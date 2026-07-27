@@ -109,88 +109,92 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
                 <div class="tab-content" data-tab-content="context">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_context_lede'}</p>
-                    <section class="card">
+                    <section class="card ap-context-section">
                         <h3>{translate 'admin.ai_presence_identity'}</h3>
-                        <div class="form-grid">
-                            <div class="form-group">
+                        <div class="form-grid ap-context-grid">
+                            <div class="form-group ap-span-full">
                                 <label for="ap-official-name">{translate 'admin.ai_presence_official_name'}</label>
                                 <div class="ap-field-row"><input type="text" id="ap-official-name" class="input" data-field="identity.official_name"><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group ap-span-full">
                                 <label for="ap-short-desc">{translate 'admin.ai_presence_short_description'}</label>
                                 <div class="ap-field-row"><textarea id="ap-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group ap-span-full">
                                 <label for="ap-full-desc">{translate 'admin.ai_presence_full_description'}</label>
                                 <div class="ap-field-row"><textarea id="ap-full-desc" class="input" rows="4" data-field="identity.full_description"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.full_description" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group ap-span-full">
                                 <label for="ap-what-we-do">{translate 'admin.ai_presence_what_we_do'}</label>
-                                <textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea>
+                                <div class="ap-field-row"><textarea id="ap-what-we-do" class="input" rows="3" data-field="identity.what_we_do"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.what_we_do" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-industry">{translate 'admin.ai_presence_industry'}</label>
-                                <textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"></textarea>
+                                <div class="ap-field-row"><textarea id="ap-industry" class="input" rows="2" placeholder="One per line" data-field="identity.industry" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.industry" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-categories">{translate 'admin.ai_presence_categories'}</label>
-                                <textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"></textarea>
+                                <div class="ap-field-row"><textarea id="ap-categories" class="input" rows="2" placeholder="One per line" data-field="identity.categories" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.categories" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-locations">{translate 'admin.ai_presence_locations'}</label>
-                                <textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"></textarea>
+                                <div class="ap-field-row"><textarea id="ap-locations" class="input" rows="2" placeholder="One per line" data-field="identity.locations" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.locations" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
                             <div class="form-group">
                                 <label for="ap-website">{translate 'admin.ai_presence_website'}</label>
-                                <input type="url" id="ap-website" class="input" data-field="identity.website">
+                                <div class="ap-field-row"><input type="url" id="ap-website" class="input" data-field="identity.website"><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group ap-span-full">
                                 <label>{translate 'admin.ai_presence_social_profiles'}</label>
                                 <div id="ap-social-list"></div>
                                 <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-add-social">{translate 'admin.add'}</button>
                             </div>
                         </div>
                     </section>
-                    <section class="card mt-m">
+                    <section class="card mt-m ap-context-section">
                         <h3>{translate 'admin.ai_presence_positioning'}</h3>
-                        <div class="form-group">
-                            <label for="ap-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
-                            <textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
-                            <textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-best-suited">{translate 'admin.ai_presence_best_suited_for'}</label>
-                            <textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-not-ideal">{translate 'admin.ai_presence_not_ideal_for'}</label>
-                            <textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-competitive">{translate 'admin.ai_presence_competitive'}</label>
-                            <textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea>
+                        <div class="form-grid ap-context-grid">
+                            <div class="form-group ap-span-full">
+                                <label for="ap-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
+                                <div class="ap-field-row"><textarea id="ap-best-known" class="input" rows="2" placeholder="One per line" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
+                                <div class="ap-field-row"><textarea id="ap-differentiators" class="input" rows="2" placeholder="One per line" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-best-suited">{translate 'admin.ai_presence_best_suited_for'}</label>
+                                <div class="ap-field-row"><textarea id="ap-best-suited" class="input" rows="2" placeholder="One per line" data-field="positioning.best_suited_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="positioning.best_suited_for" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-not-ideal">{translate 'admin.ai_presence_not_ideal_for'}</label>
+                                <div class="ap-field-row"><textarea id="ap-not-ideal" class="input" rows="2" placeholder="One per line" data-field="positioning.not_ideal_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="positioning.not_ideal_for" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-competitive">{translate 'admin.ai_presence_competitive'}</label>
+                                <div class="ap-field-row"><textarea id="ap-competitive" class="input" rows="3" data-field="positioning.competitive_positioning"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="positioning.competitive_positioning" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
                         </div>
                     </section>
-                    <section class="card mt-m">
+                    <section class="card mt-m ap-context-section">
                         <h3>{translate 'admin.ai_presence_communication'}</h3>
-                        <div class="form-group">
-                            <label for="ap-tone">{translate 'admin.ai_presence_tone'}</label>
-                            <input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv">
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-preferred-json">{translate 'admin.ai_presence_preferred_terms'}</label>
-                            <textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Brand","meaning":"Official name"}]' data-field="communication_guidance.preferred_terms" data-json="1"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-avoided-json">{translate 'admin.ai_presence_avoided_terms'}</label>
-                            <textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"…","reason":"…"}]' data-field="communication_guidance.avoided_terms" data-json="1"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="ap-custom-guidance">{translate 'admin.ai_presence_custom_guidance'}</label>
-                            <textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea>
+                        <div class="form-grid ap-context-grid">
+                            <div class="form-group">
+                                <label for="ap-tone">{translate 'admin.ai_presence_tone'}</label>
+                                <div class="ap-field-row"><input type="text" id="ap-tone" class="input" placeholder="professional, friendly" data-field="communication_guidance.tone" data-array="csv"><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="communication_guidance.tone" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-preferred-json">{translate 'admin.ai_presence_preferred_terms'}</label>
+                                <div class="ap-field-row"><textarea id="ap-preferred-json" class="input" rows="3" placeholder='[{"term":"Brand","meaning":"Official name"}]' data-field="communication_guidance.preferred_terms" data-json="1"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="communication_guidance.preferred_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-avoided-json">{translate 'admin.ai_presence_avoided_terms'}</label>
+                                <div class="ap-field-row"><textarea id="ap-avoided-json" class="input" rows="3" placeholder='[{"term":"…","reason":"…"}]' data-field="communication_guidance.avoided_terms" data-json="1"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="communication_guidance.avoided_terms" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-custom-guidance">{translate 'admin.ai_presence_custom_guidance'}</label>
+                                <div class="ap-field-row"><textarea id="ap-custom-guidance" class="input" rows="4" data-field="communication_guidance.custom_guidance"></textarea><button type="button" class="btn btn-sm btn-ghost ap-field-ai" data-field="communication_guidance.custom_guidance" title="{translate 'admin.ai_presence_field_ai_hint'}">✨</button></div>
+                            </div>
                         </div>
                     </section>
                     <section class="card mt-m">
@@ -218,57 +222,77 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
                 <div class="tab-content" data-tab-content="products">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_products_lede'}</p>
-                    <div class="main-actions-bar">
+                    <div class="main-actions-bar ap-actions-bar">
                         <button type="button" class="btn btn-primary btn-sm" id="ap-add-product">{translate 'admin.ai_presence_add_product'}</button>
                     </div>
                     <div id="ap-products-list" class="ap-products-grid mt-m"></div>
+                    <p id="ap-products-empty" class="ap-empty-state text-muted" hidden>{translate 'admin.ai_presence_products_empty'}</p>
                 </div>
 
                 <div class="tab-content" data-tab-content="claims">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_claims_lede'}</p>
-                    <div class="main-actions-bar">
+                    <div class="main-actions-bar ap-actions-bar">
                         <button type="button" class="btn btn-primary btn-sm" id="ap-add-claim">{translate 'admin.ai_presence_add_claim'}</button>
                         <button type="button" class="btn btn-secondary btn-sm" id="ap-add-evidence">{translate 'admin.ai_presence_add_evidence'}</button>
                         <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-evidence">{translate 'admin.ai_presence_add_cms_evidence'}</button>
                     </div>
                     <div class="ai-presence-split mt-m">
-                        <div class="card">
+                        <div class="card ap-claims-panel">
                             <h3>{translate 'admin.ai_presence_claims'}</h3>
-                            <ul id="ap-claims-list" class="ai-presence-item-list"></ul>
+                            <ul id="ap-claims-list" class="ai-presence-item-list ap-item-list--interactive"></ul>
                         </div>
-                        <div class="card">
+                        <div class="card ap-evidence-panel">
                             <h3>{translate 'admin.ai_presence_evidence'}</h3>
                             <div id="ap-claim-detail" class="text-muted">{translate 'admin.ai_presence_select_claim'}</div>
-                            <ul id="ap-evidence-list" class="ai-presence-item-list"></ul>
+                            <ul id="ap-evidence-list" class="ai-presence-item-list ap-item-list--interactive"></ul>
                         </div>
                     </div>
                 </div>
 
                 <div class="tab-content" data-tab-content="media">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_media_help'}</p>
-                    <div class="form-row">
-                        <input type="text" id="ap-media-id" class="input" placeholder="{translate 'admin.media_id'}">
-                        <select id="ap-media-represents" class="input">
-                            <option value="brand">Brand</option>
-                            <option value="product">Product</option>
-                            <option value="person">Person</option>
-                            <option value="campaign">Campaign</option>
-                        </select>
-                        <button type="button" class="btn btn-secondary btn-sm" id="ap-add-media-context">{translate 'admin.add'}</button>
+                    <div class="card ap-media-toolbar">
+                        <div class="form-row">
+                            <button type="button" class="btn btn-primary btn-sm" id="ap-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
+                            <select id="ap-media-represents" class="input">
+                                <option value="brand">{translate 'admin.ai_presence_media_brand'}</option>
+                                <option value="product">{translate 'admin.ai_presence_media_product'}</option>
+                                <option value="person">{translate 'admin.ai_presence_media_person'}</option>
+                                <option value="campaign">{translate 'admin.ai_presence_media_campaign'}</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-media-context">{translate 'admin.add'}</button>
+                        </div>
+                        <input type="hidden" id="ap-media-id">
+                        <div id="ap-media-picked-preview" class="ap-media-picked" hidden>
+                            <img id="ap-media-picked-thumb" alt="" class="ap-media-thumb">
+                            <span id="ap-media-picked-name" class="text-muted"></span>
+                            <button type="button" class="btn-link" id="ap-media-picked-clear">{translate 'admin.clear'}</button>
+                        </div>
                     </div>
-                    <ul id="ap-media-list" class="ai-presence-item-list mt-m"></ul>
+                    <div id="ap-media-grid" class="ap-media-grid mt-m"></div>
+                    <p id="ap-media-empty" class="ap-empty-state text-muted" hidden>{translate 'admin.ai_presence_media_empty'}</p>
                 </div>
 
                 <div class="tab-content" data-tab-content="publish">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_publish_lede'}</p>
                     <div class="card">
                         <h3>{translate 'admin.ai_presence_publish_settings'}</h3>
-                        <label class="checkbox-label"><input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
-                        <label class="checkbox-label mt-s"><input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld"> {translate 'admin.ai_presence_include_json_ld'}</label>
-                        <label class="checkbox-label mt-s"><input type="checkbox" id="ap-pub-views" data-field="publication_settings.public_views_enabled"> {translate 'admin.ai_presence_public_views'}</label>
+                        <div class="ap-publish-setting">
+                            <label class="checkbox-label"><input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
+                            <p class="ap-setting-help">{translate 'admin.ai_presence_pub_enabled_help'}</p>
+                        </div>
+                        <div class="ap-publish-setting mt-s">
+                            <label class="checkbox-label"><input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld"> {translate 'admin.ai_presence_include_json_ld'}</label>
+                            <p class="ap-setting-help">{translate 'admin.ai_presence_pub_jsonld_help'}</p>
+                        </div>
+                        <div class="ap-publish-setting mt-s">
+                            <label class="checkbox-label"><input type="checkbox" id="ap-pub-views" data-field="publication_settings.public_views_enabled"> {translate 'admin.ai_presence_public_views'}</label>
+                            <p class="ap-setting-help">{translate 'admin.ai_presence_pub_views_help'}</p>
+                        </div>
                         <div class="form-group mt-s">
                             <label for="ap-pub-path">{translate 'admin.ai_presence_public_path'}</label>
-                            <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path">
+                            <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path" placeholder="/ai/brand.json">
+                            <p class="ap-setting-help">{translate 'admin.ai_presence_pub_path_help'}</p>
                         </div>
                         <p class="text-muted mt-s">{translate 'admin.ai_presence_publish_disclaimer'}</p>
                     </div>
@@ -294,9 +318,11 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     </div>
                     <details class="card mt-m ap-collapsible">
                         <summary><h3 class="ap-collapsible-title">{translate 'admin.ai_presence_api_views'}</h3></summary>
+                        <p class="ap-setting-help">{translate 'admin.ai_presence_api_views_help'}</p>
                         <dl class="ai-presence-urls">
                             <dt>Summary</dt><dd><code id="ap-api-summary"></code></dd>
                             <dt>Products</dt><dd><code id="ap-api-products"></code></dd>
+                            <dt>Claims</dt><dd><code id="ap-api-claims"></code></dd>
                         </dl>
                     </details>
                 </div>
@@ -324,10 +350,11 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <button type="button" class="ap-assist-tab" data-assist-tab="advanced" role="tab" aria-selected="false">{translate 'admin.ai_presence_assist_tab_advanced'}</button>
             </div>
 
-            <div class="ap-assist-panel active" data-assist-panel="auto" role="tabpanel">
+                <div class="ap-assist-panel active" data-assist-panel="auto" role="tabpanel">
                 <p class="ap-hint">{translate 'admin.ai_presence_assist_auto_hint'}</p>
                 <button type="button" class="btn btn-primary ap-assist-auto-btn" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
                 <button type="button" class="btn btn-sm btn-secondary ap-assist-secondary-btn" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+                <button type="button" class="btn btn-sm btn-secondary ap-assist-secondary-btn" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
                 <p id="ap-assist-auto-status" class="ap-hint ap-assist-status"></p>
             </div>
 
@@ -362,5 +389,185 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     <span>{translate 'admin.ai_presence_assist_title'}</span>
     <span class="badge ap-suggestion-badge" id="ap-suggestion-count-fab" hidden>0</span>
 </button>
+
+<!-- Product / service modal -->
+<div id="ap-product-modal" class="modal ap-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-ap-modal-close="ap-product-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3 id="ap-product-modal-title">{translate 'admin.ai_presence_add_product'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-product-modal">&times;</button>
+        </div>
+        <form id="ap-product-form">
+            <div class="modal-body">
+                <div class="form-group"><label for="ap-product-name">{translate 'admin.name'}</label><input type="text" id="ap-product-name" class="input" required></div>
+                <div class="form-group"><label for="ap-product-type">{translate 'admin.type'}</label>
+                    <select id="ap-product-type" class="input">
+                        <option value="product">{translate 'admin.ai_presence_type_product'}</option>
+                        <option value="service">{translate 'admin.ai_presence_type_service'}</option>
+                        <option value="bundle">{translate 'admin.ai_presence_type_bundle'}</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="ap-product-short">{translate 'admin.ai_presence_short_description'}</label><textarea id="ap-product-short" class="input" rows="2"></textarea></div>
+                <div class="form-group"><label for="ap-product-full">{translate 'admin.ai_presence_full_description'}</label><textarea id="ap-product-full" class="input" rows="4"></textarea></div>
+                <div class="form-group"><label for="ap-product-category">{translate 'admin.ai_presence_categories'}</label><input type="text" id="ap-product-category" class="input"></div>
+                <div class="form-group"><label for="ap-product-pricing">{translate 'admin.ai_presence_pricing_model'}</label><input type="text" id="ap-product-pricing" class="input" placeholder="subscription, one-time, free"></div>
+                <div class="form-group"><label for="ap-product-best-for">{translate 'admin.ai_presence_best_suited_for'}</label><textarea id="ap-product-best-for" class="input" rows="2" placeholder="One per line"></textarea></div>
+                <div class="form-group"><label for="ap-product-not-for">{translate 'admin.ai_presence_not_ideal_for'}</label><textarea id="ap-product-not-for" class="input" rows="2" placeholder="One per line"></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-product-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Relationship modal -->
+<div id="ap-relationship-modal" class="modal ap-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-ap-modal-close="ap-relationship-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3>{translate 'admin.ai_presence_add_relationship'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-relationship-modal">&times;</button>
+        </div>
+        <form id="ap-relationship-form">
+            <div class="modal-body">
+                <div class="form-group"><label for="ap-rel-name">{translate 'admin.name'}</label><input type="text" id="ap-rel-name" class="input" required></div>
+                <div class="form-group"><label for="ap-rel-type">{translate 'admin.type'}</label>
+                    <select id="ap-rel-type" class="input">
+                        <option value="partner">Partner</option>
+                        <option value="subsidiary">Subsidiary</option>
+                        <option value="parent">Parent company</option>
+                        <option value="competitor">Competitor</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="ap-rel-desc">{translate 'admin.description'}</label><textarea id="ap-rel-desc" class="input" rows="3"></textarea></div>
+                <div class="form-group"><label for="ap-rel-url">{translate 'admin.ai_presence_website'}</label><input type="url" id="ap-rel-url" class="input"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-relationship-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Claim modal -->
+<div id="ap-claim-modal" class="modal ap-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-ap-modal-close="ap-claim-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3 id="ap-claim-modal-title">{translate 'admin.ai_presence_add_claim'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-claim-modal">&times;</button>
+        </div>
+        <form id="ap-claim-form">
+            <div class="modal-body">
+                <div class="form-group"><label for="ap-claim-statement">{translate 'admin.ai_presence_claim_statement'}</label><textarea id="ap-claim-statement" class="input" rows="3" required></textarea></div>
+                <div class="form-group"><label for="ap-claim-status">{translate 'admin.status'}</label>
+                    <select id="ap-claim-status" class="input">
+                        <option value="pending_review">pending_review</option>
+                        <option value="supported">supported</option>
+                        <option value="unsupported">unsupported</option>
+                        <option value="conflicting">conflicting</option>
+                        <option value="expired">expired</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="ap-claim-notes">{translate 'admin.notes'}</label><textarea id="ap-claim-notes" class="input" rows="2"></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-claim-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Evidence modal -->
+<div id="ap-evidence-modal" class="modal ap-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-ap-modal-close="ap-evidence-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3 id="ap-evidence-modal-title">{translate 'admin.ai_presence_add_evidence'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-evidence-modal">&times;</button>
+        </div>
+        <form id="ap-evidence-form">
+            <div class="modal-body">
+                <div class="form-group"><label for="ap-evidence-title">{translate 'admin.title'}</label><input type="text" id="ap-evidence-title" class="input" required></div>
+                <div class="form-group"><label for="ap-evidence-url">{translate 'admin.url'}</label><input type="url" id="ap-evidence-url" class="input"></div>
+                <div class="form-group"><label for="ap-evidence-type">{translate 'admin.type'}</label>
+                    <select id="ap-evidence-type" class="input">
+                        <option value="external_url">External URL</option>
+                        <option value="cms_content">CMS content</option>
+                        <option value="document">Document</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label for="ap-evidence-notes">{translate 'admin.notes'}</label><textarea id="ap-evidence-notes" class="input" rows="2"></textarea></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-evidence-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- CMS evidence modal -->
+<div id="ap-cms-evidence-modal" class="modal ap-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-ap-modal-close="ap-cms-evidence-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3>{translate 'admin.ai_presence_add_cms_evidence'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-cms-evidence-modal">&times;</button>
+        </div>
+        <form id="ap-cms-evidence-form">
+            <div class="modal-body">
+                <div class="form-group"><label for="ap-cms-evidence-entry">{translate 'admin.ai_presence_connected_content'}</label>
+                    <select id="ap-cms-evidence-entry" class="input" required></select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-cms-evidence-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary">{translate 'admin.add'}</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Media context modal -->
+<div id="ap-media-modal" class="modal ap-modal" aria-hidden="true">
+    <div class="modal-backdrop" data-ap-modal-close="ap-media-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3 id="ap-media-modal-title">{translate 'admin.ai_presence_edit_media'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-media-modal">&times;</button>
+        </div>
+        <form id="ap-media-form">
+            <div class="modal-body">
+                <div id="ap-media-modal-preview" class="ap-media-modal-preview" hidden>
+                    <img id="ap-media-modal-thumb" alt="" class="ap-media-thumb">
+                    <span id="ap-media-modal-name"></span>
+                </div>
+                <div class="form-group"><label for="ap-media-desc">{translate 'admin.description'}</label><textarea id="ap-media-desc" class="input" rows="2"></textarea></div>
+                <div class="form-group"><label for="ap-media-use">{translate 'admin.ai_presence_intended_use'}</label><textarea id="ap-media-use" class="input" rows="2"></textarea></div>
+                <div class="form-group"><label for="ap-media-restrictions">{translate 'admin.ai_presence_restrictions'}</label><textarea id="ap-media-restrictions" class="input" rows="2"></textarea></div>
+                <div class="form-group"><label for="ap-media-represents-edit">{translate 'admin.ai_presence_represents'}</label>
+                    <select id="ap-media-represents-edit" class="input">
+                        <option value="brand">{translate 'admin.ai_presence_media_brand'}</option>
+                        <option value="product">{translate 'admin.ai_presence_media_product'}</option>
+                        <option value="person">{translate 'admin.ai_presence_media_person'}</option>
+                        <option value="campaign">{translate 'admin.ai_presence_media_campaign'}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-media-modal">{translate 'admin.cancel'}</button>
+                <button type="submit" class="btn btn-primary">{translate 'admin.save'}</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 {include_script 'ai-presence.js'}

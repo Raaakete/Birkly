@@ -126,7 +126,7 @@ function birkly_ai_presence_parse_ai_suggestions(string $raw): array
 /**
  * @return array{suggestions: list<array<string, mixed>>, ai_error: string|null}
  */
-function birkly_ai_presence_copilot_suggestions(array $draft, string $connectionId = '', string $mode = 'all'): array
+function birkly_ai_presence_copilot_suggestions(array $draft, string $connectionId = '', string $mode = 'all', bool $creative = false): array
 {
     $suggestions = birkly_ai_presence_rule_suggestions($draft);
     $aiError = null;
@@ -137,22 +137,30 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
 
     $chunks = birkly_ai_presence_gather_cms_context($draft);
     $context = json_encode($chunks, JSON_UNESCAPED_UNICODE);
-    $draftSummary = json_encode([
-        'identity' => $draft['identity'] ?? [],
-        'positioning' => $draft['positioning'] ?? [],
-        'products_count' => count($draft['products_services'] ?? []),
-        'claims_count' => count($draft['claims'] ?? []),
-    ], JSON_UNESCAPED_UNICODE);
+    $draftSummary = json_encode($draft, JSON_UNESCAPED_UNICODE);
+    $completeness = birkly_ai_presence_completeness($draft);
+    $gaps = [];
+    foreach ($completeness['items'] as $item) {
+        if (empty($item['complete'])) {
+            $gaps[] = ($item['label'] ?? $item['key'] ?? '') . ' (' . ($item['score'] ?? 0) . '/' . ($item['max'] ?? 0) . ')';
+        }
+    }
+    $gapsText = $gaps !== [] ? implode('; ', $gaps) : 'All sections complete';
 
+    $creative = $creative || $mode === 'fill_complete';
     $modeHint = match ($mode) {
         'fill_gaps' => 'Focus on empty or weak completeness fields only.',
+        'fill_complete' => 'Generate a COMPLETE brand profile targeting 100% completeness. Fill every missing section: identity, descriptions, positioning, products, claims with evidence, terminology, relationships, and media context. Infer plausible values from existing draft when CMS sources are insufficient.',
         'improve' => 'Suggest improvements to existing copy — clearer, more precise, brand-safe.',
         'claims' => 'Suggest factual claims that can be supported by the CMS sources. Use field claims.new.',
         default => 'Suggest identity, positioning, communication, products_services.new, relationships.new, and claims.new fields as appropriate.',
     };
 
-    $system = 'You are a brand context strategist. Return JSON only: {"suggestions":[{"id":"...","field":"identity.short_description|positioning.best_known_for|products_services.new|relationships.new|claims.new|communication_guidance.tone","label":"...","value":...,"source":"...","confidence":"high|medium|low"}]}. Do not invent facts not supported by sources. For array fields use JSON arrays. Never auto-publish.';
-    $user = "$modeHint\n\nCurrent draft summary:\n$draftSummary\n\nCMS sources:\n$context";
+    $grounding = $creative
+        ? 'Prefer CMS sources when available. When sources are missing or insufficient, infer plausible brand-consistent values from the existing draft. Mark source as "cms" or "inferred" and confidence accordingly.'
+        : 'Do not invent facts not supported by sources.';
+    $system = 'You are a brand context strategist. Return JSON only: {"suggestions":[{"id":"...","field":"identity.short_description|positioning.best_known_for|products_services.new|relationships.new|claims.new|evidence.new|media_context.new|communication_guidance.preferred_terms|publication_settings.enabled","label":"...","value":...,"source":"...","confidence":"high|medium|low"}]}. ' . $grounding . ' For array fields use JSON arrays. For products use products_services.new with object value {name,type,short_description,full_description,category,best_for,not_for}. For claims use claims.new with {statement,status,notes}. For evidence use evidence.new with {title,url,type,claim_statement}. Never auto-publish.';
+    $user = "$modeHint\n\nCompleteness gaps: $gapsText\n\nCurrent draft:\n$draftSummary\n\nCMS sources:\n$context";
 
     $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
     if ($ai['ok'] ?? false) {
@@ -182,14 +190,18 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
 /**
  * @return array{suggestions: list<array<string, mixed>>, error: string|null}
  */
-function birkly_ai_presence_field_ai(string $field, array $draft, string $connectionId): array
+function birkly_ai_presence_field_ai(string $field, array $draft, string $connectionId, bool $creative = true): array
 {
     $chunks = birkly_ai_presence_gather_cms_context($draft);
     $context = json_encode($chunks, JSON_UNESCAPED_UNICODE);
     $current = birkly_ai_presence_get_field_value($draft, $field);
+    $draftSummary = json_encode($draft, JSON_UNESCAPED_UNICODE);
 
-    $system = 'Return JSON only: {"suggestions":[{"id":"field_ai","field":"' . addslashes($field) . '","label":"Suggested value","value":...,"source":"ai","confidence":"high"}]}. Ground in CMS sources; do not invent facts.';
-    $user = "Generate value for field: $field\nCurrent value: " . json_encode($current) . "\n\nCMS sources:\n$context";
+    $grounding = $creative
+        ? 'Prefer CMS sources when available. If insufficient, infer a plausible brand-consistent value from the full draft context. Mark source as "cms" or "inferred".'
+        : 'Ground in CMS sources; do not invent facts.';
+    $system = 'Return JSON only: {"suggestions":[{"id":"field_ai","field":"' . addslashes($field) . '","label":"Suggested value","value":...,"source":"cms|inferred|ai","confidence":"high|medium|low"}]}. ' . $grounding;
+    $user = "Generate value for field: $field\nCurrent value: " . json_encode($current) . "\n\nFull draft context:\n$draftSummary\n\nCMS sources:\n$context";
 
     $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
     if (!($ai['ok'] ?? false)) {
@@ -221,7 +233,7 @@ function birkly_ai_presence_get_field_value(array $draft, string $field): mixed
  * @param list<string> $collectionSlugs
  * @return array{suggestions: list<array<string, mixed>>, draft_patch: array<string, mixed>}
  */
-function birkly_ai_presence_wizard_generate(array $collectionSlugs, string $connectionId = ''): array
+function birkly_ai_presence_wizard_generate(array $collectionSlugs, string $connectionId = '', bool $creative = false): array
 {
     $contentRoot = birkly_project_root() . '/content/collections';
     $chunks = [];
@@ -279,8 +291,28 @@ function birkly_ai_presence_wizard_generate(array $collectionSlugs, string $conn
     }
 
     if ($connectionId !== '') {
-        $system = 'You are building authoritative brand context for AI systems. Return JSON only with keys: suggestions (array of {id,field,label,value,source,confidence}) and optional products (array of {name,type,short_description,full_description,category,best_for,connected_entry:{collection,entry_id,slug,label}}). Fields: identity.*, positioning.*, communication_guidance.*, claims.new, products_services.new, relationships.new. Do not invent facts.';
-        $user = 'Analyze these CMS sources and propose a complete brand context draft.' . "\n\n" . json_encode($chunks, JSON_UNESCAPED_UNICODE);
+        $draft = birkly_ai_presence_load_draft();
+        $completeness = birkly_ai_presence_completeness($draft);
+        $gaps = [];
+        foreach ($completeness['items'] as $item) {
+            if (empty($item['complete'])) {
+                $gaps[] = ($item['label'] ?? $item['key'] ?? '');
+            }
+        }
+        $grounding = $creative
+            ? 'Prefer CMS sources when available. When sources are missing or insufficient, infer plausible brand-consistent values from the existing draft. Mark source as "cms" or "inferred". Target 100% profile completeness.'
+            : 'Do not invent facts.';
+        $system = 'You are building authoritative brand context for AI systems. Return JSON only with keys: suggestions (array of {id,field,label,value,source,confidence}) and optional products (array of {name,type,short_description,full_description,category,best_for,connected_entry:{collection,entry_id,slug,label}}). Fields: identity.*, positioning.*, communication_guidance.*, claims.new, evidence.new, products_services.new, relationships.new, media_context.new, publication_settings.enabled. ' . $grounding;
+        $userPayload = [
+            'mode' => $creative ? 'fill_complete' : 'cms_grounded',
+            'completeness_gaps' => $gaps,
+            'current_draft' => $draft,
+            'cms_sources' => $chunks,
+        ];
+        $user = ($creative
+            ? 'Complete this brand profile to 100% — fill ALL missing sections using CMS sources first, then infer from existing context.'
+            : 'Analyze these CMS sources and propose a complete brand context draft.')
+            . "\n\n" . json_encode($userPayload, JSON_UNESCAPED_UNICODE);
         $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
         if ($ai['ok'] ?? false) {
             $raw = (string) ($ai['text'] ?? '');
