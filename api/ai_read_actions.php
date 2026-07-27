@@ -200,9 +200,9 @@ function executeReadAction($actionData, $aiUser) {
         
     } elseif ($actionType === 'read_collection') {
         $actionPayload = birkly_ai_normalize_collection_action_data($actionPayload);
-        $collectionSlug = $actionPayload['slug'] ?? '';
-        if (empty($collectionSlug)) {
-            return ['success' => false, 'message' => 'Collection slug is required'];
+        $collectionSlug = birkly_ai_resolve_collection_slug_from_payload($actionPayload, $contentStorage);
+        if ($collectionSlug === '') {
+            return ['success' => false, 'message' => 'Collection slug is required. Action data: ' . json_encode($actionPayload)];
         }
 
         $collectionDir = birkly_content_resolve_collection_dir($contentStorage, $collectionSlug);
