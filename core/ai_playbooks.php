@@ -483,6 +483,39 @@ function ai_chat_parse_session_notes_from_history(array $conversationHistory): a
 }
 
 /**
+ * Build create_entry payload using collection schema field names when available.
+ *
+ * @param array<string,mixed> $coll
+ * @return array<string,mixed>
+ */
+function ai_chat_build_entry_payload_for_collection(array $coll, string $slug): array
+{
+    $name = (string) ($coll['name'] ?? ucfirst($slug));
+    $payload = [
+        'collection' => $slug,
+        'title' => $name . ' — welcome',
+        'status' => 'published',
+    ];
+    $bodyField = 'text';
+    foreach ($coll['fields'] ?? [] as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $fieldName = (string) ($field['name'] ?? '');
+        $fieldType = (string) ($field['type'] ?? 'text');
+        if ($fieldName === '' || in_array($fieldName, ['title', 'slug'], true)) {
+            continue;
+        }
+        if (in_array($fieldType, ['textarea', 'markdown', 'richtext', 'text', 'wysiwyg'], true)) {
+            $bodyField = $fieldName;
+            break;
+        }
+    }
+    $payload[$bodyField] = 'Sample content for ' . $name . '. Edit in admin.';
+    return $payload;
+}
+
+/**
  * Deterministic next actions when model returns prose on site-build "proceed".
  *
  * @param array<string,mixed> $systemContext
@@ -517,21 +550,23 @@ function ai_chat_site_proceed_fallback_actions(array $conversationHistory, array
     $hasProjectIndex = in_array('index.html', $done['project_files'], true)
         || in_array('project/index.html', $done['project_files'], true);
 
+    $allSiteEntriesDone = true;
+    foreach ($siteSlugs as $slug) {
+        if (!in_array($slug, $done['entries'], true)) {
+            $allSiteEntriesDone = false;
+            break;
+        }
+    }
+
     // Phase 1: seed entries for site collections not yet touched
     $entryActions = [];
     foreach ($siteSlugs as $slug) {
         if (in_array($slug, $done['entries'], true)) {
             continue;
         }
-        $name = (string) ($collectionMap[$slug]['name'] ?? ucfirst($slug));
         $entryActions[] = [
             'type' => 'create_entry',
-            'data' => [
-                'collection' => $slug,
-                'title' => $name . ' — welcome',
-                'text' => 'Sample content for ' . $name . '. Edit in admin.',
-                'status' => 'published',
-            ],
+            'data' => ai_chat_build_entry_payload_for_collection($collectionMap[$slug], $slug),
             'description' => 'Seed published entry in ' . $slug,
         ];
         if (count($entryActions) >= 3) {
@@ -542,8 +577,9 @@ function ai_chat_site_proceed_fallback_actions(array $conversationHistory, array
         return $entryActions;
     }
 
-    // Phase 2: project shell
-    if (!$hasProjectIndex && preg_match('/\b(site|website|page|html|project|gallery|portfolio|build|finish|proceed)\b/i', $haystack)) {
+    // Phase 2: project shell (collections configured and entries seeded)
+    if (!$hasProjectIndex && ($allSiteEntriesDone || $entryActions === [])
+        && preg_match('/\b(site|website|page|html|project|gallery|portfolio|build|finish|proceed)\b/i', $haystack)) {
         $artSlug = isset($collectionMap['artworks']) ? 'artworks' : ($siteSlugs[0] ?? 'projects');
         $indexHtml = <<<HTML
 <!DOCTYPE html>
