@@ -20,6 +20,9 @@ require_once '../core/storage/StorageFactory.php';
 require_once '../core/storage/StorageMigration.php';
 require_once 'log.php';
 
+require_once __DIR__ . '/session.php';
+haru_secure_session_start();
+
 $storage = new Storage('../settings');
 // Handle both JSON and form-encoded data
 $rawInput = file_get_contents('php://input');
@@ -106,8 +109,55 @@ if ($action === 'get') {
     }
 }
 
-// All other actions require authentication and manage_settings permission
-requireAuth('manage_settings');
+/**
+ * Allow project name updates during setup wizard without manage_settings.
+ */
+function birkly_settings_is_onboarding_admin_update(string $action, array $input): bool
+{
+    if ($action !== 'update' || ($input['category'] ?? '') !== 'admin') {
+        return false;
+    }
+    if (!isset($_SESSION['user'])) {
+        return false;
+    }
+
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/onboarding.php';
+    $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? '';
+    if ($userId === '') {
+        return false;
+    }
+
+    $status = getOnboardingStatus($userId);
+    return empty($status['setup_wizard_completed']);
+}
+
+// Mutating actions require authentication; most also require manage_settings.
+if ($action !== 'get') {
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
+
+    $timeout = getSessionTimeout();
+    $now = time();
+    if (isset($_SESSION['last_activity']) && ($now - $_SESSION['last_activity']) > $timeout) {
+        session_unset();
+        session_destroy();
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Session expired']);
+        exit;
+    }
+    $_SESSION['last_activity'] = $now;
+
+    $onboardingAdminUpdate = birkly_settings_is_onboarding_admin_update($action, $input);
+    if (!$onboardingAdminUpdate && !checkPermission($_SESSION['user'], 'manage_settings')) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+        exit;
+    }
+}
 
 // Handle logo upload
 if ($action === 'upload_logo') {
