@@ -119,7 +119,7 @@
         "ai_presence_what_title": "What is Agent Guide?",
         "ai_presence_what_body": "A structured, publishable guide for AI systems and agents — who you are, what you offer, and what you can prove. It links to your existing CMS content and other sources instead of duplicating them.",
         "ai_presence_what_note": "You edit a draft, then explicitly Publish. Public endpoints only serve the published version.",
-        "ai_presence_flow_context": "Define Agent Guide context",
+        "ai_presence_flow_context": "Define profile & context",
         "ai_presence_flow_context_desc": "Identity, positioning, and voice",
         "ai_presence_flow_products": "Add products & services",
         "ai_presence_flow_products_desc": "What you sell and who it is for",
