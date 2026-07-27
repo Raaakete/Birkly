@@ -88,8 +88,12 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
     $prompt .= "Note: There is NO create_user action - users must be created via admin panel\n\n";
     $prompt .= "ACTION FORMAT (fallback when native tools unavailable):\n";
+    $prompt .= "Each action MUST include required identifiers (slug or collection). Example batch:\n";
     $prompt .= "```json\n";
-    $prompt .= "{\"actions\":[{\"type\":\"create_entry\",\"data\":{\"collection\":\"slug\",\"title\":\"...\"},\"description\":\"...\"}]}\n";
+    $prompt .= "{\"actions\":[\n";
+    $prompt .= "  {\"type\":\"update_collection\",\"slug\":\"gallery\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"label\":\"Title\",\"required\":true}]},\n";
+    $prompt .= "  {\"type\":\"create_entry\",\"collection\":\"gallery\",\"title\":\"Sample work\",\"status\":\"published\"}\n";
+    $prompt .= "]}\n";
     $prompt .= "```\n\n";
     
     if (!empty($context['collections'])) {
