@@ -258,6 +258,54 @@ function ai_chat_is_status_request(string $message): bool
     );
 }
 
+/**
+ * True when deterministic site-build automation has no remaining steps.
+ *
+ * @param array<string,mixed> $systemContext
+ */
+function ai_chat_site_build_is_automated_complete(array $conversationHistory, array $systemContext): bool
+{
+    if (!ai_chat_session_has_site_build_progress($conversationHistory)) {
+        return false;
+    }
+
+    return str_contains(
+        ai_chat_site_build_next_step_hint(ai_chat_site_build_state($conversationHistory, $systemContext)),
+        'Automated site-build steps are complete'
+    );
+}
+
+/**
+ * Drop write actions that session notes already recorded as completed.
+ *
+ * @param list<array<string,mixed>> $actions
+ * @return list<array<string,mixed>>
+ */
+function ai_chat_filter_already_completed_actions(array $actions, array $conversationHistory): array
+{
+    $done = ai_chat_parse_session_notes_from_history($conversationHistory);
+
+    return array_values(array_filter($actions, static function (array $action) use ($done): bool {
+        $type = (string) ($action['type'] ?? '');
+        $data = is_array($action['data'] ?? null) ? $action['data'] : [];
+
+        if (in_array($type, ['write_project_file', 'create_project_file'], true)) {
+            $path = (string) ($data['path'] ?? '');
+            return $path === '' || !in_array($path, $done['project_files'], true);
+        }
+        if ($type === 'create_entry') {
+            $coll = (string) ($data['collection'] ?? '');
+            return $coll === '' || !in_array($coll, $done['entries'], true);
+        }
+        if ($type === 'update_collection') {
+            $slug = (string) ($data['slug'] ?? $data['collection'] ?? '');
+            return $slug === '' || !in_array($slug, $done['collections'], true);
+        }
+
+        return true;
+    }));
+}
+
 function ai_chat_session_has_site_build_progress(array $conversationHistory): bool
 {
     $done = ai_chat_parse_session_notes_from_history($conversationHistory);
