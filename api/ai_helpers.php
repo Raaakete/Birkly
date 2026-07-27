@@ -64,50 +64,67 @@ function getSupportedAiProviders() {
     return [
         'openai' => [
             'name' => 'OpenAI',
-            'models' => ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'gpt-3.5-turbo', 'gpt-4'],
             'default_model' => 'gpt-4o-mini',
             'api_url' => 'https://api.openai.com/v1/chat/completions',
-            'type' => 'openai'
+            'type' => 'openai',
+            'dynamic_models' => true,
         ],
         'anthropic' => [
             'name' => 'Anthropic (Claude)',
-            'models' => ['claude-3-5-haiku', 'claude-3-5-sonnet', 'claude-3-opus', 'claude-3-sonnet', 'claude-3-haiku'],
-            'default_model' => 'claude-3-5-haiku',
+            'default_model' => 'claude-3-5-haiku-latest',
             'api_url' => 'https://api.anthropic.com/v1/messages',
-            'type' => 'anthropic'
+            'type' => 'anthropic',
+            'dynamic_models' => false,
+            'custom_models' => true,
         ],
         'google' => [
             'name' => 'Google (Gemini)',
-            'models' => ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest', 'gemini-pro-latest', 'gemini-2.5-flash-lite'],
             'default_model' => 'gemini-2.5-flash',
             'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models',
-            'type' => 'google'
+            'type' => 'google',
+            'dynamic_models' => true,
         ],
         'openrouter' => [
             'name' => 'OpenRouter',
-            'models' => ['openai/gpt-4o-mini', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.5-flash', 'meta-llama/llama-3.3-70b-instruct', 'mistralai/mistral-large'],
             'default_model' => 'openai/gpt-4o-mini',
             'api_url' => 'https://openrouter.ai/api/v1/chat/completions',
-            'type' => 'openai', // Uses OpenAI-compatible API
-            'custom_models' => true
+            'type' => 'openai',
+            'dynamic_models' => true,
+            'custom_models' => true,
         ],
         'ollama' => [
             'name' => 'Ollama (Local)',
-            'models' => ['llama3', 'mistral', 'codellama', 'phi', 'gemma'],
             'default_model' => 'llama3',
             'api_url' => 'http://localhost:11434/api/chat',
             'type' => 'ollama',
-            'custom_models' => true
+            'dynamic_models' => true,
+            'custom_models' => true,
         ],
         'custom' => [
             'name' => 'Custom Provider',
-            'models' => [],
             'api_url' => '',
             'type' => 'custom',
             'custom_models' => true,
-            'requires_url' => true
+            'requires_url' => true,
         ]
     ];
+}
+
+/**
+ * Provider metadata for admin clients (no static model lists when loaded dynamically).
+ *
+ * @return array<string, array<string, mixed>>
+ */
+function birkly_ai_providers_for_client(): array
+{
+    $providers = getSupportedAiProviders();
+    foreach ($providers as $key => $info) {
+        if (!empty($info['dynamic_models'])) {
+            unset($providers[$key]['models']);
+        }
+    }
+
+    return $providers;
 }
 
 /**
@@ -693,6 +710,323 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
         'message' => $message,
         'provider_error' => $detail !== '' ? $detail : ('HTTP ' . $httpCode),
     ];
+}
+
+/**
+ * Normalize a provider model entry for the admin picker.
+ *
+ * @return array{id: string, name: string, description: string, context_length: int|null}
+ */
+function birkly_ai_normalize_model_entry(string $id, string $name = '', string $description = '', ?int $contextLength = null): array
+{
+    $id = trim($id);
+    return [
+        'id' => $id,
+        'name' => $name !== '' ? $name : $id,
+        'description' => trim($description),
+        'context_length' => $contextLength,
+    ];
+}
+
+/**
+ * Sort and dedupe model entries by id.
+ *
+ * @param list<array{id: string, name: string, description: string, context_length: int|null}> $models
+ * @return list<array{id: string, name: string, description: string, context_length: int|null}>
+ */
+function birkly_ai_sort_models(array $models): array
+{
+    $byId = [];
+    foreach ($models as $model) {
+        $id = (string) ($model['id'] ?? '');
+        if ($id === '') {
+            continue;
+        }
+        $byId[$id] = $model;
+    }
+    $models = array_values($byId);
+    usort($models, static function (array $a, array $b): int {
+        return strcasecmp((string) $a['name'], (string) $b['name']);
+    });
+
+    return $models;
+}
+
+/**
+ * @return array{ok: bool, message: string, models: list<array{id: string, name: string, description: string, context_length: int|null}>}
+ */
+function birkly_ai_fetch_openrouter_models(string $apiKey = ''): array
+{
+    $headers = ['Content-Type: application/json'];
+    if ($apiKey !== '') {
+        $headers[] = 'Authorization: Bearer ' . $apiKey;
+        if (!empty($_SERVER['HTTP_HOST'])) {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+            $headers[] = 'HTTP-Referer: ' . $scheme . '://' . $_SERVER['HTTP_HOST'];
+        }
+        $headers[] = 'X-Title: Birkly';
+    }
+
+    $result = birkly_ai_provider_http_request('https://openrouter.ai/api/v1/models', [
+        'method' => 'GET',
+        'headers' => $headers,
+        'timeout' => 20,
+    ]);
+
+    if ($result['curl_error'] !== '') {
+        return ['ok' => false, 'message' => 'Could not reach OpenRouter: ' . $result['curl_error'], 'models' => []];
+    }
+
+    if ($result['http_code'] !== 200) {
+        $detail = birkly_ai_parse_provider_error($result['body']);
+        $message = 'OpenRouter returned HTTP ' . $result['http_code'];
+        if ($detail !== '') {
+            $message .= ': ' . $detail;
+        }
+        return ['ok' => false, 'message' => $message, 'models' => []];
+    }
+
+    $payload = json_decode($result['body'], true);
+    $rows = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+    $models = [];
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $id = trim((string) ($row['id'] ?? ''));
+        if ($id === '') {
+            continue;
+        }
+        $context = isset($row['context_length']) ? (int) $row['context_length'] : null;
+        $models[] = birkly_ai_normalize_model_entry(
+            $id,
+            (string) ($row['name'] ?? $id),
+            (string) ($row['description'] ?? ''),
+            $context > 0 ? $context : null
+        );
+    }
+
+    return [
+        'ok' => true,
+        'message' => count($models) . ' models loaded from OpenRouter',
+        'models' => birkly_ai_sort_models($models),
+    ];
+}
+
+/**
+ * @return array{ok: bool, message: string, models: list<array{id: string, name: string, description: string, context_length: int|null}>}
+ */
+function birkly_ai_fetch_google_models(string $apiKey): array
+{
+    if ($apiKey === '') {
+        return ['ok' => false, 'message' => 'API key is required to load Gemini models', 'models' => []];
+    }
+
+    $url = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . urlencode($apiKey);
+    $result = birkly_ai_provider_http_request($url, [
+        'method' => 'GET',
+        'headers' => ['Content-Type: application/json'],
+        'timeout' => 20,
+    ]);
+
+    if ($result['curl_error'] !== '') {
+        return ['ok' => false, 'message' => 'Could not reach Gemini: ' . $result['curl_error'], 'models' => []];
+    }
+
+    if ($result['http_code'] === 401 || $result['http_code'] === 403) {
+        return ['ok' => false, 'message' => 'Invalid Gemini API key', 'models' => []];
+    }
+
+    if ($result['http_code'] !== 200) {
+        $detail = birkly_ai_parse_provider_error($result['body']);
+        return [
+            'ok' => false,
+            'message' => 'Gemini returned HTTP ' . $result['http_code'] . ($detail !== '' ? ': ' . $detail : ''),
+            'models' => [],
+        ];
+    }
+
+    $payload = json_decode($result['body'], true);
+    $rows = is_array($payload['models'] ?? null) ? $payload['models'] : [];
+    $models = [];
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $methods = $row['supportedGenerationMethods'] ?? [];
+        if (is_array($methods) && $methods !== [] && !in_array('generateContent', $methods, true)) {
+            continue;
+        }
+        $rawName = (string) ($row['name'] ?? '');
+        $id = preg_replace('#^models/#', '', $rawName);
+        if ($id === '') {
+            continue;
+        }
+        $context = isset($row['inputTokenLimit']) ? (int) $row['inputTokenLimit'] : null;
+        $models[] = birkly_ai_normalize_model_entry(
+            $id,
+            (string) ($row['displayName'] ?? $id),
+            (string) ($row['description'] ?? ''),
+            $context > 0 ? $context : null
+        );
+    }
+
+    return [
+        'ok' => true,
+        'message' => count($models) . ' models loaded from Gemini',
+        'models' => birkly_ai_sort_models($models),
+    ];
+}
+
+/**
+ * @return array{ok: bool, message: string, models: list<array{id: string, name: string, description: string, context_length: int|null}>}
+ */
+function birkly_ai_fetch_openai_models(string $apiKey): array
+{
+    if ($apiKey === '') {
+        return ['ok' => false, 'message' => 'API key is required to load OpenAI models', 'models' => []];
+    }
+
+    $result = birkly_ai_provider_http_request('https://api.openai.com/v1/models', [
+        'method' => 'GET',
+        'headers' => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        'timeout' => 20,
+    ]);
+
+    if ($result['curl_error'] !== '') {
+        return ['ok' => false, 'message' => 'Could not reach OpenAI: ' . $result['curl_error'], 'models' => []];
+    }
+
+    if ($result['http_code'] === 401 || $result['http_code'] === 403) {
+        return ['ok' => false, 'message' => 'Invalid OpenAI API key', 'models' => []];
+    }
+
+    if ($result['http_code'] !== 200) {
+        $detail = birkly_ai_parse_provider_error($result['body']);
+        return [
+            'ok' => false,
+            'message' => 'OpenAI returned HTTP ' . $result['http_code'] . ($detail !== '' ? ': ' . $detail : ''),
+            'models' => [],
+        ];
+    }
+
+    $payload = json_decode($result['body'], true);
+    $rows = is_array($payload['data'] ?? null) ? $payload['data'] : [];
+    $models = [];
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $id = trim((string) ($row['id'] ?? ''));
+        if ($id === '') {
+            continue;
+        }
+        if (!preg_match('/^(gpt-|o[0-9]|chatgpt-)/i', $id)) {
+            continue;
+        }
+        $models[] = birkly_ai_normalize_model_entry($id, $id);
+    }
+
+    return [
+        'ok' => true,
+        'message' => count($models) . ' models loaded from OpenAI',
+        'models' => birkly_ai_sort_models($models),
+    ];
+}
+
+/**
+ * @return array{ok: bool, message: string, models: list<array{id: string, name: string, description: string, context_length: int|null}>}
+ */
+function birkly_ai_fetch_ollama_models(string $apiUrl = ''): array
+{
+    $base = resolveOllamaBaseUrl($apiUrl);
+    $url = rtrim($base, '/') . '/api/tags';
+    $result = birkly_ai_provider_http_request($url, [
+        'method' => 'GET',
+        'headers' => ['Content-Type: application/json'],
+        'timeout' => 15,
+    ]);
+
+    if ($result['curl_error'] !== '') {
+        return ['ok' => false, 'message' => 'Could not reach Ollama: ' . $result['curl_error'], 'models' => []];
+    }
+
+    if ($result['http_code'] !== 200) {
+        return [
+            'ok' => false,
+            'message' => 'Ollama returned HTTP ' . $result['http_code'],
+            'models' => [],
+        ];
+    }
+
+    $payload = json_decode($result['body'], true);
+    $rows = is_array($payload['models'] ?? null) ? $payload['models'] : [];
+    $models = [];
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $id = trim((string) ($row['name'] ?? ''));
+        if ($id === '') {
+            continue;
+        }
+        $models[] = birkly_ai_normalize_model_entry($id, $id);
+    }
+
+    return [
+        'ok' => true,
+        'message' => count($models) . ' models loaded from Ollama',
+        'models' => birkly_ai_sort_models($models),
+    ];
+}
+
+/**
+ * Fetch live model catalog from a provider API.
+ *
+ * @return array{ok: bool, message: string, models: list<array{id: string, name: string, description: string, context_length: int|null}>, default_model?: string}
+ */
+function birkly_ai_fetch_provider_models(string $provider, string $apiKey = '', string $apiUrl = ''): array
+{
+    $providers = getSupportedAiProviders();
+    if (!isset($providers[$provider])) {
+        return ['ok' => false, 'message' => 'Unsupported provider', 'models' => []];
+    }
+
+    $info = $providers[$provider];
+    $defaultModel = birkly_ai_default_model($provider);
+
+    if ($provider === 'openrouter') {
+        $result = birkly_ai_fetch_openrouter_models($apiKey);
+    } elseif ($provider === 'google') {
+        $result = birkly_ai_fetch_google_models($apiKey);
+    } elseif ($provider === 'openai') {
+        $result = birkly_ai_fetch_openai_models($apiKey);
+    } elseif ($provider === 'ollama') {
+        $result = birkly_ai_fetch_ollama_models($apiUrl);
+    } elseif ($provider === 'anthropic') {
+        $result = [
+            'ok' => true,
+            'message' => 'Enter a Claude model ID manually (Anthropic has no public model list API)',
+            'models' => birkly_ai_sort_models([
+                birkly_ai_normalize_model_entry('claude-3-5-haiku-latest', 'Claude 3.5 Haiku (latest)'),
+                birkly_ai_normalize_model_entry('claude-3-5-sonnet-latest', 'Claude 3.5 Sonnet (latest)'),
+                birkly_ai_normalize_model_entry('claude-3-opus-latest', 'Claude 3 Opus (latest)'),
+            ]),
+        ];
+    } elseif ($provider === 'custom') {
+        return ['ok' => true, 'message' => 'Enter the model ID required by your custom endpoint', 'models' => []];
+    } else {
+        return ['ok' => false, 'message' => 'Model listing is not available for this provider', 'models' => []];
+    }
+
+    if ($result['ok']) {
+        $result['default_model'] = $defaultModel;
+    }
+
+    return $result;
 }
 
 /**
