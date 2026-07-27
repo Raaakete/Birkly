@@ -375,7 +375,31 @@ function readBirklyDocsTopic(string $slug): ?array
         return $cache[$slug];
     }
 
-    // Active plugin docs (P6.5-M5)
+    require_once __DIR__ . '/../core/ai_playbooks.php';
+    $topics = birkly_ai_core_docs_topics();
+
+    if (isset($topics[$slug])) {
+        $root = dirname(__DIR__);
+        if (isset($topics[$slug]['path'])) {
+            $path = $root . '/' . $topics[$slug]['path'];
+        } else {
+            $path = $root . '/docs/' . $topics[$slug]['file'];
+        }
+        if (is_file($path)) {
+            $text = trim((string) file_get_contents($path));
+            if (strlen($text) > 120000) {
+                $text = substr($text, 0, 120000) . "\n\n[truncated]";
+            }
+            $cache[$slug] = [
+                'slug' => $slug,
+                'title' => $topics[$slug]['title'],
+                'text' => $text,
+            ];
+            return $cache[$slug];
+        }
+    }
+
+    // Active plugin docs (P6.5-M5) — after core playbooks so stubs don't override full playbooks
     if (function_exists('get_plugin_docs_by_topic_slug')) {
         if (function_exists('birkly_bootstrap_plugins_for_docs')) {
             birkly_bootstrap_plugins_for_docs();
@@ -399,42 +423,7 @@ function readBirklyDocsTopic(string $slug): ?array
         }
     }
 
-    $topics = [
-        'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
-        'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
-        'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
-        'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
-        'mcp' => ['path' => 'admin/docs/snapshots/mcp-connections.md', 'title' => 'MCP setup guide'],
-        'sub-collections' => ['file' => 'ai/sub-collections.md', 'title' => 'Sub-collections & sub-entries'],
-        'site-building' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
-        'portfolio' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
-    ];
-
-    if (!isset($topics[$slug])) {
-        return null;
-    }
-
-    $root = dirname(__DIR__);
-    if (isset($topics[$slug]['path'])) {
-        $path = $root . '/' . $topics[$slug]['path'];
-    } else {
-        $path = $root . '/docs/' . $topics[$slug]['file'];
-    }
-    if (!is_file($path)) {
-        return null;
-    }
-
-    $text = trim((string) file_get_contents($path));
-    if (strlen($text) > 120000) {
-        $text = substr($text, 0, 120000) . "\n\n[truncated]";
-    }
-
-    $cache[$slug] = [
-        'slug' => $slug,
-        'title' => $topics[$slug]['title'],
-        'text' => $text,
-    ];
-    return $cache[$slug];
+    return null;
 }
 
 /**
