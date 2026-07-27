@@ -72,7 +72,46 @@
         claimSources: []
     };
 
-    var SOURCE_ROLES = ['canonical_detail', 'reference', 'marketplace', 'review', 'docs', 'proof', 'purchase', 'social', 'other'];
+    var SOURCE_TRUTH_TYPES = ['cms_entry', 'cms_collection', 'website', 'document', 'media_asset', 'marketplace', 'review_platform', 'other'];
+    var SOURCE_TRUTH_ROLES = ['narrative', 'proof', 'reference', 'archive'];
+
+    function ensureSourcesArray() {
+        if (!state.draft) return;
+        state.draft.sources_of_truth = state.draft.sources_of_truth || [];
+    }
+
+    function newSourceId() {
+        return 'truth_' + Math.random().toString(16).slice(2, 10);
+    }
+
+    function syncLegacyConnectedFromSources() {
+        if (!state.draft) return;
+        var connected = [];
+        (state.draft.sources_of_truth || []).forEach(function (source) {
+            if (!source || (source.type !== 'cms_entry' && source.type !== 'cms_collection')) return;
+            var ref = source.ref || {};
+            connected.push({
+                role: source.role || 'reference',
+                ref_type: source.type === 'cms_collection' ? 'collection' : 'entry',
+                collection: ref.collection || '',
+                entry_id: ref.entry_id || '',
+                slug: ref.slug || ref.collection || '',
+                label: source.label || ref.label || ref.collection || ''
+            });
+        });
+        state.draft.connected_content = connected;
+    }
+
+    function updateSourceTypeUi() {
+        var typeEl = document.getElementById('ap-source-type');
+        var cmsRow = document.getElementById('ap-sources-cms-row');
+        var urlRow = document.getElementById('ap-sources-url-row');
+        if (!typeEl || !cmsRow || !urlRow) return;
+        var type = typeEl.value || 'cms_entry';
+        var isCms = type === 'cms_entry' || type === 'cms_collection';
+        cmsRow.hidden = !isCms;
+        urlRow.hidden = isCms;
+    }
 
     function countProductSources(prod) {
         var n = (prod.sources && prod.sources.length) || 0;
@@ -558,12 +597,39 @@
                 if (urlsEmptyEl) urlsEmptyEl.hidden = true;
                 urlsEl.hidden = false;
                 urlsEl.innerHTML =
-                    '<dt>Well-known</dt><dd><code>' + escapeHtml(urls.well_known_url || '—') + '</code></dd>' +
+                    '<dt>Agent Guide</dt><dd><code>' + escapeHtml(urls.well_known_url || '—') + '</code></dd>' +
+                    (urls.legacy_well_known_url ? '<dt>Legacy well-known</dt><dd><code>' + escapeHtml(urls.legacy_well_known_url) + '</code></dd>' : '') +
                     '<dt>Public API</dt><dd><code>' + escapeHtml(urls.api_url || '—') + '</code></dd>' +
+                    (urls.legacy_api_url ? '<dt>Legacy API</dt><dd><code>' + escapeHtml(urls.legacy_api_url) + '</code></dd>' : '') +
                     '<dt>Last published</dt><dd>' +
                     escapeHtml((data.meta && data.meta.last_published_at) || 'Never') + '</dd>';
             }
         }
+    }
+
+    function renderSources() {
+        ensureSourcesArray();
+        var list = document.getElementById('ap-sources-list');
+        var empty = document.getElementById('ap-sources-empty');
+        if (!list) return;
+        list.innerHTML = '';
+        var sources = state.draft.sources_of_truth || [];
+        if (empty) empty.hidden = sources.length > 0;
+        sources.forEach(function (source, idx) {
+            var li = document.createElement('li');
+            var detail = source.url || '';
+            if (!detail && source.ref) {
+                detail = (source.ref.collection || '') + (source.ref.entry_id ? '/' + source.ref.entry_id : '');
+            }
+            li.innerHTML = '<strong>' + escapeHtml(source.label || source.type || 'Source') + '</strong> ' +
+                '<span class="badge">' + escapeHtml(source.role || 'reference') + '</span> ' +
+                '<span class="text-muted">' + escapeHtml(source.type || '') + '</span>' +
+                (detail ? ' <span class="text-muted">— ' + escapeHtml(detail) + '</span>' : '') +
+                (state.canEdit ? ' <button type="button" class="btn-link ap-remove-source" data-idx="' +
+                    idx + '">Remove</button>' : '');
+            list.appendChild(li);
+        });
+        renderConnected();
     }
 
     function renderConnected() {
@@ -891,7 +957,8 @@
         items.forEach(function (item) { byKey[item.key] = item; });
 
         var map = {
-            context: ['identity', 'description', 'connected_content', 'positioning', 'terminology'],
+            sources: ['sources_of_truth'],
+            context: ['identity', 'description', 'positioning', 'terminology'],
             products: ['products'],
             claims: ['claims', 'evidence'],
             publish: ['publishing']
@@ -1085,7 +1152,7 @@
 
     function refreshAllRenders(data) {
         renderOverview(data);
-        renderConnected();
+        renderSources();
         renderSocial();
         renderRelationships();
         renderProducts();
@@ -2106,26 +2173,110 @@
             });
         }
 
+        var sourceTypeEl = document.getElementById('ap-source-type');
+        if (sourceTypeEl) {
+            sourceTypeEl.addEventListener('change', updateSourceTypeUi);
+            updateSourceTypeUi();
+        }
+
+        bindEl('ap-add-cms-source', 'click', function () {
+            ensureSourcesArray();
+            var typeEl = document.getElementById('ap-source-type');
+            var roleEl = document.getElementById('ap-source-role');
+            var colEl = document.getElementById('ap-connect-collection');
+            var entryEl = document.getElementById('ap-connect-entry');
+            var type = typeEl ? typeEl.value : 'cms_entry';
+            if (type !== 'cms_entry' && type !== 'cms_collection') type = entryEl && entryEl.value ? 'cms_entry' : 'cms_collection';
+            var col = colEl ? colEl.value : '';
+            var entryId = entryEl ? entryEl.value : '';
+            var role = roleEl ? roleEl.value : 'narrative';
+            if (!col) return;
+            if (type === 'cms_entry' && !entryId) return;
+            var label = entryId && entryEl.selectedOptions.length
+                ? entryEl.selectedOptions[0].textContent : col;
+            state.draft.sources_of_truth.push({
+                id: newSourceId(),
+                type: type,
+                role: role,
+                label: label,
+                url: '',
+                ref: {
+                    collection: col,
+                    entry_id: entryId || '',
+                    slug: entryId || col,
+                    label: label,
+                    ref_type: type === 'cms_collection' ? 'collection' : 'entry'
+                }
+            });
+            syncLegacyConnectedFromSources();
+            renderSources();
+            state.dirty = true;
+        });
+
+        bindEl('ap-add-url-source', 'click', function () {
+            ensureSourcesArray();
+            var typeEl = document.getElementById('ap-source-type');
+            var roleEl = document.getElementById('ap-source-role');
+            var labelEl = document.getElementById('ap-source-label');
+            var urlEl = document.getElementById('ap-source-url');
+            var type = typeEl ? typeEl.value : 'website';
+            if (type === 'cms_entry' || type === 'cms_collection') return;
+            var url = urlEl ? urlEl.value.trim() : '';
+            if (!url) return;
+            var label = labelEl && labelEl.value.trim() ? labelEl.value.trim() : url;
+            state.draft.sources_of_truth.push({
+                id: newSourceId(),
+                type: type,
+                role: roleEl ? roleEl.value : 'reference',
+                label: label,
+                url: url
+            });
+            if (labelEl) labelEl.value = '';
+            if (urlEl) urlEl.value = '';
+            renderSources();
+            state.dirty = true;
+        });
+
+        var sourcesList = document.getElementById('ap-sources-list');
+        if (sourcesList) {
+            sourcesList.addEventListener('click', function (e) {
+                if (e.target.classList.contains('ap-remove-source')) {
+                    var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                    ensureSourcesArray();
+                    state.draft.sources_of_truth.splice(idx, 1);
+                    syncLegacyConnectedFromSources();
+                    renderSources();
+                    state.dirty = true;
+                }
+            });
+        }
+
         bindEl('ap-add-connected', 'click', function () {
             var colEl = document.getElementById('ap-connect-collection');
             var entryEl = document.getElementById('ap-connect-entry');
             var roleEl = document.getElementById('ap-connect-role');
             var col = colEl ? colEl.value : '';
             var entryId = entryEl ? entryEl.value : '';
-            var role = roleEl ? roleEl.value : 'brand_description';
+            var role = roleEl ? roleEl.value : 'reference';
             if (!col) return;
-            var ref = {
-                role: role,
-                ref_type: entryId ? 'entry' : 'collection',
-                collection: col,
-                entry_id: entryId || '',
-                slug: entryId || col,
+            ensureSourcesArray();
+            var narrativeRole = role === 'brand_description' || role === 'about' ? 'narrative' : 'reference';
+            var type = entryId ? 'cms_entry' : 'cms_collection';
+            state.draft.sources_of_truth.push({
+                id: newSourceId(),
+                type: type,
+                role: narrativeRole,
                 label: entryId && entryEl.selectedOptions.length
-                    ? entryEl.selectedOptions[0].textContent : col
-            };
-            state.draft.connected_content = state.draft.connected_content || [];
-            state.draft.connected_content.push(ref);
-            renderConnected();
+                    ? entryEl.selectedOptions[0].textContent : col,
+                ref: {
+                    collection: col,
+                    entry_id: entryId || '',
+                    slug: entryId || col,
+                    ref_type: type === 'cms_collection' ? 'collection' : 'entry'
+                }
+            });
+            syncLegacyConnectedFromSources();
+            renderSources();
             state.dirty = true;
         });
 

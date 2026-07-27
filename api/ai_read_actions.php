@@ -448,30 +448,30 @@ function executeReadAction($actionData, $aiUser) {
             return ['success' => false, 'message' => 'Unknown docs topic'];
         }
         return ['success' => true, 'data' => $topic];
-    } elseif (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim', 'get_brand_product'], true)) {
+    } elseif (in_array($actionType, ['get_agent_guide_context', 'get_brand_context', 'list_agent_guide_products', 'list_brand_products', 'get_agent_guide_claim', 'get_brand_claim', 'get_agent_guide_product', 'get_brand_product'], true)) {
         require_once __DIR__ . '/../core/ai_presence_pro.php';
         require_once __DIR__ . '/../core/ai_presence_links.php';
-        if ($actionType === 'get_brand_context') {
+        if (in_array($actionType, ['get_agent_guide_context', 'get_brand_context'], true)) {
             $view = (string) ($actionPayload['view'] ?? 'summary');
-            $data = birkly_ai_presence_public_brand_for_tools($view);
+            $data = birkly_ai_presence_public_agent_guide_for_tools($view);
             if ($data === null) {
-                return ['success' => false, 'message' => 'Brand context not published'];
+                return ['success' => false, 'message' => 'Agent Guide not published'];
             }
             return ['success' => true, 'data' => $data];
         }
-        if ($actionType === 'list_brand_products') {
-            $data = birkly_ai_presence_public_brand_for_tools('products');
+        if (in_array($actionType, ['list_agent_guide_products', 'list_brand_products'], true)) {
+            $data = birkly_ai_presence_public_agent_guide_for_tools('products');
             if ($data === null) {
-                return ['success' => false, 'message' => 'Brand context not published'];
+                return ['success' => false, 'message' => 'Agent Guide not published'];
             }
             return ['success' => true, 'data' => ['products_services' => $data['products_services'] ?? []]];
         }
         $id = (string) ($actionPayload['id'] ?? '');
-        $full = birkly_ai_presence_public_brand_for_tools('full');
+        $full = birkly_ai_presence_public_agent_guide_for_tools('full');
         if ($full === null || $id === '') {
             return ['success' => false, 'message' => 'Not found'];
         }
-        if ($actionType === 'get_brand_product') {
+        if (in_array($actionType, ['get_agent_guide_product', 'get_brand_product'], true)) {
             $graph = birkly_ai_presence_public_product_graph($full, $id);
             if ($graph === null) {
                 return ['success' => false, 'message' => 'Product not found'];

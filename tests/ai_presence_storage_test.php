@@ -8,6 +8,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 require_once $root . '/core/ai_presence.php';
 require_once $root . '/core/ai_presence_links.php';
+require_once $root . '/core/agent_guide_sources.php';
 
 $failures = 0;
 
@@ -32,12 +33,20 @@ $errors = birkly_ai_presence_validate($default);
 assert_true($errors === [], 'default draft validates');
 
 $draft = $default;
-$draft['identity']['official_name'] = 'Test Brand';
-$draft['identity']['short_description'] = 'A test brand for AI Presence.';
+$draft['identity']['official_name'] = 'Test Entity';
+$draft['identity']['short_description'] = 'A test profile for Agent Guide.';
+$draft['sources_of_truth'] = [[
+    'id' => 'truth_test',
+    'type' => 'website',
+    'role' => 'narrative',
+    'label' => 'Primary site',
+    'url' => 'https://example.com/about',
+]];
 assert_true(birkly_ai_presence_save_draft($draft), 'save draft');
 
 $loaded = birkly_ai_presence_load_draft();
-assert_true(($loaded['identity']['official_name'] ?? '') === 'Test Brand', 'load draft roundtrip');
+assert_true(($loaded['identity']['official_name'] ?? '') === 'Test Entity', 'load draft roundtrip');
+assert_true(count($loaded['sources_of_truth'] ?? []) === 1, 'sources_of_truth normalized');
 
 $merged = birkly_ai_presence_merge_draft(['positioning' => ['best_known_for' => ['Quality']]]);
 assert_true(in_array('Quality', $merged['positioning']['best_known_for'] ?? [], true), 'merge draft partial');
@@ -57,17 +66,17 @@ assert_true((int) ($pub['version'] ?? 0) === 1, 'publish version 1');
 
 $published = birkly_ai_presence_load_published();
 assert_true($published !== null, 'published snapshot exists');
-assert_true(($published['identity']['official_name'] ?? '') === 'Test Brand', 'published has brand name');
+assert_true(($published['identity']['official_name'] ?? '') === 'Test Entity', 'published has official name');
 
 $draft['identity']['official_name'] = 'Draft Only Change';
 birkly_ai_presence_save_draft($draft);
 $stillPublished = birkly_ai_presence_load_published();
-assert_true(($stillPublished['identity']['official_name'] ?? '') === 'Test Brand', 'draft edits do not change published');
+assert_true(($stillPublished['identity']['official_name'] ?? '') === 'Test Entity', 'draft edits do not change published');
 
 $exportBody = birkly_ai_presence_get_public_export_body();
 assert_true(is_string($exportBody) && $exportBody !== '', 'public export body');
 
-$preview = birkly_ai_presence_preview_query('What is this brand known for?');
+$preview = birkly_ai_presence_preview_query('What are you best known for?');
 assert_true(($preview['answer'] ?? '') !== '', 'preview query returns answer');
 assert_true(is_array($preview['sources']), 'preview query returns sources');
 
@@ -92,9 +101,13 @@ $draftWithProduct['products_services'] = [[
 ]];
 assert_true(birkly_ai_presence_product_has_grounded_source($draftWithProduct['products_services'][0]), 'product grounded with url');
 
-$export = birkly_ai_presence_enrich_public_export($draftWithProduct);
+$export = birkly_agent_guide_enrich_export($draftWithProduct);
 assert_true(isset($export['usage_hints']), 'export includes usage_hints');
 assert_true(is_array($export['products_services'][0]['sources'] ?? null), 'export product has sources');
+assert_true(is_array($export['sources_of_truth'] ?? null), 'export includes sources_of_truth');
+
+$sourceSuggestions = birkly_agent_guide_rule_source_suggestions(['identity' => ['website' => 'https://example.com']]);
+assert_true(is_array($sourceSuggestions), 'agent guide source suggestions array');
 
 $linkSuggestions = birkly_ai_presence_rule_link_suggestions($draftWithProduct);
 assert_true(is_array($linkSuggestions), 'rule link suggestions array');
@@ -102,7 +115,7 @@ assert_true(is_array($linkSuggestions), 'rule link suggestions array');
 $schemaPath = birkly_ai_presence_schema_path();
 assert_true(is_readable($schemaPath), 'schema file readable');
 $schema = json_decode((string) file_get_contents($schemaPath), true);
-assert_true(is_array($schema) && ($schema['properties']['schema_version']['const'] ?? '') === BIRKLY_AI_PRESENCE_SCHEMA_VERSION, 'schema const matches');
+assert_true(is_array($schema) && in_array(BIRKLY_AI_PRESENCE_SCHEMA_VERSION, $schema['properties']['schema_version']['enum'] ?? [], true), 'schema enum includes agent_guide.v1');
 
 birkly_ai_presence_reset_for_tests();
 

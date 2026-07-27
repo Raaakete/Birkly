@@ -129,6 +129,10 @@ function birkly_ai_presence_parse_ai_suggestions(string $raw): array
 function birkly_ai_presence_copilot_suggestions(array $draft, string $connectionId = '', string $mode = 'all', bool $creative = false): array
 {
     $suggestions = birkly_ai_presence_rule_suggestions($draft);
+    require_once __DIR__ . '/agent_guide_sources.php';
+    foreach (birkly_agent_guide_rule_source_suggestions($draft) as $sourceSuggestion) {
+        $suggestions[] = $sourceSuggestion;
+    }
     require_once __DIR__ . '/ai_presence_links.php';
     foreach (birkly_ai_presence_rule_link_suggestions($draft) as $linkSuggestion) {
         $suggestions[] = $linkSuggestion;
@@ -139,7 +143,7 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
         return ['suggestions' => $suggestions, 'ai_error' => null];
     }
 
-    $chunks = birkly_ai_presence_gather_cms_context($draft);
+    $chunks = birkly_agent_guide_gather_sources_context($draft);
     $context = json_encode($chunks, JSON_UNESCAPED_UNICODE);
     $draftSummary = json_encode($draft, JSON_UNESCAPED_UNICODE);
     $completeness = birkly_ai_presence_completeness($draft);
@@ -154,18 +158,19 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
     $creative = $creative || $mode === 'fill_complete';
     $modeHint = match ($mode) {
         'fill_gaps' => 'Focus on empty or weak completeness fields only.',
-        'fill_complete' => 'Generate a COMPLETE brand profile targeting 100% completeness. Fill every missing section: identity, descriptions, positioning, products, claims with evidence, terminology, relationships, and media context. Infer plausible values from existing draft when CMS sources are insufficient.',
-        'improve' => 'Suggest improvements to existing copy — clearer, more precise, brand-safe.',
-        'claims' => 'Suggest factual claims that can be supported by the CMS sources. Use field claims.new.',
+        'fill_complete' => 'Generate a COMPLETE Agent Guide profile targeting 100% completeness. Fill every missing section: sources of truth, identity, descriptions, positioning, products, claims with evidence, terminology, relationships, and media context. Infer plausible values from existing draft when declared sources are insufficient.',
+        'improve' => 'Suggest improvements to existing copy — clearer, more precise, and faithful to sources.',
+        'claims' => 'Suggest factual claims that can be supported by declared sources. Use field claims.new.',
         'links' => 'Suggest cross-links only: products_services.link, evidence.new with URLs, identity.derived_from.short_description. Prefer CMS entries and verifiable external URLs (marketplace, reviews).',
-        default => 'Suggest identity, positioning, communication, products_services.new, relationships.new, and claims.new fields as appropriate.',
+        'sources' => 'Suggest sources_of_truth.new entries only — CMS collections, entries, websites, documents. Do not rewrite identity fields.',
+        default => 'Suggest sources_of_truth.new, identity, positioning, communication, products_services.new, relationships.new, and claims.new fields as appropriate. Prefer declared sources_of_truth before inferring.',
     };
 
     $grounding = $creative
-        ? 'Prefer CMS sources when available. When sources are missing or insufficient, infer plausible brand-consistent values from the existing draft. Mark source as "cms" or "inferred" and confidence accordingly.'
-        : 'Do not invent facts not supported by sources.';
-    $system = 'You are a brand context strategist. Return JSON only: {"suggestions":[{"id":"...","field":"identity.short_description|positioning.best_known_for|products_services.new|products_services.link|relationships.new|claims.new|evidence.new|media_context.new|communication_guidance.preferred_terms|identity.derived_from.short_description|publication_settings.enabled","label":"...","value":...,"source":"...","confidence":"high|medium|low"}]}. ' . $grounding . ' For array fields use JSON arrays. For products use products_services.new with object value {name,type,short_description,full_description,category,best_for,not_for,sources:[{role,type,label,url}]}. For product links use products_services.link with {product_id,source:{role,type,label,url,ref?}}. For claims use claims.new with {statement,status,notes}. For evidence use evidence.new with {title,url,type,claim_statement,rating?,review_count?}. Evidence types include marketplace_listing and review_platform. Never auto-publish.';
-    $user = "$modeHint\n\nCompleteness gaps: $gapsText\n\nCurrent draft:\n$draftSummary\n\nCMS sources:\n$context";
+        ? 'Prefer declared sources_of_truth when available. When sources are missing or insufficient, infer plausible values consistent with the existing draft. Mark source as "cms", "source", or "inferred" and confidence accordingly.'
+        : 'Do not invent facts not supported by declared sources_of_truth.';
+    $system = 'You are an Agent Guide strategist helping publish structured context for AI systems. Return JSON only: {"suggestions":[{"id":"...","field":"sources_of_truth.new|identity.short_description|positioning.best_known_for|products_services.new|products_services.link|relationships.new|claims.new|evidence.new|media_context.new|communication_guidance.preferred_terms|identity.derived_from.short_description|publication_settings.enabled","label":"...","value":...,"source":"...","confidence":"high|medium|low"}]}. ' . $grounding . ' For array fields use JSON arrays. For sources_of_truth.new use {type,role,label,url?,ref?,notes?}. For products use products_services.new with object value {name,type,short_description,full_description,category,best_for,not_for,sources:[{role,type,label,url}]}. For product links use products_services.link with {product_id,source:{role,type,label,url,ref?}}. For claims use claims.new with {statement,status,notes}. For evidence use evidence.new with {title,url,type,claim_statement,rating?,review_count?}. Evidence types include marketplace_listing and review_platform. Never auto-publish.';
+    $user = "$modeHint\n\nCompleteness gaps: $gapsText\n\nCurrent draft:\n$draftSummary\n\nDeclared sources (read these first):\n$context";
 
     $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
     if ($ai['ok'] ?? false) {
@@ -197,16 +202,16 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
  */
 function birkly_ai_presence_field_ai(string $field, array $draft, string $connectionId, bool $creative = true): array
 {
-    $chunks = birkly_ai_presence_gather_cms_context($draft);
+    $chunks = birkly_agent_guide_gather_sources_context($draft);
     $context = json_encode($chunks, JSON_UNESCAPED_UNICODE);
     $current = birkly_ai_presence_get_field_value($draft, $field);
     $draftSummary = json_encode($draft, JSON_UNESCAPED_UNICODE);
 
     $grounding = $creative
-        ? 'Prefer CMS sources when available. If insufficient, infer a plausible brand-consistent value from the full draft context. Mark source as "cms" or "inferred".'
-        : 'Ground in CMS sources; do not invent facts.';
-    $system = 'Return JSON only: {"suggestions":[{"id":"field_ai","field":"' . addslashes($field) . '","label":"Suggested value","value":...,"source":"cms|inferred|ai","confidence":"high|medium|low"}]}. ' . $grounding;
-    $user = "Generate value for field: $field\nCurrent value: " . json_encode($current) . "\n\nFull draft context:\n$draftSummary\n\nCMS sources:\n$context";
+        ? 'Prefer declared sources_of_truth when available. If insufficient, infer a plausible value consistent with the full draft context. Mark source as "source" or "inferred".'
+        : 'Ground in declared sources_of_truth; do not invent facts.';
+    $system = 'Return JSON only: {"suggestions":[{"id":"field_ai","field":"' . addslashes($field) . '","label":"Suggested value","value":...,"source":"source|inferred|ai","confidence":"high|medium|low"}]}. ' . $grounding;
+    $user = "Generate value for field: $field\nCurrent value: " . json_encode($current) . "\n\nFull draft context:\n$draftSummary\n\nDeclared sources:\n$context";
 
     $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
     if (!($ai['ok'] ?? false)) {
@@ -815,12 +820,17 @@ function birkly_ai_presence_export_json_ld_pro(array $doc): array
     return ['@context' => 'https://schema.org', '@graph' => array_values($graph)];
 }
 
+function birkly_ai_presence_public_brand_for_tools(string $view = 'summary'): ?array
+{
+    return birkly_ai_presence_public_agent_guide_for_tools($view);
+}
+
 /**
- * MCP / public read helpers.
+ * MCP / public read helpers for Agent Guide.
  *
  * @return array<string, mixed>|null
  */
-function birkly_ai_presence_public_brand_for_tools(string $view = 'summary'): ?array
+function birkly_ai_presence_public_agent_guide_for_tools(string $view = 'summary'): ?array
 {
     $published = birkly_ai_presence_load_published();
     if ($published === null || empty($published['publication_settings']['enabled'])) {
