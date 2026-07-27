@@ -162,6 +162,7 @@ function birkly_ai_core_docs_topics(): array
         'automation' => $playbook('automation-playbook.md', 'Automation playbook'),
         'events' => $playbook('events-playbook.md', 'Events playbook'),
         'user-management' => $playbook('user-management-playbook.md', 'User Management playbook'),
+        'user_management' => $playbook('user-management-playbook.md', 'User Management playbook'),
         'media' => $playbook('media-playbook.md', 'Media library playbook'),
         'cms-pages' => $playbook('cms-pages-playbook.md', 'CMS pages playbook'),
         'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),
