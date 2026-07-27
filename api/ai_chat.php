@@ -1193,6 +1193,8 @@ if ($action === 'chat') {
                     foreach ($actions as $actionData) {
                         try {
                             $result = executeActionDirectly($actionData, $aiUser);
+                            $result['action_type'] = $actionData['type'] ?? 'unknown';
+                            $result['action_data'] = $actionData['data'] ?? [];
                             $executedActions[] = $result;
                             if (!$result['success']) {
                                 $hasErrors = true;
@@ -1203,7 +1205,9 @@ if ($action === 'chat') {
                             error_log("Stack trace: " . $e->getTraceAsString());
                             $executedActions[] = [
                                 'success' => false,
-                                'message' => 'Fatal error executing action: ' . $e->getMessage()
+                                'message' => 'Fatal error executing action: ' . $e->getMessage(),
+                                'action_type' => $actionData['type'] ?? 'unknown',
+                                'action_data' => $actionData['data'] ?? [],
                             ];
                             $hasErrors = true;
                         }
@@ -2414,7 +2418,7 @@ function extractActionsFromResponse($response, $toolCalls = []) {
             } elseif (isset($json['type'])) {
                 $actions[] = [
                     'type' => $json['type'],
-                    'data' => $json['data'] ?? [],
+                    'data' => birkly_ai_extract_action_payload($json),
                     'description' => $json['description'] ?? $json['type'],
                 ];
             }
@@ -2441,7 +2445,7 @@ function extractActionsFromResponse($response, $toolCalls = []) {
         }
         $normalized[] = [
             'type' => $type,
-            'data' => $action['data'] ?? $action['arguments'] ?? $action['payload'] ?? [],
+            'data' => birkly_ai_extract_action_payload($action),
             'description' => $action['description'] ?? $type,
         ];
     }

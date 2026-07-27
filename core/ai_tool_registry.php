@@ -33,9 +33,9 @@ function birkly_ai_tool_definitions(): array
         'update_sub_entry' => ['name' => 'update_sub_entry', 'description' => 'Update an existing sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
         'delete_sub_entry' => ['name' => 'delete_sub_entry', 'description' => 'Delete a sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
         'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array']], 'required' => ['name', 'slug']]],
-        'update_collection' => ['name' => 'update_collection', 'description' => 'Update an existing collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['slug']]],
-        'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
-        'create_entry' => ['name' => 'create_entry', 'description' => 'Create a new entry in a collection. Defaults to draft; set status to published for content that must appear on the public site.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
+        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata or field schema. REQUIRED: slug (use exact slug from list_collections). Put fields in top-level "fields" array.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema']], 'required' => ['slug']]],
+        'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'collection' => ['type' => 'string']], 'required' => ['slug']]],
+        'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Put field values (title, text, etc.) at top level or in data. Use exact field names from collection schema.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'status' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
         'update_entry' => ['name' => 'update_entry', 'description' => 'Update an existing entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'id']]],
         'delete_entry' => ['name' => 'delete_entry', 'description' => 'Delete an entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection', 'id']]],
         'upload_media' => ['name' => 'upload_media', 'description' => 'Upload a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
@@ -45,7 +45,7 @@ function birkly_ai_tool_definitions(): array
         'delete_media_folder' => ['name' => 'delete_media_folder', 'description' => 'Delete a media folder', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']]],
         'move_media' => ['name' => 'move_media', 'description' => 'Move a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'folder' => ['type' => 'string']], 'required' => ['id']]],
         'update_settings' => ['name' => 'update_settings', 'description' => 'Update system settings', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['category' => ['type' => 'string'], 'data' => ['type' => 'object']]]],
-        'create_page' => ['name' => 'create_page', 'description' => 'Create a new page', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'create_page' => ['name' => 'create_page', 'description' => 'Create a site page with Birkly templating in content. REQUIRED: title and slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['title' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['title', 'slug']]],
         'update_page' => ['name' => 'update_page', 'description' => 'Update an existing page', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'data' => ['type' => 'object']]]],
         'update_user' => ['name' => 'update_user', 'description' => 'Update a user account', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'data' => ['type' => 'object']]]],
         'delete_user' => ['name' => 'delete_user', 'description' => 'Delete a user account', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']]]],
@@ -143,7 +143,41 @@ function birkly_ai_tools_prompt_section(array $aiUser): string
     foreach (birkly_ai_tools_for_user($aiUser) as $def) {
         $lines[] = '- ' . $def['name'] . ' [' . $def['category'] . ']: ' . $def['description'];
     }
+    $lines[] = '';
+    $lines[] = birkly_ai_action_workflow_prompt_section();
     return implode("\n", $lines) . "\n";
+}
+
+/**
+ * Step-by-step guidance for multi-action CMS workflows (site builds, schema updates, etc.).
+ */
+function birkly_ai_action_workflow_prompt_section(): string
+{
+    return implode("\n", [
+        'ACTION PAYLOAD RULES (critical — wrong shape causes "Collection slug is required" errors):',
+        '1. Put slug/collection/fields on the SAME LEVEL as "type", not only inside "data". Both work:',
+        '   {"type":"update_collection","slug":"gallery","fields":[...]}',
+        '   {"type":"update_collection","data":{"slug":"gallery","fields":[...]}}',
+        '2. update_collection: ALWAYS include "slug" (exact slug from AVAILABLE COLLECTIONS). Fields go in "fields" array.',
+        '3. create_entry: ALWAYS include "collection" as a slug string. Field values (title, text, image, …) at top level.',
+        '4. create_page: include "title", "slug", and "content" (HTML with {for each entry in \'slug\'} loops).',
+        '5. Do NOT pass a nested collection object instead of a slug string.',
+        '6. When user says "proceed" / "yes": execute the planned steps — do not re-ask. Use slugs from AVAILABLE COLLECTIONS below.',
+        '',
+        'RECOMMENDED SITE-BUILD ORDER:',
+        'Step A — update_collection for each collection (add fields to schema)',
+        'Step B — create_entry for sample content in each collection',
+        'Step C — create_page for home, gallery, about, contact (use Birkly templating in content)',
+        'Step D — tell user to review entries/pages; set status published when ready for the live site',
+        '',
+        'EXAMPLE — add fields to two collections:',
+        '```json',
+        '{"actions":[',
+        '  {"type":"update_collection","slug":"gallery","fields":[{"name":"title","type":"text","label":"Title","required":true},{"name":"image","type":"image","label":"Image"}]},',
+        '  {"type":"update_collection","slug":"contact","fields":[{"name":"email","type":"text","label":"Email"}]}',
+        ']}',
+        '```',
+    ]);
 }
 
 function birkly_ai_tool_calls_to_actions(array $toolCalls): array
@@ -166,7 +200,7 @@ function birkly_ai_tool_calls_to_actions(array $toolCalls): array
         if ($type === 'read_collection' && isset($args['slug']) && !isset($args['collection'])) {
             $args = ['slug' => $args['slug']];
         }
-        $actions[] = ['type' => $type, 'data' => $args, 'description' => $name];
+        $actions[] = ['type' => $type, 'data' => birkly_ai_extract_action_payload(['type' => $type] + $args), 'description' => $name];
     }
     return $actions;
 }
