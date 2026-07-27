@@ -246,9 +246,18 @@ if ($action === 'chat') {
             }
         }
 
+        // Site-build status: answer from session progress without calling the model
+        if (ai_chat_is_status_request($message) && ai_chat_session_has_site_build_progress($conversationHistory)) {
+            $skipAiCall = true;
+            $response = [
+                'success' => true,
+                'message' => ai_chat_site_build_progress_summary($conversationHistory, $systemContext),
+            ];
+        }
+
         // Site-build proceed: run deterministic next step without relying on the model
         $isProceedMessage = ai_chat_is_proceed_message($message);
-        if ($isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
+        if (!$skipAiCall && $isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
             $preResolvedActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
             if ($preResolvedActions !== []) {
                 $skipAiCall = true;
@@ -309,6 +318,7 @@ if ($action === 'chat') {
             'user_id' => $currentUserId,
             'user_message' => $message,
             'history' => &$conversationHistory,
+            'system_context' => $systemContext,
         ];
         
         if ($response['success']) {
@@ -1236,6 +1246,12 @@ if ($action === 'chat') {
                     }
                     
                     $chatPersistContext['execution_results'] = $executedActions;
+                    $response['message'] = ai_chat_format_execution_report(
+                        $executedActions,
+                        $actions,
+                        $conversationHistory,
+                        $systemContext
+                    );
                     ai_chat_emit_response([
                         'status' => $hasErrors ? 'partial' : 'ok',
                         'data' => [
@@ -1252,7 +1268,8 @@ if ($action === 'chat') {
                 // No write actions - just return the response with read data
                 $finalMessage = $response['message'] ?? '';
 
-                if (ai_chat_is_proceed_message($message) && ai_chat_session_has_site_build_progress($conversationHistory)) {
+                if ((ai_chat_is_proceed_message($message) || ai_chat_is_status_request($message))
+                    && ai_chat_session_has_site_build_progress($conversationHistory)) {
                     $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
                     if ($summary !== '') {
                         $finalMessage = $summary;
@@ -1276,36 +1293,45 @@ if ($action === 'chat') {
             }
         } else {
             $providerError = $response['message'] ?? 'Failed to get AI response';
-            if ($isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
-                $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
-                if ($fallbackActions !== []) {
-                    ai_chat_emit_direct_action_results(
-                        $fallbackActions,
-                        'Provider unavailable — running the next site-build step (' . count($fallbackActions) . ' action(s)).',
-                        $aiUser,
-                        $chatPersistContext,
-                        $streamActive,
-                        [],
-                        $providerError
-                    );
+            if (ai_chat_session_has_site_build_progress($conversationHistory)) {
+                if ($isProceedMessage) {
+                    $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+                    if ($fallbackActions !== []) {
+                        ai_chat_emit_direct_action_results(
+                            $fallbackActions,
+                            'Provider unavailable — running the next site-build step (' . count($fallbackActions) . ' action(s)).',
+                            $aiUser,
+                            $chatPersistContext,
+                            $streamActive,
+                            [],
+                            $providerError
+                        );
+                    }
                 }
 
-                $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
-                if ($summary !== '') {
-                    ai_chat_emit_response([
-                        'status' => 'ok',
-                        'data' => [
-                            'response' => $summary . "\n\n(Provider error: " . $providerError . ')',
-                            'requires_approval' => false,
-                            'read_data' => [],
-                        ],
-                    ], $streamActive, $chatPersistContext);
+                if (ai_chat_is_status_request($message) || $isProceedMessage) {
+                    $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
+                    if ($summary !== '') {
+                        $note = str_contains(strtolower($providerError), 'openai api error')
+                            ? str_replace('OpenAI API error', 'OpenRouter API error', $providerError)
+                            : $providerError;
+                        ai_chat_emit_response([
+                            'status' => 'ok',
+                            'data' => [
+                                'response' => $summary . "\n\n_Note: AI provider rate-limited — " . $note . '_',
+                                'requires_approval' => false,
+                                'read_data' => [],
+                            ],
+                        ], $streamActive, $chatPersistContext);
+                    }
                 }
             }
 
             ai_chat_emit_response([
                 'status' => 'error',
-                'message' => $providerError,
+                'message' => str_contains(strtolower($providerError), 'openai api error') && ($aiUser['provider'] ?? '') === 'openrouter'
+                    ? str_replace('OpenAI API error', 'OpenRouter API error', $providerError)
+                    : $providerError,
             ], $streamActive);
         }
     } catch (Exception $e) {
@@ -1774,6 +1800,7 @@ function executeActionDirectly($actionData, $aiUser) {
 
 // OpenAI API call (also works for OpenRouter and OpenAI-compatible APIs)
 function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = []) {
+    $apiLabel = birkly_ai_compatible_api_label($url);
     // Build messages array with conversation history
     $messages = [
         ['role' => 'system', 'content' => $systemPrompt]
@@ -1832,7 +1859,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     
     if ($httpCode !== 200) {
         $detail = birkly_ai_parse_provider_error(is_string($response) ? $response : '');
-        $message = 'OpenAI API error: ' . $httpCode;
+        $message = $apiLabel . ' API error: ' . $httpCode;
         if ($detail !== '') {
             $message .= ' — ' . $detail;
         }
@@ -1845,7 +1872,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     $result = json_decode($response, true);
     $choiceMessage = $result['choices'][0]['message'] ?? null;
     if (!$result || !$choiceMessage) {
-        return ['success' => false, 'message' => 'Invalid response from OpenAI'];
+        return ['success' => false, 'message' => 'Invalid response from ' . $apiLabel];
     }
 
     $toolCalls = $choiceMessage['tool_calls'] ?? [];
@@ -1858,7 +1885,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
         ];
     }
     if ($content === '' || $content === null) {
-        return ['success' => false, 'message' => 'Empty response from OpenAI'];
+        return ['success' => false, 'message' => 'Empty response from ' . $apiLabel];
     }
 
     return ['success' => true, 'message' => $content];
@@ -2209,6 +2236,19 @@ function ai_chat_emit_direct_action_results(
         $message .= "\n\n(Provider error: " . $providerError . ')';
     }
 
+    $report = ai_chat_format_execution_report(
+        $executedActions,
+        $actions,
+        $chatPersistContext['history'] ?? [],
+        $chatPersistContext['system_context'] ?? []
+    );
+    if ($report !== '') {
+        $message = $report;
+        if ($providerError !== '' && $hasErrors) {
+            $message .= "\n\n(Provider error: " . $providerError . ')';
+        }
+    }
+
     $chatPersistContext['execution_results'] = $executedActions;
     ai_chat_emit_response([
         'status' => $hasErrors ? 'partial' : 'ok',
@@ -2277,6 +2317,7 @@ function ai_chat_emit_response(array $payload, bool $streaming, ?array $persistC
  * @param callable(string):void $onToken
  */
 function callOpenAIStream($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $onToken) {
+    $apiLabel = birkly_ai_compatible_api_label($url);
     $messages = [
         ['role' => 'system', 'content' => $systemPrompt],
     ];
@@ -2351,7 +2392,7 @@ function callOpenAIStream($apiKey, $model, $systemPrompt, $userMessage, $url = '
 
     if ($httpCode !== 200) {
         $detail = birkly_ai_parse_provider_error($buffer);
-        $message = 'OpenAI API error: ' . $httpCode;
+        $message = $apiLabel . ' API error: ' . $httpCode;
         if ($detail !== '') {
             $message .= ' — ' . $detail;
         }
@@ -2359,7 +2400,7 @@ function callOpenAIStream($apiKey, $model, $systemPrompt, $userMessage, $url = '
     }
 
     if ($fullContent === '') {
-        return ['success' => false, 'message' => 'Empty response from provider'];
+        return ['success' => false, 'message' => 'Empty response from ' . $apiLabel];
     }
 
     return ['success' => true, 'message' => $fullContent];

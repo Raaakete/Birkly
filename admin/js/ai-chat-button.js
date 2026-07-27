@@ -94,6 +94,21 @@
         return 'HTTP Error ' + status + ': ' + message;
     }
 
+    function normalizeProviderError(message) {
+        let text = String(message || '');
+        if (currentConnection && currentConnection.provider === 'openrouter') {
+            text = text.replace(/OpenAI API error/gi, 'OpenRouter API error');
+        }
+        return text;
+    }
+
+    function responseHasExecutionReport(text) {
+        const value = String(text || '');
+        return value.indexOf('### Completed this step') !== -1
+            || value.indexOf('### Plan status') !== -1
+            || value.indexOf('### Planned this step') !== -1;
+    }
+
     // Storage keys
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
     const STORAGE_KEY_CONNECTION = 'ai_chat_connection_id';
@@ -1488,7 +1503,7 @@
             }
         }
         if (!result || (result.status !== 'ok' && result.status !== 'partial')) {
-            const errorMsg = result?.message || result?.error || result?.data?.message || 'Unknown error';
+            const errorMsg = normalizeProviderError(result?.message || result?.error || result?.data?.message || 'Unknown error');
             appendConsoleLog('error', errorMsg, result);
             if (assistantMessageId) {
                 removeChatMessage(assistantMessageId);
@@ -1564,7 +1579,9 @@
                         actionResult.data || actionResult
                     );
                 });
-                addChatMessage('system', successCount + ' action(s) executed successfully.');
+                if (!responseHasExecutionReport(responseText)) {
+                    addChatMessage('system', successCount + ' action(s) executed successfully.');
+                }
             }
         }
     }
