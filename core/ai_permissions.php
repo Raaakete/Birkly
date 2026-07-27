@@ -100,6 +100,7 @@ function birkly_ai_action_permission_map(): array
         'get_brand_context' => ['read'],
         'list_brand_products' => ['read'],
         'get_brand_claim' => ['read'],
+        'get_brand_product' => ['read'],
     ];
 }
 

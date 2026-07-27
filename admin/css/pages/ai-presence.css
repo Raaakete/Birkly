@@ -913,3 +913,65 @@
 [data-theme="dark"] .ap-assist-sidebar {
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
 }
+
+.ap-modal-fullwidth {
+  margin-top: var(--space-m, 1rem);
+  padding-top: var(--space-m, 1rem);
+  border-top: 1px solid var(--border-light, #e5e7eb);
+}
+
+.ap-modal-subtitle {
+  margin: 0 0 var(--space-xs, 0.25rem);
+  font-size: 0.9375rem;
+}
+
+.ap-sources-list {
+  list-style: none;
+  margin: 0 0 var(--space-s, 0.75rem);
+  padding: 0;
+}
+
+.ap-source-item {
+  padding: var(--space-xs, 0.25rem) 0;
+  border-bottom: 1px dashed var(--border-light, #e5e7eb);
+  font-size: 0.875rem;
+}
+
+.ap-source-add-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-s, 0.75rem);
+}
+
+.ap-source-cms-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-s, 0.75rem);
+  margin-top: var(--space-s, 0.75rem);
+}
+
+.ap-link-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s, 0.75rem);
+  margin-bottom: var(--space-s, 0.75rem);
+}
+
+.ap-link-health-item--ok {
+  color: var(--success-700, #047857);
+}
+
+.ap-link-health-item--warn {
+  color: var(--warning-700, #b45309);
+}
+
+.ap-evidence-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-s, 0.75rem);
+}
+
+.ap-source-badge {
+  font-size: 0.8125rem;
+  margin: 0.25rem 0 0;
+}
