@@ -443,3 +443,147 @@ function ai_chat_build_session_notes(array $executionResults): string
     }
     return "\n\n[Session notes — already done this conversation, do not repeat: " . implode(' | ', $parts) . ']';
 }
+
+/**
+ * Parse session notes embedded in persisted assistant messages.
+ *
+ * @return array{collections: list<string>, entries: list<string>, project_files: list<string>}
+ */
+function ai_chat_parse_session_notes_from_history(array $conversationHistory): array
+{
+    $parsed = ['collections' => [], 'entries' => [], 'project_files' => []];
+    foreach ($conversationHistory as $msg) {
+        $content = (string) ($msg['content'] ?? '');
+        if (!str_contains($content, '[Session notes')) {
+            continue;
+        }
+        if (preg_match('/project files:\s*([^|\]]+)/', $content, $m)) {
+            foreach (explode(',', $m[1]) as $path) {
+                $path = trim($path);
+                if ($path !== '') {
+                    $parsed['project_files'][] = $path;
+                }
+            }
+        }
+        if (preg_match('/cms:\s*([^|\]]+)/', $content, $m)) {
+            foreach (explode(',', $m[1]) as $item) {
+                $item = trim($item);
+                if (str_starts_with($item, 'collection:')) {
+                    $parsed['collections'][] = substr($item, strlen('collection:'));
+                } elseif (str_starts_with($item, 'entry:')) {
+                    $parsed['entries'][] = substr($item, strlen('entry:'));
+                }
+            }
+        }
+    }
+    $parsed['collections'] = array_values(array_unique($parsed['collections']));
+    $parsed['entries'] = array_values(array_unique($parsed['entries']));
+    $parsed['project_files'] = array_values(array_unique($parsed['project_files']));
+    return $parsed;
+}
+
+/**
+ * Deterministic next actions when model returns prose on site-build "proceed".
+ *
+ * @param array<string,mixed> $systemContext
+ * @return list<array<string,mixed>>
+ */
+function ai_chat_site_proceed_fallback_actions(array $conversationHistory, array $systemContext): array
+{
+    $done = ai_chat_parse_session_notes_from_history($conversationHistory);
+    $collectionMap = [];
+    foreach ($systemContext['collections'] ?? [] as $coll) {
+        if (!is_array($coll)) {
+            continue;
+        }
+        $slug = (string) ($coll['slug'] ?? '');
+        if ($slug !== '') {
+            $collectionMap[$slug] = $coll;
+        }
+    }
+    if ($collectionMap === []) {
+        return [];
+    }
+
+    $haystack = strtolower(implode("\n", array_column(array_slice($conversationHistory, -10), 'content')));
+    $siteSlugs = array_values(array_filter(
+        ['about', 'artworks', 'contact', 'gallery', 'projects', 'portfolio'],
+        static fn (string $s): bool => isset($collectionMap[$s])
+    ));
+    if ($siteSlugs === []) {
+        $siteSlugs = array_slice(array_keys($collectionMap), 0, 4);
+    }
+
+    $hasProjectIndex = in_array('index.html', $done['project_files'], true)
+        || in_array('project/index.html', $done['project_files'], true);
+
+    // Phase 1: seed entries for site collections not yet touched
+    $entryActions = [];
+    foreach ($siteSlugs as $slug) {
+        if (in_array($slug, $done['entries'], true)) {
+            continue;
+        }
+        $name = (string) ($collectionMap[$slug]['name'] ?? ucfirst($slug));
+        $entryActions[] = [
+            'type' => 'create_entry',
+            'data' => [
+                'collection' => $slug,
+                'title' => $name . ' — welcome',
+                'text' => 'Sample content for ' . $name . '. Edit in admin.',
+                'status' => 'published',
+            ],
+            'description' => 'Seed published entry in ' . $slug,
+        ];
+        if (count($entryActions) >= 3) {
+            break;
+        }
+    }
+    if ($entryActions !== [] && preg_match('/\b(proceed|finish|complete|start|build|entry|content|site|website)\b/i', $haystack)) {
+        return $entryActions;
+    }
+
+    // Phase 2: project shell
+    if (!$hasProjectIndex && preg_match('/\b(site|website|page|html|project|gallery|portfolio|build|finish|proceed)\b/i', $haystack)) {
+        $artSlug = isset($collectionMap['artworks']) ? 'artworks' : ($siteSlugs[0] ?? 'projects');
+        $indexHtml = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="/birkly-client.js"></script>
+</head>
+<body>
+  <header><h1>Gallery</h1></header>
+  <main>
+    {for each entry in '{$artSlug}'}
+      <article>
+        <h2>{title}</h2>
+        <div>{'description'}</div>
+      </article>
+    {endfor}
+  </main>
+</body>
+</html>
+HTML;
+        return [
+            [
+                'type' => 'write_project_file',
+                'data' => ['path' => 'index.html', 'content' => $indexHtml],
+                'description' => 'Create gallery index.html in project/',
+            ],
+            [
+                'type' => 'write_project_file',
+                'data' => [
+                    'path' => 'css/style.css',
+                    'content' => "body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; }\nmain { display: grid; gap: 1.5rem; max-width: 960px; margin: 0 auto; }\narticle { padding: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; }\n",
+                ],
+                'description' => 'Create gallery stylesheet in project/css/',
+            ],
+        ];
+    }
+
+    return [];
+}
