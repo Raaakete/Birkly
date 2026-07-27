@@ -102,7 +102,84 @@ function birkly_ai_normalize_collection_action_data($actionData): array
         $normalized['slug'] = trim($normalized['slug']);
     }
 
+    foreach (['collection_slug', 'collectionSlug'] as $alias) {
+        if (($normalized['slug'] ?? '') === '' && !empty($normalized[$alias]) && is_string($normalized[$alias])) {
+            $normalized['slug'] = trim($normalized[$alias]);
+        }
+    }
+
+    if (empty($normalized['fields'])) {
+        require_once __DIR__ . '/../core/collection_schema.php';
+        $schema = birkly_normalize_collection_schema($normalized);
+        if (!empty($schema['fields'])) {
+            $normalized['fields'] = $schema['fields'];
+        }
+    }
+
     return $normalized;
+}
+
+/**
+ * Pull action payload fields from data/arguments and sibling keys on the action object.
+ * The model often emits { type, slug, fields } without a data wrapper.
+ */
+function birkly_ai_extract_action_payload(array $action): array
+{
+    $data = $action['data'] ?? $action['arguments'] ?? $action['payload'] ?? [];
+    if (!is_array($data)) {
+        $data = birkly_ai_normalize_collection_action_data($data);
+    }
+
+    $reserved = ['type', 'action', 'description', 'data', 'arguments', 'payload'];
+    foreach ($action as $key => $value) {
+        if (in_array($key, $reserved, true)) {
+            continue;
+        }
+        if (!array_key_exists($key, $data) || $data[$key] === '' || $data[$key] === null) {
+            $data[$key] = $value;
+        }
+    }
+
+    return is_array($data) ? $data : [];
+}
+
+/**
+ * Resolve a collection slug/dir from a normalized payload (slug, name, or aliases).
+ */
+function birkly_ai_resolve_collection_slug_from_payload(array $payload, ?Storage $storage = null): string
+{
+    $payload = birkly_ai_normalize_collection_action_data($payload);
+
+    foreach (['slug', 'collection_slug', 'collectionSlug', 'collection'] as $key) {
+        if (!empty($payload[$key]) && is_string($payload[$key])) {
+            return trim($payload[$key]);
+        }
+    }
+
+    require_once __DIR__ . '/../core/entry_slug.php';
+
+    foreach (['name', 'title'] as $key) {
+        if (empty($payload[$key]) || !is_string($payload[$key])) {
+            continue;
+        }
+        $ref = trim($payload[$key]);
+        if ($ref === '') {
+            continue;
+        }
+        if ($storage !== null) {
+            require_once __DIR__ . '/../core/content_resolve.php';
+            $dir = birkly_content_resolve_collection_dir_name($storage, $ref);
+            if ($dir !== null) {
+                return $dir;
+            }
+        }
+        $generated = birkly_generate_slug($ref);
+        if ($generated !== '') {
+            return $generated;
+        }
+    }
+
+    return '';
 }
 
 /**

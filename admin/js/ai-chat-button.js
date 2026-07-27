@@ -857,16 +857,18 @@
             const executionResults = result.data.execution_results || [];
             const failedActions = executionResults.filter(function(r) { return !r.success; });
             failedActions.forEach(function(actionResult, index) {
+                const actionLabel = actionResult.action_type ? actionResult.action_type + ' — ' : '';
                 appendConsoleLog(
                     'error',
-                    actionResult.message || ('Action ' + (index + 1) + ' failed'),
+                    actionLabel + (actionResult.message || ('Action ' + (index + 1) + ' failed')),
                     actionResult
                 );
             });
             executionResults.filter(function(r) { return r.success; }).forEach(function(actionResult, index) {
+                const actionLabel = actionResult.action_type ? actionResult.action_type + ' — ' : '';
                 appendConsoleLog(
                     'success',
-                    actionResult.message || ('Action ' + (index + 1) + ' succeeded'),
+                    actionLabel + (actionResult.message || ('Action ' + (index + 1) + ' succeeded')),
                     actionResult.data || actionResult
                 );
             });
