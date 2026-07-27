@@ -247,7 +247,7 @@ if ($action === 'chat') {
         }
 
         // Site-build proceed: run deterministic next step without relying on the model
-        $isProceedMessage = (bool) preg_match('/\b(proceed|continue|next step|go on|yes|do it|finish|complete|start)\b/i', $message);
+        $isProceedMessage = ai_chat_is_proceed_message($message);
         if ($isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
             $preResolvedActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
             if ($preResolvedActions !== []) {
@@ -718,7 +718,7 @@ if ($action === 'chat') {
             
             // Site build: user said proceed but model returned prose without actions — one strict nudge
             if (empty($actions)
-                && preg_match('/\b(proceed|yes|go ahead|do it|finish|finished|complete)\b/i', $message)
+                && ai_chat_is_proceed_message($message)
                 && ai_chat_is_project_site_intent($message, $conversationHistory)) {
                 error_log('Site proceed with no extracted actions — nudging model for JSON action block');
                 $nudgeMessage = "The user said: \"{$message}\"\n\n"
@@ -757,7 +757,7 @@ if ($action === 'chat') {
             }
 
             if (empty($actions)
-                && preg_match('/\b(proceed|yes|go ahead|do it|finish|finished|complete|start)\b/i', $message)
+                && ai_chat_is_proceed_message($message)
                 && ai_chat_is_project_site_intent($message, $conversationHistory)) {
                 $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
                 if (!empty($fallbackActions)) {
@@ -1250,9 +1250,15 @@ if ($action === 'chat') {
                 }
             } else {
                 // No write actions - just return the response with read data
-                // Ensure we have a message - use AI's response from follow-up call
                 $finalMessage = $response['message'] ?? '';
-                
+
+                if (ai_chat_is_proceed_message($message) && ai_chat_session_has_site_build_progress($conversationHistory)) {
+                    $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
+                    if ($summary !== '') {
+                        $finalMessage = $summary;
+                    }
+                }
+
                 // Only use fallback formatting if AI didn't provide any response at all
                 if (empty($finalMessage) && !empty($readData)) {
                     error_log("AI didn't provide a response but we have read data - using generic fallback");
@@ -1269,9 +1275,37 @@ if ($action === 'chat') {
                 ], $streamActive, $chatPersistContext);
             }
         } else {
+            $providerError = $response['message'] ?? 'Failed to get AI response';
+            if ($isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
+                $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+                if ($fallbackActions !== []) {
+                    ai_chat_emit_direct_action_results(
+                        $fallbackActions,
+                        'Provider unavailable — running the next site-build step (' . count($fallbackActions) . ' action(s)).',
+                        $aiUser,
+                        $chatPersistContext,
+                        $streamActive,
+                        [],
+                        $providerError
+                    );
+                }
+
+                $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
+                if ($summary !== '') {
+                    ai_chat_emit_response([
+                        'status' => 'ok',
+                        'data' => [
+                            'response' => $summary . "\n\n(Provider error: " . $providerError . ')',
+                            'requires_approval' => false,
+                            'read_data' => [],
+                        ],
+                    ], $streamActive, $chatPersistContext);
+                }
+            }
+
             ai_chat_emit_response([
                 'status' => 'error',
-                'message' => $response['message'] ?? 'Failed to get AI response',
+                'message' => $providerError,
             ], $streamActive);
         }
     } catch (Exception $e) {
@@ -2127,6 +2161,66 @@ function ai_chat_persist_conversation(
         'messages' => $history,
         'updated_at' => date('c'),
     ]);
+}
+
+/**
+ * Execute write actions immediately and emit chat response (used for deterministic proceed).
+ *
+ * @param list<array<string,mixed>> $actions
+ * @param array<string,mixed> $aiUser
+ * @param array<string,mixed> $chatPersistContext
+ * @param list<array<string,mixed>> $readData
+ */
+function ai_chat_emit_direct_action_results(
+    array $actions,
+    string $responseMessage,
+    array $aiUser,
+    array $chatPersistContext,
+    bool $streamActive,
+    array $readData = [],
+    string $providerError = ''
+): void {
+    $executedActions = [];
+    $hasErrors = false;
+    foreach ($actions as $actionData) {
+        try {
+            $result = executeActionDirectly($actionData, $aiUser);
+            $result['action_type'] = $actionData['type'] ?? 'unknown';
+            $result['action_data'] = $actionData['data'] ?? [];
+            $executedActions[] = $result;
+            if (!$result['success']) {
+                $hasErrors = true;
+                error_log('Proceed fallback action failed: ' . json_encode($result));
+            }
+        } catch (Throwable $e) {
+            error_log('Proceed fallback action exception: ' . $e->getMessage());
+            $executedActions[] = [
+                'success' => false,
+                'message' => 'Error executing action: ' . $e->getMessage(),
+                'action_type' => $actionData['type'] ?? 'unknown',
+                'action_data' => $actionData['data'] ?? [],
+            ];
+            $hasErrors = true;
+        }
+    }
+
+    $message = $responseMessage;
+    if ($providerError !== '' && $hasErrors) {
+        $message .= "\n\n(Provider error: " . $providerError . ')';
+    }
+
+    $chatPersistContext['execution_results'] = $executedActions;
+    ai_chat_emit_response([
+        'status' => $hasErrors ? 'partial' : 'ok',
+        'data' => [
+            'response' => $message,
+            'actions_executed' => count($executedActions),
+            'execution_results' => $executedActions,
+            'requires_approval' => false,
+            'has_errors' => $hasErrors,
+            'read_data' => $readData,
+        ],
+    ], $streamActive, $chatPersistContext);
 }
 
 /**
