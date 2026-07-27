@@ -1436,14 +1436,22 @@ function birkly_ai_normalize_shared_type(array $connection): string
 /**
  * Whether a human user may use (chat with) an AI connection.
  */
-function birkly_ai_user_can_access_connection(array $connection, string $userId): bool
+function birkly_ai_user_can_access_connection(array $connection, string $userId, ?array $currentUser = null): bool
 {
     if ($userId === '') {
         return false;
     }
 
-    if (isset($connection['created_by']) && $connection['created_by'] === $userId) {
+    $createdBy = (string) ($connection['created_by'] ?? '');
+    if ($createdBy !== '' && $createdBy === $userId) {
         return true;
+    }
+
+    // Legacy connections saved without created_by — allow settings managers
+    if ($createdBy === '' && $currentUser !== null) {
+        if (checkPermission($currentUser, '*') || checkPermission($currentUser, 'manage_settings')) {
+            return true;
+        }
     }
 
     $sharedType = birkly_ai_normalize_shared_type($connection);
@@ -1455,6 +1463,76 @@ function birkly_ai_user_can_access_connection(array $connection, string $userId)
     }
 
     return false;
+}
+
+/**
+ * Resolve stable user id from session (md5 of email when id missing).
+ */
+function birkly_ai_resolve_session_user_id(?array $sessionUser = null): string
+{
+    require_once __DIR__ . '/../core/birkly_users.php';
+    $sessionUser = $sessionUser ?? ($_SESSION['user'] ?? []);
+    if (!is_array($sessionUser)) {
+        return '';
+    }
+    $userId = trim((string) ($sessionUser['id'] ?? ''));
+    if ($userId !== '') {
+        return $userId;
+    }
+    $email = trim((string) ($sessionUser['email'] ?? ''));
+    if ($email !== '') {
+        return birkly_user_id_from_email($email);
+    }
+    return '';
+}
+
+/**
+ * List AI connections the session user may use (outbound chat / AI Presence).
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_list_accessible_ai_connections_for_session_user(?array $sessionUser = null): array
+{
+    require_once __DIR__ . '/../core/birkly_users.php';
+
+    $sessionUser = $sessionUser ?? ($_SESSION['user'] ?? []);
+    $userId = birkly_ai_resolve_session_user_id($sessionUser);
+    $out = [];
+
+    foreach (birkly_users_search_dirs() as $dir) {
+        $storage = new Storage($dir);
+        if (!is_dir($storage->basePath)) {
+            continue;
+        }
+        foreach ($storage->list('') as $userFile) {
+            try {
+                $user = $storage->read($userFile);
+                if (!$user || ($user['type'] ?? '') !== 'ai') {
+                    continue;
+                }
+                if (($user['provider'] ?? '') === 'mcp') {
+                    continue;
+                }
+                if (($user['status'] ?? 'active') !== 'active') {
+                    continue;
+                }
+                if (!birkly_ai_user_can_access_connection($user, $userId, $sessionUser)) {
+                    continue;
+                }
+                $id = (string) ($user['id'] ?? '');
+                if ($id === '' && preg_match('/^(.+)\.json$/', $userFile, $m)) {
+                    $id = $m[1];
+                }
+                unset($user['api_key_encrypted'], $user['mcp_api_key']);
+                $user['id'] = $id;
+                $out[] = $user;
+            } catch (Throwable $e) {
+                continue;
+            }
+        }
+    }
+
+    return $out;
 }
 
 /**

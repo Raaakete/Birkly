@@ -8,36 +8,28 @@ declare(strict_types=1);
 require_once __DIR__ . '/ai_presence.php';
 
 /**
- * @return list<array<string, string>>
+ * @return list<array{id: string, name: string, provider: string, model: string}>
  */
 function birkly_ai_presence_list_ai_connections_for_user(string $userId): array
 {
-    require_once __DIR__ . '/../api/storage.php';
     require_once __DIR__ . '/../api/ai_helpers.php';
 
-    $storage = new Storage(dirname(__DIR__) . '/users');
-    $out = [];
-    if (!is_dir($storage->basePath)) {
-        return $out;
+    $sessionUser = $_SESSION['user'] ?? [];
+    if (!is_array($sessionUser)) {
+        $sessionUser = [];
     }
-    foreach ($storage->list('') as $userFile) {
-        try {
-            $user = $storage->read($userFile);
-            if (!$user || ($user['type'] ?? '') !== 'ai') {
-                continue;
-            }
-            if (!birkly_ai_user_can_access_connection($user, $userId)) {
-                continue;
-            }
-            $out[] = [
-                'id' => (string) ($user['id'] ?? ''),
-                'name' => (string) ($user['name'] ?? $user['id'] ?? 'AI'),
-                'provider' => (string) ($user['provider'] ?? ''),
-                'model' => (string) ($user['model'] ?? ''),
-            ];
-        } catch (Throwable $e) {
-            continue;
-        }
+    if ($userId !== '' && ($sessionUser['id'] ?? '') === '') {
+        $sessionUser['id'] = $userId;
+    }
+
+    $out = [];
+    foreach (birkly_list_accessible_ai_connections_for_session_user($sessionUser) as $conn) {
+        $out[] = [
+            'id' => (string) ($conn['id'] ?? ''),
+            'name' => (string) ($conn['name'] ?? $conn['id'] ?? 'AI'),
+            'provider' => (string) ($conn['provider'] ?? ''),
+            'model' => (string) ($conn['model'] ?? ''),
+        ];
     }
     return $out;
 }
