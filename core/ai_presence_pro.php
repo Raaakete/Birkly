@@ -74,6 +74,16 @@ function birkly_ai_presence_call_ai(string $connectionId, string $systemPrompt, 
             '',
             (string) ($conn['api_url'] ?? '')
         );
+        if (is_array($response)) {
+            if (!($response['success'] ?? false)) {
+                return ['ok' => false, 'error' => (string) ($response['message'] ?? 'AI request failed')];
+            }
+            $text = trim((string) ($response['message'] ?? ''));
+            if ($text === '') {
+                return ['ok' => false, 'error' => 'Empty AI response'];
+            }
+            return ['ok' => true, 'text' => $text];
+        }
         if (!is_string($response) || trim($response) === '') {
             return ['ok' => false, 'error' => 'Empty AI response'];
         }
@@ -120,14 +130,15 @@ function birkly_ai_presence_parse_ai_suggestions(string $raw): array
 }
 
 /**
- * @return list<array<string, mixed>>
+ * @return array{suggestions: list<array<string, mixed>>, ai_error: string|null}
  */
 function birkly_ai_presence_copilot_suggestions(array $draft, string $connectionId = '', string $mode = 'all'): array
 {
     $suggestions = birkly_ai_presence_rule_suggestions($draft);
+    $aiError = null;
 
     if ($connectionId === '') {
-        return $suggestions;
+        return ['suggestions' => $suggestions, 'ai_error' => null];
     }
 
     $chunks = birkly_ai_presence_gather_cms_context($draft);
@@ -154,6 +165,8 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
         foreach (birkly_ai_presence_parse_ai_suggestions((string) ($ai['text'] ?? '')) as $row) {
             $suggestions[] = $row;
         }
+    } else {
+        $aiError = (string) ($ai['error'] ?? 'AI request failed');
     }
 
     $seen = [];
@@ -169,11 +182,11 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
             break;
         }
     }
-    return $deduped;
+    return ['suggestions' => $deduped, 'ai_error' => $aiError];
 }
 
 /**
- * @return list<array<string, mixed>>
+ * @return array{suggestions: list<array<string, mixed>>, error: string|null}
  */
 function birkly_ai_presence_field_ai(string $field, array $draft, string $connectionId): array
 {
@@ -186,9 +199,12 @@ function birkly_ai_presence_field_ai(string $field, array $draft, string $connec
 
     $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
     if (!($ai['ok'] ?? false)) {
-        return [];
+        return ['suggestions' => [], 'error' => (string) ($ai['error'] ?? 'AI request failed')];
     }
-    return birkly_ai_presence_parse_ai_suggestions((string) ($ai['text'] ?? ''));
+    return [
+        'suggestions' => birkly_ai_presence_parse_ai_suggestions((string) ($ai['text'] ?? '')),
+        'error' => null,
+    ];
 }
 
 function birkly_ai_presence_get_field_value(array $draft, string $field): mixed
@@ -250,6 +266,7 @@ function birkly_ai_presence_wizard_generate(array $collectionSlugs, string $conn
 
     $suggestions = [];
     $draftPatch = ['connected_content' => []];
+    $aiError = null;
 
     foreach ($collectionSlugs as $slug) {
         $slug = trim($slug);
@@ -299,6 +316,8 @@ function birkly_ai_presence_wizard_generate(array $collectionSlugs, string $conn
                     }
                 }
             }
+        } else {
+            $aiError = (string) ($ai['error'] ?? 'AI request failed');
         }
     }
 
@@ -307,7 +326,7 @@ function birkly_ai_presence_wizard_generate(array $collectionSlugs, string $conn
         $suggestions = birkly_ai_presence_rule_suggestions($draft);
     }
 
-    return ['suggestions' => $suggestions, 'draft_patch' => $draftPatch];
+    return ['suggestions' => $suggestions, 'draft_patch' => $draftPatch, 'ai_error' => $aiError ?? null];
 }
 
 /**
