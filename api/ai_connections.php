@@ -47,31 +47,7 @@ if ($action === 'list') {
         ob_end_clean();
     }
     
-    $aiConnections = [];
-    $currentUserId = $_SESSION['user']['id'] ?? '';
-    
-    // Check if storage directory exists
-    if (is_dir($storage->basePath)) {
-        $users = $storage->list('');
-        
-        foreach ($users as $userFile) {
-            try {
-                $user = $storage->read($userFile);
-                if ($user && isset($user['type']) && $user['type'] === 'ai') {
-                    if (!birkly_ai_user_can_access_connection($user, $currentUserId)) {
-                        continue;
-                    }
-
-                    // Don't send encrypted API key
-                    unset($user['api_key_encrypted'], $user['mcp_api_key']);
-                    $aiConnections[] = $user;
-                }
-            } catch (Exception $e) {
-                error_log("Error reading user file $userFile: " . $e->getMessage());
-                // Continue with next file
-            }
-        }
-    }
+    $aiConnections = birkly_list_accessible_ai_connections_for_session_user($_SESSION['user'] ?? []);
     
     // Ensure clean JSON output - clear any buffers first
     while (ob_get_level() > 0) {

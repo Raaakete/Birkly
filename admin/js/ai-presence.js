@@ -614,6 +614,26 @@
     }
 
 
+    function loadAiConnections() {
+        return fetch(apiUrl('/api/ai_connections.php?action=list'), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.status === 'ok' && res.data && res.data.connections) {
+                    var list = (res.data.connections || []).filter(function (c) {
+                        return c.provider !== 'mcp';
+                    }).map(function (c) {
+                        return {
+                            id: c.id,
+                            name: c.name || c.id,
+                            provider: c.provider || '',
+                            model: c.model || ''
+                        };
+                    });
+                    populateAiConnections(list);
+                }
+            }).catch(function () { /* optional */ });
+    }
+
     function populateAiConnections(connections) {
         state.aiConnections = connections || [];
         var sel = document.getElementById('ap-ai-connection');
@@ -629,9 +649,7 @@
         });
         if (saved && state.aiConnections.some(function (c) { return c.id === saved; })) {
             sel.value = saved;
-        } else if (state.aiConnections.length === 1) {
-            sel.value = state.aiConnections[0].id;
-        } else if (state.aiConnections.length > 0 && !saved) {
+        } else if (state.aiConnections.length >= 1) {
             sel.value = state.aiConnections[0].id;
         }
         if (!sel.dataset.apBound) {
@@ -867,7 +885,6 @@
                 if (data.collections && data.collections.length) {
                     applyCollections(data.collections);
                 }
-                populateAiConnections(data.ai_connections || []);
                 bindFields();
                 refreshAllRenders(data);
                 maybeShowSetup(data);
@@ -1513,16 +1530,21 @@
         initIntroDismiss();
         initAssistSidebar();
         initAssistTabs();
+        window.addEventListener('birkly:ai-connection-changed', function () {
+            loadAiConnections();
+        });
         load().then(function () {
             if (!state.collections.length) {
                 return loadCollections();
             }
         }).then(function () {
+            return loadAiConnections();
+        }).then(function () {
             bindActions();
             renderAssistSuggestions();
         }).catch(function (e) {
             toast(e.message || 'Failed to load AI Presence', 'error');
-            bindActions();
+            loadAiConnections().finally(function () { bindActions(); });
         });
     };
 
