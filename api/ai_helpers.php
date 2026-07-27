@@ -1344,12 +1344,15 @@ function convertRolePermissionsToFlatList($rolePermissions) {
             if (in_array('create', $actions) || in_array('upload', $actions)) {
                 $flatPermissions[] = 'upload';
                 $flatPermissions[] = 'manage_media';
+                $flatPermissions[] = 'read_media';
             }
             if (in_array('update', $actions) || in_array('write', $actions)) {
                 $flatPermissions[] = 'manage_media';
+                $flatPermissions[] = 'read_media';
             }
             if (in_array('delete', $actions)) {
                 $flatPermissions[] = 'manage_media';
+                $flatPermissions[] = 'read_media';
             }
         }
         // Plugins  → plugin-management permissions
@@ -1689,12 +1692,12 @@ function getPermissionsForRole($roleIdOrName) {
     $legacyRoles = [
         'admin' => ['*'], // All permissions
         'editor' => [
-            'manage_content', 'manage_media', 'manage_plugins', 'read', 'write', 'delete', 'upload'
+            'manage_content', 'manage_media', 'manage_plugins', 'read', 'write', 'delete', 'upload', 'read_media'
         ],
         'author' => [
-            'manage_content', 'manage_media', 'read', 'write', 'upload'
+            'manage_content', 'manage_media', 'read', 'write', 'upload', 'read_media'
         ],
-        'viewer' => ['read']
+        'viewer' => ['read', 'read_media']
     ];
     
     $permissions = $legacyRoles[$roleIdOrName] ?? [];
