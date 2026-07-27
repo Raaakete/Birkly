@@ -763,9 +763,9 @@
 }
 
 .ai-chat-message-user .ai-chat-message-content {
-    background: var(--color-primary, #7CE3BF);
-    color: var(--text-inverse, #ffffff);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: var(--text-primary, #20221D);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .ai-chat-message-assistant .ai-chat-message-content {
@@ -1365,4 +1365,9 @@
 [data-theme="dark"] .ai-chat-approval-card {
     background: var(--bg-elevated, #1e293b);
     border-color: var(--border-light, #334155);
+}
+
+[data-theme="dark"] .ai-chat-message-user .ai-chat-message-content {
+    background: color-mix(in srgb, var(--text-primary, #e2e8f0) 88%, #000);
+    color: #ffffff;
 }
