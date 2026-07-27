@@ -313,6 +313,11 @@
         const provider = document.getElementById('connection-provider')?.value;
         const apiKey = document.getElementById('connection-api-key')?.value || '';
         const apiUrl = document.getElementById('connection-api-url')?.value || '';
+        const modelSelect = document.getElementById('connection-model');
+        const modelCustom = document.getElementById('connection-model-custom');
+        const model = modelCustom && modelCustom.style.display !== 'none'
+            ? (modelCustom.value || '')
+            : (modelSelect?.value || '');
         const statusEl = document.getElementById('test-connection-status');
         const testBtn = document.getElementById('test-connection-btn');
 
@@ -388,6 +393,7 @@
                     provider,
                     api_key: apiKey,
                     api_url: apiUrl,
+                    model: model,
                     _csrf: csrfToken
                 })
             });
@@ -399,10 +405,10 @@
                     statusEl.textContent = result.data.message || 'Connection successful';
                     statusEl.className = 'test-connection-status success';
                 }
-            } else {
-                connectionTestPassed = false;
-                const providerErr = result.data?.provider_error || result.message || 'Connection test failed';
-                const msg = formatSaveError(providerErr);
+                } else {
+                    connectionTestPassed = false;
+                    const providerErr = result.message || result.data?.message || result.data?.provider_error || 'Connection test failed';
+                    const msg = formatSaveError(providerErr);
                 if (statusEl) {
                     statusEl.textContent = msg;
                     statusEl.className = 'test-connection-status error';
@@ -772,6 +778,12 @@
         }
         if (m.includes('rate limit') || m.includes('HTTP 429')) {
             return 'Rate limited by the provider. Wait a moment and try again, or check your API plan limits.';
+        }
+        if (m.includes('HTTP 404') || m.includes('not found')) {
+            return 'Provider rejected the request — the model may be retired. Try another model (e.g. gemini-2.5-flash for Gemini). Details: ' + m;
+        }
+        if (m.includes('402') || m.toLowerCase().includes('insufficient') || m.toLowerCase().includes('credit')) {
+            return 'API key looks valid, but the provider account may need credits before chat works.';
         }
         if (m.includes('Unsupported provider')) {
             return 'This provider is not supported for outbound connections.';

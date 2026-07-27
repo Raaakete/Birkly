@@ -78,14 +78,14 @@ function getSupportedAiProviders() {
         ],
         'google' => [
             'name' => 'Google (Gemini)',
-            'models' => ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro', 'gemini-pro-vision'],
-            'default_model' => 'gemini-1.5-flash',
+            'models' => ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-flash-latest', 'gemini-pro-latest', 'gemini-2.5-flash-lite'],
+            'default_model' => 'gemini-2.5-flash',
             'api_url' => 'https://generativelanguage.googleapis.com/v1beta/models',
             'type' => 'google'
         ],
         'openrouter' => [
             'name' => 'OpenRouter',
-            'models' => ['openai/gpt-4o-mini', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet', 'google/gemini-pro', 'meta-llama/llama-3-70b-instruct', 'mistralai/mistral-large'],
+            'models' => ['openai/gpt-4o-mini', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'google/gemini-2.5-flash', 'meta-llama/llama-3.3-70b-instruct', 'mistralai/mistral-large'],
             'default_model' => 'openai/gpt-4o-mini',
             'api_url' => 'https://openrouter.ai/api/v1/chat/completions',
             'type' => 'openai', // Uses OpenAI-compatible API
@@ -145,6 +145,16 @@ function birkly_ai_resolve_model(string $provider, ?string $model): string
     if ($provider === 'openai') {
         $legacy = [
             'gpt-4' => 'gpt-4o',
+        ];
+        return $legacy[$resolved] ?? $resolved;
+    }
+
+    if ($provider === 'google') {
+        $legacy = [
+            'gemini-1.5-flash' => 'gemini-2.5-flash',
+            'gemini-1.5-pro' => 'gemini-2.5-pro',
+            'gemini-pro' => 'gemini-pro-latest',
+            'gemini-pro-vision' => 'gemini-2.5-flash',
         ];
         return $legacy[$resolved] ?? $resolved;
     }
@@ -363,7 +373,7 @@ function validateOllamaEndpoint(string $apiUrl = ''): array
  *
  * @return array{valid: bool, message: string, provider_error?: string}
  */
-function validateProviderConnection(string $provider, string $apiKey, string $apiUrl = ''): array
+function validateProviderConnection(string $provider, string $apiKey, string $apiUrl = '', string $model = ''): array
 {
     if ($provider === 'mcp') {
         return ['valid' => true, 'message' => 'MCP endpoints are managed separately'];
@@ -373,7 +383,201 @@ function validateProviderConnection(string $provider, string $apiKey, string $ap
         return validateOllamaEndpoint($apiUrl);
     }
 
-    return validateApiKeyForProvider($provider, $apiKey, $apiUrl);
+    return validateApiKeyForProvider($provider, $apiKey, $apiUrl, $model);
+}
+
+/**
+ * Perform a lightweight HTTP request for provider validation.
+ *
+ * @return array{http_code: int, body: string, curl_error: string}
+ */
+function birkly_ai_provider_http_request(string $url, array $options = []): array
+{
+    if (!function_exists('curl_init')) {
+        return ['http_code' => 0, 'body' => '', 'curl_error' => 'curl unavailable'];
+    }
+
+    $method = strtoupper((string) ($options['method'] ?? 'POST'));
+    $headers = $options['headers'] ?? [];
+    $body = $options['body'] ?? null;
+    $timeout = (int) ($options['timeout'] ?? 15);
+
+    $ch = curl_init();
+    $curlOpts = [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_CONNECTTIMEOUT => min(10, $timeout),
+        CURLOPT_HTTPHEADER => $headers,
+    ];
+
+    if ($method === 'GET') {
+        $curlOpts[CURLOPT_HTTPGET] = true;
+    } else {
+        $curlOpts[CURLOPT_POST] = true;
+        if ($body !== null) {
+            $curlOpts[CURLOPT_POSTFIELDS] = $body;
+        }
+    }
+
+    curl_setopt_array($ch, $curlOpts);
+    $responseBody = curl_exec($ch);
+    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    return [
+        'http_code' => $httpCode,
+        'body' => is_string($responseBody) ? $responseBody : '',
+        'curl_error' => $curlError,
+    ];
+}
+
+/**
+ * OpenRouter-specific key validation (avoids chat completion + model availability issues).
+ *
+ * @return array{valid: bool, message: string, provider_error?: string}
+ */
+function validateOpenRouterApiKey(string $apiKey): array
+{
+    $referer = '';
+    if (!empty($_SERVER['HTTP_HOST'])) {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $referer = $scheme . '://' . $_SERVER['HTTP_HOST'];
+    }
+
+    $headers = [
+        'Authorization: Bearer ' . $apiKey,
+        'Content-Type: application/json',
+    ];
+    if ($referer !== '') {
+        $headers[] = 'HTTP-Referer: ' . $referer;
+    }
+    $headers[] = 'X-Title: Birkly';
+
+    foreach (['https://openrouter.ai/api/v1/auth/key', 'https://openrouter.ai/api/v1/key'] as $url) {
+        $result = birkly_ai_provider_http_request($url, [
+            'method' => 'GET',
+            'headers' => $headers,
+        ]);
+
+        if ($result['curl_error'] !== '') {
+            return [
+                'valid' => false,
+                'message' => 'Connection failed: ' . $result['curl_error'],
+                'provider_error' => $result['curl_error'],
+            ];
+        }
+
+        if ($result['http_code'] === 200) {
+            return ['valid' => true, 'message' => 'OpenRouter API key verified'];
+        }
+
+        if ($result['http_code'] === 401 || $result['http_code'] === 403) {
+            return [
+                'valid' => false,
+                'message' => 'Invalid OpenRouter API key (HTTP ' . $result['http_code'] . ')',
+                'provider_error' => birkly_ai_parse_provider_error($result['body']) ?: ('HTTP ' . $result['http_code']),
+            ];
+        }
+
+        if ($result['http_code'] >= 500) {
+            return [
+                'valid' => false,
+                'message' => 'OpenRouter is temporarily unavailable (HTTP ' . $result['http_code'] . '). Try again shortly.',
+                'provider_error' => 'HTTP ' . $result['http_code'],
+            ];
+        }
+    }
+
+    return [
+        'valid' => false,
+        'message' => 'Could not verify OpenRouter API key',
+        'provider_error' => 'HTTP ' . ($result['http_code'] ?? 0),
+    ];
+}
+
+/**
+ * Google Gemini key validation via models list (no deprecated model ping).
+ *
+ * @return array{valid: bool, message: string, provider_error?: string}
+ */
+function validateGoogleApiKey(string $apiKey, string $model = ''): array
+{
+    $listUrl = 'https://generativelanguage.googleapis.com/v1beta/models?key=' . urlencode($apiKey);
+    $listResult = birkly_ai_provider_http_request($listUrl, [
+        'method' => 'GET',
+        'headers' => ['Content-Type: application/json'],
+    ]);
+
+    if ($listResult['curl_error'] !== '') {
+        return [
+            'valid' => false,
+            'message' => 'Connection failed: ' . $listResult['curl_error'],
+            'provider_error' => $listResult['curl_error'],
+        ];
+    }
+
+    if ($listResult['http_code'] === 401 || $listResult['http_code'] === 403) {
+        return [
+            'valid' => false,
+            'message' => 'Invalid Gemini API key (HTTP ' . $listResult['http_code'] . ')',
+            'provider_error' => birkly_ai_parse_provider_error($listResult['body']) ?: ('HTTP ' . $listResult['http_code']),
+        ];
+    }
+
+    if ($listResult['http_code'] !== 200) {
+        $detail = birkly_ai_parse_provider_error($listResult['body']);
+        $message = 'Gemini API returned HTTP ' . $listResult['http_code'];
+        if ($detail !== '') {
+            $message .= ': ' . $detail;
+        }
+        return [
+            'valid' => false,
+            'message' => $message,
+            'provider_error' => 'HTTP ' . $listResult['http_code'],
+        ];
+    }
+
+    $resolvedModel = birkly_ai_resolve_model('google', $model !== '' ? $model : birkly_ai_default_model('google'));
+    $generateUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' .
+        rawurlencode($resolvedModel) . ':generateContent?key=' . urlencode($apiKey);
+    $generateResult = birkly_ai_provider_http_request($generateUrl, [
+        'method' => 'POST',
+        'headers' => ['Content-Type: application/json'],
+        'body' => json_encode(['contents' => [['parts' => [['text' => 'ping']]]]]),
+    ]);
+
+    if ($generateResult['http_code'] === 200) {
+        return ['valid' => true, 'message' => 'Gemini API key verified'];
+    }
+
+    if ($generateResult['http_code'] === 404) {
+        return [
+            'valid' => true,
+            'message' => 'Gemini API key verified (model "' . $resolvedModel . '" may need to be changed in settings)',
+        ];
+    }
+
+    if ($generateResult['http_code'] === 401 || $generateResult['http_code'] === 403) {
+        return [
+            'valid' => false,
+            'message' => 'Invalid Gemini API key (HTTP ' . $generateResult['http_code'] . ')',
+            'provider_error' => birkly_ai_parse_provider_error($generateResult['body']) ?: ('HTTP ' . $generateResult['http_code']),
+        ];
+    }
+
+    $detail = birkly_ai_parse_provider_error($generateResult['body']);
+    $message = 'Gemini API returned HTTP ' . $generateResult['http_code'];
+    if ($detail !== '') {
+        $message .= ': ' . $detail;
+    }
+
+    return [
+        'valid' => false,
+        'message' => $message,
+        'provider_error' => 'HTTP ' . $generateResult['http_code'],
+    ];
 }
 
 /**
@@ -381,7 +585,7 @@ function validateProviderConnection(string $provider, string $apiKey, string $ap
  *
  * @return array{valid: bool, message: string, provider_error?: string}
  */
-function validateApiKeyForProvider(string $provider, string $apiKey, string $apiUrl = ''): array
+function validateApiKeyForProvider(string $provider, string $apiKey, string $apiUrl = '', string $model = ''): array
 {
     if ($provider === 'mcp') {
         return ['valid' => true, 'message' => 'No key validation required'];
@@ -400,67 +604,74 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
         return ['valid' => false, 'message' => 'Unsupported provider'];
     }
 
+    if ($provider === 'openrouter') {
+        return validateOpenRouterApiKey($apiKey);
+    }
+
+    if ($provider === 'google') {
+        return validateGoogleApiKey($apiKey, $model);
+    }
+
     $url = $apiUrl ?: ($providers[$provider]['api_url'] ?? '');
     if ($url === '') {
         return ['valid' => true, 'message' => 'Skipped validation (no URL)'];
     }
 
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_HTTPHEADER => match ($provider) {
-            'anthropic' => [
-                'Content-Type: application/json',
-                'x-api-key: ' . $apiKey,
-                'anthropic-version: 2023-06-01',
-            ],
-            'google' => ['Content-Type: application/json'],
-            default => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $apiKey,
-            ],
-        },
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => match ($provider) {
-            'anthropic' => json_encode([
-                'model' => 'claude-3-haiku-20240307',
-                'max_tokens' => 1,
-                'messages' => [['role' => 'user', 'content' => 'ping']],
-            ]),
-            'google' => json_encode(['contents' => [['parts' => [['text' => 'ping']]]]]),
-            default => json_encode([
-                'model' => birkly_ai_default_model($provider),
-                'max_tokens' => 1,
-                'messages' => [['role' => 'user', 'content' => 'ping']],
-            ]),
-        },
+    $resolvedModel = birkly_ai_resolve_model($provider, $model !== '' ? $model : birkly_ai_default_model($provider));
+    $headers = match ($provider) {
+        'anthropic' => [
+            'Content-Type: application/json',
+            'x-api-key: ' . $apiKey,
+            'anthropic-version: 2023-06-01',
+        ],
+        default => [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+    };
+
+    $body = match ($provider) {
+        'anthropic' => json_encode([
+            'model' => 'claude-3-haiku-20240307',
+            'max_tokens' => 1,
+            'messages' => [['role' => 'user', 'content' => 'ping']],
+        ]),
+        default => json_encode([
+            'model' => $resolvedModel,
+            'max_tokens' => 1,
+            'messages' => [['role' => 'user', 'content' => 'ping']],
+        ]),
+    };
+
+    $result = birkly_ai_provider_http_request($url, [
+        'method' => 'POST',
+        'headers' => $headers,
+        'body' => $body,
     ]);
 
-    if ($provider === 'google') {
-        curl_setopt($ch, CURLOPT_URL, rtrim($url, '/') . '/gemini-1.5-flash:generateContent?key=' . urlencode($apiKey));
-    }
-
-    $responseBody = curl_exec($ch);
-    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-
-    if ($curlError !== '') {
+    if ($result['curl_error'] !== '') {
         return [
             'valid' => false,
-            'message' => 'Connection failed: ' . $curlError,
-            'provider_error' => $curlError,
+            'message' => 'Connection failed: ' . $result['curl_error'],
+            'provider_error' => $result['curl_error'],
         ];
     }
+
+    $httpCode = $result['http_code'];
+    $responseBody = $result['body'];
 
     if ($httpCode === 401 || $httpCode === 403) {
         return [
             'valid' => false,
             'message' => 'Invalid API key (HTTP ' . $httpCode . ')',
-            'provider_error' => 'HTTP ' . $httpCode,
+            'provider_error' => birkly_ai_parse_provider_error($responseBody) ?: ('HTTP ' . $httpCode),
+        ];
+    }
+
+    if ($httpCode === 402) {
+        return [
+            'valid' => true,
+            'message' => 'API key accepted — add credits to your provider account before chatting',
         ];
     }
 
@@ -468,7 +679,7 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
         return ['valid' => true, 'message' => 'Connection verified'];
     }
 
-    $detail = birkly_ai_parse_provider_error(is_string($responseBody) ? $responseBody : '');
+    $detail = birkly_ai_parse_provider_error($responseBody);
     $message = 'Provider returned HTTP ' . $httpCode;
     if ($detail !== '') {
         $message .= ': ' . $detail;
@@ -480,7 +691,7 @@ function validateApiKeyForProvider(string $provider, string $apiKey, string $api
     return [
         'valid' => false,
         'message' => $message,
-        'provider_error' => 'HTTP ' . $httpCode,
+        'provider_error' => $detail !== '' ? $detail : ('HTTP ' . $httpCode),
     ];
 }
 
