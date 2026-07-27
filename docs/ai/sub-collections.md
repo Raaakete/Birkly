@@ -21,7 +21,7 @@ Sub-collections are defined in `content/collections/{parent-slug}/collection.jso
     {
       "slug": "comments",
       "name": "Comments",
-      "entry_method": "public_submit",
+      "entry_method": "public_api",
       "fields": [
         {"name": "author", "type": "text",     "label": "Author"},
         {"name": "content","type": "textarea", "label": "Content"}
@@ -36,7 +36,7 @@ Sub-collections are defined in `content/collections/{parent-slug}/collection.jso
 | Value | Who can add sub-entries |
 |-------|------------------------|
 | `admin_only` | Admin users only (default) |
-| `public_submit` | Anyone via public form |
+| `public_api` | Anyone via public form / public API |
 | `user_submit` | Logged-in site users (User Management plugin) |
 
 ---
