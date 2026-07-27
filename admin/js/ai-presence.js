@@ -87,7 +87,18 @@
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(Object.assign({ _csrf: state.csrfToken }, body))
-        }).then(function (r) { return r.json(); });
+        }).then(function (r) {
+            return r.text().then(function (text) {
+                if (!text || !String(text).trim()) {
+                    throw new Error('Empty server response. The AI request may have timed out — try again.');
+                }
+                try {
+                    return JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Invalid server response. Hard-refresh the page and try again.');
+                }
+            });
+        });
     }
 
     function getSelectedAiConnection() {
