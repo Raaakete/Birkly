@@ -2,6 +2,18 @@
 
 Curated reference for BYOAI system prompts. Loaded by `loadBirklyContextPack()` — not a full docs dump.
 
+## AI playbooks
+
+Step-by-step runbooks for complex tasks. System prompt lists all slugs; load depth via `read_birkly_docs`:
+
+- **`playbooks-index`** — start here when unsure
+- **Core:** `content-model`, `site-building`, `templating`, `public-forms`, `sub-collections`, `cms-pages`, `media`, `content-editor`
+- **AI:** `agent-guide`, `mcp-setup`, `ai-connections`
+- **Plugins:** `plugins-overview`, `commerce`, `automation`, `events`, `user-management`
+- **Admin:** `settings-roles`
+
+MCP: `birkly://docs/{topic}` for each playbook.
+
 ## Platform
 
 - **Name:** Birkly — flat-file PHP CMS
@@ -253,7 +265,7 @@ A **sub-collection** is a named set of child entries owned by a parent entry (e.
     {
       "slug": "comments",
       "name": "Comments",
-      "entry_method": "public_submit",
+      "entry_method": "public_api",
       "fields": [
         {"name": "author", "type": "text", "label": "Author"},
         {"name": "content", "type": "textarea", "label": "Content"}
@@ -263,7 +275,9 @@ A **sub-collection** is a named set of child entries owned by a parent entry (e.
 }
 ```
 
-`entry_method` values: `admin_only` (default) | `public_submit` | `user_submit`
+`entry_method` values: `admin_only` (default) | `public_api` (public forms / outside submission) | `user_submit` (User Management plugin)
+
+Full playbook: `read_birkly_docs` topics `sub-collections`, `public-forms`.
 
 ### Disk layout
 
