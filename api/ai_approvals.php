@@ -636,6 +636,9 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
         }
     } elseif (isset($actionData['data']['collection'])) {
         $collection = $actionData['data']['collection'];
+        if (is_array($collection)) {
+            $collection = $collection['slug'] ?? $collection['name'] ?? '';
+        }
         $updateData = $actionData['data'];
         unset($updateData['collection']);
         $entryId = $updateData['id'] ?? '';
