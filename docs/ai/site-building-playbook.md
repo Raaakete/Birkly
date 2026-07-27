@@ -40,7 +40,7 @@ Execute in order; **do not re-read** files you already loaded this session unles
    - `create_entry` for seed content — batch in one approval when possible
 
 3. **Templating**
-   - Use Birkly templating in HTML where needed: `{{ page.title }}`, `{% for item in collection %}`, etc.
+   - Use Birkly templating in HTML: `{for each entry in 'projects'}`, `{title}`, `{'description'}`
    - Read `templating` topic once for tag syntax; do not re-fetch every message.
 
 4. **Verify**
