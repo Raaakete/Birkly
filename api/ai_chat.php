@@ -695,6 +695,46 @@ if ($action === 'chat') {
                 }
             }
             
+            // Site build: user said proceed but model returned prose without actions — one strict nudge
+            if (empty($actions)
+                && preg_match('/\b(proceed|yes|go ahead|do it|finish|finished|complete)\b/i', $message)
+                && ai_chat_is_project_site_intent($message, $conversationHistory)) {
+                error_log('Site proceed with no extracted actions — nudging model for JSON action block');
+                $nudgeMessage = "The user said: \"{$message}\"\n\n"
+                    . "You are executing a site build (project/ + collections). Do NOT describe plans.\n"
+                    . "Output a single ```json {\"actions\":[...]} ``` block with the NEXT batch of write actions:\n"
+                    . "update_collection, create_entry, write_project_file, create_page as needed.\n"
+                    . "Use exact slugs from the system prompt. Include all remaining work you can in this batch.";
+                try {
+                    $nudgeResponse = callAiProvider(
+                        $aiUser['provider'],
+                        $apiKey,
+                        $aiUser['model'] ?? '',
+                        $systemPrompt,
+                        $nudgeMessage,
+                        $conversationId,
+                        $aiUser['api_url'] ?? '',
+                        $conversationHistory,
+                        $aiUser
+                    );
+                    if ($nudgeResponse['success'] ?? false) {
+                        $nudgeActions = extractActionsFromResponse(
+                            $nudgeResponse['message'] ?? '',
+                            $nudgeResponse['tool_calls'] ?? []
+                        );
+                        if (!empty($nudgeActions)) {
+                            $actions = $nudgeActions;
+                            if (trim((string) ($response['message'] ?? '')) === '') {
+                                $response['message'] = $nudgeResponse['message'];
+                            }
+                            error_log('Site proceed nudge extracted ' . count($nudgeActions) . ' actions');
+                        }
+                    }
+                } catch (Throwable $e) {
+                    error_log('Site proceed nudge failed: ' . $e->getMessage());
+                }
+            }
+            
             // Separate read actions (which should be executed immediately and data returned) 
             // from write actions (which may need approval)
             $readActions = [];
@@ -1162,6 +1202,7 @@ if ($action === 'chat') {
                     
                     $chatPersistContext['execution_results'] = $executedActions;
                     ai_chat_emit_response([
+                        'status' => $hasErrors ? 'partial' : 'ok',
                         'data' => [
                             'response' => $response['message'],
                             'actions_executed' => count($executedActions),
@@ -2061,7 +2102,13 @@ function ai_chat_persist_conversation(
  */
 function ai_chat_emit_response(array $payload, bool $streaming, ?array $persistContext = null): void
 {
-    if ($persistContext !== null && ($payload['status'] ?? '') === 'ok') {
+    $status = (string) ($payload['status'] ?? '');
+    if ($status === '' && isset($payload['data']) && is_array($payload['data'])) {
+        $payload['status'] = !empty($payload['data']['has_errors']) ? 'partial' : 'ok';
+        $status = $payload['status'];
+    }
+
+    if ($persistContext !== null && in_array($status, ['ok', 'partial'], true)) {
         $sessionNotes = '';
         $executionResults = $persistContext['execution_results'] ?? null;
         if (is_array($executionResults) && $executionResults !== []) {

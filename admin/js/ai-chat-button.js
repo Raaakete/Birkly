@@ -858,6 +858,11 @@
     }
 
     function handleChatApiResult(result, assistantMessageId) {
+        if (result && !result.status && result.data) {
+            if ((result.data.actions_executed || 0) > 0 || (result.data.actions_created || 0) > 0 || result.data.response) {
+                result.status = result.data.has_errors ? 'partial' : 'ok';
+            }
+        }
         if (!result || (result.status !== 'ok' && result.status !== 'partial')) {
             const errorMsg = result?.message || result?.error || result?.data?.message || 'Unknown error';
             appendConsoleLog('error', errorMsg, result);
