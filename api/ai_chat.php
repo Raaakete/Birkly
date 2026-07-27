@@ -258,10 +258,20 @@ if ($action === 'chat') {
         // Site-build proceed: run deterministic next step without relying on the model
         $isProceedMessage = ai_chat_is_proceed_message($message);
         if (!$skipAiCall && $isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
-            $preResolvedActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+            $preResolvedActions = ai_chat_filter_already_completed_actions(
+                ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext),
+                $conversationHistory
+            );
             if ($preResolvedActions !== []) {
                 $skipAiCall = true;
                 error_log('Site proceed: deterministic actions without model (' . count($preResolvedActions) . ')');
+            } else {
+                $skipAiCall = true;
+                $response = [
+                    'success' => true,
+                    'message' => ai_chat_site_build_progress_summary($conversationHistory, $systemContext),
+                ];
+                error_log('Site proceed: automated steps complete — returning progress summary only');
             }
         }
         
@@ -327,6 +337,7 @@ if ($action === 'chat') {
             if ($preResolvedActions !== []) {
                 $actions = $preResolvedActions;
             }
+            $actions = ai_chat_filter_already_completed_actions($actions, $conversationHistory);
             
             // Log for debugging
             error_log("AI Response: " . substr((string) ($response['message'] ?? ''), 0, 500));
@@ -769,7 +780,10 @@ if ($action === 'chat') {
             if (empty($actions)
                 && ai_chat_is_proceed_message($message)
                 && ai_chat_is_project_site_intent($message, $conversationHistory)) {
-                $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+                $fallbackActions = ai_chat_filter_already_completed_actions(
+                    ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext),
+                    $conversationHistory
+                );
                 if (!empty($fallbackActions)) {
                     $actions = $fallbackActions;
                     if (trim((string) ($response['message'] ?? '')) === ''
@@ -1138,6 +1152,7 @@ if ($action === 'chat') {
             
             // Use only write actions for approval/execution
             $writeActions = ai_chat_dedupe_write_actions($writeActions);
+            $writeActions = ai_chat_filter_already_completed_actions($writeActions, $conversationHistory);
             $actions = $writeActions;
             
             error_log("Final writeActions count before processing: " . count($actions));
@@ -1252,6 +1267,9 @@ if ($action === 'chat') {
                         $conversationHistory,
                         $systemContext
                     );
+                    if ($executedActions === [] && ai_chat_is_proceed_message($message)) {
+                        $response['message'] = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
+                    }
                     ai_chat_emit_response([
                         'status' => $hasErrors ? 'partial' : 'ok',
                         'data' => [
@@ -1295,7 +1313,10 @@ if ($action === 'chat') {
             $providerError = $response['message'] ?? 'Failed to get AI response';
             if (ai_chat_session_has_site_build_progress($conversationHistory)) {
                 if ($isProceedMessage) {
-                    $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+                    $fallbackActions = ai_chat_filter_already_completed_actions(
+                        ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext),
+                        $conversationHistory
+                    );
                     if ($fallbackActions !== []) {
                         ai_chat_emit_direct_action_results(
                             $fallbackActions,
