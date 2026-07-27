@@ -4,29 +4,196 @@
  * Playbooks are loaded on demand via read_birkly_docs; summaries are injected into the system prompt.
  */
 
-/** @return array<string, array{title: string, topic: string, summary: string, triggers: string}> */
+/** @return array<string, array{title: string, topic: string, summary: string, triggers: string, category: string}> */
 function birkly_ai_playbook_catalog(): array
 {
     return [
+        'playbooks-index' => [
+            'title' => 'Playbook master index & decision tree',
+            'topic' => 'playbooks-index',
+            'summary' => 'Which playbook to read for any task; feature map and anti-patterns.',
+            'triggers' => 'where to start, what playbook, complex task, not sure how',
+            'category' => 'Meta',
+        ],
+        'content-model' => [
+            'title' => 'Collections, entries & schema',
+            'topic' => 'content-model',
+            'summary' => 'Create collections, fields, entries, publishing, slug rules.',
+            'triggers' => 'collection, entry, schema, fields, blog, content type',
+            'category' => 'Core CMS',
+        ],
         'site-building' => [
             'title' => 'Website & portfolio builder (project/)',
             'topic' => 'site-building',
-            'summary' => 'End-to-end flow: plan content → schema → entries → HTML/CSS in project/ with Birkly templating.',
-            'triggers' => 'website, portfolio, project folder, build a site, gallery site, landing page',
-        ],
-        'sub-collections' => [
-            'title' => 'Sub-collections & nested content',
-            'topic' => 'sub-collections',
-            'summary' => 'Parent/child collection patterns, sub-entry tools, admin URLs.',
-            'triggers' => 'sub-collection, sub-entry, nested entries, comments on entries',
+            'summary' => 'Plan → schema → entries → HTML/CSS in project/ with Birkly templating.',
+            'triggers' => 'website, portfolio, project folder, build a site, landing page',
+            'category' => 'Core CMS',
         ],
         'templating' => [
             'title' => 'Client templating language (full spec)',
             'topic' => 'templating',
-            'summary' => 'Complete template syntax: loops, conditionals, {from…get}, field access.',
+            'summary' => 'Loops, conditionals, {from…get}, field access, forms.',
             'triggers' => 'template syntax, {for each entry}, display collection on site',
+            'category' => 'Core CMS',
+        ],
+        'public-forms' => [
+            'title' => 'Public forms & outside submission',
+            'topic' => 'public-forms',
+            'summary' => 'Contact forms, {entry for}, public_api, newsletter, visitor submissions.',
+            'triggers' => 'contact form, public form, submit from website, newsletter signup, external submission',
+            'category' => 'Public & forms',
+        ],
+        'sub-collections' => [
+            'title' => 'Sub-collections & nested content',
+            'topic' => 'sub-collections',
+            'summary' => 'Comments, reviews, line items; nested sub-collections; public_api on sub-entries.',
+            'triggers' => 'sub-collection, sub-entry, nested entries, comments on posts',
+            'category' => 'Public & forms',
+        ],
+        'cms-pages' => [
+            'title' => 'CMS pages vs project site',
+            'topic' => 'cms-pages',
+            'summary' => 'When to use create_page vs write_project_file.',
+            'triggers' => 'cms page, admin-managed page, create page',
+            'category' => 'Core CMS',
+        ],
+        'media' => [
+            'title' => 'Media library',
+            'topic' => 'media',
+            'summary' => 'Upload, folders, image/gallery fields in entries.',
+            'triggers' => 'media, upload image, gallery, media library',
+            'category' => 'Core CMS',
+        ],
+        'content-editor' => [
+            'title' => 'Rich text Editor fieldtype',
+            'topic' => 'content-editor',
+            'summary' => 'HTML tables, grids, safe updates to editor fields.',
+            'triggers' => 'editor field, rich text, content editor, html article',
+            'category' => 'Core CMS',
+        ],
+        'agent-guide' => [
+            'title' => 'Agent Guide (AI Presence)',
+            'topic' => 'agent-guide',
+            'summary' => 'Sources, products, claims, publish /.well-known/agent-guide.json.',
+            'triggers' => 'agent guide, brand context, ai presence, well-known',
+            'category' => 'AI & integration',
+        ],
+        'mcp-setup' => [
+            'title' => 'Connect Claude / ChatGPT / Cursor (MCP)',
+            'topic' => 'mcp-setup',
+            'summary' => 'Personal connector URL, OAuth, service agents, MCP resources.',
+            'triggers' => 'mcp, connect claude, connect cursor, connect chatgpt, connector url',
+            'category' => 'AI & integration',
+        ],
+        'ai-connections' => [
+            'title' => 'Built-in admin AI assistant',
+            'topic' => 'ai-connections',
+            'summary' => 'API keys, roles, approvals, floating chat.',
+            'triggers' => 'built-in assistant, api key, ai connection, approvals tab',
+            'category' => 'AI & integration',
+        ],
+        'plugins-overview' => [
+            'title' => 'Plugins & marketplace',
+            'topic' => 'plugins-overview',
+            'summary' => 'Install, enable, official plugins, dependencies.',
+            'triggers' => 'install plugin, marketplace, enable commerce, activate plugin',
+            'category' => 'Plugins',
+        ],
+        'commerce' => [
+            'title' => 'Commerce (shop & checkout)',
+            'topic' => 'commerce',
+            'summary' => 'Cart, checkout, variants, fulfillment, template buy URLs.',
+            'triggers' => 'shop, e-commerce, cart, checkout, product, sell online',
+            'category' => 'Plugins',
+        ],
+        'automation' => [
+            'title' => 'Automation workflows',
+            'topic' => 'automation',
+            'summary' => 'Triggers, webhooks, Slack/email, entry & commerce events.',
+            'triggers' => 'automation, workflow, webhook, slack notification, when entry created',
+            'category' => 'Plugins',
+        ],
+        'events' => [
+            'title' => 'Events & RSVP',
+            'topic' => 'events',
+            'summary' => 'Event listings, RSVP, paid tickets (with Commerce).',
+            'triggers' => 'events, rsvp, calendar, tickets, upcoming events',
+            'category' => 'Plugins',
+        ],
+        'user-management' => [
+            'title' => 'Site users & registration',
+            'topic' => 'user-management',
+            'summary' => 'Registration, login, tiers, user_submit sub-collections.',
+            'triggers' => 'user registration, member login, site users, user profile',
+            'category' => 'Plugins',
+        ],
+        'settings-roles' => [
+            'title' => 'Settings, roles & permissions',
+            'topic' => 'settings-roles',
+            'summary' => 'Custom roles, global settings, security.',
+            'triggers' => 'role, permission, settings, security',
+            'category' => 'Admin',
         ],
     ];
+}
+
+/**
+ * Core docs topic → file map (playbooks + reference). Checked before plugin ai-context stubs.
+ *
+ * @return array<string, array{file?: string, path?: string, title: string}>
+ */
+function birkly_ai_core_docs_topics(): array
+{
+    $playbook = static fn (string $file, string $title): array => [
+        'file' => 'ai/playbooks/' . $file,
+        'title' => $title,
+    ];
+
+    return [
+        'playbooks-index' => $playbook('playbooks-index.md', 'AI playbooks — master index'),
+        'content-model' => $playbook('content-model-playbook.md', 'Content model playbook'),
+        'public-forms' => $playbook('public-forms-playbook.md', 'Public forms playbook'),
+        'sub-collections' => $playbook('sub-collections-playbook.md', 'Sub-collections playbook'),
+        'agent-guide' => $playbook('agent-guide-playbook.md', 'Agent Guide playbook'),
+        'mcp-setup' => $playbook('mcp-setup-playbook.md', 'MCP setup playbook'),
+        'ai-connections' => $playbook('ai-connections-playbook.md', 'Built-in AI assistant playbook'),
+        'plugins-overview' => $playbook('plugins-overview-playbook.md', 'Plugins & marketplace playbook'),
+        'commerce' => $playbook('commerce-playbook.md', 'Commerce playbook'),
+        'automation' => $playbook('automation-playbook.md', 'Automation playbook'),
+        'events' => $playbook('events-playbook.md', 'Events playbook'),
+        'user-management' => $playbook('user-management-playbook.md', 'User Management playbook'),
+        'media' => $playbook('media-playbook.md', 'Media library playbook'),
+        'cms-pages' => $playbook('cms-pages-playbook.md', 'CMS pages playbook'),
+        'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),
+        'settings-roles' => $playbook('settings-roles-playbook.md', 'Settings & roles playbook'),
+        'site-building' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'portfolio' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
+        'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
+        'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
+        'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
+        'mcp' => ['path' => 'admin/docs/snapshots/mcp-connections.md', 'title' => 'MCP setup guide (admin snapshot)'],
+    ];
+}
+
+/**
+ * MCP doc resources for playbooks (merged into resources/list).
+ *
+ * @return list<array{uri: string, name: string, description: string, mimeType: string}>
+ */
+function birkly_ai_playbook_mcp_resources(): array
+{
+    $out = [];
+    foreach (birkly_ai_playbook_catalog() as $def) {
+        $topic = $def['topic'];
+        $out[] = [
+            'uri' => 'birkly://docs/' . $topic,
+            'name' => $def['title'],
+            'description' => $def['summary'],
+            'mimeType' => 'text/markdown',
+        ];
+    }
+    return $out;
 }
 
 /**
@@ -34,14 +201,27 @@ function birkly_ai_playbook_catalog(): array
  */
 function birkly_ai_playbooks_prompt_section(): string
 {
-    $lines = [
-        'PLAYBOOKS (read before complex tasks — use read_birkly_docs with topic slug):',
-        'When the user asks for a website, portfolio, or multi-step build, call read_birkly_docs topic "site-building" FIRST, then execute — do not loop on get_project_info.',
-    ];
+    $byCategory = [];
     foreach (birkly_ai_playbook_catalog() as $def) {
-        $lines[] = '- ' . $def['topic'] . ': ' . $def['title'] . ' — ' . $def['summary'];
+        $byCategory[$def['category']][] = $def;
     }
-    $lines[] = '';
+
+    $lines = [
+        'PLAYBOOKS — read before complex tasks (`read_birkly_docs` with topic slug):',
+        'Unsure where to start? Read `playbooks-index` first.',
+        'Site/portfolio build: `site-building` then execute — do not loop on get_project_info.',
+        'Forms / outside submission: `public-forms`. Nested content: `sub-collections`.',
+        '',
+    ];
+
+    foreach ($byCategory as $category => $items) {
+        $lines[] = $category . ':';
+        foreach ($items as $def) {
+            $lines[] = '  - ' . $def['topic'] . ': ' . $def['title'];
+        }
+        $lines[] = '';
+    }
+
     $lines[] = 'After reading a playbook: follow its step order. Do not repeat discovery reads you already have in this turn.';
     return implode("\n", $lines);
 }
@@ -102,7 +282,6 @@ function ai_chat_format_read_result_for_followup(array $readResult, array $readA
         return '';
     }
 
-    // Project site reads (check before generic "entries" — list_project_files used to collide)
     if (isset($data['file']) && is_array($data['file'])) {
         $path = $data['file']['path'] ?? $data['file']['relative_path'] ?? 'unknown';
         $content = $data['file']['content'] ?? '';
