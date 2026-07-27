@@ -478,6 +478,10 @@ function birkly_ai_presence_apply_suggestion_pro(array $draft, array $suggestion
             'not_for' => is_array($value['not_for'] ?? null) ? array_values(array_map('strval', $value['not_for'])) : [],
             'claim_ids' => is_array($value['claim_ids'] ?? null) ? array_values(array_map('strval', $value['claim_ids'])) : [],
             'connected_entry' => is_array($value['connected_entry'] ?? null) ? $value['connected_entry'] : null,
+            'media_id' => (string) ($value['media_id'] ?? ''),
+            'media_url' => (string) ($value['media_url'] ?? ''),
+            'media_name' => (string) ($value['media_name'] ?? ''),
+            'external_image_url' => (string) ($value['external_image_url'] ?? ''),
             'public' => !isset($value['public']) || (bool) $value['public'],
         ];
         return $draft;
@@ -659,6 +663,10 @@ function birkly_ai_presence_export_json_ld_pro(array $doc): array
         }
         if ($node['category'] === '') {
             unset($node['category']);
+        }
+        $imageUrl = (string) ($product['media_url'] ?? $product['external_image_url'] ?? '');
+        if ($imageUrl !== '') {
+            $node['image'] = $imageUrl;
         }
         $graph[] = $node;
     }
