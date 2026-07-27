@@ -743,7 +743,43 @@ window.migrateStorage = migrateStorage;
     }
 
     function getSettingsTabPanes() {
-        return document.querySelectorAll('.settings-tab-panels > .tab-pane');
+        var panes = Array.prototype.slice.call(
+            document.querySelectorAll('.settings-tab-panels > .tab-pane')
+        );
+        // Include known tab panes by id so tab switching still works when markup
+        // places a pane outside .settings-tab-panels (legacy/cached templates).
+        VALID_TABS.forEach(function (tabId) {
+            var pane = document.getElementById(tabId);
+            if (pane && panes.indexOf(pane) < 0) {
+                panes.push(pane);
+            }
+        });
+        return panes;
+    }
+
+    function setActiveSettingsPane(tabPane, tabPanes) {
+        if (!tabPane) {
+            return;
+        }
+        var paneList = Array.prototype.slice.call(tabPanes || []);
+        if (paneList.indexOf(tabPane) < 0) {
+            paneList.push(tabPane);
+        }
+        paneList.forEach(function (pane) {
+            var isActive = pane === tabPane;
+            pane.classList.toggle('active', isActive);
+            if (window.Birkly && window.Birkly.TabsA11y) {
+                window.Birkly.TabsA11y.syncTabPanel(pane, isActive);
+            }
+        });
+        // If a pane was rendered inside another tab pane, keep ancestors visible.
+        var parent = tabPane.parentElement;
+        while (parent) {
+            if (parent.classList && parent.classList.contains('tab-pane')) {
+                parent.classList.add('active');
+            }
+            parent = parent.parentElement;
+        }
     }
 
     function applySettingsSearch() {
@@ -769,15 +805,21 @@ window.migrateStorage = migrateStorage;
         tabPanes.forEach(function (pane) {
             var searchableSections = Array.prototype.slice.call(pane.querySelectorAll('[data-settings-search]'));
             var paneHasMatch = !query;
+            var isCurrentPane = pane.id === currentTab;
 
             searchableSections.forEach(function (section) {
                 var haystack = normalizeSearchValue(section.getAttribute('data-settings-search'));
                 var matches = !query || haystack.indexOf(query) >= 0;
-                section.hidden = !matches;
+                // Never hide every section in the tab the user is viewing.
+                section.hidden = isCurrentPane ? false : !matches;
                 if (matches) {
                     paneHasMatch = true;
                 }
             });
+
+            if (isCurrentPane && query) {
+                paneHasMatch = true;
+            }
 
             pane.dataset.searchVisible = paneHasMatch ? '1' : '0';
         });
@@ -894,13 +936,7 @@ window.migrateStorage = migrateStorage;
                 window.Birkly.TabsA11y.syncTabButton(tabButtons[j], isActive);
             }
         }
-        for (var k = 0; k < tabPanes.length; k++) {
-            var paneActive = tabPanes[k] === tabPane;
-            tabPanes[k].classList.toggle('active', paneActive);
-            if (window.Birkly && window.Birkly.TabsA11y) {
-                window.Birkly.TabsA11y.syncTabPanel(tabPanes[k], paneActive);
-            }
-        }
+        setActiveSettingsPane(tabPane, tabPanes);
 
         updateSaveBar(tabId);
         applySettingsSearch();
