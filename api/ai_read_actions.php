@@ -440,6 +440,42 @@ function executeReadAction($actionData, $aiUser) {
             return ['success' => false, 'message' => 'File not found or not allowed: ' . $filePath];
         }
         return ['success' => true, 'data' => ['file' => $file]];
+    } elseif ($actionType === 'get_system_context') {
+        return ['success' => true, 'data' => generateSystemContext($aiUser)];
+    } elseif ($actionType === 'read_birkly_docs') {
+        $topic = readBirklyDocsTopic((string) ($actionPayload['topic'] ?? ''));
+        if ($topic === null) {
+            return ['success' => false, 'message' => 'Unknown docs topic'];
+        }
+        return ['success' => true, 'data' => $topic];
+    } elseif (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim'], true)) {
+        require_once __DIR__ . '/../core/ai_presence_pro.php';
+        if ($actionType === 'get_brand_context') {
+            $view = (string) ($actionPayload['view'] ?? 'summary');
+            $data = birkly_ai_presence_public_brand_for_tools($view);
+            if ($data === null) {
+                return ['success' => false, 'message' => 'Brand context not published'];
+            }
+            return ['success' => true, 'data' => $data];
+        }
+        if ($actionType === 'list_brand_products') {
+            $data = birkly_ai_presence_public_brand_for_tools('products');
+            if ($data === null) {
+                return ['success' => false, 'message' => 'Brand context not published'];
+            }
+            return ['success' => true, 'data' => ['products_services' => $data['products_services'] ?? []]];
+        }
+        $id = (string) ($actionPayload['id'] ?? '');
+        $full = birkly_ai_presence_public_brand_for_tools('full');
+        if ($full === null || $id === '') {
+            return ['success' => false, 'message' => 'Claim not found'];
+        }
+        foreach ($full['claims'] ?? [] as $claim) {
+            if (is_array($claim) && ($claim['id'] ?? '') === $id) {
+                return ['success' => true, 'data' => ['claim' => $claim]];
+            }
+        }
+        return ['success' => false, 'message' => 'Claim not found'];
     }
 
     return ['success' => false, 'message' => 'Unknown read action type: ' . $actionType];

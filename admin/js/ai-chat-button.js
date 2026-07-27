@@ -25,6 +25,7 @@
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
     const STORAGE_KEY_CONNECTION = 'ai_chat_connection_id';
     const STORAGE_KEY_MESSAGES = 'ai_chat_messages';
+    const STORAGE_KEY_RECENT = 'ai_chat_recent_chats';
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
@@ -230,8 +231,8 @@
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(approval.description || 'No description')}</div>
                 <div class="ai-chat-approval-actions">
-                    <button class="btn btn-sm btn-success" onclick="aiChatButton.approveAction('${escapeHtml(approval.id)}')">Approve</button>
-                    <button class="btn btn-sm btn-danger" onclick="aiChatButton.rejectAction('${escapeHtml(approval.id)}')">Reject</button>
+                    <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">Approve</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">Reject</button>
                 </div>
             </div>`;
         }).join('');
@@ -241,12 +242,15 @@
         chatView = view;
         const messagesPanel = document.getElementById('ai-chat-messages-panel');
         const approvalsPanel = document.getElementById('ai-chat-approvals-panel');
+        const historyPanel = document.getElementById('ai-chat-history-panel');
         const inputContainer = document.querySelector('.ai-chat-input-container');
         const tabMessages = document.getElementById('ai-chat-tab-messages');
         const tabApprovals = document.getElementById('ai-chat-tab-approvals');
+        const tabHistory = document.getElementById('ai-chat-tab-history');
 
         if (messagesPanel) messagesPanel.style.display = view === 'messages' ? 'flex' : 'none';
         if (approvalsPanel) approvalsPanel.style.display = view === 'approvals' ? 'block' : 'none';
+        if (historyPanel) historyPanel.style.display = view === 'history' ? 'block' : 'none';
         if (inputContainer) inputContainer.style.display = view === 'messages' ? 'block' : 'none';
         if (tabMessages) {
             tabMessages.classList.toggle('active', view === 'messages');
@@ -256,7 +260,28 @@
             tabApprovals.classList.toggle('active', view === 'approvals');
             tabApprovals.setAttribute('aria-selected', view === 'approvals' ? 'true' : 'false');
         }
+        if (tabHistory) {
+            tabHistory.classList.toggle('active', view === 'history');
+            tabHistory.setAttribute('aria-selected', view === 'history' ? 'true' : 'false');
+        }
         if (view === 'approvals') renderApprovalQueuePanel();
+        if (view === 'history') renderHistoryPanel();
+    }
+
+    function bindChatWindowActions(chatWindow) {
+        chatWindow.addEventListener('click', function (e) {
+            const approveBtn = e.target.closest('[data-ai-approve]');
+            if (approveBtn) {
+                e.preventDefault();
+                approveAction(approveBtn.getAttribute('data-ai-approve'));
+                return;
+            }
+            const rejectBtn = e.target.closest('[data-ai-reject]');
+            if (rejectBtn) {
+                e.preventDefault();
+                rejectAction(rejectBtn.getAttribute('data-ai-reject'));
+            }
+        });
     }
 
     // Toggle chat window
@@ -309,6 +334,7 @@
             <div class="ai-chat-body">
                 <div class="ai-chat-view-tabs" role="tablist">
                     <button type="button" class="ai-chat-view-tab active" id="ai-chat-tab-messages" role="tab" aria-selected="true">Chat</button>
+                    <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-history" role="tab" aria-selected="false">History</button>
                     <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-approvals" role="tab" aria-selected="false">
                         Approvals <span class="ai-chat-tab-badge" id="ai-chat-approvals-tab-badge" style="display: none;"></span>
                     </button>
@@ -319,6 +345,9 @@
                             <p>Select an AI connection to start chatting. The AI can help you create and edit content.</p>
                         </div>
                     </div>
+                </div>
+                <div class="ai-chat-history-panel" id="ai-chat-history-panel" style="display: none;">
+                    <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
                 </div>
                 <div class="ai-chat-approvals-panel" id="ai-chat-approvals-panel" style="display: none;">
                     <div class="loading">Loading approvals...</div>
@@ -345,6 +374,7 @@
             </div>
         `;
         document.body.appendChild(chatWindow);
+        bindChatWindowActions(chatWindow);
         
         // Setup event listeners
         document.getElementById('ai-chat-close-btn')?.addEventListener('click', hideChatWindow);
@@ -364,6 +394,7 @@
         });
 
         document.getElementById('ai-chat-tab-messages')?.addEventListener('click', async () => switchChatView('messages'));
+        document.getElementById('ai-chat-tab-history')?.addEventListener('click', async () => switchChatView('history'));
         document.getElementById('ai-chat-tab-approvals')?.addEventListener('click', async () => switchChatView('approvals'));
 
         document.getElementById('ai-chat-connection-select')?.addEventListener('change', async function(e) {
@@ -558,6 +589,9 @@
             newBtn.title = 'New Chat';
             newBtn.innerHTML = icon('plus', { size: 16 });
             newBtn.addEventListener('click', async function () {
+                if (chatMessages.length > 0) {
+                    indexRecentChat();
+                }
                 if (await BirklyFeedback.confirm('Start a new chat? This will clear the current conversation.')) {
                     clearChatState();
                     const messages = document.getElementById('ai-chat-messages');
@@ -666,10 +700,20 @@
 
         const responseText = result.data.response || result.data.message || '';
         if (assistantMessageId) {
-            updateStreamingMessage(assistantMessageId, responseText, true);
-            if (responseText) {
-                chatMessages.push({ role: 'assistant', content: responseText });
+            const messageEl = document.getElementById(assistantMessageId);
+            const contentEl = messageEl ? messageEl.querySelector('.ai-chat-message-content') : null;
+            const streamedText = contentEl ? contentEl.textContent.trim() : '';
+            const finalText = responseText || (streamedText && streamedText !== 'Thinking...' ? streamedText : '');
+            if (finalText) {
+                updateStreamingMessage(assistantMessageId, finalText, true);
+                chatMessages.push({ role: 'assistant', content: finalText });
                 saveChatState();
+            } else if (result.data.requires_approval) {
+                updateStreamingMessage(assistantMessageId, 'Prepared actions for your review (see below).', true);
+                chatMessages.push({ role: 'assistant', content: 'Prepared actions for your review.' });
+                saveChatState();
+            } else {
+                messageEl?.classList.remove('ai-chat-message-streaming');
             }
         } else if (responseText) {
             addChatMessage('assistant', responseText);
@@ -1032,9 +1076,79 @@
                 localStorage.setItem(STORAGE_KEY_CONVERSATION, conversationId);
             }
             localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(chatMessages));
+            indexRecentChat();
         } catch (error) {
             console.error('Error saving chat state:', error);
         }
+    }
+
+    function getRecentChats() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_RECENT);
+            return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function indexRecentChat() {
+        if (!conversationId || !chatMessages.length) return;
+        const firstUser = chatMessages.find(m => m.role === 'user');
+        const title = firstUser ? String(firstUser.content).slice(0, 72) : 'Chat';
+        const entry = {
+            id: conversationId,
+            title: title,
+            connection_id: currentConnection?.id || '',
+            connection_name: currentConnection?.name || '',
+            updated_at: new Date().toISOString(),
+            preview: chatMessages.slice(-2).map(m => m.content).join(' · ').slice(0, 120)
+        };
+        let recent = getRecentChats().filter(c => c.id !== conversationId);
+        recent.unshift(entry);
+        recent = recent.slice(0, 20);
+        localStorage.setItem(STORAGE_KEY_RECENT, JSON.stringify(recent));
+    }
+
+    function renderHistoryPanel() {
+        const list = document.getElementById('ai-chat-history-list');
+        if (!list) return;
+        const recent = getRecentChats();
+        if (!recent.length) {
+            list.innerHTML = '<div class="ai-chat-welcome"><p>No recent chats yet. Start a conversation in the Chat tab.</p></div>';
+            return;
+        }
+        list.innerHTML = recent.map(function (chat) {
+            return `
+            <button type="button" class="ai-chat-history-item" data-conv-id="${escapeHtml(chat.id)}" data-conn-id="${escapeHtml(chat.connection_id || '')}">
+                <strong>${escapeHtml(chat.title || 'Chat')}</strong>
+                <span class="ai-chat-history-meta">${escapeHtml(chat.connection_name || '')} · ${formatTime(chat.updated_at)}</span>
+                <span class="ai-chat-history-preview">${escapeHtml(chat.preview || '')}</span>
+            </button>`;
+        }).join('');
+        list.querySelectorAll('.ai-chat-history-item').forEach(function (btn) {
+            btn.addEventListener('click', async function () {
+                const convId = btn.getAttribute('data-conv-id');
+                const connId = btn.getAttribute('data-conn-id');
+                if (connId && availableConnections.find(c => c.id === connId)) {
+                    currentConnection = availableConnections.find(c => c.id === connId);
+                    updateConnectionDropdownValue();
+                }
+                conversationId = convId;
+                chatMessages = [];
+                await loadHistoryFromServer(convId, currentConnection?.id || connId);
+                if (chatMessages.length === 0) {
+                    try {
+                        const saved = localStorage.getItem(STORAGE_KEY_MESSAGES);
+                        if (saved && conversationId === localStorage.getItem(STORAGE_KEY_CONVERSATION)) {
+                            chatMessages = JSON.parse(saved);
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+                updateChatUI();
+                saveChatState();
+                switchChatView('messages');
+            });
+        });
     }
 
     // Clear chat state
@@ -1178,10 +1292,10 @@
                 ${actionDataHtml ? `<div class="ai-chat-approval-data">${actionDataHtml}</div>` : ''}
                 <div class="ai-chat-approval-actions">
                     ${status === 'pending' ? `
-                    <button class="btn btn-sm btn-success" onclick="aiChatButton.approveAction('${approval.id}')">
+                    <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">
                         ✓ Approve
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="aiChatButton.rejectAction('${approval.id}')">
+                    <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">
                         ✗ Reject
                     </button>
                     ` : `<div class="ai-chat-approval-status ${statusClass}">${status === 'approved' ? '✓ Approved' : status === 'rejected' ? '✗ Rejected' : escapeHtml(statusLabel)}</div>`}
