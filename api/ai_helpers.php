@@ -272,6 +272,27 @@ function birkly_ai_default_model(string $provider): string
 }
 
 /**
+ * Composer capabilities for an AI connection (used by admin chat UI).
+ *
+ * @param array<string,mixed> $connection
+ * @return array<string,bool>
+ */
+function birkly_ai_connection_capabilities(array $connection): array
+{
+    $provider = (string) ($connection['provider'] ?? '');
+    $providers = getSupportedAiProviders();
+    $info = $providers[$provider] ?? [];
+    $supportsDynamicModels = !empty($info['dynamic_models']) || !empty($info['custom_models']);
+
+    return [
+        'model_picker' => $supportsDynamicModels,
+        'vision' => in_array($provider, ['openai', 'openrouter', 'anthropic', 'google', 'custom'], true),
+        'documents' => in_array($provider, ['openai', 'openrouter', 'anthropic', 'google', 'custom'], true),
+        'streaming' => birkly_ai_provider_supports_streaming($provider),
+    ];
+}
+
+/**
  * Resolve the model to send to a provider, including legacy aliases.
  */
 function birkly_ai_resolve_model(string $provider, ?string $model): string
@@ -1644,6 +1665,7 @@ function birkly_list_accessible_ai_connections_for_session_user(?array $sessionU
                 }
                 unset($user['api_key_encrypted'], $user['mcp_api_key']);
                 $user['id'] = $id;
+                $user['capabilities'] = birkly_ai_connection_capabilities($user);
                 $out[] = $user;
             } catch (Throwable $e) {
                 continue;
