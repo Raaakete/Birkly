@@ -1044,7 +1044,7 @@
             scrollAssistResults();
             openAssistSidebar();
             if (res.data.ai_error) {
-                toast(res.data.ai_error, 'warning');
+                toast(res.data.ai_error, 'error');
             }
             if (state.suggestions.length) {
                 toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
@@ -1084,7 +1084,7 @@
             renderAssistSuggestions();
             scrollAssistResults();
             if (res.data.ai_error) {
-                toast(res.data.ai_error, 'warning');
+                toast(res.data.ai_error, 'error');
             }
             toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
         }).finally(function () {
