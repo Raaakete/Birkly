@@ -61,10 +61,14 @@ function birkly_ai_tool_definitions(): array
         'write_project_file' => ['name' => 'write_project_file', 'description' => 'Create or overwrite a file in project/. PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path', 'content']]],
         'create_project_file' => ['name' => 'create_project_file', 'description' => 'Create a new file in project/ (fails if path exists). PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path']]],
         'delete_project_file' => ['name' => 'delete_project_file', 'description' => 'Delete a file from project/ (admin role by default). Directories are not deleted.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string']], 'required' => ['path']]],
-        'get_brand_context' => ['name' => 'get_brand_context', 'description' => 'Get published brand context for AI systems (view: summary|full|products)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
-        'list_brand_products' => ['name' => 'list_brand_products', 'description' => 'List published products and services from AI Presence', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
-        'get_brand_claim' => ['name' => 'get_brand_claim', 'description' => 'Get a supported brand claim by id from published AI Presence', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
-        'get_brand_product' => ['name' => 'get_brand_product', 'description' => 'Get a published product with resolved source links, linked claims, and evidence graph', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'get_agent_guide_context' => ['name' => 'get_agent_guide_context', 'description' => 'Get published Agent Guide context for AI systems (view: summary|full|products)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
+        'list_agent_guide_products' => ['name' => 'list_agent_guide_products', 'description' => 'List published products and services from Agent Guide', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'get_agent_guide_claim' => ['name' => 'get_agent_guide_claim', 'description' => 'Get a supported claim by id from published Agent Guide', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'get_agent_guide_product' => ['name' => 'get_agent_guide_product', 'description' => 'Get a published product with resolved source links, linked claims, and evidence graph', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'get_brand_context' => ['name' => 'get_brand_context', 'description' => 'Legacy alias for get_agent_guide_context', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
+        'list_brand_products' => ['name' => 'list_brand_products', 'description' => 'Legacy alias for list_agent_guide_products', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'get_brand_claim' => ['name' => 'get_brand_claim', 'description' => 'Legacy alias for get_agent_guide_claim', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'get_brand_product' => ['name' => 'get_brand_product', 'description' => 'Legacy alias for get_agent_guide_product', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
     ];
 }
 
@@ -193,27 +197,27 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         return ['content' => [['type' => 'text', 'text' => "# {$topic['title']}\n\n{$topic['text']}"]]];
     }
 
-    if (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim', 'get_brand_product'], true)) {
+    if (in_array($actionType, ['get_agent_guide_context', 'get_brand_context', 'list_agent_guide_products', 'list_brand_products', 'get_agent_guide_claim', 'get_brand_claim', 'get_agent_guide_product', 'get_brand_product'], true)) {
         require_once __DIR__ . '/ai_presence_pro.php';
         require_once __DIR__ . '/ai_presence_links.php';
-        if ($actionType === 'get_brand_context') {
+        if (in_array($actionType, ['get_agent_guide_context', 'get_brand_context'], true)) {
             $view = (string) ($arguments['view'] ?? 'summary');
-            $data = birkly_ai_presence_public_brand_for_tools($view);
+            $data = birkly_ai_presence_public_agent_guide_for_tools($view);
             if ($data === null) {
-                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Brand context not published']]];
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Agent Guide not published']]];
             }
             return ['content' => [['type' => 'text', 'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
         }
-        if ($actionType === 'list_brand_products') {
-            $data = birkly_ai_presence_public_brand_for_tools('products');
+        if (in_array($actionType, ['list_agent_guide_products', 'list_brand_products'], true)) {
+            $data = birkly_ai_presence_public_agent_guide_for_tools('products');
             if ($data === null) {
-                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Brand context not published']]];
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Agent Guide not published']]];
             }
             return ['content' => [['type' => 'text', 'text' => json_encode($data['products_services'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
         }
-        if ($actionType === 'get_brand_product') {
+        if (in_array($actionType, ['get_agent_guide_product', 'get_brand_product'], true)) {
             $id = (string) ($arguments['id'] ?? '');
-            $full = birkly_ai_presence_public_brand_for_tools('full');
+            $full = birkly_ai_presence_public_agent_guide_for_tools('full');
             if ($full === null || $id === '') {
                 return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Product not found']]];
             }
@@ -224,7 +228,7 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
             return ['content' => [['type' => 'text', 'text' => json_encode($graph, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
         }
         $id = (string) ($arguments['id'] ?? '');
-        $full = birkly_ai_presence_public_brand_for_tools('full');
+        $full = birkly_ai_presence_public_agent_guide_for_tools('full');
         if ($full === null || $id === '') {
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Claim not found']]];
         }

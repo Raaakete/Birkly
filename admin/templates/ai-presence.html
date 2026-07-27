@@ -23,6 +23,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
             <div class="ai-presence-tabs tabs-v2-root">
                 <div class="tabs ap-tabs-top" role="tablist" aria-label="{translate 'admin.ai_presence'}">
                     <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
+                    <button type="button" class="tab" data-tab="sources">{translate 'admin.ai_presence_tab_sources'}</button>
                     <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
                     <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
                     <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
@@ -39,29 +40,36 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                                 <p class="ap-hint">{translate 'admin.ai_presence_what_note'}</p>
                             </div>
                             <ol class="ap-workflow" id="ap-workflow-steps">
-                                <li class="ap-workflow-step" data-workflow="context">
+                                <li class="ap-workflow-step" data-workflow="sources">
                                     <span class="ap-workflow-num">1</span>
+                                    <div>
+                                        <strong>{translate 'admin.ai_presence_flow_sources'}</strong>
+                                        <span>{translate 'admin.ai_presence_flow_sources_desc'}</span>
+                                    </div>
+                                </li>
+                                <li class="ap-workflow-step" data-workflow="context">
+                                    <span class="ap-workflow-num">2</span>
                                     <div>
                                         <strong>{translate 'admin.ai_presence_flow_context'}</strong>
                                         <span>{translate 'admin.ai_presence_flow_context_desc'}</span>
                                     </div>
                                 </li>
                                 <li class="ap-workflow-step" data-workflow="products">
-                                    <span class="ap-workflow-num">2</span>
+                                    <span class="ap-workflow-num">3</span>
                                     <div>
                                         <strong>{translate 'admin.ai_presence_flow_products'}</strong>
                                         <span>{translate 'admin.ai_presence_flow_products_desc'}</span>
                                     </div>
                                 </li>
                                 <li class="ap-workflow-step" data-workflow="claims">
-                                    <span class="ap-workflow-num">3</span>
+                                    <span class="ap-workflow-num">4</span>
                                     <div>
                                         <strong>{translate 'admin.ai_presence_flow_claims'}</strong>
                                         <span>{translate 'admin.ai_presence_flow_claims_desc'}</span>
                                     </div>
                                 </li>
                                 <li class="ap-workflow-step" data-workflow="publish">
-                                    <span class="ap-workflow-num">4</span>
+                                    <span class="ap-workflow-num">5</span>
                                     <div>
                                         <strong>{translate 'admin.ai_presence_flow_publish'}</strong>
                                         <span>{translate 'admin.ai_presence_flow_publish_desc'}</span>
@@ -114,6 +122,44 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             <dl id="ai-presence-public-urls" class="ai-presence-urls"></dl>
                         </section>
                     </div>
+                </div>
+
+                <div class="tab-content" data-tab-content="sources">
+                    <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_sources_lede'}</p>
+                    <section class="card ap-sources-section">
+                        <h3>{translate 'admin.ai_presence_sources_of_truth'}</h3>
+                        <p class="text-muted">{translate 'admin.ai_presence_sources_help'}</p>
+                        <div class="form-row ap-sources-toolbar">
+                            <select id="ap-source-type" class="input">
+                                <option value="cms_entry">{translate 'admin.ai_presence_source_type_cms_entry'}</option>
+                                <option value="cms_collection">{translate 'admin.ai_presence_source_type_cms_collection'}</option>
+                                <option value="website">{translate 'admin.ai_presence_source_type_website'}</option>
+                                <option value="document">{translate 'admin.ai_presence_source_type_document'}</option>
+                                <option value="media_asset">{translate 'admin.ai_presence_source_type_media'}</option>
+                                <option value="marketplace">{translate 'admin.ai_presence_source_type_marketplace'}</option>
+                                <option value="review_platform">{translate 'admin.ai_presence_source_type_review'}</option>
+                                <option value="other">{translate 'admin.ai_presence_source_type_other'}</option>
+                            </select>
+                            <select id="ap-source-role" class="input">
+                                <option value="narrative">{translate 'admin.ai_presence_source_role_narrative'}</option>
+                                <option value="proof">{translate 'admin.ai_presence_source_role_proof'}</option>
+                                <option value="reference">{translate 'admin.ai_presence_source_role_reference'}</option>
+                                <option value="archive">{translate 'admin.ai_presence_source_role_archive'}</option>
+                            </select>
+                        </div>
+                        <div class="form-row ap-sources-cms-row" id="ap-sources-cms-row">
+                            <select id="ap-connect-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
+                            <select id="ap-connect-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
+                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-source">{translate 'admin.ai_presence_add_cms_source'}</button>
+                        </div>
+                        <div class="form-row ap-sources-url-row" id="ap-sources-url-row" hidden>
+                            <input type="text" id="ap-source-label" class="input" placeholder="{translate 'admin.ai_presence_source_label'}">
+                            <input type="url" id="ap-source-url" class="input" placeholder="https://…">
+                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-url-source">{translate 'admin.add'}</button>
+                        </div>
+                        <ul id="ap-sources-list" class="ai-presence-ref-list"></ul>
+                        <p id="ap-sources-empty" class="ap-empty-state text-muted" hidden>{translate 'admin.ai_presence_sources_empty'}</p>
+                    </section>
                 </div>
 
                 <div class="tab-content" data-tab-content="context">
@@ -211,22 +257,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <ul id="ap-relationships-list" class="ai-presence-item-list"></ul>
                         <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-add-relationship">{translate 'admin.ai_presence_add_relationship'}</button>
                     </section>
-                    <section class="card mt-m">
-                        <h3>{translate 'admin.ai_presence_connected_content'}</h3>
-                        <p class="text-muted">{translate 'admin.ai_presence_connected_help'}</p>
-                        <div class="form-row">
-                            <select id="ap-connect-role" class="input">
-                                <option value="brand_description">Brand description</option>
-                                <option value="about">About</option>
-                                <option value="products">Products source</option>
-                                <option value="reference">Reference</option>
-                            </select>
-                            <select id="ap-connect-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
-                            <select id="ap-connect-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
-                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-connected">{translate 'admin.add'}</button>
-                        </div>
-                        <ul id="ap-connected-list" class="ai-presence-ref-list"></ul>
-                    </section>
                 </div>
 
                 <div class="tab-content" data-tab-content="products">
@@ -300,7 +330,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         </div>
                         <div class="form-group mt-s">
                             <label for="ap-pub-path">{translate 'admin.ai_presence_public_path'}</label>
-                            <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path" placeholder="/ai/brand.json">
+                            <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path" placeholder="/.well-known/agent-guide.json">
                             <p class="ap-setting-help">{translate 'admin.ai_presence_pub_path_help'}</p>
                         </div>
                         <p class="text-muted mt-s">{translate 'admin.ai_presence_publish_disclaimer'}</p>
