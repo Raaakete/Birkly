@@ -199,17 +199,27 @@
         var stepsEl = document.getElementById('ai-presence-next-steps');
         if (stepsEl) {
             stepsEl.innerHTML = '';
-            (data.next_steps || []).forEach(function (step) {
-                var li = document.createElement('li');
-                var btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'btn-link ai-presence-goto-tab';
-                btn.setAttribute('data-tab', step.tab);
-                btn.textContent = step.message;
-                li.appendChild(btn);
-                stepsEl.appendChild(li);
-            });
+            var steps = data.next_steps || [];
+            if (!steps.length) {
+                var doneLi = document.createElement('li');
+                doneLi.className = 'is-done';
+                doneLi.textContent = 'All checklist items complete — ready to publish.';
+                stepsEl.appendChild(doneLi);
+            } else {
+                steps.forEach(function (step) {
+                    var li = document.createElement('li');
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn-link ai-presence-goto-tab';
+                    btn.setAttribute('data-tab', step.tab);
+                    btn.textContent = step.message;
+                    li.appendChild(btn);
+                    stepsEl.appendChild(li);
+                });
+            }
         }
+
+        renderWorkflow(data);
 
         var urlsEl = document.getElementById('ai-presence-public-urls');
         var urls = data.public_urls || state.publicUrls || {};
@@ -488,55 +498,67 @@
         });
     }
 
-    function renderCopilotSuggestions() {
-        var list = document.getElementById('ap-copilot-suggestions');
+    function renderWorkflow(data) {
+        var c = data.completeness || {};
+        var items = c.items || [];
+        var byKey = {};
+        items.forEach(function (item) { byKey[item.key] = item; });
+
+        var map = {
+            context: ['identity', 'description', 'connected_content', 'positioning', 'terminology'],
+            products: ['products'],
+            claims: ['claims', 'evidence'],
+            publish: ['publishing']
+        };
+
+        document.querySelectorAll('.ap-workflow-step').forEach(function (step) {
+            var wf = step.getAttribute('data-workflow');
+            var keys = map[wf] || [];
+            var done = keys.length > 0 && keys.every(function (k) {
+                return byKey[k] && byKey[k].complete;
+            });
+            step.classList.toggle('is-done', done);
+        });
+    }
+
+    function renderAssistSuggestions() {
+        var list = document.getElementById('ap-assist-suggestions');
         var badge = document.getElementById('ap-suggestion-count');
+        var badgeFab = document.getElementById('ap-suggestion-count-fab');
+        var empty = document.getElementById('ap-assist-empty');
         if (!list) return;
         list.innerHTML = '';
-        if (badge) {
-            if (state.suggestions.length) {
-                badge.hidden = false;
-                badge.textContent = String(state.suggestions.length);
+        var count = state.suggestions.length;
+        [badge, badgeFab].forEach(function (el) {
+            if (!el) return;
+            if (count) {
+                el.hidden = false;
+                el.textContent = String(count);
             } else {
-                badge.hidden = true;
+                el.hidden = true;
             }
-        }
+        });
+        if (empty) empty.hidden = count > 0;
         state.suggestions.forEach(function (s) {
             var li = document.createElement('li');
             li.className = 'ap-suggestion-item';
             var valPreview = typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value || '');
-            if (valPreview.length > 200) valPreview = valPreview.slice(0, 200) + '…';
+            if (valPreview.length > 180) valPreview = valPreview.slice(0, 180) + '…';
             li.innerHTML =
-                '<strong>' + escapeHtml(s.label || s.field) + '</strong>' +
+                '<strong>' + escapeHtml(s.label || s.field) + '</strong> ' +
                 '<span class="badge">' + escapeHtml(s.confidence || 'medium') + '</span>' +
                 '<p>' + escapeHtml(valPreview) + '</p>' +
+                (s.source ? '<div class="ap-suggestion-meta">Source: ' + escapeHtml(s.source) + '</div>' : '') +
                 (state.canEdit ?
+                    '<div class="ap-suggestion-actions">' +
                     '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' +
                     escapeHtml(s.id) + '">Accept</button> ' +
                     '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' +
-                    escapeHtml(s.id) + '">Reject</button>' : '');
+                    escapeHtml(s.id) + '">Reject</button></div>' : '');
             list.appendChild(li);
         });
     }
 
-    function renderStudioSuggestions() {
-        var wrap = document.getElementById('ap-studio-results');
-        var list = document.getElementById('ap-studio-suggestions');
-        if (!list) return;
-        list.innerHTML = '';
-        if (!state.studioSuggestions.length) {
-            if (wrap) wrap.hidden = true;
-            return;
-        }
-        if (wrap) wrap.hidden = false;
-        state.studioSuggestions.forEach(function (s) {
-            var li = document.createElement('li');
-            var valPreview = typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value || '');
-            li.innerHTML = '<strong>' + escapeHtml(s.label || s.field) + '</strong><p>' +
-                escapeHtml(valPreview.slice(0, 300)) + '</p>';
-            list.appendChild(li);
-        });
-    }
 
     function populateAiConnections(connections) {
         state.aiConnections = connections || [];
@@ -559,8 +581,8 @@
         });
     }
 
-    function populateStudioCollections() {
-        var sel = document.getElementById('ap-studio-collections');
+    function populateAssistCollections() {
+        var sel = document.getElementById('ap-assist-collections');
         if (!sel) return;
         sel.innerHTML = '';
         state.collections.forEach(function (c) {
@@ -582,59 +604,71 @@
         renderMedia();
         renderPublishStatus(data);
         renderCmsDiff();
-        renderCopilotSuggestions();
+        renderAssistSuggestions();
+    }
+
+    function initWorkflowNav() {
+        document.querySelectorAll('.ap-workflow-step').forEach(function (step) {
+            step.addEventListener('click', function () {
+                var tab = step.getAttribute('data-workflow');
+                if (tab) switchTab(tab);
+            });
+        });
+    }
+
+    function initIntroDismiss() {
+        var intro = document.getElementById('ap-intro');
+        var btn = document.getElementById('ap-intro-dismiss');
+        if (!intro || !btn) return;
+        try {
+            if (localStorage.getItem('ap_intro_dismissed') === '1') {
+                intro.classList.add('is-collapsed');
+                btn.hidden = false;
+                btn.textContent = 'Show introduction';
+            } else {
+                btn.hidden = false;
+                btn.textContent = 'Hide introduction';
+            }
+        } catch (e) { /* ignore */ }
+        btn.addEventListener('click', function () {
+            var collapsed = intro.classList.toggle('is-collapsed');
+            btn.textContent = collapsed ? 'Show introduction' : 'Hide introduction';
+            try {
+                localStorage.setItem('ap_intro_dismissed', collapsed ? '1' : '0');
+            } catch (e) { /* ignore */ }
+        });
+    }
+
+    function initAssistSidebar() {
+        var sidebar = document.getElementById('ap-assist-sidebar');
+        var fab = document.getElementById('ap-assist-fab');
+        if (!fab || !sidebar) return;
+        fab.addEventListener('click', function () {
+            var open = sidebar.classList.toggle('is-open');
+            fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        document.addEventListener('click', function (e) {
+            if (!sidebar.classList.contains('is-open')) return;
+            if (sidebar.contains(e.target) || fab.contains(e.target)) return;
+            sidebar.classList.remove('is-open');
+            fab.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    function scrollAssistResults() {
+        var el = document.getElementById('ap-assist-results');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function maybeShowSetup(data) {
+        /* Setup flow merged into intro + assist sidebar — no blocking wizard. */
         var draft = data.draft || {};
-        var wizard = document.getElementById('ai-presence-setup-wizard');
-        var overview = document.getElementById('ai-presence-overview');
-        if (!wizard || !overview) return;
-        if (draft.setup_completed_at || draft.setup_skipped_at) {
-            wizard.hidden = true;
-            overview.hidden = false;
-            return;
+        if (!draft.setup_completed_at && !draft.setup_skipped_at) {
+            var empty = !(draft.identity && draft.identity.official_name);
+            if (empty) {
+                scrollAssistResults();
+            }
         }
-        var empty = !(draft.identity && draft.identity.official_name);
-        if (!empty) {
-            wizard.hidden = true;
-            overview.hidden = false;
-            return;
-        }
-        wizard.hidden = false;
-        overview.hidden = true;
-        wizard.innerHTML =
-            '<div class="card"><h3>Get started with AI Presence</h3>' +
-            '<p class="text-muted">Define brand context for AI systems — link existing CMS content, ' +
-            'add claims with evidence, then publish.</p>' +
-            '<ol class="ai-presence-setup-steps">' +
-            '<li>Brand identity</li><li>Connect content</li><li>Known for</li>' +
-            '<li>Language guidance</li><li>Review</li></ol>' +
-            '<button type="button" class="btn btn-primary" id="ap-setup-start">Get started</button> ' +
-            '<button type="button" class="btn btn-secondary" id="ap-setup-studio">Open Studio wizard</button> ' +
-            '<button type="button" class="btn btn-secondary" id="ap-setup-skip">Skip setup</button></div>';
-        bindEl('ap-setup-start', 'click', function () {
-            postJson({ action: 'setup_prefill' }).then(function (res) {
-                if (res.status === 'ok' && res.data.prefill) {
-                    state.draft = res.data.prefill;
-                    bindFields();
-                    renderSocial();
-                    switchTab('context');
-                    wizard.hidden = true;
-                    overview.hidden = false;
-                }
-            }).catch(function (e) { toast(e.message, 'error'); });
-        });
-        bindEl('ap-setup-studio', 'click', function () {
-            openStudioModal();
-        });
-        bindEl('ap-setup-skip', 'click', function () {
-            postJson({ action: 'setup_skip' }).then(function () {
-                wizard.hidden = true;
-                overview.hidden = false;
-                load();
-            });
-        });
     }
 
     function loadCollections() {
@@ -652,7 +686,7 @@
                         sel.appendChild(opt);
                     });
                 }
-                populateStudioCollections();
+                populateAssistCollections();
             }).catch(function () { /* optional */ });
     }
 
@@ -737,12 +771,12 @@
         var connId = getSelectedAiConnection();
         return postJson({ action: 'copilot', ai_connection_id: connId, mode: mode || 'all' })
             .then(function (res) {
-                if (res.status !== 'ok') throw new Error(res.message || 'Copilot failed');
+                if (res.status !== 'ok') throw new Error(res.message || 'Assist failed');
                 state.suggestions = res.data.suggestions || [];
-                renderCopilotSuggestions();
-                var panel = document.getElementById('ap-copilot-panel');
-                if (panel) panel.hidden = false;
-                toast(state.suggestions.length + ' suggestion(s)', 'info');
+                state.studioDraftPatch = null;
+                renderAssistSuggestions();
+                scrollAssistResults();
+                toast(state.suggestions.length + ' suggestion(s) to review', 'info');
             });
     }
 
@@ -761,6 +795,21 @@
 
     function acceptAllSuggestions() {
         if (!state.suggestions.length) return Promise.resolve();
+        if (state.studioDraftPatch) {
+            return postJson({
+                action: 'wizard_apply',
+                suggestions: state.suggestions,
+                draft_patch: state.studioDraftPatch
+            }).then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Apply failed');
+                state.draft = res.data.draft;
+                state.suggestions = [];
+                state.studioDraftPatch = null;
+                bindFields();
+                refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
+                toast('Draft proposal applied', 'success');
+            });
+        }
         return postJson({ action: 'accept_suggestions', suggestions: state.suggestions })
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Accept all failed');
@@ -812,30 +861,13 @@
             });
     }
 
-    function openStudioModal() {
-        var modal = document.getElementById('ap-studio-modal');
-        if (!modal) return;
-        populateStudioCollections();
-        state.studioSuggestions = [];
-        state.studioDraftPatch = null;
-        renderStudioSuggestions();
-        var results = document.getElementById('ap-studio-results');
-        if (results) results.hidden = true;
-        modal.hidden = false;
-    }
-
-    function closeStudioModal() {
-        var modal = document.getElementById('ap-studio-modal');
-        if (modal) modal.hidden = true;
-    }
-
-    function studioGenerate() {
-        var sel = document.getElementById('ap-studio-collections');
-        if (!sel) return;
+    function assistBuildFromCms() {
+        var sel = document.getElementById('ap-assist-collections');
+        if (!sel) return Promise.resolve();
         var collections = Array.from(sel.selectedOptions).map(function (o) { return o.value; });
         if (!collections.length) {
             toast('Select at least one collection', 'warning');
-            return;
+            return Promise.resolve();
         }
         return postJson({
             action: 'wizard_generate',
@@ -843,26 +875,11 @@
             ai_connection_id: getSelectedAiConnection()
         }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
-            state.studioSuggestions = res.data.suggestions || [];
+            state.suggestions = res.data.suggestions || [];
             state.studioDraftPatch = res.data.draft_patch || null;
-            renderStudioSuggestions();
-            toast(state.studioSuggestions.length + ' studio suggestion(s)', 'success');
-        });
-    }
-
-    function studioApply() {
-        return postJson({
-            action: 'wizard_apply',
-            suggestions: state.studioSuggestions,
-            draft_patch: state.studioDraftPatch || {}
-        }).then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Apply failed');
-            state.draft = res.data.draft;
-            state.studioSuggestions = [];
-            bindFields();
-            refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
-            closeStudioModal();
-            toast('Studio suggestions applied', 'success');
+            renderAssistSuggestions();
+            scrollAssistResults();
+            toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
         });
     }
 
@@ -1011,25 +1028,24 @@
             }
         });
 
-        bindEl('ap-copilot-btn', 'click', function () {
-            var panel = document.getElementById('ap-copilot-panel');
-            if (panel) panel.hidden = !panel.hidden;
-        });
-
-        document.querySelectorAll('[data-copilot-mode]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                runCopilot(btn.getAttribute('data-copilot-mode'))
-                    .catch(function (e) { toast(e.message, 'error'); });
-            });
-        });
-
         bindEl('ap-accept-all-suggestions', 'click', function () {
             acceptAllSuggestions().catch(function (e) { toast(e.message, 'error'); });
         });
 
-        var copilotList = document.getElementById('ap-copilot-suggestions');
-        if (copilotList) {
-            copilotList.addEventListener('click', function (e) {
+        document.querySelectorAll('[data-assist-mode]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                runCopilot(btn.getAttribute('data-assist-mode'))
+                    .catch(function (e) { toast(e.message, 'error'); });
+            });
+        });
+
+        bindEl('ap-assist-build', 'click', function () {
+            assistBuildFromCms().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        var assistList = document.getElementById('ap-assist-suggestions');
+        if (assistList) {
+            assistList.addEventListener('click', function (e) {
                 var id = e.target.getAttribute('data-id');
                 if (!id) return;
                 if (e.target.classList.contains('ap-accept-suggestion')) {
@@ -1037,7 +1053,7 @@
                 }
                 if (e.target.classList.contains('ap-reject-suggestion')) {
                     state.suggestions = state.suggestions.filter(function (s) { return s.id !== id; });
-                    renderCopilotSuggestions();
+                    renderAssistSuggestions();
                 }
             });
         }
@@ -1049,22 +1065,7 @@
             });
         });
 
-        bindEl('ap-studio-btn', 'click', openStudioModal);
-        bindEl('ap-studio-generate', 'click', function () {
-            studioGenerate().catch(function (e) { toast(e.message, 'error'); });
-        });
-        bindEl('ap-studio-apply', 'click', function () {
-            studioApply().catch(function (e) { toast(e.message, 'error'); });
-        });
-        document.querySelectorAll('[data-close-studio]').forEach(function (el) {
-            el.addEventListener('click', closeStudioModal);
-        });
-
         bindEl('ap-add-product', 'click', addProduct);
-        bindEl('ap-import-products-ai', 'click', function () {
-            switchTab('products');
-            runCopilot('fill_gaps').catch(function (e) { toast(e.message, 'error'); });
-        });
 
         var productsList = document.getElementById('ap-products-list');
         if (productsList) {
@@ -1303,7 +1304,7 @@
     }
 
     function isAiPresencePage() {
-        return !!document.querySelector('.ai-presence-page');
+        return !!document.querySelector('.ap-page');
     }
 
     global.initAiPresence = function (config) {
@@ -1311,8 +1312,12 @@
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
         initTabs();
+        initWorkflowNav();
+        initIntroDismiss();
+        initAssistSidebar();
         loadCollections().then(load).then(function () {
             bindActions();
+            renderAssistSuggestions();
         }).catch(function (e) {
             toast(e.message || 'Failed to load AI Presence', 'error');
             bindActions();
