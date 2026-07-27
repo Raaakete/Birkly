@@ -1,6 +1,6 @@
 <?php
 /**
- * Serves /.well-known/brand-context.json from published AI Presence snapshot.
+ * Serves /.well-known/brand-context.json from published Agent Guide snapshot (legacy path).
  */
 
 declare(strict_types=1);

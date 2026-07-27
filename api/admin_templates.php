@@ -208,6 +208,7 @@ function getPageData($page) {
         case 'feedback':
             return getFeedbackData();
         case 'ai-presence':
+        case 'agent-guide':
             return getAiPresenceData();
         default:
             return ['error' => 'Page not found'];

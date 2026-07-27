@@ -27,7 +27,7 @@ $graph = !empty($_GET['graph']);
 $published = birkly_ai_presence_load_published();
 if ($published === null || empty($published['publication_settings']['enabled'])) {
     http_response_code(404);
-    echo json_encode(['status' => 'error', 'message' => 'AI Presence not published or disabled']);
+    echo json_encode(['status' => 'error', 'message' => 'Agent Guide not published or disabled']);
     exit;
 }
 
@@ -37,9 +37,10 @@ $at = (string) ($meta['last_published_at'] ?? date('c'));
 $export = birkly_ai_presence_build_public_export($published, $version, $at);
 
 header('Cache-Control: public, max-age=300');
+header('X-Agent-Guide-Version: ' . $version);
 header('X-AI-Presence-Version: ' . $version);
 
-if ($action === 'brand') {
+if ($action === 'brand' || $action === 'guide') {
     $body = birkly_ai_presence_public_view($export, $view);
     echo json_encode(['status' => 'ok', 'data' => $body], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
