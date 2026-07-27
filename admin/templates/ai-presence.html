@@ -96,6 +96,15 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             <p id="ap-cms-sync-empty" class="ap-panel-empty text-muted" hidden></p>
                             <ul id="ap-cms-diff-list" class="ai-presence-item-list"></ul>
                         </section>
+                        <section class="card mt-m ap-panel" id="ap-link-health-panel">
+                            <h3>{translate 'admin.ai_presence_cross_links'}</h3>
+                            <p class="text-muted ap-panel-lede">{translate 'admin.ai_presence_cross_links_help'}</p>
+                            <div class="ap-link-actions">
+                                <button type="button" class="btn btn-sm btn-secondary" id="ap-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="ap-validate-links">{translate 'admin.ai_presence_validate_links'}</button>
+                            </div>
+                            <ul id="ap-link-health-list" class="ai-presence-item-list ap-link-health-list"></ul>
+                        </section>
                         <section class="card mt-m ap-panel" id="ap-public-urls-panel"
                             data-msg-no-base="{translate 'admin.ai_presence_public_urls_no_base'}"
                             data-settings-url="<?= htmlspecialchars(admin_url('settings') . '?tab=site-delivery') ?>">
@@ -355,6 +364,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <button type="button" class="btn btn-primary ap-assist-auto-btn" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
                 <button type="button" class="btn btn-sm btn-secondary ap-assist-secondary-btn" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
                 <button type="button" class="btn btn-sm btn-secondary ap-assist-secondary-btn" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
+                <button type="button" class="btn btn-sm btn-secondary ap-assist-secondary-btn" id="ap-assist-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
                 <p id="ap-assist-auto-status" class="ap-hint ap-assist-status"></p>
             </div>
 
@@ -448,6 +458,36 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         </div>
                     </div>
                 </div>
+                <div class="ap-modal-fullwidth">
+                    <h4 class="ap-modal-subtitle">{translate 'admin.ai_presence_source_links'}</h4>
+                    <p class="ap-setting-help ap-setting-help--inline">{translate 'admin.ai_presence_source_links_help'}</p>
+                    <ul id="ap-product-sources-list" class="ap-sources-list"></ul>
+                    <div class="ap-source-add-grid">
+                        <select id="ap-product-source-role" class="input">
+                            <option value="canonical_detail">{translate 'admin.ai_presence_source_role_canonical'}</option>
+                            <option value="marketplace">{translate 'admin.ai_presence_source_role_marketplace'}</option>
+                            <option value="review">{translate 'admin.ai_presence_source_role_review'}</option>
+                            <option value="docs">{translate 'admin.ai_presence_source_role_docs'}</option>
+                            <option value="purchase">{translate 'admin.ai_presence_source_role_purchase'}</option>
+                            <option value="reference">{translate 'admin.ai_presence_source_role_reference'}</option>
+                        </select>
+                        <select id="ap-product-source-type" class="input">
+                            <option value="public_page">{translate 'admin.ai_presence_source_type_page'}</option>
+                            <option value="cms_entry">{translate 'admin.ai_presence_source_type_cms'}</option>
+                            <option value="marketplace_listing">{translate 'admin.ai_presence_source_type_marketplace'}</option>
+                            <option value="review_platform">{translate 'admin.ai_presence_source_type_review'}</option>
+                            <option value="docs">{translate 'admin.ai_presence_source_type_docs'}</option>
+                            <option value="other">{translate 'admin.ai_presence_source_type_other'}</option>
+                        </select>
+                        <input type="text" id="ap-product-source-label" class="input" placeholder="{translate 'admin.title'}">
+                        <input type="url" id="ap-product-source-url" class="input" placeholder="https://…">
+                    </div>
+                    <div class="ap-source-cms-row" id="ap-product-source-cms-row" hidden>
+                        <select id="ap-product-source-collection" class="input"><option value="">{translate 'admin.collection'}</option></select>
+                        <select id="ap-product-source-entry" class="input"><option value="">{translate 'admin.entry'}</option></select>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-product-add-source">{translate 'admin.ai_presence_add_source_link'}</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-product-modal">{translate 'admin.cancel'}</button>
@@ -509,6 +549,21 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     </select>
                 </div>
                 <div class="form-group"><label for="ap-claim-notes">{translate 'admin.notes'}</label><textarea id="ap-claim-notes" class="input" rows="2"></textarea></div>
+                <div class="form-group">
+                    <label>{translate 'admin.ai_presence_source_links'}</label>
+                    <p class="ap-setting-help ap-setting-help--inline">{translate 'admin.ai_presence_claim_sources_help'}</p>
+                    <ul id="ap-claim-sources-list" class="ap-sources-list"></ul>
+                    <div class="ap-source-add-grid">
+                        <select id="ap-claim-source-role" class="input">
+                            <option value="proof">{translate 'admin.ai_presence_source_role_proof'}</option>
+                            <option value="review">{translate 'admin.ai_presence_source_role_review'}</option>
+                            <option value="reference">{translate 'admin.ai_presence_source_role_reference'}</option>
+                        </select>
+                        <input type="text" id="ap-claim-source-label" class="input" placeholder="{translate 'admin.title'}">
+                        <input type="url" id="ap-claim-source-url" class="input" placeholder="https://…">
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-claim-add-source">{translate 'admin.ai_presence_add_source_link'}</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-ap-modal-close="ap-claim-modal">{translate 'admin.cancel'}</button>
@@ -534,9 +589,17 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <select id="ap-evidence-type" class="input">
                         <option value="external_url">External URL</option>
                         <option value="cms_content">CMS content</option>
-                        <option value="document">Document</option>
+                        <option value="marketplace_listing">{translate 'admin.ai_presence_evidence_marketplace'}</option>
+                        <option value="review_platform">{translate 'admin.ai_presence_evidence_review'}</option>
+                        <option value="certification">{translate 'admin.ai_presence_evidence_certification'}</option>
+                        <option value="publication">{translate 'admin.ai_presence_evidence_publication'}</option>
+                        <option value="upload">Document / upload</option>
                         <option value="other">Other</option>
                     </select>
+                </div>
+                <div class="ap-evidence-meta-grid">
+                    <div class="form-group"><label for="ap-evidence-rating">{translate 'admin.ai_presence_rating'}</label><input type="number" id="ap-evidence-rating" class="input" min="0" max="5" step="0.1" placeholder="4.8"></div>
+                    <div class="form-group"><label for="ap-evidence-review-count">{translate 'admin.ai_presence_review_count'}</label><input type="number" id="ap-evidence-review-count" class="input" min="0" step="1" placeholder="1200"></div>
                 </div>
                 <div class="form-group"><label for="ap-evidence-notes">{translate 'admin.notes'}</label><textarea id="ap-evidence-notes" class="input" rows="2"></textarea></div>
             </div>
