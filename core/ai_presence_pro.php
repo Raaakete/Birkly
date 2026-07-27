@@ -39,18 +39,20 @@ function birkly_ai_presence_list_ai_connections_for_user(string $userId): array
  */
 function birkly_ai_presence_call_ai(string $connectionId, string $systemPrompt, string $userPrompt): array
 {
-    if ($connectionId === '' || !function_exists('callAiProvider')) {
-        return ['ok' => false, 'error' => 'AI connection not available'];
+    if ($connectionId === '') {
+        return ['ok' => false, 'error' => 'AI connection not selected'];
     }
 
-    require_once __DIR__ . '/../api/ai_chat.php';
     require_once __DIR__ . '/../api/ai_helpers.php';
-    require_once __DIR__ . '/../api/storage.php';
+    birkly_ai_bootstrap_call_provider();
+
+    if (!function_exists('callAiProvider')) {
+        return ['ok' => false, 'error' => 'AI provider unavailable'];
+    }
 
     ensureEncryptionKeyBootstrapped();
 
-    $storage = new Storage(dirname(__DIR__) . '/users');
-    $conn = $storage->read($connectionId . '.json');
+    $conn = birkly_ai_load_connection_record($connectionId);
     if (!is_array($conn) || ($conn['type'] ?? '') !== 'ai') {
         return ['ok' => false, 'error' => 'Invalid AI connection'];
     }
