@@ -65,6 +65,7 @@
     const STORAGE_KEY_MESSAGES = 'ai_chat_messages';
     const STORAGE_KEY_RECENT = 'ai_chat_recent_chats';
     const STORAGE_KEY_CONSOLE = 'ai_chat_console_logs';
+    const STORAGE_KEY_WINDOW_OPEN = 'ai_chat_window_open';
     const CONSOLE_LOG_LIMIT = 200;
 
     // Initialize
@@ -72,7 +73,7 @@
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         loadConsoleLogs();
         loadConnections().then(() => {
-            restoreChatState();
+            restoreChatState().then(() => restoreChatWindowOpen());
         });
         createFloatingButton();
         loadApprovalQueue();
@@ -144,10 +145,6 @@
         menu.className = 'assist-fab-menu';
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
-            <button type="button" class="assist-fab-action" id="assist-fab-ai" role="menuitem" title="AI Assistant" aria-label="AI Assistant">
-                ${icon('sparkle', { size: 20 })}
-                <span>AI Chat</span>
-            </button>
             <button type="button" class="assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
                 ${icon('paper-plane-tilt', { size: 20 })}
                 <span>Feedback</span>
@@ -161,9 +158,10 @@
         button.setAttribute('aria-label', 'Open assist menu');
         button.setAttribute('aria-expanded', 'false');
         button.setAttribute('aria-haspopup', 'menu');
+        button.title = 'Assist';
         button.innerHTML = `
             ${icon('sparkle', { size: 22, class: 'assist-fab-icon assist-fab-icon-menu' })}
-            ${icon('x', { size: 22, class: 'assist-fab-icon assist-fab-icon-close', ariaHidden: true })}
+            ${icon('sparkle', { size: 22, class: 'assist-fab-icon assist-fab-icon-open', ariaHidden: true })}
         `;
 
         const badge = document.createElement('span');
@@ -180,17 +178,18 @@
         function setMenuOpen(open) {
             wrap.classList.toggle('open', open);
             button.setAttribute('aria-expanded', open ? 'true' : 'false');
+            button.setAttribute('aria-label', open ? 'Open AI Assistant' : 'Open assist menu');
+            button.title = open ? 'AI Assistant' : 'Assist';
         }
 
         button.addEventListener('click', async function (e) {
             e.stopPropagation();
-            setMenuOpen(!wrap.classList.contains('open'));
-        });
-
-        document.getElementById('assist-fab-ai').addEventListener('click', async function (e) {
-            e.stopPropagation();
-            setMenuOpen(false);
-            toggleChatWindow();
+            if (wrap.classList.contains('open')) {
+                setMenuOpen(false);
+                await openAiChatFromFab();
+                return;
+            }
+            setMenuOpen(true);
         });
 
         document.getElementById('assist-fab-feedback').addEventListener('click', async function (e) {
@@ -440,25 +439,26 @@
         });
     }
 
-    // Toggle chat window
+    async function openAiChatFromFab() {
+        if (!document.getElementById('ai-chat-window')) {
+            createChatWindow();
+            addNewChatButton();
+        }
+        await showChatWindow();
+    }
+
+    // Toggle chat window (header close uses hideChatWindow only)
     function toggleChatWindow() {
         const chatWindow = document.getElementById('ai-chat-window');
         
         if (chatWindow) {
-            // Toggle visibility
             if (chatWindow.style.display === 'none' || !chatWindow.style.display) {
                 showChatWindow();
             } else {
                 hideChatWindow();
             }
         } else {
-            createChatWindow();
-            showChatWindow();
-            addNewChatButton();
-            // Restore state if available
-            if (currentConnection && chatMessages.length > 0) {
-                updateChatUI();
-            }
+            openAiChatFromFab();
         }
     }
 
@@ -604,6 +604,10 @@
         renderConnectionDropdown();
 
         chatWindow.style.display = 'flex';
+        document.body.classList.add('ai-chat-window-open');
+        try {
+            localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '1');
+        } catch (e) { /* ignore */ }
         renderInChatQuickActions();
 
         if (availableConnections.length === 0) {
@@ -664,6 +668,28 @@
         const chatWindow = document.getElementById('ai-chat-window');
         if (chatWindow) {
             chatWindow.style.display = 'none';
+        }
+        document.body.classList.remove('ai-chat-window-open');
+        try {
+            localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '0');
+        } catch (e) { /* ignore */ }
+    }
+
+    async function restoreChatWindowOpen() {
+        let shouldOpen = false;
+        try {
+            shouldOpen = localStorage.getItem(STORAGE_KEY_WINDOW_OPEN) === '1';
+        } catch (e) { /* ignore */ }
+        if (!shouldOpen) {
+            return;
+        }
+        if (!document.getElementById('ai-chat-window')) {
+            createChatWindow();
+            addNewChatButton();
+        }
+        await showChatWindow();
+        if (chatMessages.length > 0) {
+            updateChatUI();
         }
     }
 
