@@ -305,6 +305,57 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             'data' => getOnboardingStatus($userId)
         ]);
         exit;
+
+    case 'save_site_info':
+        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        $projectName = trim((string) ($input['project_name'] ?? ''));
+        $projectDescription = trim((string) ($input['project_description'] ?? ''));
+
+        if (strlen($projectName) < 2) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Project name must be at least 2 characters']);
+            exit;
+        }
+
+        $settingsStorage = new Storage('../settings');
+        $adminSettings = $settingsStorage->read('admin.json') ?? [];
+        $adminSettings['project_name'] = $projectName;
+        $adminSettings['project_description'] = $projectDescription;
+        $adminSettings['_updated_at'] = date('c');
+        $adminSettings['_updated_by'] = $_SESSION['user']['id'] ?? '';
+        if (!$settingsStorage->write('admin.json', $adminSettings)) {
+            http_response_code(500);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to save project settings']);
+            exit;
+        }
+
+        $siteSettings = $settingsStorage->read('site.json') ?? [];
+        $siteSettings['name'] = $projectName;
+        if ($projectDescription !== '') {
+            $siteSettings['description'] = $projectDescription;
+        }
+        $settingsStorage->write('site.json', $siteSettings);
+
+        $userStorage = new Storage('../users');
+        $existing = $userStorage->read(normalizeOnboardingUserKey($userId) . '_onboarding.json') ?? [];
+        $progress = is_array($existing['progress'] ?? null) ? $existing['progress'] : [];
+        $progress['project_name'] = $projectName;
+        if ($projectDescription !== '') {
+            $progress['project_description'] = $projectDescription;
+        }
+
+        saveOnboardingProgress($userId, [
+            'last_step' => 2,
+            'current_step' => 'site-info',
+            'progress' => $progress,
+        ]);
+
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Project information saved',
+            'data' => getOnboardingStatus($userId),
+        ]);
+        exit;
         
     case 'update_progress':
         // Update onboarding progress
