@@ -1033,6 +1033,8 @@
     // Hide chat window
     function hideChatWindow() {
         const chatWindow = document.getElementById('ai-chat-window');
+        closeSidePanel();
+        closeModelMenu();
         if (chatWindow) {
             chatWindow.style.display = 'none';
         }
