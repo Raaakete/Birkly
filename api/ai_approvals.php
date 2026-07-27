@@ -387,6 +387,7 @@ function executeAiAction($approval) {
 
 // Execute create collection
 function executeCreateCollection($actionData, $aiUser = null, $originalUserId = null) {
+    $actionData = birkly_ai_normalize_collection_action_data($actionData);
     $name = $actionData['name'] ?? '';
     $slug = $actionData['slug'] ?? '';
     $fields = $actionData['fields'] ?? [];
@@ -750,6 +751,7 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
     require_once __DIR__ . '/storage.php';
     require_once __DIR__ . '/../core/content_resolve.php';
 
+    $actionData = birkly_ai_normalize_collection_action_data($actionData);
     $slugRef = (string) ($actionData['slug'] ?? '');
     if ($slugRef === '') {
         return ['success' => false, 'message' => 'Collection slug is required'];
@@ -780,6 +782,7 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
 
 // Execute delete collection
 function executeDeleteCollection($actionData, $aiUser = null, $originalUserId = null) {
+    $actionData = birkly_ai_normalize_collection_action_data($actionData);
     $slug = $actionData['slug'] ?? '';
     if (empty($slug)) {
         return ['success' => false, 'message' => 'Collection slug is required'];
