@@ -19,6 +19,10 @@
     let consoleLogs = [];
     let consoleUnread = 0;
     let assistFabState = 'idle';
+    let sidePanelView = null;
+    let chatModelOverride = '';
+    let pendingAttachments = [];
+    let chatModelOptions = [];
 
     function setAssistFabState(state) {
         const wrap = document.getElementById('assist-fab-wrap');
@@ -270,11 +274,19 @@
                 }
             }
         }
-        const tabBadge = document.getElementById('ai-chat-approvals-tab-badge');
+        const tabBadge = document.getElementById('ai-chat-approvals-header-badge');
         if (tabBadge) {
-            tabBadge.textContent = count > 0 ? String(count) : '';
+            tabBadge.textContent = count > 0 ? (count > 9 ? '9+' : String(count)) : '';
             tabBadge.style.display = count > 0 ? 'inline-flex' : 'none';
         }
+    }
+
+    function updateApprovalsHeaderButton() {
+        const btn = document.getElementById('ai-chat-approvals-btn');
+        if (!btn || !currentConnection) return;
+        const show = currentConnection.require_approval === true || currentConnection.require_approval === '1';
+        btn.style.display = show ? 'inline-flex' : 'none';
+        btn.hidden = !show;
     }
 
     async function loadApprovalQueue() {
@@ -372,7 +384,7 @@
     }
 
     function updateConsoleBadge() {
-        const badge = document.getElementById('ai-chat-console-tab-badge');
+        const badge = document.getElementById('ai-chat-console-header-badge');
         if (!badge) return;
         if (consoleUnread > 0) {
             badge.textContent = consoleUnread > 99 ? '99+' : String(consoleUnread);
@@ -420,39 +432,37 @@
         }).join('');
     }
 
-    function switchChatView(view) {
-        chatView = view;
-        const messagesPanel = document.getElementById('ai-chat-messages-panel');
-        const approvalsPanel = document.getElementById('ai-chat-approvals-panel');
+    function openSidePanel(view) {
+        const panel = document.getElementById('ai-chat-side-panel');
+        const titleEl = document.getElementById('ai-chat-side-panel-title');
         const historyPanel = document.getElementById('ai-chat-history-panel');
         const consolePanel = document.getElementById('ai-chat-console-panel');
-        const inputContainer = document.querySelector('.ai-chat-input-container');
-        const tabMessages = document.getElementById('ai-chat-tab-messages');
-        const tabApprovals = document.getElementById('ai-chat-tab-approvals');
-        const tabHistory = document.getElementById('ai-chat-tab-history');
-        const tabConsole = document.getElementById('ai-chat-tab-console');
+        const approvalsPanel = document.getElementById('ai-chat-approvals-panel');
+        const buttons = {
+            history: document.getElementById('ai-chat-history-btn'),
+            console: document.getElementById('ai-chat-console-btn'),
+            approvals: document.getElementById('ai-chat-approvals-btn'),
+        };
 
-        if (messagesPanel) messagesPanel.style.display = view === 'messages' ? 'flex' : 'none';
-        if (approvalsPanel) approvalsPanel.style.display = view === 'approvals' ? 'block' : 'none';
-        if (historyPanel) historyPanel.style.display = view === 'history' ? 'block' : 'none';
-        if (consolePanel) consolePanel.style.display = view === 'console' ? 'block' : 'none';
-        if (inputContainer) inputContainer.style.display = view === 'messages' ? 'block' : 'none';
-        if (tabMessages) {
-            tabMessages.classList.toggle('active', view === 'messages');
-            tabMessages.setAttribute('aria-selected', view === 'messages' ? 'true' : 'false');
+        if (sidePanelView === view) {
+            closeSidePanel();
+            return;
         }
-        if (tabApprovals) {
-            tabApprovals.classList.toggle('active', view === 'approvals');
-            tabApprovals.setAttribute('aria-selected', view === 'approvals' ? 'true' : 'false');
-        }
-        if (tabHistory) {
-            tabHistory.classList.toggle('active', view === 'history');
-            tabHistory.setAttribute('aria-selected', view === 'history' ? 'true' : 'false');
-        }
-        if (tabConsole) {
-            tabConsole.classList.toggle('active', view === 'console');
-            tabConsole.setAttribute('aria-selected', view === 'console' ? 'true' : 'false');
-        }
+
+        sidePanelView = view;
+        chatView = view;
+        if (panel) panel.hidden = false;
+        if (historyPanel) historyPanel.hidden = view !== 'history';
+        if (consolePanel) consolePanel.hidden = view !== 'console';
+        if (approvalsPanel) approvalsPanel.hidden = view !== 'approvals';
+
+        const titles = { history: 'History', console: 'Console', approvals: 'Approvals' };
+        if (titleEl) titleEl.textContent = titles[view] || 'Panel';
+
+        Object.keys(buttons).forEach(function (key) {
+            if (buttons[key]) buttons[key].classList.toggle('active', key === view);
+        });
+
         if (view === 'approvals') renderApprovalQueuePanel();
         if (view === 'history') renderHistoryPanel();
         if (view === 'console') {
@@ -460,6 +470,24 @@
             updateConsoleBadge();
             renderConsolePanel();
         }
+    }
+
+    function closeSidePanel() {
+        sidePanelView = null;
+        chatView = 'messages';
+        const panel = document.getElementById('ai-chat-side-panel');
+        if (panel) panel.hidden = true;
+        ['ai-chat-history-btn', 'ai-chat-console-btn', 'ai-chat-approvals-btn'].forEach(function (id) {
+            document.getElementById(id)?.classList.remove('active');
+        });
+    }
+
+    function switchChatView(view) {
+        if (view === 'messages') {
+            closeSidePanel();
+            return;
+        }
+        openSidePanel(view);
     }
 
     function bindChatWindowActions(chatWindow) {
@@ -481,7 +509,6 @@
     async function openAiChatFromFab() {
         if (!document.getElementById('ai-chat-window')) {
             createChatWindow();
-            addNewChatButton();
         }
         await showChatWindow();
     }
@@ -508,68 +535,98 @@
         chatWindow.className = 'ai-chat-window';
         chatWindow.innerHTML = `
             <div class="ai-chat-header">
-                <div class="ai-chat-header-info">
-                    <h3>AI Assistant</h3>
-                    <div class="ai-chat-connection-picker">
-                        <label for="ai-chat-connection-select" class="sr-only">AI connection</label>
-                        <select id="ai-chat-connection-select" class="ai-chat-connection-select" title="Choose AI connection">
-                            <option value="">Loading connections...</option>
-                        </select>
-                    </div>
+                <div class="ai-chat-header-brand">
+                    <span class="ai-chat-header-prefix">AI:</span>
+                    <label for="ai-chat-connection-select" class="sr-only">AI connection</label>
+                    <select id="ai-chat-connection-select" class="ai-chat-connection-inline" title="Choose AI connection">
+                        <option value="">Loading connections...</option>
+                    </select>
                 </div>
                 <div class="ai-chat-header-actions">
-                    <button class="btn-icon" id="ai-chat-fullscreen-btn" title="Toggle fullscreen">
-                        ${icon('arrows-out', { size: 16 })}
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-history-btn" title="History" aria-label="History">
+                        ${icon('clock', { size: 18 })}
                     </button>
-                    <button class="btn-icon" id="ai-chat-close-btn" title="Close chat">
-                        ${icon('x', { size: 16 })}
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-console-btn" title="Console" aria-label="Console">
+                        ${icon('code', { size: 18 })}
+                        <span class="ai-chat-header-badge" id="ai-chat-console-header-badge" style="display: none;"></span>
+                    </button>
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-approvals-btn" title="Approvals" aria-label="Approvals" hidden>
+                        ${icon('list-checks', { size: 18 })}
+                        <span class="ai-chat-header-badge" id="ai-chat-approvals-header-badge" style="display: none;"></span>
+                    </button>
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-new-btn" title="New chat" aria-label="New chat">
+                        ${icon('plus', { size: 18 })}
+                    </button>
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+                        ${icon('arrows-out', { size: 18 })}
                     </button>
                 </div>
             </div>
             <div class="ai-chat-body">
-                <div class="ai-chat-view-tabs" role="tablist">
-                    <button type="button" class="ai-chat-view-tab active" id="ai-chat-tab-messages" role="tab" aria-selected="true">Chat</button>
-                    <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-history" role="tab" aria-selected="false">History</button>
-                    <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-console" role="tab" aria-selected="false">
-                        Console <span class="ai-chat-tab-badge" id="ai-chat-console-tab-badge" style="display: none;"></span>
-                    </button>
-                    <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-approvals" role="tab" aria-selected="false">
-                        Approvals <span class="ai-chat-tab-badge" id="ai-chat-approvals-tab-badge" style="display: none;"></span>
-                    </button>
-                </div>
-                <div class="ai-chat-messages-panel" id="ai-chat-messages-panel">
-                    <div class="ai-chat-messages" id="ai-chat-messages">
-                        <div class="ai-chat-welcome">
-                            <p>Select an AI connection to start chatting. The AI can help you create and edit content.</p>
+                <div class="ai-chat-main">
+                    <div class="ai-chat-messages-panel" id="ai-chat-messages-panel">
+                        <div class="ai-chat-messages" id="ai-chat-messages">
+                            <div class="ai-chat-welcome">
+                                <p>Select an AI connection to start chatting. The AI can help you create and edit content.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-chat-side-panel" id="ai-chat-side-panel" hidden>
+                        <div class="ai-chat-side-panel-head">
+                            <span id="ai-chat-side-panel-title">History</span>
+                            <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-side-panel-back" title="Back to chat" aria-label="Back to chat">
+                                ${icon('x', { size: 16 })}
+                            </button>
+                        </div>
+                        <div class="ai-chat-history-panel ai-chat-side-panel-body" id="ai-chat-history-panel" hidden>
+                            <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
+                        </div>
+                        <div class="ai-chat-console-panel ai-chat-side-panel-body" id="ai-chat-console-panel" hidden>
+                            <div class="ai-chat-console-toolbar">
+                                <span class="ai-chat-console-hint">Action results and errors from this session</span>
+                                <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
+                            </div>
+                            <div class="ai-chat-console-list" id="ai-chat-console-list"></div>
+                        </div>
+                        <div class="ai-chat-approvals-panel ai-chat-side-panel-body" id="ai-chat-approvals-panel" hidden>
+                            <div class="loading">Loading approvals...</div>
                         </div>
                     </div>
                 </div>
-                <div class="ai-chat-history-panel" id="ai-chat-history-panel" style="display: none;">
-                    <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
-                </div>
-                <div class="ai-chat-console-panel" id="ai-chat-console-panel" style="display: none;">
-                    <div class="ai-chat-console-toolbar">
-                        <span class="ai-chat-console-hint">Action results and errors from this session</span>
-                        <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
-                    </div>
-                    <div class="ai-chat-console-list" id="ai-chat-console-list"></div>
-                </div>
-                <div class="ai-chat-approvals-panel" id="ai-chat-approvals-panel" style="display: none;">
-                    <div class="loading">Loading approvals...</div>
-                </div>
-                <div class="ai-chat-input-container">
-                    <div class="ai-chat-quick-actions" id="ai-chat-quick-actions" hidden></div>
-                    <div class="ai-chat-input-wrapper">
-                        <textarea 
-                            id="ai-chat-input" 
-                            placeholder="Ask the AI to create or edit content..."
-                            rows="2"
+                <div class="ai-chat-composer">
+                    <div class="ai-chat-attachment-list" id="ai-chat-attachment-list" hidden></div>
+                    <div class="ai-chat-composer-box">
+                        <textarea
+                            id="ai-chat-input"
+                            placeholder="Ask the AI to create or edit content…"
+                            rows="1"
                         ></textarea>
-                        <button class="btn btn-primary" id="ai-chat-send-btn" type="button" aria-label="Send message">
-                            <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 16 })}</span>
-                            <span class="ai-chat-cancel-icon" style="display:none;">${icon('stop', { size: 16 })}</span>
-                        </button>
+                        <div class="ai-chat-composer-footer">
+                            <div class="ai-chat-composer-tools">
+                                <input type="file" id="ai-chat-image-input" accept="image/*" hidden>
+                                <input type="file" id="ai-chat-doc-input" accept=".txt,.md,.json,.csv,.pdf" hidden>
+                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-image" title="Add image" aria-label="Add image" hidden>
+                                    ${icon('image', { size: 18 })}
+                                </button>
+                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-doc" title="Add document" aria-label="Add document" hidden>
+                                    ${icon('file-text', { size: 18 })}
+                                </button>
+                                <div class="ai-chat-model-picker" id="ai-chat-model-picker" hidden>
+                                    <button type="button" class="ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" title="Choose model" aria-haspopup="listbox" aria-expanded="false">
+                                        ${icon('sparkle', { size: 16 })}
+                                        <span id="ai-chat-model-label">Model</span>
+                                        ${icon('caret-down', { size: 12 })}
+                                    </button>
+                                    <div class="ai-chat-model-menu" id="ai-chat-model-menu" role="listbox" hidden></div>
+                                </div>
+                            </div>
+                            <button type="button" class="ai-chat-send-btn" id="ai-chat-send-btn" aria-label="Send message">
+                                <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 18 })}</span>
+                                <span class="ai-chat-cancel-icon" style="display:none;">${icon('stop', { size: 18 })}</span>
+                            </button>
+                        </div>
                     </div>
+                    <div class="ai-chat-quick-actions" id="ai-chat-quick-actions" hidden></div>
                 </div>
             </div>
             <div class="ai-chat-connection-selector" id="ai-chat-connection-selector" style="display: none;" aria-hidden="true">
@@ -581,9 +638,12 @@
         document.body.appendChild(chatWindow);
         bindChatWindowActions(chatWindow);
         
-        // Setup event listeners
-        document.getElementById('ai-chat-close-btn')?.addEventListener('click', hideChatWindow);
         document.getElementById('ai-chat-fullscreen-btn')?.addEventListener('click', toggleFullscreen);
+        document.getElementById('ai-chat-history-btn')?.addEventListener('click', () => openSidePanel('history'));
+        document.getElementById('ai-chat-console-btn')?.addEventListener('click', () => openSidePanel('console'));
+        document.getElementById('ai-chat-approvals-btn')?.addEventListener('click', () => openSidePanel('approvals'));
+        document.getElementById('ai-chat-side-panel-back')?.addEventListener('click', closeSidePanel);
+        document.getElementById('ai-chat-new-btn')?.addEventListener('click', startNewChat);
         document.getElementById('ai-chat-send-btn')?.addEventListener('click', async function () {
             if (isChatRequestInFlight) {
                 cancelChatRequest();
@@ -597,12 +657,18 @@
                 sendChatMessage();
             }
         });
-
-        document.getElementById('ai-chat-tab-messages')?.addEventListener('click', async () => switchChatView('messages'));
-        document.getElementById('ai-chat-tab-history')?.addEventListener('click', async () => switchChatView('history'));
-        document.getElementById('ai-chat-tab-console')?.addEventListener('click', async () => switchChatView('console'));
-        document.getElementById('ai-chat-tab-approvals')?.addEventListener('click', async () => switchChatView('approvals'));
+        document.getElementById('ai-chat-input')?.addEventListener('input', autoResizeChatInput);
         document.getElementById('ai-chat-console-clear')?.addEventListener('click', clearConsoleLogs);
+        document.getElementById('ai-chat-attach-image')?.addEventListener('click', () => document.getElementById('ai-chat-image-input')?.click());
+        document.getElementById('ai-chat-attach-doc')?.addEventListener('click', () => document.getElementById('ai-chat-doc-input')?.click());
+        document.getElementById('ai-chat-image-input')?.addEventListener('change', handleImageAttachment);
+        document.getElementById('ai-chat-doc-input')?.addEventListener('change', handleDocumentAttachment);
+        document.getElementById('ai-chat-model-trigger')?.addEventListener('click', toggleModelMenu);
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#ai-chat-model-picker')) {
+                closeModelMenu();
+            }
+        });
 
         document.getElementById('ai-chat-connection-select')?.addEventListener('change', async function(e) {
             const connectionId = e.target.value;
@@ -615,19 +681,196 @@
             selectConnection(connectionId);
         });
         
-        // Add new chat button
-        addNewChatButton();
-        
-        // Load connections into header dropdown
         renderConnectionDropdown();
         loadApprovalQueue();
         updateApprovalBadge();
         updateConsoleBadge();
         
-        // Restore chat state if available
         if (currentConnection && chatMessages.length > 0) {
             updateChatUI();
         }
+    }
+
+    function autoResizeChatInput() {
+        const input = document.getElementById('ai-chat-input');
+        if (!input) return;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+    }
+
+    async function startNewChat() {
+        if (chatMessages.length > 0) {
+            indexRecentChat();
+        }
+        if (await BirklyFeedback.confirm('Start a new chat? This will clear the current conversation.')) {
+            clearChatState();
+            closeSidePanel();
+            const messages = document.getElementById('ai-chat-messages');
+            if (messages) {
+                messages.innerHTML = '<div class="ai-chat-welcome"><p>New chat started. Ask the AI to help you create or edit content.</p></div>';
+            }
+            conversationId = 'conv_' + Date.now();
+            saveChatState();
+        }
+    }
+
+    function updateChatComposerCapabilities() {
+        const caps = currentConnection?.capabilities || {};
+        const imageBtn = document.getElementById('ai-chat-attach-image');
+        const docBtn = document.getElementById('ai-chat-attach-doc');
+        const modelPicker = document.getElementById('ai-chat-model-picker');
+        if (imageBtn) {
+            imageBtn.hidden = !caps.vision;
+            imageBtn.title = caps.vision ? 'Add image (vision models)' : 'Images not supported for this provider';
+        }
+        if (docBtn) {
+            docBtn.hidden = !caps.documents;
+            docBtn.title = caps.documents ? 'Add text document (.txt, .md, .json, .csv)' : 'Documents not supported for this provider';
+        }
+        if (modelPicker) modelPicker.hidden = !caps.model_picker;
+        updateApprovalsHeaderButton();
+        if (caps.model_picker) {
+            loadChatModels();
+        } else {
+            chatModelOverride = '';
+            updateModelLabel();
+        }
+    }
+
+    function updateModelLabel() {
+        const label = document.getElementById('ai-chat-model-label');
+        if (!label || !currentConnection) return;
+        const model = chatModelOverride || currentConnection.model || 'Model';
+        const short = model.includes('/') ? model.split('/').pop() : model;
+        label.textContent = short.length > 22 ? short.slice(0, 20) + '…' : short;
+    }
+
+    async function loadChatModels() {
+        if (!currentConnection) return;
+        const menu = document.getElementById('ai-chat-model-menu');
+        if (!menu) return;
+        menu.innerHTML = '<div class="ai-chat-model-loading">Loading models…</div>';
+        try {
+            const response = await fetch(apiUrl('/api/ai_connections.php?action=list_models'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    action: 'list_models',
+                    id: currentConnection.id,
+                    _csrf: csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '',
+                }),
+            });
+            const result = await response.json();
+            chatModelOptions = (result.status === 'ok' && result.data?.models) ? result.data.models : [];
+            if (chatModelOptions.length === 0 && currentConnection.model) {
+                chatModelOptions = [currentConnection.model];
+            }
+            renderModelMenu();
+            updateModelLabel();
+        } catch (error) {
+            menu.innerHTML = '<div class="ai-chat-model-empty">Could not load models</div>';
+        }
+    }
+
+    function renderModelMenu() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        if (!menu) return;
+        const active = chatModelOverride || currentConnection?.model || '';
+        if (chatModelOptions.length === 0) {
+            menu.innerHTML = '<div class="ai-chat-model-empty">No models listed</div>';
+            return;
+        }
+        menu.innerHTML = chatModelOptions.slice(0, 40).map(function (modelId) {
+            const selected = modelId === active ? ' aria-selected="true" class="selected"' : '';
+            return '<button type="button" role="option"' + selected + ' data-model="' + escapeHtml(modelId) + '">' + escapeHtml(modelId) + '</button>';
+        }).join('');
+        menu.querySelectorAll('[data-model]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                chatModelOverride = btn.getAttribute('data-model') || '';
+                updateModelLabel();
+                closeModelMenu();
+            });
+        });
+    }
+
+    function toggleModelMenu() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        const trigger = document.getElementById('ai-chat-model-trigger');
+        if (!menu || !trigger) return;
+        const open = menu.hidden;
+        menu.hidden = !open;
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (open && chatModelOptions.length === 0) loadChatModels();
+        else if (open) renderModelMenu();
+    }
+
+    function closeModelMenu() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        const trigger = document.getElementById('ai-chat-model-trigger');
+        if (menu) menu.hidden = true;
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    }
+
+    function handleImageAttachment(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) return;
+        pendingAttachments.push({ type: 'image', name: file.name, file: file });
+        renderAttachmentList();
+        e.target.value = '';
+    }
+
+    function handleDocumentAttachment(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+            pendingAttachments.push({
+                type: 'document',
+                name: file.name,
+                content: String(reader.result || '').slice(0, 12000),
+            });
+            renderAttachmentList();
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+    }
+
+    function renderAttachmentList() {
+        const list = document.getElementById('ai-chat-attachment-list');
+        if (!list) return;
+        if (pendingAttachments.length === 0) {
+            list.hidden = true;
+            list.innerHTML = '';
+            return;
+        }
+        list.hidden = false;
+        list.innerHTML = pendingAttachments.map(function (item, index) {
+            const iconName = item.type === 'image' ? 'image' : 'file-text';
+            return '<span class="ai-chat-attachment-chip">' + icon(iconName, { size: 14 }) +
+                '<span>' + escapeHtml(item.name) + '</span>' +
+                '<button type="button" data-remove-attachment="' + index + '" aria-label="Remove">×</button></span>';
+        }).join('');
+        list.querySelectorAll('[data-remove-attachment]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const idx = parseInt(btn.getAttribute('data-remove-attachment'), 10);
+                pendingAttachments.splice(idx, 1);
+                renderAttachmentList();
+            });
+        });
+    }
+
+    function buildMessageWithAttachments(message) {
+        let out = message;
+        pendingAttachments.forEach(function (item) {
+            if (item.type === 'document' && item.content) {
+                out += '\n\n[Attached document: ' + item.name + ']\n```\n' + item.content + '\n```';
+            } else if (item.type === 'image') {
+                out += '\n\n[Attached image: ' + item.name + ' — describe or analyze this image if relevant.]';
+            }
+        });
+        return out;
     }
 
     // Show chat window
@@ -656,6 +899,7 @@
             selectConnection(availableConnections[0].id);
         } else {
             updateConnectionDropdownValue();
+            updateChatComposerCapabilities();
         }
     }
 
@@ -696,8 +940,7 @@
         select.disabled = false;
         select.innerHTML = availableConnections.map(conn => {
             const label = conn.name || conn.provider;
-            const meta = `${conn.provider} • ${conn.role || 'admin'}`;
-            return `<option value="${conn.id}">${escapeHtml(label)} (${escapeHtml(meta)})</option>`;
+            return `<option value="${conn.id}">${escapeHtml(label)}</option>`;
         }).join('');
 
         updateConnectionDropdownValue();
@@ -728,7 +971,6 @@
         }
         if (!document.getElementById('ai-chat-window')) {
             createChatWindow();
-            addNewChatButton();
         }
         await showChatWindow();
         if (chatMessages.length > 0) {
@@ -751,9 +993,9 @@
             `;
         }
         
-        const inputContainer = document.querySelector('.ai-chat-input-container');
-        if (inputContainer) {
-            inputContainer.style.display = 'none';
+        const composer = document.querySelector('.ai-chat-composer');
+        if (composer) {
+            composer.style.display = 'none';
         }
     }
 
@@ -777,11 +1019,13 @@
             .then(result => {
                 if (result.status === 'ok') {
                     currentConnection = result.data.connection;
+                    chatModelOverride = '';
                     if (!conversationId) {
                         conversationId = 'conv_' + Date.now();
                     }
                     
                     updateConnectionDropdownValue();
+                    updateChatComposerCapabilities();
                     
                     // Restore or clear messages
                     const messages = document.getElementById('ai-chat-messages');
@@ -795,10 +1039,10 @@
                         }
                     }
                     
-                    // Show input
-                    const inputContainer = document.querySelector('.ai-chat-input-container');
-                    if (inputContainer) {
-                        inputContainer.style.display = 'block';
+                    // Show composer
+                    const composer = document.querySelector('.ai-chat-composer');
+                    if (composer) {
+                        composer.style.display = 'block';
                     }
                     
                     // Focus input
@@ -815,39 +1059,6 @@
                 console.error('Error loading connection:', err);
                 showError('Failed to load connection');
             });
-    }
-    
-    // Add "New Chat" button functionality
-    function addNewChatButton() {
-        const headerActions = document.querySelector('.ai-chat-header-actions');
-        if (headerActions && !document.getElementById('ai-chat-new-btn')) {
-            const newBtn = document.createElement('button');
-            newBtn.id = 'ai-chat-new-btn';
-            newBtn.className = 'btn-icon';
-            newBtn.title = 'New Chat';
-            newBtn.innerHTML = icon('plus', { size: 16 });
-            newBtn.addEventListener('click', async function () {
-                if (chatMessages.length > 0) {
-                    indexRecentChat();
-                }
-                if (await BirklyFeedback.confirm('Start a new chat? This will clear the current conversation.')) {
-                    clearChatState();
-                    const messages = document.getElementById('ai-chat-messages');
-                    if (messages) {
-                        messages.innerHTML = '<div class="ai-chat-welcome"><p>New chat started. Ask the AI to help you create or edit content.</p></div>';
-                    }
-                    conversationId = 'conv_' + Date.now();
-                    saveChatState();
-                }
-            });
-            // Insert before the close button, or append if close button doesn't exist
-            const closeBtn = document.getElementById('ai-chat-close-btn');
-            if (closeBtn && closeBtn.parentNode === headerActions) {
-                headerActions.insertBefore(newBtn, closeBtn);
-            } else {
-                headerActions.appendChild(newBtn);
-            }
-        }
     }
 
     // Collect current admin page context for AI (P39-M11)
@@ -1067,14 +1278,20 @@
         }
 
         const input = document.getElementById('ai-chat-input');
-        const message = (typeof messageOverride === 'string' ? messageOverride : input?.value || '').trim();
-        if (!message) return;
+        const rawMessage = (typeof messageOverride === 'string' ? messageOverride : input?.value || '').trim();
+        if (!rawMessage && pendingAttachments.length === 0) return;
+
+        const message = buildMessageWithAttachments(rawMessage || 'Please review the attached file(s).');
+        const displayMessage = rawMessage || ('Attached: ' + pendingAttachments.map(a => a.name).join(', '));
 
         lastFailedMessage = null;
-        addChatMessage('user', message);
+        addChatMessage('user', displayMessage);
         if (input && typeof messageOverride !== 'string') {
             input.value = '';
+            autoResizeChatInput();
         }
+        pendingAttachments = [];
+        renderAttachmentList();
 
         const assistantMessageId = addChatMessage('assistant', '', true);
         const messageEl = document.getElementById(assistantMessageId);
@@ -1107,6 +1324,7 @@
                     conversation_id: conversationId,
                     page_context: collectPageContext(),
                     stream: true,
+                    model: chatModelOverride || undefined,
                     _csrf: csrfToken
                 })
             });
