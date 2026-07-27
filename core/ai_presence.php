@@ -167,6 +167,10 @@ function birkly_ai_presence_normalize_draft(array $draft): array
         require_once __DIR__ . '/ai_presence_pro.php';
         $merged = birkly_ai_presence_pro_normalize($merged);
     }
+    if (is_file(__DIR__ . '/ai_presence_links.php')) {
+        require_once __DIR__ . '/ai_presence_links.php';
+        $merged = birkly_ai_presence_normalize_sources_in_draft($merged);
+    }
 
     return $merged;
 }
@@ -261,7 +265,8 @@ function birkly_ai_presence_validate(array $doc): array
         }
     }
 
-    $evidenceTypes = ['cms_content', 'external_url', 'upload', 'certification', 'publication', 'other'];
+    require_once __DIR__ . '/ai_presence_links.php';
+    $evidenceTypes = birkly_ai_presence_evidence_types_extended();
     foreach ($doc['evidence'] ?? [] as $i => $item) {
         if (!is_array($item)) {
             $errors[] = "evidence[$i] must be an object";
@@ -362,13 +367,21 @@ function birkly_ai_presence_completeness(?array $draft = null): array
     ];
 
     $evidenceCount = is_array($draft['evidence'] ?? null) ? count($draft['evidence']) : 0;
+    $urlEvidence = 0;
+    foreach ($draft['evidence'] ?? [] as $ev) {
+        if (is_array($ev) && trim((string) ($ev['url'] ?? '')) !== '') {
+            $urlEvidence++;
+        }
+    }
+    $evidenceScore = ($evidenceCount > 0 ? 10 : 0) + ($urlEvidence > 0 ? 5 : 0);
     $items[] = [
         'key' => 'evidence',
         'label' => 'Evidence sources',
-        'score' => $evidenceCount > 0 ? 15 : 0,
+        'score' => $evidenceScore,
         'max' => 15,
-        'complete' => $evidenceCount > 0,
+        'complete' => $urlEvidence > 0,
         'tab' => 'claims',
+        'detail' => $evidenceCount > 0 && $urlEvidence === 0 ? 'Add verifiable URLs to evidence' : '',
     ];
 
     $knownFor = $positioning['best_known_for'] ?? [];
@@ -383,13 +396,22 @@ function birkly_ai_presence_completeness(?array $draft = null): array
     ];
 
     $products = is_array($draft['products_services'] ?? null) ? count($draft['products_services']) : 0;
+    require_once __DIR__ . '/ai_presence_links.php';
+    $groundedProducts = 0;
+    foreach ($draft['products_services'] ?? [] as $product) {
+        if (is_array($product) && birkly_ai_presence_product_has_grounded_source($product)) {
+            $groundedProducts++;
+        }
+    }
+    $productsScore = ($products > 0 ? 5 : 0) + ($groundedProducts > 0 ? 5 : 0);
     $items[] = [
         'key' => 'products',
         'label' => 'Products & services',
-        'score' => $products > 0 ? 10 : 0,
+        'score' => $productsScore,
         'max' => 10,
-        'complete' => $products > 0,
+        'complete' => $products > 0 && $groundedProducts > 0,
         'tab' => 'products',
+        'detail' => $products > 0 && $groundedProducts === 0 ? 'Add canonical or external source links' : '',
     ];
 
     $terms = $draft['communication_guidance']['preferred_terms'] ?? [];
@@ -445,9 +467,9 @@ function birkly_ai_presence_next_steps(?array $draft = null): array
             'description' => 'Add a full description or what you do.',
             'connected_content' => 'Link CMS entries or collections as brand sources.',
             'claims' => 'Add claims with supported evidence.',
-            'evidence' => 'Attach evidence sources to support your claims.',
+            'evidence' => 'Attach evidence with verifiable URLs (marketplace, reviews, docs).',
             'positioning' => 'Describe what your brand is best known for.',
-            'products' => 'Add at least one product or service with descriptions.',
+            'products' => 'Add products with canonical CMS or external source links.',
             'terminology' => 'Define preferred terms and voice guidance.',
             'publishing' => 'Enable publishing when ready to go live.',
             default => 'Complete: ' . $label,
@@ -595,7 +617,8 @@ function birkly_ai_presence_build_public_export(array $snapshot, int $version, s
         }
     }
 
-    return $export;
+    require_once __DIR__ . '/ai_presence_links.php';
+    return birkly_ai_presence_enrich_public_export($export);
 }
 
 /**
@@ -732,6 +755,33 @@ function birkly_ai_presence_staleness(?array $draft = null): array
                 'media_id' => $mediaId,
                 'updated_at' => date('c', $mtime),
                 'message' => 'Linked media asset changed after last publish.',
+            ];
+        }
+    }
+
+    require_once __DIR__ . '/ai_presence_links.php';
+    $staleDays = 180;
+    $now = time();
+    foreach ($draft['evidence'] ?? [] as $ev) {
+        if (!is_array($ev) || ($ev['url'] ?? '') === '') {
+            continue;
+        }
+        $verified = (string) ($ev['last_verified_at'] ?? '');
+        $verifiedTs = $verified !== '' ? strtotime($verified) : false;
+        if ($verifiedTs === false || ($now - $verifiedTs) > ($staleDays * 86400)) {
+            $warnings[] = [
+                'type' => 'external_link_stale',
+                'evidence_id' => (string) ($ev['id'] ?? ''),
+                'url' => (string) ($ev['url'] ?? ''),
+                'message' => 'External evidence link not verified in the last ' . $staleDays . ' days.',
+            ];
+        }
+        if (($ev['link_status'] ?? '') === 'broken') {
+            $warnings[] = [
+                'type' => 'external_link_broken',
+                'evidence_id' => (string) ($ev['id'] ?? ''),
+                'url' => (string) ($ev['url'] ?? ''),
+                'message' => 'Evidence URL may be broken — re-check link.',
             ];
         }
     }
@@ -1104,9 +1154,16 @@ function birkly_ai_presence_apply_suggestion(array $draft, array $suggestion): a
     if (is_file(__DIR__ . '/ai_presence_pro.php')) {
         require_once __DIR__ . '/ai_presence_pro.php';
         $field = (string) ($suggestion['field'] ?? '');
-        if (in_array($field, ['products_services.new', 'relationships.new'], true)
+        if (in_array($field, ['products_services.new', 'relationships.new', 'evidence.new'], true)
             || str_starts_with($field, 'communication_guidance.')) {
             return birkly_ai_presence_apply_suggestion_pro($draft, $suggestion);
+        }
+    }
+    if (is_file(__DIR__ . '/ai_presence_links.php')) {
+        require_once __DIR__ . '/ai_presence_links.php';
+        $field = (string) ($suggestion['field'] ?? '');
+        if (in_array($field, ['products_services.link', 'identity.derived_from.short_description'], true)) {
+            return birkly_ai_presence_apply_link_suggestion($draft, $suggestion);
         }
     }
 

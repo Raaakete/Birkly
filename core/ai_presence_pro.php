@@ -129,6 +129,10 @@ function birkly_ai_presence_parse_ai_suggestions(string $raw): array
 function birkly_ai_presence_copilot_suggestions(array $draft, string $connectionId = '', string $mode = 'all', bool $creative = false): array
 {
     $suggestions = birkly_ai_presence_rule_suggestions($draft);
+    require_once __DIR__ . '/ai_presence_links.php';
+    foreach (birkly_ai_presence_rule_link_suggestions($draft) as $linkSuggestion) {
+        $suggestions[] = $linkSuggestion;
+    }
     $aiError = null;
 
     if ($connectionId === '') {
@@ -153,13 +157,14 @@ function birkly_ai_presence_copilot_suggestions(array $draft, string $connection
         'fill_complete' => 'Generate a COMPLETE brand profile targeting 100% completeness. Fill every missing section: identity, descriptions, positioning, products, claims with evidence, terminology, relationships, and media context. Infer plausible values from existing draft when CMS sources are insufficient.',
         'improve' => 'Suggest improvements to existing copy — clearer, more precise, brand-safe.',
         'claims' => 'Suggest factual claims that can be supported by the CMS sources. Use field claims.new.',
+        'links' => 'Suggest cross-links only: products_services.link, evidence.new with URLs, identity.derived_from.short_description. Prefer CMS entries and verifiable external URLs (marketplace, reviews).',
         default => 'Suggest identity, positioning, communication, products_services.new, relationships.new, and claims.new fields as appropriate.',
     };
 
     $grounding = $creative
         ? 'Prefer CMS sources when available. When sources are missing or insufficient, infer plausible brand-consistent values from the existing draft. Mark source as "cms" or "inferred" and confidence accordingly.'
         : 'Do not invent facts not supported by sources.';
-    $system = 'You are a brand context strategist. Return JSON only: {"suggestions":[{"id":"...","field":"identity.short_description|positioning.best_known_for|products_services.new|relationships.new|claims.new|evidence.new|media_context.new|communication_guidance.preferred_terms|publication_settings.enabled","label":"...","value":...,"source":"...","confidence":"high|medium|low"}]}. ' . $grounding . ' For array fields use JSON arrays. For products use products_services.new with object value {name,type,short_description,full_description,category,best_for,not_for}. For claims use claims.new with {statement,status,notes}. For evidence use evidence.new with {title,url,type,claim_statement}. Never auto-publish.';
+    $system = 'You are a brand context strategist. Return JSON only: {"suggestions":[{"id":"...","field":"identity.short_description|positioning.best_known_for|products_services.new|products_services.link|relationships.new|claims.new|evidence.new|media_context.new|communication_guidance.preferred_terms|identity.derived_from.short_description|publication_settings.enabled","label":"...","value":...,"source":"...","confidence":"high|medium|low"}]}. ' . $grounding . ' For array fields use JSON arrays. For products use products_services.new with object value {name,type,short_description,full_description,category,best_for,not_for,sources:[{role,type,label,url}]}. For product links use products_services.link with {product_id,source:{role,type,label,url,ref?}}. For claims use claims.new with {statement,status,notes}. For evidence use evidence.new with {title,url,type,claim_statement,rating?,review_count?}. Evidence types include marketplace_listing and review_platform. Never auto-publish.';
     $user = "$modeHint\n\nCompleteness gaps: $gapsText\n\nCurrent draft:\n$draftSummary\n\nCMS sources:\n$context";
 
     $ai = birkly_ai_presence_call_ai($connectionId, $system, $user);
@@ -465,6 +470,7 @@ function birkly_ai_presence_apply_suggestion_pro(array $draft, array $suggestion
     $value = $suggestion['value'] ?? '';
 
     if ($field === 'products_services.new' && is_array($value)) {
+        require_once __DIR__ . '/ai_presence_links.php';
         $id = (string) ($value['id'] ?? ('prod_' . bin2hex(random_bytes(4))));
         $draft['products_services'][] = [
             'id' => $id,
@@ -477,6 +483,9 @@ function birkly_ai_presence_apply_suggestion_pro(array $draft, array $suggestion
             'best_for' => is_array($value['best_for'] ?? null) ? array_values(array_map('strval', $value['best_for'])) : [],
             'not_for' => is_array($value['not_for'] ?? null) ? array_values(array_map('strval', $value['not_for'])) : [],
             'claim_ids' => is_array($value['claim_ids'] ?? null) ? array_values(array_map('strval', $value['claim_ids'])) : [],
+            'sources' => is_array($value['sources'] ?? null)
+                ? array_values(array_map('birkly_ai_presence_normalize_source_link', array_filter($value['sources'], 'is_array')))
+                : [],
             'connected_entry' => is_array($value['connected_entry'] ?? null) ? $value['connected_entry'] : null,
             'media_id' => (string) ($value['media_id'] ?? ''),
             'media_url' => (string) ($value['media_url'] ?? ''),
@@ -495,6 +504,57 @@ function birkly_ai_presence_apply_suggestion_pro(array $draft, array $suggestion
             'description' => (string) ($value['description'] ?? ''),
             'url' => (string) ($value['url'] ?? ''),
         ];
+        return $draft;
+    }
+
+    if ($field === 'evidence.new' && is_array($value)) {
+        require_once __DIR__ . '/ai_presence_links.php';
+        $id = (string) ($value['id'] ?? ('evidence_' . bin2hex(random_bytes(4))));
+        $types = birkly_ai_presence_evidence_types_extended();
+        $type = (string) ($value['type'] ?? 'external_url');
+        if (!in_array($type, $types, true)) {
+            $type = 'external_url';
+        }
+        $item = [
+            'id' => $id,
+            'type' => $type,
+            'title' => (string) ($value['title'] ?? 'Evidence'),
+            'url' => (string) ($value['url'] ?? ''),
+            'media_id' => '',
+            'publisher' => (string) ($value['publisher'] ?? ''),
+            'published_at' => '',
+            'reviewed_at' => '',
+            'verification_status' => 'unverified',
+            'claim_ids' => [],
+            'notes' => (string) ($value['notes'] ?? ''),
+            'link_status' => 'unknown',
+            'last_verified_at' => '',
+        ];
+        if (isset($value['rating']) && is_numeric($value['rating'])) {
+            $item['rating'] = (float) $value['rating'];
+        }
+        if (isset($value['review_count']) && is_numeric($value['review_count'])) {
+            $item['review_count'] = (int) $value['review_count'];
+        }
+        $draft['evidence'][] = $item;
+        $claimStatement = (string) ($value['claim_statement'] ?? '');
+        if ($claimStatement !== '') {
+            foreach ($draft['claims'] ?? [] as $i => $claim) {
+                if (!is_array($claim)) {
+                    continue;
+                }
+                if (strcasecmp((string) ($claim['statement'] ?? ''), $claimStatement) === 0) {
+                    $claimId = (string) ($claim['id'] ?? '');
+                    $draft['claims'][$i]['evidence_ids'] = array_values(array_unique(array_merge(
+                        $claim['evidence_ids'] ?? [],
+                        [$id]
+                    )));
+                    $last = count($draft['evidence']) - 1;
+                    $draft['evidence'][$last]['claim_ids'] = [$claimId];
+                    break;
+                }
+            }
+        }
         return $draft;
     }
 
@@ -598,6 +658,8 @@ function birkly_ai_presence_public_view(array $export, string $view): array
     $positioning = $export['positioning'] ?? [];
 
     if ($view === 'summary') {
+        require_once __DIR__ . '/ai_presence_links.php';
+        $supported = array_values(array_filter($export['claims'] ?? [], static fn ($c) => is_array($c) && ($c['status'] ?? '') === 'supported'));
         return [
             'schema_version' => $export['schema_version'] ?? BIRKLY_AI_PRESENCE_SCHEMA_VERSION,
             'published_version' => $export['published_version'] ?? 0,
@@ -607,15 +669,36 @@ function birkly_ai_presence_public_view(array $export, string $view): array
                 'official_name' => $identity['official_name'] ?? '',
                 'short_description' => $identity['short_description'] ?? '',
                 'website' => $identity['website'] ?? '',
+                'derived_from' => $identity['derived_from'] ?? [],
             ],
             'positioning' => [
                 'best_known_for' => $positioning['best_known_for'] ?? [],
                 'differentiators' => $positioning['differentiators'] ?? [],
             ],
             'supported_claims' => array_values(array_map(
-                static fn ($c) => ['id' => $c['id'] ?? '', 'statement' => $c['statement'] ?? ''],
-                array_filter($export['claims'] ?? [], static fn ($c) => is_array($c) && ($c['status'] ?? '') === 'supported')
+                static fn ($c) => [
+                    'id' => $c['id'] ?? '',
+                    'statement' => $c['statement'] ?? '',
+                    'sources' => $c['sources'] ?? [],
+                ],
+                $supported
             )),
+            'usage_hints' => $export['usage_hints'] ?? birkly_ai_presence_build_usage_hints($export),
+        ];
+    }
+
+    if ($view === 'claims') {
+        $claims = array_values(array_filter(
+            $export['claims'] ?? [],
+            static fn ($c) => is_array($c) && ($c['status'] ?? '') === 'supported'
+        ));
+        return [
+            'schema_version' => $export['schema_version'] ?? BIRKLY_AI_PRESENCE_SCHEMA_VERSION,
+            'published_version' => $export['published_version'] ?? 0,
+            'generated_at' => $export['generated_at'] ?? date('c'),
+            'view' => 'claims',
+            'claims' => $claims,
+            'usage_hints' => $export['usage_hints'] ?? [],
         ];
     }
 
@@ -641,10 +724,22 @@ function birkly_ai_presence_public_view(array $export, string $view): array
  */
 function birkly_ai_presence_export_json_ld_pro(array $doc): array
 {
-    $base = birkly_ai_presence_export_json_ld($doc);
+    require_once __DIR__ . '/ai_presence_links.php';
+    $enriched = birkly_ai_presence_enrich_public_export($doc);
+    $base = birkly_ai_presence_export_json_ld($enriched);
     $graph = $base['@graph'] ?? [$base];
+    $identity = $enriched['identity'] ?? [];
+    $sameAs = [];
+    foreach ($identity['social_profiles'] ?? [] as $profile) {
+        if (is_array($profile) && !empty($profile['url'])) {
+            $sameAs[] = (string) $profile['url'];
+        }
+    }
+    if ($sameAs !== [] && isset($graph[0]) && is_array($graph[0])) {
+        $graph[0]['sameAs'] = $sameAs;
+    }
 
-    foreach ($doc['products_services'] ?? [] as $product) {
+    foreach ($enriched['products_services'] ?? [] as $product) {
         if (!is_array($product) || empty($product['name'])) {
             continue;
         }
@@ -652,11 +747,27 @@ function birkly_ai_presence_export_json_ld_pro(array $doc): array
             continue;
         }
         $type = ($product['type'] ?? 'product') === 'service' ? 'Service' : 'Product';
+        $sources = $product['sources'] ?? [];
+        $canonicalUrl = '';
+        $sameAsProduct = [];
+        foreach ($sources as $src) {
+            if (!is_array($src) || empty($src['url'])) {
+                continue;
+            }
+            $url = (string) $src['url'];
+            if (($src['role'] ?? '') === 'canonical_detail' && $canonicalUrl === '') {
+                $canonicalUrl = $url;
+            } else {
+                $sameAsProduct[] = $url;
+            }
+        }
         $node = [
             '@type' => $type,
             'name' => (string) $product['name'],
             'description' => (string) ($product['short_description'] ?? $product['full_description'] ?? ''),
             'category' => (string) ($product['category'] ?? ''),
+            'url' => $canonicalUrl !== '' ? $canonicalUrl : null,
+            'sameAs' => $sameAsProduct !== [] ? $sameAsProduct : null,
         ];
         if ($node['description'] === '') {
             unset($node['description']);
@@ -664,35 +775,41 @@ function birkly_ai_presence_export_json_ld_pro(array $doc): array
         if ($node['category'] === '') {
             unset($node['category']);
         }
+        if ($node['url'] === null) {
+            unset($node['url']);
+        }
+        if ($node['sameAs'] === null) {
+            unset($node['sameAs']);
+        }
         $imageUrl = (string) ($product['media_url'] ?? $product['external_image_url'] ?? '');
         if ($imageUrl !== '') {
             $node['image'] = $imageUrl;
         }
-        $graph[] = $node;
+        $graph[] = array_filter($node);
     }
 
-    foreach ($doc['claims'] ?? [] as $claim) {
+    foreach ($enriched['claims'] ?? [] as $claim) {
         if (!is_array($claim) || ($claim['status'] ?? '') !== 'supported') {
             continue;
         }
         $evidenceUrls = [];
-        foreach ($doc['evidence'] ?? [] as $ev) {
-            if (!is_array($ev)) {
-                continue;
-            }
-            if (!in_array($ev['id'] ?? '', $claim['evidence_ids'] ?? [], true)) {
-                continue;
-            }
-            if (!empty($ev['url'])) {
-                $evidenceUrls[] = $ev['url'];
+        foreach ($claim['linked_evidence'] ?? [] as $ev) {
+            if (is_array($ev) && !empty($ev['url'])) {
+                $evidenceUrls[] = (string) $ev['url'];
             }
         }
-        $graph[] = array_filter([
+        $claimNode = [
             '@type' => 'Claim',
             'name' => (string) ($claim['statement'] ?? ''),
             'identifier' => (string) ($claim['id'] ?? ''),
-            'appearance' => $evidenceUrls !== [] ? ['@type' => 'CreativeWork', 'url' => $evidenceUrls[0]] : null,
-        ]);
+        ];
+        if ($evidenceUrls !== []) {
+            $claimNode['appearance'] = ['@type' => 'CreativeWork', 'url' => $evidenceUrls[0]];
+            if (count($evidenceUrls) > 1) {
+                $claimNode['isBasedOn'] = array_map(static fn ($u) => ['@type' => 'CreativeWork', 'url' => $u], $evidenceUrls);
+            }
+        }
+        $graph[] = array_filter($claimNode);
     }
 
     return ['@context' => 'https://schema.org', '@graph' => array_values($graph)];
@@ -730,6 +847,9 @@ function birkly_ai_presence_pro_normalize(array $draft): array
     $pub = $draft['publication_settings'] ?? [];
     if (!isset($pub['redact_public_fields'])) {
         $draft['publication_settings']['redact_public_fields'] = [];
+    }
+    if (!isset($draft['identity']['derived_from']) || !is_array($draft['identity']['derived_from'])) {
+        $draft['identity']['derived_from'] = [];
     }
     return $draft;
 }

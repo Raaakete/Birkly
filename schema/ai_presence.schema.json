@@ -22,8 +22,21 @@
         "industry": { "type": "array", "items": { "type": "string" } },
         "categories": { "type": "array", "items": { "type": "string" } },
         "locations": { "type": "array", "items": { "type": "string" } },
-        "website": { "type": "string" },
-        "social_profiles": {
+          "website": { "type": "string" },
+          "derived_from": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "collection": { "type": "string" },
+                "entry_id": { "type": "string" },
+                "slug": { "type": "string" },
+                "label": { "type": "string" },
+                "url": { "type": "string" }
+              }
+            }
+          },
+          "social_profiles": {
           "type": "array",
           "items": {
             "type": "object",
@@ -119,7 +132,11 @@
           "related_content": { "type": "array", "items": { "type": "object" } },
           "last_reviewed_at": { "type": "string" },
           "expires_at": { "type": "string" },
-          "notes": { "type": "string" }
+          "notes": { "type": "string" },
+          "sources": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/source_link" }
+          }
         }
       }
     },
@@ -132,10 +149,14 @@
           "id": { "type": "string" },
           "type": {
             "type": "string",
-            "enum": ["cms_content", "external_url", "upload", "certification", "publication", "other"]
+            "enum": ["cms_content", "external_url", "upload", "certification", "publication", "marketplace_listing", "review_platform", "other"]
           },
           "title": { "type": "string" },
           "url": { "type": "string" },
+          "rating": { "type": "number" },
+          "review_count": { "type": "integer" },
+          "last_verified_at": { "type": "string" },
+          "link_status": { "type": "string" },
           "media_id": { "type": "string" },
           "publisher": { "type": "string" },
           "published_at": { "type": "string" },
@@ -190,6 +211,14 @@
           "not_for": { "type": "array", "items": { "type": "string" } },
           "claim_ids": { "type": "array", "items": { "type": "string" } },
           "connected_entry": { "type": "object" },
+          "sources": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/source_link" }
+          },
+          "media_id": { "type": "string" },
+          "media_url": { "type": "string" },
+          "media_name": { "type": "string" },
+          "external_image_url": { "type": "string" },
           "public": { "type": "boolean" }
         }
       }
@@ -220,6 +249,39 @@
       }
     },
     "setup_completed_at": { "type": "string" },
-    "setup_skipped_at": { "type": "string" }
+    "setup_skipped_at": { "type": "string" },
+    "usage_hints": { "type": "object" }
+  },
+  "definitions": {
+    "source_link": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "role": {
+          "type": "string",
+          "enum": ["canonical_detail", "reference", "marketplace", "review", "docs", "proof", "purchase", "social", "other"]
+        },
+        "type": {
+          "type": "string",
+          "enum": ["cms_entry", "public_page", "marketplace_listing", "review_platform", "docs", "certification", "other"]
+        },
+        "label": { "type": "string" },
+        "url": { "type": "string" },
+        "notes": { "type": "string" },
+        "rating": { "type": "number" },
+        "review_count": { "type": "integer" },
+        "last_verified_at": { "type": "string" },
+        "link_status": { "type": "string" },
+        "ref": {
+          "type": "object",
+          "properties": {
+            "collection": { "type": "string" },
+            "entry_id": { "type": "string" },
+            "slug": { "type": "string" },
+            "label": { "type": "string" }
+          }
+        }
+      }
+    }
   }
 }
