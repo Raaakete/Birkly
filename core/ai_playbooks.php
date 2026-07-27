@@ -250,6 +250,14 @@ function ai_chat_is_proceed_message(string $message): bool
     );
 }
 
+function ai_chat_is_status_request(string $message): bool
+{
+    return (bool) preg_match(
+        '/\b(what comes next|what(?:\'s| is) next|where are we|current status|progress update|what did you do|what have you done|what was done|show progress|status report)\b/i',
+        $message
+    );
+}
+
 function ai_chat_session_has_site_build_progress(array $conversationHistory): bool
 {
     $done = ai_chat_parse_session_notes_from_history($conversationHistory);
@@ -518,11 +526,10 @@ function ai_chat_parse_session_notes_from_history(array $conversationHistory): a
 }
 
 /**
- * Human-readable site-build progress for proceed messages with no remaining automated steps.
- *
  * @param array<string,mixed> $systemContext
+ * @return array{collections: list<string>, entries: list<string>, project_files: list<string>, site_slugs: list<string>}
  */
-function ai_chat_site_build_progress_summary(array $conversationHistory, array $systemContext): string
+function ai_chat_site_build_state(array $conversationHistory, array $systemContext): array
 {
     $done = ai_chat_parse_session_notes_from_history($conversationHistory);
     $collectionMap = [];
@@ -535,9 +542,6 @@ function ai_chat_site_build_progress_summary(array $conversationHistory, array $
             $collectionMap[$slug] = $coll;
         }
     }
-    if ($collectionMap === []) {
-        return '';
-    }
 
     $siteSlugs = array_values(array_filter(
         ['about', 'artworks', 'contact', 'gallery', 'projects', 'portfolio'],
@@ -547,28 +551,256 @@ function ai_chat_site_build_progress_summary(array $conversationHistory, array $
         $siteSlugs = array_slice(array_keys($collectionMap), 0, 4);
     }
 
-    $lines = ['Site-build progress in this conversation:'];
-    foreach ($siteSlugs as $slug) {
-        $label = in_array($slug, $done['entries'], true) ? 'entry seeded' : 'entry pending';
-        $lines[] = '- ' . $slug . ': ' . $label;
+    return [
+        'collections' => $done['collections'],
+        'entries' => $done['entries'],
+        'project_files' => $done['project_files'],
+        'site_slugs' => $siteSlugs,
+        'collection_map' => $collectionMap,
+    ];
+}
+
+/**
+ * @param array<string,mixed> $action
+ */
+function ai_chat_describe_planned_action(array $action): string
+{
+    $description = trim((string) ($action['description'] ?? ''));
+    if ($description !== '') {
+        return $description;
     }
 
-    $projectFiles = ['index.html', 'about.html', 'contact.html', 'css/style.css'];
-    foreach ($projectFiles as $path) {
-        if (!in_array($path, $done['project_files'], true)) {
+    $type = (string) ($action['type'] ?? 'action');
+    $data = is_array($action['data'] ?? null) ? $action['data'] : [];
+
+    switch ($type) {
+        case 'create_entry':
+            $coll = (string) ($data['collection'] ?? '');
+            $title = (string) ($data['title'] ?? '');
+            return 'Create published entry in **' . $coll . '**' . ($title !== '' ? ' ("' . $title . '")' : '');
+        case 'write_project_file':
+        case 'create_project_file':
+            return 'Write **project/' . (string) ($data['path'] ?? '?') . '**';
+        case 'update_collection':
+            return 'Update collection **' . (string) ($data['slug'] ?? $data['collection'] ?? '?') . '**';
+        case 'create_page':
+            return 'Create page **' . (string) ($data['title'] ?? $data['slug'] ?? '?') . '**';
+        default:
+            return $type;
+    }
+}
+
+/**
+ * @param array<string,mixed> $result
+ */
+function ai_chat_describe_executed_action(array $result): string
+{
+    $ok = !empty($result['success']);
+    $mark = $ok ? '✓' : '✗';
+    $type = (string) ($result['action_type'] ?? 'action');
+    $data = is_array($result['action_data'] ?? null) ? $result['action_data'] : [];
+    $resultData = is_array($result['data'] ?? null) ? $result['data'] : [];
+    $detail = '';
+
+    switch ($type) {
+        case 'create_entry':
+            $coll = (string) ($data['collection'] ?? '');
+            $title = (string) ($data['title'] ?? ($resultData['entry']['title'] ?? ''));
+            $entryId = (string) ($resultData['entry_id'] ?? ($resultData['entry']['id'] ?? ''));
+            $detail = 'entry in **' . $coll . '**';
+            if ($title !== '') {
+                $detail .= ' — "' . $title . '"';
+            }
+            if ($entryId !== '') {
+                $detail .= ' (id: ' . $entryId . ')';
+            }
+            break;
+        case 'write_project_file':
+        case 'create_project_file':
+            $path = (string) ($data['path'] ?? ($resultData['path'] ?? ''));
+            $detail = '**project/' . $path . '**';
+            break;
+        case 'update_collection':
+            $detail = 'collection **' . (string) ($data['slug'] ?? $data['collection'] ?? '') . '**';
+            break;
+        case 'create_page':
+            $detail = 'page **' . (string) ($data['title'] ?? $data['slug'] ?? '') . '**';
+            break;
+        default:
+            $detail = trim((string) ($data['path'] ?? $data['slug'] ?? $data['collection'] ?? ''));
+            if ($detail === '') {
+                $detail = $type;
+            }
+    }
+
+    $line = $mark . ' **' . $type . '** — ' . $detail;
+    if (!$ok) {
+        $err = trim((string) ($result['message'] ?? 'failed'));
+        if ($err !== '') {
+            $line .= ' — _' . $err . '_';
+        }
+    }
+
+    return $line;
+}
+
+/**
+ * @param array{collections: list<string>, entries: list<string>, project_files: list<string>, site_slugs: list<string>, collection_map: array<string,mixed>} $state
+ */
+function ai_chat_site_build_next_step_hint(array $state): string
+{
+    $siteSlugs = $state['site_slugs'];
+    $doneEntries = $state['entries'];
+    $doneFiles = $state['project_files'];
+    $collectionMap = $state['collection_map'];
+
+    foreach ($siteSlugs as $slug) {
+        if (!in_array($slug, $doneEntries, true)) {
+            return 'Say **proceed** to seed the next collection entries (' . $slug . ' and others pending).';
+        }
+    }
+
+    $hasIndex = in_array('index.html', $doneFiles, true);
+    if (!$hasIndex) {
+        return 'Say **proceed** to create **project/index.html** and **project/css/style.css**.';
+    }
+
+    $pendingPages = [];
+    if (isset($collectionMap['about']) && !in_array('about.html', $doneFiles, true)) {
+        $pendingPages[] = 'about.html';
+    }
+    if (isset($collectionMap['contact']) && !in_array('contact.html', $doneFiles, true)) {
+        $pendingPages[] = 'contact.html';
+    }
+    if ($pendingPages !== []) {
+        return 'Say **proceed** to create **project/' . implode('** and **project/', $pendingPages) . '**.';
+    }
+
+    return 'Automated site-build steps are complete. Open **project/** to review, or describe refinements (design, copy, extra pages).';
+}
+
+/**
+ * @param array{collections: list<string>, entries: list<string>, project_files: list<string>, site_slugs: list<string>, collection_map: array<string,mixed>} $state
+ */
+function ai_chat_format_site_build_plan_status(array $state): string
+{
+    $lines = ['### Plan status'];
+
+    $entryParts = [];
+    foreach ($state['site_slugs'] as $slug) {
+        $entryParts[] = $slug . (in_array($slug, $state['entries'], true) ? ' ✓' : ' ○');
+    }
+    if ($entryParts !== []) {
+        $lines[] = '**Phase 1 — Seed entries:** ' . implode(', ', $entryParts);
+    }
+
+    $fileTargets = ['index.html', 'css/style.css', 'about.html', 'contact.html'];
+    $fileParts = [];
+    foreach ($fileTargets as $path) {
+        if ($path === 'about.html' && !isset($state['collection_map']['about'])) {
             continue;
         }
-        $lines[] = '- ' . $path . ': created';
+        if ($path === 'contact.html' && !isset($state['collection_map']['contact'])) {
+            continue;
+        }
+        $fileParts[] = $path . (in_array($path, $state['project_files'], true) ? ' ✓' : ' ○');
+    }
+    if ($fileParts !== []) {
+        $lines[] = '**Phase 2 — Project files:** ' . implode(', ', $fileParts);
     }
 
-    $pendingEntries = array_filter($siteSlugs, static fn (string $s): bool => !in_array($s, $done['entries'], true));
-    $hasIndex = in_array('index.html', $done['project_files'], true);
-    if ($pendingEntries === [] && $hasIndex) {
-        return implode("\n", $lines)
-            . "\n\nAutomated site-build steps from this chat are complete. Open **project/** to review, or describe what to refine next.";
+    $automatedComplete = str_contains(ai_chat_site_build_next_step_hint($state), 'Automated site-build steps are complete');
+    $lines[] = '**Phase 3 — Review & refine:** ' . ($automatedComplete ? 'ready' : 'in progress');
+
+    return implode("\n", $lines);
+}
+
+/**
+ * @param array{collections: list<string>, entries: list<string>, project_files: list<string>, site_slugs: list<string>, collection_map: array<string,mixed>} $state
+ * @param list<array<string,mixed>> $executedActions
+ * @return array{collections: list<string>, entries: list<string>, project_files: list<string>, site_slugs: list<string>, collection_map: array<string,mixed>}
+ */
+function ai_chat_state_after_execution(array $state, array $executedActions): array
+{
+    foreach ($executedActions as $result) {
+        if (empty($result['success'])) {
+            continue;
+        }
+        $type = (string) ($result['action_type'] ?? '');
+        $data = is_array($result['action_data'] ?? null) ? $result['action_data'] : [];
+        if ($type === 'create_entry' && !empty($data['collection'])) {
+            $state['entries'][] = (string) $data['collection'];
+        }
+        if (in_array($type, ['write_project_file', 'create_project_file'], true) && !empty($data['path'])) {
+            $state['project_files'][] = (string) $data['path'];
+        }
+        if ($type === 'update_collection' && !empty($data['slug'])) {
+            $state['collections'][] = (string) $data['slug'];
+        }
+    }
+    $state['entries'] = array_values(array_unique($state['entries']));
+    $state['project_files'] = array_values(array_unique($state['project_files']));
+    $state['collections'] = array_values(array_unique($state['collections']));
+    return $state;
+}
+
+/**
+ * @param list<array<string,mixed>> $executedActions
+ * @param list<array<string,mixed>> $plannedActions
+ * @param array<string,mixed> $systemContext
+ */
+function ai_chat_format_execution_report(
+    array $executedActions,
+    array $plannedActions,
+    array $conversationHistory,
+    array $systemContext
+): string {
+    if ($executedActions === [] && $plannedActions === []) {
+        return '';
     }
 
-    return implode("\n", $lines) . "\n\nSay **proceed** to run the next automated step.";
+    $sections = [];
+    if ($executedActions !== []) {
+        $lines = ['### Completed this step'];
+        foreach ($executedActions as $index => $result) {
+            $lines[] = ($index + 1) . '. ' . ai_chat_describe_executed_action($result);
+        }
+        $sections[] = implode("\n", $lines);
+    } elseif ($plannedActions !== []) {
+        $lines = ['### Planned this step'];
+        foreach ($plannedActions as $index => $action) {
+            $lines[] = ($index + 1) . '. ' . ai_chat_describe_planned_action($action);
+        }
+        $sections[] = implode("\n", $lines);
+    }
+
+    $state = ai_chat_site_build_state($conversationHistory, $systemContext);
+    if ($executedActions !== []) {
+        $state = ai_chat_state_after_execution($state, $executedActions);
+    }
+    if ($state['site_slugs'] !== []) {
+        $sections[] = ai_chat_format_site_build_plan_status($state);
+        $sections[] = '### What\'s next' . "\n" . ai_chat_site_build_next_step_hint($state);
+    }
+
+    return implode("\n\n", $sections);
+}
+
+/**
+ * Human-readable site-build progress for proceed messages with no remaining automated steps.
+ *
+ * @param array<string,mixed> $systemContext
+ */
+function ai_chat_site_build_progress_summary(array $conversationHistory, array $systemContext): string
+{
+    $state = ai_chat_site_build_state($conversationHistory, $systemContext);
+    if ($state['site_slugs'] === []) {
+        return '';
+    }
+
+    return ai_chat_format_site_build_plan_status($state)
+        . "\n\n### What's next\n"
+        . ai_chat_site_build_next_step_hint($state);
 }
 
 /**

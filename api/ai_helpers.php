@@ -353,6 +353,27 @@ function birkly_ai_parse_provider_error(?string $responseBody): string
 }
 
 /**
+ * Human label for OpenAI-compatible API endpoints (OpenAI, OpenRouter, custom).
+ */
+function birkly_ai_compatible_api_label(string $url, string $provider = ''): string
+{
+    if (stripos($url, 'openrouter.ai') !== false || $provider === 'openrouter') {
+        return 'OpenRouter';
+    }
+    if (stripos($url, 'api.openai.com') !== false || $provider === 'openai') {
+        return 'OpenAI';
+    }
+    if ($provider === 'ollama') {
+        return 'Ollama';
+    }
+    if ($provider === 'custom') {
+        return 'Custom API';
+    }
+
+    return 'AI provider';
+}
+
+/**
  * Load curated AI context pack (not full docs dump).
  */
 function loadBirklyContextPack(): string
