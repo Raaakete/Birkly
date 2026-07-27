@@ -513,6 +513,33 @@ if ($action === 'test') {
     exit;
 }
 
+// List models from provider API (on demand)
+if ($action === 'list_models') {
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $provider = $input['provider'] ?? $_GET['provider'] ?? '';
+    $apiKey = $input['api_key'] ?? '';
+    $apiUrl = $input['api_url'] ?? $_GET['api_url'] ?? '';
+
+    if ($provider === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Provider is required']);
+        exit;
+    }
+
+    $result = birkly_ai_fetch_provider_models((string) $provider, (string) $apiKey, (string) $apiUrl);
+    echo json_encode([
+        'status' => $result['ok'] ? 'ok' : 'error',
+        'message' => $result['message'],
+        'data' => [
+            'models' => $result['models'],
+            'default_model' => $result['default_model'] ?? birkly_ai_default_model((string) $provider),
+        ],
+    ]);
+    exit;
+}
+
 // Get supported providers
 if ($action === 'providers') {
     // Clear output buffers
@@ -525,7 +552,7 @@ if ($action === 'providers') {
     }
     echo json_encode([
         'status' => 'ok',
-        'data' => ['providers' => getSupportedAiProviders()]
+        'data' => ['providers' => birkly_ai_providers_for_client()]
     ]);
     exit;
 }

@@ -842,12 +842,19 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <span id="test-connection-status" class="test-connection-status"></span>
               </div>
 
-              <div class="form-group">
-                <label for="connection-model"><?= __('admin.model') ?></label>
-                <select id="connection-model" name="model" class="input">
-                  <option value="">Default</option>
-                </select>
+              <div class="form-group" id="connection-model-group">
+                <label for="connection-model-search"><?= __('admin.model') ?></label>
+                <div class="ai-model-picker" id="connection-model-picker">
+                  <div class="ai-model-picker-toolbar">
+                    <input type="search" id="connection-model-search" class="input" placeholder="Search models…" autocomplete="off" aria-controls="connection-model-list">
+                    <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh">Refresh</button>
+                  </div>
+                  <input type="hidden" id="connection-model" name="model" value="">
+                  <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="Models"></div>
+                  <p id="connection-model-status" class="form-help ai-model-picker-status"></p>
+                </div>
                 <input type="text" id="connection-model-custom" name="model_custom" class="input connection-model-custom" placeholder="<?= __('admin.enter_model_name') ?>">
+                <small class="form-help">Models are loaded live from your provider. Search the list or type a model ID.</small>
               </div>
 
               <div class="form-group">
