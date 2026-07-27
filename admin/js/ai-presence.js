@@ -20,7 +20,8 @@
         cmsDiff: [],
         studioDraftPatch: null,
         versions: [],
-        publicUrls: {}
+        publicUrls: {},
+        aiAbortController: null
     };
 
     function apiUrl(path) {
@@ -65,7 +66,8 @@
         claimIdx: null,
         evidenceIdx: null,
         mediaIdx: null,
-        pickedMedia: null
+        pickedMedia: null,
+        productMedia: null
     };
 
     function openApModal(id) {
@@ -123,13 +125,18 @@
         return (prefix || 'id') + '_' + Math.random().toString(16).slice(2, 10);
     }
 
-    function postJson(body) {
-        return fetch(apiUrl('/api/ai_presence.php'), {
+    function postJson(body, options) {
+        options = options || {};
+        var fetchOpts = {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(Object.assign({ _csrf: state.csrfToken }, body))
-        }).then(function (r) {
+        };
+        if (options.signal) {
+            fetchOpts.signal = options.signal;
+        }
+        return fetch(apiUrl('/api/ai_presence.php'), fetchOpts).then(function (r) {
             return r.text().then(function (text) {
                 if (!text || !String(text).trim()) {
                     throw new Error('Empty server response. The AI request may have timed out — try again.');
@@ -140,6 +147,43 @@
                     throw new Error('Invalid server response. Hard-refresh the page and try again.');
                 }
             });
+        });
+    }
+
+    function showAiLoading(message) {
+        state.aiAbortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var el = document.getElementById('ap-ai-loading');
+        var msgEl = document.getElementById('ap-ai-loading-msg');
+        if (msgEl) msgEl.textContent = message || 'AI is working…';
+        if (el) {
+            el.hidden = false;
+            el.classList.add('is-active');
+        }
+        return state.aiAbortController;
+    }
+
+    function hideAiLoading() {
+        state.aiAbortController = null;
+        var el = document.getElementById('ap-ai-loading');
+        if (el) {
+            el.hidden = true;
+            el.classList.remove('is-active');
+        }
+    }
+
+    function runWithAiLoading(message, fn) {
+        var controller = showAiLoading(message);
+        var signal = controller ? controller.signal : null;
+        return Promise.resolve().then(function () {
+            return fn(signal);
+        }).catch(function (err) {
+            if (err && err.name === 'AbortError') {
+                toast('AI request cancelled', 'info');
+                return;
+            }
+            throw err;
+        }).finally(function () {
+            hideAiLoading();
         });
     }
 
@@ -517,6 +561,9 @@
                 '<h4>' + escapeHtml(prod.name || 'Unnamed') + '</h4>' +
                 '<span class="badge">' + escapeHtml(prod.type || 'product') + '</span>' +
                 (prod.category ? ' <span class="text-muted">' + escapeHtml(prod.category) + '</span>' : '') +
+                ((prod.media_url || prod.external_image_url) ?
+                    '<div class="ap-product-card-thumb-wrap"><img class="ap-product-card-thumb" src="' +
+                    escapeHtml(prod.media_url || prod.external_image_url) + '" alt=""></div>' : '') +
                 '<p class="ap-product-desc">' + escapeHtml(prod.short_description || prod.full_description || '') + '</p>' +
                 (state.canEdit ?
                     '<div class="ap-product-actions">' +
@@ -998,14 +1045,16 @@
             toast('Select an AI connection for this action, or use Fill gaps for basic suggestions', 'warning');
             return Promise.resolve();
         }
-        setAssistStatus(mode === 'fill_complete' ? 'Generating complete profile…' : 'Generating suggestions…');
-        return postJson({
-            action: 'copilot',
-            ai_connection_id: connId,
-            mode: mode || 'all',
-            creative: mode === 'fill_complete'
-        })
-            .then(function (res) {
+        var statusMsg = mode === 'fill_complete' ? 'Generating complete profile…'
+            : mode === 'fill_gaps' ? 'Filling gaps…' : 'Generating suggestions…';
+        return runWithAiLoading(statusMsg, function (signal) {
+            setAssistStatus(statusMsg);
+            return postJson({
+                action: 'copilot',
+                ai_connection_id: connId,
+                mode: mode || 'all',
+                creative: mode === 'fill_complete'
+            }, { signal: signal }).then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Assist failed');
                 state.suggestions = res.data.suggestions || [];
                 state.studioDraftPatch = null;
@@ -1020,8 +1069,8 @@
                 } else if (!res.data.ai_error) {
                     toast('No suggestions — try linking CMS content or running Auto-fill', 'info');
                 }
-            })
-            .finally(function () { setAssistStatus(''); });
+            }).finally(function () { setAssistStatus(''); });
+        });
     }
 
     function acceptSuggestion(id) {
@@ -1085,11 +1134,14 @@
                     toast('No suggestions returned for this field', 'info');
                     return;
                 }
-                mergeSuggestions(suggestions);
-                renderAssistSuggestions();
-                scrollAssistResults();
-                openAssistSidebar();
-                toast('AI suggestion added to Review — accept or reject below', 'success');
+                var suggestion = suggestions[0];
+                return postJson({ action: 'accept_suggestion', suggestion: suggestion }).then(function (acceptRes) {
+                    if (acceptRes.status !== 'ok') throw new Error(acceptRes.message || 'Apply failed');
+                    state.draft = acceptRes.data.draft;
+                    bindFields();
+                    state.dirty = true;
+                    toast('Field updated', 'success');
+                });
             })
             .finally(function () {
                 if (btn) btn.disabled = false;
@@ -1110,29 +1162,31 @@
         var slugs = state.collections.map(collectionKey).filter(Boolean);
         var btn = document.getElementById('ap-assist-auto-fill');
         if (btn) btn.disabled = true;
-        setAssistStatus('Reading CMS collections and generating draft…');
-        return postJson({
-            action: 'wizard_generate',
-            collections: slugs,
-            ai_connection_id: connId
-        }).then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
-            state.suggestions = res.data.suggestions || [];
-            state.studioDraftPatch = res.data.draft_patch || null;
-            renderAssistSuggestions();
-            scrollAssistResults();
-            openAssistSidebar();
-            if (res.data.ai_error) {
-                toast(res.data.ai_error, 'error');
-            }
-            if (state.suggestions.length) {
-                toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
-            } else {
-                toast('No proposals generated', 'info');
-            }
-        }).finally(function () {
-            if (btn) btn.disabled = false;
-            setAssistStatus('');
+        return runWithAiLoading('Reading CMS and generating draft…', function (signal) {
+            setAssistStatus('Reading CMS collections and generating draft…');
+            return postJson({
+                action: 'wizard_generate',
+                collections: slugs,
+                ai_connection_id: connId
+            }, { signal: signal }).then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
+                state.suggestions = res.data.suggestions || [];
+                state.studioDraftPatch = res.data.draft_patch || null;
+                renderAssistSuggestions();
+                scrollAssistResults();
+                openAssistSidebar();
+                if (res.data.ai_error) {
+                    toast(res.data.ai_error, 'error');
+                }
+                if (state.suggestions.length) {
+                    toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
+                } else {
+                    toast('No proposals generated', 'info');
+                }
+            }).finally(function () {
+                if (btn) btn.disabled = false;
+                setAssistStatus('');
+            });
         });
     }
 
@@ -1151,24 +1205,26 @@
         }
         var btn = document.getElementById('ap-assist-build');
         if (btn) btn.disabled = true;
-        setAssistStatus('Generating from selected collections…');
-        return postJson({
-            action: 'wizard_generate',
-            collections: collections,
-            ai_connection_id: connId
-        }).then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
-            state.suggestions = res.data.suggestions || [];
-            state.studioDraftPatch = res.data.draft_patch || null;
-            renderAssistSuggestions();
-            scrollAssistResults();
-            if (res.data.ai_error) {
-                toast(res.data.ai_error, 'error');
-            }
-            toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
-        }).finally(function () {
-            if (btn) btn.disabled = false;
-            setAssistStatus('');
+        return runWithAiLoading('Generating from selected collections…', function (signal) {
+            setAssistStatus('Generating from selected collections…');
+            return postJson({
+                action: 'wizard_generate',
+                collections: collections,
+                ai_connection_id: connId
+            }, { signal: signal }).then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
+                state.suggestions = res.data.suggestions || [];
+                state.studioDraftPatch = res.data.draft_patch || null;
+                renderAssistSuggestions();
+                scrollAssistResults();
+                if (res.data.ai_error) {
+                    toast(res.data.ai_error, 'error');
+                }
+                toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
+            }).finally(function () {
+                if (btn) btn.disabled = false;
+                setAssistStatus('');
+            });
         });
     }
 
@@ -1193,35 +1249,74 @@
         var slugs = state.collections.map(collectionKey).filter(Boolean);
         var btn = document.getElementById('ap-assist-fill-complete');
         if (btn) btn.disabled = true;
-        setAssistStatus('Generating complete profile (may infer missing fields)…');
-        return postJson({
-            action: 'wizard_generate',
-            collections: slugs,
-            ai_connection_id: connId,
-            creative: true
-        }).then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
-            state.suggestions = res.data.suggestions || [];
-            state.studioDraftPatch = res.data.draft_patch || null;
-            renderAssistSuggestions();
-            scrollAssistResults();
-            openAssistSidebar();
-            if (res.data.ai_error) {
-                toast(res.data.ai_error, 'warning');
-            }
-            if (state.suggestions.length) {
-                toast(state.suggestions.length + ' proposal(s) for a complete profile — review and accept', 'success');
-            } else {
-                toast('No proposals generated — try Fill gaps or add more context first', 'info');
-            }
-        }).finally(function () {
-            if (btn) btn.disabled = false;
-            setAssistStatus('');
+        return runWithAiLoading('Generating complete profile — this may take a minute…', function (signal) {
+            setAssistStatus('Generating complete profile…');
+            return postJson({
+                action: 'wizard_generate',
+                collections: slugs,
+                ai_connection_id: connId,
+                creative: true
+            }, { signal: signal }).then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
+                state.suggestions = res.data.suggestions || [];
+                state.studioDraftPatch = res.data.draft_patch || null;
+                renderAssistSuggestions();
+                scrollAssistResults();
+                openAssistSidebar();
+                if (res.data.ai_error) {
+                    toast(res.data.ai_error, 'warning');
+                }
+                if (state.suggestions.length) {
+                    toast(state.suggestions.length + ' proposal(s) for a complete profile — review and accept', 'success');
+                } else {
+                    toast('No proposals generated — try Fill gaps or add more context first', 'info');
+                }
+            }).finally(function () {
+                if (btn) btn.disabled = false;
+                setAssistStatus('');
+            });
         });
+    }
+
+    function setProductMediaPreview(media) {
+        modalState.productMedia = media || null;
+        var preview = document.getElementById('ap-product-media-preview');
+        var thumb = document.getElementById('ap-product-media-thumb');
+        var nameEl = document.getElementById('ap-product-media-name');
+        var clearBtn = document.getElementById('ap-product-clear-media');
+        var idEl = document.getElementById('ap-product-media-id');
+        var urlEl = document.getElementById('ap-product-media-url');
+        if (!media) {
+            if (preview) preview.hidden = true;
+            if (clearBtn) clearBtn.hidden = true;
+            if (idEl) idEl.value = '';
+            if (urlEl) urlEl.value = '';
+            return;
+        }
+        if (idEl) idEl.value = media.id || media.name || '';
+        if (urlEl) urlEl.value = media.url || media.thumbnail || '';
+        if (preview) preview.hidden = false;
+        if (clearBtn) clearBtn.hidden = false;
+        if (thumb) {
+            thumb.src = media.url || media.thumbnail || '';
+            thumb.alt = media.name || '';
+        }
+        if (nameEl) nameEl.textContent = media.name || media.id || '';
+    }
+
+    function openProductMediaPicker() {
+        if (global.Birkly && global.Birkly.MediaModal) {
+            global.Birkly.MediaModal.open(function (media) {
+                if (media) setProductMediaPreview(media);
+            });
+        } else {
+            toast('Media picker unavailable — reload the page', 'error');
+        }
     }
 
     function openProductModal(idx) {
         modalState.productIdx = idx == null ? null : idx;
+        modalState.productMedia = null;
         var prod = idx != null ? (state.draft.products_services || [])[idx] : null;
         var titleEl = document.getElementById('ap-product-modal-title');
         if (titleEl) titleEl.textContent = prod ? 'Edit product or service' : 'Add product or service';
@@ -1233,6 +1328,16 @@
         document.getElementById('ap-product-pricing').value = prod ? (prod.pricing_model || '') : '';
         document.getElementById('ap-product-best-for').value = prod && Array.isArray(prod.best_for) ? prod.best_for.join('\n') : '';
         document.getElementById('ap-product-not-for').value = prod && Array.isArray(prod.not_for) ? prod.not_for.join('\n') : '';
+        document.getElementById('ap-product-external-url').value = prod ? (prod.external_image_url || '') : '';
+        if (prod && (prod.media_id || prod.media_url)) {
+            setProductMediaPreview({
+                id: prod.media_id,
+                name: prod.media_name || prod.media_id,
+                url: prod.media_url || prod.external_image_url || ''
+            });
+        } else {
+            setProductMediaPreview(null);
+        }
         openApModal('ap-product-modal');
     }
 
@@ -1240,6 +1345,8 @@
         e.preventDefault();
         var name = document.getElementById('ap-product-name').value.trim();
         if (!name) return;
+        var media = modalState.productMedia;
+        var externalUrl = document.getElementById('ap-product-external-url').value.trim();
         var prod = {
             id: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
                 ? state.draft.products_services[modalState.productIdx].id : uid('prod'),
@@ -1251,6 +1358,10 @@
             pricing_model: document.getElementById('ap-product-pricing').value.trim(),
             best_for: linesFromTextarea(document.getElementById('ap-product-best-for').value),
             not_for: linesFromTextarea(document.getElementById('ap-product-not-for').value),
+            media_id: media ? (media.id || media.name || '') : '',
+            media_url: media ? (media.url || media.thumbnail || '') : '',
+            media_name: media ? (media.name || '') : '',
+            external_image_url: externalUrl,
             claim_ids: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
                 ? (state.draft.products_services[modalState.productIdx].claim_ids || []) : [],
             connected_entry: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
@@ -1612,6 +1723,13 @@
             assistFillComplete().catch(function (e) { toast(e.message, 'error'); });
         });
 
+        bindEl('ap-ai-loading-cancel', 'click', function () {
+            if (state.aiAbortController) {
+                state.aiAbortController.abort();
+            }
+            hideAiLoading();
+        });
+
         bindEl('ap-assist-collection-search', 'input', function (e) {
             populateAssistCollections(e.target.value);
         });
@@ -1641,6 +1759,8 @@
         bindApModals();
         var productForm = document.getElementById('ap-product-form');
         if (productForm) productForm.addEventListener('submit', saveProductFromModal);
+        bindEl('ap-product-pick-media', 'click', openProductMediaPicker);
+        bindEl('ap-product-clear-media', 'click', function () { setProductMediaPreview(null); });
         var relForm = document.getElementById('ap-relationship-form');
         if (relForm) relForm.addEventListener('submit', saveRelationshipFromModal);
         var claimForm = document.getElementById('ap-claim-form');

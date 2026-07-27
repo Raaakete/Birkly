@@ -79,21 +79,21 @@ window.Birkly.MediaModal = {
             <div class="media-modal" style="background: white; border-radius: 8px; width: 80%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column;">
                 <div class="media-modal-header" style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
                     <h3 style="margin: 0;">Select Media</h3>
-                    <button type="button" class="media-modal-close" onclick="Birkly.MediaModal.close()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+                    <button type="button" class="media-modal-close" data-media-modal-action="close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
                 </div>
                 <div class="media-modal-content" style="padding: 20px; flex: 1; overflow-y: auto;">
                     <div class="media-upload-section" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-                        <input type="file" id="media-upload" accept="image/*" style="display: none;">
-                        <button type="button" class="btn btn-primary" onclick="document.getElementById('media-upload').click()" style="padding: 8px 16px; background: var(--color-primary, #7CE3BF); color: var(--text-inverse, #fff); border: none; border-radius: 4px; cursor: pointer;">
+                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,application/pdf" style="display: none;">
+                        <button type="button" class="btn btn-primary" data-media-modal-action="upload-trigger" style="padding: 8px 16px; background: var(--color-primary, #7CE3BF); color: var(--text-inverse, #fff); border: none; border-radius: 4px; cursor: pointer;">
                             Upload New Media
                         </button>
                     </div>
-                    <div class="media-grid" id="media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                    <div class="media-grid" id="birkly-media-modal-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
                         <div class="media-loading" style="text-align: center; padding: 40px; color: #666;">Loading media...</div>
                     </div>
                 </div>
                 <div class="media-modal-footer" style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
-                    <button type="button" class="btn btn-secondary" onclick="Birkly.MediaModal.close()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-media-modal-action="close" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         `;
@@ -109,15 +109,25 @@ window.Birkly.MediaModal = {
             }
         } catch (_) {}
         
-        // Add event listeners
+        // Bind actions (CSP-safe — no inline handlers)
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.close();
+                return;
+            }
+            const actionEl = e.target.closest('[data-media-modal-action]');
+            if (!actionEl) return;
+            const action = actionEl.getAttribute('data-media-modal-action');
+            if (action === 'close') {
+                this.close();
+            } else if (action === 'upload-trigger') {
+                const fileInput = this.modal.querySelector('#birkly-media-modal-upload');
+                if (fileInput) fileInput.click();
             }
         });
-        
+
         // Handle file upload
-        const fileInput = this.modal.querySelector('#media-upload');
+        const fileInput = this.modal.querySelector('#birkly-media-modal-upload');
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
                 // Permission gating (UX only): block upload attempt for users without upload permission
@@ -144,7 +154,7 @@ window.Birkly.MediaModal = {
             return;
         }
         
-        const grid = this.modal.querySelector('#media-grid');
+        const grid = this.modal.querySelector('#birkly-media-modal-grid');
         if (!grid) {
             return;
         }
@@ -183,7 +193,7 @@ window.Birkly.MediaModal = {
             return;
         }
         
-        const grid = this.modal.querySelector('#media-grid');
+        const grid = this.modal.querySelector('#birkly-media-modal-grid');
         if (!grid) {
             return;
         }
