@@ -28,6 +28,12 @@
     let modelMenuOutsideHandler = null;
     let chatTooltipEl = null;
     let chatTooltipTarget = null;
+    let chatMessageSeq = 0;
+
+    function nextChatMessageId() {
+        chatMessageSeq += 1;
+        return 'msg_' + Date.now() + '_' + chatMessageSeq;
+    }
 
     function setAssistFabState(state) {
         const wrap = document.getElementById('assist-fab-wrap');
@@ -1484,6 +1490,10 @@
     function updateStreamingMessage(messageId, content, isComplete) {
         const messageEl = document.getElementById(messageId);
         if (!messageEl) return;
+        if (messageEl.dataset.chatRole === 'user') {
+            console.error('Refusing to stream assistant content into a user message bubble:', messageId);
+            return;
+        }
         const contentEl = messageEl.querySelector('.ai-chat-message-content');
         if (!contentEl) return;
         contentEl.innerHTML = renderMarkdown(content);
@@ -1520,7 +1530,13 @@
             const finalText = responseText || (streamedText && streamedText !== 'Thinking...' ? streamedText : '');
             if (finalText) {
                 updateStreamingMessage(assistantMessageId, finalText, true);
-                chatMessages.push({ role: 'assistant', content: finalText });
+                const assistantEntry = { role: 'assistant', content: finalText };
+                const last = chatMessages[chatMessages.length - 1];
+                if (last && last.role === 'assistant' && last.content === '') {
+                    chatMessages[chatMessages.length - 1] = assistantEntry;
+                } else {
+                    chatMessages.push(assistantEntry);
+                }
                 saveChatState();
             } else if (result.data.requires_approval) {
                 updateStreamingMessage(assistantMessageId, 'Prepared actions for your review (see below).', true);
@@ -1646,6 +1662,10 @@
         const displayMessage = rawMessage || ('Attached: ' + pendingAttachments.map(a => a.name).join(', '));
 
         lastFailedMessage = null;
+        if (!conversationId) {
+            conversationId = 'conv_' + Date.now();
+            saveChatState();
+        }
         addChatMessage('user', displayMessage);
         if (input && typeof messageOverride !== 'string') {
             input.value = '';
@@ -2266,10 +2286,11 @@
         const welcome = messages.querySelector('.ai-chat-welcome');
         if (welcome) welcome.remove();
         
-        const messageId = 'msg_' + Date.now();
+        const messageId = nextChatMessageId();
         const messageDiv = document.createElement('div');
         messageDiv.className = `ai-chat-message ai-chat-message-${role}`;
         messageDiv.id = messageId;
+        messageDiv.dataset.chatRole = role;
         
         // Render markdown for assistant messages, plain text for user messages
         const renderedContent = isLoading 
