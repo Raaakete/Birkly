@@ -118,6 +118,7 @@ function birkly_mcp_handle_resources_list(): array
         ['uri' => 'birkly://docs/plugins', 'name' => 'Plugins', 'description' => 'Plugin architecture and client embed', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://docs/ai', 'name' => 'AI & MCP', 'description' => 'BYOAI and MCP architecture', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://docs/sub-collections', 'name' => 'Sub-collections', 'description' => 'Sub-collections and sub-entries: schema, disk layout, admin URLs, MCP tools', 'mimeType' => 'text/markdown'],
+        ['uri' => 'birkly://docs/site-building', 'name' => 'Site building playbook', 'description' => 'End-to-end website/portfolio build in project/: plan, content structure, templating, anti-patterns', 'mimeType' => 'text/markdown'],
         ['uri' => 'birkly://project', 'name' => 'Public site (project/)', 'description' => 'Paths, collections, and templating cheat sheet for AI site building', 'mimeType' => 'application/json'],
         ['uri' => 'birkly://brand-context', 'name' => 'Brand context (AI Presence)', 'description' => 'Published authoritative brand context for external AI systems', 'mimeType' => 'application/json'],
     ];
@@ -186,6 +187,7 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
         'birkly://docs/plugins' => 'plugins',
         'birkly://docs/ai' => 'ai',
         'birkly://docs/sub-collections' => 'sub-collections',
+        'birkly://docs/site-building' => 'site-building',
     ];
     if (isset($topicMap[$uri])) {
         $topic = readBirklyDocsTopic($topicMap[$uri]);

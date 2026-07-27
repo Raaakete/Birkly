@@ -422,12 +422,13 @@ function executeReadAction($actionData, $aiUser) {
 
         if ($actionType === 'list_project_files') {
             $path = (string) ($actionPayload['path'] ?? '');
+            $files = $fs->listFiles($path);
             return [
                 'success' => true,
                 'data' => [
                     'path' => $path,
-                    'entries' => $fs->listFiles($path),
-                    'count' => count($fs->listFiles($path)),
+                    'files' => $files,
+                    'count' => count($files),
                 ],
             ];
         }

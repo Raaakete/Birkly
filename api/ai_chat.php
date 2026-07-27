@@ -41,6 +41,7 @@ $GLOBALS['__HARU_INTERNAL_CALL'] = true;
 require_once 'ai_approvals.php';
 unset($GLOBALS['__HARU_INTERNAL_CALL']);
 require_once __DIR__ . '/../core/ai_tool_registry.php';
+require_once __DIR__ . '/../core/ai_playbooks.php';
 require_once __DIR__ . '/ai_read_actions.php';
 
 $input = sanitize_input(json_decode(file_get_contents('php://input'), true));
@@ -346,7 +347,7 @@ if ($action === 'chat') {
             // SIMPLIFIED FALLBACK: Only trigger if no actions AND user asked for an action
             $userAskedForAction = preg_match('/\b(create|add|make|update|delete|fix|change|another|more|one|yes|proceed)\b/i', $message);
             
-            if (empty($actions) && $userAskedForAction) {
+            if (empty($actions) && $userAskedForAction && !ai_chat_is_project_site_intent($message, $conversationHistory)) {
                 $context = $systemContext;
                 error_log("No actions found but user asked for action - using simplified fallback");
                 // Detect "create a new collection called/ named X"
@@ -800,103 +801,9 @@ if ($action === 'chat') {
                 $followUpMessage = "Context: The user asked: \"" . $message . "\"\n\n";
                 $followUpMessage .= "I've successfully retrieved the requested data. Here's what I found:\n\n";
                 foreach ($readData as $readResult) {
-                    if ($readResult['success'] ?? false) {
-                        if (isset($readResult['data']['entry'])) {
-                            $entry = $readResult['data']['entry'];
-                            // Extract collection from the read action that was executed
-                            $collectionSlug = '';
-                            foreach ($readActions as $readAction) {
-                                if (isset($readAction['data']['collection'])) {
-                                    $collectionSlug = $readAction['data']['collection'];
-                                    break;
-                                }
-                            }
-                            $followUpMessage .= "ENTRY DATA:\n";
-                            $followUpMessage .= "- Collection: " . $collectionSlug . "\n";
-                            $followUpMessage .= "- Title: " . ($entry['title'] ?? 'N/A') . "\n";
-                            $followUpMessage .= "- Slug: " . ($entry['slug'] ?? 'N/A') . "\n";
-                            $followUpMessage .= "- ID: " . ($entry['id'] ?? 'N/A') . "\n";
-                            $followUpMessage .= "\nFULL ENTRY CONTENT (JSON):\n";
-                            $followUpMessage .= json_encode($entry, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
-                        } elseif (isset($readResult['data']['entries'])) {
-                            $entries = $readResult['data']['entries'];
-                            $collectionSlug = '';
-                            foreach ($readActions as $readAction) {
-                                if (($readAction['type'] ?? '') === 'list_entries' && isset($readAction['data']['collection'])) {
-                                    $collectionSlug = $readAction['data']['collection'];
-                                    break;
-                                }
-                            }
-                            
-                            // Always include full entry data so AI can analyze content length, word count, etc.
-                            $followUpMessage .= "FOUND " . count($entries) . " ENTRIES in collection '" . $collectionSlug . "':\n";
-                            foreach ($entries as $entry) {
-                                $followUpMessage .= "- " . ($entry['title'] ?? 'Untitled') . " (slug: " . ($entry['slug'] ?? 'N/A') . ", id: " . ($entry['id'] ?? 'N/A') . ")\n";
-                            }
-                            $followUpMessage .= "\nFULL ENTRIES DATA (JSON):\n";
-                            $followUpMessage .= json_encode($entries, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
-                        } elseif (isset($readResult['data']['collections'])) {
-                            $collections = $readResult['data']['collections'];
-                            $followUpMessage .= "FOUND " . count($collections) . " COLLECTIONS:\n";
-                            foreach ($collections as $collection) {
-                                $followUpMessage .= "- " . ($collection['name'] ?? 'Untitled') . " (slug: " . ($collection['slug'] ?? 'N/A') . ")\n";
-                                if (!empty($collection['description'])) {
-                                    $followUpMessage .= "  Description: " . $collection['description'] . "\n";
-                                }
-                            }
-                            $followUpMessage .= "\nFULL COLLECTIONS DATA (JSON):\n";
-                            $followUpMessage .= json_encode($collections, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
-                            
-                            // If user asked about entry counts, hint that AI should generate list_entries for each collection
-                            $messageLower = strtolower($message);
-                            if (preg_match('/\b(which|what|how many|count|most|least|largest|smallest).*(collection|entry|entries)/i', $messageLower) || 
-                                preg_match('/\b(collection|entry|entries).*(most|least|largest|smallest|count|how many)/i', $messageLower)) {
-                                $followUpMessage .= "═══════════════════════════════════════════════════════════════════════════════\n";
-                                $followUpMessage .= "CRITICAL: USER ASKED ABOUT ENTRY COUNTS\n";
-                                $followUpMessage .= "═══════════════════════════════════════════════════════════════════════════════\n";
-                                $followUpMessage .= "To answer the user's question, you MUST execute list_entries for EACH collection listed above.\n";
-                                $followUpMessage .= "DO NOT just explain - EXECUTE the actions!\n\n";
-                                $followUpMessage .= "You MUST include a JSON action block with list_entries for each collection:\n";
-                                $followUpMessage .= "```json\n";
-                                $followUpMessage .= "{\"actions\":[\n";
-                                $actionExamples = [];
-                                foreach ($collections as $collection) {
-                                    $slug = $collection['slug'] ?? '';
-                                    if ($slug) {
-                                        $actionExamples[] = "  {\"type\":\"list_entries\",\"data\":{\"collection\":\"$slug\",\"limit\":1000},\"description\":\"Count entries in " . ($collection['name'] ?? $slug) . "\"}";
-                                    }
-                                }
-                                $followUpMessage .= implode(",\n", $actionExamples) . "\n";
-                                $followUpMessage .= "]}\n";
-                                $followUpMessage .= "```\n\n";
-                                $followUpMessage .= "After I execute these actions, I will provide you with all entry counts, and you can then answer the user's question.\n";
-                                $followUpMessage .= "═══════════════════════════════════════════════════════════════════════════════\n\n";
-                            }
-                        } elseif (isset($readResult['data']['media'])) {
-                            $media = $readResult['data']['media'];
-                            $followUpMessage .= "FOUND " . count($media) . " MEDIA FILES:\n";
-                            foreach ($media as $item) {
-                                $followUpMessage .= "- " . ($item['name'] ?? 'Untitled') . " (type: " . ($item['type'] ?? 'N/A') . ", size: " . ($item['size'] ?? 0) . " bytes)\n";
-                            }
-                            $followUpMessage .= "\nFULL MEDIA DATA (JSON):\n";
-                            $followUpMessage .= json_encode($media, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
-                        } elseif (isset($readResult['data']['users'])) {
-                            $users = $readResult['data']['users'];
-                            $followUpMessage .= "FOUND " . count($users) . " USERS:\n";
-                            foreach ($users as $user) {
-                                $followUpMessage .= "- " . ($user['email'] ?? 'N/A') . " (role: " . ($user['role'] ?? 'N/A') . ")\n";
-                            }
-                            $followUpMessage .= "\nFULL USERS DATA (JSON):\n";
-                            $followUpMessage .= json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
-                        } elseif (isset($readResult['data']['pages'])) {
-                            $pages = $readResult['data']['pages'];
-                            $followUpMessage .= "FOUND " . count($pages) . " PAGES:\n";
-                            foreach ($pages as $page) {
-                                $followUpMessage .= "- " . ($page['title'] ?? 'Untitled') . " (slug: " . ($page['slug'] ?? 'N/A') . ")\n";
-                            }
-                            $followUpMessage .= "\nFULL PAGES DATA (JSON):\n";
-                            $followUpMessage .= json_encode($pages, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
-                        }
+                    $formatted = ai_chat_format_read_result_for_followup($readResult, $readActions);
+                    if ($formatted !== '') {
+                        $followUpMessage .= $formatted;
                     }
                 }
                 // Build entry counts summary from readData
@@ -941,6 +848,24 @@ if ($action === 'chat') {
                 $followUpMessage .= "10. Include the collection slug and entry slug/id in your update_entry action.\n";
                 $followUpMessage .= "11. Provide a clear, direct answer to the user's question. DO NOT include explanations about how to do it - just do it and answer.\n";
                 $followUpMessage .= "12. IMPORTANT: For questions requiring data analysis, provide the answer directly. For write requests, include JSON action blocks.\n";
+
+                if (ai_chat_is_project_site_intent($message, $conversationHistory) || ai_chat_read_data_has_project_context($readData)) {
+                    $followUpMessage .= "13. PROJECT SITE BUILD: You already have project info and file listing above. Do NOT request get_project_info or list_project_files again.\n";
+                    $followUpMessage .= "14. Emit write_project_file actions for index.html, CSS, and other planned files. User approval is required — include all files in one batch.\n";
+                    $followUpMessage .= "15. If you have not read the site-building playbook this turn, prefer write actions over more discovery reads.\n";
+                }
+
+                $messageLower = strtolower($message);
+                foreach ($readData as $readResult) {
+                    if (!($readResult['success'] ?? false) || !isset($readResult['data']['collections'])) {
+                        continue;
+                    }
+                    if (preg_match('/\b(which|what|how many|count|most|least|largest|smallest).*(collection|entry|entries)/i', $messageLower)
+                        || preg_match('/\b(collection|entry|entries).*(most|least|largest|smallest|count|how many)/i', $messageLower)) {
+                        $followUpMessage .= "\nCRITICAL: User asked about entry counts — execute list_entries for each collection above if counts are not already included.\n";
+                        break;
+                    }
+                }
                 
                 // Make follow-up call to AI with the read data
                 error_log("Making follow-up AI call with read data");
@@ -979,8 +904,17 @@ if ($action === 'chat') {
                         if (!empty($followUpReadActions)) {
                             error_log("Executing " . count($followUpReadActions) . " additional read actions from follow-up");
                             foreach ($followUpReadActions as $actionData) {
+                                $actionKey = ($actionData['type'] ?? '') . '_' . json_encode($actionData['data'] ?? []);
+                                if (isset($executedActions[$actionKey])) {
+                                    error_log("Skipping duplicate follow-up read: " . ($actionData['type'] ?? ''));
+                                    continue;
+                                }
+                                $executedActions[$actionKey] = true;
                                 try {
                                     $result = executeReadAction($actionData, $aiUser);
+                                    if (($actionData['type'] ?? '') === 'list_entries' && isset($actionData['data']['collection'])) {
+                                        $result['data']['collection'] = $actionData['data']['collection'];
+                                    }
                                     $readData[] = $result;
                                     if ($result['success'] ?? false) {
                                         $hasSuccessfulReads = true;
@@ -993,9 +927,12 @@ if ($action === 'chat') {
                                     ];
                                 }
                             }
-                            
+
+                            $skipSecondFollowUp = ai_chat_is_project_site_intent($message, $conversationHistory)
+                                || ai_chat_read_data_has_project_context($readData);
+
                             // If we got more data, make another follow-up call with all the data
-                            if ($hasSuccessfulReads && !empty($readData)) {
+                            if ($hasSuccessfulReads && !empty($readData) && !$skipSecondFollowUp) {
                                 error_log("Making second follow-up call with all collected data");
                                 $secondFollowUpMessage = "Context: The user asked: \"" . $message . "\"\n\n";
                                 $secondFollowUpMessage .= "I've now collected ALL the necessary data. Here's everything:\n\n";
@@ -1038,8 +975,10 @@ if ($action === 'chat') {
                                     error_log("Exception in second follow-up call: " . $e->getMessage());
                                 }
                             } else {
-                                // Update the main response message to include the follow-up analysis
                                 $response['message'] = $followUpResponse['message'];
+                                if ($skipSecondFollowUp ?? false) {
+                                    error_log("Skipping second follow-up — project site context already complete");
+                                }
                             }
                         } else {
                             // Update the main response message to include the follow-up analysis
@@ -1113,6 +1052,7 @@ if ($action === 'chat') {
             }
             
             // Use only write actions for approval/execution
+            $writeActions = ai_chat_dedupe_write_actions($writeActions);
             $actions = $writeActions;
             
             error_log("Final writeActions count before processing: " . count($actions));
@@ -1220,8 +1160,8 @@ if ($action === 'chat') {
                         }
                     }
                     
+                    $chatPersistContext['execution_results'] = $executedActions;
                     ai_chat_emit_response([
-                        'status' => $hasErrors ? 'partial' : 'ok',
                         'data' => [
                             'response' => $response['message'],
                             'actions_executed' => count($executedActions),
@@ -2076,7 +2016,8 @@ function ai_chat_persist_conversation(
     string $userId,
     array $conversationHistory,
     string $userMessage,
-    string $assistantMessage
+    string $assistantMessage,
+    string $sessionNotes = ''
 ): void {
     if ($conversationId === '') {
         return;
@@ -2093,7 +2034,11 @@ function ai_chat_persist_conversation(
         $history[] = ['role' => 'user', 'content' => $userMessage];
     }
     if (trim($assistantMessage) !== '') {
-        $history[] = ['role' => 'assistant', 'content' => $assistantMessage];
+        $content = $assistantMessage;
+        if ($sessionNotes !== '') {
+            $content .= $sessionNotes;
+        }
+        $history[] = ['role' => 'assistant', 'content' => $content];
     }
     if (count($history) > 10) {
         $history = array_slice($history, -10);
@@ -2117,13 +2062,19 @@ function ai_chat_persist_conversation(
 function ai_chat_emit_response(array $payload, bool $streaming, ?array $persistContext = null): void
 {
     if ($persistContext !== null && ($payload['status'] ?? '') === 'ok') {
+        $sessionNotes = '';
+        $executionResults = $persistContext['execution_results'] ?? null;
+        if (is_array($executionResults) && $executionResults !== []) {
+            $sessionNotes = ai_chat_build_session_notes($executionResults);
+        }
         ai_chat_persist_conversation(
             (string) ($persistContext['conversation_id'] ?? ''),
             (string) ($persistContext['ai_connection_id'] ?? ''),
             (string) ($persistContext['user_id'] ?? ''),
             is_array($persistContext['history'] ?? null) ? $persistContext['history'] : [],
             (string) ($persistContext['user_message'] ?? ''),
-            (string) (($payload['data']['response'] ?? '') ?: '')
+            (string) (($payload['data']['response'] ?? '') ?: ''),
+            $sessionNotes
         );
     }
 
