@@ -60,6 +60,48 @@
         return Promise.resolve(confirm(message));
     }
 
+    var modalState = {
+        productIdx: null,
+        claimIdx: null,
+        evidenceIdx: null,
+        mediaIdx: null,
+        pickedMedia: null
+    };
+
+    function openApModal(id) {
+        var modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        var first = modal.querySelector('input, textarea, select, button:not(.modal-close)');
+        if (first) first.focus();
+    }
+
+    function closeApModal(id) {
+        var modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function bindApModals() {
+        document.querySelectorAll('[data-ap-modal-close]').forEach(function (el) {
+            el.addEventListener('click', function () {
+                closeApModal(el.getAttribute('data-ap-modal-close'));
+            });
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('.ap-modal.active').forEach(function (modal) {
+                closeApModal(modal.id);
+            });
+        });
+    }
+
+    function linesFromTextarea(val) {
+        return String(val || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+    }
+
     function collectionKey(c) {
         return c.dir || c.slug || c.handle || c.id || '';
     }
@@ -314,6 +356,8 @@
                     escapeHtml(st) + '</option>';
             });
             html += '</select></label>';
+            html += ' <button type="button" class="btn btn-sm btn-secondary ap-edit-claim-btn" data-idx="' +
+                (state.draft.claims || []).indexOf(claim) + '">Edit claim</button>';
         } else {
             html += '<p class="badge">' + escapeHtml(claim.status || 'pending_review') + '</p>';
         }
@@ -333,12 +377,17 @@
         var list = document.getElementById('ap-claims-list');
         if (!list) return;
         list.innerHTML = '';
-        (state.draft.claims || []).forEach(function (claim) {
+        (state.draft.claims || []).forEach(function (claim, idx) {
             var li = document.createElement('li');
             li.className = state.selectedClaimId === claim.id ? 'selected' : '';
             li.innerHTML = '<strong>' + escapeHtml(claim.statement || 'Untitled') + '</strong> ' +
-                '<span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>';
-            li.addEventListener('click', function () {
+                '<span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>' +
+                (state.canEdit ?
+                    '<div class="ap-item-actions">' +
+                    '<button type="button" class="btn-link ap-edit-claim-btn" data-idx="' + idx + '">Edit</button>' +
+                    '</div>' : '');
+            li.addEventListener('click', function (e) {
+                if (e.target.closest('.ap-edit-claim-btn')) return;
                 state.selectedClaimId = claim.id;
                 renderClaims();
                 renderClaimDetail();
@@ -365,26 +414,41 @@
             li.innerHTML = escapeHtml(ev.title || ev.url || ev.id) +
                 ' <span class="badge">' + escapeHtml(ev.type || 'other') + '</span> ' +
                 '<span class="badge">' + escapeHtml(ev.verification_status || 'unverified') + '</span>' +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-verify-evidence" data-idx="' +
-                    idx + '">Verify</button>' : '');
+                (state.canEdit ?
+                    '<div class="ap-item-actions">' +
+                    '<button type="button" class="btn-link ap-edit-evidence-btn" data-idx="' + idx + '">Edit</button> ' +
+                    '<button type="button" class="btn-link ap-verify-evidence" data-idx="' + idx + '">Verify</button>' +
+                    '</div>' : '');
             list.appendChild(li);
         });
     }
 
     function renderMedia() {
-        var list = document.getElementById('ap-media-list');
-        if (!list) return;
-        list.innerHTML = '';
-        (state.draft.media_context || []).forEach(function (ctx, idx) {
-            var li = document.createElement('li');
+        var grid = document.getElementById('ap-media-grid');
+        var emptyEl = document.getElementById('ap-media-empty');
+        if (!grid) return;
+        grid.innerHTML = '';
+        var items = state.draft.media_context || [];
+        if (emptyEl) emptyEl.hidden = items.length > 0;
+        items.forEach(function (ctx, idx) {
             var rep = (ctx.represents && ctx.represents.type) || 'brand';
-            li.innerHTML = '<code>' + escapeHtml(ctx.media_id) + '</code> — ' + escapeHtml(rep) +
-                '<div class="text-muted">' + escapeHtml(ctx.description || '') + '</div>' +
-                (state.canEdit ? ' <button type="button" class="btn-link ap-edit-media" data-idx="' +
-                    idx + '">Edit</button> ' +
-                    '<button type="button" class="btn-link ap-remove-media" data-idx="' +
-                    idx + '">Remove</button>' : '');
-            list.appendChild(li);
+            var card = document.createElement('div');
+            card.className = 'ap-media-card';
+            var thumbUrl = ctx.media_url || (ctx.media_id ? '/media/' + encodeURIComponent(ctx.media_id) : '');
+            card.innerHTML =
+                (thumbUrl ? '<img class="ap-media-card-thumb" src="' + escapeHtml(thumbUrl) + '" alt="">' :
+                    '<div class="ap-media-card-thumb"></div>') +
+                '<div class="ap-media-card-body">' +
+                '<strong>' + escapeHtml(ctx.media_name || ctx.media_id || 'Media') + '</strong> ' +
+                '<span class="badge">' + escapeHtml(rep) + '</span>' +
+                (ctx.description ? '<p>' + escapeHtml(ctx.description) + '</p>' : '') +
+                (state.canEdit ?
+                    '<div class="ap-item-actions">' +
+                    '<button type="button" class="btn btn-sm btn-secondary ap-edit-media" data-idx="' + idx + '">Edit</button> ' +
+                    '<button type="button" class="btn btn-sm btn-secondary ap-remove-media" data-idx="' + idx + '">Remove</button>' +
+                    '</div>' : '') +
+                '</div>';
+            grid.appendChild(card);
         });
     }
 
@@ -415,12 +479,13 @@
         var base = urls.api_url || '';
         var summary = document.getElementById('ap-api-summary');
         var products = document.getElementById('ap-api-products');
-        if (summary) {
-            summary.textContent = base ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'view=summary' : '—';
-        }
-        if (products) {
-            products.textContent = base ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'view=products' : '—';
-        }
+        var claims = document.getElementById('ap-api-claims');
+        var suffix = function (view) {
+            return base ? base + (base.indexOf('?') >= 0 ? '&' : '?') + 'view=' + view : '—';
+        };
+        if (summary) summary.textContent = suffix('summary');
+        if (products) products.textContent = suffix('products');
+        if (claims) claims.textContent = suffix('claims');
     }
 
     function renderVersions() {
@@ -440,27 +505,25 @@
 
     function renderProducts() {
         var grid = document.getElementById('ap-products-list');
+        var emptyEl = document.getElementById('ap-products-empty');
         if (!grid) return;
         grid.innerHTML = '';
-        (state.draft.products_services || []).forEach(function (prod, idx) {
+        var items = state.draft.products_services || [];
+        if (emptyEl) emptyEl.hidden = items.length > 0;
+        items.forEach(function (prod, idx) {
             var card = document.createElement('div');
             card.className = 'ap-product-card card';
             card.innerHTML =
                 '<h4>' + escapeHtml(prod.name || 'Unnamed') + '</h4>' +
                 '<span class="badge">' + escapeHtml(prod.type || 'product') + '</span>' +
                 (prod.category ? ' <span class="text-muted">' + escapeHtml(prod.category) + '</span>' : '') +
-                '<p>' + escapeHtml(prod.short_description || '') + '</p>' +
+                '<p class="ap-product-desc">' + escapeHtml(prod.short_description || prod.full_description || '') + '</p>' +
                 (state.canEdit ?
                     '<div class="ap-product-actions">' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-edit-product" data-idx="' +
-                    idx + '">Edit</button> ' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-delete-product" data-idx="' +
-                    idx + '">Delete</button></div>' : '');
+                    '<button type="button" class="btn btn-sm btn-secondary ap-edit-product" data-idx="' + idx + '">Edit</button> ' +
+                    '<button type="button" class="btn btn-sm btn-secondary ap-delete-product" data-idx="' + idx + '">Delete</button></div>' : '');
             grid.appendChild(card);
         });
-        if (!(state.draft.products_services || []).length) {
-            grid.innerHTML = '<p class="text-muted">No products or services yet.</p>';
-        }
     }
 
     function renderRelationships() {
@@ -935,8 +998,13 @@
             toast('Select an AI connection for this action, or use Fill gaps for basic suggestions', 'warning');
             return Promise.resolve();
         }
-        setAssistStatus('Generating suggestions…');
-        return postJson({ action: 'copilot', ai_connection_id: connId, mode: mode || 'all' })
+        setAssistStatus(mode === 'fill_complete' ? 'Generating complete profile…' : 'Generating suggestions…');
+        return postJson({
+            action: 'copilot',
+            ai_connection_id: connId,
+            mode: mode || 'all',
+            creative: mode === 'fill_complete'
+        })
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Assist failed');
                 state.suggestions = res.data.suggestions || [];
@@ -1006,7 +1074,7 @@
         }
         var btn = document.querySelector('.ap-field-ai[data-field="' + field + '"]');
         if (btn) btn.disabled = true;
-        return postJson({ action: 'field_ai', field: field, ai_connection_id: connId })
+        return postJson({ action: 'field_ai', field: field, ai_connection_id: connId, creative: true })
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Field AI failed');
                 var suggestions = res.data.suggestions || [];
@@ -1115,61 +1183,248 @@
         });
     }
 
-    function addProduct() {
-        var name = prompt('Product or service name');
-        if (!name) return;
-        var shortDesc = prompt('Short description') || '';
-        state.draft.products_services = state.draft.products_services || [];
-        state.draft.products_services.push({
-            id: uid('prod'),
-            name: name,
-            type: 'product',
-            short_description: shortDesc,
-            full_description: '',
-            category: '',
-            pricing_model: '',
-            best_for: [],
-            not_for: [],
-            claim_ids: [],
-            connected_entry: null,
-            public: true
+    function assistFillComplete() {
+        var connId = getSelectedAiConnection();
+        if (!connId) {
+            toast('Select an AI connection in the sidebar first', 'warning');
+            openAssistSidebar();
+            return Promise.resolve();
+        }
+        var slugs = state.collections.map(collectionKey).filter(Boolean);
+        var btn = document.getElementById('ap-assist-fill-complete');
+        if (btn) btn.disabled = true;
+        setAssistStatus('Generating complete profile (may infer missing fields)…');
+        return postJson({
+            action: 'wizard_generate',
+            collections: slugs,
+            ai_connection_id: connId,
+            creative: true
+        }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
+            state.suggestions = res.data.suggestions || [];
+            state.studioDraftPatch = res.data.draft_patch || null;
+            renderAssistSuggestions();
+            scrollAssistResults();
+            openAssistSidebar();
+            if (res.data.ai_error) {
+                toast(res.data.ai_error, 'warning');
+            }
+            if (state.suggestions.length) {
+                toast(state.suggestions.length + ' proposal(s) for a complete profile — review and accept', 'success');
+            } else {
+                toast('No proposals generated — try Fill gaps or add more context first', 'info');
+            }
+        }).finally(function () {
+            if (btn) btn.disabled = false;
+            setAssistStatus('');
         });
+    }
+
+    function openProductModal(idx) {
+        modalState.productIdx = idx == null ? null : idx;
+        var prod = idx != null ? (state.draft.products_services || [])[idx] : null;
+        var titleEl = document.getElementById('ap-product-modal-title');
+        if (titleEl) titleEl.textContent = prod ? 'Edit product or service' : 'Add product or service';
+        document.getElementById('ap-product-name').value = prod ? (prod.name || '') : '';
+        document.getElementById('ap-product-type').value = prod ? (prod.type || 'product') : 'product';
+        document.getElementById('ap-product-short').value = prod ? (prod.short_description || '') : '';
+        document.getElementById('ap-product-full').value = prod ? (prod.full_description || '') : '';
+        document.getElementById('ap-product-category').value = prod ? (prod.category || '') : '';
+        document.getElementById('ap-product-pricing').value = prod ? (prod.pricing_model || '') : '';
+        document.getElementById('ap-product-best-for').value = prod && Array.isArray(prod.best_for) ? prod.best_for.join('\n') : '';
+        document.getElementById('ap-product-not-for').value = prod && Array.isArray(prod.not_for) ? prod.not_for.join('\n') : '';
+        openApModal('ap-product-modal');
+    }
+
+    function saveProductFromModal(e) {
+        e.preventDefault();
+        var name = document.getElementById('ap-product-name').value.trim();
+        if (!name) return;
+        var prod = {
+            id: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
+                ? state.draft.products_services[modalState.productIdx].id : uid('prod'),
+            name: name,
+            type: document.getElementById('ap-product-type').value || 'product',
+            short_description: document.getElementById('ap-product-short').value.trim(),
+            full_description: document.getElementById('ap-product-full').value.trim(),
+            category: document.getElementById('ap-product-category').value.trim(),
+            pricing_model: document.getElementById('ap-product-pricing').value.trim(),
+            best_for: linesFromTextarea(document.getElementById('ap-product-best-for').value),
+            not_for: linesFromTextarea(document.getElementById('ap-product-not-for').value),
+            claim_ids: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
+                ? (state.draft.products_services[modalState.productIdx].claim_ids || []) : [],
+            connected_entry: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
+                ? state.draft.products_services[modalState.productIdx].connected_entry : null,
+            public: true
+        };
+        state.draft.products_services = state.draft.products_services || [];
+        if (modalState.productIdx != null) {
+            state.draft.products_services[modalState.productIdx] = prod;
+        } else {
+            state.draft.products_services.push(prod);
+        }
+        closeApModal('ap-product-modal');
         renderProducts();
         state.dirty = true;
+        toast('Product saved — remember to save draft', 'success');
+    }
+
+    function addProduct() {
+        openProductModal(null);
     }
 
     function editProduct(idx) {
-        var prod = (state.draft.products_services || [])[idx];
-        if (!prod) return;
-        prod.name = prompt('Name', prod.name) || prod.name;
-        prod.type = prompt('Type (product/service/bundle)', prod.type || 'product') || prod.type;
-        prod.short_description = prompt('Short description', prod.short_description || '') || prod.short_description;
-        prod.full_description = prompt('Full description', prod.full_description || '') || prod.full_description;
-        prod.category = prompt('Category', prod.category || '') || prod.category;
-        renderProducts();
-        state.dirty = true;
+        openProductModal(idx);
     }
 
     function deleteProduct(idx) {
-        if (!confirm('Delete this product/service?')) return;
-        state.draft.products_services.splice(idx, 1);
-        renderProducts();
-        state.dirty = true;
+        confirmAsync('Delete this product/service?').then(function (ok) {
+            if (!ok) return;
+            state.draft.products_services.splice(idx, 1);
+            renderProducts();
+            state.dirty = true;
+        });
     }
 
-    function addRelationship() {
-        var name = prompt('Relationship name (partner, parent company, etc.)');
+    function openRelationshipModal() {
+        document.getElementById('ap-rel-name').value = '';
+        document.getElementById('ap-rel-type').value = 'partner';
+        document.getElementById('ap-rel-desc').value = '';
+        document.getElementById('ap-rel-url').value = '';
+        openApModal('ap-relationship-modal');
+    }
+
+    function saveRelationshipFromModal(e) {
+        e.preventDefault();
+        var name = document.getElementById('ap-rel-name').value.trim();
         if (!name) return;
-        var type = prompt('Type (partner, subsidiary, parent, competitor, other)', 'partner') || 'partner';
-        var desc = prompt('Description (optional)') || '';
-        var url = prompt('URL (optional)') || '';
         state.draft.relationships = state.draft.relationships || [];
-        state.draft.relationships.push({ id: uid('rel'), type: type, name: name, description: desc, url: url });
+        state.draft.relationships.push({
+            id: uid('rel'),
+            type: document.getElementById('ap-rel-type').value || 'partner',
+            name: name,
+            description: document.getElementById('ap-rel-desc').value.trim(),
+            url: document.getElementById('ap-rel-url').value.trim()
+        });
+        closeApModal('ap-relationship-modal');
         renderRelationships();
         state.dirty = true;
     }
 
-    function addCmsEvidence() {
+    function addRelationship() {
+        openRelationshipModal();
+    }
+
+    function openClaimModal(idx) {
+        modalState.claimIdx = idx == null ? null : idx;
+        var claim = idx != null ? (state.draft.claims || [])[idx] : null;
+        var titleEl = document.getElementById('ap-claim-modal-title');
+        if (titleEl) titleEl.textContent = claim ? 'Edit claim' : 'Add claim';
+        document.getElementById('ap-claim-statement').value = claim ? (claim.statement || '') : '';
+        document.getElementById('ap-claim-status').value = claim ? (claim.status || 'pending_review') : 'pending_review';
+        document.getElementById('ap-claim-notes').value = claim ? (claim.notes || '') : '';
+        openApModal('ap-claim-modal');
+    }
+
+    function saveClaimFromModal(e) {
+        e.preventDefault();
+        var statement = document.getElementById('ap-claim-statement').value.trim();
+        if (!statement) return;
+        state.draft.claims = state.draft.claims || [];
+        if (modalState.claimIdx != null) {
+            var existing = state.draft.claims[modalState.claimIdx];
+            existing.statement = statement;
+            existing.status = document.getElementById('ap-claim-status').value;
+            existing.notes = document.getElementById('ap-claim-notes').value.trim();
+        } else {
+            state.draft.claims.push({
+                id: uid('claim'),
+                statement: statement,
+                status: document.getElementById('ap-claim-status').value,
+                evidence_ids: [],
+                related_content: [],
+                last_reviewed_at: '',
+                expires_at: '',
+                notes: document.getElementById('ap-claim-notes').value.trim()
+            });
+        }
+        closeApModal('ap-claim-modal');
+        renderClaims();
+        state.dirty = true;
+    }
+
+    function openEvidenceModal(idx) {
+        modalState.evidenceIdx = idx == null ? null : idx;
+        var ev = idx != null ? (state.draft.evidence || [])[idx] : null;
+        var titleEl = document.getElementById('ap-evidence-modal-title');
+        if (titleEl) titleEl.textContent = ev ? 'Edit evidence' : 'Add evidence';
+        document.getElementById('ap-evidence-title').value = ev ? (ev.title || '') : '';
+        document.getElementById('ap-evidence-url').value = ev ? (ev.url || '') : '';
+        document.getElementById('ap-evidence-type').value = ev ? (ev.type || 'external_url') : 'external_url';
+        document.getElementById('ap-evidence-notes').value = ev ? (ev.notes || '') : '';
+        openApModal('ap-evidence-modal');
+    }
+
+    function saveEvidenceFromModal(e) {
+        e.preventDefault();
+        var title = document.getElementById('ap-evidence-title').value.trim();
+        if (!title) return;
+        var url = document.getElementById('ap-evidence-url').value.trim();
+        var item;
+        if (modalState.evidenceIdx != null) {
+            item = state.draft.evidence[modalState.evidenceIdx];
+            item.title = title;
+            item.url = url;
+            item.type = document.getElementById('ap-evidence-type').value;
+            item.notes = document.getElementById('ap-evidence-notes').value.trim();
+            closeApModal('ap-evidence-modal');
+            renderEvidence();
+            renderClaims();
+            state.dirty = true;
+            return;
+        }
+        item = {
+            id: uid('evidence'),
+            type: url ? document.getElementById('ap-evidence-type').value : 'other',
+            title: title,
+            url: url,
+            media_id: '',
+            publisher: '',
+            published_at: '',
+            reviewed_at: '',
+            verification_status: 'unverified',
+            claim_ids: state.selectedClaimId ? [state.selectedClaimId] : [],
+            notes: document.getElementById('ap-evidence-notes').value.trim()
+        };
+        var finish = function () {
+            state.draft.evidence = state.draft.evidence || [];
+            state.draft.evidence.push(item);
+            if (state.selectedClaimId) {
+                var claim = (state.draft.claims || []).find(function (c) {
+                    return c.id === state.selectedClaimId;
+                });
+                if (claim) {
+                    claim.evidence_ids = claim.evidence_ids || [];
+                    claim.evidence_ids.push(item.id);
+                    if (claim.evidence_ids.length >= 2) claim.status = 'supported';
+                }
+            }
+            closeApModal('ap-evidence-modal');
+            renderEvidence();
+            renderClaims();
+            state.dirty = true;
+        };
+        if (url) {
+            postJson({ action: 'fetch_url_meta', url: url }).then(function (res) {
+                if (res.status === 'ok' && res.data.title) item.title = res.data.title;
+                finish();
+            }).catch(finish);
+        } else {
+            finish();
+        }
+    }
+
+    function openCmsEvidenceModal() {
         var refs = (state.draft.connected_content || []).filter(function (r) {
             return r.ref_type === 'entry' && r.entry_id;
         });
@@ -1177,10 +1432,25 @@
             toast('Connect CMS entries first (Context tab)', 'warning');
             return;
         }
-        var labels = refs.map(function (r, i) { return (i + 1) + '. ' + (r.label || r.entry_id); }).join('\n');
-        var pick = prompt('Pick connected entry number:\n' + labels);
-        if (!pick) return;
-        var idx = parseInt(pick, 10) - 1;
+        var sel = document.getElementById('ap-cms-evidence-entry');
+        if (!sel) return;
+        sel.innerHTML = '';
+        refs.forEach(function (ref, i) {
+            var opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = ref.label || ref.entry_id;
+            sel.appendChild(opt);
+        });
+        openApModal('ap-cms-evidence-modal');
+    }
+
+    function saveCmsEvidenceFromModal(e) {
+        e.preventDefault();
+        var sel = document.getElementById('ap-cms-evidence-entry');
+        var idx = parseInt(sel ? sel.value : '-1', 10);
+        var refs = (state.draft.connected_content || []).filter(function (r) {
+            return r.ref_type === 'entry' && r.entry_id;
+        });
         if (idx < 0 || idx >= refs.length) return;
         var ref = refs[idx];
         var id = uid('evidence');
@@ -1209,8 +1479,82 @@
                 if (claim.evidence_ids.length >= 2) claim.status = 'supported';
             }
         }
+        closeApModal('ap-cms-evidence-modal');
         renderEvidence();
         renderClaims();
+        state.dirty = true;
+    }
+
+    function addCmsEvidence() {
+        openCmsEvidenceModal();
+    }
+
+    function clearPickedMedia() {
+        modalState.pickedMedia = null;
+        var idEl = document.getElementById('ap-media-id');
+        if (idEl) idEl.value = '';
+        var preview = document.getElementById('ap-media-picked-preview');
+        if (preview) preview.hidden = true;
+    }
+
+    function setPickedMedia(media) {
+        modalState.pickedMedia = media;
+        var idEl = document.getElementById('ap-media-id');
+        if (idEl) idEl.value = media.id || media.name || '';
+        var preview = document.getElementById('ap-media-picked-preview');
+        var thumb = document.getElementById('ap-media-picked-thumb');
+        var nameEl = document.getElementById('ap-media-picked-name');
+        if (preview) preview.hidden = false;
+        if (thumb) {
+            thumb.src = media.url || media.thumbnail || '';
+            thumb.alt = media.name || '';
+        }
+        if (nameEl) nameEl.textContent = media.name || media.id || '';
+    }
+
+    function openMediaPicker() {
+        if (global.Birkly && global.Birkly.MediaModal) {
+            global.Birkly.MediaModal.open(function (media) {
+                if (media) setPickedMedia(media);
+            });
+        } else {
+            toast('Media picker unavailable — reload the page', 'error');
+        }
+    }
+
+    function openMediaEditModal(idx) {
+        modalState.mediaIdx = idx;
+        var ctx = (state.draft.media_context || [])[idx];
+        if (!ctx) return;
+        var preview = document.getElementById('ap-media-modal-preview');
+        var thumb = document.getElementById('ap-media-modal-thumb');
+        var nameEl = document.getElementById('ap-media-modal-name');
+        if (preview) preview.hidden = false;
+        if (thumb) {
+            thumb.src = ctx.media_url || '';
+            thumb.alt = ctx.media_name || ctx.media_id || '';
+        }
+        if (nameEl) nameEl.textContent = ctx.media_name || ctx.media_id || '';
+        document.getElementById('ap-media-desc').value = ctx.description || '';
+        document.getElementById('ap-media-use').value = ctx.intended_use || '';
+        document.getElementById('ap-media-restrictions').value = ctx.restrictions || '';
+        document.getElementById('ap-media-represents-edit').value =
+            (ctx.represents && ctx.represents.type) || 'brand';
+        openApModal('ap-media-modal');
+    }
+
+    function saveMediaFromModal(e) {
+        e.preventDefault();
+        var idx = modalState.mediaIdx;
+        var ctx = idx != null ? state.draft.media_context[idx] : null;
+        if (!ctx) return;
+        ctx.description = document.getElementById('ap-media-desc').value.trim();
+        ctx.intended_use = document.getElementById('ap-media-use').value.trim();
+        ctx.restrictions = document.getElementById('ap-media-restrictions').value.trim();
+        ctx.represents = ctx.represents || {};
+        ctx.represents.type = document.getElementById('ap-media-represents-edit').value;
+        closeApModal('ap-media-modal');
+        renderMedia();
         state.dirty = true;
     }
 
@@ -1264,6 +1608,10 @@
             assistAutoFill().catch(function (e) { toast(e.message, 'error'); });
         });
 
+        bindEl('ap-assist-fill-complete', 'click', function () {
+            assistFillComplete().catch(function (e) { toast(e.message, 'error'); });
+        });
+
         bindEl('ap-assist-collection-search', 'input', function (e) {
             populateAssistCollections(e.target.value);
         });
@@ -1289,6 +1637,20 @@
                 if (field) runFieldAi(field).catch(function (e) { toast(e.message, 'error'); });
             });
         });
+
+        bindApModals();
+        var productForm = document.getElementById('ap-product-form');
+        if (productForm) productForm.addEventListener('submit', saveProductFromModal);
+        var relForm = document.getElementById('ap-relationship-form');
+        if (relForm) relForm.addEventListener('submit', saveRelationshipFromModal);
+        var claimForm = document.getElementById('ap-claim-form');
+        if (claimForm) claimForm.addEventListener('submit', saveClaimFromModal);
+        var evidenceForm = document.getElementById('ap-evidence-form');
+        if (evidenceForm) evidenceForm.addEventListener('submit', saveEvidenceFromModal);
+        var cmsEvidenceForm = document.getElementById('ap-cms-evidence-form');
+        if (cmsEvidenceForm) cmsEvidenceForm.addEventListener('submit', saveCmsEvidenceFromModal);
+        var mediaForm = document.getElementById('ap-media-form');
+        if (mediaForm) mediaForm.addEventListener('submit', saveMediaFromModal);
 
         bindEl('ap-add-product', 'click', addProduct);
 
@@ -1376,69 +1738,32 @@
             });
         }
 
-        bindEl('ap-add-claim', 'click', function () {
-            var statement = prompt('Claim statement');
-            if (!statement) return;
-            state.draft.claims = state.draft.claims || [];
-            state.draft.claims.push({
-                id: uid('claim'),
-                statement: statement,
-                status: 'pending_review',
-                evidence_ids: [],
-                related_content: [],
-                last_reviewed_at: '',
-                expires_at: '',
-                notes: ''
-            });
-            renderClaims();
-            state.dirty = true;
-        });
+        bindEl('ap-add-claim', 'click', function () { openClaimModal(null); });
 
-        bindEl('ap-add-evidence', 'click', function () {
-            var url = prompt('Evidence URL (optional)');
-            var title = prompt('Evidence title') || 'Evidence';
-            var id = uid('evidence');
-            var item = {
-                id: id,
-                type: url ? 'external_url' : 'other',
-                title: title,
-                url: url || '',
-                media_id: '',
-                publisher: '',
-                published_at: '',
-                reviewed_at: '',
-                verification_status: 'unverified',
-                claim_ids: state.selectedClaimId ? [state.selectedClaimId] : [],
-                notes: ''
-            };
-            var finish = function () {
-                state.draft.evidence = state.draft.evidence || [];
-                state.draft.evidence.push(item);
-                if (state.selectedClaimId) {
-                    var claim = (state.draft.claims || []).find(function (c) {
-                        return c.id === state.selectedClaimId;
-                    });
-                    if (claim) {
-                        claim.evidence_ids = claim.evidence_ids || [];
-                        claim.evidence_ids.push(id);
-                        if (claim.evidence_ids.length >= 2) claim.status = 'supported';
-                    }
-                }
-                renderEvidence();
-                renderClaims();
-                state.dirty = true;
-            };
-            if (url) {
-                postJson({ action: 'fetch_url_meta', url: url }).then(function (res) {
-                    if (res.status === 'ok' && res.data.title) item.title = res.data.title;
-                    finish();
-                }).catch(finish);
-            } else {
-                finish();
-            }
-        });
+        bindEl('ap-add-evidence', 'click', function () { openEvidenceModal(null); });
 
         bindEl('ap-add-cms-evidence', 'click', addCmsEvidence);
+
+        var claimsList = document.getElementById('ap-claims-list');
+        if (claimsList) {
+            claimsList.addEventListener('click', function (e) {
+                var btn = e.target.closest('.ap-edit-claim-btn');
+                if (!btn) return;
+                e.stopPropagation();
+                var idx = parseInt(btn.getAttribute('data-idx'), 10);
+                if (!isNaN(idx)) openClaimModal(idx);
+            });
+        }
+
+        var claimDetail = document.getElementById('ap-claim-detail');
+        if (claimDetail) {
+            claimDetail.addEventListener('click', function (e) {
+                var btn = e.target.closest('.ap-edit-claim-btn');
+                if (!btn) return;
+                var idx = parseInt(btn.getAttribute('data-idx'), 10);
+                if (!isNaN(idx)) openClaimModal(idx);
+            });
+        }
 
         var evidenceList = document.getElementById('ap-evidence-list');
         if (evidenceList) {
@@ -1451,48 +1776,60 @@
                         renderEvidence();
                         state.dirty = true;
                     }
+                    return;
+                }
+                var editBtn = e.target.closest('.ap-edit-evidence-btn');
+                if (editBtn) {
+                    var evIdx = parseInt(editBtn.getAttribute('data-idx'), 10);
+                    if (!isNaN(evIdx)) openEvidenceModal(evIdx);
                 }
             });
         }
+
+        bindEl('ap-pick-media', 'click', openMediaPicker);
+        bindEl('ap-media-picked-clear', 'click', clearPickedMedia);
 
         bindEl('ap-add-media-context', 'click', function () {
             var mediaIdEl = document.getElementById('ap-media-id');
             var repEl = document.getElementById('ap-media-represents');
             var mediaId = mediaIdEl ? mediaIdEl.value.trim() : '';
-            if (!mediaId) return;
+            if (!mediaId) {
+                toast('Pick a media file first', 'warning');
+                return;
+            }
             var repType = repEl ? repEl.value : 'brand';
-            var desc = prompt('What does this media represent?') || '';
+            var picked = modalState.pickedMedia || {};
             state.draft.media_context = state.draft.media_context || [];
             state.draft.media_context.push({
                 media_id: mediaId,
+                media_name: picked.name || mediaId,
+                media_url: picked.url || picked.thumbnail || '',
                 represents: { type: repType, ref: '' },
-                description: desc,
+                description: '',
                 intended_use: '',
                 restrictions: ''
             });
-            if (mediaIdEl) mediaIdEl.value = '';
+            clearPickedMedia();
             renderMedia();
             state.dirty = true;
+            openMediaEditModal(state.draft.media_context.length - 1);
         });
 
-        var mediaList = document.getElementById('ap-media-list');
-        if (mediaList) {
-            mediaList.addEventListener('click', function (e) {
+        var mediaGrid = document.getElementById('ap-media-grid');
+        if (mediaGrid) {
+            mediaGrid.addEventListener('click', function (e) {
                 var idx = parseInt(e.target.getAttribute('data-idx'), 10);
                 if (isNaN(idx)) return;
                 if (e.target.classList.contains('ap-edit-media')) {
-                    var ctx = state.draft.media_context[idx];
-                    if (!ctx) return;
-                    ctx.description = prompt('Description', ctx.description || '') || ctx.description;
-                    ctx.intended_use = prompt('Intended use', ctx.intended_use || '') || ctx.intended_use;
-                    ctx.restrictions = prompt('Restrictions', ctx.restrictions || '') || ctx.restrictions;
-                    renderMedia();
-                    state.dirty = true;
+                    openMediaEditModal(idx);
                 }
                 if (e.target.classList.contains('ap-remove-media')) {
-                    state.draft.media_context.splice(idx, 1);
-                    renderMedia();
-                    state.dirty = true;
+                    confirmAsync('Remove this media context?').then(function (ok) {
+                        if (!ok) return;
+                        state.draft.media_context.splice(idx, 1);
+                        renderMedia();
+                        state.dirty = true;
+                    });
                 }
             });
         }
