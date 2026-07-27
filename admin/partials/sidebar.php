@@ -2,6 +2,12 @@
 // Helper function to determine if a nav link is active
 function is_nav_active(string $page_name): string {
     global $page; // Access the global $page variable from admin/index.php
+    if ($page_name === 'agent-guide' && $page === 'ai-presence') {
+        return 'active';
+    }
+    if ($page_name === 'ai-presence' && $page === 'agent-guide') {
+        return 'active';
+    }
     return ($page === $page_name) ? 'active' : '';
 }
 
@@ -124,7 +130,7 @@ if (empty($userAvatar)) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('ai-presence')) ?>" class="nav-link <?= is_nav_active('ai-presence') ?>" title="<?= htmlspecialchars(__('admin.ai_presence')) ?>">
+                        <a href="<?= htmlspecialchars(admin_url('agent-guide')) ?>" class="nav-link <?= is_nav_active('agent-guide') ?>" title="<?= htmlspecialchars(__('admin.ai_presence')) ?>">
                             <?= birkly_icon('sparkle', ['class' => 'nav-icon']) ?>
                             <span class="nav-label"><?= __('admin.ai_presence') ?></span>
                         </a>

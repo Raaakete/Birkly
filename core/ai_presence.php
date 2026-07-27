@@ -1,6 +1,6 @@
 <?php
 /**
- * AI Presence — brand context for AI systems (P46).
+ * Agent Guide — structured context for AI systems (P46, formerly AI Presence).
  * Storage: settings/ai_presence/
  */
 
@@ -9,7 +9,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/birkly_paths.php';
 require_once __DIR__ . '/hosting_urls.php';
 
-const BIRKLY_AI_PRESENCE_SCHEMA_VERSION = 'ai_presence.v1';
+const BIRKLY_AI_PRESENCE_SCHEMA_VERSION = 'agent_guide.v1';
+const BIRKLY_AI_PRESENCE_LEGACY_SCHEMA_VERSION = 'ai_presence.v1';
 const BIRKLY_AI_PRESENCE_VERSIONS_CAP = 50;
 const BIRKLY_AI_PRESENCE_EXPORT_MAX_BYTES = 2097152;
 
@@ -112,6 +113,11 @@ function birkly_ai_presence_default_draft(): array
             'custom_guidance' => '',
         ],
         'connected_content' => [],
+        'sources_of_truth' => [],
+        'guide_meta' => [
+            'product' => 'Agent Guide',
+            'summary_layer' => true,
+        ],
         'claims' => [],
         'evidence' => [],
         'media_context' => [],
@@ -119,7 +125,7 @@ function birkly_ai_presence_default_draft(): array
         'relationships' => [],
         'publication_settings' => [
             'enabled' => false,
-            'public_path' => '/.well-known/brand-context.json',
+            'public_path' => '/.well-known/agent-guide.json',
             'include_json_ld' => true,
             'redact_public_fields' => [],
             'public_views_enabled' => true,
@@ -142,10 +148,18 @@ function birkly_ai_presence_normalize_draft(array $draft): array
 {
     $defaults = birkly_ai_presence_default_draft();
     $merged = array_replace_recursive($defaults, $draft);
-    $merged['schema_version'] = BIRKLY_AI_PRESENCE_SCHEMA_VERSION;
+    if (!birkly_ai_presence_is_valid_schema_version((string) ($merged['schema_version'] ?? ''))) {
+        $merged['schema_version'] = BIRKLY_AI_PRESENCE_SCHEMA_VERSION;
+    }
 
     if (!is_array($merged['connected_content'])) {
         $merged['connected_content'] = [];
+    }
+    if (!is_array($merged['sources_of_truth'])) {
+        $merged['sources_of_truth'] = [];
+    }
+    if (!is_array($merged['guide_meta'])) {
+        $merged['guide_meta'] = ['product' => 'Agent Guide', 'summary_layer' => true];
     }
     if (!is_array($merged['claims'])) {
         $merged['claims'] = [];
@@ -171,8 +185,22 @@ function birkly_ai_presence_normalize_draft(array $draft): array
         require_once __DIR__ . '/ai_presence_links.php';
         $merged = birkly_ai_presence_normalize_sources_in_draft($merged);
     }
+    if (is_file(__DIR__ . '/agent_guide_sources.php')) {
+        require_once __DIR__ . '/agent_guide_sources.php';
+        $merged = birkly_agent_guide_normalize_sources_in_draft($merged);
+    }
 
     return $merged;
+}
+
+function birkly_ai_presence_is_valid_schema_version(string $version): bool
+{
+    return in_array($version, [
+        BIRKLY_AI_PRESENCE_SCHEMA_VERSION,
+        BIRKLY_AI_PRESENCE_LEGACY_SCHEMA_VERSION,
+        'agent_guide.v1',
+        'ai_presence.v1',
+    ], true);
 }
 
 function birkly_ai_presence_load_draft(): array
@@ -249,7 +277,7 @@ function birkly_ai_presence_validate(array $doc): array
 {
     $errors = [];
 
-    if (($doc['schema_version'] ?? '') !== BIRKLY_AI_PRESENCE_SCHEMA_VERSION) {
+    if (!birkly_ai_presence_is_valid_schema_version((string) ($doc['schema_version'] ?? ''))) {
         $errors[] = 'Invalid schema_version';
     }
 
@@ -279,6 +307,24 @@ function birkly_ai_presence_validate(array $doc): array
         $verification = (string) ($item['verification_status'] ?? 'unverified');
         if (!in_array($verification, ['user_verified', 'unverified'], true)) {
             $errors[] = "evidence[$i].verification_status invalid";
+        }
+    }
+
+    foreach ($doc['sources_of_truth'] ?? [] as $i => $source) {
+        if (!is_array($source)) {
+            $errors[] = "sources_of_truth[$i] must be an object";
+            continue;
+        }
+        $type = (string) ($source['type'] ?? '');
+        if ($type !== '' && is_file(__DIR__ . '/agent_guide_sources.php')) {
+            require_once __DIR__ . '/agent_guide_sources.php';
+            if (!in_array($type, birkly_agent_guide_source_truth_types(), true)) {
+                $errors[] = "sources_of_truth[$i].type invalid";
+            }
+            $role = (string) ($source['role'] ?? '');
+            if ($role !== '' && !in_array($role, birkly_agent_guide_source_truth_roles(), true)) {
+                $errors[] = "sources_of_truth[$i].role invalid";
+            }
         }
     }
 
@@ -317,7 +363,7 @@ function birkly_ai_presence_completeness(?array $draft = null): array
     $identityScore = ($hasName ? 10 : 0) + ($hasShort ? 10 : 0);
     $items[] = [
         'key' => 'identity',
-        'label' => 'Brand identity',
+        'label' => 'Profile identity',
         'score' => $identityScore,
         'max' => 20,
         'complete' => $identityScore >= 20,
@@ -335,15 +381,19 @@ function birkly_ai_presence_completeness(?array $draft = null): array
         'tab' => 'context',
     ];
 
+    require_once __DIR__ . '/agent_guide_sources.php';
+    $hasNarrativeSource = birkly_agent_guide_has_narrative_source($draft);
+    $sourcesCount = is_array($draft['sources_of_truth'] ?? null) ? count($draft['sources_of_truth']) : 0;
     $connected = is_array($draft['connected_content'] ?? null) ? count($draft['connected_content']) : 0;
-    $connectedScore = $connected > 0 ? 15 : 0;
+    $sourcesScore = $hasNarrativeSource ? 15 : ($sourcesCount > 0 || $connected > 0 ? 8 : 0);
     $items[] = [
-        'key' => 'connected_content',
-        'label' => 'Connected content',
-        'score' => $connectedScore,
+        'key' => 'sources_of_truth',
+        'label' => 'Sources of truth',
+        'score' => $sourcesScore,
         'max' => 15,
-        'complete' => $connected > 0,
-        'tab' => 'context',
+        'complete' => $hasNarrativeSource,
+        'tab' => 'sources',
+        'detail' => $sourcesCount > 0 && !$hasNarrativeSource ? 'Add at least one narrative source (CMS, website, or document)' : '',
     ];
 
     $claims = $draft['claims'] ?? [];
@@ -463,12 +513,13 @@ function birkly_ai_presence_next_steps(?array $draft = null): array
         $tab = (string) ($item['tab'] ?? 'overview');
         $label = (string) ($item['label'] ?? '');
         $message = match ($item['key'] ?? '') {
-            'identity' => 'Add your official brand name and short description.',
+            'identity' => 'Add an official name and short description.',
             'description' => 'Add a full description or what you do.',
-            'connected_content' => 'Link CMS entries or collections as brand sources.',
+            'sources_of_truth' => 'Add sources of truth — CMS entries, websites, or documents agents should read first.',
+            'connected_content' => 'Add CMS entries or collections as narrative sources.',
             'claims' => 'Add claims with supported evidence.',
             'evidence' => 'Attach evidence with verifiable URLs (marketplace, reviews, docs).',
-            'positioning' => 'Describe what your brand is best known for.',
+            'positioning' => 'Describe what you are best known for.',
             'products' => 'Add products with canonical CMS or external source links.',
             'terminology' => 'Define preferred terms and voice guidance.',
             'publishing' => 'Enable publishing when ready to go live.',
@@ -486,7 +537,8 @@ function birkly_ai_presence_next_steps(?array $draft = null): array
 function birkly_ai_presence_public_urls(): array
 {
     $base = birkly_hosting_public_base_url();
-    $path = '/.well-known/brand-context.json';
+    $path = '/.well-known/agent-guide.json';
+    $legacyPath = '/.well-known/brand-context.json';
     $draft = birkly_ai_presence_load_draft();
     if (!empty($draft['publication_settings']['public_path'])) {
         $path = (string) $draft['publication_settings']['public_path'];
@@ -495,8 +547,11 @@ function birkly_ai_presence_public_urls(): array
     return [
         'public_site_base' => $base,
         'well_known_url' => $base !== '' ? rtrim($base, '/') . $path : '',
-        'api_url' => $base !== '' ? rtrim($base, '/') . '/api/public/ai_presence.php?action=brand' : '',
+        'legacy_well_known_url' => $base !== '' ? rtrim($base, '/') . $legacyPath : '',
+        'api_url' => $base !== '' ? rtrim($base, '/') . '/api/public/ai_presence.php?action=guide' : '',
+        'legacy_api_url' => $base !== '' ? rtrim($base, '/') . '/api/public/ai_presence.php?action=brand' : '',
         'public_path' => $path,
+        'legacy_public_path' => $legacyPath,
     ];
 }
 
@@ -580,10 +635,12 @@ function birkly_ai_presence_write_public_exports(array $snapshot, int $version, 
         return;
     }
 
-    $path = (string) ($snapshot['publication_settings']['public_path'] ?? '/.well-known/brand-context.json');
-    if ($path === '' || $path[0] !== '/') {
-        $path = '/.well-known/brand-context.json';
-    }
+    $paths = [
+        (string) ($snapshot['publication_settings']['public_path'] ?? '/.well-known/agent-guide.json'),
+        '/.well-known/agent-guide.json',
+        '/.well-known/brand-context.json',
+    ];
+    $paths = array_values(array_unique(array_filter($paths, static fn ($p) => is_string($p) && $p !== '' && $p[0] === '/')));
 
     $hosting = birkly_hosting_load();
     $mode = (string) ($hosting['public_site_mode'] ?? 'none');
@@ -592,8 +649,10 @@ function birkly_ai_presence_write_public_exports(array $snapshot, int $version, 
         if (!is_dir($wellKnownDir)) {
             mkdir($wellKnownDir, 0755, true);
         }
-        $filename = basename($path) ?: 'brand-context.json';
-        file_put_contents($wellKnownDir . '/' . $filename, $json);
+        foreach ($paths as $path) {
+            $filename = basename($path) ?: 'agent-guide.json';
+            file_put_contents($wellKnownDir . '/' . $filename, $json);
+        }
     }
 }
 
@@ -618,7 +677,8 @@ function birkly_ai_presence_build_public_export(array $snapshot, int $version, s
     }
 
     require_once __DIR__ . '/ai_presence_links.php';
-    return birkly_ai_presence_enrich_public_export($export);
+    require_once __DIR__ . '/agent_guide_sources.php';
+    return birkly_agent_guide_enrich_export($export);
 }
 
 /**
@@ -797,7 +857,7 @@ function birkly_ai_presence_preview_query(string $question): array
     $published = birkly_ai_presence_load_published();
     if ($published === null || empty($published['publication_settings']['enabled'])) {
         return [
-            'answer' => 'No published brand context is available yet. Publish your AI Presence first.',
+            'answer' => 'No published Agent Guide is available yet. Publish your guide first.',
             'sources' => [],
         ];
     }
@@ -852,7 +912,7 @@ function birkly_ai_presence_preview_query(string $question): array
 
     if ($snippets === []) {
         return [
-            'answer' => 'No matching information found in the published brand context for that question.',
+            'answer' => 'No matching information found in the published Agent Guide for that question.',
             'sources' => [],
         ];
     }
@@ -1151,9 +1211,14 @@ function birkly_ai_presence_rule_suggestions(array $draft): array
  */
 function birkly_ai_presence_apply_suggestion(array $draft, array $suggestion): array
 {
+    $field = (string) ($suggestion['field'] ?? '');
+    if ($field === 'sources_of_truth.new' && is_file(__DIR__ . '/agent_guide_sources.php')) {
+        require_once __DIR__ . '/agent_guide_sources.php';
+        return birkly_agent_guide_apply_source_suggestion($draft, $suggestion);
+    }
+
     if (is_file(__DIR__ . '/ai_presence_pro.php')) {
         require_once __DIR__ . '/ai_presence_pro.php';
-        $field = (string) ($suggestion['field'] ?? '');
         if (in_array($field, ['products_services.new', 'relationships.new', 'evidence.new'], true)
             || str_starts_with($field, 'communication_guidance.')) {
             return birkly_ai_presence_apply_suggestion_pro($draft, $suggestion);
@@ -1161,13 +1226,11 @@ function birkly_ai_presence_apply_suggestion(array $draft, array $suggestion): a
     }
     if (is_file(__DIR__ . '/ai_presence_links.php')) {
         require_once __DIR__ . '/ai_presence_links.php';
-        $field = (string) ($suggestion['field'] ?? '');
         if (in_array($field, ['products_services.link', 'identity.derived_from.short_description'], true)) {
             return birkly_ai_presence_apply_link_suggestion($draft, $suggestion);
         }
     }
 
-    $field = (string) ($suggestion['field'] ?? '');
     $value = $suggestion['value'] ?? '';
 
     if ($field === 'claims.new' && is_string($value) && $value !== '') {
