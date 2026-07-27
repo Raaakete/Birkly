@@ -1,5 +1,30 @@
 // Media Modal System for Birkly
 window.Birkly = window.Birkly || {};
+
+function birklyMediaModalResolveUrl(url) {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    if (typeof Birkly !== 'undefined' && typeof Birkly.url === 'function') {
+        return Birkly.url(url.replace(/^\//, ''));
+    }
+    return url;
+}
+
+function birklyMediaModalHasPermission(permission) {
+    const perms = window.Birkly?.currentUser?.permissions || [];
+    if (!Array.isArray(perms)) return false;
+    if (perms.includes('*') || perms.includes(permission)) return true;
+    if (permission === 'read_media' && perms.includes('manage_media')) return true;
+    if (permission === 'upload' && (perms.includes('manage_media') || perms.includes('upload'))) return true;
+    return false;
+}
+
+function birklyMediaModalEscapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = String(text ?? '');
+    return div.innerHTML;
+}
+
 window.Birkly.MediaModal = {
     isOpen: false,
     currentCallback: null,
@@ -101,14 +126,18 @@ window.Birkly.MediaModal = {
 
         // Permission gating (UX only): hide upload controls if user can't upload
         try {
-            const perms = window.Birkly?.currentUser?.permissions || [];
-            const canUpload = Array.isArray(perms) && (perms.includes('*') || perms.includes('upload') || perms.includes('manage_media'));
             const uploadSection = this.modal.querySelector('.media-upload-section');
-            if (!canUpload && uploadSection) {
+            if (!birklyMediaModalHasPermission('upload') && uploadSection) {
                 uploadSection.style.display = 'none';
             }
         } catch (_) {}
         
+        // Prevent clicks inside the dialog from bubbling to the overlay
+        const inner = this.modal.querySelector('.media-modal');
+        if (inner) {
+            inner.addEventListener('click', (e) => e.stopPropagation());
+        }
+
         // Bind actions (CSP-safe — no inline handlers)
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
@@ -130,16 +159,11 @@ window.Birkly.MediaModal = {
         const fileInput = this.modal.querySelector('#birkly-media-modal-upload');
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
-                // Permission gating (UX only): block upload attempt for users without upload permission
-                try {
-                    const perms = window.Birkly?.currentUser?.permissions || [];
-                    const canUpload = Array.isArray(perms) && (perms.includes('*') || perms.includes('upload') || perms.includes('manage_media'));
-                    if (!canUpload) {
-                        window.Birkly?.Utils?.showPermissionDenied?.({ action: 'Upload media' });
-                        e.target.value = '';
-                        return;
-                    }
-                } catch (_) {}
+                if (!birklyMediaModalHasPermission('upload')) {
+                    window.Birkly?.Utils?.showPermissionDenied?.({ action: 'Upload media' });
+                    e.target.value = '';
+                    return;
+                }
                 this.handleFileUpload(e.target.files[0]);
             });
         }
@@ -170,12 +194,15 @@ window.Birkly.MediaModal = {
                 return;
             }
             
-            if (result.status === 'ok' && result.data) {
+            if (result.status === 'ok' && Array.isArray(result.data)) {
+                if (!result.data.length) {
+                    grid.innerHTML = '<div class="media-error" style="text-align: center; padding: 40px; color: #666;">No media files yet. Upload one above.</div>';
+                    return;
+                }
                 this.renderMediaGrid(result.data);
             } else {
-                if (this.isOpen && this.modal) {
-                    grid.innerHTML = '<div class="media-error" style="text-align: center; padding: 40px; color: #666;">No media found</div>';
-                }
+                const msg = result.message || result.error || (response.status === 403 ? 'You do not have permission to view media.' : 'Failed to load media');
+                grid.innerHTML = '<div class="media-error" style="text-align: center; padding: 40px; color: #666;">' + birklyMediaModalEscapeHtml(msg) + '</div>';
             }
         } catch (error) {
             console.error('Error loading media:', error);
@@ -200,25 +227,25 @@ window.Birkly.MediaModal = {
         
         grid.innerHTML = '';
         
-        media.forEach((item, index) => {
+        media.forEach((item) => {
             const mediaItem = document.createElement('div');
             mediaItem.className = 'media-item';
             mediaItem.style.cssText = 'border: 1px solid #ddd; border-radius: 4px; padding: 10px; cursor: pointer; transition: all 0.2s;';
-            mediaItem.innerHTML = `
-                <div class="media-item-preview" style="margin-bottom: 8px;">
-                    <img src="${item.url}" alt="${item.name}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">
-                </div>
-                <div class="media-item-info" style="text-align: center;">
-                    <div class="media-item-name" style="font-weight: 500; font-size: 12px; margin-bottom: 4px;">${item.name}</div>
-                    <div class="media-item-size" style="font-size: 10px; color: #666;">${item.size} bytes</div>
-                </div>
-            `;
+            const imgUrl = birklyMediaModalResolveUrl(item.url || item.thumbnail || '');
+            const isImage = String(item.type || item.category || '').indexOf('image') === 0 || /\.(jpe?g|png|gif|webp|svg)$/i.test(item.name || '');
+            const previewHtml = isImage && imgUrl
+                ? '<img src="' + birklyMediaModalEscapeHtml(imgUrl) + '" alt="' + birklyMediaModalEscapeHtml(item.name || '') + '" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">'
+                : '<div style="width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:4px;font-size:12px;color:#666;">' + birklyMediaModalEscapeHtml(item.category || item.type || 'File') + '</div>';
+            mediaItem.innerHTML =
+                '<div class="media-item-preview" style="margin-bottom: 8px;">' + previewHtml + '</div>' +
+                '<div class="media-item-info" style="text-align: center;">' +
+                '<div class="media-item-name" style="font-weight: 500; font-size: 12px; margin-bottom: 4px;">' + birklyMediaModalEscapeHtml(item.name || item.title || item.id || 'Media') + '</div>' +
+                '<div class="media-item-size" style="font-size: 10px; color: #666;">' + birklyMediaModalEscapeHtml(String(item.size_formatted || item.size || '')) + '</div>' +
+                '</div>';
             
             mediaItem.addEventListener('click', () => {
-                // Check if modal is still open before selecting
                 if (this.isOpen) {
                     this.selectMedia(item);
-                } else {
                 }
             });
             
@@ -246,9 +273,16 @@ window.Birkly.MediaModal = {
             const result = await response.json();
             
             if (result.status === 'ok' && result.data) {
+                if (global.BirklyFeedback && global.BirklyFeedback.toast) {
+                    global.BirklyFeedback.toast('Media uploaded', 'success');
+                }
+                await this.loadMedia();
                 this.selectMedia(result.data);
             } else {
-                BirklyFeedback.toast('Upload failed: ' + (result.error || 'Unknown error'), 'error');
+                const msg = result.message || result.error || 'Unknown error';
+                if (global.BirklyFeedback && global.BirklyFeedback.toast) {
+                    global.BirklyFeedback.toast('Upload failed: ' + msg, 'error');
+                }
             }
         } catch (error) {
             console.error('Upload error:', error);
