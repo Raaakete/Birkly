@@ -65,11 +65,33 @@ function requireAuth($permission = null) {
     }
 }
 
+function permissionGranted(array $permissions, string $permission): bool
+{
+    if (in_array('*', $permissions, true) || in_array($permission, $permissions, true)) {
+        return true;
+    }
+
+    // Higher privileges imply lower-level read permissions.
+    $impliedBy = [
+        'read_media' => ['manage_media'],
+        'read_settings' => ['manage_settings'],
+        'list_users' => ['manage_users'],
+    ];
+
+    foreach ($impliedBy[$permission] ?? [] as $parent) {
+        if (in_array($parent, $permissions, true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function checkPermission($user, $permission) {
     if (!isset($user['role'])) return false;
 
     if (isset($user['permissions']) && is_array($user['permissions'])) {
-        if (in_array('*', $user['permissions'], true) || in_array($permission, $user['permissions'], true)) {
+        if (permissionGranted($user['permissions'], $permission)) {
             return true;
         }
     }
@@ -83,15 +105,15 @@ function checkPermission($user, $permission) {
         $roles = [
             'admin' => ['*'], // Admin has all permissions
             'editor' => [
-                'manage_content', 'manage_media', 'manage_plugins', 'read', 'write', 'delete', 'upload'
+                'manage_content', 'manage_media', 'manage_plugins', 'read', 'write', 'delete', 'upload', 'read_media'
             ],
             'author' => [
-                'manage_content', 'manage_media', 'read', 'write', 'upload'
+                'manage_content', 'manage_media', 'read', 'write', 'upload', 'read_media'
             ],
-            'viewer' => ['read']
+            'viewer' => ['read', 'read_media']
         ];
         $userPermissions = $roles[$user['role']] ?? [];
     }
     
-    return in_array('*', $userPermissions) || in_array($permission, $userPermissions);
+    return permissionGranted($userPermissions, $permission);
 } 
