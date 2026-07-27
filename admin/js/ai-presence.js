@@ -216,7 +216,7 @@
         state.draft.connected_content = connected;
     }
 
-    function ensureSourcesArray() {
+    function countProductSources(prod) {
         var n = (prod.sources && prod.sources.length) || 0;
         if (!n && prod.connected_entry && prod.connected_entry.entry_id) n = 1;
         return n;
