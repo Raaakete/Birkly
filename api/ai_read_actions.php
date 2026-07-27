@@ -382,6 +382,9 @@ function executeReadAction($actionData, $aiUser) {
 
         require_once $birklyRoot . '/core/sub_entries.php';
         $entries = getSubEntries($parentCollection, $parentEntryId, $subCollection, [], ['limit' => $limit]);
+        if (!is_array($entries)) {
+            $entries = [];
+        }
 
         return [
             'success' => true,

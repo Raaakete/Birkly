@@ -18,6 +18,32 @@
     let isChatRequestInFlight = false;
     let consoleLogs = [];
     let consoleUnread = 0;
+    let assistFabState = 'idle';
+
+    function setAssistFabState(state) {
+        const wrap = document.getElementById('assist-fab-wrap');
+        if (!wrap) return;
+        assistFabState = state;
+        wrap.classList.remove('fab-idle', 'fab-menu', 'fab-chat');
+        wrap.classList.add('fab-' + state);
+
+        const button = document.getElementById('ai-chat-floating-btn');
+        if (!button) return;
+
+        if (state === 'idle') {
+            button.setAttribute('aria-expanded', 'false');
+            button.setAttribute('aria-label', 'Open assist menu');
+            button.title = 'Assist';
+        } else if (state === 'menu') {
+            button.setAttribute('aria-expanded', 'true');
+            button.setAttribute('aria-label', 'Open AI Assistant');
+            button.title = 'AI Assistant';
+        } else if (state === 'chat') {
+            button.setAttribute('aria-expanded', 'false');
+            button.setAttribute('aria-label', 'Close AI Assistant');
+            button.title = 'Close';
+        }
+    }
 
     function icon(name, opts) {
         return (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
@@ -139,7 +165,7 @@
 
         const wrap = document.createElement('div');
         wrap.id = 'assist-fab-wrap';
-        wrap.className = 'assist-fab-wrap';
+        wrap.className = 'assist-fab-wrap fab-idle';
 
         const menu = document.createElement('div');
         menu.className = 'assist-fab-menu';
@@ -160,8 +186,12 @@
         button.setAttribute('aria-haspopup', 'menu');
         button.title = 'Assist';
         button.innerHTML = `
-            ${icon('sparkle', { size: 22, class: 'assist-fab-icon assist-fab-icon-menu' })}
-            ${icon('sparkle', { size: 22, class: 'assist-fab-icon assist-fab-icon-open', ariaHidden: true })}
+            <span class="assist-fab-visual" aria-hidden="true">
+                <span class="assist-fab-icon-slot assist-fab-icon-plus">${icon('plus', { size: 22 })}</span>
+                <span class="assist-fab-icon-slot assist-fab-icon-sparkle">${icon('sparkle', { size: 22 })}</span>
+                <span class="assist-fab-icon-slot assist-fab-icon-close">${icon('x', { size: 22 })}</span>
+            </span>
+            <span class="assist-fab-label">AI Assistant</span>
         `;
 
         const badge = document.createElement('span');
@@ -175,26 +205,23 @@
         wrap.appendChild(button);
         document.body.appendChild(wrap);
 
-        function setMenuOpen(open) {
-            wrap.classList.toggle('open', open);
-            button.setAttribute('aria-expanded', open ? 'true' : 'false');
-            button.setAttribute('aria-label', open ? 'Open AI Assistant' : 'Open assist menu');
-            button.title = open ? 'AI Assistant' : 'Assist';
-        }
-
         button.addEventListener('click', async function (e) {
             e.stopPropagation();
-            if (wrap.classList.contains('open')) {
-                setMenuOpen(false);
+            if (assistFabState === 'chat') {
+                hideChatWindow();
+                setAssistFabState('idle');
+                return;
+            }
+            if (assistFabState === 'menu') {
                 await openAiChatFromFab();
                 return;
             }
-            setMenuOpen(true);
+            setAssistFabState('menu');
         });
 
         document.getElementById('assist-fab-feedback').addEventListener('click', async function (e) {
             e.stopPropagation();
-            setMenuOpen(false);
+            setAssistFabState('idle');
             if (window.Birkly && typeof window.Birkly.openFeedbackModal === 'function') {
                 window.Birkly.openFeedbackModal();
             } else {
@@ -202,15 +229,15 @@
             }
         });
 
-        document.addEventListener('click', async function (e) {
-            if (!wrap.contains(e.target)) {
-                setMenuOpen(false);
+        document.addEventListener('click', function (e) {
+            if (assistFabState === 'menu' && !wrap.contains(e.target)) {
+                setAssistFabState('idle');
             }
         });
 
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                setMenuOpen(false);
+            if (e.key === 'Escape' && assistFabState === 'menu') {
+                setAssistFabState('idle');
             }
         });
     }
@@ -224,12 +251,24 @@
             badge.textContent = count > 9 ? '9+' : String(count);
             badge.style.display = 'flex';
             badge.setAttribute('aria-hidden', 'false');
-            if (button) button.setAttribute('aria-label', `AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
+            if (button && assistFabState === 'chat') {
+                button.setAttribute('aria-label', `Close AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
+            } else if (button && assistFabState === 'menu') {
+                button.setAttribute('aria-label', `Open AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
+            }
         } else {
             badge.textContent = '';
             badge.style.display = 'none';
             badge.setAttribute('aria-hidden', 'true');
-            if (button) button.setAttribute('aria-label', 'AI Assistant');
+            if (button) {
+                if (assistFabState === 'chat') {
+                    button.setAttribute('aria-label', 'Close AI Assistant');
+                } else if (assistFabState === 'menu') {
+                    button.setAttribute('aria-label', 'Open AI Assistant');
+                } else {
+                    button.setAttribute('aria-label', 'Open assist menu');
+                }
+            }
         }
         const tabBadge = document.getElementById('ai-chat-approvals-tab-badge');
         if (tabBadge) {
@@ -605,6 +644,7 @@
 
         chatWindow.style.display = 'flex';
         document.body.classList.add('ai-chat-window-open');
+        setAssistFabState('chat');
         try {
             localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '1');
         } catch (e) { /* ignore */ }
@@ -670,6 +710,9 @@
             chatWindow.style.display = 'none';
         }
         document.body.classList.remove('ai-chat-window-open');
+        if (assistFabState === 'chat') {
+            setAssistFabState('idle');
+        }
         try {
             localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '0');
         } catch (e) { /* ignore */ }
