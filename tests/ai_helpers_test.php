@@ -22,15 +22,21 @@ assert_true(
     'google default model is gemini-2.5-flash'
 );
 
-$providers = getSupportedAiProviders();
+$providers = birkly_ai_providers_for_client();
 assert_true(
-    in_array('gemini-2.5-flash', $providers['google']['models'], true),
-    'google models list includes gemini-2.5-flash'
+    !empty($providers['openrouter']['dynamic_models']),
+    'openrouter exposes dynamic_models to clients'
 );
 
 assert_true(
-    !in_array('gemini-1.5-flash', $providers['google']['models'], true),
-    'google models list excludes retired gemini-1.5-flash'
+    !isset($providers['openrouter']['models']),
+    'openrouter client metadata omits static model list'
+);
+
+$providersFull = getSupportedAiProviders();
+assert_true(
+    in_array('gemini-2.5-flash', $providersFull['google']['models'] ?? []) === false,
+    'google provider config has no static models array'
 );
 
 echo "ai_helpers_test: OK\n";
