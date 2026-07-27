@@ -230,15 +230,30 @@ function birkly_ai_playbooks_prompt_section(): string
 /**
  * Detect website / project-folder build intent from message + recent history.
  */
+function ai_chat_session_has_site_build_progress(array $conversationHistory): bool
+{
+    $done = ai_chat_parse_session_notes_from_history($conversationHistory);
+    if ($done['collections'] !== [] || $done['entries'] !== [] || $done['project_files'] !== []) {
+        return true;
+    }
+
+    $haystack = strtolower(implode("\n", array_column(array_slice($conversationHistory, -8), 'content')));
+    return str_contains($haystack, '[session notes') && str_contains($haystack, 'collection:');
+}
+
 function ai_chat_is_project_site_intent(string $message, array $conversationHistory = []): bool
 {
+    if (ai_chat_session_has_site_build_progress($conversationHistory)) {
+        return true;
+    }
+
     $haystack = strtolower($message);
     $recent = array_slice($conversationHistory, -6);
     foreach ($recent as $msg) {
         $haystack .= ' ' . strtolower((string) ($msg['content'] ?? ''));
     }
     return (bool) preg_match(
-        '/\b(website|web site|portfolio|project\/|project folder|index\.html|write_project|create_project|build\s+(?:a\s+)?(?:site|website)|site builder|gallery site|landing page)\b/i',
+        '/\b(website|web site|portfolio|project\/|project folder|index\.html|write_project|create_project|build\s+(?:a\s+)?(?:site|website|gallery)|site builder|gallery site|landing page|\bgallery\b|\bartist\b|artworks?\b|ute bayrak)\b/i',
         $haystack
     );
 }
@@ -573,13 +588,12 @@ function ai_chat_site_proceed_fallback_actions(array $conversationHistory, array
             break;
         }
     }
-    if ($entryActions !== [] && preg_match('/\b(proceed|finish|complete|start|build|entry|content|site|website)\b/i', $haystack)) {
+    if ($entryActions !== []) {
         return $entryActions;
     }
 
     // Phase 2: project shell (collections configured and entries seeded)
-    if (!$hasProjectIndex && ($allSiteEntriesDone || $entryActions === [])
-        && preg_match('/\b(site|website|page|html|project|gallery|portfolio|build|finish|proceed)\b/i', $haystack)) {
+    if (!$hasProjectIndex && ($allSiteEntriesDone || $entryActions === [])) {
         $artSlug = isset($collectionMap['artworks']) ? 'artworks' : ($siteSlugs[0] ?? 'projects');
         $indexHtml = <<<HTML
 <!DOCTYPE html>

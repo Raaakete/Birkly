@@ -113,6 +113,7 @@ if ($action === 'chat') {
         $pageContext = birkly_ai_normalize_page_context($input['page_context'] ?? null);
         $wantStream = !empty($input['stream']);
         $streamActive = false;
+        $preResolvedActions = [];
         
         if (empty($aiConnectionId) || empty($message)) {
             if (!headers_sent()) {
@@ -140,6 +141,11 @@ if ($action === 'chat') {
             }
             echo json_encode(['status' => 'error', 'message' => 'AI connection is not active']);
             exit;
+        }
+
+        $modelOverride = trim((string) ($input['model'] ?? ''));
+        if ($modelOverride !== '') {
+            $aiUser['model'] = birkly_ai_resolve_model((string) ($aiUser['provider'] ?? ''), $modelOverride);
         }
         
         // Check if current user can access this connection
@@ -239,6 +245,16 @@ if ($action === 'chat') {
                 }
             }
         }
+
+        // Site-build proceed: run deterministic next step without relying on the model
+        $isProceedMessage = (bool) preg_match('/\b(proceed|continue|next step|go on|yes|do it|finish|complete|start)\b/i', $message);
+        if ($isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
+            $preResolvedActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+            if ($preResolvedActions !== []) {
+                $skipAiCall = true;
+                error_log('Site proceed: deterministic actions without model (' . count($preResolvedActions) . ')');
+            }
+        }
         
         // Call AI provider with conversation history (unless we're skipping for short follow-up)
         $streamCallback = null;
@@ -273,7 +289,9 @@ if ($action === 'chat') {
             // Store the found collection in a way the fallback can access it
             $response = [
                 'success' => true,
-                'message' => 'Creating another entry.' // Brief message, fallback will handle the rest
+                'message' => $preResolvedActions !== []
+                    ? ('Running the next site-build step (' . count($preResolvedActions) . ' action(s)).')
+                    : 'Creating another entry.',
             ];
             // Store found collection in response so fallback can use it
             if ($foundCollection) {
@@ -296,6 +314,9 @@ if ($action === 'chat') {
         if ($response['success']) {
             // Check if response contains action requests
             $actions = extractActionsFromResponse($response['message'] ?? '', $response['tool_calls'] ?? []);
+            if ($preResolvedActions !== []) {
+                $actions = $preResolvedActions;
+            }
             
             // Log for debugging
             error_log("AI Response: " . substr((string) ($response['message'] ?? ''), 0, 500));

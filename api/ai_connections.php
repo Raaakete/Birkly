@@ -427,6 +427,7 @@ if ($action === 'get') {
     if (!birkly_ai_user_can_manage_connection($aiUser, $currentUserId, $_SESSION['user'] ?? [])) {
         unset($aiUser['mcp_api_key']);
     }
+    $aiUser['capabilities'] = birkly_ai_connection_capabilities($aiUser);
     if (!headers_sent()) {
         header('Content-Type: application/json');
     }
@@ -495,9 +496,28 @@ if ($action === 'list_models') {
         ob_end_clean();
     }
 
+    $connectionId = $input['id'] ?? $input['connection_id'] ?? '';
     $provider = $input['provider'] ?? $_GET['provider'] ?? '';
     $apiKey = $input['api_key'] ?? '';
     $apiUrl = $input['api_url'] ?? $_GET['api_url'] ?? '';
+
+    if ($connectionId !== '') {
+        $aiUser = $storage->read($connectionId . '.json');
+        if (!$aiUser || ($aiUser['type'] ?? '') !== 'ai') {
+            echo json_encode(['status' => 'error', 'message' => 'AI connection not found']);
+            exit;
+        }
+        $currentUserId = $_SESSION['user']['id'] ?? '';
+        if (!birkly_ai_user_can_access_connection($aiUser, $currentUserId)) {
+            echo json_encode(['status' => 'error', 'message' => 'You do not have access to this connection']);
+            exit;
+        }
+        $provider = (string) ($aiUser['provider'] ?? '');
+        $apiUrl = (string) ($aiUser['api_url'] ?? '');
+        if (!empty($aiUser['api_key_encrypted'])) {
+            $apiKey = decryptApiKey($aiUser['api_key_encrypted']) ?: '';
+        }
+    }
 
     if ($provider === '') {
         echo json_encode(['status' => 'error', 'message' => 'Provider is required']);
