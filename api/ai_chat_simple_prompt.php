@@ -6,6 +6,7 @@
 
 function buildSystemPromptSimple($context, $aiUser) {
     require_once __DIR__ . '/../core/ai_tool_registry.php';
+    require_once __DIR__ . '/../core/ai_playbooks.php';
 
     $userPermissions = $context['system_info']['user_permissions'] ?? [];
     $hasAllPermissions = in_array('*', $userPermissions);
@@ -85,6 +86,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "4. FOR QUESTIONS REQUIRING DATA: When users ask questions that need data (e.g., 'which collection has the most entries?', 'how many users are there?'), you MUST execute the necessary read actions to gather the data, then analyze it and provide the answer. DO NOT just explain how to do it - DO IT.\n";
     $prompt .= "5. CHAINING ACTIONS: You can execute multiple read actions in sequence. Example: To find which collection has the most entries, first execute list_collections, then for each collection execute list_entries, then compare the counts and provide the answer.\n\n";
     
+    $prompt .= birkly_ai_playbooks_prompt_section() . "\n\n";
     $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
     $prompt .= "Note: There is NO create_user action - users must be created via admin panel\n\n";
     $prompt .= "ACTION FORMAT (fallback when native tools unavailable):\n";

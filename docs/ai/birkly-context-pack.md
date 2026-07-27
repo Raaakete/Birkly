@@ -37,7 +37,7 @@ Static HTML/CSS/JS for the public site lives under **`project/`** (not in collec
 
 **Sandbox rules:** paths must stay under `project/`; `..`, PHP, and dotfiles are blocked. Allowed extensions: `html`, `css`, `js`, `json`, `md`, `svg`, `webp`, `txt`.
 
-**Workflow:** call `get_project_info` first for paths and templating cheat sheet, then `list_project_files` / `read_project_file`, edit templates, and use content tools (`create_entry`, etc.) for CMS data.
+**Workflow:** call `read_birkly_docs` topic **`site-building`** once for the full playbook, then `get_project_info` + `list_project_files` once, edit templates with `write_project_file`, and use content tools (`create_entry`, etc.) for CMS data. Do not repeat discovery reads in the same conversation turn.
 
 ## AI actions
 

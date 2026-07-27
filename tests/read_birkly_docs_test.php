@@ -21,7 +21,7 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
     }
 }
 
-$coreTopics = ['templating', 'admin', 'plugins', 'ai', 'mcp', 'sub-collections'];
+$coreTopics = ['templating', 'admin', 'plugins', 'ai', 'mcp', 'sub-collections', 'site-building'];
 
 foreach ($coreTopics as $topic) {
     $result = readBirklyDocsTopic($topic);
