@@ -383,25 +383,14 @@ const onboarding = {
             submitBtn.textContent = 'Saving...';
         }
 
-        const csrfToken = await this.getCSRFToken();
-        if (!csrfToken) {
-            BirklyFeedback.toast('Failed to get security token.', 'error')
-            if (submitBtn) submitBtn.disabled = false;
-            return;
-        }
-
         try {
-            const response = await fetch(Birkly.url('/api/settings.php?action=update'), {
+            const response = await fetch(Birkly.url('/api/onboarding.php?action=save_site_info'), {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    action: 'update',
-                    category: 'admin',
-                    settings: {
-                        project_name: projectName,
-                        project_description: document.getElementById('project-description').value
-                    },
-                    _csrf: csrfToken
+                    project_name: projectName,
+                    project_description: document.getElementById('project-description')?.value || ''
                 })
             });
             const data = await response.json();
@@ -425,6 +414,7 @@ const onboarding = {
             if (key && value !== undefined) update[key] = value;
             await fetch(Birkly.url('/api/onboarding.php?action=update_progress'), {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(update)
             });
@@ -581,6 +571,7 @@ const onboarding = {
     async _doComplete() {
         const response = await fetch(Birkly.url('/api/onboarding.php?action=complete'), {
             method: 'POST',
+            credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 demo_website_url: this.demoWebsiteUrl,
@@ -609,7 +600,10 @@ const onboarding = {
     async skip() {
         if (!(await BirklyFeedback.confirm('Skip setup? You can finish later from the dashboard.'))) return;
         try {
-            const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), { method: 'POST' });
+            const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
             const data = await response.json();
             if (data.status === 'ok') {
                 window.location.href = Birkly.url('/admin/index.php?page=dashboard');
