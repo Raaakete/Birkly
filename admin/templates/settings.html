@@ -57,7 +57,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         Security
       </button>
-      <button type="button" class="tab" data-tab="integrations" data-settings-search="integrations api webhooks ai assistant mcp connections service agents">
+      <button type="button" class="tab" data-tab="ai" data-settings-search="ai assistant mcp connections service agents outbound personal connector built-in chat provider">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"></path>
+          <path d="M5 19l1 3 1-3 3-1-3-1-1-3-1 3-3 1 3 1 1 3z"></path>
+          <path d="M19 13l.75 2.25L22 16l-2.25.75L19 19l-.75-2.25L16 16l2.25-.75L19 13z"></path>
+        </svg>
+        <?= __('admin.ai_integrations') ?>
+      </button>
+      <button type="button" class="tab" data-tab="integrations" data-settings-search="integrations api webhooks">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
           <polyline points="22,6 12,13 2,6"></polyline>
@@ -363,7 +371,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             </div>
             <div class="project-access-links">
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=integrations#ai-integrations') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
+              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=ai') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
               <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=site-delivery') ?>" class="btn btn-secondary btn-sm">Domains</a>
             </div>
           </section>
@@ -702,7 +710,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
         </section>
         </div></div>
-          <div id="ai-integrations" class="settings-pane-section" data-settings-search="integrations ai assistant mcp connections service agents outbound personal connector"><div class="ai-integrations-settings">
+        </div>
+      </div>
+
+      <div class="tab-pane" id="ai">
+        <div class="settings-stack ai-settings">
+          <div id="ai-integrations" class="settings-pane-section" data-settings-search="ai assistant mcp connections service agents outbound personal connector"><div class="ai-integrations-settings">
           <div class="settings-section ai-integrations-intro">
             <h2>AI</h2>
             <p class="settings-help ai-intro-lead">Connect AI apps to Birkly or chat inside the admin.</p>
@@ -974,6 +987,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </form>
           </div>
         </div></div>
+        </div>
         </div>
       </div>
 

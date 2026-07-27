@@ -433,7 +433,7 @@ window.migrateStorage = migrateStorage;
 // Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'site-delivery', 'team-access', 'security', 'integrations', 'system'
+        'general', 'site-delivery', 'team-access', 'security', 'ai', 'integrations', 'system'
     ];
 
     var TAB_ALIASES = {
@@ -447,12 +447,16 @@ window.migrateStorage = migrateStorage;
         monitoring: 'system',
         storage: 'system',
         api: 'integrations',
-        'ai-integrations': 'integrations',
+        'ai-integrations': 'ai',
+        'ai-connections': 'ai',
+        'mcp-connections': 'ai',
+        'outbound-connections': 'ai',
+        'inbound-mcp': 'ai',
         'activity-log': 'system'
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'team-access', 'integrations'
+        'site-delivery', 'team-access', 'ai', 'integrations'
     ];
 
     var GLOBAL_SAVE_TABS = {
@@ -465,8 +469,11 @@ window.migrateStorage = migrateStorage;
     };
 
     var LEGACY_AI_HASH_MAP = {
-        'ai-connections': 'outbound-connections',
-        'mcp-connections': 'inbound-mcp'
+        'ai-integrations': null,
+        'ai-connections': 'ai-kind-assistant',
+        'mcp-connections': 'ai-kind-personal',
+        'outbound-connections': 'ai-kind-assistant',
+        'inbound-mcp': 'ai-kind-service'
     };
 
     var currentTab = 'general';
@@ -498,8 +505,8 @@ window.migrateStorage = migrateStorage;
 
     function resolveSettingsHash(hash) {
         if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
-        if (LEGACY_AI_HASH_MAP[hash]) {
-            return { tab: 'integrations', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
+        if (Object.prototype.hasOwnProperty.call(LEGACY_AI_HASH_MAP, hash)) {
+            return { tab: 'ai', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
         }
 
         var normalized = normalizeTabId(hash);
@@ -528,7 +535,10 @@ window.migrateStorage = migrateStorage;
             }
         } else {
             tab = normalizeTabId(tab);
-            if (resolvedHash.scrollTo && resolvedHash.tab && resolvedHash.tab === tab) {
+            if (resolvedHash.tab) {
+                if (resolvedHash.tab !== tab) {
+                    tab = resolvedHash.tab;
+                }
                 scrollTo = resolvedHash.scrollTo;
             }
         }
@@ -831,11 +841,12 @@ window.migrateStorage = migrateStorage;
             }
         } else if (tabId === 'security' && typeof window.loadDenylist === 'function') {
             window.loadDenylist();
+        } else if (tabId === 'ai') {
+            window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
         } else if (tabId === 'integrations') {
             if (typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
             }
-            window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
         } else if (tabId === 'system' && typeof window.initUpdates === 'function') {
             window.initUpdates();
         }
