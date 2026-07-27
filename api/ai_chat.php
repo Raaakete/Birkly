@@ -37,7 +37,9 @@ require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'log.php';
 require_once 'ai_helpers.php';
+$GLOBALS['__HARU_INTERNAL_CALL'] = true;
 require_once 'ai_approvals.php';
+unset($GLOBALS['__HARU_INTERNAL_CALL']);
 require_once __DIR__ . '/../core/ai_tool_registry.php';
 require_once __DIR__ . '/ai_read_actions.php';
 
@@ -245,6 +247,11 @@ if ($action === 'chat') {
             $streamCallback = function ($token) {
                 birkly_ai_sse_send('token', ['content' => $token]);
             };
+        }
+
+        // Release session lock before long AI provider calls (approval polling, etc.)
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
         }
 
         if (!$skipAiCall) {
