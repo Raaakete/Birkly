@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 require_once $root . '/core/ai_presence.php';
+require_once $root . '/core/ai_presence_links.php';
 
 $failures = 0;
 
@@ -72,6 +73,31 @@ assert_true(is_array($preview['sources']), 'preview query returns sources');
 
 assert_true(!birkly_ai_presence_is_safe_external_url('http://127.0.0.1/secret'), 'blocks localhost URL');
 assert_true(!birkly_ai_presence_is_safe_external_url('ftp://example.com'), 'blocks non-http URL');
+
+$link = birkly_ai_presence_normalize_source_link([
+    'role' => 'canonical_detail',
+    'type' => 'public_page',
+    'label' => 'Product page',
+    'url' => 'https://example.com/product',
+]);
+assert_true(($link['url'] ?? '') === 'https://example.com/product', 'normalize source link');
+
+$draftWithProduct = $merged;
+$draftWithProduct['products_services'] = [[
+    'id' => 'prod_test',
+    'name' => 'Widget',
+    'type' => 'product',
+    'sources' => [$link],
+    'public' => true,
+]];
+assert_true(birkly_ai_presence_product_has_grounded_source($draftWithProduct['products_services'][0]), 'product grounded with url');
+
+$export = birkly_ai_presence_enrich_public_export($draftWithProduct);
+assert_true(isset($export['usage_hints']), 'export includes usage_hints');
+assert_true(is_array($export['products_services'][0]['sources'] ?? null), 'export product has sources');
+
+$linkSuggestions = birkly_ai_presence_rule_link_suggestions($draftWithProduct);
+assert_true(is_array($linkSuggestions), 'rule link suggestions array');
 
 $schemaPath = birkly_ai_presence_schema_path();
 assert_true(is_readable($schemaPath), 'schema file readable');

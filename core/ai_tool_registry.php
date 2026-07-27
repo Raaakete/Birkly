@@ -64,6 +64,7 @@ function birkly_ai_tool_definitions(): array
         'get_brand_context' => ['name' => 'get_brand_context', 'description' => 'Get published brand context for AI systems (view: summary|full|products)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
         'list_brand_products' => ['name' => 'list_brand_products', 'description' => 'List published products and services from AI Presence', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_brand_claim' => ['name' => 'get_brand_claim', 'description' => 'Get a supported brand claim by id from published AI Presence', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'get_brand_product' => ['name' => 'get_brand_product', 'description' => 'Get a published product with resolved source links, linked claims, and evidence graph', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
     ];
 }
 
@@ -192,8 +193,9 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         return ['content' => [['type' => 'text', 'text' => "# {$topic['title']}\n\n{$topic['text']}"]]];
     }
 
-    if (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim'], true)) {
+    if (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim', 'get_brand_product'], true)) {
         require_once __DIR__ . '/ai_presence_pro.php';
+        require_once __DIR__ . '/ai_presence_links.php';
         if ($actionType === 'get_brand_context') {
             $view = (string) ($arguments['view'] ?? 'summary');
             $data = birkly_ai_presence_public_brand_for_tools($view);
@@ -208,6 +210,18 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
                 return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Brand context not published']]];
             }
             return ['content' => [['type' => 'text', 'text' => json_encode($data['products_services'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+        }
+        if ($actionType === 'get_brand_product') {
+            $id = (string) ($arguments['id'] ?? '');
+            $full = birkly_ai_presence_public_brand_for_tools('full');
+            if ($full === null || $id === '') {
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Product not found']]];
+            }
+            $graph = birkly_ai_presence_public_product_graph($full, $id);
+            if ($graph === null) {
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Product not found']]];
+            }
+            return ['content' => [['type' => 'text', 'text' => json_encode($graph, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
         }
         $id = (string) ($arguments['id'] ?? '');
         $full = birkly_ai_presence_public_brand_for_tools('full');
