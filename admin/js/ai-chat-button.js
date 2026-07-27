@@ -1016,6 +1016,10 @@
         isChatRequestInFlight = true;
         setSendButtonStreaming(true);
 
+        if (!csrfToken) {
+            await refreshCsrfToken();
+        }
+
         try {
             const response = await fetch(apiUrl('/api/ai_chat.php'), {
                 method: 'POST',
