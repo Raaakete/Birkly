@@ -53,6 +53,24 @@
         }
     }
 
+    function confirmAsync(message) {
+        if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
+            return global.BirklyFeedback.confirm(message);
+        }
+        return Promise.resolve(confirm(message));
+    }
+
+    function collectionKey(c) {
+        return c.dir || c.slug || c.handle || c.id || '';
+    }
+
+    function openAssistSidebar() {
+        var sidebar = document.getElementById('ap-assist-sidebar');
+        var fab = document.getElementById('ap-assist-fab');
+        if (sidebar) sidebar.classList.add('is-open');
+        if (fab) fab.setAttribute('aria-expanded', 'true');
+    }
+
     function escapeHtml(text) {
         var div = document.createElement('div');
         div.textContent = String(text ?? '');
@@ -611,21 +629,107 @@
         });
         if (saved && state.aiConnections.some(function (c) { return c.id === saved; })) {
             sel.value = saved;
+        } else if (state.aiConnections.length === 1) {
+            sel.value = state.aiConnections[0].id;
+        } else if (state.aiConnections.length > 0 && !saved) {
+            sel.value = state.aiConnections[0].id;
         }
-        sel.addEventListener('change', function () {
-            try { localStorage.setItem(LS_AI_CONN, sel.value); } catch (e) { /* ignore */ }
+        if (!sel.dataset.apBound) {
+            sel.dataset.apBound = '1';
+            sel.addEventListener('change', function () {
+                try { localStorage.setItem(LS_AI_CONN, sel.value); } catch (e) { /* ignore */ }
+            });
+        }
+    }
+
+    function applyCollections(collections) {
+        state.collections = collections || [];
+        var connectSel = document.getElementById('ap-connect-collection');
+        if (connectSel) {
+            while (connectSel.options.length > 1) connectSel.remove(1);
+            state.collections.forEach(function (c) {
+                var opt = document.createElement('option');
+                opt.value = collectionKey(c);
+                opt.textContent = c.name || opt.value;
+                connectSel.appendChild(opt);
+            });
+        }
+        populateAssistCollections();
+    }
+
+    function populateAssistCollections(filter) {
+        var sel = document.getElementById('ap-assist-collections');
+        var emptyEl = document.getElementById('ap-assist-collections-empty');
+        if (!sel) return;
+        var q = (filter || '').trim().toLowerCase();
+        sel.innerHTML = '';
+        var shown = 0;
+        state.collections.forEach(function (c) {
+            var key = collectionKey(c);
+            var label = (c.name || key) + (c.entries_count != null ? ' (' + c.entries_count + ')' : '');
+            if (q && label.toLowerCase().indexOf(q) === -1 && key.toLowerCase().indexOf(q) === -1) {
+                return;
+            }
+            var opt = document.createElement('option');
+            opt.value = key;
+            opt.textContent = label;
+            sel.appendChild(opt);
+            shown++;
+        });
+        if (emptyEl) {
+            emptyEl.hidden = state.collections.length > 0;
+        }
+        if (state.collections.length && shown === 0 && q) {
+            var hint = document.createElement('option');
+            hint.disabled = true;
+            hint.textContent = 'No collections match your search';
+            sel.appendChild(hint);
+        }
+    }
+
+    function setAssistStatus(message) {
+        var el = document.getElementById('ap-assist-auto-status');
+        if (el) el.textContent = message || '';
+    }
+
+    function mergeSuggestions(incoming) {
+        if (!incoming || !incoming.length) return;
+        var seen = {};
+        state.suggestions.forEach(function (s) {
+            seen[(s.id || '') + '|' + (s.field || '')] = true;
+        });
+        incoming.forEach(function (s) {
+            var key = (s.id || '') + '|' + (s.field || '');
+            if (seen[key]) return;
+            seen[key] = true;
+            state.suggestions.push(s);
         });
     }
 
-    function populateAssistCollections() {
-        var sel = document.getElementById('ap-assist-collections');
-        if (!sel) return;
-        sel.innerHTML = '';
-        state.collections.forEach(function (c) {
-            var opt = document.createElement('option');
-            opt.value = c.slug || c.handle || c.id;
-            opt.textContent = c.name || opt.value;
-            sel.appendChild(opt);
+    function switchAssistTab(tab) {
+        if (!tab) return;
+        document.querySelectorAll('.ap-assist-tab[data-assist-tab]').forEach(function (btn) {
+            var active = btn.getAttribute('data-assist-tab') === tab;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('.ap-assist-panel[data-assist-panel]').forEach(function (panel) {
+            var active = panel.getAttribute('data-assist-panel') === tab;
+            panel.classList.toggle('active', active);
+            panel.hidden = !active;
+        });
+    }
+
+    function initAssistTabs() {
+        var root = document.querySelector('.ap-assist-tabs');
+        if (!root) return;
+        root.addEventListener('click', function (e) {
+            var btn = e.target.closest('.ap-assist-tab[data-assist-tab]');
+            if (!btn || !root.contains(btn)) return;
+            switchAssistTab(btn.getAttribute('data-assist-tab'));
+        });
+        document.querySelectorAll('.ap-assist-panel[data-assist-panel]').forEach(function (panel) {
+            panel.hidden = !panel.classList.contains('active');
         });
     }
 
@@ -708,21 +812,12 @@
     }
 
     function loadCollections() {
-        return fetch(apiUrl('/api/admin_collections.php?action=list'), { credentials: 'same-origin' })
+        return fetch(apiUrl('/api/ai_presence.php?action=list_collections'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
-                state.collections = (res.data && res.data.collections) || res.collections || [];
-                var sel = document.getElementById('ap-connect-collection');
-                if (sel) {
-                    while (sel.options.length > 1) sel.remove(1);
-                    state.collections.forEach(function (c) {
-                        var opt = document.createElement('option');
-                        opt.value = c.slug || c.handle || c.id;
-                        opt.textContent = c.name || opt.value;
-                        sel.appendChild(opt);
-                    });
+                if (res.status === 'ok' && res.data && res.data.collections) {
+                    applyCollections(res.data.collections);
                 }
-                populateAssistCollections();
             }).catch(function () { /* optional */ });
     }
 
@@ -769,6 +864,9 @@
                 state.canEdit = !!data.can_edit;
                 state.cmsDiff = data.cms_diff || [];
                 state.publicUrls = data.public_urls || {};
+                if (data.collections && data.collections.length) {
+                    applyCollections(data.collections);
+                }
                 populateAiConnections(data.ai_connections || []);
                 bindFields();
                 refreshAllRenders(data);
@@ -805,6 +903,11 @@
 
     function runCopilot(mode) {
         var connId = getSelectedAiConnection();
+        if (!connId && mode !== 'fill_gaps') {
+            toast('Select an AI connection for this action, or use Fill gaps for basic suggestions', 'warning');
+            return Promise.resolve();
+        }
+        setAssistStatus('Generating suggestions…');
         return postJson({ action: 'copilot', ai_connection_id: connId, mode: mode || 'all' })
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Assist failed');
@@ -812,8 +915,17 @@
                 state.studioDraftPatch = null;
                 renderAssistSuggestions();
                 scrollAssistResults();
-                toast(state.suggestions.length + ' suggestion(s) to review', 'info');
-            });
+                openAssistSidebar();
+                if (res.data.ai_error && connId) {
+                    toast(res.data.ai_error, 'warning');
+                }
+                if (state.suggestions.length) {
+                    toast(state.suggestions.length + ' suggestion(s) to review', 'info');
+                } else if (!res.data.ai_error) {
+                    toast('No suggestions — try linking CMS content or running Auto-fill', 'info');
+                }
+            })
+            .finally(function () { setAssistStatus(''); });
     }
 
     function acceptSuggestion(id) {
@@ -860,41 +972,72 @@
     function runFieldAi(field) {
         var connId = getSelectedAiConnection();
         if (!connId) {
-            toast('Select an AI connection first', 'warning');
+            toast('Select an AI connection in the sidebar first', 'warning');
+            openAssistSidebar();
             return Promise.resolve();
         }
+        var btn = document.querySelector('.ap-field-ai[data-field="' + field + '"]');
+        if (btn) btn.disabled = true;
         return postJson({ action: 'field_ai', field: field, ai_connection_id: connId })
             .then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Field AI failed');
                 var suggestions = res.data.suggestions || [];
+                if (res.data.error && !suggestions.length) {
+                    throw new Error(res.data.error);
+                }
                 if (!suggestions.length) {
-                    toast('No suggestions returned', 'info');
+                    toast('No suggestions returned for this field', 'info');
                     return;
                 }
-                var s = suggestions[0];
-                if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
-                    global.BirklyFeedback.confirm('Apply AI suggestion for ' + field + '?', function (ok) {
-                        if (ok) {
-                            postJson({ action: 'accept_suggestion', suggestion: s }).then(function (r) {
-                                if (r.status === 'ok') {
-                                    state.draft = r.data.draft;
-                                    bindFields();
-                                    refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
-                                    toast('Field updated', 'success');
-                                }
-                            });
-                        }
-                    });
-                } else if (confirm('Apply AI suggestion?')) {
-                    return postJson({ action: 'accept_suggestion', suggestion: s }).then(function (r) {
-                        if (r.status === 'ok') {
-                            state.draft = r.data.draft;
-                            bindFields();
-                            refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
-                        }
-                    });
-                }
+                mergeSuggestions(suggestions);
+                renderAssistSuggestions();
+                scrollAssistResults();
+                openAssistSidebar();
+                toast('AI suggestion added to Review — accept or reject below', 'success');
+            })
+            .finally(function () {
+                if (btn) btn.disabled = false;
             });
+    }
+
+    function assistAutoFill() {
+        var connId = getSelectedAiConnection();
+        if (!connId) {
+            toast('Select an AI connection in the sidebar first', 'warning');
+            openAssistSidebar();
+            return Promise.resolve();
+        }
+        if (!state.collections.length) {
+            toast('No CMS collections found — create content collections first', 'warning');
+            return Promise.resolve();
+        }
+        var slugs = state.collections.map(collectionKey).filter(Boolean);
+        var btn = document.getElementById('ap-assist-auto-fill');
+        if (btn) btn.disabled = true;
+        setAssistStatus('Reading CMS collections and generating draft…');
+        return postJson({
+            action: 'wizard_generate',
+            collections: slugs,
+            ai_connection_id: connId
+        }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
+            state.suggestions = res.data.suggestions || [];
+            state.studioDraftPatch = res.data.draft_patch || null;
+            renderAssistSuggestions();
+            scrollAssistResults();
+            openAssistSidebar();
+            if (res.data.ai_error) {
+                toast(res.data.ai_error, 'warning');
+            }
+            if (state.suggestions.length) {
+                toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
+            } else {
+                toast('No proposals generated', 'info');
+            }
+        }).finally(function () {
+            if (btn) btn.disabled = false;
+            setAssistStatus('');
+        });
     }
 
     function assistBuildFromCms() {
@@ -905,17 +1048,31 @@
             toast('Select at least one collection', 'warning');
             return Promise.resolve();
         }
+        var connId = getSelectedAiConnection();
+        if (!connId) {
+            toast('Select an AI connection for CMS generation', 'warning');
+            return Promise.resolve();
+        }
+        var btn = document.getElementById('ap-assist-build');
+        if (btn) btn.disabled = true;
+        setAssistStatus('Generating from selected collections…');
         return postJson({
             action: 'wizard_generate',
             collections: collections,
-            ai_connection_id: getSelectedAiConnection()
+            ai_connection_id: connId
         }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message || 'Generate failed');
             state.suggestions = res.data.suggestions || [];
             state.studioDraftPatch = res.data.draft_patch || null;
             renderAssistSuggestions();
             scrollAssistResults();
+            if (res.data.ai_error) {
+                toast(res.data.ai_error, 'warning');
+            }
             toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
+        }).finally(function () {
+            if (btn) btn.disabled = false;
+            setAssistStatus('');
         });
     }
 
@@ -1055,13 +1212,9 @@
             saveDraft().catch(function (e) { toast(e.message, 'error'); });
         });
         bindEl('ai-presence-publish-btn', 'click', function () {
-            if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
-                global.BirklyFeedback.confirm('Publish brand context to public endpoints?', function (ok) {
-                    if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
-                });
-            } else if (confirm('Publish brand context?')) {
-                publish().catch(function (e) { toast(e.message, 'error'); });
-            }
+            confirmAsync('Publish brand context to public endpoints?').then(function (ok) {
+                if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
+            });
         });
 
         bindEl('ap-accept-all-suggestions', 'click', function () {
@@ -1077,6 +1230,14 @@
 
         bindEl('ap-assist-build', 'click', function () {
             assistBuildFromCms().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        bindEl('ap-assist-auto-fill', 'click', function () {
+            assistAutoFill().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        bindEl('ap-assist-collection-search', 'input', function (e) {
+            populateAssistCollections(e.target.value);
         });
 
         var assistList = document.getElementById('ap-assist-suggestions');
@@ -1351,7 +1512,12 @@
         initWorkflowNav();
         initIntroDismiss();
         initAssistSidebar();
-        loadCollections().then(load).then(function () {
+        initAssistTabs();
+        load().then(function () {
+            if (!state.collections.length) {
+                return loadCollections();
+            }
+        }).then(function () {
             bindActions();
             renderAssistSuggestions();
         }).catch(function (e) {
