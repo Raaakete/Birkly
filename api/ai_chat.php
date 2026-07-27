@@ -4,6 +4,9 @@
  * Handles chat interactions with AI providers in the admin panel
  */
 
+$__aiChatInternalLibrary = isset($GLOBALS['__HARU_INTERNAL_CALL']);
+
+if (!$__aiChatInternalLibrary) {
 // Start output buffering FIRST, before any includes
 if (ob_get_level() == 0) {
     ob_start();
@@ -1288,6 +1291,14 @@ if ($action === 'chat') {
         ]);
         exit;
     }
+}
+
+} // end !$__aiChatInternalLibrary router
+
+if ($__aiChatInternalLibrary) {
+    require_once __DIR__ . '/storage.php';
+    require_once __DIR__ . '/ai_helpers.php';
+    require_once __DIR__ . '/../core/ai_tool_registry.php';
 }
 
 // Build system prompt with context (SIMPLIFIED VERSION)
