@@ -33,13 +33,22 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
                 <div class="tab-content active" data-tab-content="overview">
                     <section class="ap-intro card" id="ap-intro">
-                        <div class="ap-intro-grid">
+                        <div class="ap-intro-layout">
                             <div class="ap-intro-copy">
                                 <h2 class="ap-intro-title">{translate 'admin.ai_presence_what_title'}</h2>
-                                <p>{translate 'admin.ai_presence_what_body'}</p>
+                                <p class="ap-intro-lede">{translate 'admin.ai_presence_what_body'}</p>
+                                <h3 class="ap-intro-subtitle">{translate 'admin.ai_presence_what_good_for_title'}</h3>
+                                <ul class="ap-intro-benefits">
+                                    <li>{translate 'admin.ai_presence_what_benefit_1'}</li>
+                                    <li>{translate 'admin.ai_presence_what_benefit_2'}</li>
+                                    <li>{translate 'admin.ai_presence_what_benefit_3'}</li>
+                                    <li>{translate 'admin.ai_presence_what_benefit_4'}</li>
+                                </ul>
                                 <p class="ap-hint">{translate 'admin.ai_presence_what_note'}</p>
                             </div>
-                            <ol class="ap-workflow" id="ap-workflow-steps">
+                            <div class="ap-intro-steps-wrap">
+                                <h3 class="ap-intro-subtitle">{translate 'admin.ai_presence_workflow_title'}</h3>
+                            <ol class="ap-workflow ap-workflow--compact" id="ap-workflow-steps">
                                 <li class="ap-workflow-step" data-workflow="sources">
                                     <span class="ap-workflow-num">1</span>
                                     <div>
@@ -76,6 +85,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                                     </div>
                                 </li>
                             </ol>
+                            </div>
                         </div>
                         <button type="button" class="btn-link ap-intro-dismiss" id="ap-intro-dismiss" hidden>{translate 'admin.ai_presence_dismiss_intro'}</button>
                     </section>
@@ -126,44 +136,85 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
                 <div class="tab-content" data-tab-content="sources">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_sources_lede'}</p>
-                    <section class="card ap-sources-section">
-                        <h3>{translate 'admin.ai_presence_sources_of_truth'}</h3>
-                        <p class="text-muted">{translate 'admin.ai_presence_sources_help'}</p>
-                        <div class="form-row ap-sources-toolbar">
-                            <select id="ap-source-type" class="input">
-                                <option value="cms_entry">{translate 'admin.ai_presence_source_type_cms_entry'}</option>
-                                <option value="cms_collection">{translate 'admin.ai_presence_source_type_cms_collection'}</option>
-                                <option value="website">{translate 'admin.ai_presence_source_type_website'}</option>
-                                <option value="document">{translate 'admin.ai_presence_source_type_document'}</option>
-                                <option value="media_asset">{translate 'admin.ai_presence_source_type_media'}</option>
-                                <option value="marketplace">{translate 'admin.ai_presence_source_type_marketplace'}</option>
-                                <option value="review_platform">{translate 'admin.ai_presence_source_type_review'}</option>
-                                <option value="other">{translate 'admin.ai_presence_source_type_other'}</option>
-                            </select>
-                            <select id="ap-source-role" class="input">
-                                <option value="narrative">{translate 'admin.ai_presence_source_role_narrative'}</option>
-                                <option value="proof">{translate 'admin.ai_presence_source_role_proof'}</option>
-                                <option value="reference">{translate 'admin.ai_presence_source_role_reference'}</option>
-                                <option value="archive">{translate 'admin.ai_presence_source_role_archive'}</option>
-                            </select>
-                        </div>
-                        <div class="form-row ap-sources-cms-row" id="ap-sources-cms-row">
-                            <select id="ap-connect-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
-                            <select id="ap-connect-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
-                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-source">{translate 'admin.ai_presence_add_cms_source'}</button>
-                        </div>
-                        <div class="form-row ap-sources-url-row" id="ap-sources-url-row" hidden>
-                            <input type="text" id="ap-source-label" class="input" placeholder="{translate 'admin.ai_presence_source_label'}">
-                            <input type="url" id="ap-source-url" class="input" placeholder="https://…">
-                            <button type="button" class="btn btn-secondary btn-sm" id="ap-add-url-source">{translate 'admin.add'}</button>
-                        </div>
-                        <ul id="ap-sources-list" class="ai-presence-ref-list"></ul>
-                        <p id="ap-sources-empty" class="ap-empty-state text-muted" hidden>{translate 'admin.ai_presence_sources_empty'}</p>
-                    </section>
+                    <div class="ap-sources-layout">
+                        <section class="card ap-sources-list-panel">
+                            <header class="ap-sources-panel-head">
+                                <div>
+                                    <h3>{translate 'admin.ai_presence_sources_of_truth'}</h3>
+                                    <p class="text-muted ap-panel-lede">{translate 'admin.ai_presence_sources_list_help'}</p>
+                                </div>
+                                <span class="badge ap-sources-count" id="ap-sources-count">0</span>
+                            </header>
+                            <ul id="ap-sources-list" class="ap-sources-cards"></ul>
+                            <p id="ap-sources-empty" class="ap-empty-state text-muted">{translate 'admin.ai_presence_sources_empty'}</p>
+                        </section>
+                        <section class="card ap-sources-add-panel">
+                            <h3>{translate 'admin.ai_presence_add_source'}</h3>
+                            <div class="ap-source-mode-tabs" role="tablist">
+                                <button type="button" class="ap-source-mode-tab active" data-source-mode="cms">{translate 'admin.ai_presence_source_mode_cms'}</button>
+                                <button type="button" class="ap-source-mode-tab" data-source-mode="url">{translate 'admin.ai_presence_source_mode_url'}</button>
+                                <button type="button" class="ap-source-mode-tab" data-source-mode="document">{translate 'admin.ai_presence_source_mode_document'}</button>
+                            </div>
+                            <div class="form-group">
+                                <label for="ap-source-role">{translate 'admin.ai_presence_source_role_label'}</label>
+                                <select id="ap-source-role" class="input">
+                                    <option value="narrative">{translate 'admin.ai_presence_source_role_narrative'}</option>
+                                    <option value="proof">{translate 'admin.ai_presence_source_role_proof'}</option>
+                                    <option value="reference">{translate 'admin.ai_presence_source_role_reference'}</option>
+                                    <option value="archive">{translate 'admin.ai_presence_source_role_archive'}</option>
+                                </select>
+                            </div>
+                            <div class="ap-source-mode-panel active" data-source-mode-panel="cms">
+                                <input type="hidden" id="ap-source-type" value="cms_entry">
+                                <div class="ap-source-form-grid">
+                                    <div class="form-group">
+                                        <label for="ap-connect-collection">{translate 'admin.collection'}</label>
+                                        <select id="ap-connect-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ap-connect-entry">{translate 'admin.entry'}</label>
+                                        <select id="ap-connect-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
+                                    </div>
+                                </div>
+                                <p class="ap-hint">{translate 'admin.ai_presence_source_cms_hint'}</p>
+                                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-cms-source">{translate 'admin.ai_presence_add_cms_source'}</button>
+                            </div>
+                            <div class="ap-source-mode-panel" data-source-mode-panel="url" hidden>
+                                <div class="form-group">
+                                    <label for="ap-source-url-type">{translate 'admin.type'}</label>
+                                    <select id="ap-source-url-type" class="input">
+                                        <option value="website">{translate 'admin.ai_presence_source_type_website'}</option>
+                                        <option value="marketplace">{translate 'admin.ai_presence_source_type_marketplace'}</option>
+                                        <option value="review_platform">{translate 'admin.ai_presence_source_type_review'}</option>
+                                        <option value="other">{translate 'admin.ai_presence_source_type_other'}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ap-source-label">{translate 'admin.ai_presence_source_label'}</label>
+                                    <input type="text" id="ap-source-label" class="input" placeholder="{translate 'admin.ai_presence_source_label_placeholder'}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="ap-source-url">{translate 'admin.url'}</label>
+                                    <input type="url" id="ap-source-url" class="input" placeholder="https://…">
+                                </div>
+                                <button type="button" class="btn btn-secondary btn-sm" id="ap-add-url-source">{translate 'admin.ai_presence_add_url_source'}</button>
+                            </div>
+                            <div class="ap-source-mode-panel" data-source-mode-panel="document" hidden>
+                                <p class="ap-hint">{translate 'admin.ai_presence_source_upload_help'}</p>
+                                <label class="ap-upload-dropzone" id="ap-source-upload-zone" for="ap-source-file">
+                                    <span class="ap-upload-dropzone-title">{translate 'admin.ai_presence_upload_documents'}</span>
+                                    <span class="ap-upload-dropzone-hint">{translate 'admin.ai_presence_upload_documents_hint'}</span>
+                                    <input type="file" id="ap-source-file" class="ap-upload-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.md,.zip" multiple>
+                                </label>
+                                <p id="ap-source-upload-status" class="ap-hint" hidden></p>
+                            </div>
+                        </section>
+                    </div>
                 </div>
 
                 <div class="tab-content" data-tab-content="context">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_context_lede'}</p>
+                    <div class="ap-context-page">
                     <section class="card ap-context-section">
                         <h3>{translate 'admin.ai_presence_identity'}</h3>
                         <div class="form-grid ap-context-grid">
@@ -257,6 +308,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <ul id="ap-relationships-list" class="ai-presence-item-list"></ul>
                         <button type="button" class="btn btn-sm btn-secondary mt-s" id="ap-add-relationship">{translate 'admin.ai_presence_add_relationship'}</button>
                     </section>
+                    </div>
                 </div>
 
                 <div class="tab-content" data-tab-content="products">
@@ -450,8 +502,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         </div>
         <form id="ap-product-form">
             <div class="modal-body ap-modal-body-scroll">
-                <div class="ap-modal-grid">
-                    <div class="ap-modal-col">
+                <div class="ap-product-modal-layout">
+                    <div class="ap-product-meta-grid">
                         <div class="form-group"><label for="ap-product-name">{translate 'admin.name'}</label><input type="text" id="ap-product-name" class="input" required></div>
                         <div class="form-group"><label for="ap-product-type">{translate 'admin.type'}</label>
                             <select id="ap-product-type" class="input">
@@ -460,32 +512,70 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                                 <option value="bundle">{translate 'admin.ai_presence_type_bundle'}</option>
                             </select>
                         </div>
-                        <div class="form-group"><label for="ap-product-short">{translate 'admin.ai_presence_short_description'}</label><textarea id="ap-product-short" class="input" rows="3"></textarea></div>
-                        <div class="form-group"><label for="ap-product-full">{translate 'admin.ai_presence_full_description'}</label><textarea id="ap-product-full" class="input" rows="6"></textarea></div>
-                    </div>
-                    <div class="ap-modal-col">
                         <div class="form-group"><label for="ap-product-category">{translate 'admin.ai_presence_categories'}</label><input type="text" id="ap-product-category" class="input"></div>
-                        <div class="form-group"><label for="ap-product-pricing">{translate 'admin.ai_presence_pricing_model'}</label><input type="text" id="ap-product-pricing" class="input" placeholder="subscription, one-time, free"></div>
+                    </div>
+                    <div class="form-group ap-span-full">
+                        <label for="ap-product-short">{translate 'admin.ai_presence_short_description'}</label>
+                        <textarea id="ap-product-short" class="input" rows="3"></textarea>
+                    </div>
+                    <div class="form-group ap-span-full">
+                        <label for="ap-product-full">{translate 'admin.ai_presence_full_description'}</label>
+                        <textarea id="ap-product-full" class="input" rows="6"></textarea>
+                    </div>
+                    <div class="ap-pricing-block card ap-inner-card">
+                        <h4 class="ap-modal-subtitle">{translate 'admin.ai_presence_pricing_section'}</h4>
+                        <div class="ap-product-meta-grid">
+                            <div class="form-group"><label for="ap-product-price-display">{translate 'admin.ai_presence_price_display'}</label><input type="text" id="ap-product-price-display" class="input" placeholder="€99/month, from $49"></div>
+                            <div class="form-group"><label for="ap-product-pricing">{translate 'admin.ai_presence_pricing_model'}</label><input type="text" id="ap-product-pricing" class="input" placeholder="subscription, one-time, free"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="ap-product-price-source-type">{translate 'admin.ai_presence_price_source'}</label>
+                            <select id="ap-product-price-source-type" class="input">
+                                <option value="manual">{translate 'admin.ai_presence_price_source_manual'}</option>
+                                <option value="cms_field">{translate 'admin.ai_presence_price_source_cms'}</option>
+                                <option value="external">{translate 'admin.ai_presence_price_source_external'}</option>
+                            </select>
+                        </div>
+                        <div class="ap-source-form-grid" id="ap-product-price-cms-row" hidden>
+                            <div class="form-group">
+                                <label for="ap-product-price-collection">{translate 'admin.collection'}</label>
+                                <select id="ap-product-price-collection" class="input"><option value="">{translate 'admin.select_collection'}</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ap-product-price-entry">{translate 'admin.entry'}</label>
+                                <select id="ap-product-price-entry" class="input"><option value="">{translate 'admin.select_entry'}</option></select>
+                            </div>
+                            <div class="form-group ap-span-full">
+                                <label for="ap-product-price-field">{translate 'admin.ai_presence_price_cms_field'}</label>
+                                <input type="text" id="ap-product-price-field" class="input" placeholder="price, pricing.amount">
+                            </div>
+                        </div>
+                        <div class="form-group" id="ap-product-price-url-row" hidden>
+                            <label for="ap-product-price-url">{translate 'admin.ai_presence_price_external_url'}</label>
+                            <input type="url" id="ap-product-price-url" class="input" placeholder="https://…">
+                        </div>
+                    </div>
+                    <div class="ap-product-side-grid">
                         <div class="form-group"><label for="ap-product-best-for">{translate 'admin.ai_presence_best_suited_for'}</label><textarea id="ap-product-best-for" class="input" rows="3" placeholder="One per line"></textarea></div>
                         <div class="form-group"><label for="ap-product-not-for">{translate 'admin.ai_presence_not_ideal_for'}</label><textarea id="ap-product-not-for" class="input" rows="3" placeholder="One per line"></textarea></div>
-                        <div class="form-group ap-product-media-block">
-                            <label>{translate 'admin.ai_presence_product_media'}</label>
-                            <p class="ap-setting-help ap-setting-help--inline">{translate 'admin.ai_presence_product_media_help'}</p>
-                            <div class="ap-product-media-row">
-                                <button type="button" class="btn btn-sm btn-secondary" id="ap-product-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
-                                <button type="button" class="btn btn-sm btn-secondary" id="ap-product-clear-media" hidden>{translate 'admin.clear'}</button>
-                            </div>
-                            <div id="ap-product-media-preview" class="ap-product-media-preview" hidden>
-                                <img id="ap-product-media-thumb" alt="" class="ap-media-thumb">
-                                <span id="ap-product-media-name" class="text-muted"></span>
-                            </div>
-                            <div class="form-group mt-s">
-                                <label for="ap-product-external-url">{translate 'admin.ai_presence_external_image_url'}</label>
-                                <input type="url" id="ap-product-external-url" class="input" placeholder="https://…">
-                            </div>
-                            <input type="hidden" id="ap-product-media-id">
-                            <input type="hidden" id="ap-product-media-url">
+                    </div>
+                    <div class="form-group ap-product-media-block">
+                        <label>{translate 'admin.ai_presence_product_media'}</label>
+                        <p class="ap-setting-help ap-setting-help--inline">{translate 'admin.ai_presence_product_media_help'}</p>
+                        <div class="ap-product-media-row">
+                            <button type="button" class="btn btn-sm btn-secondary" id="ap-product-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="ap-product-clear-media" hidden>{translate 'admin.clear'}</button>
                         </div>
+                        <div id="ap-product-media-preview" class="ap-product-media-preview" hidden>
+                            <img id="ap-product-media-thumb" alt="" class="ap-media-thumb">
+                            <span id="ap-product-media-name" class="text-muted"></span>
+                        </div>
+                        <div class="form-group mt-s">
+                            <label for="ap-product-external-url">{translate 'admin.ai_presence_external_media_url'}</label>
+                            <input type="url" id="ap-product-external-url" class="input" placeholder="https://…">
+                        </div>
+                        <input type="hidden" id="ap-product-media-id">
+                        <input type="hidden" id="ap-product-media-url">
                     </div>
                 </div>
                 <div class="ap-modal-fullwidth">
