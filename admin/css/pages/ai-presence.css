@@ -58,6 +58,43 @@
   line-height: 1.5;
 }
 
+.ap-tabs-top {
+  margin-bottom: var(--space-m, 1rem);
+}
+
+.ap-panel h3 {
+  margin: 0 0 var(--space-xs, 0.25rem);
+  font-size: 1rem;
+}
+
+.ap-panel-lede {
+  margin: 0 0 var(--space-s, 0.75rem);
+  font-size: 0.875rem;
+}
+
+.ap-panel-empty {
+  margin: 0;
+  padding: var(--space-s, 0.75rem);
+  border-radius: var(--radius-md, 8px);
+  background: var(--bg-secondary, #fafafa);
+  border: 1px dashed var(--border-light, #e5e7eb);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ap-panel-empty[hidden] {
+  display: none !important;
+}
+
+.ap-panel-status {
+  padding: var(--space-s, 0.75rem) 0;
+  font-size: 0.875rem;
+}
+
+.ap-panel-status--ok {
+  color: var(--text-secondary, #72746F);
+}
+
 .ap-workflow {
   list-style: none;
   padding: 0;
