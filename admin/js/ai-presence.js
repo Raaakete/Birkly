@@ -67,8 +67,212 @@
         evidenceIdx: null,
         mediaIdx: null,
         pickedMedia: null,
-        productMedia: null
+        productMedia: null,
+        productSources: [],
+        claimSources: []
     };
+
+    var SOURCE_ROLES = ['canonical_detail', 'reference', 'marketplace', 'review', 'docs', 'proof', 'purchase', 'social', 'other'];
+
+    function countProductSources(prod) {
+        var n = (prod.sources && prod.sources.length) || 0;
+        if (!n && prod.connected_entry && prod.connected_entry.entry_id) n = 1;
+        return n;
+    }
+
+    function renderSourcesList(listEl, sources, onRemove) {
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        (sources || []).forEach(function (src, idx) {
+            var li = document.createElement('li');
+            li.className = 'ap-source-item';
+            var label = src.label || src.url || (src.ref && src.ref.label) || 'Source';
+            var meta = (src.role || '') + (src.type ? ' · ' + src.type : '');
+            if (src.link_status && src.link_status !== 'unknown') meta += ' · ' + src.link_status;
+            li.innerHTML = '<strong>' + escapeHtml(label) + '</strong> <span class="text-muted">' +
+                escapeHtml(meta) + '</span>' +
+                (src.url ? ' <a href="' + escapeHtml(src.url) + '" target="_blank" rel="noopener">↗</a>' : '') +
+                (onRemove ? ' <button type="button" class="btn-link ap-remove-source" data-idx="' + idx + '">Remove</button>' : '');
+            listEl.appendChild(li);
+        });
+        if (onRemove) {
+            listEl.querySelectorAll('.ap-remove-source').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    onRemove(parseInt(btn.getAttribute('data-idx'), 10));
+                });
+            });
+        }
+    }
+
+    function populateSourceCollectionSelect(selectEl) {
+        if (!selectEl) return;
+        var current = selectEl.value;
+        selectEl.innerHTML = '<option value="">Collection</option>';
+        (state.collections || []).forEach(function (col) {
+            var opt = document.createElement('option');
+            opt.value = col.dir || col.slug;
+            opt.textContent = col.name || col.slug;
+            selectEl.appendChild(opt);
+        });
+        if (current) selectEl.value = current;
+    }
+
+    function loadCollectionEntries(collection, selectEl) {
+        if (!selectEl || !collection) {
+            if (selectEl) selectEl.innerHTML = '<option value="">Entry</option>';
+            return Promise.resolve();
+        }
+        if (state.entriesByCollection[collection]) {
+            fillEntrySelect(selectEl, state.entriesByCollection[collection]);
+            return Promise.resolve();
+        }
+        return fetch(apiUrl('/api/ai_presence.php?action=list_collection_entries&collection=' +
+            encodeURIComponent(collection)), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                var entries = (res.status === 'ok' && res.data && res.data.entries) ? res.data.entries : [];
+                state.entriesByCollection[collection] = entries;
+                fillEntrySelect(selectEl, entries);
+            });
+    }
+
+    function fillEntrySelect(selectEl, entries) {
+        if (!selectEl) return;
+        selectEl.innerHTML = '<option value="">Entry</option>';
+        (entries || []).forEach(function (entry) {
+            var opt = document.createElement('option');
+            opt.value = entry.id;
+            opt.textContent = entry.title || entry.id;
+            opt.dataset.slug = entry.slug || entry.id;
+            opt.dataset.collection = entry.collection || '';
+            selectEl.appendChild(opt);
+        });
+    }
+
+    function toggleProductSourceCmsRow() {
+        var typeEl = document.getElementById('ap-product-source-type');
+        var row = document.getElementById('ap-product-source-cms-row');
+        if (!typeEl || !row) return;
+        row.hidden = typeEl.value !== 'cms_entry';
+    }
+
+    function addProductSourceFromForm() {
+        var role = document.getElementById('ap-product-source-role').value || 'reference';
+        var type = document.getElementById('ap-product-source-type').value || 'public_page';
+        var label = document.getElementById('ap-product-source-label').value.trim();
+        var url = document.getElementById('ap-product-source-url').value.trim();
+        var source = { id: uid('src'), role: role, type: type, label: label, url: url, link_status: 'unknown' };
+        if (type === 'cms_entry') {
+            var colSel = document.getElementById('ap-product-source-collection');
+            var entSel = document.getElementById('ap-product-source-entry');
+            var collection = colSel ? colSel.value : '';
+            var entryId = entSel ? entSel.value : '';
+            if (!collection || !entryId) {
+                toast('Select collection and entry for CMS link', 'warning');
+                return;
+            }
+            var opt = entSel.options[entSel.selectedIndex];
+            source.ref = {
+                collection: collection,
+                entry_id: entryId,
+                slug: (opt && opt.dataset.slug) || entryId,
+                label: label || (opt ? opt.textContent : entryId)
+            };
+            source.label = source.label || source.ref.label;
+            source.url = '';
+        } else if (!url && !label) {
+            toast('Enter a label or URL', 'warning');
+            return;
+        }
+        modalState.productSources.push(source);
+        refreshProductSourcesList();
+        document.getElementById('ap-product-source-label').value = '';
+        document.getElementById('ap-product-source-url').value = '';
+    }
+
+    function addClaimSourceFromForm() {
+        var role = document.getElementById('ap-claim-source-role').value || 'proof';
+        var label = document.getElementById('ap-claim-source-label').value.trim();
+        var url = document.getElementById('ap-claim-source-url').value.trim();
+        if (!url && !label) {
+            toast('Enter a label or URL', 'warning');
+            return;
+        }
+        modalState.claimSources.push({
+            id: uid('src'),
+            role: role,
+            type: url.indexOf('amazon.') >= 0 ? 'marketplace_listing' : 'review_platform',
+            label: label || url,
+            url: url,
+            link_status: 'unknown'
+        });
+        refreshClaimSourcesList();
+        document.getElementById('ap-claim-source-label').value = '';
+        document.getElementById('ap-claim-source-url').value = '';
+    }
+
+    function renderLinkHealth(results) {
+        var list = document.getElementById('ap-link-health-list');
+        if (!list) return;
+        list.innerHTML = '';
+        if (!results || !results.length) {
+            list.innerHTML = '<li class="text-muted">No external links to check yet.</li>';
+            return;
+        }
+        results.forEach(function (row) {
+            var li = document.createElement('li');
+            var ok = row.ok ? 'ok' : 'warn';
+            li.className = 'ap-link-health-item ap-link-health-item--' + ok;
+            li.textContent = (row.scope || 'link') + ': ' + (row.url || row.id) +
+                ' — ' + (row.link_status || (row.ok ? 'ok' : 'failed'));
+            list.appendChild(li);
+        });
+    }
+
+    function runValidateLinks(updateStatus) {
+        showAiLoading('Checking links…');
+        return postJson({ action: 'validate_links', update_status: !!updateStatus }).then(function (res) {
+            hideAiLoading();
+            if (res.status !== 'ok') throw new Error(res.message || 'Link check failed');
+            if (res.data && res.data.draft) {
+                state.draft = res.data.draft;
+                renderProducts();
+                renderEvidence();
+                renderClaims();
+                state.dirty = !!updateStatus;
+            }
+            renderLinkHealth(res.data.results || []);
+            toast('Link check complete', 'success');
+        }).catch(function (e) {
+            hideAiLoading();
+            throw e;
+        });
+    }
+
+    function runSuggestLinks() {
+        showAiLoading('Suggesting cross-links…');
+        return postJson({
+            action: 'suggest_links',
+            ai_connection_id: getSelectedAiConnection()
+        }).then(function (res) {
+            hideAiLoading();
+            if (res.status !== 'ok') throw new Error(res.message || 'Suggest links failed');
+            state.suggestions = (res.data.suggestions || []).concat(state.suggestions);
+            var seen = {};
+            state.suggestions = state.suggestions.filter(function (s) {
+                var k = (s.field || '') + '|' + (s.id || '');
+                if (seen[k]) return false;
+                seen[k] = true;
+                return true;
+            });
+            renderAssistSuggestions();
+            openAssistSidebar();
+            toast('Link suggestions ready — review in AI Assist', 'success');
+        }).catch(function (e) {
+            hideAiLoading();
+            throw e;
+        });
+    }
 
     function openApModal(id) {
         var modal = document.getElementById(id);
@@ -406,6 +610,8 @@
             html += '<p class="badge">' + escapeHtml(claim.status || 'pending_review') + '</p>';
         }
         if (claim.notes) html += '<p class="text-muted">' + escapeHtml(claim.notes) + '</p>';
+        var srcCount = (claim.sources || []).length;
+        if (srcCount) html += '<p class="text-muted">' + srcCount + ' direct source link(s)</p>';
         el.innerHTML = html;
         var sel = el.querySelector('.ap-claim-status');
         if (sel) {
@@ -458,6 +664,9 @@
             li.innerHTML = escapeHtml(ev.title || ev.url || ev.id) +
                 ' <span class="badge">' + escapeHtml(ev.type || 'other') + '</span> ' +
                 '<span class="badge">' + escapeHtml(ev.verification_status || 'unverified') + '</span>' +
+                (ev.rating ? ' <span class="text-muted">' + escapeHtml(String(ev.rating)) + '★</span>' : '') +
+                (ev.link_status && ev.link_status !== 'unknown' ?
+                    ' <span class="badge">' + escapeHtml(ev.link_status) + '</span>' : '') +
                 (state.canEdit ?
                     '<div class="ap-item-actions">' +
                     '<button type="button" class="btn-link ap-edit-evidence-btn" data-idx="' + idx + '">Edit</button> ' +
@@ -565,6 +774,8 @@
                     '<div class="ap-product-card-thumb-wrap"><img class="ap-product-card-thumb" src="' +
                     escapeHtml(prod.media_url || prod.external_image_url) + '" alt=""></div>' : '') +
                 '<p class="ap-product-desc">' + escapeHtml(prod.short_description || prod.full_description || '') + '</p>' +
+                (countProductSources(prod) ?
+                    '<p class="ap-source-badge text-muted">' + countProductSources(prod) + ' linked source(s)</p>' : '') +
                 (state.canEdit ?
                     '<div class="ap-product-actions">' +
                     '<button type="button" class="btn btn-sm btn-secondary ap-edit-product" data-idx="' + idx + '">Edit</button> ' +
@@ -1314,10 +1525,36 @@
         }
     }
 
+    function refreshProductSourcesList() {
+        renderSourcesList(document.getElementById('ap-product-sources-list'), modalState.productSources, function (idx) {
+            modalState.productSources.splice(idx, 1);
+            refreshProductSourcesList();
+        });
+    }
+
+    function refreshClaimSourcesList() {
+        renderSourcesList(document.getElementById('ap-claim-sources-list'), modalState.claimSources, function (idx) {
+            modalState.claimSources.splice(idx, 1);
+            refreshClaimSourcesList();
+        });
+    }
+
     function openProductModal(idx) {
         modalState.productIdx = idx == null ? null : idx;
         modalState.productMedia = null;
         var prod = idx != null ? (state.draft.products_services || [])[idx] : null;
+        modalState.productSources = prod && Array.isArray(prod.sources) ?
+            JSON.parse(JSON.stringify(prod.sources)) : [];
+        if (prod && prod.connected_entry && prod.connected_entry.entry_id && !modalState.productSources.length) {
+            modalState.productSources.push({
+                id: uid('src'),
+                role: 'canonical_detail',
+                type: 'cms_entry',
+                label: prod.connected_entry.label || prod.connected_entry.entry_id,
+                url: '',
+                ref: prod.connected_entry
+            });
+        }
         var titleEl = document.getElementById('ap-product-modal-title');
         if (titleEl) titleEl.textContent = prod ? 'Edit product or service' : 'Add product or service';
         document.getElementById('ap-product-name').value = prod ? (prod.name || '') : '';
@@ -1329,6 +1566,9 @@
         document.getElementById('ap-product-best-for').value = prod && Array.isArray(prod.best_for) ? prod.best_for.join('\n') : '';
         document.getElementById('ap-product-not-for').value = prod && Array.isArray(prod.not_for) ? prod.not_for.join('\n') : '';
         document.getElementById('ap-product-external-url').value = prod ? (prod.external_image_url || '') : '';
+        populateSourceCollectionSelect(document.getElementById('ap-product-source-collection'));
+        toggleProductSourceCmsRow();
+        refreshProductSourcesList();
         if (prod && (prod.media_id || prod.media_url)) {
             setProductMediaPreview({
                 id: prod.media_id,
@@ -1347,6 +1587,12 @@
         if (!name) return;
         var media = modalState.productMedia;
         var externalUrl = document.getElementById('ap-product-external-url').value.trim();
+        var connectedEntry = null;
+        (modalState.productSources || []).forEach(function (src) {
+            if (src.type === 'cms_entry' && src.ref && src.ref.entry_id && !connectedEntry) {
+                connectedEntry = src.ref;
+            }
+        });
         var prod = {
             id: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
                 ? state.draft.products_services[modalState.productIdx].id : uid('prod'),
@@ -1362,10 +1608,10 @@
             media_url: media ? (media.url || media.thumbnail || '') : '',
             media_name: media ? (media.name || '') : '',
             external_image_url: externalUrl,
+            sources: modalState.productSources || [],
             claim_ids: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
                 ? (state.draft.products_services[modalState.productIdx].claim_ids || []) : [],
-            connected_entry: modalState.productIdx != null && state.draft.products_services[modalState.productIdx]
-                ? state.draft.products_services[modalState.productIdx].connected_entry : null,
+            connected_entry: connectedEntry,
             public: true
         };
         state.draft.products_services = state.draft.products_services || [];
@@ -1429,11 +1675,14 @@
     function openClaimModal(idx) {
         modalState.claimIdx = idx == null ? null : idx;
         var claim = idx != null ? (state.draft.claims || [])[idx] : null;
+        modalState.claimSources = claim && Array.isArray(claim.sources) ?
+            JSON.parse(JSON.stringify(claim.sources)) : [];
         var titleEl = document.getElementById('ap-claim-modal-title');
         if (titleEl) titleEl.textContent = claim ? 'Edit claim' : 'Add claim';
         document.getElementById('ap-claim-statement').value = claim ? (claim.statement || '') : '';
         document.getElementById('ap-claim-status').value = claim ? (claim.status || 'pending_review') : 'pending_review';
         document.getElementById('ap-claim-notes').value = claim ? (claim.notes || '') : '';
+        refreshClaimSourcesList();
         openApModal('ap-claim-modal');
     }
 
@@ -1447,6 +1696,7 @@
             existing.statement = statement;
             existing.status = document.getElementById('ap-claim-status').value;
             existing.notes = document.getElementById('ap-claim-notes').value.trim();
+            existing.sources = modalState.claimSources || [];
         } else {
             state.draft.claims.push({
                 id: uid('claim'),
@@ -1454,6 +1704,7 @@
                 status: document.getElementById('ap-claim-status').value,
                 evidence_ids: [],
                 related_content: [],
+                sources: modalState.claimSources || [],
                 last_reviewed_at: '',
                 expires_at: '',
                 notes: document.getElementById('ap-claim-notes').value.trim()
@@ -1473,6 +1724,8 @@
         document.getElementById('ap-evidence-url').value = ev ? (ev.url || '') : '';
         document.getElementById('ap-evidence-type').value = ev ? (ev.type || 'external_url') : 'external_url';
         document.getElementById('ap-evidence-notes').value = ev ? (ev.notes || '') : '';
+        document.getElementById('ap-evidence-rating').value = ev && ev.rating != null ? String(ev.rating) : '';
+        document.getElementById('ap-evidence-review-count').value = ev && ev.review_count != null ? String(ev.review_count) : '';
         openApModal('ap-evidence-modal');
     }
 
@@ -1488,6 +1741,10 @@
             item.url = url;
             item.type = document.getElementById('ap-evidence-type').value;
             item.notes = document.getElementById('ap-evidence-notes').value.trim();
+            var ratingVal = document.getElementById('ap-evidence-rating').value.trim();
+            var reviewVal = document.getElementById('ap-evidence-review-count').value.trim();
+            item.rating = ratingVal !== '' ? parseFloat(ratingVal) : undefined;
+            item.review_count = reviewVal !== '' ? parseInt(reviewVal, 10) : undefined;
             closeApModal('ap-evidence-modal');
             renderEvidence();
             renderClaims();
@@ -1505,8 +1762,14 @@
             reviewed_at: '',
             verification_status: 'unverified',
             claim_ids: state.selectedClaimId ? [state.selectedClaimId] : [],
-            notes: document.getElementById('ap-evidence-notes').value.trim()
+            notes: document.getElementById('ap-evidence-notes').value.trim(),
+            link_status: 'unknown',
+            last_verified_at: ''
         };
+        var ratingVal = document.getElementById('ap-evidence-rating').value.trim();
+        var reviewVal = document.getElementById('ap-evidence-review-count').value.trim();
+        if (ratingVal !== '') item.rating = parseFloat(ratingVal);
+        if (reviewVal !== '') item.review_count = parseInt(reviewVal, 10);
         var finish = function () {
             state.draft.evidence = state.draft.evidence || [];
             state.draft.evidence.push(item);
@@ -1721,6 +1984,26 @@
 
         bindEl('ap-assist-fill-complete', 'click', function () {
             assistFillComplete().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        bindEl('ap-assist-suggest-links', 'click', function () {
+            runSuggestLinks().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        bindEl('ap-suggest-links', 'click', function () {
+            runSuggestLinks().catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        bindEl('ap-validate-links', 'click', function () {
+            runValidateLinks(true).catch(function (e) { toast(e.message, 'error'); });
+        });
+
+        bindEl('ap-product-add-source', 'click', addProductSourceFromForm);
+        bindEl('ap-claim-add-source', 'click', addClaimSourceFromForm);
+        bindEl('ap-product-source-type', 'change', toggleProductSourceCmsRow);
+        bindEl('ap-product-source-collection', 'change', function () {
+            var col = document.getElementById('ap-product-source-collection').value;
+            loadCollectionEntries(col, document.getElementById('ap-product-source-entry'));
         });
 
         bindEl('ap-ai-loading-cancel', 'click', function () {

@@ -448,8 +448,9 @@ function executeReadAction($actionData, $aiUser) {
             return ['success' => false, 'message' => 'Unknown docs topic'];
         }
         return ['success' => true, 'data' => $topic];
-    } elseif (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim'], true)) {
+    } elseif (in_array($actionType, ['get_brand_context', 'list_brand_products', 'get_brand_claim', 'get_brand_product'], true)) {
         require_once __DIR__ . '/../core/ai_presence_pro.php';
+        require_once __DIR__ . '/../core/ai_presence_links.php';
         if ($actionType === 'get_brand_context') {
             $view = (string) ($actionPayload['view'] ?? 'summary');
             $data = birkly_ai_presence_public_brand_for_tools($view);
@@ -468,10 +469,17 @@ function executeReadAction($actionData, $aiUser) {
         $id = (string) ($actionPayload['id'] ?? '');
         $full = birkly_ai_presence_public_brand_for_tools('full');
         if ($full === null || $id === '') {
-            return ['success' => false, 'message' => 'Claim not found'];
+            return ['success' => false, 'message' => 'Not found'];
+        }
+        if ($actionType === 'get_brand_product') {
+            $graph = birkly_ai_presence_public_product_graph($full, $id);
+            if ($graph === null) {
+                return ['success' => false, 'message' => 'Product not found'];
+            }
+            return ['success' => true, 'data' => $graph];
         }
         foreach ($full['claims'] ?? [] as $claim) {
-            if (is_array($claim) && ($claim['id'] ?? '') === $id) {
+            if (is_array($claim) && ($claim['id'] ?? '') === $id && ($claim['status'] ?? '') === 'supported') {
                 return ['success' => true, 'data' => ['claim' => $claim]];
             }
         }
