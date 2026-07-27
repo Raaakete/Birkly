@@ -156,7 +156,8 @@ function birkly_ai_tool_calls_to_actions(array $toolCalls): array
         }
         $rawArgs = $call['function']['arguments'] ?? $call['arguments'] ?? '{}';
         $args = is_string($rawArgs) ? (json_decode($rawArgs, true) ?: []) : (is_array($rawArgs) ? $rawArgs : []);
-        if (in_array($name, ['create_entry', 'update_entry'], true) && isset($args['data']) && is_array($args['data'])) {
+        if (in_array($name, ['create_entry', 'update_entry', 'create_collection', 'update_collection', 'delete_collection', 'read_collection'], true)
+            && isset($args['data']) && is_array($args['data'])) {
             $inner = $args['data'];
             unset($args['data']);
             $args = array_merge($args, $inner);
