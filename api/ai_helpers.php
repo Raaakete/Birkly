@@ -68,8 +68,15 @@ function isAiUser($user) {
  *
  * @return array{slug: string, name?: string, description?: string, fields?: array, entry_method?: string}
  */
-function birkly_ai_normalize_collection_action_data(array $actionData): array
+function birkly_ai_normalize_collection_action_data($actionData): array
 {
+    if (!is_array($actionData)) {
+        if (is_string($actionData) && trim($actionData) !== '') {
+            return ['slug' => trim($actionData)];
+        }
+        return [];
+    }
+
     $normalized = $actionData;
 
     if (isset($actionData['data']) && is_array($actionData['data'])) {

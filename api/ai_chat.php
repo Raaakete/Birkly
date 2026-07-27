@@ -290,7 +290,7 @@ if ($action === 'chat') {
             $actions = extractActionsFromResponse($response['message'] ?? '', $response['tool_calls'] ?? []);
             
             // Log for debugging
-            error_log("AI Response: " . substr($response['message'], 0, 500));
+            error_log("AI Response: " . substr((string) ($response['message'] ?? ''), 0, 500));
             error_log("Extracted actions count: " . count($actions));
             if (!empty($actions)) {
                 error_log("Actions: " . json_encode($actions));
@@ -337,9 +337,10 @@ if ($action === 'chat') {
             }
 
             // SIMPLIFIED FALLBACK: Only trigger if no actions AND user asked for an action
-            $userAskedForAction = preg_match('/\b(create|add|make|update|delete|fix|change|another|more|one)\b/i', $message);
+            $userAskedForAction = preg_match('/\b(create|add|make|update|delete|fix|change|another|more|one|yes|proceed)\b/i', $message);
             
             if (empty($actions) && $userAskedForAction) {
+                $context = $systemContext;
                 error_log("No actions found but user asked for action - using simplified fallback");
                 // Detect "create a new collection called/ named X"
                 $collectionName = null;
@@ -762,7 +763,7 @@ if ($action === 'chat') {
                                             if ($newResult['success'] ?? false) {
                                                 $hasSuccessfulReads = true;
                                             }
-                                        } catch (Exception $e) {
+                                        } catch (Throwable $e) {
                                             error_log("Exception executing auto-generated list_entries: " . $e->getMessage());
                                             $readData[] = [
                                                 'success' => false,
@@ -773,7 +774,7 @@ if ($action === 'chat') {
                                 }
                             }
                         }
-                    } catch (Exception $e) {
+                    } catch (Throwable $e) {
                         error_log("Exception executing read action: " . $e->getMessage());
                         $readData[] = [
                             'success' => false,
@@ -977,7 +978,7 @@ if ($action === 'chat') {
                                     if ($result['success'] ?? false) {
                                         $hasSuccessfulReads = true;
                                     }
-                                } catch (Exception $e) {
+                                } catch (Throwable $e) {
                                     error_log("Exception executing follow-up read action: " . $e->getMessage());
                                     $readData[] = [
                                         'success' => false,
@@ -1144,7 +1145,7 @@ if ($action === 'chat') {
                             'ai_user_id' => $aiConnectionId,
                             'action_type' => $actionData['type'] ?? 'unknown',
                             'action_data' => $actionData['data'] ?? [],
-                            'description' => $actionData['description'] ?? substr($response['message'], 0, 200),
+                            'description' => $actionData['description'] ?? substr((string) ($response['message'] ?? ''), 0, 200),
                             'status' => 'pending',
                             'created_at' => date('c'),
                             'conversation_id' => $conversationId
@@ -1197,15 +1198,7 @@ if ($action === 'chat') {
                                 $hasErrors = true;
                                 error_log("Action execution failed: " . json_encode($result));
                             }
-                        } catch (Exception $e) {
-                            error_log("Exception executing action: " . $e->getMessage());
-                            error_log("Stack trace: " . $e->getTraceAsString());
-                            $executedActions[] = [
-                                'success' => false,
-                                'message' => 'Error executing action: ' . $e->getMessage()
-                            ];
-                            $hasErrors = true;
-                        } catch (Error $e) {
+                        } catch (Throwable $e) {
                             error_log("Fatal error executing action: " . $e->getMessage());
                             error_log("Stack trace: " . $e->getTraceAsString());
                             $executedActions[] = [
@@ -1287,7 +1280,8 @@ if ($action === 'chat') {
         }
         echo json_encode([
             'status' => 'error',
-            'message' => 'A fatal error occurred. Please check the server logs.'
+            'message' => 'A fatal error occurred: ' . $e->getMessage(),
+            'error_type' => get_class($e),
         ]);
         exit;
     }
