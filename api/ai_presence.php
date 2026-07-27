@@ -207,7 +207,8 @@ if ($action === 'suggest' || $action === 'copilot') {
     $draft = birkly_ai_presence_load_draft();
     $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
     $mode = trim((string) ($input['mode'] ?? 'all'));
-    $result = birkly_ai_presence_copilot_suggestions($draft, $aiConnectionId, $mode);
+    $creative = !empty($input['creative']) || $mode === 'fill_complete';
+    $result = birkly_ai_presence_copilot_suggestions($draft, $aiConnectionId, $mode, $creative);
     echo json_encode(['status' => 'ok', 'data' => $result]);
     exit;
 }
@@ -216,11 +217,12 @@ if ($action === 'field_ai') {
     $draft = birkly_ai_presence_load_draft();
     $field = trim((string) ($input['field'] ?? ''));
     $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
+    $creative = !isset($input['creative']) || !empty($input['creative']);
     if ($field === '' || $aiConnectionId === '') {
         echo json_encode(['status' => 'error', 'message' => 'field and ai_connection_id required']);
         exit;
     }
-    $result = birkly_ai_presence_field_ai($field, $draft, $aiConnectionId);
+    $result = birkly_ai_presence_field_ai($field, $draft, $aiConnectionId, $creative);
     if (!empty($result['error']) && empty($result['suggestions'])) {
         echo json_encode(['status' => 'error', 'message' => $result['error']]);
         exit;
@@ -235,7 +237,8 @@ if ($action === 'wizard_generate') {
         $collections = [];
     }
     $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
-    $result = birkly_ai_presence_wizard_generate($collections, $aiConnectionId);
+    $creative = !empty($input['creative']);
+    $result = birkly_ai_presence_wizard_generate($collections, $aiConnectionId, $creative);
     echo json_encode(['status' => 'ok', 'data' => $result]);
     exit;
 }
