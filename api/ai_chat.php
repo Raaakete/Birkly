@@ -734,6 +734,20 @@ if ($action === 'chat') {
                     error_log('Site proceed nudge failed: ' . $e->getMessage());
                 }
             }
+
+            if (empty($actions)
+                && preg_match('/\b(proceed|yes|go ahead|do it|finish|finished|complete|start)\b/i', $message)
+                && ai_chat_is_project_site_intent($message, $conversationHistory)) {
+                $fallbackActions = ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext);
+                if (!empty($fallbackActions)) {
+                    $actions = $fallbackActions;
+                    if (trim((string) ($response['message'] ?? '')) === ''
+                        || preg_match('/\b(I\'ll|I will|Let me|Starting)\b/i', (string) ($response['message'] ?? ''))) {
+                        $response['message'] = 'Running the next site-build step (' . count($fallbackActions) . ' action(s)).';
+                    }
+                    error_log('Site proceed deterministic fallback: ' . count($fallbackActions) . ' actions');
+                }
+            }
             
             // Separate read actions (which should be executed immediately and data returned) 
             // from write actions (which may need approval)
