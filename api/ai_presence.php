@@ -28,7 +28,7 @@ if (!isset($_SESSION['user'])) {
 }
 
 $currentUser = $_SESSION['user'];
-$userId = (string) ($currentUser['id'] ?? $currentUser['email'] ?? '');
+$userId = birkly_ai_resolve_session_user_id($currentUser);
 $raw = file_get_contents('php://input');
 $input = json_decode($raw ?: '{}', true);
 if (!is_array($input)) {
