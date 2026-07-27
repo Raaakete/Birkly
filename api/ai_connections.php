@@ -154,7 +154,7 @@ if ($action === 'create') {
     }
 
     if ($provider !== 'ollama' && !empty($apiKey)) {
-        $validation = validateProviderConnection($provider, $apiKey, $apiUrl);
+        $validation = validateProviderConnection($provider, $apiKey, $apiUrl, $model);
         if (!$validation['valid']) {
             if (!headers_sent()) {
                 header('Content-Type: application/json');
@@ -476,6 +476,7 @@ if ($action === 'test') {
     $provider = $input['provider'] ?? '';
     $apiKey = $input['api_key'] ?? '';
     $apiUrl = $input['api_url'] ?? '';
+    $model = $input['model'] ?? '';
 
     if (empty($provider)) {
         echo json_encode(['status' => 'error', 'message' => 'Provider is required']);
@@ -503,7 +504,7 @@ if ($action === 'test') {
         exit;
     }
 
-    $validation = validateProviderConnection($provider, $apiKey, $apiUrl);
+    $validation = validateProviderConnection($provider, $apiKey, $apiUrl, $model);
     echo json_encode([
         'status' => $validation['valid'] ? 'ok' : 'error',
         'message' => $validation['message'],
