@@ -341,10 +341,13 @@ function birkly_ai_parse_provider_error(?string $responseBody): string
 
     $message = $data['error']['message'] ?? $data['message'] ?? '';
     if (!is_string($message)) {
-        return '';
+        $message = '';
+    }
+    if ($message === '' && isset($data['error']['status']) && is_string($data['error']['status'])) {
+        $message = $data['error']['status'];
     }
 
-    $message = trim($message);
+    $message = trim((string) $message);
     if (strlen($message) > 240) {
         return substr($message, 0, 237) . '...';
     }
@@ -371,6 +374,55 @@ function birkly_ai_compatible_api_label(string $url, string $provider = ''): str
     }
 
     return 'AI provider';
+}
+
+/**
+ * Build a structured provider API failure for chat UI and logs.
+ *
+ * @return array{success: false, message: string, error_details: array<string, mixed>}
+ */
+function birkly_ai_build_provider_error(
+    string $providerLabel,
+    int $httpCode,
+    ?string $responseBody,
+    string $model = '',
+    string $provider = ''
+): array {
+    $detail = birkly_ai_parse_provider_error($responseBody);
+    $message = $providerLabel . ' API error: ' . $httpCode;
+    if ($detail !== '') {
+        $message .= ' — ' . $detail;
+    }
+    if ($model !== '') {
+        $message .= ' (model: ' . $model . ')';
+    }
+
+    $hint = '';
+    if ($httpCode === 404 && $provider === 'google') {
+        $hint = 'Model not found or unavailable for your API key. Edit the connection in Settings → Built-in assistant, reload models, and choose one from the list.';
+    } elseif ($httpCode === 404) {
+        $hint = 'The model endpoint was not found. Verify the model name in your connection settings.';
+    } elseif ($httpCode === 429) {
+        $hint = 'Rate limit exceeded. Wait a few minutes, choose a different model, or add credits to your provider account.';
+    } elseif ($httpCode === 401 || $httpCode === 403) {
+        $hint = 'Authentication failed. Check that your API key is valid and has access to this model.';
+    } elseif ($httpCode >= 500) {
+        $hint = 'The provider returned a server error. Try again in a moment or switch models.';
+    }
+
+    return [
+        'success' => false,
+        'message' => $message,
+        'error_details' => [
+            'provider' => $provider,
+            'provider_label' => $providerLabel,
+            'http_code' => $httpCode,
+            'model' => $model,
+            'provider_message' => $detail,
+            'hint' => $hint,
+            'raw_body' => is_string($responseBody) ? substr($responseBody, 0, 800) : '',
+        ],
+    ];
 }
 
 /**
@@ -1659,6 +1711,7 @@ function birkly_list_accessible_ai_connections_for_session_user(?array $sessionU
     $sessionUser = $sessionUser ?? ($_SESSION['user'] ?? []);
     $userId = birkly_ai_resolve_session_user_id($sessionUser);
     $out = [];
+    $seenIds = [];
 
     foreach (birkly_users_search_dirs() as $dir) {
         $storage = new Storage($dir);
@@ -1684,6 +1737,10 @@ function birkly_list_accessible_ai_connections_for_session_user(?array $sessionU
                 if ($id === '' && preg_match('/^(.+)\.json$/', $userFile, $m)) {
                     $id = $m[1];
                 }
+                if ($id === '' || isset($seenIds[$id])) {
+                    continue;
+                }
+                $seenIds[$id] = true;
                 unset($user['api_key_encrypted'], $user['mcp_api_key']);
                 $user['id'] = $id;
                 $user['capabilities'] = birkly_ai_connection_capabilities($user);

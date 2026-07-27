@@ -1353,6 +1353,7 @@ if ($action === 'chat') {
                 'message' => str_contains(strtolower($providerError), 'openai api error') && ($aiUser['provider'] ?? '') === 'openrouter'
                     ? str_replace('OpenAI API error', 'OpenRouter API error', $providerError)
                     : $providerError,
+                'error_details' => is_array($response['error_details'] ?? null) ? $response['error_details'] : null,
             ], $streamActive);
         }
     } catch (Exception $e) {
@@ -1879,21 +1880,28 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     }
     
     if ($httpCode !== 200) {
-        $detail = birkly_ai_parse_provider_error(is_string($response) ? $response : '');
-        $message = $apiLabel . ' API error: ' . $httpCode;
-        if ($detail !== '') {
-            $message .= ' — ' . $detail;
-        }
-        if ($httpCode === 404) {
-            $message .= ' (model: ' . $model . ')';
-        }
-        return ['success' => false, 'message' => $message];
+        return birkly_ai_build_provider_error(
+            $apiLabel,
+            (int) $httpCode,
+            is_string($response) ? $response : '',
+            $model,
+            stripos($url, 'openrouter.ai') !== false ? 'openrouter' : (stripos($url, 'api.openai.com') !== false ? 'openai' : 'custom')
+        );
     }
     
     $result = json_decode($response, true);
     $choiceMessage = $result['choices'][0]['message'] ?? null;
     if (!$result || !$choiceMessage) {
-        return ['success' => false, 'message' => 'Invalid response from ' . $apiLabel];
+        return [
+            'success' => false,
+            'message' => 'Invalid response from ' . $apiLabel,
+            'error_details' => [
+                'provider_label' => $apiLabel,
+                'model' => $model,
+                'hint' => 'The provider returned an unexpected response format.',
+                'raw_body' => is_string($response) ? substr($response, 0, 800) : '',
+            ],
+        ];
     }
 
     $toolCalls = $choiceMessage['tool_calls'] ?? [];
@@ -1960,7 +1968,7 @@ function callAnthropic($apiKey, $model, $systemPrompt, $userMessage, $conversati
     }
     
     if ($httpCode !== 200) {
-        return ['success' => false, 'message' => 'Anthropic API error: ' . $httpCode];
+        return birkly_ai_build_provider_error('Anthropic', (int) $httpCode, is_string($response) ? $response : '', $model, 'anthropic');
     }
     
     $result = json_decode($response, true);
@@ -2020,7 +2028,7 @@ function callGoogle($apiKey, $model, $systemPrompt, $userMessage, $conversationH
     }
     
     if ($httpCode !== 200) {
-        return ['success' => false, 'message' => 'Google API error: ' . $httpCode];
+        return birkly_ai_build_provider_error('Google Gemini', (int) $httpCode, is_string($response) ? $response : '', $model, 'google');
     }
     
     $result = json_decode($response, true);
@@ -2412,12 +2420,13 @@ function callOpenAIStream($apiKey, $model, $systemPrompt, $userMessage, $url = '
     }
 
     if ($httpCode !== 200) {
-        $detail = birkly_ai_parse_provider_error($buffer);
-        $message = $apiLabel . ' API error: ' . $httpCode;
-        if ($detail !== '') {
-            $message .= ' — ' . $detail;
-        }
-        return ['success' => false, 'message' => $message];
+        return birkly_ai_build_provider_error(
+            $apiLabel,
+            (int) $httpCode,
+            $buffer,
+            $model,
+            stripos($url, 'openrouter.ai') !== false ? 'openrouter' : (stripos($url, 'api.openai.com') !== false ? 'openai' : 'custom')
+        );
     }
 
     if ($fullContent === '') {
