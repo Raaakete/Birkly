@@ -2455,10 +2455,12 @@ function extractActionsFromResponse($response, $toolCalls = []) {
     return $normalized;
 }
 
-// Default response for unknown actions
-if (!headers_sent()) {
-    header('Content-Type: application/json; charset=utf-8');
+// Default response for unknown actions (API router only — not when included as provider library)
+if (!$__aiChatInternalLibrary) {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=utf-8');
+    }
+    echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
+    exit;
 }
-echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
-exit;
 
