@@ -16,6 +16,8 @@
     let activeChatAbortController = null;
     let lastFailedMessage = null;
     let isChatRequestInFlight = false;
+    let consoleLogs = [];
+    let consoleUnread = 0;
 
     function icon(name, opts) {
         return (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
@@ -26,10 +28,13 @@
     const STORAGE_KEY_CONNECTION = 'ai_chat_connection_id';
     const STORAGE_KEY_MESSAGES = 'ai_chat_messages';
     const STORAGE_KEY_RECENT = 'ai_chat_recent_chats';
+    const STORAGE_KEY_CONSOLE = 'ai_chat_console_logs';
+    const CONSOLE_LOG_LIMIT = 200;
 
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        loadConsoleLogs();
         loadConnections().then(() => {
             restoreChatState();
         });
@@ -238,19 +243,125 @@
         }).join('');
     }
 
+    function appendConsoleLog(level, message, details) {
+        consoleLogs.unshift({
+            id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+            level: level || 'info',
+            message: String(message || ''),
+            details: details !== undefined && details !== null ? details : null,
+            time: new Date().toISOString(),
+        });
+        if (consoleLogs.length > CONSOLE_LOG_LIMIT) {
+            consoleLogs.length = CONSOLE_LOG_LIMIT;
+        }
+        if ((level === 'error' || level === 'warn') && chatView !== 'console') {
+            consoleUnread++;
+        }
+        saveConsoleLogs();
+        updateConsoleBadge();
+        if (chatView === 'console') {
+            renderConsolePanel();
+        }
+        if (level === 'error' || level === 'warn') {
+            console.error('[AI Chat]', message, details || '');
+        }
+    }
+
+    function saveConsoleLogs() {
+        try {
+            localStorage.setItem(STORAGE_KEY_CONSOLE, JSON.stringify(consoleLogs));
+        } catch (error) {
+            /* ignore quota errors */
+        }
+    }
+
+    function loadConsoleLogs() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_CONSOLE);
+            if (!raw) {
+                consoleLogs = [];
+                return;
+            }
+            const parsed = JSON.parse(raw);
+            consoleLogs = Array.isArray(parsed) ? parsed.slice(0, CONSOLE_LOG_LIMIT) : [];
+        } catch (error) {
+            consoleLogs = [];
+        }
+    }
+
+    function clearConsoleLogs() {
+        consoleLogs = [];
+        consoleUnread = 0;
+        saveConsoleLogs();
+        updateConsoleBadge();
+        renderConsolePanel();
+    }
+
+    function updateConsoleBadge() {
+        const badge = document.getElementById('ai-chat-console-tab-badge');
+        if (!badge) return;
+        if (consoleUnread > 0) {
+            badge.textContent = consoleUnread > 99 ? '99+' : String(consoleUnread);
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function formatConsoleDetails(details) {
+        if (details === null || details === undefined) return '';
+        if (typeof details === 'string') return details;
+        try {
+            return JSON.stringify(details, null, 2);
+        } catch (error) {
+            return String(details);
+        }
+    }
+
+    function renderConsolePanel() {
+        const list = document.getElementById('ai-chat-console-list');
+        if (!list) return;
+
+        if (!consoleLogs.length) {
+            list.innerHTML = '<div class="ai-chat-console-empty">No log entries yet. Failed actions and errors appear here.</div>';
+            return;
+        }
+
+        list.innerHTML = consoleLogs.map(function (entry) {
+            const level = entry.level || 'info';
+            const levelLabel = level.charAt(0).toUpperCase() + level.slice(1);
+            const detailsText = formatConsoleDetails(entry.details);
+            const detailsHtml = detailsText
+                ? '<pre class="ai-chat-console-details">' + escapeHtml(detailsText) + '</pre>'
+                : '';
+            return `
+                <div class="ai-chat-console-entry ai-chat-console-entry--${escapeHtml(level)}">
+                    <div class="ai-chat-console-entry-head">
+                        <span class="ai-chat-console-level">${escapeHtml(levelLabel)}</span>
+                        <time class="ai-chat-console-time">${escapeHtml(formatTime(entry.time))}</time>
+                    </div>
+                    <div class="ai-chat-console-message">${escapeHtml(entry.message || '')}</div>
+                    ${detailsHtml}
+                </div>`;
+        }).join('');
+    }
+
     function switchChatView(view) {
         chatView = view;
         const messagesPanel = document.getElementById('ai-chat-messages-panel');
         const approvalsPanel = document.getElementById('ai-chat-approvals-panel');
         const historyPanel = document.getElementById('ai-chat-history-panel');
+        const consolePanel = document.getElementById('ai-chat-console-panel');
         const inputContainer = document.querySelector('.ai-chat-input-container');
         const tabMessages = document.getElementById('ai-chat-tab-messages');
         const tabApprovals = document.getElementById('ai-chat-tab-approvals');
         const tabHistory = document.getElementById('ai-chat-tab-history');
+        const tabConsole = document.getElementById('ai-chat-tab-console');
 
         if (messagesPanel) messagesPanel.style.display = view === 'messages' ? 'flex' : 'none';
         if (approvalsPanel) approvalsPanel.style.display = view === 'approvals' ? 'block' : 'none';
         if (historyPanel) historyPanel.style.display = view === 'history' ? 'block' : 'none';
+        if (consolePanel) consolePanel.style.display = view === 'console' ? 'block' : 'none';
         if (inputContainer) inputContainer.style.display = view === 'messages' ? 'block' : 'none';
         if (tabMessages) {
             tabMessages.classList.toggle('active', view === 'messages');
@@ -264,8 +375,17 @@
             tabHistory.classList.toggle('active', view === 'history');
             tabHistory.setAttribute('aria-selected', view === 'history' ? 'true' : 'false');
         }
+        if (tabConsole) {
+            tabConsole.classList.toggle('active', view === 'console');
+            tabConsole.setAttribute('aria-selected', view === 'console' ? 'true' : 'false');
+        }
         if (view === 'approvals') renderApprovalQueuePanel();
         if (view === 'history') renderHistoryPanel();
+        if (view === 'console') {
+            consoleUnread = 0;
+            updateConsoleBadge();
+            renderConsolePanel();
+        }
     }
 
     function bindChatWindowActions(chatWindow) {
@@ -335,6 +455,9 @@
                 <div class="ai-chat-view-tabs" role="tablist">
                     <button type="button" class="ai-chat-view-tab active" id="ai-chat-tab-messages" role="tab" aria-selected="true">Chat</button>
                     <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-history" role="tab" aria-selected="false">History</button>
+                    <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-console" role="tab" aria-selected="false">
+                        Console <span class="ai-chat-tab-badge" id="ai-chat-console-tab-badge" style="display: none;"></span>
+                    </button>
                     <button type="button" class="ai-chat-view-tab" id="ai-chat-tab-approvals" role="tab" aria-selected="false">
                         Approvals <span class="ai-chat-tab-badge" id="ai-chat-approvals-tab-badge" style="display: none;"></span>
                     </button>
@@ -348,6 +471,13 @@
                 </div>
                 <div class="ai-chat-history-panel" id="ai-chat-history-panel" style="display: none;">
                     <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
+                </div>
+                <div class="ai-chat-console-panel" id="ai-chat-console-panel" style="display: none;">
+                    <div class="ai-chat-console-toolbar">
+                        <span class="ai-chat-console-hint">Action results and errors from this session</span>
+                        <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
+                    </div>
+                    <div class="ai-chat-console-list" id="ai-chat-console-list"></div>
                 </div>
                 <div class="ai-chat-approvals-panel" id="ai-chat-approvals-panel" style="display: none;">
                     <div class="loading">Loading approvals...</div>
@@ -395,7 +525,9 @@
 
         document.getElementById('ai-chat-tab-messages')?.addEventListener('click', async () => switchChatView('messages'));
         document.getElementById('ai-chat-tab-history')?.addEventListener('click', async () => switchChatView('history'));
+        document.getElementById('ai-chat-tab-console')?.addEventListener('click', async () => switchChatView('console'));
         document.getElementById('ai-chat-tab-approvals')?.addEventListener('click', async () => switchChatView('approvals'));
+        document.getElementById('ai-chat-console-clear')?.addEventListener('click', clearConsoleLogs);
 
         document.getElementById('ai-chat-connection-select')?.addEventListener('change', async function(e) {
             const connectionId = e.target.value;
@@ -415,6 +547,7 @@
         renderConnectionDropdown();
         loadApprovalQueue();
         updateApprovalBadge();
+        updateConsoleBadge();
         
         // Restore chat state if available
         if (currentConnection && chatMessages.length > 0) {
@@ -691,6 +824,7 @@
     function handleChatApiResult(result, assistantMessageId) {
         if (!result || (result.status !== 'ok' && result.status !== 'partial')) {
             const errorMsg = result?.message || result?.error || result?.data?.message || 'Unknown error';
+            appendConsoleLog('error', errorMsg, result);
             if (assistantMessageId) {
                 removeChatMessage(assistantMessageId);
             }
@@ -720,10 +854,24 @@
         }
 
         if (result.status === 'partial' && result.data.has_errors) {
-            const failedActions = result.data.execution_results?.filter(function(r) { return !r.success; }) || [];
+            const executionResults = result.data.execution_results || [];
+            const failedActions = executionResults.filter(function(r) { return !r.success; });
+            failedActions.forEach(function(actionResult, index) {
+                appendConsoleLog(
+                    'error',
+                    actionResult.message || ('Action ' + (index + 1) + ' failed'),
+                    actionResult
+                );
+            });
+            executionResults.filter(function(r) { return r.success; }).forEach(function(actionResult, index) {
+                appendConsoleLog(
+                    'success',
+                    actionResult.message || ('Action ' + (index + 1) + ' succeeded'),
+                    actionResult.data || actionResult
+                );
+            });
             if (failedActions.length > 0) {
-                addChatMessage('system', 'Warning: ' + failedActions.length + ' action(s) failed. Check console for details.');
-                console.error('Failed actions:', failedActions);
+                addChatMessage('system', 'Warning: ' + failedActions.length + ' action(s) failed. See the Console tab for details.');
             }
         }
 
@@ -738,8 +886,16 @@
         }
 
         if (!result.data.requires_approval && result.data.actions_executed > 0) {
-            const successCount = result.data.execution_results?.filter(function(r) { return r.success; }).length || 0;
+            const executionResults = result.data.execution_results || [];
+            const successCount = executionResults.filter(function(r) { return r.success; }).length || 0;
             if (successCount > 0) {
+                executionResults.filter(function(r) { return r.success; }).forEach(function(actionResult, index) {
+                    appendConsoleLog(
+                        'success',
+                        actionResult.message || ('Action ' + (index + 1) + ' succeeded'),
+                        actionResult.data || actionResult
+                    );
+                });
                 addChatMessage('system', successCount + ' action(s) executed successfully.');
             }
         }
@@ -853,6 +1009,7 @@
                 if (!result) {
                     removeChatMessage(assistantMessageId);
                     lastFailedMessage = message;
+                    appendConsoleLog('error', 'Stream ended without a response');
                     addChatMessageWithRetry('error', 'Stream ended without a response.');
                     return;
                 }
@@ -863,6 +1020,7 @@
                 } catch (parseError) {
                     removeChatMessage(assistantMessageId);
                     lastFailedMessage = message;
+                    appendConsoleLog('error', 'Invalid response from server', parseError.message);
                     addChatMessageWithRetry('error', 'Invalid response from server.');
                     return;
                 }
@@ -875,6 +1033,7 @@
                 return;
             }
             console.error('Error sending message:', error);
+            appendConsoleLog('error', 'Error sending message: ' + error.message, { name: error.name });
             removeChatMessage(assistantMessageId);
             lastFailedMessage = message;
             addChatMessageWithRetry('error', 'Error sending message: ' + error.message);
@@ -1325,6 +1484,7 @@
             const result = await response.json();
             
             if (result.status === 'ok') {
+                appendConsoleLog('success', 'Action approved and executed successfully.', result.data || null);
                 const card = document.getElementById('approval-' + approvalId) || document.getElementById('queue-approval-' + approvalId);
                 if (card) {
                     card.classList.add('ai-chat-approval-approved');
@@ -1336,10 +1496,12 @@
                 addChatMessage('system', 'Action approved and executed successfully.');
                 loadApprovalQueue();
             } else {
+                appendConsoleLog('error', 'Failed to approve action', result);
                 addChatMessage('error', 'Failed to approve: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error approving action:', error);
+            appendConsoleLog('error', 'Error approving action: ' + error.message);
             addChatMessage('error', 'Error approving action');
         }
     }
@@ -1378,10 +1540,12 @@
                 addChatMessage('system', 'Action rejected.');
                 loadApprovalQueue();
             } else {
+                appendConsoleLog('error', 'Failed to reject action', result);
                 addChatMessage('error', 'Failed to reject: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error rejecting action:', error);
+            appendConsoleLog('error', 'Error rejecting action: ' + error.message);
             addChatMessage('error', 'Error rejecting action');
         }
     }
