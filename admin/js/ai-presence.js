@@ -188,6 +188,8 @@
         if (cmsRow) cmsRow.hidden = type !== 'cms_field';
         if (urlRow) urlRow.hidden = type !== 'external';
     }
+
+    function ensureSourcesArray() {
         if (!state.draft) return;
         state.draft.sources_of_truth = state.draft.sources_of_truth || [];
     }
@@ -1777,6 +1779,9 @@
             loadCollectionEntries(priceSource.collection, document.getElementById('ap-product-price-entry')).then(function () {
                 if (priceSource.entry_id) document.getElementById('ap-product-price-entry').value = priceSource.entry_id;
             });
+        } else {
+            var priceEntry = document.getElementById('ap-product-price-entry');
+            if (priceEntry) priceEntry.innerHTML = '<option value="">Entry</option>';
         }
         toggleProductPriceSourceUi();
         document.getElementById('ap-product-best-for').value = prod && Array.isArray(prod.best_for) ? prod.best_for.join('\n') : '';
@@ -2278,10 +2283,14 @@
         var productsList = document.getElementById('ap-products-list');
         if (productsList) {
             productsList.addEventListener('click', function (e) {
-                var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+                var editBtn = e.target.closest('.ap-edit-product');
+                var deleteBtn = e.target.closest('.ap-delete-product');
+                if (!editBtn && !deleteBtn) return;
+                var btn = editBtn || deleteBtn;
+                var idx = parseInt(btn.getAttribute('data-idx'), 10);
                 if (isNaN(idx)) return;
-                if (e.target.classList.contains('ap-edit-product')) editProduct(idx);
-                if (e.target.classList.contains('ap-delete-product')) deleteProduct(idx);
+                if (editBtn) editProduct(idx);
+                if (deleteBtn) deleteProduct(idx);
             });
         }
 
