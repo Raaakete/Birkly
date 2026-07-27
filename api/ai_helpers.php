@@ -406,6 +406,8 @@ function readBirklyDocsTopic(string $slug): ?array
         'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
         'mcp' => ['path' => 'admin/docs/snapshots/mcp-connections.md', 'title' => 'MCP setup guide'],
         'sub-collections' => ['file' => 'ai/sub-collections.md', 'title' => 'Sub-collections & sub-entries'],
+        'site-building' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'portfolio' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
     ];
 
     if (!isset($topics[$slug])) {
