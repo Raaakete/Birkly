@@ -23,6 +23,8 @@
     let chatModelOverride = '';
     let pendingAttachments = [];
     let chatModelOptions = [];
+    let modelMenuAnchor = null;
+    let modelMenuOutsideHandler = null;
 
     function setAssistFabState(state) {
         const wrap = document.getElementById('assist-fab-wrap');
@@ -696,11 +698,10 @@
         document.getElementById('ai-chat-attach-doc')?.addEventListener('click', () => document.getElementById('ai-chat-doc-input')?.click());
         document.getElementById('ai-chat-image-input')?.addEventListener('change', handleImageAttachment);
         document.getElementById('ai-chat-doc-input')?.addEventListener('change', handleDocumentAttachment);
-        document.getElementById('ai-chat-model-trigger')?.addEventListener('click', toggleModelMenu);
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('#ai-chat-model-picker')) {
-                closeModelMenu();
-            }
+        document.getElementById('ai-chat-model-trigger')?.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleModelMenu();
         });
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
@@ -792,9 +793,14 @@
     async function loadChatModels() {
         if (!currentConnection) return;
         const menu = document.getElementById('ai-chat-model-menu');
-        if (!menu) return;
-        menu.innerHTML = '<div class="ai-chat-model-loading">Loading models…</div>';
+        const menuWasOpen = menu && !menu.hidden;
+        if (menu && menuWasOpen) {
+            menu.innerHTML = '<div class="ai-chat-model-loading">Loading models…</div>';
+        }
         try {
+            if (!csrfToken) {
+                await refreshCsrfToken();
+            }
             const response = await fetch(apiUrl('/api/ai_connections.php?action=list_models'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -812,9 +818,13 @@
             }
             renderModelMenu();
             updateModelLabel();
-            positionModelMenu();
+            if (menuWasOpen) {
+                positionModelMenu();
+            }
         } catch (error) {
-            menu.innerHTML = '<div class="ai-chat-model-empty">Could not load models</div>';
+            if (menu && menuWasOpen) {
+                menu.innerHTML = '<div class="ai-chat-model-empty">Could not load models</div>';
+            }
         }
     }
 
@@ -831,30 +841,79 @@
             return '<button type="button" role="option"' + selected + ' data-model="' + escapeHtml(modelId) + '">' + escapeHtml(modelId) + '</button>';
         }).join('');
         menu.querySelectorAll('[data-model]').forEach(function (btn) {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
                 chatModelOverride = btn.getAttribute('data-model') || '';
                 updateModelLabel();
                 closeModelMenu();
             });
         });
+        if (!menu.hidden) {
+            positionModelMenu();
+        }
     }
 
-    function toggleModelMenu() {
+    function attachModelMenuPortal() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        const picker = document.getElementById('ai-chat-model-picker');
+        if (!menu || !picker || menu.dataset.portaled === '1') return;
+        modelMenuAnchor = document.createComment('ai-chat-model-menu-anchor');
+        picker.insertBefore(modelMenuAnchor, menu);
+        document.body.appendChild(menu);
+        menu.dataset.portaled = '1';
+    }
+
+    function restoreModelMenuPortal() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        const picker = document.getElementById('ai-chat-model-picker');
+        if (!menu || !picker || menu.dataset.portaled !== '1' || !modelMenuAnchor) return;
+        picker.insertBefore(menu, modelMenuAnchor.nextSibling);
+        modelMenuAnchor.remove();
+        modelMenuAnchor = null;
+        delete menu.dataset.portaled;
+    }
+
+    function bindModelMenuOutsideClose() {
+        if (modelMenuOutsideHandler) return;
+        modelMenuOutsideHandler = function (e) {
+            const menu = document.getElementById('ai-chat-model-menu');
+            if (!menu || menu.hidden) return;
+            if (e.target.closest('#ai-chat-model-menu') || e.target.closest('#ai-chat-model-trigger')) {
+                return;
+            }
+            closeModelMenu();
+        };
+        document.addEventListener('mousedown', modelMenuOutsideHandler);
+    }
+
+    function unbindModelMenuOutsideClose() {
+        if (!modelMenuOutsideHandler) return;
+        document.removeEventListener('mousedown', modelMenuOutsideHandler);
+        modelMenuOutsideHandler = null;
+    }
+
+    async function toggleModelMenu() {
         const menu = document.getElementById('ai-chat-model-menu');
         const trigger = document.getElementById('ai-chat-model-trigger');
-        const chatWindow = document.getElementById('ai-chat-window');
         if (!menu || !trigger) return;
-        const open = menu.hidden;
-        if (open) {
-            if (chatModelOptions.length === 0) loadChatModels();
-            else renderModelMenu();
-            menu.hidden = false;
-            trigger.setAttribute('aria-expanded', 'true');
-            positionModelMenu();
-            chatWindow?.classList.add('ai-chat-model-menu-open');
-        } else {
+
+        if (!menu.hidden) {
             closeModelMenu();
+            return;
         }
+
+        if (chatModelOptions.length === 0) {
+            await loadChatModels();
+        } else {
+            renderModelMenu();
+        }
+
+        attachModelMenuPortal();
+        menu.hidden = false;
+        menu.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        positionModelMenu();
+        bindModelMenuOutsideClose();
     }
 
     function positionModelMenu() {
@@ -862,36 +921,36 @@
         const trigger = document.getElementById('ai-chat-model-trigger');
         if (!menu || !trigger || menu.hidden) return;
         const rect = trigger.getBoundingClientRect();
+        const width = Math.min(320, Math.max(220, rect.width));
+        const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
         menu.style.position = 'fixed';
-        menu.style.left = Math.max(8, rect.left) + 'px';
-        menu.style.minWidth = Math.max(rect.width, 220) + 'px';
-        menu.style.maxWidth = '320px';
-        const menuHeight = Math.min(240, menu.scrollHeight || 240);
-        const spaceAbove = rect.top;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        if (spaceAbove >= menuHeight + 8 || spaceAbove > spaceBelow) {
-            menu.style.top = 'auto';
-            menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
-        } else {
-            menu.style.bottom = 'auto';
-            menu.style.top = (rect.bottom + 6) + 'px';
-        }
+        menu.style.left = left + 'px';
+        menu.style.width = width + 'px';
+        menu.style.minWidth = width + 'px';
+        menu.style.maxWidth = width + 'px';
+        menu.style.top = 'auto';
+        menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+        menu.style.zIndex = '1101';
     }
 
     function closeModelMenu() {
         const menu = document.getElementById('ai-chat-model-menu');
         const trigger = document.getElementById('ai-chat-model-trigger');
-        const chatWindow = document.getElementById('ai-chat-window');
         if (menu) {
             menu.hidden = true;
+            menu.classList.remove('is-open');
             menu.style.position = '';
             menu.style.left = '';
             menu.style.top = '';
             menu.style.bottom = '';
+            menu.style.width = '';
             menu.style.minWidth = '';
+            menu.style.maxWidth = '';
+            menu.style.zIndex = '';
         }
+        restoreModelMenuPortal();
+        unbindModelMenuOutsideClose();
         if (trigger) trigger.setAttribute('aria-expanded', 'false');
-        chatWindow?.classList.remove('ai-chat-model-menu-open');
     }
 
     function handleImageAttachment(e) {
