@@ -58,6 +58,47 @@ function isAiUser($user) {
 }
 
 /**
+ * Normalize collection action payloads from AI (slug/name/fields may be nested).
+ *
+ * Common shapes:
+ * - { slug, name, fields }
+ * - { collection: "slug", ... }
+ * - { collection: { slug, name, fields, ... } }
+ * - { data: { slug | collection, ... } }
+ *
+ * @return array{slug: string, name?: string, description?: string, fields?: array, entry_method?: string}
+ */
+function birkly_ai_normalize_collection_action_data(array $actionData): array
+{
+    $normalized = $actionData;
+
+    if (isset($actionData['data']) && is_array($actionData['data'])) {
+        $normalized = array_merge($actionData, $actionData['data']);
+    }
+
+    if (isset($normalized['collection']) && is_array($normalized['collection'])) {
+        $coll = $normalized['collection'];
+        unset($normalized['collection']);
+        foreach (['slug', 'name', 'description', 'fields', 'entry_method'] as $key) {
+            if (!array_key_exists($key, $normalized) && array_key_exists($key, $coll)) {
+                $normalized[$key] = $coll[$key];
+            }
+        }
+    } elseif (isset($normalized['collection']) && is_string($normalized['collection'])) {
+        if (empty($normalized['slug'])) {
+            $normalized['slug'] = $normalized['collection'];
+        }
+        unset($normalized['collection']);
+    }
+
+    if (isset($normalized['slug']) && is_string($normalized['slug'])) {
+        $normalized['slug'] = trim($normalized['slug']);
+    }
+
+    return $normalized;
+}
+
+/**
  * Get supported AI providers
  */
 function getSupportedAiProviders() {
