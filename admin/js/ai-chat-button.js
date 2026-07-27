@@ -23,8 +23,11 @@
     let chatModelOverride = '';
     let pendingAttachments = [];
     let chatModelOptions = [];
+    let chatModelSearchQuery = '';
     let modelMenuAnchor = null;
     let modelMenuOutsideHandler = null;
+    let chatTooltipEl = null;
+    let chatTooltipTarget = null;
 
     function setAssistFabState(state) {
         const wrap = document.getElementById('assist-fab-wrap');
@@ -443,6 +446,8 @@
     }
 
     function openSidePanel(view) {
+        hideChatTooltip();
+        closeModelMenu();
         const overlay = document.getElementById('ai-chat-overlay');
         const titleEl = document.getElementById('ai-chat-side-panel-title');
         const historyPanel = document.getElementById('ai-chat-history-panel');
@@ -485,6 +490,7 @@
     }
 
     function closeSidePanel() {
+        hideChatTooltip();
         sidePanelView = null;
         chatView = 'messages';
         const overlay = document.getElementById('ai-chat-overlay');
@@ -662,6 +668,7 @@
         `;
         document.body.appendChild(chatWindow);
         bindChatWindowActions(chatWindow);
+        bindChatTooltips(chatWindow);
         
         document.getElementById('ai-chat-fullscreen-btn')?.addEventListener('click', toggleFullscreen);
         document.getElementById('ai-chat-history-btn')?.addEventListener('click', function (e) {
@@ -712,6 +719,9 @@
         window.addEventListener('resize', function () {
             if (!document.getElementById('ai-chat-model-menu')?.hidden) {
                 positionModelMenu();
+            }
+            if (chatTooltipTarget) {
+                positionChatTooltip(chatTooltipTarget);
             }
         });
 
@@ -790,6 +800,180 @@
         label.textContent = short.length > 22 ? short.slice(0, 20) + '…' : short;
     }
 
+    function normalizeChatModel(model) {
+        if (!model) return null;
+        if (typeof model === 'string') {
+            return { id: model, name: model, description: '', context_length: null };
+        }
+        const id = String(model.id || model.name || '').trim();
+        if (!id) return null;
+        return {
+            id: id,
+            name: model.name || id,
+            description: model.description || '',
+            context_length: model.context_length || null,
+        };
+    }
+
+    function normalizeChatModelList(models) {
+        return (models || []).map(normalizeChatModel).filter(Boolean);
+    }
+
+    function filterChatModels(models, filter) {
+        const query = String(filter || '').trim().toLowerCase();
+        if (!query) return models || [];
+        return (models || []).filter(function (model) {
+            const hay = [
+                model.id || '',
+                model.name || '',
+                model.description || '',
+            ].join(' ').toLowerCase();
+            return hay.indexOf(query) >= 0;
+        });
+    }
+
+    function ensureChatTooltip() {
+        if (chatTooltipEl) return chatTooltipEl;
+        chatTooltipEl = document.createElement('div');
+        chatTooltipEl.id = 'ai-chat-tooltip';
+        chatTooltipEl.className = 'ai-chat-tooltip';
+        chatTooltipEl.hidden = true;
+        chatTooltipEl.setAttribute('role', 'tooltip');
+        document.body.appendChild(chatTooltipEl);
+        return chatTooltipEl;
+    }
+
+    function positionChatTooltip(el) {
+        if (!chatTooltipEl || chatTooltipEl.hidden || !el) return;
+        chatTooltipEl.style.left = '0';
+        chatTooltipEl.style.top = '0';
+        const rect = el.getBoundingClientRect();
+        const tipRect = chatTooltipEl.getBoundingClientRect();
+        let left = rect.left + rect.width / 2 - tipRect.width / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - tipRect.width - 8));
+        let top = rect.top - tipRect.height - 8;
+        if (top < 8) {
+            top = rect.bottom + 8;
+        }
+        chatTooltipEl.style.left = left + 'px';
+        chatTooltipEl.style.top = top + 'px';
+    }
+
+    function showChatTooltip(el) {
+        const text = el?.getAttribute('data-tooltip');
+        if (!text) return;
+        const tooltip = ensureChatTooltip();
+        chatTooltipTarget = el;
+        tooltip.textContent = text;
+        tooltip.hidden = false;
+        positionChatTooltip(el);
+    }
+
+    function hideChatTooltip() {
+        if (chatTooltipEl) chatTooltipEl.hidden = true;
+        chatTooltipTarget = null;
+    }
+
+    function bindChatTooltips(root) {
+        if (!root || root.dataset.tooltipsBound === '1') return;
+        root.dataset.tooltipsBound = '1';
+        ensureChatTooltip();
+
+        root.addEventListener('mouseover', function (e) {
+            const el = e.target.closest('[data-tooltip]');
+            if (!el || !root.contains(el)) return;
+            showChatTooltip(el);
+        });
+        root.addEventListener('mouseout', function (e) {
+            const el = e.target.closest('[data-tooltip]');
+            if (!el || chatTooltipTarget !== el) return;
+            const related = e.relatedTarget;
+            if (related && el.contains(related)) return;
+            hideChatTooltip();
+        });
+        root.addEventListener('focusin', function (e) {
+            const el = e.target.closest('[data-tooltip]');
+            if (!el || !root.contains(el)) return;
+            showChatTooltip(el);
+        });
+        root.addEventListener('focusout', function (e) {
+            const el = e.target.closest('[data-tooltip]');
+            if (!el || chatTooltipTarget !== el) return;
+            const related = e.relatedTarget;
+            if (related && el.contains(related)) return;
+            hideChatTooltip();
+        });
+        root.addEventListener('scroll', hideChatTooltip, true);
+    }
+
+    function ensureModelMenuShell(menu) {
+        if (menu.querySelector('.ai-chat-model-menu-list')) return;
+        menu.innerHTML =
+            '<div class="ai-chat-model-menu-search-wrap">' +
+            '<input type="search" class="ai-chat-model-menu-search" placeholder="Search models…" aria-label="Search models" autocomplete="off">' +
+            '</div>' +
+            '<div class="ai-chat-model-menu-list" role="presentation"></div>';
+        const search = menu.querySelector('.ai-chat-model-menu-search');
+        search?.addEventListener('input', function () {
+            chatModelSearchQuery = search.value;
+            renderModelMenuList();
+            positionModelMenu();
+        });
+        search?.addEventListener('keydown', function (e) {
+            e.stopPropagation();
+            if (e.key === 'Escape') {
+                closeModelMenu();
+            }
+        });
+    }
+
+    function renderModelMenuList() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        const list = menu?.querySelector('.ai-chat-model-menu-list');
+        if (!menu || !list) return;
+
+        const active = chatModelOverride || currentConnection?.model || '';
+        const filtered = filterChatModels(chatModelOptions, chatModelSearchQuery);
+
+        if (chatModelOptions.length === 0) {
+            list.innerHTML = '<div class="ai-chat-model-empty">No models listed</div>';
+            return;
+        }
+
+        if (!filtered.length) {
+            list.innerHTML = '<div class="ai-chat-model-empty">No models match your search.</div>';
+            return;
+        }
+
+        list.innerHTML = filtered.map(function (model) {
+            const id = escapeHtml(model.id);
+            const name = escapeHtml(model.name || model.id);
+            const description = escapeHtml(model.description || '');
+            const context = model.context_length
+                ? '<span class="ai-chat-model-option-meta">' + Number(model.context_length).toLocaleString() + ' tokens</span>'
+                : '';
+            const meta = description
+                ? '<span class="ai-chat-model-option-meta">' + description + '</span>'
+                : context;
+            const selectedClass = active && active === model.id ? ' selected' : '';
+            const selectedAttr = active && active === model.id ? ' aria-selected="true"' : '';
+            return '<button type="button" role="option" class="ai-chat-model-option' + selectedClass + '"' + selectedAttr + ' data-model="' + id + '">' +
+                '<span class="ai-chat-model-option-name">' + name + '</span>' +
+                (name !== id ? '<span class="ai-chat-model-option-meta">' + id + '</span>' : '') +
+                meta +
+                '</button>';
+        }).join('');
+
+        list.querySelectorAll('[data-model]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                chatModelOverride = btn.getAttribute('data-model') || '';
+                updateModelLabel();
+                closeModelMenu();
+            });
+        });
+    }
+
     async function loadChatModels() {
         if (!currentConnection) return;
         const menu = document.getElementById('ai-chat-model-menu');
@@ -812,9 +996,11 @@
                 }),
             });
             const result = await response.json();
-            chatModelOptions = (result.status === 'ok' && result.data?.models) ? result.data.models : [];
+            chatModelOptions = normalizeChatModelList(
+                (result.status === 'ok' && result.data?.models) ? result.data.models : []
+            );
             if (chatModelOptions.length === 0 && currentConnection.model) {
-                chatModelOptions = [currentConnection.model];
+                chatModelOptions = normalizeChatModelList([currentConnection.model]);
             }
             renderModelMenu();
             updateModelLabel();
@@ -831,23 +1017,12 @@
     function renderModelMenu() {
         const menu = document.getElementById('ai-chat-model-menu');
         if (!menu) return;
-        const active = chatModelOverride || currentConnection?.model || '';
-        if (chatModelOptions.length === 0) {
-            menu.innerHTML = '<div class="ai-chat-model-empty">No models listed</div>';
-            return;
+        ensureModelMenuShell(menu);
+        const search = menu.querySelector('.ai-chat-model-menu-search');
+        if (search && search.value !== chatModelSearchQuery) {
+            search.value = chatModelSearchQuery;
         }
-        menu.innerHTML = chatModelOptions.slice(0, 40).map(function (modelId) {
-            const selected = modelId === active ? ' aria-selected="true" class="selected"' : '';
-            return '<button type="button" role="option"' + selected + ' data-model="' + escapeHtml(modelId) + '">' + escapeHtml(modelId) + '</button>';
-        }).join('');
-        menu.querySelectorAll('[data-model]').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                chatModelOverride = btn.getAttribute('data-model') || '';
-                updateModelLabel();
-                closeModelMenu();
-            });
-        });
+        renderModelMenuList();
         if (!menu.hidden) {
             positionModelMenu();
         }
@@ -908,12 +1083,20 @@
             renderModelMenu();
         }
 
+        hideChatTooltip();
         attachModelMenuPortal();
         menu.hidden = false;
         menu.classList.add('is-open');
         trigger.setAttribute('aria-expanded', 'true');
         positionModelMenu();
         bindModelMenuOutsideClose();
+        const search = menu.querySelector('.ai-chat-model-menu-search');
+        if (search) {
+            window.requestAnimationFrame(function () {
+                search.focus();
+                search.select();
+            });
+        }
     }
 
     function positionModelMenu() {
@@ -921,22 +1104,37 @@
         const trigger = document.getElementById('ai-chat-model-trigger');
         if (!menu || !trigger || menu.hidden) return;
         const rect = trigger.getBoundingClientRect();
-        const width = Math.min(320, Math.max(220, rect.width));
+        const width = Math.min(360, Math.max(260, rect.width + 80));
         const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
         menu.style.position = 'fixed';
         menu.style.left = left + 'px';
         menu.style.width = width + 'px';
         menu.style.minWidth = width + 'px';
         menu.style.maxWidth = width + 'px';
-        menu.style.top = 'auto';
-        menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
         menu.style.zIndex = '1101';
+        menu.style.visibility = 'hidden';
+        menu.style.top = 'auto';
+        menu.style.bottom = 'auto';
+        const menuHeight = menu.offsetHeight;
+        const spaceAbove = rect.top - 12;
+        const spaceBelow = window.innerHeight - rect.bottom - 12;
+        if (spaceAbove >= menuHeight || spaceAbove >= spaceBelow) {
+            menu.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+            menu.style.top = 'auto';
+        } else {
+            menu.style.top = (rect.bottom + 8) + 'px';
+            menu.style.bottom = 'auto';
+        }
+        menu.style.visibility = '';
     }
 
     function closeModelMenu() {
         const menu = document.getElementById('ai-chat-model-menu');
         const trigger = document.getElementById('ai-chat-model-trigger');
+        chatModelSearchQuery = '';
         if (menu) {
+            const search = menu.querySelector('.ai-chat-model-menu-search');
+            if (search) search.value = '';
             menu.hidden = true;
             menu.classList.remove('is-open');
             menu.style.position = '';
@@ -947,6 +1145,7 @@
             menu.style.minWidth = '';
             menu.style.maxWidth = '';
             menu.style.zIndex = '';
+            menu.style.visibility = '';
         }
         restoreModelMenuPortal();
         unbindModelMenuOutsideClose();
