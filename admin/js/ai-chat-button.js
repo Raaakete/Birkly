@@ -340,12 +340,12 @@
         if (consoleLogs.length > CONSOLE_LOG_LIMIT) {
             consoleLogs.length = CONSOLE_LOG_LIMIT;
         }
-        if ((level === 'error' || level === 'warn') && chatView !== 'console') {
+        if ((level === 'error' || level === 'warn') && sidePanelView !== 'console') {
             consoleUnread++;
         }
         saveConsoleLogs();
         updateConsoleBadge();
-        if (chatView === 'console') {
+        if (sidePanelView === 'console') {
             renderConsolePanel();
         }
         if (level === 'error' || level === 'warn') {
@@ -432,8 +432,16 @@
         }).join('');
     }
 
+    function toggleSidePanel(view) {
+        if (sidePanelView === view) {
+            closeSidePanel();
+            return;
+        }
+        openSidePanel(view);
+    }
+
     function openSidePanel(view) {
-        const panel = document.getElementById('ai-chat-side-panel');
+        const overlay = document.getElementById('ai-chat-overlay');
         const titleEl = document.getElementById('ai-chat-side-panel-title');
         const historyPanel = document.getElementById('ai-chat-history-panel');
         const consolePanel = document.getElementById('ai-chat-console-panel');
@@ -444,14 +452,12 @@
             approvals: document.getElementById('ai-chat-approvals-btn'),
         };
 
-        if (sidePanelView === view) {
-            closeSidePanel();
-            return;
-        }
-
         sidePanelView = view;
         chatView = view;
-        if (panel) panel.hidden = false;
+        if (overlay) {
+            overlay.classList.add('is-open');
+            overlay.setAttribute('aria-hidden', 'false');
+        }
         if (historyPanel) historyPanel.hidden = view !== 'history';
         if (consolePanel) consolePanel.hidden = view !== 'console';
         if (approvalsPanel) approvalsPanel.hidden = view !== 'approvals';
@@ -460,7 +466,11 @@
         if (titleEl) titleEl.textContent = titles[view] || 'Panel';
 
         Object.keys(buttons).forEach(function (key) {
-            if (buttons[key]) buttons[key].classList.toggle('active', key === view);
+            const btn = buttons[key];
+            if (!btn) return;
+            const active = key === view;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
 
         if (view === 'approvals') renderApprovalQueuePanel();
@@ -475,10 +485,16 @@
     function closeSidePanel() {
         sidePanelView = null;
         chatView = 'messages';
-        const panel = document.getElementById('ai-chat-side-panel');
-        if (panel) panel.hidden = true;
+        const overlay = document.getElementById('ai-chat-overlay');
+        if (overlay) {
+            overlay.classList.remove('is-open');
+            overlay.setAttribute('aria-hidden', 'true');
+        }
         ['ai-chat-history-btn', 'ai-chat-console-btn', 'ai-chat-approvals-btn'].forEach(function (id) {
-            document.getElementById(id)?.classList.remove('active');
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.classList.remove('active');
+            btn.setAttribute('aria-pressed', 'false');
         });
     }
 
@@ -530,6 +546,10 @@
 
     // Create chat window
     function createChatWindow() {
+        if (document.getElementById('ai-chat-window')) {
+            return;
+        }
+
         const chatWindow = document.createElement('div');
         chatWindow.id = 'ai-chat-window';
         chatWindow.className = 'ai-chat-window';
@@ -543,21 +563,21 @@
                     </select>
                 </div>
                 <div class="ai-chat-header-actions">
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-history-btn" title="History" aria-label="History">
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="History" aria-label="History" aria-pressed="false">
                         ${icon('clock', { size: 18 })}
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-console-btn" title="Console" aria-label="Console">
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="Console" aria-label="Console" aria-pressed="false">
                         ${icon('code', { size: 18 })}
                         <span class="ai-chat-header-badge" id="ai-chat-console-header-badge" style="display: none;"></span>
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-approvals-btn" title="Approvals" aria-label="Approvals" hidden>
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="Approvals" aria-label="Approvals" aria-pressed="false" hidden>
                         ${icon('list-checks', { size: 18 })}
                         <span class="ai-chat-header-badge" id="ai-chat-approvals-header-badge" style="display: none;"></span>
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-new-btn" title="New chat" aria-label="New chat">
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="New chat" aria-label="New chat">
                         ${icon('plus', { size: 18 })}
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="Fullscreen" aria-label="Toggle fullscreen">
                         ${icon('arrows-out', { size: 18 })}
                     </button>
                 </div>
@@ -571,25 +591,28 @@
                             </div>
                         </div>
                     </div>
-                    <div class="ai-chat-side-panel" id="ai-chat-side-panel" hidden>
-                        <div class="ai-chat-side-panel-head">
-                            <span id="ai-chat-side-panel-title">History</span>
-                            <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-side-panel-back" title="Back to chat" aria-label="Back to chat">
-                                ${icon('x', { size: 16 })}
-                            </button>
-                        </div>
-                        <div class="ai-chat-history-panel ai-chat-side-panel-body" id="ai-chat-history-panel" hidden>
-                            <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
-                        </div>
-                        <div class="ai-chat-console-panel ai-chat-side-panel-body" id="ai-chat-console-panel" hidden>
-                            <div class="ai-chat-console-toolbar">
-                                <span class="ai-chat-console-hint">Action results and errors from this session</span>
-                                <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
+                    <div class="ai-chat-overlay" id="ai-chat-overlay" aria-hidden="true">
+                        <button type="button" class="ai-chat-overlay-backdrop" id="ai-chat-overlay-backdrop" aria-label="Close panel"></button>
+                        <div class="ai-chat-side-panel" id="ai-chat-side-panel" role="dialog" aria-modal="true">
+                            <div class="ai-chat-side-panel-head">
+                                <span id="ai-chat-side-panel-title">History</span>
+                                <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="Back to chat" aria-label="Back to chat">
+                                    ${icon('x', { size: 16 })}
+                                </button>
                             </div>
-                            <div class="ai-chat-console-list" id="ai-chat-console-list"></div>
-                        </div>
-                        <div class="ai-chat-approvals-panel ai-chat-side-panel-body" id="ai-chat-approvals-panel" hidden>
-                            <div class="loading">Loading approvals...</div>
+                            <div class="ai-chat-history-panel ai-chat-side-panel-body" id="ai-chat-history-panel" hidden>
+                                <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
+                            </div>
+                            <div class="ai-chat-console-panel ai-chat-side-panel-body" id="ai-chat-console-panel" hidden>
+                                <div class="ai-chat-console-toolbar">
+                                    <span class="ai-chat-console-hint">Action results and errors from this session</span>
+                                    <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
+                                </div>
+                                <div class="ai-chat-console-list" id="ai-chat-console-list"></div>
+                            </div>
+                            <div class="ai-chat-approvals-panel ai-chat-side-panel-body" id="ai-chat-approvals-panel" hidden>
+                                <div class="loading">Loading approvals...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -605,14 +628,14 @@
                             <div class="ai-chat-composer-tools">
                                 <input type="file" id="ai-chat-image-input" accept="image/*" hidden>
                                 <input type="file" id="ai-chat-doc-input" accept=".txt,.md,.json,.csv,.pdf" hidden>
-                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-image" title="Add image" aria-label="Add image" hidden>
+                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="Add image" aria-label="Add image" hidden>
                                     ${icon('image', { size: 18 })}
                                 </button>
-                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-doc" title="Add document" aria-label="Add document" hidden>
+                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="Add document" aria-label="Add document" hidden>
                                     ${icon('file-text', { size: 18 })}
                                 </button>
                                 <div class="ai-chat-model-picker" id="ai-chat-model-picker" hidden>
-                                    <button type="button" class="ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" title="Choose model" aria-haspopup="listbox" aria-expanded="false">
+                                    <button type="button" class="ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="Choose model" aria-haspopup="listbox" aria-expanded="false">
                                         ${icon('sparkle', { size: 16 })}
                                         <span id="ai-chat-model-label">Model</span>
                                         ${icon('caret-down', { size: 12 })}
@@ -639,9 +662,19 @@
         bindChatWindowActions(chatWindow);
         
         document.getElementById('ai-chat-fullscreen-btn')?.addEventListener('click', toggleFullscreen);
-        document.getElementById('ai-chat-history-btn')?.addEventListener('click', () => openSidePanel('history'));
-        document.getElementById('ai-chat-console-btn')?.addEventListener('click', () => openSidePanel('console'));
-        document.getElementById('ai-chat-approvals-btn')?.addEventListener('click', () => openSidePanel('approvals'));
+        document.getElementById('ai-chat-history-btn')?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleSidePanel('history');
+        });
+        document.getElementById('ai-chat-console-btn')?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleSidePanel('console');
+        });
+        document.getElementById('ai-chat-approvals-btn')?.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleSidePanel('approvals');
+        });
+        document.getElementById('ai-chat-overlay-backdrop')?.addEventListener('click', closeSidePanel);
         document.getElementById('ai-chat-side-panel-back')?.addEventListener('click', closeSidePanel);
         document.getElementById('ai-chat-new-btn')?.addEventListener('click', startNewChat);
         document.getElementById('ai-chat-send-btn')?.addEventListener('click', async function () {
@@ -667,6 +700,17 @@
         document.addEventListener('click', function (e) {
             if (!e.target.closest('#ai-chat-model-picker')) {
                 closeModelMenu();
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                if (sidePanelView) closeSidePanel();
+                closeModelMenu();
+            }
+        });
+        window.addEventListener('resize', function () {
+            if (!document.getElementById('ai-chat-model-menu')?.hidden) {
+                positionModelMenu();
             }
         });
 
@@ -768,6 +812,7 @@
             }
             renderModelMenu();
             updateModelLabel();
+            positionModelMenu();
         } catch (error) {
             menu.innerHTML = '<div class="ai-chat-model-empty">Could not load models</div>';
         }
@@ -797,19 +842,56 @@
     function toggleModelMenu() {
         const menu = document.getElementById('ai-chat-model-menu');
         const trigger = document.getElementById('ai-chat-model-trigger');
+        const chatWindow = document.getElementById('ai-chat-window');
         if (!menu || !trigger) return;
         const open = menu.hidden;
-        menu.hidden = !open;
-        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
-        if (open && chatModelOptions.length === 0) loadChatModels();
-        else if (open) renderModelMenu();
+        if (open) {
+            if (chatModelOptions.length === 0) loadChatModels();
+            else renderModelMenu();
+            menu.hidden = false;
+            trigger.setAttribute('aria-expanded', 'true');
+            positionModelMenu();
+            chatWindow?.classList.add('ai-chat-model-menu-open');
+        } else {
+            closeModelMenu();
+        }
+    }
+
+    function positionModelMenu() {
+        const menu = document.getElementById('ai-chat-model-menu');
+        const trigger = document.getElementById('ai-chat-model-trigger');
+        if (!menu || !trigger || menu.hidden) return;
+        const rect = trigger.getBoundingClientRect();
+        menu.style.position = 'fixed';
+        menu.style.left = Math.max(8, rect.left) + 'px';
+        menu.style.minWidth = Math.max(rect.width, 220) + 'px';
+        menu.style.maxWidth = '320px';
+        const menuHeight = Math.min(240, menu.scrollHeight || 240);
+        const spaceAbove = rect.top;
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceAbove >= menuHeight + 8 || spaceAbove > spaceBelow) {
+            menu.style.top = 'auto';
+            menu.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+        } else {
+            menu.style.bottom = 'auto';
+            menu.style.top = (rect.bottom + 6) + 'px';
+        }
     }
 
     function closeModelMenu() {
         const menu = document.getElementById('ai-chat-model-menu');
         const trigger = document.getElementById('ai-chat-model-trigger');
-        if (menu) menu.hidden = true;
+        const chatWindow = document.getElementById('ai-chat-window');
+        if (menu) {
+            menu.hidden = true;
+            menu.style.position = '';
+            menu.style.left = '';
+            menu.style.top = '';
+            menu.style.bottom = '';
+            menu.style.minWidth = '';
+        }
         if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        chatWindow?.classList.remove('ai-chat-model-menu-open');
     }
 
     function handleImageAttachment(e) {
@@ -887,6 +969,8 @@
 
         chatWindow.style.display = 'flex';
         document.body.classList.add('ai-chat-window-open');
+        closeSidePanel();
+        closeModelMenu();
         setAssistFabState('chat');
         try {
             localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '1');
@@ -1610,7 +1694,7 @@
         if (!list) return;
         const recent = getRecentChats();
         if (!recent.length) {
-            list.innerHTML = '<div class="ai-chat-welcome"><p>No recent chats yet. Start a conversation in the Chat tab.</p></div>';
+            list.innerHTML = '<div class="ai-chat-welcome"><p>No recent chats yet. Start a conversation to see it here.</p></div>';
             return;
         }
         list.innerHTML = recent.map(function (chat) {
