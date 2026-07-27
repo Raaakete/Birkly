@@ -1536,6 +1536,45 @@ function birkly_list_accessible_ai_connections_for_session_user(?array $sessionU
 }
 
 /**
+ * Load an AI connection JSON record by id from any users directory.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_ai_load_connection_record(string $connectionId): ?array
+{
+    $connectionId = trim($connectionId);
+    if ($connectionId === '') {
+        return null;
+    }
+
+    require_once __DIR__ . '/../core/birkly_users.php';
+    require_once __DIR__ . '/storage.php';
+
+    foreach (birkly_users_search_dirs() as $dir) {
+        $storage = new Storage($dir);
+        $record = $storage->read($connectionId . '.json');
+        if (is_array($record) && ($record['type'] ?? '') === 'ai') {
+            return $record;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Ensure callAiProvider() is available without running the chat API router.
+ */
+function birkly_ai_bootstrap_call_provider(): void
+{
+    if (function_exists('callAiProvider')) {
+        return;
+    }
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/ai_chat.php';
+    unset($GLOBALS['__HARU_INTERNAL_CALL']);
+}
+
+/**
  * Whether a human user may update/delete an AI connection.
  */
 function birkly_ai_user_can_manage_connection(array $connection, string $userId, ?array $currentUser = null): bool
