@@ -230,6 +230,26 @@ function birkly_ai_playbooks_prompt_section(): string
 /**
  * Detect website / project-folder build intent from message + recent history.
  */
+function ai_chat_is_planning_request(string $message): bool
+{
+    return (bool) preg_match(
+        '/\b(outline|plan(?:ning)?|break\s*down|roadmap|step\s*by\s*step|layout|sketch|before you (?:start|execute)|clear path|plant this task|think through|map out)\b/i',
+        $message
+    );
+}
+
+function ai_chat_is_proceed_message(string $message): bool
+{
+    if (ai_chat_is_planning_request($message)) {
+        return false;
+    }
+
+    return (bool) preg_match(
+        '/\b(proceed|continue|next step|go on|keep going|move on|yes|do it|finish(?:ed|ing)?|complete(?:ly|d)?|start executing|run it|go ahead|until (?:everything|done|finished)|til everything)\b/i',
+        $message
+    );
+}
+
 function ai_chat_session_has_site_build_progress(array $conversationHistory): bool
 {
     $done = ai_chat_parse_session_notes_from_history($conversationHistory);
@@ -498,6 +518,60 @@ function ai_chat_parse_session_notes_from_history(array $conversationHistory): a
 }
 
 /**
+ * Human-readable site-build progress for proceed messages with no remaining automated steps.
+ *
+ * @param array<string,mixed> $systemContext
+ */
+function ai_chat_site_build_progress_summary(array $conversationHistory, array $systemContext): string
+{
+    $done = ai_chat_parse_session_notes_from_history($conversationHistory);
+    $collectionMap = [];
+    foreach ($systemContext['collections'] ?? [] as $coll) {
+        if (!is_array($coll)) {
+            continue;
+        }
+        $slug = (string) ($coll['slug'] ?? '');
+        if ($slug !== '') {
+            $collectionMap[$slug] = $coll;
+        }
+    }
+    if ($collectionMap === []) {
+        return '';
+    }
+
+    $siteSlugs = array_values(array_filter(
+        ['about', 'artworks', 'contact', 'gallery', 'projects', 'portfolio'],
+        static fn (string $s): bool => isset($collectionMap[$s])
+    ));
+    if ($siteSlugs === []) {
+        $siteSlugs = array_slice(array_keys($collectionMap), 0, 4);
+    }
+
+    $lines = ['Site-build progress in this conversation:'];
+    foreach ($siteSlugs as $slug) {
+        $label = in_array($slug, $done['entries'], true) ? 'entry seeded' : 'entry pending';
+        $lines[] = '- ' . $slug . ': ' . $label;
+    }
+
+    $projectFiles = ['index.html', 'about.html', 'contact.html', 'css/style.css'];
+    foreach ($projectFiles as $path) {
+        if (!in_array($path, $done['project_files'], true)) {
+            continue;
+        }
+        $lines[] = '- ' . $path . ': created';
+    }
+
+    $pendingEntries = array_filter($siteSlugs, static fn (string $s): bool => !in_array($s, $done['entries'], true));
+    $hasIndex = in_array('index.html', $done['project_files'], true);
+    if ($pendingEntries === [] && $hasIndex) {
+        return implode("\n", $lines)
+            . "\n\nAutomated site-build steps from this chat are complete. Open **project/** to review, or describe what to refine next.";
+    }
+
+    return implode("\n", $lines) . "\n\nSay **proceed** to run the next automated step.";
+}
+
+/**
  * Build create_entry payload using collection schema field names when available.
  *
  * @param array<string,mixed> $coll
@@ -633,6 +707,65 @@ HTML;
                 'description' => 'Create gallery stylesheet in project/css/',
             ],
         ];
+    }
+
+    // Phase 3: about/contact pages when index exists
+    if ($hasProjectIndex) {
+        $pageActions = [];
+        $pageDefs = [
+            'about' => [
+                'path' => 'about.html',
+                'title' => 'About',
+                'collection' => 'about',
+            ],
+            'contact' => [
+                'path' => 'contact.html',
+                'title' => 'Contact',
+                'collection' => 'contact',
+            ],
+        ];
+        foreach ($pageDefs as $def) {
+            $path = $def['path'];
+            if (in_array($path, $done['project_files'], true)) {
+                continue;
+            }
+            if (!isset($collectionMap[$def['collection']])) {
+                continue;
+            }
+            $collSlug = $def['collection'];
+            $pageTitle = $def['title'];
+            $html = <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{$pageTitle}</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="/birkly-client.js"></script>
+</head>
+<body>
+  <header><a href="index.html">Gallery</a> · <h1>{$pageTitle}</h1></header>
+  <main>
+    {for each entry in '{$collSlug}'}
+      <article>
+        <h2>{title}</h2>
+        <div>{'description'}</div>
+      </article>
+    {endfor}
+  </main>
+</body>
+</html>
+HTML;
+            $pageActions[] = [
+                'type' => 'write_project_file',
+                'data' => ['path' => $path, 'content' => $html],
+                'description' => 'Create ' . $path . ' in project/',
+            ];
+        }
+        if ($pageActions !== []) {
+            return $pageActions;
+        }
     }
 
     return [];
