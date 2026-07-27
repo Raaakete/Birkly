@@ -199,6 +199,7 @@ function executeReadAction($actionData, $aiUser) {
         return ['success' => true, 'data' => ['user' => $user]];
         
     } elseif ($actionType === 'read_collection') {
+        $actionPayload = birkly_ai_normalize_collection_action_data($actionPayload);
         $collectionSlug = $actionPayload['slug'] ?? '';
         if (empty($collectionSlug)) {
             return ['success' => false, 'message' => 'Collection slug is required'];
