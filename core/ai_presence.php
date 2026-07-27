@@ -958,6 +958,51 @@ function birkly_ai_presence_setup_prefill(): array
 }
 
 /**
+ * List CMS collections for AI Assist (read-scoped, no manage_content required).
+ *
+ * @return list<array{slug: string, name: string, entries_count: int}>
+ */
+function birkly_ai_presence_list_collections(): array
+{
+    $contentRoot = birkly_project_root() . '/content/collections';
+    $out = [];
+    if (!is_dir($contentRoot)) {
+        return $out;
+    }
+
+    foreach (scandir($contentRoot) ?: [] as $dir) {
+        if ($dir === '.' || $dir === '..' || !is_dir($contentRoot . '/' . $dir)) {
+            continue;
+        }
+        $path = $contentRoot . '/' . $dir;
+        $meta = birkly_ai_presence_read_json($path . '/collection.json') ?? [];
+        $slug = (string) ($meta['slug'] ?? $dir);
+        $entriesDir = $path . '/entries';
+        $entriesCount = 0;
+        if (is_dir($entriesDir)) {
+            foreach (scandir($entriesDir) ?: [] as $file) {
+                if ($file === '.' || $file === '..') {
+                    continue;
+                }
+                if (is_file($entriesDir . '/' . $file) && str_ends_with($file, '.json')) {
+                    $entriesCount++;
+                }
+            }
+        }
+        $out[] = [
+            'slug' => $slug,
+            'dir' => $dir,
+            'name' => (string) ($meta['title'] ?? $meta['name'] ?? $slug),
+            'entries_count' => $entriesCount,
+        ];
+    }
+
+    usort($out, static fn(array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+    return $out;
+}
+
+/**
  * @return list<array<string, mixed>>
  */
 function birkly_ai_presence_gather_cms_context(array $draft): array
