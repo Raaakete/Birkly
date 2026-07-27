@@ -45,7 +45,7 @@ if (!birkly_ai_presence_can_view($currentUser)) {
 
 $readActions = [
     'get', 'completeness', 'staleness', 'preview_query', 'setup_prefill', 'public_urls',
-    'list_connections', 'list_versions', 'cms_diff',
+    'list_connections', 'list_versions', 'cms_diff', 'list_collections',
 ];
 $writeActions = [
     'save_draft', 'publish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'accept_suggestions',
@@ -73,6 +73,7 @@ if ($action === 'get') {
             'public_urls' => birkly_ai_presence_public_urls(),
             'staleness' => birkly_ai_presence_staleness($draft),
             'cms_diff' => birkly_ai_presence_cms_sync_diff($draft),
+            'collections' => birkly_ai_presence_list_collections(),
             'ai_connections' => birkly_ai_presence_list_ai_connections_for_user($userId),
             'can_edit' => birkly_ai_presence_can_edit($currentUser),
         ],
@@ -194,12 +195,20 @@ if ($action === 'fetch_url_meta') {
     exit;
 }
 
+if ($action === 'list_collections') {
+    echo json_encode([
+        'status' => 'ok',
+        'data' => ['collections' => birkly_ai_presence_list_collections()],
+    ]);
+    exit;
+}
+
 if ($action === 'suggest' || $action === 'copilot') {
     $draft = birkly_ai_presence_load_draft();
     $aiConnectionId = trim((string) ($input['ai_connection_id'] ?? ''));
     $mode = trim((string) ($input['mode'] ?? 'all'));
-    $suggestions = birkly_ai_presence_copilot_suggestions($draft, $aiConnectionId, $mode);
-    echo json_encode(['status' => 'ok', 'data' => ['suggestions' => $suggestions]]);
+    $result = birkly_ai_presence_copilot_suggestions($draft, $aiConnectionId, $mode);
+    echo json_encode(['status' => 'ok', 'data' => $result]);
     exit;
 }
 
@@ -211,8 +220,12 @@ if ($action === 'field_ai') {
         echo json_encode(['status' => 'error', 'message' => 'field and ai_connection_id required']);
         exit;
     }
-    $suggestions = birkly_ai_presence_field_ai($field, $draft, $aiConnectionId);
-    echo json_encode(['status' => 'ok', 'data' => ['suggestions' => $suggestions]]);
+    $result = birkly_ai_presence_field_ai($field, $draft, $aiConnectionId);
+    if (!empty($result['error']) && empty($result['suggestions'])) {
+        echo json_encode(['status' => 'error', 'message' => $result['error']]);
+        exit;
+    }
+    echo json_encode(['status' => 'ok', 'data' => $result]);
     exit;
 }
 

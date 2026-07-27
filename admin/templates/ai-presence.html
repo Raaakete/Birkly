@@ -319,23 +319,30 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <p id="ap-ai-connection-hint" class="ap-hint">{translate 'admin.ai_presence_assist_connection_hint'}</p>
             </div>
 
-            <div class="ap-assist-block">
-                <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_quick'}</h3>
-                <p class="ap-hint">{translate 'admin.ai_presence_assist_quick_hint'}</p>
-                <div class="ap-assist-actions">
-                    <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+            <div class="ap-assist-tabs" role="tablist" aria-label="AI Assist modes">
+                <button type="button" class="ap-assist-tab active" data-assist-tab="auto" role="tab" aria-selected="true">{translate 'admin.ai_presence_assist_tab_auto'}</button>
+                <button type="button" class="ap-assist-tab" data-assist-tab="advanced" role="tab" aria-selected="false">{translate 'admin.ai_presence_assist_tab_advanced'}</button>
+            </div>
+
+            <div class="ap-assist-panel active" data-assist-panel="auto" role="tabpanel">
+                <p class="ap-hint">{translate 'admin.ai_presence_assist_auto_hint'}</p>
+                <button type="button" class="btn btn-primary ap-assist-auto-btn" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
+                <button type="button" class="btn btn-sm btn-secondary ap-assist-secondary-btn" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+                <p id="ap-assist-auto-status" class="ap-hint ap-assist-status"></p>
+            </div>
+
+            <div class="ap-assist-panel" data-assist-panel="advanced" role="tabpanel" hidden>
+                <p class="ap-hint">{translate 'admin.ai_presence_assist_advanced_hint'}</p>
+                <label class="ap-assist-label" for="ap-assist-collection-search">{translate 'admin.ai_presence_studio_sources'}</label>
+                <input type="search" id="ap-assist-collection-search" class="input" placeholder="Search collections…" autocomplete="off">
+                <select id="ap-assist-collections" class="input" multiple size="6" aria-describedby="ap-assist-build-hint"></select>
+                <p id="ap-assist-collections-empty" class="ap-hint text-muted" hidden>{translate 'admin.ai_presence_assist_no_collections'}</p>
+                <p id="ap-assist-build-hint" class="ap-hint">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
+                <button type="button" class="btn btn-sm btn-primary ap-assist-build-btn" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
+                <div class="ap-assist-actions ap-assist-actions--advanced">
                     <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
                     <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
                 </div>
-            </div>
-
-            <div class="ap-assist-block ap-assist-block--divider">
-                <h3 class="ap-assist-block-title">{translate 'admin.ai_presence_assist_build'}</h3>
-                <p class="ap-hint">{translate 'admin.ai_presence_assist_build_hint'}</p>
-                <label class="ap-assist-label" for="ap-assist-collections">{translate 'admin.ai_presence_studio_sources'}</label>
-                <select id="ap-assist-collections" class="input" multiple size="5" aria-describedby="ap-assist-build-hint"></select>
-                <p id="ap-assist-build-hint" class="ap-hint">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
-                <button type="button" class="btn btn-sm btn-primary ap-assist-build-btn" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
             </div>
 
             <div class="ap-assist-block ap-assist-block--results" id="ap-assist-results">

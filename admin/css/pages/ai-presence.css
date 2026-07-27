@@ -203,6 +203,66 @@
   width: 100%;
 }
 
+.ap-assist-tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+  background: var(--bg-secondary, #fafafa);
+}
+
+.ap-assist-tab {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary, #72746F);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ap-assist-tab:hover {
+  color: var(--text-primary, #1a1a1a);
+}
+
+.ap-assist-tab.active {
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary, #1a1a1a);
+  box-shadow: inset 0 -2px 0 var(--primary-600, #52C49A);
+}
+
+.ap-assist-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-s, 0.5rem);
+}
+
+.ap-assist-panel[hidden] {
+  display: none !important;
+}
+
+.ap-assist-auto-btn {
+  width: 100%;
+}
+
+.ap-assist-secondary-btn {
+  width: 100%;
+  margin-top: var(--space-xs, 0.25rem);
+}
+
+.ap-assist-status {
+  min-height: 1.25rem;
+}
+
+.ap-assist-actions--advanced {
+  margin-top: var(--space-s, 0.5rem);
+  padding-top: var(--space-s, 0.5rem);
+  border-top: 1px solid var(--border-light, #f3f4f6);
+}
+
 .ap-assist-actions {
   display: flex;
   flex-wrap: wrap;
