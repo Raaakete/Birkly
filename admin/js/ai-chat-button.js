@@ -23,6 +23,42 @@
         return (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
     }
 
+    function apiUrl(path) {
+        return (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
+    }
+
+    async function refreshCsrfToken() {
+        try {
+            const response = await fetch(apiUrl('/api/csrf.php'), { credentials: 'same-origin' });
+            const data = await response.json();
+            if (data.status === 'ok' && data.data && data.data.csrf_token) {
+                csrfToken = data.data.csrf_token;
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) meta.content = csrfToken;
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to refresh CSRF token:', error);
+        }
+        return false;
+    }
+
+    function formatHttpError(status, bodyText) {
+        let message = bodyText || 'Server error';
+        try {
+            const parsed = JSON.parse(bodyText);
+            if (parsed && parsed.message) {
+                message = parsed.message;
+            }
+        } catch (e) {
+            // keep raw body
+        }
+        if (status === 401) {
+            return 'Your session expired. Please refresh the page and log in again.';
+        }
+        return 'HTTP Error ' + status + ': ' + message;
+    }
+
     // Storage keys
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
     const STORAGE_KEY_CONNECTION = 'ai_chat_connection_id';
@@ -80,7 +116,7 @@
     // Load available AI connections
     async function loadConnections() {
         try {
-            const response = await fetch('/api/ai_connections.php?action=list');
+            const response = await fetch(apiUrl('/api/ai_connections.php?action=list'), { credentials: 'same-origin' });
             const result = await response.json();
             
             if (result && result.status === 'ok' && result.data) {
@@ -205,7 +241,7 @@
 
     async function loadApprovalQueue() {
         try {
-            const response = await fetch('/api/ai_approvals.php?action=list&status=pending');
+            const response = await fetch(apiUrl('/api/ai_approvals.php?action=list&status=pending'), { credentials: 'same-origin' });
             const result = await response.json();
             pendingApprovals = (result && result.status === 'ok' && result.data)
                 ? (result.data.approvals || [])
@@ -667,7 +703,7 @@
         }
         
         // Load connection details
-        fetch(`/api/ai_connections.php?action=get&id=${connectionId}`)
+        fetch(apiUrl('/api/ai_connections.php?action=get&id=' + encodeURIComponent(connectionId)), { credentials: 'same-origin' })
             .then(r => r.json())
             .then(result => {
                 if (result.status === 'ok') {
@@ -981,9 +1017,10 @@
         setSendButtonStreaming(true);
 
         try {
-            const response = await fetch('/api/ai_chat.php', {
+            const response = await fetch(apiUrl('/api/ai_chat.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 signal: activeChatAbortController.signal,
                 body: JSON.stringify({
                     action: 'chat',
@@ -1000,7 +1037,8 @@
                 const errorText = await response.text();
                 removeChatMessage(assistantMessageId);
                 lastFailedMessage = message;
-                addChatMessageWithRetry('error', 'HTTP Error ' + response.status + ': ' + (errorText || 'Server error'));
+                appendConsoleLog('error', formatHttpError(response.status, errorText), { status: response.status, body: errorText });
+                addChatMessageWithRetry('error', formatHttpError(response.status, errorText));
                 return;
             }
 
@@ -1216,7 +1254,7 @@
                 conversation_id: convId,
                 ai_connection_id: connectionId
             });
-            const response = await fetch('/api/ai_chat.php?' + params.toString());
+            const response = await fetch(apiUrl('/api/ai_chat.php?' + params.toString()), { credentials: 'same-origin' });
             const result = await response.json();
             if (result.status === 'ok' && Array.isArray(result.data?.messages) && result.data.messages.length > 0) {
                 chatMessages = result.data.messages
@@ -1474,9 +1512,10 @@
         if (!(await BirklyFeedback.confirm('Approve this action?'))) return;
         
         try {
-            const response = await fetch('/api/ai_approvals.php', {
+            const response = await fetch(apiUrl('/api/ai_approvals.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     action: 'approve',
                     id: approvalId,
@@ -1518,9 +1557,10 @@
         });
         
         try {
-            const response = await fetch('/api/ai_approvals.php', {
+            const response = await fetch(apiUrl('/api/ai_approvals.php'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     action: 'reject',
                     id: approvalId,
