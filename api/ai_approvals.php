@@ -266,7 +266,10 @@ function executeAiAction($approval) {
     require_once __DIR__ . '/../core/ai_permissions.php';
 
     $actionType = $approval['action_type'];
-    $actionData = $approval['action_data'];
+    $actionData = $approval['action_data'] ?? [];
+    if (!is_array($actionData)) {
+        $actionData = birkly_ai_normalize_collection_action_data($actionData);
+    }
     
     // Get AI user but DO NOT modify session - pass it as context instead
     $usersStorage = new Storage('../users');
@@ -489,8 +492,11 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
     
     // Try to get collection from various locations
     if (isset($actionData['collection'])) {
-        error_log("executeCreateEntry: Found collection at top level: " . $actionData['collection']);
+        error_log("executeCreateEntry: Found collection at top level: " . json_encode($actionData['collection']));
         $collection = $actionData['collection'];
+        if (is_array($collection)) {
+            $collection = $collection['slug'] ?? $collection['name'] ?? '';
+        }
         // Check if there's nested data
         if (isset($actionData['data']) && is_array($actionData['data'])) {
             error_log("executeCreateEntry: Found nested data field");
@@ -502,9 +508,12 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             unset($entryData['collection']);
         }
     } elseif (isset($actionData['data']['collection'])) {
-        error_log("executeCreateEntry: Found collection nested in data: " . $actionData['data']['collection']);
+        error_log("executeCreateEntry: Found collection nested in data: " . json_encode($actionData['data']['collection']));
         // Collection is nested in data
         $collection = $actionData['data']['collection'];
+        if (is_array($collection)) {
+            $collection = $collection['slug'] ?? $collection['name'] ?? '';
+        }
         $entryData = $actionData['data'];
         unset($entryData['collection']);
     } else {
@@ -608,6 +617,9 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     // Try to get collection and entry identifier from various locations
     if (isset($actionData['collection'])) {
         $collection = $actionData['collection'];
+        if (is_array($collection)) {
+            $collection = $collection['slug'] ?? $collection['name'] ?? '';
+        }
         // Check if there's nested data
         if (isset($actionData['data']) && is_array($actionData['data'])) {
             $updateData = $actionData['data'];
@@ -770,14 +782,36 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
         return ['success' => false, 'message' => 'Failed to read collection'];
     }
     
-    // Update fields
+    // Update metadata
     if (isset($actionData['name'])) $collection['name'] = $actionData['name'];
     if (isset($actionData['description'])) $collection['description'] = $actionData['description'];
-    if (isset($actionData['fields'])) $collection['fields'] = $actionData['fields'];
     $collection['updated_at'] = date('c');
+
+    if (isset($actionData['fields']) && is_array($actionData['fields'])) {
+        require_once __DIR__ . '/../core/collection_schema.php';
+        $schemaFile = '../content/collections/' . $slug . '/schema.json';
+        $schema = birkly_normalize_collection_schema($actionData);
+        if (file_put_contents($schemaFile, json_encode($schema, JSON_PRETTY_PRINT)) === false) {
+            return ['success' => false, 'message' => 'Failed to update collection schema'];
+        }
+    }
     
     $result = file_put_contents($collectionFile, json_encode($collection, JSON_PRETTY_PRINT));
     return $result ? ['success' => true, 'data' => ['collection' => $collection]] : ['success' => false, 'message' => 'Failed to update collection'];
+}
+
+// Recursively delete a directory (shared by AI delete actions).
+function birkly_ai_delete_directory(string $dir): bool
+{
+    if (!is_dir($dir)) {
+        return false;
+    }
+    $files = array_diff(scandir($dir), ['.', '..']);
+    foreach ($files as $file) {
+        $path = $dir . '/' . $file;
+        is_dir($path) ? birkly_ai_delete_directory($path) : unlink($path);
+    }
+    return rmdir($dir);
 }
 
 // Execute delete collection
@@ -793,18 +827,7 @@ function executeDeleteCollection($actionData, $aiUser = null, $originalUserId = 
         return ['success' => false, 'message' => 'Collection not found'];
     }
     
-    // Recursively delete directory
-    function deleteDirectory($dir) {
-        if (!is_dir($dir)) return false;
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? deleteDirectory($path) : unlink($path);
-        }
-        return rmdir($dir);
-    }
-    
-    $result = deleteDirectory($collectionDir);
+    $result = birkly_ai_delete_directory($collectionDir);
     return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete collection'];
 }
 
