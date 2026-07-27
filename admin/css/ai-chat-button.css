@@ -757,3 +757,15 @@
     color: var(--text-primary, #f8fafc);
     border: 1px solid var(--border-light, #334155);
 }
+
+[data-theme="dark"] .ai-chat-window {
+    background: color-mix(in srgb, var(--bg-elevated, #1e293b) 42%, transparent);
+    border-color: color-mix(in srgb, var(--border-light, #334155) 50%, transparent);
+}
+
+[data-theme="dark"] .ai-chat-message-assistant .ai-chat-message-content,
+[data-theme="dark"] .ai-chat-input-wrapper textarea,
+[data-theme="dark"] .ai-chat-approval-card {
+    background: var(--bg-elevated, #1e293b);
+    border-color: var(--border-light, #334155);
+}
