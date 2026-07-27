@@ -13,6 +13,8 @@
     let wizardStep = 1;
     const WIZARD_MAX_STEP = 3;
     let providersCache = null;
+    let providerModelsCache = [];
+    let modelPickerLoading = false;
     let connectionTestPassed = false;
 
     function birklyApiUrl(path) {
@@ -76,6 +78,35 @@
             updateProviderFields();
             connectionTestPassed = false;
             clearTestStatus();
+        });
+
+        document.getElementById('connection-model-refresh')?.addEventListener('click', function() {
+            fetchProviderModels({ force: true }).catch(function(err) {
+                console.error('Error loading models:', err);
+            });
+        });
+
+        document.getElementById('connection-model-search')?.addEventListener('input', function() {
+            renderModelPickerList(providerModelsCache, this.value);
+        });
+
+        document.getElementById('connection-model-search')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = this.value.trim();
+                if (value) setModelPickerValue(value);
+            }
+        });
+
+        document.getElementById('connection-model-list')?.addEventListener('click', function(e) {
+            const btn = e.target.closest('.ai-model-picker-option[data-model-id]');
+            if (!btn) return;
+            setModelPickerValue(btn.getAttribute('data-model-id') || '');
+        });
+
+        document.getElementById('connection-model-search')?.addEventListener('blur', function() {
+            const value = this.value.trim();
+            if (value) setModelPickerValue(value);
         });
 
         document.getElementById('connection-api-key')?.addEventListener('input', function() {
@@ -203,11 +234,7 @@
         if (apiUrlGroup) apiUrlGroup.style.display = 'none';
         if (apiKeyGroup) apiKeyGroup.style.display = 'block';
         if (modelCustom) modelCustom.style.display = 'none';
-        const modelSelect = document.getElementById('connection-model');
-        if (modelSelect) {
-            modelSelect.style.display = 'block';
-            modelSelect.innerHTML = '<option value="">Default</option>';
-        }
+        resetModelPicker();
 
         const requireApprovalCheckbox = document.getElementById('connection-require-approval');
         if (requireApprovalCheckbox) requireApprovalCheckbox.checked = true;
@@ -309,15 +336,190 @@
         }
     }
 
+    function getSelectedModel() {
+        const modelCustom = document.getElementById('connection-model-custom');
+        if (modelCustom && modelCustom.style.display !== 'none') {
+            return (modelCustom.value || '').trim();
+        }
+        const hidden = document.getElementById('connection-model');
+        const search = document.getElementById('connection-model-search');
+        return ((hidden && hidden.value) || (search && search.value) || '').trim();
+    }
+
+    function setModelPickerStatus(message, tone) {
+        const status = document.getElementById('connection-model-status');
+        if (!status) return;
+        status.textContent = message || '';
+        status.className = 'form-help ai-model-picker-status' + (tone ? ' is-' + tone : '');
+    }
+
+    function resetModelPicker() {
+        providerModelsCache = [];
+        const hidden = document.getElementById('connection-model');
+        const search = document.getElementById('connection-model-search');
+        const list = document.getElementById('connection-model-list');
+        if (hidden) hidden.value = '';
+        if (search) search.value = '';
+        if (list) {
+            list.innerHTML = '';
+            list.classList.add('is-empty');
+            list.textContent = 'Load models after selecting a provider.';
+        }
+        setModelPickerStatus('');
+    }
+
+    function setModelPickerValue(modelId) {
+        const hidden = document.getElementById('connection-model');
+        const search = document.getElementById('connection-model-search');
+        const custom = document.getElementById('connection-model-custom');
+        const value = (modelId || '').trim();
+        if (hidden) hidden.value = value;
+        if (search) search.value = value;
+        if (custom && custom.style.display !== 'none') custom.value = value;
+        renderModelPickerList(providerModelsCache, search ? search.value : '');
+    }
+
+    function updateModelPickerVisibility(provider) {
+        const picker = document.getElementById('connection-model-picker');
+        const custom = document.getElementById('connection-model-custom');
+        const info = providersCache && provider ? providersCache[provider] : null;
+        const manualOnly = provider === 'custom' || (info && !info.dynamic_models && info.custom_models);
+
+        if (picker) picker.hidden = !!manualOnly;
+        if (custom) {
+            custom.style.display = manualOnly ? 'block' : 'none';
+            custom.required = provider === 'custom';
+        }
+    }
+
+    function renderModelPickerList(models, filter) {
+        const list = document.getElementById('connection-model-list');
+        const selected = getSelectedModel();
+        if (!list) return;
+
+        const query = String(filter || '').trim().toLowerCase();
+        const filtered = (models || []).filter(function(model) {
+            if (!query) return true;
+            const hay = [
+                model.id || '',
+                model.name || '',
+                model.description || ''
+            ].join(' ').toLowerCase();
+            return hay.indexOf(query) >= 0;
+        });
+
+        if (!filtered.length) {
+            list.classList.add('is-empty');
+            list.innerHTML = '';
+            list.textContent = models && models.length
+                ? 'No models match your search.'
+                : 'No models loaded yet.';
+            return;
+        }
+
+        list.classList.remove('is-empty');
+        list.innerHTML = filtered.map(function(model) {
+            const id = escapeHtml(model.id || '');
+            const name = escapeHtml(model.name || model.id || '');
+            const description = escapeHtml(model.description || '');
+            const context = model.context_length
+                ? '<span class="ai-model-picker-option-meta">' + Number(model.context_length).toLocaleString() + ' tokens</span>'
+                : '';
+            const meta = description
+                ? '<span class="ai-model-picker-option-meta">' + description + '</span>'
+                : context;
+            const selectedClass = selected && selected === model.id ? ' is-selected' : '';
+            return '<button type="button" class="ai-model-picker-option' + selectedClass + '" data-model-id="' + id + '">' +
+                '<span class="ai-model-picker-option-id">' + name + '</span>' +
+                (name !== id ? '<span class="ai-model-picker-option-meta">' + id + '</span>' : '') +
+                meta +
+                '</button>';
+        }).join('');
+    }
+
+    function canFetchModelsWithoutKey(provider) {
+        return provider === 'openrouter';
+    }
+
+    function canFetchModelsForProvider(provider) {
+        if (!provider || provider === 'custom') return false;
+        if (provider === 'ollama') return true;
+        if (canFetchModelsWithoutKey(provider)) return true;
+        const apiKey = document.getElementById('connection-api-key')?.value || '';
+        return apiKey.trim() !== '';
+    }
+
+    async function fetchProviderModels(options) {
+        options = options || {};
+        const providerSelect = document.getElementById('connection-provider');
+        const provider = providerSelect ? providerSelect.value : '';
+        if (!provider) {
+            resetModelPicker();
+            return null;
+        }
+
+        updateModelPickerVisibility(provider);
+        if (provider === 'custom') {
+            setModelPickerStatus('Enter the model ID required by your endpoint.');
+            return null;
+        }
+
+        if (!canFetchModelsForProvider(provider)) {
+            setModelPickerStatus('Enter your API key to load models from ' + (providersCache?.[provider]?.name || provider) + '.');
+            renderModelPickerList([], '');
+            return null;
+        }
+
+        if (modelPickerLoading && !options.force) return null;
+        modelPickerLoading = true;
+        setModelPickerStatus('Loading models…', 'loading');
+
+        const apiKey = document.getElementById('connection-api-key')?.value || '';
+        const apiUrl = document.getElementById('connection-api-url')?.value || '';
+
+        try {
+            const response = await fetch(birklyApiUrl('/api/ai_connections.php'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'list_models',
+                    provider: provider,
+                    api_key: apiKey,
+                    api_url: apiUrl
+                })
+            });
+            const result = await response.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to load models');
+            }
+
+            providerModelsCache = result.data?.models || [];
+            const defaultModel = result.data?.default_model || '';
+            const search = document.getElementById('connection-model-search');
+            renderModelPickerList(providerModelsCache, search ? search.value : '');
+            setModelPickerStatus(result.message || (providerModelsCache.length + ' models loaded'));
+
+            if (options.autoSelectDefault && defaultModel && !getSelectedModel()) {
+                const hasDefault = providerModelsCache.some(function(m) { return m.id === defaultModel; });
+                setModelPickerValue(hasDefault ? defaultModel : (providerModelsCache[0]?.id || defaultModel));
+            }
+
+            return providerModelsCache;
+        } catch (error) {
+            providerModelsCache = [];
+            renderModelPickerList([], '');
+            setModelPickerStatus(error.message || 'Could not load models', 'error');
+            return null;
+        } finally {
+            modelPickerLoading = false;
+        }
+    }
+
     async function testConnection() {
         const provider = document.getElementById('connection-provider')?.value;
         const apiKey = document.getElementById('connection-api-key')?.value || '';
         const apiUrl = document.getElementById('connection-api-url')?.value || '';
-        const modelSelect = document.getElementById('connection-model');
-        const modelCustom = document.getElementById('connection-model-custom');
-        const model = modelCustom && modelCustom.style.display !== 'none'
-            ? (modelCustom.value || '')
-            : (modelSelect?.value || '');
+        const model = getSelectedModel();
         const statusEl = document.getElementById('test-connection-status');
         const testBtn = document.getElementById('test-connection-btn');
 
@@ -352,6 +554,9 @@
                         statusEl.textContent = result.data.message || 'Ollama reachable';
                         statusEl.className = 'test-connection-status success';
                     }
+                    fetchProviderModels({ force: true, autoSelectDefault: !getSelectedModel() }).catch(function(err) {
+                        console.error('Error loading Ollama models after test:', err);
+                    });
                 } else {
                     connectionTestPassed = false;
                     const providerErr = result.data?.provider_error || result.message || 'Cannot reach Ollama';
@@ -405,7 +610,10 @@
                     statusEl.textContent = result.data.message || 'Connection successful';
                     statusEl.className = 'test-connection-status success';
                 }
-                } else {
+                fetchProviderModels({ force: true, autoSelectDefault: !getSelectedModel() }).catch(function(err) {
+                    console.error('Error loading models after test:', err);
+                });
+            } else {
                     connectionTestPassed = false;
                     const providerErr = result.message || result.data?.message || result.data?.provider_error || 'Connection test failed';
                     const msg = formatSaveError(providerErr);
@@ -505,61 +713,25 @@
 
     function updateProviderModels() {
         const providerSelect = document.getElementById('connection-provider');
-        const modelSelect = document.getElementById('connection-model');
-        const modelCustom = document.getElementById('connection-model-custom');
-        if (!providerSelect || !modelSelect) return;
-
-        const provider = providerSelect.value;
+        const provider = providerSelect ? providerSelect.value : '';
         if (!provider) {
-            modelSelect.innerHTML = '<option value="">Default</option>';
-            if (modelCustom) modelCustom.style.display = 'none';
+            resetModelPicker();
             return;
         }
 
-        const providers = providersCache;
-        if (!providers) {
-            fetch(birklyApiUrl('/api/ai_connections.php?action=providers'))
-                .then(r => r.json())
-                .then(result => {
-                    if (result.status === 'ok') {
-                        providersCache = result.data.providers;
-                        populateModels(provider);
-                    }
-                })
-                .catch(err => console.error('Error loading models:', err));
-            return;
-        }
-        populateModels(provider);
-    }
-
-    function populateModels(provider) {
-        const modelSelect = document.getElementById('connection-model');
-        const modelCustom = document.getElementById('connection-model-custom');
-        if (!modelSelect || !providersCache || !providersCache[provider]) return;
-
-        const providerInfo = providersCache[provider];
-        const models = providerInfo.models || [];
-        const customModels = providerInfo.custom_models || false;
-
-        if (customModels && models.length === 0) {
-            modelSelect.style.display = 'none';
-            if (modelCustom) {
-                modelCustom.style.display = 'block';
-                modelCustom.required = true;
-            }
+        updateModelPickerVisibility(provider);
+        if (canFetchModelsForProvider(provider)) {
+            fetchProviderModels({ autoSelectDefault: true }).catch(function(err) {
+                console.error('Error loading models:', err);
+            });
         } else {
-            modelSelect.style.display = 'block';
-            if (modelCustom) {
-                modelCustom.style.display = 'none';
-                modelCustom.required = false;
-            }
-            modelSelect.innerHTML = '<option value="">Default</option>' +
-                models.map(model => `<option value="${escapeHtml(model)}">${escapeHtml(model)}</option>`).join('');
-
-            if (customModels && modelCustom) {
-                modelCustom.style.display = 'block';
-                modelCustom.placeholder = 'Or enter custom model name';
-                modelCustom.required = false;
+            resetModelPicker();
+            if (provider !== 'custom') {
+                setModelPickerStatus(
+                    canFetchModelsWithoutKey(provider)
+                        ? 'Loading models…'
+                        : 'Enter your API key, then test the connection to load models.'
+                );
             }
         }
     }
@@ -661,11 +833,7 @@
         e.preventDefault();
 
         const formData = new FormData(e.target);
-        const modelSelect = document.getElementById('connection-model');
-        const modelCustom = document.getElementById('connection-model-custom');
-        const model = modelCustom && modelCustom.style.display !== 'none'
-            ? modelCustom.value
-            : (formData.get('model') || '');
+        const model = getSelectedModel();
         const idInput = document.getElementById('connection-id');
         const connectionId = idInput ? (idInput.value || '') : '';
 
@@ -838,7 +1006,6 @@
             const providerSelect = document.getElementById('connection-provider');
             const nameInput = document.getElementById('connection-name');
             const apiUrlInput = document.getElementById('connection-api-url');
-            const modelSelect = document.getElementById('connection-model');
             const modelCustom = document.getElementById('connection-model-custom');
             const roleSelect = document.getElementById('connection-role');
             const requireApprovalCheckbox = document.getElementById('connection-require-approval');
@@ -849,28 +1016,18 @@
                 providerSelect.value = conn.provider || '';
                 providerSelect.disabled = true;
                 updateProviderFields();
-                updateProviderModels();
+                await fetchProviderModels({ force: true });
             }
 
             if (nameInput) nameInput.value = conn.name || '';
             if (apiUrlInput) apiUrlInput.value = conn.api_url || '';
 
-            if (modelSelect && modelCustom) {
-                const modelValue = conn.model || '';
-                if (modelValue) {
-                    setTimeout(() => {
-                        const option = Array.from(modelSelect.options).find(opt => opt.value === modelValue);
-                        if (option) {
-                            modelSelect.value = modelValue;
-                            modelSelect.style.display = 'block';
-                            modelCustom.style.display = 'none';
-                        } else {
-                            modelSelect.value = '';
-                            modelSelect.style.display = 'none';
-                            modelCustom.style.display = 'block';
-                            modelCustom.value = modelValue;
-                        }
-                    }, 150);
+            const modelValue = conn.model || '';
+            if (modelValue) {
+                if (modelCustom && modelCustom.style.display !== 'none') {
+                    modelCustom.value = modelValue;
+                } else {
+                    setModelPickerValue(modelValue);
                 }
             }
 
