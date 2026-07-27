@@ -485,6 +485,15 @@ function birkly_ai_presence_apply_suggestion_pro(array $draft, array $suggestion
             'full_description' => (string) ($value['full_description'] ?? ''),
             'category' => (string) ($value['category'] ?? ''),
             'pricing_model' => (string) ($value['pricing_model'] ?? ''),
+            'price_display' => (string) ($value['price_display'] ?? ''),
+            'price_source' => is_array($value['price_source'] ?? null) ? [
+                'type' => in_array(($value['price_source']['type'] ?? 'manual'), ['manual', 'cms_field', 'external'], true)
+                    ? $value['price_source']['type'] : 'manual',
+                'collection' => (string) ($value['price_source']['collection'] ?? ''),
+                'entry_id' => (string) ($value['price_source']['entry_id'] ?? ''),
+                'field' => (string) ($value['price_source']['field'] ?? ''),
+                'url' => (string) ($value['price_source']['url'] ?? ''),
+            ] : null,
             'best_for' => is_array($value['best_for'] ?? null) ? array_values(array_map('strval', $value['best_for'])) : [],
             'not_for' => is_array($value['not_for'] ?? null) ? array_values(array_map('strval', $value['not_for'])) : [],
             'claim_ids' => is_array($value['claim_ids'] ?? null) ? array_values(array_map('strval', $value['claim_ids'])) : [],
