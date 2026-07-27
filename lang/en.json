@@ -565,6 +565,8 @@
         "update_status": "Update Status",
         "updated": "Updated",
         "upload_media": "Upload Media",
+        "upload": "Upload",
+        "title_optional": "Title (optional)",
         "user_management": "User Management",
         "users": "Users",
         "users_and_roles": "Users & roles",
