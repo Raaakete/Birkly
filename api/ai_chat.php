@@ -137,8 +137,9 @@ if ($action === 'chat') {
         }
         
         // Check if current user can access this connection
-        $currentUserId = $_SESSION['user']['id'] ?? '';
-        if (!birkly_ai_user_can_access_connection($aiUser, $currentUserId)) {
+        $currentUser = $_SESSION['user'] ?? [];
+        $currentUserId = birkly_ai_resolve_session_user_id($currentUser);
+        if (!birkly_ai_user_can_access_connection($aiUser, $currentUserId, $currentUser)) {
             if (!headers_sent()) {
                 header('Content-Type: application/json');
             }
@@ -272,36 +273,14 @@ if ($action === 'chat') {
             }
         }
         
-        // Save conversation history after getting response
-        if (!empty($conversationId) && $response['success']) {
-            // Ensure storage directory exists
-            $conversationStorage = new Storage('../data/ai_conversations');
-            if (!is_dir($conversationStorage->basePath)) {
-                mkdir($conversationStorage->basePath, 0755, true);
-            }
-            
-            // Add user message and AI response to history (avoid duplicates)
-            $lastUserMsg = end($conversationHistory);
-            if (!$lastUserMsg || $lastUserMsg['role'] !== 'user' || $lastUserMsg['content'] !== $message) {
-                $conversationHistory[] = ['role' => 'user', 'content' => $message];
-            }
-            $conversationHistory[] = ['role' => 'assistant', 'content' => $response['message']];
-            
-            // Keep only last 10 messages to avoid token limits and improve speed
-            if (count($conversationHistory) > 10) {
-                $conversationHistory = array_slice($conversationHistory, -10);
-            }
-            
-            // Save conversation
-            $conversationData = [
-                'id' => $conversationId,
-                'ai_connection_id' => $aiConnectionId,
-                'user_id' => $currentUserId,
-                'messages' => $conversationHistory,
-                'updated_at' => date('c')
-            ];
-            $conversationStorage->write($conversationId . '.json', $conversationData);
-        }
+        // Save conversation history after the full response is finalized (see ai_chat_persist_conversation)
+        $chatPersistContext = [
+            'conversation_id' => $conversationId,
+            'ai_connection_id' => $aiConnectionId,
+            'user_id' => $currentUserId,
+            'user_message' => $message,
+            'history' => &$conversationHistory,
+        ];
         
         if ($response['success']) {
             // Check if response contains action requests
@@ -710,7 +689,7 @@ if ($action === 'chat') {
             $writeActions = [];
             foreach ($actions as $action) {
                 $actionType = $action['type'] ?? '';
-                if (in_array($actionType, ['read_entry', 'list_entries', 'list_collections', 'list_media', 'read_settings', 'list_users', 'read_user', 'read_collection', 'read_media', 'list_pages', 'read_page', 'list_activity', 'list_roles', 'read_role', 'list_plugins', 'list_project_files', 'read_project_file', 'get_project_info'], true)) {
+                if (birkly_ai_is_read_action($actionType)) {
                     $readActions[] = $action;
                 } else {
                     $writeActions[] = $action;
@@ -1135,10 +1114,17 @@ if ($action === 'chat') {
             if (is_string($requireApproval)) {
                 $requireApproval = ($requireApproval === '1' || $requireApproval === 'true' || $requireApproval === 'yes');
             }
+            // Admin-role connections skip approval when explicitly configured permission-free
+            if (($aiUser['role'] ?? '') === 'admin' && ($aiUser['require_approval'] ?? null) === false) {
+                $requireApproval = false;
+            }
             error_log("require_approval setting: " . ($requireApproval ? 'true' : 'false') . " (raw: " . var_export($aiUser['require_approval'] ?? 'not set', true) . ")");
             
             if (!empty($actions)) {
                 if ($requireApproval) {
+                    if (trim((string) ($response['message'] ?? '')) === '') {
+                        $response['message'] = ai_chat_summarize_pending_actions($actions);
+                    }
                     // Create approval requests for each action
                     $approvalIds = [];
                     $approvalStorage = new Storage('../data/ai_approvals');
@@ -1195,7 +1181,7 @@ if ($action === 'chat') {
                             'requires_approval' => true,
                             'read_data' => $readData,
                         ],
-                    ], $streamActive);
+                    ], $streamActive, $chatPersistContext);
                 } else {
                     // Execute actions directly without approval
                     $executedActions = [];
@@ -1237,7 +1223,7 @@ if ($action === 'chat') {
                             'has_errors' => $hasErrors,
                             'read_data' => $readData,
                         ],
-                    ], $streamActive);
+                    ], $streamActive, $chatPersistContext);
                 }
             } else {
                 // No write actions - just return the response with read data
@@ -1257,7 +1243,7 @@ if ($action === 'chat') {
                         'requires_approval' => false,
                         'read_data' => $readData,
                     ],
-                ], $streamActive);
+                ], $streamActive, $chatPersistContext);
             }
         } else {
             ai_chat_emit_response([
@@ -2052,12 +2038,79 @@ function birkly_ai_sse_send(string $event, array $data): void
 }
 
 /**
+ * Summarize queued write actions when the model returned no text.
+ *
+ * @param list<array<string, mixed>> $actions
+ */
+function ai_chat_summarize_pending_actions(array $actions): string
+{
+    $lines = [];
+    foreach ($actions as $action) {
+        $lines[] = '• ' . (string) ($action['description'] ?? $action['type'] ?? 'Action');
+    }
+    return "I've prepared the following for your review:\n\n" . implode("\n", $lines);
+}
+
+/**
+ * Persist conversation after the final assistant message is known.
+ */
+function ai_chat_persist_conversation(
+    string $conversationId,
+    string $aiConnectionId,
+    string $userId,
+    array $conversationHistory,
+    string $userMessage,
+    string $assistantMessage
+): void {
+    if ($conversationId === '') {
+        return;
+    }
+
+    $conversationStorage = new Storage('../data/ai_conversations');
+    if (!is_dir($conversationStorage->basePath)) {
+        mkdir($conversationStorage->basePath, 0755, true);
+    }
+
+    $history = $conversationHistory;
+    $lastUser = end($history);
+    if (!$lastUser || ($lastUser['role'] ?? '') !== 'user' || ($lastUser['content'] ?? '') !== $userMessage) {
+        $history[] = ['role' => 'user', 'content' => $userMessage];
+    }
+    if (trim($assistantMessage) !== '') {
+        $history[] = ['role' => 'assistant', 'content' => $assistantMessage];
+    }
+    if (count($history) > 10) {
+        $history = array_slice($history, -10);
+    }
+
+    $conversationStorage->write($conversationId . '.json', [
+        'id' => $conversationId,
+        'ai_connection_id' => $aiConnectionId,
+        'user_id' => $userId,
+        'messages' => $history,
+        'updated_at' => date('c'),
+    ]);
+}
+
+/**
  * Emit final chat response as JSON or SSE done event.
  *
  * @param array<string,mixed> $payload
+ * @param array<string,mixed>|null $persistContext
  */
-function ai_chat_emit_response(array $payload, bool $streaming): void
+function ai_chat_emit_response(array $payload, bool $streaming, ?array $persistContext = null): void
 {
+    if ($persistContext !== null && ($payload['status'] ?? '') === 'ok') {
+        ai_chat_persist_conversation(
+            (string) ($persistContext['conversation_id'] ?? ''),
+            (string) ($persistContext['ai_connection_id'] ?? ''),
+            (string) ($persistContext['user_id'] ?? ''),
+            is_array($persistContext['history'] ?? null) ? $persistContext['history'] : [],
+            (string) ($persistContext['user_message'] ?? ''),
+            (string) (($payload['data']['response'] ?? '') ?: '')
+        );
+    }
+
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
