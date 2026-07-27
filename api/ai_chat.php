@@ -791,7 +791,7 @@ if ($action === 'chat') {
                             $hasSuccessfulReads = true;
                             
                             // AUTO-CHAIN: If user asked about entry counts and we just got collections, auto-generate list_entries for each
-                            if ($actionData['type'] === 'list_collections' && isset($result['data']['collections'])) {
+                            if ($actionData['type'] === 'list_collections' && is_array($result['data']['collections'] ?? null)) {
                                 $messageLower = strtolower($message);
                                 if (preg_match('/\b(which|what|how many|count|most|least|largest|smallest).*(collection|entry|entries)/i', $messageLower) || 
                                     preg_match('/\b(collection|entry|entries).*(most|least|largest|smallest|count|how many)/i', $messageLower)) {
@@ -866,7 +866,7 @@ if ($action === 'chat') {
                 
                 // First, extract collection names from list_collections result
                 foreach ($readData as $readResult) {
-                    if ($readResult['success'] ?? false && isset($readResult['data']['collections'])) {
+                    if (($readResult['success'] ?? false) && is_array($readResult['data']['collections'] ?? null)) {
                         foreach ($readResult['data']['collections'] as $coll) {
                             $slug = $coll['slug'] ?? '';
                             if ($slug) {
@@ -878,7 +878,7 @@ if ($action === 'chat') {
                 
                 // Then, extract entry counts from list_entries results (collection slug is now in result data)
                 foreach ($readData as $readResult) {
-                    if ($readResult['success'] ?? false && isset($readResult['data']['entries'])) {
+                    if (($readResult['success'] ?? false) && is_array($readResult['data']['entries'] ?? null)) {
                         $collection = $readResult['data']['collection'] ?? '';
                         if ($collection) {
                             $entryCounts[$collection] = count($readResult['data']['entries']);
@@ -1051,7 +1051,7 @@ if ($action === 'chat') {
                             
                             // Extract collection names
                             foreach ($readData as $readResult) {
-                                if ($readResult['success'] ?? false && isset($readResult['data']['collections'])) {
+                                if (($readResult['success'] ?? false) && is_array($readResult['data']['collections'] ?? null)) {
                                     foreach ($readResult['data']['collections'] as $coll) {
                                         $slug = $coll['slug'] ?? '';
                                         if ($slug) {
@@ -1063,7 +1063,7 @@ if ($action === 'chat') {
                             
                     // Extract entry counts - collection slug is now stored in the result data
                     foreach ($readData as $readResult) {
-                        if ($readResult['success'] ?? false && isset($readResult['data']['entries'])) {
+                        if (($readResult['success'] ?? false) && is_array($readResult['data']['entries'] ?? null)) {
                             $collection = $readResult['data']['collection'] ?? '';
                             if ($collection) {
                                 $entryCounts[$collection] = count($readResult['data']['entries']);
