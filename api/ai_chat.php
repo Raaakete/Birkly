@@ -108,14 +108,16 @@ if ($action === 'chat') {
         }
         
         $aiConnectionId = $input['ai_connection_id'] ?? '';
-        $message = $input['message'] ?? '';
+        $message = trim((string) ($input['message'] ?? ''));
+        $chatAttachments = birkly_ai_normalize_chat_attachments($input['attachments'] ?? []);
+        $message = birkly_ai_message_with_document_attachments($message, $chatAttachments);
         $conversationId = $input['conversation_id'] ?? '';
         $pageContext = birkly_ai_normalize_page_context($input['page_context'] ?? null);
         $wantStream = !empty($input['stream']);
         $streamActive = false;
         $preResolvedActions = [];
         
-        if (empty($aiConnectionId) || empty($message)) {
+        if (empty($aiConnectionId) || ($message === '' && $chatAttachments === [])) {
             if (!headers_sent()) {
                 header('Content-Type: application/json');
             }
@@ -181,6 +183,21 @@ if ($action === 'chat') {
         
         // Build system prompt
         $systemPrompt = buildSystemPrompt($systemContext, $aiUser);
+
+        $chatImageAttachments = birkly_ai_chat_image_attachments($chatAttachments);
+        if ($chatImageAttachments !== []) {
+            $caps = birkly_ai_connection_capabilities($aiUser);
+            if (empty($caps['vision'])) {
+                if (!headers_sent()) {
+                    header('Content-Type: application/json');
+                }
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'This connection does not support image attachments. Switch to a vision-capable provider (OpenRouter, OpenAI, Gemini, Anthropic).',
+                ]);
+                exit;
+            }
+        }
         
         // Load conversation history if conversationId is provided
         $conversationHistory = [];
@@ -301,7 +318,8 @@ if ($action === 'chat') {
                 $aiUser['api_url'] ?? '',
                 $conversationHistory,
                 $aiUser,
-                $streamCallback
+                $streamCallback,
+                $chatAttachments
             );
         } else {
             // Create a fake response that will trigger fallback immediately
@@ -1740,10 +1758,11 @@ function buildSystemPromptOld($context, $aiUser) {
 // End of old complex prompt
 
 // Call AI provider API
-function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage, $conversationId = '', $apiUrl = '', $conversationHistory = [], $aiUser = null, $onToken = null) {
+function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage, $conversationId = '', $apiUrl = '', $conversationHistory = [], $aiUser = null, $onToken = null, array $attachments = []) {
     $providers = getSupportedAiProviders();
     $providerInfo = $providers[$provider] ?? null;
     $providerType = $providerInfo['type'] ?? $provider;
+    $imageAttachments = birkly_ai_chat_image_attachments($attachments);
 
     $openAiTools = [];
     if (is_array($aiUser)) {
@@ -1756,17 +1775,17 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
         case 'openai':
         case 'openrouter':
             $url = $apiUrl ?: ($providerInfo['api_url'] ?? 'https://api.openai.com/v1/chat/completions');
-            if ($onToken && empty($openAiTools)) {
+            if ($onToken && empty($openAiTools) && $imageAttachments === []) {
                 return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments);
         case 'anthropic':
-            return callAnthropic($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
+            return callAnthropic($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory, $imageAttachments);
         case 'google':
-            return callGoogle($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
+            return callGoogle($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory, $imageAttachments);
         case 'ollama':
             $url = $apiUrl ?: ($providerInfo['api_url'] ?? 'http://localhost:11434/api/chat');
-            if ($onToken) {
+            if ($onToken && $imageAttachments === []) {
                 return callOllamaStream($url, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory, $onToken);
             }
             return callOllama($url, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory);
@@ -1778,10 +1797,10 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             if ($resolvedModel === '') {
                 return ['success' => false, 'message' => 'Model required for custom provider'];
             }
-            if ($onToken && empty($openAiTools)) {
+            if ($onToken && empty($openAiTools) && $imageAttachments === []) {
                 return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments);
         default:
             return ['success' => false, 'message' => 'Unsupported provider'];
     }
@@ -1821,7 +1840,7 @@ function executeActionDirectly($actionData, $aiUser) {
 }
 
 // OpenAI API call (also works for OpenRouter and OpenAI-compatible APIs)
-function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = []) {
+function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = []) {
     $apiLabel = birkly_ai_compatible_api_label($url);
     // Build messages array with conversation history
     $messages = [
@@ -1837,8 +1856,11 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
         $messages[] = $historyMsg;
     }
     
-    // Add current user message
-    $messages[] = ['role' => 'user', 'content' => $userMessage];
+    // Add current user message (multimodal when images attached)
+    $messages[] = [
+        'role' => 'user',
+        'content' => birkly_ai_build_openai_user_content($userMessage, $imageAttachments),
+    ];
     
     $data = [
         'model' => $model,
@@ -1921,7 +1943,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
 }
 
 // Anthropic API call
-function callAnthropic($apiKey, $model, $systemPrompt, $userMessage, $conversationHistory = []) {
+function callAnthropic($apiKey, $model, $systemPrompt, $userMessage, $conversationHistory = [], array $imageAttachments = []) {
     $url = 'https://api.anthropic.com/v1/messages';
     
     // Build messages array with conversation history
@@ -1937,7 +1959,10 @@ function callAnthropic($apiKey, $model, $systemPrompt, $userMessage, $conversati
     }
     
     // Add current user message
-    $messages[] = ['role' => 'user', 'content' => $userMessage];
+    $messages[] = [
+        'role' => 'user',
+        'content' => birkly_ai_build_anthropic_user_content($userMessage, $imageAttachments),
+    ];
     
     $data = [
         'model' => $model,
@@ -1980,7 +2005,7 @@ function callAnthropic($apiKey, $model, $systemPrompt, $userMessage, $conversati
 }
 
 // Google Gemini API call
-function callGoogle($apiKey, $model, $systemPrompt, $userMessage, $conversationHistory = []) {
+function callGoogle($apiKey, $model, $systemPrompt, $userMessage, $conversationHistory = [], array $imageAttachments = []) {
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent?key=' . $apiKey;
     
     // Build conversation context
@@ -1996,17 +2021,31 @@ function callGoogle($apiKey, $model, $systemPrompt, $userMessage, $conversationH
     }
     
     // Add current user message
-    $conversationText .= "User: " . $userMessage;
-    
-    $data = [
-        'contents' => [
-            [
-                'parts' => [
-                    ['text' => $conversationText]
-                ]
-            ]
-        ]
-    ];
+    $currentText = trim($userMessage) !== '' ? $userMessage : 'Please analyze the attached image(s).';
+    $conversationText .= "User: " . $currentText;
+
+    if ($imageAttachments !== []) {
+        $parts = [['text' => $conversationText]];
+        foreach ($imageAttachments as $img) {
+            $parts[] = [
+                'inline_data' => [
+                    'mime_type' => (string) ($img['mime'] ?? 'image/png'),
+                    'data' => (string) ($img['base64'] ?? ''),
+                ],
+            ];
+        }
+        $data = ['contents' => [['parts' => $parts]]];
+    } else {
+        $data = [
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $conversationText],
+                    ],
+                ],
+            ],
+        ];
+    }
     
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

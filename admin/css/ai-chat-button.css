@@ -980,6 +980,12 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #7CE3BF) 18%, transparent);
 }
 
+.ai-chat-composer-box.is-drag-over {
+    border-color: color-mix(in srgb, var(--color-primary, #7CE3BF) 70%, var(--border-color, #e5e7eb));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #7CE3BF) 24%, transparent);
+    background: color-mix(in srgb, var(--color-primary, #7CE3BF) 6%, var(--bg-elevated, #ffffff));
+}
+
 .ai-chat-composer-box textarea {
     width: 100%;
     box-sizing: border-box;
@@ -1196,6 +1202,13 @@
     background: var(--bg-secondary, #f3f4f6);
     font-size: 0.75rem;
     color: var(--text-primary, #20221D);
+    max-width: 200px;
+}
+
+.ai-chat-attachment-chip > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ai-chat-attachment-chip button {
