@@ -371,7 +371,8 @@ if ($action === 'list_entries') {
             $transformedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $transformedEntries);
         }
         
-        respond(['status'=>'ok','data'=>['entries'=>array_values($transformedEntries)]]);
+        require_once __DIR__ . '/../core/entry_slug.php';
+        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($transformedEntries))]]);
     } else {
         // Apply permission filtering if user management plugin is installed and active
         if (function_exists('get_plugin_state') && get_plugin_state('user_management')
@@ -384,7 +385,8 @@ if ($action === 'list_entries') {
         }
         
         // No multi-language, return entries as-is
-        respond(['status'=>'ok','data'=>['entries'=>array_values($publishedEntries)]]);
+        require_once __DIR__ . '/../core/entry_slug.php';
+        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($publishedEntries))]]);
     }
 }
 
@@ -392,6 +394,11 @@ if ($action === 'get_entry') {
     $collection = $input['collection'] ?? '';
     $id = $input['id'] ?? '';
     $entryId = $input['entry'] ?? '';
+    // Entry id alias: ?id= on detail pages (when not collection id)
+    if ($entryId === '' && $id !== '' && $collection !== '') {
+        $entryId = $id;
+        $id = '';
+    }
     $slug = $input['slug'] ?? $_GET['slug'] ?? '';
     $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en'; // Default to 'en'
     $dir = '';
@@ -425,12 +432,13 @@ if ($action === 'get_entry') {
     }
     
     // Find entry by slug or ID
+    require_once __DIR__ . '/../core/entry_slug.php';
     $data = null;
     if ($slug) {
         $entries = $storage->list("collections/$dir/entries");
         foreach ($entries as $entryFile) {
             $entryData = $storage->read("collections/$dir/entries/$entryFile");
-            if ($entryData && isset($entryData['slug']) && $entryData['slug'] === $slug) {
+            if ($entryData && birkly_entry_matches_slug($entryData, $slug)) {
                 $data = $entryData;
                 break;
             }
@@ -442,6 +450,8 @@ if ($action === 'get_entry') {
     if (!$data || ($data['status'] ?? 'draft') !== 'published') {
         respond(['status'=>'error','message'=>'Entry not found or not published']);
     }
+    
+    $data = birkly_public_entry_with_effective_slug($data);
     
     // Calculate likes_count and comments_count for social_posts collection
     $collectionSlug = $collectionMeta['slug'] ?? '';

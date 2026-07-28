@@ -16,6 +16,7 @@ Read this when the user's request spans multiple areas or you are unsure which p
 |------------|-------------------------------|
 | `content-model` | Collections, entries, schema, fields, publishing, slugs |
 | `site-building` | Website, portfolio, landing page, `project/` HTML/CSS |
+| `web-project-patterns` | Flexible site wiring: list/detail pages, schema decisions, CMS-to-HTML, common bugs |
 | `templating` | Template syntax, loops, `{from…get}`, client rendering |
 | `public-forms` | Contact forms, newsletter signup, external submission, `{entry for}` |
 | `sub-collections` | Nested content: comments, reviews, line items, nested sub-collections |
@@ -38,7 +39,7 @@ Plugin topics (`commerce`, `automation`, etc.) also resolve from active plugin `
 
 ```
 Build a public website?
-├─ Custom HTML/CSS → site-building (+ templating if dynamic)
+├─ Custom HTML/CSS → web-project-patterns + site-building (+ templating)
 ├─ Simple admin pages only → cms-pages
 └─ Forms on the site → public-forms (+ content-model for schema)
 
@@ -85,4 +86,7 @@ Install flow: `plugins-overview` → `list_plugins` → admin Marketplace or `ac
 - Using `create_page` when user wanted `project/` custom site
 - Using `create_entry` fallback on "yes/proceed" during site builds
 - Wrong templating syntax (`{% for %}`, `{{ }}`) — use Birkly tags (`{for each entry in 'slug'}`)
+- Detail page loops entire collection — use URL slug pattern (`?collection=&slug=`)
+- Template tags without `birkly-client.js` — raw `{…}` visible in browser
+- Empty collection schema (`fields: []`) then templates reference custom fields
 - Confusing `entry_method` values — runtime uses `public_api` for public submission (not `public_submit`)
