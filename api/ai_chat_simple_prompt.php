@@ -3,6 +3,8 @@
  * System prompt for Birkly AI chat — conversational assistant with CMS context.
  */
 
+require_once __DIR__ . '/../core/ai_playbooks.php';
+
 function buildSystemPromptSimple($context, $aiUser) {
     require_once __DIR__ . '/../core/ai_tool_registry.php';
 
@@ -47,6 +49,8 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Manage Users: " . ($canManageUsers ? "YES" : "NO") . "\n\n";
 
     $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
+
+    $prompt .= birkly_ai_playbooks_prompt_section() . "\n\n";
 
     if (!empty($context['collections'])) {
         $prompt .= "AVAILABLE COLLECTIONS:\n";
