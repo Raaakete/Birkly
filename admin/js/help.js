@@ -106,6 +106,7 @@
             topic.section || '',
             topic.description || '',
             topic.docs_path || '',
+            topic.ai_topic || '',
             ...(topic.keywords || []),
         ].join(' ').toLowerCase();
     }
@@ -175,12 +176,16 @@
             if (source) {
                 const base = manifest.docs_base_url || 'https://docs.birkly.com';
                 const docsPath = topic.docs_path || '';
+                const parts = [];
                 if (docsPath) {
                     const docsUrl = base.replace(/\/$/, '') + '/' + docsPath;
-                    source.innerHTML = 'Source: <a href="' + escapeHtml(docsUrl) + '" target="_blank" rel="noopener">Birkly-Docs — ' + escapeHtml(topic.title) + '</a>';
-                } else {
-                    source.textContent = '';
+                    parts.push('Source: <a href="' + escapeHtml(docsUrl) + '" target="_blank" rel="noopener">Birkly-Docs — ' + escapeHtml(topic.title) + '</a>');
                 }
+                if (topic.ai_topic) {
+                    const aiSlug = escapeHtml(topic.ai_topic);
+                    parts.push('AI playbook: <code>' + aiSlug + '</code> — load via admin AI <code>read_birkly_docs</code> or MCP <code>birkly://docs/' + aiSlug + '</code>');
+                }
+                source.innerHTML = parts.join(' · ');
             }
         } catch (err) {
             content.innerHTML = '<div class="alert alert-info"><p>Could not load topic: ' + escapeHtml(err.message) + '</p></div>';

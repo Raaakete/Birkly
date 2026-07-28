@@ -146,6 +146,9 @@ function birkly_merge_help_topics(array $localTopics, array $liveTopics): array
             if (isset($live['version'])) {
                 $topic['version'] = $live['version'];
             }
+            if (!empty($live['ai_topic'])) {
+                $topic['ai_topic'] = (string) $live['ai_topic'];
+            }
             $topic['docs_source'] = 'live';
         }
         $merged[] = $topic;

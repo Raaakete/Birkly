@@ -79,6 +79,24 @@ assert_true(
     $patterns !== null && str_contains($patterns['text'], 'birkly-client.js')
 );
 
+$siteBuilding = readBirklyDocsTopic('site-building');
+assert_true(
+    'site-building from playbooks folder',
+    is_array($siteBuilding) && str_contains((string) ($siteBuilding['text'] ?? ''), 'Build order')
+);
+
+$events = readBirklyDocsTopic('events');
+assert_true(
+    'events playbook has failure modes',
+    is_array($events) && str_contains((string) ($events['text'] ?? ''), 'Common failure modes')
+);
+
+$publicFormsBad = readBirklyDocsTopic('public-forms');
+assert_true(
+    'public-forms has known bad patterns',
+    is_array($publicFormsBad) && str_contains((string) ($publicFormsBad['text'] ?? ''), 'Known bad patterns')
+);
+
 $catalog = birkly_ai_playbook_catalog();
 assert_true('playbook catalog has playbooks-index', isset($catalog['playbooks-index']));
 assert_true('playbook catalog has ai-quality-guide', isset($catalog['ai-quality-guide']));
