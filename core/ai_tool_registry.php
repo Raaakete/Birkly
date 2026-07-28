@@ -32,8 +32,8 @@ function birkly_ai_tool_definitions(): array
         'create_sub_entry' => ['name' => 'create_sub_entry', 'description' => 'Create a new sub-entry under a parent entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Parent collection slug'], 'entry_id' => ['type' => 'string', 'description' => 'Parent entry ID'], 'sub_collection' => ['type' => 'string', 'description' => 'Sub-collection slug'], 'data' => ['type' => 'object', 'description' => 'Sub-entry field values']], 'required' => ['collection', 'entry_id', 'sub_collection']]],
         'update_sub_entry' => ['name' => 'update_sub_entry', 'description' => 'Update an existing sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
         'delete_sub_entry' => ['name' => 'delete_sub_entry', 'description' => 'Delete a sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
-        'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array']], 'required' => ['name', 'slug']]],
-        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata or field schema. REQUIRED: slug (use exact slug from list_collections). Put fields in top-level "fields" array.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema']], 'required' => ['slug']]],
+        'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['name', 'slug']]],
+        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata or field schema. REQUIRED: slug (use exact slug from list_collections). Put fields in top-level "fields" array.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['slug']]],
         'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'collection' => ['type' => 'string']], 'required' => ['slug']]],
         'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Put field values (title, text, etc.) at top level or in data. Use exact field names from collection schema.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'status' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
         'update_entry' => ['name' => 'update_entry', 'description' => 'Update an existing entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'id']]],
@@ -96,6 +96,10 @@ function birkly_ai_is_read_action(string $actionType): bool
 
 function birkly_ai_normalize_tool_input_schema(array $schema): array
 {
+    if (($schema['type'] ?? '') === 'array' && !isset($schema['items'])) {
+        $schema['items'] = birkly_ai_tool_schema_field_definition_item();
+    }
+
     if (isset($schema['properties']) && is_array($schema['properties']) && $schema['properties'] === []) {
         $schema['properties'] = (object) [];
     } elseif (isset($schema['properties']) && is_array($schema['properties'])) {
@@ -105,7 +109,28 @@ function birkly_ai_normalize_tool_input_schema(array $schema): array
             }
         }
     }
+
+    if (isset($schema['items']) && is_array($schema['items'])) {
+        $schema['items'] = birkly_ai_normalize_tool_input_schema($schema['items']);
+    }
+
     return $schema;
+}
+
+/** JSON Schema fragment for one collection field definition in create/update_collection. */
+function birkly_ai_tool_schema_field_definition_item(): array
+{
+    return [
+        'type' => 'object',
+        'properties' => [
+            'name' => ['type' => 'string', 'description' => 'Field machine name'],
+            'type' => ['type' => 'string', 'description' => 'Field type, e.g. text, textarea, image, number'],
+            'label' => ['type' => 'string', 'description' => 'Human-readable label'],
+            'required' => ['type' => 'boolean', 'description' => 'Whether the field is required'],
+        ],
+        'required' => ['name', 'type'],
+        'additionalProperties' => true,
+    ];
 }
 
 function birkly_ai_tools_openai_format(array $aiUser): array
