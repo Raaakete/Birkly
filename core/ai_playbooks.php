@@ -396,7 +396,7 @@ function ai_chat_message_implies_execute_intent(string $message): bool
     }
 
     return (bool) preg_match(
-        '/\b(yes[, ]*(please|go ahead)?|execute|implement( all| these| them)?|apply( all| these| them)?|do (it|them|all)|go ahead|proceed|continue|start (now|executing)|run (it|them|all)|make (it|them) happen|one go|in sequence|all of them)\b/i',
+        '/\b(yes[, ]*(please|go ahead)?|execute|implement( all| these| them)?|apply( all| these| them)?|do (it|them|all|step|that)|go ahead|proceed|continue|start (now|executing|step|with)|run (it|them|all)|make (it|them) happen|one go|in sequence|all of them|tackle( it| them| step| that| this| now)?|work on step|do step|start step|step \d+)\b/i',
         $current
     );
 }

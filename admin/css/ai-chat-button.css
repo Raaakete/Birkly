@@ -869,6 +869,73 @@
     animation: pulse 1.5s ease-in-out infinite;
 }
 
+.ai-chat-activity {
+    flex-shrink: 0;
+    padding: var(--space-2, 0.5rem) var(--space-4, 1rem) 0;
+}
+
+.ai-chat-activity-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-2, 0.5rem) 0;
+}
+
+.ai-chat-activity-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--accent-primary, #6366f1);
+    animation: ai-chat-sparkle 1.8s ease-in-out infinite;
+}
+
+.ai-chat-activity-icon svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.ai-chat-activity-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ai-chat-activity-status {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #72746F);
+    line-height: 1.4;
+}
+
+.ai-chat-activity-tip {
+    font-size: 0.78rem;
+    color: var(--text-tertiary, #9ca3af);
+    line-height: 1.45;
+}
+
+.ai-chat-activity-tip a {
+    color: var(--accent-primary, #6366f1);
+    text-decoration: none;
+}
+
+.ai-chat-activity-tip a:hover {
+    text-decoration: underline;
+}
+
+@keyframes ai-chat-sparkle {
+    0%, 100% {
+        opacity: 0.55;
+        transform: scale(0.92) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05) rotate(8deg);
+    }
+}
+
 /* Approval Cards */
 .ai-chat-message-approval {
     margin: 12px 0;

@@ -787,6 +787,15 @@
                         </div>
                     </div>
                 </div>
+                <div class="ai-chat-activity" id="ai-chat-activity" hidden aria-live="polite">
+                    <div class="ai-chat-activity-inner">
+                        <span class="ai-chat-activity-icon" aria-hidden="true">${icon('sparkle', { size: 18 })}</span>
+                        <div class="ai-chat-activity-copy">
+                            <span class="ai-chat-activity-status" id="ai-chat-activity-status">Waiting for AI…</span>
+                            <span class="ai-chat-activity-tip" id="ai-chat-activity-tip"></span>
+                        </div>
+                    </div>
+                </div>
                 <div class="ai-chat-composer">
                     <div class="ai-chat-attachment-list" id="ai-chat-attachment-list" hidden></div>
                     <div class="ai-chat-composer-box">
@@ -1818,6 +1827,144 @@
         if (cancelIcon) cancelIcon.style.display = streaming ? '' : 'none';
     }
 
+    const CHAT_ACTIVITY_STATUS_CYCLE = [
+        'Waiting for AI…',
+        'AI is thinking…',
+        'AI is working…',
+        'Still working…',
+    ];
+
+    const CHAT_ACTIVITY_TIPS = [
+        {
+            text: 'Did you know Birkly can run with MySQL or PostgreSQL instead of flat files?',
+            href: 'https://docs.birkly.com/content/01-admin/settings.html#storage-backends',
+            label: 'Learn more',
+        },
+        {
+            text: 'The AI can read and edit files in your project/ folder for site builds.',
+            href: 'https://docs.birkly.com/content/03-ai/ai-assistant.html',
+            label: 'Learn more',
+        },
+        {
+            text: 'You can attach images and documents to chat messages for context.',
+        },
+        {
+            text: 'Use the Approvals tab to review AI-proposed changes before they run.',
+            href: 'https://docs.birkly.com/content/03-ai/approvals.html',
+            label: 'Learn more',
+        },
+        {
+            text: 'Collections and entries live under content/ — back them up regularly.',
+            href: 'https://docs.birkly.com/content/07-operations/backup-and-restore.html',
+            label: 'Learn more',
+        },
+        {
+            text: 'Switch models from the sparkle menu in the composer for faster or smarter replies.',
+        },
+        {
+            text: 'Birkly templates use {for each entry in \'collection\'} syntax for dynamic pages.',
+            href: 'https://docs.birkly.com/content/02-content/templating.html',
+            label: 'Learn more',
+        },
+    ];
+
+    let chatActivityStatusTimer = null;
+    let chatActivityTipTimer = null;
+    let chatActivityStatusIndex = 0;
+    let chatActivityTipIndex = 0;
+    let chatActivityServerStatus = '';
+
+    function stripChatStatusMarkdown(text) {
+        return String(text || '')
+            .replace(/\*\*([^*]+)\*\*/g, '$1')
+            .replace(/[_*`]/g, '')
+            .trim();
+    }
+
+    function renderChatActivityTip(tip) {
+        if (!tip) return '';
+        const label = tip.label ? escapeHtml(tip.label) : 'Learn more';
+        if (tip.href) {
+            return escapeHtml(tip.text) + ' <a href="' + escapeHtml(tip.href) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>.';
+        }
+        return escapeHtml(tip.text) + '.';
+    }
+
+    function rotateChatActivityStatus() {
+        if (chatActivityServerStatus) return;
+        const statusEl = document.getElementById('ai-chat-activity-status');
+        if (!statusEl) return;
+        chatActivityStatusIndex = (chatActivityStatusIndex + 1) % CHAT_ACTIVITY_STATUS_CYCLE.length;
+        statusEl.textContent = CHAT_ACTIVITY_STATUS_CYCLE[chatActivityStatusIndex];
+    }
+
+    function rotateChatActivityTip() {
+        const tipEl = document.getElementById('ai-chat-activity-tip');
+        if (!tipEl) return;
+        chatActivityTipIndex = (chatActivityTipIndex + 1) % CHAT_ACTIVITY_TIPS.length;
+        tipEl.innerHTML = renderChatActivityTip(CHAT_ACTIVITY_TIPS[chatActivityTipIndex]);
+    }
+
+    function showChatActivity(initialStatus) {
+        const activityEl = document.getElementById('ai-chat-activity');
+        const statusEl = document.getElementById('ai-chat-activity-status');
+        const tipEl = document.getElementById('ai-chat-activity-tip');
+        if (!activityEl || !statusEl || !tipEl) return;
+
+        chatActivityServerStatus = '';
+        chatActivityStatusIndex = 0;
+        chatActivityTipIndex = Math.floor(Math.random() * CHAT_ACTIVITY_TIPS.length);
+
+        statusEl.textContent = initialStatus || CHAT_ACTIVITY_STATUS_CYCLE[0];
+        tipEl.innerHTML = renderChatActivityTip(CHAT_ACTIVITY_TIPS[chatActivityTipIndex]);
+        activityEl.hidden = false;
+
+        clearInterval(chatActivityStatusTimer);
+        clearInterval(chatActivityTipTimer);
+        chatActivityStatusTimer = setInterval(rotateChatActivityStatus, 4500);
+        chatActivityTipTimer = setInterval(rotateChatActivityTip, 9000);
+
+        const messages = document.getElementById('ai-chat-messages');
+        if (messages) {
+            messages.scrollTop = messages.scrollHeight;
+        }
+    }
+
+    function updateChatActivityStatus(statusText) {
+        const statusEl = document.getElementById('ai-chat-activity-status');
+        const activityEl = document.getElementById('ai-chat-activity');
+        if (!statusEl || !activityEl || activityEl.hidden) return;
+
+        const cleaned = stripChatStatusMarkdown(statusText);
+        if (!cleaned) return;
+
+        chatActivityServerStatus = cleaned;
+        statusEl.textContent = cleaned;
+    }
+
+    function hideChatActivity() {
+        const activityEl = document.getElementById('ai-chat-activity');
+        if (activityEl) activityEl.hidden = true;
+        chatActivityServerStatus = '';
+        clearInterval(chatActivityStatusTimer);
+        clearInterval(chatActivityTipTimer);
+        chatActivityStatusTimer = null;
+        chatActivityTipTimer = null;
+    }
+
+    function ensureAssistantMessage(assistantRef) {
+        if (assistantRef.id) return assistantRef.id;
+        hideChatActivity();
+        assistantRef.id = addChatMessage('assistant', '', true);
+        const messageEl = document.getElementById(assistantRef.id);
+        if (messageEl) {
+            messageEl.classList.add('ai-chat-message-streaming');
+            const contentEl = messageEl.querySelector('.ai-chat-message-content');
+            if (contentEl) contentEl.innerHTML = '';
+        }
+        return assistantRef.id;
+    }
+
     function cancelChatRequest() {
         if (activeChatAbortController) {
             activeChatAbortController.abort();
@@ -1825,6 +1972,7 @@
         }
         isChatRequestInFlight = false;
         setSendButtonStreaming(false);
+        hideChatActivity();
         addChatMessage('system', 'Request cancelled.');
     }
 
@@ -1940,7 +2088,7 @@
         }
     }
 
-    async function parseSseChatResponse(response, assistantMessageId) {
+    async function parseSseChatResponse(response, assistantRef) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
@@ -1974,10 +2122,11 @@
                     continue;
                 }
                 if (eventName === 'token' && payload.content) {
+                    ensureAssistantMessage(assistantRef);
                     streamedContent += payload.content;
-                    updateStreamingMessage(assistantMessageId, streamedContent, false);
+                    updateStreamingMessage(assistantRef.id, streamedContent, false);
                 } else if (eventName === 'status' && payload.message) {
-                    updateStreamingMessage(assistantMessageId, payload.message, false);
+                    updateChatActivityStatus(payload.message);
                 } else if (eventName === 'done') {
                     finalResult = payload;
                 }
@@ -2015,15 +2164,8 @@
         pendingAttachments = [];
         renderAttachmentList();
 
-        const assistantMessageId = addChatMessage('assistant', '', true);
-        const messageEl = document.getElementById(assistantMessageId);
-        if (messageEl) {
-            messageEl.classList.add('ai-chat-message-streaming');
-            const contentEl = messageEl.querySelector('.ai-chat-message-content');
-            if (contentEl) {
-                contentEl.innerHTML = '<div class="ai-chat-loading">Thinking...</div>';
-            }
-        }
+        const assistantRef = { id: null };
+        showChatActivity('Waiting for AI…');
 
         activeChatAbortController = new AbortController();
         isChatRequestInFlight = true;
@@ -2054,7 +2196,7 @@
 
             if (!response.ok) {
                 const errorText = await response.text();
-                removeChatMessage(assistantMessageId);
+                hideChatActivity();
                 lastFailedMessage = message;
                 appendConsoleLog('error', formatHttpError(response.status, errorText), { status: response.status, body: errorText });
                 addChatMessageWithRetry('error', formatHttpError(response.status, errorText));
@@ -2065,20 +2207,23 @@
             let result;
 
             if (contentType.includes('text/event-stream')) {
-                result = await parseSseChatResponse(response, assistantMessageId);
+                result = await parseSseChatResponse(response, assistantRef);
+                hideChatActivity();
                 if (!result) {
-                    removeChatMessage(assistantMessageId);
+                    if (assistantRef.id) {
+                        removeChatMessage(assistantRef.id);
+                    }
                     lastFailedMessage = message;
                     appendConsoleLog('error', 'Stream ended without a response');
                     addChatMessageWithRetry('error', 'Stream ended without a response.');
                     return;
                 }
             } else {
+                hideChatActivity();
                 const responseText = await response.text();
                 try {
                     result = JSON.parse(responseText);
                 } catch (parseError) {
-                    removeChatMessage(assistantMessageId);
                     lastFailedMessage = message;
                     appendConsoleLog('error', 'Invalid response from server', parseError.message);
                     addChatMessageWithRetry('error', 'Invalid response from server.');
@@ -2086,18 +2231,25 @@
                 }
             }
 
-            handleChatApiResult(result, assistantMessageId);
+            if (!assistantRef.id && result && (result.status === 'ok' || result.status === 'partial')) {
+                assistantRef.id = ensureAssistantMessage(assistantRef);
+            }
+
+            handleChatApiResult(result, assistantRef.id);
         } catch (error) {
+            hideChatActivity();
             if (error.name === 'AbortError') {
-                removeChatMessage(assistantMessageId);
                 return;
             }
             console.error('Error sending message:', error);
             appendConsoleLog('error', 'Error sending message: ' + error.message, { name: error.name });
-            removeChatMessage(assistantMessageId);
+            if (assistantRef.id) {
+                removeChatMessage(assistantRef.id);
+            }
             lastFailedMessage = message;
             addChatMessageWithRetry('error', 'Error sending message: ' + error.message);
         } finally {
+            hideChatActivity();
             activeChatAbortController = null;
             isChatRequestInFlight = false;
             setSendButtonStreaming(false);
