@@ -634,6 +634,7 @@ if ($action === 'rebuild_system') {
     log_security_event('system_rebuild', [
         'user' => $_SESSION['user']['email'] ?? 'unknown',
         'entries_removed' => $result['entries_removed'] ?? 0,
+        'collections_removed' => $result['collections_removed'] ?? [],
         'onboarding_files_removed' => $result['onboarding_files_removed'] ?? 0,
     ]);
 
