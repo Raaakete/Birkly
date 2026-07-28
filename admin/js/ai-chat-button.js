@@ -165,6 +165,37 @@
         return type + target + ' ' + status + err;
     }
 
+    function getSavedChatModels() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY_MODELS);
+            return raw ? JSON.parse(raw) : {};
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function getSavedChatModel(connectionId) {
+        if (!connectionId) return '';
+        const map = getSavedChatModels();
+        return map[connectionId] || '';
+    }
+
+    function saveChatModelForConnection(connectionId, modelId) {
+        if (!connectionId) return;
+        const map = getSavedChatModels();
+        if (modelId) {
+            map[connectionId] = modelId;
+        } else {
+            delete map[connectionId];
+        }
+        localStorage.setItem(STORAGE_KEY_MODELS, JSON.stringify(map));
+    }
+
+    function restoreChatModelForConnection(connectionId) {
+        chatModelOverride = getSavedChatModel(connectionId);
+        updateModelLabel();
+    }
+
     function responseHasExecutionReport(text) {
         const value = String(text || '');
         return value.indexOf('### Completed this step') !== -1
@@ -224,6 +255,7 @@
     const STORAGE_KEY_RECENT = 'ai_chat_recent_chats';
     const STORAGE_KEY_CONSOLE = 'ai_chat_console_logs';
     const STORAGE_KEY_WINDOW_OPEN = 'ai_chat_window_open';
+    const STORAGE_KEY_MODELS = 'ai_chat_model_by_connection';
     const CONSOLE_LOG_LIMIT = 200;
 
     // Initialize
@@ -914,8 +946,7 @@
         if (caps.model_picker) {
             loadChatModels();
         } else {
-            chatModelOverride = '';
-            updateModelLabel();
+            restoreChatModelForConnection(currentConnection?.id);
         }
     }
 
@@ -1095,6 +1126,7 @@
             btn.addEventListener('click', function (e) {
                 e.stopPropagation();
                 chatModelOverride = btn.getAttribute('data-model') || '';
+                saveChatModelForConnection(currentConnection?.id, chatModelOverride);
                 updateModelLabel();
                 closeModelMenu();
             });
@@ -1676,6 +1708,9 @@
 
         // If switching connections, start a new conversation
         if (switching) {
+            if (currentConnection?.id && chatModelOverride) {
+                saveChatModelForConnection(currentConnection.id, chatModelOverride);
+            }
             clearChatState();
         }
         
@@ -1685,7 +1720,7 @@
             .then(result => {
                 if (result.status === 'ok') {
                     currentConnection = result.data.connection;
-                    chatModelOverride = '';
+                    restoreChatModelForConnection(currentConnection.id);
                     if (!conversationId) {
                         conversationId = 'conv_' + Date.now();
                     }
@@ -2198,6 +2233,7 @@
             
             if (savedConnectionId && availableConnections.find(c => c.id === savedConnectionId)) {
                 currentConnection = availableConnections.find(c => c.id === savedConnectionId);
+                restoreChatModelForConnection(savedConnectionId);
                 conversationId = savedConversationId || 'conv_' + Date.now();
                 
                 // Prefer server history when conversation id exists

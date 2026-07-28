@@ -532,6 +532,69 @@ function ai_chat_sanitize_display_message(string $message): string
 }
 
 /**
+ * Extract decoded JSON objects from text using brace matching (handles nested {} in strings).
+ *
+ * @return list<array<string,mixed>>
+ */
+function ai_chat_extract_json_objects(string $text, ?string $requiredKey = null): array
+{
+    $objects = [];
+    $offset = 0;
+    $len = strlen($text);
+    while ($offset < $len) {
+        $pos = strpos($text, '{', $offset);
+        if ($pos === false) {
+            break;
+        }
+        if ($requiredKey !== null) {
+            $snippet = substr($text, $pos, min(48, $len - $pos));
+            if (stripos($snippet, '"' . $requiredKey . '"') === false) {
+                $offset = $pos + 1;
+                continue;
+            }
+        }
+        $end = ai_chat_find_json_object_end($text, $pos);
+        if ($end === null) {
+            $offset = $pos + 1;
+            continue;
+        }
+        $chunk = substr($text, $pos, $end - $pos);
+        $json = json_decode($chunk, true);
+        if (is_array($json)) {
+            $objects[] = $json;
+        }
+        $offset = $end;
+    }
+
+    return $objects;
+}
+
+/**
+ * Validate a write/read action before execution. Returns error message or null if OK.
+ */
+function birkly_ai_validate_action_before_execute(array $action): ?string
+{
+    $type = (string) ($action['type'] ?? '');
+    $data = is_array($action['data'] ?? null) ? $action['data'] : [];
+
+    if (in_array($type, ['write_project_file', 'create_project_file'], true)) {
+        $path = (string) ($data['path'] ?? '');
+        $content = (string) ($data['content'] ?? '');
+        if ($path === '') {
+            return 'write_project_file missing path';
+        }
+        if ($content === '') {
+            return 'write_project_file missing content for ' . $path;
+        }
+        if (!preg_match('#^[a-zA-Z0-9][a-zA-Z0-9_./-]*$#', $path)) {
+            return 'Invalid project file path: ' . $path;
+        }
+    }
+
+    return null;
+}
+
+/**
  * Normalize chat attachment payloads from the browser.
  *
  * @return list<array{type: string, name?: string, mime?: string, base64?: string, content?: string}>
