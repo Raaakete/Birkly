@@ -230,6 +230,12 @@ if (!empty($entries)): ?>
                             <a href="<?= htmlspecialchars($titleUrl) ?>" class="title-text">
                                 <?= htmlspecialchars($title) ?>
                             </a>
+                            <?php if (!empty($options['show_slug_meta']) && !empty($entry['slug'])): ?>
+                                <div class="entry-slug-meta">
+                                    <span>Slug:</span>
+                                    <a href="<?= htmlspecialchars($titleUrl) ?>" class="entry-slug-link"><?= htmlspecialchars($entry['slug']) ?></a>
+                                </div>
+                            <?php endif; ?>
                         </td>
 
                         <td class="cell cell-status">
