@@ -188,6 +188,7 @@ function birkly_ai_action_workflow_prompt_section(): string
         '4. create_page: include "title", "slug", and "content" (HTML with {for each entry in \'slug\'} loops).',
         '5. Do NOT pass a nested collection object instead of a slug string.',
         '6. When user says "proceed" / "yes": execute the planned steps — do not re-ask. Use slugs from AVAILABLE COLLECTIONS below.',
+        '7. delete_project_file: use the exact filename. To remove typo duplicates delete ndex.html / bout.html / ontact.html / rtworks.html — never delete index.html, about.html, contact.html, or artworks.html for typo cleanup.',
         '',
         'RECOMMENDED SITE-BUILD ORDER (custom HTML/CSS in project/ — read_birkly_docs topic "site-building" first):',
         'Step 0 — read_birkly_docs "site-building" once; get_project_info + list_project_files once (do not repeat)',
