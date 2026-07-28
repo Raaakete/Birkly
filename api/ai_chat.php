@@ -92,6 +92,7 @@ register_shutdown_function(function() {
 
 // Send chat message
 if ($action === 'chat') {
+    $streamActive = false;
     try {
         // Clear output buffers
         while (ob_get_level() > 0) {
@@ -248,9 +249,7 @@ if ($action === 'chat') {
         if ($writeIntent && $hasNativeTools) {
             $providerOptions['tool_choice'] = 'required';
         }
-        if ($writeIntent || $executeIntent) {
-            $providerOptions['timeout'] = 120;
-        }
+        $providerOptions['timeout'] = ($writeIntent || $executeIntent) ? 180 : 120;
 
         if ($streamActive && !$streamCallback) {
             ai_chat_emit_status(true, 'Waiting for AI response…');
@@ -931,41 +930,49 @@ if ($action === 'chat') {
             ], $streamActive);
         }
     } catch (Exception $e) {
-        // Log the error
         error_log("AI Chat Error: " . $e->getMessage());
         error_log("Stack trace: " . $e->getTraceAsString());
-        
-        // Clear output buffers
+
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        
+
+        $errorPayload = [
+            'status' => 'error',
+            'message' => 'An error occurred while processing your request: ' . $e->getMessage(),
+        ];
+
+        if (!empty($streamActive)) {
+            ai_chat_emit_response($errorPayload, true);
+        }
+
         if (!headers_sent()) {
             header('Content-Type: application/json');
         }
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'An error occurred while processing your request: ' . $e->getMessage()
-        ]);
+        echo json_encode($errorPayload);
         exit;
     } catch (Error $e) {
-        // Catch fatal errors (PHP 7+)
         error_log("AI Chat Fatal Error: " . $e->getMessage());
         error_log("Stack trace: " . $e->getTraceAsString());
-        
-        // Clear output buffers
+
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
-        
-        if (!headers_sent()) {
-            header('Content-Type: application/json');
-        }
-        echo json_encode([
+
+        $errorPayload = [
             'status' => 'error',
             'message' => 'A fatal error occurred: ' . $e->getMessage(),
             'error_type' => get_class($e),
-        ]);
+        ];
+
+        if (!empty($streamActive)) {
+            ai_chat_emit_response($errorPayload, true);
+        }
+
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+        }
+        echo json_encode($errorPayload);
         exit;
     }
 }
@@ -1321,7 +1328,7 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
     $imageAttachments = birkly_ai_chat_image_attachments($attachments);
     $toolChoice = (string) ($providerOptions['tool_choice'] ?? 'auto');
     $disableTools = !empty($providerOptions['disable_tools']);
-    $curlTimeout = max(30, (int) ($providerOptions['timeout'] ?? 60));
+    $curlTimeout = max(30, (int) ($providerOptions['timeout'] ?? 120));
 
     $openAiTools = [];
     if (is_array($aiUser) && !$disableTools) {
