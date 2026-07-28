@@ -244,8 +244,9 @@ function ai_chat_is_proceed_message(string $message): bool
         return false;
     }
 
+    // Explicit proceed phrases only — bare "yes"/"one"/"finish" match normal conversation.
     return (bool) preg_match(
-        '/\b(proceed|continue|next step|go on|keep going|move on|yes|do it|finish(?:ed|ing)?|complete(?:ly|d)?|start executing|run it|go ahead|until (?:everything|done|finished)|til everything)\b/i',
+        '/\b(proceed|continue|next step|go on|keep going|move on|start executing|run it|go ahead|until (?:everything|done|finished)|til everything)\b/i',
         $message
     );
 }
@@ -306,23 +307,38 @@ function ai_chat_filter_already_completed_actions(array $actions, array $convers
     }));
 }
 
+/**
+ * True when recent conversation shows an explicit website / project-folder build.
+ */
+function ai_chat_conversation_has_site_build_intent(array $conversationHistory): bool
+{
+    $haystack = strtolower(implode("\n", array_column(array_slice($conversationHistory, -12), 'content')));
+    return (bool) preg_match(
+        '/\b(site-building|write_project|create_project|index\.html|project\/|portfolio|build\s+(?:a\s+)?(?:site|website|gallery)|site builder|landing page|gallery site)\b/i',
+        $haystack
+    );
+}
+
 function ai_chat_session_has_site_build_progress(array $conversationHistory): bool
 {
     $done = ai_chat_parse_session_notes_from_history($conversationHistory);
-    if ($done['collections'] !== [] || $done['entries'] !== [] || $done['project_files'] !== []) {
+
+    // Project file writes are a definitive site-build signal.
+    if ($done['project_files'] !== []) {
         return true;
     }
 
-    $haystack = strtolower(implode("\n", array_column(array_slice($conversationHistory, -8), 'content')));
-    return str_contains($haystack, '[session notes') && str_contains($haystack, 'collection:');
+    // CMS-only actions (entries/collections) count as site-build progress only in an
+    // explicit site-build conversation — not after generic "create a blog post" work.
+    if (($done['collections'] !== [] || $done['entries'] !== []) && ai_chat_conversation_has_site_build_intent($conversationHistory)) {
+        return true;
+    }
+
+    return false;
 }
 
 function ai_chat_is_project_site_intent(string $message, array $conversationHistory = []): bool
 {
-    if (ai_chat_session_has_site_build_progress($conversationHistory)) {
-        return true;
-    }
-
     $haystack = strtolower($message);
     $recent = array_slice($conversationHistory, -6);
     foreach ($recent as $msg) {
@@ -826,7 +842,7 @@ function ai_chat_format_execution_report(
     if ($executedActions !== []) {
         $state = ai_chat_state_after_execution($state, $executedActions);
     }
-    if ($state['site_slugs'] !== []) {
+    if ($state['site_slugs'] !== [] && ai_chat_session_has_site_build_progress($conversationHistory)) {
         $sections[] = ai_chat_format_site_build_plan_status($state);
         $sections[] = '### What\'s next' . "\n" . ai_chat_site_build_next_step_hint($state);
     }
