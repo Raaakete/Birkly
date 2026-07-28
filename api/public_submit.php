@@ -202,8 +202,6 @@ foreach ($deferredRequired as $name) {
 if ($errors) {
     respond(['status' => 'error', 'message' => 'Validation failed', 'errors' => $errors], 422);
 }
-
-// --- Anti-spam checks ---
 $antiSpam = $collectionMeta['anti_spam'] ?? [];
 
 // Honeypot (already implemented)
@@ -312,7 +310,16 @@ $id = uniqid();
 $cleanData['id'] = $id;
 $cleanData['created_at'] = date('c');
 $cleanData['updated_at'] = date('c');
-$cleanData['status'] = $collectionMeta['default_public_status'] ?? 'pending';
+$apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
+$autoPublish = !empty($apiSettings['auto_publish']);
+$defaultStatus = $collectionMeta['default_public_status'] ?? null;
+if ($autoPublish) {
+    $cleanData['status'] = 'published';
+} elseif (is_string($defaultStatus) && $defaultStatus !== '') {
+    $cleanData['status'] = $defaultStatus;
+} else {
+    $cleanData['status'] = 'pending';
+}
 
 try {
     if (function_exists('apply_filters_strict')) {
