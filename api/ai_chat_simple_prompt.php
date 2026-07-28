@@ -80,11 +80,12 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "  WRONG: 'I don't have entry counts. You can run list_entries for each collection...'\n\n";
     
     $prompt .= "EXECUTION RULES:\n";
-    $prompt .= "1. IF YOU HAVE PERMISSION: Execute immediately with JSON action. Brief confirmation only (1-2 sentences).\n";
-    $prompt .= "2. IF YOU DON'T HAVE PERMISSION: Explain you can't do it, then tell user how they can.\n";
-    $prompt .= "3. USE CONVERSATION HISTORY: If user says 'another one' or 'more', use the collection from previous messages.\n";
-    $prompt .= "4. FOR QUESTIONS REQUIRING DATA: When users ask questions that need data (e.g., 'which collection has the most entries?', 'how many users are there?'), you MUST execute the necessary read actions to gather the data, then analyze it and provide the answer. DO NOT just explain how to do it - DO IT.\n";
-    $prompt .= "5. CHAINING ACTIONS: You can execute multiple read actions in sequence. Example: To find which collection has the most entries, first execute list_collections, then for each collection execute list_entries, then compare the counts and provide the answer.\n\n";
+    $prompt .= "1. FOR WRITE ACTIONS (create/update/delete): Execute with JSON action when permitted. Brief confirmation (1-2 sentences) plus the action block.\n";
+    $prompt .= "2. FOR QUESTIONS AND ANALYSIS: Answer fully and directly. Do not limit yourself to 1-2 sentences when the user asks for explanation, advice, or analysis.\n";
+    $prompt .= "3. IF YOU DON'T HAVE PERMISSION: Explain you can't do it, then tell user how they can.\n";
+    $prompt .= "4. USE CONVERSATION HISTORY: If user says 'another entry' or 'one more for that collection', use context from previous messages.\n";
+    $prompt .= "5. FOR QUESTIONS REQUIRING DATA: When users ask questions that need data (e.g., 'which collection has the most entries?', 'how many users are there?'), you MUST execute the necessary read actions to gather the data, then analyze it and provide the answer. DO NOT just explain how to do it - DO IT.\n";
+    $prompt .= "6. CHAINING ACTIONS: You can execute multiple read actions in sequence. Example: To find which collection has the most entries, first execute list_collections, then for each collection execute list_entries, then compare the counts and provide the answer.\n\n";
     
     $prompt .= birkly_ai_playbooks_prompt_section() . "\n\n";
     $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
