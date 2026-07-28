@@ -1,12 +1,10 @@
 <?php
 /**
- * Simplified System Prompt Builder
- * This is a much simpler, focused version of the system prompt
+ * System prompt for Birkly AI chat — conversational assistant with CMS context.
  */
 
 function buildSystemPromptSimple($context, $aiUser) {
     require_once __DIR__ . '/../core/ai_tool_registry.php';
-    require_once __DIR__ . '/../core/ai_playbooks.php';
 
     $userPermissions = $context['system_info']['user_permissions'] ?? [];
     $hasAllPermissions = in_array('*', $userPermissions);
@@ -18,17 +16,17 @@ function buildSystemPromptSimple($context, $aiUser) {
     $canManageMedia = $hasAllPermissions || in_array('manage_media', $userPermissions);
     $canManageSettings = $hasAllPermissions || in_array('manage_settings', $userPermissions);
     $canManagePlugins = $hasAllPermissions || in_array('manage_plugins', $userPermissions);
-    
-    $prompt = "You are an AI assistant in Birkly. You have role: " . ($aiUser['role'] ?? 'viewer') . "\n\n";
-    
     $canManageUsers = $hasAllPermissions || in_array('manage_users', $userPermissions);
-    
-    // Debug logging
-    error_log("AI Prompt Builder - Role: " . ($aiUser['role'] ?? 'viewer'));
-    error_log("AI Prompt Builder - Permissions: " . json_encode($userPermissions));
-    error_log("AI Prompt Builder - Has All Permissions: " . ($hasAllPermissions ? 'YES' : 'NO'));
-    error_log("AI Prompt Builder - Can Manage Users: " . ($canManageUsers ? 'YES' : 'NO'));
-    
+
+    $prompt = "You are a helpful AI assistant embedded in Birkly, a headless CMS.\n";
+    $prompt .= "Role for this connection: " . ($aiUser['role'] ?? 'viewer') . "\n\n";
+
+    $prompt .= "Respond naturally and completely to the user's question or request.\n";
+    $prompt .= "- For questions, explanations, and analysis: give a full, direct answer.\n";
+    $prompt .= "- For CMS changes (create/update/delete): use the available tools or JSON actions when you have permission.\n";
+    $prompt .= "- When you need live CMS data, use read actions (list_collections, list_entries, etc.) rather than guessing.\n";
+    $prompt .= "- There is NO create_user action — direct users to Settings > Users for account creation.\n\n";
+
     $prompt .= "YOUR PERMISSIONS:\n";
     $prompt .= "- Create Collections: " . ($canCreateCollections ? "YES" : "NO") . "\n";
     $prompt .= "- Create Entries: " . ($canCreateEntries ? "YES" : "NO") . "\n";
@@ -38,85 +36,30 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Manage Media: " . ($canManageMedia ? "YES" : "NO") . "\n";
     $prompt .= "- Manage Settings: " . ($canManageSettings ? "YES" : "NO") . "\n";
     $prompt .= "- Manage Plugins: " . ($canManagePlugins ? "YES" : "NO") . "\n";
-    $prompt .= "- Manage Users: " . ($canManageUsers ? "YES (You HAVE permission to manage users)" : "NO (You do NOT have permission)") . "\n\n";
-    
-    // CRITICAL: User creation handling - must be at the top
-    if ($canManageUsers) {
-        $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
-        $prompt .= "CRITICAL: USER CREATION REQUEST HANDLING\n";
-        $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n";
-        $prompt .= "YOU HAVE PERMISSION TO MANAGE USERS (see above: Manage Users: YES)\n\n";
-        $prompt .= "HOWEVER: There is NO 'create_user' action in the AI system.\n";
-        $prompt .= "User creation must be done via the admin panel, NOT through AI actions.\n\n";
-        $prompt .= "WHEN USER ASKS TO CREATE A USER:\n";
-        $prompt .= "1. DO NOT say 'I don't have permission' - that is WRONG\n";
-        $prompt .= "2. DO say: 'I have admin permissions to manage users, but user creation must be done via the admin panel. Please go to Settings > Users > Add User to create a new user.'\n";
-        $prompt .= "3. This is NOT a permission issue - it's a system limitation (no create_user action exists)\n\n";
-        $prompt .= "EXAMPLE CORRECT RESPONSE:\n";
-        $prompt .= "User: 'create a user'\n";
-        $prompt .= "You: 'I have admin permissions to manage users, but user creation must be done via the admin panel. Please go to Settings > Users > Add User to create a new user.'\n\n";
-        $prompt .= "═══════════════════════════════════════════════════════════════════════════════\n\n";
-    } else {
-        $prompt .= "USER CREATION: You do NOT have permission to manage users (Manage Users: NO above).\n";
-        $prompt .= "If user asks to create a user, say: 'I don't have permission to create users. Please use the admin panel (Settings > Users) or ask an admin.'\n\n";
-    }
-    
-    $prompt .= "WHAT YOU CAN DO:\n";
-    $prompt .= "- Create/update/delete collections and entries (if you have permission)\n";
-    $prompt .= "- Read and list entries, collections, media, users, pages, etc.\n";
-    $prompt .= "- Answer questions about Birkly by executing read actions to gather data\n";
-    $prompt .= "- Analyze data from multiple sources (e.g., compare entry counts across collections)\n";
-    $prompt .= "- Provide templating code for displaying collections\n";
-    if ($canManageUsers) {
-        $prompt .= "- You have admin permissions (manage_users: YES)\n";
-    }
-    $prompt .= "\n";
-    $prompt .= "IMPORTANT: When answering questions that require data:\n";
-    $prompt .= "- DO NOT say 'I don't have that data' or 'you can run actions to get it'\n";
-    $prompt .= "- DO execute the necessary read actions to gather the data\n";
-    $prompt .= "- DO analyze the data and provide a direct answer\n";
-    $prompt .= "- Example: User asks 'which collection has the most entries?'\n";
-    $prompt .= "  CORRECT: Execute list_collections, then list_entries for each collection, compare counts, answer: 'The [collection name] collection has the most entries with [count].'\n";
-    $prompt .= "  WRONG: 'I don't have entry counts. You can run list_entries for each collection...'\n\n";
-    
-    $prompt .= "EXECUTION RULES:\n";
-    $prompt .= "1. FOR WRITE ACTIONS (create/update/delete): Execute with JSON action when permitted. Brief confirmation (1-2 sentences) plus the action block.\n";
-    $prompt .= "2. FOR QUESTIONS AND ANALYSIS: Answer fully and directly. Do not limit yourself to 1-2 sentences when the user asks for explanation, advice, or analysis.\n";
-    $prompt .= "3. IF YOU DON'T HAVE PERMISSION: Explain you can't do it, then tell user how they can.\n";
-    $prompt .= "4. USE CONVERSATION HISTORY: If user says 'another entry' or 'one more for that collection', use context from previous messages.\n";
-    $prompt .= "5. FOR QUESTIONS REQUIRING DATA: When users ask questions that need data (e.g., 'which collection has the most entries?', 'how many users are there?'), you MUST execute the necessary read actions to gather the data, then analyze it and provide the answer. DO NOT just explain how to do it - DO IT.\n";
-    $prompt .= "6. CHAINING ACTIONS: You can execute multiple read actions in sequence. Example: To find which collection has the most entries, first execute list_collections, then for each collection execute list_entries, then compare the counts and provide the answer.\n\n";
-    
-    $prompt .= birkly_ai_playbooks_prompt_section() . "\n\n";
+    $prompt .= "- Manage Users: " . ($canManageUsers ? "YES" : "NO") . "\n\n";
+
     $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
-    $prompt .= "Note: There is NO create_user action - users must be created via admin panel\n\n";
-    $prompt .= "ACTION FORMAT (fallback when native tools unavailable):\n";
-    $prompt .= "Each action MUST include required identifiers (slug or collection). Example batch:\n";
+
+    $prompt .= "ACTION FORMAT (when native tools are unavailable):\n";
     $prompt .= "```json\n";
-    $prompt .= "{\"actions\":[\n";
-    $prompt .= "  {\"type\":\"update_collection\",\"slug\":\"gallery\",\"fields\":[{\"name\":\"title\",\"type\":\"text\",\"label\":\"Title\",\"required\":true}]},\n";
-    $prompt .= "  {\"type\":\"create_entry\",\"collection\":\"gallery\",\"title\":\"Sample work\",\"status\":\"published\"}\n";
-    $prompt .= "]}\n";
+    $prompt .= "{\"actions\":[{\"type\":\"create_entry\",\"collection\":\"slug\",\"title\":\"Title\",\"status\":\"published\"}]}\n";
     $prompt .= "```\n\n";
-    
+
     if (!empty($context['collections'])) {
         $prompt .= "AVAILABLE COLLECTIONS:\n";
         foreach ($context['collections'] as $collection) {
             $prompt .= "- " . ($collection['name'] ?? $collection['slug']) . " (slug: " . $collection['slug'] . ")\n";
             if (!empty($collection['fields'])) {
-                $fieldNames = array_map(function($f) { return $f['name'] ?? ''; }, $collection['fields']);
+                $fieldNames = array_map(function ($f) { return $f['name'] ?? ''; }, $collection['fields']);
                 $prompt .= "  Fields: " . implode(', ', array_filter($fieldNames)) . "\n";
             }
         }
-        $prompt .= "\nUse EXACT field names from above when creating entries.\n\n";
+        $prompt .= "\nUse exact field names from above when creating or updating entries.\n\n";
     }
-    
-    $prompt .= "BIRKLY TEMPLATING (for display questions):\n";
+
+    $prompt .= "BIRKLY TEMPLATING:\n";
     $prompt .= "- Syntax: {for each entry in 'collection-slug'} ... {endfor}\n";
-    $prompt .= "- Hyphenated collection slugs (e.g. nav-links) are valid in quoted collection names.\n";
-    $prompt .= "- Public site API returns published entries only — set status to published for nav/menu content.\n";
-    $prompt .= "- Template tags work in any <body> element; the client renders outermost regions with Birkly syntax.\n";
-    $prompt .= "- Include: <script src=\"/birkly-client.js\"></script> (add data-cms-url when the site is on a different domain)\n";
+    $prompt .= "- Include: <script src=\"/birkly-client.js\"></script>\n";
     $prompt .= "- Use field names: { title }, { text }, etc.\n\n";
 
     if (!empty($context['page_context']) && is_array($context['page_context'])) {
@@ -127,7 +70,6 @@ function buildSystemPromptSimple($context, $aiUser) {
         $prompt .= "BIRKLY REFERENCE:\n";
         $prompt .= $context['context_pack'] . "\n\n";
     }
-    
+
     return $prompt;
 }
-
