@@ -116,6 +116,58 @@ function birkly_slug_from_title_or_id(string $title, ?string $id = null): string
 }
 
 /**
+ * Effective URL slug for an entry (stored slug, or generated from title).
+ *
+ * @param array<string, mixed> $entry
+ */
+function birkly_entry_effective_slug(array $entry): string
+{
+    $stored = trim((string) ($entry['slug'] ?? ''));
+    if ($stored !== '') {
+        return birkly_normalize_slug($stored);
+    }
+
+    $title = (string) ($entry['title'] ?? '');
+    $id = (string) ($entry['id'] ?? '');
+
+    return birkly_slug_from_title_or_id($title, $id !== '' ? $id : null);
+}
+
+/**
+ * @param array<string, mixed> $entry
+ */
+function birkly_entry_matches_slug(array $entry, string $slug): bool
+{
+    $slug = birkly_normalize_slug($slug);
+    if ($slug === '') {
+        return false;
+    }
+
+    $stored = trim((string) ($entry['slug'] ?? ''));
+    if ($stored !== '' && birkly_normalize_slug($stored) === $slug) {
+        return true;
+    }
+
+    return birkly_entry_effective_slug($entry) === $slug;
+}
+
+/**
+ * Ensure public API / template consumers always have a usable slug field.
+ *
+ * @param array<string, mixed> $entry
+ * @return array<string, mixed>
+ */
+function birkly_public_entry_with_effective_slug(array $entry): array
+{
+    $effective = birkly_entry_effective_slug($entry);
+    if ($effective !== '' && trim((string) ($entry['slug'] ?? '')) === '') {
+        $entry['slug'] = $effective;
+    }
+
+    return $entry;
+}
+
+/**
  * @param 'create'|'update'|string $action
  * @param array<string, mixed> $entryData
  * @param array<string, mixed>|null $existingEntry

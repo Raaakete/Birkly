@@ -568,7 +568,12 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             $entryData['title'] = $entryId;
         }
 
-        if (!empty($entryData['slug'])) {
+        require_once __DIR__ . '/../core/entry_slug.php';
+        $title = trim((string) ($entryData['title'] ?? ''));
+        $resolvedSlug = birkly_resolve_entry_slug('create', $entryData, null, $title, $entryId);
+        if ($resolvedSlug !== '') {
+            $entryData['slug'] = $resolvedSlug;
+        } elseif (!empty($entryData['slug'])) {
             $entryData['slug'] = birkly_normalize_slug((string) $entryData['slug']);
         }
         
