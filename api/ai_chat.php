@@ -16,7 +16,7 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
-ini_set('max_execution_time', 120); // 2 minutes for AI calls (reduced for faster responses)
+ini_set('max_execution_time', 120); // overridden per-request for long execute batches
 ini_set('memory_limit', '256M');
 
 require_once 'session.php';
@@ -217,6 +217,10 @@ if ($action === 'chat') {
         $openAiTools = birkly_ai_tools_openai_format($aiUser);
         $analysisIntent = ai_chat_message_implies_analysis_intent($message, $conversationHistory);
         $writeIntent = ai_chat_message_implies_write_intent($message, $conversationHistory);
+        $executeIntent = ai_chat_message_implies_execute_intent($message);
+        if ($writeIntent || $executeIntent) {
+            ini_set('max_execution_time', '300');
+        }
         $providerType = getSupportedAiProviders()[$aiUser['provider'] ?? '']['type'] ?? ($aiUser['provider'] ?? '');
         $providerSupportsNativeTools = in_array($providerType, ['openai', 'openrouter', 'custom'], true);
         $hasNativeTools = $openAiTools !== [] && $providerSupportsNativeTools;
@@ -239,6 +243,9 @@ if ($action === 'chat') {
         $providerOptions = [];
         if ($writeIntent && $hasNativeTools) {
             $providerOptions['tool_choice'] = 'required';
+        }
+        if ($writeIntent || $executeIntent) {
+            $providerOptions['timeout'] = 120;
         }
 
         $response = callAiProvider(
@@ -292,6 +299,10 @@ if ($action === 'chat') {
                 } else {
                     $writeActions[] = $action;
                 }
+            }
+
+            if ($executeIntent && $writeActions !== []) {
+                $readActions = [];
             }
 
             if ($analysisIntent && $readActions === [] && $writeActions === []
@@ -409,7 +420,7 @@ if ($action === 'chat') {
             // This allows the AI to analyze the data and either:
             // 1. Answer questions (like "which collection has the most entries?")
             // 2. Create write actions based on analysis (like "check for typos and fix them")
-            if ($hasSuccessfulReads && !empty($readData) && !$analysisHandled) {
+            if ($hasSuccessfulReads && !empty($readData) && !$analysisHandled && !$executeIntent) {
                 // Build a follow-up message with the read data
                 $followUpMessage = "Context: The user asked: \"" . $message . "\"\n\n";
                 $followUpMessage .= "I've successfully retrieved the requested data. Here's what I found:\n\n";
@@ -660,6 +671,7 @@ if ($action === 'chat') {
 
             $displayForClaimCheck = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
             if ($writeActions === []
+                && !$executeIntent
                 && ($writeIntent || ai_chat_response_implies_false_execution_claim($displayForClaimCheck))) {
                 error_log('No write actions after model response — nudging for executable actions');
                 $nudgeResponse = ai_chat_nudge_for_actions(
@@ -1289,6 +1301,7 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
     $imageAttachments = birkly_ai_chat_image_attachments($attachments);
     $toolChoice = (string) ($providerOptions['tool_choice'] ?? 'auto');
     $disableTools = !empty($providerOptions['disable_tools']);
+    $curlTimeout = max(30, (int) ($providerOptions['timeout'] ?? 60));
 
     $openAiTools = [];
     if (is_array($aiUser) && !$disableTools) {
@@ -1304,7 +1317,7 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             if ($onToken && empty($openAiTools) && $imageAttachments === []) {
                 return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, $toolChoice);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, $toolChoice, $curlTimeout);
         case 'anthropic':
             return callAnthropic($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory, $imageAttachments);
         case 'google':
@@ -1326,7 +1339,7 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             if ($onToken && empty($openAiTools) && $imageAttachments === []) {
                 return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, $toolChoice);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, $toolChoice, $curlTimeout);
         default:
             return ['success' => false, 'message' => 'Unsupported provider'];
     }
@@ -1466,7 +1479,7 @@ function executeActionDirectly($actionData, $aiUser) {
 }
 
 // OpenAI API call (also works for OpenRouter and OpenAI-compatible APIs)
-function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto') {
+function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto', int $curlTimeout = 60) {
     $apiLabel = birkly_ai_compatible_api_label($url);
     // Build messages array with conversation history
     $messages = [
@@ -1516,8 +1529,8 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); // 5 second connection timeout
-    curl_setopt($ch, CURLOPT_TIMEOUT, 60); // 60 second total timeout (reduced from default)
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    curl_setopt($ch, CURLOPT_TIMEOUT, $curlTimeout);
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -1531,7 +1544,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     if ($httpCode !== 200) {
         if (!empty($tools) && $toolChoice === 'required' && in_array((int) $httpCode, [400, 422], true)) {
             error_log($apiLabel . ' rejected tool_choice=required — retrying with auto');
-            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $tools, $imageAttachments, 'auto');
+            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $tools, $imageAttachments, 'auto', $curlTimeout);
         }
         return birkly_ai_build_provider_error(
             $apiLabel,

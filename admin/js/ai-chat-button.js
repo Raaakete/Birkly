@@ -100,6 +100,9 @@
         if (status === 401) {
             return 'Your session expired. Please refresh the page and log in again.';
         }
+        if (status === 504) {
+            return 'The request timed out (504). Large site builds can take a minute — try again, use a faster model, or ask for fewer files at once (e.g. "write index.html first").';
+        }
         return 'HTTP Error ' + status + ': ' + message;
     }
 
