@@ -29,6 +29,9 @@
     let chatTooltipEl = null;
     let chatTooltipTarget = null;
     let chatMessageSeq = 0;
+    const MAX_CHAT_ATTACHMENTS = 6;
+    const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+    const DOCUMENT_EXTENSIONS = ['.txt', '.md', '.json', '.csv', '.html', '.xml', '.yaml', '.yml', '.log', '.js', '.ts', '.css', '.php'];
 
     function nextChatMessageId() {
         chatMessageSeq += 1;
@@ -707,7 +710,7 @@
                     <div class="ai-chat-composer-box">
                         <textarea
                             id="ai-chat-input"
-                            placeholder="Ask the AI to create or edit content…"
+                            placeholder="Ask the AI to create or edit content… Paste or drop images and files here."
                             rows="1"
                         ></textarea>
                         <div class="ai-chat-composer-footer">
@@ -783,6 +786,7 @@
         document.getElementById('ai-chat-attach-doc')?.addEventListener('click', () => document.getElementById('ai-chat-doc-input')?.click());
         document.getElementById('ai-chat-image-input')?.addEventListener('change', handleImageAttachment);
         document.getElementById('ai-chat-doc-input')?.addEventListener('change', handleDocumentAttachment);
+        bindComposerAttachmentHandlers();
         document.getElementById('ai-chat-model-trigger')?.addEventListener('click', function (e) {
             e.preventDefault();
             e.stopPropagation();
@@ -854,11 +858,11 @@
         const modelPicker = document.getElementById('ai-chat-model-picker');
         if (imageBtn) {
             imageBtn.hidden = !caps.vision;
-            imageBtn.title = caps.vision ? 'Add image (vision models)' : 'Images not supported for this provider';
+            imageBtn.title = caps.vision ? 'Add image — or paste / drop into the chat box' : 'Images not supported for this provider';
         }
         if (docBtn) {
             docBtn.hidden = !caps.documents;
-            docBtn.title = caps.documents ? 'Add text document (.txt, .md, .json, .csv)' : 'Documents not supported for this provider';
+            docBtn.title = caps.documents ? 'Add document — or paste / drop into the chat box' : 'Documents not supported for this provider';
         }
         if (modelPicker) modelPicker.hidden = !caps.model_picker;
         updateApprovalsHeaderButton();
@@ -1230,28 +1234,203 @@
         if (trigger) trigger.setAttribute('aria-expanded', 'false');
     }
 
+    function bindComposerAttachmentHandlers() {
+        const input = document.getElementById('ai-chat-input');
+        const composerBox = document.querySelector('.ai-chat-composer-box');
+        if (input && input.dataset.pasteBound !== '1') {
+            input.dataset.pasteBound = '1';
+            input.addEventListener('paste', handleComposerPaste);
+        }
+        if (composerBox && composerBox.dataset.dropBound !== '1') {
+            composerBox.dataset.dropBound = '1';
+            composerBox.addEventListener('dragover', handleComposerDragOver);
+            composerBox.addEventListener('dragleave', handleComposerDragLeave);
+            composerBox.addEventListener('drop', handleComposerDrop);
+        }
+    }
+
+    function canAttachImages() {
+        return !!(currentConnection?.capabilities?.vision);
+    }
+
+    function canAttachDocuments() {
+        return !!(currentConnection?.capabilities?.documents);
+    }
+
+    function isTextDocumentFile(file) {
+        if (!file) return false;
+        const name = String(file.name || '').toLowerCase();
+        const mime = String(file.type || '').toLowerCase();
+        if (mime.startsWith('text/')) return true;
+        return DOCUMENT_EXTENSIONS.some(function (ext) { return name.endsWith(ext); });
+    }
+
+    function defaultNameForFile(file, fallback) {
+        if (file?.name) return file.name;
+        return fallback;
+    }
+
+    function notifyAttachmentIssue(message) {
+        appendConsoleLog('warn', message);
+        if (typeof BirklyFeedback !== 'undefined' && BirklyFeedback.toast) {
+            BirklyFeedback.toast(message, 'warning');
+        }
+    }
+
+    function readFileAsDataUrl(file) {
+        return new Promise(function (resolve, reject) {
+            const reader = new FileReader();
+            reader.onload = function () { resolve(String(reader.result || '')); };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function readFileAsText(file) {
+        return new Promise(function (resolve, reject) {
+            const reader = new FileReader();
+            reader.onload = function () { resolve(String(reader.result || '')); };
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
+    async function queueImageFile(file, suggestedName) {
+        if (!file) return false;
+        if (!canAttachImages()) {
+            notifyAttachmentIssue('Image paste is not supported for this connection. Use a vision-capable provider.');
+            return false;
+        }
+        if (!String(file.type || '').startsWith('image/')) {
+            notifyAttachmentIssue('Only image files can be attached as images.');
+            return false;
+        }
+        if (file.size > MAX_IMAGE_BYTES) {
+            notifyAttachmentIssue('Image is too large (max 4 MB).');
+            return false;
+        }
+        if (pendingAttachments.length >= MAX_CHAT_ATTACHMENTS) {
+            notifyAttachmentIssue('Maximum ' + MAX_CHAT_ATTACHMENTS + ' attachments per message.');
+            return false;
+        }
+        try {
+            const dataUrl = await readFileAsDataUrl(file);
+            const base64 = dataUrl.replace(/^data:[^;]+;base64,/, '');
+            pendingAttachments.push({
+                type: 'image',
+                name: defaultNameForFile(file, suggestedName || 'pasted-image.png'),
+                mime: file.type || 'image/png',
+                base64: base64,
+            });
+            renderAttachmentList();
+            return true;
+        } catch (error) {
+            notifyAttachmentIssue('Could not read image: ' + error.message);
+            return false;
+        }
+    }
+
+    async function queueDocumentFile(file) {
+        if (!file) return false;
+        if (!canAttachDocuments()) {
+            notifyAttachmentIssue('Document attachments are not supported for this connection.');
+            return false;
+        }
+        if (!isTextDocumentFile(file)) {
+            notifyAttachmentIssue('Only text-based documents are supported (.txt, .md, .json, .csv, etc.).');
+            return false;
+        }
+        if (pendingAttachments.length >= MAX_CHAT_ATTACHMENTS) {
+            notifyAttachmentIssue('Maximum ' + MAX_CHAT_ATTACHMENTS + ' attachments per message.');
+            return false;
+        }
+        try {
+            const content = await readFileAsText(file);
+            pendingAttachments.push({
+                type: 'document',
+                name: defaultNameForFile(file, 'document.txt'),
+                content: content.slice(0, 12000),
+            });
+            renderAttachmentList();
+            return true;
+        } catch (error) {
+            notifyAttachmentIssue('Could not read document: ' + error.message);
+            return false;
+        }
+    }
+
+    async function ingestAttachmentFiles(files, sourceLabel) {
+        const list = Array.from(files || []);
+        if (!list.length) return;
+        let added = 0;
+        for (const file of list) {
+            if (String(file.type || '').startsWith('image/')) {
+                if (await queueImageFile(file)) added++;
+            } else if (isTextDocumentFile(file)) {
+                if (await queueDocumentFile(file)) added++;
+            } else {
+                notifyAttachmentIssue('Unsupported file: ' + (file.name || 'unknown') + '. Paste images or text documents.');
+            }
+        }
+        if (added > 0 && sourceLabel) {
+            appendConsoleLog('info', added + ' file(s) attached via ' + sourceLabel + '.');
+        }
+    }
+
+    async function handleComposerPaste(e) {
+        const clipboard = e.clipboardData;
+        if (!clipboard) return;
+
+        const imageItems = [];
+        const fileItems = [];
+        for (let i = 0; i < clipboard.items.length; i++) {
+            const item = clipboard.items[i];
+            if (item.kind === 'file') {
+                const file = item.getAsFile();
+                if (file) fileItems.push(file);
+            } else if (item.kind === 'string' && item.type.indexOf('image/') === 0) {
+                const file = item.getAsFile();
+                if (file) imageItems.push(file);
+            }
+        }
+
+        const files = fileItems.length ? fileItems : imageItems;
+        if (!files.length) return;
+
+        e.preventDefault();
+        await ingestAttachmentFiles(files, 'paste');
+    }
+
+    function handleComposerDragOver(e) {
+        if (!e.dataTransfer?.types?.includes('Files')) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        e.currentTarget.classList.add('is-drag-over');
+    }
+
+    function handleComposerDragLeave(e) {
+        e.currentTarget.classList.remove('is-drag-over');
+    }
+
+    async function handleComposerDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('is-drag-over');
+        const files = e.dataTransfer?.files;
+        if (!files?.length) return;
+        await ingestAttachmentFiles(files, 'drop');
+    }
+
     function handleImageAttachment(e) {
         const file = e.target.files?.[0];
         if (!file) return;
-        if (!file.type.startsWith('image/')) return;
-        pendingAttachments.push({ type: 'image', name: file.name, file: file });
-        renderAttachmentList();
+        queueImageFile(file);
         e.target.value = '';
     }
 
     function handleDocumentAttachment(e) {
         const file = e.target.files?.[0];
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function () {
-            pendingAttachments.push({
-                type: 'document',
-                name: file.name,
-                content: String(reader.result || '').slice(0, 12000),
-            });
-            renderAttachmentList();
-        };
-        reader.readAsText(file);
+        queueDocumentFile(file);
         e.target.value = '';
     }
 
@@ -1280,15 +1459,35 @@
     }
 
     function buildMessageWithAttachments(message) {
-        let out = message;
-        pendingAttachments.forEach(function (item) {
-            if (item.type === 'document' && item.content) {
-                out += '\n\n[Attached document: ' + item.name + ']\n```\n' + item.content + '\n```';
-            } else if (item.type === 'image') {
-                out += '\n\n[Attached image: ' + item.name + ' — describe or analyze this image if relevant.]';
+        return String(message || '').trim();
+    }
+
+    function serializeAttachmentsForApi() {
+        return pendingAttachments.map(function (item) {
+            if (item.type === 'image') {
+                return {
+                    type: 'image',
+                    name: item.name,
+                    mime: item.mime || 'image/png',
+                    base64: item.base64 || '',
+                };
             }
-        });
-        return out;
+            if (item.type === 'document') {
+                return {
+                    type: 'document',
+                    name: item.name,
+                    content: item.content || '',
+                };
+            }
+            return null;
+        }).filter(Boolean);
+    }
+
+    function buildDisplayMessage(rawMessage) {
+        const text = String(rawMessage || '').trim();
+        if (text) return text;
+        if (pendingAttachments.length === 0) return '';
+        return 'Attached: ' + pendingAttachments.map(function (a) { return a.name; }).join(', ');
     }
 
     // Show chat window
@@ -1713,7 +1912,8 @@
         if (!rawMessage && pendingAttachments.length === 0) return;
 
         const message = buildMessageWithAttachments(rawMessage || 'Please review the attached file(s).');
-        const displayMessage = rawMessage || ('Attached: ' + pendingAttachments.map(a => a.name).join(', '));
+        const displayMessage = buildDisplayMessage(rawMessage);
+        const attachmentsPayload = serializeAttachmentsForApi();
 
         lastFailedMessage = null;
         if (!conversationId) {
@@ -1756,6 +1956,7 @@
                     action: 'chat',
                     ai_connection_id: currentConnection.id,
                     message: message,
+                    attachments: attachmentsPayload,
                     conversation_id: conversationId,
                     page_context: collectPageContext(),
                     stream: true,
