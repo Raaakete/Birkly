@@ -90,12 +90,12 @@ Full spec: `docs/TEMPLATE_LANGUAGE_SPEC.md` (platform); public docs on Birkly-Do
 - **User-defined fields** use quoted names: `{'content'}`, `{'price'}`
 - Loops close with `{endfor}`
 
-### Collection loop
+### Collection loop (list page)
 
 ```html
-{for each entry in 'blog' with status = published ordered by newest}
-  <h2><a href="article.html?collection=blog&slug={slug}">{title}</a></h2>
-  <p>{'excerpt'}</p>
+{for each entry in 'your-collection' with status = published ordered by newest}
+  <h2><a href="/project/detail.html?collection=your-collection&slug={slug}">{title}</a></h2>
+  <p>{'teaser-field'}</p>
 {endfor}
 ```
 
@@ -103,21 +103,14 @@ Full spec: `docs/TEMPLATE_LANGUAGE_SPEC.md` (platform); public docs on Birkly-Do
 
 | Page | Pattern |
 |------|---------|
-| **List** (`blog.html`) | `{for each entry in 'blog' …}{endfor}` + links with `?collection=blog&slug={slug}` |
-| **Detail** (`article.html`) | Meta tags + `{ title }`, `{ content }` — **no loop over the collection** |
+| **List** | `{for each entry in 'slug' …}{endfor}` + links with `?collection=<slug>&slug={slug}` |
+| **Detail** | Meta `birkly-collection` + `{ title }`, `{ fields… }` — **no loop over the collection** |
 
-Detail page head:
+Detail page uses URL `?slug=` — see `project/post.html` as one reference.
 
-```html
-<meta name="birkly-page" content="post">
-<meta name="birkly-collection" content="blog">
-```
+**Every templated page** needs `<script src="/birkly-client.js"></script>` or `{…}` shows as raw text.
 
-Detail page body uses URL context from `?slug=` — reference: `project/post.html`.
-
-**Every templated page** must include `<script src="/birkly-client.js"></script>` or `{…}` shows as raw text.
-
-Full recipes: playbook `web-project-patterns`.
+Principles and edge cases: playbook `web-project-patterns`.
 
 ### Single entry (fixed slug, no URL param)
 

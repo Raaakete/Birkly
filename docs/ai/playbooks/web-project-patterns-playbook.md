@@ -1,295 +1,187 @@
 # Web project patterns playbook (Birkly)
 
-Use this **every time** you build or fix a site in `project/`. This is the practical layer on top of `site-building`, `content-model`, and `templating`.
+Principles for wiring **any** custom site in `project/` to the CMS — blog, portfolio, bakery, agency, landing page, etc.
 
-**Goal:** CMS-backed sites that work on first load — not static HTML with collections sitting unused beside it.
+Layer on top of: `site-building`, `content-model`, `templating`.
 
----
-
-## Non-negotiable checklist (every templated HTML page)
-
-Before writing any `write_project_file` for HTML:
-
-1. **Script tag** — required or `{…}` shows as raw text in the browser:
-   ```html
-   <script src="/birkly-client.js"></script>
-   ```
-   Place before `</body>`. Same-host preview needs no `data-cms-url`; external hosting needs `data-cms-url="https://cms-domain"`.
-
-2. **URL prefix** — project sites are served under `/project/` (check `get_project_info` → `site_url_prefix`):
-   - CSS: `/project/css/style.css` — **not** `/css/style.css`
-   - Pages: `/project/index.html`, `/project/post.html?collection=blog&slug={slug}`
-   - Wrong paths = unstyled pages and broken navigation
-
-3. **Entry slugs** — `create_entry` **auto-generates slug from title**. List links MUST use:
-   ```html
-   href="/project/post.html?collection=blog&slug={slug}"
-   ```
-   Do **not** use `?id={id}` unless you have no choice — prefer human-readable slugs.
-
-4. **Collection slugs in single quotes** — `{for each entry in 'blog'}` not `blog` unquoted.
-
-5. **Published entries** — `status: "published"` on every entry that must appear on the public site.
-
-6. **Schema before entries** — define collection `fields` with `update_collection` **before** `create_entry`. Empty-schema collections produce broken templates.
-
-7. **Exact field names** — use names from schema in entries and templates (`{'excerpt'}`, not `summary` unless the field is named `summary`).
+**Goal:** Templates and collections work together on first load. The user edits content in admin; HTML provides structure and loops.
 
 ---
 
-## Three page types (do not mix them up)
+## How to think about any site request
 
-| Page type | Purpose | Template pattern | Example file |
-|-----------|---------|------------------|--------------|
-| **List** | Show many entries | `{for each entry in 'blog' …}{endfor}` | `blog.html`, homepage teaser section |
-| **Detail** | Show **one** entry from URL | Top-level `{ title }`, `{ content }` — **no loop over the collection** | `post.html`, `article.html` |
-| **Static** | Fixed copy (no CMS loop) | Plain HTML, or `{from 'site_elements' get entry 'hero'}…{endget}` | `about.html`, legal pages |
+Before creating collections or files, infer from the user's prompt:
 
-### The #1 detail-page bug
+1. **What repeats?** (posts, projects, products, team members, menu items) → one **collection per repeatable type**
+2. **What is shared on every page?** (header, footer, hero, nav labels) → **singleton entries** or a small “site chrome” collection + `<birkly-region>`
+3. **What is one-off page copy?** (about text, legal) → one entry in a page collection, `{from … get entry …}`, or mostly static HTML
+4. **What do visitors submit?** (contact, newsletter) → collection with `entry_method: public_api` + `{entry for}` — see `public-forms`
+5. **What belongs to one parent item?** (comments, variants, line items) → **sub-collection**, not a separate top-level collection
 
-**Wrong:** Using `{for each entry in 'blog'}` on `article.html` — every visit shows the full list again.
+Adapt names and fields to the business — do not copy fixed slugs from examples unless they fit.
 
-**Right:** Detail page uses **URL context**. User arrives via:
+---
+
+## Non-negotiable technical rules
+
+These apply to **every** templated page, regardless of site type:
+
+| Rule | Why |
+|------|-----|
+| `<script src="/birkly-client.js"></script>` on each templated HTML page | Without it, `{…}` renders as raw text |
+| Use `get_project_info` → `site_url_prefix` for links and assets | e.g. `/project/css/style.css`, not `/css/style.css` |
+| Collection slugs in **single quotes** in loops | `{for each entry in 'your-slug'}` |
+| Define **full schema** before `create_entry` | Empty `fields: []` breaks templates |
+| `status: "published"` for live content | Draft entries are invisible on the public site |
+| Field names in templates **match schema exactly** | `{'excerpt'}` only if the field is named `excerpt` |
+| `create_entry` auto-generates **slug from title** | Use `{slug}` in list → detail links |
+
+Tool paths for writes: `index.html`, `css/style.css` — never prefix `project/` in `write_project_file`.
+
+---
+
+## Three page patterns (do not mix)
+
+| Pattern | When | Template approach |
+|---------|------|-------------------|
+| **List** | Many items of the same type | `{for each entry in 'collection-slug' …}{endfor}` on a list or homepage section |
+| **Detail** | One item chosen from a link | URL `?collection=<slug>&slug={slug}` + top-level `{ title }`, `{ field }` — **no loop over the whole collection** |
+| **Static / singleton** | Fixed page or single CMS block | Plain HTML, `{from 'coll' get entry 'entry-slug'}…{endget}`, or `<birkly-region>` |
+
+### Detail pages — the most common bug
+
+**Wrong:** Detail HTML loops `{for each entry in '…'}` → user always sees a list.
+
+**Right:** List page links to detail with collection + slug; detail page reads **current entry** from the URL:
 
 ```html
-<a href="article.html?collection=blog&slug={slug}">Read story</a>
-```
+<!-- On list page, inside a loop -->
+<a href="/project/detail.html?collection=YOUR-COLL&slug={slug}">{ title }</a>
 
-Detail page head:
-
-```html
-<meta name="birkly-page" content="post">
-<meta name="birkly-collection" content="blog">
+<!-- On detail page head -->
+<meta name="birkly-collection" content="YOUR-COLL">
 <title>{ title }</title>
-```
 
-Detail page body (no collection loop):
-
-```html
-<article>
-  <h1>{ title }</h1>
-  <time>{ created_at }</time>
-  <div class="body">{ content }</div>
-</article>
+<!-- On detail page body — no collection loop -->
+<h1>{ title }</h1>
+<div>{ content }</div>
 <script src="/birkly-client.js"></script>
 ```
 
-The client reads `?slug=` and `?collection=`, loads that one entry, and exposes `{ title }`, `{ content }`, `{ slug }` at the top level.
+Prefer **`?slug={slug}`** in links (slug is auto-set from title). Avoid `?id=` unless you have a specific reason.
 
-Reference templates in this repo: `project/blog.html` (list) + `project/post.html` (detail).
+Reference implementation in repo: `project/blog.html` + `project/post.html` (example only — names are yours to choose).
 
 ---
 
-## Smart collection design (choose once, wire everywhere)
+## Content model design (flexible)
 
-Design the **content model first** in one plan message, then create collections, then HTML.
+### One collection = one kind of thing
 
-### Recipe: Blog / stories / news
+Each collection should represent a **single content type** with fields that belong together. If two sections need different fields, use two collections.
 
-**Collection:** `blog` (slug matches template loops)
+### Field types — match shape of content
 
-| Field | Type | Why |
-|-------|------|-----|
-| `title` | text | Required; system-friendly |
-| `content` | editor or textarea | Full article body |
-| `excerpt` | textarea | Teaser on list cards — do not truncate in templates |
-| `category` | text or select | Optional grouping |
-| `read_time` | text | e.g. "5 min read" |
-| `hero_image` | image | Optional card/header image |
-| `order` | number | Only if manual sort; otherwise use `ordered by newest` |
+| Content shape | Field type |
+|---------------|------------|
+| Short label, name, tag | `text` |
+| Paragraph, teaser, bio | `textarea` |
+| Long formatted body | `editor` (or `textarea` if plain text is enough) |
+| Single photo | `image` |
+| Multiple photos | `gallery` |
+| Ordered list (nav, FAQ, features) | `number` (`order`) + `ordered by order` in template |
+| On/off (featured, visible) | `checkbox` |
+| External link | `url` |
+| Fixed choices | `select` |
 
-**Pages:** `index.html` (featured + recent), `blog.html` (archive), `article.html` or `post.html` (detail).
+Always include `title`. Slug is generated from title unless you set it.
 
-**Do not** create empty `blog` and `site-elements` collections with `"fields": []` — define fields immediately.
+### Shared chrome (header, footer, hero)
 
-### Recipe: Site-wide chrome (header, footer, hero copy)
+**Problem:** Copy-pasting nav/footer on every HTML file.
 
-**Collection:** `site_elements` (slug with underscore is fine)
-
-| Entry slug | Purpose | Field approach |
-|------------|---------|----------------|
-| `header` | Nav / logo text | `editor` or `textarea` for HTML snippet, or multiple `text` fields |
-| `footer` | Copyright, links | same |
-| `hero` | Homepage headline block | `editor` with blocks, or `text` + `textarea` |
-
-**One-line include on every page:**
+**Approach:** One collection (any slug you choose) with **one entry per block** (e.g. entries named for their role). Include on each page:
 
 ```html
-<birkly-region collection="site_elements" entry="header"></birkly-region>
+<birkly-region collection="YOUR-CHROME-COLL" entry="header"></birkly-region>
 ```
 
-Prefer this over copy-pasting `{from 'site_elements' get entry 'header'}…{endget}` on every file.
+Or `{from 'YOUR-CHROME-COLL' get entry 'header'}…{endget}` when you need a custom wrapper.
 
-### Recipe: Portfolio / bakery products / menu items
+### Sub-collections vs top-level collections
 
-**Collection:** `projects` or `products` or `menu_items`
+| Situation | Use |
+|-----------|-----|
+| Items always tied to one parent (comments on a post, toppings on a dish) | Sub-collection scoped with `.current` on detail page |
+| Items that stand alone (all posts, all products) | Top-level collection + list/detail pages |
+| Visitor-submitted rows (contact messages) | Top-level collection with `public_api` |
 
-| Field | Type | Why |
-|-------|------|-----|
-| `title` | text | Item name |
-| `description` | textarea | Short blurb for cards |
-| `content` | editor | Long description (detail page) |
-| `image` | image | Card photo |
-| `link` | url | External link if needed |
-| `order` | number | Manual sort on grid (`ordered by order`) |
-| `featured` | checkbox | Homepage filter: `with 'featured' = true` if supported, or dedicated homepage loop |
-
-**Pages:** `index.html` (grid), `item.html` (detail with `?collection=projects&slug={slug}`).
-
-### Recipe: Team, testimonials, FAQ
-
-| Use case | Collection | Key fields |
-|----------|------------|------------|
-| Team | `team` | name (text), role (text), photo (image), bio (textarea) |
-| Testimonials | `testimonials` | quote (textarea), author (text), company (text), order (number) |
-| FAQ | `faq` | question (text), answer (textarea or editor), order (number) |
-
-Single-page FAQ: one `{for each entry in 'faq' ordered by order}` on `index.html` — no detail page needed.
-
-### When to use sub-collections
-
-Use **sub-collections** (see `sub-collections` playbook) when rows belong to **one parent entry**:
-
-- Comments on a blog post → `comments` sub-collection of `blog`
-- Reviews on a product → `reviews` sub of `products`
-- Order line items → sub of `orders`
-
-On a **detail page**, loop sub-entries scoped to current post:
+On a detail page, sub-collection loop example:
 
 ```html
-{for each entry in 'comments' of 'blog'.current ordered by newest}
-  <p>{'author'}: {'content'}</p>
+{for each entry in 'SUB-SLUG' of 'PARENT-COLL'.current ordered by newest}
+  …
 {endfor}
 ```
 
-Do **not** create a separate top-level `comments` collection if comments always belong to one post.
+---
+
+## Wiring CMS to HTML (general workflow)
+
+1. **Discover** — `get_project_info`, `list_project_files`, `list_collections` (once)
+2. **Model** — decide collections, fields, which pages are list vs detail vs static
+3. **Schema** — `create_collection` / `update_collection` with complete `fields`
+4. **Content** — `create_entry` with `published` and realistic seed data
+5. **Templates** — list loops, detail page(s), shared regions, CSS under correct URL prefix
+6. **Verify** — list shows CMS data; click through to one item; no raw `{…}`; styles load
+
+Do not stop after one collection if the site has distinct sections (marketing copy, repeatable items, forms, shared nav) — split the model to match.
 
 ---
 
-## Field type picker (avoid weak schemas)
+## Common mistakes (symptom → fix)
 
-| Need | Use | Avoid |
-|------|-----|-------|
-| Short label, name, category | `text` | `editor` |
-| Paragraph, excerpt, bio | `textarea` | `text` (too small mentally) |
-| Article body with formatting | `editor` | plain `textarea` unless user wants markdown only |
-| Hero / card photo | `image` | URL in `text` unless external-only |
-| Photo gallery | `gallery` | multiple `image` fields |
-| Pick one of several | `select` with options | free-text `text` |
-| Show/hide on homepage | `checkbox` | string "true" |
-| Sortable lists | `number` field + `ordered by order` | random `text` |
-| Link out | `url` | unvalidated `text` |
-
-Always include `title` (required). Slug is auto-generated from title unless set explicitly.
+| Symptom | Fix |
+|---------|-----|
+| Raw `{for each…}` visible | Add `birkly-client.js` |
+| Unstyled page | Prefix assets with `site_url_prefix` from `get_project_info` |
+| Blank detail page | Check slug in URL; use `?collection=&slug={slug}`; detail page must not loop the collection |
+| Static cards, empty CMS | Replace hard-coded markup with loops; publish entries |
+| Empty field in template | Align template field names with schema; define schema before entries |
+| Click item → list again | Detail page is wrongly using a list loop |
+| Same nav pasted everywhere | Use `<birkly-region>` or `{from … get …}` for shared blocks |
+| `{{ }}` / `{% for %}` | Birkly uses single braces: `{for each entry in 'slug'}` |
+| Invented filters (`truncate`, `strip_tags`) | Store teasers in CMS; only date `format` filter exists |
 
 ---
 
-## List page template (copy-ready)
+## Examples (illustrative — adapt to the project)
 
-```html
-{for each entry in 'blog' with status = published ordered by newest}
-<article class="card">
-  <h2><a href="article.html?collection=blog&slug={slug}">{ title }</a></h2>
-  {if entry has 'excerpt'}
-  <p>{'excerpt'}</p>
-  {endif}
-  <a href="article.html?collection=blog&slug={slug}">Read story →</a>
-</article>
-{endfor}
-```
+These are **patterns**, not required slugs or file names.
 
-Use **`{slug}` inside hrefs** — it resolves to each entry's slug in the loop.
+### Repeatable items + detail (blog, portfolio, menu, products)
 
-Filters that work: `with status = published`, `ordered by newest`, `ordered by order`, `ordered by oldest`.
+- Collection for the item type (fields: title, teaser, body, image, order as needed)
+- Homepage or index: featured loop and/or link to full list page
+- List page: `{for each entry in '…' ordered by …}` with links to detail
+- Detail page: meta collection + `{ title }`, body fields, back link
 
----
+*Example:* posts → list at `articles.html`, detail at `item.html?collection=posts&slug={slug}`.
 
-## Detail page template (copy-ready)
+### Mostly static marketing site
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="birkly-page" content="post">
-  <meta name="birkly-collection" content="blog">
-  <title>{ title }</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-  <birkly-region collection="site_elements" entry="header"></birkly-region>
-  <main>
-    <article>
-      <h1>{ title }</h1>
-      {if entry has 'category'}<span class="category">{'category'}</span>{endif}
-      {if entry has 'read_time'}<span class="read-time">{'read_time'}</span>{endif}
-      <div class="content">{ content }</div>
-    </article>
-    <p><a href="blog.html">← Back to all stories</a></p>
-  </main>
-  <script src="/birkly-client.js"></script>
-</body>
-</html>
-```
+- One chrome collection for hero + footer
+- One collection only where content will change often (testimonials, case studies)
+- Rest: static HTML or single-entry `{from … get …}` blocks
 
-**No `{for each entry in 'blog'}` on this page.**
+### Business site with contact
 
-Alternative for a **fixed** slug (no URL param): `{from 'blog' get entry 'my-slug'}…{endget}` — use only when the page is always one entry.
+- Collections for editable sections (services, team, etc.) as needed
+- Separate collection for **inbound submissions** (`public_api`) — not mixed with marketing entries
+- Contact page: `{entry for 'inquiries'}` — see `public-forms`
 
 ---
 
-## Build order (follow strictly)
+## After building
 
-1. `list_collections` — see what exists; reuse or extend, don't duplicate slugs.
-2. **Design schema** — write out fields table (this playbook's recipes).
-3. `create_collection` or `update_collection` with full `fields` array.
-4. `create_entry` × N with `status: "published"` and realistic seed content.
-5. **List pages** — loops + correct detail links.
-6. **Detail page** — meta tags + current-entry fields, no list loop.
-7. `site_elements` entries for shared header/footer if multi-page.
-8. Verify: open list → click one item → single article renders.
-
----
-
-## Common AI mistakes (user-visible bugs)
-
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| Raw `{for each entry…}` on page | Missing `/birkly-client.js` | Add script before `</body>` on **every** templated page |
-| Page unstyled (plain HTML) | CSS linked as `/css/style.css` | Use `/project/css/style.css` — check `site_url_prefix` |
-| Post links go to blank page | Missing slug on entries / empty `{slug}` | Slugs auto-generate from title; link with `?slug={slug}` not empty slug |
-| AI switched to `?id={id}` | Workaround for missing slugs | Fix slugs; prefer `?collection=blog&slug={slug}` |
-| Collections exist but site is static | Never wired templates | Replace hard-coded cards with loops |
-| Click "Read" → list again | Detail page loops entire collection | Use URL detail pattern; `{ title }` not `{for each}` |
-| Empty cards / missing fields | Schema has `"fields": []` | `update_collection` with proper fields |
-| Wrong field shows empty | Field name mismatch | Match schema exactly: `{'excerpt'}` not `{'summary'}` |
-| `{title truncate 80}` etc. | Invalid syntax (Jinja-ism) | Store excerpt in CMS; only `format` filter works on dates |
-| `{{title}}` or `{% for %}` | Wrong engine | Single braces Birkly syntax only |
-| Duplicate nav on every page | Copy-paste header HTML | `site_elements` + `<birkly-region>` |
-| Sub-collection on wrong page | Top-level loop instead of `.current` | `'comments' of 'blog'.current` on detail page only |
-
----
-
-## File layout convention
-
-```
-project/
-  index.html          # homepage (can mix static + loops)
-  blog.html           # list archive
-  article.html        # detail (or post.html)
-  about.html          # static or site_elements
-  css/style.css
-  js/script.js        # optional; dark mode, newsletter UI only — not for CMS rendering
-```
-
-Paths in tools: `index.html`, `css/style.css` — never prefix `project/`.
-
----
-
-## After building — tell the user
-
-- Public preview URL from `get_project_info`
-- Which collections power which pages
-- That list → detail links use `?collection=…&slug=…`
-- That editing content happens in admin → Collections, not by editing HTML cards
+Tell the user: preview URL (`get_project_info`), which collections feed which pages, that content edits happen in admin Collections, and how list → detail URLs work.
