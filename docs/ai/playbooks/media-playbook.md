@@ -10,7 +10,7 @@ Files in `media/` with sidecar `.metadata.json`. Organized in folders.
 
 | Tool | Purpose |
 |------|---------|
-| `list_media` | Browse library |
+| `list_media` | Browse library (filename, folder, URL) |
 | `upload_media` | Upload file (approval may apply) |
 | `create_media_folder` | New folder |
 | `move_media` | Organize files |
@@ -18,15 +18,53 @@ Files in `media/` with sidecar `.metadata.json`. Organized in folders.
 
 ## Workflow: image in entry
 
-1. `list_media` or user uploads via admin
-2. `create_entry` with image field = filename or media reference per fieldtype rules
-3. Template: image/gallery fields render via client or SSR
+1. User uploads via admin **Media**, or AI calls `upload_media` (needs `manage_media`)
+2. `list_media` — note exact **filename** and folder
+3. `create_entry` / `update_entry` — set image field to media reference per fieldtype (often filename string)
+4. Template — output field: `{'featured_image'}` or `{featured_image}` depending on field name
+
+### Example: blog post with featured image
+
+Schema field:
+
+```json
+{"name": "featured_image", "label": "Featured image", "type": "image", "required": false}
+```
+
+After upload `hero-bread.jpg`:
+
+```json
+{
+  "collection": "blog",
+  "title": "Morning batch",
+  "featured_image": "hero-bread.jpg",
+  "status": "published"
+}
+```
+
+Template:
+
+```html
+{for each entry in 'blog'}
+  <article>
+    <img src="/media/hero-bread.jpg" alt="{title}">
+    <!-- Prefer field output when client renders media URLs: -->
+    <div>{'featured_image'}</div>
+  </article>
+{endfor}
+```
+
+Use `list_media` response URLs when hard-coding is needed.
 
 ## Field types
 
-- **image** — single file
-- **gallery** — multiple images
-- **media** — generic file attachment
+| type | Use |
+|------|-----|
+| `image` | Single image |
+| `gallery` | Multiple images (array) |
+| `media` | Generic file (PDF, etc.) |
+
+See **`fieldtypes`** playbook for schema JSON.
 
 ## SVG & rules
 
@@ -36,13 +74,12 @@ SVG upload may be restricted by settings. Check admin media settings for allowed
 
 - Prefer describing required assets; user may upload via Media modal
 - `upload_media` when connection has `manage_media`
-- Reference exact filename from `list_media` response
+- Reference exact filename from `list_media` response — do not guess paths
+- Public site URLs often `/media/{folder}/{filename}` — confirm via `list_media`
 
 ## Related
 
-- `content-model` — image/gallery fields on entries
+- `fieldtypes` — image/gallery/media field definitions
+- `content-model` — entries with media fields
 - `content-editor` — inline images in rich HTML
-
-## Admin reference
-
-Snapshot: `admin/docs/snapshots/media.md`
+- Admin: `admin/docs/snapshots/media.md`, `admin/docs/fieldtypes.php`

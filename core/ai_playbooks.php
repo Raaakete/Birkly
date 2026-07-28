@@ -15,6 +15,27 @@ function birkly_ai_playbook_catalog(): array
             'triggers' => 'where to start, what playbook, complex task, not sure how',
             'category' => 'Meta',
         ],
+        'ai-quality-guide' => [
+            'title' => 'AI output quality guide',
+            'topic' => 'ai-quality-guide',
+            'summary' => 'Golden rules, checklists, failure modes, cross-links — read when unsure.',
+            'triggers' => 'how to build, best practice, quality, checklist, why failed',
+            'category' => 'Meta',
+        ],
+        'fieldtypes' => [
+            'title' => 'Field types reference',
+            'topic' => 'fieldtypes',
+            'summary' => 'Schema field types, JSON examples, common mistakes (editor vs richtext).',
+            'triggers' => 'field type, fieldtypes, schema type, image field, editor field',
+            'category' => 'Core CMS',
+        ],
+        'collection-groups' => [
+            'title' => 'Collection sidebar groups',
+            'topic' => 'collection-groups',
+            'summary' => 'list/save collection groups for admin Content sidebar organization.',
+            'triggers' => 'collection group, sidebar group, reorder collections, organize collections',
+            'category' => 'Core CMS',
+        ],
         'content-model' => [
             'title' => 'Collections, entries & schema',
             'topic' => 'content-model',
@@ -158,6 +179,9 @@ function birkly_ai_core_docs_topics(): array
 
     return [
         'playbooks-index' => $playbook('playbooks-index.md', 'AI playbooks — master index'),
+        'ai-quality-guide' => $playbook('ai-quality-guide.md', 'AI output quality guide'),
+        'fieldtypes' => $playbook('fieldtypes-playbook.md', 'Field types reference'),
+        'collection-groups' => $playbook('collection-groups-playbook.md', 'Collection groups playbook'),
         'content-model' => $playbook('content-model-playbook.md', 'Content model playbook'),
         'public-forms' => $playbook('public-forms-playbook.md', 'Public forms playbook'),
         'sub-collections' => $playbook('sub-collections-playbook.md', 'Sub-collections playbook'),
@@ -181,7 +205,7 @@ function birkly_ai_core_docs_topics(): array
         'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
         'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
         'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
-        'mcp' => ['path' => 'admin/docs/snapshots/mcp-connections.md', 'title' => 'MCP setup guide (admin snapshot)'],
+        'mcp' => $playbook('mcp-setup-playbook.md', 'MCP setup playbook'),
     ];
 }
 
@@ -234,7 +258,10 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
     }
 
     $triggerMap = [
-        'public-forms' => '/\b(contact form|newsletter|public form|submit from website|visitor submission)\b/i',
+        'ai-quality-guide' => '/\b(how (?:do|should)|best practice|quality|checklist|why (?:did|does).*fail|not working)\b/i',
+        'fieldtypes' => '/\b(field type|fieldtypes|schema type|editor field|image field|gallery field)\b/i',
+        'collection-groups' => '/\b(collection group|sidebar group|reorder collections|organize collections)\b/i',
+        'public-forms' => '/\b(contact form|newsletter|public form|submit from website|visitor submission|validation failed)\b/i',
         'sub-collections' => '/\b(sub-collection|sub-entry|nested entries|comments on posts)\b/i',
         'commerce' => '/\b(shop|e-?commerce|cart|checkout|sell online|online store|product catalog)\b/i',
         'cms-pages' => '/\b(cms page|admin-managed page|create page)\b/i',
@@ -243,6 +270,11 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
         'automation' => '/\b(automation|workflow|webhook|slack notification)\b/i',
         'events' => '/\b(events|rsvp|calendar|tickets)\b/i',
         'user-management' => '/\b(user registration|member login|site users)\b/i',
+        'mcp-setup' => '/\b(mcp|connect claude|connect cursor|connect chatgpt|connector url|model context protocol)\b/i',
+        'ai-connections' => '/\b(built-in assistant|ai connection|approvals tab|floating chat)\b/i',
+        'plugins-overview' => '/\b(install plugin|marketplace|activate plugin|enable commerce|enable plugin)\b/i',
+        'settings-roles' => '/\b(role|permission|settings tab|security settings)\b/i',
+        'content-editor' => '/\b(rich text|content editor|editor field|wysiwyg)\b/i',
     ];
 
     foreach ($triggerMap as $topic => $pattern) {
@@ -259,6 +291,13 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
  */
 function birkly_ai_should_auto_inject_playbooks(string $message, array $conversationHistory = []): bool
 {
+    $topics = birkly_ai_detect_playbook_topics($message, $conversationHistory);
+    $siteCore = birkly_ai_core_site_build_topics();
+    $nonSiteTopics = array_values(array_diff($topics, $siteCore));
+    if ($nonSiteTopics !== []) {
+        return true;
+    }
+
     if (!ai_chat_is_project_site_intent($message, $conversationHistory)) {
         return false;
     }
@@ -331,9 +370,11 @@ function birkly_ai_mcp_initialize_instructions(): string
 
     $rules = "RULES:\n"
         . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
+        . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, public-forms — use when playbooks below don't cover your task\n"
         . "- List pages: loops; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
         . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script>\n"
-        . "- Define collection fields BEFORE create_entry — never leave fields: []\n"
+        . "- Define collection fields BEFORE create_entry — never leave fields: []; read fieldtypes playbook for type names\n"
+        . "- read_collection before writing form HTML — field slugs must match name=\"{slug}\" exactly\n"
         . "- Use get_project_info site_url_prefix for asset/page URLs in HTML (e.g. /project/css/…)\n"
         . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
         . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
@@ -453,9 +494,12 @@ function birkly_ai_playbooks_prompt_section(): string
     }
 
     $lines = [
-        'PLAYBOOKS — relevant playbooks are auto-loaded server-side when you detect site build, commerce, forms, etc.',
+        'PLAYBOOKS — relevant playbooks are auto-loaded server-side when intent matches (site build, forms, MCP, plugins, etc.).',
         'For topics not yet loaded, use `read_birkly_docs` with the topic slug below.',
-        'Site/portfolio build: follow the pre-loaded site-building playbook — do not loop on get_project_info.',
+        'Unsure? read_birkly_docs "ai-quality-guide" or "playbooks-index" once, then execute.',
+        'Site/portfolio build: follow pre-loaded site-building + web-project-patterns — do not loop on get_project_info.',
+        '',
+        'Quality: schema before entries before HTML; read_collection before forms; birkly-client.js on every templated page.',
         '',
     ];
 

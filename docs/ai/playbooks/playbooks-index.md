@@ -4,24 +4,30 @@ Read this when the user's request spans multiple areas or you are unsure which p
 
 ## How playbooks work
 
-1. **L1 (always in system prompt):** Short catalog of playbook slugs and triggers.
-2. **L2 (on demand):** `read_birkly_docs` with a topic slug loads the full step-by-step playbook.
-3. **L3 (reference):** `templating`, `admin` (context pack), plugin topics when active.
+1. **L1 (always in system prompt):** Short catalog of playbook slugs, quality rules, tools list, templating cheat sheet, context pack summary.
+2. **L2 (auto-loaded):** Full playbook markdown injected server-side when intent matches (site builds, forms, commerce, MCP setup, plugins, etc.).
+3. **L3 (on demand):** `read_birkly_docs` with a topic slug, or MCP `birkly://docs/{topic}` / `resources/read` for depth.
 
-**Rule:** Read the relevant playbook **once**, then execute. Do not loop on discovery reads.
+**Rule:** Read the relevant playbook **once**, then execute. Do not loop on discovery reads in the same turn.
+
+**Start here for quality:** `ai-quality-guide` — golden rules, failure modes, checklists.
 
 ## Playbook map
 
 | Topic slug | Use when the user asks about… |
 |------------|-------------------------------|
+| `ai-quality-guide` | How to produce reliable outputs; checklists; failure modes |
+| `playbooks-index` | This file — routing & decision tree |
 | `content-model` | Collections, entries, schema, fields, publishing, slugs |
+| `fieldtypes` | Field `type` values, schema JSON examples, image/editor/email |
 | `site-building` | Website, portfolio, landing page, `project/` HTML/CSS |
-| `web-project-patterns` | Flexible site wiring: list/detail pages, schema decisions, CMS-to-HTML, common bugs |
+| `web-project-patterns` | List/detail pages, schema decisions, CMS-to-HTML wiring, common bugs |
 | `templating` | Template syntax, loops, `{from…get}`, client rendering |
-| `public-forms` | Contact forms, newsletter signup, external submission, `{entry for}` |
-| `sub-collections` | Nested content: comments, reviews, line items, nested sub-collections |
+| `public-forms` | Contact forms, `{entry for}`, public_api, newsletter, visitor submissions |
+| `sub-collections` | Nested content: comments, reviews, line items |
+| `collection-groups` | Admin sidebar groups, reorder collections |
 | `cms-pages` | Admin-managed pages vs `project/` site |
-| `media` | Media library, uploads, folders, referencing images in entries |
+| `media` | Media library, uploads, folders, image/gallery fields |
 | `content-editor` | Rich text / layout HTML in Editor fields |
 | `agent-guide` | Agent Guide: sources, products, claims, publishing `/.well-known/` |
 | `mcp-setup` | Connect Claude, ChatGPT, Cursor via MCP |
@@ -35,21 +41,42 @@ Read this when the user's request spans multiple areas or you are unsure which p
 
 Plugin topics (`commerce`, `automation`, etc.) also resolve from active plugin `docs/ai-context.md` when installed.
 
+## Documentation cross-links (human admin docs)
+
+AI playbooks distill these; load L3 when you need admin UI specifics:
+
+| Topic | Playbook | Admin / platform doc |
+|-------|----------|----------------------|
+| Field types | `fieldtypes` | `admin/docs/fieldtypes.php` |
+| Public API forms | `public-forms` | `admin/docs/public-api-forms.php` |
+| Website + client JS | `web-project-patterns`, `templating` | `admin/docs/website-integration.php`, `admin/docs/client-library.php` |
+| MCP connections | `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
+| Media | `media` | `admin/docs/snapshots/media.md` |
+| Content editor | `content-editor` | `admin/docs/snapshots/content-editor.md` |
+| Marketplace | `plugins-overview` | `admin/docs/snapshots/marketplace.md` |
+| Commerce | `commerce` | `admin/docs/snapshots/commerce-*.md` |
+| User plugin | `user-management` | `admin/docs/snapshots/user-plugin.md` |
+| Template language (full) | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
+| Platform overview | `admin` (context pack) | `docs/ai/birkly-context-pack.md` |
+
 ## Decision tree
 
 ```
+Any task → ai-quality-guide (rules) if unsure
+
 Build a public website?
-├─ Custom HTML/CSS → web-project-patterns + site-building (+ templating)
+├─ Custom HTML/CSS → web-project-patterns + site-building + fieldtypes
 ├─ Simple admin pages only → cms-pages
-└─ Forms on the site → public-forms (+ content-model for schema)
+└─ Forms on the site → public-forms (+ content-model + fieldtypes)
 
 Structured content?
-├─ Flat entries → content-model
+├─ Flat entries → content-model + fieldtypes
 ├─ Child rows per parent → sub-collections (+ public-forms if visitors submit)
+├─ Admin sidebar organization → collection-groups
 └─ Rich article body → content-editor
 
 Sell / automate / members?
-├─ Products & checkout → commerce (enable plugin first)
+├─ Products & checkout → plugins-overview → commerce
 ├─ When X then Y → automation
 ├─ Events & RSVP → events (+ commerce if paid)
 └─ Login & registration → user-management
@@ -72,22 +99,26 @@ AI connectivity?
 
 Install flow: `plugins-overview` → `list_plugins` → admin Marketplace or `activate_plugin`.
 
-## What AI cannot configure (direct to admin UI)
+## What AI can configure via tools
 
-- Agent Guide write/publish (admin AI Presence page)
+- Collection `entry_method: public_api`, sub-collection submission rights
+- Collection groups (`list_collection_groups` / `save_collection_groups`)
+- Full collection schema, entries, project files, media (with permissions)
+
+## What still requires admin UI
+
+- Agent Guide write/publish (AI Presence page)
 - Automation workflow CRUD (Automation admin)
 - Payment provider credentials (Commerce → Connections)
 - Admin user creation (Settings → Users — no `create_user` tool)
-
-AI **can** set collection `entry_method: public_api`, sub-collection submission rights, and collection groups via `update_collection` / `save_collection_groups`.
 
 ## Anti-patterns (all playbooks)
 
 - Re-listing collections/files every message after first successful read
 - Using `create_page` when user wanted `project/` custom site
-- Using `create_entry` fallback on "yes/proceed" during site builds
-- Wrong templating syntax (`{% for %}`, `{{ }}`) — use Birkly tags (`{for each entry in 'slug'}`)
-- Detail page loops entire collection — use URL slug pattern (`?collection=&slug=`)
-- Template tags without `birkly-client.js` — raw `{…}` visible in browser
-- Empty collection schema (`fields: []`) then templates reference custom fields
-- Confusing `entry_method` values — runtime uses `public_api` for public submission (not `public_submit`)
+- Wrong field types or names — read `fieldtypes` + `read_collection`
+- Wrong templating syntax (`{% for %}`, `{{ }}`) — use Birkly tags
+- Detail page loops entire collection — use URL slug pattern
+- Template tags without `birkly-client.js`
+- Form field names ≠ schema slugs — causes "Validation failed"
+- Telling non-technical users to manually fix what AI tools can do
