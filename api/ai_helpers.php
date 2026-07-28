@@ -144,6 +144,25 @@ function birkly_ai_extract_action_payload(array $action): array
 }
 
 /**
+ * Normalize action payloads before execution (project paths, collection slugs, etc.).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_ai_normalize_action_data(string $type, array $data): array
+{
+    if (in_array($type, ['write_project_file', 'create_project_file', 'delete_project_file', 'read_project_file'], true)
+        && !empty($data['path']) && is_string($data['path'])) {
+        $data['path'] = birkly_ai_normalize_project_file_path($data['path']);
+    }
+
+    if (in_array($type, ['update_collection', 'create_collection', 'create_entry', 'update_entry'], true)) {
+        $data = birkly_ai_normalize_collection_action_data($data);
+    }
+
+    return $data;
+}
+
+/**
  * Resolve a collection slug/dir from a normalized payload (slug, name, or aliases).
  */
 function birkly_ai_resolve_collection_slug_from_payload(array $payload, ?Storage $storage = null): string
@@ -423,6 +442,93 @@ function birkly_ai_build_provider_error(
             'raw_body' => is_string($responseBody) ? substr($responseBody, 0, 800) : '',
         ],
     ];
+}
+
+/**
+ * Strip leading project/ from paths — files already live under project/.
+ */
+function birkly_ai_normalize_project_file_path(string $path): string
+{
+    $path = ltrim(str_replace('\\', '/', trim($path)), '/');
+    while (str_starts_with(strtolower($path), 'project/')) {
+        $path = substr($path, 9);
+    }
+    return $path;
+}
+
+/**
+ * Find the end index (exclusive) of a JSON object starting at $start.
+ */
+function ai_chat_find_json_object_end(string $text, int $start): ?int
+{
+    $depth = 0;
+    $inString = false;
+    $escape = false;
+    $len = strlen($text);
+    for ($i = $start; $i < $len; $i++) {
+        $c = $text[$i];
+        if ($inString) {
+            if ($escape) {
+                $escape = false;
+                continue;
+            }
+            if ($c === '\\') {
+                $escape = true;
+                continue;
+            }
+            if ($c === '"') {
+                $inString = false;
+            }
+            continue;
+        }
+        if ($c === '"') {
+            $inString = true;
+            continue;
+        }
+        if ($c === '{') {
+            $depth++;
+            continue;
+        }
+        if ($c === '}') {
+            $depth--;
+            if ($depth === 0) {
+                return $i + 1;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Remove action JSON, session notes, and other non-chat noise from assistant text.
+ */
+function ai_chat_sanitize_display_message(string $message): string
+{
+    $message = (string) $message;
+    if ($message === '') {
+        return '';
+    }
+
+    $message = preg_replace('/```(?:json)?\s*[\s\S]*?```/iu', '', $message) ?? $message;
+    $message = preg_replace('/\n*\[Session notes[^\]]*\]\s*/u', '', $message) ?? $message;
+
+    $patterns = ['{"actions"', '{ "actions"', '{"type":"write_project_file"', '{ "type": "write_project_file"'];
+    foreach ($patterns as $needle) {
+        $offset = 0;
+        while (($pos = stripos($message, $needle, $offset)) !== false) {
+            $end = ai_chat_find_json_object_end($message, $pos);
+            if ($end === null) {
+                break;
+            }
+            $message = substr($message, 0, $pos) . substr($message, $end);
+            $offset = $pos;
+        }
+    }
+
+    $message = preg_replace("/\n{3,}/", "\n\n", trim($message)) ?? trim($message);
+
+    return trim($message);
 }
 
 /**
