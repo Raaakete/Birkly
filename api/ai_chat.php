@@ -801,7 +801,13 @@ if ($action === 'chat') {
                     }
                     
                     $chatPersistContext['execution_results'] = $executedActions;
-                    $displayNarrative = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
+                    $rawMessage = (string) ($response['message'] ?? '');
+                    $displayNarrative = ai_chat_sanitize_display_message($rawMessage);
+                    if ($displayNarrative === '' || ai_chat_message_contains_tool_call_markup($rawMessage)) {
+                        $displayNarrative = count($executedActions) === 1
+                            ? 'Applied the requested change.'
+                            : 'Applied **' . count($executedActions) . '** changes to your site.';
+                    }
                     if ($executedActions !== []) {
                         $lines = [];
                         foreach ($executedActions as $result) {
@@ -826,7 +832,17 @@ if ($action === 'chat') {
                 }
             } else {
                 // No write actions - return the model response as-is
-                $finalMessage = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
+                $rawMessage = (string) ($response['message'] ?? '');
+                $finalMessage = ai_chat_sanitize_display_message($rawMessage);
+
+                if (ai_chat_message_contains_tool_call_markup($rawMessage)) {
+                    if (!empty($readData)) {
+                        $readSummary = ai_chat_summarize_read_results($readData);
+                        $finalMessage = $readSummary !== '' ? $readSummary : 'Retrieved project data.';
+                    } elseif ($finalMessage === '') {
+                        $finalMessage = 'Working on your request…';
+                    }
+                }
 
                 if ($actions === []
                     && ai_chat_response_implies_false_execution_claim($finalMessage)) {
@@ -2258,54 +2274,56 @@ function cleanResponseMessage($message, $actions) {
 // Extract action requests from AI response
 function extractActionsFromResponse($response, $toolCalls = []) {
     $actions = [];
+    $response = (string) $response;
 
     if (!empty($toolCalls)) {
-        $actions = birkly_ai_tool_calls_to_actions($toolCalls);
-    } else {
-        $response = (string) $response;
+        $actions = array_merge($actions, birkly_ai_tool_calls_to_actions($toolCalls));
+    }
 
-        // Fenced ```json blocks — brace matching (CSS/HTML in content breaks naive regex)
-        if (preg_match_all('/```(?:json)?\s*/i', $response, $fenceMatches, PREG_OFFSET_CAPTURE)) {
-            foreach ($fenceMatches[0] as $match) {
-                $searchFrom = $match[1] + strlen($match[0]);
-                $brace = strpos($response, '{', $searchFrom);
-                if ($brace === false) {
-                    continue;
-                }
-                $end = ai_chat_find_json_object_end($response, $brace);
-                if ($end === null) {
-                    continue;
-                }
-                $json = json_decode(substr($response, $brace, $end - $brace), true);
-                if (!is_array($json)) {
-                    continue;
-                }
-                if (isset($json['actions']) && is_array($json['actions'])) {
-                    $actions = array_merge($actions, $json['actions']);
-                } elseif (isset($json['type'])) {
-                    $actions[] = $json;
-                }
+    $actions = array_merge($actions, ai_chat_extract_xml_tool_calls($response));
+
+    // Fenced ```json blocks — brace matching (CSS/HTML in content breaks naive regex)
+    if (preg_match_all('/```(?:json)?\s*/i', $response, $fenceMatches, PREG_OFFSET_CAPTURE)) {
+        foreach ($fenceMatches[0] as $match) {
+            $searchFrom = $match[1] + strlen($match[0]);
+            $brace = strpos($response, '{', $searchFrom);
+            if ($brace === false) {
+                continue;
+            }
+            $end = ai_chat_find_json_object_end($response, $brace);
+            if ($end === null) {
+                continue;
+            }
+            $json = json_decode(substr($response, $brace, $end - $brace), true);
+            if (!is_array($json)) {
+                continue;
+            }
+            if (isset($json['actions']) && is_array($json['actions'])) {
+                $actions = array_merge($actions, $json['actions']);
+            } elseif (isset($json['type'])) {
+                $actions[] = $json;
             }
         }
+    }
 
-        if ($actions === []) {
-            foreach (ai_chat_extract_json_objects($response, 'actions') as $json) {
-                if (isset($json['actions']) && is_array($json['actions'])) {
-                    $actions = array_merge($actions, $json['actions']);
-                }
+    if ($actions === []) {
+        foreach (ai_chat_extract_json_objects($response, 'actions') as $json) {
+            if (isset($json['actions']) && is_array($json['actions'])) {
+                $actions = array_merge($actions, $json['actions']);
             }
         }
+    }
 
-        if ($actions === []) {
-            foreach (ai_chat_extract_json_objects($response, 'type') as $json) {
-                if (isset($json['type']) && is_string($json['type'])) {
-                    $actions[] = $json;
-                }
+    if ($actions === []) {
+        foreach (ai_chat_extract_json_objects($response, 'type') as $json) {
+            if (isset($json['type']) && is_string($json['type'])) {
+                $actions[] = $json;
             }
         }
     }
 
     $normalized = [];
+    $seen = [];
     foreach ($actions as $action) {
         if (!is_array($action)) {
             continue;
@@ -2315,6 +2333,11 @@ function extractActionsFromResponse($response, $toolCalls = []) {
             continue;
         }
         $payload = birkly_ai_normalize_action_data($type, birkly_ai_extract_action_payload($action));
+        $dedupeKey = $type . ':' . json_encode($payload);
+        if (isset($seen[$dedupeKey])) {
+            continue;
+        }
+        $seen[$dedupeKey] = true;
         $validationError = birkly_ai_validate_action_before_execute([
             'type' => $type,
             'data' => $payload,

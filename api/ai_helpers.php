@@ -501,6 +501,89 @@ function ai_chat_find_json_object_end(string $text, int $start): ?int
 }
 
 /**
+ * True when text embeds model tool-call markup (OpenRouter XML-style or similar).
+ */
+function ai_chat_message_contains_tool_call_markup(string $message): bool
+{
+    return (bool) preg_match('/<tool_call\b[\s>]/i', $message)
+        || (bool) preg_match('/<arg_key>[\s\S]*?<\/arg_value>/i', $message);
+}
+
+/**
+ * Parse XML-style tool calls some OpenRouter models emit inside message content.
+ *
+ * @return list<array<string,mixed>>
+ */
+function ai_chat_extract_xml_tool_calls(string $response): array
+{
+    $actions = [];
+    if (!preg_match_all('/<tool_call>\s*([a-z_][a-z0-9_]*)\s*([\s\S]*?)<\/tool_call>/i', $response, $blocks, PREG_SET_ORDER)) {
+        return $actions;
+    }
+
+    foreach ($blocks as $block) {
+        $name = (string) $block[1];
+        $body = (string) $block[2];
+        if ($name === '') {
+            continue;
+        }
+        $args = [];
+        if (preg_match_all('/<arg_key>([^<]*)<\/arg_key>\s*<arg_value>([\s\S]*?)<\/arg_value>/i', $body, $argMatches, PREG_SET_ORDER)) {
+            foreach ($argMatches as $argMatch) {
+                $key = trim((string) $argMatch[1]);
+                if ($key === '') {
+                    continue;
+                }
+                $args[$key] = trim((string) $argMatch[2]);
+            }
+        }
+        $actions[] = ['type' => $name] + $args;
+    }
+
+    return $actions;
+}
+
+/**
+ * Brief user-facing summary after read actions (no raw file dumps).
+ *
+ * @param list<array<string,mixed>> $readData
+ */
+function ai_chat_summarize_read_results(array $readData): string
+{
+    $parts = [];
+    foreach ($readData as $readResult) {
+        if (!($readResult['success'] ?? false)) {
+            continue;
+        }
+        $data = is_array($readResult['data'] ?? null) ? $readResult['data'] : [];
+        if (isset($data['file']) && is_array($data['file'])) {
+            $path = (string) ($data['file']['path'] ?? $data['file']['relative_path'] ?? '');
+            if ($path !== '') {
+                $parts[] = $path;
+            }
+            continue;
+        }
+        if (isset($data['collection']) && isset($data['entries'])) {
+            $parts[] = 'entries in ' . $data['collection'];
+            continue;
+        }
+        if (isset($data['path']) && isset($data['count']) && !isset($data['collection'])) {
+            $parts[] = 'files at ' . $data['path'];
+            continue;
+        }
+        if (isset($data['site_dir'])) {
+            $parts[] = 'project info';
+        }
+    }
+    $parts = array_values(array_unique($parts));
+    if ($parts === []) {
+        return '';
+    }
+
+    return 'Retrieved **' . implode('**, **', $parts) . '**.';
+}
+
+/**
  * Remove action JSON, session notes, and other non-chat noise from assistant text.
  */
 function ai_chat_sanitize_display_message(string $message): string
@@ -510,6 +593,8 @@ function ai_chat_sanitize_display_message(string $message): string
         return '';
     }
 
+    $message = preg_replace('/<tool_call\b[^>]*>[\s\S]*?<\/tool_call>/iu', '', $message) ?? $message;
+    $message = preg_replace('/<tool_call\b[^>]*>[\s\S]*/iu', '', $message) ?? $message;
     $message = preg_replace('/```(?:json)?\s*[\s\S]*?```/iu', '', $message) ?? $message;
     $message = preg_replace('/\n*\[Session notes[^\]]*\]\s*/u', '', $message) ?? $message;
 
