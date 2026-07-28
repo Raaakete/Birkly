@@ -1976,6 +1976,8 @@
                 if (eventName === 'token' && payload.content) {
                     streamedContent += payload.content;
                     updateStreamingMessage(assistantMessageId, streamedContent, false);
+                } else if (eventName === 'status' && payload.message) {
+                    updateStreamingMessage(assistantMessageId, payload.message, false);
                 } else if (eventName === 'done') {
                     finalResult = payload;
                 }
