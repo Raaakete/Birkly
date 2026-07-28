@@ -1921,8 +1921,8 @@
 
         clearInterval(chatActivityStatusTimer);
         clearInterval(chatActivityTipTimer);
-        chatActivityStatusTimer = setInterval(rotateChatActivityStatus, 4500);
-        chatActivityTipTimer = setInterval(rotateChatActivityTip, 9000);
+        chatActivityStatusTimer = setInterval(rotateChatActivityStatus, 2500);
+        chatActivityTipTimer = setInterval(rotateChatActivityTip, 5000);
 
         const messages = document.getElementById('ai-chat-messages');
         if (messages) {
