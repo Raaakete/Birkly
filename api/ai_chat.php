@@ -214,56 +214,9 @@ if ($action === 'chat') {
             }
         }
         
-        // Check if this is a short follow-up request that should skip AI and go straight to fallback
-        $isShortFollowUp = strlen(trim($message)) < 25 && preg_match('/\b(another|more|one|again|same|another one|yes|do it|that)\b/i', $message);
+        // Call AI provider with conversation history
         $skipAiCall = false;
-        $foundCollection = null;
-        
-        if ($isShortFollowUp && !empty($conversationHistory)) {
-            error_log("Short follow-up detected: '$message' - searching history for collection");
-            // Check if we can find a collection from recent history (check both JSON and text)
-            foreach (array_reverse($conversationHistory) as $histMsg) {
-                $histContent = $histMsg['content'] ?? '';
-                
-                // First try: Look for JSON with collection field (most reliable)
-                if (preg_match('/"collection"\s*:\s*"([^"]+)"/i', $histContent, $m)) {
-                    $possibleSlug = trim($m[1]);
-                    // Verify it's a valid collection
-                    if (!empty($systemContext['collections'])) {
-                        foreach ($systemContext['collections'] as $coll) {
-                            if (strtolower($coll['slug'] ?? '') === strtolower($possibleSlug)) {
-                                $foundCollection = $coll['slug'];
-                                error_log("Short follow-up: Found collection '$foundCollection' from JSON in history - skipping AI call");
-                                $skipAiCall = true;
-                                break 2;
-                            }
-                        }
-                    }
-                }
-                
-                // Second try: Look for collection mentions in text
-                if (preg_match('/(?:for|in|to)\s+(?:the\s+)?([a-z0-9][a-z0-9\s-]+?)(?:\s+collection|$)/i', $histContent, $m)) {
-                    $possibleCollection = trim($m[1]);
-                    $possibleCollection = preg_replace('/\b(for|in|to|the|collection|demo|new|a|an)\b/i', '', $possibleCollection);
-                    $possibleCollection = trim($possibleCollection);
-                    $normalizedPossible = strtolower(preg_replace('/[^a-z0-9]+/', '-', $possibleCollection));
-                    
-                    if (!empty($systemContext['collections'])) {
-                        foreach ($systemContext['collections'] as $coll) {
-                            $collSlug = strtolower($coll['slug'] ?? '');
-                            if ($collSlug === $normalizedPossible || strpos($collSlug, str_replace('-', '', $normalizedPossible)) !== false) {
-                                $foundCollection = $coll['slug'];
-                                error_log("Short follow-up: Found collection '$foundCollection' from text in history - skipping AI call");
-                                $skipAiCall = true;
-                                break 2;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Site-build status: answer from session progress without calling the model
+        $streamCallback = null;
         if (ai_chat_is_status_request($message) && ai_chat_session_has_site_build_progress($conversationHistory)) {
             $skipAiCall = true;
             $response = [
@@ -292,8 +245,6 @@ if ($action === 'chat') {
             }
         }
         
-        // Call AI provider with conversation history (unless we're skipping for short follow-up)
-        $streamCallback = null;
         if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? ''))) {
             birkly_ai_sse_begin();
             $streamActive = true;
@@ -322,20 +273,14 @@ if ($action === 'chat') {
                 $chatAttachments
             );
         } else {
-            // Create a fake response that will trigger fallback immediately
-            // Store the found collection in a way the fallback can access it
-            $response = [
-                'success' => true,
-                'message' => $preResolvedActions !== []
-                    ? ('Running the next site-build step (' . count($preResolvedActions) . ' action(s)).')
-                    : 'Creating another entry.',
-            ];
-            // Store found collection in response so fallback can use it
-            if ($foundCollection) {
-                $response['_fallback_collection'] = $foundCollection;
-                error_log("Skipped AI call for short follow-up - found collection: $foundCollection");
-            } else {
-                error_log("Skipped AI call for short follow-up - collection not found in history, will search in fallback");
+            // skipAiCall path: status/proceed summary already set in $response above
+            if (!isset($response)) {
+                $response = [
+                    'success' => true,
+                    'message' => $preResolvedActions !== []
+                        ? ('Running the next site-build step (' . count($preResolvedActions) . ' action(s)).')
+                        : '',
+                ];
             }
         }
         
@@ -404,8 +349,10 @@ if ($action === 'chat') {
                 }
             }
 
-            // SIMPLIFIED FALLBACK: Only trigger if no actions AND user asked for an action
-            $userAskedForAction = preg_match('/\b(create|add|make|update|delete|fix|change|another|more|one|yes|proceed)\b/i', $message);
+            // SIMPLIFIED FALLBACK: Only trigger if no actions AND user explicitly asked for a write action
+            $userAskedForAction = preg_match('/\b(create|add|make|update|delete|fix|change)\b/i', $message)
+                && !preg_match('/\?\s*$/', trim($message))
+                && !preg_match('/\b(explain|why|how|what|describe|tell me|can you|could you|should i)\b/i', $message);
             
             if (empty($actions) && $userAskedForAction && !ai_chat_is_project_site_intent($message, $conversationHistory)) {
                 $context = $systemContext;
@@ -1279,12 +1226,18 @@ if ($action === 'chat') {
                     }
                     
                     $chatPersistContext['execution_results'] = $executedActions;
-                    $response['message'] = ai_chat_format_execution_report(
+                    $modelNarrative = trim((string) ($response['message'] ?? ''));
+                    $executionReport = ai_chat_format_execution_report(
                         $executedActions,
                         $actions,
                         $conversationHistory,
                         $systemContext
                     );
+                    if ($modelNarrative !== '' && strlen($modelNarrative) > 60 && !str_contains($modelNarrative, '```json')) {
+                        $response['message'] = $modelNarrative . "\n\n---\n\n" . $executionReport;
+                    } else {
+                        $response['message'] = $executionReport;
+                    }
                     if ($executedActions === [] && ai_chat_is_proceed_message($message)) {
                         $response['message'] = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
                     }
@@ -1307,7 +1260,7 @@ if ($action === 'chat') {
                 if ((ai_chat_is_proceed_message($message) || ai_chat_is_status_request($message))
                     && ai_chat_session_has_site_build_progress($conversationHistory)) {
                     $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
-                    if ($summary !== '') {
+                    if ($summary !== '' && strlen(trim($finalMessage)) < 80) {
                         $finalMessage = $summary;
                     }
                 }
