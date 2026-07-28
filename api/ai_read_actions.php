@@ -99,29 +99,26 @@ function executeReadAction($actionData, $aiUser) {
         ];
 
     } elseif ($actionType === 'list_collections') {
-        // List all collections
+        require_once __DIR__ . '/../core/ai_collection_config.php';
         $collectionsDir = $birklyRoot . '/content/collections';
         $collections = [];
-        
+
         if (is_dir($collectionsDir)) {
-            $collectionDirs = array_filter(glob($collectionsDir . '/*'), 'is_dir');
-            foreach ($collectionDirs as $dir) {
-                $collectionFile = $dir . '/collection.json';
-                if (file_exists($collectionFile)) {
-                    $collectionMeta = json_decode(file_get_contents($collectionFile), true);
-                    if ($collectionMeta) {
-                        $collections[] = [
-                            'slug' => $collectionMeta['slug'] ?? basename($dir),
-                            'name' => $collectionMeta['name'] ?? $collectionMeta['title'] ?? basename($dir),
-                            'description' => $collectionMeta['description'] ?? '',
-                            'fields' => $collectionMeta['fields'] ?? []
-                        ];
-                    }
+            foreach (array_filter(glob($collectionsDir . '/*'), 'is_dir') ?: [] as $dir) {
+                $summary = birkly_ai_summarize_collection_from_dir($dir);
+                if ($summary !== null) {
+                    $collections[] = $summary;
                 }
             }
         }
-        
+
         return ['success' => true, 'data' => ['collections' => $collections, 'count' => count($collections)]];
+
+    } elseif ($actionType === 'list_collection_groups') {
+        require_once __DIR__ . '/../core/collection_groups.php';
+        $groups = birkly_load_collection_groups();
+
+        return ['success' => true, 'data' => ['collection_groups' => $groups, 'count' => count($groups)]];
         
     } elseif ($actionType === 'list_media') {
         // List media files
