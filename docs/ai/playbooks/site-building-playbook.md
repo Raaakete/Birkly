@@ -126,3 +126,13 @@ Note: collections created, list vs detail filenames, preview URL. Content edits 
 - `fieldtypes` — schema field types
 - `public-forms` — contact/newsletter
 - `ai-quality-guide` — checklists & failure modes
+
+## Admin cross-reference
+
+| Topic | Help topic id | AI playbook |
+|-------|---------------|-------------|
+| Entries & collections | `entries` | `content-model` |
+| Public forms | `public-forms` | `public-forms` |
+| Reference projects | `reference-projects` | `web-project-patterns` |
+
+Playbook file: `docs/ai/playbooks/site-building-playbook.md`

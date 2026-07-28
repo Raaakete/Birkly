@@ -153,6 +153,86 @@ Do not stop after one collection if the site has distinct sections (marketing co
 | `{{ }}` / `{% for %}` | Birkly uses single braces: `{for each entry in 'slug'}` |
 | Invented filters (`truncate`, `strip_tags`) | Store teasers in CMS; only date `format` filter exists |
 
+## Known bad patterns (real regressions — never generate these)
+
+If `read_project_file` shows these, rewrite the file — they have caused broken layouts and silent form failures in production.
+
+### Bad: detail page loops entire collection
+
+```html
+<!-- WRONG on post.html / detail.html — always shows list or wrong item -->
+{for each entry in 'blog'}
+  <h1>{title}</h1>
+  <div>{ content }</div>
+{endfor}
+```
+
+**Fix:** Detail uses URL context only:
+
+```html
+<meta name="birkly-collection" content="blog">
+<h1>{ title }</h1>
+<div>{ content }</div>
+```
+
+List page links: `detail.html?collection=blog&slug={slug}`.
+
+### Bad: CSS at `/css/` instead of site prefix
+
+```html
+<!-- WRONG when site_url_prefix is /project/ -->
+<link rel="stylesheet" href="/css/style.css">
+```
+
+**Fix:** `get_project_info` → use `/project/css/style.css` (or whatever prefix returns).
+
+### Bad: hard-coded cards when collection exists
+
+```html
+<!-- WRONG after create_collection 'menu' — CMS data ignored -->
+<article><h2>Sourdough</h2><p>$5</p></article>
+<article><h2>Croissant</h2><p>$3</p></article>
+```
+
+**Fix:** `{for each entry in 'menu' …}` with published entries from `create_entry`.
+
+### Bad: empty schema then rich templates
+
+```json
+{ "fields": [] }
+```
+
+Template references `{ 'excerpt' }`, `{ image }` → blank output forever.
+
+**Fix:** Full schema first (`fieldtypes` playbook), then entries, then HTML.
+
+### Bad: Jinja/Liquid/Blade syntax
+
+```html
+{% for item in items %}
+{{ item.title }}
+{% endfor %}
+```
+
+Birkly only: `{for each entry in 'slug'}` … `{endfor}`.
+
+### Bad: custom contact form JS (overrides platform)
+
+AI-generated sites sometimes ship hand-written fetch handlers that conflict with `{entry for}`. See **`public-forms`** → Known bad patterns — replace with `{entry for}` + `birkly-client.js`.
+
+### Bad: entry detail layout without table structure
+
+Admin entry-detail for sub-collections expects consistent markup when mixing main entry + sub-entries — prefer patterns from reference `project/post.html` + `smart-table` conventions in admin templates.
+
+## Admin cross-reference
+
+| Topic | Admin / human doc |
+|-------|-------------------|
+| Website integration | `admin/docs/website-integration.php` |
+| Client library | `admin/docs/client-library.php` |
+| Reference projects | `admin/docs/snapshots/reference-projects.md` |
+| Template spec (full) | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
+
 ---
 
 ## Examples (illustrative — adapt to the project)
