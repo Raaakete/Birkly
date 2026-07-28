@@ -150,9 +150,13 @@ function birkly_ai_extract_action_payload(array $action): array
  */
 function birkly_ai_normalize_action_data(string $type, array $data): array
 {
-    if (in_array($type, ['write_project_file', 'create_project_file', 'delete_project_file', 'read_project_file'], true)
+    if (in_array($type, ['write_project_file', 'create_project_file', 'read_project_file'], true)
         && !empty($data['path']) && is_string($data['path'])) {
         $data['path'] = birkly_ai_normalize_project_file_path($data['path']);
+    } elseif ($type === 'delete_project_file'
+        && !empty($data['path']) && is_string($data['path'])) {
+        // Never typo-correct delete paths — ndex.html must delete ndex.html, not index.html.
+        $data['path'] = birkly_ai_normalize_project_file_path_for_delete($data['path']);
     }
 
     if (in_array($type, ['update_collection', 'create_collection', 'create_entry', 'update_entry'], true)) {
@@ -447,14 +451,114 @@ function birkly_ai_build_provider_error(
 /**
  * Strip leading project/ from paths — files already live under project/.
  */
-function birkly_ai_normalize_project_file_path(string $path): string
+function birkly_ai_strip_project_path_prefix(string $path): string
 {
     $path = ltrim(str_replace('\\', '/', trim($path)), '/');
     while (str_starts_with(strtolower($path), 'project/')) {
         // "project/" is 8 characters — substr(..., 9) incorrectly ate the first path char (index→ndex).
         $path = substr($path, 8);
     }
-    return birkly_ai_fix_common_project_path_typos($path);
+
+    return $path;
+}
+
+/**
+ * Normalize project file paths for read/write (strip project/ prefix, fix known typos).
+ */
+function birkly_ai_normalize_project_file_path(string $path): string
+{
+    return birkly_ai_fix_common_project_path_typos(birkly_ai_strip_project_path_prefix($path));
+}
+
+/**
+ * Normalize project file paths for delete — strip prefix only, never rewrite filenames.
+ */
+function birkly_ai_normalize_project_file_path_for_delete(string $path): string
+{
+    return birkly_ai_strip_project_path_prefix($path);
+}
+
+/**
+ * Known typo duplicates created by the old path-strip bug.
+ *
+ * @return array<string, string> canonical basename => typo basename
+ */
+function birkly_ai_project_typo_duplicate_map(): array
+{
+    return [
+        'index.html' => 'ndex.html',
+        'about.html' => 'bout.html',
+        'contact.html' => 'ontact.html',
+        'artworks.html' => 'rtworks.html',
+    ];
+}
+
+/** @return list<string> */
+function birkly_ai_project_canonical_page_paths(): array
+{
+    return array_keys(birkly_ai_project_typo_duplicate_map());
+}
+
+function birkly_ai_project_file_exists(string $path): bool
+{
+    require_once __DIR__ . '/../core/project_site_filesystem.php';
+
+    try {
+        $fs = new ProjectSiteFileSystem();
+        $full = $fs->resolvePath(birkly_ai_strip_project_path_prefix($path), false);
+
+        return $full !== null && is_file($full);
+    } catch (Throwable $e) {
+        return false;
+    }
+}
+
+/**
+ * Block deleting a canonical page when its typo duplicate still exists on disk.
+ */
+function birkly_ai_validate_delete_project_file_path(string $path): ?string
+{
+    $path = birkly_ai_normalize_project_file_path_for_delete($path);
+    $base = basename($path);
+
+    foreach (birkly_ai_project_typo_duplicate_map() as $canonical => $typo) {
+        if ($base !== $canonical) {
+            continue;
+        }
+        if (birkly_ai_project_file_exists($typo)) {
+            return 'Refusing to delete ' . $canonical . ' while typo duplicate ' . $typo
+                . ' still exists. Delete ' . $typo . ' instead.';
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Block suspicious bulk deletes of core site pages (often a model mistake after a review).
+ *
+ * @param list<array<string,mixed>> $actions
+ */
+function birkly_ai_validate_bulk_project_deletes(array $actions): ?string
+{
+    $canonicalDeletes = [];
+    foreach ($actions as $action) {
+        if (($action['type'] ?? '') !== 'delete_project_file') {
+            continue;
+        }
+        $path = basename(birkly_ai_normalize_project_file_path_for_delete((string) ($action['data']['path'] ?? '')));
+        if (in_array($path, birkly_ai_project_canonical_page_paths(), true)) {
+            $canonicalDeletes[] = $path;
+        }
+    }
+
+    $canonicalDeletes = array_values(array_unique($canonicalDeletes));
+    if (count($canonicalDeletes) >= 2) {
+        return 'Refusing bulk delete of core site pages (' . implode(', ', $canonicalDeletes) . '). '
+            . 'If removing typo duplicates, delete ndex.html, bout.html, ontact.html, and rtworks.html instead.';
+    }
+
+    return null;
 }
 
 /**
@@ -863,6 +967,10 @@ function birkly_ai_validate_action_before_execute(array $action): ?string
         $path = (string) ($data['path'] ?? '');
         if ($path === '' || !str_contains($path, '.')) {
             return 'delete_project_file requires a file path (directories cannot be deleted with this action): ' . $path;
+        }
+        $blockReason = birkly_ai_validate_delete_project_file_path($path);
+        if ($blockReason !== null) {
+            return $blockReason;
         }
     }
 
