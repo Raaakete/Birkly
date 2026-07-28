@@ -74,11 +74,12 @@ Install flow: `plugins-overview` → `list_plugins` → admin Marketplace or `ac
 
 ## What AI cannot configure (direct to admin UI)
 
-- Public API keys for collections (Settings tab on collection editor)
 - Agent Guide write/publish (admin AI Presence page)
 - Automation workflow CRUD (Automation admin)
 - Payment provider credentials (Commerce → Connections)
 - Admin user creation (Settings → Users — no `create_user` tool)
+
+AI **can** set collection `entry_method: public_api`, sub-collection submission rights, and collection groups via `update_collection` / `save_collection_groups`.
 
 ## Anti-patterns (all playbooks)
 

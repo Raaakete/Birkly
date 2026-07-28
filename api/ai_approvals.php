@@ -382,6 +382,9 @@ function executeAiAction($approval) {
 
         case 'delete_project_file':
             return executeDeleteProjectFile($actionData, $aiUser, $originalUserId);
+
+        case 'save_collection_groups':
+            return executeSaveCollectionGroups($actionData, $aiUser, $originalUserId);
             
         default:
             return ['success' => false, 'message' => 'Unknown action type: ' . $actionType];
@@ -442,8 +445,11 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
         'description' => $description,
         'created_at' => date('Y-m-d H:i:s'),
         'updated_at' => date('Y-m-d H:i:s'),
-        'entry_method' => 'admin_only'
+        'entry_method' => 'admin_only',
     ];
+
+    require_once __DIR__ . '/../core/ai_collection_config.php';
+    birkly_ai_merge_collection_config($collectionData, $actionData, null);
     
     // Save collection.json
     $collectionFile = $collectionDir . '/collection.json';
@@ -812,9 +818,33 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
             return ['success' => false, 'message' => 'Failed to update collection schema'];
         }
     }
+
+    require_once __DIR__ . '/../core/ai_collection_config.php';
+    birkly_ai_merge_collection_config($collection, $actionData, $collection);
     
     $result = file_put_contents($collectionFile, json_encode($collection, JSON_PRETTY_PRINT));
     return $result ? ['success' => true, 'data' => ['collection' => $collection]] : ['success' => false, 'message' => 'Failed to update collection'];
+}
+
+function executeSaveCollectionGroups($actionData, $aiUser = null, $originalUserId = null) {
+    require_once __DIR__ . '/../core/collection_groups.php';
+
+    $groups = $actionData['groups'] ?? [];
+    if (!is_array($groups)) {
+        return ['success' => false, 'message' => 'groups must be an array'];
+    }
+
+    $normalized = birkly_normalize_collection_groups($groups);
+    $validationError = birkly_validate_collection_groups($normalized);
+    if ($validationError !== null) {
+        return ['success' => false, 'message' => $validationError];
+    }
+
+    if (!birkly_save_collection_groups($normalized)) {
+        return ['success' => false, 'message' => 'Failed to save collection groups'];
+    }
+
+    return ['success' => true, 'data' => ['collection_groups' => $normalized]];
 }
 
 // Recursively delete a directory (shared by AI delete actions).
