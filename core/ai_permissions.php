@@ -19,6 +19,7 @@ function birkly_ai_action_permission_map(): array
         'list_entries' => ['read'],
         'read_collection' => ['read'],
         'list_collections' => ['read'],
+        'list_collection_groups' => ['read', 'manage_content'],
 
         // Media reads
         'list_media' => ['read', 'read_media', 'manage_media'],
@@ -53,6 +54,7 @@ function birkly_ai_action_permission_map(): array
         // Content writes
         'create_collection' => ['manage_content', 'write'],
         'update_collection' => ['manage_content', 'write'],
+        'save_collection_groups' => ['manage_content', 'write'],
         'delete_collection' => ['delete', 'manage_content'],
         'create_entry' => ['write', 'manage_content'],
         'update_entry' => ['write', 'manage_content'],

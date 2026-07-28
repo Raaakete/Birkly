@@ -66,7 +66,7 @@ function isAiUser($user) {
  * - { collection: { slug, name, fields, ... } }
  * - { data: { slug | collection, ... } }
  *
- * @return array{slug: string, name?: string, description?: string, fields?: array, entry_method?: string}
+ * @return array{slug: string, name?: string, description?: string, fields?: array, entry_method?: string, api_settings?: array, sub_collections?: array}
  */
 function birkly_ai_normalize_collection_action_data($actionData): array
 {
@@ -86,7 +86,7 @@ function birkly_ai_normalize_collection_action_data($actionData): array
     if (isset($normalized['collection']) && is_array($normalized['collection'])) {
         $coll = $normalized['collection'];
         unset($normalized['collection']);
-        foreach (['slug', 'name', 'description', 'fields', 'entry_method'] as $key) {
+        foreach (['slug', 'name', 'description', 'fields', 'entry_method', 'api_settings', 'api_key', 'sub_collections'] as $key) {
             if (!array_key_exists($key, $normalized) && array_key_exists($key, $coll)) {
                 $normalized[$key] = $coll[$key];
             }
