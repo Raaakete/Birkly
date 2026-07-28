@@ -1374,8 +1374,9 @@ function executeDeleteSubEntry($actionData, $aiUser = null, $originalUserId = nu
 
 function executeWriteProjectFile($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/../core/project_site_filesystem.php';
+    require_once __DIR__ . '/ai_helpers.php';
 
-    $path = (string) ($actionData['path'] ?? '');
+    $path = birkly_ai_normalize_project_file_path((string) ($actionData['path'] ?? ''));
     $content = (string) ($actionData['content'] ?? '');
     if ($path === '') {
         return ['success' => false, 'message' => 'path is required'];
@@ -1397,8 +1398,9 @@ function executeWriteProjectFile($actionData, $aiUser = null, $originalUserId = 
 
 function executeCreateProjectFile($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/../core/project_site_filesystem.php';
+    require_once __DIR__ . '/ai_helpers.php';
 
-    $path = (string) ($actionData['path'] ?? '');
+    $path = birkly_ai_normalize_project_file_path((string) ($actionData['path'] ?? ''));
     $content = (string) ($actionData['content'] ?? '');
     if ($path === '') {
         return ['success' => false, 'message' => 'path is required'];

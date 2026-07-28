@@ -55,6 +55,7 @@ Use `read_birkly_docs` tool or fetch `birkly://docs/site-building` before comple
 - Putting API keys in MCP connector (use OAuth URL only)
 - Expecting Birkly Approvals tab for MCP writes
 - Using viewer-role connector for destructive bulk edits
+- Sending entire large HTML homepages in one `write_project_file` call from **ChatGPT** — OpenAI may block the tool call client-side with a generic "safety status" error before Birkly receives it. Prefer smaller files (`css/style.css`, `js/site.js`) and incremental HTML updates; verify with `list_project_files` + `read_project_file`.
 
 ## Related
 
