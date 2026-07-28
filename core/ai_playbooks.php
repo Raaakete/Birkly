@@ -351,6 +351,54 @@ function ai_chat_is_project_site_intent(string $message, array $conversationHist
 }
 
 /**
+ * True when the user message asks the assistant to change CMS/project state (not just read/review).
+ */
+function ai_chat_message_implies_write_intent(string $message, array $conversationHistory = []): bool
+{
+    $haystack = strtolower(trim($message));
+    if ($haystack === '') {
+        return false;
+    }
+
+    $readOnlyQuestion = preg_match(
+        '/^(what|how|show|list|tell me|describe|explain|review|check|look at|read|who|when|where|why|can you see|does it)\b/i',
+        $haystack
+    ) && !preg_match(
+        '/\b(fix|update|change|write|create|add|remove|delete|deploy|commit|style|design|dark|theme|try again|proceed)\b/i',
+        $haystack
+    );
+    if ($readOnlyQuestion) {
+        return false;
+    }
+
+    if (preg_match(
+        '/\b(fix(ed|ing)?|update(d|s|ing)?|write|written|create(d|s|ing)?|change(d|s|ing)?|modify|deploy(ed|ing)?|commit(ted|ing)?|implement|apply|restyle|redesign|try again|please proceed|go ahead|do it now|make it|rebuild|add\s+(css|html|styles?|dark|theme))\b/i',
+        $haystack
+    )) {
+        return true;
+    }
+
+    if (preg_match('/\b(yes|proceed|continue|ok|okay|sure)\b/i', $haystack)
+        && ai_chat_is_project_site_intent($message, $conversationHistory)) {
+        return true;
+    }
+
+    return ai_chat_is_project_site_intent($message, $conversationHistory)
+        && preg_match('/\b(build|create|make|design|style|dark|theme|portfolio|gallery|landing)\b/i', $haystack);
+}
+
+/**
+ * True when assistant prose claims work was done without a matching executed action.
+ */
+function ai_chat_response_implies_false_execution_claim(string $message): bool
+{
+    return (bool) preg_match(
+        '/\b(I have (now )?(written|updated|deployed|fixed|deleted|committed)|have been (written|updated|deployed|fixed)|files have been|actions (were )?executed|cleanup is complete)\b/i',
+        $message
+    );
+}
+
+/**
  * True when read results already include project site discovery data.
  *
  * @param list<array<string,mixed>> $readData
