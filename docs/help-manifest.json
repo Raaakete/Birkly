@@ -7,7 +7,8 @@
       "title": "Getting started",
       "keywords": ["start", "setup", "onboarding", "first steps", "welcome"],
       "snapshot": "/admin/docs/snapshots/getting-started.md",
-      "docs_path": "00-overview/getting-started.html"
+      "docs_path": "00-overview/getting-started.html",
+      "ai_topic": "playbooks-index"
     },
     {
       "id": "closed-alpha",
@@ -28,35 +29,48 @@
       "title": "Entries & collections",
       "keywords": ["entries", "collections", "content", "create", "edit", "slug"],
       "snapshot": "/admin/docs/snapshots/entries.md",
-      "docs_path": "02-content/entries.html"
+      "docs_path": "02-content/entries.html",
+      "ai_topic": "content-model"
+    },
+    {
+      "id": "collection-groups",
+      "title": "Collection groups",
+      "keywords": ["groups", "collection groups", "sidebar", "reorder collections", "organize"],
+      "snapshot": "/admin/docs/snapshots/entries.md",
+      "docs_path": "02-content/collection-groups.html",
+      "ai_topic": "collection-groups"
     },
     {
       "id": "entry-editor",
       "title": "Entry editor",
       "keywords": ["entry editor", "write", "publish", "draft", "fields", "save"],
       "snapshot": "/admin/docs/snapshots/entry-editor.md",
-      "docs_path": "02-content/entries.html"
+      "docs_path": "02-content/entries.html",
+      "ai_topic": "content-model"
     },
     {
       "id": "settings",
       "title": "Settings",
       "keywords": ["settings", "general", "branding", "security", "api", "domains"],
       "snapshot": "/admin/docs/snapshots/settings.md",
-      "docs_path": "01-admin/settings.html"
+      "docs_path": "01-admin/settings.html",
+      "ai_topic": "settings-roles"
     },
     {
       "id": "ai",
       "title": "AI assistant",
       "keywords": ["ai", "chat", "assistant", "openai", "ollama", "anthropic", "byoai", "approval"],
       "snapshot": "/admin/docs/snapshots/ai-overview.md",
-      "docs_path": "01-admin/ai-overview.html"
+      "docs_path": "01-admin/ai-overview.html",
+      "ai_topic": "ai-connections"
     },
     {
       "id": "ai-connections",
       "title": "AI connections (outbound)",
       "keywords": ["ai connections", "provider", "api key", "model", "role", "byoai", "openai", "anthropic", "ollama", "subscription", "wizard"],
       "snapshot": "/admin/docs/snapshots/ai-connections.md",
-      "docs_path": "01-admin/ai-connections.html"
+      "docs_path": "01-admin/ai-connections.html",
+      "ai_topic": "ai-connections"
     },
     {
       "id": "mcp-connections",
@@ -64,49 +78,72 @@
       "version": 2,
       "keywords": ["mcp", "mcp connections", "claude desktop", "model context protocol", "inbound", "endpoint", "bridge", "cursor", "external client"],
       "snapshot": "/admin/docs/snapshots/mcp-connections.md",
-      "docs_path": "01-admin/mcp-connections.html"
+      "docs_path": "01-admin/mcp-connections.html",
+      "ai_topic": "mcp-setup"
     },
     {
       "id": "automation",
       "title": "Automation",
       "keywords": ["automation", "workflow", "trigger", "webhook", "schedule", "slack"],
       "snapshot": "/admin/docs/snapshots/automation-overview.md",
-      "docs_path": "05-automation/automation-overview.html"
+      "docs_path": "05-automation/automation-overview.html",
+      "ai_topic": "automation"
     },
     {
       "id": "user-plugin",
       "title": "User management plugin",
       "keywords": ["user plugin", "registration", "login", "members", "community", "password"],
       "snapshot": "/admin/docs/snapshots/user-plugin.md",
-      "docs_path": "06-extensibility/user-plugin.html"
+      "docs_path": "06-extensibility/user-plugin.html",
+      "ai_topic": "user-management"
     },
     {
       "id": "content-editor",
       "title": "ContentEditor field",
       "keywords": ["content editor", "rich text", "blocks", "html", "fieldtype", "wysiwyg"],
       "snapshot": "/admin/docs/snapshots/content-editor.md",
-      "docs_path": "02-content/content-editor.html"
+      "docs_path": "02-content/content-editor.html",
+      "ai_topic": "content-editor"
     },
     {
       "id": "plugins",
       "title": "Plugins",
       "keywords": ["plugins", "extensions", "install", "enable", "field types"],
       "snapshot": "/admin/docs/snapshots/plugins.md",
-      "docs_path": "06-extensibility/plugins.html"
+      "docs_path": "06-extensibility/plugins.html",
+      "ai_topic": "plugins-overview"
+    },
+    {
+      "id": "marketplace",
+      "title": "Marketplace",
+      "keywords": ["marketplace", "install plugin", "birkly-commerce", "official plugins"],
+      "snapshot": "/admin/docs/snapshots/marketplace.md",
+      "docs_path": "06-extensibility/marketplace-go-live.html",
+      "ai_topic": "plugins-overview"
     },
     {
       "id": "media",
       "title": "Media library",
       "keywords": ["media", "images", "upload", "files", "library"],
       "snapshot": "/admin/docs/snapshots/media.md",
-      "docs_path": "01-admin/media-library.html"
+      "docs_path": "01-admin/media-library.html",
+      "ai_topic": "media"
+    },
+    {
+      "id": "public-forms",
+      "title": "Public forms & API submission",
+      "keywords": ["public form", "contact form", "public api", "entry_method", "visitor submit"],
+      "snapshot": "/admin/docs/snapshots/entries.md",
+      "docs_path": "04-integration/public-forms.html",
+      "ai_topic": "public-forms"
     },
     {
       "id": "help",
       "title": "Help & documentation",
-      "keywords": ["help", "docs", "documentation", "search"],
+      "keywords": ["help", "docs", "documentation", "search", "playbooks"],
       "snapshot": "/admin/docs/snapshots/help.md",
-      "docs_path": "01-admin/help-and-onboarding.html"
+      "docs_path": "01-admin/help-and-onboarding.html",
+      "ai_topic": "playbooks-index"
     }
   ]
 }

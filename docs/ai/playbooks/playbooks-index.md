@@ -43,7 +43,24 @@ Plugin topics (`commerce`, `automation`, etc.) also resolve from active plugin `
 
 ## Documentation cross-links (human admin docs)
 
-AI playbooks distill these; load L3 when you need admin UI specifics:
+AI playbooks distill these; load L3 when you need admin UI specifics.
+
+**Bidirectional linking:** Admin Help topics in `docs/help-manifest.json` include an **`ai_topic`** slug pointing at the matching playbook. When viewing Help in admin, the footer shows the AI playbook id — use `read_birkly_docs` or MCP `birkly://docs/{ai_topic}`.
+
+| Help topic id | Playbook (ai_topic) | Admin snapshot |
+|---------------|---------------------|----------------|
+| `entries` | `content-model` | `admin/docs/snapshots/entries.md` |
+| `collection-groups` | `collection-groups` | Collection groups docs |
+| `settings` | `settings-roles` | `admin/docs/snapshots/settings.md` |
+| `mcp-connections` | `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
+| `user-plugin` | `user-management` | `admin/docs/snapshots/user-plugin.md` |
+| `plugins` / `marketplace` | `plugins-overview` | `admin/docs/snapshots/plugins.md` |
+| `public-forms` | `public-forms` | Public API forms docs |
+| `media` | `media` | `admin/docs/snapshots/media.md` |
+| `content-editor` | `content-editor` | `admin/docs/snapshots/content-editor.md` |
+| `ai` / `ai-connections` | `ai-connections` | AI admin snapshots |
+| `automation` | `automation` | `admin/docs/snapshots/automation-overview.md` |
+| `help` | `playbooks-index` | This index |
 
 | Topic | Playbook | Admin / platform doc |
 |-------|----------|----------------------|
