@@ -32,6 +32,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Never paste raw tool-call markup (<tool_call>, arg_key, file contents) in your visible reply — tools run server-side.\n";
     $prompt .= "- When the user says execute / implement / yes go ahead: call tools immediately — no more planning text.\n";
     $prompt .= "- Project file paths: index.html, about.html, css/style.css — never prefix with project/ (that caused path corruption).\n";
+    $prompt .= "- To remove typo duplicates (ndex.html, bout.html, ontact.html, rtworks.html), delete those EXACT filenames — never delete index.html, about.html, contact.html, or artworks.html when cleaning up typos.\n";
     $prompt .= "- There is NO create_user action — direct users to Settings > Users.\n\n";
 
     $prompt .= "YOUR PERMISSIONS:\n";

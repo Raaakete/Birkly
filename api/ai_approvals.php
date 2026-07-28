@@ -1420,10 +1420,16 @@ function executeCreateProjectFile($actionData, $aiUser = null, $originalUserId =
 
 function executeDeleteProjectFile($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/../core/project_site_filesystem.php';
+    require_once __DIR__ . '/ai_helpers.php';
 
-    $path = (string) ($actionData['path'] ?? '');
+    $path = birkly_ai_normalize_project_file_path_for_delete((string) ($actionData['path'] ?? ''));
     if ($path === '') {
         return ['success' => false, 'message' => 'path is required'];
+    }
+
+    $blockReason = birkly_ai_validate_delete_project_file_path($path);
+    if ($blockReason !== null) {
+        return ['success' => false, 'message' => $blockReason];
     }
 
     $fs = new ProjectSiteFileSystem();
