@@ -227,12 +227,16 @@ if ($action === 'chat') {
         $useNonStreaming = $hasNativeTools || $writeIntent;
 
         $streamCallback = null;
-        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? '')) && $chatImageAttachments === [] && !$useNonStreaming) {
+        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? '')) && $chatImageAttachments === []) {
             birkly_ai_sse_begin();
             $streamActive = true;
-            $streamCallback = function ($token) {
-                birkly_ai_sse_send('token', ['content' => $token]);
-            };
+            if (!$useNonStreaming) {
+                $streamCallback = function ($token) {
+                    birkly_ai_sse_send('token', ['content' => $token]);
+                };
+            } else {
+                ai_chat_emit_status(true, 'Contacting AI…');
+            }
         }
 
         // Release session lock before long AI provider calls (approval polling, etc.)
@@ -246,6 +250,10 @@ if ($action === 'chat') {
         }
         if ($writeIntent || $executeIntent) {
             $providerOptions['timeout'] = 120;
+        }
+
+        if ($streamActive && !$streamCallback) {
+            ai_chat_emit_status(true, 'Waiting for AI response…');
         }
 
         $response = callAiProvider(
@@ -320,7 +328,13 @@ if ($action === 'chat') {
             $hasSuccessfulReads = false;
             $executedActions = []; // Track which actions we've executed to avoid duplicates
             if (!empty($readActions)) {
+                if ($streamActive) {
+                    ai_chat_emit_status(true, 'Running **' . count($readActions) . '** read action(s)…');
+                }
                 foreach ($readActions as $actionData) {
+                    if ($streamActive) {
+                        ai_chat_emit_status(true, ai_chat_status_label_for_action($actionData));
+                    }
                     $actionKey = ($actionData['type'] ?? '') . '_' . json_encode($actionData['data'] ?? []);
                     if (isset($executedActions[$actionKey])) {
                         continue; // Skip if already executed
@@ -790,7 +804,13 @@ if ($action === 'chat') {
                     // Execute actions directly without approval
                     $executedActions = [];
                     $hasErrors = false;
+                    if ($streamActive) {
+                        ai_chat_emit_status(true, 'Applying **' . count($actions) . '** change(s)…');
+                    }
                     foreach ($actions as $actionData) {
+                        if ($streamActive) {
+                            ai_chat_emit_status(true, ai_chat_status_label_for_action($actionData));
+                        }
                         try {
                             $result = executeActionDirectly($actionData, $aiUser);
                             $result['action_type'] = $actionData['type'] ?? 'unknown';
@@ -1479,8 +1499,9 @@ function executeActionDirectly($actionData, $aiUser) {
 }
 
 // OpenAI API call (also works for OpenRouter and OpenAI-compatible APIs)
-function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto', int $curlTimeout = 60) {
+function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto', int $curlTimeout = 60, bool $allowHistoryRetry = true) {
     $apiLabel = birkly_ai_compatible_api_label($url);
+    $conversationHistory = birkly_ai_sanitize_conversation_history_for_provider($conversationHistory);
     // Build messages array with conversation history
     $messages = [
         ['role' => 'system', 'content' => $systemPrompt]
@@ -1544,7 +1565,7 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     if ($httpCode !== 200) {
         if (!empty($tools) && $toolChoice === 'required' && in_array((int) $httpCode, [400, 422], true)) {
             error_log($apiLabel . ' rejected tool_choice=required — retrying with auto');
-            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $tools, $imageAttachments, 'auto', $curlTimeout);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, 'auto', $curlTimeout, false);
         }
         return birkly_ai_build_provider_error(
             $apiLabel,
@@ -1556,34 +1577,24 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     }
     
     $result = json_decode($response, true);
-    $choiceMessage = $result['choices'][0]['message'] ?? null;
-    if (!$result || !$choiceMessage) {
-        return [
-            'success' => false,
-            'message' => 'Invalid response from ' . $apiLabel,
-            'error_details' => [
-                'provider_label' => $apiLabel,
-                'model' => $model,
-                'hint' => 'The provider returned an unexpected response format.',
-                'raw_body' => is_string($response) ? substr($response, 0, 800) : '',
-            ],
-        ];
+    $parsed = birkly_ai_parse_openai_chat_response(is_array($result) ? $result : null, $apiLabel, is_string($response) ? $response : '');
+    if (!($parsed['success'] ?? false) && $allowHistoryRetry && count($conversationHistory) > 4) {
+        error_log($apiLabel . ' parse failed — retrying with shorter conversation history');
+        return callOpenAI(
+            $apiKey,
+            $model,
+            $systemPrompt,
+            $userMessage,
+            $url,
+            array_slice($conversationHistory, -4),
+            $tools,
+            $imageAttachments,
+            $toolChoice,
+            $curlTimeout,
+            false
+        );
     }
-
-    $toolCalls = $choiceMessage['tool_calls'] ?? [];
-    $content = $choiceMessage['content'] ?? '';
-    if (!empty($toolCalls)) {
-        return [
-            'success' => true,
-            'message' => is_string($content) ? $content : '',
-            'tool_calls' => $toolCalls,
-        ];
-    }
-    if ($content === '' || $content === null) {
-        return ['success' => false, 'message' => 'Empty response from ' . $apiLabel];
-    }
-
-    return ['success' => true, 'message' => $content];
+    return $parsed;
 }
 
 // Anthropic API call
@@ -1840,6 +1851,17 @@ function birkly_ai_sse_send(string $event, array $data): void
         @ob_flush();
     }
     flush();
+}
+
+/**
+ * Push a live progress line to the chat UI during long tool/action runs.
+ */
+function ai_chat_emit_status(bool $streaming, string $message): void
+{
+    if (!$streaming || trim($message) === '') {
+        return;
+    }
+    birkly_ai_sse_send('status', ['message' => $message]);
 }
 
 /**

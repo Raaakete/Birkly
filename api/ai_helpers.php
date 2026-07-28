@@ -480,6 +480,166 @@ function birkly_ai_fix_common_project_path_typos(string $path): string
 }
 
 /**
+ * Normalize OpenAI message content (string or multimodal parts array).
+ */
+function birkly_ai_normalize_openai_message_content(mixed $content): string
+{
+    if (is_string($content)) {
+        return $content;
+    }
+    if (!is_array($content)) {
+        return '';
+    }
+    $parts = [];
+    foreach ($content as $part) {
+        if (is_string($part)) {
+            $parts[] = $part;
+            continue;
+        }
+        if (!is_array($part)) {
+            continue;
+        }
+        if (isset($part['text']) && is_string($part['text'])) {
+            $parts[] = $part['text'];
+        } elseif (isset($part['content']) && is_string($part['content'])) {
+            $parts[] = $part['content'];
+        }
+    }
+
+    return implode("\n", $parts);
+}
+
+/**
+ * Sanitize stored chat history before sending to OpenAI-compatible providers.
+ *
+ * @param list<array<string,mixed>> $history
+ * @return list<array{role: string, content: string}>
+ */
+function birkly_ai_sanitize_conversation_history_for_provider(array $history): array
+{
+    $out = [];
+    foreach ($history as $msg) {
+        if (!is_array($msg)) {
+            continue;
+        }
+        $role = (string) ($msg['role'] ?? '');
+        if (!in_array($role, ['user', 'assistant', 'system'], true)) {
+            continue;
+        }
+        $content = birkly_ai_normalize_openai_message_content($msg['content'] ?? '');
+        $content = trim($content);
+        if ($content === '') {
+            continue;
+        }
+        if (strlen($content) > 12000) {
+            $content = substr($content, 0, 12000) . "\n\n[truncated for context limit]";
+        }
+        $out[] = ['role' => $role, 'content' => $content];
+    }
+
+    return $out;
+}
+
+/**
+ * Parse an OpenAI-compatible chat completion JSON payload.
+ *
+ * @return array{success: bool, message?: string, tool_calls?: list<array<string,mixed>>, error_details?: array<string,mixed>}
+ */
+function birkly_ai_parse_openai_chat_response(?array $result, string $apiLabel, string $rawBody = ''): array
+{
+    if (!is_array($result)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid response from ' . $apiLabel,
+            'error_details' => [
+                'provider_label' => $apiLabel,
+                'hint' => 'Response was not valid JSON.',
+                'raw_body' => substr($rawBody, 0, 800),
+            ],
+        ];
+    }
+
+    if (isset($result['error']) && is_array($result['error'])) {
+        $errMsg = (string) ($result['error']['message'] ?? json_encode($result['error']));
+        return [
+            'success' => false,
+            'message' => $apiLabel . ' error: ' . $errMsg,
+            'error_details' => [
+                'provider_label' => $apiLabel,
+                'hint' => 'The provider returned an error object.',
+                'raw_body' => substr($rawBody, 0, 800),
+            ],
+        ];
+    }
+
+    $choice = $result['choices'][0] ?? null;
+    if (!is_array($choice)) {
+        return [
+            'success' => false,
+            'message' => 'Invalid response from ' . $apiLabel,
+            'error_details' => [
+                'provider_label' => $apiLabel,
+                'hint' => 'No choices array in provider response (rate limit or model unavailable).',
+                'raw_body' => substr($rawBody, 0, 800),
+            ],
+        ];
+    }
+
+    $choiceMessage = $choice['message'] ?? $choice['delta'] ?? null;
+    if (!is_array($choiceMessage)) {
+        if (isset($choice['text']) && is_string($choice['text']) && trim($choice['text']) !== '') {
+            return ['success' => true, 'message' => $choice['text']];
+        }
+        return [
+            'success' => false,
+            'message' => 'Invalid response from ' . $apiLabel,
+            'error_details' => [
+                'provider_label' => $apiLabel,
+                'hint' => 'The provider returned an unexpected response format.',
+                'raw_body' => substr($rawBody, 0, 800),
+            ],
+        ];
+    }
+
+    $toolCalls = is_array($choiceMessage['tool_calls'] ?? null) ? $choiceMessage['tool_calls'] : [];
+    $content = birkly_ai_normalize_openai_message_content($choiceMessage['content'] ?? '');
+
+    foreach (['reasoning', 'reasoning_content', 'reasoning_details'] as $reasonKey) {
+        if ($content !== '') {
+            break;
+        }
+        $reasonVal = $choiceMessage[$reasonKey] ?? null;
+        if (is_string($reasonVal) && trim($reasonVal) !== '') {
+            $content = $reasonVal;
+        } elseif (is_array($reasonVal)) {
+            $content = birkly_ai_normalize_openai_message_content($reasonVal);
+        }
+    }
+
+    if ($toolCalls !== []) {
+        return [
+            'success' => true,
+            'message' => $content,
+            'tool_calls' => $toolCalls,
+        ];
+    }
+
+    if (trim($content) === '') {
+        return [
+            'success' => false,
+            'message' => 'Empty response from ' . $apiLabel,
+            'error_details' => [
+                'provider_label' => $apiLabel,
+                'hint' => 'Model returned no text and no tool calls.',
+                'raw_body' => substr($rawBody, 0, 800),
+            ],
+        ];
+    }
+
+    return ['success' => true, 'message' => $content];
+}
+
+/**
  * Find the end index (exclusive) of a JSON object starting at $start.
  */
 function ai_chat_find_json_object_end(string $text, int $start): ?int
