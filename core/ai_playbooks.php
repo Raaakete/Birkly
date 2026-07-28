@@ -355,18 +355,49 @@ function ai_chat_is_project_site_intent(string $message, array $conversationHist
  */
 function ai_chat_message_implies_analysis_intent(string $message, array $conversationHistory = []): bool
 {
-    $haystack = strtolower(trim($message));
-    $recent = array_slice($conversationHistory, -8);
-    foreach ($recent as $msg) {
-        $haystack .= ' ' . strtolower((string) ($msg['content'] ?? ''));
+    $current = strtolower(trim($message));
+    if ($current === '') {
+        return false;
     }
-    if ($haystack === '') {
+
+    if (ai_chat_message_implies_execute_intent($message)) {
+        return false;
+    }
+
+    if (preg_match(
+        '/\b(review|analyze|analyse|audit|optimize|optimise|improve|what to (fix|change|optimize|improve|do)|tell me (what|about|how)|what do you think|recommend(?:ation)?s?|suggest(?:ion)?s?|feedback|critique|assessment|look over|check (the|my|this) (site|website|project|page)|what should i (fix|change|improve))\b/i',
+        $current
+    )) {
+        return true;
+    }
+
+    if (preg_match('/\b(so\?|what is the result|what(?:\'s| is) the (result|verdict|assessment)|tell me the result)\b/i', $current)) {
+        $haystack = $current;
+        foreach (array_slice($conversationHistory, -6) as $msg) {
+            $haystack .= ' ' . strtolower((string) ($msg['content'] ?? ''));
+        }
+        return (bool) preg_match(
+            '/\b(review|analyze|analyse|optimize|optimise|audit)\b/i',
+            $haystack
+        );
+    }
+
+    return false;
+}
+
+/**
+ * True when the user confirms execution of a previously discussed plan.
+ */
+function ai_chat_message_implies_execute_intent(string $message): bool
+{
+    $current = strtolower(trim($message));
+    if ($current === '') {
         return false;
     }
 
     return (bool) preg_match(
-        '/\b(review|analyze|analyse|audit|optimize|optimise|improve|what to (fix|change|optimize|improve|do)|tell me (what|the result|about|how)|what is the result|what(?:\'s| is) the (result|verdict|assessment)|so\?|what do you think|recommend(?:ation)?s?|suggest(?:ion)?s?|feedback|critique|assessment|look over|check (the|my|this) (site|website|project|page)|what should i (fix|change|improve))\b/i',
-        $haystack
+        '/\b(yes[, ]*(please|go ahead)?|execute|implement( all| these| them)?|apply( all| these| them)?|do (it|them|all)|go ahead|proceed|continue|start (now|executing)|run (it|them|all)|make (it|them) happen|one go|in sequence|all of them)\b/i',
+        $current
     );
 }
 
@@ -394,6 +425,10 @@ function ai_chat_message_implies_write_intent(string $message, array $conversati
     $haystack = strtolower(trim($message));
     if ($haystack === '') {
         return false;
+    }
+
+    if (ai_chat_message_implies_execute_intent($message)) {
+        return true;
     }
 
     if (ai_chat_message_implies_analysis_intent($message, $conversationHistory)) {

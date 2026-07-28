@@ -451,9 +451,32 @@ function birkly_ai_normalize_project_file_path(string $path): string
 {
     $path = ltrim(str_replace('\\', '/', trim($path)), '/');
     while (str_starts_with(strtolower($path), 'project/')) {
-        $path = substr($path, 9);
+        // "project/" is 8 characters — substr(..., 9) incorrectly ate the first path char (index→ndex).
+        $path = substr($path, 8);
     }
-    return $path;
+    return birkly_ai_fix_common_project_path_typos($path);
+}
+
+/**
+ * Correct filenames corrupted by the old project/ strip bug or model typos.
+ */
+function birkly_ai_fix_common_project_path_typos(string $path): string
+{
+    $dir = dirname($path);
+    $base = basename($path);
+    $fixes = [
+        'ndex.html' => 'index.html',
+        'bout.html' => 'about.html',
+        'ontact.html' => 'contact.html',
+        'rtworks.html' => 'artworks.html',
+        'rtwork.html' => 'artwork.html',
+    ];
+    if (!isset($fixes[$base])) {
+        return $path;
+    }
+    $fixed = $fixes[$base];
+    error_log("Correcting project path typo: {$base} → {$fixed}");
+    return ($dir === '.' || $dir === '') ? $fixed : $dir . '/' . $fixed;
 }
 
 /**
@@ -673,6 +696,21 @@ function birkly_ai_validate_action_before_execute(array $action): ?string
         }
         if (!preg_match('#^[a-zA-Z0-9][a-zA-Z0-9_./-]*$#', $path)) {
             return 'Invalid project file path: ' . $path;
+        }
+    }
+
+    if ($type === 'delete_project_file') {
+        $path = (string) ($data['path'] ?? '');
+        if ($path === '' || !str_contains($path, '.')) {
+            return 'delete_project_file requires a file path (directories cannot be deleted with this action): ' . $path;
+        }
+    }
+
+    if ($type === 'update_settings') {
+        $category = (string) ($data['category'] ?? '');
+        $settings = $data['settings'] ?? null;
+        if ($category === '' || !is_array($settings) || $settings === []) {
+            return 'update_settings requires category and settings object';
         }
     }
 
