@@ -66,6 +66,18 @@ assert_true(
     ai_chat_message_implies_execute_intent('implement all of these')
 );
 assert_true(
+    'tackle step 2 is execute',
+    ai_chat_message_implies_execute_intent('okay, tackle step 2 now')
+);
+assert_true(
+    'step 2 alone is execute',
+    ai_chat_message_implies_execute_intent('step 2')
+);
+assert_true(
+    'work on step is execute',
+    ai_chat_message_implies_execute_intent('work on step 3 please')
+);
+assert_true(
     'yes execute is write not analysis',
     ai_chat_message_implies_write_intent('yes, execute them all', [
         ['role' => 'user', 'content' => 'Review the project website and tell me what to optimize'],
