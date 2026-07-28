@@ -426,6 +426,160 @@ function birkly_ai_build_provider_error(
 }
 
 /**
+ * Normalize chat attachment payloads from the browser.
+ *
+ * @return list<array{type: string, name?: string, mime?: string, base64?: string, content?: string}>
+ */
+function birkly_ai_normalize_chat_attachments(mixed $raw): array
+{
+    if (!is_array($raw)) {
+        return [];
+    }
+
+    $out = [];
+    foreach ($raw as $item) {
+        if (!is_array($item)) {
+            continue;
+        }
+        $type = (string) ($item['type'] ?? '');
+        if ($type === 'image') {
+            $base64 = (string) ($item['base64'] ?? '');
+            if ($base64 === '' && !empty($item['data_url'])) {
+                $base64 = preg_replace('#^data:[^;]+;base64,#', '', (string) $item['data_url']) ?? '';
+            }
+            $base64 = preg_replace('/\s+/', '', $base64);
+            if ($base64 === '' || strlen($base64) > 6 * 1024 * 1024) {
+                continue;
+            }
+            $mime = (string) ($item['mime'] ?? 'image/png');
+            if (!str_starts_with($mime, 'image/')) {
+                $mime = 'image/png';
+            }
+            $out[] = [
+                'type' => 'image',
+                'name' => (string) ($item['name'] ?? 'image.png'),
+                'mime' => $mime,
+                'base64' => $base64,
+            ];
+        } elseif ($type === 'document') {
+            $content = (string) ($item['content'] ?? '');
+            if ($content === '') {
+                continue;
+            }
+            $out[] = [
+                'type' => 'document',
+                'name' => (string) ($item['name'] ?? 'document.txt'),
+                'content' => mb_substr($content, 0, 12000),
+            ];
+        }
+    }
+
+    return array_slice($out, 0, 6);
+}
+
+/**
+ * @param list<array<string,mixed>> $attachments
+ */
+function birkly_ai_chat_image_attachments(array $attachments): array
+{
+    return array_values(array_filter($attachments, static fn (array $item): bool => ($item['type'] ?? '') === 'image'));
+}
+
+/**
+ * @param list<array<string,mixed>> $attachments
+ */
+function birkly_ai_message_with_document_attachments(string $message, array $attachments): string
+{
+    $out = trim($message);
+    foreach ($attachments as $item) {
+        if (($item['type'] ?? '') !== 'document') {
+            continue;
+        }
+        $name = (string) ($item['name'] ?? 'document.txt');
+        $content = (string) ($item['content'] ?? '');
+        $out .= "\n\n[Attached document: {$name}]\n```\n{$content}\n```";
+    }
+    return $out;
+}
+
+/**
+ * @param list<array<string,mixed>> $imageAttachments
+ * @return array<int, array<string, mixed>>|string
+ */
+function birkly_ai_build_openai_user_content(string $text, array $imageAttachments)
+{
+    if ($imageAttachments === []) {
+        return $text;
+    }
+
+    $parts = [];
+    if (trim($text) !== '') {
+        $parts[] = ['type' => 'text', 'text' => $text];
+    }
+    foreach ($imageAttachments as $img) {
+        $mime = (string) ($img['mime'] ?? 'image/png');
+        $parts[] = [
+            'type' => 'image_url',
+            'image_url' => [
+                'url' => 'data:' . $mime . ';base64,' . ($img['base64'] ?? ''),
+            ],
+        ];
+    }
+
+    return $parts !== [] ? $parts : $text;
+}
+
+/**
+ * @param list<array<string,mixed>> $imageAttachments
+ * @return list<array<string,mixed>>
+ */
+function birkly_ai_build_anthropic_user_content(string $text, array $imageAttachments): array
+{
+    $blocks = [];
+    if (trim($text) !== '') {
+        $blocks[] = ['type' => 'text', 'text' => $text];
+    }
+    foreach ($imageAttachments as $img) {
+        $blocks[] = [
+            'type' => 'image',
+            'source' => [
+                'type' => 'base64',
+                'media_type' => (string) ($img['mime'] ?? 'image/png'),
+                'data' => (string) ($img['base64'] ?? ''),
+            ],
+        ];
+    }
+    if ($blocks === []) {
+        $blocks[] = ['type' => 'text', 'text' => ''];
+    }
+    return $blocks;
+}
+
+/**
+ * @param list<array<string,mixed>> $imageAttachments
+ * @return list<array<string,mixed>>
+ */
+function birkly_ai_build_google_user_parts(string $text, array $imageAttachments): array
+{
+    $parts = [];
+    if (trim($text) !== '') {
+        $parts[] = ['text' => $text];
+    }
+    foreach ($imageAttachments as $img) {
+        $parts[] = [
+            'inline_data' => [
+                'mime_type' => (string) ($img['mime'] ?? 'image/png'),
+                'data' => (string) ($img['base64'] ?? ''),
+            ],
+        ];
+    }
+    if ($parts === []) {
+        $parts[] = ['text' => ''];
+    }
+    return $parts;
+}
+
+/**
  * Load curated AI context pack (not full docs dump).
  */
 function loadBirklyContextPack(): string
