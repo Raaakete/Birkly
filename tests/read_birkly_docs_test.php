@@ -25,8 +25,10 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 $coreTopics = [
     'templating', 'admin', 'plugins', 'ai', 'mcp',
     'sub-collections', 'site-building', 'web-project-patterns', 'playbooks-index',
+    'ai-quality-guide', 'fieldtypes', 'collection-groups',
     'content-model', 'public-forms', 'commerce', 'automation',
-    'agent-guide', 'mcp-setup',
+    'agent-guide', 'mcp-setup', 'ai-connections', 'plugins-overview',
+    'media', 'cms-pages', 'content-editor', 'settings-roles', 'user-management', 'events',
 ];
 
 foreach ($coreTopics as $topic) {
@@ -46,9 +48,23 @@ assert_true(
     'templating mentions birkly-client.js',
     is_array($templating) && str_contains((string) ($templating['text'] ?? ''), 'birkly-client.js')
 );
+
+$mcp = readBirklyDocsTopic('mcp');
 assert_true(
-    'templating does not mention cms-template.v2.js',
-    is_array($templating) && !str_contains((string) ($templating['text'] ?? ''), 'cms-template.v2.js')
+    'mcp alias resolves to mcp-setup playbook',
+    is_array($mcp) && str_contains((string) ($mcp['text'] ?? ''), 'MCP')
+);
+
+$fieldtypes = readBirklyDocsTopic('fieldtypes');
+assert_true(
+    'fieldtypes mentions editor type',
+    is_array($fieldtypes) && str_contains((string) ($fieldtypes['text'] ?? ''), 'editor')
+);
+
+$quality = readBirklyDocsTopic('ai-quality-guide');
+assert_true(
+    'ai-quality-guide has golden rules',
+    is_array($quality) && str_contains((string) ($quality['text'] ?? ''), 'Golden rules')
 );
 
 $publicForms = readBirklyDocsTopic('public-forms');
@@ -63,14 +79,27 @@ assert_true(
     $patterns !== null && str_contains($patterns['text'], 'birkly-client.js')
 );
 
-$commerce = readBirklyDocsTopic('commerce');
-assert_true(
-    'commerce playbook mentions fulfillment',
-    is_array($commerce) && str_contains((string) ($commerce['text'] ?? ''), 'fulfillment')
-);
-
 $catalog = birkly_ai_playbook_catalog();
 assert_true('playbook catalog has playbooks-index', isset($catalog['playbooks-index']));
-assert_true('playbook catalog count >= 15', count($catalog) >= 15);
+assert_true('playbook catalog has ai-quality-guide', isset($catalog['ai-quality-guide']));
+assert_true('playbook catalog has fieldtypes', isset($catalog['fieldtypes']));
+assert_true('playbook catalog count >= 20', count($catalog) >= 20);
+
+$topics = birkly_ai_detect_playbook_topics('how do I connect Cursor via MCP', []);
+assert_true(
+    'detect mcp-setup from MCP message',
+    in_array('mcp-setup', $topics, true)
+);
+
+$topicsForm = birkly_ai_detect_playbook_topics('fix my contact form validation failed', []);
+assert_true(
+    'detect public-forms from contact form message',
+    in_array('public-forms', $topicsForm, true)
+);
+
+assert_true(
+    'auto-inject for non-site MCP topic',
+    birkly_ai_should_auto_inject_playbooks('connect claude to mcp', [])
+);
 
 exit($failures > 0 ? 1 : 0);
