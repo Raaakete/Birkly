@@ -30,7 +30,8 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Only write/update project files when the user asks you to change something — not when they only ask a question or want a review.\n";
     $prompt .= "- Use native tool calls for all CMS/project changes — do not describe changes you did not execute.\n";
     $prompt .= "- Never paste raw tool-call markup (<tool_call>, arg_key, file contents) in your visible reply — tools run server-side.\n";
-    $prompt .= "- Project file paths: index.html, css/style.css (relative to project/ — never prefix with project/).\n";
+    $prompt .= "- When the user says execute / implement / yes go ahead: call tools immediately — no more planning text.\n";
+    $prompt .= "- Project file paths: index.html, about.html, css/style.css — never prefix with project/ (that caused path corruption).\n";
     $prompt .= "- There is NO create_user action — direct users to Settings > Users.\n\n";
 
     $prompt .= "YOUR PERMISSIONS:\n";

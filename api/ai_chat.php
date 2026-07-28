@@ -295,7 +295,8 @@ if ($action === 'chat') {
             }
 
             if ($analysisIntent && $readActions === [] && $writeActions === []
-                && ai_chat_is_project_site_intent($message, $conversationHistory)) {
+                && ai_chat_is_project_site_intent($message, $conversationHistory)
+                && !ai_chat_message_implies_execute_intent($message)) {
                 error_log('Analysis intent with no model reads — auto-loading project files');
                 $readActions = ai_chat_default_project_read_actions();
             }
