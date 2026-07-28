@@ -62,6 +62,22 @@ assert_true(
     ])
 );
 assert_true(
+    'implement all is execute not analysis',
+    ai_chat_message_implies_execute_intent('implement all of these')
+);
+assert_true(
+    'yes execute is write not analysis',
+    ai_chat_message_implies_write_intent('yes, execute them all', [
+        ['role' => 'user', 'content' => 'Review the project website and tell me what to optimize'],
+    ])
+);
+assert_true(
+    'yes execute is not analysis when review in history',
+    !ai_chat_message_implies_analysis_intent('yes, execute them all', [
+        ['role' => 'user', 'content' => 'Review the project website and tell me what to optimize'],
+    ])
+);
+assert_true(
     'do it and tell me is analysis not write',
     !ai_chat_message_implies_write_intent('do it and tell me', [
         ['role' => 'user', 'content' => 'review the project website'],

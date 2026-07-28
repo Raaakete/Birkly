@@ -22,8 +22,16 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 }
 
 assert_true(
-    'strips project/ prefix from paths',
+    'strips project/ prefix preserving filename',
     birkly_ai_normalize_project_file_path('project/index.html') === 'index.html'
+);
+assert_true(
+    'strips project/ from about.html',
+    birkly_ai_normalize_project_file_path('project/about.html') === 'about.html'
+);
+assert_true(
+    'fixes ndex typo to index',
+    birkly_ai_normalize_project_file_path('ndex.html') === 'index.html'
 );
 
 assert_true(
