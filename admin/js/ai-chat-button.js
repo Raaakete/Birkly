@@ -108,6 +108,60 @@
         return text;
     }
 
+    function formatChatErrorDetails(result) {
+        const details = result?.error_details || result?.data?.error_details || null;
+        let message = normalizeProviderError(
+            result?.message || result?.error || result?.data?.message || 'Unknown error'
+        );
+        if (!details || typeof details !== 'object') {
+            return message;
+        }
+
+        const lines = [message];
+        if (details.provider_label || details.provider) {
+            lines.push(
+                'Provider: ' + (details.provider_label || details.provider)
+                + (details.model ? ' · Model: ' + details.model : '')
+                + (details.http_code ? ' · HTTP ' + details.http_code : '')
+            );
+        }
+        if (details.provider_message && !message.includes(details.provider_message)) {
+            lines.push('Details: ' + details.provider_message);
+        }
+        if (details.hint) {
+            lines.push('Hint: ' + details.hint);
+        }
+        return lines.join('\n\n');
+    }
+
+    function buildConsoleErrorDetails(result) {
+        const details = result?.error_details || result?.data?.error_details;
+        if (details && typeof details === 'object') {
+            return details;
+        }
+        if (result && typeof result === 'object') {
+            return result;
+        }
+        return null;
+    }
+
+    function describeActionConsoleResult(actionResult, index) {
+        const type = actionResult.action_type || 'action';
+        const data = actionResult.action_data || actionResult.data || {};
+        let target = '';
+        if (type === 'write_project_file' || type === 'create_project_file') {
+            target = data.path ? ' → project/' + data.path : '';
+        } else if (type === 'create_entry') {
+            target = data.collection ? ' → ' + data.collection : '';
+            if (data.title) target += ' ("' + data.title + '")';
+        } else if (type === 'update_collection') {
+            target = data.slug ? ' → ' + data.slug : '';
+        }
+        const status = actionResult.success ? 'succeeded' : 'failed';
+        const err = !actionResult.success && actionResult.message ? ' — ' + actionResult.message : '';
+        return type + target + ' ' + status + err;
+    }
+
     function responseHasExecutionReport(text) {
         const value = String(text || '');
         return value.indexOf('### Completed this step') !== -1
@@ -446,13 +500,16 @@
             const detailsHtml = detailsText
                 ? '<pre class="ai-chat-console-details">' + escapeHtml(detailsText) + '</pre>'
                 : '';
+            const messageHtml = (entry.message || '').split('\n').map(function (line) {
+                return escapeHtml(line);
+            }).join('<br>');
             return `
                 <div class="ai-chat-console-entry ai-chat-console-entry--${escapeHtml(level)}">
                     <div class="ai-chat-console-entry-head">
                         <span class="ai-chat-console-level">${escapeHtml(levelLabel)}</span>
                         <time class="ai-chat-console-time">${escapeHtml(formatTime(entry.time))}</time>
                     </div>
-                    <div class="ai-chat-console-message">${escapeHtml(entry.message || '')}</div>
+                    <div class="ai-chat-console-message">${messageHtml}</div>
                     ${detailsHtml}
                 </div>`;
         }).join('');
@@ -1513,12 +1570,12 @@
             }
         }
         if (!result || (result.status !== 'ok' && result.status !== 'partial')) {
-            const errorMsg = normalizeProviderError(result?.message || result?.error || result?.data?.message || 'Unknown error');
-            appendConsoleLog('error', errorMsg, result);
+            const errorMsg = formatChatErrorDetails(result);
+            appendConsoleLog('error', errorMsg, buildConsoleErrorDetails(result));
             if (assistantMessageId) {
                 removeChatMessage(assistantMessageId);
             }
-            addChatMessageWithRetry('error', 'Error: ' + errorMsg);
+            addChatMessageWithRetry('error', errorMsg);
             return;
         }
 
@@ -1553,18 +1610,16 @@
             const executionResults = result.data.execution_results || [];
             const failedActions = executionResults.filter(function(r) { return !r.success; });
             failedActions.forEach(function(actionResult, index) {
-                const actionLabel = actionResult.action_type ? actionResult.action_type + ' — ' : '';
                 appendConsoleLog(
                     'error',
-                    actionLabel + (actionResult.message || ('Action ' + (index + 1) + ' failed')),
+                    describeActionConsoleResult(actionResult, index),
                     actionResult
                 );
             });
             executionResults.filter(function(r) { return r.success; }).forEach(function(actionResult, index) {
-                const actionLabel = actionResult.action_type ? actionResult.action_type + ' — ' : '';
                 appendConsoleLog(
                     'success',
-                    actionLabel + (actionResult.message || ('Action ' + (index + 1) + ' succeeded')),
+                    describeActionConsoleResult(actionResult, index),
                     actionResult.data || actionResult
                 );
             });
@@ -1588,10 +1643,9 @@
             const successCount = executionResults.filter(function(r) { return r.success; }).length || 0;
             if (successCount > 0) {
                 executionResults.filter(function(r) { return r.success; }).forEach(function(actionResult, index) {
-                    const actionLabel = actionResult.action_type ? actionResult.action_type + ' — ' : '';
                     appendConsoleLog(
                         'success',
-                        actionLabel + (actionResult.message || ('Action ' + (index + 1) + ' succeeded')),
+                        describeActionConsoleResult(actionResult, index),
                         actionResult.data || actionResult
                     );
                 });
@@ -2295,7 +2349,11 @@
         // Render markdown for assistant messages, plain text for user messages
         const renderedContent = isLoading 
             ? '<div class="ai-chat-loading">...</div>' 
-            : (role === 'assistant' ? renderMarkdown(content) : escapeHtml(content));
+            : (role === 'assistant'
+                ? renderMarkdown(content)
+                : (role === 'error'
+                    ? escapeHtml(content).split('\n').join('<br>')
+                    : escapeHtml(content)));
         
         messageDiv.innerHTML = `
             <div class="ai-chat-message-content">
