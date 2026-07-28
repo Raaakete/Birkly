@@ -2866,6 +2866,7 @@
         const siteElements = await getAllSiteElements();
         urlParams = new URLSearchParams(window.location.search);
         const slug = urlParams.get('slug');
+        const entryId = urlParams.get('id') || urlParams.get('entry');
         let collection = urlParams.get('collection');
         const query = {};
         for (const [k, v] of urlParams.entries()) query[k] = v;
@@ -2933,6 +2934,18 @@
                 }
             } catch (e) {
                 Birkly.warn('Birkly v3: could not load entry', collection, slug, e);
+            }
+        } else if (entryId && collection) {
+            try {
+                const entry = await getEntryById(collection, entryId);
+                if (entry) {
+                    const flat = flattenLocalizedEntry(entry);
+                    Object.assign(data, flat, { entry: flat });
+                    const slugKey = flat.slug || entryId;
+                    data['__entry__:' + collection + ':' + slugKey] = flat;
+                }
+            } catch (e) {
+                Birkly.warn('Birkly v3: could not load entry by id', collection, entryId, e);
             }
         }
 
@@ -3206,6 +3219,26 @@
         } catch (error) {
             console.error('Birkly: Error fetching entry by slug:', error);
             console.error('Birkly: Error stack:', error.stack);
+        }
+        return null;
+    }
+
+    async function getEntryById(collection, entryId) {
+        try {
+            Birkly.log('Birkly: Fetching entry by id', { collection, entryId });
+            const data = await fetchContent('get_entry', { collection: collection, entry: entryId });
+
+            if (!data || data.status !== 'ok') {
+                Birkly.warn('Birkly: Entry not found by id', { collection, entryId });
+                return null;
+            }
+
+            const entry = data.data && data.data.entry;
+            if (entry) {
+                return flattenLocalizedEntry(entry);
+            }
+        } catch (error) {
+            console.error('Birkly: Error fetching entry by id:', error);
         }
         return null;
     }

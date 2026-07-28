@@ -35,7 +35,7 @@ function birkly_ai_tool_definitions(): array
         'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['name', 'slug']]],
         'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata or field schema. REQUIRED: slug (use exact slug from list_collections). Put fields in top-level "fields" array.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['slug']]],
         'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'collection' => ['type' => 'string']], 'required' => ['slug']]],
-        'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Put field values at top level or in data. Set status to "published" so the public API and {for each entry} loops show the entry (defaults to published via MCP).', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'status' => ['type' => 'string', 'description' => 'published or draft — use published for live site content'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
+        'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Slug is auto-generated from title when omitted — use {slug} in post links (post.html?collection=blog&slug={slug}). Set status to "published" for live site content.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'slug' => ['type' => 'string', 'description' => 'Optional URL slug; auto-generated from title if omitted'], 'status' => ['type' => 'string', 'description' => 'published or draft — use published for live site content'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
         'update_entry' => ['name' => 'update_entry', 'description' => 'Update an existing entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'id']]],
         'delete_entry' => ['name' => 'delete_entry', 'description' => 'Delete an entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection', 'id']]],
         'upload_media' => ['name' => 'upload_media', 'description' => 'Upload a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
@@ -403,11 +403,13 @@ function birkly_ai_mcp_tool_success_summary(string $actionType, array $arguments
     if ($actionType === 'create_entry') {
         $collection = (string) ($arguments['collection'] ?? '');
         $entryId = (string) ($data['entry_id'] ?? '');
+        $entrySlug = (string) ($data['entry']['slug'] ?? $arguments['slug'] ?? '');
         $status = (string) ($data['entry']['status'] ?? $arguments['status'] ?? '');
         if ($collection === '' || $entryId === '') {
             return '';
         }
-        return 'SUCCESS: created entry ' . $entryId . ' in "' . $collection . '" (status: ' . ($status !== '' ? $status : 'unknown') . ')';
+        $slugPart = $entrySlug !== '' ? ', slug: ' . $entrySlug : '';
+        return 'SUCCESS: created entry ' . $entryId . ' in "' . $collection . '"' . $slugPart . ' (status: ' . ($status !== '' ? $status : 'unknown') . ')';
     }
 
     return '';

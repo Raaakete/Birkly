@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/storage/StorageFactory.php';
 require_once __DIR__ . '/cache.php';
+require_once __DIR__ . '/entry_slug.php';
 
 function birkly_public_resolve_collection_dir($storage, $collectionSlug, $collectionId = '') {
     $collections = $storage->list('collections');
@@ -96,8 +97,12 @@ function birkly_public_list_entries($storage, $collectionSlug, $language = 'en')
 
     if ($language && $multilanguageEnabled) {
         $publishedEntries = array_map(function ($entry) use ($language, $multilanguageEnabled, $multilanguageLanguages) {
-            return birkly_public_transform_entry_for_language($entry, $language, $multilanguageEnabled, $multilanguageLanguages);
+            return birkly_public_entry_with_effective_slug(
+                birkly_public_transform_entry_for_language($entry, $language, $multilanguageEnabled, $multilanguageLanguages)
+            );
         }, $publishedEntries);
+    } else {
+        $publishedEntries = array_map('birkly_public_entry_with_effective_slug', $publishedEntries);
     }
 
     return ['status' => 'ok', 'data' => ['entries' => $publishedEntries]];
@@ -126,7 +131,7 @@ function birkly_public_get_entry($storage, $collectionSlug, $slug = '', $entryId
         $entries = $storage->list("collections/$dir/entries");
         foreach ($entries as $entryFile) {
             $entryData = $storage->read("collections/$dir/entries/$entryFile");
-            if ($entryData && isset($entryData['slug']) && $entryData['slug'] === $slug) {
+            if ($entryData && birkly_entry_matches_slug($entryData, $slug)) {
                 $data = $entryData;
                 break;
             }
@@ -142,6 +147,8 @@ function birkly_public_get_entry($storage, $collectionSlug, $slug = '', $entryId
     if ($language && $multilanguageEnabled) {
         $data = birkly_public_transform_entry_for_language($data, $language, $multilanguageEnabled, $multilanguageLanguages);
     }
+
+    $data = birkly_public_entry_with_effective_slug($data);
 
     return ['status' => 'ok', 'data' => ['entry' => $data]];
 }

@@ -29,6 +29,13 @@ function birkly_ai_playbook_catalog(): array
             'triggers' => 'website, portfolio, project folder, build a site, landing page',
             'category' => 'Core CMS',
         ],
+        'web-project-patterns' => [
+            'title' => 'Web project patterns — content model, list/detail, wiring',
+            'topic' => 'web-project-patterns',
+            'summary' => 'Flexible principles for any site: page types, schema decisions, CMS-to-HTML wiring, common bugs.',
+            'triggers' => 'detail page, raw templating, birkly-client, collection fields, list page, portfolio, blog, wiring',
+            'category' => 'Core CMS',
+        ],
         'templating' => [
             'title' => 'Client templating language (full spec)',
             'topic' => 'templating',
@@ -168,6 +175,7 @@ function birkly_ai_core_docs_topics(): array
         'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),
         'settings-roles' => $playbook('settings-roles-playbook.md', 'Settings & roles playbook'),
         'site-building' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'web-project-patterns' => $playbook('web-project-patterns-playbook.md', 'Web project patterns — list/detail, schemas, wiring'),
         'portfolio' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
         'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
         'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
@@ -198,6 +206,243 @@ function birkly_ai_playbook_mcp_resources(): array
 }
 
 /**
+ * Core playbook topics auto-loaded for website / project builds.
+ *
+ * @return list<string>
+ */
+function birkly_ai_core_site_build_topics(): array
+{
+    return ['web-project-patterns', 'site-building', 'content-model', 'templating'];
+}
+
+/**
+ * Detect playbook topics to auto-load from user message + recent history.
+ *
+ * @return list<string>
+ */
+function birkly_ai_detect_playbook_topics(string $message, array $conversationHistory = []): array
+{
+    $haystack = strtolower($message);
+    foreach (array_slice($conversationHistory, -6) as $msg) {
+        $haystack .= ' ' . strtolower((string) ($msg['content'] ?? ''));
+    }
+
+    $topics = [];
+
+    if (ai_chat_is_project_site_intent($message, $conversationHistory)) {
+        $topics = array_merge($topics, birkly_ai_core_site_build_topics());
+    }
+
+    $triggerMap = [
+        'public-forms' => '/\b(contact form|newsletter|public form|submit from website|visitor submission)\b/i',
+        'sub-collections' => '/\b(sub-collection|sub-entry|nested entries|comments on posts)\b/i',
+        'commerce' => '/\b(shop|e-?commerce|cart|checkout|sell online|online store|product catalog)\b/i',
+        'cms-pages' => '/\b(cms page|admin-managed page|create page)\b/i',
+        'media' => '/\b(media library|upload image|gallery field)\b/i',
+        'agent-guide' => '/\b(agent guide|ai presence|well-known)\b/i',
+        'automation' => '/\b(automation|workflow|webhook|slack notification)\b/i',
+        'events' => '/\b(events|rsvp|calendar|tickets)\b/i',
+        'user-management' => '/\b(user registration|member login|site users)\b/i',
+    ];
+
+    foreach ($triggerMap as $topic => $pattern) {
+        if (preg_match($pattern, $haystack)) {
+            $topics[] = $topic;
+        }
+    }
+
+    return array_values(array_unique($topics));
+}
+
+/**
+ * Whether to inject full playbook text into the system prompt this turn.
+ */
+function birkly_ai_should_auto_inject_playbooks(string $message, array $conversationHistory = []): bool
+{
+    if (!ai_chat_is_project_site_intent($message, $conversationHistory)) {
+        return false;
+    }
+
+    if (ai_chat_message_implies_execute_intent($message)) {
+        return true;
+    }
+
+    if (!ai_chat_session_has_site_build_progress($conversationHistory)) {
+        return true;
+    }
+
+    return (bool) preg_match(
+        '/\b(build|create|make|design|set up|setup|launch|start)\b/i',
+        $message
+    );
+}
+
+/**
+ * Load full playbook markdown for the given topics (server-side — no read_birkly_docs tool needed).
+ *
+ * @param list<string> $topics
+ */
+function birkly_ai_build_auto_playbook_section(array $topics, int $maxCharsPerTopic = 25000): string
+{
+    if ($topics === []) {
+        return '';
+    }
+
+    require_once __DIR__ . '/../api/ai_helpers.php';
+
+    $lines = [
+        'BIRKLY PLAYBOOKS (pre-loaded automatically — follow step order; do NOT call read_birkly_docs for these topics this turn):',
+        '',
+    ];
+
+    foreach ($topics as $topic) {
+        $doc = readBirklyDocsTopic($topic);
+        if ($doc === null) {
+            continue;
+        }
+        $text = (string) ($doc['text'] ?? '');
+        if ($text === '') {
+            continue;
+        }
+        if (strlen($text) > $maxCharsPerTopic) {
+            $text = substr($text, 0, $maxCharsPerTopic) . "\n\n[truncated]";
+        }
+        $lines[] = '--- ' . ($doc['title'] ?? $topic) . ' (' . $topic . ') ---';
+        $lines[] = $text;
+        $lines[] = '';
+    }
+
+    if (count($lines) <= 2) {
+        return '';
+    }
+
+    return implode("\n", $lines);
+}
+
+/**
+ * MCP initialize instructions — always includes core site-building playbooks.
+ */
+function birkly_ai_mcp_initialize_instructions(): string
+{
+    $playbooks = birkly_ai_build_auto_playbook_section(birkly_ai_core_site_build_topics());
+
+    $header = "You are connected to a Birkly CMS instance via MCP.\n"
+        . "Users may give very short prompts (e.g. \"build me a bakery website\") — you must still deliver a complete Birkly project site.\n\n";
+
+    $rules = "RULES:\n"
+        . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
+        . "- List pages: loops; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
+        . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script>\n"
+        . "- Define collection fields BEFORE create_entry — never leave fields: []\n"
+        . "- Use get_project_info site_url_prefix for asset/page URLs in HTML (e.g. /project/css/…)\n"
+        . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
+        . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
+        . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n\n";
+
+    return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
+}
+
+/**
+ * Server-side project discovery reads for site-build prompts.
+ *
+ * @return list<array<string,mixed>>
+ */
+function ai_chat_site_build_discovery_actions(): array
+{
+    return [
+        ['type' => 'get_project_info', 'data' => [], 'description' => 'Get project site info'],
+        ['type' => 'list_project_files', 'data' => ['path' => ''], 'description' => 'List project files'],
+        ['type' => 'list_collections', 'data' => [], 'description' => 'List collections'],
+    ];
+}
+
+/**
+ * Whether to run server-side project discovery before the AI call.
+ */
+function birkly_ai_should_auto_project_discovery(string $message, array $conversationHistory = []): bool
+{
+    if (!ai_chat_is_project_site_intent($message, $conversationHistory)) {
+        return false;
+    }
+
+    if (ai_chat_message_implies_analysis_intent($message, $conversationHistory)
+        && !ai_chat_message_implies_write_intent($message, $conversationHistory)) {
+        return false;
+    }
+
+    return ai_chat_message_implies_write_intent($message, $conversationHistory)
+        || ai_chat_message_implies_execute_intent($message);
+}
+
+/**
+ * Execute discovery reads and format for system prompt injection.
+ *
+ * @param array<string,mixed> $aiUser
+ */
+function birkly_ai_build_project_discovery_prompt_section(array $aiUser): string
+{
+    require_once __DIR__ . '/../api/ai_read_actions.php';
+
+    $sections = [
+        'PROJECT DISCOVERY (pre-loaded automatically — do NOT call get_project_info or list_project_files again this turn unless the user changed files):',
+        '',
+    ];
+
+    foreach (ai_chat_site_build_discovery_actions() as $action) {
+        try {
+            $result = executeReadAction($action, $aiUser);
+            $formatted = ai_chat_format_read_result_for_followup($result, [$action]);
+            if ($formatted !== '') {
+                $sections[] = trim($formatted);
+            }
+        } catch (Throwable $e) {
+            error_log('Auto project discovery failed: ' . $e->getMessage());
+        }
+    }
+
+    if (count($sections) <= 2) {
+        return '';
+    }
+
+    return implode("\n\n", $sections) . "\n\n";
+}
+
+/**
+ * Append auto-loaded playbooks and project discovery to a chat system prompt.
+ *
+ * @param array<string,mixed> $aiUser
+ */
+function birkly_ai_enrich_system_prompt_for_message(
+    string $basePrompt,
+    string $message,
+    array $conversationHistory,
+    array $aiUser
+): string {
+    $extra = '';
+
+    if (birkly_ai_should_auto_inject_playbooks($message, $conversationHistory)) {
+        $topics = birkly_ai_detect_playbook_topics($message, $conversationHistory);
+        $playbookSection = birkly_ai_build_auto_playbook_section($topics);
+        if ($playbookSection !== '') {
+            $extra .= $playbookSection . "\n\n";
+        }
+    }
+
+    if (birkly_ai_should_auto_project_discovery($message, $conversationHistory)) {
+        $discoverySection = birkly_ai_build_project_discovery_prompt_section($aiUser);
+        if ($discoverySection !== '') {
+            $extra .= $discoverySection;
+        }
+    }
+
+    if ($extra === '') {
+        return $basePrompt;
+    }
+
+    return rtrim($basePrompt) . "\n\n" . rtrim($extra) . "\n";
+}
+
+/**
  * Short playbook index for every chat system prompt (L1).
  */
 function birkly_ai_playbooks_prompt_section(): string
@@ -208,10 +453,9 @@ function birkly_ai_playbooks_prompt_section(): string
     }
 
     $lines = [
-        'PLAYBOOKS — read before complex tasks (`read_birkly_docs` with topic slug):',
-        'Unsure where to start? Read `playbooks-index` first.',
-        'Site/portfolio build: `site-building` then execute — do not loop on get_project_info.',
-        'Forms / outside submission: `public-forms`. Nested content: `sub-collections`.',
+        'PLAYBOOKS — relevant playbooks are auto-loaded server-side when you detect site build, commerce, forms, etc.',
+        'For topics not yet loaded, use `read_birkly_docs` with the topic slug below.',
+        'Site/portfolio build: follow the pre-loaded site-building playbook — do not loop on get_project_info.',
         '',
     ];
 
@@ -223,7 +467,7 @@ function birkly_ai_playbooks_prompt_section(): string
         $lines[] = '';
     }
 
-    $lines[] = 'After reading a playbook: follow its step order. Do not repeat discovery reads you already have in this turn.';
+    $lines[] = 'After a playbook is loaded: follow its step order. Do not repeat discovery reads you already have in this turn.';
     return implode("\n", $lines);
 }
 
@@ -345,7 +589,12 @@ function ai_chat_is_project_site_intent(string $message, array $conversationHist
         $haystack .= ' ' . strtolower((string) ($msg['content'] ?? ''));
     }
     return (bool) preg_match(
-        '/\b(website|web site|portfolio|project\/|project folder|index\.html|write_project|create_project|build\s+(?:a\s+)?(?:site|website|gallery)|site builder|gallery site|landing page|\bgallery\b|\bartist\b|artworks?\b|ute bayrak)\b/i',
+        '/\b(website|web site|webpage|web page|homepage|home page|portfolio|project\/|project folder|index\.html|write_project|create_project|'
+        . 'build\s+(?:a\s+|me\s+(?:a\s+)?)?(?:site|website|web\s*project|page|pages)|'
+        . 'site builder|gallery site|landing page|\bgallery\b|\bartist\b|artworks?\b|'
+        . 'online presence|web presence|web project|'
+        . 'bakery|restaurant|cafe|coffee shop|salon|barber|dentist|clinic|agency|studio|'
+        . 'boutique|storefront|business site|company site|small business|my business|my shop|my store)\b/i',
         $haystack
     );
 }
@@ -448,6 +697,17 @@ function ai_chat_message_implies_write_intent(string $message, array $conversati
 
     if (preg_match(
         '/\b(fix(ed|ing)?|update(d|s|ing)?|write|written|create(d|s|ing)?|change(d|s|ing)?|modify|deploy(ed|ing)?|commit(ted|ing)?|implement|apply|restyle|redesign|try again|please proceed|go ahead|do it now|make it|rebuild|add\s+(css|html|styles?|dark|theme))\b/i',
+        $haystack
+    )) {
+        return true;
+    }
+
+    // Casual site-build prompts: "build me a bakery website", "website for my restaurant"
+    if (preg_match(
+        '/\b(build|create|make|design|set up|setup|launch|need)\b.{0,40}\b(website|web site|site|webpage|web page|web project|online presence)\b/i',
+        $haystack
+    ) || preg_match(
+        '/\b(website|web site|site|webpage|web page)\b.{0,40}\b(for|for my|for our)\b/i',
         $haystack
     )) {
         return true;

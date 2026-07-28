@@ -184,21 +184,6 @@ if ($action === 'chat') {
         // Build system prompt
         $systemPrompt = buildSystemPrompt($systemContext, $aiUser);
 
-        $chatImageAttachments = birkly_ai_chat_image_attachments($chatAttachments);
-        if ($chatImageAttachments !== []) {
-            $caps = birkly_ai_connection_capabilities($aiUser);
-            if (empty($caps['vision'])) {
-                if (!headers_sent()) {
-                    header('Content-Type: application/json');
-                }
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'This connection does not support image attachments. Switch to a vision-capable provider (OpenRouter, OpenAI, Gemini, Anthropic).',
-                ]);
-                exit;
-            }
-        }
-        
         // Load conversation history if conversationId is provided
         $conversationHistory = [];
         if (!empty($conversationId)) {
@@ -211,6 +196,29 @@ if ($action === 'chat') {
                 if (count($conversationHistory) > 10) {
                     $conversationHistory = array_slice($conversationHistory, -10);
                 }
+            }
+        }
+
+        require_once __DIR__ . '/../core/ai_playbooks.php';
+        $systemPrompt = birkly_ai_enrich_system_prompt_for_message(
+            $systemPrompt,
+            $message,
+            $conversationHistory,
+            $aiUser
+        );
+
+        $chatImageAttachments = birkly_ai_chat_image_attachments($chatAttachments);
+        if ($chatImageAttachments !== []) {
+            $caps = birkly_ai_connection_capabilities($aiUser);
+            if (empty($caps['vision'])) {
+                if (!headers_sent()) {
+                    header('Content-Type: application/json');
+                }
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'This connection does not support image attachments. Switch to a vision-capable provider (OpenRouter, OpenAI, Gemini, Anthropic).',
+                ]);
+                exit;
             }
         }
         

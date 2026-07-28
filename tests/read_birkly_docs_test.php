@@ -24,7 +24,7 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 
 $coreTopics = [
     'templating', 'admin', 'plugins', 'ai', 'mcp',
-    'sub-collections', 'site-building', 'playbooks-index',
+    'sub-collections', 'site-building', 'web-project-patterns', 'playbooks-index',
     'content-model', 'public-forms', 'commerce', 'automation',
     'agent-guide', 'mcp-setup',
 ];
@@ -55,6 +55,12 @@ $publicForms = readBirklyDocsTopic('public-forms');
 assert_true(
     'public-forms mentions public_api',
     is_array($publicForms) && str_contains((string) ($publicForms['text'] ?? ''), 'public_api')
+);
+
+$patterns = readBirklyDocsTopic('web-project-patterns');
+assert_true(
+    'readBirklyDocsTopic(web-project-patterns)',
+    $patterns !== null && str_contains($patterns['text'], 'birkly-client.js')
 );
 
 $commerce = readBirklyDocsTopic('commerce');

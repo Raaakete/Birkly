@@ -7,7 +7,7 @@ Curated reference for BYOAI system prompts. Loaded by `loadBirklyContextPack()` 
 Step-by-step runbooks for complex tasks. System prompt lists all slugs; load depth via `read_birkly_docs`:
 
 - **`playbooks-index`** — start here when unsure
-- **Core:** `content-model`, `site-building`, `templating`, `public-forms`, `sub-collections`, `cms-pages`, `media`, `content-editor`
+- **Core:** `content-model`, `site-building`, `web-project-patterns`, `templating`, `public-forms`, `sub-collections`, `cms-pages`, `media`, `content-editor`
 - **AI:** `agent-guide`, `mcp-setup`, `ai-connections`
 - **Plugins:** `plugins-overview`, `commerce`, `automation`, `events`, `user-management`
 - **Admin:** `settings-roles`
@@ -90,16 +90,29 @@ Full spec: `docs/TEMPLATE_LANGUAGE_SPEC.md` (platform); public docs on Birkly-Do
 - **User-defined fields** use quoted names: `{'content'}`, `{'price'}`
 - Loops close with `{endfor}`
 
-### Collection loop
+### Collection loop (list page)
 
 ```html
-{for each entry in 'blog'}
-  <h2>{title}</h2>
-  <div>{'content'}</div>
+{for each entry in 'your-collection' with status = published ordered by newest}
+  <h2><a href="/project/detail.html?collection=your-collection&slug={slug}">{title}</a></h2>
+  <p>{'teaser-field'}</p>
 {endfor}
 ```
 
-### Single entry (no loop)
+### List page vs detail page (critical)
+
+| Page | Pattern |
+|------|---------|
+| **List** | `{for each entry in 'slug' …}{endfor}` + links with `?collection=<slug>&slug={slug}` |
+| **Detail** | Meta `birkly-collection` + `{ title }`, `{ fields… }` — **no loop over the collection** |
+
+Detail page uses URL `?slug=` — see `project/post.html` as one reference.
+
+**Every templated page** needs `<script src="/birkly-client.js"></script>` or `{…}` shows as raw text.
+
+Principles and edge cases: playbook `web-project-patterns`.
+
+### Single entry (fixed slug, no URL param)
 
 ```html
 {from 'blog' get entry 'my-post-slug'}
