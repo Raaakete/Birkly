@@ -1823,7 +1823,7 @@
             return;
         }
 
-        const responseText = result.data.response || result.data.message || '';
+        const responseText = sanitizeChatDisplayText(result.data.response || result.data.message || '');
         if (assistantMessageId) {
             const messageEl = document.getElementById(assistantMessageId);
             const contentEl = messageEl ? messageEl.querySelector('.ai-chat-message-content') : null;
