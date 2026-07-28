@@ -115,7 +115,6 @@ if ($action === 'chat') {
         $pageContext = birkly_ai_normalize_page_context($input['page_context'] ?? null);
         $wantStream = !empty($input['stream']);
         $streamActive = false;
-        $preResolvedActions = [];
         
         if (empty($aiConnectionId) || ($message === '' && $chatAttachments === [])) {
             if (!headers_sent()) {
@@ -214,38 +213,9 @@ if ($action === 'chat') {
             }
         }
         
-        // Call AI provider with conversation history
-        $skipAiCall = false;
+        // Always call the AI provider — no server-side proceed/status bypasses.
         $streamCallback = null;
-        if (ai_chat_is_status_request($message) && ai_chat_session_has_site_build_progress($conversationHistory)) {
-            $skipAiCall = true;
-            $response = [
-                'success' => true,
-                'message' => ai_chat_site_build_progress_summary($conversationHistory, $systemContext),
-            ];
-        }
-
-        // Site-build proceed: run deterministic next step without relying on the model
-        $isProceedMessage = ai_chat_is_proceed_message($message);
-        if (!$skipAiCall && $isProceedMessage && ai_chat_session_has_site_build_progress($conversationHistory)) {
-            $preResolvedActions = ai_chat_filter_already_completed_actions(
-                ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext),
-                $conversationHistory
-            );
-            if ($preResolvedActions !== []) {
-                $skipAiCall = true;
-                error_log('Site proceed: deterministic actions without model (' . count($preResolvedActions) . ')');
-            } else {
-                $skipAiCall = true;
-                $response = [
-                    'success' => true,
-                    'message' => ai_chat_site_build_progress_summary($conversationHistory, $systemContext),
-                ];
-                error_log('Site proceed: automated steps complete — returning progress summary only');
-            }
-        }
-        
-        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? ''))) {
+        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? '')) && $chatImageAttachments === []) {
             birkly_ai_sse_begin();
             $streamActive = true;
             $streamCallback = function ($token) {
@@ -258,31 +228,19 @@ if ($action === 'chat') {
             session_write_close();
         }
 
-        if (!$skipAiCall) {
-            $response = callAiProvider(
-                $aiUser['provider'], 
-                $apiKey, 
-                $aiUser['model'] ?? '', 
-                $systemPrompt, 
-                $message, 
-                $conversationId,
-                $aiUser['api_url'] ?? '',
-                $conversationHistory,
-                $aiUser,
-                $streamCallback,
-                $chatAttachments
-            );
-        } else {
-            // skipAiCall path: status/proceed summary already set in $response above
-            if (!isset($response)) {
-                $response = [
-                    'success' => true,
-                    'message' => $preResolvedActions !== []
-                        ? ('Running the next site-build step (' . count($preResolvedActions) . ' action(s)).')
-                        : '',
-                ];
-            }
-        }
+        $response = callAiProvider(
+            $aiUser['provider'],
+            $apiKey,
+            $aiUser['model'] ?? '',
+            $systemPrompt,
+            $message,
+            $conversationId,
+            $aiUser['api_url'] ?? '',
+            $conversationHistory,
+            $aiUser,
+            $streamCallback,
+            $chatAttachments
+        );
         
         // Save conversation history after the full response is finalized (see ai_chat_persist_conversation)
         $chatPersistContext = [
@@ -297,9 +255,6 @@ if ($action === 'chat') {
         if ($response['success']) {
             // Check if response contains action requests
             $actions = extractActionsFromResponse($response['message'] ?? '', $response['tool_calls'] ?? []);
-            if ($preResolvedActions !== []) {
-                $actions = $preResolvedActions;
-            }
             $actions = ai_chat_filter_already_completed_actions($actions, $conversationHistory);
             
             // Log for debugging
@@ -310,455 +265,8 @@ if ($action === 'chat') {
                 
             }
 
-            // FALLBACK: Detect read-only requests and auto-generate actions
-            if (empty($actions)) {
-                $messageLower = strtolower($message);
-                // List collections
-                if (preg_match('/\b(list|show|get|display).*collection/i', $messageLower) || preg_match('/collection.*list|all.*collection/i', $messageLower)) {
-                    $actions[] = ['type' => 'list_collections', 'data' => [], 'description' => 'List all collections'];
-                    error_log("Auto-generated list_collections action");
-                }
-                // Questions about collections/entries (e.g., "which collection has the most entries?")
-                elseif (preg_match('/\b(which|what|how many|count|most|least|largest|smallest).*(collection|entry|entries)/i', $messageLower) || 
-                        preg_match('/\b(collection|entry|entries).*(most|least|largest|smallest|count|how many)/i', $messageLower)) {
-                    // Auto-generate list_collections first
-                    $actions[] = ['type' => 'list_collections', 'data' => [], 'description' => 'List all collections to analyze entry counts'];
-                    error_log("Auto-generated list_collections action for analysis question");
-                    // Note: After list_collections executes, the follow-up will get collections data
-                    // and the AI should generate list_entries for each collection if needed
-                }
-                // List media
-                elseif (preg_match('/\b(list|show|get|display).*media|media.*list|all.*media/i', $messageLower)) {
-                    $actions[] = ['type' => 'list_media', 'data' => [], 'description' => 'List all media files'];
-                    error_log("Auto-generated list_media action");
-                }
-                // List users
-                elseif (preg_match('/\b(list|show|get|display).*user|user.*list|all.*user/i', $messageLower)) {
-                    $actions[] = ['type' => 'list_users', 'data' => [], 'description' => 'List all users'];
-                    error_log("Auto-generated list_users action");
-                }
-                // List pages
-                elseif (preg_match('/\b(list|show|get|display).*page|page.*list|all.*page/i', $messageLower)) {
-                    $actions[] = ['type' => 'list_pages', 'data' => [], 'description' => 'List all pages'];
-                    error_log("Auto-generated list_pages action");
-                }
-                // Read settings
-                elseif (preg_match('/\b(show|get|read|display).*setting|setting.*show/i', $messageLower)) {
-                    $actions[] = ['type' => 'read_settings', 'data' => [], 'description' => 'Read system settings'];
-                    error_log("Auto-generated read_settings action");
-                }
-            }
+            // Actions come from the model only — no server-side regex fallbacks.
 
-            // SIMPLIFIED FALLBACK: Only trigger if no actions AND user explicitly asked for a write action
-            $userAskedForAction = preg_match('/\b(create|add|make|update|delete|fix|change)\b/i', $message)
-                && !preg_match('/\?\s*$/', trim($message))
-                && !preg_match('/\b(explain|why|how|what|describe|tell me|can you|could you|should i)\b/i', $message);
-            
-            if (empty($actions) && $userAskedForAction && !ai_chat_is_project_site_intent($message, $conversationHistory)) {
-                $context = $systemContext;
-                error_log("No actions found but user asked for action - using simplified fallback");
-                // Detect "create a new collection called/ named X"
-                $collectionName = null;
-                if (preg_match('/create\\s+(?:a\\s+)?(?:new\\s+)?collection\\s+(?:called|named)\\s+\"?([^\"\\n]+)\"?/i', $message, $m)) {
-                    $collectionName = trim($m[1]);
-                } elseif (preg_match('/create\\s+(?:a\\s+)?(?:new\\s+)?collection\\s+\"?([^\"\\n]+)\"?/i', $message, $m2)) {
-                    $collectionName = trim($m2[1]);
-                }
-
-                if (!empty($collectionName)) {
-                    // Generate a slug from the name
-                    $slug = strtolower($collectionName);
-                    $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
-                    $slug = trim($slug, '-');
-                    if ($slug === '') {
-                        $slug = 'collection-' . bin2hex(random_bytes(3));
-                    }
-
-                    $fallbackAction = [
-                        'type' => 'create_collection',
-                        'data' => [
-                            'name' => $collectionName,
-                            'slug' => $slug,
-                            'fields' => [
-                                [
-                                    'name' => 'title',
-                                    'type' => 'text',
-                                    'label' => 'Title',
-                                    'required' => true,
-                                ],
-                                [
-                                    'name' => 'text',
-                                    'type' => 'textarea',
-                                    'label' => 'Text',
-                                ],
-                            ],
-                        ],
-                        'description' => 'Create collection "' . $collectionName . '" (auto-generated fallback action)',
-                    ];
-
-                    $actions[] = $fallbackAction;
-                    error_log("Fallback: auto-generated create_collection action from user message");
-                }
-                
-                // Detect "create entry/entries for collection X" or "add entry/entries to collection X"
-                $entryCollection = null;
-                $entryCount = 1;
-                
-                // Check if this is a follow-up request ("another", "more", "additional", "one", "another one")
-                $isFollowUp = preg_match('/\b(another|more|additional|one more|again|another one|one|same)\b/i', $message);
-                
-                // Also check if message is very short (likely a follow-up) - prioritize this
-                $isShortFollowUp = strlen(trim($message)) < 25 && preg_match('/\b(another|more|one|again|same|yes|do it|that)\b/i', $message);
-                if ($isShortFollowUp) {
-                    $isFollowUp = true;
-                    error_log("Fallback: Detected short follow-up message: '$message' (length: " . strlen(trim($message)) . ")");
-                }
-                
-                // If it's a follow-up, try to find the collection from conversation history
-                if ($isFollowUp && !empty($conversationHistory)) {
-                    error_log("Fallback: Detected follow-up request, searching conversation history for collection");
-                    // Look backwards through conversation history for collection mentions
-                    $historyMessages = array_reverse($conversationHistory);
-                    foreach ($historyMessages as $histMsg) {
-                        $histContent = $histMsg['content'] ?? '';
-                        // Look for collection mentions in previous messages
-                        if (preg_match('/(?:collection|for|in|to)\s+([a-z0-9][a-z0-9\s-]+?)(?:\s+collection|$)/i', $histContent, $m)) {
-                            $possibleCollection = trim($m[1]);
-                            $possibleCollection = preg_replace('/\b(for|in|to|the|collection|demo|new|a|an)\b/i', '', $possibleCollection);
-                            $possibleCollection = trim($possibleCollection);
-                            // Check if this matches a known collection
-                            if (!empty($context['collections'])) {
-                                foreach ($context['collections'] as $coll) {
-                                    $collSlug = strtolower($coll['slug'] ?? '');
-                                    $collName = strtolower($coll['name'] ?? '');
-                                    $normalizedPossible = strtolower(preg_replace('/[^a-z0-9]+/', '-', $possibleCollection));
-                                    if ($collSlug === $normalizedPossible || 
-                                        strpos($collSlug, str_replace('-', '', $normalizedPossible)) !== false ||
-                                        strpos($collName, str_replace('-', ' ', $normalizedPossible)) !== false) {
-                                        $entryCollection = $coll['slug'];
-                                        error_log("Fallback: Found collection '$entryCollection' from conversation history");
-                                        break 2;
-                                    }
-                                }
-                            }
-                        }
-                        // Also check for create_entry actions in history
-                        if (preg_match('/"collection"\s*:\s*"([^"]+)"/i', $histContent, $m)) {
-                            $possibleSlug = trim($m[1]);
-                            if (!empty($context['collections'])) {
-                                foreach ($context['collections'] as $coll) {
-                                    if (strtolower($coll['slug'] ?? '') === strtolower($possibleSlug)) {
-                                        $entryCollection = $coll['slug'];
-                                        error_log("Fallback: Found collection '$entryCollection' from action in history");
-                                        break 2;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // More comprehensive patterns to catch variations
-                $entryPatterns = [
-                    // "create a demo entry for the approval test collection"
-                    '/create\\s+(?:a\\s+)?(?:demo\\s+)?(?:new\\s+)?entry\\s+(?:for|in|to)\\s+(?:the\\s+)?([^\"\'\\n]+?)(?:\\s+collection)?$/i',
-                    // "add entry to collection X"
-                    '/add\\s+(?:a\\s+)?(?:demo\\s+)?(?:new\\s+)?entry\\s+(?:for|in|to)\\s+(?:the\\s+)?([^\"\'\\n]+?)(?:\\s+collection)?$/i',
-                    // "create entry for the X collection"
-                    '/create\\s+(?:a\\s+)?(?:demo\\s+)?entry\\s+for\\s+the\\s+([^\"\'\\n]+?)\\s+collection/i',
-                    // "create entry for collection X" (X at the end)
-                    '/create\\s+(?:a\\s+)?(?:demo\\s+)?entry\\s+for\\s+(?:the\\s+)?collection\\s+([^\"\'\\n]+)/i',
-                    // "create entry in X"
-                    '/create\\s+(?:a\\s+)?(?:demo\\s+)?entry\\s+in\\s+([^\"\'\\n]+)/i',
-                    // "add entry to X"
-                    '/add\\s+(?:a\\s+)?(?:demo\\s+)?entry\\s+to\\s+([^\"\'\\n]+)/i',
-                    // "create entry X" (simpler pattern)
-                    '/create\\s+(?:a\\s+)?(?:demo\\s+)?entry\\s+([^\"\'\\n]+)/i',
-                    // "another entry" or "more entries" (without collection specified)
-                    '/\b(another|more|additional)\s+(?:demo\s+)?entry/i',
-                ];
-                
-                foreach ($entryPatterns as $pattern) {
-                    if (preg_match($pattern, $message, $m)) {
-                        if (isset($m[1]) && !empty($m[1])) {
-                            $entryCollection = trim($m[1]);
-                            // Remove common words that might be captured
-                            $entryCollection = preg_replace('/\\b(for|in|to|the|collection|demo|new|a|an)\\b/i', '', $entryCollection);
-                            $entryCollection = trim($entryCollection);
-                            // Remove quotes if present
-                            $entryCollection = trim($entryCollection, '"\'');
-                            if (!empty($entryCollection)) {
-                                error_log("Fallback: Detected entry collection from pattern: '$entryCollection'");
-                                break;
-                            }
-                        } elseif (preg_match('/\b(another|more|additional)\s+(?:demo\s+)?entry/i', $message)) {
-                            // This is "another entry" without collection - we'll use history or default
-                            error_log("Fallback: Detected 'another/more entry' pattern without collection");
-                            break;
-                        }
-                    }
-                }
-                
-                // If still not found, try a more aggressive pattern that looks for collection names
-                if (empty($entryCollection)) {
-                    // Look for common collection name patterns after "entry" keywords
-                    if (preg_match('/(?:entry|entries).*?(?:for|in|to|collection).*?([a-z0-9][a-z0-9\s-]+?)(?:\s+collection|$)/i', $message, $m)) {
-                        $entryCollection = trim($m[1]);
-                        $entryCollection = preg_replace('/\\b(for|in|to|the|collection|demo|new|a|an)\\b/i', '', $entryCollection);
-                        $entryCollection = trim($entryCollection);
-                        $entryCollection = trim($entryCollection, '"\'');
-                        if (!empty($entryCollection)) {
-                            error_log("Fallback: Detected entry collection from aggressive pattern: '$entryCollection'");
-                        }
-                    }
-                }
-                
-                // Check if collection was pre-found when skipping AI call
-                if (empty($entryCollection) && isset($response['_fallback_collection'])) {
-                    $entryCollection = $response['_fallback_collection'];
-                    error_log("Fallback: Using pre-found collection from skip-AI logic: '$entryCollection'");
-                }
-                
-                // If still no collection found but it's a follow-up, try to use the most recent collection from history
-                if (empty($entryCollection) && ($isFollowUp || $isShortFollowUp) && !empty($conversationHistory)) {
-                    error_log("Fallback: Searching conversation history for collection (follow-up detected)");
-                    // Look for the most recently mentioned collection in actions (check both user and assistant messages)
-                    foreach (array_reverse($conversationHistory) as $histMsg) {
-                        $histContent = $histMsg['content'] ?? '';
-                        
-                        // Look for JSON with collection field (most reliable)
-                        if (preg_match('/"collection"\s*:\s*"([^"]+)"/i', $histContent, $m)) {
-                            $possibleSlug = trim($m[1]);
-                            // Verify it's a valid collection
-                            if (!empty($context['collections'])) {
-                                foreach ($context['collections'] as $coll) {
-                                    if (strtolower($coll['slug'] ?? '') === strtolower($possibleSlug)) {
-                                        $entryCollection = $coll['slug'];
-                                        error_log("Fallback: Using most recent collection '$entryCollection' from JSON in history");
-                                        break 2;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Also check for collection mentions in text (e.g., "approval test collection")
-                        if (preg_match('/(?:for|in|to)\s+(?:the\s+)?([a-z0-9][a-z0-9\s-]+?)(?:\s+collection|$)/i', $histContent, $m)) {
-                            $possibleCollection = trim($m[1]);
-                            $possibleCollection = preg_replace('/\b(for|in|to|the|collection|demo|new|a|an)\b/i', '', $possibleCollection);
-                            $possibleCollection = trim($possibleCollection);
-                            $normalizedPossible = strtolower(preg_replace('/[^a-z0-9]+/', '-', $possibleCollection));
-                            
-                            if (!empty($context['collections'])) {
-                                foreach ($context['collections'] as $coll) {
-                                    $collSlug = strtolower($coll['slug'] ?? '');
-                                    if ($collSlug === $normalizedPossible || strpos($collSlug, str_replace('-', '', $normalizedPossible)) !== false) {
-                                        $entryCollection = $coll['slug'];
-                                        error_log("Fallback: Using collection '$entryCollection' from text mention in history");
-                                        break 2;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Check for multiple entries
-                if (preg_match('/(\\d+)\\s+entries?/i', $message, $mCount)) {
-                    $entryCount = (int)$mCount[1];
-                } elseif (preg_match('/entries?/i', $message) && preg_match('/two|2|three|3|four|4|five|5/i', $message)) {
-                    if (preg_match('/two|2/i', $message)) $entryCount = 2;
-                    elseif (preg_match('/three|3/i', $message)) $entryCount = 3;
-                    elseif (preg_match('/four|4/i', $message)) $entryCount = 4;
-                    elseif (preg_match('/five|5/i', $message)) $entryCount = 5;
-                }
-                
-                // If no collection found but user asked for entry, try to use first available collection as fallback
-                if (empty($entryCollection) && preg_match('/\b(entry|entries|another|more)\b/i', $message)) {
-                    if (!empty($context['collections']) && count($context['collections']) === 1) {
-                        // Only one collection available, use it
-                        $entryCollection = $context['collections'][0]['slug'];
-                        error_log("Fallback: No collection specified, using only available collection: '$entryCollection'");
-                    } elseif (!empty($context['collections'])) {
-                        // Multiple collections - try to find a "demo" or common one
-                        foreach ($context['collections'] as $coll) {
-                            $collSlug = strtolower($coll['slug'] ?? '');
-                            if (strpos($collSlug, 'demo') !== false || strpos($collSlug, 'test') !== false) {
-                                $entryCollection = $coll['slug'];
-                                error_log("Fallback: No collection specified, using demo/test collection: '$entryCollection'");
-                                break;
-                            }
-                        }
-                        // If still not found, use the first one
-                        if (empty($entryCollection)) {
-                            $entryCollection = $context['collections'][0]['slug'];
-                            error_log("Fallback: No collection specified, using first available: '$entryCollection'");
-                        }
-                    }
-                }
-                
-                if (!empty($entryCollection)) {
-                    // Normalize collection name (remove "collection" suffix, handle "approval test" -> "approval-test")
-                    $collectionName = trim($entryCollection);
-                    $collectionName = preg_replace('/\\s+collection$/i', '', $collectionName);
-                    
-                    // Find the collection in context first (try exact match, then fuzzy match)
-                    $targetCollection = null;
-                    $collectionSlug = null;
-                    
-                    if (!empty($context['collections'])) {
-                        // First try: exact slug match
-                        $normalizedInput = strtolower($collectionName);
-                        $normalizedInput = preg_replace('/[^a-z0-9]+/', '-', $normalizedInput);
-                        $normalizedInput = trim($normalizedInput, '-');
-                        
-                        foreach ($context['collections'] as $coll) {
-                            $collSlug = $coll['slug'] ?? '';
-                            $collName = strtolower($coll['name'] ?? '');
-                            
-                            // Try exact slug match
-                            if (strtolower($collSlug) === $normalizedInput) {
-                                $targetCollection = $coll;
-                                $collectionSlug = $collSlug;
-                                break;
-                            }
-                            
-                            // Try name match (handle "approval test" -> "approval-test")
-                            $normalizedCollName = preg_replace('/[^a-z0-9]+/', '-', $collName);
-                            $normalizedCollName = trim($normalizedCollName, '-');
-                            if ($normalizedCollName === $normalizedInput) {
-                                $targetCollection = $coll;
-                                $collectionSlug = $collSlug;
-                                break;
-                            }
-                            
-                            // Try partial match (e.g., "approval test" matches "approval-test")
-                            if (strpos($normalizedInput, str_replace('-', '', $normalizedCollName)) !== false ||
-                                strpos(str_replace('-', '', $normalizedCollName), str_replace(' ', '', $normalizedInput)) !== false) {
-                                $targetCollection = $coll;
-                                $collectionSlug = $collSlug;
-                                break;
-                            }
-                        }
-                        
-                        // If still not found, use the normalized input as slug
-                        if (!$targetCollection) {
-                            $collectionSlug = $normalizedInput;
-                            error_log("Fallback: Collection not found in context, using normalized slug: $collectionSlug");
-                        }
-                    } else {
-                        // No collections in context, use normalized input
-                        $collectionSlug = strtolower($collectionName);
-                        $collectionSlug = preg_replace('/[^a-z0-9]+/', '-', $collectionSlug);
-                        $collectionSlug = trim($collectionSlug, '-');
-                        error_log("Fallback: No collections in context, using slug: $collectionSlug");
-                    }
-                    
-                    // Generate entry/entries
-                    for ($i = 1; $i <= $entryCount; $i++) {
-                        $entryTitle = $entryCount > 1 ? "Demo Entry $i" : "Demo Entry";
-                        $entrySlug = strtolower($entryTitle);
-                        $entrySlug = preg_replace('/[^a-z0-9]+/', '-', $entrySlug);
-                        $entrySlug = trim($entrySlug, '-') . '-' . bin2hex(random_bytes(2));
-                        
-                        $entryData = [
-                            'collection' => $collectionSlug,
-                            'title' => $entryTitle,
-                            'slug' => $entrySlug,
-                        ];
-                        
-                        // Add fields from collection schema if available
-                        if ($targetCollection && !empty($targetCollection['fields'])) {
-                            foreach ($targetCollection['fields'] as $field) {
-                                $fieldName = $field['name'] ?? '';
-                                if ($fieldName && $fieldName !== 'title' && $fieldName !== 'slug') {
-                                    $fieldType = $field['type'] ?? 'text';
-                                    // Generate demo content based on field type
-                                    if ($fieldType === 'textarea' || $fieldType === 'markdown') {
-                                        $entryData[$fieldName] = "This is demo content for the $fieldName field.";
-                                    } elseif ($fieldType === 'text') {
-                                        $entryData[$fieldName] = "Demo $fieldName";
-                                    } elseif ($fieldType === 'date') {
-                                        $entryData[$fieldName] = date('Y-m-d');
-                                    } else {
-                                        $entryData[$fieldName] = "Demo value";
-                                    }
-                                }
-                            }
-                        } else {
-                            // Default fields if schema not found
-                            $entryData['text'] = "This is a demo entry for the $collectionSlug collection.";
-                        }
-                        
-                        $fallbackAction = [
-                            'type' => 'create_entry',
-                            'data' => $entryData,
-                            'description' => 'Create demo entry in ' . $collectionSlug . ' collection (auto-generated fallback action)',
-                        ];
-                        
-                        $actions[] = $fallbackAction;
-                    }
-                    
-                    error_log("Fallback: auto-generated " . $entryCount . " create_entry action(s) for collection '$collectionSlug' from user message");
-                }
-            }
-            
-            // Site build: user said proceed but model returned prose without actions — one strict nudge
-            if (empty($actions)
-                && ai_chat_is_proceed_message($message)
-                && ai_chat_is_project_site_intent($message, $conversationHistory)) {
-                error_log('Site proceed with no extracted actions — nudging model for JSON action block');
-                $nudgeMessage = "The user said: \"{$message}\"\n\n"
-                    . "You are executing a site build (project/ + collections). Do NOT describe plans.\n"
-                    . "Output a single ```json {\"actions\":[...]} ``` block with the NEXT batch of write actions:\n"
-                    . "update_collection, create_entry, write_project_file, create_page as needed.\n"
-                    . "Use exact slugs from the system prompt. Include all remaining work you can in this batch.";
-                try {
-                    $nudgeResponse = callAiProvider(
-                        $aiUser['provider'],
-                        $apiKey,
-                        $aiUser['model'] ?? '',
-                        $systemPrompt,
-                        $nudgeMessage,
-                        $conversationId,
-                        $aiUser['api_url'] ?? '',
-                        $conversationHistory,
-                        $aiUser
-                    );
-                    if ($nudgeResponse['success'] ?? false) {
-                        $nudgeActions = extractActionsFromResponse(
-                            $nudgeResponse['message'] ?? '',
-                            $nudgeResponse['tool_calls'] ?? []
-                        );
-                        if (!empty($nudgeActions)) {
-                            $actions = $nudgeActions;
-                            if (trim((string) ($response['message'] ?? '')) === '') {
-                                $response['message'] = $nudgeResponse['message'];
-                            }
-                            error_log('Site proceed nudge extracted ' . count($nudgeActions) . ' actions');
-                        }
-                    }
-                } catch (Throwable $e) {
-                    error_log('Site proceed nudge failed: ' . $e->getMessage());
-                }
-            }
-
-            if (empty($actions)
-                && ai_chat_is_proceed_message($message)
-                && ai_chat_is_project_site_intent($message, $conversationHistory)) {
-                $fallbackActions = ai_chat_filter_already_completed_actions(
-                    ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext),
-                    $conversationHistory
-                );
-                if (!empty($fallbackActions)) {
-                    $actions = $fallbackActions;
-                    if (trim((string) ($response['message'] ?? '')) === ''
-                        || preg_match('/\b(I\'ll|I will|Let me|Starting)\b/i', (string) ($response['message'] ?? ''))) {
-                        $response['message'] = 'Running the next site-build step (' . count($fallbackActions) . ' action(s)).';
-                    }
-                    error_log('Site proceed deterministic fallback: ' . count($fallbackActions) . ' actions');
-                }
-            }
-            
             // Separate read actions (which should be executed immediately and data returned) 
             // from write actions (which may need approval)
             $readActions = [];
@@ -899,38 +407,8 @@ if ($action === 'chat') {
                 // Note: We don't add hardcoded summaries here - let the AI analyze the data dynamically
                 // The AI has all the entry data above and can calculate counts, content length, etc. as needed
                 
-                $followUpMessage .= "INSTRUCTIONS:\n";
-                $followUpMessage .= "1. Based on the user's request: \"" . $message . "\", analyze ALL the data above and provide a direct answer.\n";
-                $followUpMessage .= "2. You have FULL entry data for all collections above. Analyze the content, length, word count, or any other aspect as needed.\n";
-                $followUpMessage .= "3. For questions about content length: Calculate the total character/word count for each collection by summing all entry content fields (title, content, description, etc.).\n";
-                $followUpMessage .= "4. For questions about entry counts: Compare the entry counts listed above.\n";
-                $followUpMessage .= "5. For ANY analysis question: Analyze the data and provide the answer directly. DO NOT say you need more data - you have it above.\n";
-                $followUpMessage .= "6. If the user asked to list/show data, format it nicely in a readable way (tables, lists, etc.).\n";
-                $followUpMessage .= "7. If the user asked you to check for issues (grammar, typos, etc.), identify all problems.\n";
-                $followUpMessage .= "8. If the user asked you to fix issues, create an 'update_entry' action with the corrected data.\n";
-                $followUpMessage .= "9. Use the EXACT field names from the collection schema (as listed in the system prompt).\n";
-                $followUpMessage .= "10. Include the collection slug and entry slug/id in your update_entry action.\n";
-                $followUpMessage .= "11. Provide a clear, direct answer to the user's question. DO NOT include explanations about how to do it - just do it and answer.\n";
-                $followUpMessage .= "12. IMPORTANT: For questions requiring data analysis, provide the answer directly. For write requests, include JSON action blocks.\n";
-
-                if (ai_chat_is_project_site_intent($message, $conversationHistory) || ai_chat_read_data_has_project_context($readData)) {
-                    $followUpMessage .= "13. PROJECT SITE BUILD: You already have project info and file listing above. Do NOT request get_project_info or list_project_files again.\n";
-                    $followUpMessage .= "14. Emit write_project_file actions for index.html, CSS, and other planned files. User approval is required — include all files in one batch.\n";
-                    $followUpMessage .= "15. If you have not read the site-building playbook this turn, prefer write actions over more discovery reads.\n";
-                }
-
-                $messageLower = strtolower($message);
-                foreach ($readData as $readResult) {
-                    if (!($readResult['success'] ?? false) || !isset($readResult['data']['collections'])) {
-                        continue;
-                    }
-                    if (preg_match('/\b(which|what|how many|count|most|least|largest|smallest).*(collection|entry|entries)/i', $messageLower)
-                        || preg_match('/\b(collection|entry|entries).*(most|least|largest|smallest|count|how many)/i', $messageLower)) {
-                        $followUpMessage .= "\nCRITICAL: User asked about entry counts — execute list_entries for each collection above if counts are not already included.\n";
-                        break;
-                    }
-                }
-                
+                $followUpMessage .= "Answer the user's question directly using the data above. Be clear and complete.\n";
+                $followUpMessage .= "If they asked for a write action (create/update/delete), include a JSON action block as described in the system prompt.\n";
                 // Make follow-up call to AI with the read data
                 error_log("Making follow-up AI call with read data");
                 try {
@@ -1227,19 +705,16 @@ if ($action === 'chat') {
                     
                     $chatPersistContext['execution_results'] = $executedActions;
                     $modelNarrative = trim((string) ($response['message'] ?? ''));
-                    $executionReport = ai_chat_format_execution_report(
-                        $executedActions,
-                        $actions,
-                        $conversationHistory,
-                        $systemContext
-                    );
-                    if ($modelNarrative !== '' && strlen($modelNarrative) > 60 && !str_contains($modelNarrative, '```json')) {
-                        $response['message'] = $modelNarrative . "\n\n---\n\n" . $executionReport;
-                    } else {
-                        $response['message'] = $executionReport;
-                    }
-                    if ($executedActions === [] && ai_chat_is_proceed_message($message)) {
-                        $response['message'] = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
+                    $displayNarrative = trim((string) preg_replace('/```json\s*[\s\S]*?```/i', '', $modelNarrative));
+                    if ($executedActions !== []) {
+                        $lines = [];
+                        foreach ($executedActions as $result) {
+                            $lines[] = '- ' . ai_chat_describe_executed_action($result);
+                        }
+                        $note = "**Actions completed:**\n" . implode("\n", $lines);
+                        $response['message'] = $displayNarrative !== '' ? $displayNarrative . "\n\n" . $note : $note;
+                    } elseif ($displayNarrative !== '') {
+                        $response['message'] = $displayNarrative;
                     }
                     ai_chat_emit_response([
                         'status' => $hasErrors ? 'partial' : 'ok',
@@ -1254,16 +729,8 @@ if ($action === 'chat') {
                     ], $streamActive, $chatPersistContext);
                 }
             } else {
-                // No write actions - just return the response with read data
+                // No write actions - return the model response as-is
                 $finalMessage = $response['message'] ?? '';
-
-                if ((ai_chat_is_proceed_message($message) || ai_chat_is_status_request($message))
-                    && ai_chat_session_has_site_build_progress($conversationHistory)) {
-                    $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
-                    if ($summary !== '' && strlen(trim($finalMessage)) < 80) {
-                        $finalMessage = $summary;
-                    }
-                }
 
                 // Only use fallback formatting if AI didn't provide any response at all
                 if (empty($finalMessage) && !empty($readData)) {
@@ -1282,42 +749,6 @@ if ($action === 'chat') {
             }
         } else {
             $providerError = $response['message'] ?? 'Failed to get AI response';
-            if (ai_chat_session_has_site_build_progress($conversationHistory)) {
-                if ($isProceedMessage) {
-                    $fallbackActions = ai_chat_filter_already_completed_actions(
-                        ai_chat_site_proceed_fallback_actions($conversationHistory, $systemContext),
-                        $conversationHistory
-                    );
-                    if ($fallbackActions !== []) {
-                        ai_chat_emit_direct_action_results(
-                            $fallbackActions,
-                            'Provider unavailable — running the next site-build step (' . count($fallbackActions) . ' action(s)).',
-                            $aiUser,
-                            $chatPersistContext,
-                            $streamActive,
-                            [],
-                            $providerError
-                        );
-                    }
-                }
-
-                if (ai_chat_is_status_request($message) || $isProceedMessage) {
-                    $summary = ai_chat_site_build_progress_summary($conversationHistory, $systemContext);
-                    if ($summary !== '') {
-                        $note = str_contains(strtolower($providerError), 'openai api error')
-                            ? str_replace('OpenAI API error', 'OpenRouter API error', $providerError)
-                            : $providerError;
-                        ai_chat_emit_response([
-                            'status' => 'ok',
-                            'data' => [
-                                'response' => $summary . "\n\n_Note: AI provider rate-limited — " . $note . '_',
-                                'requires_approval' => false,
-                                'read_data' => [],
-                            ],
-                        ], $streamActive, $chatPersistContext);
-                    }
-                }
-            }
 
             ai_chat_emit_response([
                 'status' => 'error',
