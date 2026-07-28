@@ -35,7 +35,7 @@ function birkly_ai_tool_definitions(): array
         'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['name', 'slug']]],
         'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata or field schema. REQUIRED: slug (use exact slug from list_collections). Put fields in top-level "fields" array.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['slug']]],
         'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'collection' => ['type' => 'string']], 'required' => ['slug']]],
-        'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Put field values (title, text, etc.) at top level or in data. Use exact field names from collection schema.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'status' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
+        'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Put field values at top level or in data. Set status to "published" so the public API and {for each entry} loops show the entry (defaults to published via MCP).', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'status' => ['type' => 'string', 'description' => 'published or draft — use published for live site content'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
         'update_entry' => ['name' => 'update_entry', 'description' => 'Update an existing entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'id']]],
         'delete_entry' => ['name' => 'delete_entry', 'description' => 'Delete an entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection', 'id']]],
         'upload_media' => ['name' => 'upload_media', 'description' => 'Upload a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
@@ -58,7 +58,7 @@ function birkly_ai_tool_definitions(): array
         'list_project_files' => ['name' => 'list_project_files', 'description' => 'List files and folders in the public site (project/). Optional path relative to project root.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string', 'description' => 'Subdirectory under project/, e.g. css or pages']]]],
         'read_project_file' => ['name' => 'read_project_file', 'description' => 'Read a file from the public site (project/). Allowed: html, css, js, json, md, svg, webp, txt', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string', 'description' => 'Relative path, e.g. index.html or css/site.css']], 'required' => ['path']]],
         'get_project_info' => ['name' => 'get_project_info', 'description' => 'Get public site paths, collections, and templating cheat sheet for building CMS-integrated HTML', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
-        'write_project_file' => ['name' => 'write_project_file', 'description' => 'Create or overwrite a file in project/. PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path', 'content']]],
+        'write_project_file' => ['name' => 'write_project_file', 'description' => 'Create or overwrite a file in project/. Paths: index.html, css/style.css, js/site.js (no project/ prefix). For large HTML pages, write in smaller steps — some AI clients block very large tool payloads before they reach Birkly.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path', 'content']]],
         'create_project_file' => ['name' => 'create_project_file', 'description' => 'Create a new file in project/ (fails if path exists). PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path']]],
         'delete_project_file' => ['name' => 'delete_project_file', 'description' => 'Delete a file from project/ (admin role by default). Directories are not deleted.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string']], 'required' => ['path']]],
         'get_agent_guide_context' => ['name' => 'get_agent_guide_context', 'description' => 'Get published Agent Guide context for AI systems (view: summary|full|products)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
@@ -309,6 +309,7 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         if ($source === 'mcp' && in_array($actionType, ['list_entries'], true)) {
             $arguments['summary'] = true;
         }
+        $arguments = birkly_ai_normalize_action_data($actionType, is_array($arguments) ? $arguments : []);
         $result = executeReadAction(['type' => $actionType, 'data' => $arguments], $aiUser);
         if (!($result['success'] ?? false)) {
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Action failed']]];
@@ -351,6 +352,13 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
     $GLOBALS['__HARU_INTERNAL_CALL'] = true;
     require_once __DIR__ . '/../api/ai_approvals.php';
+
+    $arguments = is_array($arguments) ? $arguments : [];
+    if ($source === 'mcp' && $actionType === 'create_entry' && !isset($arguments['status'])) {
+        $arguments['status'] = 'published';
+    }
+    $arguments = birkly_ai_normalize_action_data($actionType, $arguments);
+
     $result = executeAiAction([
         'action_type' => $actionType,
         'action_data' => $arguments,
@@ -361,7 +369,48 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     if (!($result['success'] ?? false)) {
         return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Execution failed']]];
     }
-    return ['content' => [['type' => 'text', 'text' => json_encode($result, JSON_PRETTY_PRINT)]]];
+
+    $summary = birkly_ai_mcp_tool_success_summary($actionType, $arguments, $result);
+    if ($summary !== '') {
+        return ['content' => [['type' => 'text', 'text' => $summary . "\n\n" . json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+    }
+
+    return ['content' => [['type' => 'text', 'text' => json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+}
+
+/**
+ * Plain-language confirmation for MCP clients (reduces false "done" claims when JSON is ignored).
+ *
+ * @param array<string,mixed> $arguments
+ * @param array<string,mixed> $result
+ */
+function birkly_ai_mcp_tool_success_summary(string $actionType, array $arguments, array $result): string
+{
+    $data = is_array($result['data'] ?? null) ? $result['data'] : [];
+
+    if (in_array($actionType, ['write_project_file', 'create_project_file'], true)) {
+        $path = (string) ($data['path'] ?? $arguments['path'] ?? '');
+        return $path !== '' ? 'SUCCESS: wrote project/' . $path : '';
+    }
+    if ($actionType === 'delete_project_file') {
+        $path = (string) ($data['path'] ?? $arguments['path'] ?? '');
+        return $path !== '' ? 'SUCCESS: deleted project/' . $path : '';
+    }
+    if ($actionType === 'create_collection') {
+        $slug = (string) ($data['slug'] ?? $arguments['slug'] ?? '');
+        return $slug !== '' ? 'SUCCESS: created collection "' . $slug . '"' : '';
+    }
+    if ($actionType === 'create_entry') {
+        $collection = (string) ($arguments['collection'] ?? '');
+        $entryId = (string) ($data['entry_id'] ?? '');
+        $status = (string) ($data['entry']['status'] ?? $arguments['status'] ?? '');
+        if ($collection === '' || $entryId === '') {
+            return '';
+        }
+        return 'SUCCESS: created entry ' . $entryId . ' in "' . $collection . '" (status: ' . ($status !== '' ? $status : 'unknown') . ')';
+    }
+
+    return '';
 }
 
 function birkly_ai_mcp_scheme(): string
