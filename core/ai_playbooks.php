@@ -793,6 +793,17 @@ function ai_chat_describe_planned_action(array $action): string
 }
 
 /**
+ * Live status label while an action runs (chat progress UI).
+ *
+ * @param array<string,mixed> $action
+ */
+function ai_chat_status_label_for_action(array $action): string
+{
+    $label = ai_chat_describe_planned_action($action);
+    return str_ends_with($label, '…') ? $label : $label . '…';
+}
+
+/**
  * @param array<string,mixed> $result
  */
 function ai_chat_describe_executed_action(array $result): string
