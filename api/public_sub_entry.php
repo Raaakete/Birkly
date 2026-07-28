@@ -239,8 +239,31 @@ foreach ($submissionData as $key => $value) {
     }
 }
 
+// Validate required fields from sub-collection schema
+$schemaFields = $subCollectionConfig['fields'] ?? $subCollectionConfig['schema']['fields'] ?? [];
+$validationErrors = [];
+foreach ($schemaFields as $field) {
+    if (!is_array($field)) {
+        continue;
+    }
+    $fieldName = (string) ($field['name'] ?? '');
+    if ($fieldName === '' || empty($field['required'])) {
+        continue;
+    }
+    $value = $sanitizedData[$fieldName] ?? '';
+    if (is_string($value) && trim($value) === '') {
+        $validationErrors[] = $fieldName . ' is required';
+    }
+}
+if ($validationErrors) {
+    http_response_code(422);
+    echo json_encode(['status' => 'error', 'message' => 'Validation failed', 'errors' => $validationErrors]);
+    exit;
+}
+
 // Set status based on auto_publish setting
-$autoPublish = !empty($subCollectionConfig['auto_publish']);
+$autoPublish = !empty($subCollectionConfig['auto_publish'])
+    || !empty($subCollectionConfig['api_settings']['auto_publish']);
 $sanitizedData['status'] = $autoPublish ? 'published' : 'draft';
 
 // Toggle / Create

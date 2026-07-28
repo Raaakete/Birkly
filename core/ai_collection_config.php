@@ -147,7 +147,8 @@ function birkly_ai_process_sub_collections(array $subCollections, string $parent
             'name' => $name,
             'description' => trim((string) ($subCollectionData['description'] ?? '')),
             'entry_method' => $entryMethod,
-            'auto_publish' => !empty($subCollectionData['auto_publish']),
+            'auto_publish' => !empty($subCollectionData['auto_publish'])
+                || !empty($subCollectionData['api_settings']['auto_publish']),
             'fields' => $fields,
             'parent_field' => trim((string) ($subCollectionData['parent_field'] ?? ($parentSlug . '_id'))),
         ];
