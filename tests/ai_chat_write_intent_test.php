@@ -51,5 +51,29 @@ assert_true(
     'normal reply not false claim',
     !ai_chat_response_implies_false_execution_claim('I can update index.html if you want — should I proceed?')
 );
+assert_true(
+    'review implies analysis',
+    ai_chat_message_implies_analysis_intent('review the project website and tell me what to optimize')
+);
+assert_true(
+    'so what is result implies analysis with history',
+    ai_chat_message_implies_analysis_intent('so what is the result???', [
+        ['role' => 'user', 'content' => 'review the project website'],
+    ])
+);
+assert_true(
+    'do it and tell me is analysis not write',
+    !ai_chat_message_implies_write_intent('do it and tell me', [
+        ['role' => 'user', 'content' => 'review the project website'],
+    ])
+);
+assert_true(
+    'read stub detected',
+    ai_chat_response_is_read_stub('Let me read the actual site files to give you a thorough')
+);
+assert_true(
+    'real answer not stub',
+    !ai_chat_response_is_read_stub('Your homepage loads a large CSS file inline. Consider moving styles to css/style.css and adding meta description tags.')
+);
 
 exit($failures > 0 ? 1 : 0);

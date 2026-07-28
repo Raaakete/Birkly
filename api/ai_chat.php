@@ -215,6 +215,7 @@ if ($action === 'chat') {
         
         // Always call the AI provider — no server-side proceed/status bypasses.
         $openAiTools = birkly_ai_tools_openai_format($aiUser);
+        $analysisIntent = ai_chat_message_implies_analysis_intent($message, $conversationHistory);
         $writeIntent = ai_chat_message_implies_write_intent($message, $conversationHistory);
         $providerType = getSupportedAiProviders()[$aiUser['provider'] ?? '']['type'] ?? ($aiUser['provider'] ?? '');
         $providerSupportsNativeTools = in_array($providerType, ['openai', 'openrouter', 'custom'], true);
@@ -291,6 +292,12 @@ if ($action === 'chat') {
                 } else {
                     $writeActions[] = $action;
                 }
+            }
+
+            if ($analysisIntent && $readActions === [] && $writeActions === []
+                && ai_chat_is_project_site_intent($message, $conversationHistory)) {
+                error_log('Analysis intent with no model reads — auto-loading project files');
+                $readActions = ai_chat_default_project_read_actions();
             }
             
             error_log("Initial readActions count: " . count($readActions));
@@ -377,11 +384,31 @@ if ($action === 'chat') {
                 }
             }
             
+            // Review/analysis questions: dedicated prose-only follow-up (no more tool calls).
+            $analysisHandled = false;
+            if ($hasSuccessfulReads && !empty($readData) && $analysisIntent) {
+                error_log('Analysis intent detected — running prose-only review follow-up');
+                $analysisResponse = ai_chat_run_read_analysis(
+                    $aiUser,
+                    $apiKey,
+                    $systemPrompt,
+                    $message,
+                    $conversationId,
+                    $conversationHistory,
+                    $readData,
+                    $readActions
+                );
+                if (($analysisResponse['success'] ?? false) && trim((string) ($analysisResponse['message'] ?? '')) !== '') {
+                    $response['message'] = $analysisResponse['message'];
+                    $analysisHandled = true;
+                }
+            }
+
             // If we successfully read data, make a follow-up call to the AI with the read data
             // This allows the AI to analyze the data and either:
             // 1. Answer questions (like "which collection has the most entries?")
             // 2. Create write actions based on analysis (like "check for typos and fix them")
-            if ($hasSuccessfulReads && !empty($readData)) {
+            if ($hasSuccessfulReads && !empty($readData) && !$analysisHandled) {
                 // Build a follow-up message with the read data
                 $followUpMessage = "Context: The user asked: \"" . $message . "\"\n\n";
                 $followUpMessage .= "I've successfully retrieved the requested data. Here's what I found:\n\n";
@@ -530,7 +557,27 @@ if ($action === 'chat') {
                                     error_log("Exception in second follow-up call: " . $e->getMessage());
                                 }
                             } else {
-                                $response['message'] = $followUpResponse['message'];
+                                $candidateMessage = (string) ($followUpResponse['message'] ?? '');
+                                if (ai_chat_response_is_read_stub($candidateMessage) && $analysisIntent) {
+                                    error_log('Follow-up returned read stub — running analysis follow-up');
+                                    $analysisResponse = ai_chat_run_read_analysis(
+                                        $aiUser,
+                                        $apiKey,
+                                        $systemPrompt,
+                                        $message,
+                                        $conversationId,
+                                        $conversationHistory,
+                                        $readData,
+                                        $readActions
+                                    );
+                                    if (($analysisResponse['success'] ?? false) && trim((string) ($analysisResponse['message'] ?? '')) !== '') {
+                                        $response['message'] = $analysisResponse['message'];
+                                    } else {
+                                        $response['message'] = $candidateMessage;
+                                    }
+                                } else {
+                                    $response['message'] = $candidateMessage;
+                                }
                                 if ($skipSecondFollowUp ?? false) {
                                     error_log("Skipping second follow-up — project site context already complete");
                                 }
@@ -786,10 +833,32 @@ if ($action === 'chat') {
                     $finalMessage .= "\n\n⚠️ _No CMS actions were actually executed this turn. Ask again or check Approvals if approval is required._";
                 }
 
+                // Stub or empty after reads — run analysis if the user asked for a review
+                if ((empty($finalMessage) || ai_chat_response_is_read_stub($finalMessage))
+                    && !empty($readData)
+                    && ($analysisIntent || ai_chat_message_implies_analysis_intent($message, $conversationHistory))) {
+                    error_log('Read stub or empty message after reads — retrying analysis follow-up');
+                    $analysisResponse = ai_chat_run_read_analysis(
+                        $aiUser,
+                        $apiKey,
+                        $systemPrompt,
+                        $message,
+                        $conversationId,
+                        $conversationHistory,
+                        $readData,
+                        $readActions ?? []
+                    );
+                    if (($analysisResponse['success'] ?? false) && trim((string) ($analysisResponse['message'] ?? '')) !== '') {
+                        $finalMessage = ai_chat_sanitize_display_message((string) $analysisResponse['message']);
+                    }
+                }
+
                 // Only use fallback formatting if AI didn't provide any response at all
                 if (empty($finalMessage) && !empty($readData)) {
                     error_log("AI didn't provide a response but we have read data - using generic fallback");
-                    $finalMessage = "I've retrieved the requested data. " . count($readData) . " read operation(s) completed successfully.";
+                    $finalMessage = "I've retrieved the requested data (" . count($readData) . " read operation(s)), "
+                        . "but couldn't produce an analysis with the current model. "
+                        . "Try asking again or switch to a stronger model on OpenRouter.";
                 }
                 
                 ai_chat_emit_response([
@@ -1202,9 +1271,10 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
     $providerType = $providerInfo['type'] ?? $provider;
     $imageAttachments = birkly_ai_chat_image_attachments($attachments);
     $toolChoice = (string) ($providerOptions['tool_choice'] ?? 'auto');
+    $disableTools = !empty($providerOptions['disable_tools']);
 
     $openAiTools = [];
-    if (is_array($aiUser)) {
+    if (is_array($aiUser) && !$disableTools) {
         $openAiTools = birkly_ai_tools_openai_format($aiUser);
     }
     
@@ -1243,6 +1313,52 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
         default:
             return ['success' => false, 'message' => 'Unsupported provider'];
     }
+}
+
+/**
+ * Prose-only follow-up after reads — for review/optimize questions (no tool calls).
+ *
+ * @param list<array<string,mixed>> $readData
+ * @param list<array<string,mixed>> $readActions
+ */
+function ai_chat_run_read_analysis(
+    array $aiUser,
+    string $apiKey,
+    string $systemPrompt,
+    string $originalMessage,
+    string $conversationId,
+    array $conversationHistory,
+    array $readData,
+    array $readActions = []
+): array {
+    $analysisMessage = "The user asked:\n\"{$originalMessage}\"\n\n";
+    $analysisMessage .= "You already have the project/site data below. Do NOT call tools or say you will read files.\n";
+    $analysisMessage .= "Write a complete, helpful answer now — specific findings and actionable recommendations.\n\n";
+    $analysisMessage .= "Cover where relevant: HTML structure, CSS/styling, performance, SEO, accessibility, Birkly templating, and CMS content gaps.\n\n";
+    $analysisMessage .= "DATA RETRIEVED:\n\n";
+    foreach ($readData as $readResult) {
+        $formatted = ai_chat_format_read_result_for_followup($readResult, $readActions);
+        if ($formatted !== '') {
+            $analysisMessage .= $formatted;
+        } elseif (($readResult['success'] ?? false) && is_array($readResult['data'] ?? null)) {
+            $analysisMessage .= json_encode($readResult['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n\n";
+        }
+    }
+
+    return callAiProvider(
+        $aiUser['provider'] ?? '',
+        $apiKey,
+        $aiUser['model'] ?? '',
+        $systemPrompt,
+        $analysisMessage,
+        $conversationId,
+        $aiUser['api_url'] ?? '',
+        $conversationHistory,
+        $aiUser,
+        null,
+        [],
+        ['disable_tools' => true]
+    );
 }
 
 /**
