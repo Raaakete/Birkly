@@ -11,26 +11,22 @@ Use for: contact forms, newsletter signup, feedback, visitor-submitted content, 
 
 Runtime value is **`public_api`** (not `public_submit` — older docs may use that name).
 
-## Setup (admin UI — AI guides, user clicks)
+## Setup (AI + admin)
 
-AI **cannot** set API keys via tools. Direct the user:
+AI connections with **manage_content** can configure public submission via tools:
 
-1. **Content → Collections** → open collection (or create one)
-2. **Settings** tab → Entry Method → **Public API**
-3. API key auto-generated; configure:
-   - Auto-publish vs draft (moderation)
-   - Rate limit (default ~10/hour)
-   - Notification email
-   - Optional CAPTCHA (reCAPTCHA v3 / hCaptcha)
-4. Save collection
+1. `create_collection` or `update_collection` with `entry_method: "public_api"`
+2. API key is **auto-generated** when switching to public_api (returned in `read_collection`)
+3. Optional `api_settings`: `auto_publish`, `rate_limit`, `notification_email`, captcha fields
+4. For sub-collections: pass `sub_collections[]` with `entry_method: "public_api"` on the parent collection update
 
-For sub-collections: edit sub-collection schema on parent collection editor → set `entry_method: public_api`.
+Then `write_project_file` — HTML with `{entry for 'slug'}` in `project/`.
 
-## AI can do via tools
+## AI workflow
 
-1. `create_collection` / `update_collection` with fields for the form (name, email, message, etc.)
-2. Tell user to switch Entry Method to Public API and copy key from Settings tab
-3. `write_project_file` — HTML with `{entry for}` in `project/`
+1. `create_collection` / `update_collection` with form fields (name, email, message, etc.) **and** `entry_method: "public_api"`
+2. `read_collection` to confirm `api_key` if needed for external integrations (template forms use `{entry for}` without exposing the key in HTML)
+3. `write_project_file` — contact page with `{entry for 'your-collection-slug'}`
 
 ## Method 1: Template-first form (recommended)
 

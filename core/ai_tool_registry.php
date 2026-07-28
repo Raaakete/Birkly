@@ -12,7 +12,8 @@ function birkly_ai_tool_definitions(): array
         'read_entry' => ['name' => 'read_entry', 'description' => 'Read a specific entry by collection slug and entry slug or ID', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection']]],
         'list_entries' => ['name' => 'list_entries', 'description' => 'List entries in a collection. Use the slug from list_collections (or the display name — both work). Returns id, slug, title, and status summaries.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug or name from list_collections'], 'limit' => ['type' => 'number']], 'required' => ['collection']]],
         'read_collection' => ['name' => 'read_collection', 'description' => 'Get details and schema of a collection', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
-        'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections (slug, name, entry_method, field summary)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'list_collection_groups' => ['name' => 'list_collection_groups', 'description' => 'List admin collection groups and which collection slugs belong to each (for sidebar organization)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
         'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly playbook or doc topic. Start with playbooks-index. Topics: content-model, site-building, public-forms, sub-collections, templating, commerce, automation, events, user-management, agent-guide, mcp-setup, ai-connections, plugins-overview, media, cms-pages, content-editor, settings-roles, admin, ai, mcp, plugins; active plugin slugs when installed.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug — see playbooks-index for full list']], 'required' => ['topic']]],
@@ -32,8 +33,9 @@ function birkly_ai_tool_definitions(): array
         'create_sub_entry' => ['name' => 'create_sub_entry', 'description' => 'Create a new sub-entry under a parent entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Parent collection slug'], 'entry_id' => ['type' => 'string', 'description' => 'Parent entry ID'], 'sub_collection' => ['type' => 'string', 'description' => 'Sub-collection slug'], 'data' => ['type' => 'object', 'description' => 'Sub-entry field values']], 'required' => ['collection', 'entry_id', 'sub_collection']]],
         'update_sub_entry' => ['name' => 'update_sub_entry', 'description' => 'Update an existing sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
         'delete_sub_entry' => ['name' => 'delete_sub_entry', 'description' => 'Delete a sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
-        'create_collection' => ['name' => 'create_collection', 'description' => 'Create a new content collection', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['name', 'slug']]],
-        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata or field schema. REQUIRED: slug (use exact slug from list_collections). Put fields in top-level "fields" array.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], 'required' => ['slug']]],
+        'create_collection' => ['name' => 'create_collection', 'description' => 'Create a content collection. Optional: entry_method public_api for contact forms; sub_collections for nested content (comments). API key auto-generated when public_api is set.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], birkly_ai_tool_schema_collection_config_properties()), 'required' => ['name', 'slug']]],
+        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata, field schema, entry_method (public_api for forms), or sub_collections. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], birkly_ai_tool_schema_collection_config_properties()), 'required' => ['slug']]],
+        'save_collection_groups' => ['name' => 'save_collection_groups', 'description' => 'Save collection sidebar groups (create groups, assign collections, reorder). Replaces entire groups tree.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['groups' => ['type' => 'array', 'description' => 'Group tree: [{id, name, collections: [slug...], icon?, children?: [...]}]', 'items' => ['type' => 'object', 'additionalProperties' => true]]], 'required' => ['groups']]],
         'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'collection' => ['type' => 'string']], 'required' => ['slug']]],
         'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Slug is auto-generated from title when omitted — use {slug} in post links (post.html?collection=blog&slug={slug}). Set status to "published" for live site content.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'slug' => ['type' => 'string', 'description' => 'Optional URL slug; auto-generated from title if omitted'], 'status' => ['type' => 'string', 'description' => 'published or draft — use published for live site content'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
         'update_entry' => ['name' => 'update_entry', 'description' => 'Update an existing entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'id']]],
@@ -133,6 +135,43 @@ function birkly_ai_tool_schema_field_definition_item(): array
     ];
 }
 
+/** JSON Schema for sub-collection definition on create/update_collection. */
+function birkly_ai_tool_schema_sub_collection_item(): array
+{
+    return [
+        'type' => 'object',
+        'properties' => [
+            'slug' => ['type' => 'string'],
+            'name' => ['type' => 'string'],
+            'description' => ['type' => 'string'],
+            'entry_method' => ['type' => 'string', 'description' => 'admin_only or public_api (for visitor comments/reviews)'],
+            'auto_publish' => ['type' => 'boolean'],
+            'fields' => ['type' => 'array', 'items' => birkly_ai_tool_schema_field_definition_item()],
+        ],
+        'required' => ['slug', 'name'],
+        'additionalProperties' => true,
+    ];
+}
+
+/** Extra collection properties (entry_method, sub_collections, public API). */
+function birkly_ai_tool_schema_collection_config_properties(): array
+{
+    return [
+        'description' => ['type' => 'string'],
+        'entry_method' => ['type' => 'string', 'description' => 'admin_only (default) or public_api for contact forms and public submission'],
+        'api_settings' => [
+            'type' => 'object',
+            'description' => 'When entry_method is public_api: auto_publish, rate_limit, notification_email, captcha_*',
+            'additionalProperties' => true,
+        ],
+        'sub_collections' => [
+            'type' => 'array',
+            'description' => 'Nested sub-collections (e.g. comments on posts)',
+            'items' => birkly_ai_tool_schema_sub_collection_item(),
+        ],
+    ];
+}
+
 function birkly_ai_tools_openai_format(array $aiUser): array
 {
     $tools = [];
@@ -183,12 +222,13 @@ function birkly_ai_action_workflow_prompt_section(): string
         '1. Put slug/collection/fields on the SAME LEVEL as "type", not only inside "data". Both work:',
         '   {"type":"update_collection","slug":"gallery","fields":[...]}',
         '   {"type":"update_collection","data":{"slug":"gallery","fields":[...]}}',
-        '2. update_collection: ALWAYS include "slug" (exact slug from AVAILABLE COLLECTIONS). Fields go in "fields" array.',
+        '2. update_collection: ALWAYS include "slug". Fields in "fields". Set entry_method: "public_api" for contact/inquiry collections and public sub-collections (comments). sub_collections[] for nested schemas.',
         '3. create_entry: ALWAYS include "collection" as a slug string. Field values (title, text, image, …) at top level.',
-        '4. create_page: include "title", "slug", and "content" (HTML with {for each entry in \'slug\'} loops).',
-        '5. Do NOT pass a nested collection object instead of a slug string.',
-        '6. When user says "proceed" / "yes": execute the planned steps — do not re-ask. Use slugs from AVAILABLE COLLECTIONS below.',
-        '7. delete_project_file: use the exact filename. To remove typo duplicates delete ndex.html / bout.html / ontact.html / rtworks.html — never delete index.html, about.html, contact.html, or artworks.html for typo cleanup.',
+        '4. save_collection_groups: pass full groups tree from list_collection_groups when reorganizing admin sidebar.',
+        '5. create_page: include "title", "slug", and "content" (HTML with {for each entry in \'slug\'} loops).',
+        '6. Do NOT pass a nested collection object instead of a slug string.',
+        '7. When user says "proceed" / "yes": execute the planned steps — do not re-ask. Use slugs from AVAILABLE COLLECTIONS below.',
+        '8. delete_project_file: use the exact filename. To remove typo duplicates delete ndex.html / bout.html / ontact.html / rtworks.html — never delete index.html, about.html, contact.html, or artworks.html for typo cleanup.',
         '',
         'RECOMMENDED SITE-BUILD ORDER (custom HTML/CSS in project/ — read_birkly_docs topic "site-building" first):',
         'Step 0 — read_birkly_docs "site-building" once; get_project_info + list_project_files once (do not repeat)',
