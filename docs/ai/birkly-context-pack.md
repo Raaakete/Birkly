@@ -6,13 +6,29 @@ Curated reference for BYOAI system prompts. Loaded by `loadBirklyContextPack()` 
 
 Step-by-step runbooks for complex tasks. System prompt lists all slugs; load depth via `read_birkly_docs`:
 
-- **`playbooks-index`** — start here when unsure
-- **Core:** `content-model`, `site-building`, `web-project-patterns`, `templating`, `public-forms`, `sub-collections`, `cms-pages`, `media`, `content-editor`
+- **`ai-quality-guide`** — how to produce reliable outputs; read when unsure
+- **`playbooks-index`** — master routing & decision tree
+- **Core:** `content-model`, `fieldtypes`, `site-building`, `web-project-patterns`, `templating`, `public-forms`, `sub-collections`, `collection-groups`, `cms-pages`, `media`, `content-editor`
 - **AI:** `agent-guide`, `mcp-setup`, `ai-connections`
 - **Plugins:** `plugins-overview`, `commerce`, `automation`, `events`, `user-management`
 - **Admin:** `settings-roles`
 
 MCP: `birkly://docs/{topic}` for each playbook.
+
+### Documentation map (cross-links)
+
+| Playbook topic | Also see (admin / platform) |
+|----------------|----------------------------|
+| `fieldtypes` | `admin/docs/fieldtypes.php` |
+| `public-forms` | `admin/docs/public-api-forms.php` |
+| `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
+| `media` | `admin/docs/snapshots/media.md` |
+| `content-editor` | `admin/docs/snapshots/content-editor.md` |
+| `plugins-overview` | `admin/docs/snapshots/marketplace.md` |
+| `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
+| `commerce` | `admin/docs/snapshots/commerce-*.md` |
+
+Playbooks are auto-loaded server-side for matching intents (site builds, forms, MCP, plugins). Otherwise call `read_birkly_docs` once — do not skip playbooks for casual prompts like "build me a website."
 
 ## Platform
 
