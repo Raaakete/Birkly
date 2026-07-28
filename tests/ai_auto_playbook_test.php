@@ -47,7 +47,8 @@ assert_true(
 $topics = birkly_ai_detect_playbook_topics('build me a bakery website');
 assert_true(
     'site build detects core topics',
-    in_array('site-building', $topics, true)
+    in_array('web-project-patterns', $topics, true)
+    && in_array('site-building', $topics, true)
     && in_array('content-model', $topics, true)
     && in_array('templating', $topics, true),
     'topics: ' . implode(', ', $topics)
@@ -93,8 +94,9 @@ $mcpInstructions = birkly_ai_mcp_initialize_instructions();
 assert_true(
     'MCP instructions include core rules',
     str_contains($mcpInstructions, 'birkly-client.js')
-    && str_contains($mcpInstructions, 'site-building')
+    && str_contains($mcpInstructions, 'web-project-patterns')
     && str_contains($mcpInstructions, 'write_project_file')
+    && str_contains($mcpInstructions, 'detail pages')
 );
 
 // Project discovery gate

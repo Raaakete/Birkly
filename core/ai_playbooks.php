@@ -29,6 +29,13 @@ function birkly_ai_playbook_catalog(): array
             'triggers' => 'website, portfolio, project folder, build a site, landing page',
             'category' => 'Core CMS',
         ],
+        'web-project-patterns' => [
+            'title' => 'Web project patterns — list/detail pages, schemas, wiring',
+            'topic' => 'web-project-patterns',
+            'summary' => 'Mandatory checklist, collection recipes, list vs detail pages, common AI bugs.',
+            'triggers' => 'blog, article page, detail page, raw templating, birkly-client, collection fields, site_elements',
+            'category' => 'Core CMS',
+        ],
         'templating' => [
             'title' => 'Client templating language (full spec)',
             'topic' => 'templating',
@@ -168,6 +175,7 @@ function birkly_ai_core_docs_topics(): array
         'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),
         'settings-roles' => $playbook('settings-roles-playbook.md', 'Settings & roles playbook'),
         'site-building' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'web-project-patterns' => $playbook('web-project-patterns-playbook.md', 'Web project patterns — list/detail, schemas, wiring'),
         'portfolio' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
         'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
         'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
@@ -204,7 +212,7 @@ function birkly_ai_playbook_mcp_resources(): array
  */
 function birkly_ai_core_site_build_topics(): array
 {
-    return ['site-building', 'content-model', 'templating'];
+    return ['web-project-patterns', 'site-building', 'content-model', 'templating'];
 }
 
 /**
@@ -322,12 +330,13 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "Users may give very short prompts (e.g. \"build me a bakery website\") — you must still deliver a complete Birkly project site.\n\n";
 
     $rules = "RULES:\n"
-        . "- Build public sites in project/ with write_project_file (paths: index.html, css/style.css — never prefix project/)\n"
-        . "- Include <script src=\"/birkly-client.js\"></script> in every HTML page\n"
-        . "- Use Birkly templating: {for each entry in 'collection-slug'} … {endfor}\n"
-        . "- Order: list_collections → create/update collections & fields → create_entry (published) → write HTML/CSS\n"
-        . "- Call get_project_info and list_project_files once at the start; do not loop on discovery reads\n"
-        . "- Playbooks below are pre-loaded — follow them; do not skip the CMS layer (collections + templating)\n\n";
+        . "- Read web-project-patterns first: list pages use loops; detail pages use ?collection=&slug= with NO collection loop\n"
+        . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script> before </body>\n"
+        . "- Define collection fields BEFORE create_entry — never leave fields: []\n"
+        . "- Build order: schema → published entries → list HTML → detail HTML → site_elements header\n"
+        . "- Paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
+        . "- Links to articles: article.html?collection=blog&slug={slug}\n"
+        . "- Playbooks below are pre-loaded — follow them; wire CMS to templates, not static cards\n\n";
 
     return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
 }

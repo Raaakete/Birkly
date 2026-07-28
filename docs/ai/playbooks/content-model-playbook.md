@@ -67,11 +67,27 @@ Sub-collections use the same values on the sub-collection config — see `sub-co
 
 | Use case | Collections | Key fields |
 |----------|-------------|------------|
-| Blog | `blog` | title, content (editor), image, date |
+| Blog | `blog` | title, content (editor), excerpt, category, hero_image, read_time |
 | Team | `team` | name, role, photo, bio |
-| FAQ | `faq` | question, answer |
-| Portfolio items | `projects` | title, description, image, link, order |
+| FAQ | `faq` | question, answer, order |
+| Portfolio items | `projects` | title, description, content, image, link, order, featured |
+| Site chrome | `site_elements` | entries: header, footer, hero (editor or text fields) |
 | Contact submissions | `contact` | name, email, message + `entry_method: public_api` |
+
+**Full recipes and field-type guidance:** `read_birkly_docs` topic `web-project-patterns` (auto-loaded on site builds).
+
+## Schema design rules (smart collections)
+
+1. **Define all fields before first entry** — empty `"fields": []` breaks templates.
+2. **Match field types to content:**
+   - Short labels → `text`
+   - Teaser/card text → `textarea` (`excerpt`)
+   - Article body → `editor` or `textarea`
+   - Photos → `image` or `gallery`
+   - Sortable lists → `number` (`order`) + `ordered by order` in templates
+3. **One collection per content type** — `blog` for posts, `projects` for portfolio; don't mix unrelated fields.
+4. **Use `site_elements`** for repeated header/footer/hero — not duplicate HTML on every page.
+5. **Sub-collections** for rows that belong to one parent entry (comments on a post) — see `sub-collections` playbook.
 
 ## Workflow order
 
