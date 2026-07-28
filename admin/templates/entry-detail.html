@@ -40,101 +40,88 @@
         </div>
         <div class="page-header-actions"></div>
     </div>
-    
-    
-    
+    <?php
+    $mainEntryIdForLinks = !empty($is_sub_entry_detail) && !empty($_GET['entry'])
+        ? (string) $_GET['entry']
+        : (string) ($entry['_parent_entry_id'] ?? ($entry['id'] ?? ''));
+
+    $mainEntryDetailReturnParams = [
+        'collection' => $collection['slug'] ?? '',
+        'entry' => $mainEntryIdForLinks,
+    ];
+    if (!empty($is_sub_entry_detail) && !empty($sub_collection_slug) && !empty($sub_entry_id)) {
+        $mainEntryDetailReturnParams['sub_collection'] = $sub_collection_slug;
+        $mainEntryDetailReturnParams['sub_entry'] = $sub_entry_id;
+        if (!empty($parent_sub_collection_slug) && !empty($parent_sub_entry_id)) {
+            $mainEntryDetailReturnParams['parent_sub_collection'] = $parent_sub_collection_slug;
+            $mainEntryDetailReturnParams['parent_sub_entry'] = $parent_sub_entry_id;
+        }
+    }
+    $currentMainEntryDetailUrl = admin_url('entry-detail', $mainEntryDetailReturnParams);
+
+    $buildMainEntryEditorUrl = function (array $rowEntry) use (
+        $collection,
+        $currentMainEntryDetailUrl,
+        $is_sub_entry_detail,
+        $mainEntryIdForLinks,
+        $sub_collection_slug,
+        $sub_entry_id,
+        $parent_sub_collection_slug,
+        $parent_sub_entry_id
+    ): string {
+        $params = [
+            'collection' => $collection['slug'] ?? '',
+            'return_to' => $currentMainEntryDetailUrl,
+        ];
+        if (!empty($is_sub_entry_detail)) {
+            $params['entry'] = $mainEntryIdForLinks;
+            $params['sub_collection'] = $sub_collection_slug ?? '';
+            $params['sub_entry'] = $rowEntry['id'] ?? '';
+            if (!empty($parent_sub_collection_slug) && !empty($parent_sub_entry_id)) {
+                $params['parent_sub_collection'] = $parent_sub_collection_slug;
+                $params['parent_sub_entry'] = $parent_sub_entry_id;
+            }
+        } else {
+            $params['entry'] = $rowEntry['id'] ?? '';
+        }
+        return admin_url('entry-editor', $params);
+    };
+    ?>
+
     <!-- Main Entry Table -->
     <div style="margin-bottom: var(--space-6, 24px);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4, 16px);">
             <h2 style="margin: 0;">Main Entry</h2>
         </div>
-        
-        <div class="entries-smart-table">
-            <div class="table-viewport">
-                <div class="table-head">
-                    <div class="head-row" role="row">
-                        <div class="head-cell head-title" role="columnheader"><?= __('admin.title') ?></div>
-                        <div class="head-cell head-status" role="columnheader"><?= __('admin.status') ?></div>
-                        <div class="fields-head-region">
-                            <?php foreach ($fields as $field): ?>
-                                <div class="head-cell head-field" role="columnheader" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
-                                    <?= htmlspecialchars($field['name'] ?? $field['label'] ?? '') ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="head-cell head-actions" role="columnheader"><?= __('admin.actions') ?></div>
-                    </div>
-                </div>
-                
-                <div class="table-body">
-                    <div class="table-row" role="row" data-entry-id="<?= htmlspecialchars($entry['id'] ?? '') ?>">
-                        <div class="cell cell-title" role="cell">
-                            <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']) ?>" class="title-text">
-                                <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?>
-                            </a>
-                            <?php if (!empty($entry['slug'])): ?>
-                                <div class="entry-slug-meta" style="margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-secondary, #6b7280);">
-                                    <span style="margin-right: 0.25rem;">Slug:</span>
-                                    <a href="<?= admin_url('entry-editor', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']) ?>" style="font-family: monospace; color: var(--primary-600, #2563eb); text-decoration: none;">
-                                        <?= htmlspecialchars($entry['slug']) ?>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="cell cell-status" role="cell">
-                            <?php
-                            $status = $entry['__cells']['__status'] ?? $entry['status'] ?? 'unpublished';
-                            // Map old 'draft' status to 'unpublished' for backward compatibility
-                            if ($status === 'draft') {
-                                $status = 'unpublished';
-                            }
-                            $statusClass = $status;
-                            
-                            if (in_array($status, ['pending_review', 'published', 'unpublished', 'scheduled'])) {
-                                // Use translation if available, otherwise use formatted label
-                                $translated = __('admin.' . $status);
-                                $statusLabel = ($translated && $translated !== 'admin.' . $status) ? $translated : ucfirst(str_replace('_', ' ', $status));
-                            } else {
-                                $statusLabel = ucfirst(str_replace('_', ' ', $status));
-                            }
-                            ?>
-                            <span class="status-badge <?= htmlspecialchars($statusClass) ?>" aria-label="<?= __('admin.status') ?>: <?= htmlspecialchars($statusLabel) ?>">
-                                <?= htmlspecialchars($statusLabel) ?>
-                            </span>
-                        </div>
-                        <div class="fields-region">
-                            <?php foreach ($fields as $field): ?>
-                                <div class="cell cell-field" role="cell" style="--col-field: <?= htmlspecialchars($field['width'] ?? '240px') ?>; --col-field-min: <?= htmlspecialchars($field['min_width'] ?? $field['width'] ?? '240px') ?>">
-                                    <?php
-                                    $fieldName = $field['name'];
-                                    $fieldValue = $entry['__cells'][$fieldName . '_html'] ?? $entry['__cells'][$fieldName] ?? '';
-                                    echo $fieldValue ?: '<span class="ft-list-empty" aria-label="No value">–</span>';
-                                    ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                        <div class="cell cell-actions" role="cell">
-                            <?php
-                            $currentMainEntryDetailUrl = admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['id'] ?? '']);
-                            $mainEntryEditLink = admin_url('entry-editor', [
-                                'collection' => $collection['slug'] ?? '',
-                                'entry' => $entry['id'] ?? '',
-                                'return_to' => $currentMainEntryDetailUrl,
-                            ]);
-                            ?>
-                            <a class="btn mr-s" href="<?= $mainEntryEditLink ?>" aria-label="<?= __('admin.edit_entry') ?>">
-                                <?= __('admin.edit_entry') ?>
-                            </a>
-                            <?php if (empty($is_sub_entry_detail)): ?>
-                                <button type="button" class="btn btn-danger delete-main-entry-btn" aria-label="Delete entry">
-                                    <?= __('admin.delete') ?>
-                                </button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        <?php
+        $originalEntries = $entries ?? null;
+        $entries = [$entry];
+
+        $options = [
+            'show_checkbox' => false,
+            'show_drag' => false,
+            'show_sub_entries' => false,
+            'show_slug_meta' => true,
+            'table_class' => 'main-entry-table',
+            'delete_callback' => empty($is_sub_entry_detail) ? 'delete-main-entry-btn' : null,
+            'delete_data_attr' => 'data-entry-id',
+            'edit_url_callback' => $buildMainEntryEditorUrl,
+            'title_url_callback' => $buildMainEntryEditorUrl,
+        ];
+
+        $templateDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
+        $componentPath = $templateDir . '/components/smart-table.php';
+        if (file_exists($componentPath)) {
+            include $componentPath;
+        } else {
+            echo '<div class="error-message">Smart table component not found at: ' . htmlspecialchars($componentPath) . '</div>';
+        }
+
+        if ($originalEntries !== null) {
+            $entries = $originalEntries;
+        }
+        ?>
     </div>
     
     <!-- Sub-Entries Section -->
@@ -148,10 +135,6 @@
         
         $parentSubCollectionSlugForNested = $viewingSubCollectionSlug;
         $parentSubEntryIdForNested = $viewingSubEntryId;
-        
-        $mainEntryIdForLinks = !empty($is_sub_entry_detail) && !empty($_GET['entry']) 
-            ? $_GET['entry'] 
-            : (!empty($entry['_parent_entry_id']) ? $entry['_parent_entry_id'] : ($entry['id'] ?? ''));
         
         ?>
         <?php 
@@ -476,7 +459,7 @@ document.querySelectorAll('.delete-sub-entry-btn').forEach(btn => {
             body: JSON.stringify({
                 action: 'delete',
                 parent_collection: '<?= htmlspecialchars($collection['slug'] ?? '') ?>',
-                parent_entry_id: '<?= htmlspecialchars($entry['id'] ?? '') ?>',
+                parent_entry_id: '<?= htmlspecialchars($mainEntryIdForLinks) ?>',
                 sub_collection: subCollection,
                 sub_entry_id: subEntryId,
                 _csrf: document.getElementById('csrf-token').value
