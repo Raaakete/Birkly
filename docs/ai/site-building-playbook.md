@@ -1,80 +1,51 @@
 # Site building playbook (Birkly)
 
-Use this when the user asks to **build a website**, **portfolio**, **landing page**, or **public site** in this Birkly instance.
+Use when the user asks to **build a website**, **portfolio**, **landing page**, or any **public site** in this Birkly instance.
 
-## Two ways to publish a public site
+**Also auto-loaded:** `web-project-patterns` (principles for content model, list/detail pages, wiring CMS to HTML).
 
-| Approach | When to use | Where files live |
-|----------|-------------|------------------|
-| **Project site (preferred for custom HTML/CSS)** | Full design control, static pages, portfolio, marketing site | `project/` at site root |
-| **CMS pages** | Simple content pages managed in admin, blog-style | `pages` collection + templates in `project/` |
+## Two ways to publish
 
-For “build me a portfolio website”, default to **project site** unless the user explicitly wants admin-managed pages only.
+| Approach | When | Where |
+|----------|------|--------|
+| **Project site** (default for custom design) | Full HTML/CSS control, marketing sites, portfolios | `project/` |
+| **CMS pages** | Simple admin-managed pages, no custom project shell | `pages` + templates |
 
-## Before you write anything
+Default to **project site** unless the user wants admin pages only.
 
-1. **Read once** — do not repeat these in a loop:
-   - `get_project_info` — see if `project/` exists, URL, index file
-   - `list_project_files` with `path: ""` — see current tree
-   - `read_project_file` for `index.html` (or main template) if it exists
-   - `read_birkly_docs` topic `site-building` (this doc) and `templating` if using Birkly tags
+## Before writing files
 
-2. **Plan in one message** (brief):
-   - Site goal (portfolio, business, landing)
-   - Pages/sections (hero, about, work, contact)
-   - Content model: static HTML only vs collections + entries for repeatable items (projects, testimonials)
+1. **Infer the content model** from the request — what repeats, what's shared, what's one-off (see `web-project-patterns`).
+2. **Discover once** (do not loop):
+   - `get_project_info` — URL prefix, paths
+   - `list_project_files` — existing tree
+   - `list_collections` — reuse or extend; avoid duplicate slugs
 
-3. **Confirm schema only if needed** — if portfolio items should be editable in admin, ensure a collection exists (`list_collections` once). Do not re-list collections every turn.
+## Build order
 
-## Recommended build order (project site)
+1. **Schema** — collections + fields (never empty `fields: []`)
+2. **Entries** — seed with `status: "published"`
+3. **HTML** — list pages (loops), detail pages (URL context, no list loop), shared chrome, CSS
+4. **Script** — `birkly-client.js` on every templated page
+5. **Verify** — CMS data visible, detail links work, styles load under correct prefix
 
-Execute in order; **do not re-read** files you already loaded this session unless the user changed something.
+## Anti-patterns
 
-1. **Structure**
-   - `write_project_file` — `index.html` (main page)
-   - `write_project_file` — `css/style.css` (or linked stylesheet path you choose)
-   - Optional: `js/main.js` for interactions
+- Templates without `birkly-client.js`
+- Detail page that loops the whole collection
+- Collections beside static hard-coded cards (CMS unused)
+- Empty schema then templates referencing custom fields
+- Re-reading project files every turn after first successful discovery
 
-2. **Content model (if dynamic)**
-   - `create_collection` only when user wants CMS-managed items (projects, blog posts)
-   - `create_entry` for seed content — batch in one approval when possible
-
-3. **Templating**
-   - Use Birkly templating in HTML: `{for each entry in 'projects'}`, `{title}`, `{'description'}`
-   - Read `templating` topic once for tag syntax; do not re-fetch every message.
-
-4. **Verify**
-   - `get_project_info` once after writes to confirm index path
-   - Tell user the public URL from project info
-
-## Content structure tips
-
-- **Portfolio**: hero + featured work grid + about + contact; work items as collection `projects` with fields: title, description, image, link, order.
-- **Landing**: single `index.html` with sections; minimal collections.
-- **Multi-page**: `about.html`, `contact.html` in `project/` with shared CSS; link from index.
-
-## Anti-patterns (causes loops)
-
-- Calling `list_project_files` or `read_project_file` on the same path repeatedly
-- Using `create_page` / CMS page flow when user asked for a site in **project/**
-- Saying “I'll proceed” without emitting `write_project_file` actions
-- Re-discovering collections every turn — cache mentally from first `list_collections`
-- Second follow-up round that only re-reads project files — stop after first successful read batch
-
-## Tool choice
+## Tools
 
 | Intent | Tools |
 |--------|--------|
-| Custom site in project folder | `write_project_file`, `read_project_file`, `list_project_files`, `get_project_info` |
-| Editable content blocks | `create_collection`, `create_entry`, `update_entry` |
-| Admin-managed pages | `create_page`, `list_pages` |
-| Learn syntax | `read_birkly_docs` — topics: `site-building`, `templating` |
-
-## Approval flow
-
-- Writes require user approval — include all planned files in one batch when the UI supports multiple actions.
-- After approval, summarize what was created and the URL to preview.
+| Project HTML/CSS | `write_project_file`, `read_project_file`, `list_project_files`, `get_project_info` |
+| CMS data | `create_collection`, `update_collection`, `create_entry`, … |
+| Admin pages | `create_page`, `list_pages` |
+| Depth | Pre-loaded `web-project-patterns`, `content-model`, `templating` |
 
 ## Session memory
 
-After building, the conversation should note: project path, index file, collections created, and main CSS path — so follow-up turns do not re-scan the tree.
+Note: collections created, list vs detail filenames, preview URL. Content edits happen in admin — not by editing HTML cards.

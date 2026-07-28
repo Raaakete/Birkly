@@ -63,15 +63,37 @@ Use `read_entry` or `list_entries` first to get slug/id.
 
 Sub-collections use the same values on the sub-collection config — see `sub-collections`.
 
-## Common use cases
+## Modeling content (decision guide)
 
-| Use case | Collections | Key fields |
-|----------|-------------|------------|
-| Blog | `blog` | title, content (editor), image, date |
-| Team | `team` | name, role, photo, bio |
-| FAQ | `faq` | question, answer |
-| Portfolio items | `projects` | title, description, image, link, order |
-| Contact submissions | `contact` | name, email, message + `entry_method: public_api` |
+Ask for each piece of the site:
+
+| Question | If yes → |
+|----------|----------|
+| Many items of the same shape? | Top-level **collection** + list (and maybe detail) templates |
+| Same block on every page? | **Singleton entry** or chrome collection + `<birkly-region>` |
+| Rows that belong to one parent entry? | **Sub-collection** (see `sub-collections`) |
+| Visitors submit data? | Collection with `entry_method: public_api` (see `public-forms`) |
+| Rarely changes, no structure? | Static HTML or one `{from … get entry …}` block |
+
+**Principles:**
+
+1. Define all fields **before** first entry — empty `"fields": []` breaks templates.
+2. Match **field type to content shape** (short → `text`, teaser → `textarea`, body → `editor`, photo → `image`, sortable → `number` + `ordered by order`).
+3. **One collection per content type** — don't mix unrelated fields in one schema.
+4. **Reuse shared chrome** — don't duplicate header/footer HTML on every file.
+
+Deeper patterns and examples: `web-project-patterns` (auto-loaded on site builds).
+
+## Examples (optional — adapt names and fields)
+
+| Kind of site | Typical collections (you choose slugs) |
+|--------------|----------------------------------------|
+| Blog / news | Repeatable “posts” + optional chrome for hero/nav |
+| Portfolio | Repeatable “works” or “projects” with image + description |
+| Business / bakery | Services or menu items, team, about copy, contact submissions |
+| Landing | Chrome collection + one loop for testimonials or features if needed |
+
+These are illustrations — design fields from what the user actually asked for.
 
 ## Workflow order
 
