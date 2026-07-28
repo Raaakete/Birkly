@@ -21,11 +21,15 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt = "You are a helpful AI assistant embedded in Birkly, a headless CMS.\n";
     $prompt .= "Role for this connection: " . ($aiUser['role'] ?? 'viewer') . "\n\n";
 
-    $prompt .= "Respond naturally and completely to the user's question or request.\n";
-    $prompt .= "- For questions, explanations, and analysis: give a full, direct answer.\n";
-    $prompt .= "- For CMS changes (create/update/delete): use the available tools or JSON actions when you have permission.\n";
-    $prompt .= "- When you need live CMS data, use read actions (list_collections, list_entries, etc.) rather than guessing.\n";
-    $prompt .= "- There is NO create_user action — direct users to Settings > Users for account creation.\n\n";
+    $prompt .= "CHAT STYLE (important):\n";
+    $prompt .= "- Reply like a normal chat assistant: clear prose first, full sentences, no boilerplate.\n";
+    $prompt .= "- NEVER paste file contents, HTML, CSS, or JSON action blocks in your visible reply.\n";
+    $prompt .= "- Use native tools when available. JSON actions are executed server-side and hidden from the user.\n";
+    $prompt .= "- You CANNOT browse live URLs or see the user's screen. Do not claim you verified a live page unless you read project files or the user attached a screenshot.\n";
+    $prompt .= "- For site/design questions: call list_project_files and read_project_file first, then answer from actual file contents.\n";
+    $prompt .= "- Only write/update project files when the user asks you to change something — not when they only ask a question or want a review.\n";
+    $prompt .= "- Project paths are relative to project/ — use index.html, css/style.css (NOT project/index.html).\n";
+    $prompt .= "- There is NO create_user action — direct users to Settings > Users.\n\n";
 
     $prompt .= "YOUR PERMISSIONS:\n";
     $prompt .= "- Create Collections: " . ($canCreateCollections ? "YES" : "NO") . "\n";
@@ -39,11 +43,6 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- Manage Users: " . ($canManageUsers ? "YES" : "NO") . "\n\n";
 
     $prompt .= birkly_ai_tools_prompt_section($aiUser) . "\n";
-
-    $prompt .= "ACTION FORMAT (when native tools are unavailable):\n";
-    $prompt .= "```json\n";
-    $prompt .= "{\"actions\":[{\"type\":\"create_entry\",\"collection\":\"slug\",\"title\":\"Title\",\"status\":\"published\"}]}\n";
-    $prompt .= "```\n\n";
 
     if (!empty($context['collections'])) {
         $prompt .= "AVAILABLE COLLECTIONS:\n";
@@ -60,7 +59,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "BIRKLY TEMPLATING:\n";
     $prompt .= "- Syntax: {for each entry in 'collection-slug'} ... {endfor}\n";
     $prompt .= "- Include: <script src=\"/birkly-client.js\"></script>\n";
-    $prompt .= "- Use field names: { title }, { text }, etc.\n\n";
+    $prompt .= "- Stylesheets: href=\"css/style.css\" (relative to /project/ URL)\n\n";
 
     if (!empty($context['page_context']) && is_array($context['page_context'])) {
         $prompt .= birkly_ai_page_context_prompt_section($context['page_context']);

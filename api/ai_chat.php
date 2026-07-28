@@ -704,8 +704,7 @@ if ($action === 'chat') {
                     }
                     
                     $chatPersistContext['execution_results'] = $executedActions;
-                    $modelNarrative = trim((string) ($response['message'] ?? ''));
-                    $displayNarrative = trim((string) preg_replace('/```json\s*[\s\S]*?```/i', '', $modelNarrative));
+                    $displayNarrative = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
                     if ($executedActions !== []) {
                         $lines = [];
                         foreach ($executedActions as $result) {
@@ -730,7 +729,7 @@ if ($action === 'chat') {
                 }
             } else {
                 // No write actions - return the model response as-is
-                $finalMessage = $response['message'] ?? '';
+                $finalMessage = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
 
                 // Only use fallback formatting if AI didn't provide any response at all
                 if (empty($finalMessage) && !empty($readData)) {
@@ -1683,22 +1682,18 @@ function ai_chat_emit_direct_action_results(
         }
     }
 
-    $message = $responseMessage;
+    $message = ai_chat_sanitize_display_message($responseMessage);
     if ($providerError !== '' && $hasErrors) {
         $message .= "\n\n(Provider error: " . $providerError . ')';
     }
 
-    $report = ai_chat_format_execution_report(
-        $executedActions,
-        $actions,
-        $chatPersistContext['history'] ?? [],
-        $chatPersistContext['system_context'] ?? []
-    );
-    if ($report !== '') {
-        $message = $report;
-        if ($providerError !== '' && $hasErrors) {
-            $message .= "\n\n(Provider error: " . $providerError . ')';
+    if ($executedActions !== []) {
+        $lines = [];
+        foreach ($executedActions as $result) {
+            $lines[] = '- ' . ai_chat_describe_executed_action($result);
         }
+        $note = "**Actions completed:**\n" . implode("\n", $lines);
+        $message = $message !== '' ? $message . "\n\n" . $note : $note;
     }
 
     $chatPersistContext['execution_results'] = $executedActions;
@@ -1734,6 +1729,9 @@ function ai_chat_emit_response(array $payload, bool $streaming, ?array $persistC
         $executionResults = $persistContext['execution_results'] ?? null;
         if (is_array($executionResults) && $executionResults !== []) {
             $sessionNotes = ai_chat_build_session_notes($executionResults);
+        }
+        if (isset($payload['data']['response']) && is_string($payload['data']['response'])) {
+            $payload['data']['response'] = ai_chat_sanitize_display_message($payload['data']['response']);
         }
         ai_chat_persist_conversation(
             (string) ($persistContext['conversation_id'] ?? ''),
@@ -2073,7 +2071,7 @@ function extractActionsFromResponse($response, $toolCalls = []) {
         }
         $normalized[] = [
             'type' => $type,
-            'data' => birkly_ai_extract_action_payload($action),
+            'data' => birkly_ai_normalize_action_data($type, birkly_ai_extract_action_payload($action)),
             'description' => $action['description'] ?? $type,
         ];
     }

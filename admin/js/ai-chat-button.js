@@ -172,6 +172,51 @@
             || value.indexOf('### Planned this step') !== -1;
     }
 
+    function sanitizeChatDisplayText(text) {
+        let message = String(text || '');
+        if (!message) return '';
+
+        message = message.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
+        message = message.replace(/\n*\[Session notes[^\]]*\]\s*/g, '');
+
+        const needles = ['{"actions"', '{ "actions"', '{"type":"write_project_file"', '{ "type": "write_project_file"'];
+        for (const needle of needles) {
+            let searchFrom = 0;
+            while (true) {
+                const pos = message.toLowerCase().indexOf(needle.toLowerCase(), searchFrom);
+                if (pos === -1) break;
+                const end = findJsonObjectEnd(message, pos);
+                if (end === null) break;
+                message = message.slice(0, pos) + message.slice(end);
+                searchFrom = pos;
+            }
+        }
+
+        return message.replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    function findJsonObjectEnd(text, start) {
+        let depth = 0;
+        let inString = false;
+        let escape = false;
+        for (let i = start; i < text.length; i++) {
+            const c = text[i];
+            if (inString) {
+                if (escape) { escape = false; continue; }
+                if (c === '\\') { escape = true; continue; }
+                if (c === '"') inString = false;
+                continue;
+            }
+            if (c === '"') { inString = true; continue; }
+            if (c === '{') { depth++; continue; }
+            if (c === '}') {
+                depth--;
+                if (depth === 0) return i + 1;
+            }
+        }
+        return null;
+    }
+
     // Storage keys
     const STORAGE_KEY_CONVERSATION = 'ai_chat_conversation_id';
     const STORAGE_KEY_CONNECTION = 'ai_chat_connection_id';
@@ -1752,7 +1797,7 @@
         }
         const contentEl = messageEl.querySelector('.ai-chat-message-content');
         if (!contentEl) return;
-        contentEl.innerHTML = renderMarkdown(content);
+        contentEl.innerHTML = renderMarkdown(sanitizeChatDisplayText(content));
         if (isComplete) {
             messageEl.classList.remove('ai-chat-message-streaming');
         }
@@ -2551,7 +2596,7 @@
         const renderedContent = isLoading 
             ? '<div class="ai-chat-loading">...</div>' 
             : (role === 'assistant'
-                ? renderMarkdown(content)
+                ? renderMarkdown(sanitizeChatDisplayText(content))
                 : (role === 'error'
                     ? escapeHtml(content).split('\n').join('<br>')
                     : escapeHtml(content)));
