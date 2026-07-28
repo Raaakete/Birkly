@@ -253,6 +253,18 @@
   overflow: hidden;
 }
 
+.entries-smart-table .entry-slug-meta {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.entries-smart-table .entry-slug-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--primary-600, #2563eb);
+  text-decoration: none;
+}
+
 /* Selected Row */
 .entries-smart-table .table-row[data-entry-selected="true"] td {
   background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
