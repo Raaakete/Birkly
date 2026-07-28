@@ -351,12 +351,52 @@ function ai_chat_is_project_site_intent(string $message, array $conversationHist
 }
 
 /**
+ * True when the user wants analysis/review of existing data (not CMS writes).
+ */
+function ai_chat_message_implies_analysis_intent(string $message, array $conversationHistory = []): bool
+{
+    $haystack = strtolower(trim($message));
+    $recent = array_slice($conversationHistory, -8);
+    foreach ($recent as $msg) {
+        $haystack .= ' ' . strtolower((string) ($msg['content'] ?? ''));
+    }
+    if ($haystack === '') {
+        return false;
+    }
+
+    return (bool) preg_match(
+        '/\b(review|analyze|analyse|audit|optimize|optimise|improve|what to (fix|change|optimize|improve|do)|tell me (what|the result|about|how)|what is the result|what(?:\'s| is) the (result|verdict|assessment)|so\?|what do you think|recommend(?:ation)?s?|suggest(?:ion)?s?|feedback|critique|assessment|look over|check (the|my|this) (site|website|project|page)|what should i (fix|change|improve))\b/i',
+        $haystack
+    );
+}
+
+/**
+ * True when assistant text is a placeholder before reads, not a real answer.
+ */
+function ai_chat_response_is_read_stub(string $message): bool
+{
+    $message = trim($message);
+    if ($message === '') {
+        return true;
+    }
+    if (preg_match('/^(let me read|i[\'\x{2019}]ll read|i will read|reading (the|your)|give you a thorough)\b/iu', $message)) {
+        return true;
+    }
+    return strlen($message) < 100
+        && (bool) preg_match('/\b(read|retrieve|fetch|look at) (the|your|project|site|actual|files)\b/i', $message);
+}
+
+/**
  * True when the user message asks the assistant to change CMS/project state (not just read/review).
  */
 function ai_chat_message_implies_write_intent(string $message, array $conversationHistory = []): bool
 {
     $haystack = strtolower(trim($message));
     if ($haystack === '') {
+        return false;
+    }
+
+    if (ai_chat_message_implies_analysis_intent($message, $conversationHistory)) {
         return false;
     }
 
@@ -385,6 +425,21 @@ function ai_chat_message_implies_write_intent(string $message, array $conversati
 
     return ai_chat_is_project_site_intent($message, $conversationHistory)
         && preg_match('/\b(build|create|make|design|style|dark|theme|portfolio|gallery|landing)\b/i', $haystack);
+}
+
+/**
+ * Default project reads for review/analysis when the model forgets to call tools.
+ *
+ * @return list<array<string,mixed>>
+ */
+function ai_chat_default_project_read_actions(): array
+{
+    return [
+        ['type' => 'get_project_info', 'data' => [], 'description' => 'Get project site info'],
+        ['type' => 'list_project_files', 'data' => ['path' => ''], 'description' => 'List project files'],
+        ['type' => 'read_project_file', 'data' => ['path' => 'index.html'], 'description' => 'Read index.html'],
+        ['type' => 'read_project_file', 'data' => ['path' => 'css/style.css'], 'description' => 'Read css/style.css'],
+    ];
 }
 
 /**
