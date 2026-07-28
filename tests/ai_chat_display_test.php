@@ -35,6 +35,11 @@ assert_true(
 );
 
 assert_true(
+    'delete keeps ndex typo filename',
+    birkly_ai_normalize_project_file_path_for_delete('ndex.html') === 'ndex.html'
+);
+
+assert_true(
     'strips nested project/ prefix',
     birkly_ai_normalize_project_file_path('project/project/css/style.css') === 'css/style.css'
 );

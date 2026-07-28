@@ -803,6 +803,38 @@ if ($action === 'chat') {
                     // Execute actions directly without approval
                     $executedActions = [];
                     $hasErrors = false;
+                    $bulkDeleteBlock = birkly_ai_validate_bulk_project_deletes($actions);
+                    if ($bulkDeleteBlock !== null) {
+                        error_log('Blocked bulk project deletes: ' . $bulkDeleteBlock);
+                        $hasErrors = true;
+                        foreach ($actions as $actionData) {
+                            if (($actionData['type'] ?? '') !== 'delete_project_file') {
+                                continue;
+                            }
+                            $path = basename(birkly_ai_normalize_project_file_path_for_delete(
+                                (string) (($actionData['data']['path'] ?? ''))
+                            ));
+                            if (!in_array($path, birkly_ai_project_canonical_page_paths(), true)) {
+                                continue;
+                            }
+                            $executedActions[] = [
+                                'success' => false,
+                                'message' => $bulkDeleteBlock,
+                                'action_type' => 'delete_project_file',
+                                'action_data' => $actionData['data'] ?? [],
+                            ];
+                        }
+                        $actions = array_values(array_filter($actions, function ($actionData) {
+                            if (($actionData['type'] ?? '') !== 'delete_project_file') {
+                                return true;
+                            }
+                            $path = basename(birkly_ai_normalize_project_file_path_for_delete(
+                                (string) (($actionData['data']['path'] ?? ''))
+                            ));
+
+                            return !in_array($path, birkly_ai_project_canonical_page_paths(), true);
+                        }));
+                    }
                     if ($streamActive) {
                         ai_chat_emit_status(true, 'Applying **' . count($actions) . '** change(s)…');
                     }
@@ -1506,7 +1538,7 @@ function executeActionDirectly($actionData, $aiUser) {
 }
 
 // OpenAI API call (also works for OpenRouter and OpenAI-compatible APIs)
-function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto', int $curlTimeout = 60, bool $allowHistoryRetry = true) {
+function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto', int $curlTimeout = 60, bool $allowHistoryRetry = true, int $serverErrorRetry = 0) {
     $apiLabel = birkly_ai_compatible_api_label($url);
     $conversationHistory = birkly_ai_sanitize_conversation_history_for_provider($conversationHistory);
     // Build messages array with conversation history
@@ -1572,7 +1604,13 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     if ($httpCode !== 200) {
         if (!empty($tools) && $toolChoice === 'required' && in_array((int) $httpCode, [400, 422], true)) {
             error_log($apiLabel . ' rejected tool_choice=required — retrying with auto');
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, 'auto', $curlTimeout, false);
+            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $tools, $imageAttachments, 'auto', $curlTimeout, $allowHistoryRetry, $serverErrorRetry);
+        }
+        if (in_array((int) $httpCode, [500, 502, 503, 504], true) && $serverErrorRetry < 2) {
+            $waitMicros = 500000 * ($serverErrorRetry + 1);
+            error_log($apiLabel . ' HTTP ' . $httpCode . ' — retrying in ' . ($waitMicros / 1000000) . 's (attempt ' . ($serverErrorRetry + 1) . ')');
+            usleep($waitMicros);
+            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $tools, $imageAttachments, $toolChoice, $curlTimeout, $allowHistoryRetry, $serverErrorRetry + 1);
         }
         return birkly_ai_build_provider_error(
             $apiLabel,
