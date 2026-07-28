@@ -2306,6 +2306,42 @@
         return String(current);
     }
 
+    function encodeEntryBlockContent(html) {
+        return String(html || '')
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    function processEntryForBlocks(html) {
+        const pattern = /\{entry\s+for\s+['"]([^'"]+)['"]\}/i;
+        let guard = 0;
+        while (guard++ < 100) {
+            const m = html.match(pattern);
+            if (!m) break;
+            const start = m.index;
+            const openLen = m[0].length;
+            const collectionSlug = m[1];
+            const contentStart = start + openLen;
+            const [closePos, closeLen] = findClosingTag(html, contentStart, ['{endentry}']);
+            if (closePos === null) {
+                html = html.substring(0, start) + html.substring(contentStart);
+                continue;
+            }
+            const inner = html.substring(contentStart, closePos);
+            const placeholder = '<div class="birkly-entry-block" data-birkly-collection="' + escapeHtml(collectionSlug) + '" data-birkly-content="' + encodeEntryBlockContent(inner) + '"></div>';
+            html = html.substring(0, start) + placeholder + html.substring(closePos + closeLen);
+        }
+        return html;
+    }
+
+    function processPublicFormBlocks(html) {
+        return html.replace(/\{public_form\s+['"]([^'"]+)['"]\}/gi, (_, slug) => {
+            return '<div class="birkly-form-placeholder" data-birkly-collection="' + escapeHtml(String(slug || '').trim()) + '"></div>';
+        });
+    }
+
     function processFromGetBlocks(html, data, render) {
         const pattern = /\{from\s+['"]([^'"]+)['"]\s+get\s+entry\s+['"]([^'"]+)['"]\}/i;
         let guard = 0;
@@ -2418,7 +2454,13 @@
         return html.replace(/\{([^}]+)\}/g, (full, inner) => {
             const trimmed = String(inner || '').trim();
             if (!trimmed) return '';
-            if (/^(if|else|elseif|endif|for|endfor|from|get|endget|end|set|count)\b/i.test(trimmed)) {
+            if (/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count|entry)\b/i.test(trimmed)) {
+                return '';
+            }
+            if (/^entry\s+for\s+['"][^'"]+['"]$/i.test(trimmed)) {
+                return '';
+            }
+            if (/^public_form\s+['"][^'"]+['"]$/i.test(trimmed)) {
                 return '';
             }
             if (/^count\s+of\b/i.test(trimmed)) return full;
@@ -2451,7 +2493,9 @@
         if (!data || typeof data !== 'object') return html;
 
         const renderFn = (tpl, ctx) => render(tpl, ctx);
-        let out = processFromGetBlocks(html, data, renderFn);
+        let out = processEntryForBlocks(html);
+        out = processPublicFormBlocks(out);
+        out = processFromGetBlocks(out, data, renderFn);
         out = processForLoops(out, data, renderFn);
         out = processIfBlocks(out, data, renderFn);
         out = processCountVariables(out, data);
@@ -2497,6 +2541,15 @@
 
         if (text.includes('site_elements')) {
             add({ type: 'list_entries', into: 'site_elements', collection: 'site_elements' });
+        }
+
+        const subLoopRe = /\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+'([^']+)'\s+of\s+'([^']+)'\.\s*(current|[^'\s{}]+)\s*/gi;
+        while ((m = subLoopRe.exec(text)) !== null) {
+            add({
+                type: 'list_entries',
+                into: m[2],
+                collection: m[2]
+            });
         }
 
         return requests;
@@ -3447,6 +3500,8 @@
         const forms = document.querySelectorAll('form[data-birkly-collection]');
         for (const form of forms) {
             if (form.dataset.haruFormInitialized) continue;
+            // bindActionForms handles data-birkly-url forms (public_submit, public_sub_entry, etc.)
+            if (form.hasAttribute('data-birkly-url')) continue;
             form.dataset.haruFormInitialized = 'true';
             
             form.addEventListener('submit', async function(e) {
@@ -3811,6 +3866,26 @@
 
         const bound = new WeakSet();
 
+        function showFormStatus(form, message, isError) {
+            const el = form.querySelector('[data-birkly-form-status], .birkly-form-status');
+            if (el) {
+                el.textContent = message;
+                el.hidden = false;
+                el.classList.toggle('is-error', !!isError);
+                el.classList.toggle('is-success', !isError);
+                return;
+            }
+            alert(message);
+        }
+
+        function formatActionError(json, fallback) {
+            const base = (json && (json.message || json.error)) ? String(json.message || json.error) : fallback;
+            if (json && Array.isArray(json.errors) && json.errors.length) {
+                return base + ': ' + json.errors.join(', ');
+            }
+            return base;
+        }
+
         async function handleSubmit(form, e) {
             if (form.dataset.haruSubmitting === '1') return;
             form.dataset.haruSubmitting = '1';
@@ -3884,21 +3959,20 @@
                 });
                 const json = await res.json().catch(() => ({}));
                 if (!res.ok || (json.status && json.status !== 'ok') || (json.success === false)) {
-                    throw new Error(json.message || json.error || 'Action failed');
+                    throw new Error(formatActionError(json, 'Action failed'));
                 }
 
                 // Special-case public collection submissions (contact form, etc.)
-                // Always show a friendly confirmation before applying onSuccess behaviour.
                 if (directUrl && /public_submit\.php(?:\?|$)/.test(directUrl)) {
                     const msg = (json && (json.message || json.ok))
                         ? String(json.message || json.ok)
                         : 'Thank you! Your message has been received.';
-                    try {
-                        // Basic feedback – can later be replaced with inline UI or modal.
-                        alert(msg);
-                    } catch (_) {
-                        // Ignore if alerts are blocked
-                    }
+                    showFormStatus(form, msg, false);
+                } else if (directUrl && /public_sub_entry\.php(?:\?|$)/.test(directUrl)) {
+                    const msg = (json && json.message)
+                        ? String(json.message)
+                        : 'Submitted successfully.';
+                    showFormStatus(form, msg, false);
                 }
 
                 // Clear textareas after success
@@ -3925,7 +3999,7 @@
                     target.searchParams.set(errParam, msg);
                     window.location.href = target.toString();
                 } else {
-                    alert(err?.message || 'Action failed');
+                    showFormStatus(form, err?.message || 'Action failed', true);
                 }
             } finally {
                 delete form.dataset.haruSubmitting;
