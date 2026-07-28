@@ -24,11 +24,14 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 $tmpRoot = sys_get_temp_dir() . '/birkly-rebuild-test-' . getmypid();
 @mkdir($tmpRoot, 0755, true);
 @mkdir($tmpRoot . '/content/collections/blog/entries', 0755, true);
+@mkdir($tmpRoot . '/content/collections/artworks/entries', 0755, true);
 @mkdir($tmpRoot . '/users', 0755, true);
 @mkdir($tmpRoot . '/settings', 0755, true);
 @mkdir($tmpRoot . '/project', 0755, true);
 
 file_put_contents($tmpRoot . '/content/collections/blog/entries/post-1.json', '{"id":"post-1"}');
+file_put_contents($tmpRoot . '/content/collections/artworks/collection.json', '{"slug":"artworks","name":"Artworks"}');
+file_put_contents($tmpRoot . '/content/collections/artworks/entries/piece-1.json', '{"id":"piece-1"}');
 file_put_contents($tmpRoot . '/users/admin_onboarding.json', '{"setup_wizard_completed":true}');
 file_put_contents($tmpRoot . '/settings/onboarding.json', '{"install_path":"test"}');
 file_put_contents($tmpRoot . '/project/index.html', '<html></html>');
@@ -37,6 +40,8 @@ $result = birkly_rebuild_system($tmpRoot);
 
 assert_true('rebuild returns success', !empty($result['success']), $result['message'] ?? '');
 assert_true('entry file removed', !is_file($tmpRoot . '/content/collections/blog/entries/post-1.json'));
+assert_true('user-created collection removed', !is_dir($tmpRoot . '/content/collections/artworks'));
+assert_true('starter collection folder removed', !is_dir($tmpRoot . '/content/collections/blog'));
 assert_true('onboarding file removed', !is_file($tmpRoot . '/users/admin_onboarding.json'));
 assert_true('site onboarding settings removed', !is_file($tmpRoot . '/settings/onboarding.json'));
 assert_true('project site cleared', !is_file($tmpRoot . '/project/index.html'));
