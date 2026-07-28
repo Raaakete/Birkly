@@ -16,13 +16,24 @@ Before writing any `write_project_file` for HTML:
    ```
    Place before `</body>`. Same-host preview needs no `data-cms-url`; external hosting needs `data-cms-url="https://cms-domain"`.
 
-2. **Collection slugs in single quotes** — `{for each entry in 'blog'}` not `blog` unquoted.
+2. **URL prefix** — project sites are served under `/project/` (check `get_project_info` → `site_url_prefix`):
+   - CSS: `/project/css/style.css` — **not** `/css/style.css`
+   - Pages: `/project/index.html`, `/project/post.html?collection=blog&slug={slug}`
+   - Wrong paths = unstyled pages and broken navigation
 
-3. **Published entries** — `status: "published"` on every entry that must appear on the public site.
+3. **Entry slugs** — `create_entry` **auto-generates slug from title**. List links MUST use:
+   ```html
+   href="/project/post.html?collection=blog&slug={slug}"
+   ```
+   Do **not** use `?id={id}` unless you have no choice — prefer human-readable slugs.
 
-4. **Schema before entries** — define collection `fields` with `update_collection` **before** `create_entry`. Empty-schema collections produce broken templates.
+4. **Collection slugs in single quotes** — `{for each entry in 'blog'}` not `blog` unquoted.
 
-5. **Exact field names** — use names from schema in entries and templates (`{'excerpt'}`, not `summary` unless the field is named `summary`).
+5. **Published entries** — `status: "published"` on every entry that must appear on the public site.
+
+6. **Schema before entries** — define collection `fields` with `update_collection` **before** `create_entry`. Empty-schema collections produce broken templates.
+
+7. **Exact field names** — use names from schema in entries and templates (`{'excerpt'}`, not `summary` unless the field is named `summary`).
 
 ---
 
@@ -246,6 +257,9 @@ Alternative for a **fixed** slug (no URL param): `{from 'blog' get entry 'my-slu
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | Raw `{for each entry…}` on page | Missing `/birkly-client.js` | Add script before `</body>` on **every** templated page |
+| Page unstyled (plain HTML) | CSS linked as `/css/style.css` | Use `/project/css/style.css` — check `site_url_prefix` |
+| Post links go to blank page | Missing slug on entries / empty `{slug}` | Slugs auto-generate from title; link with `?slug={slug}` not empty slug |
+| AI switched to `?id={id}` | Workaround for missing slugs | Fix slugs; prefer `?collection=blog&slug={slug}` |
 | Collections exist but site is static | Never wired templates | Replace hard-coded cards with loops |
 | Click "Read" → list again | Detail page loops entire collection | Use URL detail pattern; `{ title }` not `{for each}` |
 | Empty cards / missing fields | Schema has `"fields": []` | `update_collection` with proper fields |

@@ -335,7 +335,8 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "- Define collection fields BEFORE create_entry — never leave fields: []\n"
         . "- Build order: schema → published entries → list HTML → detail HTML → site_elements header\n"
         . "- Paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
-        . "- Links to articles: article.html?collection=blog&slug={slug}\n"
+        . "- Links to articles: /project/post.html?collection=blog&slug={slug} (slug auto-generated from title on create_entry)\n"
+        . "- Never link posts with empty slug — create_entry now stores slug from title automatically\n"
         . "- Playbooks below are pre-loaded — follow them; wire CMS to templates, not static cards\n\n";
 
     return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
