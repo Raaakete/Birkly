@@ -214,8 +214,15 @@ if ($action === 'chat') {
         }
         
         // Always call the AI provider — no server-side proceed/status bypasses.
+        $openAiTools = birkly_ai_tools_openai_format($aiUser);
+        $writeIntent = ai_chat_message_implies_write_intent($message, $conversationHistory);
+        $providerType = getSupportedAiProviders()[$aiUser['provider'] ?? '']['type'] ?? ($aiUser['provider'] ?? '');
+        $providerSupportsNativeTools = in_array($providerType, ['openai', 'openrouter', 'custom'], true);
+        $hasNativeTools = $openAiTools !== [] && $providerSupportsNativeTools;
+        $useNonStreaming = $hasNativeTools || $writeIntent;
+
         $streamCallback = null;
-        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? '')) && $chatImageAttachments === []) {
+        if ($wantStream && birkly_ai_provider_supports_streaming((string) ($aiUser['provider'] ?? '')) && $chatImageAttachments === [] && !$useNonStreaming) {
             birkly_ai_sse_begin();
             $streamActive = true;
             $streamCallback = function ($token) {
@@ -226,6 +233,11 @@ if ($action === 'chat') {
         // Release session lock before long AI provider calls (approval polling, etc.)
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
+        }
+
+        $providerOptions = [];
+        if ($writeIntent && $hasNativeTools) {
+            $providerOptions['tool_choice'] = 'required';
         }
 
         $response = callAiProvider(
@@ -239,7 +251,8 @@ if ($action === 'chat') {
             $conversationHistory,
             $aiUser,
             $streamCallback,
-            $chatAttachments
+            $chatAttachments,
+            $providerOptions
         );
         
         // Save conversation history after the full response is finalized (see ai_chat_persist_conversation)
@@ -596,6 +609,42 @@ if ($action === 'chat') {
             // Use only write actions for approval/execution
             $writeActions = ai_chat_dedupe_write_actions($writeActions);
             $writeActions = ai_chat_filter_already_completed_actions($writeActions, $conversationHistory);
+
+            $displayForClaimCheck = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
+            if ($writeActions === []
+                && ($writeIntent || ai_chat_response_implies_false_execution_claim($displayForClaimCheck))) {
+                error_log('No write actions after model response — nudging for executable actions');
+                $nudgeResponse = ai_chat_nudge_for_actions(
+                    $aiUser,
+                    $apiKey,
+                    $systemPrompt,
+                    $message,
+                    (string) ($response['message'] ?? ''),
+                    $conversationId,
+                    $conversationHistory,
+                    $readData
+                );
+                if ($nudgeResponse['success'] ?? false) {
+                    $nudgeActions = extractActionsFromResponse(
+                        $nudgeResponse['message'] ?? '',
+                        $nudgeResponse['tool_calls'] ?? []
+                    );
+                    $nudgeActions = ai_chat_filter_already_completed_actions($nudgeActions, $conversationHistory);
+                    foreach ($nudgeActions as $action) {
+                        $actionType = $action['type'] ?? '';
+                        if (!birkly_ai_is_read_action($actionType)) {
+                            $writeActions[] = $action;
+                        }
+                    }
+                    if ($writeActions !== []) {
+                        $nudgeDisplay = ai_chat_sanitize_display_message((string) ($nudgeResponse['message'] ?? ''));
+                        if ($nudgeDisplay !== '' && !ai_chat_response_implies_false_execution_claim($nudgeDisplay)) {
+                            $response['message'] = $nudgeDisplay;
+                        }
+                    }
+                }
+            }
+
             $actions = $writeActions;
             
             error_log("Final writeActions count before processing: " . count($actions));
@@ -733,7 +782,7 @@ if ($action === 'chat') {
                 $finalMessage = ai_chat_sanitize_display_message((string) ($response['message'] ?? ''));
 
                 if ($actions === []
-                    && preg_match('/\b(I have (now )?(written|updated|deployed|fixed|deleted|committed)|have been (written|updated|deployed|fixed)|files have been|actions (were )?executed|cleanup is complete)\b/i', $finalMessage)) {
+                    && ai_chat_response_implies_false_execution_claim($finalMessage)) {
                     $finalMessage .= "\n\n⚠️ _No CMS actions were actually executed this turn. Ask again or check Approvals if approval is required._";
                 }
 
@@ -1147,11 +1196,12 @@ function buildSystemPromptOld($context, $aiUser) {
 // End of old complex prompt
 
 // Call AI provider API
-function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage, $conversationId = '', $apiUrl = '', $conversationHistory = [], $aiUser = null, $onToken = null, array $attachments = []) {
+function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage, $conversationId = '', $apiUrl = '', $conversationHistory = [], $aiUser = null, $onToken = null, array $attachments = [], array $providerOptions = []) {
     $providers = getSupportedAiProviders();
     $providerInfo = $providers[$provider] ?? null;
     $providerType = $providerInfo['type'] ?? $provider;
     $imageAttachments = birkly_ai_chat_image_attachments($attachments);
+    $toolChoice = (string) ($providerOptions['tool_choice'] ?? 'auto');
 
     $openAiTools = [];
     if (is_array($aiUser)) {
@@ -1167,7 +1217,7 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             if ($onToken && empty($openAiTools) && $imageAttachments === []) {
                 return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, $toolChoice);
         case 'anthropic':
             return callAnthropic($apiKey, $resolvedModel, $systemPrompt, $userMessage, $conversationHistory, $imageAttachments);
         case 'google':
@@ -1189,10 +1239,64 @@ function callAiProvider($provider, $apiKey, $model, $systemPrompt, $userMessage,
             if ($onToken && empty($openAiTools) && $imageAttachments === []) {
                 return callOpenAIStream($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $onToken);
             }
-            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments);
+            return callOpenAI($apiKey, $resolvedModel, $systemPrompt, $userMessage, $url, $conversationHistory, $openAiTools, $imageAttachments, $toolChoice);
         default:
             return ['success' => false, 'message' => 'Unsupported provider'];
     }
+}
+
+/**
+ * Second-chance provider call when the model replied in prose but omitted executable actions.
+ *
+ * @param list<array<string,mixed>> $readData
+ */
+function ai_chat_nudge_for_actions(
+    array $aiUser,
+    string $apiKey,
+    string $systemPrompt,
+    string $originalMessage,
+    string $assistantMessage,
+    string $conversationId,
+    array $conversationHistory,
+    array $readData = []
+): array {
+    $providers = getSupportedAiProviders();
+    $providerType = $providers[$aiUser['provider'] ?? '']['type'] ?? ($aiUser['provider'] ?? '');
+    $hasNativeTools = in_array($providerType, ['openai', 'openrouter', 'custom'], true)
+        && birkly_ai_tools_openai_format($aiUser) !== [];
+
+    $nudgeMessage = "The user asked:\n\"{$originalMessage}\"\n\n";
+    $nudgeMessage .= "Your previous reply did not include executable CMS actions (no tool calls and no JSON action block).\n";
+    $nudgeMessage .= "Do NOT claim work is done. Execute the requested changes now.\n";
+    if (trim($assistantMessage) !== '') {
+        $nudgeMessage .= "\nYour previous reply (for context):\n" . substr($assistantMessage, 0, 2000) . "\n";
+    }
+    if ($readData !== []) {
+        $nudgeMessage .= "\nData already retrieved this turn:\n"
+            . substr(json_encode($readData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), 0, 12000) . "\n";
+    }
+    if ($hasNativeTools) {
+        $nudgeMessage .= "\nUse native tool calls for every change. Paths: index.html, css/style.css (no project/ prefix).\n";
+    } else {
+        $nudgeMessage .= "\nRespond with ONLY a fenced ```json block: {\"actions\":[{\"type\":\"...\", ...}]}\n";
+    }
+
+    $providerOptions = ['tool_choice' => $hasNativeTools ? 'required' : 'auto'];
+
+    return callAiProvider(
+        $aiUser['provider'] ?? '',
+        $apiKey,
+        $aiUser['model'] ?? '',
+        $systemPrompt,
+        $nudgeMessage,
+        $conversationId,
+        $aiUser['api_url'] ?? '',
+        $conversationHistory,
+        $aiUser,
+        null,
+        [],
+        $providerOptions
+    );
 }
 
 // Execute action directly (when approval not required)
@@ -1229,7 +1333,7 @@ function executeActionDirectly($actionData, $aiUser) {
 }
 
 // OpenAI API call (also works for OpenRouter and OpenAI-compatible APIs)
-function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = []) {
+function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https://api.openai.com/v1/chat/completions', $conversationHistory = [], $tools = [], array $imageAttachments = [], string $toolChoice = 'auto') {
     $apiLabel = birkly_ai_compatible_api_label($url);
     // Build messages array with conversation history
     $messages = [
@@ -1259,7 +1363,8 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
 
     if (!empty($tools)) {
         $data['tools'] = $tools;
-        $data['tool_choice'] = 'auto';
+        $allowedToolChoice = ['auto', 'required', 'none'];
+        $data['tool_choice'] = in_array($toolChoice, $allowedToolChoice, true) ? $toolChoice : 'auto';
     }
     
     $headers = [
@@ -1291,6 +1396,10 @@ function callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url = 'https:
     }
     
     if ($httpCode !== 200) {
+        if (!empty($tools) && $toolChoice === 'required' && in_array((int) $httpCode, [400, 422], true)) {
+            error_log($apiLabel . ' rejected tool_choice=required — retrying with auto');
+            return callOpenAI($apiKey, $model, $systemPrompt, $userMessage, $url, $conversationHistory, $tools, $imageAttachments, 'auto');
+        }
         return birkly_ai_build_provider_error(
             $apiLabel,
             (int) $httpCode,
