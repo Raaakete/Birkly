@@ -30,10 +30,10 @@ function birkly_ai_playbook_catalog(): array
             'category' => 'Core CMS',
         ],
         'web-project-patterns' => [
-            'title' => 'Web project patterns — list/detail pages, schemas, wiring',
+            'title' => 'Web project patterns — content model, list/detail, wiring',
             'topic' => 'web-project-patterns',
-            'summary' => 'Mandatory checklist, collection recipes, list vs detail pages, common AI bugs.',
-            'triggers' => 'blog, article page, detail page, raw templating, birkly-client, collection fields, site_elements',
+            'summary' => 'Flexible principles for any site: page types, schema decisions, CMS-to-HTML wiring, common bugs.',
+            'triggers' => 'detail page, raw templating, birkly-client, collection fields, list page, portfolio, blog, wiring',
             'category' => 'Core CMS',
         ],
         'templating' => [
@@ -330,14 +330,14 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "Users may give very short prompts (e.g. \"build me a bakery website\") — you must still deliver a complete Birkly project site.\n\n";
 
     $rules = "RULES:\n"
-        . "- Read web-project-patterns first: list pages use loops; detail pages use ?collection=&slug= with NO collection loop\n"
-        . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script> before </body>\n"
+        . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
+        . "- List pages: loops; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
+        . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script>\n"
         . "- Define collection fields BEFORE create_entry — never leave fields: []\n"
-        . "- Build order: schema → published entries → list HTML → detail HTML → site_elements header\n"
-        . "- Paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
-        . "- Links to articles: /project/post.html?collection=blog&slug={slug} (slug auto-generated from title on create_entry)\n"
-        . "- Never link posts with empty slug — create_entry now stores slug from title automatically\n"
-        . "- Playbooks below are pre-loaded — follow them; wire CMS to templates, not static cards\n\n";
+        . "- Use get_project_info site_url_prefix for asset/page URLs in HTML (e.g. /project/css/…)\n"
+        . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
+        . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
+        . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n\n";
 
     return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
 }
