@@ -16,7 +16,7 @@ Read this when the user's request spans multiple areas or you are unsure which p
 |------------|-------------------------------|
 | `content-model` | Collections, entries, schema, fields, publishing, slugs |
 | `site-building` | Website, portfolio, landing page, `project/` HTML/CSS |
-| `web-project-patterns` | List/detail pages, schema recipes, birkly-client.js, wiring CMS to HTML |
+| `web-project-patterns` | Flexible site wiring: list/detail pages, schema decisions, CMS-to-HTML, common bugs |
 | `templating` | Template syntax, loops, `{from…get}`, client rendering |
 | `public-forms` | Contact forms, newsletter signup, external submission, `{entry for}` |
 | `sub-collections` | Nested content: comments, reviews, line items, nested sub-collections |
