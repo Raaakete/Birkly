@@ -111,6 +111,84 @@ Set `auto_publish: true` on the comments sub-collection when comments should app
 - Expecting comments via `public_submit.php` — use `public_sub_entry.php`
 - Forgetting `auto_publish` then wondering why submissions are invisible on the site
 
+## Known bad patterns (real regressions — never generate these)
+
+These patterns have broken production sites. If you see them in `read_project_file`, **rewrite** the form — do not patch around them.
+
+### Bad: custom fetch with invented API shape
+
+```html
+<!-- WRONG — bypasses birkly-client validation, wrong payload, often missing CSRF/collection slug -->
+<form id="contact-form">
+  <input name="title">  <!-- schema has name, not title -->
+</form>
+<script>
+document.getElementById('contact-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await fetch('/api/public_submit.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: '...' })  // wrong field names
+  });
+});
+</script>
+```
+
+**Fix:** Delete custom JS. Use `{entry for 'contact'}` + matching `name="{slug}"` from `read_collection`.
+
+### Bad: `{entry for}` without birkly-client.js
+
+```html
+{entry for 'contact'}
+  <input name="{name}">
+{endentry}
+<!-- MISSING <script src="/birkly-client.js"></script> -->
+```
+
+**Symptom:** Raw `{entry for 'contact'}` visible; submit does nothing.  
+**Fix:** Add script tag on every templated page.
+
+### Bad: client API key in HTML or JS
+
+```html
+<!-- WRONG — keys must never appear in project/ files -->
+<input type="hidden" name="api_key" value="sk-...">
+```
+
+Public forms use server-side collection slug routing — no browser key.
+
+### Bad: comments via parent public_submit
+
+```html
+<!-- WRONG endpoint for nested comments -->
+<form data-birkly-url="/api/public_submit.php">
+  <input name="parent_entry_id" ...>
+</form>
+```
+
+**Fix:** `/api/public_sub_entry.php` + hidden `parent_collection`, `parent_entry_id`, `sub_collection`.
+
+### Bad: schema / HTML field mismatch (contact forms)
+
+Collection fields: `name`, `email`, `message`  
+Form uses: `name="title"`, `name="body"` → **Validation failed**
+
+**Fix:** `read_collection` first; copy exact slugs into `name="{slug}"`.
+
+### Bad: telling user to "fix in admin" when AI can configure
+
+Collection not public? Use `update_collection` with `entry_method: "public_api"`.  
+Sub-collection not submittable? Update `sub_collections` with `entry_method: "public_api"`.  
+Do not ask non-technical users to hunt settings the tools can set.
+
+## Admin cross-reference
+
+| Topic | Admin / human doc |
+|-------|-------------------|
+| Public API forms | `admin/docs/public-api-forms.php` |
+| Collection entry_method | Collection settings / AI `update_collection` |
+| Help topic | `entries` → playbook `public-forms` |
+
 ## Tools
 
 | Task | Tool |

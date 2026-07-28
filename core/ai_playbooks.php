@@ -198,9 +198,9 @@ function birkly_ai_core_docs_topics(): array
         'cms-pages' => $playbook('cms-pages-playbook.md', 'CMS pages playbook'),
         'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),
         'settings-roles' => $playbook('settings-roles-playbook.md', 'Settings & roles playbook'),
-        'site-building' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'site-building' => $playbook('site-building-playbook.md', 'Website & portfolio builder (project/)'),
         'web-project-patterns' => $playbook('web-project-patterns-playbook.md', 'Web project patterns — list/detail, schemas, wiring'),
-        'portfolio' => ['file' => 'ai/site-building-playbook.md', 'title' => 'Website & portfolio builder (project/)'],
+        'portfolio' => $playbook('site-building-playbook.md', 'Website & portfolio builder (project/)'),
         'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
         'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
         'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
@@ -263,16 +263,16 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
         'collection-groups' => '/\b(collection group|sidebar group|reorder collections|organize collections)\b/i',
         'public-forms' => '/\b(contact form|newsletter|public form|submit from website|visitor submission|validation failed)\b/i',
         'sub-collections' => '/\b(sub-collection|sub-entry|nested entries|comments on posts)\b/i',
-        'commerce' => '/\b(shop|e-?commerce|cart|checkout|sell online|online store|product catalog)\b/i',
+        'commerce' => '/\b(shop|e-?commerce|cart|checkout|sell online|online store|product catalog|paid tickets)\b/i',
         'cms-pages' => '/\b(cms page|admin-managed page|create page)\b/i',
         'media' => '/\b(media library|upload image|gallery field)\b/i',
         'agent-guide' => '/\b(agent guide|ai presence|well-known)\b/i',
         'automation' => '/\b(automation|workflow|webhook|slack notification)\b/i',
         'events' => '/\b(events|rsvp|calendar|tickets)\b/i',
-        'user-management' => '/\b(user registration|member login|site users)\b/i',
+        'user-management' => '/\b(user registration|member registration|member login|site users|logged-in members)\b/i',
         'mcp-setup' => '/\b(mcp|connect claude|connect cursor|connect chatgpt|connector url|model context protocol)\b/i',
         'ai-connections' => '/\b(built-in assistant|ai connection|approvals tab|floating chat)\b/i',
-        'plugins-overview' => '/\b(install plugin|marketplace|activate plugin|enable commerce|enable plugin)\b/i',
+        'plugins-overview' => '/\b(install plugin|install \w+ plugin|marketplace|activate plugin|enable commerce|enable plugin)\b/i',
         'settings-roles' => '/\b(role|permission|settings tab|security settings)\b/i',
         'content-editor' => '/\b(rich text|content editor|editor field|wysiwyg)\b/i',
     ];
@@ -369,15 +369,19 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "Users may give very short prompts (e.g. \"build me a bakery website\") — you must still deliver a complete Birkly project site.\n\n";
 
     $rules = "RULES:\n"
+        . "- Start with ai-quality-guide golden rules when unsure; playbooks-index for routing\n"
         . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
-        . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, public-forms — use when playbooks below don't cover your task\n"
+        . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, public-forms, web-project-patterns — when not pre-loaded below\n"
+        . "- Admin help topics link to playbooks via ai_topic (e.g. entries→content-model, mcp-connections→mcp-setup)\n"
         . "- List pages: loops; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
         . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script>\n"
-        . "- Define collection fields BEFORE create_entry — never leave fields: []; read fieldtypes playbook for type names\n"
+        . "- Define collection fields BEFORE create_entry — never leave fields: []; read fieldtypes for type names\n"
         . "- read_collection before writing form HTML — field slugs must match name=\"{slug}\" exactly\n"
+        . "- Use {entry for} for contact forms — NEVER custom fetch JS with wrong payloads (see public-forms known bad patterns)\n"
         . "- Use get_project_info site_url_prefix for asset/page URLs in HTML (e.g. /project/css/…)\n"
         . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
         . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
+        . "- Plugins: list_plugins before assuming Commerce/Events/User Management exist — install via Marketplace\n"
         . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n\n";
 
     return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
