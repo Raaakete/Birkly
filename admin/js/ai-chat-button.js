@@ -208,6 +208,8 @@
         if (!message) return '';
 
         message = message.replace(/```(?:json)?\s*[\s\S]*?```/gi, '');
+        message = message.replace(/<tool_call\b[^>]*>[\s\S]*?<\/tool_call>/gi, '');
+        message = message.replace(/<tool_call\b[^>]*>[\s\S]*/gi, '');
         message = message.replace(/\n*\[Session notes[^\]]*\]\s*/g, '');
 
         const needles = ['{"actions"', '{ "actions"', '{"type":"write_project_file"', '{ "type": "write_project_file"'];

@@ -29,6 +29,7 @@ function buildSystemPromptSimple($context, $aiUser) {
     $prompt .= "- For site/design questions: call list_project_files and read_project_file first, then answer from actual file contents.\n";
     $prompt .= "- Only write/update project files when the user asks you to change something — not when they only ask a question or want a review.\n";
     $prompt .= "- Use native tool calls for all CMS/project changes — do not describe changes you did not execute.\n";
+    $prompt .= "- Never paste raw tool-call markup (<tool_call>, arg_key, file contents) in your visible reply — tools run server-side.\n";
     $prompt .= "- Project file paths: index.html, css/style.css (relative to project/ — never prefix with project/).\n";
     $prompt .= "- There is NO create_user action — direct users to Settings > Users.\n\n";
 
