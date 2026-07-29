@@ -305,3 +305,10 @@ Fetch summary on session start; cache 5 min keyed by `X-Agent-Guide-Version`. Re
 - [Getting started](../02-content/agent-guide-getting-started.md)
 - [MCP & agents](agent-guide-mcp-and-agents.md)
 - [Website integration](website-integration.md)
+
+## Further reading
+
+- [Choose your stack](choose-your-stack.md)
+- [Web components](web-components.md)
+- [SPA (React / Vue)](spa-react-vue.md)
+- [SSR and build-time](ssr-and-build-time.md)
