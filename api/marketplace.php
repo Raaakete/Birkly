@@ -224,6 +224,19 @@ if ($action === 'install') {
         exit;
     }
 
+    $offerDetail = birkly_marketplace_offer_detail($slug);
+    if ($offerDetail['ok']) {
+        $offer = is_array($offerDetail['offer'] ?? null) ? $offerDetail['offer'] : [];
+        if (!birkly_marketplace_offer_is_installable($offer)) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'This plugin is coming soon and cannot be installed yet.',
+                'code' => 'offer_coming_soon',
+            ]);
+            exit;
+        }
+    }
+
     $freeInstall = false;
     if ($licenseKey === '') {
         $freeClaim = birkly_marketplace_claim_free_license($slug);
