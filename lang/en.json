@@ -349,6 +349,7 @@
         "no_plugins_marketplace_hint": "Browse the Marketplace tab to install official plugins like Commerce and Events — free for Birkly sites.",
         "browse_marketplace": "Browse Marketplace",
         "price_free": "Free",
+        "price_from": "From",
         "install": "Install",
         "install_with_license": "Install with license",
         "enter_license_key": "Enter your license key",
