@@ -648,10 +648,26 @@ function birkly_ai_presence_list_versions(): array
         if (!preg_match('/^(\d+)\.json$/', $file, $m)) {
             continue;
         }
+        $path = $dir . '/' . $file;
+        $publishedAt = null;
+        $summary = '';
+        $decoded = birkly_ai_presence_read_json($path);
+        if (is_array($decoded)) {
+            $publishedAt = (string) ($decoded['_published']['published_at'] ?? '');
+            if ($publishedAt === '') {
+                $publishedAt = null;
+            }
+            $name = trim((string) ($decoded['identity']['official_name'] ?? ''));
+            if ($name !== '') {
+                $summary = $name;
+            }
+        }
         $versions[] = [
             'version' => (int) $m[1],
-            'path' => $dir . '/' . $file,
-            'size' => filesize($dir . '/' . $file) ?: 0,
+            'path' => $path,
+            'size' => filesize($path) ?: 0,
+            'published_at' => $publishedAt,
+            'summary' => $summary,
         ];
     }
     usort($versions, static fn ($a, $b) => ($b['version'] <=> $a['version']));

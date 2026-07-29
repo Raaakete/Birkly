@@ -50,7 +50,7 @@ $readActions = [
 ];
 $writeActions = [
     'save_draft', 'publish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'accept_suggestions',
-    'setup_complete', 'setup_skip', 'copilot', 'field_ai', 'wizard_generate', 'wizard_apply', 'cms_refresh',
+    'setup_complete', 'setup_skip', 'setup_start', 'copilot', 'field_ai', 'wizard_generate', 'wizard_apply', 'cms_refresh',
     'validate_links', 'suggest_links',
 ];
 
@@ -78,6 +78,7 @@ if ($action === 'get') {
             'collections' => birkly_ai_presence_list_collections(),
             'ai_connections' => birkly_ai_presence_list_ai_connections_for_user($userId),
             'can_edit' => birkly_ai_presence_can_edit($currentUser),
+            'publish_state' => birkly_ai_presence_publish_state($draft),
         ],
     ]);
     exit;
@@ -335,6 +336,16 @@ if ($action === 'accept_suggestions') {
         }
     }
     birkly_ai_presence_save_draft($draft);
+    echo json_encode(['status' => 'ok', 'data' => ['draft' => $draft]]);
+    exit;
+}
+
+if ($action === 'setup_start') {
+    $draft = birkly_ai_presence_load_draft();
+    if (empty($draft['setup_started_at'])) {
+        $draft['setup_started_at'] = date('c');
+        birkly_ai_presence_save_draft($draft);
+    }
     echo json_encode(['status' => 'ok', 'data' => ['draft' => $draft]]);
     exit;
 }

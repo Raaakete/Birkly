@@ -1307,3 +1307,204 @@
   font-size: 0.8125rem;
   margin: 0.25rem 0 0;
 }
+
+/* P49 — status strip, publish feedback, essentials, timeline */
+
+.ap-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-m, 1rem);
+  margin-bottom: var(--space-m, 1rem);
+  padding: var(--space-m, 1rem);
+}
+
+.ap-status-strip-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs, 0.375rem);
+}
+
+.ap-live-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.ap-live-badge--live {
+  background: var(--primary-100, #d1fae5);
+  color: var(--primary-800, #065f46);
+}
+
+.ap-live-badge--draft,
+.ap-live-badge--changes {
+  background: var(--warning-100, #fef3c7);
+  color: var(--warning-800, #92400e);
+}
+
+.ap-live-badge--off {
+  background: var(--bg-secondary, #f3f4f6);
+  color: var(--text-secondary, #72746F);
+}
+
+.ap-status-strip-meta {
+  flex: 1;
+  min-width: 200px;
+  font-size: 0.8125rem;
+  color: var(--text-secondary, #72746F);
+}
+
+.ap-status-url {
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.ap-view-toggle {
+  display: inline-flex;
+  gap: 0;
+  margin-bottom: var(--space-m, 1rem);
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: var(--radius-md, 8px);
+  overflow: hidden;
+}
+
+.ap-view-toggle-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: var(--bg-elevated, #fff);
+  color: var(--text-secondary, #72746F);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ap-view-toggle-btn:focus-visible {
+  outline: var(--focus-outline, 2px solid var(--primary-500, #52C49A));
+  outline-offset: 2px;
+}
+
+.ap-view-toggle-btn.active {
+  background: var(--primary-50, #ecfdf5);
+  color: var(--primary-800, #065f46);
+  font-weight: 600;
+}
+
+.ap-essentials-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-s, 0.75rem);
+  margin-bottom: var(--space-s, 0.75rem);
+}
+
+.ap-essentials-section-head h3 {
+  margin: 0;
+}
+
+.ap-essentials-preview-list {
+  margin: 0;
+}
+
+.ap-essentials-publish-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-s, 0.75rem);
+}
+
+.ap-page--essentials .ap-assist-sidebar {
+  display: none;
+}
+
+.ap-page--essentials {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ap-publish-banner {
+  margin: 0 var(--space-m, 1rem) var(--space-m, 1rem);
+  border: 2px solid var(--primary-500, #52C49A);
+  border-radius: var(--radius-md, 8px);
+  background: var(--primary-50, #ecfdf5);
+}
+
+.ap-publish-banner-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-m, 1rem);
+  padding: var(--space-m, 1rem);
+}
+
+.ap-publish-banner-icon {
+  font-size: 1.5rem;
+  color: var(--primary-700, #047857);
+  font-weight: 700;
+}
+
+.ap-publish-banner-text {
+  flex: 1;
+  min-width: 180px;
+}
+
+.ap-publish-banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs, 0.375rem);
+  align-items: center;
+}
+
+.ap-narrative-callout {
+  margin-bottom: var(--space-m, 1rem);
+  padding: var(--space-m, 1rem);
+  border-left: 3px solid var(--primary-500, #52C49A);
+}
+
+.ap-version-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 var(--space-m, 1rem);
+  border-left: 2px solid var(--border-light, #e5e7eb);
+}
+
+.ap-version-timeline-item {
+  position: relative;
+  padding: 0 0 var(--space-m, 1rem) var(--space-m, 1rem);
+}
+
+.ap-version-timeline-marker {
+  position: absolute;
+  left: calc(-1 * var(--space-m, 1rem) - 5px);
+  top: 0.35rem;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary-500, #52C49A);
+  border: 2px solid var(--bg-elevated, #fff);
+}
+
+.ap-version-timeline-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.875rem;
+}
+
+.ap-publish-success-body {
+  text-align: center;
+  padding: var(--space-l, 1.5rem);
+}
+
+@media (max-width: 640px) {
+  .ap-status-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ap-status-strip-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-s, 0.75rem);
+  }
+}
