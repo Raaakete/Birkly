@@ -335,3 +335,70 @@ function birkly_mcp_validate_origin(): bool
 {
     return birkly_mcp_is_permitted_request_origin((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
 }
+
+/**
+ * GET on MCP endpoint — legacy HTTP+SSE probe (2024-11-05) and Streamable HTTP listen channel.
+ * MCP clients that receive 401 on POST may GET expecting an SSE stream + endpoint event.
+ */
+function birkly_mcp_handle_get_request(): void
+{
+    if (!birkly_mcp_validate_origin()) {
+        http_response_code(403);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Invalid Origin']);
+        return;
+    }
+
+    $accept = (string) ($_SERVER['HTTP_ACCEPT'] ?? '');
+    if ($accept !== '' && !str_contains($accept, 'text/event-stream')) {
+        http_response_code(405);
+        header('Allow: GET, POST');
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Use GET with Accept: text/event-stream or POST for MCP.']);
+        return;
+    }
+
+    require_once __DIR__ . '/mcp_oauth.php';
+
+    $endpointUrl = birkly_mcp_oauth_resource_url();
+
+    http_response_code(200);
+    header('Content-Type: text/event-stream; charset=utf-8');
+    header('Cache-Control: no-cache, no-transform');
+    header('Connection: keep-alive');
+    header('X-Accel-Buffering: no');
+
+    // Legacy HTTP+SSE (2024-11-05): first event is the JSON-RPC POST target.
+    echo 'event: endpoint' . "\n";
+    echo 'data: ' . $endpointUrl . "\n\n";
+    if (function_exists('ob_flush')) {
+        @ob_flush();
+    }
+    flush();
+}
+
+/**
+ * Emit one JSON-RPC payload as a Streamable HTTP SSE message (optional response shape).
+ */
+function birkly_mcp_emit_sse_jsonrpc(array $payload): void
+{
+    header('Content-Type: text/event-stream; charset=utf-8');
+    header('Cache-Control: no-cache, no-transform');
+    header('X-Accel-Buffering: no');
+    echo 'data: ' . json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n\n";
+    if (function_exists('ob_flush')) {
+        @ob_flush();
+    }
+    flush();
+}
+
+function birkly_mcp_client_prefers_sse_response(): bool
+{
+    $accept = strtolower((string) ($_SERVER['HTTP_ACCEPT'] ?? ''));
+    if ($accept === '') {
+        return false;
+    }
+    $wantsStream = str_contains($accept, 'text/event-stream');
+    $wantsJson = str_contains($accept, 'application/json');
+    return $wantsStream && !$wantsJson;
+}
