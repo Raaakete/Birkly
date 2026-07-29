@@ -30,6 +30,15 @@ if (window.HaruFieldtypeConfig) {
 
 // DynamicItems fieldtype implementation
 window.HaruFieldtypes['dynamicitems'] = {
+  // Resolve DynamicItems field name from a DOM node inside .block-field (multilang-safe).
+  resolveFieldNameFromNode: function(node) {
+    const field = node && node.closest ? node.closest('.block-field') : null;
+    if (!field || !field.id) {
+      return null;
+    }
+    return field.id.replace(/^field_/, '');
+  },
+
   // Resolve field container id from the Add Block button (multilang-safe).
   showAddBlockModalFromButton: function(button) {
     const field = button && button.closest ? button.closest('.block-field') : null;
@@ -39,6 +48,12 @@ window.HaruFieldtypes['dynamicitems'] = {
     }
     const fieldName = field.id.replace(/^field_/, '');
     this.showAddBlockModal(fieldName);
+  },
+
+  resolveUrl: function(path) {
+    if (!path) return '';
+    if (/^https?:\/\//i.test(path)) return path;
+    return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
   },
 
   // Show modal for adding a new block
@@ -78,11 +93,11 @@ window.HaruFieldtypes['dynamicitems'] = {
     });
     
     const modalHtml = `
-      <div id="${modalId}" class="dynamicitems-modal-overlay">
+      <div id="${modalId}" class="dynamicitems-modal-overlay" data-dynamicitems-field="${this.escapeHtml(fieldName)}">
         <div class="dynamicitems-modal">
           <div class="dynamicitems-modal-header">
             <h3>Add Block</h3>
-            <button type="button" class="dynamicitems-modal-close" onclick="this.closest('.dynamicitems-modal-overlay').remove()">&times;</button>
+            <button type="button" class="dynamicitems-modal-close" data-dynamicitems-action="modal-close" aria-label="Close">&times;</button>
           </div>
           <div class="dynamicitems-modal-body">
             <div class="dynamicitems-form-group">
@@ -113,8 +128,8 @@ window.HaruFieldtypes['dynamicitems'] = {
             </div>
           </div>
           <div class="dynamicitems-modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="document.getElementById('${modalId}').remove()">Cancel</button>
-            <button type="button" class="btn btn-primary" onclick="window.HaruFieldtypes['dynamicitems'].addBlockFromModal('${fieldName}')">Add Block</button>
+            <button type="button" class="btn btn-secondary" data-dynamicitems-action="modal-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dynamicitems-action="modal-confirm">Add Block</button>
           </div>
         </div>
       </div>
@@ -138,6 +153,7 @@ window.HaruFieldtypes['dynamicitems'] = {
     });
     
     // Load fieldtype settings when type is selected
+    const dynamicItemsApi = this;
     fieldtypeSelect.addEventListener('change', function() {
       const fieldtypeName = this.value;
       const settingsContainer = document.getElementById('block-settings-container');
@@ -149,7 +165,7 @@ window.HaruFieldtypes['dynamicitems'] = {
       }
       
       // Load fieldtype config UI
-      fetch(`/api/admin_fieldtypes.php?action=get_config_ui&fieldtype=${encodeURIComponent(fieldtypeName)}&fieldIndex=0&existingData={}`)
+      fetch(dynamicItemsApi.resolveUrl(`/api/admin_fieldtypes.php?action=get_config_ui&fieldtype=${encodeURIComponent(fieldtypeName)}&fieldIndex=0&existingData={}`))
         .then(response => response.json())
         .then(data => {
           if (data.status === 'ok' && data.html) {
@@ -318,10 +334,10 @@ window.HaruFieldtypes['dynamicitems'] = {
           <span class="block-item-name">${this.escapeHtml(block.name)}</span>
         </div>
         <div class="block-item-actions">
-          <button type="button" class="btn btn-sm btn-secondary" onclick="window.HaruFieldtypes['dynamicitems'].editBlock('${fieldName}', ${idx})" title="Edit">
+          <button type="button" class="btn btn-sm btn-secondary" data-dynamicitems-action="edit-block" data-block-idx="${idx}" title="Edit">
             ✎ Edit
           </button>
-          <button type="button" class="btn btn-sm btn-danger" onclick="window.HaruFieldtypes['dynamicitems'].removeBlock('${fieldName}', ${idx})" title="Remove">
+          <button type="button" class="btn btn-sm btn-danger" data-dynamicitems-action="remove-block" data-block-idx="${idx}" title="Remove">
             × Remove
           </button>
         </div>
@@ -353,7 +369,7 @@ window.HaruFieldtypes['dynamicitems'] = {
       formData.append('blockSettings', JSON.stringify(block.settings));
     }
     
-    fetch('/api/admin_fieldtypes.php', {
+    fetch(this.resolveUrl('/api/admin_fieldtypes.php'), {
       method: 'POST',
       body: formData
     })
@@ -607,6 +623,81 @@ window.HaruFieldtypes['dynamicitems'] = {
     return div.innerHTML;
   }
 };
+
+// CSP blocks inline onclick in admin (P16-M5) — use delegated listeners.
+function bindDynamicItemsDelegatedEvents() {
+  if (document.documentElement.dataset.dynamicitemsDelegationBound === '1') {
+    return;
+  }
+  document.documentElement.dataset.dynamicitemsDelegationBound = '1';
+
+  document.addEventListener('click', function(e) {
+    const api = window.HaruFieldtypes && window.HaruFieldtypes['dynamicitems'];
+    if (!api) {
+      return;
+    }
+
+    const actionEl = e.target.closest('[data-dynamicitems-action]');
+    if (!actionEl) {
+      return;
+    }
+
+    const action = actionEl.getAttribute('data-dynamicitems-action');
+    if (!action) {
+      return;
+    }
+
+    if (action === 'add-block') {
+      e.preventDefault();
+      api.showAddBlockModalFromButton(actionEl);
+      return;
+    }
+
+    const fieldName = api.resolveFieldNameFromNode(actionEl);
+    if (!fieldName && action !== 'modal-close' && action !== 'modal-cancel' && action !== 'modal-confirm') {
+      return;
+    }
+
+    if (action === 'edit-block') {
+      e.preventDefault();
+      const idx = parseInt(actionEl.getAttribute('data-block-idx') || '', 10);
+      if (!Number.isNaN(idx)) {
+        api.editBlock(fieldName, idx);
+      }
+      return;
+    }
+
+    if (action === 'remove-block') {
+      e.preventDefault();
+      const idx = parseInt(actionEl.getAttribute('data-block-idx') || '', 10);
+      if (!Number.isNaN(idx)) {
+        api.removeBlock(fieldName, idx);
+      }
+      return;
+    }
+
+    const modal = actionEl.closest('.dynamicitems-modal-overlay');
+    if (!modal) {
+      return;
+    }
+
+    if (action === 'modal-close' || action === 'modal-cancel') {
+      e.preventDefault();
+      modal.remove();
+      return;
+    }
+
+    if (action === 'modal-confirm') {
+      e.preventDefault();
+      const modalFieldName = modal.getAttribute('data-dynamicitems-field') || fieldName;
+      if (modalFieldName) {
+        api.addBlockFromModal(modalFieldName);
+      }
+    }
+  });
+}
+
+bindDynamicItemsDelegatedEvents();
 
 // Initialize function for DynamicItems fieldtype
 function initDynamicItemsField(fieldName) {
