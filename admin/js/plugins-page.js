@@ -698,6 +698,20 @@
         updatePageTitle('marketplace');
     }
 
+    function ratingTierClass(summary) {
+        if (!summary || !summary.count) {
+            return 'none';
+        }
+        var avg = Number(summary.average || 0);
+        if (avg >= 4) {
+            return 'good';
+        }
+        if (avg >= 3) {
+            return 'fair';
+        }
+        return 'poor';
+    }
+
     function formatRating(summary) {
         if (!summary || !summary.count) {
             return t('marketplace_no_reviews', 'No reviews yet');
@@ -770,19 +784,31 @@
         );
     }
 
-    function renderOfferMetaRows(offer) {
+    function renderOfferRatingStat(summary) {
+        var tier = ratingTierClass(summary);
         return (
-            '<div class="marketplace-offer-meta">' +
-            '<div class="marketplace-offer-meta-row">' +
-            '<span class="marketplace-price">' + escapeHtml(formatPrice(offer)) + '</span>' +
-            '<span class="marketplace-rating">' + escapeHtml(formatRating(offer.rating_summary)) + '</span>' +
-            '</div>' +
-            '<div class="marketplace-offer-meta-row">' +
-            '<span class="marketplace-downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
-            (offer.latest_version
-                ? '<span class="marketplace-version">v' + escapeHtml(offer.latest_version) + '</span>'
-                : '<span class="marketplace-version"></span>') +
-            '</div>' +
+            '<span class="marketplace-stat marketplace-stat--rating marketplace-rating--' +
+            escapeHtml(tier) +
+            '">' +
+            escapeHtml(formatRating(summary)) +
+            '</span>'
+        );
+    }
+
+    function renderOfferMetaRows(offer) {
+        var versionHtml = offer.latest_version
+            ? '<span class="marketplace-stat marketplace-stat--version">v' + escapeHtml(offer.latest_version) + '</span>'
+            : '';
+        return (
+            '<div class="marketplace-offer-stats">' +
+            '<span class="marketplace-stat marketplace-stat--price">' + escapeHtml(formatPrice(offer)) + '</span>' +
+            '<span class="marketplace-stat-sep" aria-hidden="true">·</span>' +
+            renderOfferRatingStat(offer.rating_summary) +
+            '<span class="marketplace-stat-sep" aria-hidden="true">·</span>' +
+            '<span class="marketplace-stat marketplace-stat--downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
+            (versionHtml
+                ? '<span class="marketplace-stat-sep" aria-hidden="true">·</span>' + versionHtml
+                : '') +
             '</div>'
         );
     }
