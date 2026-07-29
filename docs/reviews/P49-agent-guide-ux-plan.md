@@ -153,20 +153,20 @@ Single scroll or 2-column page (not 7 tabs):
 | ID | Focus | Owner | Status |
 |----|--------|-------|--------|
 | **P49-M0** | Plan, gap register, matrix, handoff | product-planner | **this PR** |
-| **P49-M1** | Publish success UX + sticky bar + overview live badge | frontend-developer | pending |
-| **P49-M2** | Overview redesign (status strip, next steps, re-run wizard CTA) | frontend-developer | pending |
-| **P49-M3** | Guided setup wizard (modal, 7 steps, skip/advanced) | frontend-developer | pending |
-| **P49-M4** | Essentials simple view + Advanced toggle | frontend-developer | pending |
-| **P49-M5** | AI Assist contextual (wizard steps + collapsible sidebar) | frontend-developer | pending |
-| **P49-M6** | Sources tab simplification + narrative source emphasis | frontend-developer | pending |
-| **P49-M7** | Claims & evidence guided flow (add claim wizard inline) | frontend-developer | pending |
-| **P49-M8** | Products & Media tab polish + empty states | frontend-developer | pending |
-| **P49-M9** | Publish tab: history timeline, change hint, API URL block | frontend-developer | pending |
-| **P49-M10** | Context preview polish + sample questions | cms-developer | pending |
-| **P49-M11** | Hardening: a11y, mobile, errors, loading, double-submit | frontend-developer + qa-verifier | pending |
-| **P49-M12** | i18n en + de for all new strings | cms-developer | pending |
-| **P49-M13** | Birkly-Docs user flows + admin help snippets | docs-writer | pending |
-| **P49-M14** | Tests, V-AG matrix, design review, smoke script, closure | lead-engineer | pending |
+| **P49-M1** | Publish success UX + sticky bar + overview live badge | frontend-developer | **done** |
+| **P49-M2** | Overview redesign (status strip, next steps, re-run wizard CTA) | frontend-developer | **done** |
+| **P49-M3** | Guided setup wizard (modal, 7 steps, skip/advanced) | frontend-developer | **done** |
+| **P49-M4** | Essentials simple view + Advanced toggle | frontend-developer | **done** |
+| **P49-M5** | AI Assist contextual (wizard steps + collapsible sidebar) | frontend-developer | **done** |
+| **P49-M6** | Sources tab simplification + narrative source emphasis | frontend-developer | **done** |
+| **P49-M7** | Claims & evidence guided flow (add claim wizard inline) | frontend-developer | **done** |
+| **P49-M8** | Products & Media tab polish + empty states | frontend-developer | **done** |
+| **P49-M9** | Publish tab: history timeline, change hint, API URL block | frontend-developer | **done** |
+| **P49-M10** | Context preview polish + sample questions | cms-developer | **done** |
+| **P49-M11** | Hardening: a11y, mobile, errors, loading, double-submit | frontend-developer + qa-verifier | **done** |
+| **P49-M12** | i18n en + de for all new strings | cms-developer | **done** |
+| **P49-M13** | Birkly-Docs user flows + admin help snippets | docs-writer | **done** |
+| **P49-M14** | Tests, V-AG matrix, design review, smoke script, closure | lead-engineer | **done** |
 
 **Execution order:** M1→M2 (feedback/state) before M3 wizard; M4–M9 can overlap after M3 shell; M11 continuous; M14 last.
 
