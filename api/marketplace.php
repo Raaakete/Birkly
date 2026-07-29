@@ -62,8 +62,9 @@ if ($action === 'browse') {
     $category = trim((string) ($input['category'] ?? $_GET['category'] ?? ''));
     $offerType = trim((string) ($input['offer_type'] ?? $_GET['offer_type'] ?? ''));
     $sort = trim((string) ($input['sort'] ?? $_GET['sort'] ?? 'name'));
+    $price = trim((string) ($input['price'] ?? $_GET['price'] ?? ''));
 
-    $result = birkly_marketplace_browse($query, $category, $offerType, $sort);
+    $result = birkly_marketplace_browse($query, $category, $offerType, $sort, $price);
     if (!$result['ok']) {
         echo json_encode([
             'status' => 'error',
