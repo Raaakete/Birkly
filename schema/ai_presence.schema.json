@@ -302,6 +302,7 @@
         "public_views_enabled": { "type": "boolean" }
       }
     },
+    "setup_started_at": { "type": "string" },
     "setup_completed_at": { "type": "string" },
     "setup_skipped_at": { "type": "string" },
     "usage_hints": { "type": "object" }

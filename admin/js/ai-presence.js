@@ -21,7 +21,11 @@
         studioDraftPatch: null,
         versions: [],
         publicUrls: {},
-        aiAbortController: null
+        aiAbortController: null,
+        viewMode: 'essentials',
+        publishState: null,
+        publishingInProgress: false,
+        wizard: null
     };
 
     function apiUrl(path) {
@@ -416,20 +420,64 @@
         });
     }
 
+    var modalFocusTrap = null;
+    var modalPreviousFocus = null;
+
+    function getModalFocusable(modal) {
+        return Array.from(modal.querySelectorAll(
+            'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )).filter(function (el) { return el.offsetParent !== null; });
+    }
+
+    function releaseModalFocusTrap() {
+        if (modalFocusTrap) {
+            document.removeEventListener('keydown', modalFocusTrap);
+            modalFocusTrap = null;
+        }
+    }
+
+    function trapModalFocus(modal) {
+        releaseModalFocusTrap();
+        modalFocusTrap = function (e) {
+            if (e.key !== 'Tab' || !modal.classList.contains('active')) return;
+            var focusable = getModalFocusable(modal);
+            if (!focusable.length) return;
+            var first = focusable[0];
+            var last = focusable[focusable.length - 1];
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+        document.addEventListener('keydown', modalFocusTrap);
+    }
+
     function openApModal(id) {
         var modal = document.getElementById(id);
         if (!modal) return;
+        modalPreviousFocus = document.activeElement;
         modal.classList.add('active');
+        modal.style.display = 'flex';
         modal.setAttribute('aria-hidden', 'false');
         var first = modal.querySelector('input, textarea, select, button:not(.modal-close)');
         if (first) first.focus();
+        trapModalFocus(modal);
     }
 
     function closeApModal(id) {
         var modal = document.getElementById(id);
         if (!modal) return;
         modal.classList.remove('active');
+        modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
+        releaseModalFocusTrap();
+        if (modalPreviousFocus && modalPreviousFocus.focus) {
+            modalPreviousFocus.focus();
+            modalPreviousFocus = null;
+        }
     }
 
     function bindApModals() {
@@ -461,10 +509,338 @@
         if (fab) fab.setAttribute('aria-expanded', 'true');
     }
 
+    function t(key, fallback) {
+        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
+            return global.Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback || key;
+    }
+
     function escapeHtml(text) {
         var div = document.createElement('div');
         div.textContent = String(text ?? '');
         return div.innerHTML;
+    }
+
+    function formatDateTime(iso) {
+        if (!iso) return '—';
+        try {
+            return new Date(iso).toLocaleString();
+        } catch (e) {
+            return iso;
+        }
+    }
+
+    function getPublishState(data) {
+        if (data && data.publish_state) {
+            var ps = data.publish_state;
+            if (state.dirty) {
+                ps = Object.assign({}, ps, { has_unpublished_changes: true });
+            }
+            return ps;
+        }
+        var meta = state.meta || {};
+        var version = (meta.published_version || 0);
+        var enabled = !!(state.draft && state.draft.publication_settings && state.draft.publication_settings.enabled);
+        var neverPublished = !state.published || version < 1;
+        var isLive = !neverPublished && enabled;
+        return {
+            is_live: isLive,
+            version: version,
+            last_published_at: meta.last_published_at || null,
+            publishing_enabled: enabled,
+            has_unpublished_changes: isLive && state.dirty,
+            never_published: neverPublished
+        };
+    }
+
+    function renderStatusStrip(data) {
+        var ps = getPublishState(data);
+        state.publishState = ps;
+        var badgesEl = document.getElementById('ap-status-badges');
+        var metaEl = document.getElementById('ap-status-meta');
+        var setupBtn = document.getElementById('ap-setup-guide-btn');
+        var statusPubBtn = document.getElementById('ap-status-publish-btn');
+        if (!badgesEl) return;
+
+        var badges = '';
+        if (!ps.publishing_enabled) {
+            badges += '<span class="ap-live-badge ap-live-badge--off">' + escapeHtml(t('ag_badge_publishing_off', 'Publishing off')) + '</span>';
+        } else if (ps.never_published) {
+            badges += '<span class="ap-live-badge ap-live-badge--draft">' + escapeHtml(t('ag_badge_not_live', 'Not live')) + '</span>';
+        } else {
+            badges += '<span class="ap-live-badge ap-live-badge--live">' + escapeHtml(t('ag_badge_live', 'Live · v{version}').replace('{version}', String(ps.version))) + '</span>';
+            if (ps.has_unpublished_changes || state.dirty) {
+                badges += ' <span class="ap-live-badge ap-live-badge--changes">' + escapeHtml(t('ag_badge_unpublished', 'Unpublished changes')) + '</span>';
+            }
+        }
+        badgesEl.innerHTML = badges;
+
+        if (metaEl) {
+            var urls = data.public_urls || state.publicUrls || {};
+            var parts = [];
+            if (ps.last_published_at) {
+                parts.push(t('ag_last_published', 'Last published') + ': ' + formatDateTime(ps.last_published_at));
+            }
+            if (urls.well_known_url) {
+                parts.push('<code class="ap-status-url">' + escapeHtml(urls.well_known_url) + '</code>');
+            }
+            metaEl.innerHTML = parts.join(' · ');
+        }
+
+        if (setupBtn) setupBtn.hidden = false;
+        if (statusPubBtn) {
+            var showPub = ps.is_live && (ps.has_unpublished_changes || state.dirty);
+            statusPubBtn.hidden = !showPub;
+        }
+    }
+
+    function updateStickyBar(data) {
+        var ps = getPublishState(data);
+        var msgEl = document.getElementById('ai-presence-message');
+        var pubBtn = document.getElementById('ai-presence-publish-btn');
+        if (msgEl) {
+            msgEl.style.display = 'block';
+            if (!ps.publishing_enabled) {
+                msgEl.textContent = t('ag_sticky_publishing_off', 'Publishing is disabled — enable it on the Publish tab.');
+                msgEl.className = 'main-actions-message message message-warning';
+            } else if (ps.never_published) {
+                msgEl.textContent = t('ag_sticky_not_live', 'Not published yet — complete setup and publish when ready.');
+                msgEl.className = 'main-actions-message message message-warning';
+            } else if (ps.has_unpublished_changes || state.dirty) {
+                msgEl.textContent = t('ag_sticky_unpublished', 'You have unpublished changes.');
+                msgEl.className = 'main-actions-message message message-warning';
+            } else {
+                msgEl.textContent = t('ag_sticky_published', 'Published at {time} — no unpublished changes.')
+                    .replace('{time}', formatDateTime(ps.last_published_at));
+                msgEl.className = 'main-actions-message message message-success';
+            }
+        }
+        if (pubBtn) {
+            var disablePub = state.publishingInProgress || (!ps.never_published && !ps.has_unpublished_changes && !state.dirty);
+            pubBtn.disabled = disablePub || !state.canEdit;
+            pubBtn.textContent = ps.is_live && (ps.has_unpublished_changes || state.dirty)
+                ? t('ag_publish_updates', 'Publish updates')
+                : t('publish_ai_presence', 'Publish');
+        }
+    }
+
+    function showPublishSuccess(data, isFirst) {
+        var ps = getPublishState(data);
+        var urls = data.public_urls || state.publicUrls || {};
+        var url = urls.well_known_url || '';
+        var metaText = t('ag_wizard_success_meta', 'Version {version} · Published {time}')
+            .replace('{version}', String(ps.version))
+            .replace('{time}', formatDateTime(ps.last_published_at));
+
+        if (isFirst) {
+            var modal = document.getElementById('ap-publish-success-modal');
+            var urlEl = document.getElementById('ap-success-url');
+            var metaEl = document.getElementById('ap-success-meta');
+            var openEl = document.getElementById('ap-success-open');
+            if (urlEl) urlEl.textContent = url;
+            if (metaEl) metaEl.textContent = metaText;
+            if (openEl && url) openEl.href = url;
+            openApModal('ap-publish-success-modal');
+        } else {
+            var banner = document.getElementById('ap-publish-banner');
+            var titleEl = document.getElementById('ap-publish-banner-title');
+            var bannerMeta = document.getElementById('ap-publish-banner-meta');
+            var bannerOpen = document.getElementById('ap-publish-banner-open');
+            if (titleEl) titleEl.textContent = isFirst
+                ? t('ag_wizard_success_title', 'Agent Guide is live')
+                : t('ag_publish_updated_title', 'Agent Guide updated');
+            if (bannerMeta) bannerMeta.textContent = metaText;
+            if (bannerOpen && url) bannerOpen.href = url;
+            if (banner) banner.hidden = false;
+        }
+        toast(t('ag_publish_toast', 'Agent Guide published'), 'success');
+    }
+
+    function renderEssentials() {
+        var sourcesList = document.getElementById('ap-essentials-sources-list');
+        var sourcesEmpty = document.getElementById('ap-essentials-sources-empty');
+        var claimsList = document.getElementById('ap-essentials-claims-list');
+        var claimsEmpty = document.getElementById('ap-essentials-claims-empty');
+        var sources = (state.draft && state.draft.sources_of_truth) || [];
+        if (sourcesList) {
+            sourcesList.innerHTML = '';
+            sources.slice(0, 3).forEach(function (src) {
+                var li = document.createElement('li');
+                li.innerHTML = '<strong>' + escapeHtml(src.label || src.type) + '</strong> ' +
+                    '<span class="badge">' + escapeHtml(src.role || 'reference') + '</span>';
+                sourcesList.appendChild(li);
+            });
+            if (sourcesEmpty) sourcesEmpty.hidden = sources.length > 0;
+            sourcesList.hidden = sources.length === 0;
+        }
+        var claims = (state.draft && state.draft.claims) || [];
+        if (claimsList) {
+            claimsList.innerHTML = '';
+            claims.slice(0, 3).forEach(function (claim) {
+                var li = document.createElement('li');
+                li.innerHTML = '<strong>' + escapeHtml(claim.statement || 'Untitled') + '</strong> ' +
+                    '<span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>';
+                claimsList.appendChild(li);
+            });
+            if (claimsEmpty) claimsEmpty.hidden = claims.length > 0;
+            claimsList.hidden = claims.length === 0;
+        }
+    }
+
+    function setViewMode(mode) {
+        state.viewMode = mode === 'advanced' ? 'advanced' : 'essentials';
+        try {
+            localStorage.setItem('ap_view_mode', state.viewMode);
+        } catch (e) { /* ignore */ }
+        var essEl = document.getElementById('ap-essentials-view');
+        var advEl = document.getElementById('ap-advanced-view');
+        var page = document.querySelector('.ap-page');
+        if (essEl) essEl.hidden = state.viewMode !== 'essentials';
+        if (advEl) advEl.hidden = state.viewMode !== 'advanced';
+        document.querySelectorAll('.ap-view-toggle-btn').forEach(function (btn) {
+            btn.classList.toggle('active', btn.getAttribute('data-view-mode') === state.viewMode);
+            btn.setAttribute('aria-pressed', btn.getAttribute('data-view-mode') === state.viewMode ? 'true' : 'false');
+        });
+        if (page) {
+            page.classList.toggle('ap-page--essentials', state.viewMode === 'essentials');
+            page.classList.toggle('ap-page--advanced', state.viewMode === 'advanced');
+        }
+        var fab = document.getElementById('ap-assist-fab');
+        if (fab) fab.hidden = state.viewMode === 'essentials';
+    }
+
+    function initViewMode() {
+        try {
+            var saved = localStorage.getItem('ap_view_mode');
+            if (saved === 'advanced' || saved === 'essentials') {
+                state.viewMode = saved;
+            }
+        } catch (e) { /* ignore */ }
+        document.querySelectorAll('.ap-view-toggle-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setViewMode(btn.getAttribute('data-view-mode'));
+            });
+        });
+        setViewMode(state.viewMode);
+    }
+
+    function initWizard() {
+        if (!global.AgentGuideWizard) return;
+        state.wizard = new global.AgentGuideWizard({
+            getDraft: function () { return state.draft; },
+            setDraft: function (d) { state.draft = d; state.dirty = true; },
+            getCollections: function () { return state.collections; },
+            getPublicUrls: function () { return state.publicUrls; },
+            saveDraft: function () { return saveDraft(); },
+            publish: function () {
+                return publishInternal(false).then(function (res) {
+                    return { meta: state.meta, version: state.meta && state.meta.published_version };
+                });
+            },
+            onSetupStart: function () {
+                postJson({ action: 'setup_start' }).catch(function () { /* optional */ });
+            },
+            onSkip: function () {
+                return postJson({ action: 'setup_skip' }).then(function () {
+                    setViewMode('essentials');
+                });
+            },
+            onComplete: function () {
+                return postJson({ action: 'setup_complete', draft: state.draft }).then(function () {
+                    setViewMode('essentials');
+                    return load();
+                });
+            },
+            onPublishSuccess: function (result, fromWizard) {
+                showPublishSuccess({ meta: state.meta, public_urls: state.publicUrls, publish_state: state.publishState }, fromWizard);
+            },
+            onPreview: function () {
+                setViewMode('advanced');
+                switchTab('publish');
+            },
+            loadEntries: function (collection, sel) {
+                return loadEntries(collection).then(function () {
+                    var entries = state.entriesByCollection[collection] || [];
+                    sel.innerHTML = '<option value="">Select entry</option>';
+                    entries.forEach(function (e) {
+                        var opt = document.createElement('option');
+                        opt.value = e.id;
+                        opt.textContent = e.title || e.name || e.id;
+                        sel.appendChild(opt);
+                    });
+                });
+            },
+            runCopilot: function (mode) {
+                var connId = getSelectedAiConnection();
+                return postJson({
+                    action: 'copilot',
+                    ai_connection_id: connId,
+                    mode: mode || 'fill_gaps'
+                }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message || 'Assist failed');
+                    return res.data.suggestions || [];
+                });
+            },
+            acceptSuggestion: function (suggestion) {
+                return postJson({ action: 'accept_suggestion', suggestion: suggestion }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message || 'Accept failed');
+                    state.draft = res.data.draft;
+                    bindFields();
+                    state.dirty = true;
+                });
+            },
+            toast: toast,
+            confirm: confirmAsync
+        });
+    }
+
+    function openSetupWizard() {
+        if (state.wizard) state.wizard.open();
+    }
+
+    function initPublishFeedback() {
+        bindEl('ap-publish-banner-copy', 'click', function () {
+            var openEl = document.getElementById('ap-publish-banner-open');
+            if (openEl && openEl.href && navigator.clipboard) {
+                navigator.clipboard.writeText(openEl.href).then(function () {
+                    toast(t('ag_wizard_url_copied', 'URL copied'), 'success');
+                });
+            }
+        });
+        document.querySelectorAll('.ap-publish-banner-dismiss').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var banner = document.getElementById('ap-publish-banner');
+                if (banner) banner.hidden = true;
+            });
+        });
+        bindEl('ap-success-copy', 'click', function () {
+            var urlEl = document.getElementById('ap-success-url');
+            if (urlEl && navigator.clipboard) {
+                navigator.clipboard.writeText(urlEl.textContent.trim()).then(function () {
+                    toast(t('ag_wizard_url_copied', 'URL copied'), 'success');
+                });
+            }
+        });
+        bindEl('ap-success-overview', 'click', function () {
+            closeApModal('ap-publish-success-modal');
+            setViewMode('advanced');
+            switchTab('overview');
+        });
+        bindEl('ap-setup-guide-btn', 'click', openSetupWizard);
+        bindEl('ap-status-publish-btn', 'click', function () {
+            confirmAsync(t('ag_confirm_publish_updates', 'Publish updates to the live Agent Guide?')).then(function (ok) {
+                if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
+            });
+        });
+        bindEl('ap-essentials-publish-btn', 'click', function () {
+            confirmAsync(t('ag_confirm_publish', 'Publish Agent Guide to public endpoints?')).then(function (ok) {
+                if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
+            });
+        });
+        bindEl('ap-essentials-save-draft', 'click', function () {
+            saveDraft().catch(function (e) { toast(e.message, 'error'); });
+        });
     }
 
     function uid(prefix) {
@@ -578,6 +954,9 @@
         }
         setNested(state.draft, path, val);
         state.dirty = true;
+        renderStatusStrip({ meta: state.meta, public_urls: state.publicUrls, publish_state: state.publishState });
+        updateStickyBar({ meta: state.meta, publish_state: state.publishState });
+        renderEssentials();
     }
 
     function writeFieldEl(el) {
@@ -664,9 +1043,20 @@
             if (!steps.length) {
                 var doneLi = document.createElement('li');
                 doneLi.className = 'is-done';
-                doneLi.textContent = 'All checklist items complete — ready to publish.';
+                doneLi.textContent = t('ag_overview_ready', 'All checklist items complete — ready to publish.');
                 stepsEl.appendChild(doneLi);
             } else {
+                var ps = getPublishState(data);
+                if (ps.never_published) {
+                    var wizLi = document.createElement('li');
+                    var wizBtn = document.createElement('button');
+                    wizBtn.type = 'button';
+                    wizBtn.className = 'btn-link';
+                    wizBtn.textContent = t('ag_overview_start_wizard', 'Run guided setup to publish in ~15 minutes');
+                    wizBtn.addEventListener('click', openSetupWizard);
+                    wizLi.appendChild(wizBtn);
+                    stepsEl.appendChild(wizLi);
+                }
                 steps.forEach(function (step) {
                     var li = document.createElement('li');
                     var btn = document.createElement('button');
@@ -886,11 +1276,17 @@
 
     function renderPublishStatus(data) {
         var el = document.getElementById('ap-publish-status');
-        var version = (data.meta && data.meta.published_version) || 0;
+        var ps = getPublishState(data);
         if (el) {
-            el.textContent = version > 0
-                ? 'Published version ' + version + '. Draft changes require explicit publish.'
-                : 'Not published yet.';
+            if (ps.never_published) {
+                el.textContent = t('ag_publish_never', 'Not published yet. Enable publishing and use Publish when ready.');
+            } else if (ps.has_unpublished_changes || state.dirty) {
+                el.textContent = t('ag_publish_has_draft', 'Live version {v} — draft has unpublished changes.')
+                    .replace('{v}', String(ps.version));
+            } else {
+                el.textContent = t('ag_publish_in_sync', 'Live version {v} — draft matches published snapshot.')
+                    .replace('{v}', String(ps.version));
+            }
         }
         var warn = document.getElementById('ap-staleness-warnings');
         if (warn) {
@@ -924,14 +1320,35 @@
         var list = document.getElementById('ap-version-list');
         if (!list) return;
         list.innerHTML = '';
+        list.className = 'ap-version-timeline';
         if (!state.versions.length) {
-            list.innerHTML = '<li class="text-muted">No published versions yet.</li>';
+            list.innerHTML = '<li class="text-muted">' + escapeHtml(t('ag_no_versions', 'No published versions yet.')) + '</li>';
             return;
         }
         state.versions.forEach(function (v) {
             var li = document.createElement('li');
-            li.textContent = 'Version ' + v.version + ' (' + Math.round((v.size || 0) / 1024) + ' KB)';
+            li.className = 'ap-version-timeline-item';
+            var when = v.published_at ? formatDateTime(v.published_at) : '—';
+            var summary = v.summary ? ' · ' + escapeHtml(v.summary) : '';
+            var urls = state.publicUrls || {};
+            var jsonUrl = urls.well_known_url || '';
+            li.innerHTML =
+                '<div class="ap-version-timeline-marker" aria-hidden="true"></div>' +
+                '<div class="ap-version-timeline-body">' +
+                '<strong>' + escapeHtml(t('ag_version_label', 'Version {n}').replace('{n}', String(v.version))) + '</strong>' +
+                '<span class="text-muted">' + escapeHtml(when) + summary + '</span>' +
+                (jsonUrl ? ' <button type="button" class="btn-link ap-version-open-json" data-version="' +
+                    escapeHtml(String(v.version)) + '">' + escapeHtml(t('ag_view_json', 'View JSON')) + '</button>' : '') +
+                '</div>';
             list.appendChild(li);
+        });
+        list.querySelectorAll('.ap-version-open-json').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var urls = state.publicUrls || {};
+                if (urls.well_known_url) {
+                    global.open(urls.well_known_url, '_blank', 'noopener');
+                }
+            });
         });
     }
 
@@ -1267,7 +1684,10 @@
     }
 
     function refreshAllRenders(data) {
+        renderStatusStrip(data);
+        updateStickyBar(data);
         renderOverview(data);
+        renderEssentials();
         renderSources();
         initFieldAiButtons();
         renderSocial();
@@ -1335,13 +1755,12 @@
     }
 
     function maybeShowSetup(data) {
-        /* Setup flow merged into intro + assist sidebar — no blocking wizard. */
         var draft = data.draft || {};
-        if (!draft.setup_completed_at && !draft.setup_skipped_at) {
-            var empty = !(draft.identity && draft.identity.official_name);
-            if (empty) {
-                scrollAssistResults();
-            }
+        var empty = !(draft.identity && draft.identity.official_name);
+        if (!draft.setup_completed_at && !draft.setup_skipped_at && empty) {
+            setTimeout(function () {
+                openSetupWizard();
+            }, 400);
         }
     }
 
@@ -1403,6 +1822,7 @@
                 }
                 bindFields();
                 refreshAllRenders(data);
+                state.publishState = data.publish_state || getPublishState(data);
                 maybeShowSetup(data);
                 if (!state.canEdit) {
                     var saveBtn = document.getElementById('ai-presence-save-draft');
@@ -1420,18 +1840,40 @@
             state.draft = res.data.draft;
             state.dirty = false;
             toast('Draft saved', 'success');
-            return load();
+            return load().then(function () {
+                updateStickyBar({ meta: state.meta, publish_state: state.publishState });
+            });
+        });
+    }
+
+    function publishInternal(showFeedback) {
+        if (state.publishingInProgress) return Promise.reject(new Error(t('ag_publish_in_progress', 'Publish already in progress')));
+        state.publishingInProgress = true;
+        var wasNeverPublished = getPublishState({ publish_state: state.publishState, meta: state.meta }).never_published;
+        updateStickyBar({ meta: state.meta, publish_state: state.publishState });
+        return saveDraft().then(function () {
+            return postJson({ action: 'publish' }).then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Publish failed');
+                return load().then(function () {
+                    if (showFeedback !== false) {
+                        showPublishSuccess({
+                            meta: state.meta,
+                            public_urls: state.publicUrls,
+                            publish_state: state.publishState
+                        }, wasNeverPublished);
+                    }
+                    return res;
+                });
+            });
+        }).finally(function () {
+            state.publishingInProgress = false;
+            state.dirty = false;
+            updateStickyBar({ meta: state.meta, publish_state: state.publishState });
         });
     }
 
     function publish() {
-        return saveDraft().then(function () {
-            return postJson({ action: 'publish' }).then(function (res) {
-                if (res.status !== 'ok') throw new Error(res.message || 'Publish failed');
-                toast('Published for AI systems', 'success');
-                return load();
-            });
-        });
+        return publishInternal(true);
     }
 
     function runCopilot(mode) {
@@ -1483,30 +1925,34 @@
 
     function acceptAllSuggestions() {
         if (!state.suggestions.length) return Promise.resolve();
-        if (state.studioDraftPatch) {
-            return postJson({
-                action: 'wizard_apply',
-                suggestions: state.suggestions,
-                draft_patch: state.studioDraftPatch
-            }).then(function (res) {
-                if (res.status !== 'ok') throw new Error(res.message || 'Apply failed');
-                state.draft = res.data.draft;
-                state.suggestions = [];
-                state.studioDraftPatch = null;
-                bindFields();
-                refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
-                toast('Draft proposal applied', 'success');
-            });
-        }
-        return postJson({ action: 'accept_suggestions', suggestions: state.suggestions })
-            .then(function (res) {
-                if (res.status !== 'ok') throw new Error(res.message || 'Accept all failed');
-                state.draft = res.data.draft;
-                state.suggestions = [];
-                bindFields();
-                refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
-                toast('All suggestions accepted', 'success');
-            });
+        return confirmAsync(t('ag_confirm_accept_all', 'Accept all {n} suggestions? Review each change before confirming.')
+            .replace('{n}', String(state.suggestions.length))).then(function (ok) {
+            if (!ok) return;
+            if (state.studioDraftPatch) {
+                return postJson({
+                    action: 'wizard_apply',
+                    suggestions: state.suggestions,
+                    draft_patch: state.studioDraftPatch
+                }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message || 'Apply failed');
+                    state.draft = res.data.draft;
+                    state.suggestions = [];
+                    state.studioDraftPatch = null;
+                    bindFields();
+                    refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [], publish_state: state.publishState });
+                    toast('Draft proposal applied', 'success');
+                });
+            }
+            return postJson({ action: 'accept_suggestions', suggestions: state.suggestions })
+                .then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message || 'Accept all failed');
+                    state.draft = res.data.draft;
+                    state.suggestions = [];
+                    bindFields();
+                    refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [], publish_state: state.publishState });
+                    toast('All suggestions accepted', 'success');
+                });
+        });
     }
 
     function runFieldAi(field) {
@@ -2181,7 +2627,10 @@
             saveDraft().catch(function (e) { toast(e.message, 'error'); });
         });
         bindEl('ai-presence-publish-btn', 'click', function () {
-            confirmAsync('Publish brand context to public endpoints?').then(function (ok) {
+            var ps = state.publishState || getPublishState({ meta: state.meta });
+            var msg = ps.is_live ? t('ag_confirm_publish_updates', 'Publish updates to the live Agent Guide?')
+                : t('ag_confirm_publish', 'Publish Agent Guide to public endpoints?');
+            confirmAsync(msg).then(function (ok) {
                 if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
             });
         });
@@ -2572,6 +3021,7 @@
 
         document.body.addEventListener('click', function (e) {
             if (e.target.classList.contains('ai-presence-goto-tab')) {
+                setViewMode('advanced');
                 switchTab(e.target.getAttribute('data-tab'));
             }
         });
@@ -2588,6 +3038,9 @@
         initTabs();
         initWorkflowNav();
         initIntroDismiss();
+        initViewMode();
+        initWizard();
+        initPublishFeedback();
         initAssistSidebar();
         initAssistTabs();
         window.addEventListener('birkly:ai-connection-changed', function () {
