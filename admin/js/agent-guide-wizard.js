@@ -275,6 +275,8 @@
         this.ensureModal();
         this.step = 1;
         this.dirty = false;
+        this.publishing = false;
+        this.setLoading(false);
         this.previousFocus = document.activeElement;
         this.modal.style.display = 'flex';
         this.modal.setAttribute('aria-hidden', 'false');
@@ -311,6 +313,8 @@
         var self = this;
         if (this.options.onSkip) {
             this.options.onSkip().then(function () {
+                self.close();
+            }).catch(function () {
                 self.close();
             });
         } else {
