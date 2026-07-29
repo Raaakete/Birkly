@@ -40,8 +40,20 @@
                         <option value="name">{translate 'admin.marketplace_sort_name_labeled'}</option>
                         <option value="rating">{translate 'admin.marketplace_sort_rating_labeled'}</option>
                         <option value="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</option>
-                        <option value="price_asc">{translate 'admin.marketplace_sort_price_low_labeled'}</option>
-                        <option value="price_desc">{translate 'admin.marketplace_sort_price_high_labeled'}</option>
+                    </select>
+                    <select id="marketplace-price" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_price_filter'}">
+                        <option value="">{translate 'admin.marketplace_price_all_labeled'}</option>
+                        <optgroup label="{translate 'admin.marketplace_price_range_group'}">
+                            <option value="free">{translate 'admin.marketplace_price_free_labeled'}</option>
+                            <option value="under_10">{translate 'admin.marketplace_price_under_10_labeled'}</option>
+                            <option value="10_50">{translate 'admin.marketplace_price_10_50_labeled'}</option>
+                            <option value="50_100">{translate 'admin.marketplace_price_50_100_labeled'}</option>
+                            <option value="over_100">{translate 'admin.marketplace_price_over_100_labeled'}</option>
+                        </optgroup>
+                        <optgroup label="{translate 'admin.marketplace_price_sort_group'}">
+                            <option value="price_asc">{translate 'admin.marketplace_sort_price_low_labeled'}</option>
+                            <option value="price_desc">{translate 'admin.marketplace_sort_price_high_labeled'}</option>
+                        </optgroup>
                     </select>
                 </div>
             </div>
