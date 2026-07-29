@@ -1,6 +1,6 @@
 # Phase 50 — Lead-engineer handoff (content model clarity & admin quality)
 
-**Status:** Planned (2026-07-29) — **execute after human approves plan PR**  
+**Status:** **Approved** (2026-07-29, Keven) — PR #434 merged · **execute P50-M1→M6 now**  
 **Human rule:** Execute P50-M1→M6 autonomously. Notify human **once** at P50-M6 closure.
 
 **Master plan:** `docs/reviews/P50-content-model-clarity-plan.md`  
@@ -16,7 +16,7 @@
 ```
 You are the lead-engineer for Birkly Phase 50 — Content model clarity, docs SSOT, fieldtype QA, collection editor UX.
 
-Human approved P50 (date TBD). Execute P50-M1→M6 autonomously in ONE continuous run (or two PR waves: Docs then CMS).
+Human approved P50 (2026-07-29, Keven). PR #434 merged. Execute P50-M1→M6 autonomously in ONE continuous run (or two PR waves: Docs then CMS).
 Notify human ONCE at P50-M6 with verification matrix green + design-reviewer sign-off on collection save UX.
 
 GOAL:
@@ -138,6 +138,6 @@ Single CMS PR acceptable if Docs merged first and sync committed in same CMS PR.
 
 ## Human approval checklist
 
-- [ ] P50 plan PR merged
-- [ ] Confirm post-create redirect default: **modal with CTAs** vs auto-redirect to entries list
-- [ ] Confirm deprecating `admin/docs/*.php` (no removal in P50 — README + playbook links only)
+- [x] P50 plan PR merged (#434)
+- [x] Post-create redirect default: **modal with CTAs** (“Add first entry” + “Back to collections”) — not auto-redirect
+- [x] Deprecate `admin/docs/*.php` via README + playbook links — no file removal in P50
