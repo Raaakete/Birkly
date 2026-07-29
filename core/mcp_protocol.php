@@ -286,6 +286,20 @@ function birkly_mcp_is_notification(array $input): bool
     return array_key_exists('method', $input) && !array_key_exists('id', $input);
 }
 
+/**
+ * Browser origins allowed to POST to MCP Streamable HTTP (Claude, ChatGPT, Cursor).
+ */
+function birkly_mcp_allowed_client_origins(): array
+{
+    return [
+        'https://claude.ai',
+        'https://chatgpt.com',
+        'https://chat.openai.com',
+        'https://cursor.com',
+        'https://www.cursor.com',
+    ];
+}
+
 function birkly_mcp_validate_origin(): bool
 {
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -293,13 +307,7 @@ function birkly_mcp_validate_origin(): bool
         return true;
     }
 
-    $allowed = [
-        'https://claude.ai',
-        'https://chatgpt.com',
-        'https://chat.openai.com',
-    ];
-
-    if (in_array($origin, $allowed, true)) {
+    if (in_array($origin, birkly_mcp_allowed_client_origins(), true)) {
         return true;
     }
 
