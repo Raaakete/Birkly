@@ -44,20 +44,19 @@ $config = [
 $field = new Birkly\FieldTypes\DynamicItems\DynamicItems($config);
 $rawHtml = $field->render();
 
-assert_contains('render includes showAddBlockModal', $rawHtml, "showAddBlockModal('blocks')");
+assert_contains('render includes FromButton handler', $rawHtml, 'showAddBlockModalFromButton(this)');
 assert_contains('render includes field_blocks id', $rawHtml, 'id="field_blocks"');
 
 $enHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'en');
 
 assert_contains('multilang container id', $enHtml, 'id="field_en_blocks"');
 assert_contains('multilang hidden value id', $enHtml, 'id="field_en_blocks_value"');
-assert_contains('multilang onclick field name', $enHtml, "showAddBlockModal('en_blocks')");
-assert_not_contains('multilang stale bare onclick', $enHtml, "showAddBlockModal('blocks')");
+assert_contains('multilang button uses FromButton handler', $enHtml, 'showAddBlockModalFromButton(this)');
 assert_contains('multilang data-field-config name', $enHtml, '"name":"en_blocks"');
 assert_contains('multilang input name', $enHtml, 'name="en[blocks]"');
 
 $deHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'de');
-assert_contains('de onclick field name', $deHtml, "showAddBlockModal('de_blocks')");
+assert_contains('de container id', $deHtml, 'id="field_de_blocks"');
 
 // --- render_for_dynamicitems (via renderFieldtype smoke) ---
 

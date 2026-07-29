@@ -30,6 +30,17 @@ if (window.HaruFieldtypeConfig) {
 
 // DynamicItems fieldtype implementation
 window.HaruFieldtypes['dynamicitems'] = {
+  // Resolve field container id from the Add Block button (multilang-safe).
+  showAddBlockModalFromButton: function(button) {
+    const field = button && button.closest ? button.closest('.block-field') : null;
+    if (!field || !field.id) {
+      console.error('[DynamicItems] Could not find block-field container from button');
+      return;
+    }
+    const fieldName = field.id.replace(/^field_/, '');
+    this.showAddBlockModal(fieldName);
+  },
+
   // Show modal for adding a new block
   showAddBlockModal: function(fieldName) {
     const container = document.getElementById('field_' + fieldName);
