@@ -65,6 +65,34 @@ if (!isset($GLOBALS['birkly_plugin_settings']) || !is_array($GLOBALS['birkly_plu
 }
 $birkly_plugin_settings = &$GLOBALS['birkly_plugin_settings'];
 
+/**
+ * Persistent settings directory for plugins.json (respects BIRKLY_DATA).
+ */
+function birkly_plugin_state_settings_dir(): string
+{
+    if (isset($GLOBALS['__birkly_plugin_state_settings_dir'])) {
+        return (string) $GLOBALS['__birkly_plugin_state_settings_dir'];
+    }
+
+    require_once __DIR__ . '/birkly_data_paths.php';
+    $dataRoot = birkly_data_root();
+    if ($dataRoot !== null) {
+        return $dataRoot . '/settings';
+    }
+
+    return __DIR__ . '/../settings';
+}
+
+function birkly_plugin_state_storage(): PluginStorage
+{
+    static $storage = null;
+    if ($storage === null) {
+        $storage = new PluginStorage(birkly_plugin_state_settings_dir());
+    }
+
+    return $storage;
+}
+
 // Plugin state management
 function get_plugin_state($plugin_id) {
     return birkly_is_plugin_active($plugin_id);
@@ -82,35 +110,40 @@ function birkly_is_plugin_active(string $plugin_id): bool
 
     static $persistedStates = null;
     if ($persistedStates === null) {
-        $storage = new PluginStorage(__DIR__ . '/../settings');
-        $persistedStates = $storage->read('plugins.json') ?? [];
+        $persistedStates = birkly_plugin_state_storage()->read('plugins.json') ?? [];
     }
     if (array_key_exists($plugin_id, $persistedStates)) {
         return (bool) ($persistedStates[$plugin_id]['active'] ?? false);
-    }
-    if ($plugin_id === 'automation') {
-        return true;
     }
     return false;
 }
 
 function set_plugin_state($plugin_id, $active) {
     global $birkly_plugins;
-    if (isset($birkly_plugins[$plugin_id])) {
-        $birkly_plugins[$plugin_id]['active'] = $active;
-        save_plugin_states();
-        
-        // Call activation/deactivation hooks
-        if ($active) {
-            do_action('plugin_activated', $plugin_id);
-        } else {
-            // Unregister plugin fieldtypes when deactivating
-            if (function_exists('unregister_plugin_fieldtypes')) {
-                unregister_plugin_fieldtypes($plugin_id);
-            }
-            do_action('plugin_deactivated', $plugin_id);
-        }
+    if (!isset($birkly_plugins[$plugin_id]) && function_exists('load_plugins')) {
+        load_plugins();
     }
+    if (!isset($birkly_plugins[$plugin_id])) {
+        return false;
+    }
+
+    $birkly_plugins[$plugin_id]['active'] = $active;
+    if (!save_plugin_states()) {
+        return false;
+    }
+
+    // Call activation/deactivation hooks
+    if ($active) {
+        do_action('plugin_activated', $plugin_id);
+    } else {
+        // Unregister plugin fieldtypes when deactivating
+        if (function_exists('unregister_plugin_fieldtypes')) {
+            unregister_plugin_fieldtypes($plugin_id);
+        }
+        do_action('plugin_deactivated', $plugin_id);
+    }
+
+    return true;
 }
 
 function save_plugin_states() {
@@ -133,13 +166,12 @@ function save_plugin_states() {
         $states[$id] = $state;
     }
     
-    $storage = new PluginStorage(__DIR__ . '/../settings');
-    $storage->write('plugins.json', $states);
+    return birkly_plugin_state_storage()->write('plugins.json', $states);
 }
 
 function load_plugin_states() {
     global $birkly_plugins;
-    $storage = new PluginStorage(__DIR__ . '/../settings');
+    $storage = birkly_plugin_state_storage();
     $states = $storage->read('plugins.json') ?? [];
 
     if (birkly_migrate_removed_plugin_states($states)) {
@@ -464,7 +496,7 @@ function load_plugins($plugins_dir = null) {
     
     // Load plugin states first
     load_plugin_states();
-    $settingsStorage = new PluginStorage(__DIR__ . '/../settings');
+    $settingsStorage = birkly_plugin_state_storage();
     $persistedPluginStates = $settingsStorage->read('plugins.json') ?? [];
     if (birkly_migrate_removed_plugin_states($persistedPluginStates)) {
         $settingsStorage->write('plugins.json', $persistedPluginStates);
