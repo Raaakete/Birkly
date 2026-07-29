@@ -348,6 +348,8 @@
         "entry_save_view_entries": "View all entries",
         "entry_save_add_another": "Add another entry",
         "entry_save_continue_editing": "Continue editing",
+        "entry_save_publish_now": "Publish entry",
+        "entry_save_published_toast": "Entry published",
         "create_first_entry": "Create your first entry",
         "create_group": "Create Group",
         "create_manage_content": "Create Manage Content",

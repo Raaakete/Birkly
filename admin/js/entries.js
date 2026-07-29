@@ -567,8 +567,10 @@
         const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
         const isTrashedEntry = normalizedStatus === 'trashed';
         const allowDragHandle = hasDragColumn
-            ? '<td class="cell cell-drag"' + (canDragCurrentView() ? ' draggable="true"' : '') + ' aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '">' +
-                (canDragCurrentView() ? icon('dots-six-vertical', { size: 16 }) : '') +
+            ? '<td class="cell cell-drag" aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '">' +
+                (canDragCurrentView()
+                    ? '<span class="entry-drag-handle" aria-hidden="true">' + icon('dots-six-vertical', { size: 16 }) + '</span>'
+                    : '') +
             '</td>'
             : '';
 
@@ -905,7 +907,7 @@
         entrySorter = new MouseDragDrop({
             container: tableBody,
             itemSelector: '.table-row',
-            handleSelector: '.cell-drag',
+            handleSelector: '.entry-drag-handle',
             onReorder: function (fromIndex, toIndex, placeholder, draggedItem) {
                 const draggedEntryId = draggedItem?.dataset?.entryId || '';
                 if (!draggedEntryId) return;
