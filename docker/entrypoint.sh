@@ -108,6 +108,11 @@ if [ -f /app/scripts/repair-starter-content.php ]; then
   php /app/scripts/repair-starter-content.php || true
 fi
 
+if [ -f /app/scripts/emergency-deactivate-broken-plugins.php ]; then
+  echo "[entrypoint] Checking active plugins for syntax errors..."
+  php /app/scripts/emergency-deactivate-broken-plugins.php || true
+fi
+
 echo "[entrypoint] Starting php-fpm..."
 if ! php-fpm -D; then
   echo "[entrypoint] ERROR: php-fpm failed to start"

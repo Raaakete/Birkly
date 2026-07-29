@@ -25,14 +25,32 @@ function birkly_csp_nonce_attr(): string
 
 /**
  * Marketplace origin allowed in admin iframes (offer embed modal).
+ * Reads settings/env only — must not bootstrap plugins or marketplace client.
  */
 function birkly_csp_marketplace_frame_origin(): string
 {
-    require_once __DIR__ . '/marketplace.php';
-    $url = birkly_marketplace_url();
+    $default = 'https://marketplace.birkly.cloud';
+    $envUrl = trim((string) (getenv('BIRKLY_MARKETPLACE_URL') ?: ''));
+    if ($envUrl !== '') {
+        $url = rtrim($envUrl, '/');
+    } else {
+        require_once __DIR__ . '/birkly_paths.php';
+        $url = $default;
+        $settingsFile = birkly_project_root() . '/settings/marketplace.json';
+        if (is_readable($settingsFile)) {
+            $data = json_decode((string) file_get_contents($settingsFile), true);
+            if (is_array($data) && !empty($data['marketplace_url']) && is_string($data['marketplace_url'])) {
+                $candidate = trim($data['marketplace_url']);
+                if ($candidate !== '') {
+                    $url = rtrim($candidate, '/');
+                }
+            }
+        }
+    }
+
     $parts = parse_url($url);
     if (!is_array($parts) || empty($parts['scheme']) || empty($parts['host'])) {
-        return 'https://marketplace.birkly.cloud';
+        return $default;
     }
 
     $origin = $parts['scheme'] . '://' . $parts['host'];
