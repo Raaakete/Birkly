@@ -11,6 +11,8 @@
     var currentOfferProvider = null;
     var currentOfferTitle = '';
     var embedModalView = 'offer';
+    var embedOfferTab = 'offer';
+    var currentOfferDetail = null;
     var marketplaceBaseUrl = '';
     var marketplaceDisplayCurrency = 'EUR';
     var marketplaceCurrencyRates = {
@@ -129,6 +131,8 @@
             openProviderInEmbedModal(el.getAttribute('data-provider-id'));
         } else if (action === 'back-offer-detail') {
             backToOfferInEmbedModal();
+        } else if (action === 'embed-offer-tab') {
+            setEmbedOfferTab(el.getAttribute('data-embed-tab') || 'offer');
         } else if (action === 'close-marketplace-install') {
             closeMarketplaceInstallModal();
         } else if (action === 'install-marketplace') {
@@ -163,6 +167,11 @@
                     action === 'close-offer-embed' ||
                     action === 'view-provider-profile' ||
                     action === 'back-offer-detail' ||
+                    action === 'embed-offer-tab' ||
+                    action === 'open-review' ||
+                    action === 'install-free' ||
+                    action === 'upgrade' ||
+                    action === 'open-install' ||
                     action === 'close-install-modal' ||
                     action === 'close-marketplace-install' ||
                     action === 'open-install-modal' ||
@@ -545,11 +554,8 @@
         if (marketplaceOffersCache.length) {
             renderMarketplaceOffers(marketplaceOffersCache);
         }
-        if (currentOfferSlug) {
-            var offer = findCachedOffer(currentOfferSlug);
-            if (offer) {
-                updateEmbedModalPricing(offer);
-            }
+        if (currentOfferDetail && currentOfferDetail.offer) {
+            updateEmbedModalPanels();
         }
         var detailPricing = document.querySelector('.marketplace-offer-detail-pricing');
         if (detailPricing && currentOfferSlug) {
@@ -670,21 +676,209 @@
         var providerBox = document.getElementById('marketplace-embed-provider-box');
         var actionsEl = document.getElementById('marketplace-embed-offer-actions');
         var footerEl = document.querySelector('.marketplace-embed-footer');
+        var tabsEl = document.getElementById('marketplace-embed-tabs');
         if (backBtn) {
             backBtn.hidden = embedModalView !== 'provider';
         }
         if (providerBox) {
             providerBox.hidden = embedModalView !== 'offer' || providerBox.innerHTML.trim() === '';
         }
+        if (tabsEl) {
+            tabsEl.hidden = embedModalView === 'provider';
+        }
         if (actionsEl) {
             actionsEl.hidden = embedModalView === 'provider';
         }
-        var pricingEl = document.getElementById('marketplace-embed-pricing');
-        if (pricingEl) {
-            pricingEl.hidden = embedModalView !== 'offer' || pricingEl.innerHTML.trim() === '';
-        }
         if (footerEl) {
             footerEl.hidden = false;
+        }
+        if (embedModalView === 'provider') {
+            document.querySelectorAll('.marketplace-embed-panel').forEach(function (panel) {
+                var isOfferPanel = panel.getAttribute('data-embed-panel') === 'offer';
+                panel.hidden = !isOfferPanel;
+                panel.classList.toggle('active', isOfferPanel);
+            });
+        } else {
+            setEmbedOfferTab(embedOfferTab || 'offer');
+        }
+    }
+
+    function setEmbedOfferTab(tab) {
+        if (embedModalView === 'provider') {
+            return;
+        }
+        var allowed = ['offer', 'pricing', 'reviews', 'versions'];
+        if (allowed.indexOf(tab) === -1) {
+            tab = 'offer';
+        }
+        embedOfferTab = tab;
+        document.querySelectorAll('.marketplace-embed-tab').forEach(function (button) {
+            var active = button.getAttribute('data-embed-tab') === tab;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        document.querySelectorAll('.marketplace-embed-panel').forEach(function (panel) {
+            var active = panel.getAttribute('data-embed-panel') === tab;
+            panel.hidden = !active;
+            panel.classList.toggle('active', active);
+        });
+    }
+
+    function formatReviewDate(value) {
+        if (!value) {
+            return '';
+        }
+        return String(value).substring(0, 10);
+    }
+
+    function renderReviewStars(rating) {
+        var stars = Math.max(0, Math.min(5, parseInt(rating, 10) || 0));
+        return '\u2605'.repeat(stars) + '\u2606'.repeat(5 - stars);
+    }
+
+    function compareVersionStrings(a, b) {
+        if (!a && !b) {
+            return 0;
+        }
+        if (!a) {
+            return -1;
+        }
+        if (!b) {
+            return 1;
+        }
+        var pa = String(a).split('.').map(function (part) {
+            return parseInt(part, 10) || 0;
+        });
+        var pb = String(b).split('.').map(function (part) {
+            return parseInt(part, 10) || 0;
+        });
+        var len = Math.max(pa.length, pb.length);
+        for (var i = 0; i < len; i++) {
+            var diff = (pa[i] || 0) - (pb[i] || 0);
+            if (diff !== 0) {
+                return diff > 0 ? 1 : -1;
+            }
+        }
+        return 0;
+    }
+
+    function renderOfferReviewsPanel(reviews, ratingSummary, slug) {
+        var summaryHtml = '';
+        if (ratingSummary && ratingSummary.count) {
+            summaryHtml =
+                '<div class="marketplace-reviews-summary">' +
+                '<p class="marketplace-reviews-summary-score">' + escapeHtml(formatRating(ratingSummary)) + '</p>' +
+                '<p class="marketplace-reviews-summary-count">' +
+                escapeHtml(String(ratingSummary.count)) + ' ' + escapeHtml(t('marketplace_reviews_count', 'reviews')) +
+                '</p></div>';
+        }
+
+        var installedMatch = findInstalledPluginByOfferSlug(slug);
+        var writeReviewHtml = '';
+        if (installedMatch) {
+            var reviewStatus = reviewStatusMap[installedMatch.id] || {};
+            if (reviewStatus.can_review) {
+                writeReviewHtml =
+                    '<div class="marketplace-reviews-write">' +
+                    '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
+                    escapeHtml(installedMatch.id) + '" data-offer-slug="' + escapeHtml(slug) + '">' +
+                    escapeHtml(t('rate_plugin', 'Rate this plugin')) + '</button></div>';
+            } else if (reviewStatus.has_review) {
+                writeReviewHtml =
+                    '<div class="marketplace-reviews-write">' +
+                    '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
+                    escapeHtml(installedMatch.id) + '" data-offer-slug="' + escapeHtml(slug) + '">' +
+                    escapeHtml(t('your_review', 'Your review')) + '</button></div>';
+            }
+        }
+
+        if (!reviews || !reviews.length) {
+            return (
+                summaryHtml +
+                writeReviewHtml +
+                '<p class="marketplace-empty-state">' + escapeHtml(t('marketplace_no_reviews', 'No reviews yet')) + '</p>'
+            );
+        }
+
+        var items = reviews.map(function (review) {
+            var verifiedHtml = review.verified_installation
+                ? '<span class="marketplace-review-verified">' + escapeHtml(t('marketplace_review_verified', 'Verified installation')) + '</span>'
+                : '';
+            var replyHtml = review.provider_reply && review.provider_reply.body
+                ? '<div class="marketplace-review-reply"><p class="marketplace-review-reply-label">' +
+                    escapeHtml(t('marketplace_provider_reply', 'Provider reply')) + '</p><p>' +
+                    escapeHtml(review.provider_reply.body) + '</p></div>'
+                : '';
+            return (
+                '<article class="marketplace-review-item">' +
+                '<div class="marketplace-review-meta">' +
+                '<span class="marketplace-review-stars" aria-hidden="true">' + renderReviewStars(review.rating) + '</span>' +
+                '<span class="marketplace-review-date">' + escapeHtml(formatReviewDate(review.created_at)) + '</span>' +
+                verifiedHtml +
+                '</div>' +
+                '<p class="marketplace-review-body">' + escapeHtml(review.body || '') + '</p>' +
+                replyHtml +
+                '</article>'
+            );
+        }).join('');
+
+        return summaryHtml + writeReviewHtml + '<div class="marketplace-reviews-list">' + items + '</div>';
+    }
+
+    function renderOfferVersionsPanel(offer, releases) {
+        if (!releases || !releases.length) {
+            return '<p class="marketplace-empty-state">' + escapeHtml(t('marketplace_no_versions', 'No release history yet.')) + '</p>';
+        }
+
+        var latestVersion = (offer && offer.latest_version) || '';
+        var sorted = releases.slice().sort(function (a, b) {
+            return compareVersionStrings(b.version, a.version);
+        });
+
+        return sorted.map(function (release, index) {
+            var version = release.version || '';
+            var isLatest = version !== '' && (version === latestVersion || (latestVersion === '' && index === 0));
+            var changelog = release.changelog || t('marketplace_no_changelog', 'No changelog provided.');
+            var published = formatReviewDate(release.published_at);
+            return (
+                '<article class="marketplace-version-item' + (isLatest ? ' is-latest' : '') + '">' +
+                '<header class="marketplace-version-header">' +
+                '<div><h4 class="marketplace-version-title">v' + escapeHtml(version) +
+                (isLatest ? ' <span class="marketplace-version-badge">' + escapeHtml(t('marketplace_latest_version', 'Latest')) + '</span>' : '') +
+                '</h4>' +
+                (published ? '<p class="marketplace-version-date">' + escapeHtml(published) + '</p>' : '') +
+                '</div></header>' +
+                '<div class="marketplace-version-changelog">' + escapeHtml(changelog) + '</div>' +
+                '</article>'
+            );
+        }).join('');
+    }
+
+    function updateEmbedModalPanels() {
+        var detail = currentOfferDetail;
+        if (!detail || !detail.offer) {
+            return;
+        }
+        var offer = detail.offer;
+        var slug = offer.slug || currentOfferSlug || '';
+
+        var pricingPanel = document.getElementById('marketplace-embed-pricing-panel');
+        if (pricingPanel) {
+            pricingPanel.innerHTML = renderOfferPricingTable(offer);
+        }
+
+        var reviewsPanel = document.getElementById('marketplace-embed-reviews-panel');
+        if (reviewsPanel) {
+            reviewsPanel.innerHTML = renderOfferReviewsPanel(
+                detail.reviews || [],
+                detail.rating_summary || offer.rating_summary || null,
+                slug
+            );
+        }
+
+        var versionsPanel = document.getElementById('marketplace-embed-versions-panel');
+        if (versionsPanel) {
+            versionsPanel.innerHTML = renderOfferVersionsPanel(offer, detail.releases || []);
         }
     }
 
@@ -898,16 +1092,6 @@
         );
     }
 
-    function updateEmbedModalPricing(offer) {
-        var pricingEl = document.getElementById('marketplace-embed-pricing');
-        if (!pricingEl) {
-            return;
-        }
-        var html = renderOfferPricingTable(offer);
-        pricingEl.innerHTML = html;
-        pricingEl.hidden = embedModalView !== 'offer' || html === '';
-    }
-
     function findCachedOffer(slug) {
         for (var i = 0; i < marketplaceOffersCache.length; i++) {
             if (marketplaceOffersCache[i] && marketplaceOffersCache[i].slug === slug) {
@@ -1007,7 +1191,7 @@
         return html;
     }
 
-    function openOfferEmbedModal(slug, offer, provider) {
+    function openOfferEmbedModal(slug, offer, provider, detailExtras) {
         var modal = document.getElementById('marketplace-offer-embed-modal');
         var iframe = document.getElementById('marketplace-offer-iframe');
         var titleEl = document.getElementById('marketplace-embed-title');
@@ -1016,10 +1200,19 @@
             return;
         }
 
+        detailExtras = detailExtras || {};
         var resolvedOffer = offer || findCachedOffer(slug) || { slug: slug, title: slug };
         currentOfferProvider = provider || currentOfferProvider;
         currentOfferTitle = resolvedOffer.title || slug;
+        currentOfferDetail = {
+            offer: resolvedOffer,
+            releases: detailExtras.releases || [],
+            reviews: detailExtras.reviews || [],
+            rating_summary: detailExtras.rating_summary || resolvedOffer.rating_summary || null,
+            provider: provider || null,
+        };
         embedModalView = 'offer';
+        embedOfferTab = 'offer';
         if (titleEl) {
             titleEl.textContent = currentOfferTitle;
         }
@@ -1033,7 +1226,7 @@
             };
         }
         updateEmbedModalProviderBox(providerForBox);
-        updateEmbedModalPricing(resolvedOffer);
+        updateEmbedModalPanels();
         setEmbedModalView('offer');
         if (actionsEl) {
             actionsEl.innerHTML = renderOfferEmbedFooterActions(slug, resolvedOffer);
@@ -1077,13 +1270,16 @@
             titleEl.textContent = currentOfferTitle || currentOfferSlug;
         }
         embedModalView = 'offer';
+        embedOfferTab = 'offer';
         setEmbedModalView('offer');
         var actionsEl = document.getElementById('marketplace-embed-offer-actions');
         var cachedOffer = findCachedOffer(currentOfferSlug);
         if (actionsEl) {
             actionsEl.innerHTML = renderOfferEmbedFooterActions(currentOfferSlug, cachedOffer);
         }
-        updateEmbedModalPricing(cachedOffer);
+        if (currentOfferDetail && currentOfferDetail.offer) {
+            updateEmbedModalPanels();
+        }
     }
 
     function closeOfferEmbedModal() {
@@ -1102,11 +1298,12 @@
             providerBox.innerHTML = '';
             providerBox.hidden = true;
         }
-        var pricingEl = document.getElementById('marketplace-embed-pricing');
-        if (pricingEl) {
-            pricingEl.innerHTML = '';
-            pricingEl.hidden = true;
-        }
+        ['marketplace-embed-pricing-panel', 'marketplace-embed-reviews-panel', 'marketplace-embed-versions-panel'].forEach(function (id) {
+            var panel = document.getElementById(id);
+            if (panel) {
+                panel.innerHTML = '';
+            }
+        });
         if (actionsEl) {
             actionsEl.innerHTML = '';
             actionsEl.hidden = false;
@@ -1121,7 +1318,9 @@
         currentOfferSlug = null;
         currentOfferProvider = null;
         currentOfferTitle = '';
+        currentOfferDetail = null;
         embedModalView = 'offer';
+        embedOfferTab = 'offer';
         updateMarketplaceUrl('');
         updatePageTitle('marketplace');
     }
@@ -1742,7 +1941,11 @@
             if (cachedIndex >= 0) {
                 marketplaceOffersCache[cachedIndex] = Object.assign({}, marketplaceOffersCache[cachedIndex], offer);
             }
-            openOfferEmbedModal(slug, offer, provider);
+            openOfferEmbedModal(slug, offer, provider, {
+                releases: result.data.releases || [],
+                reviews: result.data.reviews || [],
+                rating_summary: result.data.rating_summary || offer.rating_summary || null,
+            });
         } catch (err) {
             var cached = findCachedOffer(slug);
             if (cached) {

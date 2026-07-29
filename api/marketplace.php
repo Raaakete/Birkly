@@ -134,6 +134,8 @@ if ($action === 'offer') {
         'data' => [
             'offer' => $detail['offer'],
             'releases' => $detail['releases'],
+            'reviews' => $detail['reviews'] ?? [],
+            'rating_summary' => $detail['rating_summary'] ?? ($detail['offer']['rating_summary'] ?? null),
             'provider' => $detail['provider'] ?? null,
             'fallback' => !empty($detail['fallback']),
             'install_state' => $detail['offer']['install_state'] ?? birkly_marketplace_offer_install_state($slug),
