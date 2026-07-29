@@ -415,6 +415,18 @@
         await executeMarketplaceInstall(slug, resolvedVersion, licenseKey, false);
     }
 
+    async function parsePluginsResponse(response) {
+        var body = await response.text();
+        if (!body || !body.trim()) {
+            throw new Error(t('plugins_empty_response', 'Plugin request failed (empty server response). Try again or check server logs.'));
+        }
+        try {
+            return JSON.parse(body);
+        } catch (parseErr) {
+            throw new Error(t('plugins_invalid_response', 'Plugin request failed (invalid server response). Try again or check server logs.'));
+        }
+    }
+
     async function pluginsApi(action, extra) {
         var response = await fetch(url('/api/plugins.php'), {
             method: 'POST',
@@ -422,7 +434,7 @@
             credentials: 'same-origin',
             body: JSON.stringify(Object.assign({ action: action, _csrf: csrfToken() }, extra || {})),
         });
-        var result = await response.json();
+        var result = await parsePluginsResponse(response);
         if (!response.ok || result.status === 'error') {
             throw new Error(result.message || 'Request failed');
         }
@@ -941,7 +953,7 @@
         }
 
         var response = await fetch(url('/api/plugins.php?action=list'), { credentials: 'same-origin' });
-        var result = await response.json();
+        var result = await parsePluginsResponse(response);
         if (result.status !== 'ok') {
             throw new Error(result.message || 'Failed to load plugins');
         }
