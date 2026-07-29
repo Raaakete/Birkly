@@ -98,3 +98,41 @@ function birkly_plugin_health_all(): array
     }
     return $out;
 }
+
+/**
+ * Try loading a plugin's plugin.php (activation smoke test).
+ *
+ * @return array{ok:bool,error:?string}
+ */
+function birkly_plugin_smoke_load(string $pluginId): array
+{
+    global $birkly_plugins;
+
+    if (!isset($birkly_plugins[$pluginId]) && function_exists('load_plugins')) {
+        load_plugins();
+    }
+
+    $path = (string) ($birkly_plugins[$pluginId]['path'] ?? '');
+    $pluginFile = $path !== '' ? $path . '/plugin.php' : '';
+    if ($pluginFile === '' || !is_file($pluginFile)) {
+        return ['ok' => false, 'error' => 'plugin.php not found'];
+    }
+
+    $loadedKey = '__birkly_plugin_smoke_loaded_' . $pluginId;
+    if (!empty($GLOBALS[$loadedKey])) {
+        return ['ok' => true, 'error' => null];
+    }
+
+    $previousActive = $birkly_plugins[$pluginId]['active'] ?? false;
+    $birkly_plugins[$pluginId]['active'] = true;
+
+    try {
+        include_once $pluginFile;
+        $GLOBALS[$loadedKey] = true;
+        return ['ok' => true, 'error' => null];
+    } catch (Throwable $e) {
+        return ['ok' => false, 'error' => $e->getMessage()];
+    } finally {
+        $birkly_plugins[$pluginId]['active'] = $previousActive;
+    }
+}
