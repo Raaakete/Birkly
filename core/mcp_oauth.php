@@ -13,7 +13,7 @@ define('BIRKLY_MCP_OAUTH_ACCESS_TTL', 86400);
 define('BIRKLY_MCP_OAUTH_REFRESH_TTL', 86400 * 30);
 define('BIRKLY_MCP_OAUTH_CODE_TTL', 600);
 define('BIRKLY_MCP_OAUTH_SCOPE', 'mcp');
-define('BIRKLY_MCP_OAUTH_CORS_ORIGIN', 'https://claude.ai');
+// CORS allowlist shared with MCP Streamable HTTP origin checks (see mcp_protocol.php).
 
 function birkly_mcp_oauth_storage(): Storage
 {
@@ -156,9 +156,11 @@ function birkly_mcp_oauth_www_authenticate_header(): string
 
 function birkly_mcp_oauth_apply_cors(): void
 {
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    if ($origin === BIRKLY_MCP_OAUTH_CORS_ORIGIN) {
-        header('Access-Control-Allow-Origin: ' . BIRKLY_MCP_OAUTH_CORS_ORIGIN);
+    require_once __DIR__ . '/mcp_protocol.php';
+
+    $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
+    if ($origin !== '' && birkly_mcp_is_permitted_request_origin($origin)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
         header('Vary: Origin');

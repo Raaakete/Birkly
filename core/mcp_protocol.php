@@ -286,29 +286,52 @@ function birkly_mcp_is_notification(array $input): bool
     return array_key_exists('method', $input) && !array_key_exists('id', $input);
 }
 
-function birkly_mcp_validate_origin(): bool
+/**
+ * Whether a browser Origin header is permitted for MCP Streamable HTTP and OAuth CORS.
+ *
+ * Policy (not a vendor allowlist): OAuth + Bearer tokens gate real access. We accept
+ * any HTTPS origin so Claude, ChatGPT, Cursor, and future MCP clients work without
+ * per-vendor server updates. Native/desktop clients often send no Origin (allowed).
+ * HTTP is limited to localhost for local dev; plain HTTP remote origins are rejected.
+ */
+function birkly_mcp_is_permitted_request_origin(string $origin): bool
 {
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     if ($origin === '') {
         return true;
     }
 
-    $allowed = [
-        'https://claude.ai',
-        'https://chatgpt.com',
-        'https://chat.openai.com',
-    ];
-
-    if (in_array($origin, $allowed, true)) {
-        return true;
+    $parsed = parse_url($origin);
+    if (!is_array($parsed)) {
+        return false;
     }
 
-    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $scheme = strtolower((string) ($parsed['scheme'] ?? ''));
+    $host = strtolower((string) ($parsed['host'] ?? ''));
     if ($host === '') {
         return false;
     }
 
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $selfOrigin = $scheme . '://' . $host;
-    return $origin === $selfOrigin;
+    $requestHost = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    if ($requestHost !== '') {
+        $normalizedRequestHost = preg_replace('/:\d+$/', '', $requestHost) ?? $requestHost;
+        $normalizedOriginHost = preg_replace('/:\d+$/', '', $host) ?? $host;
+        if ($normalizedOriginHost === $normalizedRequestHost) {
+            return true;
+        }
+    }
+
+    if ($scheme === 'https') {
+        return true;
+    }
+
+    if ($scheme === 'http' && in_array($host, ['localhost', '127.0.0.1'], true)) {
+        return true;
+    }
+
+    return false;
+}
+
+function birkly_mcp_validate_origin(): bool
+{
+    return birkly_mcp_is_permitted_request_origin((string) ($_SERVER['HTTP_ORIGIN'] ?? ''));
 }
