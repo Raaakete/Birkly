@@ -363,6 +363,7 @@
         "marketplace_type_plugin": "Plugin",
         "marketplace_type_theme": "Theme",
         "marketplace_type_template": "Template pack",
+        "marketplace_type_fieldtype": "Fieldtype",
         "marketplace_filter_category": "Category",
         "marketplace_filter_all_categories": "All categories",
         "marketplace_sort": "Sort by",
