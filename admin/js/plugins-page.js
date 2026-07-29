@@ -856,6 +856,15 @@
         var free = isFreeOffer(offer);
         void stopPropagation;
 
+        if (offer.status === 'coming_soon') {
+            return (
+                '<button type="button" class="btn btn-sm btn-secondary" disabled title="' +
+                escapeHtml(t('marketplace_coming_soon_hint', 'This plugin is not available to install yet.')) +
+                '">' +
+                escapeHtml(t('marketplace_coming_soon', 'Coming soon')) + '</button>'
+            );
+        }
+
         if (state.installed) {
             if (state.update_available && state.plugin_id) {
                 return (
