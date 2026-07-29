@@ -12,6 +12,18 @@
     var currentOfferTitle = '';
     var embedModalView = 'offer';
     var marketplaceBaseUrl = '';
+    var marketplaceDisplayCurrency = 'EUR';
+    var marketplaceCurrencyRates = {
+        EUR: 1,
+        USD: 1.08,
+        GBP: 0.85,
+        CHF: 0.95,
+        DKK: 7.46,
+        SEK: 11.5,
+        NOK: 11.8,
+        CAD: 1.47,
+        AUD: 1.65,
+    };
     var marketplaceOffersCache = [];
     var reviewStatusMap = {};
     var pendingInstallContext = null;
@@ -485,12 +497,71 @@
         );
     }
 
+    function convertPriceCents(cents, fromCurrency, toCurrency) {
+        var from = String(fromCurrency || 'EUR').toUpperCase();
+        var to = String(toCurrency || marketplaceDisplayCurrency).toUpperCase();
+        var amount = Math.max(0, parseInt(cents, 10) || 0);
+        if (amount === 0 || from === to) {
+            return amount;
+        }
+        var fromRate = marketplaceCurrencyRates[from];
+        var toRate = marketplaceCurrencyRates[to];
+        if (!fromRate || !toRate) {
+            return amount;
+        }
+        return Math.round((amount / fromRate) * toRate);
+    }
+
+    function applyMarketplaceDisplayCurrency(currency) {
+        var normalized = String(currency || 'EUR').toUpperCase();
+        if (!marketplaceCurrencyRates[normalized]) {
+            normalized = 'EUR';
+        }
+        marketplaceDisplayCurrency = normalized;
+        var select = document.getElementById('marketplace-display-currency');
+        if (select && select.value !== normalized) {
+            select.value = normalized;
+        }
+    }
+
+    async function saveDisplayCurrency(currency) {
+        try {
+            await fetch(url('/api/marketplace.php'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save_display_currency',
+                    currency: currency,
+                    _csrf: csrfToken(),
+                }),
+            });
+        } catch (err) {
+            // Preference save is best-effort; prices still update locally.
+        }
+    }
+
+    function refreshMarketplacePriceDisplay() {
+        if (marketplaceOffersCache.length) {
+            renderMarketplaceOffers(marketplaceOffersCache);
+        }
+        var detailPrice = document.querySelector('.marketplace-offer-detail-price');
+        if (detailPrice && currentOfferSlug) {
+            var offer = findCachedOffer(currentOfferSlug);
+            if (offer) {
+                detailPrice.textContent = formatPrice(offer);
+            }
+        }
+    }
+
     function formatPrice(offer) {
         if (isFreeOffer(offer)) {
             return t('price_free', 'Free');
         }
         var pricing = offer.pricing || {};
-        var amount = ((pricing.amount_cents || 0) / 100).toFixed(2) + ' ' + (pricing.currency || 'USD');
+        var fromCurrency = String(pricing.currency || 'EUR').toUpperCase();
+        var cents = convertPriceCents(pricing.amount_cents || 0, fromCurrency, marketplaceDisplayCurrency);
+        var amount = (cents / 100).toFixed(2) + ' ' + marketplaceDisplayCurrency;
         if (pricing.model === 'subscription') {
             return amount + '/' + (pricing.subscription_interval || 'month');
         }
@@ -1488,6 +1559,9 @@
             }
 
             marketplaceBaseUrl = (result.data && result.data.marketplace_url) || marketplaceBaseUrl;
+            if (result.data && result.data.display_currency) {
+                applyMarketplaceDisplayCurrency(result.data.display_currency);
+            }
 
             marketplaceFilterOptions = (result.data && result.data.filter_options) || marketplaceFilterOptions;
             updateCategoryFilterOptions(marketplaceFilterOptions.categories || []);
@@ -1678,6 +1752,14 @@
                 });
             }
         });
+        var currencyEl = document.getElementById('marketplace-display-currency');
+        if (currencyEl) {
+            currencyEl.addEventListener('change', function () {
+                applyMarketplaceDisplayCurrency(currencyEl.value);
+                saveDisplayCurrency(marketplaceDisplayCurrency);
+                refreshMarketplacePriceDisplay();
+            });
+        }
         var search = document.getElementById('marketplace-search');
         if (search) {
             search.addEventListener('keydown', function (e) {
