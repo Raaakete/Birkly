@@ -41,6 +41,40 @@ function birkly_marketplace_consent_reset(): void
     unset($GLOBALS['__birkly_marketplace_consent']);
 }
 
+/**
+ * Local-only lookup for a marketplace offer installed on this CMS (no registry calls).
+ *
+ * @return array{plugin_id:string,version:string}|null
+ */
+function birkly_marketplace_local_installed_offer(string $slug): ?array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return null;
+    }
+
+    if (!function_exists('get_all_plugins')) {
+        require_once dirname(__DIR__) . '/plugins.php';
+    }
+
+    foreach (get_all_plugins() as $pluginId => $plugin) {
+        if (!is_array($plugin)) {
+            continue;
+        }
+        $pluginSlug = birkly_marketplace_plugin_offer_slug((string) $pluginId, $plugin);
+        if ($pluginSlug !== $slug) {
+            continue;
+        }
+
+        return [
+            'plugin_id' => (string) $pluginId,
+            'version' => trim((string) ($plugin['version'] ?? $plugin['marketplace_version'] ?? '')),
+        ];
+    }
+
+    return null;
+}
+
 function birkly_marketplace_is_offer_version_installed(string $slug, string $version): bool
 {
     $slug = trim($slug);
@@ -49,12 +83,33 @@ function birkly_marketplace_is_offer_version_installed(string $slug, string $ver
         return false;
     }
 
-    $installed = birkly_marketplace_installed_by_slug()[$slug] ?? null;
-    if (!is_array($installed) || empty($installed['installed'])) {
+    $installed = birkly_marketplace_local_installed_offer($slug);
+    if ($installed === null) {
         return false;
     }
 
-    return trim((string) ($installed['installed_version'] ?? '')) === $version;
+    return $installed['version'] === $version;
+}
+
+/**
+ * Whether the normalized manifest declares capabilities that require user consent.
+ *
+ * @param array{permissions?:array,hooks?:array,data_access?:array} $manifest
+ */
+function birkly_marketplace_manifest_requires_consent(array $manifest): bool
+{
+    $normalized = birkly_marketplace_normalize_permissions_manifest($manifest);
+    if ($normalized['permissions'] !== [] || $normalized['hooks'] !== []) {
+        return true;
+    }
+
+    foreach ($normalized['data_access'] as $level) {
+        if ($level !== 'none') {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function birkly_marketplace_has_install_consent(string $slug, string $version): bool
@@ -227,11 +282,14 @@ function birkly_marketplace_install_permissions(string $slug, string $version = 
         ];
     }
 
+    $permissionsManifest = birkly_marketplace_normalize_permissions_manifest($manifest);
+
     return [
         'ok' => true,
         'version' => $targetVersion,
-        'permissions_manifest' => birkly_marketplace_normalize_permissions_manifest($manifest),
-        'consent_required' => !birkly_marketplace_has_install_consent($slug, $targetVersion),
+        'permissions_manifest' => $permissionsManifest,
+        'consent_required' => birkly_marketplace_manifest_requires_consent($permissionsManifest)
+            && !birkly_marketplace_has_install_consent($slug, $targetVersion),
         'consent_record' => birkly_marketplace_load_consent()[$slug][$targetVersion] ?? null,
     ];
 }
@@ -249,21 +307,45 @@ function birkly_marketplace_permissions_manifest_from_plugin_json(array $pluginJ
 }
 
 /**
+ * @param array{permissions?:array,hooks?:array,data_access?:array}|null $permissionsManifest
  * @return array{ok:bool,error?:string,code?:string}
  */
-function birkly_marketplace_require_install_consent(string $slug, string $version, bool $consentAccepted = false): array
-{
+function birkly_marketplace_require_install_consent(
+    string $slug,
+    string $version,
+    bool $consentAccepted = false,
+    ?array $permissionsManifest = null
+): array {
+    if ($consentAccepted) {
+        return ['ok' => true];
+    }
+
     if (birkly_marketplace_has_install_consent($slug, $version)) {
         return ['ok' => true];
     }
 
-    if (!$consentAccepted) {
-        return [
-            'ok' => false,
-            'error' => 'Permission consent is required before installing this plugin',
-            'code' => 'consent_required',
-        ];
+    if ($permissionsManifest === null) {
+        $permInfo = birkly_marketplace_install_permissions($slug, $version);
+        if (empty($permInfo['ok'])) {
+            return [
+                'ok' => false,
+                'error' => $permInfo['error'] ?? 'Failed to load permissions',
+                'code' => 'permissions_failed',
+            ];
+        }
+        $permissionsManifest = is_array($permInfo['permissions_manifest'] ?? null)
+            ? $permInfo['permissions_manifest']
+            : [];
+        $version = (string) ($permInfo['version'] ?? $version);
     }
 
-    return ['ok' => true];
+    if (!birkly_marketplace_manifest_requires_consent($permissionsManifest)) {
+        return ['ok' => true];
+    }
+
+    return [
+        'ok' => false,
+        'error' => 'Permission consent is required before installing this plugin',
+        'code' => 'consent_required',
+    ];
 }
