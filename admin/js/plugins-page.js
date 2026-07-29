@@ -796,19 +796,19 @@
     }
 
     function renderOfferMetaRows(offer) {
-        var versionHtml = offer.latest_version
-            ? '<span class="marketplace-stat marketplace-stat--version">v' + escapeHtml(offer.latest_version) + '</span>'
-            : '';
+        var versionText = offer.latest_version ? 'v' + escapeHtml(offer.latest_version) : '';
         return (
             '<div class="marketplace-offer-stats">' +
+            '<div class="marketplace-offer-stats-row marketplace-offer-stats-row--primary">' +
             '<span class="marketplace-stat marketplace-stat--price">' + escapeHtml(formatPrice(offer)) + '</span>' +
-            '<span class="marketplace-stat-sep" aria-hidden="true">·</span>' +
             renderOfferRatingStat(offer.rating_summary) +
-            '<span class="marketplace-stat-sep" aria-hidden="true">·</span>' +
+            '</div>' +
+            '<div class="marketplace-offer-stats-row marketplace-offer-stats-row--secondary">' +
+            (versionText
+                ? '<span class="marketplace-stat marketplace-stat--version">' + versionText + '</span>'
+                : '<span class="marketplace-stat marketplace-stat--version marketplace-stat--empty"></span>') +
             '<span class="marketplace-stat marketplace-stat--downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
-            (versionHtml
-                ? '<span class="marketplace-stat-sep" aria-hidden="true">·</span>' + versionHtml
-                : '') +
+            '</div>' +
             '</div>'
         );
     }
@@ -1300,7 +1300,7 @@
         var select = document.getElementById('marketplace-filter-category');
         if (!select) return;
         var current = select.value;
-        var html = '<option value="">' + escapeHtml(t('marketplace_filter_all_categories', 'All categories')) + '</option>';
+        var html = '<option value="">' + escapeHtml(t('marketplace_filter_category_all', 'Category · All categories')) + '</option>';
         (categories || []).forEach(function (cat) {
             html += '<option value="' + escapeHtml(cat) + '"' + (current === cat ? ' selected' : '') + '>' + escapeHtml(cat) + '</option>';
         });
@@ -1345,18 +1345,6 @@
             }
 
             marketplaceBaseUrl = (result.data && result.data.marketplace_url) || marketplaceBaseUrl;
-
-            var hint = document.getElementById('marketplace-url-hint');
-            if (hint) {
-                var hintText = 'Registry: ' + ((result.data && result.data.marketplace_url) || '');
-                if (result.data && result.data.installation_owner_email) {
-                    hintText += ' · Owner: ' + result.data.installation_owner_email;
-                }
-                if (result.data && result.data.fallback) {
-                    hintText += ' (showing bundled catalog — registry unreachable)';
-                }
-                hint.textContent = hintText;
-            }
 
             marketplaceFilterOptions = (result.data && result.data.filter_options) || marketplaceFilterOptions;
             updateCategoryFilterOptions(marketplaceFilterOptions.categories || []);
