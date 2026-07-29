@@ -1452,11 +1452,13 @@
         var typeEl = document.getElementById('marketplace-filter-type');
         var catEl = document.getElementById('marketplace-filter-category');
         var sortEl = document.getElementById('marketplace-sort');
+        var priceEl = document.getElementById('marketplace-price');
         return {
             q: qEl ? qEl.value : '',
             offer_type: typeEl ? typeEl.value : '',
             category: catEl ? catEl.value : '',
             sort: sortEl ? sortEl.value : 'name',
+            price: priceEl ? priceEl.value : '',
         };
     }
 
@@ -1474,6 +1476,7 @@
         if (params.category) query.set('category', params.category);
         if (params.offer_type) query.set('offer_type', params.offer_type);
         if (params.sort) query.set('sort', params.sort);
+        if (params.price) query.set('price', params.price);
 
         try {
             var browse = await fetch(url('/api/marketplace.php?' + query.toString()), {
@@ -1667,7 +1670,7 @@
     }
 
     function initMarketplaceFilters() {
-        ['marketplace-filter-type', 'marketplace-filter-category', 'marketplace-sort'].forEach(function (id) {
+        ['marketplace-filter-type', 'marketplace-filter-category', 'marketplace-sort', 'marketplace-price'].forEach(function (id) {
             var el = document.getElementById(id);
             if (el) {
                 el.addEventListener('change', function () {
