@@ -82,4 +82,4 @@ SVG upload may be restricted by settings. Check admin media settings for allowed
 - `fieldtypes` — image/gallery/media field definitions
 - `content-model` — entries with media fields
 - `content-editor` — inline images in rich HTML
-- Admin: `admin/docs/snapshots/media.md`, `admin/docs/fieldtypes.php`
+- Human docs: https://docs.birkly.com/01-admin/media-library.html
