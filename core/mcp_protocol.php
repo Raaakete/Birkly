@@ -254,6 +254,25 @@ function birkly_mcp_dispatch_jsonrpc(array $input, array $aiUser): array
 }
 
 /**
+ * Build a JSON-RPC 2.0 response with either result or error — never both (Cursor/Zod rejects extra keys).
+ */
+function birkly_mcp_build_jsonrpc_response(array $input, ?array $result, ?array $error): array
+{
+    $response = [
+        'jsonrpc' => '2.0',
+        'id' => $input['id'] ?? null,
+    ];
+
+    if ($error !== null) {
+        $response['error'] = $error;
+    } else {
+        $response['result'] = $result;
+    }
+
+    return $response;
+}
+
+/**
  * Ensure a bearer token issued for an MCP endpoint matches the agent in the URL path.
  */
 function birkly_mcp_actor_matches_path_agent(array $aiUser, ?string $pathAgentId): bool
