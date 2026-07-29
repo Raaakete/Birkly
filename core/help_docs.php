@@ -225,6 +225,35 @@ function birkly_help_topic_snapshot_path(array $topic): string
 }
 
 /**
+ * Derive Help nav section from Birkly-Docs docs_path prefix.
+ *
+ * @return array{id: string, label: string}
+ */
+function birkly_help_nav_section_from_docs_path(string $docsPath): array
+{
+    /** @var array<string, array{id: string, label: string}> */
+    static $map = [
+        '00-overview' => ['id' => 'overview', 'label' => 'Overview'],
+        '01-admin' => ['id' => 'admin', 'label' => 'Admin'],
+        '02-content' => ['id' => 'content', 'label' => 'Content model'],
+        '03-templating' => ['id' => 'templating', 'label' => 'Templating'],
+        '04-integration' => ['id' => 'integration', 'label' => 'Integration'],
+        '05-automation' => ['id' => 'automation', 'label' => 'Automation'],
+        '06-extensibility' => ['id' => 'extensibility', 'label' => 'Extensibility'],
+        '06-plugin-economy' => ['id' => 'plugin-economy', 'label' => 'Plugin economy'],
+        '07-operations' => ['id' => 'operations', 'label' => 'Operations'],
+    ];
+
+    foreach ($map as $prefix => $section) {
+        if (str_starts_with($docsPath, $prefix . '/')) {
+            return $section;
+        }
+    }
+
+    return ['id' => 'platform', 'label' => 'Platform'];
+}
+
+/**
  * Ensure every topic has a bundled markdown snapshot path for admin Help.
  *
  * @param list<array<string, mixed>> $topics
@@ -240,6 +269,12 @@ function birkly_normalize_help_topics(array $topics): array
         $snapshot = (string) ($topic['snapshot'] ?? '');
         if ($snapshot === '' || !str_ends_with(strtolower($snapshot), '.md')) {
             $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
+        }
+        if (empty($topic['nav_section'])) {
+            $docsPath = (string) ($topic['docs_path'] ?? '');
+            $nav = birkly_help_nav_section_from_docs_path($docsPath);
+            $topic['nav_section'] = $nav['id'];
+            $topic['nav_section_label'] = $nav['label'];
         }
         $normalized[] = $topic;
     }

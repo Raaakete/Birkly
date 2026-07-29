@@ -41,8 +41,8 @@ class DynamicItems extends BaseField {
             foreach ($dirs as $dir) {
                 $fieldtypeName = basename($dir);
                 
-                // Skip DynamicItems itself and complex types
-                $excluded = ['DynamicItems', 'Gallery', 'Map', 'Relation', 'Wysiwyg', 'Editor', 'ContentEditor'];
+                // Skip DynamicItems itself and types that cannot nest safely
+                $excluded = ['DynamicItems', 'Gallery', 'Map', 'Relation'];
                 if (in_array($fieldtypeName, $excluded)) {
                     continue;
                 }
@@ -133,8 +133,8 @@ class DynamicItems extends BaseField {
             foreach ($dirs as $dir) {
                 $fieldtypeName = basename($dir);
                 
-                // Skip DynamicItems itself and complex types
-                $excluded = ['DynamicItems', 'Gallery', 'Map', 'Relation', 'Wysiwyg', 'Editor', 'ContentEditor'];
+                // Skip DynamicItems itself and types that cannot nest safely
+                $excluded = ['DynamicItems', 'Gallery', 'Map', 'Relation'];
                 if (in_array($fieldtypeName, $excluded)) {
                     continue;
                 }

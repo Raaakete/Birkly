@@ -70,7 +70,7 @@ For shared header/footer content:
 ]
 ```
 
-**Allowed block types:** Most built-in fieldtypes except nested Dynamic items, Gallery, Map, Relation, and full Content editor (to avoid excessive nesting). The admin discovers available types automatically.
+**Allowed block types:** Most built-in fieldtypes except nested Dynamic items, Gallery, Map, and Relation (to avoid excessive nesting). **ContentEditor** is available for rich body blocks. The admin discovers available types automatically.
 
 **Templates:** Output depends on integration — with `<birkly-region>`, the client hydrates the field HTML. In custom JSON consumers, iterate the array and map `type` + `value`.
 

@@ -48,6 +48,8 @@ assert_contains('render includes add-block data action', $rawHtml, 'data-dynamic
 assert_not_contains('render avoids inline onclick (CSP)', $rawHtml, 'onclick=');
 assert_contains('render includes field_blocks id', $rawHtml, 'id="field_blocks"');
 
+assert_contains('render includes contenteditor option', $rawHtml, '"name":"contenteditor"');
+
 $enHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'en');
 
 assert_contains('multilang container id', $enHtml, 'id="field_en_blocks"');
