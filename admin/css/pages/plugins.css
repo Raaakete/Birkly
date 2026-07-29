@@ -418,10 +418,46 @@
   display: block;
 }
 
+.marketplace-offer-type-badge {
+  position: absolute;
+  top: var(--space-3, 0.75rem);
+  left: var(--space-3, 0.75rem);
+  z-index: 1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-sm, 0.375rem);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.marketplace-offer-type-badge--plugin {
+  color: #5b21b6;
+  background: #ede9fe;
+}
+
+.marketplace-offer-type-badge--template_pack {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.marketplace-offer-type-badge--fieldtype {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.marketplace-offer-type-badge--theme {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
 .marketplace-offer-icon-badge {
   position: absolute;
   left: var(--space-3, 0.75rem);
   bottom: var(--space-3, 0.75rem);
+  z-index: 1;
   width: 48px;
   height: 48px;
   border-radius: var(--radius-md, 0.375rem);
@@ -439,15 +475,19 @@
   font-size: 3rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.9);
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
 }
 
 .marketplace-offer-placeholder.placeholder-theme {
-  background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
 }
 
 .marketplace-offer-placeholder.placeholder-template_pack {
-  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  background: linear-gradient(135deg, #fbbf24 0%, #fde68a 100%);
+}
+
+.marketplace-offer-placeholder.placeholder-fieldtype {
+  background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
 }
 
 .marketplace-offer-body {
@@ -456,13 +496,6 @@
   flex-direction: column;
   gap: var(--space-3, 0.75rem);
   flex: 1;
-}
-
-.marketplace-offer-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
 }
 
 .marketplace-offer-type {
