@@ -30,6 +30,7 @@
         "ai_presence_communication": "Communication guidance",
         "ai_presence_competitive": "Competitive positioning",
         "ai_presence_completeness": "Completeness",
+        "ai_presence_completeness_pct": "% complete",
         "ai_presence_connected_content": "Connected content",
         "ai_presence_connected_help": "Reference CMS entries or collections — content stays in Content, not duplicated here.",
         "ai_presence_context_preview": "Context preview",

@@ -2,6 +2,8 @@
 
 This file tracks **current state** and the **active execution phase**. Full historical roadmap may live in `Raaakete/Birkly-Internal` when the public repo is scrubbed for OSS.
 
+**Catch-up inventory:** `docs/roadmap/ROADMAP-CATCHUP-2026-07-29.md` — unphased work through 2026-07-29.
+
 ## Plan governance
 
 | Change type | Who decides |
@@ -12,127 +14,86 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ---
 
-## Current state (verified 2026-07-26)
+## Current state (verified 2026-07-29)
 
 | Area | Status |
 |------|--------|
-| **Docker / Dokploy** | `BIRKLY_DATA=/app/data` single volume (#282–#288) |
-| **Production** | `cms.birkly.cloud` + `birkly.cloud` on one Dokploy app |
-| **P43 Hosting** | Settings-driven CMS vs public URLs — complete |
-| **P44 Admin UX** | Full design remediation M1–M12 — complete |
-| **P45 Templating** | Complete — birkly-region, stack docs |
-| **AI Presence** | Phase 46 approved — execute M1→M14 |
+| **Docker / Dokploy** | `BIRKLY_DATA=/app/data` single volume |
+| **Production** | `cms.birkly.cloud` + `birkly.cloud` |
+| **P43–P45** | Hosting, admin UX, templating — complete |
+| **Agent Guide** | P46+P47 complete — polish + docs ongoing |
+| **Content UX (P39)** | Shipped (#258–268) — catch-up doc only |
+| **Marketplace CMS UI** | Large wave merged 2026-07-29 — unphased |
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
+
+**No formal active phase queued** — pick next from catch-up doc or new plan PR.
 
 ---
 
 ## Completed phases
 
-### Phase 43 — Configurable hosting URLs (CMS vs public site)
+### Phase 43 — Configurable hosting URLs
 
-**Status:** **Complete** (2026-07-25)
+**Status:** **Complete** (2026-07-25) · `docs/reviews/P43-*`
+
+### Phase 44 — Admin UI/UX excellence
+
+**Status:** **Complete** (2026-07-25) · `docs/reviews/P44-*` · `docs/admin-design-system.md`
+
+### Phase 45 — Templating & multi-stack integration
+
+**Status:** **Complete** (2026-07-26) · V-TPL green · PRs #307, Birkly-Docs #39, Birkly-Website #13
+
+`<birkly-region>`, scoped `processTemplates`, stack docs, template validator, spec v1.0.
+
+### Phase 46 — Agent Guide (planned as “AI Presence”)
+
+**Status:** **Complete** (2026-07-27) — shipped as **Agent Guide** in admin UI
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| P43-M0–M9 | Settings URLs, routing, Hosting API/UI, nginx, tests, docs | complete |
+| P46-M0–M14 | Schema, admin workspace, publish, public API, preview, tests | **done** |
 
-**Artifacts:** `docs/reviews/P43-*` · `core/hosting_urls.php` · `api/hosting.php`
+**User-facing:** Admin nav **Agent Guide** · `/.well-known/agent-guide.json` · `api/public/ai_presence.php`
 
-### Phase 44 — Admin UI/UX excellence (full design remediation)
+**Beyond original P46 scope (shipped as P47 wave):** Products tab, AI Assist sidebar, sources of truth, cross-links, link health, CMS sync hints.
 
-**Status:** **Complete** (2026-07-25)
+**Artifacts:** `docs/reviews/P46-*` · `core/ai_presence.php` · `admin/templates/ai-presence.html`
 
-| Milestone | Focus | Status |
-|-----------|--------|--------|
-| P44-M0–M12 | Save model, settings IA, hosting wizard, tokens, a11y, i18n, Project tab, closure | complete |
-
-**Artifacts:** `docs/reviews/P44-*` · `docs/admin-design-system.md`
+**PRs:** #330 plan · #331 feature · #334–356 UX · #353 cross-links · #336 Pro
 
 ---
 
-## Recently completed
+## Shipped without full phase docs (see catch-up file)
 
-### Phase 45 — Templating, web components, and multi-stack integration
-
-**Status:** **Complete** (2026-07-26) — V-TPL matrix green
-
-**Goal:** One-line `<birkly-region>` for CMS blocks (no per-page template repetition); scoped `processTemplates`; truthful AI/MCP docs; Birkly-Docs guides for HTML, web components, SPAs, and SSR.
-
-| Milestone | Focus | Status |
-|-----------|--------|--------|
-| **P45-M0** | Plan, gap register, matrix, handoff | **done** |
-| **P45-M1** | AI + MCP syntax truth (remove phantom directives) | **done** |
-| **P45-M2** | Scoped `processTemplates({ root })` | **done** |
-| **P45-M3** | `<birkly-region>` component (entry + list) | **done** |
-| **P45-M4** | Connect lifecycle + `data-birkly-region` | **done** |
-| **P45-M5** | Enhance-only component helpers | **done** |
-| **P45-M6** | Template language spec v1.0 | **done** |
-| **P45-M7** | Project template validator | **done** |
-| **P45-M8** | Birkly-Docs: stack hub + web components | **done** |
-| **P45-M9** | Birkly-Docs: SPA (React/Vue) guide | **done** |
-| **P45-M10** | Birkly-Docs: SSR / build-time guide | **done** |
-| **P45-M11** | Tests + V-TPL matrix | **done** |
-| **P45-M12** | Birkly-Website reference + closure | **done** |
-
-**Spec:** `docs/reviews/P45-templating-and-stacks-plan.md`  
-**Handoff:** `docs/reviews/P45-lead-engineer-handoff.md`  
-**Matrix:** `docs/reviews/P45-verification-matrix.md` (all **pass**)  
-**Gaps:** `docs/reviews/P45-gap-register.md`
-
-**PRs:** Birkly #307 · Birkly-Docs #39 · Birkly-Website #13
+| ID | What | PRs / refs |
+|----|------|------------|
+| **P38** | AI Project Gateway (MCP/chat `project/`) | #246, AI architecture docs |
+| **P39** | Content editor + entries UX + chat context | #258–268 |
+| **Marketplace** | CMS marketplace tab polish | #402–423 |
+| **Admin audit** | UX fix tracks A–E | `admin-ux-fix-plan-2026-07.md` |
 
 ---
 
-## Next active phase
+## Paused / not in scope
 
-### Phase 46 — AI Presence (brand context for AI systems)
+Admin PHP `eval` replacement · Studio P26 · P42 marketing template pack · P28 beta launch automation · Core vector DB / embeddings index
 
-**Status:** **Approved** (2026-07-26) — **M0 complete**, **M1→M14 execution ready**
-
-**Goal:** Thin layer on CMS — brand identity, claims, evidence, media context, communication guidance; publish `/.well-known/brand-context.json` + public API on the brand's public domain. Not a chatbot. Not duplicate Content/Media.
-
-| Milestone | Focus | Status |
-|-----------|--------|--------|
-| **P46-M0** | Plan, gap register, matrix, handoff | **this PR** |
-| **P46-M1** | Schema + storage + `core/ai_presence.php` | pending |
-| **P46-M2** | Nav + page shell + tabs | pending |
-| **P46-M3** | Overview + completeness + next steps | pending |
-| **P46-M4** | Skippable first-time setup | pending |
-| **P46-M5** | Context tab (identity, positioning, guidance) | pending |
-| **P46-M6** | Connected content pickers | pending |
-| **P46-M7** | Claims & Evidence | pending |
-| **P46-M8** | Media context tab | pending |
-| **P46-M9** | Draft/publish + versions | pending |
-| **P46-M10** | Well-known JSON + public API + JSON-LD | pending |
-| **P46-M11** | Staleness + Publish tab | pending |
-| **P46-M12** | Context Preview (sources visible) | pending |
-| **P46-M13** | AI suggestions (approve-to-save) | pending |
-| **P46-M14** | Birkly-Docs, i18n, tests, closure | pending |
-
-**Spec:** `docs/reviews/P46-ai-presence-plan.md`  
-**Handoff:** `docs/reviews/P46-lead-engineer-handoff.md`  
-**Matrix:** `docs/reviews/P46-verification-matrix.md`  
-**Gaps:** `docs/reviews/P46-gap-register.md`
-
-**Human decisions (locked):** P46-D1–D14 · notify once at M14
-
-**Depends on:** P43 public site URLs · P44 admin UX patterns
-
-**Paused / not in scope:** Admin eval replacement · Studio P26 · P42 marketing template pack
+**Product note:** Vector search is **not** core CMS. Agent Guide + structured content is the primary path for machine-readable brand truth. Optional RAG/support-bot indexing could be a **future plugin**, not required for headless CMS.
 
 ---
 
 ## Task handoff format
 
 ```markdown
-### Task: P46-M[N]-T[N] [title]
+### Task: P[N]-M[N]-T[N] [title]
 - **Owner**: cms-developer | frontend-developer | docs-writer | qa-verifier | lead-engineer
 - **Repo(s)**: Birkly | Birkly-Docs
 - **Files**: path/to/files
-- **Depends on**: P46-M[N]-T[N] | none
+- **Depends on**: ...
 - **Acceptance criteria**:
   - ...
 ```
 
-Branch template: `cursor/p46-m[N]-<slug>-030a`
+Branch template: `cursor/p[N]-m[N]-<slug>-030a`

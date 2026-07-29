@@ -1,6 +1,6 @@
 # P46 — AI Presence (brand context for AI systems)
 
-**Status:** Approved (2026-07-26) — **next active phase**  
+**Status:** Complete (2026-07-27) — shipped as **Agent Guide** in admin UI  
 **Repos:** Birkly (core) · Birkly-Docs (product + API docs)  
 **Handoff:** `docs/reviews/P46-lead-engineer-handoff.md`  
 **Matrix:** `docs/reviews/P46-verification-matrix.md`  
