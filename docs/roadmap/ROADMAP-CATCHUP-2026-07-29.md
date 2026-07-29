@@ -131,18 +131,11 @@ Roughly **2026-07-29**, many PRs improved the **Plugins → Marketplace** tab in
 
 ## Next planning candidates (need approved plan PR)
 
-1. **Integration registry** — Settings hub for shared provider connections (Commerce Stripe first); see product note below  
-2. **P26** — Studio creative suite  
-3. **P31/P32** — Dashboard (if still desired)  
-4. **Marketplace** — only if new CMS↔marketplace features beyond July #402–423 wave
+1. **P26** — Studio creative suite  
+2. **P31/P32** — Dashboard (if still desired)  
+3. **Marketplace** — only if new CMS↔marketplace features beyond July #402–423 wave
 
-### Product note — central Integrations tab (not approved)
-
-**Idea:** Settings → Integrations stores provider connections once (e.g. Stripe from Commerce) so other plugins pick an existing connection instead of re-entering secrets.
-
-**Today:** Settings **Integrations** tab = Public API + webhooks. **AI** tab = AI connections / MCP (separate encrypted store). Commerce **Connections** = per-plugin (sidebar), not a core registry.
-
-**Verdict for planning:** Useful when **multiple features share the same provider account** (Stripe, email, analytics). Not a gimmick if built as **typed integrations + scoped plugin access**, not a generic secret dump. Security: larger blast radius — require encryption, audit log, per-integration permissions, no cross-plugin secret export. **Incremental:** registry API + Commerce as first writer; second consumer before expanding UI.
+**Deferred (no build now):** Central integration registry — Commerce owns payment connections for all plugins; revisit only if multiple independent consumers need shared provider creds.
 
 ---
 
