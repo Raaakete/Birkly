@@ -536,6 +536,10 @@ function load_plugins($plugins_dir = null) {
             
             // Only load plugin code if it's active
             if ($birkly_plugins[$plugin_id]['active']) {
+                if (!defined('BIRKLY_CMS_ROOT')) {
+                    require_once __DIR__ . '/birkly_paths.php';
+                    define('BIRKLY_CMS_ROOT', birkly_project_root());
+                }
                 include_once $path . '/plugin.php';
             }
             
