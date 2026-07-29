@@ -71,6 +71,11 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
     mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
   done
   mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
+  if [ -d /app/bundled-plugins/automation ]; then
+    echo "[entrypoint] Syncing bundled automation plugin to data volume..."
+    mkdir -p "$DATA_ROOT/plugins/automation" 2>/dev/null || true
+    cp -a /app/bundled-plugins/automation/. "$DATA_ROOT/plugins/automation/" 2>/dev/null || true
+  fi
   chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback"
 else
   legacy_layout
