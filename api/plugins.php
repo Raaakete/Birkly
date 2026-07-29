@@ -173,6 +173,10 @@ if ($action === 'activate') {
         echo json_encode(['status' => 'error', 'message' => 'Invalid plugin ID']);
         exit;
     }
+
+    if (function_exists('load_plugins')) {
+        load_plugins();
+    }
     
     $plugins = get_all_plugins();
     if (!isset($plugins[$plugin_id])) {
@@ -224,8 +228,25 @@ if ($action === 'activate') {
             }
         }
     }
+
+    if (function_exists('birkly_plugin_smoke_load')) {
+        $smoke = birkly_plugin_smoke_load($plugin_id);
+        if (!$smoke['ok']) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Plugin failed to load: ' . ($smoke['error'] ?? 'unknown error'),
+            ]);
+            exit;
+        }
+    }
     
-    set_plugin_state($plugin_id, true);
+    if (!set_plugin_state($plugin_id, true)) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Failed to save plugin activation state. Check settings directory permissions.',
+        ]);
+        exit;
+    }
     
     log_security_event('plugin_activated', ['plugin' => $plugin_id, 'user' => $_SESSION['user']['email'] ?? 'unknown']);
     echo json_encode([

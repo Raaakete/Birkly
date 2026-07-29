@@ -112,6 +112,30 @@ if ($action === 'diagnose_plugins') {
     exit;
 }
 
+if ($action === 'probe_plugin_load') {
+    $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
+    if ($pluginId === '' || !preg_match('/^[a-z0-9_-]+$/i', $pluginId)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'invalid plugin_id'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $probeScript = $projectRoot . '/scripts/probe-plugin-load.php';
+    $cmd = 'php ' . escapeshellarg($probeScript) . ' ' . escapeshellarg($pluginId) . ' 2>&1';
+    $output = shell_exec($cmd) ?? '';
+    $ok = str_contains($output, 'OK');
+
+    echo json_encode([
+        'status' => $ok ? 'ok' : 'error',
+        'plugin_id' => $pluginId,
+        'load_ok' => $ok,
+        'detail' => trim($output) !== 'OK' ? trim($output) : null,
+        'plugins' => birkly_deploy_revision_plugin_diagnostics($projectRoot),
+        'time' => gmdate('c'),
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($action === 'repair_plugins') {
     $requestedId = trim((string) ($_GET['installation_id'] ?? ''));
     if ($requestedId === '' || $installationId === null || !hash_equals((string) $installationId, $requestedId)) {
