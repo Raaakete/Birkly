@@ -205,3 +205,10 @@ See [Public API](../04-integration/agent-guide-public-api.md).
 - [Workflows](agent-guide-workflows.md)
 - [Best practices](agent-guide-best-practices.md)
 - [Data model](agent-guide-data-model.md)
+
+## Further reading
+
+- [Content model overview](content-model-overview.md)
+- [Collections](collections.md)
+- [Entries & collections](entries.md)
+- [Collection groups](collection-groups.md)

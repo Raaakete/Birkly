@@ -203,3 +203,10 @@ Without an AI connection, preview uses keyword matching on published fields. Wit
 | Governance & quality | [Best practices](agent-guide-best-practices.md) |
 | Build an integration | [Public API](../04-integration/agent-guide-public-api.md) |
 | Connect Claude Desktop / MCP | [MCP & agents](../04-integration/agent-guide-mcp-and-agents.md) |
+
+## Further reading
+
+- [Content model overview](content-model-overview.md)
+- [Collections](collections.md)
+- [Entries & collections](entries.md)
+- [Collection groups](collection-groups.md)
