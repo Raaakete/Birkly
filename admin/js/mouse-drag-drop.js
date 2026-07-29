@@ -664,23 +664,24 @@
 
         insertPlaceholder(targetItem, mouseY, targetContainer) {
             if (!this.placeholder || !targetItem) return;
-            
+
             const container = targetContainer || this.container;
-            
+
             // Make sure targetItem is still in the DOM
             if (!targetItem.parentNode) return;
-            
+
             const rect = targetItem.getBoundingClientRect();
             const centerY = rect.top + rect.height / 2;
             const insertBefore = mouseY < centerY;
-            
+
             // Special case: if inserting before the first item, make sure we're actually at the top
             const targetParent = targetItem.parentNode;
-            let items = Array.from(targetParent.children).filter(child => 
-                child.nodeType === 1 && 
-                child.matches && 
-                child.matches(this.itemSelector) && 
-                child !== this.draggedItem && 
+            const childSelector = this.placeholder.tagName === 'TR' ? 'tr.table-row' : this.itemSelector;
+            let items = Array.from(targetParent.children).filter(child =>
+                child.nodeType === 1 &&
+                child.matches &&
+                child.matches(childSelector) &&
+                child !== this.draggedItem &&
                 child !== this.placeholder
             );
             
@@ -882,22 +883,31 @@
                     ph.remove();
                 }
             });
-            
-            // Create new placeholder
-            this.placeholder = document.createElement('div');
-            this.placeholder.className = 'drag-placeholder';
-            const computedStyle = window.getComputedStyle(item);
-            this.placeholder.style.height = item.offsetHeight + 'px';
-            this.placeholder.style.width = item.offsetWidth + 'px';
-            this.placeholder.style.margin = computedStyle.margin;
-            this.placeholder.style.border = '2px dashed #3b82f6';
-            this.placeholder.style.borderRadius = '4px';
-            this.placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-            
+
+            const isTableRow = item.tagName === 'TR';
+            if (isTableRow) {
+                this.placeholder = document.createElement('tr');
+                this.placeholder.className = 'drag-placeholder table-row drag-placeholder-row';
+                const cell = document.createElement('td');
+                cell.colSpan = Math.max(item.cells.length, 1);
+                cell.className = 'drag-placeholder-cell';
+                this.placeholder.appendChild(cell);
+            } else {
+                this.placeholder = document.createElement('div');
+                this.placeholder.className = 'drag-placeholder';
+                const computedStyle = window.getComputedStyle(item);
+                this.placeholder.style.height = item.offsetHeight + 'px';
+                this.placeholder.style.width = item.offsetWidth + 'px';
+                this.placeholder.style.margin = computedStyle.margin;
+                this.placeholder.style.border = '2px dashed #3b82f6';
+                this.placeholder.style.borderRadius = '4px';
+                this.placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            }
+
             // Insert at dragged item's position
             if (item.parentNode) {
                 item.parentNode.insertBefore(this.placeholder, item);
-                
+
                 // Trigger animation by forcing reflow
                 void this.placeholder.offsetHeight;
             }

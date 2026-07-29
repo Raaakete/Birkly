@@ -206,8 +206,8 @@ if (!empty($entries)): ?>
                         <?php endif; ?>
 
                         <?php if ($showDrag): ?>
-                            <td class="cell cell-drag" draggable="true" aria-label="<?= __('admin.drag_to_reorder') ?>">
-                                <?= birkly_icon('dots-six-vertical', ['size' => 16]) ?>
+                            <td class="cell cell-drag" aria-label="<?= __('admin.drag_to_reorder') ?>">
+                                <span class="entry-drag-handle" aria-hidden="true"><?= birkly_icon('dots-six-vertical', ['size' => 16]) ?></span>
                             </td>
                         <?php endif; ?>
 

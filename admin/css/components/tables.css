@@ -74,7 +74,7 @@
 }
 
 .entries-smart-table .table-viewport {
-  overflow-x: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 100%;
@@ -141,11 +141,52 @@
 
 .entries-smart-table .head-drag,
 .entries-smart-table .cell-drag {
-  width: 40px;
-  min-width: 40px;
-  max-width: 40px;
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  padding-left: var(--space-2, 0.5rem);
+  padding-right: var(--space-2, 0.5rem);
   text-align: center;
-  cursor: grab !important;
+}
+
+.entries-smart-table .cell-drag {
+  cursor: grab;
+  color: var(--text-tertiary, #C4C6C1);
+  vertical-align: middle;
+}
+
+.entries-smart-table .entry-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-sm, 0.375rem);
+  touch-action: none;
+  user-select: none;
+}
+
+.entries-smart-table .entry-drag-handle:hover {
+  background: var(--bg-hover, #f3f4f6);
+  color: var(--text-secondary, #72746F);
+}
+
+.entries-smart-table .cell-drag:active,
+.entries-smart-table .cell-drag:active .entry-drag-handle {
+  cursor: grabbing;
+}
+
+.entries-smart-table .drag-placeholder-row .drag-placeholder-cell {
+  height: 60px;
+  padding: 0;
+  border: 2px dashed var(--primary-400, #60a5fa);
+  border-radius: var(--radius-sm, 0.375rem);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.entries-smart-table .table-row.dragging {
+  opacity: 0.92;
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
 }
 
 .entries-smart-table .head-sub-entries,
@@ -172,8 +213,7 @@
 
 .entries-smart-table .head-actions,
 .entries-smart-table .cell-actions {
-  position: sticky;
-  right: 0;
+  position: static;
   width: 112px;
   min-width: 112px;
   max-width: 112px;
@@ -181,11 +221,14 @@
   border-left: 1px solid var(--border-light, #f3f4f6);
   background: var(--bg-elevated, #ffffff);
   text-align: center;
-  z-index: 3;
+  z-index: 1;
 }
 
 .entries-smart-table.is-scrolled-x .head-actions,
 .entries-smart-table.is-scrolled-x .cell-actions {
+  position: sticky;
+  right: 0;
+  z-index: 3;
   box-shadow: -6px 0 12px -6px rgba(0, 0, 0, 0.12);
 }
 
@@ -207,7 +250,6 @@
   flex-shrink: 0;
 }
 
-.entries-smart-table .cell-drag,
 .entries-smart-table .cell-title,
 .entries-smart-table .cell-status,
 .entries-smart-table .cell-field {
@@ -222,18 +264,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.entries-smart-table .cell-drag {
-  cursor: grab;
-  color: var(--text-tertiary, #C4C6C1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.entries-smart-table .cell-drag:active {
-  cursor: grabbing;
 }
 
 .entries-smart-table .cell-title .title-text {
@@ -487,6 +517,10 @@
 
 /* Mobile — horizontal scroll in viewport only; compact fixed columns */
 @media (max-width: 767px) {
+  .entries-smart-table .table-viewport {
+    overflow-x: auto;
+  }
+
   .entries-smart-table .smart-table {
     table-layout: auto;
     width: max-content;
