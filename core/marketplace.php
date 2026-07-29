@@ -4,6 +4,78 @@
  */
 
 const BIRKLY_MARKETPLACE_DEFAULT_URL = 'https://marketplace.birkly.cloud';
+const BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY = 'EUR';
+
+/** Display-only FX rates (units per 1 EUR) for CMS marketplace price conversion. */
+const BIRKLY_MARKETPLACE_CURRENCY_RATES = [
+    'EUR' => 1.0,
+    'USD' => 1.08,
+    'GBP' => 0.85,
+    'CHF' => 0.95,
+    'DKK' => 7.46,
+    'SEK' => 11.50,
+    'NOK' => 11.80,
+    'CAD' => 1.47,
+    'AUD' => 1.65,
+];
+
+function birkly_marketplace_supported_display_currencies(): array
+{
+    return BIRKLY_MARKETPLACE_CURRENCY_RATES;
+}
+
+function birkly_marketplace_normalize_display_currency(string $currency): string
+{
+    $currency = strtoupper(trim($currency));
+    if (!array_key_exists($currency, BIRKLY_MARKETPLACE_CURRENCY_RATES)) {
+        throw new InvalidArgumentException('Unsupported display currency');
+    }
+
+    return $currency;
+}
+
+function birkly_marketplace_display_currency(): string
+{
+    $currency = strtoupper(trim((string) (birkly_marketplace_settings()['display_currency'] ?? BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY)));
+    if (!array_key_exists($currency, BIRKLY_MARKETPLACE_CURRENCY_RATES)) {
+        return BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY;
+    }
+
+    return $currency;
+}
+
+function birkly_marketplace_sync_display_currency(string $currency): void
+{
+    require_once __DIR__ . '/../api/storage.php';
+    $currency = birkly_marketplace_normalize_display_currency($currency);
+    $storage = new Storage(birkly_marketplace_settings_dir());
+    $data = $storage->read('marketplace.json') ?? [];
+    if (!is_array($data)) {
+        $data = [];
+    }
+
+    $data['display_currency'] = $currency;
+    $storage->write('marketplace.json', $data);
+    birkly_marketplace_settings_reset();
+}
+
+function birkly_marketplace_convert_cents(int $cents, string $fromCurrency, string $toCurrency): int
+{
+    $fromCurrency = strtoupper(trim($fromCurrency));
+    $toCurrency = strtoupper(trim($toCurrency));
+    if ($cents <= 0 || $fromCurrency === $toCurrency) {
+        return max(0, $cents);
+    }
+
+    $rates = BIRKLY_MARKETPLACE_CURRENCY_RATES;
+    if (!isset($rates[$fromCurrency], $rates[$toCurrency])) {
+        return max(0, $cents);
+    }
+
+    $inEur = $cents / $rates[$fromCurrency];
+
+    return (int) round($inEur * $rates[$toCurrency]);
+}
 
 function birkly_marketplace_settings_dir(): string
 {
@@ -38,9 +110,15 @@ function birkly_marketplace_settings(): array
         $url = BIRKLY_MARKETPLACE_DEFAULT_URL;
     }
 
+    $displayCurrency = strtoupper(trim((string) ($stored['display_currency'] ?? BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY)));
+    if (!array_key_exists($displayCurrency, BIRKLY_MARKETPLACE_CURRENCY_RATES)) {
+        $displayCurrency = BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY;
+    }
+
     $GLOBALS['__birkly_marketplace_settings'] = [
         'marketplace_url' => rtrim($url, '/'),
         'installation_owner_email' => trim((string) ($stored['installation_owner_email'] ?? '')),
+        'display_currency' => $displayCurrency,
     ];
     return $GLOBALS['__birkly_marketplace_settings'];
 }

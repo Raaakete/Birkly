@@ -52,6 +52,32 @@ if ($action === 'config') {
             'installation_id' => birkly_installation_id(),
             'installation_owner_email' => birkly_marketplace_installation_owner_email(),
             'cloud_account_linked' => birkly_cloud_account_is_linked(),
+            'display_currency' => birkly_marketplace_display_currency(),
+            'supported_currencies' => array_keys(birkly_marketplace_supported_display_currencies()),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'save_display_currency') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $currency = trim((string) ($input['currency'] ?? ''));
+    try {
+        birkly_marketplace_sync_display_currency($currency);
+    } catch (InvalidArgumentException $e) {
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'display_currency' => birkly_marketplace_display_currency(),
         ],
     ]);
     exit;
@@ -80,6 +106,8 @@ if ($action === 'browse') {
             'offers' => $result['offers'],
             'marketplace_url' => birkly_marketplace_url(),
             'installation_owner_email' => birkly_marketplace_installation_owner_email(),
+            'display_currency' => birkly_marketplace_display_currency(),
+            'supported_currencies' => array_keys(birkly_marketplace_supported_display_currencies()),
             'fallback' => !empty($result['fallback']),
             'filter_options' => $result['filter_options'] ?? ['categories' => [], 'offer_types' => []],
             'total' => count($result['offers']),
