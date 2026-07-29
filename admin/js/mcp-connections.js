@@ -391,12 +391,15 @@
         return `
         <ol class="endpoint-setup-steps">
             <li>Copy this <strong>Connector URL</strong> below.</li>
-            <li>Open your AI app (Claude, ChatGPT, or Cursor) → connector or integration settings.</li>
-            <li>Paste the URL only — <strong>leave Client ID and Client Secret empty</strong>.</li>
+            <li>Open your AI app’s <strong>connectors</strong> or <strong>MCP</strong> settings (any app that supports remote MCP + OAuth).</li>
+            <li>Add a new remote server and paste the URL only — <strong>leave Client ID and Client Secret empty</strong> (OAuth is automatic).</li>
+            <li><strong>Cursor:</strong> Cursor Settings → <strong>Tools &amp; MCP</strong> → Add MCP server → paste URL → save → click <strong>Connect</strong> if prompted. You do not need to edit <code>mcp.json</code> by hand.</li>
+            <li><strong>Claude:</strong> Settings → Connectors → Add connector → paste URL.</li>
+            <li><strong>ChatGPT:</strong> Settings → Connectors → paste URL.</li>
             ${personalNote}
-            <li>When your AI app opens Birkly, sign in and approve the connection.</li>
+            <li>When your AI app opens Birkly in the browser, sign in and approve the connection.</li>
             <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
-            <li>For write actions, set tool permissions in your AI app (Claude: connector settings → tool permissions).</li>
+            <li>For write actions, approve tool calls in your AI app (not the Birkly Approvals tab).</li>
             <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
         </ol>
         ${httpWarning}
