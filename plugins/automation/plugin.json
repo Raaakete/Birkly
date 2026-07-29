@@ -1,0 +1,28 @@
+{
+  "name": "Automation",
+  "version": "1.0.0",
+  "description": "Workflow automation with triggers, conditions, and actions. Deactivate to disable all automation hooks, API routes, and admin UI.",
+  "author": "Birkly",
+  "requires": "1.0.0",
+  "hooks": [
+    "automation_blocks_register",
+    "plugin_activated",
+    "plugin_deactivated"
+  ],
+  "permissions": [
+    "manage_content"
+  ],
+  "navigation": {
+    "name": "Automation",
+    "page": "automation",
+    "icon": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"mr-xs\"><path d=\"M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"></path></svg>"
+  },
+  "settings_schema": {
+    "default_rate_limit_per_hour": {
+      "type": "integer",
+      "default": 100,
+      "label": "Default Rate Limit (per hour)",
+      "description": "Maximum automation executions per hour per workflow"
+    }
+  }
+}

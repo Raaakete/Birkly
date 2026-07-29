@@ -112,6 +112,63 @@ if ($action === 'diagnose_plugins') {
     exit;
 }
 
+if ($action === 'sync_bundled_plugin') {
+    $requestedId = trim((string) ($_GET['installation_id'] ?? ''));
+    if ($requestedId === '' || $installationId === null || !hash_equals((string) $installationId, $requestedId)) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'installation_id mismatch'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
+    if ($pluginId === '' || !preg_match('/^[a-z0-9_-]+$/i', $pluginId)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'invalid plugin_id'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $bundleDir = $projectRoot . '/bundled-plugins/' . $pluginId;
+    $targetDir = $projectRoot . '/plugins/' . $pluginId;
+    if (!is_dir($bundleDir)) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'bundled plugin not found', 'bundle_dir' => $bundleDir], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0775, true);
+    }
+
+    $copied = 0;
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($bundleDir, RecursiveDirectoryIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+    foreach ($iterator as $item) {
+        $relative = $iterator->getSubPathName();
+        $dest = $targetDir . '/' . $relative;
+        if ($item->isDir()) {
+            if (!is_dir($dest)) {
+                mkdir($dest, 0775, true);
+            }
+            continue;
+        }
+        if (copy($item->getPathname(), $dest)) {
+            $copied++;
+        }
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Bundled plugin synced',
+        'plugin_id' => $pluginId,
+        'files_copied' => $copied,
+        'plugins' => birkly_deploy_revision_plugin_diagnostics($projectRoot),
+        'time' => gmdate('c'),
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($action === 'probe_plugin_load') {
     $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
     if ($pluginId === '' || !preg_match('/^[a-z0-9_-]+$/i', $pluginId)) {
