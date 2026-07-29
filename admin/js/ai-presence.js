@@ -1757,7 +1757,7 @@
     function maybeShowSetup(data) {
         var draft = data.draft || {};
         var empty = !(draft.identity && draft.identity.official_name);
-        if (!draft.setup_completed_at && !draft.setup_skipped_at && empty) {
+        if (!draft.setup_completed_at && !draft.setup_skipped_at && empty && state.wizard) {
             setTimeout(function () {
                 openSetupWizard();
             }, 400);
