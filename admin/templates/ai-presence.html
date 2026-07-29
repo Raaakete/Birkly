@@ -17,9 +17,104 @@ $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
 
+<div id="ap-publish-banner" class="ap-publish-banner" hidden role="status" aria-live="polite">
+    <div class="ap-publish-banner-inner">
+        <span class="ap-publish-banner-icon" aria-hidden="true">✓</span>
+        <div class="ap-publish-banner-text">
+            <strong id="ap-publish-banner-title"></strong>
+            <span id="ap-publish-banner-meta" class="text-muted"></span>
+        </div>
+        <div class="ap-publish-banner-actions">
+            <button type="button" class="btn btn-sm btn-secondary" id="ap-publish-banner-copy">{translate 'admin.ag_wizard_copy_url'}</button>
+            <a class="btn btn-sm btn-primary" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
+            <button type="button" class="btn btn-sm btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.dismiss'}">×</button>
+        </div>
+    </div>
+</div>
+
 <div class="ap-page">
     <div class="ap-main">
+        <section class="ap-status-strip card" id="ap-status-strip" aria-live="polite">
+            <div class="ap-status-strip-badges" id="ap-status-badges"></div>
+            <div class="ap-status-strip-meta" id="ap-status-meta"></div>
+            <div class="ap-status-strip-actions">
+                <button type="button" class="btn btn-sm btn-secondary" id="ap-setup-guide-btn" hidden>{translate 'admin.ag_setup_guide'}</button>
+                <button type="button" class="btn btn-sm btn-primary" id="ap-status-publish-btn" hidden>{translate 'admin.ag_publish_updates'}</button>
+            </div>
+        </section>
+        <div class="ap-view-toggle" role="group" aria-label="{translate 'admin.ag_view_mode'}">
+            <button type="button" class="ap-view-toggle-btn active" data-view-mode="essentials">{translate 'admin.ag_view_essentials'}</button>
+            <button type="button" class="ap-view-toggle-btn" data-view-mode="advanced">{translate 'admin.ag_view_advanced'}</button>
+        </div>
         <div class="ai-presence-page">
+            <div id="ap-essentials-view" class="ap-essentials">
+                <section class="card ap-essentials-section">
+                    <header class="ap-essentials-section-head">
+                        <h3>{translate 'admin.ag_essentials_who'}</h3>
+                    </header>
+                    <div class="form-grid ap-context-grid">
+                        <div class="form-group ap-span-full">
+                            <label for="ap-essentials-official-name">{translate 'admin.ai_presence_official_name'}</label>
+                            <input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name">
+                        </div>
+                        <div class="form-group ap-span-full">
+                            <label for="ap-essentials-short-desc">{translate 'admin.ai_presence_short_description'}</label>
+                            <textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea>
+                        </div>
+                        <div class="form-group ap-span-full">
+                            <label for="ap-essentials-website">{translate 'admin.ai_presence_website'}</label>
+                            <input type="url" id="ap-essentials-website" class="input" data-field="identity.website">
+                        </div>
+                    </div>
+                </section>
+                <section class="card mt-m ap-essentials-section">
+                    <header class="ap-essentials-section-head">
+                        <h3>{translate 'admin.ag_essentials_sources'}</h3>
+                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="sources">{translate 'admin.ag_manage_all'}</button>
+                    </header>
+                    <ul id="ap-essentials-sources-list" class="ai-presence-item-list ap-essentials-preview-list"></ul>
+                    <p id="ap-essentials-sources-empty" class="ap-empty-state text-muted" hidden>{translate 'admin.ai_presence_sources_empty'}</p>
+                </section>
+                <section class="card mt-m ap-essentials-section">
+                    <header class="ap-essentials-section-head">
+                        <h3>{translate 'admin.ag_essentials_messages'}</h3>
+                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
+                    </header>
+                    <div class="form-grid ap-context-grid">
+                        <div class="form-group ap-span-full">
+                            <label for="ap-essentials-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
+                            <textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"></textarea>
+                        </div>
+                        <div class="form-group ap-span-full">
+                            <label for="ap-essentials-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
+                            <textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"></textarea>
+                        </div>
+                    </div>
+                </section>
+                <section class="card mt-m ap-essentials-section">
+                    <header class="ap-essentials-section-head">
+                        <h3>{translate 'admin.ag_essentials_claims'}</h3>
+                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="claims">{translate 'admin.ag_manage_all'}</button>
+                    </header>
+                    <ul id="ap-essentials-claims-list" class="ai-presence-item-list ap-essentials-preview-list"></ul>
+                    <p id="ap-essentials-claims-empty" class="ap-empty-state text-muted" hidden>{translate 'admin.ai_presence_select_claim'}</p>
+                </section>
+                <section class="card mt-m ap-essentials-section">
+                    <header class="ap-essentials-section-head">
+                        <h3>{translate 'admin.ag_essentials_publish'}</h3>
+                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="publish">{translate 'admin.ag_manage_all'}</button>
+                    </header>
+                    <div class="ap-publish-setting">
+                        <label class="checkbox-label"><input type="checkbox" id="ap-essentials-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
+                        <p class="ap-setting-help">{translate 'admin.ai_presence_pub_enabled_help'}</p>
+                    </div>
+                    <div class="ap-essentials-publish-actions mt-s">
+                        <button type="button" class="btn btn-primary" id="ap-essentials-publish-btn">{translate 'admin.publish_ai_presence'}</button>
+                        <button type="button" class="btn btn-secondary" id="ap-essentials-save-draft">{translate 'admin.save_draft'}</button>
+                    </div>
+                </section>
+            </div>
+            <div id="ap-advanced-view" class="ap-advanced-view" hidden>
             <div class="ai-presence-tabs tabs-v2-root">
                 <div class="tabs ap-tabs-top" role="tablist" aria-label="{translate 'admin.ai_presence'}">
                     <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
@@ -136,6 +231,10 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
                 <div class="tab-content" data-tab-content="sources">
                     <p class="ap-tab-lede text-muted">{translate 'admin.ai_presence_tab_sources_lede'}</p>
+                    <div class="ap-narrative-callout card" role="note">
+                        <strong>{translate 'admin.ag_narrative_callout_title'}</strong>
+                        <p class="text-muted ap-panel-lede">{translate 'admin.ag_narrative_callout_body'}</p>
+                    </div>
                     <div class="ap-sources-layout">
                         <section class="card ap-sources-list-panel">
                             <header class="ap-sources-panel-head">
@@ -399,6 +498,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <div class="ai-presence-preview-presets">
                             <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What is this brand known for?">{translate 'admin.ai_presence_preset_known_for'}</button>
                             <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What does this brand do?">{translate 'admin.ai_presence_preset_what_do'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What products or services do you offer?">{translate 'admin.ag_preview_preset_products'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What claims are supported?">{translate 'admin.ag_preview_preset_claims'}</button>
                         </div>
                         <div class="form-row mt-s">
                             <input type="text" id="ap-preview-question" class="input" placeholder="{translate 'admin.ai_presence_ask_question'}">
@@ -417,6 +518,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         </dl>
                     </details>
                 </div>
+            </div>
             </div>
         </div>
     </div>
@@ -489,6 +591,27 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         <div class="ap-ai-loading-spinner" aria-hidden="true"></div>
         <p id="ap-ai-loading-msg" class="ap-ai-loading-msg">{translate 'admin.ai_presence_ai_working'}</p>
         <button type="button" class="btn btn-secondary btn-sm" id="ap-ai-loading-cancel">{translate 'admin.cancel'}</button>
+    </div>
+</div>
+
+<!-- Publish success modal -->
+<div id="ap-publish-success-modal" class="modal ap-modal ap-publish-success-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ap-publish-success-title">
+    <div class="modal-backdrop" data-ap-modal-close="ap-publish-success-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-body ap-publish-success-body">
+            <div class="ag-wizard-success-icon" aria-hidden="true">✓</div>
+            <h3 id="ap-publish-success-title">{translate 'admin.ag_wizard_success_title'}</h3>
+            <p id="ap-success-meta" class="ag-wizard-success-meta"></p>
+            <dl class="ai-presence-urls">
+                <dt>{translate 'admin.ag_wizard_public_json'}</dt>
+                <dd><code id="ap-success-url"></code></dd>
+            </dl>
+            <div class="ag-wizard-success-actions">
+                <button type="button" class="btn btn-primary" id="ap-success-copy">{translate 'admin.ag_wizard_copy_url'}</button>
+                <a class="btn btn-secondary" id="ap-success-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
+                <button type="button" class="btn btn-secondary" id="ap-success-overview">{translate 'admin.ag_wizard_done'}</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -787,4 +910,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
+{include_style 'components/agent-guide-wizard.css'}
+{include_script 'agent-guide-wizard.js'}
 {include_script 'ai-presence.js'}

@@ -1294,6 +1294,60 @@ function birkly_ai_presence_can_view(?array $user): bool
     return checkPermission($user, 'read') || checkPermission($user, 'manage_settings');
 }
 
+/**
+ * Normalize a draft/published doc for publish-state checksum comparison.
+ *
+ * @return array<string, mixed>
+ */
+function birkly_ai_presence_publish_compare_doc(array $doc): array
+{
+    unset($doc['_published']);
+    return $doc;
+}
+
+function birkly_ai_presence_has_unpublished_changes(?array $draft = null): bool
+{
+    $published = birkly_ai_presence_load_published();
+    if ($published === null) {
+        return false;
+    }
+    $draft = $draft ?? birkly_ai_presence_load_draft();
+    $pubCopy = birkly_ai_presence_publish_compare_doc($published);
+    $draftCopy = birkly_ai_presence_publish_compare_doc($draft);
+
+    return birkly_ai_presence_checksum($draftCopy) !== birkly_ai_presence_checksum($pubCopy);
+}
+
+/**
+ * @return array{
+ *   is_live: bool,
+ *   version: int,
+ *   last_published_at: ?string,
+ *   publishing_enabled: bool,
+ *   has_unpublished_changes: bool,
+ *   never_published: bool
+ * }
+ */
+function birkly_ai_presence_publish_state(?array $draft = null): array
+{
+    $meta = birkly_ai_presence_load_meta();
+    $published = birkly_ai_presence_load_published();
+    $draft = $draft ?? birkly_ai_presence_load_draft();
+    $version = (int) ($meta['published_version'] ?? 0);
+    $enabled = !empty($draft['publication_settings']['enabled']);
+    $neverPublished = $published === null || $version < 1;
+    $isLive = !$neverPublished && $enabled;
+
+    return [
+        'is_live' => $isLive,
+        'version' => $version,
+        'last_published_at' => $meta['last_published_at'] ?? null,
+        'publishing_enabled' => $enabled,
+        'has_unpublished_changes' => $isLive && birkly_ai_presence_has_unpublished_changes($draft),
+        'never_published' => $neverPublished,
+    ];
+}
+
 function birkly_ai_presence_reset_for_tests(): void
 {
     $dir = birkly_ai_presence_dir();
