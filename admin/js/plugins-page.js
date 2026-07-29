@@ -947,13 +947,21 @@
         );
     }
 
+    function renderOfferMediaBadges(offer) {
+        var badges = renderOfferTypeBadge(offer.offer_type || 'plugin');
+        if (isOfferComingSoon(offer)) {
+            badges += renderComingSoonBadge(offer);
+        }
+        return '<div class="marketplace-offer-media-badges">' + badges + '</div>';
+    }
+
     function offerImageHtml(offer) {
         var coverUrl = offer.cover_url || '';
         var iconUrl = offer.icon_url || '';
         if (!coverUrl && Array.isArray(offer.screenshots) && offer.screenshots.length) {
             coverUrl = offer.screenshots[0];
         }
-        var html = renderOfferTypeBadge(offer.offer_type);
+        var html = renderOfferMediaBadges(offer);
         if (coverUrl) {
             html += '<img class="marketplace-offer-cover" src="' + escapeHtml(coverUrl) + '" alt="" loading="lazy">';
         } else if (iconUrl) {
@@ -1252,7 +1260,6 @@
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
                 '<div class="marketplace-offer-heading">' +
-                renderComingSoonBadge(offer) +
                 '<h3 class="marketplace-offer-title">' +
                 '<button type="button" class="marketplace-offer-title-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
                 escapeHtml(offer.title || slug) +
@@ -1351,7 +1358,6 @@
             '</button>' +
             '<div class="marketplace-offer-detail-header">' +
             '<div>' +
-            renderComingSoonBadge(offer) +
             '<div class="marketplace-offer-detail-media">' + offerImageHtml(offer) + '</div>' +
             '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
             '<h2 class="marketplace-offer-title">' + escapeHtml(offer.title || slug) + '</h2>' +
