@@ -65,6 +65,56 @@
   font-size: 1rem;
 }
 
+.plugin-name-link {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-primary, #059669);
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.plugin-name-link:hover {
+  color: var(--color-primary-dark, #047857);
+}
+
+.plugin-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin-bottom: var(--space-4, 1rem);
+}
+
+.plugin-review-chip {
+  appearance: none;
+  background: var(--bg-secondary, #fafafa);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: var(--radius-sm, 0.375rem);
+  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-secondary, #72746F);
+  cursor: pointer;
+}
+
+.plugin-review-chip:hover {
+  border-color: var(--color-primary, #059669);
+  color: var(--color-primary, #059669);
+}
+
+.plugin-review-chip--rated {
+  background: color-mix(in srgb, var(--warning-500, #f59e0b) 12%, var(--bg-primary, #fff));
+  border-color: color-mix(in srgb, var(--warning-500, #f59e0b) 35%, var(--border-color, #e5e7eb));
+  color: var(--text-primary, #20221D);
+}
+
 .plugin-version {
   background: var(--bg-secondary, #fafafa);
   color: var(--text-secondary, #72746F);
