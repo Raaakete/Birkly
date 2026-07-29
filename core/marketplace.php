@@ -721,6 +721,8 @@ function birkly_marketplace_offer_detail(string $slug): array
             'ok' => true,
             'offer' => birkly_marketplace_enrich_offer_install_state($offer),
             'releases' => is_array($response['data']['releases'] ?? null) ? $response['data']['releases'] : [],
+            'reviews' => is_array($response['data']['reviews'] ?? null) ? $response['data']['reviews'] : [],
+            'rating_summary' => is_array($response['data']['rating_summary'] ?? null) ? $response['data']['rating_summary'] : null,
             'provider' => $provider,
             'fallback' => false,
         ];
