@@ -129,18 +129,4 @@ if (birkly_mcp_is_notification($input)) {
 
 [$result, $error] = birkly_mcp_dispatch_jsonrpc($input, $aiUser);
 
-$payload = [
-    'jsonrpc' => '2.0',
-    'id' => $input['id'] ?? null,
-    'result' => $result,
-    'error' => $error,
-];
-
-if (birkly_mcp_client_prefers_sse_response()) {
-    http_response_code(200);
-    birkly_mcp_emit_sse_jsonrpc($payload);
-    exit;
-}
-
-header('Content-Type: application/json');
-echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+birkly_mcp_send_jsonrpc_response(birkly_mcp_build_jsonrpc_response($input, $result, $error), 200);
