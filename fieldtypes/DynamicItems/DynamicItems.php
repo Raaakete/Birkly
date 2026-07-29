@@ -170,53 +170,7 @@ class DynamicItems extends BaseField {
     public function getJavaScript(): string {
         $jsPath = __DIR__ . '/fieldtype.js';
         if (file_exists($jsPath)) {
-            $js = file_get_contents($jsPath);
-            
-            // Add initialization function and expose it globally
-            $js .= "\n\n// Auto-initialize dynamic items fields\n";
-            $js .= "function initDynamicItemsField(fieldName) {\n";
-            $js .= "    console.log('[DynamicItems] Initializing field:', fieldName);\n";
-            $js .= "    \n";
-            $js .= "    const field = document.getElementById('field_' + fieldName);\n";
-            $js .= "    if (!field) {\n";
-            $js .= "        console.error('[DynamicItems] Field container not found:', fieldName);\n";
-            $js .= "        return;\n";
-            $js .= "    }\n";
-            $js .= "    \n";
-            $js .= "    const hiddenInput = field.querySelector('input[type=\"hidden\"]');\n";
-            $js .= "    if (hiddenInput && hiddenInput.value) {\n";
-            $js .= "        try {\n";
-            $js .= "            const value = JSON.parse(hiddenInput.value);\n";
-            $js .= "            if (Array.isArray(value) && value.length > 0) {\n";
-            $js .= "                console.log('[DynamicItems] Loading existing blocks:', value);\n";
-            $js .= "                window.HaruFieldtypes['dynamicitems'].setValue(fieldName, value);\n";
-            $js .= "            }\n";
-            $js .= "        } catch (e) {\n";
-            $js .= "            console.error('[DynamicItems] Failed to parse value:', e);\n";
-            $js .= "        }\n";
-            $js .= "    }\n";
-            $js .= "    \n";
-            $js .= "    // Update hidden input when blocks change\n";
-            $js .= "    const observer = new MutationObserver(() => {\n";
-            $js .= "        const blocks = window.HaruFieldtypes['dynamicitems'].getValue(fieldName);\n";
-            $js .= "        if (hiddenInput) {\n";
-            $js .= "            hiddenInput.value = JSON.stringify(blocks);\n";
-            $js .= "        }\n";
-            $js .= "    });\n";
-            $js .= "    \n";
-            $js .= "    const blocksContainer = field.querySelector('.block-items');\n";
-            $js .= "    if (blocksContainer) {\n";
-            $js .= "        observer.observe(blocksContainer, { childList: true, subtree: true });\n";
-            $js .= "    }\n";
-            $js .= "    \n";
-            $js .= "    console.log('[DynamicItems] Field initialized successfully:', fieldName);\n";
-            $js .= "}\n";
-            
-            // Expose the function globally
-            $js .= "\n// Expose initialization function globally\n";
-            $js .= "window.initDynamicItemsField = initDynamicItemsField;\n";
-            
-            return $js;
+            return (string) file_get_contents($jsPath);
         }
         return '';
     }
