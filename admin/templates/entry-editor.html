@@ -732,6 +732,7 @@ echo htmlspecialchars($collectionExample);
                 <p id="entry-save-success-message" class="entry-save-success-meta"><?= __('admin.entry_save_create_message') ?></p>
                 <div class="entry-save-success-actions">
                     <a class="btn btn-primary" id="entry-save-view-entries" href="#"><?= __('admin.entry_save_view_entries') ?></a>
+                    <button type="button" class="btn btn-primary" id="entry-save-publish" hidden><?= __('admin.entry_save_publish_now') ?></button>
                     <a class="btn btn-secondary" id="entry-save-add-another" href="#"><?= __('admin.entry_save_add_another') ?></a>
                     <button type="button" class="btn btn-secondary" id="entry-save-continue" data-entry-modal-close="entry-save-success-modal"><?= __('admin.entry_save_continue_editing') ?></button>
                 </div>
@@ -1218,6 +1219,8 @@ echo htmlspecialchars($collectionExample);
         'viewEntries' => __('admin.entry_save_view_entries'),
         'addAnother' => __('admin.entry_save_add_another'),
         'continueEditing' => __('admin.entry_save_continue_editing'),
+        'publishNow' => __('admin.entry_save_publish_now'),
+        'publishedToast' => __('admin.entry_save_published_toast'),
         'saving' => __('admin.saving'),
     ],
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
