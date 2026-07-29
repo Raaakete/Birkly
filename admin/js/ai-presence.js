@@ -642,7 +642,7 @@
         var label = document.getElementById('ai-presence-completeness-label');
         if (bar) bar.style.width = (c.percent || 0) + '%';
         if (label) {
-            label.textContent = (c.score || 0) + ' / ' + (c.max || 100) + ' (' + (c.percent || 0) + '%)';
+            label.textContent = (c.percent || 0) + '% complete';
         }
 
         var cards = document.getElementById('ai-presence-status-cards');

@@ -485,16 +485,21 @@ function birkly_ai_presence_completeness(?array $draft = null): array
     ];
 
     $score = 0;
-    $max = 0;
+    $maxRaw = 0;
     foreach ($items as $item) {
         $score += (int) $item['score'];
-        $max += (int) $item['max'];
+        $maxRaw += (int) $item['max'];
+    }
+
+    $percent = $maxRaw > 0 ? (int) round(($score / $maxRaw) * 100) : 0;
+    if ($percent > 100) {
+        $percent = 100;
     }
 
     return [
-        'score' => $score,
-        'max' => $max,
-        'percent' => $max > 0 ? (int) round(($score / $max) * 100) : 0,
+        'score' => $percent,
+        'max' => 100,
+        'percent' => $percent,
         'items' => $items,
     ];
 }
