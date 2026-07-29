@@ -12,6 +12,7 @@
     var currentOfferTitle = '';
     var embedModalView = 'offer';
     var embedOfferTab = 'offer';
+    var selectedEmbedDiscountId = '';
     var currentOfferDetail = null;
     var marketplaceBaseUrl = '';
     var marketplaceDisplayCurrency = 'EUR';
@@ -133,6 +134,9 @@
             backToOfferInEmbedModal();
         } else if (action === 'embed-offer-tab') {
             setEmbedOfferTab(el.getAttribute('data-embed-tab') || 'offer');
+        } else if (action === 'select-pricing-discount') {
+            selectedEmbedDiscountId = el.getAttribute('data-discount-id') || '';
+            updateEmbedModalPanels();
         } else if (action === 'close-marketplace-install') {
             closeMarketplaceInstallModal();
         } else if (action === 'install-marketplace') {
@@ -168,6 +172,7 @@
                     action === 'view-provider-profile' ||
                     action === 'back-offer-detail' ||
                     action === 'embed-offer-tab' ||
+                    action === 'select-pricing-discount' ||
                     action === 'open-review' ||
                     action === 'install-free' ||
                     action === 'upgrade' ||
@@ -670,10 +675,58 @@
         );
     }
 
+    function renderEmbedOfferHeader(offer) {
+        if (!offer) {
+            return '';
+        }
+        var iconUrl = offer.icon_url || '';
+        var initial = (offer.title || offer.slug || '?').charAt(0).toUpperCase();
+        var iconHtml = iconUrl
+            ? '<img class="marketplace-embed-offer-header-icon" src="' + escapeHtml(iconUrl) + '" alt="">'
+            : '<div class="marketplace-embed-offer-header-icon marketplace-embed-offer-header-icon--placeholder" aria-hidden="true">' + escapeHtml(initial) + '</div>';
+        var tagline = offer.tagline || offer.summary || '';
+        var taglineHtml = tagline
+            ? '<p class="marketplace-embed-offer-header-tagline">' + escapeHtml(tagline) + '</p>'
+            : '';
+        return (
+            '<div class="marketplace-embed-offer-header-inner">' +
+            iconHtml +
+            '<div class="marketplace-embed-offer-header-body">' +
+            '<div class="marketplace-embed-offer-header-title-row">' +
+            '<h3 class="marketplace-embed-offer-header-title">' + escapeHtml(offer.title || offer.slug || '') + '</h3>' +
+            renderOfferTypeBadge(offer.offer_type || 'plugin') +
+            (isOfferComingSoon(offer) ? renderComingSoonBadge(offer) : '') +
+            '</div>' +
+            taglineHtml +
+            '</div>' +
+            '<div class="marketplace-embed-offer-header-meta">' +
+            '<span class="marketplace-embed-offer-header-price">' + escapeHtml(formatPrice(offer)) + '</span>' +
+            renderOfferRatingStat(offer.rating_summary) +
+            '</div>' +
+            '</div>'
+        );
+    }
+
+    function updateEmbedOfferHeader(offer) {
+        var headerEl = document.getElementById('marketplace-embed-offer-header');
+        if (!headerEl) {
+            return;
+        }
+        if (embedModalView !== 'offer' || !offer) {
+            headerEl.innerHTML = '';
+            headerEl.hidden = true;
+            return;
+        }
+        var html = renderEmbedOfferHeader(offer);
+        headerEl.innerHTML = html;
+        headerEl.hidden = html === '';
+    }
+
     function setEmbedModalView(mode) {
         embedModalView = mode === 'provider' ? 'provider' : 'offer';
         var backBtn = document.getElementById('marketplace-embed-back');
         var providerBox = document.getElementById('marketplace-embed-provider-box');
+        var offerHeader = document.getElementById('marketplace-embed-offer-header');
         var actionsEl = document.getElementById('marketplace-embed-offer-actions');
         var footerEl = document.querySelector('.marketplace-embed-footer');
         var tabsEl = document.getElementById('marketplace-embed-tabs');
@@ -682,6 +735,9 @@
         }
         if (providerBox) {
             providerBox.hidden = embedModalView !== 'offer' || providerBox.innerHTML.trim() === '';
+        }
+        if (offerHeader) {
+            offerHeader.hidden = embedModalView !== 'offer' || offerHeader.innerHTML.trim() === '';
         }
         if (tabsEl) {
             tabsEl.hidden = embedModalView === 'provider';
@@ -862,6 +918,8 @@
         var offer = detail.offer;
         var slug = offer.slug || currentOfferSlug || '';
 
+        updateEmbedOfferHeader(offer);
+
         var pricingPanel = document.getElementById('marketplace-embed-pricing-panel');
         if (pricingPanel) {
             pricingPanel.innerHTML = renderOfferPricingTable(offer);
@@ -892,13 +950,74 @@
         providerBox.hidden = embedModalView !== 'offer' || html === '';
     }
 
-    function marketplacePurchaseUrl(slug, planId) {
+    function marketplacePurchaseUrl(slug, options) {
         var base = marketplaceBaseUrl || 'https://marketplace.birkly.cloud';
         var purchaseUrl = base.replace(/\/$/, '') + '/buy/' + encodeURIComponent(slug || '');
-        if (planId) {
-            purchaseUrl += '?plan_id=' + encodeURIComponent(planId);
+        options = options || {};
+        var params = [];
+        if (options.planId) {
+            params.push('plan_id=' + encodeURIComponent(options.planId));
+        }
+        if (options.promoCode) {
+            params.push('promo_code=' + encodeURIComponent(options.promoCode));
+        }
+        if (options.quantity && parseInt(options.quantity, 10) > 1) {
+            params.push('quantity=' + encodeURIComponent(String(options.quantity)));
+        }
+        if (params.length) {
+            purchaseUrl += '?' + params.join('&');
         }
         return purchaseUrl;
+    }
+
+    function getSelectedEmbedDiscount(offer) {
+        if (!selectedEmbedDiscountId) {
+            return null;
+        }
+        var pricing = (offer && offer.pricing) || {};
+        var discounts = Array.isArray(pricing.discounts) ? pricing.discounts : [];
+        for (var i = 0; i < discounts.length; i++) {
+            var discount = discounts[i];
+            if (!discount) {
+                continue;
+            }
+            var id = String(discount.id || discount.promo_code || ('discount-' + (i + 1)));
+            if (id === selectedEmbedDiscountId) {
+                return discount;
+            }
+        }
+        return null;
+    }
+
+    function resolvePurchaseOptions(offer, row) {
+        var options = {
+            planId: row && row.kind === 'subscription' ? row.id : null,
+        };
+        var discount = getSelectedEmbedDiscount(offer);
+        if (!discount) {
+            return options;
+        }
+        var discountPlanId = String(discount.plan_id || '').trim();
+        if (discountPlanId && row && row.id && discountPlanId !== row.id) {
+            return options;
+        }
+        if (discount.promo_code) {
+            options.promoCode = discount.promo_code;
+        }
+        options.quantity = Math.max(1, parseInt(discount.min_quantity, 10) || 1);
+        return options;
+    }
+
+    function formatDiscountValueLabel(discount) {
+        var type = String(discount.type || 'percent_off');
+        var value = parseInt(discount.value, 10) || 0;
+        if (type === 'percent_off') {
+            return value + '% off';
+        }
+        if (type === 'fixed_off') {
+            return (value / 100).toFixed(2) + ' off';
+        }
+        return String(discount.label || '');
     }
 
     function getOfferPricingRows(offer) {
@@ -1030,27 +1149,68 @@
         }
 
         var planId = row.kind === 'subscription' ? row.id : null;
+        var purchaseOptions = resolvePurchaseOptions(offer, row);
+        if (!purchaseOptions.planId && planId) {
+            purchaseOptions.planId = planId;
+        }
         return (
-            '<a class="btn btn-sm btn-primary" href="' + escapeHtml(marketplacePurchaseUrl(slug, planId)) +
+            '<a class="btn btn-sm btn-primary" href="' + escapeHtml(marketplacePurchaseUrl(slug, purchaseOptions)) +
             '" target="_blank" rel="noopener noreferrer">' +
             escapeHtml(t('buy', 'Buy')) + '</a>'
         );
     }
 
-    function renderOfferPricingDiscounts(pricing) {
+    function renderOfferPricingDiscounts(offer, pricing) {
         var discounts = Array.isArray(pricing.discounts) ? pricing.discounts : [];
         if (!discounts.length) {
             return '';
         }
-        var items = discounts.map(function (discount) {
-            var label = escapeHtml(String(discount.label || ''));
-            var code = discount.promo_code ? ' · ' + escapeHtml(String(discount.promo_code)) : '';
-            return '<li>' + label + code + '</li>';
+
+        var noneChecked = selectedEmbedDiscountId === '' ? ' checked' : '';
+        var optionsHtml =
+            '<label class="marketplace-pricing-discount-option" data-plugin-action="select-pricing-discount" data-discount-id="">' +
+            '<input type="radio" name="embed-pricing-discount" value=""' + noneChecked + '>' +
+            '<span class="marketplace-pricing-discount-option-body">' +
+            '<span class="marketplace-pricing-discount-option-label">' + escapeHtml(t('marketplace_pricing_no_discount', 'Standard pricing')) + '</span>' +
+            '</span></label>';
+
+        optionsHtml += discounts.map(function (discount, index) {
+            var id = String(discount.id || discount.promo_code || ('discount-' + (index + 1)));
+            var checked = selectedEmbedDiscountId === id ? ' checked' : '';
+            var promoCode = discount.promo_code ? String(discount.promo_code) : '';
+            var minQty = Math.max(1, parseInt(discount.min_quantity, 10) || 1);
+            var metaParts = [formatDiscountValueLabel(discount)];
+            if (minQty > 1) {
+                metaParts.push(minQty + '+ ' + t('marketplace_pricing_licenses', 'licenses'));
+            }
+            if (promoCode) {
+                metaParts.push(promoCode);
+            }
+            return (
+                '<label class="marketplace-pricing-discount-option" data-plugin-action="select-pricing-discount" data-discount-id="' + escapeHtml(id) + '">' +
+                '<input type="radio" name="embed-pricing-discount" value="' + escapeHtml(id) + '"' + checked + '>' +
+                '<span class="marketplace-pricing-discount-option-body">' +
+                '<span class="marketplace-pricing-discount-option-label">' + escapeHtml(String(discount.label || id)) + '</span>' +
+                '<span class="marketplace-pricing-discount-option-meta">' + escapeHtml(metaParts.join(' · ')) + '</span>' +
+                '</span></label>'
+            );
         }).join('');
+
+        var selectedDiscount = getSelectedEmbedDiscount(offer);
+        var checkoutHint = selectedDiscount
+            ? '<p class="marketplace-pricing-discount-checkout-hint">' +
+                escapeHtml(t('marketplace_pricing_discount_checkout_hint', 'Buy buttons use the selected discount at checkout.')) +
+                '</p>'
+            : '';
+
         return (
             '<div class="marketplace-pricing-discounts">' +
             '<p class="marketplace-pricing-discounts-title">' + escapeHtml(t('marketplace_pricing_discounts', 'Discount offers')) + '</p>' +
-            '<ul>' + items + '</ul></div>'
+            '<div class="marketplace-pricing-discount-options" role="radiogroup" aria-label="' + escapeHtml(t('marketplace_pricing_select_discount', 'Select a discount offer')) + '">' +
+            optionsHtml +
+            '</div>' +
+            checkoutHint +
+            '</div>'
         );
     }
 
@@ -1087,7 +1247,7 @@
             '<th scope="col">' + escapeHtml(t('marketplace_pricing_action', 'Action')) + '</th>' +
             '</tr></thead>' +
             '<tbody>' + bodyRows + '</tbody></table>' +
-            renderOfferPricingDiscounts(pricing) +
+            renderOfferPricingDiscounts(offer, pricing) +
             '</div>'
         );
     }
@@ -1213,6 +1373,7 @@
         };
         embedModalView = 'offer';
         embedOfferTab = 'offer';
+        selectedEmbedDiscountId = '';
         if (titleEl) {
             titleEl.textContent = currentOfferTitle;
         }
@@ -1321,6 +1482,13 @@
         currentOfferDetail = null;
         embedModalView = 'offer';
         embedOfferTab = 'offer';
+        selectedEmbedDiscountId = '';
+        var offerHeader = document.getElementById('marketplace-embed-offer-header');
+        if (offerHeader) {
+            offerHeader.innerHTML = '';
+            offerHeader.hidden = true;
+        }
+        setEmbedOfferTab('offer');
         updateMarketplaceUrl('');
         updatePageTitle('marketplace');
     }
