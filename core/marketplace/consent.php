@@ -53,22 +53,51 @@ function birkly_marketplace_local_installed_offer(string $slug): ?array
         return null;
     }
 
-    if (!function_exists('get_all_plugins')) {
-        require_once dirname(__DIR__) . '/plugins.php';
+    $pluginsDir = dirname(__DIR__, 2) . '/plugins';
+    if (!is_dir($pluginsDir)) {
+        return null;
     }
 
-    foreach (get_all_plugins() as $pluginId => $plugin) {
-        if (!is_array($plugin)) {
+    require_once dirname(__DIR__, 2) . '/api/storage.php';
+    $states = (new Storage(birkly_marketplace_settings_dir()))->read('plugins.json') ?? [];
+    if (!is_array($states)) {
+        $states = [];
+    }
+
+    foreach (scandir($pluginsDir) ?: [] as $entry) {
+        if ($entry === '.' || $entry === '..') {
             continue;
         }
-        $pluginSlug = birkly_marketplace_plugin_offer_slug((string) $pluginId, $plugin);
-        if ($pluginSlug !== $slug) {
+        $path = $pluginsDir . '/' . $entry;
+        if (!is_dir($path) || !is_file($path . '/plugin.php')) {
             continue;
+        }
+
+        $pluginId = $entry;
+        $state = is_array($states[$pluginId] ?? null) ? $states[$pluginId] : [];
+        $marketplaceSlug = trim((string) ($state['marketplace_slug'] ?? ''));
+        if ($marketplaceSlug === '') {
+            $official = birkly_official_marketplace_slugs();
+            if (isset($official[$pluginId]) && $official[$pluginId] === $slug) {
+                $marketplaceSlug = $slug;
+            }
+        }
+
+        if ($marketplaceSlug !== $slug) {
+            continue;
+        }
+
+        $version = trim((string) ($state['marketplace_version'] ?? $state['version'] ?? ''));
+        if ($version === '' && is_file($path . '/plugin.json')) {
+            $meta = json_decode((string) file_get_contents($path . '/plugin.json'), true);
+            if (is_array($meta)) {
+                $version = trim((string) ($meta['version'] ?? ''));
+            }
         }
 
         return [
-            'plugin_id' => (string) $pluginId,
-            'version' => trim((string) ($plugin['version'] ?? $plugin['marketplace_version'] ?? '')),
+            'plugin_id' => $pluginId,
+            'version' => $version,
         ];
     }
 
