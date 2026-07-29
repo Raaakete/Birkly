@@ -124,6 +124,7 @@ php scripts/migrate-ai-agents-hybrid.php
 ## Requirements
 
 - Your Birkly site must use a **public HTTPS** address for external AI apps. Local or HTTP-only installs show a warning in Settings and will not work with remote connectors.
+- The connector uses **OAuth + Streamable HTTP MCP** (RFC 9728). Any AI app that supports remote MCP with OAuth can connect — not only Claude, ChatGPT, or Cursor. Paste the Connector URL; leave Client ID/Secret empty.
 
 ## Security
 
