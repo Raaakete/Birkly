@@ -19,11 +19,18 @@ require_once __DIR__ . '/../core/mcp_protocol.php';
 require_once __DIR__ . '/../core/mcp_endpoints.php';
 require_once __DIR__ . '/../core/mcp_oauth.php';
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+$method = (string) ($_SERVER['REQUEST_METHOD'] ?? '');
+
+if ($method === 'GET') {
+    birkly_mcp_handle_get_request();
+    exit;
+}
+
+if ($method !== 'POST') {
     http_response_code(405);
-    header('Allow: POST');
+    header('Allow: GET, POST');
     header('Content-Type: application/json');
-    echo json_encode(['error' => 'Method not allowed. Use POST for MCP Streamable HTTP.']);
+    echo json_encode(['error' => 'Method not allowed. Use GET (SSE) or POST for MCP Streamable HTTP.']);
     exit;
 }
 
@@ -84,7 +91,7 @@ if ($aiUser) {
     $pathAgentId = birkly_mcp_agent_id_from_path();
     if ($pathAgentId !== null && !birkly_mcp_actor_matches_path_agent($aiUser, $pathAgentId)) {
         $aiUser = null;
-        $authFailureMessage = 'Connector URL does not match this access token. In Claude, remove the Birkly connector and add it again using the Connector URL from Birkly Settings → AI.';
+        $authFailureMessage = 'Connector URL does not match this access token. Remove the connector and add it again using the Connector URL from Birkly Settings → AI.';
     }
 }
 
@@ -124,10 +131,18 @@ if (birkly_mcp_is_notification($input)) {
 
 [$result, $error] = birkly_mcp_dispatch_jsonrpc($input, $aiUser);
 
-header('Content-Type: application/json');
-echo json_encode([
+$payload = [
     'jsonrpc' => '2.0',
     'id' => $input['id'] ?? null,
     'result' => $result,
     'error' => $error,
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+];
+
+if (birkly_mcp_client_prefers_sse_response()) {
+    http_response_code(200);
+    birkly_mcp_emit_sse_jsonrpc($payload);
+    exit;
+}
+
+header('Content-Type: application/json');
+echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
