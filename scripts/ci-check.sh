@@ -25,6 +25,9 @@ php tests/ai_presence_test.php
 echo "==> DynamicItems multilang tests"
 php tests/dynamicitems_multilang_test.php
 
+echo "==> Help snapshot normalization tests"
+php tests/help_docs_snapshot_test.php
+
 echo "==> Other node template engine smoke tests"
 node tests/for_loop_header_test.js
 node tests/from_block_prefetch_test.js
