@@ -337,8 +337,11 @@ function birkly_mcp_validate_origin(): bool
 }
 
 /**
- * GET on MCP endpoint — legacy HTTP+SSE probe (2024-11-05) and Streamable HTTP listen channel.
- * MCP clients that receive 401 on POST may GET expecting an SSE stream + endpoint event.
+ * GET on MCP endpoint — Streamable HTTP listen probe (not legacy HTTP+SSE redirect).
+ *
+ * Do not emit legacy `event: endpoint` here: that switches clients to deprecated
+ * HTTP+SSE (responses on the GET stream). Birkly speaks Streamable HTTP (responses
+ * on POST). A ping SSE stream is enough for health probes.
  */
 function birkly_mcp_handle_get_request(): void
 {
@@ -358,23 +361,32 @@ function birkly_mcp_handle_get_request(): void
         return;
     }
 
-    require_once __DIR__ . '/mcp_oauth.php';
-
-    $endpointUrl = birkly_mcp_oauth_resource_url();
-
     http_response_code(200);
     header('Content-Type: text/event-stream; charset=utf-8');
     header('Cache-Control: no-cache, no-transform');
     header('Connection: keep-alive');
     header('X-Accel-Buffering: no');
 
-    // Legacy HTTP+SSE (2024-11-05): first event is the JSON-RPC POST target.
-    echo 'event: endpoint' . "\n";
-    echo 'data: ' . $endpointUrl . "\n\n";
+    echo ': streamable-http' . "\n\n";
     if (function_exists('ob_flush')) {
         @ob_flush();
     }
     flush();
+}
+
+/**
+ * Send a JSON-RPC payload as JSON or SSE depending on Accept (Streamable HTTP).
+ */
+function birkly_mcp_send_jsonrpc_response(array $payload, int $httpCode = 200): void
+{
+    http_response_code($httpCode);
+    if (birkly_mcp_client_prefers_sse_response()) {
+        birkly_mcp_emit_sse_jsonrpc($payload);
+        return;
+    }
+
+    header('Content-Type: application/json');
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
 /**
