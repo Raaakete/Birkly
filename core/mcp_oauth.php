@@ -556,6 +556,12 @@ function birkly_mcp_oauth_handle_authorize(): void
     birkly_mcp_oauth_render_consent_page($agent, $endpoint, $user, $params);
 }
 
+function birkly_mcp_oauth_normalize_scope(string $scope): string
+{
+    $scope = trim($scope);
+    return $scope !== '' ? $scope : BIRKLY_MCP_OAUTH_SCOPE;
+}
+
 function birkly_mcp_oauth_collect_authorize_params(): array
 {
     $source = ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' ? $_POST : $_GET;
@@ -567,7 +573,7 @@ function birkly_mcp_oauth_collect_authorize_params(): array
         'state' => (string) ($source['state'] ?? ''),
         'code_challenge' => (string) ($source['code_challenge'] ?? ''),
         'code_challenge_method' => (string) ($source['code_challenge_method'] ?? 'S256'),
-        'scope' => (string) ($source['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE),
+        'scope' => birkly_mcp_oauth_normalize_scope((string) ($source['scope'] ?? '')),
         'resource' => trim((string) ($source['resource'] ?? '')),
     ];
 }
