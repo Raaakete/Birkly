@@ -1,77 +1,58 @@
-# Entries
+# Entry Editor
 
 ## Summary
 
-Entries are the actual content items in a collection: one blog post, one product, one team member. You create and edit them in the admin by filling in the collection’s fields (title, content, date, image, etc.). Each entry has a **slug** (URL-friendly identifier) and a **status** (Draft or Published). Only published entries are normally shown on your website and in the Public API.
+The **entry editor** is where you create and edit individual items in a collection. The main area shows your collection fields (title, content, images, and so on). The **right sidebar** holds system settings in three tabs — **General**, **Meta Data**, and **Templating**. Slug, status, scheduling, and SEO fields live in the sidebar only; they never appear in the main field list.
 
 ## Beginner
 
-An **entry** is one filled-in “form” for a collection. If the collection is “Blog posts,” each entry is one post; if it’s “Products,” each entry is one product.
+Open a collection from **Content**, then click **New entry** or open an existing entry to edit.
 
-**Example: one blog entry**
+**Layout**
 
-For a “Blog posts” collection with fields Title, Content, Excerpt, Publication date, Featured image, Tags, you might create an entry like this:
+- **Main area (left)** — Collection fields only: title, editor, media, dates, and any custom fields you defined. Labels sit **above** each control (full-width fieldtypes).
+- **Topbar breadcrumb** — Long trails collapse from the left; the collection and entry names stay visible (`… / Collection / Entry`). See [Forms and navigation](admin-forms-navigation.md).
+- **Sidebar (right)** — Three tabs:
+  - **General** — Slug, status, publish/expire dates, reviewer, and entry metadata (ID, created/updated times).
+  - **Meta Data** — SEO and social sharing: meta title, meta description, keywords, Open Graph fields.
+  - **Templating** — Field slug reference for templates and links to templating docs.
 
-| Field             | Value |
-|-------------------|--------|
-| Title             | Welcome to our blog |
-| Content           | (Rich text: “We’re excited to launch…”) |
-| Excerpt           | A short summary for the homepage. |
-| Publication date  | 2025-02-05 |
-| Featured image    | (Choose “hero-blog.jpg” from Media Library) |
-| Tags              | news, welcome |
-| **Slug**          | welcome-to-our-blog |
-| **Status**        | Published |
+**Slug (General tab)**
 
-After you save, this entry is stored. Your website can show it in a list of posts and on a single post page using the slug in the URL (e.g. `/blog/welcome-to-our-blog`).
+The slug is the URL-friendly identifier for this entry (e.g. `welcome-to-our-blog`). It appears **only** in the sidebar General tab — not among your content fields.
 
-**How to create an entry**
+- **Auto-generate slug from title** — Checkbox below the slug field; **on by default**. When checked, the slug updates as you type the title (lowercase, spaces become hyphens).
+- **No title** — If you save without a title, Birkly assigns the entry **ID** as the title and uses the normalized ID as the slug.
+- **Manual slug** — Uncheck **Auto-generate slug from title** to type your own slug. While unchecked, changing the title does not change the slug. Check the box again to regenerate from the current title (or ID if the title is empty).
+- You can edit the slug field directly at any time.
 
-1. **Content** → open the collection (e.g. “Blog posts”) → **New entry** (or **Add entry**).
-2. Fill every field:
-   - **Text / Textarea** — Type in the box.
-   - **Editor** — Use the toolbar for bold, lists, links, images.
-   - **Media / Gallery** — Click the field → choose from the Media Library (or upload). For Gallery you can pick several and reorder.
-   - **Date / DateTime** — Use the calendar (and time picker if the field has time).
-   - **Select / Radio** — Pick one option. **MultiSelect / Checkbox** — Pick multiple or yes/no as the field allows.
-   - **Tags** — Type a word and press Enter; repeat for more tags.
-3. **Slug** — Often auto-filled from the title (e.g. “Welcome to our blog” → `welcome-to-our-blog`). You can edit it. This is what your site will use in the URL and when loading “this one post.”
-4. **Status** — **Draft** = saved but not visible on the site. **Published** = visible. Choose **Save** or **Save & Publish**.
-5. Click **Save**.
+**Status (General tab)**
 
-**Editing:** Open the collection, click the entry in the list (or the edit icon), change any fields, and save. **Deleting:** Use the delete option from the list or the entry screen—usually permanent, so be sure. **Duplicate:** If available, “Duplicate” creates a new entry with the same content (and a new slug) so you can tweak it for a similar post or product.
+Choose **Unpublished**, **Published**, **Scheduled**, or **Pending for Review**. Additional fields appear when relevant (e.g. **Publish At** for scheduled, **Unpublish At** for published, **Notify Reviewer** for pending review).
 
-**Important:** Only **Published** entries are shown on the live site (and in the public API by default). Keep entries as **Draft** until they’re ready to go live; you can switch back to Draft to “unpublish” without deleting.
+**Saving**
+
+Use **Save** or **Save & Publish** at the top. Slug and status are read from the sidebar when you save.
 
 ## Advanced Users
 
-An entry is one **record** in a collection: field values plus system fields (**slug**, **status**, optional **id**, **created**, **updated**). Stored as one JSON file per entry (e.g. `content/collections/blog/entries/welcome-to-our-blog.json`) or as a DB row depending on setup.
+**Reserved fields (sidebar only):** `slug`, `status`, `published_at`, `expires_at`, `reviewer`, `meta_title`, `meta_description` (plus related OG fields in Meta Data). These are filtered out of the main `$fields` render loop in `admin/templates/entry-editor.html`.
 
-**Create:** Content → collection → New entry; fill fields; set slug (often derived from title) and status; save. **Edit/delete:** From list or editor; save updates the file/row. **Duplicate:** Clone record with new slug/id.
+**Slug resolution:** Client-side auto-generation in `admin/js/entry-editor.js`; server-side `birkly_resolve_entry_slug()` in `core/entry_slug.php` on create/update via `api/admin_entries.php`.
 
-**System fields:** `slug` (unique per collection, used in URLs and single-entry fetch), `status` ("draft" | "published"). Draft entries excluded from public API and from template loops that filter by published. Publish/unpublish = set status and save.
+| Mode | Behavior |
+|------|----------|
+| Auto checkbox **on** (default) | Slug follows title on input; empty title → entry ID fallback on save |
+| Auto checkbox **off** | Slug preserved on title-only save (P2-R11); POST `slug` wins |
+| Re-check auto | Slug regenerates immediately from current title or ID |
 
-**Example: entry JSON (conceptual)**
+**Sidebar tabs:** Scoped under `.sidebar-tabs` so tab panes are not hidden by global `tabs.css`. Tab JS is scoped to `.sidebar-tabs` only.
 
-```json
-{
-  "slug": "welcome-to-our-blog",
-  "status": "published",
-  "title": "Welcome to our blog",
-  "content": "<p>We're excited to launch…</p>",
-  "excerpt": "A short summary.",
-  "date": "2025-02-05",
-  "featured_image": "hero-blog.jpg",
-  "tags": ["news", "welcome"]
-}
-```
-
-**API:** `GET /api/public/collections/blog/entries` returns published entries; `GET /api/public/collections/blog/entries/welcome-to-our-blog` returns this entry by slug. Template: `{from 'blog' get entry 'welcome-to-our-blog'}` then `{ title }`, `{ content }`, etc.
+**Sub-entries:** Sub-entry editors use the same sidebar layout and slug rules.
 
 ## Related
 
-- [Collections](collections.md)
-- [Field types](field-types.md)
-- [Slugs and status](slugs-and-status.md)
-- [Loops and lists](../03-templating/loops-and-lists.md)
-- [Variables and output](../03-templating/variables-and-output.md)
+- [Entries](../02-content/entries.md)
+- [Slugs and status](../02-content/slugs-and-status.md)
+- [Collection editor](collection-editor.md)
+- [Content overview](content-overview.md)
