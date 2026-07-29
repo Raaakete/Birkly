@@ -3338,6 +3338,7 @@ function getPluginsData() {
             'marketplace_type_theme' => __('admin.marketplace_type_theme'),
             'marketplace_type_template' => __('admin.marketplace_type_template'),
             'marketplace_type_fieldtype' => __('admin.marketplace_type_fieldtype'),
+            'marketplace_filter_category_all' => __('admin.marketplace_filter_category_all'),
             'marketplace_filter_all_categories' => __('admin.marketplace_filter_all_categories'),
             'marketplace_no_reviews' => __('admin.marketplace_no_reviews'),
             'marketplace_downloads' => __('admin.marketplace_downloads'),

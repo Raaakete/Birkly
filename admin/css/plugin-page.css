@@ -85,7 +85,7 @@
 .plugin-page .events-tab.active,
 .plugin-page .settings-tabs.plugin-tabs .tab.active {
   color: var(--text-primary, #111827);
-  border-bottom-color: var(--primary, #2563eb);
+  border-bottom-color: var(--primary-600, #52C49A);
   font-weight: 600;
   background: transparent;
 }
