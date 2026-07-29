@@ -7,8 +7,8 @@
   display: flex;
   border-bottom: 1px solid var(--border-light, #f3f4f6);
   margin-bottom: var(--space-6, 1.5rem);
-  background: var(--bg-primary, #ffffff);
-  border-radius: var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0 0;
+  background: transparent;
+  border-radius: 0;
   overflow-x: auto;
 }
 
@@ -28,14 +28,14 @@
 
 .tab:hover {
   color: var(--text-primary, #20221D);
-  background: var(--bg-secondary, #fafafa);
+  background: transparent;
 }
 
 .tab.active {
   color: var(--text-primary, #20221D);
   font-weight: 600;
   border-bottom-color: var(--primary-600, #52C49A);
-  background: var(--bg-primary, #ffffff);
+  background: transparent;
 }
 
 /* Tab Content */

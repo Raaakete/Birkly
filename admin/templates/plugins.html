@@ -20,39 +20,31 @@
     <div class="plugins-tab-panel" id="plugins-tab-marketplace" role="tabpanel" hidden>
         <div id="marketplace-browse-view">
         <div class="marketplace-toolbar">
-            <div class="marketplace-search">
-                <input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
-                <button type="button" class="btn btn-primary" data-plugin-action="search-marketplace">{translate 'admin.search'}</button>
-            </div>
-            <div class="marketplace-filters">
-                <label class="marketplace-filter">
-                    <span class="marketplace-filter-label">{translate 'admin.marketplace_filter_type'}</span>
-                    <select id="marketplace-filter-type" class="input">
-                        <option value="">{translate 'admin.marketplace_filter_all_types'}</option>
+            <div class="marketplace-toolbar-row">
+                <div class="marketplace-search">
+                    <input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
+                    <button type="button" class="btn btn-primary" data-plugin-action="search-marketplace">{translate 'admin.search'}</button>
+                </div>
+                <p class="marketplace-result-count" id="marketplace-result-count" hidden></p>
+                <div class="marketplace-filters">
+                    <select id="marketplace-filter-type" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_filter_type'}">
+                        <option value="">{translate 'admin.marketplace_filter_type_all'}</option>
                         <option value="plugin">{translate 'admin.marketplace_type_plugin'}</option>
                         <option value="theme">{translate 'admin.marketplace_type_theme'}</option>
                         <option value="template_pack">{translate 'admin.marketplace_type_template'}</option>
                     </select>
-                </label>
-                <label class="marketplace-filter">
-                    <span class="marketplace-filter-label">{translate 'admin.marketplace_filter_category'}</span>
-                    <select id="marketplace-filter-category" class="input">
-                        <option value="">{translate 'admin.marketplace_filter_all_categories'}</option>
+                    <select id="marketplace-filter-category" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_filter_category'}">
+                        <option value="">{translate 'admin.marketplace_filter_category_all'}</option>
                     </select>
-                </label>
-                <label class="marketplace-filter">
-                    <span class="marketplace-filter-label">{translate 'admin.marketplace_sort'}</span>
-                    <select id="marketplace-sort" class="input">
-                        <option value="name">{translate 'admin.marketplace_sort_name'}</option>
-                        <option value="rating">{translate 'admin.marketplace_sort_rating'}</option>
-                        <option value="downloads">{translate 'admin.marketplace_sort_downloads'}</option>
-                        <option value="price_asc">{translate 'admin.marketplace_sort_price_low'}</option>
-                        <option value="price_desc">{translate 'admin.marketplace_sort_price_high'}</option>
+                    <select id="marketplace-sort" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_sort'}">
+                        <option value="name">{translate 'admin.marketplace_sort_name_labeled'}</option>
+                        <option value="rating">{translate 'admin.marketplace_sort_rating_labeled'}</option>
+                        <option value="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</option>
+                        <option value="price_asc">{translate 'admin.marketplace_sort_price_low_labeled'}</option>
+                        <option value="price_desc">{translate 'admin.marketplace_sort_price_high_labeled'}</option>
                     </select>
-                </label>
+                </div>
             </div>
-            <p class="form-help marketplace-hint" id="marketplace-url-hint"></p>
-            <p class="form-help marketplace-result-count" id="marketplace-result-count" hidden></p>
         </div>
         <div class="marketplace-grid" id="marketplace-grid">
             <div class="loading-state">
