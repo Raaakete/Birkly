@@ -396,7 +396,6 @@
         renderNav(topicId);
 
         const content = document.getElementById('help-topic-content');
-        const source = document.getElementById('help-doc-source');
         if (!content) return;
 
         content.innerHTML = '<p class="text-secondary">Loading…</p>';
@@ -423,21 +422,6 @@
                 '<article class="markdown-content help-article">' + renderMarkdown(md) + '</article>';
 
             bindTopicLinks(content);
-
-            if (source) {
-                const base = manifest.docs_base_url || 'https://docs.birkly.com';
-                const docsPath = topic.docs_path || '';
-                const parts = [];
-                if (docsPath) {
-                    const docsUrl = base.replace(/\/$/, '') + '/' + docsPath;
-                    parts.push('Source: <a href="' + escapeHtml(docsUrl) + '" target="_blank" rel="noopener">Birkly-Docs — ' + escapeHtml(topic.title) + '</a>');
-                }
-                if (topic.ai_topic) {
-                    const aiSlug = escapeHtml(topic.ai_topic);
-                    parts.push('AI playbook: <code>' + aiSlug + '</code> — load via admin AI <code>read_birkly_docs</code> or MCP <code>birkly://docs/' + aiSlug + '</code>');
-                }
-                source.innerHTML = parts.join(' · ');
-            }
         } catch (err) {
             content.innerHTML = '<div class="alert alert-info"><p>Could not load topic: ' + escapeHtml(err.message) + '</p></div>';
         }
