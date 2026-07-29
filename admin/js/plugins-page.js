@@ -554,18 +554,39 @@
         }
     }
 
+    function lowestMonthlyPlanCents(pricing) {
+        var plans = pricing.plans || [];
+        if (!plans.length) {
+            return parseInt(pricing.amount_cents || 0, 10) || 0;
+        }
+        var lowest = null;
+        plans.forEach(function (plan) {
+            var monthly = parseInt(plan.monthly_equivalent_cents || plan.amount_cents || 0, 10);
+            if (monthly > 0) {
+                lowest = lowest === null ? monthly : Math.min(lowest, monthly);
+            }
+        });
+        return lowest !== null ? lowest : (parseInt(pricing.amount_cents || 0, 10) || 0);
+    }
+
     function formatPrice(offer) {
         if (isFreeOffer(offer)) {
             return t('price_free', 'Free');
         }
         var pricing = offer.pricing || {};
         var fromCurrency = String(pricing.currency || 'EUR').toUpperCase();
-        var cents = convertPriceCents(pricing.amount_cents || 0, fromCurrency, marketplaceDisplayCurrency);
-        var amount = (cents / 100).toFixed(2) + ' ' + marketplaceDisplayCurrency;
         if (pricing.model === 'subscription') {
-            return amount + '/' + (pricing.subscription_interval || 'month');
+            var plans = pricing.plans || [];
+            var monthlyCents = lowestMonthlyPlanCents(pricing);
+            var convertedMonthly = convertPriceCents(monthlyCents, fromCurrency, marketplaceDisplayCurrency);
+            var monthlyAmount = (convertedMonthly / 100).toFixed(2) + ' ' + marketplaceDisplayCurrency + '/month';
+            if (plans.length > 1) {
+                return t('price_from', 'From') + ' ' + monthlyAmount;
+            }
+            return monthlyAmount;
         }
-        return amount;
+        var cents = convertPriceCents(pricing.amount_cents || 0, fromCurrency, marketplaceDisplayCurrency);
+        return (cents / 100).toFixed(2) + ' ' + marketplaceDisplayCurrency;
     }
 
     function marketplaceOfferUrl(slug, embed) {
