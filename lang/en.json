@@ -382,6 +382,8 @@
         "marketplace_compatibility": "Compatibility",
         "marketplace_releases": "Releases",
         "marketplace_provider": "Provider",
+        "marketplace_view_provider_profile": "View provider profile",
+        "marketplace_back_to_offer": "Back to offer",
         "marketplace_view_details": "View details",
         "marketplace_no_description": "No detailed description provided yet.",
         "marketplace_requires_birkly": "Requires Birkly",
