@@ -432,6 +432,11 @@
         return (offer.pricing.amount_cents || 0) === 0;
     }
 
+    function offerTypeCssClass(offerType) {
+        var type = String(offerType || 'plugin').replace(/[^a-z_]/g, '');
+        return type || 'plugin';
+    }
+
     function offerTypeLabel(offerType) {
         if (offerType === 'theme') {
             return t('marketplace_type_theme', 'Theme');
@@ -439,7 +444,21 @@
         if (offerType === 'template_pack') {
             return t('marketplace_type_template', 'Template pack');
         }
+        if (offerType === 'fieldtype') {
+            return t('marketplace_type_fieldtype', 'Fieldtype');
+        }
         return t('marketplace_type_plugin', 'Plugin');
+    }
+
+    function renderOfferTypeBadge(offerType) {
+        var typeClass = offerTypeCssClass(offerType);
+        return (
+            '<span class="marketplace-offer-type-badge marketplace-offer-type-badge--' +
+            escapeHtml(typeClass) +
+            '">' +
+            escapeHtml(offerTypeLabel(offerType || 'plugin')) +
+            '</span>'
+        );
     }
 
     function formatPrice(offer) {
@@ -774,7 +793,7 @@
         if (!coverUrl && Array.isArray(offer.screenshots) && offer.screenshots.length) {
             coverUrl = offer.screenshots[0];
         }
-        var html = '';
+        var html = renderOfferTypeBadge(offer.offer_type);
         if (coverUrl) {
             html += '<img class="marketplace-offer-cover" src="' + escapeHtml(coverUrl) + '" alt="" loading="lazy">';
         } else if (iconUrl) {
@@ -1074,9 +1093,6 @@
                 '<article class="marketplace-offer-card" role="button" tabindex="0" data-offer-slug="' + escapeHtml(slug) + '">' +
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
-                '<div class="marketplace-offer-top">' +
-                '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
-                '</div>' +
                 '<div class="marketplace-offer-heading">' +
                 '<h3 class="marketplace-offer-title">' +
                 '<button type="button" class="marketplace-offer-title-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
