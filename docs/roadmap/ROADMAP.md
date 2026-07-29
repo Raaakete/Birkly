@@ -27,7 +27,25 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**No formal active phase queued** — pick next from catch-up doc or new plan PR.
+**Queued phase:** **P50 — Content model clarity & admin quality** (plan PR pending approval) · `docs/reviews/P50-content-model-clarity-plan.md`
+
+Focus: Birkly-Docs SSOT for human docs, content-model overview, DynamicItems fix, collection save UX, fieldtype audit. **No new content primitives.**
+
+---
+
+## Queued — Phase 50 (content model clarity)
+
+**Status:** Planned (2026-07-29) — awaiting plan approval  
+**Artifacts:** `docs/reviews/P50-content-model-clarity-plan.md`, `P50-gap-register.md`, `P50-verification-matrix.md`, `P50-lead-engineer-handoff.md`
+
+| Milestone | Focus |
+|-----------|--------|
+| P50-M1 | Birkly-Docs — content-model overview, dynamic items, site-elements pattern |
+| P50-M2 | CMS docs sync hardening, deprecate legacy `admin/docs/*.php` |
+| P50-M3 | DynamicItems multilang + init fixes |
+| P50-M4 | Collection/sub-collection save feedback + navigation + bugs |
+| P50-M5 | Fieldtype audit matrix (26 types) |
+| P50-M6 | CI, design review, closure |
 
 ---
 

@@ -130,11 +130,11 @@ Roughly **2026-07-29**, many PRs improved the **Marketplace** tab inside CMS (no
 
 ## Next planning candidates
 
-1. **P48** — Formal marketplace CMS client closure + docs  
-2. **P42** — Marketing starter template pack  
-3. **P26** — Studio creative suite  
-4. **P28** — Beta launch automation  
-5. **Agent Guide polish** — ongoing UX, docs, production smoke (not a full phase unless scope grows)
+1. **P50** — Content model clarity, docs SSOT, DynamicItems fix, collection save UX, fieldtype audit — **plan ready** (`docs/reviews/P50-*`)
+2. **P48** — Formal marketplace CMS client closure + docs  
+3. **Agent Guide polish** — ongoing UX, docs, production smoke (not a full phase unless scope grows)
+
+**Removed from candidates (2026-07-29):** P42 marketing template pack, P28 beta launch automation — not relevant per product direction.
 
 ---
 
