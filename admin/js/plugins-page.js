@@ -610,6 +610,86 @@
         return null;
     }
 
+    function resolvePluginOfferSlug(plugin) {
+        if (!plugin) {
+            return '';
+        }
+        return String(plugin.offer_slug || plugin.marketplace_slug || '').trim();
+    }
+
+    function findInstalledPluginByOfferSlug(slug) {
+        if (!slug) {
+            return null;
+        }
+        for (var i = 0; i < installedPlugins.length; i++) {
+            if (resolvePluginOfferSlug(installedPlugins[i]) === slug) {
+                return installedPlugins[i];
+            }
+        }
+        return null;
+    }
+
+    function renderPluginReviewChip(pluginId, offerSlug, reviewStatus) {
+        if (!offerSlug) {
+            return '';
+        }
+        reviewStatus = reviewStatus || {};
+        if (reviewStatus.has_review && reviewStatus.review) {
+            var rating = String(reviewStatus.review.rating || '');
+            return (
+                '<button type="button" class="plugin-review-chip plugin-review-chip--rated" data-plugin-action="open-review" data-plugin-id="' +
+                escapeHtml(pluginId) + '" data-offer-slug="' + escapeHtml(offerSlug) + '">' +
+                '\u2605 ' + escapeHtml(rating) + ' \u00b7 ' + escapeHtml(t('your_review', 'Your review')) +
+                '</button>'
+            );
+        }
+        if (reviewStatus.can_review) {
+            return (
+                '<button type="button" class="plugin-review-chip" data-plugin-action="open-review" data-plugin-id="' +
+                escapeHtml(pluginId) + '" data-offer-slug="' + escapeHtml(offerSlug) + '">' +
+                escapeHtml(t('rate_plugin', 'Rate this plugin')) +
+                '</button>'
+            );
+        }
+        return '';
+    }
+
+    function renderInstalledOfferReviewButton(pluginId, offerSlug) {
+        if (!pluginId || !offerSlug) {
+            return '';
+        }
+        var reviewStatus = reviewStatusMap[pluginId] || {};
+        if (reviewStatus.has_review) {
+            return (
+                '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
+                escapeHtml(pluginId) + '" data-offer-slug="' + escapeHtml(offerSlug) + '">' +
+                escapeHtml(t('your_review', 'Your review')) +
+                '</button>'
+            );
+        }
+        if (reviewStatus.can_review) {
+            return (
+                '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
+                escapeHtml(pluginId) + '" data-offer-slug="' + escapeHtml(offerSlug) + '">' +
+                escapeHtml(t('rate_plugin', 'Rate this plugin')) +
+                '</button>'
+            );
+        }
+        return '';
+    }
+
+    function renderOfferEmbedFooterActions(slug, offer) {
+        var footerHtml = renderOfferActionButtons(offer || findCachedOffer(slug) || { slug: slug }, false);
+        var installedMatch = findInstalledPluginByOfferSlug(slug);
+        if (installedMatch) {
+            var reviewBtn = renderInstalledOfferReviewButton(installedMatch.id, slug);
+            if (reviewBtn) {
+                footerHtml = reviewBtn + footerHtml;
+            }
+        }
+        return footerHtml;
+    }
+
     function openOfferEmbedModal(slug, offer, provider) {
         var modal = document.getElementById('marketplace-offer-embed-modal');
         var iframe = document.getElementById('marketplace-offer-iframe');
@@ -638,7 +718,7 @@
         updateEmbedModalProviderBox(providerForBox);
         setEmbedModalView('offer');
         if (actionsEl) {
-            actionsEl.innerHTML = renderOfferActionButtons(resolvedOffer, false);
+            actionsEl.innerHTML = renderOfferEmbedFooterActions(slug, resolvedOffer);
         }
         modal.classList.add('active');
     }
@@ -682,8 +762,8 @@
         setEmbedModalView('offer');
         var actionsEl = document.getElementById('marketplace-embed-offer-actions');
         var cachedOffer = findCachedOffer(currentOfferSlug);
-        if (actionsEl && cachedOffer) {
-            actionsEl.innerHTML = renderOfferActionButtons(cachedOffer, false);
+        if (actionsEl) {
+            actionsEl.innerHTML = renderOfferEmbedFooterActions(currentOfferSlug, cachedOffer);
         }
     }
 
@@ -894,26 +974,23 @@
             var healthStatus = health.status || 'unknown';
             var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
             var healthClass = 'health-' + healthStatus;
+            var offerSlug = resolvePluginOfferSlug(plugin);
+            var hasMarketplaceOffer = !!(plugin.has_marketplace_offer || offerSlug);
             var reviewStatus = reviewStatusMap[plugin.id] || {};
-            var reviewButton = '';
-            if (plugin.from_marketplace && plugin.marketplace_slug) {
-                if (reviewStatus.has_review) {
-                    reviewButton =
-                        '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
-                        escapeHtml(plugin.id) + '" data-offer-slug="' + escapeHtml(plugin.marketplace_slug) +
-                        '">Your review</button>';
-                } else if (reviewStatus.can_review) {
-                    reviewButton =
-                        '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
-                        escapeHtml(plugin.id) + '" data-offer-slug="' + escapeHtml(plugin.marketplace_slug) +
-                        '">Write review</button>';
-                }
-            }
+            var reviewChip = renderPluginReviewChip(plugin.id, offerSlug, reviewStatus);
+            var pluginNameHtml = offerSlug
+                ? '<button type="button" class="plugin-name-link" data-plugin-action="open-offer" data-offer-slug="' +
+                    escapeHtml(offerSlug) + '">' + escapeHtml(plugin.name) + '</button>'
+                : escapeHtml(plugin.name);
+            var detailsButton = offerSlug
+                ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-offer" data-offer-slug="' +
+                    escapeHtml(offerSlug) + '">' + escapeHtml(t('offer_details', 'Details')) + '</button>'
+                : '';
             return (
                 '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
                 '<div class="plugin-header">' +
                 '<div>' +
-                '<h3 class="plugin-name">' + escapeHtml(plugin.name) + '</h3>' +
+                '<h3 class="plugin-name">' + pluginNameHtml + '</h3>' +
                 (hasUpdate ? '<span class="update-pill">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
                 '</div>' +
                 '<div class="plugin-header-badges">' +
@@ -928,11 +1005,12 @@
                 (plugin.description ? '<p class="plugin-description">' + escapeHtml(plugin.description) + '</p>' : '') +
                 '<div class="plugin-meta">' +
                 '<span class="plugin-version">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-                (plugin.from_marketplace ? '<span class="marketplace-tag">Marketplace</span>' : '') +
+                (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="marketplace-tag">Marketplace</span>' : '') +
                 (plugin.license_ref ? '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
+                reviewChip +
                 '</div>' +
                 '<div class="plugin-actions">' +
-                reviewButton +
+                detailsButton +
                 (hasUpdate
                     ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
                     : '') +
@@ -984,7 +1062,7 @@
         if (!modal) return;
 
         document.getElementById('plugin-review-plugin-id').value = pluginId || '';
-        document.getElementById('plugin-review-slug').value = offerSlug || plugin.marketplace_slug || '';
+        document.getElementById('plugin-review-slug').value = offerSlug || plugin.marketplace_slug || plugin.offer_slug || '';
 
         if (titleEl) {
             titleEl.textContent = status.has_review ? 'Your review' : 'Write a review';
