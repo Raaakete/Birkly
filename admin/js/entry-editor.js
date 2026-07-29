@@ -132,15 +132,68 @@
         }
     }
 
-    function openEntrySaveSuccessModal(isCreate) {
+    function getEntryStatusFromSidebar() {
+        const statusSelect = document.getElementById('status');
+        const value = statusSelect ? String(statusSelect.value || '').trim() : '';
+        if (value === 'draft') {
+            return 'unpublished';
+        }
+        return value || 'unpublished';
+    }
+
+    function isUnpublishedStatus(status) {
+        return !status || status === 'unpublished' || status === 'draft';
+    }
+
+    async function publishSavedEntry(entryId) {
+        const form = document.getElementById('entry-form');
+        if (!form || !entryId) {
+            return false;
+        }
+
+        const publishData = new FormData(form);
+        publishData.set('entry_id', entryId);
+        publishData.set('status', 'published');
+        if (!publishData.get('collection') && config.collectionSlug) {
+            publishData.set('collection', config.collectionSlug);
+        }
+
+        const response = await fetch('/api/admin_entries.php?action=save', {
+            method: 'POST',
+            body: publishData,
+        });
+        const raw = await response.text();
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (_e) {
+            data = null;
+        }
+
+        if (!data || data.status !== 'ok') {
+            throw new Error((data && data.message) || raw || 'Publish failed');
+        }
+
+        const statusSelect = document.getElementById('status');
+        if (statusSelect) {
+            statusSelect.value = 'published';
+            statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        return true;
+    }
+
+    function openEntrySaveSuccessModal(isCreate, entryId, entryStatus) {
         const modal = document.getElementById('entry-save-success-modal');
         if (!modal) return;
 
         const titleEl = document.getElementById('entry-save-success-title');
         const messageEl = document.getElementById('entry-save-success-message');
         const viewEntriesEl = document.getElementById('entry-save-view-entries');
+        const publishEl = document.getElementById('entry-save-publish');
         const addAnotherEl = document.getElementById('entry-save-add-another');
         const continueEl = document.getElementById('entry-save-continue');
+        const unpublished = isUnpublishedStatus(entryStatus);
 
         if (titleEl) {
             titleEl.textContent = isCreate
@@ -157,6 +210,11 @@
             viewEntriesEl.href = config.entriesListUrl || '#';
             viewEntriesEl.hidden = !config.entriesListUrl;
         }
+        if (publishEl) {
+            publishEl.textContent = saveLabel('publishNow', 'Publish entry');
+            publishEl.hidden = !unpublished || !entryId;
+            publishEl.dataset.entryId = entryId || '';
+        }
         if (addAnotherEl) {
             addAnotherEl.textContent = saveLabel('addAnother', 'Add another entry');
             addAnotherEl.href = config.newEntryUrl || '#';
@@ -172,9 +230,14 @@
         requestAnimationFrame(function () {
             modal.classList.add('active');
             trapEntrySaveModalFocus(modal);
-            const firstFocus = viewEntriesEl && !viewEntriesEl.hidden
-                ? viewEntriesEl
-                : (addAnotherEl && !addAnotherEl.hidden ? addAnotherEl : continueEl);
+            let firstFocus = continueEl;
+            if (publishEl && !publishEl.hidden) {
+                firstFocus = publishEl;
+            } else if (viewEntriesEl && !viewEntriesEl.hidden) {
+                firstFocus = viewEntriesEl;
+            } else if (addAnotherEl && !addAnotherEl.hidden) {
+                firstFocus = addAnotherEl;
+            }
             if (firstFocus && firstFocus.focus) {
                 firstFocus.focus();
             }
@@ -199,6 +262,26 @@
                 closeEntrySaveSuccessModal();
             }
         });
+
+        const publishBtn = document.getElementById('entry-save-publish');
+        if (publishBtn) {
+            publishBtn.addEventListener('click', async function () {
+                const entryId = publishBtn.dataset.entryId || '';
+                if (!entryId) return;
+                publishBtn.disabled = true;
+                try {
+                    await publishSavedEntry(entryId);
+                    closeEntrySaveSuccessModal();
+                    hideUnsavedBadge();
+                    flashEntrySavedState();
+                    BirklyFeedback.toast(saveLabel('publishedToast', 'Entry published'), 'success');
+                } catch (err) {
+                    BirklyFeedback.toast(err.message || 'Publish failed', 'error');
+                } finally {
+                    publishBtn.disabled = false;
+                }
+            });
+        }
     }
 
     /**
@@ -1456,8 +1539,9 @@
                         hideUnsavedBadge();
                         flashEntrySavedState();
 
-                        if (isNewRegularEntry) {
-                            openEntrySaveSuccessModal(true);
+                        const savedStatus = getEntryStatusFromSidebar();
+                        if (isNewRegularEntry || isUnpublishedStatus(savedStatus)) {
+                            openEntrySaveSuccessModal(isNewRegularEntry, savedEntryId, savedStatus);
                         } else {
                             showEntryUpdateBanner(
                                 (data.data && data.data.message) ||
