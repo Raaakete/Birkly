@@ -1555,6 +1555,7 @@ function getEntryEditorData($includeFieldHtml = false) {
 
             // Write each JS chunk as a separate file to isolate failures
             $jsFiles = [];
+            $jsInline = '';
             if (!empty($__fieldtypeJs)) {
                 foreach ($__fieldtypeJs as $i => $chunk) {
                     $file = $tempDir . "/fieldtypes-{$hash}-{$i}.js";
@@ -1564,11 +1565,21 @@ function getEntryEditorData($includeFieldHtml = false) {
                         $jsFiles[] = "/temp/fieldtypes-{$hash}-{$i}.js";
                     }
                 }
+                if ($jsFiles === []) {
+                    $jsInline = implode(
+                        "\n\n",
+                        array_map(
+                            static fn(string $chunk): string => ";(function(){\n" . $chunk . "\n})();",
+                            $__fieldtypeJs
+                        )
+                    );
+                }
             }
             $payload['fieldtype_assets'] = [
                 'css' => $cssUrl,
                 'css_inline' => $cssInline,
                 'js_files'  => $jsFiles,
+                'js_inline' => $jsInline,
             ];
         }
     }

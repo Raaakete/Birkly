@@ -105,7 +105,7 @@ class DynamicItems extends BaseField {
                 <!-- Blocks will be rendered by JavaScript -->
             </div>
             <div class="block-controls">
-                <button type="button" class="btn btn-primary" onclick="window.HaruFieldtypes['dynamicitems'].showAddBlockModalFromButton(this)">
+                <button type="button" class="btn btn-primary dynamicitems-add-block-btn" data-dynamicitems-action="add-block">
                     + Add Block
                 </button>
             </div>
