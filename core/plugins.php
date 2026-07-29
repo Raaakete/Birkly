@@ -609,6 +609,10 @@ function set_plugin_setting($plugin_id, $key, $value) {
 function get_all_plugins() {
     global $birkly_plugins;
     
+    if ($birkly_plugins === [] && function_exists('load_plugins')) {
+        load_plugins();
+    }
+
     // Always ensure we have the latest plugin states
     load_plugin_states();
 
