@@ -22,10 +22,9 @@ Open **Settings → AI** → **Connect your AI app**.
 1. **Settings → AI** tab → **Connect your AI app**.
 2. Under **Your personal connector**, click **Show Connector URL** and copy the URL (HTTPS, ends with `/mcp`).
 3. In your AI app:
-   - **Cursor:** Cursor Settings → **Tools & MCP** → Add MCP server → paste URL only → save → click **Connect** if prompted (you do not need to edit `mcp.json` manually)
    - **Claude:** Settings → Connectors → Add connector → paste URL only (leave OAuth fields empty)
    - **ChatGPT:** Settings → Connectors → paste URL only
-   - **Any other MCP client** that supports remote Streamable HTTP + OAuth: add server with this URL; leave Client ID/Secret empty
+   - **Cursor:** Settings → MCP / Connectors → paste URL only
 4. Sign in with **your** Birkly account when your app asks.
 5. On the consent screen, confirm you are connecting with **your** role and permissions.
 
@@ -79,8 +78,6 @@ If you need a service agent but do not see it, ask an admin to add your role or 
 
 ### Personal connector
 
-For **site building** (editing `project/` HTML/CSS/JS), sign in with an account that has the **Admin** role, or create a **Site builder** service agent (Settings → AI → Add agent → Site builder preset).
-
 Access matches the **authorizing user’s** CMS role at sign-in time (Viewer, Author, Editor, Admin, or custom roles). There is no separate agent role — the AI cannot do more than you can in the admin.
 
 ### Service agent
@@ -124,7 +121,6 @@ php scripts/migrate-ai-agents-hybrid.php
 ## Requirements
 
 - Your Birkly site must use a **public HTTPS** address for external AI apps. Local or HTTP-only installs show a warning in Settings and will not work with remote connectors.
-- The connector uses **OAuth + Streamable HTTP MCP** (RFC 9728). Any AI app that supports remote MCP with OAuth can connect — not only Claude, ChatGPT, or Cursor. Paste the Connector URL; leave Client ID/Secret empty.
 
 ## Security
 
