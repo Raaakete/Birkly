@@ -1090,6 +1090,10 @@ echo htmlspecialchars($collectionExample);
     <?php foreach ($fieldtypeAssets['js_files'] as $jsFile): ?>
         <script src="<?= htmlspecialchars(birkly_url($jsFile)) ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
     <?php endforeach; ?>
+<?php elseif (!empty($fieldtypeAssets['js_inline'])): ?>
+    <script<?= $__birklyScriptNonceAttr ?? '' ?>>
+    <?= $fieldtypeAssets['js_inline'] ?>
+    </script>
 <?php endif; ?>
 <link rel="stylesheet" href="<?= birkly_url('/admin/css/pages/entry-editor-sidebar.css') ?>">
 <script type="application/json" id="entry-editor-sidebar-config"><?= json_encode($sidebar ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
