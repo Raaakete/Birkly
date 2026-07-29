@@ -158,8 +158,8 @@ function birkly_mcp_oauth_apply_cors(): void
 {
     require_once __DIR__ . '/mcp_protocol.php';
 
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-    if ($origin !== '' && in_array($origin, birkly_mcp_allowed_client_origins(), true)) {
+    $origin = (string) ($_SERVER['HTTP_ORIGIN'] ?? '');
+    if ($origin !== '' && birkly_mcp_is_permitted_request_origin($origin)) {
         header('Access-Control-Allow-Origin: ' . $origin);
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         header('Access-Control-Allow-Headers: Content-Type, Authorization');
