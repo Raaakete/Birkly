@@ -68,9 +68,7 @@ if (($aiUser['type'] ?? '') === 'mcp_endpoint') {
 
 [$result, $error] = birkly_mcp_dispatch_jsonrpc($input ?? [], $aiUser);
 
-echo json_encode([
-    'jsonrpc' => '2.0',
-    'id' => $input['id'] ?? null,
-    'result' => $result,
-    'error' => $error,
-]);
+echo json_encode(
+    birkly_mcp_build_jsonrpc_response($input ?? [], $result, $error),
+    JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+);
