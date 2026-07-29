@@ -1068,12 +1068,14 @@
                 '<div class="marketplace-offer-top">' +
                 '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
                 '</div>' +
+                '<div class="marketplace-offer-heading">' +
                 '<h3 class="marketplace-offer-title">' +
                 '<button type="button" class="marketplace-offer-title-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
                 escapeHtml(offer.title || slug) +
                 '</button>' +
                 '</h3>' +
                 renderOfferCardProvider(offer) +
+                '</div>' +
                 '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
                 renderOfferMetaRows(offer) +
                 '<div class="marketplace-offer-actions">' +
