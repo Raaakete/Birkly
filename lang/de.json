@@ -376,6 +376,8 @@
         "entry_save_view_entries": "Alle Einträge anzeigen",
         "entry_save_add_another": "Weiteren Eintrag hinzufügen",
         "entry_save_continue_editing": "Weiter bearbeiten",
+        "entry_save_publish_now": "Eintrag veröffentlichen",
+        "entry_save_published_toast": "Eintrag veröffentlicht",
         "create_first_entry": "Erstellen Sie Ihren ersten Eintrag",
         "create_group": "Gruppe erstellen",
         "create_manage_content": "Create Manage Content",
