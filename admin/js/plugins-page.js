@@ -771,20 +771,18 @@
     function offerImageHtml(offer) {
         var coverUrl = offer.cover_url || '';
         var iconUrl = offer.icon_url || '';
-        if (!coverUrl && !iconUrl && Array.isArray(offer.screenshots) && offer.screenshots.length) {
+        if (!coverUrl && Array.isArray(offer.screenshots) && offer.screenshots.length) {
             coverUrl = offer.screenshots[0];
         }
         var html = '';
         if (coverUrl) {
             html += '<img class="marketplace-offer-cover" src="' + escapeHtml(coverUrl) + '" alt="" loading="lazy">';
         } else if (iconUrl) {
+            html += '<img class="marketplace-offer-image" src="' + escapeHtml(iconUrl) + '" alt="" loading="lazy">';
+        } else {
             var initial = (offer.title || offer.slug || '?').charAt(0).toUpperCase();
             var typeClass = 'placeholder-' + escapeHtml((offer.offer_type || 'plugin').replace(/[^a-z_]/g, ''));
             html += '<div class="marketplace-offer-placeholder ' + typeClass + '" aria-hidden="true">' + escapeHtml(initial) + '</div>';
-        } else {
-            var initialFallback = (offer.title || offer.slug || '?').charAt(0).toUpperCase();
-            var typeClassFallback = 'placeholder-' + escapeHtml((offer.offer_type || 'plugin').replace(/[^a-z_]/g, ''));
-            html += '<div class="marketplace-offer-placeholder ' + typeClassFallback + '" aria-hidden="true">' + escapeHtml(initialFallback) + '</div>';
         }
         if (iconUrl && coverUrl) {
             html += '<img class="marketplace-offer-icon-badge" src="' + escapeHtml(iconUrl) + '" alt="" loading="lazy">';
