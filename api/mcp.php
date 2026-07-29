@@ -72,14 +72,12 @@ $apiKey = $_SERVER['HTTP_X_MCP_API_KEY'] ?? $_GET['api_key'] ?? '';
 $bearerToken = birkly_mcp_oauth_extract_bearer();
 
 if ($apiKey === '' && $bearerToken === '') {
-    http_response_code(401);
     header('WWW-Authenticate: ' . birkly_mcp_oauth_www_authenticate_header());
-    header('Content-Type: application/json');
-    echo json_encode([
+    birkly_mcp_send_jsonrpc_response([
         'jsonrpc' => '2.0',
         'id' => $input['id'] ?? null,
         'error' => ['code' => -32000, 'message' => 'Authentication required'],
-    ]);
+    ], 401);
     exit;
 }
 
