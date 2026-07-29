@@ -386,6 +386,7 @@
         "marketplace_installed": "Installed",
         "marketplace_coming_soon": "Coming soon",
         "marketplace_coming_soon_hint": "This plugin is not available to install yet.",
+        "marketplace_coming_soon_install_blocked": "This plugin is coming soon and cannot be installed yet.",
         "marketplace_update": "Update",
         "marketplace_back": "Back to marketplace",
         "marketplace_description": "Description",
