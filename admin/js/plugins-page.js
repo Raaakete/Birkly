@@ -835,6 +835,27 @@
         return n + ' ' + t('marketplace_downloads', 'downloads');
     }
 
+    function isOfferComingSoon(offer) {
+        if (!offer) {
+            return false;
+        }
+        if (offer.status === 'coming_soon') {
+            return true;
+        }
+        return offer.installable === false && offer.status !== 'published';
+    }
+
+    function renderComingSoonBadge(offer) {
+        if (!isOfferComingSoon(offer)) {
+            return '';
+        }
+        return (
+            '<span class="marketplace-offer-status-badge marketplace-offer-status-badge--coming-soon">' +
+            escapeHtml(t('marketplace_coming_soon', 'Coming soon')) +
+            '</span>'
+        );
+    }
+
     function getOfferInstallState(offer) {
         if (offer && offer.install_state) {
             return offer.install_state;
@@ -856,7 +877,7 @@
         var free = isFreeOffer(offer);
         void stopPropagation;
 
-        if (offer.status === 'coming_soon') {
+        if (isOfferComingSoon(offer)) {
             return (
                 '<button type="button" class="btn btn-sm btn-secondary" disabled title="' +
                 escapeHtml(t('marketplace_coming_soon_hint', 'This plugin is not available to install yet.')) +
@@ -1231,6 +1252,7 @@
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
                 '<div class="marketplace-offer-heading">' +
+                renderComingSoonBadge(offer) +
                 '<h3 class="marketplace-offer-title">' +
                 '<button type="button" class="marketplace-offer-title-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
                 escapeHtml(offer.title || slug) +
@@ -1329,6 +1351,7 @@
             '</button>' +
             '<div class="marketplace-offer-detail-header">' +
             '<div>' +
+            renderComingSoonBadge(offer) +
             '<div class="marketplace-offer-detail-media">' + offerImageHtml(offer) + '</div>' +
             '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
             '<h2 class="marketplace-offer-title">' + escapeHtml(offer.title || slug) + '</h2>' +
@@ -1593,6 +1616,11 @@
     }
 
     async function installFreePlugin(slug, version) {
+        var offer = findCachedOffer(slug);
+        if (isOfferComingSoon(offer)) {
+            showMessage(t('marketplace_coming_soon_install_blocked', 'This plugin is coming soon and cannot be installed yet.'), 'info');
+            return;
+        }
         if (!(await BirklyFeedback.confirm(t('confirm_free_install', 'Install this free plugin now?')))) {
             return;
         }

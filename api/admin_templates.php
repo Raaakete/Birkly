@@ -3311,6 +3311,7 @@ function getEntryDetailData() {
 // ===== NEW PAGE DATA FUNCTIONS =====
 
 function getPluginsData() {
+    require_once __DIR__ . '/../core/build_info.php';
     $tab = isset($_GET['tab']) ? (string) $_GET['tab'] : 'marketplace';
     if (!in_array($tab, ['marketplace', 'installed'], true)) {
         $tab = 'marketplace';
@@ -3321,6 +3322,8 @@ function getPluginsData() {
         'page_title' => $tab === 'installed' ? __('admin.installed_plugins') : __('admin.marketplace'),
         'marketplace_title' => __('admin.marketplace'),
         'installed_title' => __('admin.installed_plugins'),
+        'plugins_css_url' => birkly_admin_asset_url('/admin/css/pages/plugins.css'),
+        'plugins_page_js_url' => birkly_admin_asset_url('/admin/js/plugins-page.js'),
         'i18n' => [
             'no_plugins_installed' => __('admin.no_plugins_installed'),
             'no_plugins_marketplace_hint' => __('admin.no_plugins_marketplace_hint'),
@@ -3345,6 +3348,9 @@ function getPluginsData() {
             'marketplace_offers_count' => __('admin.marketplace_offers_count'),
             'buy' => __('admin.marketplace_buy'),
             'installed' => __('admin.marketplace_installed'),
+            'marketplace_coming_soon' => __('admin.marketplace_coming_soon'),
+            'marketplace_coming_soon_hint' => __('admin.marketplace_coming_soon_hint'),
+            'marketplace_coming_soon_install_blocked' => __('admin.marketplace_coming_soon_install_blocked'),
             'update' => __('admin.marketplace_update'),
             'back_to_marketplace' => __('admin.marketplace_back'),
             'description' => __('admin.marketplace_description'),

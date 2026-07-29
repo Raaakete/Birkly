@@ -519,6 +519,16 @@ function birkly_marketplace_offer_install_state(string $slug, ?string $catalogLa
     ];
 }
 
+function birkly_marketplace_offer_is_installable(array $offer): bool
+{
+    $status = (string) ($offer['status'] ?? '');
+    if ($status === '') {
+        return true;
+    }
+
+    return $status === 'published';
+}
+
 function birkly_marketplace_enrich_offer_install_state(array $offer): array
 {
     $slug = (string) ($offer['slug'] ?? '');
@@ -526,6 +536,7 @@ function birkly_marketplace_enrich_offer_install_state(array $offer): array
         $slug,
         (string) ($offer['latest_version'] ?? '')
     );
+    $offer['installable'] = birkly_marketplace_offer_is_installable($offer);
 
     return $offer;
 }
