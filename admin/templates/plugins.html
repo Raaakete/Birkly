@@ -110,11 +110,27 @@
             <h2 id="marketplace-embed-title">{translate 'admin.marketplace'}</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-offer-embed">&times;</button>
         </div>
-        <div class="modal-body marketplace-embed-body">
-            <iframe id="marketplace-offer-iframe" class="marketplace-offer-iframe" title="{translate 'admin.marketplace'}" loading="lazy"></iframe>
+        <div id="marketplace-embed-tabs" class="marketplace-embed-tabs" role="tablist" aria-label="{translate 'admin.marketplace_offer_tabs'}">
+            <button type="button" class="marketplace-embed-tab active" role="tab" aria-selected="true" data-plugin-action="embed-offer-tab" data-embed-tab="offer">{translate 'admin.marketplace_tab_offer'}</button>
+            <button type="button" class="marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="pricing">{translate 'admin.marketplace_tab_pricing'}</button>
+            <button type="button" class="marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="reviews">{translate 'admin.marketplace_tab_reviews'}</button>
+            <button type="button" class="marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="versions">{translate 'admin.marketplace_tab_versions'}</button>
         </div>
         <div id="marketplace-embed-provider-box" class="marketplace-embed-provider-box" hidden></div>
-        <div id="marketplace-embed-pricing" class="marketplace-embed-pricing" hidden></div>
+        <div class="modal-body marketplace-embed-body">
+            <div class="marketplace-embed-panel active" data-embed-panel="offer" role="tabpanel">
+                <iframe id="marketplace-offer-iframe" class="marketplace-offer-iframe" title="{translate 'admin.marketplace'}" loading="lazy"></iframe>
+            </div>
+            <div class="marketplace-embed-panel" data-embed-panel="pricing" role="tabpanel" hidden>
+                <div id="marketplace-embed-pricing-panel" class="marketplace-embed-panel-inner"></div>
+            </div>
+            <div class="marketplace-embed-panel" data-embed-panel="reviews" role="tabpanel" hidden>
+                <div id="marketplace-embed-reviews-panel" class="marketplace-embed-panel-inner"></div>
+            </div>
+            <div class="marketplace-embed-panel" data-embed-panel="versions" role="tabpanel" hidden>
+                <div id="marketplace-embed-versions-panel" class="marketplace-embed-panel-inner"></div>
+            </div>
+        </div>
         <div class="modal-footer marketplace-embed-footer">
             <button type="button" class="btn btn-secondary btn-sm marketplace-embed-back" id="marketplace-embed-back" hidden data-plugin-action="back-offer-detail">{translate 'admin.marketplace_back_to_offer'}</button>
             <div class="marketplace-embed-offer-actions" id="marketplace-embed-offer-actions"></div>
