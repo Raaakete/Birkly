@@ -92,15 +92,17 @@
 <div id="marketplace-offer-embed-modal" class="modal-backdrop">
     <div class="modal-content marketplace-offer-embed-modal">
         <div class="modal-header marketplace-embed-header">
-            <button type="button" class="btn btn-secondary btn-sm marketplace-embed-back" id="marketplace-embed-back" hidden data-plugin-action="back-offer-detail">{translate 'admin.marketplace_back_to_offer'}</button>
             <h2 id="marketplace-embed-title">{translate 'admin.marketplace'}</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-offer-embed">&times;</button>
         </div>
-        <div id="marketplace-embed-provider-box" class="marketplace-embed-provider-box" hidden></div>
         <div class="modal-body marketplace-embed-body">
             <iframe id="marketplace-offer-iframe" class="marketplace-offer-iframe" title="{translate 'admin.marketplace'}" loading="lazy"></iframe>
         </div>
-        <div class="modal-footer marketplace-embed-footer" id="marketplace-embed-actions"></div>
+        <div id="marketplace-embed-provider-box" class="marketplace-embed-provider-box" hidden></div>
+        <div class="modal-footer marketplace-embed-footer">
+            <button type="button" class="btn btn-secondary btn-sm marketplace-embed-back" id="marketplace-embed-back" hidden data-plugin-action="back-offer-detail">{translate 'admin.marketplace_back_to_offer'}</button>
+            <div class="marketplace-embed-offer-actions" id="marketplace-embed-offer-actions"></div>
+        </div>
     </div>
 </div>
 
