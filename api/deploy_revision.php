@@ -132,6 +132,22 @@ if ($action === 'repair_plugins') {
 
     $mode = trim((string) ($_GET['mode'] ?? 'deactivate_broken'));
     $changed = [];
+
+    if (is_dir($projectRoot . '/plugins')) {
+        foreach (scandir($projectRoot . '/plugins') ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..' || !preg_match('/^[a-z0-9_-]+$/i', $entry)) {
+                continue;
+            }
+            $pluginFile = $projectRoot . '/plugins/' . $entry . '/plugin.php';
+            if (!is_file($pluginFile)) {
+                continue;
+            }
+            if (!isset($states[$entry]) || !is_array($states[$entry])) {
+                $states[$entry] = ['active' => false, 'settings' => []];
+            }
+        }
+    }
+
     foreach ($states as $pluginId => $state) {
         if (!is_array($state) || !is_string($pluginId)) {
             continue;

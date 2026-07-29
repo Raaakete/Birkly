@@ -494,11 +494,6 @@ function load_plugins($plugins_dir = null) {
             } else {
                 $defaultActive = (bool) ($existing_state['active'] ?? false);
                 $defaultSettings = $existing_state['settings'] ?? [];
-                // Automation was core before P3-M6 — default active on first discovery
-                if ($plugin_id === 'automation') {
-                    $defaultActive = true;
-                    $automationDefaultActivated = true;
-                }
             }
             $birkly_plugins[$plugin_id] = array_merge($metadata, [
                 'id' => $plugin_id,

@@ -21,39 +21,58 @@ if (!is_dir($pluginsDir) || !is_dir($settingsDir)) {
 
 $storage = new Storage($settingsDir);
 $states = $storage->read('plugins.json');
-if (!is_array($states) || $states === []) {
-    exit(0);
+if (!is_array($states)) {
+    $states = [];
 }
 
 $changed = false;
 $repairs = [];
+$pluginIds = [];
 
-foreach ($states as $pluginId => $state) {
-    if (!is_array($state) || empty($state['active'])) {
+foreach (scandir($pluginsDir) ?: [] as $entry) {
+    if ($entry === '.' || $entry === '..' || !preg_match('/^[a-z0-9_-]+$/i', $entry)) {
         continue;
     }
-    if (!is_string($pluginId) || !preg_match('/^[a-z0-9_-]+$/i', $pluginId)) {
+    $pluginFile = $pluginsDir . '/' . $entry . '/plugin.php';
+    if (!is_file($pluginFile)) {
+        continue;
+    }
+    $pluginIds[] = $entry;
+    if (!isset($states[$entry]) || !is_array($states[$entry])) {
+        $states[$entry] = ['active' => false, 'settings' => []];
+        $changed = true;
+    }
+}
+
+foreach ($pluginIds as $pluginId) {
+    $state = $states[$pluginId] ?? null;
+    if (!is_array($state)) {
         continue;
     }
 
     $pluginFile = $pluginsDir . '/' . $pluginId . '/plugin.php';
-    if (!is_file($pluginFile)) {
-        $states[$pluginId]['active'] = false;
-        $changed = true;
-        $repairs[] = ['plugin_id' => $pluginId, 'reason' => 'plugin.php missing'];
-        continue;
-    }
-
     $cmd = 'php -l ' . escapeshellarg($pluginFile) . ' 2>&1';
     $output = shell_exec($cmd) ?? '';
-    if (!str_contains($output, 'No syntax errors detected')) {
-        $states[$pluginId]['active'] = false;
-        $changed = true;
+    $syntaxOk = str_contains($output, 'No syntax errors detected');
+
+    if (!$syntaxOk) {
+        if (!empty($state['active'])) {
+            $states[$pluginId]['active'] = false;
+            $changed = true;
+        }
         $repairs[] = [
             'plugin_id' => $pluginId,
             'reason' => 'syntax check failed',
             'detail' => trim($output),
         ];
+        continue;
+    }
+
+    // Prevent first-discovery auto-activation of automation when not yet configured.
+    if ($pluginId === 'automation' && !array_key_exists('active', $state)) {
+        $states[$pluginId]['active'] = false;
+        $changed = true;
+        $repairs[] = ['plugin_id' => $pluginId, 'reason' => 'seed inactive until admin enables'];
     }
 }
 
@@ -74,4 +93,4 @@ $entry = [
 ];
 file_put_contents($logFile, json_encode($entry, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
 
-fwrite(STDERR, '[emergency-deactivate-broken-plugins] Deactivated ' . count($repairs) . " plugin(s)\n");
+fwrite(STDERR, '[emergency-deactivate-broken-plugins] Updated ' . count($repairs) . " plugin record(s)\n");
