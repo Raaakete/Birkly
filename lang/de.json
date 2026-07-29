@@ -420,6 +420,8 @@
         "marketplace_no_reviews": "No reviews yet",
         "marketplace_offers_count": "{count} Angebote",
         "marketplace_provider": "Anbieter",
+        "marketplace_view_provider_profile": "Anbieterprofil anzeigen",
+        "marketplace_back_to_offer": "Zurück zum Angebot",
         "marketplace_releases": "Releases",
         "marketplace_requires_birkly": "Benötigt Birkly",
         "marketplace_requires_php": "Benötigt PHP",
