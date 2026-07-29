@@ -483,14 +483,19 @@
         if (!name) {
             return '';
         }
-        return '<p class="marketplace-offer-provider">' + escapeHtml(name) + '</p>';
+        var byLabel = t('offer_by_provider', 'by {provider}').replace('{provider}', name);
+        return '<p class="marketplace-offer-provider">' + escapeHtml(byLabel) + '</p>';
     }
 
     function renderProviderProfileBox(provider) {
-        if (!provider || !provider.id) {
+        if (!provider) {
             return '';
         }
-        var name = provider.display_name || provider.id;
+        var name = provider.display_name || provider.id || '';
+        if (!name) {
+            return '';
+        }
+        var providerId = provider.id || '';
         var initial = String(name).charAt(0).toUpperCase();
         var avatarHtml = provider.avatar_url
             ? '<img class="marketplace-provider-card-avatar" src="' + escapeHtml(provider.avatar_url) + '" alt="">'
@@ -498,9 +503,9 @@
         var taglineHtml = provider.tagline
             ? '<p class="marketplace-provider-card-tagline">' + escapeHtml(provider.tagline) + '</p>'
             : '';
-        var profileLink = provider.published === true
+        var profileLink = provider.published === true && providerId
             ? '<button type="button" class="btn btn-secondary btn-sm marketplace-provider-card-action" data-plugin-action="view-provider-profile" data-provider-id="' +
-              escapeHtml(provider.id) + '">' +
+              escapeHtml(providerId) + '">' +
               escapeHtml(t('view_provider_profile', 'View provider profile')) +
               '</button>'
             : '';
@@ -522,7 +527,8 @@
         embedModalView = mode === 'provider' ? 'provider' : 'offer';
         var backBtn = document.getElementById('marketplace-embed-back');
         var providerBox = document.getElementById('marketplace-embed-provider-box');
-        var actionsEl = document.getElementById('marketplace-embed-actions');
+        var actionsEl = document.getElementById('marketplace-embed-offer-actions');
+        var footerEl = document.querySelector('.marketplace-embed-footer');
         if (backBtn) {
             backBtn.hidden = embedModalView !== 'provider';
         }
@@ -531,6 +537,9 @@
         }
         if (actionsEl) {
             actionsEl.hidden = embedModalView === 'provider';
+        }
+        if (footerEl) {
+            footerEl.hidden = false;
         }
     }
 
@@ -562,7 +571,7 @@
         var modal = document.getElementById('marketplace-offer-embed-modal');
         var iframe = document.getElementById('marketplace-offer-iframe');
         var titleEl = document.getElementById('marketplace-embed-title');
-        var actionsEl = document.getElementById('marketplace-embed-actions');
+        var actionsEl = document.getElementById('marketplace-embed-offer-actions');
         if (!modal || !iframe) {
             return;
         }
@@ -586,7 +595,6 @@
         updateEmbedModalProviderBox(providerForBox);
         setEmbedModalView('offer');
         if (actionsEl) {
-            actionsEl.hidden = false;
             actionsEl.innerHTML = renderOfferActionButtons(resolvedOffer, false);
         }
         modal.classList.add('active');
@@ -629,13 +637,19 @@
         }
         embedModalView = 'offer';
         setEmbedModalView('offer');
+        var actionsEl = document.getElementById('marketplace-embed-offer-actions');
+        var cachedOffer = findCachedOffer(currentOfferSlug);
+        if (actionsEl && cachedOffer) {
+            actionsEl.innerHTML = renderOfferActionButtons(cachedOffer, false);
+        }
     }
 
     function closeOfferEmbedModal() {
         var modal = document.getElementById('marketplace-offer-embed-modal');
         var iframe = document.getElementById('marketplace-offer-iframe');
         var providerBox = document.getElementById('marketplace-embed-provider-box');
-        var actionsEl = document.getElementById('marketplace-embed-actions');
+        var actionsEl = document.getElementById('marketplace-embed-offer-actions');
+        var footerEl = document.querySelector('.marketplace-embed-footer');
         if (modal) {
             modal.classList.remove('active');
         }
@@ -647,7 +661,15 @@
             providerBox.hidden = true;
         }
         if (actionsEl) {
+            actionsEl.innerHTML = '';
             actionsEl.hidden = false;
+        }
+        var backBtn = document.getElementById('marketplace-embed-back');
+        if (backBtn) {
+            backBtn.hidden = true;
+        }
+        if (footerEl) {
+            footerEl.hidden = false;
         }
         currentOfferSlug = null;
         currentOfferProvider = null;
