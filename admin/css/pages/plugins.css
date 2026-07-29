@@ -481,11 +481,20 @@
   display: block;
 }
 
-.marketplace-offer-type-badge {
+.marketplace-offer-media-badges {
   position: absolute;
   top: var(--space-3, 0.75rem);
   left: var(--space-3, 0.75rem);
-  z-index: 1;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: calc(100% - 1.5rem);
+}
+
+.marketplace-offer-type-badge {
+  position: static;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -519,8 +528,7 @@
 .marketplace-offer-status-badge {
   display: inline-flex;
   align-items: center;
-  margin-bottom: var(--space-2, 0.5rem);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -528,14 +536,19 @@
   border-radius: var(--radius-sm, 0.375rem);
 }
 
+.marketplace-offer-media-badges .marketplace-offer-status-badge {
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
 .marketplace-offer-status-badge--coming-soon {
   color: #92400e;
   background: #fef3c7;
-  border: 1px solid #fcd34d;
+  border-color: #fcd34d;
 }
 
-.marketplace-offer-heading .marketplace-offer-status-badge {
-  margin-bottom: var(--space-2, 0.5rem);
+.marketplace-offer-media-badges .marketplace-offer-status-badge--coming-soon {
+  border-color: rgba(255, 255, 255, 0.65);
 }
 
 .marketplace-offer-icon-badge {
