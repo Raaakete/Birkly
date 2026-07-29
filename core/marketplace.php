@@ -570,10 +570,13 @@ function birkly_marketplace_offer_detail(string $slug): array
     $response = birkly_marketplace_request('GET', '/api/v1/offers/' . rawurlencode($slug));
     if ($response['ok'] && is_array($response['data'])) {
         $offer = is_array($response['data']['offer'] ?? null) ? $response['data']['offer'] : [];
+        $provider = is_array($response['data']['provider'] ?? null) ? $response['data']['provider'] : null;
+
         return [
             'ok' => true,
             'offer' => birkly_marketplace_enrich_offer_install_state($offer),
             'releases' => is_array($response['data']['releases'] ?? null) ? $response['data']['releases'] : [],
+            'provider' => $provider,
             'fallback' => false,
         ];
     }
