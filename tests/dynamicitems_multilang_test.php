@@ -44,7 +44,7 @@ $config = [
 $field = new Birkly\FieldTypes\DynamicItems\DynamicItems($config);
 $rawHtml = $field->render();
 
-assert_contains('render includes showAddBlockModal', $rawHtml, "showAddBlockModal('blocks')");
+assert_contains('render includes FromButton handler', $rawHtml, 'showAddBlockModalFromButton(this)');
 assert_contains('render includes field_blocks id', $rawHtml, 'id="field_blocks"');
 
 $enHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'en');
