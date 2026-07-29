@@ -19,15 +19,16 @@ This file tracks **current state** and the **active execution phase**. Full hist
 | Area | Status |
 |------|--------|
 | **Docker / Dokploy** | `BIRKLY_DATA=/app/data` single volume |
-| **Production** | `cms.birkly.cloud` + `birkly.cloud` |
+| **Production** | `cms.birkly.cloud` + `birkly.cloud` · Agent Guide live on `birkly.cloud` |
 | **P43–P45** | Hosting, admin UX, templating — complete |
-| **Agent Guide** | P46+P47 complete — polish + docs ongoing |
+| **Agent Guide (feature)** | P46+P47 complete |
+| **Agent Guide UX** | **P49 complete** (#426 plan · #427 execution · #428 wizard fix) |
 | **Content UX (P39)** | Shipped (#258–268) — catch-up doc only |
-| **Marketplace CMS UI** | Large wave merged 2026-07-29 — unphased |
+| **Marketplace CMS tab** | Shipped (#402–423) — admin catalog/install UX; not a separate pending phase |
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**No formal active phase queued** — pick next from catch-up doc or new plan PR.
+**No formal active phase queued** — next work needs an approved plan PR (see planning candidates in catch-up file).
 
 ---
 
@@ -63,6 +64,23 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **PRs:** #330 plan · #331 feature · #334–356 UX · #353 cross-links · #336 Pro
 
+### Phase 49 — Agent Guide UX excellence
+
+**Status:** **Complete** (2026-07-29)
+
+**Goal delivered:** Guided setup wizard, Essentials view, publish success UX, live/draft badges, publish history, contextual AI Assist, i18n (en/de), hardening, docs, tests — one run for non-developers.
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| P49-M0 | Plan, gap register, matrix, handoff | **done** |
+| P49-M1–M14 | UX polish, wizard, history, tests, closure | **done** |
+
+**Artifacts:** `docs/reviews/P49-*` · `admin/js/agent-guide-wizard.js` · `scripts/smoke-agent-guide.sh`
+
+**PRs:** #426 plan · #427 execution · #428 wizard overlay fix
+
+**Verification:** `docs/reviews/P49-verification-matrix.md` — green
+
 ---
 
 ## Shipped without full phase docs (see catch-up file)
@@ -71,14 +89,14 @@ This file tracks **current state** and the **active execution phase**. Full hist
 |----|------|------------|
 | **P38** | AI Project Gateway (MCP/chat `project/`) | #246, AI architecture docs |
 | **P39** | Content editor + entries UX + chat context | #258–268 |
-| **Marketplace** | CMS marketplace tab polish | #402–423 |
+| **Marketplace tab** | CMS admin marketplace catalog/install polish | #402–423 (shipped; no follow-up phase unless scoped) |
 | **Admin audit** | UX fix tracks A–E | `admin-ux-fix-plan-2026-07.md` |
 
 ---
 
 ## Paused / not in scope
 
-Admin PHP `eval` replacement · Studio P26 · P42 marketing template pack · P28 beta launch automation · Core vector DB / embeddings index
+Admin PHP `eval` replacement · Studio P26 · Core vector DB / embeddings index
 
 **Product note:** Vector search is **not** core CMS. Agent Guide + structured content is the primary path for machine-readable brand truth. Optional RAG/support-bot indexing could be a **future plugin**, not required for headless CMS.
 

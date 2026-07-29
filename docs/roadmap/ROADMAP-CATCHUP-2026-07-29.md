@@ -15,7 +15,8 @@ Inventory of work shipped on `main` that was **not fully reflected** in `ROADMAP
 | P39 Content UX | PRs only (#258–268) | Yes | **Documented here** |
 | P46 AI Presence | Yes | Yes (+ rebrand) | Complete → **Agent Guide** |
 | P47 AI Presence Pro | No formal plan on `main` | Yes (#336+) | **Documented here** |
-| Marketplace CMS UI wave | No | Yes (#402–423) | **Documented here** |
+| P49 Agent Guide UX | Yes | Yes (#426–428) | Complete in `ROADMAP.md` |
+| Marketplace CMS tab wave | No | Yes (#402–423) | **Documented here** (shipped, not a pending phase) |
 | Admin UX audit 2026-07 | Ad hoc plan | Yes (#314+) | Complete |
 
 ---
@@ -77,9 +78,9 @@ Inventory of work shipped on `main` that was **not fully reflected** in `ROADMAP
 
 ---
 
-## Marketplace integration wave (CMS admin, unphased)
+## Marketplace CMS tab wave (unphased, shipped)
 
-Roughly **2026-07-29**, many PRs improved the **Marketplace** tab inside CMS (not Birkly-Marketplace repo alone):
+Roughly **2026-07-29**, many PRs improved the **Plugins → Marketplace** tab inside CMS admin (catalog/install UX in this repo; commerce/registry in `Birkly-Marketplace`). This is **not** a pending “formalization” phase — work is merged unless you scope new marketplace features explicitly.
 
 - Offer cards (cover, type badges, stats, typography)
 - Provider info on cards + modal
@@ -89,7 +90,7 @@ Roughly **2026-07-29**, many PRs improved the **Marketplace** tab inside CMS (no
 - Installed plugin reviews modal
 - Automation plugin path fixes on `BIRKLY_DATA`
 
-**Suggestion:** If more marketplace work is planned, formalize as **P48 Marketplace CMS client** or fold into marketplace roadmap in `Birkly-Marketplace`.
+**If more marketplace work is needed:** scope it explicitly (new offers, checkout in CMS, etc.) in `Birkly-Marketplace` roadmap or a new CMS plan PR — not required for closure of the July wave.
 
 ---
 
@@ -111,7 +112,7 @@ Roughly **2026-07-29**, many PRs improved the **Marketplace** tab inside CMS (no
 | Item | Notes |
 |------|--------|
 | PR #289 | nginx marketing domain — consider merge or close |
-| Draft plans | P28 beta launch, P26 Studio, P31/P32 dashboard, P42 template pack |
+| Draft plans | P26 Studio, P31/P32 dashboard (stale — confirm or archive) |
 | PR #169 | Reference demo client fixes (draft) |
 
 ---
@@ -128,13 +129,20 @@ Roughly **2026-07-29**, many PRs improved the **Marketplace** tab inside CMS (no
 
 ---
 
-## Next planning candidates
+## Next planning candidates (need approved plan PR)
 
-1. **P48** — Formal marketplace CMS client closure + docs  
-2. **P42** — Marketing starter template pack  
-3. **P26** — Studio creative suite  
-4. **P28** — Beta launch automation  
-5. **Agent Guide polish** — ongoing UX, docs, production smoke (not a full phase unless scope grows)
+1. **Integration registry** — Settings hub for shared provider connections (Commerce Stripe first); see product note below  
+2. **P26** — Studio creative suite  
+3. **P31/P32** — Dashboard (if still desired)  
+4. **Marketplace** — only if new CMS↔marketplace features beyond July #402–423 wave
+
+### Product note — central Integrations tab (not approved)
+
+**Idea:** Settings → Integrations stores provider connections once (e.g. Stripe from Commerce) so other plugins pick an existing connection instead of re-entering secrets.
+
+**Today:** Settings **Integrations** tab = Public API + webhooks. **AI** tab = AI connections / MCP (separate encrypted store). Commerce **Connections** = per-plugin (sidebar), not a core registry.
+
+**Verdict for planning:** Useful when **multiple features share the same provider account** (Stripe, email, analytics). Not a gimmick if built as **typed integrations + scoped plugin access**, not a generic secret dump. Security: larger blast radius — require encryption, audit log, per-integration permissions, no cross-plugin secret export. **Incremental:** registry API + Commerce as first writer; second consumer before expanding UI.
 
 ---
 
