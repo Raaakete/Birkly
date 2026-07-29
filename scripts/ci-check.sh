@@ -22,6 +22,9 @@ echo "==> AI Presence tests"
 php tests/ai_presence_storage_test.php
 php tests/ai_presence_test.php
 
+echo "==> DynamicItems multilang tests"
+php tests/dynamicitems_multilang_test.php
+
 echo "==> Other node template engine smoke tests"
 node tests/for_loop_header_test.js
 node tests/from_block_prefetch_test.js

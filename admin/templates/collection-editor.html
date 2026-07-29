@@ -106,6 +106,7 @@ if (!$cancelUrl) {
             <?php endif; ?>
         <?php else: ?>
             <input type="hidden" name="action" value="<?= !empty($collection['title']) ? 'update' : 'create' ?>">
+            <input type="hidden" name="sub_collections_replace" value="1">
             <?php if (!empty($collection['title'])): ?>
                 <input type="hidden" name="collection_slug" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>">
             <?php endif; ?>
@@ -2014,6 +2015,57 @@ echo htmlspecialchars($formCode);
 }
 </style>
 
+<!-- Collection save success modal (P50) -->
+<div id="col-save-success-modal" class="modal col-save-success-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="col-save-success-title" aria-describedby="col-save-success-message">
+    <div class="modal-backdrop" data-col-modal-close="col-save-success-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-body ap-publish-success-body ag-wizard-panel--success">
+            <div class="ag-wizard-success-icon" aria-hidden="true">✓</div>
+            <h3 id="col-save-success-title"><?= __('admin.col_save_success_title') ?></h3>
+            <p id="col-save-success-message" class="ag-wizard-success-meta"><?= __('admin.col_save_success_message') ?></p>
+            <div class="ag-wizard-success-actions">
+                <a class="btn btn-primary" id="col-save-add-entry" href="#"><?= __('admin.col_save_add_first_entry') ?></a>
+                <a class="btn btn-secondary" id="col-save-back" href="<?= htmlspecialchars(admin_url('content')) ?>"><?= __('admin.col_save_back_to_collections') ?></a>
+                <button type="button" class="btn btn-secondary" id="col-save-continue" data-col-modal-close="col-save-success-modal"><?= __('admin.col_save_continue_editing') ?></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.main-actions-bar--saved .btn-primary {
+    box-shadow: 0 0 0 3px rgba(82, 196, 154, 0.35);
+}
+.ag-wizard-panel--success {
+    text-align: center;
+    padding: var(--space-l, 1.5rem) var(--space-m, 1rem);
+}
+.ag-wizard-success-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    margin: 0 auto var(--space-m, 1rem);
+    border-radius: 50%;
+    background: var(--primary-100, #d1fae5);
+    color: var(--primary-700, #047857);
+    font-size: 1.75rem;
+    line-height: 3.5rem;
+    font-weight: 700;
+}
+.ag-wizard-success-meta {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--text-secondary, #72746F);
+    margin: 0 0 var(--space-m, 1rem);
+}
+.ag-wizard-success-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-s, 0.75rem);
+    justify-content: center;
+    margin-top: var(--space-m, 1rem);
+}
+</style>
+
 <script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/collection-editor-core.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/collection-editor-core.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
@@ -2087,12 +2139,27 @@ document.addEventListener('DOMContentLoaded', function() {
             formId: 'collection-form',
             schemaContainerId: <?= json_encode($isSubCollection ? 'sub-collection-fields-container' : 'fields-container') ?>,
             schemaSectionSelector: <?= json_encode($isSubCollection ? '.fieldtype-section[data-sub-field-index]' : '.fieldtype-section[data-index]') ?>,
-            reorderContainerId: <?= json_encode($isSubCollection ? '' : 'fields-container') ?>,
-            reorderSectionSelector: '.fieldtype-section[data-index]',
-            reorderIndexAttribute: 'data-index',
+            reorderContainerId: <?= json_encode($isSubCollection ? 'sub-collection-fields-container' : 'fields-container') ?>,
+            reorderSectionSelector: <?= json_encode($isSubCollection ? '.fieldtype-section[data-sub-field-index]' : '.fieldtype-section[data-index]') ?>,
+            reorderIndexAttribute: <?= json_encode($isSubCollection ? 'data-sub-field-index' : 'data-index') ?>,
             originalSchema: window.__collectionOriginalSchema,
             isSubCollection: <?= $isSubCollection ? 'true' : 'false' ?>,
-            blockSubmitWhenActiveElementIds: ['language-input', 'sub-collection-language-input']
+            blockSubmitWhenActiveElementIds: ['language-input', 'sub-collection-language-input'],
+            contentOverviewUrl: <?= json_encode(admin_url('content')) ?>,
+            entryEditorUrlTemplate: <?= json_encode(admin_url('entry-editor', ['collection' => '__SLUG__'])) ?>,
+            entriesListUrlTemplate: <?= json_encode(admin_url('entries', ['collection' => '__SLUG__'])) ?>,
+            saveLabels: {
+                successTitle: <?= json_encode(__('admin.col_save_success_title')) ?>,
+                successMessage: <?= json_encode(__('admin.col_save_success_message')) ?>,
+                subSuccessTitle: <?= json_encode(__('admin.col_save_sub_success_title')) ?>,
+                subSuccessMessage: <?= json_encode(__('admin.col_save_sub_success_message')) ?>,
+                addFirstEntry: <?= json_encode(__('admin.col_save_add_first_entry')) ?>,
+                viewEntries: <?= json_encode(__('admin.col_save_view_entries')) ?>,
+                backToCollections: <?= json_encode(__('admin.col_save_back_to_collections')) ?>,
+                updated: <?= json_encode(__('admin.col_save_updated')) ?>,
+                blockedLanguage: <?= json_encode(__('admin.col_save_blocked_language')) ?>,
+                continueEditing: <?= json_encode(__('admin.col_save_continue_editing')) ?>
+            }
         })
         : null;
     function getNextSubCollectionSchemaFieldIndex() {

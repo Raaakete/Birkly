@@ -1,6 +1,6 @@
 # Marketplace go-live — installing plugins
 
-Birkly CMS downloads ship **without bundled plugins**. After a fresh install, the `plugins/` folder is empty and you add extensions from the [Birkly Marketplace](https://marketplace.birkly.io). Official Birkly plugins (commerce, events, automation, user management) are **free** and install in one click from the CMS admin. **Paid official** plugins require marketplace checkout and a license key. **Subscription** official plugins bill monthly/yearly until canceled. **Paid third-party** offers use the same checkout flow.
+Birkly CMS downloads ship **without bundled plugins**. After a fresh install, the `plugins/` folder is empty and you add extensions from the [Birkly Marketplace](https://marketplace.birkly.cloud). Official Birkly plugins (commerce, events, automation, user management) are **free** and install in one click from the CMS admin. **Paid official** plugins require marketplace checkout and a license key. **Subscription** official plugins bill monthly/yearly until canceled. **Paid third-party** offers use the same checkout flow.
 
 ## Summary
 
@@ -36,10 +36,10 @@ These four plugins are maintained by Birkly and listed on the marketplace as **f
 
 | Plugin folder | Marketplace slug | What it does | Docs |
 |---------------|------------------|--------------|------|
-| `commerce` | [birkly-commerce](https://marketplace.birkly.io/offers/birkly-commerce) | Payments, catalog, cart, checkout, orders | [Commerce plugin](plugins/commerce.md) |
-| `events` | [birkly-events](https://marketplace.birkly.io/offers/birkly-events) | Events, RSVP, paid tickets (uses Commerce) | [Events functions](../03-templating/events-functions.md) |
-| `automation` | [birkly-automation](https://marketplace.birkly.io/offers/birkly-automation) | Workflows, triggers, conditions, actions | [Automation overview](../05-automation/automation-overview.md) |
-| `user_management` | [birkly-user-management](https://marketplace.birkly.io/offers/birkly-user-management) | Registration, auth, tiers, permissions | [User plugin](user-plugin.md) |
+| `commerce` | [birkly-commerce](https://marketplace.birkly.cloud/offers/birkly-commerce) | Payments, catalog, cart, checkout, orders | [Commerce plugin](plugins/commerce.md) |
+| `events` | [birkly-events](https://marketplace.birkly.cloud/offers/birkly-events) | Events, RSVP, paid tickets (uses Commerce) | [Events functions](../03-templating/events-functions.md) |
+| `automation` | [birkly-automation](https://marketplace.birkly.cloud/offers/birkly-automation) | Workflows, triggers, conditions, actions | [Automation overview](../05-automation/automation-overview.md) |
+| `user_management` | [birkly-user-management](https://marketplace.birkly.cloud/offers/birkly-user-management) | Registration, auth, tiers, permissions | [User plugin](user-plugin.md) |
 
 **Paid and subscription official offers** (for example SEO Basics, Analytics Pro) also appear in the catalog with `pricing.model` `one_time` or `subscription`. They require marketplace checkout — see [Marketplace — buyer license and install](marketplace-buyer-guide.md).
 
@@ -59,6 +59,16 @@ Local development and automated tests use `scripts/install-dev-plugins.sh` in th
 
 Each marketplace release includes a semver version, artifact URL, and SHA-256 checksum. The CMS verifies the checksum before extracting into `plugins/`. Override the marketplace base URL with `BIRKLY_MARKETPLACE_URL` or `settings/marketplace.json` for staging.
 
+**Production platform (Birkly Cloud)**
+
+| Surface | URL | Purpose |
+|---------|-----|---------|
+| Public marketplace | `https://marketplace.birkly.cloud` | Catalog, registry API, buyer checkout |
+| Provider Studio | `https://providers.birkly.cloud` | Seller signup, offers, Stripe Connect |
+| Birkly Ops | `https://ops.birkly.cloud` | Staff admin, feedback inbox, install registry |
+
+CMS installs use `marketplace.birkly.cloud` by default. Customer feedback relays to Ops when `settings/platform.json` includes `feedback_relay_url` (see `docs/reviews/platform.json.example` in the Birkly repo).
+
 **API gating**
 
 Core routes that depend on a plugin (e.g. automation webhooks, commerce APIs) return 404 or 503 when the plugin is not installed, instead of fatal errors.
@@ -69,4 +79,4 @@ Core routes that depend on a plugin (e.g. automation webhooks, commerce APIs) re
 - [Marketplace — provider publishing guide](marketplace-provider-guide.md)
 - [Plugins](plugins.md)
 - [Updates](updates.md)
-- [Birkly Marketplace](https://marketplace.birkly.io)
+- [Birkly Marketplace](https://marketplace.birkly.cloud)

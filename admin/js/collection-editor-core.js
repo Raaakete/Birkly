@@ -201,11 +201,51 @@
             ? options.blockSubmitWhenActiveElementIds
             : [];
         var isSubCollection = !!options.isSubCollection;
+        var saveLabels = options.saveLabels || {};
+        var contentOverviewUrl = options.contentOverviewUrl || '/admin?page=content';
+        var entryEditorUrlTemplate = options.entryEditorUrlTemplate || '';
+        var entriesListUrlTemplate = options.entriesListUrlTemplate || '';
         var originalSchema = cloneJson(options.originalSchema || global.__collectionOriginalSchema || []);
         var initialFormState = serializeFormState(form);
         var isDirty = false;
         var isSubmitting = false;
         var fieldtypeSorter = null;
+        var saveModalPreviousFocus = null;
+        var saveModalFocusTrap = null;
+
+        function getSaveModalFocusable(modal) {
+            return Array.from(modal.querySelectorAll(
+                'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )).filter(function (el) {
+                return el.offsetParent !== null || el === document.activeElement;
+            });
+        }
+
+        function releaseSaveModalFocusTrap() {
+            if (saveModalFocusTrap) {
+                document.removeEventListener('keydown', saveModalFocusTrap);
+                saveModalFocusTrap = null;
+            }
+        }
+
+        function trapSaveModalFocus(modal) {
+            releaseSaveModalFocusTrap();
+            saveModalFocusTrap = function (event) {
+                if (event.key !== 'Tab' || !modal.classList.contains('active')) return;
+                var focusable = getSaveModalFocusable(modal);
+                if (!focusable.length) return;
+                var first = focusable[0];
+                var last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            };
+            document.addEventListener('keydown', saveModalFocusTrap);
+        }
 
         function buildCurrentSchema() {
             if (!schemaContainer) {
@@ -340,6 +380,122 @@
             }
         }
 
+        function label(key, fallback) {
+            return saveLabels[key] || fallback;
+        }
+
+        function buildEntryEditorUrl(collectionSlug) {
+            if (!collectionSlug) return contentOverviewUrl;
+            if (entryEditorUrlTemplate.indexOf('__SLUG__') !== -1) {
+                return entryEditorUrlTemplate.replace('__SLUG__', encodeURIComponent(collectionSlug));
+            }
+            return '/admin?page=entry-editor&collection=' + encodeURIComponent(collectionSlug);
+        }
+
+        function buildEntriesListUrl(collectionSlug) {
+            if (!collectionSlug) return contentOverviewUrl;
+            if (entriesListUrlTemplate.indexOf('__SLUG__') !== -1) {
+                return entriesListUrlTemplate.replace('__SLUG__', encodeURIComponent(collectionSlug));
+            }
+            return '/admin?page=entries&collection=' + encodeURIComponent(collectionSlug);
+        }
+
+        function openSaveSuccessModal(collectionSlug, wasSubCollectionCreate) {
+            var modal = document.getElementById('col-save-success-modal');
+            if (!modal) return;
+
+            var titleEl = document.getElementById('col-save-success-title');
+            var messageEl = document.getElementById('col-save-success-message');
+            var addEntryEl = document.getElementById('col-save-add-entry');
+            var backEl = document.getElementById('col-save-back');
+            var continueEl = document.getElementById('col-save-continue');
+
+            if (titleEl) {
+                titleEl.textContent = wasSubCollectionCreate
+                    ? label('subSuccessTitle', 'Sub-collection created')
+                    : label('successTitle', 'Collection created');
+            }
+            if (messageEl) {
+                messageEl.textContent = wasSubCollectionCreate
+                    ? label('subSuccessMessage', 'Your sub-collection schema is saved.')
+                    : label('successMessage', 'Your collection is ready.');
+            }
+            if (addEntryEl) {
+                if (wasSubCollectionCreate) {
+                    addEntryEl.textContent = label('viewEntries', 'View entries');
+                    addEntryEl.href = buildEntriesListUrl(collectionSlug);
+                } else {
+                    addEntryEl.textContent = label('addFirstEntry', 'Add first entry');
+                    addEntryEl.href = buildEntryEditorUrl(collectionSlug);
+                }
+                addEntryEl.hidden = !collectionSlug;
+            }
+            if (backEl) {
+                backEl.textContent = label('backToCollections', 'Back to collections');
+                backEl.href = contentOverviewUrl;
+            }
+            if (continueEl) {
+                continueEl.textContent = label('continueEditing', 'Continue editing');
+            }
+
+            saveModalPreviousFocus = document.activeElement;
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            requestAnimationFrame(function () {
+                modal.classList.add('active');
+                trapSaveModalFocus(modal);
+                var firstFocus = addEntryEl && !addEntryEl.hidden ? addEntryEl : continueEl;
+                if (firstFocus && firstFocus.focus) {
+                    firstFocus.focus();
+                }
+            });
+        }
+
+        function closeSaveSuccessModal() {
+            var modal = document.getElementById('col-save-success-modal');
+            if (!modal) return;
+            modal.classList.remove('active');
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            releaseSaveModalFocusTrap();
+            if (saveModalPreviousFocus && saveModalPreviousFocus.focus) {
+                saveModalPreviousFocus.focus();
+                saveModalPreviousFocus = null;
+            }
+        }
+
+        function flashSavedState() {
+            var saveBar = document.querySelector('.main-actions-bar--sticky');
+            if (!saveBar) return;
+            saveBar.classList.add('main-actions-bar--saved');
+            global.setTimeout(function () {
+                saveBar.classList.remove('main-actions-bar--saved');
+            }, 2500);
+        }
+
+        function bindSaveSuccessModal() {
+            var modal = document.getElementById('col-save-success-modal');
+            if (!modal || modal.dataset.colSaveBound === 'true') return;
+            modal.dataset.colSaveBound = 'true';
+
+            modal.querySelectorAll('[data-col-modal-close]').forEach(function (el) {
+                el.addEventListener('click', closeSaveSuccessModal);
+            });
+
+            var continueBtn = document.getElementById('col-save-continue');
+            if (continueBtn) {
+                continueBtn.addEventListener('click', closeSaveSuccessModal);
+            }
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && modal.classList.contains('active')) {
+                    closeSaveSuccessModal();
+                }
+            });
+        }
+
+        bindSaveSuccessModal();
+
         async function confirmDestructiveChanges(changes) {
             if (!changes || !changes.length) return true;
 
@@ -464,11 +620,16 @@
             if (isBlockedSubmitTarget(activeElement)) {
                 event.preventDefault();
                 event.stopPropagation();
+                showToast(label('blockedLanguage', 'Click outside the language field, then save again.'), 'warning');
                 return false;
             }
 
             event.preventDefault();
             if (isSubmitting) return false;
+
+            var actionInput = form.querySelector('input[name="action"]');
+            var saveAction = actionInput ? actionInput.value : '';
+            var wasCreate = saveAction === 'create' || saveAction === 'add_sub_collection';
 
             collectGeneratedOptionInputs();
 
@@ -504,7 +665,18 @@
                 global.__collectionOriginalSchema = cloneJson(originalSchema);
                 initialFormState = serializeFormState(form);
                 isDirty = false;
-                showToast(data.message || 'Collection saved successfully', 'success');
+
+                var payload = data.data || {};
+                var collectionSlug = payload.slug
+                    || (form.querySelector('input[name="collection_slug"]') || {}).value
+                    || '';
+
+                if (wasCreate) {
+                    openSaveSuccessModal(collectionSlug, saveAction === 'add_sub_collection' || isSubCollection);
+                } else {
+                    flashSavedState();
+                    showToast(data.message || label('updated', 'Collection saved'), 'success');
+                }
                 return false;
             } catch (error) {
                 global.console.error('Error saving collection:', error);

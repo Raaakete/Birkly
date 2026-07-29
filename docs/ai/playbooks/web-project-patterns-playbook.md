@@ -226,11 +226,12 @@ Admin entry-detail for sub-collections expects consistent markup when mixing mai
 
 ## Admin cross-reference
 
-| Topic | Admin / human doc |
-|-------|-------------------|
-| Website integration | `admin/docs/website-integration.php` |
-| Client library | `admin/docs/client-library.php` |
-| Reference projects | `admin/docs/snapshots/reference-projects.md` |
+| Topic | Human doc (Birkly-Docs) |
+|-------|-------------------------|
+| Website integration | https://docs.birkly.com/04-integration/website-integration.html |
+| Client library | https://docs.birkly.com/04-integration/client-library.html |
+| Site elements pattern | https://docs.birkly.com/02-content/site-elements-pattern.html |
+| Reference projects | https://docs.birkly.com/03-templating/reference-projects.html |
 | Template spec (full) | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
 
 ---
