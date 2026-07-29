@@ -38,6 +38,70 @@ $snapshotNames = [
     'closed-alpha' => 'closed-alpha.md',
 ];
 
+/** @var array<string, array{id: string, label: string}> docs_path prefix → nav section */
+$navSectionFromPrefix = [
+    '00-overview' => ['id' => 'overview', 'label' => 'Overview'],
+    '01-admin' => ['id' => 'admin', 'label' => 'Admin'],
+    '02-content' => ['id' => 'content', 'label' => 'Content model'],
+    '03-templating' => ['id' => 'templating', 'label' => 'Templating'],
+    '04-integration' => ['id' => 'integration', 'label' => 'Integration'],
+    '05-automation' => ['id' => 'automation', 'label' => 'Automation'],
+    '06-extensibility' => ['id' => 'extensibility', 'label' => 'Extensibility'],
+    '06-plugin-economy' => ['id' => 'plugin-economy', 'label' => 'Plugin economy'],
+    '07-operations' => ['id' => 'operations', 'label' => 'Operations'],
+];
+
+function sync_birkly_docs_nav_section(string $docsPath, array $navSectionFromPrefix): array
+{
+    foreach ($navSectionFromPrefix as $prefix => $section) {
+        if (str_starts_with($docsPath, $prefix . '/')) {
+            return $section;
+        }
+    }
+
+    return ['id' => 'platform', 'label' => 'Platform'];
+}
+
+function sync_birkly_docs_has_further_reading(string $markdown): bool
+{
+    return (bool) preg_match('/^##\s+(Further reading|Related)\s*$/mi', $markdown);
+}
+
+/**
+ * Append a Further reading section when the source doc has none.
+ *
+ * @param list<array<string, mixed>> $peers
+ */
+function sync_birkly_docs_append_further_reading(string $markdown, array $peers, string $currentId): string
+{
+    if (sync_birkly_docs_has_further_reading($markdown)) {
+        return $markdown;
+    }
+
+    $links = [];
+    foreach ($peers as $peer) {
+        if (!is_array($peer) || ($peer['id'] ?? '') === $currentId) {
+            continue;
+        }
+        $title = (string) ($peer['title'] ?? $peer['id'] ?? '');
+        $peerId = (string) ($peer['id'] ?? '');
+        if ($title === '' || $peerId === '') {
+            continue;
+        }
+        $links[] = '- [' . $title . '](' . $peerId . '.md)';
+        if (count($links) >= 4) {
+            break;
+        }
+    }
+
+    if ($links === []) {
+        return $markdown;
+    }
+
+    $suffix = "\n\n## Further reading\n\n" . implode("\n", $links) . "\n";
+    return rtrim($markdown) . $suffix;
+}
+
 /**
  * @return list<string>
  */
@@ -73,6 +137,20 @@ function sync_birkly_docs_snapshot_name(array $topic, array $snapshotNames): str
 $offlineTopics = [];
 $copied = 0;
 $skipped = 0;
+$topicsByNavSection = [];
+
+foreach ($live['topics'] as $topic) {
+    if (!is_array($topic) || empty($topic['id'])) {
+        continue;
+    }
+    $docsPath = (string) ($topic['docs_path'] ?? '');
+    $nav = sync_birkly_docs_nav_section($docsPath, $navSectionFromPrefix);
+    $sectionId = (string) ($topic['nav_section'] ?? $nav['id']);
+    if (!isset($topicsByNavSection[$sectionId])) {
+        $topicsByNavSection[$sectionId] = [];
+    }
+    $topicsByNavSection[$sectionId][] = $topic;
+}
 
 foreach ($live['topics'] as $topic) {
     if (!is_array($topic) || empty($topic['id'])) {
@@ -81,6 +159,8 @@ foreach ($live['topics'] as $topic) {
 
     $id = (string) $topic['id'];
     $docsPath = (string) ($topic['docs_path'] ?? '');
+    $nav = sync_birkly_docs_nav_section($docsPath, $navSectionFromPrefix);
+    $sectionId = (string) ($topic['nav_section'] ?? $nav['id']);
     $snapshotFile = sync_birkly_docs_snapshot_name($topic, $snapshotNames);
     $dest = $snapDir . '/' . $snapshotFile;
 
@@ -95,8 +175,11 @@ foreach ($live['topics'] as $topic) {
     }
 
     if ($source !== null) {
-        if (!@copy($source, $dest)) {
-            fwrite(STDERR, "WARN: failed to copy $source -> $dest\n");
+        $markdown = (string) file_get_contents($source);
+        $peers = $topicsByNavSection[$sectionId] ?? [];
+        $markdown = sync_birkly_docs_append_further_reading($markdown, $peers, $id);
+        if (!@file_put_contents($dest, $markdown)) {
+            fwrite(STDERR, "WARN: failed to write $dest\n");
         } else {
             $copied++;
         }
@@ -117,6 +200,8 @@ foreach ($live['topics'] as $topic) {
         'keywords' => $topic['keywords'] ?? [],
         'snapshot' => '/admin/docs/snapshots/' . $snapshotFile,
         'docs_path' => $docsPath,
+        'nav_section' => $sectionId,
+        'nav_section_label' => (string) ($topic['nav_section_label'] ?? $nav['label']),
     ];
 
     if (isset($topic['version'])) {

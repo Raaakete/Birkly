@@ -14,6 +14,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/getting-started.md",
       "docs_path": "00-overview/getting-started.html",
+      "nav_section": "overview",
+      "nav_section_label": "Overview",
       "ai_topic": "playbooks-index"
     },
     {
@@ -28,7 +30,9 @@
         "waitlist"
       ],
       "snapshot": "/admin/docs/snapshots/closed-alpha.md",
-      "docs_path": "00-overview/closed-alpha-guide.html"
+      "docs_path": "00-overview/closed-alpha-guide.html",
+      "nav_section": "overview",
+      "nav_section_label": "Overview"
     },
     {
       "id": "alpha-legal",
@@ -41,7 +45,9 @@
         "alpha"
       ],
       "snapshot": "/admin/docs/snapshots/alpha-legal.md",
-      "docs_path": "00-overview/alpha-legal.html"
+      "docs_path": "00-overview/alpha-legal.html",
+      "nav_section": "overview",
+      "nav_section_label": "Overview"
     },
     {
       "id": "dashboard",
@@ -54,7 +60,9 @@
         "activity"
       ],
       "snapshot": "/admin/docs/snapshots/dashboard.md",
-      "docs_path": "01-admin/dashboard.html"
+      "docs_path": "01-admin/dashboard.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin"
     },
     {
       "id": "responsive-dashboard",
@@ -68,7 +76,9 @@
         "analytics"
       ],
       "snapshot": "/admin/docs/snapshots/responsive-dashboard.md",
-      "docs_path": "01-admin/admin-responsive-dashboard.html"
+      "docs_path": "01-admin/admin-responsive-dashboard.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin"
     },
     {
       "id": "account",
@@ -83,7 +93,9 @@
         "link"
       ],
       "snapshot": "/admin/docs/snapshots/account.md",
-      "docs_path": "01-admin/account.html"
+      "docs_path": "01-admin/account.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin"
     },
     {
       "id": "admin-appearance",
@@ -96,7 +108,9 @@
         "mobile"
       ],
       "snapshot": "/admin/docs/snapshots/admin-appearance.md",
-      "docs_path": "01-admin/admin-appearance.html"
+      "docs_path": "01-admin/admin-appearance.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin"
     },
     {
       "id": "content-model-overview",
@@ -113,6 +127,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/content-model-overview.md",
       "docs_path": "02-content/content-model-overview.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "content-model"
     },
     {
@@ -129,6 +145,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/collections.md",
       "docs_path": "02-content/collections.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "content-model"
     },
     {
@@ -144,6 +162,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/entries.md",
       "docs_path": "02-content/entries.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "content-model"
     },
     {
@@ -160,6 +180,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/collection-groups.md",
       "docs_path": "02-content/collection-groups.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "collection-groups"
     },
     {
@@ -175,6 +197,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/entry-editor.md",
       "docs_path": "01-admin/entry-editor.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "content-model"
     },
     {
@@ -190,6 +214,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/dynamic-items-field.md",
       "docs_path": "02-content/dynamic-items-field.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "content-model"
     },
     {
@@ -206,6 +232,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/site-elements-pattern.md",
       "docs_path": "02-content/site-elements-pattern.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "web-project-patterns"
     },
     {
@@ -222,6 +250,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/settings.md",
       "docs_path": "01-admin/settings.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "settings-roles"
     },
     {
@@ -236,7 +266,9 @@
         "ops"
       ],
       "snapshot": "/admin/docs/snapshots/monitoring-alerts.md",
-      "docs_path": "07-operations/monitoring-alerts.html"
+      "docs_path": "07-operations/monitoring-alerts.html",
+      "nav_section": "operations",
+      "nav_section_label": "Operations"
     },
     {
       "id": "ai",
@@ -251,8 +283,10 @@
         "byoai",
         "approval"
       ],
-      "snapshot": "/admin/docs/snapshots/ai.md",
+      "snapshot": "/admin/docs/snapshots/ai-overview.md",
       "docs_path": "01-admin/ai-overview.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "ai-connections"
     },
     {
@@ -268,6 +302,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/ai-connections.md",
       "docs_path": "01-admin/ai-connections.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "ai-connections"
     },
     {
@@ -282,6 +318,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/mcp-connections.md",
       "docs_path": "01-admin/mcp-connections.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "mcp-setup"
     },
     {
@@ -294,8 +332,10 @@
         "webhook",
         "schedule"
       ],
-      "snapshot": "/admin/docs/snapshots/automation.md",
+      "snapshot": "/admin/docs/snapshots/automation-overview.md",
       "docs_path": "05-automation/automation-overview.html",
+      "nav_section": "automation",
+      "nav_section_label": "Automation",
       "ai_topic": "automation"
     },
     {
@@ -310,6 +350,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/user-plugin.md",
       "docs_path": "06-extensibility/user-plugin.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility",
       "ai_topic": "user-management"
     },
     {
@@ -324,6 +366,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/content-editor.md",
       "docs_path": "02-content/content-editor.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "content-editor"
     },
     {
@@ -337,6 +381,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/plugins.md",
       "docs_path": "06-extensibility/plugins.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility",
       "ai_topic": "plugins-overview"
     },
     {
@@ -351,6 +397,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/marketplace.md",
       "docs_path": "06-extensibility/marketplace-go-live.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility",
       "ai_topic": "plugins-overview"
     },
     {
@@ -366,6 +414,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/marketplace-buyer.md",
       "docs_path": "06-extensibility/marketplace-buyer-guide.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility",
       "ai_topic": "plugins-overview"
     },
     {
@@ -380,7 +430,9 @@
         "catalog"
       ],
       "snapshot": "/admin/docs/snapshots/plugin-economy.md",
-      "docs_path": "06-plugin-economy/overview.html"
+      "docs_path": "06-plugin-economy/overview.html",
+      "nav_section": "plugin-economy",
+      "nav_section_label": "Plugin economy"
     },
     {
       "id": "plugin-economy-install",
@@ -395,6 +447,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/plugin-economy-install.md",
       "docs_path": "06-plugin-economy/for-site-owners.html",
+      "nav_section": "plugin-economy",
+      "nav_section_label": "Plugin economy",
       "ai_topic": "plugins-overview"
     },
     {
@@ -409,7 +463,9 @@
         "offer"
       ],
       "snapshot": "/admin/docs/snapshots/plugin-economy-providers.md",
-      "docs_path": "06-plugin-economy/for-providers.html"
+      "docs_path": "06-plugin-economy/for-providers.html",
+      "nav_section": "plugin-economy",
+      "nav_section_label": "Plugin economy"
     },
     {
       "id": "plugin-economy-official",
@@ -423,7 +479,9 @@
         "free"
       ],
       "snapshot": "/admin/docs/snapshots/plugin-economy-official.md",
-      "docs_path": "06-plugin-economy/official-plugins.html"
+      "docs_path": "06-plugin-economy/official-plugins.html",
+      "nav_section": "plugin-economy",
+      "nav_section_label": "Plugin economy"
     },
     {
       "id": "plugin-economy-starters",
@@ -437,7 +495,9 @@
         "demo"
       ],
       "snapshot": "/admin/docs/snapshots/plugin-economy-starters.md",
-      "docs_path": "06-plugin-economy/theme-and-template-packs.html"
+      "docs_path": "06-plugin-economy/theme-and-template-packs.html",
+      "nav_section": "plugin-economy",
+      "nav_section_label": "Plugin economy"
     },
     {
       "id": "plugin-economy-security",
@@ -451,7 +511,9 @@
         "denylist"
       ],
       "snapshot": "/admin/docs/snapshots/plugin-economy-security.md",
-      "docs_path": "06-plugin-economy/security-and-review.html"
+      "docs_path": "06-plugin-economy/security-and-review.html",
+      "nav_section": "plugin-economy",
+      "nav_section_label": "Plugin economy"
     },
     {
       "id": "commerce",
@@ -465,6 +527,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/commerce.md",
       "docs_path": "06-extensibility/plugins/commerce.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility",
       "ai_topic": "commerce"
     },
     {
@@ -478,7 +542,9 @@
         "checkout"
       ],
       "snapshot": "/admin/docs/snapshots/commerce-multi-currency.md",
-      "docs_path": "06-extensibility/commerce-multi-currency.html"
+      "docs_path": "06-extensibility/commerce-multi-currency.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility"
     },
     {
       "id": "commerce-live-import",
@@ -492,7 +558,9 @@
         "sync"
       ],
       "snapshot": "/admin/docs/snapshots/commerce-live-import.md",
-      "docs_path": "06-extensibility/commerce-live-import.html"
+      "docs_path": "06-extensibility/commerce-live-import.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility"
     },
     {
       "id": "commerce-inventory-webhooks",
@@ -506,7 +574,9 @@
         "hmac"
       ],
       "snapshot": "/admin/docs/snapshots/commerce-inventory-webhooks.md",
-      "docs_path": "06-extensibility/commerce-inventory-webhooks.html"
+      "docs_path": "06-extensibility/commerce-inventory-webhooks.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility"
     },
     {
       "id": "commerce-warehouse-stock",
@@ -519,7 +589,9 @@
         "inventory"
       ],
       "snapshot": "/admin/docs/snapshots/commerce-warehouse-stock.md",
-      "docs_path": "06-extensibility/commerce-warehouse-stock.html"
+      "docs_path": "06-extensibility/commerce-warehouse-stock.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility"
     },
     {
       "id": "plugin-denylist",
@@ -532,7 +604,9 @@
         "collections"
       ],
       "snapshot": "/admin/docs/snapshots/plugin-denylist.md",
-      "docs_path": "06-extensibility/plugin-security-denylist.html"
+      "docs_path": "06-extensibility/plugin-security-denylist.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility"
     },
     {
       "id": "scaffold-plugin",
@@ -545,7 +619,9 @@
         "create"
       ],
       "snapshot": "/admin/docs/snapshots/scaffold-plugin.md",
-      "docs_path": "06-extensibility/scaffold-plugin-cli.html"
+      "docs_path": "06-extensibility/scaffold-plugin-cli.html",
+      "nav_section": "extensibility",
+      "nav_section_label": "Extensibility"
     },
     {
       "id": "media",
@@ -559,6 +635,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/media.md",
       "docs_path": "01-admin/media-library.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "media"
     },
     {
@@ -573,6 +651,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/help.md",
       "docs_path": "01-admin/help-and-onboarding.html",
+      "nav_section": "admin",
+      "nav_section_label": "Admin",
       "ai_topic": "playbooks-index"
     },
     {
@@ -589,6 +669,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/reference-projects.md",
       "docs_path": "03-templating/reference-projects.html",
+      "nav_section": "templating",
+      "nav_section_label": "Templating",
       "ai_topic": "web-project-patterns"
     },
     {
@@ -603,7 +685,9 @@
         "birkly-client"
       ],
       "snapshot": "/admin/docs/snapshots/production-optimization.md",
-      "docs_path": "03-templating/production-optimization.html"
+      "docs_path": "03-templating/production-optimization.html",
+      "nav_section": "templating",
+      "nav_section_label": "Templating"
     },
     {
       "id": "agent-guide",
@@ -621,6 +705,8 @@
       ],
       "snapshot": "/admin/docs/snapshots/agent-guide.md",
       "docs_path": "02-content/agent-guide.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model",
       "ai_topic": "agent-guide"
     },
     {
@@ -634,7 +720,9 @@
         "first steps"
       ],
       "snapshot": "/admin/docs/snapshots/agent-guide-getting-started.md",
-      "docs_path": "02-content/agent-guide-getting-started.html"
+      "docs_path": "02-content/agent-guide-getting-started.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model"
     },
     {
       "id": "agent-guide-claims",
@@ -649,7 +737,9 @@
         "proof"
       ],
       "snapshot": "/admin/docs/snapshots/agent-guide-claims.md",
-      "docs_path": "02-content/agent-guide-claims-evidence-and-links.html"
+      "docs_path": "02-content/agent-guide-claims-evidence-and-links.html",
+      "nav_section": "content",
+      "nav_section_label": "Content model"
     },
     {
       "id": "agent-guide-api",
@@ -663,7 +753,9 @@
         "brand-context.json"
       ],
       "snapshot": "/admin/docs/snapshots/agent-guide-api.md",
-      "docs_path": "04-integration/agent-guide-public-api.html"
+      "docs_path": "04-integration/agent-guide-public-api.html",
+      "nav_section": "integration",
+      "nav_section_label": "Integration"
     },
     {
       "id": "choose-your-stack",
@@ -679,7 +771,9 @@
         "vue"
       ],
       "snapshot": "/admin/docs/snapshots/choose-your-stack.md",
-      "docs_path": "04-integration/choose-your-stack.html"
+      "docs_path": "04-integration/choose-your-stack.html",
+      "nav_section": "integration",
+      "nav_section_label": "Integration"
     },
     {
       "id": "web-components",
@@ -692,7 +786,9 @@
         "shadow"
       ],
       "snapshot": "/admin/docs/snapshots/web-components.md",
-      "docs_path": "04-integration/web-components.html"
+      "docs_path": "04-integration/web-components.html",
+      "nav_section": "integration",
+      "nav_section_label": "Integration"
     },
     {
       "id": "spa-react-vue",
@@ -706,7 +802,9 @@
         "jsx"
       ],
       "snapshot": "/admin/docs/snapshots/spa-react-vue.md",
-      "docs_path": "04-integration/spa-react-vue.html"
+      "docs_path": "04-integration/spa-react-vue.html",
+      "nav_section": "integration",
+      "nav_section_label": "Integration"
     },
     {
       "id": "ssr-and-build-time",
@@ -720,11 +818,11 @@
         "static"
       ],
       "snapshot": "/admin/docs/snapshots/ssr-and-build-time.md",
-      "docs_path": "04-integration/ssr-and-build-time.html"
+      "docs_path": "04-integration/ssr-and-build-time.html",
+      "nav_section": "integration",
+      "nav_section_label": "Integration"
     }
   ],
   "manifest_source": "offline",
-  "offline": true,
-  "synced_at": "2026-07-29T22:02:45.753Z",
-  "synced_from": "/agent/repos/birkly-docs"
+  "offline": true
 }

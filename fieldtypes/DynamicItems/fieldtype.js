@@ -137,19 +137,25 @@ window.HaruFieldtypes['dynamicitems'] = {
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     
-    // Auto-generate API name from label
+    // Auto-generate API name from label until the editor overrides it manually
     const labelInput = document.getElementById('block-label-input');
     const nameInput = document.getElementById('block-name-input');
     const fieldtypeSelect = document.getElementById('block-fieldtype-select');
-    
+    let slugAutoSync = true;
+
+    nameInput.addEventListener('input', function() {
+      slugAutoSync = false;
+    });
+
     labelInput.addEventListener('input', function() {
-      if (!nameInput.value) {
-        const apiName = this.value.toLowerCase()
-          .replace(/[^a-z0-9\s]/g, '')
-          .replace(/\s+/g, '_')
-          .replace(/^_+|_+$/g, '');
-        nameInput.value = apiName;
+      if (!slugAutoSync) {
+        return;
       }
+      const apiName = this.value.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/^_+|_+$/g, '');
+      nameInput.value = apiName;
     });
     
     // Load fieldtype settings when type is selected
