@@ -269,11 +269,13 @@
 .plugins-tabs .tabs {
   border-bottom: 1px solid var(--border-color, #e5e7eb);
   margin-bottom: 0;
+  background: transparent;
+  border-radius: 0;
 }
 
 .plugins-tab,
 .plugins-tabs .tab.plugins-tab {
-  background: none;
+  background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
   padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
@@ -287,7 +289,8 @@
 
 .plugins-tab.active {
   color: var(--text-primary, #20221D);
-  border-bottom-color: var(--primary-500);
+  border-bottom-color: var(--primary-600, #52C49A);
+  background: transparent;
 }
 
 .plugins-tab-panel {
@@ -340,48 +343,50 @@
   margin-bottom: var(--space-5, 1.25rem);
 }
 
+.marketplace-toolbar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4, 1rem);
+}
+
 .marketplace-search {
   display: flex;
   gap: var(--space-3, 0.75rem);
-  max-width: 520px;
+  max-width: 420px;
+  justify-self: start;
+  width: 100%;
 }
 
 .marketplace-search .input {
   flex: 1;
 }
 
-.marketplace-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-5, 1.25rem);
+.marketplace-result-count {
+  margin: 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #72746F);
+  white-space: nowrap;
 }
 
 .marketplace-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4, 1rem);
-  margin-top: var(--space-4, 1rem);
-  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--space-3, 0.75rem);
+  justify-self: end;
 }
 
-.marketplace-filter {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1, 0.25rem);
-  min-width: 160px;
+.marketplace-filter-select {
+  min-width: 9.5rem;
+  max-width: 12rem;
 }
 
-.marketplace-filter-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary, #72746F);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.marketplace-result-count {
-  margin-top: var(--space-2, 0.5rem);
-  margin-bottom: 0;
+.marketplace-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-5, 1.25rem);
 }
 
 .marketplace-offer-card {
@@ -523,7 +528,7 @@
 }
 
 .marketplace-offer-summary {
-  margin: 0;
+  margin: var(--space-3, 0.75rem) 0 var(--space-4, 1rem);
   color: var(--text-secondary, #72746F);
   font-size: 0.875rem;
   line-height: 1.5;
@@ -535,27 +540,45 @@
 
 .marketplace-offer-stats {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.25rem 0.4rem;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-top: auto;
+}
+
+.marketplace-offer-stats-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+}
+
+.marketplace-offer-stats-row--primary {
+  font-size: 0.9375rem;
+}
+
+.marketplace-offer-stats-row--secondary {
   font-size: 0.8125rem;
-  line-height: 1.4;
   color: var(--text-secondary, #72746F);
 }
 
 .marketplace-stat--price {
+  font-size: 1.0625rem;
   font-weight: 700;
   color: var(--text-primary, #20221D);
 }
 
-.marketplace-stat-sep {
-  color: var(--border-color, #d1d5db);
-  user-select: none;
+.marketplace-stat--rating {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: right;
 }
 
-.marketplace-stat--rating {
-  font-weight: 600;
+.marketplace-stat--version {
+  text-align: left;
+}
+
+.marketplace-stat--downloads {
+  text-align: right;
 }
 
 .marketplace-rating--good {
@@ -870,14 +893,24 @@
     margin-bottom: var(--space-4, 1rem);
   }
 
+  .marketplace-toolbar-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-3, 0.75rem);
+  }
+
   .marketplace-search {
     flex-direction: column;
     max-width: none;
     width: 100%;
+    justify-self: stretch;
   }
 
   .marketplace-search .btn {
     width: 100%;
+  }
+
+  .marketplace-result-count {
+    justify-self: center;
   }
 
   .marketplace-filters {
@@ -885,10 +918,12 @@
     grid-template-columns: 1fr;
     gap: var(--space-3, 0.75rem);
     width: 100%;
+    justify-self: stretch;
   }
 
-  .marketplace-filter {
+  .marketplace-filter-select {
     width: 100%;
+    max-width: none;
   }
 
   .marketplace-offers-grid {
