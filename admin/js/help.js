@@ -168,9 +168,15 @@
             if (manifest && manifest._loadedFrom === 'offline') {
                 banner = '<div class="alert alert-info help-offline-banner">' + escapeHtml(manifest._offlineMessage || 'Offline Help mode') + '</div>';
             }
+            if (!topic.snapshot) {
+                throw new Error('Help topic is missing a snapshot path');
+            }
             const res = await fetch(resolveUrl(topic.snapshot));
             if (!res.ok) throw new Error('Snapshot not found');
             const md = await res.text();
+            if (/^\s*<!DOCTYPE html/i.test(md) || /^\s*<html[\s>]/i.test(md)) {
+                throw new Error('Snapshot returned HTML instead of markdown — check Help manifest snapshot paths');
+            }
             content.innerHTML = banner + '<div class="markdown-content">' + renderMarkdown(md) + '</div>';
 
             if (source) {
