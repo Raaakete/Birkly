@@ -1757,8 +1757,12 @@
     function maybeShowSetup(data) {
         var draft = data.draft || {};
         var empty = !(draft.identity && draft.identity.official_name);
-        if (!draft.setup_completed_at && !draft.setup_skipped_at && empty) {
+        if (!draft.setup_completed_at && !draft.setup_skipped_at && empty && state.wizard) {
             setTimeout(function () {
+                if (state.wizard && !document.getElementById('ag-wizard-modal')) {
+                    /* wizard not yet mounted — skip auto-open */
+                    return;
+                }
                 openSetupWizard();
             }, 400);
         }
