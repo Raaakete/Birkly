@@ -3,8 +3,11 @@
  * Marketplace plugin install and upgrade from verified zip artifacts.
  */
 
-if (!function_exists('validate_plugin')) {
-    require_once dirname(__DIR__) . '/plugins.php';
+function birkly_marketplace_ensure_plugins_core(): void
+{
+    if (!function_exists('validate_plugin')) {
+        require_once dirname(__DIR__) . '/plugins.php';
+    }
 }
 
 /**
@@ -164,6 +167,7 @@ function birkly_marketplace_ensure_plugins_root_writable(string $pluginsRoot): a
  */
 function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId, bool $replaceExisting = false): array
 {
+    birkly_marketplace_ensure_plugins_core();
     $errors = [];
     $pluginId = preg_replace('/[^a-z0-9_-]/i', '', $pluginId) ?? '';
     if ($pluginId === '') {
@@ -343,6 +347,7 @@ function birkly_marketplace_install_plugin(
     bool $upgrade = false,
     bool $consentAccepted = false
 ): array {
+    birkly_marketplace_ensure_plugins_core();
     $consentCheck = birkly_marketplace_require_install_consent($slug, $version, $consentAccepted);
     if (!$consentCheck['ok']) {
         return [
@@ -414,6 +419,7 @@ function birkly_marketplace_install_plugin(
 
 function birkly_marketplace_save_plugin_source(string $pluginId, string $slug, string $version, string $licenseKey): void
 {
+    birkly_marketplace_ensure_plugins_core();
     global $birkly_plugins;
     if (!isset($birkly_plugins[$pluginId])) {
         load_plugins();
@@ -440,6 +446,7 @@ function birkly_marketplace_save_plugin_source(string $pluginId, string $slug, s
  */
 function birkly_marketplace_installed_plugin_updates(): array
 {
+    birkly_marketplace_ensure_plugins_core();
     $plugins = get_all_plugins();
     $updates = [];
 
