@@ -12,6 +12,11 @@
   position: relative;
 }
 
+.ag-wizard-header {
+  position: relative;
+  z-index: 11;
+}
+
 .ag-wizard-steps {
   display: flex;
   flex-wrap: wrap;
@@ -142,6 +147,11 @@
   justify-content: center;
   gap: var(--space-s, 0.75rem);
   z-index: 10;
+}
+
+.ag-wizard-loading[hidden] {
+  display: none !important;
+  pointer-events: none;
 }
 
 .ag-wizard-loading-spinner {
