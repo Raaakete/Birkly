@@ -25,6 +25,7 @@ require_once '../core/plugins.php';
 require_once '../core/plugins/security.php';
 require_once '../core/plugins/validation.php';
 require_once '../core/plugins/health.php';
+require_once '../core/marketplace.php';
 
 // Use the PluginStorage class from core/plugins.php
 $storage = new PluginStorage('../settings');
@@ -85,6 +86,7 @@ if ($action === 'list') {
     
     foreach ($plugins as $id => $plugin) {
         $health = birkly_plugin_health_check((string) $id);
+        $offerSlug = birkly_marketplace_plugin_offer_slug((string) $id, $plugin);
         $plugins_list[] = [
             'id' => $id,
             'name' => $plugin['name'] ?? ucwords(str_replace(['_', '-'], ' ', $id)),
@@ -96,8 +98,10 @@ if ($action === 'list') {
             'has_settings' => !empty($plugin['settings_schema'] ?? []),
             'settings' => $plugin['settings'] ?? [],
             'marketplace_slug' => $plugin['marketplace_slug'] ?? null,
+            'offer_slug' => $offerSlug !== '' ? $offerSlug : null,
             'license_ref' => $plugin['license_ref'] ?? null,
             'from_marketplace' => !empty($plugin['marketplace_slug']),
+            'has_marketplace_offer' => $offerSlug !== '',
             'health' => $health,
         ];
     }
