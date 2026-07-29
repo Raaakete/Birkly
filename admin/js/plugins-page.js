@@ -258,6 +258,18 @@
         }, 1000);
     }
 
+    async function parseMarketplaceResponse(response) {
+        var body = await response.text();
+        if (!body || !body.trim()) {
+            throw new Error(t('marketplace_empty_response', 'Marketplace request failed (empty server response). Try again or check server logs.'));
+        }
+        try {
+            return JSON.parse(body);
+        } catch (parseErr) {
+            throw new Error(t('marketplace_invalid_response', 'Marketplace request failed (invalid server response). Try again or check server logs.'));
+        }
+    }
+
     async function marketplaceApi(action, extra) {
         var response = await fetch(url('/api/marketplace.php'), {
             method: 'POST',
@@ -265,7 +277,7 @@
             credentials: 'same-origin',
             body: JSON.stringify(Object.assign({ action: action, _csrf: csrfToken() }, extra || {})),
         });
-        var result = await response.json();
+        var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
             var err = new Error(result.message || 'Request failed');
             err.code = result.code || '';
@@ -280,7 +292,7 @@
         var response = await fetch(url('/api/marketplace.php?' + qs.toString()), {
             credentials: 'same-origin',
         });
-        var result = await response.json();
+        var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
             var err = new Error(result.message || 'Request failed');
             err.code = result.code || '';
