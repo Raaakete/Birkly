@@ -21,6 +21,11 @@ function assert_true(bool $cond, string $label): void
     $failures++;
 }
 
+assert_true(
+    !isset($GLOBALS['haru_plugins_loaded']),
+    'loading marketplace client does not bootstrap plugins'
+);
+
 birkly_marketplace_consent_reset();
 
 $emptyManifest = [
@@ -48,15 +53,17 @@ assert_true(
     'manifest with permissions requires consent'
 );
 
-$GLOBALS['birkly_plugins'] = [
+$settingsDir = sys_get_temp_dir() . '/birkly-mp-consent-' . bin2hex(random_bytes(4));
+mkdir($settingsDir, 0755, true);
+$GLOBALS['__birkly_marketplace_settings_dir'] = $settingsDir;
+file_put_contents($settingsDir . '/plugins.json', json_encode([
     'automation' => [
-        'name' => 'Automation',
-        'version' => '1.0.0',
-        'marketplace_slug' => 'birkly-automation',
         'active' => true,
-        'path' => $root . '/plugins/automation',
+        'marketplace_slug' => 'birkly-automation',
+        'marketplace_version' => '1.0.0',
+        'version' => '1.0.0',
     ],
-];
+], JSON_PRETTY_PRINT));
 
 $local = birkly_marketplace_local_installed_offer('birkly-automation');
 assert_true(
