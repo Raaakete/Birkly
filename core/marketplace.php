@@ -177,7 +177,7 @@ function birkly_marketplace_request(string $method, string $path, ?array $body =
 /**
  * @return array{ok:bool,offers:array,error?:string}
  */
-function birkly_marketplace_browse(string $query = '', string $category = '', string $offerType = '', string $sort = 'name'): array
+function birkly_marketplace_browse(string $query = '', string $category = '', string $offerType = '', string $sort = 'name', string $price = ''): array
 {
     $params = [];
     if ($offerType !== '' && $offerType !== 'all') {
@@ -189,19 +189,28 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
     if ($category !== '') {
         $params['category'] = $category;
     }
+    if ($sort !== '' && $sort !== 'name') {
+        $params['sort'] = $sort;
+    }
+    if ($price !== '') {
+        $params['price'] = $price;
+    }
+
+    $priceSelection = birkly_marketplace_price_selection($price);
+    $effectiveSort = $priceSelection['sort'] !== '' ? $priceSelection['sort'] : $sort;
 
     $response = birkly_marketplace_request('GET', '/api/v1/registry', null, $params);
     if (!$response['ok'] || !is_array($response['data'])) {
         $fallback = birkly_marketplace_fallback_catalog();
         $offers = is_array($fallback['offers'] ?? null) ? $fallback['offers'] : [];
         if ($offerType !== '' && $offerType !== 'all') {
-            $offers = birkly_marketplace_filter_offers($offers, '', '', $offerType);
+            $offers = birkly_marketplace_filter_offers($offers, '', '', $offerType, $priceSelection['price_range']);
         }
-        if ($query !== '' || $category !== '') {
-            $offers = birkly_marketplace_filter_offers($offers, $query, $category, $offerType);
+        if ($query !== '' || $category !== '' || $priceSelection['price_range'] !== '') {
+            $offers = birkly_marketplace_filter_offers($offers, $query, $category, $offerType, $priceSelection['price_range']);
         }
         if ($offers !== []) {
-            $offers = birkly_marketplace_sort_offers($offers, $sort);
+            $offers = birkly_marketplace_sort_offers($offers, $effectiveSort);
             return [
                 'ok' => true,
                 'offers' => birkly_marketplace_enrich_offers_install_state($offers),
@@ -213,10 +222,7 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
     }
 
     $offers = is_array($response['data']['offers'] ?? null) ? $response['data']['offers'] : [];
-    if ($query !== '' || $category !== '' || ($offerType !== '' && $offerType !== 'all')) {
-        $offers = birkly_marketplace_filter_offers($offers, $query, $category, $offerType);
-    }
-    $offers = birkly_marketplace_sort_offers($offers, $sort);
+    $offers = birkly_marketplace_filter_offers($offers, $query, $category, $offerType, $priceSelection['price_range']);
     $filterOptions = is_array($response['data']['filter_options'] ?? null)
         ? $response['data']['filter_options']
         : birkly_marketplace_catalog_filter_options(is_array($response['data']['offers'] ?? null) ? $response['data']['offers'] : []);
@@ -262,7 +268,7 @@ function birkly_marketplace_is_demo_catalog_slug(string $slug): bool
     return in_array($slug, birkly_marketplace_demo_catalog_slugs(), true);
 }
 
-function birkly_marketplace_filter_offers(array $offers, string $query, string $category, string $offerType): array
+function birkly_marketplace_filter_offers(array $offers, string $query, string $category, string $offerType, string $priceRange = ''): array
 {
     $q = strtolower(trim($query));
     $filtered = [];
@@ -277,6 +283,9 @@ function birkly_marketplace_filter_offers(array $offers, string $query, string $
             continue;
         }
         if ($category !== '' && ($offer['category'] ?? '') !== $category) {
+            continue;
+        }
+        if (!birkly_marketplace_offer_matches_price_range($offer, $priceRange)) {
             continue;
         }
         if ($q !== '') {
@@ -321,6 +330,53 @@ function birkly_marketplace_catalog_filter_options(array $offers): array
         'categories' => $categoryKeys,
         'offer_types' => $typeKeys,
     ];
+}
+
+/**
+ * @return array{price_range: string, sort: string}
+ */
+function birkly_marketplace_price_selection(string $price): array
+{
+    $price = trim($price);
+    if ($price === '' || $price === 'all') {
+        return ['price_range' => '', 'sort' => ''];
+    }
+    if (in_array($price, ['price_asc', 'price_desc'], true)) {
+        return ['price_range' => '', 'sort' => $price];
+    }
+    if (in_array($price, ['free', 'under_10', '10_50', '50_100', 'over_100'], true)) {
+        return ['price_range' => $price, 'sort' => ''];
+    }
+
+    return ['price_range' => '', 'sort' => ''];
+}
+
+function birkly_marketplace_offer_amount_cents(array $offer): int
+{
+    $pricing = is_array($offer['pricing'] ?? null) ? $offer['pricing'] : [];
+    if ((string) ($pricing['model'] ?? '') === 'free') {
+        return 0;
+    }
+
+    return max(0, (int) ($pricing['amount_cents'] ?? 0));
+}
+
+function birkly_marketplace_offer_matches_price_range(array $offer, string $range): bool
+{
+    if ($range === '') {
+        return true;
+    }
+
+    $cents = birkly_marketplace_offer_amount_cents($offer);
+
+    return match ($range) {
+        'free' => $cents === 0,
+        'under_10' => $cents > 0 && $cents <= 1000,
+        '10_50' => $cents > 1000 && $cents <= 5000,
+        '50_100' => $cents > 5000 && $cents <= 10000,
+        'over_100' => $cents > 10000,
+        default => true,
+    };
 }
 
 function birkly_marketplace_sort_offers(array $offers, string $sort): array
