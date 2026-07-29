@@ -3349,6 +3349,8 @@ function getPluginsData() {
             'compatibility' => __('admin.marketplace_compatibility'),
             'releases' => __('admin.marketplace_releases'),
             'provider' => __('admin.marketplace_provider'),
+            'view_provider_profile' => __('admin.marketplace_view_provider_profile'),
+            'back_to_offer' => __('admin.marketplace_back_to_offer'),
             'view_details' => __('admin.marketplace_view_details'),
             'no_description' => __('admin.marketplace_no_description'),
             'requires_birkly' => __('admin.marketplace_requires_birkly'),
