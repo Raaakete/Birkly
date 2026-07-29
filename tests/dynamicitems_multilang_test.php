@@ -44,14 +44,16 @@ $config = [
 $field = new Birkly\FieldTypes\DynamicItems\DynamicItems($config);
 $rawHtml = $field->render();
 
-assert_contains('render includes FromButton handler', $rawHtml, 'showAddBlockModalFromButton(this)');
+assert_contains('render includes add-block data action', $rawHtml, 'data-dynamicitems-action="add-block"');
+assert_not_contains('render avoids inline onclick (CSP)', $rawHtml, 'onclick=');
 assert_contains('render includes field_blocks id', $rawHtml, 'id="field_blocks"');
 
 $enHtml = birkly_admin_multilang_field_html($rawHtml, 'blocks', 'en');
 
 assert_contains('multilang container id', $enHtml, 'id="field_en_blocks"');
 assert_contains('multilang hidden value id', $enHtml, 'id="field_en_blocks_value"');
-assert_contains('multilang button uses FromButton handler', $enHtml, 'showAddBlockModalFromButton(this)');
+assert_contains('multilang add-block data action', $enHtml, 'data-dynamicitems-action="add-block"');
+assert_not_contains('multilang avoids inline onclick (CSP)', $enHtml, 'onclick=');
 assert_contains('multilang data-field-config name', $enHtml, '"name":"en_blocks"');
 assert_contains('multilang input name', $enHtml, 'name="en[blocks]"');
 
