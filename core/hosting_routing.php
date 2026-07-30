@@ -11,6 +11,16 @@ require_once __DIR__ . '/project_site.php';
 function birkly_hosting_serve_file(string $filePath): void
 {
     $mime = mime_content_type($filePath) ?: 'application/octet-stream';
+    $ext = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    if ($ext === 'css') {
+        $mime = 'text/css; charset=UTF-8';
+    } elseif ($ext === 'js') {
+        $mime = 'application/javascript; charset=UTF-8';
+    } elseif ($ext === 'json') {
+        $mime = 'application/json; charset=UTF-8';
+    } elseif ($ext === 'svg') {
+        $mime = 'image/svg+xml';
+    }
     header('Content-Type: ' . $mime);
     readfile($filePath);
     exit;
