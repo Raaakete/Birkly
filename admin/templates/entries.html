@@ -26,7 +26,7 @@ $currentPage = max(1, (int) ($entries_page ?? 1));
 $perPage = max(1, (int) ($entries_per_page ?? 20));
 $entriesTotalCount = max(0, (int) ($entries_total ?? count($entries ?? [])));
 $totalPages = max(1, (int) ($entries_total_pages ?? 1));
-$showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearchQuery === '' && $totalPages <= 1;
+$showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearchQuery === '' && $currentPage === 1;
 ?>
 <div class="entries-page">
     <div class="page-header pt-m pb-m">
