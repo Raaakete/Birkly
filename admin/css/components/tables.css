@@ -156,6 +156,37 @@
   cursor: grabbing;
 }
 
+.entries-smart-table button.entry-drag-handle {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 60px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: inherit;
+  pointer-events: auto;
+  color: inherit;
+  font: inherit;
+  line-height: 0;
+}
+
+.entries-smart-table button.entry-drag-handle:focus {
+  outline: none;
+}
+
+.entries-smart-table button.entry-drag-handle:focus-visible {
+  outline: 2px solid var(--focus-ring, #8ab4f8);
+  outline-offset: -2px;
+}
+
 .entries-smart-table .entry-drag-handle {
   display: inline-flex;
   align-items: center;
