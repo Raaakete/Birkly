@@ -906,8 +906,9 @@
 
         entrySorter = new MouseDragDrop({
             container: tableBody,
-            itemSelector: '.table-row',
+            itemSelector: '.table-row:not(.table-row--empty)',
             handleSelector: '.entry-drag-handle',
+            tableRowMode: true,
             onReorder: function (fromIndex, toIndex, placeholder, draggedItem) {
                 const draggedEntryId = draggedItem?.dataset?.entryId || '';
                 if (!draggedEntryId) return;
