@@ -828,11 +828,13 @@ if ($action === 'set_entry_order') {
     $collection = $input['collection'] ?? '';
     $order = $input['order'] ?? [];
     $dir = '';
+    $collectionMeta = null;
     $collections = $storage->list('collections');
     foreach ($collections as $d) {
         $m = $storage->read("collections/$d/collection.json");
         if ($m && ($m['id'] === $collection || $m['slug'] === $collection)) {
             $dir = $d;
+            $collectionMeta = $m;
             break;
         }
     }
@@ -846,8 +848,14 @@ if ($action === 'set_entry_order') {
     }
     $result = $storage->write("collections/$dir/order.json", $order);
     log_security_event('set_entry_order', ['collection' => $dir, 'order_count' => count($order)]);
-    
+
     if ($result) {
+        $collectionSlugForCache = $collectionMeta['slug'] ?? $dir;
+        if ($collectionSlugForCache !== '') {
+            require_once __DIR__ . '/../core/cache.php';
+            $cache = new Cache();
+            $cache->invalidateCollection($collectionSlugForCache);
+        }
         echo json_encode(['status' => 'ok', 'message' => 'Entry order saved successfully']);
     } else {
         http_response_code(500);
