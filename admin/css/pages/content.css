@@ -633,13 +633,13 @@ label.field-title {
   cursor: grab;
 }
 
-.cell-drag {
+.cell-drag:not(td) {
   cursor: grab;
   opacity: 0.6;
   transition: opacity 0.2s;
 }
 
-.cell-drag:active {
+.cell-drag:not(td):active {
   cursor: grabbing;
 }
 
