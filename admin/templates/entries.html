@@ -2,6 +2,9 @@
 /**
  * Entries list — pure PHP template (bypasses directive parser).
  */
+if (!function_exists('birkly_admin_asset_url')) {
+    require_once __DIR__ . '/../../core/build_info.php';
+}
 $collectionTitle = htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection');
 $collectionSlugParam = (string) ($collection['slug'] ?? '');
 $currentStatusFilter = (string) ($current_status_filter ?? '');
@@ -261,4 +264,4 @@ window.entriesListState = <?= json_encode([
     'status' => $currentStatusFilter,
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 </script>
-<script src="<?= htmlspecialchars(birkly_url('/admin/js/entries.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('admin/js/entries.js')) ?>"></script>
