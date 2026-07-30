@@ -890,9 +890,200 @@
         }
     }
 
+    function EntryTableDrag(options) {
+        this.tbody = options.container;
+        this.rowSelector = options.rowSelector || '.table-row:not(.table-row--empty)';
+        this.handleSelector = options.handleSelector || '.entry-drag-handle';
+        this.onReorder = options.onReorder || function () {};
+        this.dragging = false;
+        this.draggedRow = null;
+        this.placeholder = null;
+        this.fromIndex = -1;
+        this.activePointerId = null;
+
+        this.onPointerDown = this.onPointerDown.bind(this);
+        this.onPointerMove = this.onPointerMove.bind(this);
+        this.onPointerUp = this.onPointerUp.bind(this);
+
+        if (this.tbody) {
+            this.tbody.addEventListener('pointerdown', this.onPointerDown);
+        }
+    }
+
+    EntryTableDrag.prototype.getRows = function () {
+        if (!this.tbody) {
+            return [];
+        }
+        return Array.from(this.tbody.querySelectorAll(this.rowSelector));
+    };
+
+    EntryTableDrag.prototype.onPointerDown = function (event) {
+        if (this.dragging || (typeof event.button === 'number' && event.button !== 0)) {
+            return;
+        }
+
+        const handle = event.target.closest(this.handleSelector);
+        if (!handle) {
+            return;
+        }
+
+        const row = handle.closest(this.rowSelector);
+        if (!row || !this.tbody.contains(row)) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.dragging = true;
+        this.draggedRow = row;
+        this.fromIndex = this.getRows().indexOf(row);
+        this.activePointerId = typeof event.pointerId === 'number' ? event.pointerId : null;
+
+        this.placeholder = document.createElement('tr');
+        this.placeholder.className = 'drag-placeholder-row';
+        this.placeholder.setAttribute('aria-hidden', 'true');
+        const cell = document.createElement('td');
+        cell.colSpan = Math.max(row.cells.length, 1);
+        cell.className = 'drag-placeholder-cell';
+        this.placeholder.appendChild(cell);
+
+        row.parentNode.insertBefore(this.placeholder, row);
+        row.classList.add('is-drag-source');
+        row.style.display = 'none';
+
+        document.addEventListener('pointermove', this.onPointerMove);
+        document.addEventListener('pointerup', this.onPointerUp);
+        document.addEventListener('pointercancel', this.onPointerUp);
+        document.body.style.cursor = 'grabbing';
+    };
+
+    EntryTableDrag.prototype.findRowAt = function (clientY) {
+        const rows = this.getRows();
+        for (let index = 0; index < rows.length; index += 1) {
+            const row = rows[index];
+            if (row === this.draggedRow || row.style.display === 'none') {
+                continue;
+            }
+            const rect = row.getBoundingClientRect();
+            if (clientY >= rect.top && clientY <= rect.bottom) {
+                return row;
+            }
+        }
+        return null;
+    };
+
+    EntryTableDrag.prototype.movePlaceholder = function (clientY) {
+        if (!this.placeholder) {
+            return;
+        }
+
+        const target = this.findRowAt(clientY);
+        if (!target) {
+            return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        const insertBefore = clientY < rect.top + rect.height / 2;
+        const parent = target.parentNode;
+        if (!parent) {
+            return;
+        }
+
+        if (insertBefore) {
+            if (this.placeholder.nextSibling !== target) {
+                parent.insertBefore(this.placeholder, target);
+            }
+        } else if (this.placeholder.previousSibling !== target) {
+            parent.insertBefore(this.placeholder, target.nextSibling);
+        }
+    };
+
+    EntryTableDrag.prototype.getPlaceholderIndex = function () {
+        if (!this.tbody || !this.placeholder) {
+            return -1;
+        }
+
+        let index = 0;
+        const children = this.tbody.children;
+        for (let nodeIndex = 0; nodeIndex < children.length; nodeIndex += 1) {
+            const node = children[nodeIndex];
+            if (node === this.placeholder) {
+                return index;
+            }
+            if (node.matches && node.matches(this.rowSelector) && node !== this.draggedRow) {
+                index += 1;
+            }
+        }
+        return -1;
+    };
+
+    EntryTableDrag.prototype.onPointerMove = function (event) {
+        if (!this.dragging) {
+            return;
+        }
+        if (this.activePointerId !== null && typeof event.pointerId === 'number' && event.pointerId !== this.activePointerId) {
+            return;
+        }
+
+        event.preventDefault();
+        this.movePlaceholder(event.clientY);
+    };
+
+    EntryTableDrag.prototype.onPointerUp = function (event) {
+        if (!this.dragging) {
+            return;
+        }
+        if (this.activePointerId !== null && typeof event.pointerId === 'number' && event.pointerId !== this.activePointerId) {
+            return;
+        }
+
+        const toIndex = this.getPlaceholderIndex();
+        if (this.placeholder && this.placeholder.parentNode && this.draggedRow) {
+            this.placeholder.parentNode.insertBefore(this.draggedRow, this.placeholder);
+        }
+
+        const draggedRow = this.draggedRow;
+        const fromIndex = this.fromIndex;
+        this.cleanup();
+
+        if (draggedRow && toIndex !== -1 && toIndex !== fromIndex) {
+            this.onReorder(fromIndex, toIndex, draggedRow);
+        }
+    };
+
+    EntryTableDrag.prototype.cleanup = function () {
+        document.removeEventListener('pointermove', this.onPointerMove);
+        document.removeEventListener('pointerup', this.onPointerUp);
+        document.removeEventListener('pointercancel', this.onPointerUp);
+        document.body.style.cursor = '';
+
+        if (this.draggedRow) {
+            this.draggedRow.style.display = '';
+            this.draggedRow.classList.remove('is-drag-source');
+        }
+        if (this.placeholder && this.placeholder.parentNode) {
+            this.placeholder.remove();
+        }
+
+        this.dragging = false;
+        this.draggedRow = null;
+        this.placeholder = null;
+        this.fromIndex = -1;
+        this.activePointerId = null;
+    };
+
+    EntryTableDrag.prototype.destroy = function () {
+        this.cleanup();
+        if (this.tbody) {
+            this.tbody.removeEventListener('pointerdown', this.onPointerDown);
+        }
+        this.tbody = null;
+    };
+
     function initializeEntryDragHandlers() {
         const tableBody = document.querySelector('.table-body');
-        if (!tableBody || !canDragCurrentView() || typeof MouseDragDrop !== 'function') {
+        if (!tableBody || !canDragCurrentView()) {
             if (entrySorter) {
                 entrySorter.destroy();
                 entrySorter = null;
@@ -904,51 +1095,29 @@
             entrySorter.destroy();
         }
 
-        entrySorter = new MouseDragDrop({
+        entrySorter = new EntryTableDrag({
             container: tableBody,
-            itemSelector: '.table-row:not(.table-row--empty)',
+            rowSelector: '.table-row:not(.table-row--empty)',
             handleSelector: '.entry-drag-handle',
-            tableRowMode: true,
-            onReorder: function (fromIndex, toIndex, placeholder, draggedItem) {
-                const draggedEntryId = draggedItem?.dataset?.entryId || '';
-                if (!draggedEntryId) return;
-
-                let targetEntryId = null;
-                let insertBefore = false;
-
-                if (placeholder && placeholder.parentNode) {
-                    let sibling = placeholder.nextSibling;
-                    while (sibling) {
-                        if (sibling.classList && sibling.classList.contains('table-row')) {
-                            targetEntryId = sibling.dataset.entryId;
-                            insertBefore = true;
-                            break;
-                        }
-                        sibling = sibling.nextSibling;
-                    }
-                    if (!targetEntryId) {
-                        sibling = placeholder.previousSibling;
-                        while (sibling) {
-                            if (sibling.classList && sibling.classList.contains('table-row')) {
-                                targetEntryId = sibling.dataset.entryId;
-                                insertBefore = false;
-                                break;
-                            }
-                            sibling = sibling.previousSibling;
-                        }
-                    }
+            onReorder: function (fromIndex, toIndex, draggedRow) {
+                const draggedEntryId = draggedRow?.dataset?.entryId || '';
+                if (!draggedEntryId) {
+                    return;
                 }
 
-                if (!targetEntryId) {
-                    const allRows = Array.from(tableBody.querySelectorAll('.table-row')).filter(function (row) {
-                        return row !== draggedItem && !row.classList.contains('drag-placeholder');
+                const rows = Array.from(tableBody.querySelectorAll('.table-row:not(.table-row--empty)'))
+                    .filter(function (row) {
+                        return row !== draggedRow && row.style.display !== 'none';
                     });
-                    if (toIndex < allRows.length) {
-                        targetEntryId = allRows[toIndex].dataset.entryId;
-                        insertBefore = true;
-                    } else if (allRows.length > 0) {
-                        targetEntryId = allRows[allRows.length - 1].dataset.entryId;
-                    }
+
+                let targetEntryId = null;
+                let insertBefore = true;
+                if (toIndex < rows.length) {
+                    targetEntryId = rows[toIndex].dataset.entryId;
+                    insertBefore = true;
+                } else if (rows.length > 0) {
+                    targetEntryId = rows[rows.length - 1].dataset.entryId;
+                    insertBefore = false;
                 }
 
                 if (targetEntryId && draggedEntryId !== targetEntryId) {
