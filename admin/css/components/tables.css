@@ -166,6 +166,16 @@
   user-select: none;
   -webkit-user-select: none;
   cursor: inherit;
+  pointer-events: auto;
+}
+
+body.entries-table-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.entries-table-dragging .entries-smart-table .smart-table {
+  cursor: grabbing;
 }
 
 .entries-smart-table .table-row:hover td.cell-drag,
