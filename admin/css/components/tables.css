@@ -140,52 +140,61 @@
 }
 
 .entries-smart-table .head-drag,
-.entries-smart-table .cell-drag {
+.entries-smart-table td.cell-drag {
   width: 36px;
   min-width: 36px;
   max-width: 36px;
   padding: 0;
   text-align: center;
-}
-
-.entries-smart-table .cell-drag {
-  position: relative;
+  vertical-align: middle;
+  display: table-cell;
   cursor: grab;
   color: var(--text-tertiary, #C4C6C1);
-  vertical-align: middle;
+}
+
+.entries-smart-table td.cell-drag:active {
+  cursor: grabbing;
 }
 
 .entries-smart-table .entry-drag-handle {
-  position: absolute;
-  inset: 0;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  min-height: 60px;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  cursor: inherit;
 }
 
+.entries-smart-table .table-row:hover td.cell-drag,
 .entries-smart-table .entry-drag-handle:hover {
   background: var(--bg-hover, #f3f4f6);
   color: var(--text-secondary, #72746F);
 }
 
-.entries-smart-table .cell-drag:active,
-.entries-smart-table .cell-drag:active .entry-drag-handle {
-  cursor: grabbing;
+.entries-smart-table tr.drag-placeholder-row {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  background: transparent !important;
+  border: none !important;
 }
 
 .entries-smart-table .drag-placeholder-row .drag-placeholder-cell {
   height: 60px;
   padding: 0;
-  border: 2px dashed var(--primary-400, #60a5fa);
+  border: 2px dashed var(--primary-400, #60a5fa) !important;
   border-radius: 0;
-  background: rgba(59, 130, 246, 0.08);
+  background: rgba(59, 130, 246, 0.08) !important;
   box-sizing: border-box;
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
 }
 
-.entries-smart-table .table-row.dragging {
+.entries-smart-table .table-row.is-drag-source {
   opacity: 1;
   box-shadow: none;
 }
@@ -555,7 +564,7 @@
   background: var(--primary-50, #eff6ff);
 }
 
-.table-row:hover .cell-drag {
+.table-row:hover .cell-drag:not(td) {
   opacity: 1;
 }
 
