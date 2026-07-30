@@ -567,9 +567,9 @@
         const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
         const isTrashedEntry = normalizedStatus === 'trashed';
         const allowDragHandle = hasDragColumn
-            ? '<td class="cell cell-drag" aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '">' +
+            ? '<td class="cell cell-drag">' +
                 (canDragCurrentView()
-                    ? '<span class="entry-drag-handle" aria-hidden="true">' + icon('dots-six-vertical', { size: 16 }) + '</span>'
+                    ? '<button type="button" class="entry-drag-handle" aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '" tabindex="-1">' + icon('dots-six-vertical', { size: 16 }) + '</button>'
                     : '') +
             '</td>'
             : '';
@@ -858,10 +858,10 @@
                 throw new Error(response.message || 'Failed to save entry order');
             }
 
-            const tableBodyEl = document.querySelector('.table-body');
+            const tableBodyEl = entriesTableBody();
             const entryMap = {};
             orderedIds.forEach(function (entryId) {
-                const row = document.querySelector('.table-row[data-entry-id="' + entryId + '"]');
+                const row = tableBodyEl ? tableBodyEl.querySelector('.table-row[data-entry-id="' + entryId + '"]') : null;
                 if (row) {
                     entryMap[entryId] = row;
                 }
@@ -892,29 +892,34 @@
             .filter(Boolean);
     }
 
+    function entriesTableRoot() {
+        return document.querySelector('.entries-smart-table');
+    }
+
+    function entriesTableBody() {
+        const root = entriesTableRoot();
+        return root ? root.querySelector('tbody.table-body') : null;
+    }
+
+    function entriesTableHasDragHandles() {
+        const tbody = entriesTableBody();
+        return Boolean(tbody && tbody.querySelector('.entry-drag-handle'));
+    }
+
     function EntryTableDrag(options) {
-        this.table = options.table;
         this.tbody = options.container;
-        this.rowSelector = options.rowSelector || '.table-row:not(.table-row--empty)';
-        this.handleSelector = options.handleSelector || '.entry-drag-handle';
         this.onReorder = options.onReorder || function () {};
         this.dragging = false;
         this.draggedRow = null;
         this.placeholder = null;
         this.orderAtDragStart = [];
-        this.activePointerId = null;
-        this.dragHandle = null;
-        this.usingPointerEvents = typeof window.PointerEvent === 'function';
 
         this.onDragStart = this.onDragStart.bind(this);
         this.onDragMove = this.onDragMove.bind(this);
         this.onDragEnd = this.onDragEnd.bind(this);
 
-        if (this.table) {
-            this.table.addEventListener('mousedown', this.onDragStart, true);
-            if (this.usingPointerEvents) {
-                this.table.addEventListener('pointerdown', this.onDragStart, true);
-            }
+        if (this.tbody) {
+            this.tbody.addEventListener('mousedown', this.onDragStart, true);
         }
     }
 
@@ -922,40 +927,21 @@
         if (!this.tbody) {
             return [];
         }
-        return Array.from(this.tbody.querySelectorAll(this.rowSelector));
-    };
-
-    EntryTableDrag.prototype.getEventCoords = function (event) {
-        if (typeof event.clientY === 'number') {
-            return event.clientY;
-        }
-        if (event.touches && event.touches[0]) {
-            return event.touches[0].clientY;
-        }
-        return 0;
+        return Array.from(this.tbody.querySelectorAll('.table-row:not(.table-row--empty)'));
     };
 
     EntryTableDrag.prototype.onDragStart = function (event) {
-        if (this.dragging) {
-            return;
-        }
-        if (this.usingPointerEvents && event.type === 'mousedown') {
-            return;
-        }
-        if (!this.usingPointerEvents && event.type === 'pointerdown') {
-            return;
-        }
-        if (typeof event.button === 'number' && event.button !== 0) {
+        if (this.dragging || (typeof event.button === 'number' && event.button !== 0)) {
             return;
         }
 
-        const handle = event.target.closest(this.handleSelector);
-        if (!handle || !this.table || !this.table.contains(handle)) {
+        const handle = event.target.closest('.entry-drag-handle');
+        if (!handle || !this.tbody || !this.tbody.contains(handle)) {
             return;
         }
 
         const row = handle.closest('.table-row');
-        if (!row || row.classList.contains('table-row--empty') || !this.tbody || !this.tbody.contains(row)) {
+        if (!row || row.classList.contains('table-row--empty') || !this.tbody.contains(row)) {
             return;
         }
 
@@ -964,15 +950,7 @@
 
         this.dragging = true;
         this.draggedRow = row;
-        this.dragHandle = handle;
         this.orderAtDragStart = getEntryRowOrder(this.tbody);
-        this.activePointerId = typeof event.pointerId === 'number' ? event.pointerId : null;
-
-        try {
-            if (this.usingPointerEvents && typeof event.pointerId === 'number' && handle.setPointerCapture) {
-                handle.setPointerCapture(event.pointerId);
-            }
-        } catch (_) {}
 
         this.placeholder = document.createElement('tr');
         this.placeholder.className = 'drag-placeholder-row';
@@ -988,11 +966,6 @@
 
         document.addEventListener('mousemove', this.onDragMove);
         document.addEventListener('mouseup', this.onDragEnd);
-        if (this.usingPointerEvents) {
-            document.addEventListener('pointermove', this.onDragMove);
-            document.addEventListener('pointerup', this.onDragEnd);
-            document.addEventListener('pointercancel', this.onDragEnd);
-        }
         document.body.style.cursor = 'grabbing';
         document.body.classList.add('entries-table-dragging');
     };
@@ -1002,7 +975,6 @@
             return row !== this.draggedRow && row.style.display !== 'none';
         }, this);
 
-        let matched = null;
         for (let index = 0; index < rows.length; index += 1) {
             const row = rows[index];
             const rect = row.getBoundingClientRect();
@@ -1027,7 +999,7 @@
     };
 
     EntryTableDrag.prototype.movePlaceholder = function (clientY) {
-        if (!this.placeholder || !this.tbody) {
+        if (!this.placeholder) {
             return;
         }
 
@@ -1059,19 +1031,12 @@
         if (!this.dragging) {
             return;
         }
-        if (this.activePointerId !== null && typeof event.pointerId === 'number' && event.pointerId !== this.activePointerId) {
-            return;
-        }
-
         event.preventDefault();
-        this.movePlaceholder(this.getEventCoords(event));
+        this.movePlaceholder(event.clientY);
     };
 
-    EntryTableDrag.prototype.onDragEnd = function (event) {
+    EntryTableDrag.prototype.onDragEnd = function () {
         if (!this.dragging) {
-            return;
-        }
-        if (this.activePointerId !== null && typeof event.pointerId === 'number' && event.pointerId !== this.activePointerId) {
             return;
         }
 
@@ -1092,17 +1057,8 @@
     EntryTableDrag.prototype.cleanup = function () {
         document.removeEventListener('mousemove', this.onDragMove);
         document.removeEventListener('mouseup', this.onDragEnd);
-        document.removeEventListener('pointermove', this.onDragMove);
-        document.removeEventListener('pointerup', this.onDragEnd);
-        document.removeEventListener('pointercancel', this.onDragEnd);
         document.body.style.cursor = '';
         document.body.classList.remove('entries-table-dragging');
-
-        if (this.dragHandle && this.activePointerId !== null && this.dragHandle.releasePointerCapture) {
-            try {
-                this.dragHandle.releasePointerCapture(this.activePointerId);
-            } catch (_) {}
-        }
 
         if (this.draggedRow) {
             this.draggedRow.style.display = '';
@@ -1116,26 +1072,19 @@
         this.draggedRow = null;
         this.placeholder = null;
         this.orderAtDragStart = [];
-        this.activePointerId = null;
-        this.dragHandle = null;
     };
 
     EntryTableDrag.prototype.destroy = function () {
         this.cleanup();
-        if (this.table) {
-            this.table.removeEventListener('mousedown', this.onDragStart, true);
-            if (this.usingPointerEvents) {
-                this.table.removeEventListener('pointerdown', this.onDragStart, true);
-            }
+        if (this.tbody) {
+            this.tbody.removeEventListener('mousedown', this.onDragStart, true);
         }
-        this.table = null;
         this.tbody = null;
     };
 
     function initializeEntryDragHandlers() {
-        const entriesTableEl = document.querySelector('.entries-smart-table .smart-table');
-        const tableBodyEl = document.querySelector('.table-body');
-        if (!entriesTableEl || !tableBodyEl || !canDragCurrentView()) {
+        const tableBodyEl = entriesTableBody();
+        if (!tableBodyEl || !entriesTableHasDragHandles()) {
             if (entrySorter) {
                 entrySorter.destroy();
                 entrySorter = null;
@@ -1148,10 +1097,7 @@
         }
 
         entrySorter = new EntryTableDrag({
-            table: entriesTableEl,
             container: tableBodyEl,
-            rowSelector: '.table-row:not(.table-row--empty)',
-            handleSelector: '.entry-drag-handle',
             onReorder: function (orderedIds) {
                 saveEntryOrder(orderedIds);
             },
@@ -1193,6 +1139,7 @@
 
     updateBulkUI();
     initializeViewportScrollState();
-    window.setTimeout(initializeEntryDragHandlers, 100);
+    initializeEntryDragHandlers();
+    window.addEventListener('load', initializeEntryDragHandlers);
 })();
 
