@@ -76,8 +76,9 @@
 /* Drag handles and menu dots — centered, solid fill icons */
 .drag-handle,
 .group-drag-handle,
-.cell-drag,
-.fieldtype-drag-handle {
+.cell-drag:not(td),
+.fieldtype-drag-handle,
+.entry-drag-handle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -87,7 +88,8 @@
 
 .drag-handle .birkly-icon,
 .group-drag-handle .birkly-icon,
-.cell-drag .birkly-icon,
+.cell-drag:not(td) .birkly-icon,
+.entry-drag-handle .birkly-icon,
 .collection-menu-btn .birkly-icon,
 .fieldtype-drag-handle .birkly-icon,
 .fieldtype-drag-handle img {
