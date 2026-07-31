@@ -16,6 +16,7 @@ ENV_FILE="$SETTINGS/plugin_dev_sync.env"
 INTERVAL="${PLUGIN_DEV_SYNC_INTERVAL:-60}"
 ORG="${GITHUB_ORG:-Birkly-Other-Things}"
 IDS="${PLUGIN_DEV_SYNC_IDS:-commerce,events,automation,user_management,studio}"
+REPOS="${PLUGIN_DEV_SYNC_REPOS:-commerce:Birkly-Plugin-Commerce,events:Birkly-Plugin-Events,automation:Birkly-Plugin-Automation,user_management:Birkly-Plugin-User,studio:Birkly-Plugin-Studio}"
 
 TOKEN="${GITHUB_TOKEN:-}"
 while [ $# -gt 0 ]; do
@@ -50,6 +51,7 @@ mkdir -p "$SETTINGS" "$DATA_ROOT/logs" "$DATA_ROOT/plugins"
   echo "PLUGIN_DEV_SYNC_INTERVAL=${INTERVAL}"
   echo "GITHUB_ORG=${ORG}"
   echo "PLUGIN_DEV_SYNC_IDS=${IDS}"
+  echo "PLUGIN_DEV_SYNC_REPOS=${REPOS}"
   if [ -n "$TOKEN" ]; then
     echo "GITHUB_TOKEN=${TOKEN}"
   fi
