@@ -14,6 +14,7 @@ require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/../core/project_site.php';
 require_once __DIR__ . '/../core/project_site_filesystem.php';
+require_once __DIR__ . '/../core/project_settings.php';
 require_once __DIR__ . '/../core/project_ssr.php';
 
 set_cors_headers('admin');
@@ -26,43 +27,6 @@ if (!is_array($input)) {
 }
 
 $action = trim((string) ($_GET['action'] ?? $input['action'] ?? $_POST['action'] ?? 'overview'));
-
-function birkly_project_settings_storage(): Storage
-{
-    return new Storage(__DIR__ . '/../settings');
-}
-
-/**
- * @return array<string, mixed>
- */
-function birkly_load_project_settings(): array
-{
-    $settings = birkly_project_settings_storage()->read('project.json');
-    if (!is_array($settings)) {
-        $settings = [];
-    }
-
-    return array_merge([
-        'show_visit_button' => false,
-        // P51: server-side render controls (full admin UI lands in M3).
-        'render_mode' => 'client',      // client | server | auto
-        'hosting_type' => 'birkly',     // birkly | external (SSR only when birkly)
-        'ssr_cache_ttl' => 60,          // seconds
-    ], $settings);
-}
-
-/**
- * @param array<string, mixed> $patch
- */
-function birkly_save_project_settings(array $patch): bool
-{
-    $existing = birkly_load_project_settings();
-    $updated = array_merge($existing, $patch);
-    $updated['_updated_at'] = date('c');
-    $updated['_updated_by'] = $_SESSION['user']['id'] ?? 'unknown';
-
-    return birkly_project_settings_storage()->write('project.json', $updated);
-}
 
 function birkly_project_site_starter_label(): ?string
 {
