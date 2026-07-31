@@ -73,6 +73,10 @@ pull_one() {
   rm -f "$err_file"
 }
 
+if [ "${BIRKLY_PLUGIN_DEV_SYNC_DISABLED:-0}" = "1" ]; then
+  exit 0
+fi
+
 if [ ! -f "$ENV_FILE" ]; then
   exit 0
 fi
