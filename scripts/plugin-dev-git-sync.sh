@@ -19,17 +19,48 @@ link_plugin_dev_paths() {
   ln -sfn /app/api "$DATA_ROOT/api" 2>/dev/null || true
 }
 
+# Official Birkly-Other-Things plugin repos (fallback when clone has no origin).
 repo_name_for_id() {
   id="$1"
   case "$id" in
-    user_management) echo "birkly-user-management" ;;
+    commerce) echo "Birkly-Plugin-Commerce" ;;
+    events) echo "Birkly-Plugin-Events" ;;
+    automation) echo "Birkly-Plugin-Automation" ;;
+    user_management) echo "Birkly-Plugin-User" ;;
+    studio) echo "Birkly-Plugin-Studio" ;;
     *) echo "birkly-${id}" ;;
   esac
 }
 
+parse_github_remote() {
+  url="$1"
+  url="$(echo "$url" | sed -E 's#https://[^@/]+@#https://#')"
+  case "$url" in
+    git@github.com:*)
+      path="${url#git@github.com:}"
+      path="${path%.git}"
+      path="${path%/}"
+      org="${path%%/*}"
+      repo="${path#*/}"
+      ;;
+    *github.com/*)
+      path="${url#*github.com/}"
+      path="${path%.git}"
+      path="${path%/}"
+      org="${path%%/*}"
+      repo="${path#*/}"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+  [ -n "$org" ] && [ -n "$repo" ] || return 1
+  echo "${org}/${repo}"
+}
+
 pull_one() {
   id="$1"
-  org="$2"
+  default_org="$2"
   token="$3"
   dir="$PLUGINS_DIR/$id"
 
@@ -38,7 +69,17 @@ pull_one() {
     return 0
   fi
 
+  org="$default_org"
   repo="$(repo_name_for_id_from_map "$id")"
+  remote_url="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
+  if [ -n "$remote_url" ]; then
+    parsed="$(parse_github_remote "$remote_url" 2>/dev/null || true)"
+    if [ -n "$parsed" ]; then
+      org="${parsed%%/*}"
+      repo="${parsed#*/}"
+    fi
+  fi
+
   branch="$(git -C "$dir" symbolic-ref -q --short HEAD 2>/dev/null || echo main)"
   if [ -z "$branch" ]; then
     branch=main
@@ -48,10 +89,10 @@ pull_one() {
   ok=0
 
   if [ -n "$token" ]; then
-    url="https://x-access-token:${token}@github.com/${org}/${repo}.git"
-    if git -C "$dir" pull -q "$url" "$branch" 2>"$err_file"; then
+    auth="$(printf 'x-access-token:%s' "$token" | base64 | tr -d '\n')"
+    if git -C "$dir" -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" pull -q origin "$branch" 2>"$err_file"; then
       ok=1
-    elif git -C "$dir" pull -q "$url" main 2>"$err_file"; then
+    elif git -C "$dir" -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" pull -q origin main 2>"$err_file"; then
       ok=1
     fi
   fi
@@ -65,10 +106,16 @@ pull_one() {
   fi
 
   if [ "$ok" -eq 1 ]; then
-    log "pulled $id ($branch)"
+    log "pulled $id (${org}/${repo}, $branch)"
   else
     err="$(tr '\n' ' ' < "$err_file" | sed 's/[[:space:]]+/ /g' | cut -c1-240)"
-    log "WARN: pull failed for $id (${org}/${repo}, branch ${branch}): ${err}"
+    hint=""
+    case "$err" in
+      *Authentication* | *Invalid username* | *403* | *401*)
+        hint=" — check GITHUB_TOKEN in $ENV_FILE (create a new fine-grained PAT with Contents: Read on ${org} repos)"
+        ;;
+    esac
+    log "WARN: pull failed for $id (${org}/${repo}, branch ${branch}): ${err}${hint}"
   fi
   rm -f "$err_file"
 }
@@ -102,7 +149,7 @@ ORG="${GITHUB_ORG:-Birkly-Other-Things}"
 TOKEN="${GITHUB_TOKEN:-}"
 IDS="${PLUGIN_DEV_SYNC_IDS:-commerce,events,automation,user_management,studio}"
 
-# Optional: PLUGIN_DEV_SYNC_REPOS=commerce:birkly-commerce,events:my-events-repo
+# Optional override: PLUGIN_DEV_SYNC_REPOS=commerce:my-repo-name,events:other-repo
 REPO_MAP="${PLUGIN_DEV_SYNC_REPOS:-}"
 
 repo_name_for_id_from_map() {
