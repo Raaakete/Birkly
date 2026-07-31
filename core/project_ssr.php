@@ -323,7 +323,13 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         $requests = birkly_project_ssr_collect_requests($html);
     }
 
-    $bundle = birkly_run_page_bundle_requests($storage, $requests, $language, ['lean' => true]);
+    // trusted_ssr: SSR has no browser Origin / domain-auth context. Without this,
+    // page_bundle denies every non-site_elements collection and loops render empty
+    // (then get cached), which looks like "missing styles/content" on the public site.
+    $bundle = birkly_run_page_bundle_requests($storage, $requests, $language, [
+        'lean' => true,
+        'trusted_ssr' => true,
+    ]);
 
     $data = [
         'current_year' => (int) date('Y'),

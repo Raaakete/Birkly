@@ -53,6 +53,11 @@ Data context mirrors the client (`processTemplatesV3`): `current_year`, `query`,
 `site_elements` (slug/key-keyed map), bundle `list_entries`/`get_entry` results, and for detail pages
 (`?collection=&slug=`) the current entry flattened at top level + `data.entry`.
 
+**Important:** SSR calls `birkly_run_page_bundle_requests(..., ['trusted_ssr' => true])`. Without that
+flag, domain/Origin checks deny every collection except `site_elements` during a public-host page
+request (no browser `Origin`), loops render empty, and the empty HTML can be cached — the site looks
+broken / “missing styles” even though CSS is present.
+
 ## Settings (`settings/project.json`)
 
 ```json
