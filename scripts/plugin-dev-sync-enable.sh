@@ -64,7 +64,11 @@ if [ -x "$ROOT/scripts/plugin-dev-git-sync.sh" ]; then
   "$ROOT/scripts/plugin-dev-git-sync.sh" || true
 fi
 
+if [ -x "$ROOT/scripts/plugin-dev-sync-start-loop.sh" ]; then
+  "$ROOT/scripts/plugin-dev-sync-start-loop.sh" || true
+fi
+
 echo "[plugin-dev-sync-enable] Written $ENV_FILE"
-echo "[plugin-dev-sync-enable] Auto-sync starts on every container start (interval ${INTERVAL}s)."
+echo "[plugin-dev-sync-enable] Background sync is running now and restarts on every container start."
 echo "[plugin-dev-sync-enable] Log: $DATA_ROOT/logs/plugin-dev-sync.log"
 echo "[plugin-dev-sync-enable] Disable: set PLUGIN_DEV_SYNC_ENABLED=0 in that file."

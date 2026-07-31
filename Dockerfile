@@ -19,7 +19,7 @@ ENV BIRKLY_BUILD_REVISION=$BIRKLY_BUILD_REVISION
 COPY . /app
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
-    && chmod +x /app/scripts/plugin-dev-git-sync.sh /app/scripts/plugin-dev-sync-enable.sh \
+    && chmod +x /app/scripts/plugin-dev-git-sync.sh /app/scripts/plugin-dev-sync-enable.sh /app/scripts/plugin-dev-sync-start-loop.sh \
     && echo "$BIRKLY_BUILD_REVISION" > /app/BUILD_REVISION \
     && mkdir -p content media settings users data cache logs temp plugins themes
 

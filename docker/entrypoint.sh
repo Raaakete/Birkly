@@ -128,26 +128,8 @@ if [ -f /app/scripts/emergency-deactivate-broken-plugins.php ]; then
 fi
 
 # Plugin dev git sync (config on data volume — survives Dokploy redeploys).
-if [ "$USE_DATA_ROOT" -eq 1 ] && [ -f "$DATA_ROOT/settings/plugin_dev_sync.env" ]; then
-  if grep -q '^PLUGIN_DEV_SYNC_ENABLED=1' "$DATA_ROOT/settings/plugin_dev_sync.env" 2>/dev/null; then
-  interval=60
-  if grep -q '^PLUGIN_DEV_SYNC_INTERVAL=' "$DATA_ROOT/settings/plugin_dev_sync.env" 2>/dev/null; then
-    interval="$(grep '^PLUGIN_DEV_SYNC_INTERVAL=' "$DATA_ROOT/settings/plugin_dev_sync.env" | head -1 | cut -d= -f2 | tr -d '[:space:]')"
-  fi
-  if [ -z "$interval" ] || ! echo "$interval" | grep -qE '^[0-9]+$'; then
-    interval=60
-  fi
-  echo "[entrypoint] Plugin dev git sync enabled (every ${interval}s, config on volume)"
-  (
-    export BIRKLY_DATA="$DATA_ROOT"
-    while true; do
-      if [ -x /app/scripts/plugin-dev-git-sync.sh ]; then
-        /app/scripts/plugin-dev-git-sync.sh || true
-      fi
-      sleep "$interval"
-    done
-  ) &
-  fi
+if [ "$USE_DATA_ROOT" -eq 1 ] && [ -x /app/scripts/plugin-dev-sync-start-loop.sh ]; then
+  /app/scripts/plugin-dev-sync-start-loop.sh || true
 fi
 
 echo "[entrypoint] Starting php-fpm..."
