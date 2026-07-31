@@ -879,7 +879,11 @@ function saveEntry() {
         // Invalidate cache for this collection
         $cache = new Cache();
         $cache->invalidateCollection($collectionSlug);
-        
+
+        // Invalidate SSR output cache (P51-M2)
+        require_once __DIR__ . '/../core/project_ssr.php';
+        birkly_project_ssr_invalidate_all();
+
         // Allow plugins to react to entry save (e.g., sync status with user)
         if (function_exists('do_action')) {
             do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
@@ -1242,6 +1246,10 @@ function persistEntryRecord(string $collectionSlug, string $entryId, array $entr
 
     $cache = new Cache();
     $cache->invalidateCollection($collectionSlug);
+
+    // Invalidate SSR output cache (P51-M2) — covers create/update/delete/bulk.
+    require_once __DIR__ . '/../core/project_ssr.php';
+    birkly_project_ssr_invalidate_all();
     return true;
 }
 

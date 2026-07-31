@@ -8,6 +8,28 @@ declare(strict_types=1);
 require_once __DIR__ . '/hosting_urls.php';
 require_once __DIR__ . '/project_site.php';
 
+/**
+ * Serve a resolved public file. For project HTML this first attempts SSR
+ * (P51-M2) when enabled, then falls back to the static file on any failure.
+ */
+function birkly_hosting_serve_public_file(string $filePath): void
+{
+    require_once __DIR__ . '/project_ssr.php';
+
+    if (birkly_project_ssr_should_render($filePath)) {
+        $query = isset($_GET) && is_array($_GET) ? $_GET : [];
+        if (birkly_project_ssr_serve($filePath, $query)) {
+            exit;
+        }
+        // SSR opted-in but failed → static file + client-side render marker.
+        if (!headers_sent()) {
+            header('X-Birkly-Render: client-fallback');
+        }
+    }
+
+    birkly_hosting_serve_file($filePath);
+}
+
 function birkly_hosting_serve_file(string $filePath): void
 {
     $mime = mime_content_type($filePath) ?: 'application/octet-stream';
@@ -57,7 +79,7 @@ function birkly_hosting_dispatch(string $uri): bool
 
         $publicFile = birkly_hosting_resolve_public_file($uri);
         if ($publicFile !== null && ($role === 'public' || $role === 'local' || $role === 'cms')) {
-            birkly_hosting_serve_file($publicFile);
+            birkly_hosting_serve_public_file($publicFile);
         }
     }
 
@@ -66,7 +88,7 @@ function birkly_hosting_dispatch(string $uri): bool
         if ($config['public_site_mode'] === 'project' && ($role === 'public' || $role === 'local')) {
             $publicFile = birkly_hosting_resolve_public_file('/');
             if ($publicFile !== null) {
-                birkly_hosting_serve_file($publicFile);
+                birkly_hosting_serve_public_file($publicFile);
             }
         }
 

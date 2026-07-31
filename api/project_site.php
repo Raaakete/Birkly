@@ -43,6 +43,10 @@ function birkly_load_project_settings(): array
 
     return array_merge([
         'show_visit_button' => false,
+        // P51: server-side render controls (full admin UI lands in M3).
+        'render_mode' => 'client',      // client | server | auto
+        'hosting_type' => 'birkly',     // birkly | external (SSR only when birkly)
+        'ssr_cache_ttl' => 60,          // seconds
     ], $settings);
 }
 

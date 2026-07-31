@@ -1,7 +1,7 @@
 # Phase 51 — Verification matrix
 
 **Plan:** `P51-ssr-shared-template-engine-plan.md`  
-**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`
+**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -28,16 +28,16 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-SSR-01 | SSR pipeline module exists and uses shared engine | File + smoke | cms-developer | pending |
-| V-SSR-02 | Project HTML under `/project/` can be SSR when mode=server | Integration | cms-developer | pending |
-| V-SSR-03 | Data loaded from storage / page_bundle_runner (not fake fixtures only) | Code review | cms-developer | pending |
-| V-SSR-04 | Response is fully rendered HTML (no raw `{for each` for covered regions) | Integration | cms-developer | pending |
-| V-SSR-05 | On engine/Node failure → original HTML + client fallback | Integration | cms-developer | pending |
-| V-SSR-06 | Cache hit within TTL returns cached HTML | Unit/integration | cms-developer | pending |
-| V-SSR-07 | Cache miss after TTL recomputes | Unit/integration | cms-developer | pending |
-| V-SSR-08 | Entry publish/update invalidates SSR cache | Hook test | cms-developer | pending |
-| V-SSR-09 | Draft / unpublished content not leaked via SSR | Security check | cms-developer | pending |
-| V-SSR-10 | External hosting / client mode never forces SSR | Integration | cms-developer | pending |
+| V-SSR-01 | SSR pipeline module exists and uses shared engine | File + smoke | cms-developer | **pass** — `core/project_ssr.php` renders via `scripts/birkly-ssr-cli.js` → `birkly-template-engine.js` |
+| V-SSR-02 | Project HTML under `/project/` can be SSR when mode=server | Integration | cms-developer | **pass** — `/blog.html` returns `X-Birkly-Render: server` (manual + `project_ssr_test.php`) |
+| V-SSR-03 | Data loaded from storage / page_bundle_runner (not fake fixtures only) | Code review | cms-developer | **pass** — `birkly_project_ssr_build_data()` uses `birkly_run_page_bundle_requests` + `birkly_public_get_entry` |
+| V-SSR-04 | Response is fully rendered HTML (no raw `{for each` for covered regions) | Integration | cms-developer | **pass** — served HTML has 0 raw `{for each}`; SSR strips template syntax |
+| V-SSR-05 | On engine/Node failure → original HTML + client fallback | Integration | cms-developer | **pass** — broken `BIRKLY_NODE_BIN` → static + `X-Birkly-Render: client-fallback` |
+| V-SSR-06 | Cache hit within TTL returns cached HTML | Unit/integration | cms-developer | **pass** — 2nd request `X-Birkly-SSR-Cache: HIT`; `project_ssr_test.php` cache roundtrip |
+| V-SSR-07 | Cache miss after TTL recomputes | Unit/integration | cms-developer | **pass** — TTL-expiry purge asserted in `project_ssr_test.php` |
+| V-SSR-08 | Entry publish/update invalidates SSR cache | Hook test | cms-developer | **pass** — `birkly_project_ssr_invalidate_all()` hooked in `admin_entries.php` (save/persist) + `content.php` (order); revision in cache key also busts on content change |
+| V-SSR-09 | Draft / unpublished content not leaked via SSR | Security check | cms-developer | **pass** — data comes only from published-only `birkly_public_*` read APIs; engine escapes untrusted fields |
+| V-SSR-10 | External hosting / client mode never forces SSR | Integration | cms-developer | **pass** — `birkly_project_ssr_enabled()` gating asserted (external/client/none) in `project_ssr_test.php` |
 
 ---
 
