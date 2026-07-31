@@ -35,11 +35,41 @@ This directory contains the modular components of the Birkly client library.
    - `tryLoadPageSnapshot()` - Load publish-time snapshot (inline or `page_snapshot.php`)
 
 6. **birkly-render.js** - Template engine v3 (string-based renderer)
-   - `render(html, data)` - Full parse → render pipeline
+   - Thin re-export of the shared engine — see below.
+   - `render(html, data, options)` - Full parse → render pipeline
    - `collectBundleRequests(html)` - Data needs from template source
    - `discoverPageRegions(document, root?, { force? })` - Outermost Light DOM regions (template syntax, `data-birkly-region`, or `birkly-region`); optional scoped root; skips `data-birkly-processed`
    - `buildRegionTemplate` / `getRegionDefaultTemplate` - helpers for `<birkly-region>` entry/list defaults
    - Inlined into `birkly-client.js` for production (single script tag)
+
+### Shared template engine (`birkly-template-engine.js`)
+
+The canonical string engine now lives at the repo root in
+**`birkly-template-engine.js`** (P51-M1). It is the single source of truth for
+the Birkly template language and is shared by the client, the
+`birkly-render.js` re-export, and (in later P51 milestones) server-side
+rendering.
+
+```js
+// Node / CommonJS
+const BirklyTemplateEngine = require('./birkly-template-engine.js');
+BirklyTemplateEngine.render(html, data, options);
+
+// Browser: exposed as globalThis.BirklyTemplateEngine
+```
+
+- UMD/CommonJS + browser-global; no third-party deps or build step.
+- Public API: `render(html, data, options)`, `collectBundleRequests(html)`,
+  `hasTemplateSyntax(html)`, `escapeHtml`, plus region helpers
+  (`discoverPageRegions`, `buildRegionTemplate`, `getRegionDefaultTemplate`, …).
+- `options.escapeHtml` (default `true`) HTML-escapes untrusted field values;
+  rich-content fields (`content` / `html`) remain trusted markup.
+- Syntax coverage is verified by `tests/template-engine/run.js` (V-ENG-01..10)
+  against `docs/TEMPLATE_LANGUAGE_SPEC.md`.
+
+`birkly-client-modules/birkly-render.js` is retained as a thin re-export
+(`module.exports = require('../birkly-template-engine.js')`) so existing tests
+and callers keep working.
 
 ### Hydrate script (baked pages)
 
