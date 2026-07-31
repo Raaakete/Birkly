@@ -867,10 +867,34 @@ function birkly_admin_multilang_field_html(string $html, string $fieldName, stri
     }
 
     $newName = $langCode . '[' . $fieldName . ']';
+    $langFieldName = $langCode . '_' . $fieldName;
     $quoted = preg_quote($fieldName, '/');
+
     $html = preg_replace('/\bname=(["\'])' . $quoted . '\1/i', 'name=$1' . $newName . '$1', $html, 1);
     $html = preg_replace('/\bname=(["\'])' . $quoted . '\[\]/', 'name=$1' . $newName . '[]', $html);
-    $html = preg_replace('/\bid=(["\'])field_' . $quoted . '\1/i', 'id=$1field_' . $langCode . '_' . $fieldName . '$1', $html, 1);
+
+    // Hidden value ids first (field_{name}_value) then container ids (field_{name})
+    $html = preg_replace('/\bid=(["\'])field_' . $quoted . '_value\1/i', 'id=$1field_' . $langFieldName . '_value$1', $html);
+    $html = preg_replace('/\bid=(["\'])field_' . $quoted . '\1/i', 'id=$1field_' . $langFieldName . '$1', $html);
+
+    // DynamicItems onclick handlers use bare field name as DOM key
+    $html = preg_replace(
+        "/showAddBlockModal\\(['\"]" . $quoted . "['\"]\\)/",
+        "showAddBlockModal('" . $langFieldName . "')",
+        $html
+    );
+    $html = preg_replace(
+        "/window\\.HaruFieldtypes\\['dynamicitems'\\]\\.showAddBlockModal\\(['\"]" . $quoted . "['\"]\\)/",
+        "window.HaruFieldtypes['dynamicitems'].showAddBlockModal('" . $langFieldName . "')",
+        $html
+    );
+
+    // data-field-config JSON "name":"fieldname"
+    $html = preg_replace(
+        '/"name"\s*:\s*"' . $quoted . '"/',
+        '"name":"' . $langFieldName . '"',
+        $html
+    );
 
     return $html;
 }
@@ -1531,6 +1555,7 @@ function getEntryEditorData($includeFieldHtml = false) {
 
             // Write each JS chunk as a separate file to isolate failures
             $jsFiles = [];
+            $jsInline = '';
             if (!empty($__fieldtypeJs)) {
                 foreach ($__fieldtypeJs as $i => $chunk) {
                     $file = $tempDir . "/fieldtypes-{$hash}-{$i}.js";
@@ -1540,11 +1565,21 @@ function getEntryEditorData($includeFieldHtml = false) {
                         $jsFiles[] = "/temp/fieldtypes-{$hash}-{$i}.js";
                     }
                 }
+                if ($jsFiles === []) {
+                    $jsInline = implode(
+                        "\n\n",
+                        array_map(
+                            static fn(string $chunk): string => ";(function(){\n" . $chunk . "\n})();",
+                            $__fieldtypeJs
+                        )
+                    );
+                }
             }
             $payload['fieldtype_assets'] = [
                 'css' => $cssUrl,
                 'css_inline' => $cssInline,
                 'js_files'  => $jsFiles,
+                'js_inline' => $jsInline,
             ];
         }
     }
