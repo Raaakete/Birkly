@@ -149,4 +149,49 @@ clears leftovers).
 - **Invalidation granularity:** content writes call `invalidate_all()` (simple + correct). Per-page/prefix invalidation exists but is not yet wired to specific collections.
 - **Per-request Node process:** each cache MISS spawns a Node process (~tens of ms). Acceptable with caching on; a persistent worker is out of scope for M2.
 - **Language:** SSR resolves language from `?lang=` only (localStorage is client-side). Multilingual detail pages render the `?lang=` variant.
-- **Client decoupling (M5):** `birkly-client.js` still embeds its own engine copy; server and client share the engine file but the client is not yet refactored to require it.
+
+## Client decoupling (M5)
+
+**Status:** Implemented 2026-07-31 (cms-developer). Closes gap register
+**G51-02, G51-14**. Verified by matrix **V-DEC-01..08**
+(`tests/template-engine/parity_client_server_test.js`).
+
+`birkly-client.js` previously carried its own duplicated parser/renderer (the
+`BIRKLY_RENDER_V3_INLINE` block, ~840 lines). That block is **removed**. The
+client now embeds a **byte-for-byte copy of `birkly-template-engine.js`** — the
+same module SSR uses — between markers:
+
+```js
+/* BIRKLY_TEMPLATE_ENGINE_INLINE_BEGIN */
+… birkly-template-engine.js (UMD IIFE) …
+/* BIRKLY_TEMPLATE_ENGINE_INLINE_END */
+```
+
+- **Approach A (inline/sync):** a single production `<script src="/birkly-client.js">`
+  keeps working with **zero HTML changes** — no runtime `require`, no second
+  script tag, no bundler. The inlined IIFE registers
+  `globalThis.BirklyTemplateEngine`; the client points its local `Birkly.render`
+  (and `globalThis.Birkly.render`) at it.
+- **Source of truth:** `birkly-template-engine.js`. The inlined block is
+  generated, never hand-edited.
+- **Sync script:** `scripts/sync-template-engine-inline.sh` (plain awk/diff).
+  Write mode refreshes the block; `--check` fails on drift and is wired into
+  `scripts/ci-check.sh` (plus `node --check birkly-client.js`).
+- **What stays in the client layer:** DOM scanning / region discovery, network
+  fetch + page-bundle, hydration, events, forms, loading helpers (M4),
+  `processTemplatesV3`, `<birkly-region>` prepare/wrap. Only the template
+  *parsing/rendering* logic moved out.
+- **Parity:** client, SSR CLI (`scripts/birkly-ssr-cli.js`), `core/project_ssr.php`,
+  and the `birkly-render.js` re-export all execute one module, so client and
+  server render output is identical **by construction**. The parity suite also
+  asserts the inlined bytes equal the engine source and that the old block is
+  gone.
+
+### Residual duplication
+
+None in the render engine: there is exactly one engine implementation. The
+`birkly-render.js` re-export and the inlined client block both resolve to
+`birkly-template-engine.js`. The client keeps a separate, engine-independent
+`Birkly.bundle.collectBundleRequests` (DOM-oriented) alongside the engine's
+static `collectBundleRequests(html)`; these serve different layers and are not
+template-render duplication.

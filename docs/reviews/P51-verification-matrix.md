@@ -1,7 +1,7 @@
 # Phase 51 — Verification matrix
 
 **Plan:** `P51-ssr-shared-template-engine-plan.md`  
-**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`; V-CLI (M4) passing via `tests/birkly_loading_test.js`; V-SET (M3) V-SET-01..05/07 passing via admin UI + `tests/project_ssr_settings_api_test.php` (V-SET-06 pending design-reviewer)
+**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`; V-CLI (M4) passing via `tests/birkly_loading_test.js`; V-SET (M3) V-SET-01..05/07 passing via admin UI + `tests/project_ssr_settings_api_test.php` (V-SET-06 pending design-reviewer); V-DEC (M5) passing via `tests/template-engine/parity_client_server_test.js` + `scripts/sync-template-engine-inline.sh --check`
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -72,14 +72,14 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-DEC-01 | `birkly-client.js` string render delegates to shared engine | Code review | cms-developer | pending |
-| V-DEC-02 | Duplicate parse/render block removed or thin wrapper only | Diff review | cms-developer | pending |
-| V-DEC-03 | DOM scan / regions / MutationObserver remain in client | Code review | cms-developer | pending |
-| V-DEC-04 | Network fetch / page_bundle remain in client | Code review | cms-developer | pending |
-| V-DEC-05 | Events `birkly:region-processed` / `templates-processed` still fire | Test | cms-developer | pending |
-| V-DEC-06 | Output parity: client render == server render for fixture suite | Node tests | cms-developer | pending |
-| V-DEC-07 | Existing template region CI tests still pass | ci-check | cms-developer | pending |
-| V-DEC-08 | Single-script tag still works (engine bundled or loaded) | Smoke | cms-developer | pending |
+| V-DEC-01 | `birkly-client.js` string render delegates to shared engine | Code review | cms-developer | **pass** (M5) — local `Birkly.render` + public `Birkly.render()`/`renderEngine` point at `globalThis.BirklyTemplateEngine`; parity test V-DEC-01 asserts single shared module |
+| V-DEC-02 | Duplicate parse/render block removed or thin wrapper only | Diff review | cms-developer | **pass** (M5) — `BIRKLY_RENDER_V3_INLINE` block deleted; client now inlines a byte-for-byte copy of `birkly-template-engine.js` between `BIRKLY_TEMPLATE_ENGINE_INLINE_*` markers (parity test V-DEC-02) |
+| V-DEC-03 | DOM scan / regions / MutationObserver remain in client | Code review | cms-developer | **pass** (M5) — `processTemplatesV3`, region discovery, observers untouched in client layer |
+| V-DEC-04 | Network fetch / page_bundle remain in client | Code review | cms-developer | **pass** (M5) — `fetchContent`, `Birkly.bundle.*`, page-bundle loading unchanged |
+| V-DEC-05 | Events `birkly:region-processed` / `templates-processed` still fire | Test | cms-developer | **pass** (M5) — event dispatch unchanged; `tests/template_regions_test.js` + `tests/birkly_region_test.js` green |
+| V-DEC-06 | Output parity: client render == server render for fixture suite | Node tests | cms-developer | **pass** (M5) — `tests/template-engine/parity_client_server_test.js` (one shared module ⇒ identical output; fixtures V-DEC-03..08) |
+| V-DEC-07 | Existing template region CI tests still pass | ci-check | cms-developer | **pass** (M5) — full `scripts/ci-check.sh` green |
+| V-DEC-08 | Single-script tag still works (engine bundled or loaded) | Smoke | cms-developer | **pass** (M5) — engine inlined, zero HTML changes; `node --check birkly-client.js` + sync `--check` drift guard in ci-check |
 
 ---
 

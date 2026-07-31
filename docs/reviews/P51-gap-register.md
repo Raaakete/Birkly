@@ -6,7 +6,7 @@
 | ID | Area | Gap | Severity | Milestone | Status |
 |----|------|-----|----------|-----------|--------|
 | G51-01 | Engine | No standalone `birkly-template-engine.js` shared by server + client | High | M1 | **Closed** (M1) |
-| G51-02 | Engine | `birkly-client.js` inline v3 diverges from `birkly-client-modules/birkly-render.js` (forms etc.) | High | M1/M5 | Partially closed — shared engine now merges form handling (`{entry for}`, `{public_form}`) + inline `{from…get}` from inline v3; client still embeds its own copy until M5 |
+| G51-02 | Engine | `birkly-client.js` inline v3 diverges from `birkly-client-modules/birkly-render.js` (forms etc.) | High | M1/M5 | **Closed** (M5) — client no longer has its own engine; it inlines a byte-for-byte copy of `birkly-template-engine.js` (kept in sync + CI-checked), so client, SSR, and the re-export share one implementation |
 | G51-03 | Engine | Incomplete automated coverage vs TEMPLATE_LANGUAGE_SPEC | High | M1 | **Closed** (M1) — `tests/template-engine/run.js` covers V-ENG-01..10 |
 | G51-04 | SSR | `/project/` always static `readfile` — no HTML render path | **Blocker** | M2 | **Closed** (M2) — `core/project_ssr.php` + `birkly_hosting_serve_public_file()` render project HTML when enabled |
 | G51-05 | SSR | No server data→template pipeline for project HTML | **Blocker** | M2 | **Closed** (M2) — `birkly_project_ssr_build_data()` collects requests → `page_bundle_runner` → shared engine via Node CLI (`scripts/birkly-ssr-cli.js`) |
@@ -18,7 +18,7 @@
 | G51-11 | Client | No loading reveal after `birkly:templates-processed` | Medium | M4 | **Closed** (M4) — opt-in `data-birkly-loading`/`data-birkly-reveal`; `birkly-ready` added on `birkly:templates-processed`, SSR marker (microtask), or 8s safety timeout. Source `birkly-client-modules/birkly-loading.js`, inlined in `birkly-client.js`, exposed as `Birkly.loading` |
 | G51-12 | Client | No animation holdback utility | Medium | M4 | **Closed** (M4) — opt-in `data-birkly-hold-animations` freezes CSS `animation`/`transition` via `:not(.birkly-ready)` selectors until ready |
 | G51-13 | Client | No optional skeleton helper | Low | M4 | **Closed** (M4) — `data-birkly-skeleton` shimmer + `Birkly.loading.showSkeleton/hideSkeleton`; cleared on `birkly:region-processed` / templates-processed. Tests `tests/birkly_loading_test.js` (V-CLI-01..06) |
-| G51-14 | Decouple | Client still embeds full duplicate engine | High | M5 | Open |
+| G51-14 | Decouple | Client still embeds full duplicate engine | High | M5 | **Closed** (M5) — old `BIRKLY_RENDER_V3_INLINE` block removed; `birkly-client.js` inlines the shared `birkly-template-engine.js` verbatim via `scripts/sync-template-engine-inline.sh` (`--check` in ci-check). Parity matrix V-DEC-01..08 (`tests/template-engine/parity_client_server_test.js`) |
 | G51-15 | Docs | ROADMAP / help lack Birkly-hosted SSR project mode | Medium | M6 | Open |
 | G51-16 | Security | SSR must escape untrusted field output; cache keys must not leak drafts | High | M2/M6 | Partially closed (M2) — engine escapes untrusted fields; SSR data uses published-only public read APIs; cache key includes content revision. Full security review remains M6 |
 
