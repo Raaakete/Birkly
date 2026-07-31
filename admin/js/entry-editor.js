@@ -8,12 +8,279 @@
     // Configuration (can be overridden via data attributes or global config)
     let config = window.entryEditorConfig || {};
     
-    // Read from data attribute if available
+    // Read from JSON config block when available
     const configEl = document.getElementById('entry-editor-config');
-    if (configEl) {
+    if (configEl && configEl.textContent) {
+        try {
+            config = Object.assign({}, config, JSON.parse(configEl.textContent));
+        } catch (err) {
+            console.error('Failed to parse entry-editor-config:', err);
+        }
+    } else if (configEl) {
         const slug = configEl.getAttribute('data-collection-slug');
         if (slug) {
             config.collectionSlug = slug;
+        }
+    }
+
+    let saveModalPreviousFocus = null;
+    let isSubmittingEntry = false;
+
+    function saveLabel(key, fallback) {
+        return (config.saveLabels && config.saveLabels[key]) || fallback;
+    }
+
+    function getSaveSubmitButton() {
+        return document.getElementById('entry-save-submit');
+    }
+
+    function setSaveSubmitting(isSubmitting) {
+        const btn = getSaveSubmitButton();
+        const bar = document.querySelector('.main-actions-bar--sticky');
+        if (!btn) return;
+
+        if (isSubmitting) {
+            if (!btn.dataset.originalLabel) {
+                btn.dataset.originalLabel = btn.textContent.trim();
+            }
+            btn.textContent = saveLabel('saving', 'Saving') + '…';
+            btn.disabled = true;
+            if (bar) bar.classList.add('main-actions-bar--saving');
+        } else {
+            btn.textContent = btn.dataset.originalLabel || btn.textContent;
+            btn.disabled = false;
+            if (bar) bar.classList.remove('main-actions-bar--saving');
+        }
+    }
+
+    function flashEntrySavedState() {
+        const bar = document.querySelector('.main-actions-bar--sticky');
+        if (!bar) return;
+        bar.classList.add('main-actions-bar--saved');
+        setTimeout(function () {
+            bar.classList.remove('main-actions-bar--saved');
+        }, 2500);
+    }
+
+    function hideUnsavedBadge() {
+        const badge = document.getElementById('editor-unsaved-badge');
+        if (badge) {
+            badge.hidden = true;
+            badge.style.display = 'none';
+        }
+    }
+
+    function showEntryUpdateBanner(message) {
+        const banner = document.getElementById('entry-save-success-banner');
+        const textEl = document.getElementById('entry-save-success-banner-text');
+        if (!banner || !textEl) return;
+
+        textEl.textContent = message;
+        banner.hidden = false;
+        requestAnimationFrame(function () {
+            banner.classList.add('is-visible');
+        });
+
+        clearTimeout(banner._hideTimer);
+        banner._hideTimer = setTimeout(function () {
+            banner.classList.remove('is-visible');
+            setTimeout(function () {
+                banner.hidden = true;
+            }, 350);
+        }, 6000);
+    }
+
+    function trapEntrySaveModalFocus(modal) {
+        const focusable = modal.querySelectorAll(
+            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        if (!focusable.length) return;
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        modal._focusTrapHandler = function (e) {
+            if (e.key !== 'Tab') return;
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+        document.addEventListener('keydown', modal._focusTrapHandler);
+    }
+
+    function releaseEntrySaveModalFocusTrap(modal) {
+        if (modal && modal._focusTrapHandler) {
+            document.removeEventListener('keydown', modal._focusTrapHandler);
+            modal._focusTrapHandler = null;
+        }
+    }
+
+    function closeEntrySaveSuccessModal() {
+        const modal = document.getElementById('entry-save-success-modal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        releaseEntrySaveModalFocusTrap(modal);
+        if (saveModalPreviousFocus && saveModalPreviousFocus.focus) {
+            saveModalPreviousFocus.focus();
+            saveModalPreviousFocus = null;
+        }
+    }
+
+    function getEntryStatusFromSidebar() {
+        const statusSelect = document.getElementById('status');
+        const value = statusSelect ? String(statusSelect.value || '').trim() : '';
+        if (value === 'draft') {
+            return 'unpublished';
+        }
+        return value || 'unpublished';
+    }
+
+    function isUnpublishedStatus(status) {
+        return !status || status === 'unpublished' || status === 'draft';
+    }
+
+    async function publishSavedEntry(entryId) {
+        const form = document.getElementById('entry-form');
+        if (!form || !entryId) {
+            return false;
+        }
+
+        const publishData = new FormData(form);
+        publishData.set('entry_id', entryId);
+        publishData.set('status', 'published');
+        if (!publishData.get('collection') && config.collectionSlug) {
+            publishData.set('collection', config.collectionSlug);
+        }
+
+        const response = await fetch('/api/admin_entries.php?action=save', {
+            method: 'POST',
+            body: publishData,
+        });
+        const raw = await response.text();
+        let data;
+        try {
+            data = JSON.parse(raw);
+        } catch (_e) {
+            data = null;
+        }
+
+        if (!data || data.status !== 'ok') {
+            throw new Error((data && data.message) || raw || 'Publish failed');
+        }
+
+        const statusSelect = document.getElementById('status');
+        if (statusSelect) {
+            statusSelect.value = 'published';
+            statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        return true;
+    }
+
+    function openEntrySaveSuccessModal(isCreate, entryId, entryStatus) {
+        const modal = document.getElementById('entry-save-success-modal');
+        if (!modal) return;
+
+        const titleEl = document.getElementById('entry-save-success-title');
+        const messageEl = document.getElementById('entry-save-success-message');
+        const viewEntriesEl = document.getElementById('entry-save-view-entries');
+        const publishEl = document.getElementById('entry-save-publish');
+        const addAnotherEl = document.getElementById('entry-save-add-another');
+        const continueEl = document.getElementById('entry-save-continue');
+        const unpublished = isUnpublishedStatus(entryStatus);
+
+        if (titleEl) {
+            titleEl.textContent = isCreate
+                ? saveLabel('createTitle', 'Entry created')
+                : saveLabel('updateTitle', 'Entry saved');
+        }
+        if (messageEl) {
+            messageEl.textContent = isCreate
+                ? saveLabel('createMessage', 'Your entry was saved.')
+                : saveLabel('updateMessage', 'Your changes were saved successfully.');
+        }
+        if (viewEntriesEl) {
+            viewEntriesEl.textContent = saveLabel('viewEntries', 'View all entries');
+            viewEntriesEl.href = config.entriesListUrl || '#';
+            viewEntriesEl.hidden = !config.entriesListUrl;
+        }
+        if (publishEl) {
+            publishEl.textContent = saveLabel('publishNow', 'Publish entry');
+            publishEl.hidden = !unpublished || !entryId;
+            publishEl.dataset.entryId = entryId || '';
+        }
+        if (addAnotherEl) {
+            addAnotherEl.textContent = saveLabel('addAnother', 'Add another entry');
+            addAnotherEl.href = config.newEntryUrl || '#';
+            addAnotherEl.hidden = !isCreate || !config.newEntryUrl;
+        }
+        if (continueEl) {
+            continueEl.textContent = saveLabel('continueEditing', 'Continue editing');
+        }
+
+        saveModalPreviousFocus = document.activeElement;
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        requestAnimationFrame(function () {
+            modal.classList.add('active');
+            trapEntrySaveModalFocus(modal);
+            let firstFocus = continueEl;
+            if (publishEl && !publishEl.hidden) {
+                firstFocus = publishEl;
+            } else if (viewEntriesEl && !viewEntriesEl.hidden) {
+                firstFocus = viewEntriesEl;
+            } else if (addAnotherEl && !addAnotherEl.hidden) {
+                firstFocus = addAnotherEl;
+            }
+            if (firstFocus && firstFocus.focus) {
+                firstFocus.focus();
+            }
+        });
+    }
+
+    function bindEntrySaveSuccessModal() {
+        const modal = document.getElementById('entry-save-success-modal');
+        if (!modal || modal.dataset.entrySaveBound === '1') return;
+        modal.dataset.entrySaveBound = '1';
+
+        modal.addEventListener('click', function (e) {
+            const closeTarget = e.target.closest('[data-entry-modal-close]');
+            if (closeTarget || e.target.classList.contains('modal-backdrop')) {
+                e.preventDefault();
+                closeEntrySaveSuccessModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeEntrySaveSuccessModal();
+            }
+        });
+
+        const publishBtn = document.getElementById('entry-save-publish');
+        if (publishBtn) {
+            publishBtn.addEventListener('click', async function () {
+                const entryId = publishBtn.dataset.entryId || '';
+                if (!entryId) return;
+                publishBtn.disabled = true;
+                try {
+                    await publishSavedEntry(entryId);
+                    closeEntrySaveSuccessModal();
+                    hideUnsavedBadge();
+                    flashEntrySavedState();
+                    BirklyFeedback.toast(saveLabel('publishedToast', 'Entry published'), 'success');
+                } catch (err) {
+                    BirklyFeedback.toast(err.message || 'Publish failed', 'error');
+                } finally {
+                    publishBtn.disabled = false;
+                }
+            });
         }
     }
 
@@ -922,7 +1189,10 @@
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            if (isSubmittingEntry) return;
             clearFieldErrors();
+            isSubmittingEntry = true;
+            setSaveSubmitting(true);
             
             // Sync all editor fields before submission
             syncContentEditorFields();
@@ -1226,7 +1496,8 @@
                 if (data && data.status === 'ok') {
                     // Success! Even if HTTP status code is 400 (server bug)
                     const savedEntryId = data.data && data.data.id ? data.data.id : (formData.get('entry_id') || '');
-                    const isNewRegularEntry = !isSubEntry && !formData.get('entry_id') && !!savedEntryId;
+                    const hadEntryIdBeforeSave = !!(formData.get('entry_id') || form.querySelector('input[name="entry_id"]'));
+                    const isNewRegularEntry = !isSubEntry && !hadEntryIdBeforeSave && !!savedEntryId;
 
                     if (savedEntryId) {
                         ensureEntryIdInput(form, savedEntryId);
@@ -1264,7 +1535,19 @@
                                 response: data
                             }
                         }));
-                        BirklyFeedback.toast((data.data && data.data.message) || 'Entry saved successfully', 'success');
+
+                        hideUnsavedBadge();
+                        flashEntrySavedState();
+
+                        const savedStatus = getEntryStatusFromSidebar();
+                        if (isNewRegularEntry || isUnpublishedStatus(savedStatus)) {
+                            openEntrySaveSuccessModal(isNewRegularEntry, savedEntryId, savedStatus);
+                        } else {
+                            showEntryUpdateBanner(
+                                (data.data && data.data.message) ||
+                                saveLabel('updateMessage', 'Your changes were saved successfully.')
+                            );
+                        }
                     }
                 } else if (data && data.status === 'error') {
                     if (!applyFieldErrors(data.field_errors)) {
@@ -1281,6 +1564,10 @@
             .catch(error => {
                 console.error('Error saving entry:', error);
                 BirklyFeedback.toast('Error saving entry: ' + error.message, 'error')
+            })
+            .finally(function () {
+                isSubmittingEntry = false;
+                setSaveSubmitting(false);
             });
         });
     }
@@ -1553,6 +1840,7 @@
      * Main initialization
      */
     function init() {
+        bindEntrySaveSuccessModal();
         initSlugGeneration();
         initFormSubmission();
         initTagsEnterKeyPrevention();

@@ -62,17 +62,18 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 | `automation` | `automation` | `admin/docs/snapshots/automation-overview.md` |
 | `help` | `playbooks-index` | This index |
 
-| Topic | Playbook | Admin / platform doc |
-|-------|----------|----------------------|
-| Field types | `fieldtypes` | `admin/docs/fieldtypes.php` |
-| Public API forms | `public-forms` | `admin/docs/public-api-forms.php` |
-| Website + client JS | `web-project-patterns`, `templating` | `admin/docs/website-integration.php`, `admin/docs/client-library.php` |
-| MCP connections | `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
-| Media | `media` | `admin/docs/snapshots/media.md` |
-| Content editor | `content-editor` | `admin/docs/snapshots/content-editor.md` |
-| Marketplace | `plugins-overview` | `admin/docs/snapshots/marketplace.md` |
-| Commerce | `commerce` | `admin/docs/snapshots/commerce-*.md` |
-| User plugin | `user-management` | `admin/docs/snapshots/user-plugin.md` |
+| Topic | Playbook | Human doc (Birkly-Docs SSOT) |
+|-------|----------|------------------------------|
+| Content model | `content-model` | https://docs.birkly.com/02-content/content-model-overview.html |
+| Field types | `fieldtypes` | https://docs.birkly.com/02-content/field-types.html |
+| Public API forms | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html |
+| Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.com/04-integration/website-integration.html , https://docs.birkly.com/04-integration/client-library.html |
+| MCP connections | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html |
+| Media | `media` | https://docs.birkly.com/01-admin/media-library.html |
+| Content editor | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
+| Marketplace | `plugins-overview` | https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
+| Commerce | `commerce` | https://docs.birkly.com/06-extensibility/plugins/commerce.html |
+| User plugin | `user-management` | https://docs.birkly.com/06-extensibility/user-plugin.html |
 | Template language (full) | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
 | Platform overview | `admin` (context pack) | `docs/ai/birkly-context-pack.md` |
 

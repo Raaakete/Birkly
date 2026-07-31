@@ -14,6 +14,8 @@ Use for: collections, entries, schema design, publishing, bulk content, slug rul
 2. `read_collection` for target slug if updating schema.
 3. `read_birkly_docs` `content-model` (this doc) if multi-step.
 
+**Human docs (SSOT):** [Content model overview](https://docs.birkly.com/02-content/content-model-overview.html) on docs.birkly.com — offline mirror: `admin/docs/snapshots/content-model-overview.md`.
+
 ## Create a new collection
 
 ```json
@@ -70,7 +72,7 @@ Ask for each piece of the site:
 | Question | If yes → |
 |----------|----------|
 | Many items of the same shape? | Top-level **collection** + list (and maybe detail) templates |
-| Same block on every page? | **Singleton entry** or chrome collection + `<birkly-region>` |
+| Same block on every page? | **Site elements** collection + named entries + `<birkly-region>` (see Birkly-Docs `site-elements-pattern`) |
 | Rows that belong to one parent entry? | **Sub-collection** (see `sub-collections`) |
 | Visitors submit data? | Collection with `entry_method: public_api` (see `public-forms`) |
 | Rarely changes, no structure? | Static HTML or one `{from … get entry …}` block |

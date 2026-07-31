@@ -39,17 +39,18 @@ User request
 
 ## Cross-reference map (where to read depth)
 
-| Need | Playbook topic | Admin snapshot (human docs) |
-|------|----------------|----------------------------|
-| Field types | `fieldtypes` | `admin/docs/fieldtypes.php` |
+| Need | Playbook topic | Human docs (docs.birkly.com) |
+|------|----------------|------------------------------|
+| Content model | `content-model` | /02-content/content-model-overview.html |
+| Field types | `fieldtypes` | /02-content/field-types.html |
 | Template syntax | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
-| Public forms | `public-forms` | `admin/docs/public-api-forms.php` |
-| MCP / Cursor | `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
-| Media | `media` | `admin/docs/snapshots/media.md` |
-| Commerce | `commerce` | `admin/docs/snapshots/commerce-*.md` |
-| Collection sidebar groups | `collection-groups` | Content → drag groups in admin |
-| Rich text fields | `content-editor` | `admin/docs/snapshots/content-editor.md` |
-| Plugins | `plugins-overview` | `admin/docs/snapshots/marketplace.md` |
+| Public forms | `public-forms` | /04-integration/public-forms.html |
+| MCP / Cursor | `mcp-setup` | /01-admin/mcp-connections.html |
+| Media | `media` | /01-admin/media-library.html |
+| Commerce | `commerce` | /06-extensibility/plugins/commerce.html |
+| Collection sidebar groups | `collection-groups` | /02-content/collection-groups.html |
+| Rich text fields | `content-editor` | /02-content/content-editor.html |
+| Plugins | `plugins-overview` | /06-extensibility/marketplace-go-live.html |
 
 Load via `read_birkly_docs` with the topic slug. MCP: `birkly://docs/{topic}`.
 

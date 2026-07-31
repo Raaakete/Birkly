@@ -39,6 +39,7 @@
             this.onReorder = options.onReorder || function() {};
             this.onCrossContainerMove = options.onCrossContainerMove || null;
             this.allContainers = options.allContainers || null; // For cross-container moves
+            this.tableRowMode = options.tableRowMode === true;
             
             this.dragging = false;
             this.draggedItem = null;
@@ -55,6 +56,7 @@
             this.activePointerId = null;
             this.dragIndexContainer = null;
             this.activeDropContainer = null;
+            this.pointerCaptureTarget = null;
             
             this.init();
         }
@@ -93,11 +95,15 @@
 
         attachDocumentDragListeners(e) {
             this.detachDocumentDragListeners();
+            const captureTarget = this.tableRowMode
+                ? (this.container || this.draggedItem)
+                : this.draggedItem;
+            this.pointerCaptureTarget = captureTarget;
             if (this.usingPointerEvents && typeof e.pointerId === 'number') {
                 this.activePointerId = e.pointerId;
                 try {
-                    if (this.draggedItem && this.draggedItem.setPointerCapture) {
-                        this.draggedItem.setPointerCapture(e.pointerId);
+                    if (captureTarget && captureTarget.setPointerCapture) {
+                        captureTarget.setPointerCapture(e.pointerId);
                     }
                 } catch (_) {}
                 document.addEventListener('pointermove', this.boundMouseMove);
@@ -119,12 +125,14 @@
         }
 
         releasePointerCapture() {
-            if (this.activePointerId !== null && this.draggedItem && this.draggedItem.releasePointerCapture) {
+            const captureTarget = this.pointerCaptureTarget || this.draggedItem;
+            if (this.activePointerId !== null && captureTarget && captureTarget.releasePointerCapture) {
                 try {
-                    this.draggedItem.releasePointerCapture(this.activePointerId);
+                    captureTarget.releasePointerCapture(this.activePointerId);
                 } catch (_) {}
             }
             this.activePointerId = null;
+            this.pointerCaptureTarget = null;
         }
 
         handleMouseDown(e) {
@@ -223,12 +231,15 @@
             // Create placeholder
             this.createPlaceholder(item);
             
-            // Add dragging class with fast transition
-            item.style.transition = 'opacity 0.1s ease-out, transform 0.1s ease-out, box-shadow 0.1s ease-out';
-            item.classList.add('dragging');
-            
-            // Trigger reflow to ensure transition applies
-            void item.offsetHeight;
+            // Table rows cannot use position:fixed — hide source row and rely on placeholder
+            if (this.tableRowMode) {
+                item.classList.add('dragging');
+                item.style.display = 'none';
+            } else {
+                item.style.transition = 'opacity 0.1s ease-out, transform 0.1s ease-out, box-shadow 0.1s ease-out';
+                item.classList.add('dragging');
+                void item.offsetHeight;
+            }
             
             // Set cursor
             document.body.style.cursor = 'grabbing';
@@ -247,17 +258,17 @@
             
             const coords = this.getEventCoords(e);
             
-            // Update dragged item position with smooth movement
-            if (!this.draggedItem.style.position || this.draggedItem.style.position !== 'fixed') {
-                this.draggedItem.style.position = 'fixed';
-                this.draggedItem.style.pointerEvents = 'none';
-                this.draggedItem.style.zIndex = '10000';
-                this.draggedItem.style.transition = 'none'; // Disable transition during drag for immediate response
+            // Table rows stay in the DOM; only the placeholder moves
+            if (!this.tableRowMode) {
+                if (!this.draggedItem.style.position || this.draggedItem.style.position !== 'fixed') {
+                    this.draggedItem.style.position = 'fixed';
+                    this.draggedItem.style.pointerEvents = 'none';
+                    this.draggedItem.style.zIndex = '10000';
+                    this.draggedItem.style.transition = 'none';
+                }
+                this.draggedItem.style.left = (coords.x - this.mouseOffset.x) + 'px';
+                this.draggedItem.style.top = (coords.y - this.mouseOffset.y) + 'px';
             }
-            
-            // Update position directly for immediate response (requestAnimationFrame would add lag)
-            this.draggedItem.style.left = (coords.x - this.mouseOffset.x) + 'px';
-            this.draggedItem.style.top = (coords.y - this.mouseOffset.y) + 'px';
             
             // Throttle placeholder updates for smoother performance (but not item movement)
             const now = performance.now();
@@ -664,23 +675,24 @@
 
         insertPlaceholder(targetItem, mouseY, targetContainer) {
             if (!this.placeholder || !targetItem) return;
-            
+
             const container = targetContainer || this.container;
-            
+
             // Make sure targetItem is still in the DOM
             if (!targetItem.parentNode) return;
-            
+
             const rect = targetItem.getBoundingClientRect();
             const centerY = rect.top + rect.height / 2;
             const insertBefore = mouseY < centerY;
-            
+
             // Special case: if inserting before the first item, make sure we're actually at the top
             const targetParent = targetItem.parentNode;
-            let items = Array.from(targetParent.children).filter(child => 
-                child.nodeType === 1 && 
-                child.matches && 
-                child.matches(this.itemSelector) && 
-                child !== this.draggedItem && 
+            const childSelector = this.placeholder.tagName === 'TR' ? 'tr.table-row' : this.itemSelector;
+            let items = Array.from(targetParent.children).filter(child =>
+                child.nodeType === 1 &&
+                child.matches &&
+                child.matches(childSelector) &&
+                child !== this.draggedItem &&
                 child !== this.placeholder
             );
             
@@ -882,22 +894,33 @@
                     ph.remove();
                 }
             });
-            
-            // Create new placeholder
-            this.placeholder = document.createElement('div');
-            this.placeholder.className = 'drag-placeholder';
-            const computedStyle = window.getComputedStyle(item);
-            this.placeholder.style.height = item.offsetHeight + 'px';
-            this.placeholder.style.width = item.offsetWidth + 'px';
-            this.placeholder.style.margin = computedStyle.margin;
-            this.placeholder.style.border = '2px dashed #3b82f6';
-            this.placeholder.style.borderRadius = '4px';
-            this.placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-            
+
+            const isTableRow = item.tagName === 'TR' || this.tableRowMode;
+            if (isTableRow) {
+                this.placeholder = document.createElement('tr');
+                this.placeholder.className = 'drag-placeholder drag-placeholder-row';
+                this.placeholder.setAttribute('aria-hidden', 'true');
+                const cell = document.createElement('td');
+                cell.colSpan = Math.max(item.cells.length, 1);
+                cell.className = 'drag-placeholder-cell';
+                cell.style.height = Math.max(item.offsetHeight, 1) + 'px';
+                this.placeholder.appendChild(cell);
+            } else {
+                this.placeholder = document.createElement('div');
+                this.placeholder.className = 'drag-placeholder';
+                const computedStyle = window.getComputedStyle(item);
+                this.placeholder.style.height = item.offsetHeight + 'px';
+                this.placeholder.style.width = item.offsetWidth + 'px';
+                this.placeholder.style.margin = computedStyle.margin;
+                this.placeholder.style.border = '2px dashed #3b82f6';
+                this.placeholder.style.borderRadius = '4px';
+                this.placeholder.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            }
+
             // Insert at dragged item's position
             if (item.parentNode) {
                 item.parentNode.insertBefore(this.placeholder, item);
-                
+
                 // Trigger animation by forcing reflow
                 void this.placeholder.offsetHeight;
             }
@@ -908,8 +931,7 @@
             this.releasePointerCapture();
 
             if (this.draggedItem) {
-                // CRITICAL: Immediately reset fixed positioning to prevent floating
-                // This must happen synchronously, not in a timeout
+                this.draggedItem.style.display = '';
                 this.draggedItem.style.position = '';
                 this.draggedItem.style.left = '';
                 this.draggedItem.style.top = '';
@@ -926,19 +948,19 @@
                     }
                 }
                 
-                // Faster transition back to normal state for visual effects
-                this.draggedItem.style.transition = 'opacity 0.1s ease-out, transform 0.1s ease-out, box-shadow 0.1s ease-out';
                 this.draggedItem.classList.remove('dragging');
-                
-                // Reset remaining styles after a brief delay to allow transition
-                setTimeout(() => {
-                    if (this.draggedItem) {
-                        this.draggedItem.style.opacity = '';
-                        this.draggedItem.style.transform = '';
-                        this.draggedItem.style.transition = '';
-                        this.draggedItem.style.boxShadow = '';
-                    }
-                }, 100);
+
+                if (!this.tableRowMode) {
+                    this.draggedItem.style.transition = 'opacity 0.1s ease-out, transform 0.1s ease-out, box-shadow 0.1s ease-out';
+                    setTimeout(() => {
+                        if (this.draggedItem) {
+                            this.draggedItem.style.opacity = '';
+                            this.draggedItem.style.transform = '';
+                            this.draggedItem.style.transition = '';
+                            this.draggedItem.style.boxShadow = '';
+                        }
+                    }, 100);
+                }
             }
             
             // Remove ALL placeholders (safety check for duplicates)

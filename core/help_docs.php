@@ -98,12 +98,28 @@ function birkly_fetch_live_help_manifest(?string $url = null, int $timeoutSecond
  */
 function birkly_load_core_help_manifest(): array
 {
+    $offlinePath = birkly_help_offline_manifest_path();
+    if (is_file($offlinePath)) {
+        $manifest = json_decode((string) file_get_contents($offlinePath), true);
+        if (is_array($manifest) && !empty($manifest['topics'])) {
+            return $manifest;
+        }
+    }
+
     $path = birkly_help_core_manifest_path();
     if (!is_file($path)) {
         return ['version' => 2, 'topics' => []];
     }
     $manifest = json_decode((string) file_get_contents($path), true);
-    return is_array($manifest) ? $manifest : ['version' => 2, 'topics' => []];
+    if (!is_array($manifest)) {
+        return ['version' => 2, 'topics' => []];
+    }
+
+    $manifest['topics'] = birkly_normalize_help_topics(
+        is_array($manifest['topics'] ?? null) ? $manifest['topics'] : []
+    );
+
+    return $manifest;
 }
 
 /**
@@ -166,13 +182,104 @@ function birkly_merge_help_topics(array $localTopics, array $liveTopics): array
         $topic['section'] = $topic['section'] ?? 'platform';
         $topic['source'] = $topic['source'] ?? 'core';
         if (empty($topic['snapshot'])) {
-            $topic['snapshot'] = '/admin/docs/snapshots/' . $id . '.md';
+            $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
         }
         $merged[] = $topic;
         $seen[$id] = true;
     }
 
+    // Ensure snapshot paths survive live-metadata merge (Birkly-Docs manifest has no snapshot URLs).
+    foreach ($merged as &$topic) {
+        if (!is_array($topic) || empty($topic['id'])) {
+            continue;
+        }
+        if (empty($topic['snapshot']) || !str_ends_with(strtolower((string) $topic['snapshot']), '.md')) {
+            $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
+        }
+    }
+    unset($topic);
+
     return $merged;
+}
+
+/**
+ * Default offline snapshot path for a Help topic id (P50 sync / live manifest have no snapshot URLs).
+ */
+function birkly_help_topic_snapshot_path(array $topic): string
+{
+    $id = (string) ($topic['id'] ?? '');
+    if ($id === '') {
+        return '';
+    }
+
+    /** @var array<string, string> */
+    static $legacyNames = [
+        'ai' => 'ai-overview.md',
+        'automation' => 'automation-overview.md',
+        'closed-alpha' => 'closed-alpha.md',
+    ];
+
+    $file = $legacyNames[$id] ?? ($id . '.md');
+
+    return '/admin/docs/snapshots/' . $file;
+}
+
+/**
+ * Derive Help nav section from Birkly-Docs docs_path prefix.
+ *
+ * @return array{id: string, label: string}
+ */
+function birkly_help_nav_section_from_docs_path(string $docsPath): array
+{
+    /** @var array<string, array{id: string, label: string}> */
+    static $map = [
+        '00-overview' => ['id' => 'overview', 'label' => 'Overview'],
+        '01-admin' => ['id' => 'admin', 'label' => 'Admin'],
+        '02-content' => ['id' => 'content', 'label' => 'Content model'],
+        '03-templating' => ['id' => 'templating', 'label' => 'Templating'],
+        '04-integration' => ['id' => 'integration', 'label' => 'Integration'],
+        '05-automation' => ['id' => 'automation', 'label' => 'Automation'],
+        '06-extensibility' => ['id' => 'extensibility', 'label' => 'Extensibility'],
+        '06-plugin-economy' => ['id' => 'plugin-economy', 'label' => 'Plugin economy'],
+        '07-operations' => ['id' => 'operations', 'label' => 'Operations'],
+    ];
+
+    foreach ($map as $prefix => $section) {
+        if (str_starts_with($docsPath, $prefix . '/')) {
+            return $section;
+        }
+    }
+
+    return ['id' => 'platform', 'label' => 'Platform'];
+}
+
+/**
+ * Ensure every topic has a bundled markdown snapshot path for admin Help.
+ *
+ * @param list<array<string, mixed>> $topics
+ * @return list<array<string, mixed>>
+ */
+function birkly_normalize_help_topics(array $topics): array
+{
+    $normalized = [];
+    foreach ($topics as $topic) {
+        if (!is_array($topic) || empty($topic['id'])) {
+            continue;
+        }
+        $snapshot = (string) ($topic['snapshot'] ?? '');
+        if ($snapshot === '' || !str_ends_with(strtolower($snapshot), '.md')) {
+            $topic['snapshot'] = birkly_help_topic_snapshot_path($topic);
+        }
+        if (empty($topic['nav_section'])) {
+            $docsPath = (string) ($topic['docs_path'] ?? '');
+            $nav = birkly_help_nav_section_from_docs_path($docsPath);
+            $topic['nav_section'] = $nav['id'];
+            $topic['nav_section_label'] = $nav['label'];
+        }
+        $normalized[] = $topic;
+    }
+
+    return $normalized;
 }
 
 /**
@@ -206,6 +313,10 @@ function birkly_build_platform_help_manifest(): array
         $manifest['topics'] = birkly_merge_help_topics($manifest['topics'], $settings['topics']);
     }
 
+    $manifest['topics'] = birkly_normalize_help_topics(
+        is_array($manifest['topics'] ?? null) ? $manifest['topics'] : []
+    );
+
     return $manifest;
 }
 
@@ -221,6 +332,9 @@ function birkly_help_offline_manifest(): array
         $data = json_decode((string) file_get_contents($path), true);
         if (is_array($data)) {
             $data['manifest_source'] = 'offline';
+            if (!empty($data['topics']) && is_array($data['topics'])) {
+                $data['topics'] = birkly_normalize_help_topics($data['topics']);
+            }
             return $data;
         }
     }
