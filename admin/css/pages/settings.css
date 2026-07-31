@@ -2923,6 +2923,14 @@
   color: var(--text-secondary);
 }
 
+.project-rendering-runtime-note:not([hidden]) {
+  color: var(--color-warning, #9a6b00);
+  background: var(--color-warning-bg, #fff8e6);
+  border: 1px solid var(--color-warning-border, #f0d48a);
+  border-radius: var(--radius-sm, 6px);
+  padding: var(--space-3, 0.75rem);
+}
+
 .project-rendering-card input[type="number"] {
   max-width: 12rem;
 }
