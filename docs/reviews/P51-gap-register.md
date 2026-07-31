@@ -1,7 +1,7 @@
 # Phase 51 — Gap register (SSR & shared template engine)
 
 **Plan:** `P51-ssr-shared-template-engine-plan.md`  
-**Status:** Open — execution 2026-07-31 (M1 engine gaps G51-01 / G51-03 closed; M2 SSR gaps G51-04/05/06/07 closed; M3 settings gaps G51-08/09/10 closed; M4 client gaps G51-11/12/13 closed; G51-16 partial)
+**Status:** Closed 2026-07-31 (P51-M1→M6 complete)
 
 | ID | Area | Gap | Severity | Milestone | Status |
 |----|------|-----|----------|-----------|--------|
@@ -19,8 +19,8 @@
 | G51-12 | Client | No animation holdback utility | Medium | M4 | **Closed** (M4) — opt-in `data-birkly-hold-animations` freezes CSS `animation`/`transition` via `:not(.birkly-ready)` selectors until ready |
 | G51-13 | Client | No optional skeleton helper | Low | M4 | **Closed** (M4) — `data-birkly-skeleton` shimmer + `Birkly.loading.showSkeleton/hideSkeleton`; cleared on `birkly:region-processed` / templates-processed. Tests `tests/birkly_loading_test.js` (V-CLI-01..06) |
 | G51-14 | Decouple | Client still embeds full duplicate engine | High | M5 | **Closed** (M5) — old `BIRKLY_RENDER_V3_INLINE` block removed; `birkly-client.js` inlines the shared `birkly-template-engine.js` verbatim via `scripts/sync-template-engine-inline.sh` (`--check` in ci-check). Parity matrix V-DEC-01..08 (`tests/template-engine/parity_client_server_test.js`) |
-| G51-15 | Docs | ROADMAP / help lack Birkly-hosted SSR project mode | Medium | M6 | Open |
-| G51-16 | Security | SSR must escape untrusted field output; cache keys must not leak drafts | High | M2/M6 | Partially closed (M2) — engine escapes untrusted fields; SSR data uses published-only public read APIs; cache key includes content revision. Full security review remains M6 |
+| G51-15 | Docs | ROADMAP / help lack Birkly-hosted SSR project mode | Medium | M6 | **Closed** (M6) — ROADMAP marks P51 complete; `docs/reviews/P51-ssr-notes.md` documents enablement, architecture, client helpers, security/perf |
+| G51-16 | Security | SSR must escape untrusted field output; cache keys must not leak drafts | High | M2/M6 | **Closed** (M6) — V-CI-03 security notes in `P51-ssr-notes.md`; escaping + published-only + auth + Node timeout verified in tests and code review |
 
 ## Resolved (pre-P51 baseline)
 

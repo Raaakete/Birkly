@@ -285,6 +285,7 @@
     }
 
     // External hosting always renders on the client, so disable SSR controls.
+    // Invalidate is also disabled when render mode is client (no SSR cache to clear).
     function updateRenderingDisabledState() {
         var hostingType = document.getElementById('project-hosting-type');
         var isExternal = !!hostingType && hostingType.value === 'external';
@@ -292,9 +293,10 @@
         var ttl = document.getElementById('project-ssr-cache-ttl');
         var invalidateBtn = document.getElementById('project-invalidate-ssr-btn');
         var note = document.getElementById('project-rendering-external-note');
+        var isClientMode = !!renderMode && renderMode.value === 'client';
         if (renderMode) renderMode.disabled = isExternal;
         if (ttl) ttl.disabled = isExternal;
-        if (invalidateBtn) invalidateBtn.disabled = isExternal;
+        if (invalidateBtn) invalidateBtn.disabled = isExternal || isClientMode;
         if (note) note.hidden = !isExternal;
     }
 
@@ -569,6 +571,12 @@
         if (hostingType && hostingType.dataset.bound !== '1') {
             hostingType.dataset.bound = '1';
             hostingType.addEventListener('change', updateRenderingDisabledState);
+        }
+
+        var renderModeSelect = document.getElementById('project-render-mode');
+        if (renderModeSelect && renderModeSelect.dataset.bound !== '1') {
+            renderModeSelect.dataset.bound = '1';
+            renderModeSelect.addEventListener('change', updateRenderingDisabledState);
         }
 
         var saveRenderingBtn = document.getElementById('project-save-rendering-btn');

@@ -1,7 +1,7 @@
 # Phase 51 — Verification matrix
 
 **Plan:** `P51-ssr-shared-template-engine-plan.md`  
-**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`; V-CLI (M4) passing via `tests/birkly_loading_test.js`; V-SET (M3) V-SET-01..05/07 passing via admin UI + `tests/project_ssr_settings_api_test.php` (V-SET-06 pending design-reviewer); V-DEC (M5) passing via `tests/template-engine/parity_client_server_test.js` + `scripts/sync-template-engine-inline.sh --check`
+**Status:** Green 2026-07-31 (P51-M1→M6) — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`; V-CLI (M4) passing via `tests/birkly_loading_test.js`; V-SET (M3) V-SET-01..05/07 passing via admin UI + `tests/project_ssr_settings_api_test.php` (V-SET-06 pending design-reviewer); V-DEC (M5) passing via `tests/template-engine/parity_client_server_test.js` + `scripts/sync-template-engine-inline.sh --check`
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -50,7 +50,7 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 | V-SET-03 | Cache TTL field persisted to `project.json` | API | cms-developer | **pass** (M3) — `tests/project_ssr_settings_api_test.php` persists ttl=300 and reads back via `birkly_project_ssr_settings()` |
 | V-SET-04 | Manual invalidate clears SSR cache | Admin + API | cms-developer | **pass** (M3) — `invalidate_ssr_cache` action → `birkly_project_ssr_invalidate_all()`; asserted in settings API test |
 | V-SET-05 | Changing render settings persists and can invalidate cache | Integration | cms-developer | **pass** (M3) — `save_settings` persists whitelisted patch and invalidates cache when `ssr_affected`; validation + clamp covered by test |
-| V-SET-06 | Settings match admin design system (labels, help, spacing) | design-reviewer | design-reviewer | pending |
+| V-SET-06 | Settings match admin design system (labels, help, spacing) | design-reviewer | design-reviewer | **pass** (M6) — design-reviewer: approve with nits; polish applied (TTL max-width, aria-live on external note, label dim when disabled, invalidate disabled in client mode) |
 | V-SET-07 | Non-admin cannot change settings | Auth check | cms-developer | **pass** (M3) — unauthenticated POST to `save_settings`/`invalidate_ssr_cache` returns 401 (HTTP probe in settings API test); `requireAuth('manage_settings')` guards all writes |
 
 ---
@@ -87,8 +87,8 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-CI-01 | `./scripts/ci-check.sh` green (or documented PHP skip if env lacks PHP) | CI | lead-engineer | pending |
-| V-CI-02 | Performance notes: client vs server first paint / CLS documented | Doc | lead-engineer | pending |
-| V-CI-03 | Security review notes: escaping, cache, access control | Doc | lead-engineer | pending |
-| V-CI-04 | design-reviewer sign-off on project settings UX | Review | design-reviewer | pending |
-| V-CI-05 | ROADMAP + gap register closed; human notified once | Closure | lead-engineer | pending |
+| V-CI-01 | `./scripts/ci-check.sh` green (or documented PHP skip if env lacks PHP) | CI | lead-engineer | **pass** (M6) — full `bash scripts/ci-check.sh` green on closure branch |
+| V-CI-02 | Performance notes: client vs server first paint / CLS documented | Doc | lead-engineer | **pass** (M6) — `docs/reviews/P51-ssr-notes.md` Performance notes section |
+| V-CI-03 | Security review notes: escaping, cache, access control | Doc | lead-engineer | **pass** (M6) — `docs/reviews/P51-ssr-notes.md` Security notes section |
+| V-CI-04 | design-reviewer sign-off on project settings UX | Review | design-reviewer | **pass** (M6) — design-reviewer approve-with-nits; polish committed |
+| V-CI-05 | ROADMAP + gap register closed; human notified once | Closure | lead-engineer | **pass** (M6) — ROADMAP + gap register closed; human notified at M6 |

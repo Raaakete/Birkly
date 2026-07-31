@@ -14,7 +14,7 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ---
 
-## Current state (verified 2026-07-29)
+## Current state (verified 2026-07-31)
 
 | Area | Status |
 |------|--------|
@@ -27,9 +27,25 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**Active phase:** None — **P50 complete** (2026-07-29). Next phase TBD with human + product-planner.
+**Active phase:** None — **P51 complete** (2026-07-31). Next phase TBD with human + product-planner.
 
-Focus delivered: Birkly-Docs SSOT for human docs, content-model overview, DynamicItems fix, collection save UX, fieldtype audit. **No new content primitives.**
+Focus delivered: shared `birkly-template-engine.js`, optional SSR for Birkly-hosted `project/` sites, admin render settings, client loading helpers, client↔engine decoupling.
+
+---
+
+## Completed — Phase 51 (SSR & shared template engine)
+
+**Status:** Complete (2026-07-31)  
+**Artifacts:** `docs/reviews/P51-ssr-shared-template-engine-plan.md`, `P51-gap-register.md`, `P51-verification-matrix.md`, `P51-ssr-notes.md`
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| P51-M1 | Shared `birkly-template-engine.js` + syntax tests | Done |
+| P51-M2 | Project SSR pipeline (Node CLI + cache + fallback) | Done |
+| P51-M3 | Admin Project render settings + invalidate | Done |
+| P51-M4 | Client loading reveal / animation holdback / skeletons | Done |
+| P51-M5 | Decouple `birkly-client.js` onto shared engine | Done |
+| P51-M6 | CI, design review, security/perf notes, closure | Done |
 
 ---
 

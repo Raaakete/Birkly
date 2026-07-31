@@ -1,6 +1,6 @@
 # Phase 51 — Server-side rendering & shared template engine
 
-**Status:** Approved (2026-07-31, Keven) — execute P51-M1→M6  
+**Status:** Complete (2026-07-31) — P51-M1→M6 executed; matrix green  
 **Human decision (locked):** Shared JS template engine + optional SSR for Birkly-hosted project sites. No third-party frontend frameworks. No build-time static export / zip download. Template language syntax unchanged for authors. Do not modify `birkly-client.js` until M1 and M2 are stable.
 
 **Artifacts:** `P51-gap-register.md` · `P51-verification-matrix.md` · `P51-lead-engineer-handoff.md`

@@ -143,12 +143,33 @@ timeout reveal · animation-holdback release · skeleton lifecycle
 (declared → shimmer, `birkly:region-processed` clears, manual show/hide, reveal
 clears leftovers).
 
-## Known limitations / M3+ follow-ups
+## Known limitations / follow-ups
 
-- **Admin UI (M3):** no Project-tab controls yet for render mode / hosting type / TTL / manual invalidate — settings are file/env only.
 - **Invalidation granularity:** content writes call `invalidate_all()` (simple + correct). Per-page/prefix invalidation exists but is not yet wired to specific collections.
-- **Per-request Node process:** each cache MISS spawns a Node process (~tens of ms). Acceptable with caching on; a persistent worker is out of scope for M2.
+- **Per-request Node process:** each cache MISS spawns a Node process (~tens of ms). Acceptable with caching on; a persistent worker is out of scope for P51.
 - **Language:** SSR resolves language from `?lang=` only (localStorage is client-side). Multilingual detail pages render the `?lang=` variant.
+- **48h production pilot:** enable `render_mode=server` on one internal Birkly-hosted project after merge; monitor `X-Birkly-Render` / fallback rates.
+
+## Performance notes (M6 / V-CI-02)
+
+| Mode | First paint | Layout shift |
+|------|-------------|--------------|
+| **Client** (`render_mode=client`) | Browser paints raw HTML; template regions fill after `page_bundle` + `processTemplates`. Without opt-in helpers, authors may see brief `{…}` / empty regions. | Possible CLS when loops inject height after fetch. Mitigate with `data-birkly-loading` / `data-birkly-hold-animations` / skeletons (M4). |
+| **Server** (`render_mode=server`) | HTML arrives with template syntax already rendered (`X-Birkly-Render: server`). First paint shows content; client only enhances forms/nav. Cache HIT avoids Node spawn. | Lower CLS for content blocks; still use loading helpers if CSS animations should wait for fonts/assets. |
+| **Auto** | Same as server when Node + gating succeed; falls back to client with `X-Birkly-Render: client-fallback`. | Same as whichever path ran. |
+
+**Qualitative finding (dev server, 2026-07-31):** SSR MISS for a small list page completed within the 5s Node budget; subsequent HIT returned cached HTML without re-spawn. Formal Lighthouse/browser matrix deferred to post-merge pilot (not a P51 blocker).
+
+## Security notes (M6 / V-CI-03)
+
+| Risk | Mitigation |
+|------|------------|
+| XSS via field values in SSR HTML | Shared engine `escapeHtml` default `true` for untrusted fields; rich `content`/`html` remain trusted by existing convention (same as client). Covered by V-ENG-09 / V-SSR-09. |
+| Draft leakage via SSR/cache | Data built only through public read APIs (`birkly_public_list_entries` / `birkly_public_get_entry`) — published filter. Cache keys include content revision so unpublished edits do not revive stale public HTML incorrectly after publish/unpublish cycles without invalidate. |
+| Cache poisoning / stale private HTML | SSR serves public project files only; no session-specific HTML in cache. Admin auth required for settings + invalidate. |
+| Node CLI abuse | `proc_open` with `escapeshellarg` path, ~5s timeout, terminate on overrun; stdin JSON only; failure → static fallback (no crash). |
+| Unauthorized settings change | `requireAuth('manage_settings')` + CSRF on `save_settings` / `invalidate_ssr_cache` (V-SET-07). |
+| External hosting SSR surprise | `hosting_type=external` or hosting `public_site_mode≠project` disables SSR entirely (V-SSR-10 / V-SET-02). |
 
 ## Client decoupling (M5)
 
