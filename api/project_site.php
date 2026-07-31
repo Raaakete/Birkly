@@ -321,6 +321,7 @@ function birkly_project_site_activity(int $limit = 30): array
 
 if ($action === 'overview') {
     requireAuth('read_settings');
+    require_once __DIR__ . '/../core/project_ssr.php';
 
     birkly_ensure_public_site_path();
     $fs = new ProjectSiteFileSystem();
@@ -343,6 +344,7 @@ if ($action === 'overview') {
             'render_mode' => (string) ($projectSettings['render_mode'] ?? 'client'),
             'hosting_type' => (string) ($projectSettings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($projectSettings['ssr_cache_ttl'] ?? 60),
+            'ssr_runtime' => birkly_project_ssr_runtime_status(),
         ],
     ]);
     exit;
