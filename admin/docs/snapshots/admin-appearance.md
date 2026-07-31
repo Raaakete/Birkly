@@ -40,7 +40,7 @@ The admin header includes a **theme switcher**: **Light**, **Dark**, or **System
 - `getResolvedTheme()` resolves `system` via `prefers-color-scheme`
 - Switcher markup: `admin/partials/theme-switcher.php`
 
-**CSS:** Design tokens under `[data-theme="dark"]` and shared variables in admin stylesheets. Audited surfaces (P15-M1): Commerce admin tabs, Settings global save bar, Marketplace install panel, ContentEditor side panels, dashboard widgets.
+**CSS:** Design tokens under `[data-theme="dark"]` and shared variables in admin stylesheets. Audited surfaces (P15-M1): Commerce admin tabs, Settings global save bar, Marketplace install panel, ContentEditor side panels, dashboard widgets. Full token and component reference: [Admin design system](design-system.md).
 
 **Responsive:** Breakpoint ~768px — sidebar toggle (`initMobileSidebar`), table overflow, stacked form rows.
 
@@ -48,6 +48,7 @@ The admin header includes a **theme switcher**: **Light**, **Dark**, or **System
 
 ## Related
 
+- [Admin design system](design-system.md)
 - [Dashboard](dashboard.md)
 - [Settings](settings.md)
 - [Help and onboarding](help-and-onboarding.md)

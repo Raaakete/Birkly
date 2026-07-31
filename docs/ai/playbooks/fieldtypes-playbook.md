@@ -126,4 +126,4 @@ On parent `blog` via `update_collection` → `sub_collections`:
 - `public-forms` — `{entry for}` and form field mapping
 - `sub-collections` — nested schemas
 - `content-editor` — Editor field HTML tables/grids
-- Admin: `admin/docs/fieldtypes.php`
+- Human docs: https://docs.birkly.com/02-content/field-types.html (offline: `admin/docs/snapshots/field-types.md`)

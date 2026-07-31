@@ -166,7 +166,7 @@
             tags: '.tags-field-container',
             relation: '.relation-field',
             media: '.media-field',
-            dynamicitems: '.dynamic-items-field',
+            dynamicitems: '.block-field',
             editor: '.editor-field'
           };
           var run = function() {

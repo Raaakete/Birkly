@@ -567,8 +567,10 @@
         const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
         const isTrashedEntry = normalizedStatus === 'trashed';
         const allowDragHandle = hasDragColumn
-            ? '<td class="cell cell-drag"' + (canDragCurrentView() ? ' draggable="true"' : '') + ' aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '">' +
-                (canDragCurrentView() ? icon('dots-six-vertical', { size: 16 }) : '') +
+            ? '<td class="cell cell-drag">' +
+                (canDragCurrentView()
+                    ? '<button type="button" class="entry-drag-handle" aria-label="' + escapeHtml(t('drag_to_reorder', 'Drag to reorder')) + '" tabindex="-1">' + icon('dots-six-vertical', { size: 16 }) + '</button>'
+                    : '') +
             '</td>'
             : '';
 
@@ -840,27 +842,15 @@
         }
     });
 
-    async function reorderEntries(entryId, targetEntryId, insertBefore) {
-        const rows = Array.from(document.querySelectorAll('.table-row'));
-        const currentOrder = rows.map(function (row) { return row.dataset.entryId; }).filter(Boolean);
-        const currentIndex = currentOrder.indexOf(entryId);
-        const targetIndex = currentOrder.indexOf(targetEntryId);
-
-        if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) {
+    async function saveEntryOrder(orderedIds) {
+        if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
             return;
         }
 
-        currentOrder.splice(currentIndex, 1);
-        let newTargetIndex = targetIndex;
-        if (currentIndex < targetIndex) {
-            newTargetIndex = targetIndex - 1;
-        }
-        currentOrder.splice(insertBefore ? newTargetIndex : newTargetIndex + 1, 0, entryId);
-
         try {
             const response = await requestJson('/api/content.php?action=set_entry_order', {
-                collection: window.collectionId || collectionSlug,
-                order: currentOrder,
+                collection: collectionSlug,
+                order: orderedIds,
                 _csrf: getCSRFToken(),
             });
 
@@ -868,29 +858,233 @@
                 throw new Error(response.message || 'Failed to save entry order');
             }
 
-            const tableBody = document.querySelector('.table-body');
+            const tableBodyEl = entriesTableBody();
             const entryMap = {};
-            rows.forEach(function (row) {
-                entryMap[row.dataset.entryId] = row;
-            });
-            if (!tableBody) {
-                return;
-            }
-            tableBody.innerHTML = '';
-            currentOrder.forEach(function (id) {
-                if (entryMap[id]) {
-                    tableBody.appendChild(entryMap[id]);
+            orderedIds.forEach(function (entryId) {
+                const row = tableBodyEl ? tableBodyEl.querySelector('.table-row[data-entry-id="' + entryId + '"]') : null;
+                if (row) {
+                    entryMap[entryId] = row;
                 }
             });
+            if (!tableBodyEl) {
+                return;
+            }
+            tableBodyEl.innerHTML = '';
+            orderedIds.forEach(function (entryId) {
+                if (entryMap[entryId]) {
+                    tableBodyEl.appendChild(entryMap[entryId]);
+                }
+            });
+            refreshTableElements();
             initializeEntryDragHandlers();
         } catch (error) {
-            BirklyFeedback.toast('Error saving entry order: ' + error.message, 'error')
+            BirklyFeedback.toast('Error saving entry order: ' + error.message, 'error');
+            throw error;
         }
     }
 
+    function getEntryRowOrder(tableBodyEl) {
+        if (!tableBodyEl) {
+            return [];
+        }
+        return Array.from(tableBodyEl.querySelectorAll('.table-row:not(.table-row--empty)'))
+            .map(function (row) { return row.dataset.entryId || ''; })
+            .filter(Boolean);
+    }
+
+    function entriesTableRoot() {
+        return document.querySelector('.entries-smart-table');
+    }
+
+    function entriesTableBody() {
+        const root = entriesTableRoot();
+        return root ? root.querySelector('tbody.table-body') : null;
+    }
+
+    function entriesTableHasDragHandles() {
+        const tbody = entriesTableBody();
+        return Boolean(tbody && tbody.querySelector('.entry-drag-handle'));
+    }
+
+    function EntryTableDrag(options) {
+        this.tbody = options.container;
+        this.onReorder = options.onReorder || function () {};
+        this.dragging = false;
+        this.draggedRow = null;
+        this.placeholder = null;
+        this.orderAtDragStart = [];
+
+        this.onDragStart = this.onDragStart.bind(this);
+        this.onDragMove = this.onDragMove.bind(this);
+        this.onDragEnd = this.onDragEnd.bind(this);
+
+        if (this.tbody) {
+            this.tbody.addEventListener('mousedown', this.onDragStart, true);
+        }
+    }
+
+    EntryTableDrag.prototype.getRows = function () {
+        if (!this.tbody) {
+            return [];
+        }
+        return Array.from(this.tbody.querySelectorAll('.table-row:not(.table-row--empty)'));
+    };
+
+    EntryTableDrag.prototype.onDragStart = function (event) {
+        if (this.dragging || (typeof event.button === 'number' && event.button !== 0)) {
+            return;
+        }
+
+        const handle = event.target.closest('.entry-drag-handle');
+        if (!handle || !this.tbody || !this.tbody.contains(handle)) {
+            return;
+        }
+
+        const row = handle.closest('.table-row');
+        if (!row || row.classList.contains('table-row--empty') || !this.tbody.contains(row)) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        this.dragging = true;
+        this.draggedRow = row;
+        this.orderAtDragStart = getEntryRowOrder(this.tbody);
+
+        this.placeholder = document.createElement('tr');
+        this.placeholder.className = 'drag-placeholder-row';
+        this.placeholder.setAttribute('aria-hidden', 'true');
+        const cell = document.createElement('td');
+        cell.colSpan = Math.max(row.cells.length, 1);
+        cell.className = 'drag-placeholder-cell';
+        this.placeholder.appendChild(cell);
+
+        row.parentNode.insertBefore(this.placeholder, row);
+        row.classList.add('is-drag-source');
+        row.style.display = 'none';
+
+        document.addEventListener('mousemove', this.onDragMove);
+        document.addEventListener('mouseup', this.onDragEnd);
+        document.body.style.cursor = 'grabbing';
+        document.body.classList.add('entries-table-dragging');
+    };
+
+    EntryTableDrag.prototype.findRowAt = function (clientY) {
+        const rows = this.getRows().filter(function (row) {
+            return row !== this.draggedRow && row.style.display !== 'none';
+        }, this);
+
+        for (let index = 0; index < rows.length; index += 1) {
+            const row = rows[index];
+            const rect = row.getBoundingClientRect();
+            if (clientY >= rect.top && clientY <= rect.bottom) {
+                return row;
+            }
+        }
+
+        let closest = null;
+        let minDistance = Infinity;
+        for (let index = 0; index < rows.length; index += 1) {
+            const row = rows[index];
+            const rect = row.getBoundingClientRect();
+            const centerY = rect.top + rect.height / 2;
+            const distance = Math.abs(clientY - centerY);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closest = row;
+            }
+        }
+        return closest;
+    };
+
+    EntryTableDrag.prototype.movePlaceholder = function (clientY) {
+        if (!this.placeholder) {
+            return;
+        }
+
+        const target = this.findRowAt(clientY);
+        if (!target) {
+            return;
+        }
+
+        const rect = target.getBoundingClientRect();
+        const insertBefore = clientY < rect.top + rect.height / 2;
+        const parent = target.parentNode;
+        if (!parent) {
+            return;
+        }
+
+        if (insertBefore) {
+            if (this.placeholder.nextSibling !== target) {
+                parent.insertBefore(this.placeholder, target);
+            }
+            return;
+        }
+
+        if (this.placeholder.previousSibling !== target) {
+            parent.insertBefore(this.placeholder, target.nextSibling);
+        }
+    };
+
+    EntryTableDrag.prototype.onDragMove = function (event) {
+        if (!this.dragging) {
+            return;
+        }
+        event.preventDefault();
+        this.movePlaceholder(event.clientY);
+    };
+
+    EntryTableDrag.prototype.onDragEnd = function () {
+        if (!this.dragging) {
+            return;
+        }
+
+        if (this.placeholder && this.placeholder.parentNode && this.draggedRow) {
+            this.placeholder.parentNode.insertBefore(this.draggedRow, this.placeholder);
+        }
+
+        const nextOrder = getEntryRowOrder(this.tbody);
+        const startKey = this.orderAtDragStart.join('\u0001');
+        const nextKey = nextOrder.join('\u0001');
+        this.cleanup();
+
+        if (nextOrder.length > 0 && startKey !== nextKey) {
+            this.onReorder(nextOrder);
+        }
+    };
+
+    EntryTableDrag.prototype.cleanup = function () {
+        document.removeEventListener('mousemove', this.onDragMove);
+        document.removeEventListener('mouseup', this.onDragEnd);
+        document.body.style.cursor = '';
+        document.body.classList.remove('entries-table-dragging');
+
+        if (this.draggedRow) {
+            this.draggedRow.style.display = '';
+            this.draggedRow.classList.remove('is-drag-source');
+        }
+        if (this.placeholder && this.placeholder.parentNode) {
+            this.placeholder.remove();
+        }
+
+        this.dragging = false;
+        this.draggedRow = null;
+        this.placeholder = null;
+        this.orderAtDragStart = [];
+    };
+
+    EntryTableDrag.prototype.destroy = function () {
+        this.cleanup();
+        if (this.tbody) {
+            this.tbody.removeEventListener('mousedown', this.onDragStart, true);
+        }
+        this.tbody = null;
+    };
+
     function initializeEntryDragHandlers() {
-        const tableBody = document.querySelector('.table-body');
-        if (!tableBody || !canDragCurrentView() || typeof MouseDragDrop !== 'function') {
+        const tableBodyEl = entriesTableBody();
+        if (!tableBodyEl || !entriesTableHasDragHandles()) {
             if (entrySorter) {
                 entrySorter.destroy();
                 entrySorter = null;
@@ -902,55 +1096,10 @@
             entrySorter.destroy();
         }
 
-        entrySorter = new MouseDragDrop({
-            container: tableBody,
-            itemSelector: '.table-row',
-            handleSelector: '.cell-drag',
-            onReorder: function (fromIndex, toIndex, placeholder, draggedItem) {
-                const draggedEntryId = draggedItem?.dataset?.entryId || '';
-                if (!draggedEntryId) return;
-
-                let targetEntryId = null;
-                let insertBefore = false;
-
-                if (placeholder && placeholder.parentNode) {
-                    let sibling = placeholder.nextSibling;
-                    while (sibling) {
-                        if (sibling.classList && sibling.classList.contains('table-row')) {
-                            targetEntryId = sibling.dataset.entryId;
-                            insertBefore = true;
-                            break;
-                        }
-                        sibling = sibling.nextSibling;
-                    }
-                    if (!targetEntryId) {
-                        sibling = placeholder.previousSibling;
-                        while (sibling) {
-                            if (sibling.classList && sibling.classList.contains('table-row')) {
-                                targetEntryId = sibling.dataset.entryId;
-                                insertBefore = false;
-                                break;
-                            }
-                            sibling = sibling.previousSibling;
-                        }
-                    }
-                }
-
-                if (!targetEntryId) {
-                    const allRows = Array.from(tableBody.querySelectorAll('.table-row')).filter(function (row) {
-                        return row !== draggedItem && !row.classList.contains('drag-placeholder');
-                    });
-                    if (toIndex < allRows.length) {
-                        targetEntryId = allRows[toIndex].dataset.entryId;
-                        insertBefore = true;
-                    } else if (allRows.length > 0) {
-                        targetEntryId = allRows[allRows.length - 1].dataset.entryId;
-                    }
-                }
-
-                if (targetEntryId && draggedEntryId !== targetEntryId) {
-                    reorderEntries(draggedEntryId, targetEntryId, insertBefore);
-                }
+        entrySorter = new EntryTableDrag({
+            container: tableBodyEl,
+            onReorder: function (orderedIds) {
+                saveEntryOrder(orderedIds);
             },
         });
     }
@@ -990,6 +1139,7 @@
 
     updateBulkUI();
     initializeViewportScrollState();
-    window.setTimeout(initializeEntryDragHandlers, 100);
+    initializeEntryDragHandlers();
+    window.addEventListener('load', initializeEntryDragHandlers);
 })();
 

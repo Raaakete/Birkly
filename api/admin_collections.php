@@ -51,6 +51,59 @@ if (!validate_csrf_token($csrf)) {
     exit;
 }
 
+/**
+ * Process nested sub-collection rows from POST (standalone sub-collection editor).
+ *
+ * @param array<int, array<string, mixed>> $rawNested
+ * @return list<array<string, mixed>>
+ */
+function birkly_admin_build_nested_sub_collections(array $rawNested, string $parentSlug): array
+{
+    $processed = [];
+    foreach ($rawNested as $nestedData) {
+        if (!is_array($nestedData) || empty($nestedData['slug']) || empty($nestedData['name'])) {
+            continue;
+        }
+
+        $nestedFields = $nestedData['schema']['fields'] ?? $nestedData['fields'] ?? [];
+        $processedFields = [];
+        if (is_array($nestedFields)) {
+            foreach ($nestedFields as $fieldId => $fieldData) {
+                $fieldName = $fieldData['name'] ?? '';
+                $fieldLabel = $fieldData['label'] ?? '';
+                $fieldType = $fieldData['type'] ?? '';
+                if (empty($fieldName) && !empty($fieldLabel)) {
+                    $fieldName = strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldLabel)));
+                }
+                if (empty($fieldName) || empty($fieldType)) {
+                    continue;
+                }
+                $processedFields[] = [
+                    'name' => strtolower(trim(preg_replace('/[^A-Za-z0-9_]+/', '_', $fieldName))),
+                    'label' => !empty($fieldLabel) ? $fieldLabel : $fieldName,
+                    'type' => $fieldType,
+                    'required' => !empty($fieldData['required']),
+                    'id' => $fieldId,
+                ];
+            }
+        }
+
+        $nestedSlug = trim((string) $nestedData['slug']);
+        $processed[] = [
+            'slug' => $nestedSlug,
+            'name' => trim((string) $nestedData['name']),
+            'description' => trim((string) ($nestedData['description'] ?? '')),
+            'entry_method' => $nestedData['entry_method'] ?? 'admin_only',
+            'auto_publish' => !empty($nestedData['auto_publish']),
+            'fields' => $processedFields,
+            'parent_field' => $parentSlug . '_id',
+            'parent_sub_collection' => $parentSlug,
+        ];
+    }
+
+    return $processed;
+}
+
 try {
     // Check for sub-collection specific actions
     $action = $_POST['action'] ?? '';
@@ -154,6 +207,13 @@ try {
             'parent_field' => $parentSubCollectionSlug ? ($parentSubCollectionSlug . '_id') : ($collectionSlug . '_id'),
             'parent_sub_collection' => $parentSubCollectionSlug
         ];
+
+        if (isset($subCollectionData['sub_collections']) && is_array($subCollectionData['sub_collections'])) {
+            $newSubCollection['sub_collections'] = birkly_admin_build_nested_sub_collections(
+                $subCollectionData['sub_collections'],
+                trim($subCollectionData['slug'])
+            );
+        }
         
         // Add to target sub-collections
         $targetSubCollections[] = $newSubCollection;
@@ -279,7 +339,7 @@ try {
                     $processedSubFields[] = $field;
                 }
                 
-            $targetSubCollections[$targetIndex] = [
+            $updatedSubCollection = [
                 'slug' => trim($subCollectionData['slug'] ?? $subCollectionSlug),
                 'name' => trim($subCollectionData['name'] ?? $subCollection['name']),
                 'description' => trim($subCollectionData['description'] ?? ''),
@@ -288,8 +348,18 @@ try {
                 'fields' => $processedSubFields,
                 'parent_field' => $subCollection['parent_field'] ?? ($parentSubCollectionSlug ? ($parentSubCollectionSlug . '_id') : ($collectionSlug . '_id')),
                 'parent_sub_collection' => $parentSubCollectionSlug ?? ($subCollection['parent_sub_collection'] ?? null),
-                'sub_collections' => $subCollection['sub_collections'] ?? []
             ];
+
+            if (isset($subCollectionData['sub_collections']) && is_array($subCollectionData['sub_collections'])) {
+                $updatedSubCollection['sub_collections'] = birkly_admin_build_nested_sub_collections(
+                    $subCollectionData['sub_collections'],
+                    trim($subCollectionData['slug'] ?? $subCollectionSlug)
+                );
+            } else {
+                $updatedSubCollection['sub_collections'] = $subCollection['sub_collections'] ?? [];
+            }
+
+            $targetSubCollections[$targetIndex] = $updatedSubCollection;
             
             if ($parentSubCollectionSlug && $parentIndex !== null) {
                 $existingSubCollections[$parentIndex]['sub_collections'] = $targetSubCollections;
@@ -312,7 +382,7 @@ try {
             'status' => 'ok',
             'message' => 'Sub-collection updated successfully',
             'data' => [
-                'sub_collection' => $existingSubCollections[$index]
+                'sub_collection' => $targetSubCollections[$targetIndex]
             ]
         ]);
         ob_end_flush();
@@ -485,8 +555,9 @@ try {
     // Process and save sub-collections
     error_log("Raw sub_collections POST data: " . print_r($subCollections, true));
     
-    if (is_array($subCollections) && count($subCollections) > 0) {
+    if (!empty($_POST['sub_collections_replace'])) {
         $processedSubCollections = [];
+        if (is_array($subCollections) && count($subCollections) > 0) {
         foreach ($subCollections as $subCollectionIndex => $subCollectionData) {
             error_log("Processing sub-collection index: $subCollectionIndex");
             error_log("Sub-collection data keys: " . implode(', ', array_keys($subCollectionData)));
@@ -602,11 +673,12 @@ try {
             error_log("Final sub-collection structure: " . json_encode($subCollection, JSON_PRETTY_PRINT));
             $processedSubCollections[] = $subCollection;
         }
+        }
         $collectionData['sub_collections'] = $processedSubCollections;
         error_log("Total processed sub-collections: " . count($processedSubCollections));
     } else {
-        error_log("No sub-collections to process or empty array");
-        // Preserve existing sub_collections if not provided
+        error_log("No sub-collections replace flag or empty replace payload");
+        // Preserve existing sub_collections when replace marker absent (API-only updates)
         if ($existingCollection && isset($existingCollection['sub_collections'])) {
             $collectionData['sub_collections'] = $existingCollection['sub_collections'];
             error_log("Preserving existing sub-collections: " . count($existingCollection['sub_collections']));
