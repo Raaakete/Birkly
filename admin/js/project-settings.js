@@ -12,7 +12,8 @@
         hasIndex: false,
         dirty: false,
         advancedMode: false,
-        simpleInitialized: false
+        simpleInitialized: false,
+        renderSettingsLoaded: false
     };
 
     function apiUrl(path) {
@@ -280,12 +281,15 @@
         var hostingType = document.getElementById('project-hosting-type');
         var renderMode = document.getElementById('project-render-mode');
         var ttl = document.getElementById('project-ssr-cache-ttl');
+        var saveBtn = document.getElementById('project-save-rendering-btn');
         if (hostingType && data.hosting_type) hostingType.value = data.hosting_type;
         if (renderMode && data.render_mode) renderMode.value = data.render_mode;
         if (ttl && data.ssr_cache_ttl != null) ttl.value = data.ssr_cache_ttl;
         if (data.ssr_runtime && typeof data.ssr_runtime === 'object') {
             ssrRuntime = data.ssr_runtime;
         }
+        state.renderSettingsLoaded = true;
+        if (saveBtn) saveBtn.disabled = false;
         updateRenderingDisabledState();
     }
 
@@ -333,6 +337,13 @@
         var renderMode = document.getElementById('project-render-mode');
         var ttl = document.getElementById('project-ssr-cache-ttl');
         var btn = document.getElementById('project-save-rendering-btn');
+
+        // Prevent overwriting persisted server mode with the HTML default
+        // ("client") if the user hits Save before overview finishes loading.
+        if (!state.renderSettingsLoaded) {
+            BirklyFeedback.toast('Wait for rendering settings to load, then try again', 'warning');
+            return Promise.resolve();
+        }
 
         var ttlValue = parseInt(ttl ? ttl.value : '', 10);
         if (isNaN(ttlValue) || ttlValue < 0) ttlValue = 0;
