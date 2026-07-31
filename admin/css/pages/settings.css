@@ -2923,6 +2923,14 @@
   color: var(--text-secondary);
 }
 
+.project-rendering-card input[type="number"] {
+  max-width: 12rem;
+}
+
+.project-rendering-card .form-group:has(:disabled) > label {
+  opacity: 0.7;
+}
+
 .project-files-header {
   display: flex;
   justify-content: space-between;
