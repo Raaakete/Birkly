@@ -34,23 +34,43 @@ pull_one() {
   dir="$PLUGINS_DIR/$id"
 
   if [ ! -d "$dir/.git" ]; then
+    log "skip $id (not a git clone — no .git)"
     return 0
   fi
 
-  repo="$(repo_name_for_id "$id")"
+  repo="$(repo_name_for_id_from_map "$id")"
+  branch="$(git -C "$dir" symbolic-ref -q --short HEAD 2>/dev/null || echo main)"
+  if [ -z "$branch" ]; then
+    branch=main
+  fi
+
+  err_file="$(mktemp)"
+  ok=0
+
   if [ -n "$token" ]; then
     url="https://x-access-token:${token}@github.com/${org}/${repo}.git"
-    if git -C "$dir" pull -q "$url" 2>/dev/null; then
-      log "pulled $id"
-      return 0
+    if git -C "$dir" pull -q "$url" "$branch" 2>"$err_file"; then
+      ok=1
+    elif git -C "$dir" pull -q "$url" main 2>"$err_file"; then
+      ok=1
     fi
   fi
 
-  if git -C "$dir" pull -q 2>/dev/null; then
-    log "pulled $id"
-  else
-    log "WARN: pull failed for $id"
+  if [ "$ok" -eq 0 ]; then
+    if git -C "$dir" pull -q origin "$branch" 2>"$err_file"; then
+      ok=1
+    elif git -C "$dir" pull -q 2>"$err_file"; then
+      ok=1
+    fi
   fi
+
+  if [ "$ok" -eq 1 ]; then
+    log "pulled $id ($branch)"
+  else
+    err="$(tr '\n' ' ' < "$err_file" | sed 's/[[:space:]]+/ /g' | cut -c1-240)"
+    log "WARN: pull failed for $id (${org}/${repo}, branch ${branch}): ${err}"
+  fi
+  rm -f "$err_file"
 }
 
 if [ ! -f "$ENV_FILE" ]; then
@@ -77,6 +97,27 @@ link_plugin_dev_paths
 ORG="${GITHUB_ORG:-Birkly-Other-Things}"
 TOKEN="${GITHUB_TOKEN:-}"
 IDS="${PLUGIN_DEV_SYNC_IDS:-commerce,events,automation,user_management,studio}"
+
+# Optional: PLUGIN_DEV_SYNC_REPOS=commerce:birkly-commerce,events:my-events-repo
+REPO_MAP="${PLUGIN_DEV_SYNC_REPOS:-}"
+
+repo_name_for_id_from_map() {
+  id="$1"
+  if [ -n "$REPO_MAP" ]; then
+    IFS=,
+    for pair in $REPO_MAP; do
+      key="${pair%%:*}"
+      val="${pair#*:}"
+      key="$(echo "$key" | tr -d '[:space:]')"
+      val="$(echo "$val" | tr -d '[:space:]')"
+      if [ "$key" = "$id" ] && [ -n "$val" ]; then
+        echo "$val"
+        return 0
+      fi
+    done
+  fi
+  repo_name_for_id "$id"
+}
 
 IFS=,
 for id in $IDS; do
