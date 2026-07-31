@@ -263,6 +263,26 @@ try {
 assert('null/invalid inputs handled gracefully', nonStringOk);
 
 // ---------------------------------------------------------------------------
+// V-ENG-11 — CSS/JS brace bodies must survive full-page render (SSR)
+// ---------------------------------------------------------------------------
+section('V-ENG-11', 'protect style/script CSS braces');
+const cssHtml = `<!DOCTYPE html><html><head><style>
+.bk-card { transition: transform .35s ease; }
+[data-theme="dark"] { background: #262836; color: #E7EAE4; }
+@media (max-width: 900px) { [data-feature-col] { margin-top: 0 !important; } }
+@keyframes birkly-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+</style><script>var x = { a: 1 };</script></head><body>
+{for each entry in 'features'}<div>{'heading'}</div>{endfor}
+</body></html>`;
+const cssOut = engine.render(cssHtml, { features: [{ heading: 'Hi' }] });
+assert('keeps .bk-card rule body', cssOut.includes('transition: transform .35s ease'));
+assert('keeps [data-theme=dark] rule body', cssOut.includes('background: #262836'));
+assert('keeps nested media query body', cssOut.includes('margin-top: 0 !important'));
+assert('keeps keyframes bodies', cssOut.includes('opacity: 1') && cssOut.includes('opacity: 0.35'));
+assert('keeps JS object braces in script', cssOut.includes('var x = { a: 1 };'));
+assert('still renders template loops', cssOut.includes('<div>Hi</div>'));
+
+// ---------------------------------------------------------------------------
 console.log('\ntemplate-engine suite: ' + (failures === 0 ? 'PASS' : 'FAIL') +
     ' (' + (total - failures) + '/' + total + ')');
 process.exit(failures === 0 ? 0 : 1);

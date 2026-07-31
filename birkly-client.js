@@ -2712,6 +2712,35 @@
     }
 
     /**
+     * Pull `<style>`, `<script>`, and `<noscript>` bodies out of the template so
+     * CSS/JS `{ … }` blocks are not eaten by processVariables (which matches any
+     * `{…}` pair). Tokens are restored after templating.
+     *
+     * Without this, full-page SSR mangles inline CSS (theme rules, keyframes,
+     * media queries) and the site looks unstyled even though markup is correct.
+     */
+    function extractProtectedBlocks(html) {
+        const blocks = [];
+        const next = String(html || '').replace(
+            /<(script|style|noscript)\b([^>]*)>([\s\S]*?)<\/\1>/gi,
+            (full, tag, attrs, body) => {
+                const token = '@@BIRKLY_PROTECTED_' + blocks.length + '@@';
+                blocks.push(String(body));
+                return '<' + tag + attrs + '>' + token + '</' + tag + '>';
+            }
+        );
+        return { html: next, blocks: blocks };
+    }
+
+    function restoreProtectedBlocks(html, blocks) {
+        let out = String(html || '');
+        for (let i = 0; i < blocks.length; i++) {
+            out = out.split('@@BIRKLY_PROTECTED_' + i + '@@').join(blocks[i]);
+        }
+        return out;
+    }
+
+    /**
      * Render a template string against data.
      * @param {string} html   template source
      * @param {object} data   render context (collections, entry, site_elements, query, current, …)
@@ -2724,9 +2753,20 @@
 
         const opts = (options && typeof options === 'object') ? options : {};
         const ctxOptions = { escapeHtml: opts.escapeHtml === false ? false : true };
-        const renderFn = (tpl, ctx) => render(tpl, ctx, ctxOptions);
+        // Nested render() calls (loops/from/if) must not re-extract already-tokenized
+        // protected blocks from the parent pass — only the outermost call protects.
+        const protect = opts._skipProtect !== true;
+        const renderFn = (tpl, ctx) => render(tpl, ctx, Object.assign({}, ctxOptions, { _skipProtect: true }));
 
-        let out = processEntryForBlocks(html);
+        let source = html;
+        let protectedBlocks = [];
+        if (protect) {
+            const extracted = extractProtectedBlocks(html);
+            source = extracted.html;
+            protectedBlocks = extracted.blocks;
+        }
+
+        let out = processEntryForBlocks(source);
         out = processPublicFormBlocks(out);
         out = processFromGetBlocks(out, data, renderFn);
         out = processInlineFromGet(out, data, ctxOptions);
@@ -2734,6 +2774,10 @@
         out = processIfBlocks(out, data, renderFn);
         out = processCountVariables(out, data);
         out = processVariables(out, data, ctxOptions);
+
+        if (protect && protectedBlocks.length) {
+            out = restoreProtectedBlocks(out, protectedBlocks);
+        }
         return out;
     }
 

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
 require_once __DIR__ . '/hosting_urls.php';
+require_once __DIR__ . '/project_settings.php';
 
 /**
  * Effective SSR settings (defaults merged with settings/project.json + env).
@@ -37,22 +38,7 @@ function birkly_project_ssr_settings(): array
         'ssr_cache_ttl' => 60,
     ];
 
-    $settings = [];
-    if (function_exists('birkly_load_project_settings')) {
-        $loaded = birkly_load_project_settings();
-        if (is_array($loaded)) {
-            $settings = $loaded;
-        }
-    } else {
-        $path = birkly_project_root() . '/settings/project.json';
-        if (is_readable($path)) {
-            $decoded = json_decode((string) @file_get_contents($path), true);
-            if (is_array($decoded)) {
-                $settings = $decoded;
-            }
-        }
-    }
-
+    $settings = birkly_load_project_settings();
     $merged = array_merge($defaults, $settings);
 
     // Optional env override (handy for tests / staging).
