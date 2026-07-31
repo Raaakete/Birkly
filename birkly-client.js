@@ -4111,6 +4111,171 @@
     }
     
     
+    /* =====================================================================
+     * P51-M4: Loading reveal / animation holdback / skeleton helpers
+     * ---------------------------------------------------------------------
+     * Additive, opt-in. Default path is unchanged when no data-attributes are
+     * present. Canonical source (unit-tested) lives in
+     * birkly-client-modules/birkly-loading.js — kept in sync here so the single
+     * bundled birkly-client.js needs no extra script tag.
+     *
+     * Opt-in hooks (static HTML):
+     *   <html data-birkly-loading>          hide page until ready, then fade in
+     *   <body data-birkly-reveal>           same, on <body>
+     *   <html data-birkly-hold-animations>  freeze CSS anim/transition until ready
+     *   <any  data-birkly-skeleton>         shimmer placeholder until processed
+     *
+     * Ready = first of: `birkly:templates-processed`, SSR marker present
+     * (<meta name="birkly-ssr"> / <html data-birkly-ssr>), or 8s safety timeout.
+     * On ready we add `birkly-ready` to opt-in elements (+ <html>), which the
+     * injected CSS uses to reveal, resume animations, and drop skeletons.
+     * ===================================================================== */
+    function createBirklyLoading(win, doc, opts) {
+        opts = opts || {};
+        win = win || window;
+        doc = doc || document;
+
+        const READY_CLASS = 'birkly-ready';
+        const SKELETON_CLASS = 'birkly-skeleton';
+        const STYLE_ID = 'birkly-loading-styles';
+        const OPT_IN_SELECTOR =
+            '[data-birkly-loading],[data-birkly-reveal],[data-birkly-hold-animations]';
+        const timeoutMs = typeof opts.timeout === 'number' ? opts.timeout : 8000;
+
+        const STYLE_CSS = [
+            '[data-birkly-loading]:not(.' + READY_CLASS + '),',
+            '[data-birkly-reveal]:not(.' + READY_CLASS + '){opacity:0!important;}',
+            '[data-birkly-loading].' + READY_CLASS + ',',
+            '[data-birkly-reveal].' + READY_CLASS + '{opacity:1!important;transition:opacity .25s ease-in;}',
+            '[data-birkly-hold-animations]:not(.' + READY_CLASS + ') *,',
+            '[data-birkly-hold-animations]:not(.' + READY_CLASS + ') *::before,',
+            '[data-birkly-hold-animations]:not(.' + READY_CLASS + ') *::after{animation:none!important;transition:none!important;}',
+            '.' + SKELETON_CLASS + '{position:relative;min-height:1em;color:transparent!important;border-radius:4px;',
+            'background:linear-gradient(90deg,#eee 25%,#f5f5f5 37%,#eee 63%);background-size:400% 100%;',
+            'animation:birkly-shimmer 1.4s ease infinite;}',
+            '.' + SKELETON_CLASS + ' *{visibility:hidden!important;}',
+            '@keyframes birkly-shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}'
+        ].join('');
+
+        let ready = false;
+        let timer = null;
+        let listening = false;
+
+        function isSsrRendered() {
+            try {
+                const de = doc.documentElement;
+                if (de && de.hasAttribute && de.hasAttribute('data-birkly-ssr')) return true;
+            } catch (e) { /* ignore */ }
+            try {
+                if (doc.querySelector && doc.querySelector('meta[name="birkly-ssr"]')) return true;
+            } catch (e) { /* ignore */ }
+            return false;
+        }
+
+        function queryAll(selector) {
+            if (typeof doc.querySelectorAll !== 'function') return [];
+            try {
+                return Array.prototype.slice.call(doc.querySelectorAll(selector));
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function optInTargets() {
+            const targets = [];
+            if (doc.documentElement) targets.push(doc.documentElement);
+            if (doc.body && targets.indexOf(doc.body) === -1) targets.push(doc.body);
+            queryAll(OPT_IN_SELECTOR).forEach(function (el) {
+                if (el && targets.indexOf(el) === -1) targets.push(el);
+            });
+            return targets;
+        }
+
+        function injectStyles() {
+            if (doc.getElementById && doc.getElementById(STYLE_ID)) return;
+            if (typeof doc.createElement !== 'function') return;
+            const head = doc.head ||
+                (doc.getElementsByTagName && doc.getElementsByTagName('head')[0]) ||
+                doc.documentElement;
+            if (!head || typeof head.appendChild !== 'function') return;
+            const style = doc.createElement('style');
+            style.id = STYLE_ID;
+            style.textContent = STYLE_CSS;
+            head.appendChild(style);
+        }
+
+        function showSkeleton(el) {
+            if (el && el.classList) el.classList.add(SKELETON_CLASS);
+        }
+
+        function hideSkeleton(el) {
+            if (el && el.classList) el.classList.remove(SKELETON_CLASS);
+            if (el && typeof el.removeAttribute === 'function') el.removeAttribute('data-birkly-skeleton');
+        }
+
+        function reveal() {
+            if (ready) return;
+            ready = true;
+            if (timer != null && typeof win.clearTimeout === 'function') win.clearTimeout(timer);
+            timer = null;
+            optInTargets().forEach(function (el) {
+                if (el && el.classList) el.classList.add(READY_CLASS);
+            });
+            queryAll('.' + SKELETON_CLASS).forEach(hideSkeleton);
+            try {
+                if (typeof doc.dispatchEvent === 'function' && typeof win.CustomEvent === 'function') {
+                    doc.dispatchEvent(new win.CustomEvent('birkly:ready'));
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function onRegionProcessed(event) {
+            if (event && event.target) hideSkeleton(event.target);
+        }
+
+        function setup() {
+            injectStyles();
+            queryAll('[data-birkly-skeleton]').forEach(showSkeleton);
+
+            if (isSsrRendered()) {
+                const micro = typeof win.queueMicrotask === 'function'
+                    ? win.queueMicrotask
+                    : function (fn) { win.setTimeout ? win.setTimeout(fn, 0) : fn(); };
+                micro(reveal);
+                return api;
+            }
+
+            if (!listening && typeof doc.addEventListener === 'function') {
+                doc.addEventListener('birkly:templates-processed', reveal);
+                doc.addEventListener('birkly:region-processed', onRegionProcessed);
+                listening = true;
+            }
+            if (typeof win.setTimeout === 'function') {
+                timer = win.setTimeout(reveal, timeoutMs);
+            }
+            return api;
+        }
+
+        const api = {
+            setup: setup,
+            reveal: reveal,
+            showSkeleton: showSkeleton,
+            hideSkeleton: hideSkeleton,
+            isReady: function () { return ready; },
+            READY_CLASS: READY_CLASS,
+            SKELETON_CLASS: SKELETON_CLASS,
+            timeout: timeoutMs
+        };
+        return api;
+    }
+
+    // Instantiate + wire up as early as possible (before first paint) so opt-in
+    // pages can hide content until templates render. No-op unless the page opts
+    // in via the data-attributes above.
+    const loadingHelpers = createBirklyLoading(window, document);
+    Birkly.loading = loadingHelpers;
+    try { loadingHelpers.setup(); } catch (e) { /* never block init */ }
+
     /**
      * Public API
      * Note: local `Birkly` (const) keeps the render engine at Birkly.render.
@@ -4170,6 +4335,12 @@
          * Prepare + process a region host (used by <birkly-region>)
          */
         processRegion: processBirklyRegionHost,
+
+        /**
+         * Loading / animation helpers (P51-M4).
+         * Birkly.loading.reveal() / showSkeleton(el) / hideSkeleton(el) / isReady()
+         */
+        loading: loadingHelpers,
         
         /**
          * Get current configuration

@@ -71,6 +71,29 @@ BirklyTemplateEngine.render(html, data, options);
 (`module.exports = require('../birkly-template-engine.js')`) so existing tests
 and callers keep working.
 
+### Loading helpers (`birkly-loading.js`, P51-M4)
+
+Additive, **opt-in** helpers so template-first pages can avoid FOUC / premature
+animations. Default behavior is unchanged when no opt-in attributes are present.
+Canonical source is `birkly-loading.js` (UMD, unit-tested under Node); the same
+code is inlined into `birkly-client.js` and exposed as `Birkly.loading`.
+
+Opt-in via static HTML attributes:
+
+| Hook | Effect |
+|------|--------|
+| `<html data-birkly-loading>` / `<body data-birkly-reveal>` | Hide until ready, then fade in |
+| `<html data-birkly-hold-animations>` | Freeze CSS animations/transitions until ready |
+| `<any data-birkly-skeleton>` | Shimmer placeholder until that region/page is processed |
+
+*Ready* = first of `birkly:templates-processed`, SSR marker present
+(`<meta name="birkly-ssr">` / `<html data-birkly-ssr>` → reveal on microtask),
+or an 8 s safety timeout. On ready, `birkly-ready` is added to opt-in elements
+(and `<html>`). JS API: `Birkly.loading.reveal()`, `.showSkeleton(el)`,
+`.hideSkeleton(el)`, `.isReady()`. Tests: `tests/birkly_loading_test.js`
+(V-CLI-01..06). Details: `docs/reviews/P51-ssr-notes.md` → "Client loading
+helpers (M4)".
+
 ### Hydrate script (baked pages)
 
 **birkly-hydrate.js** — still supported for baked/publish-time pages. Use when HTML is pre-rendered at deploy and you only need interactivity (forms, cart, auth). See file header and [Production optimization](../../admin/docs/snapshots/production-optimization.md) in admin help.
