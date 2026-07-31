@@ -363,15 +363,85 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
 }
 
 /**
- * Locate the Node binary (env override, then PATH probe).
+ * Locate a usable Node binary (env override, then PATH / common locations).
+ * Returns null when Node is not available — callers must fall back to client.
  */
 function birkly_project_ssr_node_binary(): ?string
 {
+    static $cached = false;
+    static $resolved = null;
+
+    if ($cached) {
+        return $resolved;
+    }
+    $cached = true;
+
+    $candidates = [];
     $env = getenv('BIRKLY_NODE_BIN');
     if ($env !== false && trim((string) $env) !== '') {
-        return trim((string) $env);
+        $candidates[] = trim((string) $env);
     }
-    return 'node';
+    $candidates[] = 'node';
+    $candidates[] = '/usr/bin/node';
+    $candidates[] = '/usr/local/bin/node';
+
+    foreach ($candidates as $candidate) {
+        if ($candidate === '') {
+            continue;
+        }
+        // Absolute / relative path: must be an executable file.
+        if (str_contains($candidate, '/') || str_starts_with($candidate, '.')) {
+            if (is_file($candidate) && is_executable($candidate)) {
+                $resolved = $candidate;
+                return $resolved;
+            }
+            continue;
+        }
+        // Bare command name: probe PATH via `command -v`.
+        $probe = @shell_exec('command -v ' . escapeshellarg($candidate) . ' 2>/dev/null');
+        if (is_string($probe)) {
+            $probe = trim($probe);
+            if ($probe !== '' && is_file($probe) && is_executable($probe)) {
+                $resolved = $probe;
+                return $resolved;
+            }
+        }
+    }
+
+    $resolved = null;
+    return null;
+}
+
+/**
+ * Runtime readiness for SSR (used by admin overview + diagnostics).
+ *
+ * @return array{ready:bool,node:string|null,cli:bool,engine:bool,reason:?string}
+ */
+function birkly_project_ssr_runtime_status(): array
+{
+    $node = birkly_project_ssr_node_binary();
+    $cli = is_file(birkly_project_root() . '/scripts/birkly-ssr-cli.js');
+    $engine = is_file(birkly_project_root() . '/birkly-template-engine.js');
+    $procOpen = function_exists('proc_open');
+
+    $reason = null;
+    if (!$procOpen) {
+        $reason = 'proc_open_disabled';
+    } elseif ($node === null) {
+        $reason = 'node_missing';
+    } elseif (!$cli) {
+        $reason = 'cli_missing';
+    } elseif (!$engine) {
+        $reason = 'engine_missing';
+    }
+
+    return [
+        'ready' => $reason === null,
+        'node' => $node,
+        'cli' => $cli,
+        'engine' => $engine,
+        'reason' => $reason,
+    ];
 }
 
 /**
@@ -453,14 +523,31 @@ function birkly_project_ssr_run_node(string $node, string $script, string $paylo
  * @param array<string,mixed> $data
  * @param array<string,mixed> $options
  */
+/**
+ * Last SSR render failure reason (short machine code for diagnostics headers).
+ */
+function birkly_project_ssr_last_error(?string $set = null): ?string
+{
+    static $last = null;
+    if ($set !== null) {
+        $last = $set;
+    }
+    return $last;
+}
+
 function birkly_project_ssr_render(string $html, array $data, array $options = []): ?string
 {
+    birkly_project_ssr_last_error('');
+
     $node = birkly_project_ssr_node_binary();
     if ($node === null) {
+        birkly_project_ssr_last_error('node_missing');
+        error_log('birkly_project_ssr: Node.js not found — install nodejs in the runtime image');
         return null;
     }
     $script = birkly_project_root() . '/scripts/birkly-ssr-cli.js';
     if (!is_file($script)) {
+        birkly_project_ssr_last_error('cli_missing');
         return null;
     }
 
@@ -471,11 +558,15 @@ function birkly_project_ssr_render(string $html, array $data, array $options = [
         'options' => $options !== [] ? $options : (object) [],
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
     if ($payload === false) {
+        birkly_project_ssr_last_error('payload_encode');
         return null;
     }
 
-    $raw = birkly_project_ssr_run_node($node, $script, $payload, 5.0);
+    // Homepage-sized templates can exceed 5s on cold start; keep a generous budget.
+    $timeout = isset($options['timeout']) ? (float) $options['timeout'] : 15.0;
+    $raw = birkly_project_ssr_run_node($node, $script, $payload, max(5.0, $timeout));
     if ($raw === null || trim($raw) === '') {
+        birkly_project_ssr_last_error('node_timeout_or_fail');
         return null;
     }
 
@@ -483,6 +574,9 @@ function birkly_project_ssr_render(string $html, array $data, array $options = [
     if (!is_array($decoded) || empty($decoded['ok'])) {
         if (is_array($decoded) && isset($decoded['error'])) {
             error_log('birkly_project_ssr: engine error ' . $decoded['error']);
+            birkly_project_ssr_last_error('engine_error');
+        } else {
+            birkly_project_ssr_last_error('bad_cli_response');
         }
         return null;
     }

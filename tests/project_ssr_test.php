@@ -174,12 +174,15 @@ try {
 
     // Parity with Node CLI collect (if node available).
     $node = birkly_project_ssr_node_binary();
-    $cliParity = birkly_project_ssr_run_node(
-        $node,
-        $root . '/scripts/birkly-ssr-cli.js',
-        json_encode(['mode' => 'collect', 'html' => $tpl]),
-        5.0
-    );
+    $cliParity = null;
+    if (is_string($node) && $node !== '') {
+        $cliParity = birkly_project_ssr_run_node(
+            $node,
+            $root . '/scripts/birkly-ssr-cli.js',
+            json_encode(['mode' => 'collect', 'html' => $tpl]),
+            5.0
+        );
+    }
     if ($cliParity !== null) {
         $decoded = json_decode($cliParity, true);
         $nodeReqs = is_array($decoded) ? ($decoded['requests'] ?? []) : [];

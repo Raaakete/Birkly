@@ -85,7 +85,10 @@ BIRKLY_SSR_RENDER_MODE=server php -S localhost:8080 -t . server-router.php
 
 ## Fallback & safety
 
-- Any failure (Node missing/broken, timeout, engine error, empty output) → `birkly_project_ssr_serve()` returns `false` → caller serves the original static file. When SSR was opted-in but failed, `X-Birkly-Render: client-fallback` is set so the outcome is observable.
+- Any failure (Node missing/broken, timeout, engine error, empty output) → `birkly_project_ssr_serve()` returns `false` → caller serves the original static file. When SSR was opted-in but failed:
+  - `X-Birkly-Render: client-fallback`
+  - `X-Birkly-SSR-Fallback: <reason>` — short machine code (`node_missing`, `node_timeout_or_fail`, `engine_error`, …)
+- **Production requirement:** the Docker image must include `nodejs` (see `Dockerfile`). Without Node, every SSR request falls back to the client.
 - SSR strips template syntax from the output, so the client's `hasTemplateSyntax()` finds nothing to re-render; the `<meta name="birkly-ssr">` marker + `X-Birkly-Render: server` header make the SSR path observable. `birkly-client.js` is untouched and remains idempotent (enhances forms/nav as usual).
 - Only **published** content is rendered: data flows through `birkly_public_list_entries` / `birkly_public_get_entry`, which filter to `status=published`. Drafts are never fetched.
 - Untrusted field values are HTML-escaped by the engine (rich `content`/`html` fields remain trusted HTML by existing convention).
