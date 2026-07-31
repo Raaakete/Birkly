@@ -62,7 +62,7 @@ Data context mirrors the client (`processTemplatesV3`): `current_year`, `query`,
 - Defaults: `render_mode=client` (safe), `hosting_type=birkly`, `ssr_cache_ttl=60`.
 - SSR runs only when: `hosting_type=birkly` **and** `render_mode ∈ {server, auto}` **and** `hosting.json` `public_site_mode=project`.
 - `BIRKLY_SSR_RENDER_MODE` env overrides `render_mode` (handy for tests/staging).
-- Full admin UI for these controls is **M3**.
+- **Admin UI:** Settings → **Site delivery** → scroll past Domains/Hosting to **Server rendering** (always visible; not under Advanced file editor). Direct link: `?tab=site-delivery#project-server-rendering`.
 
 ### Enable SSR for testing
 
