@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/entry_counts.php';
+
 /**
  * @return array<string, mixed>
  */
@@ -27,7 +29,7 @@ function birkly_content_page_data_minimal(): array
             }
 
             $entriesDir = $dir . '/entries';
-            $entriesCount = is_dir($entriesDir) ? count(glob($entriesDir . '/*.json') ?: []) : 0;
+            $entriesCount = birkly_count_entry_files($entriesDir);
 
             $row = [
                 'id' => $collectionData['id'] ?? ('col-' . $collectionName),
