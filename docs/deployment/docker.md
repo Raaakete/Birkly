@@ -59,9 +59,36 @@ If you created an admin **without** a volume, then added a **new empty** volume 
 
 Site-owner guide: [Birkly-Docs — Dokploy hosting](https://github.com/Raaakete/Birkly-Docs/blob/main/07-operations/dokploy-hosting.md).
 
-No per-folder volume list is required.
+## Plugin dev git sync (test/staging)
 
-### Two domains (marketing + CMS)
+For **git-cloned** official plugins under `/app/data/plugins/` (e.g. from **Birkly-Other-Things**), enable automatic `git pull` on every container start. Config lives on the **data volume** — **Dokploy CMS redeploys do not disable it**.
+
+1. Clone plugin repos into `/app/data/plugins/{id}` (folder name = plugin id: `commerce`, `events`, …).
+2. One-time in Dokploy Terminal:
+
+```bash
+GITHUB_TOKEN=ghp_your_read_token ./scripts/plugin-dev-sync-enable.sh
+```
+
+Or without token for public repos:
+
+```bash
+./scripts/plugin-dev-sync-enable.sh
+```
+
+3. Redeploy CMS anytime — entrypoint restarts the background pull loop (default **60s**).
+
+| File on volume | Purpose |
+|----------------|---------|
+| `settings/plugin_dev_sync.env` | `PLUGIN_DEV_SYNC_ENABLED=1`, org, token, interval, plugin ids |
+| `logs/plugin-dev-sync.log` | Pull log |
+
+Disable: set `PLUGIN_DEV_SYNC_ENABLED=0` in that env file.
+
+Entrypoint also links `/app/data/core`, `fieldtypes`, and `api` to the image (required for git-cloned plugins) and **does not overwrite** a git-cloned `automation` folder with the bundled copy.
+
+**Production:** use Marketplace installs, not dev git sync.
+
 
 Configure URLs in **Settings → Hosting** (`settings/hosting.json`), not by hostname prefix or Dokploy Internal Path tricks.
 

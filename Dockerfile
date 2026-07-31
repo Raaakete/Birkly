@@ -2,7 +2,7 @@
 FROM php:8.3-fpm-bookworm
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx libzip-dev libcurl4-openssl-dev unzip curl \
+    && apt-get install -y --no-install-recommends nginx libzip-dev libcurl4-openssl-dev unzip curl git \
     && docker-php-ext-install zip curl \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
@@ -19,6 +19,7 @@ ENV BIRKLY_BUILD_REVISION=$BIRKLY_BUILD_REVISION
 COPY . /app
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
+    && chmod +x /app/scripts/plugin-dev-git-sync.sh /app/scripts/plugin-dev-sync-enable.sh \
     && echo "$BIRKLY_BUILD_REVISION" > /app/BUILD_REVISION \
     && mkdir -p content media settings users data cache logs temp plugins themes
 
