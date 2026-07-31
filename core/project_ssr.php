@@ -77,6 +77,51 @@ function birkly_project_ssr_settings(): array
 }
 
 /**
+ * Validate render-related settings from an admin save_settings payload.
+ *
+ * Whitelists render_mode / hosting_type and clamps ssr_cache_ttl. Only keys
+ * present in $input are validated; anything else is ignored so callers can mix
+ * these with other project settings (e.g. show_visit_button).
+ *
+ * @param array<string,mixed> $input
+ * @return array{patch:array<string,mixed>,error:?string,ssr_affected:bool}
+ */
+function birkly_project_ssr_validate_render_settings(array $input): array
+{
+    $patch = [];
+    $ssrAffected = false;
+
+    if (array_key_exists('render_mode', $input)) {
+        $mode = strtolower(trim((string) $input['render_mode']));
+        if (!in_array($mode, ['client', 'server', 'auto'], true)) {
+            return ['patch' => [], 'error' => 'Invalid render_mode', 'ssr_affected' => false];
+        }
+        $patch['render_mode'] = $mode;
+        $ssrAffected = true;
+    }
+
+    if (array_key_exists('hosting_type', $input)) {
+        $type = strtolower(trim((string) $input['hosting_type']));
+        if (!in_array($type, ['birkly', 'external'], true)) {
+            return ['patch' => [], 'error' => 'Invalid hosting_type', 'ssr_affected' => false];
+        }
+        $patch['hosting_type'] = $type;
+        $ssrAffected = true;
+    }
+
+    if (array_key_exists('ssr_cache_ttl', $input)) {
+        if (!is_numeric($input['ssr_cache_ttl'])) {
+            return ['patch' => [], 'error' => 'Invalid ssr_cache_ttl', 'ssr_affected' => false];
+        }
+        $ttl = max(0, min(86400, (int) $input['ssr_cache_ttl']));
+        $patch['ssr_cache_ttl'] = $ttl;
+        $ssrAffected = true;
+    }
+
+    return ['patch' => $patch, 'error' => null, 'ssr_affected' => $ssrAffected];
+}
+
+/**
  * SSR is enabled only for Birkly-hosted project sites in server/auto mode.
  */
 function birkly_project_ssr_enabled(): bool

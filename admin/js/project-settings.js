@@ -271,6 +271,84 @@
             toggle.checked = !!data.show_visit_button;
         }
         syncVisitProjectButton(!!data.show_visit_button);
+        applyRenderSettings(data);
+    }
+
+    function applyRenderSettings(data) {
+        var hostingType = document.getElementById('project-hosting-type');
+        var renderMode = document.getElementById('project-render-mode');
+        var ttl = document.getElementById('project-ssr-cache-ttl');
+        if (hostingType && data.hosting_type) hostingType.value = data.hosting_type;
+        if (renderMode && data.render_mode) renderMode.value = data.render_mode;
+        if (ttl && data.ssr_cache_ttl != null) ttl.value = data.ssr_cache_ttl;
+        updateRenderingDisabledState();
+    }
+
+    // External hosting always renders on the client, so disable SSR controls.
+    function updateRenderingDisabledState() {
+        var hostingType = document.getElementById('project-hosting-type');
+        var isExternal = !!hostingType && hostingType.value === 'external';
+        var renderMode = document.getElementById('project-render-mode');
+        var ttl = document.getElementById('project-ssr-cache-ttl');
+        var invalidateBtn = document.getElementById('project-invalidate-ssr-btn');
+        var note = document.getElementById('project-rendering-external-note');
+        if (renderMode) renderMode.disabled = isExternal;
+        if (ttl) ttl.disabled = isExternal;
+        if (invalidateBtn) invalidateBtn.disabled = isExternal;
+        if (note) note.hidden = !isExternal;
+    }
+
+    function saveRenderingSettings() {
+        var hostingType = document.getElementById('project-hosting-type');
+        var renderMode = document.getElementById('project-render-mode');
+        var ttl = document.getElementById('project-ssr-cache-ttl');
+        var btn = document.getElementById('project-save-rendering-btn');
+
+        var ttlValue = parseInt(ttl ? ttl.value : '', 10);
+        if (isNaN(ttlValue) || ttlValue < 0) ttlValue = 0;
+        if (ttlValue > 86400) ttlValue = 86400;
+
+        if (btn) btn.disabled = true;
+        return fetchJson(apiUrl('/api/project_site.php?action=save_settings'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'save_settings',
+                hosting_type: hostingType ? hostingType.value : 'birkly',
+                render_mode: renderMode ? renderMode.value : 'client',
+                ssr_cache_ttl: ttlValue,
+                _csrf: getCsrfToken()
+            })
+        }).then(function (payload) {
+            applyRenderSettings(payload.data || {});
+            BirklyFeedback.toast('Rendering settings saved', 'success');
+        }).catch(function (error) {
+            BirklyFeedback.toast(error.message || 'Failed to save rendering settings', 'error');
+        }).then(function () {
+            if (btn) btn.disabled = false;
+            updateRenderingDisabledState();
+        });
+    }
+
+    function invalidateSsrCache() {
+        var btn = document.getElementById('project-invalidate-ssr-btn');
+        if (btn) btn.disabled = true;
+        return fetchJson(apiUrl('/api/project_site.php?action=invalidate_ssr_cache'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'invalidate_ssr_cache',
+                _csrf: getCsrfToken()
+            })
+        }).then(function () {
+            BirklyFeedback.toast('SSR cache invalidated', 'success');
+        }).catch(function (error) {
+            BirklyFeedback.toast(error.message || 'Failed to invalidate SSR cache', 'error');
+        }).then(function () {
+            updateRenderingDisabledState();
+        });
     }
 
     function saveVisitButtonSetting(enabled) {
@@ -484,6 +562,28 @@
                     toggle.checked = !toggle.checked;
                     syncVisitProjectButton(toggle.checked);
                 });
+            });
+        }
+
+        var hostingType = document.getElementById('project-hosting-type');
+        if (hostingType && hostingType.dataset.bound !== '1') {
+            hostingType.dataset.bound = '1';
+            hostingType.addEventListener('change', updateRenderingDisabledState);
+        }
+
+        var saveRenderingBtn = document.getElementById('project-save-rendering-btn');
+        if (saveRenderingBtn && saveRenderingBtn.dataset.bound !== '1') {
+            saveRenderingBtn.dataset.bound = '1';
+            saveRenderingBtn.addEventListener('click', function () {
+                saveRenderingSettings();
+            });
+        }
+
+        var invalidateBtn = document.getElementById('project-invalidate-ssr-btn');
+        if (invalidateBtn && invalidateBtn.dataset.bound !== '1') {
+            invalidateBtn.dataset.bound = '1';
+            invalidateBtn.addEventListener('click', function () {
+                invalidateSsrCache();
             });
         }
 
