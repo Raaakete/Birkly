@@ -24,6 +24,13 @@ function birkly_hosting_serve_public_file(string $filePath): void
         // SSR opted-in but failed → static file + client-side render marker.
         if (!headers_sent()) {
             header('X-Birkly-Render: client-fallback');
+            $reason = birkly_project_ssr_last_error();
+            if ($reason === null || $reason === '') {
+                $status = birkly_project_ssr_runtime_status();
+                $reason = $status['reason'] ?? 'unknown';
+            }
+            // Short machine code only — safe for public responses / ops debugging.
+            header('X-Birkly-SSR-Fallback: ' . preg_replace('/[^a-z0-9_]/', '', (string) $reason));
         }
     }
 
