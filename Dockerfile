@@ -1,9 +1,13 @@
 # Birkly CMS — production image (Dokploy / Docker)
 FROM php:8.3-fpm-bookworm
 
+# Node.js is required for project SSR (P51): PHP shells out to
+# scripts/birkly-ssr-cli.js → birkly-template-engine.js. Without Node the
+# public site always falls back to client-side rendering.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nginx libzip-dev libcurl4-openssl-dev unzip curl git \
+    && apt-get install -y --no-install-recommends nginx libzip-dev libcurl4-openssl-dev unzip curl git nodejs \
     && docker-php-ext-install zip curl \
+    && node --version \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
 

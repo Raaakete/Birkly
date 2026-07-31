@@ -274,6 +274,8 @@
         applyRenderSettings(data);
     }
 
+    var ssrRuntime = { ready: true, reason: null };
+
     function applyRenderSettings(data) {
         var hostingType = document.getElementById('project-hosting-type');
         var renderMode = document.getElementById('project-render-mode');
@@ -281,7 +283,26 @@
         if (hostingType && data.hosting_type) hostingType.value = data.hosting_type;
         if (renderMode && data.render_mode) renderMode.value = data.render_mode;
         if (ttl && data.ssr_cache_ttl != null) ttl.value = data.ssr_cache_ttl;
+        if (data.ssr_runtime && typeof data.ssr_runtime === 'object') {
+            ssrRuntime = data.ssr_runtime;
+        }
         updateRenderingDisabledState();
+    }
+
+    function ssrRuntimeMessage(reason) {
+        if (reason === 'node_missing') {
+            return 'Server rendering cannot run: Node.js is not installed in this CMS runtime. Redeploy with a Birkly image that includes Node (P51), or the public site will keep falling back to client-side rendering.';
+        }
+        if (reason === 'proc_open_disabled') {
+            return 'Server rendering cannot run: PHP proc_open is disabled on this host.';
+        }
+        if (reason === 'cli_missing' || reason === 'engine_missing') {
+            return 'Server rendering cannot run: shared template engine files are missing from this install.';
+        }
+        if (reason) {
+            return 'Server rendering is not ready on this host (' + reason + '). Pages will fall back to client-side rendering.';
+        }
+        return 'Server rendering runtime is not ready. Pages will fall back to client-side rendering.';
     }
 
     // External hosting always renders on the client, so disable SSR controls.
@@ -293,11 +314,18 @@
         var ttl = document.getElementById('project-ssr-cache-ttl');
         var invalidateBtn = document.getElementById('project-invalidate-ssr-btn');
         var note = document.getElementById('project-rendering-external-note');
+        var runtimeNote = document.getElementById('project-rendering-runtime-note');
         var isClientMode = !!renderMode && renderMode.value === 'client';
+        var wantsSsr = !isClientMode && !isExternal;
         if (renderMode) renderMode.disabled = isExternal;
         if (ttl) ttl.disabled = isExternal;
         if (invalidateBtn) invalidateBtn.disabled = isExternal || isClientMode;
         if (note) note.hidden = !isExternal;
+        if (runtimeNote) {
+            var showRuntime = wantsSsr && ssrRuntime && ssrRuntime.ready === false;
+            runtimeNote.hidden = !showRuntime;
+            runtimeNote.textContent = showRuntime ? ssrRuntimeMessage(ssrRuntime.reason) : '';
+        }
     }
 
     function saveRenderingSettings() {
