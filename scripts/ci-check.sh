@@ -7,12 +7,18 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "==> PHP syntax (core entrypoints)"
-for f in server-router.php index.php admin/index.php core/version.php scripts/validate-project-templates.php; do
+for f in server-router.php index.php admin/index.php core/version.php core/project_ssr.php scripts/validate-project-templates.php; do
   php -l "$f" >/dev/null
 done
 
 echo "==> Shared template engine syntax suite (V-ENG-01..10)"
 node tests/template-engine/run.js
+
+echo "==> SSR Node CLI bridge smoke (V-SSR-CLI)"
+node tests/template-engine/ssr_cli_test.js
+
+echo "==> Project SSR pipeline tests (V-SSR-01..10)"
+php tests/project_ssr_test.php
 
 echo "==> Template region tests"
 node tests/template_regions_test.js
