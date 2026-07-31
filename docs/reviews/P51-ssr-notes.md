@@ -90,6 +90,59 @@ BIRKLY_SSR_RENDER_MODE=server php -S localhost:8080 -t . server-router.php
 - Only **published** content is rendered: data flows through `birkly_public_list_entries` / `birkly_public_get_entry`, which filter to `status=published`. Drafts are never fetched.
 - Untrusted field values are HTML-escaped by the engine (rich `content`/`html` fields remain trusted HTML by existing convention).
 
+## Client loading helpers (M4)
+
+**Status:** Implemented 2026-07-31 (frontend-developer). Additive, opt-in — the
+default page path is byte-for-byte unchanged when none of the data-attributes
+below are present. Closes gap register **G51-11, G51-12, G51-13**. Verified by
+`tests/birkly_loading_test.js` (matrix **V-CLI-01..06**).
+
+**Source of truth:** `birkly-client-modules/birkly-loading.js` (UMD, unit-tested
+under Node). The same implementation is inlined into `birkly-client.js` (marked
+`P51-M4` section, before the public API export) so the single bundled client
+script needs no extra `<script>` tag. Exposed as `Birkly.loading`.
+
+### Opt-in API (static HTML)
+
+| Hook | Effect |
+|------|--------|
+| `<html data-birkly-loading>` | Hide the page (`opacity:0`) until ready, then fade it in. |
+| `<body data-birkly-reveal>` | Same, applied to `<body>`. |
+| `<html data-birkly-hold-animations>` | Freeze CSS `animation`/`transition` on descendants until ready. |
+| `<any data-birkly-skeleton>` | Show a shimmer placeholder on that element until its region (or the page) is processed. |
+
+**Ready** = the first of: `birkly:templates-processed` fires · an SSR marker is
+present (`<meta name="birkly-ssr">` or `<html data-birkly-ssr>`) → reveal on the
+next microtask · an **8 s safety timeout** elapses (page never stays blank).
+On ready the helper adds `birkly-ready` to opt-in elements (and `<html>`); the
+injected CSS uses `:not(.birkly-ready)` selectors to reveal, resume animations,
+and drop skeletons. `birkly:templates-processed` behavior is preserved (the
+helper only *listens*).
+
+### JS API
+
+```js
+Birkly.loading.reveal();          // force reveal now (idempotent)
+Birkly.loading.showSkeleton(el);  // add shimmer placeholder
+Birkly.loading.hideSkeleton(el);  // remove shimmer placeholder
+Birkly.loading.isReady();         // boolean
+```
+
+A single `<style id="birkly-loading-styles">` is injected once (reveal fade +
+shimmer keyframes). For **zero-flash** reveal, load `birkly-client.js` in
+`<head>` or add this tiny snippet to `<head>` so the hide rule applies before
+first paint:
+
+```html
+<style>[data-birkly-loading]:not(.birkly-ready){opacity:0}</style>
+```
+
+**Matrix V-CLI-01..06 (all PASS):** default no-op path · reveal on
+templates-processed · SSR meta microtask short-circuit (no timer) · safety
+timeout reveal · animation-holdback release · skeleton lifecycle
+(declared → shimmer, `birkly:region-processed` clears, manual show/hide, reveal
+clears leftovers).
+
 ## Known limitations / M3+ follow-ups
 
 - **Admin UI (M3):** no Project-tab controls yet for render mode / hosting type / TTL / manual invalidate — settings are file/env only.
