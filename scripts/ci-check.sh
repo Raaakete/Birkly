@@ -20,9 +20,15 @@ node tests/template-engine/ssr_cli_test.js
 echo "==> Project SSR pipeline tests (V-SSR-01..10)"
 php tests/project_ssr_test.php
 
+echo "==> Project render settings API tests (V-SET-03/04/05/07)"
+php tests/project_ssr_settings_api_test.php
+
 echo "==> Template region tests"
 node tests/template_regions_test.js
 node tests/birkly_region_test.js
+
+echo "==> Client loading helpers tests (V-CLI-01..06)"
+node tests/birkly_loading_test.js
 
 echo "==> Phantom template validator self-test"
 php scripts/validate-project-templates.php --self-test

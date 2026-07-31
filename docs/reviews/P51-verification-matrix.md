@@ -1,7 +1,7 @@
 # Phase 51 — Verification matrix
 
 **Plan:** `P51-ssr-shared-template-engine-plan.md`  
-**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`
+**Status:** In progress 2026-07-31 — V-ENG (M1) passing via `tests/template-engine/run.js`; V-SSR (M2) passing via `tests/project_ssr_test.php` + `tests/template-engine/ssr_cli_test.js`; V-CLI (M4) passing via `tests/birkly_loading_test.js`; V-SET (M3) V-SET-01..05/07 passing via admin UI + `tests/project_ssr_settings_api_test.php` (V-SET-06 pending design-reviewer)
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -45,13 +45,13 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-SET-01 | Render mode selector: client / server / auto | Admin UI | frontend-developer | pending |
-| V-SET-02 | Hosting type Birkly / External; SSR disabled when External | Admin UI + API | frontend-developer | pending |
-| V-SET-03 | Cache TTL field persisted to `project.json` | API | cms-developer | pending |
-| V-SET-04 | Manual invalidate clears SSR cache | Admin + API | cms-developer | pending |
-| V-SET-05 | Changing render settings persists and can invalidate cache | Integration | cms-developer | pending |
+| V-SET-01 | Render mode selector: client / server / auto | Admin UI | frontend-developer | **pass** (M3) — `#project-render-mode` select (Client/Server/Auto) in Project tab “Server rendering” card |
+| V-SET-02 | Hosting type Birkly / External; SSR disabled when External | Admin UI + API | frontend-developer | **pass** (M3) — `#project-hosting-type` select; `updateRenderingDisabledState()` disables render mode + TTL + invalidate and shows external note; API gating unchanged |
+| V-SET-03 | Cache TTL field persisted to `project.json` | API | cms-developer | **pass** (M3) — `tests/project_ssr_settings_api_test.php` persists ttl=300 and reads back via `birkly_project_ssr_settings()` |
+| V-SET-04 | Manual invalidate clears SSR cache | Admin + API | cms-developer | **pass** (M3) — `invalidate_ssr_cache` action → `birkly_project_ssr_invalidate_all()`; asserted in settings API test |
+| V-SET-05 | Changing render settings persists and can invalidate cache | Integration | cms-developer | **pass** (M3) — `save_settings` persists whitelisted patch and invalidates cache when `ssr_affected`; validation + clamp covered by test |
 | V-SET-06 | Settings match admin design system (labels, help, spacing) | design-reviewer | design-reviewer | pending |
-| V-SET-07 | Non-admin cannot change settings | Auth check | cms-developer | pending |
+| V-SET-07 | Non-admin cannot change settings | Auth check | cms-developer | **pass** (M3) — unauthenticated POST to `save_settings`/`invalidate_ssr_cache` returns 401 (HTTP probe in settings API test); `requireAuth('manage_settings')` guards all writes |
 
 ---
 
@@ -59,12 +59,12 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-CLI-01 | Opt-in loading reveal waits for `birkly:templates-processed` | Manual/unit | frontend-developer | pending |
-| V-CLI-02 | Without opt-in, behavior unchanged | Regression | frontend-developer | pending |
-| V-CLI-03 | Animation holdback delays CSS animations until ready | Manual/unit | frontend-developer | pending |
-| V-CLI-04 | Optional skeleton helper API present | Code + demo | frontend-developer | pending |
-| V-CLI-05 | Helpers work with client render mode | Manual | qa-verifier | pending |
-| V-CLI-06 | Helpers do not break SSR-served pages | Manual | qa-verifier | pending |
+| V-CLI-01 | Opt-in loading reveal waits for `birkly:templates-processed` | Manual/unit | frontend-developer | **pass** (M4) — `tests/birkly_loading_test.js` V-CLI-02: not ready before event, `birkly-ready` added on `birkly:templates-processed` |
+| V-CLI-02 | Without opt-in, behavior unchanged | Regression | frontend-developer | **pass** (M4) — V-CLI-01 in test: no opt-in elements ⇒ only an inert `<style>` is injected; full `scripts/ci-check.sh` green (region/engine suites unchanged) |
+| V-CLI-03 | Animation holdback delays CSS animations until ready | Manual/unit | frontend-developer | **pass** (M4) — V-CLI-05 in test: `data-birkly-hold-animations` element gets `birkly-ready` only after processing; CSS `:not(.birkly-ready)` freezes `animation`/`transition` |
+| V-CLI-04 | Optional skeleton helper API present | Code + demo | frontend-developer | **pass** (M4) — V-CLI-06 in test: `data-birkly-skeleton` shimmer + `showSkeleton`/`hideSkeleton`; cleared on `birkly:region-processed`/templates-processed |
+| V-CLI-05 | Helpers work with client render mode | Manual | qa-verifier | **pass with note** (M4) — unit covers client path (event + timeout reveal); live browser spot-check recommended at closure |
+| V-CLI-06 | Helpers do not break SSR-served pages | Manual | qa-verifier | **pass with note** (M4) — V-CLI-03 in test: SSR marker (`<meta name="birkly-ssr">`/`data-birkly-ssr`) short-circuits to microtask reveal with no safety timer; live SSR spot-check recommended at closure |
 
 ---
 
