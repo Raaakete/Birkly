@@ -67,8 +67,10 @@ For **git-cloned** official plugins under `/app/data/plugins/` (e.g. from **Birk
 2. One-time in Dokploy Terminal:
 
 ```bash
-GITHUB_TOKEN=ghp_your_read_token ./scripts/plugin-dev-sync-enable.sh
+GITHUB_TOKEN=github_pat_your_read_token ./scripts/plugin-dev-sync-enable.sh
 ```
+
+Create a **fine-grained** GitHub PAT with **Contents: Read** on the `Birkly-Other-Things` plugin repos (or the whole org). Classic `ghp_` tokens also work. If pulls log `Invalid username or token`, the token is expired, revoked, or missing repo access — create a new PAT and update `GITHUB_TOKEN` in `settings/plugin_dev_sync.env` on the volume.
 
 Or without token for public repos:
 
