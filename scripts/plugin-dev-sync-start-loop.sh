@@ -6,6 +6,11 @@ DATA_ROOT="${BIRKLY_DATA:-/app/data}"
 ENV_FILE="$DATA_ROOT/settings/plugin_dev_sync.env"
 PID_FILE="$DATA_ROOT/logs/plugin-dev-sync.loop.pid"
 
+if [ "${BIRKLY_PLUGIN_DEV_SYNC_DISABLED:-0}" = "1" ]; then
+  echo "[plugin-dev-sync] disabled via BIRKLY_PLUGIN_DEV_SYNC_DISABLED=1"
+  exit 0
+fi
+
 if [ ! -f "$ENV_FILE" ] || ! grep -q '^PLUGIN_DEV_SYNC_ENABLED=1' "$ENV_FILE" 2>/dev/null; then
   exit 0
 fi
