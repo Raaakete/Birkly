@@ -14,6 +14,7 @@ require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/../core/project_site.php';
 require_once __DIR__ . '/../core/project_site_filesystem.php';
+require_once __DIR__ . '/../core/project_ssr.php';
 
 set_cors_headers('admin');
 haru_secure_session_start();
@@ -43,6 +44,10 @@ function birkly_load_project_settings(): array
 
     return array_merge([
         'show_visit_button' => false,
+        // P51: server-side render controls (full admin UI lands in M3).
+        'render_mode' => 'client',      // client | server | auto
+        'hosting_type' => 'birkly',     // birkly | external (SSR only when birkly)
+        'ssr_cache_ttl' => 60,          // seconds
     ], $settings);
 }
 
@@ -335,6 +340,9 @@ if ($action === 'overview') {
             'last_change' => $lastChange,
             'allowed_extensions' => $fs->allowedExtensions(),
             'show_visit_button' => (bool) ($projectSettings['show_visit_button'] ?? false),
+            'render_mode' => (string) ($projectSettings['render_mode'] ?? 'client'),
+            'hosting_type' => (string) ($projectSettings['hosting_type'] ?? 'birkly'),
+            'ssr_cache_ttl' => (int) ($projectSettings['ssr_cache_ttl'] ?? 60),
         ],
     ]);
     exit;
@@ -402,35 +410,68 @@ if (!validate_csrf_token($csrf)) {
 }
 
 if ($action === 'save_settings') {
-    $showVisit = array_key_exists('show_visit_button', $input)
-        ? filter_var($input['show_visit_button'], FILTER_VALIDATE_BOOLEAN)
-        : null;
+    $patch = [];
 
-    if ($showVisit === null) {
+    if (array_key_exists('show_visit_button', $input)) {
+        $patch['show_visit_button'] = filter_var($input['show_visit_button'], FILTER_VALIDATE_BOOLEAN);
+    }
+
+    // Render / SSR controls (P51-M3): whitelist + clamp.
+    $renderSettings = birkly_project_ssr_validate_render_settings($input);
+    if ($renderSettings['error'] !== null) {
+        echo json_encode(['status' => 'error', 'message' => $renderSettings['error']]);
+        exit;
+    }
+    $patch = array_merge($patch, $renderSettings['patch']);
+
+    if ($patch === []) {
         echo json_encode(['status' => 'error', 'message' => 'No settings to save']);
         exit;
     }
 
-    if (!birkly_save_project_settings(['show_visit_button' => $showVisit])) {
+    if (!birkly_save_project_settings($patch)) {
         echo json_encode(['status' => 'error', 'message' => 'Failed to save settings']);
         exit;
     }
 
-    log_security_event('project_settings_updated', [
-        'show_visit_button' => $showVisit,
-    ]);
+    // Any change that affects server-side rendering busts the SSR cache so the
+    // next request re-renders under the new configuration.
+    if ($renderSettings['ssr_affected']) {
+        birkly_project_ssr_invalidate_all();
+    }
+
+    log_security_event('project_settings_updated', $patch);
 
     birkly_ensure_public_site_path();
     $indexPath = birkly_public_site_path() . '/index.html';
+    $settings = birkly_load_project_settings();
 
     echo json_encode([
         'status' => 'ok',
         'message' => 'Project settings saved',
         'data' => [
-            'show_visit_button' => $showVisit,
+            'show_visit_button' => (bool) ($settings['show_visit_button'] ?? false),
+            'render_mode' => (string) ($settings['render_mode'] ?? 'client'),
+            'hosting_type' => (string) ($settings['hosting_type'] ?? 'birkly'),
+            'ssr_cache_ttl' => (int) ($settings['ssr_cache_ttl'] ?? 60),
+            'ssr_cache_invalidated' => $renderSettings['ssr_affected'],
             'visit_url' => birkly_public_site_url(is_file($indexPath) ? '/index.html' : '/'),
             'has_index' => is_file($indexPath),
         ],
+    ]);
+    exit;
+}
+
+if ($action === 'invalidate_ssr_cache') {
+    birkly_project_ssr_invalidate_all();
+
+    log_security_event('project_ssr_cache_invalidated', [
+        'source' => 'admin',
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'SSR cache invalidated',
     ]);
     exit;
 }

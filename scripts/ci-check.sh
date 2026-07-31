@@ -7,13 +7,35 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 echo "==> PHP syntax (core entrypoints)"
-for f in server-router.php index.php admin/index.php core/version.php scripts/validate-project-templates.php; do
+for f in server-router.php index.php admin/index.php core/version.php core/project_ssr.php scripts/validate-project-templates.php; do
   php -l "$f" >/dev/null
 done
+
+echo "==> Client inlines shared engine verbatim (P51-M5 drift guard)"
+bash scripts/sync-template-engine-inline.sh --check
+node --check birkly-client.js
+
+echo "==> Shared template engine syntax suite (V-ENG-01..10)"
+node tests/template-engine/run.js
+
+echo "==> Client/server render parity suite (V-DEC-01..08)"
+node tests/template-engine/parity_client_server_test.js
+
+echo "==> SSR Node CLI bridge smoke (V-SSR-CLI)"
+node tests/template-engine/ssr_cli_test.js
+
+echo "==> Project SSR pipeline tests (V-SSR-01..10)"
+php tests/project_ssr_test.php
+
+echo "==> Project render settings API tests (V-SET-03/04/05/07)"
+php tests/project_ssr_settings_api_test.php
 
 echo "==> Template region tests"
 node tests/template_regions_test.js
 node tests/birkly_region_test.js
+
+echo "==> Client loading helpers tests (V-CLI-01..06)"
+node tests/birkly_loading_test.js
 
 echo "==> Phantom template validator self-test"
 php scripts/validate-project-templates.php --self-test
