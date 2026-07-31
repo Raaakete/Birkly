@@ -58,6 +58,16 @@ flag, domain/Origin checks deny every collection except `site_elements` during a
 request (no browser `Origin`), loops render empty, and the empty HTML can be cached — the site looks
 broken / “missing styles” even though CSS is present.
 
+**CSS protection:** Full-page SSR runs the shared engine over the entire HTML file. Inline
+`<style>` / `<script>` bodies contain CSS/JS `{ … }` braces that would otherwise be wiped by
+`processVariables`. The engine extracts those tags before templating and restores them after
+(V-ENG-11). Without that, theme rules (`[data-theme="dark"]`, keyframes, media queries) disappear
+and the site looks unstyled.
+
+**Settings persistence:** `render_mode` lives in `settings/project.json` on the data volume
+(`core/project_settings.php`). Admin Save is disabled until overview loads so the HTML default
+(`client`) cannot overwrite a saved `server` mode by accident.
+
 ## Settings (`settings/project.json`)
 
 ```json
