@@ -11,6 +11,9 @@ for f in server-router.php index.php admin/index.php core/version.php scripts/va
   php -l "$f" >/dev/null
 done
 
+echo "==> Shared template engine syntax suite (V-ENG-01..10)"
+node tests/template-engine/run.js
+
 echo "==> Template region tests"
 node tests/template_regions_test.js
 node tests/birkly_region_test.js
