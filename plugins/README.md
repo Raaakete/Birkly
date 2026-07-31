@@ -14,15 +14,24 @@ New CMS installs ship with an empty `plugins/` directory (this README and `.gitk
 | user_management | [birkly-user-management](https://marketplace.birkly.cloud/offers/birkly-user-management) |
 | studio | [birkly-studio](https://marketplace.birkly.cloud/offers/birkly-studio) |
 
-## Local development
+## Test install: git clones + auto-sync (Dokploy)
 
-Official plugin **source** lives in the private Ops workspace at `Birkly-Marketplace/internal/cms/packages/official-plugins/`. It is not part of the public CMS repository.
+For rapid plugin development against a **test** CMS (e.g. `test.birkly.cloud`):
 
-To work on plugins locally:
+1. Clone each plugin repo into the **data volume** as `/app/data/plugins/{plugin_id}` (ids: `commerce`, `events`, `automation`, `user_management`, `studio`).
+2. Enable auto-sync once (config stays on the volume):
 
-1. Clone the Ops repo (or use a sibling checkout at `../Birkly-Marketplace`).
-2. Build a plugin zip: `BIRKLY_OPS_ROOT=../Birkly-Marketplace ./scripts/build-plugin-zip.sh <plugin-id>`
-3. Install the zip via Admin → Plugins, or pull from the registry with `./scripts/install-dev-plugins.sh`.
+```bash
+GITHUB_TOKEN=ghp_... ./scripts/plugin-dev-sync-enable.sh
+```
+
+3. Push/merge on GitHub → within ~60s the test install pulls (no manual scripts). **CMS redeploys** restart the sync loop automatically.
+
+See `docs/deployment/docker.md` § Plugin dev git sync.
+
+Marketplace zip installs remain the path for production sites.
+
+## Local development (zip / Ops workspace)
 
 `sample-plugin` is dev/examples only and is not published to the marketplace.
 

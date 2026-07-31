@@ -72,10 +72,19 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   done
   mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
   if [ -d /app/bundled-plugins/automation ]; then
-    echo "[entrypoint] Syncing bundled automation plugin to data volume..."
-    mkdir -p "$DATA_ROOT/plugins/automation" 2>/dev/null || true
-    cp -a /app/bundled-plugins/automation/. "$DATA_ROOT/plugins/automation/" 2>/dev/null || true
+    auto_dir="$DATA_ROOT/plugins/automation"
+    if [ -f "$auto_dir/plugin.php" ] && [ -d "$auto_dir/.git" ]; then
+      echo "[entrypoint] automation is a git dev clone — skip bundled copy"
+    elif [ ! -f "$auto_dir/plugin.php" ]; then
+      echo "[entrypoint] Seeding bundled automation plugin to data volume..."
+      mkdir -p "$auto_dir" 2>/dev/null || true
+      cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
+    fi
   fi
+  # Git-cloned plugins under /app/data/plugins need CMS paths via ../.. from realpath.
+  ln -sfn /app/core "$DATA_ROOT/core" 2>/dev/null || true
+  ln -sfn /app/fieldtypes "$DATA_ROOT/fieldtypes" 2>/dev/null || true
+  ln -sfn /app/api "$DATA_ROOT/api" 2>/dev/null || true
   chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback"
 else
   legacy_layout
@@ -116,6 +125,29 @@ fi
 if [ -f /app/scripts/emergency-deactivate-broken-plugins.php ]; then
   echo "[entrypoint] Checking active plugins for syntax errors..."
   php /app/scripts/emergency-deactivate-broken-plugins.php || true
+fi
+
+# Plugin dev git sync (config on data volume — survives Dokploy redeploys).
+if [ "$USE_DATA_ROOT" -eq 1 ] && [ -f "$DATA_ROOT/settings/plugin_dev_sync.env" ]; then
+  if grep -q '^PLUGIN_DEV_SYNC_ENABLED=1' "$DATA_ROOT/settings/plugin_dev_sync.env" 2>/dev/null; then
+  interval=60
+  if grep -q '^PLUGIN_DEV_SYNC_INTERVAL=' "$DATA_ROOT/settings/plugin_dev_sync.env" 2>/dev/null; then
+    interval="$(grep '^PLUGIN_DEV_SYNC_INTERVAL=' "$DATA_ROOT/settings/plugin_dev_sync.env" | head -1 | cut -d= -f2 | tr -d '[:space:]')"
+  fi
+  if [ -z "$interval" ] || ! echo "$interval" | grep -qE '^[0-9]+$'; then
+    interval=60
+  fi
+  echo "[entrypoint] Plugin dev git sync enabled (every ${interval}s, config on volume)"
+  (
+    export BIRKLY_DATA="$DATA_ROOT"
+    while true; do
+      if [ -x /app/scripts/plugin-dev-git-sync.sh ]; then
+        /app/scripts/plugin-dev-git-sync.sh || true
+      fi
+      sleep "$interval"
+    done
+  ) &
+  fi
 fi
 
 echo "[entrypoint] Starting php-fpm..."
