@@ -33,5 +33,18 @@ assert_true('site_elements always allowed', birkly_page_bundle_collection_allowe
 $_SERVER['HTTP_REFERER'] = 'https://evil.example/project/index.html';
 assert_true('foreign origin does not bypass collection auth without domain', !birkly_page_bundle_collection_allowed('blog'));
 
+// Project SSR has no Origin/Referer domain context — must still read published collections.
+$_SERVER['HTTP_ORIGIN'] = '';
+$_SERVER['HTTP_REFERER'] = '';
+$GLOBALS['current_domain'] = '';
+assert_true(
+    'trusted_ssr allows collections without domain context',
+    birkly_page_bundle_collection_allowed('blog', ['trusted_ssr' => true])
+);
+assert_true(
+    'without trusted_ssr still denies when no domain',
+    !birkly_page_bundle_collection_allowed('blog', [])
+);
+
 echo "\npage_bundle_origin_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");
 exit($failures === 0 ? 0 : 1);
