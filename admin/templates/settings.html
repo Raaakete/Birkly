@@ -39,7 +39,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </svg>
         <?= __('admin.general') ?>
       </button>
-      <button type="button" class="tab" data-tab="site-delivery" data-settings-search="site delivery domains hosting project files redirects analytics public site">
+      <button type="button" class="tab" data-tab="site-delivery" data-settings-search="site delivery domains hosting project files redirects analytics public site server rendering ssr render mode cache">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
           <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
@@ -274,7 +274,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=site-delivery') ?>">Settings → Site delivery</a>.</p>
           </section>
         </div></div>
-          <div id="project" class="settings-pane-section" data-settings-search="site delivery project files upload editor public site activity access"><div class="settings-stack project-settings">
+          <div id="project" class="settings-pane-section" data-settings-search="site delivery project files upload editor public site activity access server rendering ssr render mode cache"><div class="settings-stack project-settings">
           <section class="card project-simple-card">
             <div class="section-header project-simple-header">
               <div>
@@ -299,25 +299,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </section>
 
-          <div id="project-advanced-panel" class="project-advanced-panel" hidden>
-          <section class="card project-overview-card">
-            <div class="section-header">
-              <h2>Project overview</h2>
-              <p class="section-description">Bundled public site workspace on this installation. Content can also be consumed on external sites via the public API and Domains whitelist.</p>
-            </div>
-            <div id="project-overview-content" class="project-overview-grid">
-              <div class="loading-state"><div class="spinner"></div><p>Loading project info...</p></div>
-            </div>
-            <div class="form-group project-visit-toggle">
-              <label class="checkbox-label">
-                <input type="checkbox" id="project-show-visit-button">
-                Show “Visit project” in admin header
-              </label>
-              <small class="form-help">Opens <code>project/index.html</code> in a new tab when the file exists.</small>
-            </div>
-          </section>
-
-          <section class="card project-rendering-card">
+          <section class="card project-rendering-card" id="project-server-rendering" data-settings-search="server rendering ssr render mode cache ttl hosting">
             <div class="section-header">
               <h2>Server rendering</h2>
               <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering only applies to Birkly-hosted project sites; external sites always render on the client.</p>
@@ -352,6 +334,24 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="project-rendering-actions">
               <button type="button" class="btn btn-primary btn-sm" id="project-save-rendering-btn">Save rendering settings</button>
               <button type="button" class="btn btn-secondary btn-sm" id="project-invalidate-ssr-btn">Invalidate SSR cache</button>
+            </div>
+          </section>
+
+          <div id="project-advanced-panel" class="project-advanced-panel" hidden>
+          <section class="card project-overview-card">
+            <div class="section-header">
+              <h2>Project overview</h2>
+              <p class="section-description">Bundled public site workspace on this installation. Content can also be consumed on external sites via the public API and Domains whitelist.</p>
+            </div>
+            <div id="project-overview-content" class="project-overview-grid">
+              <div class="loading-state"><div class="spinner"></div><p>Loading project info...</p></div>
+            </div>
+            <div class="form-group project-visit-toggle">
+              <label class="checkbox-label">
+                <input type="checkbox" id="project-show-visit-button">
+                Show “Visit project” in admin header
+              </label>
+              <small class="form-help">Opens <code>project/index.html</code> in a new tab when the file exists.</small>
             </div>
           </section>
 
