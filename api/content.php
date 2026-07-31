@@ -851,6 +851,8 @@ if ($action === 'set_entry_order') {
             require_once __DIR__ . '/../core/cache.php';
             $cache = new Cache();
             $cache->invalidateCollection($collectionSlugForCache);
+            require_once __DIR__ . '/../core/project_ssr.php';
+            birkly_project_ssr_invalidate_all();
         }
         echo json_encode(['status' => 'ok', 'message' => 'Entry order saved successfully']);
     } else {
