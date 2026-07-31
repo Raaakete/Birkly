@@ -11,8 +11,15 @@ for f in server-router.php index.php admin/index.php core/version.php core/proje
   php -l "$f" >/dev/null
 done
 
+echo "==> Client inlines shared engine verbatim (P51-M5 drift guard)"
+bash scripts/sync-template-engine-inline.sh --check
+node --check birkly-client.js
+
 echo "==> Shared template engine syntax suite (V-ENG-01..10)"
 node tests/template-engine/run.js
+
+echo "==> Client/server render parity suite (V-DEC-01..08)"
+node tests/template-engine/parity_client_server_test.js
 
 echo "==> SSR Node CLI bridge smoke (V-SSR-CLI)"
 node tests/template-engine/ssr_cli_test.js
