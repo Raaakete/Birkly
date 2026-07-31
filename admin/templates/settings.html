@@ -317,6 +317,44 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </section>
 
+          <section class="card project-rendering-card">
+            <div class="section-header">
+              <h2>Server rendering</h2>
+              <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering only applies to Birkly-hosted project sites; external sites always render on the client.</p>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="project-hosting-type">Hosting</label>
+                <select id="project-hosting-type" class="input">
+                  <option value="birkly">Birkly hosted</option>
+                  <option value="external">External</option>
+                </select>
+                <small class="form-help">Where this project site is served from. External sites always use client-side rendering.</small>
+              </div>
+              <div class="form-group">
+                <label for="project-render-mode">Render mode</label>
+                <select id="project-render-mode" class="input">
+                  <option value="client">Client-side</option>
+                  <option value="server">Server-side</option>
+                  <option value="auto">Auto</option>
+                </select>
+                <small class="form-help">Client renders in the browser. Server pre-renders HTML. Auto uses the server when possible and falls back to the client.</small>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="project-ssr-cache-ttl">Cache TTL (seconds)</label>
+                <input type="number" id="project-ssr-cache-ttl" class="input" min="0" max="86400" step="1" inputmode="numeric">
+                <small class="form-help">How long pre-rendered pages are cached. <code>0</code> disables caching (every request re-renders). Max 86400 (24h).</small>
+              </div>
+            </div>
+            <p class="form-help project-rendering-note" id="project-rendering-external-note" role="status" aria-live="polite" hidden>Server rendering is disabled while hosting is set to External. Switch to Birkly hosted to enable SSR.</p>
+            <div class="project-rendering-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="project-save-rendering-btn">Save rendering settings</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="project-invalidate-ssr-btn">Invalidate SSR cache</button>
+            </div>
+          </section>
+
           <section class="card project-files-card">
             <div class="section-header project-files-header">
               <div>
