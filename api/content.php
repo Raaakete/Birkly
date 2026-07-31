@@ -13,6 +13,7 @@ require_once '../core/cache.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once '../core/collection_schema.php';
+require_once '../core/entry_counts.php';
 require_once '../core/collection_groups.php';
 require_once 'log.php';
 
@@ -59,12 +60,7 @@ if ($action === 'list_collections') {
             if ($meta) {
                 // Add entries_count including sub-entries
                 $entriesDir = rtrim($path, '/') . '/entries';
-                $entriesCount = 0;
-                if (file_exists($entriesDir) && is_dir($entriesDir)) {
-                    $entriesCount = count(array_filter(scandir($entriesDir), function($f) use ($entriesDir) {
-                        return $f !== '.' && $f !== '..' && is_file($entriesDir . '/' . $f) && pathinfo($f, PATHINFO_EXTENSION) === 'json';
-                    }));
-                }
+                $entriesCount = birkly_count_entry_files($entriesDir);
                 
                 // Count sub-entries if collection has sub-collections
                 $subEntriesCount = 0;
