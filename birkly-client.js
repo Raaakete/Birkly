@@ -1897,10 +1897,33 @@
     }
 
 
-    /* BIRKLY_RENDER_V3_INLINE */
+    /* ---------------------------------------------------------------------
+       Shared template engine — AUTO-GENERATED, DO NOT EDIT BY HAND.
+       Source of truth: birkly-template-engine.js (repo root).
+       Re-sync:  bash scripts/sync-template-engine-inline.sh
+       CI (scripts/ci-check.sh) fails if this block drifts from the source.
+       Inlining keeps a single production <script src="/birkly-client.js">
+       tag working while client, SSR, and birkly-render.js share ONE engine. */
+    /* BIRKLY_TEMPLATE_ENGINE_INLINE_BEGIN */
 /**
- * Birkly Template Engine v3
- * String-based renderer — parse → render pipeline (parity with StudioTemplateEngine.php).
+ * Birkly Template Engine (shared)
+ * -------------------------------
+ * Canonical string-based renderer for the Birkly plain-English template
+ * language (see docs/TEMPLATE_LANGUAGE_SPEC.md). This is the single source of
+ * truth used by:
+ *   - the public Light DOM client (`birkly-client.js`)
+ *   - `birkly-client-modules/birkly-render.js` (thin re-export for tests)
+ *   - server-side rendering (SSR) added in later P51 milestones
+ *
+ * UMD/CommonJS + browser-global compatible: works under Node `require()` and
+ * as `globalThis.BirklyTemplateEngine` in a browser. No third-party deps.
+ *
+ * Public API (also exposed on the exported `engine` object):
+ *   - render(html, data, options)      main renderer; options.escapeHtml (bool)
+ *   - collectBundleRequests(html)      static analysis of a template's data needs
+ *   - hasTemplateSyntax(html)          does the string contain template syntax?
+ *   - escapeHtml(str)                  HTML-escape a value
+ *   - region helpers (discoverPageRegions, buildRegionTemplate, …) for parity
  */
 (function (root) {
     'use strict';
@@ -1908,7 +1931,8 @@
     const CONTROL_WORDS = new Set([
         'if', 'else', 'elseif', 'endif', 'for', 'endfor', 'foreach', 'endforeach',
         'from', 'get', 'endget', 'end', 'set', 'count', 'each', 'in', 'with',
-        'ordered', 'by', 'limit', 'of', 'has', 'exist', 'not', 'does'
+        'ordered', 'by', 'limit', 'of', 'has', 'exist', 'not', 'does',
+        'entry', 'endentry', 'public_form'
     ]);
 
     function escapeHtml(str) {
@@ -1966,13 +1990,31 @@
         if (Number.isNaN(d.getTime())) return String(value);
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const monthsFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        return String(format || 'Y-m-d')
-            .replace(/F/g, monthsFull[d.getMonth()])
-            .replace(/M/g, months[d.getMonth()])
-            .replace(/j/g, String(d.getDate()))
-            .replace(/d/g, String(d.getDate()).padStart(2, '0'))
-            .replace(/Y/g, String(d.getFullYear()))
-            .replace(/y/g, String(d.getFullYear()).slice(-2));
+        const pad = (n) => String(n).padStart(2, '0');
+        // PHP-style format codes. Scanned char-by-char so that substituted text
+        // (e.g. "January") is never re-scanned for later codes (the trailing
+        // "y" in a month name must not become the 2-digit year).
+        const codes = {
+            Y: String(d.getFullYear()),
+            y: String(d.getFullYear()).slice(-2),
+            m: pad(d.getMonth() + 1),
+            n: String(d.getMonth() + 1),
+            F: monthsFull[d.getMonth()],
+            M: months[d.getMonth()],
+            d: pad(d.getDate()),
+            j: String(d.getDate()),
+            H: pad(d.getHours()),
+            G: String(d.getHours()),
+            i: pad(d.getMinutes()),
+            s: pad(d.getSeconds())
+        };
+        const fmt = String(format || 'Y-m-d');
+        let out = '';
+        for (let i = 0; i < fmt.length; i++) {
+            const ch = fmt[i];
+            out += Object.prototype.hasOwnProperty.call(codes, ch) ? codes[ch] : ch;
+        }
+        return out;
     }
 
     function resolveEntry(collection, slug, data) {
@@ -2093,6 +2135,12 @@
     function applyLoopFilters(items, filter) {
         if (!filter) return items;
         let m = filter.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)$/);
+        if (m) {
+            const field = m[1];
+            const value = m[2];
+            return items.filter((it) => it && String(it[field]) === value);
+        }
+        m = filter.match(/^['"]([^'"]+)['"]\s*=\s*['"]([^'"]*)['"]$/);
         if (m) {
             const field = m[1];
             const value = m[2];
@@ -2226,11 +2274,58 @@
         return [null, 0, null, 0];
     }
 
+    /**
+     * Resolve a bare-headed context/system path such as `current.language`,
+     * `query.'lang'`, `query.slug`, or `entry.title`. The head must be a
+     * top-level key on `data` that holds an object; the remaining segments
+     * (quoted, numeric, or bare) are walked in order.
+     * Returns a string, or `undefined` when the expression is not such a path
+     * (so the caller can fall through to other resolvers).
+     */
+    function resolveContextPath(expr, data) {
+        const trimmed = String(expr || '').trim();
+        const m = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*)((?:\.(?:'[^']+'|"[^"]+"|\d+|[a-zA-Z_][a-zA-Z0-9_]*))+)$/);
+        if (!m) return undefined;
+        const head = m[1];
+        if (!data || typeof data !== 'object' || !Object.prototype.hasOwnProperty.call(data, head)) {
+            return undefined;
+        }
+        let cur = data[head];
+        if (cur == null || typeof cur !== 'object') return undefined;
+        const segRe = /\.(?:'([^']+)'|"([^"]+)"|(\d+)|([a-zA-Z_][a-zA-Z0-9_]*))/g;
+        let s;
+        while ((s = segRe.exec(m[2])) !== null) {
+            const key = s[1] != null ? s[1] : (s[2] != null ? s[2] : (s[3] != null ? s[3] : s[4]));
+            if (cur == null || typeof cur !== 'object') return undefined;
+            cur = cur[key];
+        }
+        if (cur == null || typeof cur === 'object') return undefined;
+        return String(cur);
+    }
+
     function evaluateExistence(ref, data) {
         const value = resolveCollectionEntryRef(ref, data);
         if (value === null || value === undefined) return false;
         if (Array.isArray(value)) return value.length > 0;
         return value !== '' && value !== false;
+    }
+
+    /** Resolve the left-hand side of a comparison into a comparable string. */
+    function resolveComparisonValue(expr, data) {
+        const trimmed = String(expr || '').trim();
+        const ctx = resolveContextPath(trimmed, data);
+        if (ctx !== undefined) return ctx;
+        const bare = trimmed.match(/^[a-zA-Z_][a-zA-Z0-9_]*$/);
+        if (bare) return resolveVariable(trimmed, data);
+        const quoted = trimmed.match(/^'([^']+)'$/);
+        if (quoted) {
+            const entry = data.entry || data;
+            if (entry && typeof entry === 'object' && Object.prototype.hasOwnProperty.call(entry, quoted[1])) {
+                const v = entry[quoted[1]];
+                return v == null || typeof v === 'object' ? '' : String(v);
+            }
+        }
+        return undefined;
     }
 
     function evaluateCondition(condition, data) {
@@ -2270,12 +2365,57 @@
             return entry && typeof entry === 'object' && entryHasField(entry, m[1]);
         }
 
+        // entry-field numeric comparison without `has`: {if entry 'price' <= 15}
+        m = cond.match(/^entry\s+['"]([^'"]+)['"]\s*(>=|<=|=<|=>|>|<|=|==|!=)\s*([0-9]+(?:\.[0-9]+)?)\s*$/i);
+        if (m) {
+            const entry = data.entry || data;
+            if (!entry || typeof entry !== 'object') return false;
+            const val = parseFloat(entry[m[1]]);
+            if (Number.isNaN(val)) return false;
+            return compareNumeric(val, normalizeOperator(m[2]), parseFloat(m[3]));
+        }
+
+        // Generic value comparison against a literal, e.g.
+        // {if current.language = 'de'} or {if query.'mode' = 'grid'}
+        m = cond.match(/^(.+?)\s*(=|==|!=|<=|>=|=<|=>|<|>)\s*('([^']*)'|"([^"]*)"|[0-9]+(?:\.[0-9]+)?|[a-zA-Z0-9_-]+)\s*$/);
+        if (m) {
+            const op = normalizeOperator(m[2]);
+            const rawRight = m[3];
+            const left = resolveComparisonValue(m[1].trim(), data);
+            if (left !== undefined) {
+                let right;
+                if (m[4] != null) right = m[4];
+                else if (m[5] != null) right = m[5];
+                else right = rawRight;
+                const leftNum = parseFloat(left);
+                const rightNum = parseFloat(right);
+                if (!Number.isNaN(leftNum) && !Number.isNaN(rightNum) && /^[0-9.]+$/.test(String(right))) {
+                    return compareNumeric(leftNum, op, rightNum);
+                }
+                const leftStr = String(left);
+                const rightStr = String(right);
+                switch (op) {
+                    case '=': return leftStr === rightStr;
+                    case '!=': return leftStr !== rightStr;
+                    case '<': return leftStr < rightStr;
+                    case '>': return leftStr > rightStr;
+                    case '<=': return leftStr <= rightStr;
+                    case '>=': return leftStr >= rightStr;
+                    default: return false;
+                }
+            }
+        }
+
         return false;
     }
 
-    function escapeOutput(pathOrName, value) {
+    function escapeOutput(pathOrName, value, options) {
         const str = value == null ? '' : String(value);
         if (!str) return '';
+        if (options && options.escapeHtml === false) {
+            return str;
+        }
+        // Rich-content fields are treated as trusted HTML by convention.
         if (String(pathOrName).includes('content') || String(pathOrName).includes('html')) {
             return str;
         }
@@ -2314,6 +2454,12 @@
             .replace(/>/g, '&gt;');
     }
 
+    /**
+     * `{entry for 'collection'}…{endentry}` — public form scaffold.
+     * The engine emits a placeholder `<div>` carrying the inner markup so the
+     * client (or SSR post-step) can hydrate a real form. This keeps the string
+     * engine framework-free.
+     */
     function processEntryForBlocks(html) {
         const pattern = /\{entry\s+for\s+['"]([^'"]+)['"]\}/i;
         let guard = 0;
@@ -2336,9 +2482,80 @@
         return html;
     }
 
+    /** `{public_form 'collection'}` — inline public form placeholder. */
     function processPublicFormBlocks(html) {
         return html.replace(/\{public_form\s+['"]([^'"]+)['"]\}/gi, (_, slug) => {
             return '<div class="birkly-form-placeholder" data-birkly-collection="' + escapeHtml(String(slug || '').trim()) + '"></div>';
+        });
+    }
+
+    function stringifyInlineItem(item) {
+        if (item == null) return '';
+        if (typeof item !== 'object') return String(item);
+        for (const k of ['value', 'name', 'label', 'title', 'id']) {
+            if (item[k] != null && typeof item[k] !== 'object') return String(item[k]);
+        }
+        return '';
+    }
+
+    function resolveArrayInlineItem(arr, accessor) {
+        if (!Array.isArray(arr)) return undefined;
+        let m = accessor.match(/^item\.(\d+)$/i);
+        if (m) return arr[parseInt(m[1], 10) - 1];
+        if (/^item\.newest$/i.test(accessor)) return arr[arr.length - 1];
+        if (/^item\.oldest$/i.test(accessor)) return arr[0];
+        m = accessor.match(/^item\.'([^']+)'$/i);
+        if (m) {
+            const key = m[1];
+            return arr.find((it) => {
+                if (it == null) return false;
+                if (typeof it === 'object') {
+                    return ['value', 'name', 'id', 'label'].some((k) => String(it[k]) === key);
+                }
+                return String(it) === key;
+            });
+        }
+        return undefined;
+    }
+
+    /**
+     * Inline single-value `{from … get …}` (no `{endget}`), e.g.
+     *   {from 'site_elements'.'headline' get 'content'.0.'value'}
+     *   {from 'tags' get item.1}   (array field on the current entry)
+     * Block forms (`{from … get entry …}{endget}`) are handled earlier and are
+     * already consumed by the time this runs.
+     */
+    function processInlineFromGet(html, data, options) {
+        return html.replace(/\{from\s+([^{}]+?)\s+get\s+([^{}]+?)\}/gi, (_, source, target) => {
+            const src = String(source || '').trim();
+            const tgt = String(target || '').trim();
+            if (/^entry\b/i.test(tgt)) return '';
+
+            // Case A: {from 'collection'.'identifier' get 'field'.0.'value'}
+            let m = src.match(/^'([^']+)'\.'([^']+)'$/) || src.match(/^'([^']+)'\.(current|newest|last-updated)$/);
+            if (m) {
+                const entry = resolveParentCollectionEntry(m[1], m[2], data);
+                if (!entry || typeof entry !== 'object') return '';
+                const parts = [...tgt.matchAll(/'([^']+)'|(\d+)/g)];
+                if (!parts.length) return '';
+                const value = resolveFieldPathFromParts(parts, { entry: entry });
+                return escapeOutput(tgt, value, options);
+            }
+
+            // Case B: {from 'arrayField' get item.N | item.newest | item.'value'}
+            m = src.match(/^'([^']+)'$/);
+            if (m) {
+                const field = m[1];
+                const entry = data.entry;
+                let arr = null;
+                if (entry && typeof entry === 'object' && Array.isArray(entry[field])) arr = entry[field];
+                else if (Array.isArray(data[field])) arr = data[field];
+                if (!arr) return '';
+                const item = resolveArrayInlineItem(arr, tgt);
+                return escapeOutput(tgt, stringifyInlineItem(item), options);
+            }
+
+            return '';
         });
     }
 
@@ -2450,8 +2667,8 @@
         });
     }
 
-    function processVariables(html, data) {
-        return html.replace(/\{([^}]+)\}/g, (full, inner) => {
+    function processVariables(html, data, options) {
+        return html.replace(/\{([^{}]*)\}/g, (full, inner) => {
             const trimmed = String(inner || '').trim();
             if (!trimmed) return '';
             if (/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count|entry)\b/i.test(trimmed)) {
@@ -2465,11 +2682,17 @@
             }
             if (/^count\s+of\b/i.test(trimmed)) return full;
 
+            // System / context paths: current.language, query.'lang', query.slug …
+            const ctx = resolveContextPath(trimmed, data);
+            if (ctx !== undefined) {
+                return escapeOutput(trimmed, ctx, options);
+            }
+
             if (trimmed.includes("'")) {
                 const parts = [...trimmed.matchAll(/'([^']+)'|(\d+)/g)];
                 if (parts.length) {
                     const value = resolveFieldPathFromParts(parts, data);
-                    return escapeOutput(trimmed, value);
+                    return escapeOutput(trimmed, value, options);
                 }
             }
 
@@ -2481,25 +2704,36 @@
                 if (format && value) {
                     return formatDate(value, format);
                 }
-                return escapeOutput(name, value);
+                return escapeOutput(name, value, options);
             }
 
             return '';
         });
     }
 
-    function render(html, data) {
+    /**
+     * Render a template string against data.
+     * @param {string} html   template source
+     * @param {object} data   render context (collections, entry, site_elements, query, current, …)
+     * @param {{ escapeHtml?: boolean }} [options]  escapeHtml defaults to true (safe)
+     * @returns {string}
+     */
+    function render(html, data, options) {
         if (!html || typeof html !== 'string') return html || '';
         if (!data || typeof data !== 'object') return html;
 
-        const renderFn = (tpl, ctx) => render(tpl, ctx);
+        const opts = (options && typeof options === 'object') ? options : {};
+        const ctxOptions = { escapeHtml: opts.escapeHtml === false ? false : true };
+        const renderFn = (tpl, ctx) => render(tpl, ctx, ctxOptions);
+
         let out = processEntryForBlocks(html);
         out = processPublicFormBlocks(out);
         out = processFromGetBlocks(out, data, renderFn);
+        out = processInlineFromGet(out, data, ctxOptions);
         out = processForLoops(out, data, renderFn);
         out = processIfBlocks(out, data, renderFn);
         out = processCountVariables(out, data);
-        out = processVariables(out, data);
+        out = processVariables(out, data, ctxOptions);
         return out;
     }
 
@@ -2731,16 +2965,33 @@
         buildRegionTemplate,
         resolveLoopItems,
         evaluateCondition,
+        formatDate,
+        getNestedValue,
         escapeHtml
     };
 
-    const BirklyRoot = root.Birkly || (root.Birkly = {});
-    BirklyRoot.render = engine;
-})(typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : {}));
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = engine;
+    }
 
-    /* END BIRKLY_RENDER_V3_INLINE */
+    // Browser / global exposure (framework-free, no bundler required).
+    root.BirklyTemplateEngine = engine;
+    const Birkly = root.Birkly || (root.Birkly = {});
+    if (!Birkly.render) {
+        Birkly.render = engine;
+    }
+})(typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : this));
+    /* BIRKLY_TEMPLATE_ENGINE_INLINE_END */
 
-    if (typeof globalThis !== 'undefined' && globalThis.Birkly && globalThis.Birkly.render) {
+    // Point this client instance's render engine at the shared engine that the
+    // inlined IIFE above just registered (globalThis.BirklyTemplateEngine). The
+    // client, SSR CLI bridge, and birkly-render.js re-export share ONE engine.
+    if (typeof globalThis !== 'undefined' && globalThis.BirklyTemplateEngine) {
+        if (globalThis.Birkly) {
+            globalThis.Birkly.render = globalThis.BirklyTemplateEngine;
+        }
+        Birkly.render = globalThis.BirklyTemplateEngine;
+    } else if (typeof globalThis !== 'undefined' && globalThis.Birkly && globalThis.Birkly.render) {
         Birkly.render = globalThis.Birkly.render;
     }
 
@@ -4111,6 +4362,171 @@
     }
     
     
+    /* =====================================================================
+     * P51-M4: Loading reveal / animation holdback / skeleton helpers
+     * ---------------------------------------------------------------------
+     * Additive, opt-in. Default path is unchanged when no data-attributes are
+     * present. Canonical source (unit-tested) lives in
+     * birkly-client-modules/birkly-loading.js — kept in sync here so the single
+     * bundled birkly-client.js needs no extra script tag.
+     *
+     * Opt-in hooks (static HTML):
+     *   <html data-birkly-loading>          hide page until ready, then fade in
+     *   <body data-birkly-reveal>           same, on <body>
+     *   <html data-birkly-hold-animations>  freeze CSS anim/transition until ready
+     *   <any  data-birkly-skeleton>         shimmer placeholder until processed
+     *
+     * Ready = first of: `birkly:templates-processed`, SSR marker present
+     * (<meta name="birkly-ssr"> / <html data-birkly-ssr>), or 8s safety timeout.
+     * On ready we add `birkly-ready` to opt-in elements (+ <html>), which the
+     * injected CSS uses to reveal, resume animations, and drop skeletons.
+     * ===================================================================== */
+    function createBirklyLoading(win, doc, opts) {
+        opts = opts || {};
+        win = win || window;
+        doc = doc || document;
+
+        const READY_CLASS = 'birkly-ready';
+        const SKELETON_CLASS = 'birkly-skeleton';
+        const STYLE_ID = 'birkly-loading-styles';
+        const OPT_IN_SELECTOR =
+            '[data-birkly-loading],[data-birkly-reveal],[data-birkly-hold-animations]';
+        const timeoutMs = typeof opts.timeout === 'number' ? opts.timeout : 8000;
+
+        const STYLE_CSS = [
+            '[data-birkly-loading]:not(.' + READY_CLASS + '),',
+            '[data-birkly-reveal]:not(.' + READY_CLASS + '){opacity:0!important;}',
+            '[data-birkly-loading].' + READY_CLASS + ',',
+            '[data-birkly-reveal].' + READY_CLASS + '{opacity:1!important;transition:opacity .25s ease-in;}',
+            '[data-birkly-hold-animations]:not(.' + READY_CLASS + ') *,',
+            '[data-birkly-hold-animations]:not(.' + READY_CLASS + ') *::before,',
+            '[data-birkly-hold-animations]:not(.' + READY_CLASS + ') *::after{animation:none!important;transition:none!important;}',
+            '.' + SKELETON_CLASS + '{position:relative;min-height:1em;color:transparent!important;border-radius:4px;',
+            'background:linear-gradient(90deg,#eee 25%,#f5f5f5 37%,#eee 63%);background-size:400% 100%;',
+            'animation:birkly-shimmer 1.4s ease infinite;}',
+            '.' + SKELETON_CLASS + ' *{visibility:hidden!important;}',
+            '@keyframes birkly-shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}'
+        ].join('');
+
+        let ready = false;
+        let timer = null;
+        let listening = false;
+
+        function isSsrRendered() {
+            try {
+                const de = doc.documentElement;
+                if (de && de.hasAttribute && de.hasAttribute('data-birkly-ssr')) return true;
+            } catch (e) { /* ignore */ }
+            try {
+                if (doc.querySelector && doc.querySelector('meta[name="birkly-ssr"]')) return true;
+            } catch (e) { /* ignore */ }
+            return false;
+        }
+
+        function queryAll(selector) {
+            if (typeof doc.querySelectorAll !== 'function') return [];
+            try {
+                return Array.prototype.slice.call(doc.querySelectorAll(selector));
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function optInTargets() {
+            const targets = [];
+            if (doc.documentElement) targets.push(doc.documentElement);
+            if (doc.body && targets.indexOf(doc.body) === -1) targets.push(doc.body);
+            queryAll(OPT_IN_SELECTOR).forEach(function (el) {
+                if (el && targets.indexOf(el) === -1) targets.push(el);
+            });
+            return targets;
+        }
+
+        function injectStyles() {
+            if (doc.getElementById && doc.getElementById(STYLE_ID)) return;
+            if (typeof doc.createElement !== 'function') return;
+            const head = doc.head ||
+                (doc.getElementsByTagName && doc.getElementsByTagName('head')[0]) ||
+                doc.documentElement;
+            if (!head || typeof head.appendChild !== 'function') return;
+            const style = doc.createElement('style');
+            style.id = STYLE_ID;
+            style.textContent = STYLE_CSS;
+            head.appendChild(style);
+        }
+
+        function showSkeleton(el) {
+            if (el && el.classList) el.classList.add(SKELETON_CLASS);
+        }
+
+        function hideSkeleton(el) {
+            if (el && el.classList) el.classList.remove(SKELETON_CLASS);
+            if (el && typeof el.removeAttribute === 'function') el.removeAttribute('data-birkly-skeleton');
+        }
+
+        function reveal() {
+            if (ready) return;
+            ready = true;
+            if (timer != null && typeof win.clearTimeout === 'function') win.clearTimeout(timer);
+            timer = null;
+            optInTargets().forEach(function (el) {
+                if (el && el.classList) el.classList.add(READY_CLASS);
+            });
+            queryAll('.' + SKELETON_CLASS).forEach(hideSkeleton);
+            try {
+                if (typeof doc.dispatchEvent === 'function' && typeof win.CustomEvent === 'function') {
+                    doc.dispatchEvent(new win.CustomEvent('birkly:ready'));
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function onRegionProcessed(event) {
+            if (event && event.target) hideSkeleton(event.target);
+        }
+
+        function setup() {
+            injectStyles();
+            queryAll('[data-birkly-skeleton]').forEach(showSkeleton);
+
+            if (isSsrRendered()) {
+                const micro = typeof win.queueMicrotask === 'function'
+                    ? win.queueMicrotask
+                    : function (fn) { win.setTimeout ? win.setTimeout(fn, 0) : fn(); };
+                micro(reveal);
+                return api;
+            }
+
+            if (!listening && typeof doc.addEventListener === 'function') {
+                doc.addEventListener('birkly:templates-processed', reveal);
+                doc.addEventListener('birkly:region-processed', onRegionProcessed);
+                listening = true;
+            }
+            if (typeof win.setTimeout === 'function') {
+                timer = win.setTimeout(reveal, timeoutMs);
+            }
+            return api;
+        }
+
+        const api = {
+            setup: setup,
+            reveal: reveal,
+            showSkeleton: showSkeleton,
+            hideSkeleton: hideSkeleton,
+            isReady: function () { return ready; },
+            READY_CLASS: READY_CLASS,
+            SKELETON_CLASS: SKELETON_CLASS,
+            timeout: timeoutMs
+        };
+        return api;
+    }
+
+    // Instantiate + wire up as early as possible (before first paint) so opt-in
+    // pages can hide content until templates render. No-op unless the page opts
+    // in via the data-attributes above.
+    const loadingHelpers = createBirklyLoading(window, document);
+    Birkly.loading = loadingHelpers;
+    try { loadingHelpers.setup(); } catch (e) { /* never block init */ }
+
     /**
      * Public API
      * Note: local `Birkly` (const) keeps the render engine at Birkly.render.
@@ -4170,6 +4586,12 @@
          * Prepare + process a region host (used by <birkly-region>)
          */
         processRegion: processBirklyRegionHost,
+
+        /**
+         * Loading / animation helpers (P51-M4).
+         * Birkly.loading.reveal() / showSkeleton(el) / hideSkeleton(el) / isReady()
+         */
+        loading: loadingHelpers,
         
         /**
          * Get current configuration

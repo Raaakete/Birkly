@@ -35,11 +35,92 @@ This directory contains the modular components of the Birkly client library.
    - `tryLoadPageSnapshot()` - Load publish-time snapshot (inline or `page_snapshot.php`)
 
 6. **birkly-render.js** - Template engine v3 (string-based renderer)
-   - `render(html, data)` - Full parse → render pipeline
+   - Thin re-export of the shared engine — see below.
+   - `render(html, data, options)` - Full parse → render pipeline
    - `collectBundleRequests(html)` - Data needs from template source
    - `discoverPageRegions(document, root?, { force? })` - Outermost Light DOM regions (template syntax, `data-birkly-region`, or `birkly-region`); optional scoped root; skips `data-birkly-processed`
    - `buildRegionTemplate` / `getRegionDefaultTemplate` - helpers for `<birkly-region>` entry/list defaults
-   - Inlined into `birkly-client.js` for production (single script tag)
+   - The shared engine is inlined into `birkly-client.js` for production (single
+     script tag) from `birkly-template-engine.js` via
+     `scripts/sync-template-engine-inline.sh` — see "Inlining" below.
+
+### Shared template engine (`birkly-template-engine.js`)
+
+The canonical string engine now lives at the repo root in
+**`birkly-template-engine.js`** (P51-M1). It is the single source of truth for
+the Birkly template language and is shared by the client, the
+`birkly-render.js` re-export, and (in later P51 milestones) server-side
+rendering.
+
+```js
+// Node / CommonJS
+const BirklyTemplateEngine = require('./birkly-template-engine.js');
+BirklyTemplateEngine.render(html, data, options);
+
+// Browser: exposed as globalThis.BirklyTemplateEngine
+```
+
+- UMD/CommonJS + browser-global; no third-party deps or build step.
+- Public API: `render(html, data, options)`, `collectBundleRequests(html)`,
+  `hasTemplateSyntax(html)`, `escapeHtml`, plus region helpers
+  (`discoverPageRegions`, `buildRegionTemplate`, `getRegionDefaultTemplate`, …).
+- `options.escapeHtml` (default `true`) HTML-escapes untrusted field values;
+  rich-content fields (`content` / `html`) remain trusted markup.
+- Syntax coverage is verified by `tests/template-engine/run.js` (V-ENG-01..10)
+  against `docs/TEMPLATE_LANGUAGE_SPEC.md`.
+
+`birkly-client-modules/birkly-render.js` is retained as a thin re-export
+(`module.exports = require('../birkly-template-engine.js')`) so existing tests
+and callers keep working.
+
+#### Inlining into `birkly-client.js` (P51-M5)
+
+`birkly-client.js` no longer carries its own copy of the parser/renderer. The
+old `BIRKLY_RENDER_V3_INLINE` block is gone; in its place the production client
+embeds a **byte-for-byte copy of `birkly-template-engine.js`** between markers:
+
+```js
+/* BIRKLY_TEMPLATE_ENGINE_INLINE_BEGIN */
+… contents of birkly-template-engine.js (UMD IIFE) …
+/* BIRKLY_TEMPLATE_ENGINE_INLINE_END */
+```
+
+The IIFE registers `globalThis.BirklyTemplateEngine`; the client then points its
+local `Birkly.render` (and `globalThis.Birkly.render`) at it. The client layer
+keeps everything else — DOM scanning, network fetch, hydration, events, forms,
+loading helpers (M4), `processTemplatesV3`, `<birkly-region>` handling.
+
+- **Source of truth:** `birkly-template-engine.js`. Never hand-edit the inlined
+  block.
+- **Re-sync:** `bash scripts/sync-template-engine-inline.sh` (plain awk/diff, no
+  bundler). `--check` verifies no drift and is wired into `scripts/ci-check.sh`.
+- **Parity:** client, SSR (`scripts/birkly-ssr-cli.js` / `core/project_ssr.php`),
+  and the `birkly-render.js` re-export all execute the same module, so client
+  and server output are identical by construction. Verified by
+  `tests/template-engine/parity_client_server_test.js` (matrix **V-DEC-01..08**).
+
+### Loading helpers (`birkly-loading.js`, P51-M4)
+
+Additive, **opt-in** helpers so template-first pages can avoid FOUC / premature
+animations. Default behavior is unchanged when no opt-in attributes are present.
+Canonical source is `birkly-loading.js` (UMD, unit-tested under Node); the same
+code is inlined into `birkly-client.js` and exposed as `Birkly.loading`.
+
+Opt-in via static HTML attributes:
+
+| Hook | Effect |
+|------|--------|
+| `<html data-birkly-loading>` / `<body data-birkly-reveal>` | Hide until ready, then fade in |
+| `<html data-birkly-hold-animations>` | Freeze CSS animations/transitions until ready |
+| `<any data-birkly-skeleton>` | Shimmer placeholder until that region/page is processed |
+
+*Ready* = first of `birkly:templates-processed`, SSR marker present
+(`<meta name="birkly-ssr">` / `<html data-birkly-ssr>` → reveal on microtask),
+or an 8 s safety timeout. On ready, `birkly-ready` is added to opt-in elements
+(and `<html>`). JS API: `Birkly.loading.reveal()`, `.showSkeleton(el)`,
+`.hideSkeleton(el)`, `.isReady()`. Tests: `tests/birkly_loading_test.js`
+(V-CLI-01..06). Details: `docs/reviews/P51-ssr-notes.md` → "Client loading
+helpers (M4)".
 
 ### Hydrate script (baked pages)
 
