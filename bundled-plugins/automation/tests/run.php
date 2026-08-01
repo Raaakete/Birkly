@@ -298,7 +298,7 @@ function test_setup_health_and_mail_settings(): void
     assert_true(isset($health['mail']['from_email']), 'health should expose mail settings');
     assert_true(isset($health['guide']['steps']), 'health should include setup guide copy');
     assert_true(($health['plugin_version'] ?? '') !== '', 'health should expose plugin version');
-    assert_true(version_compare((string) $health['plugin_version'], '1.1.2', '>='), 'plugin version should be at least 1.1.2');
+    assert_true(version_compare((string) $health['plugin_version'], '1.1.3', '>='), 'plugin version should be at least 1.1.3');
 
     $lock1 = automation_acquire_test_email_lock('dedupe@example.com', 30);
     $lock2 = automation_acquire_test_email_lock('dedupe@example.com', 30);
