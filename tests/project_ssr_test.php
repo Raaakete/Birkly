@@ -5,8 +5,8 @@
  * plus P52-M3 defaults coverage — V-DEF-01/02/04/05/06.
  *
  * P52-M2: render is in-process PHP (core/birkly_template_engine.php).
- * Render smoke MUST pass without Node; only the legacy Node-collect parity
- * check may SKIP when Node is unavailable.
+ * The suite never shells out to Node — the legacy Node-collect parity block
+ * was deleted with the Node SSR surface in P52-M4.
  *
  * P52-M3: render_mode defaults to server for Birkly hosting. A saved
  * "client" in settings/project.json must survive load (no migration).
@@ -204,32 +204,6 @@ try {
     assert_true('collect finds header get_entry', $hasHeaderEntry);
     assert_true('collect finds sub-collection parent (comments)', $hasComments);
 
-    // Legacy parity with Node CLI collect — optional, SKIPs without Node.
-    // (Node helpers are @deprecated; this block goes away with them in P52-M4.)
-    $node = birkly_project_ssr_node_binary();
-    $cliParity = null;
-    if (is_string($node) && $node !== '') {
-        $cliParity = birkly_project_ssr_run_node(
-            $node,
-            $root . '/scripts/birkly-ssr-cli.js',
-            json_encode(['mode' => 'collect', 'html' => $tpl]),
-            5.0
-        );
-    }
-    if ($cliParity !== null) {
-        $decoded = json_decode($cliParity, true);
-        $nodeReqs = is_array($decoded) ? ($decoded['requests'] ?? []) : [];
-        // Compare as sets of json-encoded requests.
-        $norm = static function (array $list): array {
-            $out = array_map(static fn($r) => json_encode($r), $list);
-            sort($out);
-            return $out;
-        };
-        assert_true('PHP collect == Node collect (parity)', $norm($reqs) === $norm($nodeReqs), 'php=' . json_encode($reqs) . ' node=' . json_encode($nodeReqs));
-    } else {
-        echo "  PHP/Node collect parity: SKIP (node unavailable)\n";
-    }
-
     echo "\n[V-SSR-06/07] cache put/get/ttl/invalidate\n";
     birkly_project_ssr_invalidate_all();
     $key = birkly_project_ssr_cache_key('/index.html', ['slug' => 'demo'], 'en', 'rev123');
@@ -289,7 +263,7 @@ try {
         . '$st = birkly_project_ssr_runtime_status();'
         . 'echo "|" . ((($st["ready"] ?? false) === true) ? "READY" : "NOTREADY");'
         . 'echo "|reason=" . (($st["reason"] ?? null) === null ? "null" : (string) $st["reason"]);';
-    $probeCmd = 'env PATH=/usr/bin:/bin BIRKLY_NODE_BIN= '
+    $probeCmd = 'env PATH=/usr/bin:/bin '
         . escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($probeCode) . ' ' . escapeshellarg($root);
     $probeOut = (string) shell_exec($probeCmd);
     assert_true('Node-absent PATH: render works', strpos($probeOut, 'RENDER_OK') !== false, 'out=' . $probeOut);

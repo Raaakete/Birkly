@@ -4,18 +4,21 @@
 /**
  * P51-M5 — Client/server render parity suite (matrix V-DEC-01 … V-DEC-08).
  *
- * The whole point of P51 is that there is exactly ONE template engine
- * implementation. This test proves the decoupling holds:
+ * The whole point of P51 is that there is exactly ONE JS template engine
+ * implementation (the browser SSOT). This test proves the decoupling holds:
  *
- *   - `birkly-template-engine.js`                  ← SSR (core/project_ssr.php,
- *                                                     scripts/birkly-ssr-cli.js)
+ *   - `birkly-template-engine.js`                  ← canonical JS engine
  *   - `birkly-client-modules/birkly-render.js`     ← thin re-export (tests)
  *   - the inlined block in `birkly-client.js`      ← production single script tag
  *
  * ...all resolve to the same source. Because the client inlines a byte-for-byte
  * copy of the engine (kept in sync by scripts/sync-template-engine-inline.sh and
- * enforced by ci-check), client-side `Birkly.render(html, data)` and server-side
- * SSR `engine.render(html, data)` produce identical output by construction.
+ * enforced by ci-check), every browser `Birkly.render(html, data)` call runs
+ * the same code by construction.
+ *
+ * Server-side rendering is PHP-native since P52 (core/birkly_template_engine.php,
+ * no Node on the SSR path); PHP↔JS output parity is proven separately by
+ * tests/template_engine_parity_test.php against the shared fixture set.
  *
  * Run: node tests/template-engine/parity_client_server_test.js
  */
