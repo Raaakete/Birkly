@@ -1,0 +1,146 @@
+{
+    "section": "V-PHP-05",
+    "title": "if/else/endif, has, exist, comparisons",
+    "cases": [
+        {
+            "name": "if entry has field present",
+            "html": "{if entry has 'price'}has-price{else}no-price{endif}",
+            "data": {
+                "entry": { "title": "Item", "price": 12, "discount": "" }
+            }
+        },
+        {
+            "name": "if entry has field empty string is false",
+            "html": "{if entry has 'discount'}has{else}none{endif}",
+            "data": {
+                "entry": { "title": "Item", "price": 12, "discount": "" }
+            }
+        },
+        {
+            "name": "if entry has field empty list is false",
+            "html": "{if entry has 'tags'}has{else}none{endif}",
+            "data": {
+                "entry": { "title": "Item", "tags": [] }
+            }
+        },
+        {
+            "name": "collection entry exist present",
+            "html": "{if 'site_elements'.'hero' exist}here{endif}",
+            "data": {
+                "site_elements": { "hero": { "content": [{ "value": "x" }] } }
+            }
+        },
+        {
+            "name": "collection entry exist missing",
+            "html": "{if 'site_elements'.'ghost' exist}here{else}gone{endif}",
+            "data": {
+                "site_elements": { "hero": { "content": [{ "value": "x" }] } }
+            }
+        },
+        {
+            "name": "does not exist",
+            "html": "{if 'site_elements'.'ghost' does not exist}missing{else}present{endif}",
+            "data": {
+                "site_elements": { "hero": { "title": "x" } }
+            }
+        },
+        {
+            "name": "numeric comparison has price <= 15",
+            "html": "{if entry has 'price' <= 15}cheap{else}pricey{endif}",
+            "data": {
+                "entry": { "title": "Item", "price": 12 }
+            }
+        },
+        {
+            "name": "numeric comparison has price > 20 false",
+            "html": "{if entry has 'price' > 20}big{else}small{endif}",
+            "data": {
+                "entry": { "title": "Item", "price": 12 }
+            }
+        },
+        {
+            "name": "entry field comparison without has",
+            "html": "{if entry 'price' <= 15}cheap{else}pricey{endif}",
+            "data": {
+                "entry": { "title": "Item", "price": 12 }
+            }
+        },
+        {
+            "name": "bare has form",
+            "html": "{if has 'price'}yes{else}no{endif}",
+            "data": {
+                "entry": { "price": 9 }
+            }
+        },
+        {
+            "name": "entry has bare field name",
+            "html": "{if entry has price}yes{else}no{endif}",
+            "data": {
+                "entry": { "price": 9 }
+            }
+        },
+        {
+            "name": "current.language string comparison true",
+            "html": "{if current.language = 'de'}Willkommen{else}Welcome{endif}",
+            "data": {
+                "current": { "language": "de" }
+            }
+        },
+        {
+            "name": "current.language string comparison false",
+            "html": "{if current.language = 'en'}Welcome{else}Andere{endif}",
+            "data": {
+                "current": { "language": "de" }
+            }
+        },
+        {
+            "name": "query path comparison",
+            "html": "{if query.'mode' = 'grid'}grid{else}list{endif}",
+            "data": {
+                "query": { "mode": "grid" }
+            }
+        },
+        {
+            "name": "quoted entry field string comparison",
+            "html": "{if 'category' = 'news'}newsy{else}other{endif}",
+            "data": {
+                "entry": { "category": "news" }
+            }
+        },
+        {
+            "name": "not equals operator",
+            "html": "{if current.language != 'en'}translated{else}original{endif}",
+            "data": {
+                "current": { "language": "fr" }
+            }
+        },
+        {
+            "name": "numeric comparison against literal on left path",
+            "html": "{if 'price' <= 15}ok{else}nope{endif}",
+            "data": {
+                "entry": { "price": "12.50" }
+            }
+        },
+        {
+            "name": "operator alias =< normalizes",
+            "html": "{if entry has 'price' =< 15}cheap{else}pricey{endif}",
+            "data": {
+                "entry": { "price": 12 }
+            }
+        },
+        {
+            "name": "unknown condition renders false branch",
+            "html": "{if wibble wobble}yes{else}no{endif}",
+            "data": {
+                "entry": { "title": "x" }
+            }
+        },
+        {
+            "name": "if without else removes block when false",
+            "html": "a{if entry has 'ghost'}X{endif}b",
+            "data": {
+                "entry": { "title": "x" }
+            }
+        }
+    ]
+}

@@ -1,0 +1,105 @@
+{
+    "section": "V-PHP-04",
+    "title": "from…get block + inline",
+    "cases": [
+        {
+            "name": "from get block resolves entry fields",
+            "html": "{from 'site_elements' get entry 'hero'}<h1>{'content'.0.'value'}</h1><p>{'content'.1.'value'}</p>{endget}",
+            "data": {
+                "site_elements": {
+                    "hero": { "key": "hero", "title": "Hero", "content": [{ "value": "Welcome" }, { "value": "Subtitle" }] }
+                }
+            }
+        },
+        {
+            "name": "from get block for missing entry removed entirely",
+            "html": "before{from 'site_elements' get entry 'ghost'}<h1>{title}</h1>{endget}after",
+            "data": {
+                "site_elements": {
+                    "hero": { "key": "hero", "title": "Hero" }
+                }
+            }
+        },
+        {
+            "name": "from get block on a list collection by slug",
+            "html": "{from 'blog' get entry 'hello'}<h1>{title}</h1><div>{'content'}</div>{endget}",
+            "data": {
+                "blog": [
+                    { "slug": "other", "title": "Other", "content": "<em>skip</em>" },
+                    { "slug": "hello", "title": "Hello", "content": "<em>body</em>" }
+                ]
+            }
+        },
+        {
+            "name": "from get block via __entry__ key",
+            "html": "{from 'blog' get entry 'hello'}<h1>{title}</h1>{endget}",
+            "data": {
+                "__entry__:blog:hello": { "slug": "hello", "title": "Prefetched" }
+            }
+        },
+        {
+            "name": "inline from get resolves single value",
+            "html": "<b>{from 'site_elements'.'hero' get 'content'.0.'value'}</b>",
+            "data": {
+                "site_elements": {
+                    "hero": { "key": "hero", "content": [{ "value": "Welcome" }] }
+                }
+            }
+        },
+        {
+            "name": "inline array item.1 is one-based",
+            "html": "{from 'tags' get item.1}",
+            "data": {
+                "entry": { "tags": ["cms", "birkly", "ssr"] }
+            }
+        },
+        {
+            "name": "inline array item.newest is last",
+            "html": "{from 'tags' get item.newest}",
+            "data": {
+                "entry": { "tags": ["cms", "birkly", "ssr"] }
+            }
+        },
+        {
+            "name": "inline array item.oldest is first",
+            "html": "{from 'tags' get item.oldest}",
+            "data": {
+                "entry": { "tags": ["cms", "birkly", "ssr"] }
+            }
+        },
+        {
+            "name": "inline array item by value on object items",
+            "html": "{from 'links' get item.'docs'}",
+            "data": {
+                "entry": {
+                    "links": [
+                        { "name": "home", "value": "https://example.com" },
+                        { "name": "docs", "value": "https://docs.example.com" }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "from get block inside loop body",
+            "html": "{for each entry in 'blog'}<article>{title}{from 'site_elements' get entry 'badge'}<span>{'label'}</span>{endget}</article>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha" },
+                    { "slug": "b", "title": "Bravo" }
+                ],
+                "site_elements": {
+                    "badge": { "key": "badge", "label": "New" }
+                }
+            }
+        },
+        {
+            "name": "unclosed from get drops the open tag",
+            "html": "x{from 'blog' get entry 'hello'}<h1>{title}</h1>",
+            "data": {
+                "blog": [
+                    { "slug": "hello", "title": "Hello" }
+                ]
+            }
+        }
+    ]
+}

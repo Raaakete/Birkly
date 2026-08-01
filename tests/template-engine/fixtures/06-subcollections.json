@@ -1,0 +1,127 @@
+{
+    "section": "V-PHP-07",
+    "title": "sub-collection of parent.slug / .current",
+    "cases": [
+        {
+            "name": "sub-collection of parent by slug",
+            "html": "{for each entry in 'comments' of 'blog'.'hello-world'}<c>{'author'}</c>{endfor}",
+            "data": {
+                "blog": [
+                    {
+                        "slug": "hello-world", "id": "p1", "title": "Hello",
+                        "comments": [
+                            { "author": "Ana", "created_at": "2026-01-02" },
+                            { "author": "Bo", "created_at": "2026-01-05" }
+                        ]
+                    }
+                ],
+                "entry": {
+                    "slug": "hello-world", "id": "p1", "title": "Hello",
+                    "comments": [
+                        { "author": "Ana", "created_at": "2026-01-02" },
+                        { "author": "Bo", "created_at": "2026-01-05" }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "sub-collection of parent.current ordered by newest",
+            "html": "{for each entry in 'comments' of 'blog'.current ordered by newest}<c>{'author'}</c>{endfor}",
+            "data": {
+                "blog": [
+                    {
+                        "slug": "hello-world", "id": "p1", "title": "Hello",
+                        "comments": [
+                            { "author": "Ana", "created_at": "2026-01-02" },
+                            { "author": "Bo", "created_at": "2026-01-05" }
+                        ]
+                    }
+                ],
+                "entry": {
+                    "slug": "hello-world", "id": "p1", "title": "Hello",
+                    "comments": [
+                        { "author": "Ana", "created_at": "2026-01-02" },
+                        { "author": "Bo", "created_at": "2026-01-05" }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "count of sub-collection",
+            "html": "{count of 'comments' of 'blog'.'hello-world'}",
+            "data": {
+                "blog": [
+                    {
+                        "slug": "hello-world", "id": "p1",
+                        "comments": [
+                            { "author": "Ana" },
+                            { "author": "Bo" }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "sub-collection via __sub__ bundle key",
+            "html": "{for each entry in 'comments' of 'blog'.'hello-world'}<c>{'author'}</c>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "hello-world", "id": "p1", "title": "Hello" }
+                ],
+                "__sub__:blog:p1:comments": [
+                    { "author": "Cleo" },
+                    { "author": "Dee" }
+                ]
+            }
+        },
+        {
+            "name": "sub-collection of parent.newest",
+            "html": "{for each entry in 'comments' of 'blog'.newest}<c>{'author'}</c>{endfor}",
+            "data": {
+                "blog": [
+                    {
+                        "slug": "older", "created_at": "2025-01-01",
+                        "comments": [{ "author": "OldC" }]
+                    },
+                    {
+                        "slug": "newer", "created_at": "2026-01-01",
+                        "comments": [{ "author": "NewC" }]
+                    }
+                ]
+            }
+        },
+        {
+            "name": "top-level sub-collection list matched to current entry",
+            "html": "{for each entry in 'comments' of 'blog'.current}<c>{'author'}</c>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "hello-world", "id": "p1", "title": "Hello" }
+                ],
+                "entry": { "slug": "hello-world", "id": "p1", "title": "Hello" },
+                "comments": [
+                    { "author": "Top1" },
+                    { "author": "Top2" }
+                ]
+            }
+        },
+        {
+            "name": "missing parent yields empty loop",
+            "html": "a{for each entry in 'comments' of 'blog'.'ghost'}<c>{'author'}</c>{endfor}b",
+            "data": {
+                "blog": [
+                    { "slug": "hello-world", "id": "p1" }
+                ]
+            }
+        },
+        {
+            "name": "nested loops over parent and sub items",
+            "html": "{for each entry in 'blog'}<post>{title}{for each entry in 'comments'}<c>{'author'}</c>{endfor}</post>{endfor}",
+            "data": {
+                "blog": [
+                    { "title": "P1", "comments": [{ "author": "C1" }, { "author": "C2" }] },
+                    { "title": "P2", "comments": [{ "author": "C3" }] }
+                ]
+            }
+        }
+    ]
+}

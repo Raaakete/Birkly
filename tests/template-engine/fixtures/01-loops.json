@@ -1,0 +1,105 @@
+{
+    "section": "V-PHP-02",
+    "title": "Loops + with filters + limit",
+    "cases": [
+        {
+            "name": "basic loop renders all entries",
+            "html": "{for each entry in 'blog'}<i>{title}</i>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha", "status": "published", "category": "news", "price": 10, "created_at": "2026-01-01" },
+                    { "slug": "b", "title": "Bravo", "status": "draft", "category": "news", "price": 20, "created_at": "2026-02-01" },
+                    { "slug": "c", "title": "Charlie", "status": "published", "category": "craft", "price": 5, "created_at": "2026-03-01" }
+                ]
+            }
+        },
+        {
+            "name": "with status filter keeps only published",
+            "html": "{for each entry in 'blog' with status = published}<i>{title}</i>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha", "status": "published", "category": "news", "price": 10, "created_at": "2026-01-01" },
+                    { "slug": "b", "title": "Bravo", "status": "draft", "category": "news", "price": 20, "created_at": "2026-02-01" },
+                    { "slug": "c", "title": "Charlie", "status": "published", "category": "craft", "price": 5, "created_at": "2026-03-01" }
+                ]
+            }
+        },
+        {
+            "name": "with quoted field filter",
+            "html": "{for each entry in 'blog' with 'category' = 'craft'}<i>{title}</i>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha", "status": "published", "category": "news", "price": 10 },
+                    { "slug": "c", "title": "Charlie", "status": "published", "category": "craft", "price": 5 }
+                ]
+            }
+        },
+        {
+            "name": "with numeric filter price <= 10",
+            "html": "{for each entry in 'blog' with 'price' <= 10}<i>{title}</i>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha", "price": 10 },
+                    { "slug": "b", "title": "Bravo", "price": 20 },
+                    { "slug": "c", "title": "Charlie", "price": 5 }
+                ]
+            }
+        },
+        {
+            "name": "limit caps rendered items",
+            "html": "{for each entry in 'blog' limit 2}<i>{title}</i>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha" },
+                    { "slug": "b", "title": "Bravo" },
+                    { "slug": "c", "title": "Charlie" }
+                ]
+            }
+        },
+        {
+            "name": "with + ordered + limit combine",
+            "html": "{for each entry in 'blog' with status = published ordered by newest limit 1}<i>{title}</i>{endfor}",
+            "data": {
+                "blog": [
+                    { "slug": "a", "title": "Alpha", "status": "published", "created_at": "2026-01-01" },
+                    { "slug": "b", "title": "Bravo", "status": "draft", "created_at": "2026-02-01" },
+                    { "slug": "c", "title": "Charlie", "status": "published", "created_at": "2026-03-01" }
+                ]
+            }
+        },
+        {
+            "name": "loop over quoted array field on current entry",
+            "html": "{for each item in 'tags'}[{item}]{endfor}",
+            "data": {
+                "entry": { "title": "Post", "tags": ["cms", "birkly", "ssr"] }
+            }
+        },
+        {
+            "name": "loop over bare field falls back to plural",
+            "html": "{for each tag in tag}[{tag}]{endfor}",
+            "data": {
+                "entry": { "title": "Post", "tags": ["one", "two"] }
+            }
+        },
+        {
+            "name": "numeric field values render like JS numbers",
+            "html": "{for each entry in 'products'}<p>{'price'}|{'stock'}</p>{endfor}",
+            "data": {
+                "products": [
+                    { "title": "A", "price": 10.5, "stock": 3 },
+                    { "title": "B", "price": 12.0, "stock": 0 }
+                ]
+            }
+        },
+        {
+            "name": "count of collection",
+            "html": "<b>{count of 'blog'}</b>",
+            "data": {
+                "blog": [
+                    { "title": "One" },
+                    { "title": "Two" }
+                ]
+            }
+        }
+    ]
+}
