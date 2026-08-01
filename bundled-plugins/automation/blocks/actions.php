@@ -10,6 +10,13 @@ require_once __DIR__ . '/../executor.php';
 require_once __DIR__ . '/../security.php';
 
 // Email Action
+$automationEmailDefaults = function_exists('automation_default_email_templates')
+    ? automation_default_email_templates()
+    : [
+        'subject' => '{{automation.name}}',
+        'body' => "{{trigger_summary}}\n\nTitle: {{entry.title}}\nCollection: {{collection}}\n\nOpen in Birkly:\n{{entry_admin_url}}",
+    ];
+
 register_automation_block('action', 'email', [
     'name' => 'Send Email',
     'description' => 'Send an email notification',
@@ -23,18 +30,48 @@ register_automation_block('action', 'email', [
         'subject' => [
             'type' => 'string',
             'label' => 'Subject',
-            'required' => true
+            'required' => true,
+            'default' => $automationEmailDefaults['subject'],
+            'placeholder' => '{{automation.name}}',
+            'description' => 'Use {{automation.name}} for the workflow name, or {{trigger_summary}} for “New entry in collection”.'
         ],
         'body' => [
             'type' => 'textarea',
             'label' => 'Message Body',
-            'required' => true
+            'required' => true,
+            'default' => $automationEmailDefaults['body'],
+            'rows' => 8,
+            'description' => 'Supports {{entry.title}}, {{collection}}, {{trigger_summary}}, {{entry_admin_url}} (opens the entry in admin).'
         ]
     ],
     'handler' => function($config, $context) {
+        if (!function_exists('automation_default_email_templates')) {
+            require_once __DIR__ . '/../includes/context.php';
+        }
+        $defaults = automation_default_email_templates();
+
         $to = render_automation_template($config['to'] ?? '', $context);
-        $subject = render_automation_template($config['subject'] ?? '', $context);
-        $body = render_automation_template($config['body'] ?? '', $context);
+        $subjectTemplate = trim((string) ($config['subject'] ?? ''));
+        if ($subjectTemplate === '') {
+            $subjectTemplate = $defaults['subject'];
+        }
+        $bodyTemplate = trim((string) ($config['body'] ?? ''));
+        if ($bodyTemplate === '') {
+            $bodyTemplate = $defaults['body'];
+        }
+
+        $subject = trim(render_automation_template($subjectTemplate, $context));
+        $body = render_automation_template($bodyTemplate, $context);
+
+        // Prefer the automation name over a blank/literal leftover.
+        if ($subject === '' || strcasecmp($subject, 'new entry') === 0) {
+            $fallback = trim((string) ($context['automation']['name'] ?? $context['automation_name'] ?? ''));
+            if ($fallback !== '') {
+                $subject = $fallback;
+            } elseif (!empty($context['trigger_summary'])) {
+                $subject = (string) $context['trigger_summary'];
+            }
+        }
         
         if (empty($to) || empty($subject)) {
             throw new Exception('Email to and subject are required');
@@ -63,7 +100,7 @@ register_automation_block('action', 'email', [
             ];
         }
 
-        $html = nl2br(htmlspecialchars($body, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $html = automation_format_email_html($body, $context);
         $result = automation_send_mail($to, $subject, $html);
         if (empty($result['ok'])) {
             throw new Exception($result['error'] ?? 'Failed to send email. Open Automation → Setup and configure SMTP or Log transport.');
@@ -75,6 +112,8 @@ register_automation_block('action', 'email', [
             'from' => $result['from'] ?? null,
             'method' => $result['method'] ?? null,
             'logged' => !empty($result['logged']),
+            'subject' => $subject,
+            'entry_admin_url' => $context['entry_admin_url'] ?? null,
         ];
     }
 ]);

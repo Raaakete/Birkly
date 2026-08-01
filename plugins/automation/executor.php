@@ -151,6 +151,20 @@ function execute_automation($automation, $context = [], ?array &$details = null)
         'conditions_met' => false,
     ];
 
+    if (!function_exists('automation_enrich_execution_context')) {
+        $contextFile = __DIR__ . '/includes/context.php';
+        if (is_file($contextFile)) {
+            require_once $contextFile;
+        }
+    }
+    if (function_exists('automation_enrich_execution_context')) {
+        $context = automation_enrich_execution_context(
+            $context,
+            is_array($automation) ? $automation : [],
+            $automation['trigger']['type'] ?? ($context['trigger_type'] ?? null)
+        );
+    }
+
     // Loop prevention: check if this automation was triggered by another automation
     $origin_automation = $context['origin_automation'] ?? null;
     if ($origin_automation === $automation_id) {

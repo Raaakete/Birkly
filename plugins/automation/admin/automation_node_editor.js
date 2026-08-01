@@ -307,6 +307,18 @@
       });
     }
 
+    _schemaDefaults(kind, type) {
+      const meta = this._blockMeta(kind, type);
+      const schema = meta.schema || {};
+      const config = {};
+      Object.keys(schema).forEach((field) => {
+        if (schema[field] && schema[field].default != null && schema[field].default !== '') {
+          config[field] = schema[field].default;
+        }
+      });
+      return config;
+    }
+
     _addNode(kind, type) {
       if (kind === 'trigger') {
         const existing = this.canvas.nodes.find((n) => n.kind === 'trigger');
@@ -326,7 +338,7 @@
         id: nextNodeId(kind),
         kind,
         type,
-        config: {},
+        config: this._schemaDefaults(kind, type),
         x,
         y
       };
@@ -688,7 +700,16 @@
       }
 
       const type = fs.type || 'string';
-      const val = (node.config || {})[field] ?? fs.default ?? '';
+      let val = (node.config || {})[field];
+      if ((val == null || val === '') && fs.default != null && fs.default !== '') {
+        val = fs.default;
+        if (!node.config) node.config = {};
+        // Persist schema defaults so Save keeps useful email subject/body templates.
+        if (node.config[field] == null || node.config[field] === '') {
+          node.config[field] = fs.default;
+        }
+      }
+      if (val == null) val = '';
 
       if (type === 'collection_picker') {
         wrap.appendChild(this._buildSearchableCollectionPicker(node, field, val));
