@@ -33,6 +33,11 @@ fi
 
 mkdir -p "$DATA_ROOT/logs"
 
+# Refresh volume config from Dokploy env (GITHUB_TOKEN etc.) before the loop.
+if [ -x /app/scripts/plugin-dev-sync-bootstrap-from-env.sh ]; then
+  /app/scripts/plugin-dev-sync-bootstrap-from-env.sh || true
+fi
+
 (
   export BIRKLY_DATA="$DATA_ROOT"
   while true; do
