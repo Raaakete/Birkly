@@ -94,10 +94,14 @@ loading helpers (M4), `processTemplatesV3`, `<birkly-region>` handling.
   block.
 - **Re-sync:** `bash scripts/sync-template-engine-inline.sh` (plain awk/diff, no
   bundler). `--check` verifies no drift and is wired into `scripts/ci-check.sh`.
-- **Parity:** client, SSR (`scripts/birkly-ssr-cli.js` / `core/project_ssr.php`),
-  and the `birkly-render.js` re-export all execute the same module, so client
-  and server output are identical by construction. Verified by
-  `tests/template-engine/parity_client_server_test.js` (matrix **V-DEC-01..08**).
+- **Parity:** the client inline and the `birkly-render.js` re-export execute the
+  same module, so every browser render runs identical code by construction —
+  verified by `tests/template-engine/parity_client_server_test.js` (matrix
+  **V-DEC-01..08**). SSR (`core/project_ssr.php`) is PHP-native since P52: it
+  renders in-process with `core/birkly_template_engine.php`, which is
+  fixture-parity-tested byte-for-byte against this module
+  (`tests/template_engine_parity_test.php`). The former Node SSR CLI was
+  deleted in P52-M4.
 
 ### Loading helpers (`birkly-loading.js`, P51-M4)
 

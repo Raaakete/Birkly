@@ -6,8 +6,8 @@
  * Renders templates in-process with the PHP template engine
  * (`core/birkly_template_engine.php`, fixture-parity-tested against the shared
  * JS engine `birkly-template-engine.js`) and caches the output. No Node
- * runtime is involved — the former Node CLI bridge (`scripts/birkly-ssr-cli.js`)
- * is retired from the render/serve path and slated for deletion in P52-M4.
+ * runtime is involved — the former Node CLI bridge and its helpers were
+ * deleted in P52-M4.
  *
  * Design guarantees:
  *   - SSR is opt-in (render_mode=server|auto) and only for Birkly hosting with
@@ -184,8 +184,8 @@ function birkly_project_ssr_relative_path(string $filePath): string
  * Collect page_bundle-shaped data requests from template HTML.
  *
  * PHP heuristic mirroring `collectBundleRequests()` in
- * birkly-template-engine.js. Kept in sync with that function; the Node CLI
- * "collect" mode exposes the canonical implementation for tests/parity.
+ * birkly-template-engine.js (the canonical implementation, which the browser
+ * client runs). Keep the two in sync when the grammar grows.
  *
  * @return list<array<string,mixed>>
  */
@@ -357,60 +357,6 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
 }
 
 /**
- * Locate a usable Node binary (env override, then PATH / common locations).
- * Returns null when Node is not available.
- *
- * @deprecated P52-M2 — SSR renders in-process via the PHP template engine and
- *             no longer shells out to Node. Not called from the render/serve
- *             path; kept only until P52-M4 deletes the Node SSR surface.
- */
-function birkly_project_ssr_node_binary(): ?string
-{
-    static $cached = false;
-    static $resolved = null;
-
-    if ($cached) {
-        return $resolved;
-    }
-    $cached = true;
-
-    $candidates = [];
-    $env = getenv('BIRKLY_NODE_BIN');
-    if ($env !== false && trim((string) $env) !== '') {
-        $candidates[] = trim((string) $env);
-    }
-    $candidates[] = 'node';
-    $candidates[] = '/usr/bin/node';
-    $candidates[] = '/usr/local/bin/node';
-
-    foreach ($candidates as $candidate) {
-        if ($candidate === '') {
-            continue;
-        }
-        // Absolute / relative path: must be an executable file.
-        if (str_contains($candidate, '/') || str_starts_with($candidate, '.')) {
-            if (is_file($candidate) && is_executable($candidate)) {
-                $resolved = $candidate;
-                return $resolved;
-            }
-            continue;
-        }
-        // Bare command name: probe PATH via `command -v`.
-        $probe = @shell_exec('command -v ' . escapeshellarg($candidate) . ' 2>/dev/null');
-        if (is_string($probe)) {
-            $probe = trim($probe);
-            if ($probe !== '' && is_file($probe) && is_executable($probe)) {
-                $resolved = $probe;
-                return $resolved;
-            }
-        }
-    }
-
-    $resolved = null;
-    return null;
-}
-
-/**
  * Absolute path of the in-process PHP template engine.
  */
 function birkly_project_ssr_engine_path(): string
@@ -454,82 +400,6 @@ function birkly_project_ssr_runtime_status(): array
         'engine' => $available ? 'php' : false,
         'reason' => $available ? null : 'engine_missing',
     ];
-}
-
-/**
- * Run the Node CLI with a JSON payload on stdin and a wall-clock timeout.
- * Returns stdout on success (exit code 0), or null on any failure/timeout.
- *
- * @deprecated P52-M2 — SSR renders in-process via the PHP template engine.
- *             Only the optional Node-collect parity check in tests still uses
- *             this; kept until P52-M4 deletes the Node SSR surface.
- */
-function birkly_project_ssr_run_node(string $node, string $script, string $payload, float $timeoutSeconds = 5.0): ?string
-{
-    if (!function_exists('proc_open')) {
-        return null;
-    }
-
-    $descriptors = [
-        0 => ['pipe', 'r'],
-        1 => ['pipe', 'w'],
-        2 => ['pipe', 'w'],
-    ];
-
-    $cmd = escapeshellarg($node) . ' ' . escapeshellarg($script);
-    $process = @proc_open($cmd, $descriptors, $pipes, birkly_project_root());
-    if (!is_resource($process)) {
-        return null;
-    }
-
-    // Write payload and close stdin so the CLI's 'end' handler fires.
-    fwrite($pipes[0], $payload);
-    fclose($pipes[0]);
-
-    stream_set_blocking($pipes[1], false);
-    stream_set_blocking($pipes[2], false);
-
-    $stdout = '';
-    $stderr = '';
-    $start = microtime(true);
-    $timedOut = false;
-
-    while (true) {
-        $status = proc_get_status($process);
-
-        $stdout .= (string) stream_get_contents($pipes[1]);
-        $stderr .= (string) stream_get_contents($pipes[2]);
-
-        if (!$status['running']) {
-            break;
-        }
-
-        if ((microtime(true) - $start) > $timeoutSeconds) {
-            $timedOut = true;
-            proc_terminate($process, 9);
-            break;
-        }
-
-        usleep(2000);
-    }
-
-    // Drain any remaining output.
-    $stdout .= (string) stream_get_contents($pipes[1]);
-    fclose($pipes[1]);
-    fclose($pipes[2]);
-
-    $exit = proc_close($process);
-
-    if ($timedOut) {
-        error_log('birkly_project_ssr: node render timed out after ' . $timeoutSeconds . 's');
-        return null;
-    }
-    if ($exit !== 0) {
-        error_log('birkly_project_ssr: node exited ' . $exit . ' stderr=' . trim($stderr));
-        return null;
-    }
-
-    return $stdout;
 }
 
 /**
