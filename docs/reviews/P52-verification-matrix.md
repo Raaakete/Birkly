@@ -1,7 +1,7 @@
 # Phase 52 — Verification matrix
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP) verified 2026-08-01, M2–M5 pending
+**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP) and M2 (V-CUT) verified 2026-08-01, M3–M5 pending
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -33,16 +33,21 @@ on the full fixture set — no whitespace normalization needed), with
 
 ## V-CUT — SSR cutover (M2)
 
+Verified 2026-08-01 by `php tests/project_ssr_test.php` (51/51, including with
+`env PATH=/usr/bin:/bin BIRKLY_NODE_BIN=` so no Node is reachable), plus
+`php tests/project_ssr_settings_api_test.php`, `php tests/template_engine_php_test.php`
+(60/60) and `php tests/template_engine_parity_test.php` (148/148) still green.
+
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-CUT-01 | Serve path calls PHP engine (no Node on happy path) | Code + integration | cms-developer | pending |
-| V-CUT-02 | `X-Birkly-Render: server` with Node absent from PATH | Integration | cms-developer | pending |
-| V-CUT-03 | Engine exception → client-fallback + static HTML | Integration | cms-developer | pending |
-| V-CUT-04 | Cache HIT/MISS headers unchanged | Integration | cms-developer | pending |
-| V-CUT-05 | Entry save still invalidates SSR cache | Hook test | cms-developer | pending |
-| V-CUT-06 | Draft/unpublished not leaked | Security | cms-developer | pending |
-| V-CUT-07 | External / client mode never SSR | Integration | cms-developer | pending |
-| V-CUT-08 | `project_ssr_test.php` green without Node | CI | cms-developer | pending |
+| V-CUT-01 | Serve path calls PHP engine (no Node on happy path) | Code + integration | cms-developer | **pass** — `birkly_project_ssr_render()` calls `birkly_template_engine_render()` in-process; grep confirms no `run_node`/`node_binary` callers outside the deprecated helpers + optional test parity block |
+| V-CUT-02 | `X-Birkly-Render: server` with Node absent from PATH | Integration | cms-developer | **pass** (unit/integration level) — Node-absent subprocess renders + reports `ready=true, engine=php, reason=null`; `birkly_project_ssr_serve()` MISS→HIT succeeds under Node-absent PATH. Header-level HTTP smoke on localhost = M5 (V-CI-02) |
+| V-CUT-03 | Engine exception → client-fallback + static HTML | Integration | cms-developer | **pass** — stubbed engine throw → `render()` returns null with `last_error=engine_error`; routing then serves static + `X-Birkly-SSR-Fallback` (code path unchanged) |
+| V-CUT-04 | Cache HIT/MISS headers unchanged | Integration | cms-developer | **pass** — cache/send code untouched in M2; serve test asserts MISS render then byte-identical HIT from cache |
+| V-CUT-05 | Entry save still invalidates SSR cache | Hook test | cms-developer | **pass** — hooks unchanged (`api/admin_entries.php`, `api/content.php`); manual invalidate still asserted in `project_ssr_settings_api_test.php` |
+| V-CUT-06 | Draft/unpublished not leaked | Security | cms-developer | **pass** — data path unchanged in M2: published-only public reads via `page_bundle_runner` (`trusted_ssr`) + `birkly_public_get_entry`; M2 swapped only the render backend |
+| V-CUT-07 | External / client mode never SSR | Integration | cms-developer | **pass** — gating assertions green: external hosting_type, client mode, and `public_site_mode=none` all disable SSR |
+| V-CUT-08 | `project_ssr_test.php` green without Node | CI | cms-developer | **pass** — full suite green with `PATH=/usr/bin:/bin` (Node only exists outside that PATH on the test host); render smoke is required, Node-collect parity is the only optional SKIP |
 
 ---
 
