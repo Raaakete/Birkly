@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/../registry.php';
 require_once __DIR__ . '/../executor.php';
+require_once __DIR__ . '/../security.php';
 
 // Slack Webhook Action
 register_automation_block('action', 'slack', [
@@ -50,6 +51,10 @@ register_automation_block('action', 'slack', [
         if (empty($webhook_url) || empty($message)) {
             throw new Exception('Webhook URL and message are required');
         }
+        $url_check = automation_validate_outbound_url($webhook_url);
+        if (!$url_check['ok']) {
+            throw new Exception('Slack webhook URL rejected: ' . ($url_check['error'] ?? 'invalid URL'));
+        }
         
         // Parse attachments
         $attachments = json_decode($attachments_json, true);
@@ -78,6 +83,11 @@ register_automation_block('action', 'slack', [
         $ch = curl_init($webhook_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
+        if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+        }
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json'
@@ -138,6 +148,10 @@ register_automation_block('action', 'teams', [
         if (empty($webhook_url) || empty($title) || empty($message)) {
             throw new Exception('Webhook URL, title, and message are required');
         }
+        $url_check = automation_validate_outbound_url($webhook_url);
+        if (!$url_check['ok']) {
+            throw new Exception('Teams webhook URL rejected: ' . ($url_check['error'] ?? 'invalid URL'));
+        }
         
         // Build Teams payload (MessageCard format)
         $payload = [
@@ -153,6 +167,11 @@ register_automation_block('action', 'teams', [
         $ch = curl_init($webhook_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
+        if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+        }
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json'

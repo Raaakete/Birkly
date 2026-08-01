@@ -7,25 +7,28 @@
 
   <div class="payments-tabs automation-view-tabs" role="tablist">
     <button type="button" class="payments-tab active" data-automation-view="list">Automations</button>
+    <button type="button" class="payments-tab" data-automation-view="setup" id="automation-setup-tab">
+      Setup
+      <span id="automation-setup-badge" class="automation-setup-badge" hidden>!</span>
+    </button>
     <button type="button" class="payments-tab" data-automation-view="documentation">Documentation</button>
   </div>
 
   <div id="automation-view-list" class="automation-view-panel">
-  <div id="automation-health-hint" class="automation-health-hint" style="display:none" role="alert">
+  <div id="automation-health-hint" class="automation-health-hint" style="display:none" role="status">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
       <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
     </svg>
     <div>
-      <strong>Queue may not be processing</strong>
+      <strong>Queued jobs waiting</strong>
       <p>
-        Automations are queued but the queue processor hasn't run yet.
-        Configure a cron job to call <code>api/automation.php?action=process_queue</code> every minute,
-        or check your server's task scheduler.
-        <a href="{admin_url 'settings'}">Open Settings</a>
+        <span id="automation-health-pending-count">Some</span> automation jobs are waiting to run.
+        Open <button type="button" class="btn-link" data-automation-action="show-setup">Setup</button>
+        and click <strong>Process queue now</strong>, or configure cron.
       </p>
     </div>
-    <button class="automation-health-hint-close" onclick="dismissHealthHint()" aria-label="Dismiss">
+    <button type="button" class="automation-health-hint-close" data-automation-action="dismiss-health" aria-label="Dismiss">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
@@ -33,7 +36,7 @@
   </div>
 
   <div class="tab-panel-actions">
-    <button type="button" class="btn btn-primary" onclick="openCreateAutomationModal()">
+    <button type="button" class="btn btn-primary" id="automation-create-btn" data-automation-action="create">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
@@ -50,6 +53,167 @@
 
   </div>
 
+  <div id="automation-view-setup" class="automation-view-panel" hidden>
+    <div class="automation-setup-panel">
+      <h2>Setup — make automations actually deliver</h2>
+      <p class="form-help" id="automation-plugin-version-line">Plugin version: loading…</p>
+      <div class="automation-setup-intro">
+        <p>
+          Building a workflow only defines <em>when</em> something should happen.
+          This tab configures <em>how</em> messages leave the server. If Setup is wrong,
+          Test can still say “succeeded” (that is only a simulation) and real emails never arrive.
+        </p>
+        <ol class="automation-setup-steps">
+          <li><strong>Configure email transport</strong> (SMTP on cloud hosts) and send a test email.</li>
+          <li><strong>Process the queue</strong> if jobs are waiting (or rely on auto-run after entry create).</li>
+          <li><strong>Create/enable your workflow</strong>, then use Confirm &amp; Run Live — not only Test.</li>
+        </ol>
+      </div>
+
+      <div id="automation-setup-status" class="automation-setup-status" aria-live="polite">
+        Checking setup…
+      </div>
+
+      <div class="automation-setup-card">
+        <h3>Status checklist</h3>
+        <p class="form-help">Each item explains what it is and why it matters. Fix anything marked fail/warn before expecting delivery.</p>
+        <ul id="automation-setup-checklist" class="automation-setup-checklist">
+          <li class="form-help">Loading…</li>
+        </ul>
+        <div class="automation-setup-actions">
+          <button type="button" class="btn btn-sm btn-primary" data-automation-action="process-queue-now">
+            Process queue now
+          </button>
+          <button type="button" class="btn btn-sm btn-secondary" data-automation-action="refresh-setup">
+            Refresh status
+          </button>
+        </div>
+        <p class="form-help" style="margin-top:0.75rem">
+          <strong>Process queue now</strong> force-runs waiting jobs immediately (including ones waiting on retry backoff).
+          Use it when you see Pending jobs after creating an entry.
+        </p>
+        <div style="margin-top:1rem">
+          <h4 style="margin:0 0 0.5rem;font-size:0.95rem">Recent queue jobs</h4>
+          <p class="form-help">Shows whether the runner matched an automation and any errors (e.g. SMTP failures or collection filter misses).</p>
+          <ul id="automation-recent-jobs" class="automation-setup-checklist">
+            <li class="form-help">No queue jobs yet.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="automation-setup-card">
+        <h3>Email delivery (required for Send Email)</h3>
+        <p class="form-help">
+          Choose how Send Email actions leave this server. On Dokploy/Docker/cloud,
+          <strong>PHP mail()</strong> almost never reaches a real inbox even when it reports success —
+          use <strong>SMTP</strong> (Brevo, Mailgun, Postmark, Amazon SES, your host SMTP, etc.).
+          Use <strong>Log only</strong> to prove the workflow ran without sending.
+        </p>
+        <form id="automation-mail-settings-form" class="automation-mail-form">
+          <div class="form-group">
+            <label for="automation-mail-method">Transport</label>
+            <select id="automation-mail-method" class="input" name="method">
+              <option value="smtp">SMTP (recommended for real delivery)</option>
+              <option value="log">Log only (no inbox — good for testing)</option>
+              <option value="mail">PHP mail() (local/dev hosts only)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="automation-mail-from-name">From name</label>
+            <input type="text" id="automation-mail-from-name" class="input" name="from_name" placeholder="Birkly" autocomplete="organization">
+          </div>
+          <div class="form-group">
+            <label for="automation-mail-from-email">From email</label>
+            <input type="email" id="automation-mail-from-email" class="input" name="from_email" required placeholder="noreply@yourdomain.com" autocomplete="email">
+            <p class="form-help">Must be allowed by your SMTP provider (usually a verified domain).</p>
+          </div>
+          <div id="automation-smtp-fields" class="automation-smtp-fields">
+            <div class="form-group">
+              <label for="automation-smtp-host">SMTP host</label>
+              <input type="text" id="automation-smtp-host" class="input" name="smtp_host" placeholder="smtp.example.com" autocomplete="off">
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="automation-smtp-port">Port</label>
+                <input type="number" id="automation-smtp-port" class="input" name="smtp_port" value="587" min="1" max="65535">
+              </div>
+              <div class="form-group">
+                <label for="automation-smtp-encryption">Encryption</label>
+                <select id="automation-smtp-encryption" class="input" name="smtp_encryption">
+                  <option value="tls">STARTTLS (587)</option>
+                  <option value="ssl">SSL (465)</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="automation-smtp-username">SMTP username</label>
+              <input type="text" id="automation-smtp-username" class="input" name="smtp_username" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="automation-smtp-password">SMTP password / API key</label>
+              <input type="password" id="automation-smtp-password" class="input" name="smtp_password" autocomplete="new-password" placeholder="Leave blank to keep existing">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary">Save email settings</button>
+        </form>
+        <p id="automation-mail-settings-msg" class="form-help" aria-live="polite"></p>
+
+        <div class="automation-test-email" style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border-subtle,#e5e7eb)">
+          <h4 style="margin:0 0 0.5rem;font-size:0.95rem">Send test email</h4>
+          <p class="form-help">Sends for real with the saved transport (not a dry-run). Confirm Setup before trusting workflows.</p>
+          <div class="automation-setup-actions">
+            <input type="email" id="automation-test-email-to" class="input" placeholder="you@example.com" style="max-width:16rem">
+            <button type="button" class="btn btn-sm btn-secondary" data-automation-action="send-test-email">Send test email</button>
+          </div>
+          <p id="automation-test-email-msg" class="form-help" aria-live="polite"></p>
+        </div>
+
+        <div style="margin-top:1rem">
+          <h4 style="margin:0 0 0.5rem;font-size:0.95rem">Recent sends</h4>
+          <p class="form-help">Shows the last emails accepted by the transport (including Log mode).</p>
+          <ul id="automation-sent-mail-log" class="automation-setup-checklist">
+            <li class="form-help">No sends recorded yet.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="automation-setup-card">
+        <h3>Slack / Teams / Webhooks</h3>
+        <p class="form-help">
+          There is <strong>no separate Slack login</strong> in Setup. For each workflow action, paste an
+          <em>Incoming Webhook</em> URL from Slack or Teams (or any HTTPS webhook endpoint).
+          Outbound HTTP uses PHP curl (see checklist above).
+        </p>
+        <ol class="automation-setup-steps">
+          <li>In Slack: Apps → Incoming Webhooks → Add to channel → copy URL.</li>
+          <li>In your automation, add a Slack (or Webhook) action and paste the URL.</li>
+          <li>Save, then Confirm &amp; Run Live (Test will not post).</li>
+        </ol>
+      </div>
+
+      <div class="automation-setup-card">
+        <h3>Optional: keep the queue draining with cron</h3>
+        <p class="form-help">
+          Entry create/update already tries to process a few jobs immediately.
+          Cron is still useful for backlog, schedules, and reliability if the admin request is interrupted.
+        </p>
+        <pre class="automation-setup-code"><code id="automation-cron-cli">* * * * * php plugins/automation/cli/process_queue.php 10</code></pre>
+        <details class="automation-setup-details">
+          <summary>Alternative: token-protected HTTP URLs</summary>
+          <p class="form-help">Use only if you cannot run CLI cron. Tokens stay masked until revealed.</p>
+          <p><strong>Queue URL</strong></p>
+          <pre class="automation-setup-code"><code id="automation-cron-queue-url">Loading masked cron URL…</code></pre>
+          <p><strong>Scheduled URL</strong></p>
+          <pre class="automation-setup-code"><code id="automation-cron-scheduled-url">Loading masked cron URL…</code></pre>
+          <button type="button" class="btn btn-sm btn-secondary" id="automation-cron-toggle" data-automation-action="toggle-cron-urls" aria-pressed="false">
+            Show cron URLs
+          </button>
+        </details>
+      </div>
+    </div>
+  </div>
+
   <div id="automation-view-documentation" class="automation-view-panel" hidden>
     <div class="plugin-docs-panel" data-plugin-id="automation"></div>
   </div>
@@ -59,11 +223,11 @@
 <!-- ============================================================
      Create / Edit Automation Modal
      ============================================================ -->
-<div id="automation-modal" class="modal-backdrop">
-  <div class="modal-content automation-modal-wide" style="max-width:min(96vw, 1200px);width:100%">
+<div id="automation-modal" class="modal-backdrop" hidden aria-hidden="true">
+  <div class="modal-content automation-modal-wide" style="max-width:min(96vw, 1200px);width:100%" role="document">
     <div class="modal-header">
       <h2 id="automation-modal-title">{translate 'admin.create_automation'}</h2>
-      <button class="modal-close-btn" onclick="closeAutomationModal()">&times;</button>
+      <button type="button" class="modal-close-btn" data-automation-action="close-modal" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body automation-modal-body">
       <div class="automation-form-meta">
@@ -86,12 +250,12 @@
 
       <div class="automation-editor-toolbar">
         <div class="automation-editor-mode-toggle" role="tablist" aria-label="Editor mode">
-          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="canvas" role="tab" aria-selected="true" onclick="setAutomationEditorMode('canvas')">Node canvas</button>
-          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="form" role="tab" aria-selected="false" onclick="setAutomationEditorMode('form')">Form editor</button>
+          <button type="button" class="btn btn-sm editor-mode-btn active" data-mode="canvas" data-automation-action="editor-mode" data-automation-mode="canvas" role="tab" aria-selected="true">Node canvas</button>
+          <button type="button" class="btn btn-sm editor-mode-btn" data-mode="form" data-automation-action="editor-mode" data-automation-mode="form" role="tab" aria-selected="false">Form editor</button>
         </div>
         <div class="automation-editor-canvas-actions" id="canvas-toolbar-actions">
-          <button type="button" class="btn btn-sm btn-ghost" onclick="exportCanvasJson()" title="Export canvas JSON">Export</button>
-          <button type="button" class="btn btn-sm btn-ghost" onclick="importCanvasJson()" title="Import canvas JSON">Import</button>
+          <button type="button" class="btn btn-sm btn-ghost" data-automation-action="export-canvas" title="Export canvas JSON">Export</button>
+          <button type="button" class="btn btn-sm btn-ghost" data-automation-action="import-canvas" title="Import canvas JSON">Import</button>
         </div>
       </div>
 
@@ -142,7 +306,7 @@
               </svg>
               {translate 'admin.conditions_optional'}
             </h3>
-            <button type="button" class="btn btn-sm btn-ghost" onclick="addCondition()">
+            <button type="button" class="btn btn-sm btn-ghost" data-automation-action="add-condition">
               + {translate 'admin.add_condition'}
             </button>
           </div>
@@ -162,7 +326,7 @@
               </svg>
               {translate 'admin.actions'} <span class="required">*</span>
             </h3>
-            <button type="button" class="btn btn-sm btn-ghost" onclick="addAction()">
+            <button type="button" class="btn btn-sm btn-ghost" data-automation-action="add-action">
               + {translate 'admin.add_action'}
             </button>
           </div>
@@ -176,8 +340,8 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeAutomationModal()">{translate 'admin.cancel'}</button>
-      <button type="button" class="btn btn-primary" onclick="saveAutomation()">{translate 'admin.save_automation'}</button>
+      <button type="button" class="btn btn-secondary" data-automation-action="close-modal">{translate 'admin.cancel'}</button>
+      <button type="button" class="btn btn-primary" data-automation-action="save">{translate 'admin.save_automation'}</button>
     </div>
   </div>
 </div>
@@ -185,11 +349,11 @@
 <!-- ============================================================
      Logs / Dry-run Modal
      ============================================================ -->
-<div id="automation-logs-modal" class="modal-backdrop">
-  <div class="modal-content" style="max-width:700px">
+<div id="automation-logs-modal" class="modal-backdrop" hidden aria-hidden="true">
+  <div class="modal-content" style="max-width:700px" role="document">
     <div class="modal-header">
       <h2 id="automation-logs-title">{translate 'admin.execution_logs'}</h2>
-      <button class="modal-close-btn" onclick="closeLogsModal()">&times;</button>
+      <button type="button" class="modal-close-btn" data-automation-action="close-logs" aria-label="Close">&times;</button>
     </div>
     <div class="modal-body">
       <div id="automation-logs-content">
@@ -197,7 +361,7 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeLogsModal()">{translate 'admin.close'}</button>
+      <button type="button" class="btn btn-secondary" data-automation-action="close-logs">{translate 'admin.close'}</button>
     </div>
   </div>
 </div>

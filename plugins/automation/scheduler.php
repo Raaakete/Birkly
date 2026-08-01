@@ -1,11 +1,12 @@
 <?php
+require_once __DIR__ . '/cms_paths.php';
+
 /**
  * Automation Scheduler for Birkly
  * 
  * Handles scheduled (cron-like) automation triggers.
  */
 
-require_once __DIR__ . '/cms_paths.php';
 require_once automation_cms_root() . '/core/storage/StorageFactory.php';
 require_once __DIR__ . '/automation.php';
 require_once __DIR__ . '/queue.php';
