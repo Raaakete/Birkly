@@ -86,13 +86,45 @@ pull_one() {
   token="$3"
   dir="$PLUGINS_DIR/$id"
 
+  org="$default_org"
+  repo="$(repo_name_for_id_from_map "$id")"
+
+  # Seeded/marketplace installs have no .git — clone so future pulls work.
   if [ ! -d "$dir/.git" ]; then
-    log "skip $id (not a git clone — no .git)"
+    if [ -z "$token" ] && [ "$id" != "automation" ]; then
+      # Public repos may clone without a token; private ones need GITHUB_TOKEN.
+      :
+    fi
+    clone_url="https://github.com/${org}/${repo}.git"
+    if [ -n "$token" ]; then
+      clone_url="https://x-access-token:${token}@github.com/${org}/${repo}.git"
+    fi
+    tmp_dir="${dir}.git-sync-tmp.$$"
+    rm -rf "$tmp_dir" 2>/dev/null || true
+    mkdir -p "$PLUGINS_DIR"
+    if git clone -q --depth 1 --branch main "$clone_url" "$tmp_dir" 2>/tmp/plugin-dev-clone.err \
+      || git clone -q --depth 1 "$clone_url" "$tmp_dir" 2>/tmp/plugin-dev-clone.err; then
+      # Preserve any local runtime data dirs if present under the old tree.
+      if [ -d "$dir" ]; then
+        for keep in data logs runtime; do
+          if [ -d "$dir/$keep" ] && [ ! -e "$tmp_dir/$keep" ]; then
+            cp -a "$dir/$keep" "$tmp_dir/$keep" 2>/dev/null || true
+          fi
+        done
+        rm -rf "$dir"
+      fi
+      mv "$tmp_dir" "$dir"
+      git -C "$dir" remote set-url origin "https://github.com/${org}/${repo}.git" 2>/dev/null || true
+      after="$(git -C "$dir" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+      log "cloned $id (${org}/${repo}) at $after"
+      return 0
+    fi
+    rm -rf "$tmp_dir" 2>/dev/null || true
+    err="$(tr '\n' ' ' < /tmp/plugin-dev-clone.err 2>/dev/null | sed 's/[[:space:]]\{1,\}/ /g' | cut -c1-240)"
+    log "WARN: clone failed for $id (${org}/${repo}): ${err:-unknown error}"
     return 0
   fi
 
-  org="$default_org"
-  repo="$(repo_name_for_id_from_map "$id")"
   remote_url="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
   if [ -n "$remote_url" ]; then
     parsed="$(parse_github_remote "$remote_url" 2>/dev/null || true)"

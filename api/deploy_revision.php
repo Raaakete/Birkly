@@ -269,6 +269,43 @@ if ($action === 'repair_plugins') {
     exit;
 }
 
+if ($action === 'plugin_dev_sync_now') {
+    $requestedId = trim((string) ($_GET['installation_id'] ?? ''));
+    if ($requestedId === '' || $installationId === null || !hash_equals((string) $installationId, $requestedId)) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'installation_id mismatch'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $script = $projectRoot . '/scripts/plugin-dev-git-sync.sh';
+    if (!is_file($script)) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'plugin-dev-git-sync.sh missing'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    $cmd = 'sh ' . escapeshellarg($script) . ' 2>&1';
+    $output = shell_exec($cmd) ?? '';
+    $automationJson = $projectRoot . '/plugins/automation/plugin.json';
+    $version = null;
+    if (is_readable($automationJson)) {
+        $decoded = json_decode((string) file_get_contents($automationJson), true);
+        if (is_array($decoded)) {
+            $version = $decoded['version'] ?? null;
+        }
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'plugin-dev-git-sync ran',
+        'automation_version' => $version,
+        'output_tail' => substr(trim($output), -1200),
+        'plugins' => birkly_deploy_revision_plugin_diagnostics($projectRoot),
+        'time' => gmdate('c'),
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 echo json_encode([
     'service' => 'birkly-cms',
     'build_revision' => $revision,

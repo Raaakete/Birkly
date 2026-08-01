@@ -136,12 +136,12 @@ register_automation_block('trigger', 'status_changed', [
             'description' => 'Filter by specific collection, or leave empty for all'
         ],
         'from' => [
-            'type' => 'string',
+            'type' => 'status_select',
             'label' => 'From Status (optional)',
             'description' => 'Only trigger when changing from this status'
         ],
         'to' => [
-            'type' => 'string',
+            'type' => 'status_select',
             'label' => 'To Status (optional)',
             'description' => 'Only trigger when changing to this status'
         ]

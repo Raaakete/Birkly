@@ -11,8 +11,7 @@ if (php_sapi_name() !== 'cli') {
     exit(1);
 }
 
-require_once dirname(__DIR__) . '/cms_paths.php';
-$root = automation_cms_root();
+$root = dirname(__DIR__, 3);
 chdir($root);
 
 require_once $root . '/core/automation/bootstrap.php';

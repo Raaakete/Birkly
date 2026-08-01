@@ -7,10 +7,73 @@
 
 require_once __DIR__ . '/cms_paths.php';
 require_once automation_cms_root() . '/core/storage/StorageFactory.php';
+require_once automation_cms_root() . '/core/plugins.php';
+require_once __DIR__ . '/security.php';
 
-function automation_storage()
+/**
+ * Sanitize a persisted workflow graph (nodes + branch edges).
+ *
+ * @param mixed $graph
+ * @return array{nodes: array<int, array>, edges: array<int, array>}|null
+ */
+function automation_sanitize_graph($graph): ?array
 {
-    return StorageFactory::createStorage(automation_settings_dir());
+    if (!is_array($graph) || !isset($graph['nodes']) || !is_array($graph['nodes'])) {
+        return null;
+    }
+
+    $nodes = [];
+    foreach ($graph['nodes'] as $node) {
+        if (!is_array($node)) {
+            continue;
+        }
+        $id = trim((string) ($node['id'] ?? ''));
+        $kind = (string) ($node['kind'] ?? '');
+        $type = trim((string) ($node['type'] ?? ''));
+        if ($id === '' || !in_array($kind, ['trigger', 'condition', 'action'], true) || $type === '') {
+            continue;
+        }
+        $nodes[] = [
+            'id' => $id,
+            'kind' => $kind,
+            'type' => $type,
+            'config' => is_array($node['config'] ?? null) ? $node['config'] : [],
+            'x' => is_numeric($node['x'] ?? null) ? (float) $node['x'] : 0,
+            'y' => is_numeric($node['y'] ?? null) ? (float) $node['y'] : 0,
+        ];
+    }
+
+    if ($nodes === []) {
+        return null;
+    }
+
+    $ids = [];
+    foreach ($nodes as $node) {
+        $ids[$node['id']] = true;
+    }
+
+    $edges = [];
+    foreach ($graph['edges'] ?? [] as $edge) {
+        if (!is_array($edge)) {
+            continue;
+        }
+        $from = trim((string) ($edge['from'] ?? ''));
+        $to = trim((string) ($edge['to'] ?? ''));
+        if ($from === '' || $to === '' || !isset($ids[$from], $ids[$to])) {
+            continue;
+        }
+        $branch = (string) ($edge['branch'] ?? 'default');
+        if (!in_array($branch, ['default', 'true', 'false'], true)) {
+            $branch = 'default';
+        }
+        $edges[] = [
+            'from' => $from,
+            'to' => $to,
+            'branch' => $branch,
+        ];
+    }
+
+    return ['nodes' => $nodes, 'edges' => $edges];
 }
 
 function automation_dashboard_user_can_view(): bool
@@ -134,6 +197,7 @@ function create_automation($data) {
         'trigger' => $data['trigger'] ?? [],
         'conditions' => $data['conditions'] ?? [],
         'actions' => $data['actions'] ?? [],
+        'graph' => automation_sanitize_graph($data['graph'] ?? null),
         'stop_on_failure' => $data['stop_on_failure'] ?? false,
         'created_at' => date('c'),
         'updated_at' => date('c'),
@@ -166,6 +230,10 @@ function create_automation($data) {
 function update_automation($automation_id, $data) {
     $storage = automation_storage();
     $automations = $storage->read('automations.json') ?? [];
+
+    if (array_key_exists('graph', $data)) {
+        $data['graph'] = automation_sanitize_graph($data['graph']);
+    }
     
     $found = false;
     foreach ($automations as &$automation) {
@@ -250,8 +318,8 @@ function log_automation_execution($automation_id, $context, $results = [], $erro
     
     $log = [
         'automation_id' => $automation_id,
-        'context' => $context,
-        'results' => $results,
+        'context' => automation_redact_sensitive_data($context),
+        'results' => automation_redact_sensitive_data($results),
         'errors' => $errors,
         'status' => empty($errors) ? 'success' : 'error',
         'executed_at' => date('c'),

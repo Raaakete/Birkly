@@ -1,12 +1,12 @@
 <?php
+require_once __DIR__ . '/../cms_paths.php';
+
 /**
  * Cron / queue processor authentication for automation.
  * Queue processing is allowed via CLI or a shared secret token only.
  */
 
-require_once __DIR__ . '/cms_paths.php';
 require_once automation_cms_root() . '/core/storage/StorageFactory.php';
-require_once __DIR__ . '/automation.php';
 
 /**
  * Read or create the automation cron token (stored in settings, not committed).
