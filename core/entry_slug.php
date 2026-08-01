@@ -228,6 +228,21 @@ function birkly_auto_slug_checked(
     return $slugValue === $expected;
 }
 
+/**
+ * Resolve create vs update for entry saves.
+ *
+ * The entry editor always posts to ?action=save. Create vs update must be
+ * determined by whether an entry_id is present — not by the URL action.
+ * Without this, new entries enqueue entry_updated instead of entry_created.
+ */
+function birkly_resolve_entry_save_action(?string $entryId): string
+{
+    if (trim((string) $entryId) !== '') {
+        return 'update';
+    }
+    return 'create';
+}
+
 function birkly_resolve_collection_slug(
     array $postData,
     ?array $existingCollection,
