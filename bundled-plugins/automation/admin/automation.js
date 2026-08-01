@@ -656,9 +656,13 @@ async function saveMailSettings() {
 }
 
 let sendingTestEmail = false;
+let lastTestEmailStartedAt = 0;
 async function sendTestEmail() {
-  if (sendingTestEmail) return;
+  const now = Date.now();
+  // Client-side hard gate: one send per 8s even if multiple listeners fire.
+  if (sendingTestEmail || (now - lastTestEmailStartedAt) < 8000) return;
   sendingTestEmail = true;
+  lastTestEmailStartedAt = now;
   const msg = document.getElementById('automation-test-email-msg');
   const to = document.getElementById('automation-test-email-to')?.value || '';
   const btn = document.querySelector('[data-automation-action="send-test-email"]');
@@ -1638,6 +1642,10 @@ async function confirmLiveRun(automationId) {
 
     if (result.status === 'ok') {
       const ok = result.data.success !== false;
+      const errors = Array.isArray(result.data.errors) ? result.data.errors : [];
+      const errorHtml = errors.length
+        ? `<br><strong>Error:</strong> ${escapeHtml(errors.join(' | '))}`
+        : '';
       const delivery = result.data.delivery_note
         ? `<br>${escapeHtml(result.data.delivery_note)}`
         : '<br>Check Automation → Setup if delivery channels are not configured.';
@@ -1649,6 +1657,7 @@ async function confirmLiveRun(automationId) {
           <p style="font-size:0.875rem;color:var(--text-secondary);margin:0">
             Runtime: ${result.data.runtime_ms ? result.data.runtime_ms.toFixed(1) + 'ms' : 'n/a'}<br>
             Actions executed: ${result.data.actions_executed ?? 'n/a'}
+            ${errorHtml}
             ${delivery}
           </p>
         </div>
