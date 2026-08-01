@@ -40,6 +40,7 @@ $tests = [
     'setup health and mail settings work' => 'test_setup_health_and_mail_settings',
     'dry run describes side effects clearly' => 'test_dry_run_describes_side_effects',
     'force queue processing ignores retry backoff' => 'test_force_queue_ignores_retry',
+    'duplicate email side effects are deduped' => 'test_email_side_effect_dedupe',
 ];
 
 $failures = 0;
@@ -298,7 +299,7 @@ function test_setup_health_and_mail_settings(): void
     assert_true(isset($health['mail']['from_email']), 'health should expose mail settings');
     assert_true(isset($health['guide']['steps']), 'health should include setup guide copy');
     assert_true(($health['plugin_version'] ?? '') !== '', 'health should expose plugin version');
-    assert_true(version_compare((string) $health['plugin_version'], '1.1.3', '>='), 'plugin version should be at least 1.1.3');
+    assert_true(version_compare((string) $health['plugin_version'], '1.1.4', '>='), 'plugin version should be at least 1.1.4');
 
     $lock1 = automation_acquire_test_email_lock('dedupe@example.com', 30);
     $lock2 = automation_acquire_test_email_lock('dedupe@example.com', 30);
@@ -325,6 +326,71 @@ function test_dry_run_describes_side_effects(): void
         'method' => 'POST',
     ], []);
     assert_true(str_contains($webhook, 'not sent'), 'webhook dry-run detail must say not sent');
+}
+
+function test_email_side_effect_dedupe(): void
+{
+    automation_save_mail_settings([
+        'method' => 'log',
+        'from_email' => 'alerts@example.com',
+        'from_name' => 'Alerts',
+    ]);
+
+    create_automation([
+        'id' => 'dedupe-email',
+        'name' => 'Dedupe email',
+        'enabled' => true,
+        'trigger' => ['type' => 'entry_created', 'config' => []],
+        'actions' => [[
+            'type' => 'email',
+            'config' => [
+                'to' => 'user@example.com',
+                'subject' => 'Hello',
+                'body' => 'Body',
+            ],
+        ]],
+    ]);
+
+    $context = [
+        'entry' => ['id' => 'entry_1', 'title' => 'One', 'collection' => 'blog'],
+        'collection' => 'blog',
+        'origin_automation' => 'dedupe-email',
+    ];
+
+    $block = get_automation_block('action', 'email');
+    $handler = $block['handler'];
+    $first = call_user_func($handler, [
+        'to' => 'user@example.com',
+        'subject' => 'Hello',
+        'body' => 'Body',
+    ], $context);
+    $second = call_user_func($handler, [
+        'to' => 'user@example.com',
+        'subject' => 'Hello',
+        'body' => 'Body',
+    ], $context);
+
+    assert_true(!empty($first['sent']), 'first email action should send');
+    assert_true(empty($first['deduped']), 'first email action should not be deduped');
+    assert_true(!empty($second['deduped']), 'second identical email action should be deduped');
+
+    $ok1 = enqueue_automation('entry_created', [
+        'entry' => ['id' => 'entry_dup', 'title' => 'Dup', 'collection' => 'blog'],
+        'collection' => 'blog',
+        '_test_mode' => true,
+    ]);
+    $before = get_automation_queue_status();
+    $ok2 = enqueue_automation('entry_created', [
+        'entry' => ['id' => 'entry_dup', 'title' => 'Dup', 'collection' => 'blog'],
+        'collection' => 'blog',
+        '_test_mode' => true,
+    ]);
+    $after = get_automation_queue_status();
+    assert_true($ok1 && $ok2, 'enqueue dedupe should still report success');
+    assert_true(
+        (int) ($after['total'] ?? 0) <= (int) ($before['total'] ?? 0) + 0,
+        'second enqueue for same entry should not add another job'
+    );
 }
 
 function test_force_queue_ignores_retry(): void

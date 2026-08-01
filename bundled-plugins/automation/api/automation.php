@@ -738,6 +738,27 @@ if ($action === 'run_live') {
         exit;
     }
 
+    if (!function_exists('automation_claim_side_effect')) {
+        require_once __DIR__ . '/../includes/side_effects.php';
+    }
+    // Collapse double-clicks on Confirm & Run Live.
+    $liveClaim = 'run_live_' . md5((string) $automation_id . '|' . (string) ($_SESSION['user']['id'] ?? 'anon'));
+    if (!automation_claim_side_effect($liveClaim, 8)) {
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'success' => true,
+                'runtime_ms' => 0,
+                'actions_executed' => 0,
+                'manual_run' => true,
+                'deduped' => true,
+                'errors' => [],
+                'delivery_note' => 'Live run already started a moment ago — not executed again.',
+            ],
+        ]);
+        exit;
+    }
+
     $start_time = microtime(true);
     try {
         $execDetails = [];
