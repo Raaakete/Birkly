@@ -129,23 +129,31 @@ function execute_automations($trigger_type, $context = []) {
  * @param array $context Execution context
  * @return bool True if executed successfully
  */
-function execute_automation($automation, $context = []) {
+function execute_automation($automation, $context = [], ?array &$details = null) {
     $start_time = microtime(true);
     $automation_id = $automation['id'] ?? '';
     $stop_on_failure = $automation['stop_on_failure'] ?? false;
     $is_test_mode = !empty($context['_test_mode']);
     $is_dry_run = !empty($context['_dry_run']);
+    $details = [
+        'success' => false,
+        'errors' => [],
+        'results' => [],
+        'conditions_met' => false,
+    ];
 
     // Loop prevention: check if this automation was triggered by another automation
     $origin_automation = $context['origin_automation'] ?? null;
     if ($origin_automation === $automation_id) {
         error_log("[Automation] Loop prevention: Automation $automation_id triggered itself");
+        $details['errors'][] = 'Loop prevention blocked this run';
         return false;
     }
 
     // Rate limiting check. Test/dry-run paths must be side-effect free.
     if (!$is_test_mode && !$is_dry_run && !check_automation_rate_limit($automation_id)) {
         error_log("[Automation] Rate limit exceeded for automation $automation_id");
+        $details['errors'][] = 'Rate limit exceeded';
         return false;
     }
 
@@ -162,6 +170,10 @@ function execute_automation($automation, $context = []) {
     } else {
         $conditions_met = execute_automation_linear($automation, $context, $results, $errors, $stop_on_failure, $is_test_mode, $is_dry_run);
     }
+
+    $details['results'] = $results;
+    $details['errors'] = $errors;
+    $details['conditions_met'] = $conditions_met;
 
     if (!$conditions_met) {
         if (!$is_test_mode && function_exists('log_automation_execution')) {
@@ -184,6 +196,7 @@ function execute_automation($automation, $context = []) {
         ]), $results, $errors);
     }
 
+    $details['success'] = empty($errors);
     return empty($errors);
 }
 
