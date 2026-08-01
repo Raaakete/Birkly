@@ -27,9 +27,27 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**Active phase:** None — **P51 complete** (2026-07-31). Next phase TBD with human + product-planner.
+**Active phase:** **P52** (PHP-native SSR) — approved 2026-08-01. Execute via lead-engineer.
 
 Focus delivered: shared `birkly-template-engine.js`, optional SSR for Birkly-hosted `project/` sites, admin render settings, client loading helpers, client↔engine decoupling.
+
+---
+
+## Active — Phase 52 (PHP-native SSR)
+
+**Status:** Approved 2026-08-01 — in execution  
+**Artifacts:** `docs/reviews/P52-php-native-ssr-plan.md`, `P52-gap-register.md`, `P52-verification-matrix.md`, `P52-lead-engineer-handoff.md`  
+**Handoff prompt:** `docs/reviews/P52-lead-engineer-prompt.md`
+
+| Milestone | Focus | Status |
+|-----------|--------|--------|
+| P52-M1 | PHP `render()` port + JS↔PHP fixture parity | Ready |
+| P52-M2 | Cut over `project_ssr.php` to in-process PHP (no Node) | Pending M1 |
+| P52-M3 | Default `render_mode=server` for Birkly hosting; drop Docker Node | Pending M2 |
+| P52-M4 | Delete Node SSR CLI / helpers | Pending M3 |
+| P52-M5 | CI, localhost PHP-only smoke, closure | Pending M4 |
+
+**Product intent:** Localhost and Birkly-hosted project sites use SSR by default; PHP is the only built-in host runtime. Browser keeps the JS engine via `birkly-client.js` (not an author/npm dependency).
 
 ---
 
