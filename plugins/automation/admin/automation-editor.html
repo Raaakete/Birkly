@@ -1,0 +1,65 @@
+<link rel="stylesheet" href="{birkly_url '/admin/css/plugin-page.css'}">
+<link rel="stylesheet" href="{birkly_url '/plugins/automation/admin/automation.css'}">
+
+{plugin_page_header}
+
+<div class="automation-page automation-editor-page plugin-page">
+  <div class="automation-editor-topbar">
+    <div class="automation-editor-topbar-left">
+      <a class="btn btn-secondary btn-sm" id="automation-editor-back" href="{admin_url 'automation'}">← Automations</a>
+      <div class="automation-editor-title-wrap">
+        <label class="sr-only" for="automation-editor-name">Automation name</label>
+        <input type="text" id="automation-editor-name" class="input automation-editor-name" placeholder="Automation name" required>
+      </div>
+    </div>
+    <div class="automation-editor-topbar-right">
+      <label class="checkbox-label">
+        <input type="checkbox" id="automation-editor-enabled" checked>
+        <span>Enabled</span>
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="automation-editor-stop-on-failure">
+        <span>Stop on failure</span>
+      </label>
+      <button type="button" class="btn btn-secondary btn-sm" id="automation-editor-test" hidden title="Simulate only — does not send email or webhooks">Test (dry run)</button>
+      <button type="button" class="btn btn-primary" id="automation-editor-save">Save</button>
+    </div>
+  </div>
+
+  <p class="automation-editor-subhint" id="automation-editor-status">Loading editor…</p>
+
+  <div class="automation-editor-shell">
+    <aside id="node-palette" class="node-palette automation-editor-palette" aria-label="Block palette"></aside>
+    <div class="node-canvas-column automation-editor-canvas-col">
+      <div class="automation-editor-canvas-toolbar">
+        <span class="form-help">Connect ports to build the flow. Conditions branch with If true / Else.</span>
+        <div class="automation-editor-canvas-actions">
+          <button type="button" class="btn btn-sm btn-ghost" id="automation-editor-export">Export</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="automation-editor-import">Import</button>
+        </div>
+      </div>
+      <div id="node-canvas" class="node-canvas automation-editor-canvas" aria-label="Workflow canvas"></div>
+      <div id="canvas-validation-errors" class="canvas-validation-errors" style="display:none" role="alert"></div>
+    </div>
+    <aside id="node-inspector" class="node-inspector-panel automation-editor-inspector" aria-label="Node configuration"></aside>
+  </div>
+</div>
+
+<div id="automation-logs-modal" class="modal-backdrop" hidden aria-hidden="true">
+  <div class="modal-content" style="max-width:700px" role="document">
+    <div class="modal-header">
+      <h2 id="automation-logs-title">Test run</h2>
+      <button type="button" class="modal-close-btn" id="automation-editor-close-logs" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="automation-logs-content"><div class="loading-state">Loading…</div></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="automation-editor-close-logs-footer">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="{birkly_url '/plugins/automation/admin/automation_node_serializer.js'}"></script>
+<script src="{birkly_url '/plugins/automation/admin/automation_node_editor.js'}"></script>
+<script src="{birkly_url '/plugins/automation/admin/automation-editor.js'}"></script>

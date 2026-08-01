@@ -44,7 +44,7 @@ register_automation_block('trigger', 'webhook_inbound', [
         $filter_value = $config['filter_value'] ?? '';
         
         if ($filter_field && $filter_value) {
-            $field_value = $context[$filter_field] ?? '';
+            $field_value = automation_webhook_nested_value($context, $filter_field);
             if ($field_value !== $filter_value) {
                 return false;
             }
@@ -53,3 +53,19 @@ register_automation_block('trigger', 'webhook_inbound', [
         return true;
     }
 ]);
+
+function automation_webhook_nested_value(array $context, string $path): string
+{
+    $keys = explode('.', $path);
+    $value = $context;
+
+    foreach ($keys as $key) {
+        if (is_array($value) && array_key_exists($key, $value)) {
+            $value = $value[$key];
+            continue;
+        }
+        return '';
+    }
+
+    return is_scalar($value) ? (string) $value : json_encode($value);
+}

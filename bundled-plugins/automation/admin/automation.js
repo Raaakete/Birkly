@@ -5,12 +5,26 @@
 
 const apiUrl = (path) => (window.Birkly && typeof Birkly.url === 'function') ? Birkly.url(path) : path;
 
+function adminPageUrl(page, params) {
+  const base = apiUrl('/admin/index.php');
+  const qs = new URLSearchParams(Object.assign({ page: page }, params || {}));
+  return base + '?' + qs.toString();
+}
+
+function openAutomationEditor(automationId, extras) {
+  const params = Object.assign({}, extras || {});
+  if (automationId) params.id = automationId;
+  else params.new = '1';
+  window.location.href = adminPageUrl('automation-editor', params);
+}
+
 let automations = [];
 let availableBlocks = { triggers: [], conditions: [], actions: [] };
 let availableCollections = [];
 let currentAutomation = null;
 let automationEditorMode = 'canvas';
 let nodeEditor = null;
+let cronUrlsVisible = false;
 
 // ============================================================
 // Node canvas editor (P7-M6)
@@ -155,12 +169,201 @@ function importCanvasJson() {
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function () {
+  initAutomationActionDelegation();
   initAutomationViewTabs();
   loadBlocks();
   loadAutomations();
   loadCollections();
   checkQueueHealth();
 });
+
+// ============================================================
+// CSP-safe actions (admin CSP blocks inline onclick)
+// ============================================================
+
+let automationActionsBound = false;
+function initAutomationActionDelegation() {
+  if (automationActionsBound) return;
+  automationActionsBound = true;
+  document.addEventListener('click', function (event) {
+    const el = event.target.closest('[data-automation-action]');
+    if (!el) return;
+    // Page shell + modals (modals sit outside .automation-page)
+    if (!el.closest('.automation-page, #automation-modal, #automation-logs-modal')) return;
+
+    // Prevent duplicate handlers (script loaded twice) from firing the same action.
+    if (event.__automationActionHandled) return;
+    event.__automationActionHandled = true;
+    event.preventDefault();
+
+    const action = el.getAttribute('data-automation-action');
+    const id = el.getAttribute('data-automation-id') || '';
+    const index = parseInt(el.getAttribute('data-automation-index') || '', 10);
+
+    switch (action) {
+      case 'create':
+        openAutomationEditor(null);
+        break;
+      case 'close-modal':
+        closeAutomationModal();
+        break;
+      case 'close-logs':
+        closeLogsModal();
+        break;
+      case 'save':
+        saveAutomation();
+        break;
+      case 'editor-mode':
+        setAutomationEditorMode(el.getAttribute('data-automation-mode') || 'canvas');
+        break;
+      case 'export-canvas':
+        exportCanvasJson();
+        break;
+      case 'import-canvas':
+        importCanvasJson();
+        break;
+      case 'add-condition':
+        addCondition();
+        break;
+      case 'add-action':
+        addAction();
+        break;
+      case 'remove-condition':
+        if (!Number.isNaN(index)) removeCondition(index);
+        break;
+      case 'remove-action':
+        if (!Number.isNaN(index)) removeAction(index);
+        break;
+      case 'move-action': {
+        const delta = parseInt(el.getAttribute('data-automation-delta') || '0', 10);
+        if (!Number.isNaN(index) && delta) moveAction(index, delta);
+        break;
+      }
+      case 'edit':
+        if (id) openAutomationEditor(id);
+        break;
+      case 'logs':
+        if (id) viewLogs(id);
+        break;
+      case 'delete':
+        if (id) deleteAutomation(id);
+        break;
+      case 'duplicate':
+        if (id) duplicateAutomation(id);
+        break;
+      case 'dry-run':
+        if (id) dryRunAutomation(id);
+        break;
+      case 'toggle':
+        if (id) {
+          const enabled = el.getAttribute('data-automation-enabled') === '1';
+          toggleAutomation(id, enabled);
+        }
+        break;
+      case 'apply-template': {
+        const templateId = el.getAttribute('data-automation-template') || '';
+        if (templateId) {
+          try {
+            sessionStorage.setItem('automation-editor-template', templateId);
+          } catch (_) {}
+          openAutomationEditor(null, { template: templateId });
+        }
+        break;
+      }
+      case 'confirm-live-run':
+        if (id) confirmLiveRun(id);
+        break;
+      case 'dismiss-health':
+        dismissHealthHint();
+        break;
+      case 'toggle-cron-urls':
+        toggleCronUrlVisibility();
+        break;
+      case 'show-setup':
+        switchAutomationView('setup');
+        break;
+      case 'process-queue-now':
+        processQueueNow();
+        break;
+      case 'refresh-setup':
+        loadSetupHealth();
+        break;
+      case 'send-test-email':
+        sendTestEmail();
+        break;
+      default:
+        break;
+    }
+  });
+
+  const mailForm = document.getElementById('automation-mail-settings-form');
+  if (mailForm) {
+    mailForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await saveMailSettings();
+    });
+  }
+  const methodSelect = document.getElementById('automation-mail-method');
+  if (methodSelect) {
+    methodSelect.addEventListener('change', syncSmtpFieldsVisibility);
+    syncSmtpFieldsVisibility();
+  }
+
+  document.addEventListener('keydown', function (event) {
+    const el = event.target.closest('[data-automation-action="apply-template"]');
+    if (!el || (event.key !== 'Enter' && event.key !== ' ')) return;
+    event.preventDefault();
+    const templateId = el.getAttribute('data-automation-template') || '';
+    if (templateId) applyTemplate(templateId);
+  });
+
+  document.addEventListener('change', function (event) {
+    const el = event.target.closest('[data-automation-change]');
+    if (!el || !el.closest('#automation-modal')) return;
+    const kind = el.getAttribute('data-automation-change');
+    const index = parseInt(el.getAttribute('data-automation-index') || '', 10);
+    if (Number.isNaN(index)) return;
+    if (kind === 'condition-type') loadConditionConfig(index, el.value);
+    if (kind === 'action-type') loadActionConfig(index, el.value);
+  });
+}
+
+function showAutomationModal(modal) {
+  if (!modal) return;
+  modal.hidden = false;
+  modal.setAttribute('aria-hidden', 'false');
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+}
+
+function hideAutomationModal(modal) {
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.style.display = 'none';
+  modal.hidden = true;
+  modal.setAttribute('aria-hidden', 'true');
+}
+
+function switchAutomationView(view) {
+  const target = view || 'list';
+  document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((btn) => {
+    const active = (btn.getAttribute('data-automation-view') || '') === target;
+    btn.classList.toggle('active', active);
+  });
+  const listPanel = document.getElementById('automation-view-list');
+  const setupPanel = document.getElementById('automation-view-setup');
+  const docsPanel = document.getElementById('automation-view-documentation');
+  if (listPanel) listPanel.hidden = target !== 'list';
+  if (setupPanel) setupPanel.hidden = target !== 'setup';
+  if (docsPanel) docsPanel.hidden = target !== 'documentation';
+  if (target === 'setup') {
+    loadCronInfo();
+    refreshSetupStatus();
+  }
+  if (target === 'documentation' && window.BirklyPluginDocs) {
+    window.BirklyPluginDocs.activate('automation', 'automation-view-documentation');
+  }
+}
 
 // ============================================================
 // Data loading
@@ -173,6 +376,8 @@ async function loadAutomations() {
     if (result.status === 'ok') {
       automations = result.data.automations || [];
       renderAutomations();
+      // Re-evaluate health tip after we know whether automations exist.
+      checkQueueHealth();
     } else {
       showMessage('Error loading automations: ' + result.message, 'error');
     }
@@ -216,27 +421,320 @@ async function checkQueueHealth() {
     const response = await fetch(apiUrl('/api/automation.php?action=queue_status'));
     const result = await response.json();
     if (result.status !== 'ok') return;
-    const q = result.data.queue || {};
-    const pending = q.pending || 0;
+    const q = result.data.queue || result.data || {};
+    const pending = Number(q.pending || 0);
+    const completed = Number(q.completed || 0);
+    const processing = Number(q.processing || 0);
+    const failed = Number(q.failed || 0);
+    window.__automationQueueStats = { pending, completed, processing, failed };
+
+    // Always preload Setup panel info (not a scary list banner).
+    loadCronInfo();
+    loadSetupHealth();
+
     const hint = document.getElementById('automation-health-hint');
-    if (!hint) return;
+    const countEl = document.getElementById('automation-health-pending-count');
+    if (countEl) countEl.textContent = String(pending);
 
-    // Show hint if there are stuck pending jobs (heuristic: > 5 pending with no completed)
-    const hasCompleted = (q.completed || 0) > 0;
-    const stuckJobs = pending > 5 && !hasCompleted;
-    const noCronConfigured = pending > 0 && !hasCompleted;
-
-    if (stuckJobs || noCronConfigured) {
-      hint.style.display = 'flex';
+    // Compact list tip only when jobs are waiting AND at least one automation exists.
+    const hasAutomations = Array.isArray(automations) && automations.length > 0;
+    const jobsWaiting = pending > 0;
+    let dismissed = false;
+    try {
+      dismissed = sessionStorage.getItem('automation-health-dismissed') === '1';
+    } catch (_) {}
+    if (hint) {
+      hint.style.display = (hasAutomations && jobsWaiting && completed === 0 && !dismissed) ? 'flex' : 'none';
     }
   } catch (_) {
     // Non-fatal
   }
 }
 
+function syncSmtpFieldsVisibility() {
+  const method = document.getElementById('automation-mail-method')?.value || 'mail';
+  const smtp = document.getElementById('automation-smtp-fields');
+  if (smtp) smtp.hidden = method !== 'smtp';
+}
+
+async function loadSetupHealth() {
+  const el = document.getElementById('automation-setup-status');
+  const list = document.getElementById('automation-setup-checklist');
+  const badge = document.getElementById('automation-setup-badge');
+  const sentList = document.getElementById('automation-sent-mail-log');
+  try {
+    const response = await fetch(apiUrl('/api/automation.php?action=setup_health'));
+    const result = await response.json();
+    if (result.status !== 'ok') {
+      if (el) {
+        el.className = 'automation-setup-status is-warn';
+        el.textContent = 'Could not load setup status.';
+      }
+      return;
+    }
+    const data = result.data || {};
+    window.__automationSetupHealth = data;
+    const versionLine = document.getElementById('automation-plugin-version-line');
+    if (versionLine) {
+      versionLine.textContent = 'Plugin version: ' + (data.plugin_version || 'unknown')
+        + ' — if this is below 1.1.2, redeploy/sync the Automation plugin before debugging further.';
+    }
+    if (data.queue) {
+      window.__automationQueueStats = {
+        pending: Number(data.queue.pending || 0),
+        completed: Number(data.queue.completed || 0),
+        processing: Number(data.queue.processing || 0),
+        failed: Number(data.queue.failed || 0),
+      };
+    }
+
+    const mail = data.mail || {};
+    const methodInput = document.getElementById('automation-mail-method');
+    const nameInput = document.getElementById('automation-mail-from-name');
+    const emailInput = document.getElementById('automation-mail-from-email');
+    const hostInput = document.getElementById('automation-smtp-host');
+    const portInput = document.getElementById('automation-smtp-port');
+    const userInput = document.getElementById('automation-smtp-username');
+    const encInput = document.getElementById('automation-smtp-encryption');
+    if (methodInput && mail.method) methodInput.value = mail.method;
+    if (nameInput && mail.from_name) nameInput.value = mail.from_name;
+    if (emailInput && mail.from_email) emailInput.value = mail.from_email;
+    if (hostInput) hostInput.value = mail.smtp_host || '';
+    if (portInput) portInput.value = String(mail.smtp_port || 587);
+    if (userInput) userInput.value = mail.smtp_username || '';
+    if (encInput && mail.smtp_encryption) encInput.value = mail.smtp_encryption;
+    syncSmtpFieldsVisibility();
+
+    const checks = Array.isArray(data.checks) ? data.checks : [];
+    if (list) {
+      list.innerHTML = checks.map((check) => {
+        const status = check.status || 'ok';
+        const why = check.why ? `<p class="automation-setup-check-why"><strong>Why:</strong> ${escapeHtml(check.why)}</p>` : '';
+        return `<li class="automation-setup-check is-${escapeAttr(status)}">
+          <span class="automation-setup-check-status">${escapeHtml(status)}</span>
+          <span class="automation-setup-check-label">${escapeHtml(check.label || '')}</span>
+          <p class="automation-setup-check-detail">${escapeHtml(check.detail || '')}</p>
+          ${why}
+        </li>`;
+      }).join('') || '<li class="form-help">No checks available.</li>';
+    }
+
+    if (sentList) {
+      const sent = Array.isArray(data.sent_mail) ? data.sent_mail : [];
+      sentList.innerHTML = sent.length
+        ? sent.map((row) => `<li class="automation-setup-check is-ok">
+            <span class="automation-setup-check-status">${escapeHtml(row.method || 'mail')}</span>
+            <span class="automation-setup-check-label">${escapeHtml(row.to || '')}</span>
+            <p class="automation-setup-check-detail">${escapeHtml(row.subject || '')} · ${escapeHtml(row.sent_at || '')}</p>
+          </li>`).join('')
+        : '<li class="form-help">No sends recorded yet. Use Send test email after saving settings.</li>';
+    }
+
+    const jobsList = document.getElementById('automation-recent-jobs');
+    if (jobsList) {
+      const jobs = Array.isArray(data.recent_jobs) ? data.recent_jobs : [];
+      jobsList.innerHTML = jobs.length
+        ? jobs.map((job) => {
+          const status = job.status || 'pending';
+          const cls = status === 'completed' ? 'ok' : (status === 'failed' ? 'fail' : 'warn');
+          const note = job.error || job.warning || (job.executed_count != null ? (`matched ${job.executed_count} automation(s)`) : 'waiting');
+          return `<li class="automation-setup-check is-${cls}">
+            <span class="automation-setup-check-status">${escapeHtml(status)}</span>
+            <span class="automation-setup-check-label">${escapeHtml(job.trigger_type || 'job')}${job.collection ? ' · ' + escapeHtml(String(job.collection)) : ''}</span>
+            <p class="automation-setup-check-detail">${escapeHtml(note)}${job.retry_after ? ' · retry after ' + escapeHtml(String(job.retry_after)) : ''}</p>
+          </li>`;
+        }).join('')
+        : '<li class="form-help">No queue jobs yet. Create an entry in the watched collection to enqueue one.</li>';
+    }
+
+    const blocking = data.blocking || [];
+    const warnings = data.warnings || [];
+    if (el) {
+      if (blocking.length) {
+        el.className = 'automation-setup-status is-warn';
+        el.textContent = 'Setup incomplete: ' + blocking[0];
+      } else if (warnings.length) {
+        el.className = 'automation-setup-status is-warn';
+        el.textContent = warnings[0];
+      } else {
+        el.className = 'automation-setup-status is-ok';
+        el.textContent = 'Setup looks ready. Remember: Test is dry-run only — use Confirm & Run Live or create an entry for real delivery.';
+      }
+    }
+    if (badge) {
+      badge.hidden = !(blocking.length || warnings.length || Number(data.queue?.pending || 0) > 0);
+    }
+  } catch (_) {
+    if (el) {
+      el.className = 'automation-setup-status is-warn';
+      el.textContent = 'Could not load setup status.';
+    }
+  }
+}
+
+function refreshSetupStatus() {
+  loadSetupHealth();
+}
+
+async function processQueueNow() {
+  const el = document.getElementById('automation-setup-status');
+  if (el) {
+    el.className = 'automation-setup-status';
+    el.textContent = 'Force-processing queue (ignores retry wait)…';
+  }
+  try {
+    const response = await fetch(apiUrl('/api/automation.php?action=process_queue_now'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit: 25, force: true, _csrf: getCsrfToken() })
+    });
+    const result = await response.json();
+    if (result.status !== 'ok') {
+      showMessage(result.message || 'Failed to process queue', 'error');
+      await loadSetupHealth();
+      return;
+    }
+    const processed = Number(result.data?.processed || 0);
+    const notes = result.data?.health?.runtime?.last_job_notes || [];
+    const noteText = notes.length ? (' ' + notes[0]) : '';
+    showMessage(`Processed ${processed} queue job${processed === 1 ? '' : 's'}.${noteText}`, processed > 0 ? 'success' : 'info');
+    await loadSetupHealth();
+    await loadAutomations();
+  } catch (error) {
+    showMessage(error.message || 'Failed to process queue', 'error');
+  }
+}
+
+async function saveMailSettings() {
+  const msg = document.getElementById('automation-mail-settings-msg');
+  const method = document.getElementById('automation-mail-method')?.value || 'mail';
+  const fromName = document.getElementById('automation-mail-from-name')?.value || '';
+  const fromEmail = document.getElementById('automation-mail-from-email')?.value || '';
+  const smtpPassword = document.getElementById('automation-smtp-password')?.value || '';
+  if (msg) msg.textContent = 'Saving…';
+  try {
+    const response = await fetch(apiUrl('/api/automation.php?action=save_mail_settings'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        method,
+        from_name: fromName,
+        from_email: fromEmail,
+        smtp_host: document.getElementById('automation-smtp-host')?.value || '',
+        smtp_port: Number(document.getElementById('automation-smtp-port')?.value || 587),
+        smtp_username: document.getElementById('automation-smtp-username')?.value || '',
+        smtp_password: smtpPassword,
+        keep_smtp_password: smtpPassword === '',
+        smtp_encryption: document.getElementById('automation-smtp-encryption')?.value || 'tls',
+        _csrf: getCsrfToken()
+      })
+    });
+    const result = await response.json();
+    if (result.status !== 'ok') {
+      if (msg) msg.textContent = result.message || 'Could not save email settings';
+      showMessage(result.message || 'Could not save email settings', 'error');
+      return;
+    }
+    if (msg) {
+      msg.textContent = method === 'smtp'
+        ? 'Saved. Click Send test email to verify SMTP delivery.'
+        : (method === 'log'
+          ? 'Saved. Emails will be logged only — use Send test email, then check Recent sends.'
+          : 'Saved. PHP mail() rarely delivers on cloud hosts — prefer SMTP.');
+    }
+    const pwd = document.getElementById('automation-smtp-password');
+    if (pwd) pwd.value = '';
+    showMessage('Email settings saved.', 'success');
+    if (result.data?.health) {
+      window.__automationSetupHealth = result.data.health;
+    }
+    await loadSetupHealth();
+  } catch (error) {
+    if (msg) msg.textContent = error.message || 'Could not save email settings';
+    showMessage(error.message || 'Could not save email settings', 'error');
+  }
+}
+
+let sendingTestEmail = false;
+async function sendTestEmail() {
+  if (sendingTestEmail) return;
+  sendingTestEmail = true;
+  const msg = document.getElementById('automation-test-email-msg');
+  const to = document.getElementById('automation-test-email-to')?.value || '';
+  const btn = document.querySelector('[data-automation-action="send-test-email"]');
+  if (btn) btn.disabled = true;
+  if (msg) msg.textContent = 'Sending test email…';
+  try {
+    const response = await fetch(apiUrl('/api/automation.php?action=send_test_email'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to, _csrf: getCsrfToken() })
+    });
+    const result = await response.json();
+    if (result.status !== 'ok') {
+      if (msg) msg.textContent = result.message || 'Test email failed';
+      showMessage(result.message || 'Test email failed', 'error');
+      await loadSetupHealth();
+      return;
+    }
+    if (msg) msg.textContent = result.message || 'Test email sent.';
+    showMessage(result.message || 'Test email sent.', 'success');
+    await loadSetupHealth();
+  } catch (error) {
+    if (msg) msg.textContent = error.message || 'Test email failed';
+    showMessage(error.message || 'Test email failed', 'error');
+  } finally {
+    sendingTestEmail = false;
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function loadCronInfo() {
+  try {
+    const response = await fetch(apiUrl('/api/automation.php?action=cron_info'));
+    const result = await response.json();
+    if (result.status !== 'ok') return;
+    const data = result.data || {};
+    const cli = document.getElementById('automation-cron-cli');
+    const queueUrl = document.getElementById('automation-cron-queue-url');
+    const scheduledUrl = document.getElementById('automation-cron-scheduled-url');
+    if (cli && data.queue_cli) cli.textContent = data.queue_cli;
+    setCronUrl(queueUrl, data.queue_url || '');
+    setCronUrl(scheduledUrl, data.scheduled_url || '');
+  } catch (_) {
+    // Non-fatal
+  }
+}
+
+function setCronUrl(element, url) {
+  if (!element || !url) return;
+  element.dataset.fullUrl = url;
+  element.textContent = cronUrlsVisible ? url : maskCronUrl(url);
+}
+
+function maskCronUrl(url) {
+  return String(url).replace(/([?&]token=)[^&]+/, '$1••••••');
+}
+
+function toggleCronUrlVisibility() {
+  cronUrlsVisible = !cronUrlsVisible;
+  document.querySelectorAll('#automation-cron-queue-url, #automation-cron-scheduled-url').forEach((el) => {
+    const fullUrl = el.dataset.fullUrl || el.textContent || '';
+    el.textContent = cronUrlsVisible ? fullUrl : maskCronUrl(fullUrl);
+  });
+  const toggle = document.getElementById('automation-cron-toggle');
+  if (toggle) {
+    toggle.textContent = cronUrlsVisible ? 'Hide cron URLs' : 'Show cron URLs';
+    toggle.setAttribute('aria-pressed', cronUrlsVisible ? 'true' : 'false');
+  }
+}
+
 function dismissHealthHint() {
   const hint = document.getElementById('automation-health-hint');
   if (hint) hint.style.display = 'none';
+  try {
+    sessionStorage.setItem('automation-health-dismissed', '1');
+  } catch (_) {}
 }
 
 // ============================================================
@@ -295,7 +793,9 @@ function renderAutomations() {
           </svg>
         </div>
         <div class="automation-card-body">
-          <div class="automation-card-title">${escapeHtml(automation.name || 'Untitled')}</div>
+          <button type="button" class="automation-card-title-btn" data-automation-action="edit" data-automation-id="${escapeAttr(automation.id)}">
+            ${escapeHtml(automation.name || 'Untitled')}
+          </button>
           <div class="automation-card-meta">
             <span class="status-badge ${automation.enabled ? 'active' : 'inactive'}">
               ${automation.enabled ? 'Enabled' : 'Disabled'}
@@ -307,25 +807,25 @@ function renderAutomations() {
           </div>
         </div>
         <div class="automation-card-actions">
-          <button class="btn btn-sm btn-ghost" onclick="dryRunAutomation('${escapeAttr(automation.id)}')" title="Test run (dry run)">
+          <button type="button" class="btn btn-sm btn-ghost" data-automation-action="dry-run" data-automation-id="${escapeAttr(automation.id)}" title="Test run (dry run)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5,3 19,12 5,21 5,3"/>
             </svg>
             Test
           </button>
-          <button class="btn btn-sm btn-ghost" onclick="duplicateAutomation('${escapeAttr(automation.id)}')" title="Duplicate">
+          <button type="button" class="btn btn-sm btn-ghost" data-automation-action="duplicate" data-automation-id="${escapeAttr(automation.id)}" title="Duplicate">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
             </svg>
           </button>
-          <button class="btn btn-sm btn-secondary" onclick="editAutomation('${escapeAttr(automation.id)}')">Edit</button>
-          <button class="btn btn-sm btn-secondary" onclick="viewLogs('${escapeAttr(automation.id)}')">Logs</button>
-          <button class="btn btn-sm ${automation.enabled ? 'btn-warning' : 'btn-primary'}"
-                  onclick="toggleAutomation('${escapeAttr(automation.id)}', ${automation.enabled})">
+          <button type="button" class="btn btn-sm btn-primary" data-automation-action="edit" data-automation-id="${escapeAttr(automation.id)}">Open</button>
+          <button type="button" class="btn btn-sm btn-secondary" data-automation-action="logs" data-automation-id="${escapeAttr(automation.id)}">Logs</button>
+          <button type="button" class="btn btn-sm ${automation.enabled ? 'btn-warning' : 'btn-primary'}"
+                  data-automation-action="toggle" data-automation-id="${escapeAttr(automation.id)}" data-automation-enabled="${automation.enabled ? '1' : '0'}">
             ${automation.enabled ? 'Disable' : 'Enable'}
           </button>
-          <button class="btn btn-sm btn-danger" onclick="deleteAutomation('${escapeAttr(automation.id)}')">Delete</button>
+          <button type="button" class="btn btn-sm btn-danger" data-automation-action="delete" data-automation-id="${escapeAttr(automation.id)}">Delete</button>
         </div>
       </div>
     `;
@@ -371,11 +871,11 @@ const AUTOMATION_TEMPLATES = [
       conditions: [],
       actions: [
         {
-          type: 'http_request',
+          type: 'webhook',
           config: {
             url: 'https://example.com/webhook',
             method: 'POST',
-            body: '{"event":"entry_created","entry":"{{entry.id}}","collection":"{{collection}}"}'
+            payload: '{"event":"entry_created","entry":"{{entry.id}}","collection":"{{collection}}"}'
           }
         }
       ]
@@ -407,8 +907,7 @@ const AUTOMATION_TEMPLATES = [
 
 function renderEmptyState(container) {
   const templatesHtml = AUTOMATION_TEMPLATES.map(t => `
-    <div class="automation-template-card" onclick="applyTemplate('${t.id}')" role="button" tabindex="0"
-         onkeydown="if(event.key==='Enter')applyTemplate('${t.id}')">
+    <div class="automation-template-card" data-automation-action="apply-template" data-automation-template="${escapeAttr(t.id)}" role="button" tabindex="0">
       <div class="automation-template-card-label">${escapeHtml(t.label)}</div>
       <div class="automation-template-card-desc">${escapeHtml(t.description)}</div>
     </div>
@@ -424,7 +923,7 @@ function renderEmptyState(container) {
       <h3>No automations yet</h3>
       <p>Automations run workflows automatically when content changes, entries are published, or sub-entries are created.</p>
       <div class="automation-empty-actions">
-        <button class="btn btn-primary" onclick="openCreateAutomationModal()">
+        <button type="button" class="btn btn-primary" data-automation-action="create">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
@@ -443,14 +942,24 @@ function applyTemplate(templateId) {
   const tpl = AUTOMATION_TEMPLATES.find(t => t.id === templateId);
   if (!tpl) return;
   currentAutomation = null;
-  document.getElementById('automation-modal-title').textContent = 'Create Automation';
-  document.getElementById('automation-form').reset();
-  document.getElementById('automation-id').value = '';
-  document.getElementById('conditions-list').innerHTML = '';
-  document.getElementById('actions-list').innerHTML = '';
-  document.getElementById('trigger-config').style.display = 'none';
-  document.getElementById('automation-modal').classList.add('active');
-  // Pre-fill after modal open
+  const title = document.getElementById('automation-modal-title');
+  if (title) title.textContent = 'Create Automation';
+  const form = document.getElementById('automation-form');
+  if (form) form.reset();
+  const idField = document.getElementById('automation-id');
+  if (idField) idField.value = '';
+  const conditionsList = document.getElementById('conditions-list');
+  if (conditionsList) conditionsList.innerHTML = '';
+  const actionsList = document.getElementById('actions-list');
+  if (actionsList) actionsList.innerHTML = '';
+  const triggerConfig = document.getElementById('trigger-config');
+  if (triggerConfig) triggerConfig.style.display = 'none';
+  showAutomationModal(document.getElementById('automation-modal'));
+  try {
+    setAutomationEditorMode('canvas');
+  } catch (e) {
+    console.warn('Automation editor init failed:', e);
+  }
   setTimeout(() => populateAutomationForm(tpl.automation), 50);
 }
 
@@ -460,28 +969,42 @@ function applyTemplate(templateId) {
 
 function openCreateAutomationModal() {
   currentAutomation = null;
-  document.getElementById('automation-modal-title').textContent = 'Create Automation';
-  document.getElementById('automation-form').reset();
-  document.getElementById('automation-id').value = '';
-  document.getElementById('conditions-list').innerHTML = '';
-  document.getElementById('actions-list').innerHTML = '';
-  document.getElementById('trigger-config').style.display = 'none';
-  setAutomationEditorMode('canvas');
-  initNodeEditor();
-  if (nodeEditor) {
-    nodeEditor.loadFromWorkflow({
-      trigger: { type: 'entry_created', config: {} },
-      conditions: [],
-      actions: [{ type: 'log_message', config: { message: 'Automation ran' } }],
-    });
+  const title = document.getElementById('automation-modal-title');
+  if (title) title.textContent = 'Create Automation';
+  const form = document.getElementById('automation-form');
+  if (form) form.reset();
+  const idField = document.getElementById('automation-id');
+  if (idField) idField.value = '';
+  const conditionsList = document.getElementById('conditions-list');
+  if (conditionsList) conditionsList.innerHTML = '';
+  const actionsList = document.getElementById('actions-list');
+  if (actionsList) actionsList.innerHTML = '';
+  const triggerConfig = document.getElementById('trigger-config');
+  if (triggerConfig) triggerConfig.style.display = 'none';
+
+  // Open modal first so CSP/UI failures in the editor never look like a dead button.
+  showAutomationModal(document.getElementById('automation-modal'));
+
+  try {
+    setAutomationEditorMode('canvas');
+    initNodeEditor();
+    if (nodeEditor) {
+      nodeEditor.loadFromWorkflow({
+        trigger: { type: 'entry_created', config: {} },
+        conditions: [],
+        actions: [{ type: 'log', config: { message: 'Automation ran for {{entry.title}}' } }],
+      });
+    }
+  } catch (e) {
+    console.warn('Automation editor init failed:', e);
   }
+
   const drPanel = document.getElementById('dry-run-panel');
   if (drPanel) drPanel.style.display = 'none';
-  document.getElementById('automation-modal').classList.add('active');
 }
 
 function closeAutomationModal() {
-  document.getElementById('automation-modal').classList.remove('active');
+  hideAutomationModal(document.getElementById('automation-modal'));
 }
 
 // ============================================================
@@ -497,8 +1020,12 @@ async function editAutomation(automationId) {
       document.getElementById('automation-modal-title').textContent = 'Edit Automation';
       const drPanel = document.getElementById('dry-run-panel');
       if (drPanel) drPanel.style.display = 'none';
-      setAutomationEditorMode('canvas');
-      document.getElementById('automation-modal').classList.add('active');
+      showAutomationModal(document.getElementById('automation-modal'));
+      try {
+        setAutomationEditorMode('canvas');
+      } catch (e) {
+        console.warn('Automation editor init failed:', e);
+      }
       setTimeout(() => populateAutomationForm(currentAutomation), 50);
     } else {
       showMessage('Error loading automation: ' + result.message, 'error');
@@ -541,17 +1068,7 @@ function populateAutomationForm(automation) {
 function initAutomationViewTabs() {
   document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const view = btn.getAttribute('data-automation-view') || 'list';
-      document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((b) => {
-        b.classList.toggle('active', b === btn);
-      });
-      const listPanel = document.getElementById('automation-view-list');
-      const docsPanel = document.getElementById('automation-view-documentation');
-      if (listPanel) listPanel.hidden = view !== 'list';
-      if (docsPanel) docsPanel.hidden = view !== 'documentation';
-      if (view === 'documentation' && window.BirklyPluginDocs) {
-        window.BirklyPluginDocs.activate('automation', 'automation-view-documentation');
-      }
+      switchAutomationView(btn.getAttribute('data-automation-view') || 'list');
     });
   });
 }
@@ -779,7 +1296,7 @@ function addConditionToForm(condition, index) {
   div.innerHTML = `
     <div class="block-header">
       <h4 class="block-header-title">Condition ${index + 1}</h4>
-      <button type="button" class="block-remove-btn" onclick="removeCondition(${index})" title="Remove">
+      <button type="button" class="block-remove-btn" data-automation-action="remove-condition" data-automation-index="${index}" title="Remove">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3,6 5,6 21,6"/>
           <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
@@ -790,7 +1307,7 @@ function addConditionToForm(condition, index) {
       <div class="form-group">
         <label>Condition Type</label>
         <select name="conditions[${index}][type]" class="input condition-type-select"
-                onchange="loadConditionConfig(${index}, this.value)">
+                data-automation-change="condition-type" data-automation-index="${index}">
           <option value="">Select condition…</option>
           ${options}
         </select>
@@ -834,18 +1351,18 @@ function addActionToForm(action, index) {
     <div class="block-header">
       <h4 class="block-header-title">Action ${index + 1}</h4>
       <div class="block-header-order">
-        <button type="button" class="block-reorder-btn" onclick="moveAction(${index}, -1)" title="Move up" aria-label="Move up">
+        <button type="button" class="block-reorder-btn" data-automation-action="move-action" data-automation-index="${index}" data-automation-delta="-1" title="Move up" aria-label="Move up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="18,15 12,9 6,15"/>
           </svg>
         </button>
-        <button type="button" class="block-reorder-btn" onclick="moveAction(${index}, 1)" title="Move down" aria-label="Move down">
+        <button type="button" class="block-reorder-btn" data-automation-action="move-action" data-automation-index="${index}" data-automation-delta="1" title="Move down" aria-label="Move down">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="6,9 12,15 18,9"/>
           </svg>
         </button>
       </div>
-      <button type="button" class="block-remove-btn" onclick="removeAction(${index})" title="Remove">
+      <button type="button" class="block-remove-btn" data-automation-action="remove-action" data-automation-index="${index}" title="Remove">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3,6 5,6 21,6"/>
           <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
@@ -855,8 +1372,7 @@ function addActionToForm(action, index) {
     <div class="block-body">
       <div class="form-group">
         <label>Action Type <span class="required">*</span></label>
-        <select name="actions[${index}][type]" class="input action-type-select" required
-                onchange="loadActionConfig(${index}, this.value)">
+        <select name="actions[${index}][type]" class="input action-type-select" required data-automation-change="action-type" data-automation-index="${index}">
           <option value="">Select action…</option>
           ${options}
         </select>
@@ -1024,13 +1540,13 @@ async function dryRunAutomation(automationId) {
   const automation = automations.find(a => a.id === automationId);
   title.textContent = `Test Run: ${automation ? automation.name : automationId}`;
   content.innerHTML = '<div class="loading-state">Running dry-run…</div>';
-  modal.classList.add('active');
+  showAutomationModal(modal);
 
   try {
     const response = await fetch(apiUrl('/api/automation.php?action=dry_run'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ automation_id: automationId, context: {} })
+      body: JSON.stringify({ automation_id: automationId, context: {}, _csrf: getCsrfToken() })
     });
     const result = await response.json();
 
@@ -1066,22 +1582,32 @@ function renderDryRunResult(data, automationId) {
     </div>
   `).join('');
 
+  const setup = data.setup || {};
+  const setupNotes = []
+    .concat(setup.blocking || [])
+    .concat(setup.warnings || [])
+    .slice(0, 3)
+    .map((note) => `<li>${escapeHtml(note)}</li>`)
+    .join('');
+
   // D4: dry-run only; show live-run confirm section
   content.innerHTML = `
     <div class="dry-run-panel" style="background:none;border:none;padding:0">
       <div style="margin-bottom:var(--space-3)">
-        <span class="dry-run-badge">Dry Run</span>
+        <span class="dry-run-badge">Dry Run — nothing sent</span>
         <p style="font-size:0.8125rem;color:var(--text-secondary);margin:var(--space-2) 0 0 0">
-          This is a simulation — no actions were executed.
+          Simulation only. Emails, Slack, Teams, and webhooks were <strong>not</strong> sent.
+          “Succeeded” here means the workflow config looks valid.
         </p>
+        ${setupNotes ? `<ul style="margin:var(--space-2) 0 0;padding-left:1.1rem;font-size:0.8125rem;color:var(--warning-700,#b45309)">${setupNotes}</ul>` : ''}
       </div>
       <div class="dry-run-steps">${stepsHtml}</div>
       <div class="dry-run-confirm-bar">
         <p>
           <strong>Run for real?</strong>
-          This will execute ${actionCount} action${actionCount !== 1 ? 's' : ''} live.
+          This will execute ${actionCount} action${actionCount !== 1 ? 's' : ''} live (real email/webhook side effects).
         </p>
-        <button class="btn btn-sm btn-warning" onclick="confirmLiveRun('${escapeAttr(automationId)}')">
+        <button type="button" class="btn btn-sm btn-warning" data-automation-action="confirm-live-run" data-automation-id="${escapeAttr(automationId)}">
           Confirm &amp; Run Live
         </button>
       </div>
@@ -1112,6 +1638,9 @@ async function confirmLiveRun(automationId) {
 
     if (result.status === 'ok') {
       const ok = result.data.success !== false;
+      const delivery = result.data.delivery_note
+        ? `<br>${escapeHtml(result.data.delivery_note)}`
+        : '<br>Check Automation → Setup if delivery channels are not configured.';
       content.innerHTML = `
         <div style="padding:var(--space-4)">
           <p style="color:${ok ? 'var(--success-600)' : 'var(--warning-600)'};font-weight:600;margin:0 0 var(--space-2) 0">
@@ -1119,8 +1648,8 @@ async function confirmLiveRun(automationId) {
           </p>
           <p style="font-size:0.875rem;color:var(--text-secondary);margin:0">
             Runtime: ${result.data.runtime_ms ? result.data.runtime_ms.toFixed(1) + 'ms' : 'n/a'}<br>
-            Actions executed: ${result.data.actions_executed ?? 'n/a'}<br>
-            Note: email delivery depends on server mail configuration.
+            Actions executed: ${result.data.actions_executed ?? 'n/a'}
+            ${delivery}
           </p>
         </div>
       `;
@@ -1277,7 +1806,7 @@ async function deleteAutomation(automationId) {
 async function viewLogs(automationId) {
   const automation = automations.find(a => a.id === automationId);
   document.getElementById('automation-logs-title').textContent = `Logs: ${automation ? automation.name : automationId}`;
-  document.getElementById('automation-logs-modal').classList.add('active');
+  showAutomationModal(document.getElementById('automation-logs-modal'));
 
   const content = document.getElementById('automation-logs-content');
   content.innerHTML = '<div class="loading-state">Loading logs…</div>';
@@ -1337,7 +1866,7 @@ function renderLogs(logs) {
 }
 
 function closeLogsModal() {
-  document.getElementById('automation-logs-modal').classList.remove('active');
+  hideAutomationModal(document.getElementById('automation-logs-modal'));
 }
 
 // ============================================================
