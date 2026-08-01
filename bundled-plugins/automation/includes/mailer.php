@@ -8,7 +8,7 @@ require_once __DIR__ . '/../cms_paths.php';
 /**
  * Send an Automation email using configured transport.
  *
- * @return array{ok: bool, method: string, error?: string, to?: string, from?: string, logged?: bool}
+ * @return array{ok: bool, method: string, error?: string, to?: string, from?: string, logged?: bool, stage?: string}
  */
 function automation_send_mail(string $to, string $subject, string $bodyHtml, ?array $settings = null): array
 {
@@ -39,6 +39,20 @@ function automation_send_mail(string $to, string $subject, string $bodyHtml, ?ar
     }
 
     if ($method === 'smtp') {
+        if (trim((string) ($settings['smtp_host'] ?? '')) === '') {
+            return [
+                'ok' => false,
+                'method' => 'smtp',
+                'error' => 'SMTP host is missing. Open Automation → Setup, save SMTP settings, then try again.',
+            ];
+        }
+        if (trim((string) ($settings['smtp_password'] ?? '')) === '' && trim((string) ($settings['smtp_username'] ?? '')) !== '') {
+            return [
+                'ok' => false,
+                'method' => 'smtp',
+                'error' => 'SMTP password is missing. Re-enter it under Automation → Setup and Save email settings.',
+            ];
+        }
         $result = automation_send_via_smtp($to, $subject, $bodyHtml, $settings);
         if (!empty($result['ok'])) {
             automation_log_sent_mail($to, $subject, $bodyHtml, $fromEmail, $fromName, 'smtp');
@@ -78,7 +92,7 @@ function automation_send_mail(string $to, string $subject, string $bodyHtml, ?ar
 }
 
 /**
- * @return array{ok: bool, method: string, error?: string, to?: string, from?: string}
+ * @return array{ok: bool, method: string, error?: string, to?: string, from?: string, stage?: string}
  */
 function automation_send_via_smtp(string $to, string $subject, string $bodyHtml, array $settings): array
 {
@@ -89,86 +103,211 @@ function automation_send_via_smtp(string $to, string $subject, string $bodyHtml,
     $encryption = strtolower((string) ($settings['smtp_encryption'] ?? 'tls'));
     $fromEmail = (string) ($settings['from_email'] ?? '');
     $fromName = (string) ($settings['from_name'] ?? 'Birkly');
+    $stage = 'connect';
 
     if ($host === '') {
-        return ['ok' => false, 'method' => 'smtp', 'error' => 'SMTP host is required'];
+        return ['ok' => false, 'method' => 'smtp', 'error' => 'SMTP host is required', 'stage' => $stage];
     }
     if ($port < 1 || $port > 65535) {
-        return ['ok' => false, 'method' => 'smtp', 'error' => 'SMTP port is invalid'];
+        return ['ok' => false, 'method' => 'smtp', 'error' => 'SMTP port is invalid', 'stage' => $stage];
     }
 
-    $remote = ($encryption === 'ssl' ? 'ssl://' : '') . $host . ':' . $port;
-    $errno = 0;
-    $errstr = '';
-    $socket = @stream_socket_client($remote, $errno, $errstr, 20, STREAM_CLIENT_CONNECT);
-    if (!$socket) {
+    $socket = automation_smtp_connect($host, $port, $encryption);
+    if (!is_array($socket) || empty($socket['ok'])) {
         return [
             'ok' => false,
             'method' => 'smtp',
-            'error' => 'Could not connect to SMTP server ' . $host . ':' . $port . ' (' . $errstr . ')',
+            'error' => $socket['error'] ?? ('Could not connect to SMTP server ' . $host . ':' . $port),
+            'stage' => 'connect',
+            'to' => $to,
+            'from' => $fromEmail,
         ];
     }
-    stream_set_timeout($socket, 20);
+    $fp = $socket['socket'];
+    stream_set_timeout($fp, 30);
 
     try {
-        automation_smtp_expect($socket, [220]);
-        automation_smtp_cmd($socket, 'EHLO birkly.local', [250]);
+        $ehloHost = automation_smtp_ehlo_name($fromEmail);
+
+        $stage = 'greeting';
+        automation_smtp_expect($fp, [220], $stage);
+
+        $stage = 'ehlo';
+        automation_smtp_cmd($fp, 'EHLO ' . $ehloHost, [250], $stage);
 
         if ($encryption === 'tls') {
-            automation_smtp_cmd($socket, 'STARTTLS', [220]);
+            $stage = 'starttls';
+            automation_smtp_cmd($fp, 'STARTTLS', [220], $stage);
             $crypto = STREAM_CRYPTO_METHOD_TLS_CLIENT;
-            if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
-                $crypto = STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT;
+            if (!@stream_socket_enable_crypto($fp, true, $crypto)) {
+                // Retry with broader crypto flags used by older PHP builds.
+                if (defined('STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT')) {
+                    if (!@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLSv1_2_CLIENT)) {
+                        throw new RuntimeException('STARTTLS negotiation failed (TLS handshake)');
+                    }
+                } else {
+                    throw new RuntimeException('STARTTLS negotiation failed (TLS handshake)');
+                }
             }
-            if (!@stream_socket_enable_crypto($socket, true, $crypto)) {
-                throw new RuntimeException('STARTTLS negotiation failed');
-            }
-            automation_smtp_cmd($socket, 'EHLO birkly.local', [250]);
+            $stage = 'ehlo_tls';
+            automation_smtp_cmd($fp, 'EHLO ' . $ehloHost, [250], $stage);
         }
 
         if ($user !== '') {
-            automation_smtp_cmd($socket, 'AUTH LOGIN', [334]);
-            automation_smtp_cmd($socket, base64_encode($user), [334]);
-            automation_smtp_cmd($socket, base64_encode($pass), [235]);
+            $stage = 'auth';
+            automation_smtp_cmd($fp, 'AUTH LOGIN', [334], $stage);
+            automation_smtp_cmd($fp, base64_encode($user), [334], $stage);
+            automation_smtp_cmd($fp, base64_encode($pass), [235], $stage);
         }
 
-        automation_smtp_cmd($socket, 'MAIL FROM:<' . $fromEmail . '>', [250]);
-        automation_smtp_cmd($socket, 'RCPT TO:<' . $to . '>', [250, 251]);
-        automation_smtp_cmd($socket, 'DATA', [354]);
+        $stage = 'mail_from';
+        automation_smtp_cmd($fp, 'MAIL FROM:<' . $fromEmail . '>', [250], $stage);
+        $stage = 'rcpt_to';
+        automation_smtp_cmd($fp, 'RCPT TO:<' . $to . '>', [250, 251], $stage);
+        $stage = 'data';
+        automation_smtp_cmd($fp, 'DATA', [354], $stage);
 
-        $message = [];
-        $message[] = 'Date: ' . date('r');
-        $message[] = 'From: ' . automation_mail_encode_address($fromName, $fromEmail);
-        $message[] = 'To: <' . $to . '>';
-        $message[] = 'Subject: ' . automation_mail_encode_header($subject);
-        $message[] = 'MIME-Version: 1.0';
-        $message[] = 'Content-Type: text/html; charset=UTF-8';
-        $message[] = 'Content-Transfer-Encoding: 8bit';
-        $message[] = '';
-        $message[] = $bodyHtml;
-        $message[] = '.';
+        $message = automation_smtp_build_message($fromName, $fromEmail, $to, $subject, $bodyHtml);
+        $written = fwrite($fp, $message);
+        if ($written === false || $written < strlen($message)) {
+            throw new RuntimeException('Failed to write SMTP DATA payload');
+        }
 
-        fwrite($socket, implode("\r\n", $message) . "\r\n");
-        automation_smtp_expect($socket, [250]);
-        @fwrite($socket, "QUIT\r\n");
+        $stage = 'data_end';
+        automation_smtp_expect($fp, [250], $stage);
+        @fwrite($fp, "QUIT\r\n");
 
-        return ['ok' => true, 'method' => 'smtp', 'to' => $to, 'from' => $fromEmail];
+        return ['ok' => true, 'method' => 'smtp', 'to' => $to, 'from' => $fromEmail, 'stage' => 'done'];
     } catch (Throwable $e) {
-        return ['ok' => false, 'method' => 'smtp', 'error' => $e->getMessage(), 'to' => $to, 'from' => $fromEmail];
+        return [
+            'ok' => false,
+            'method' => 'smtp',
+            'error' => $e->getMessage(),
+            'stage' => $stage,
+            'to' => $to,
+            'from' => $fromEmail,
+        ];
     } finally {
-        if (is_resource($socket)) {
-            fclose($socket);
+        if (isset($fp) && (is_resource($fp) || is_object($fp))) {
+            @fclose($fp);
         }
     }
 }
 
-function automation_smtp_cmd($socket, string $command, array $okCodes): void
+/**
+ * Connect preferring IPv4 to avoid Docker IPv6 blackhole hangs.
+ *
+ * @return array{ok: bool, socket?: resource, error?: string}
+ */
+function automation_smtp_connect(string $host, int $port, string $encryption): array
 {
-    fwrite($socket, $command . "\r\n");
-    automation_smtp_expect($socket, $okCodes);
+    $prefix = ($encryption === 'ssl') ? 'ssl://' : '';
+    $targets = [];
+
+    if (filter_var($host, FILTER_VALIDATE_IP)) {
+        $targets[] = $host;
+    } else {
+        $aRecords = @dns_get_record($host, DNS_A) ?: [];
+        foreach ($aRecords as $row) {
+            if (!empty($row['ip'])) {
+                $targets[] = (string) $row['ip'];
+            }
+        }
+        // Fall back to hostname (may use IPv6) only if no A record.
+        if ($targets === []) {
+            $targets[] = $host;
+        }
+    }
+
+    $errors = [];
+    foreach (array_values(array_unique($targets)) as $target) {
+        $remote = $prefix . $target . ':' . $port;
+        $errno = 0;
+        $errstr = '';
+        $context = stream_context_create([
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'peer_name' => $host,
+                'SNI_enabled' => true,
+            ],
+        ]);
+        $socket = @stream_socket_client(
+            $remote,
+            $errno,
+            $errstr,
+            12,
+            STREAM_CLIENT_CONNECT,
+            $context
+        );
+        if ($socket) {
+            return ['ok' => true, 'socket' => $socket];
+        }
+        $errors[] = $target . ' (' . $errstr . ')';
+    }
+
+    return [
+        'ok' => false,
+        'error' => 'Could not connect to SMTP server ' . $host . ':' . $port . ' — ' . implode('; ', $errors),
+    ];
 }
 
-function automation_smtp_expect($socket, array $okCodes): string
+function automation_smtp_ehlo_name(string $fromEmail): string
+{
+    $domain = '';
+    if (str_contains($fromEmail, '@')) {
+        $domain = strtolower((string) substr(strrchr($fromEmail, '@'), 1));
+    }
+    if ($domain !== '' && preg_match('/^[a-z0-9.-]+$/', $domain)) {
+        return $domain;
+    }
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'birkly.local');
+    $host = preg_replace('/:\d+$/', '', $host) ?: 'birkly.local';
+    return $host;
+}
+
+function automation_smtp_build_message(
+    string $fromName,
+    string $fromEmail,
+    string $to,
+    string $subject,
+    string $bodyHtml
+): string {
+    $headers = [
+        'Date: ' . date('r'),
+        'From: ' . automation_mail_encode_address($fromName, $fromEmail),
+        'To: <' . $to . '>',
+        'Subject: ' . automation_mail_encode_header($subject),
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=UTF-8',
+        'Content-Transfer-Encoding: 8bit',
+    ];
+
+    // Normalize body newlines and SMTP-dot-stuff lines that start with ".".
+    $body = str_replace(["\r\n", "\r"], "\n", $bodyHtml);
+    $lines = explode("\n", $body);
+    $stuffed = [];
+    foreach ($lines as $line) {
+        if (isset($line[0]) && $line[0] === '.') {
+            $stuffed[] = '.' . $line;
+        } else {
+            $stuffed[] = $line;
+        }
+    }
+
+    return implode("\r\n", $headers) . "\r\n\r\n" . implode("\r\n", $stuffed) . "\r\n.\r\n";
+}
+
+function automation_smtp_cmd($socket, string $command, array $okCodes, string $stage = ''): string
+{
+    $written = fwrite($socket, $command . "\r\n");
+    if ($written === false) {
+        throw new RuntimeException('SMTP write failed at ' . ($stage !== '' ? $stage : 'command'));
+    }
+    return automation_smtp_expect($socket, $okCodes, $stage);
+}
+
+function automation_smtp_expect($socket, array $okCodes, string $stage = ''): string
 {
     $response = '';
     while (($line = fgets($socket, 515)) !== false) {
@@ -177,9 +316,20 @@ function automation_smtp_expect($socket, array $okCodes): string
             break;
         }
     }
+
+    $meta = stream_get_meta_data($socket);
+    if ($response === '' || !empty($meta['timed_out'])) {
+        $where = $stage !== '' ? $stage : 'response';
+        throw new RuntimeException(
+            'SMTP timeout/empty response at ' . $where
+            . '. Check host/port/encryption, firewall egress, and that the SMTP password is an app/SMTP token (not your login password).'
+        );
+    }
+
     $code = (int) substr($response, 0, 3);
     if (!in_array($code, $okCodes, true)) {
-        throw new RuntimeException('SMTP unexpected response: ' . trim($response));
+        $where = $stage !== '' ? (' at ' . $stage) : '';
+        throw new RuntimeException('SMTP unexpected response' . $where . ': ' . trim($response));
     }
     return $response;
 }
@@ -235,6 +385,28 @@ function automation_log_sent_mail(
     } catch (Throwable $e) {
         error_log('[Automation] failed to log sent mail: ' . $e->getMessage());
     }
+}
+
+/**
+ * True when an identical test/automation send was logged very recently.
+ */
+function automation_recent_send_exists(string $to, string $subject, int $withinSeconds = 15): bool
+{
+    $to = strtolower(trim($to));
+    $subject = trim($subject);
+    $cutoff = time() - max(1, $withinSeconds);
+    foreach (automation_get_sent_mail_log(10) as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $rowTo = strtolower(trim((string) ($row['to'] ?? '')));
+        $rowSubject = trim((string) ($row['subject'] ?? ''));
+        $sentAt = strtotime((string) ($row['sent_at'] ?? ''));
+        if ($rowTo === $to && $rowSubject === $subject && $sentAt !== false && $sentAt >= $cutoff) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**

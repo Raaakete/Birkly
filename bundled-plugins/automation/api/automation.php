@@ -390,8 +390,22 @@ if ($action === 'send_test_email') {
 
     // Cross-request lock (session alone is not enough if the page binds twice
     // or two tabs fire in the same second).
-    $dedupe = automation_acquire_test_email_lock($to, 12);
+    $dedupe = automation_acquire_test_email_lock($to, 20);
     if (!$dedupe['acquired']) {
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Test email already sent a moment ago — check your inbox before sending again.',
+            'data' => [
+                'result' => ['ok' => true, 'method' => 'deduped'],
+                'health' => automation_setup_health(),
+            ],
+        ]);
+        exit;
+    }
+
+    $subject = 'Birkly Automation test email';
+    // Extra guard: identical successful send in the last 20s (covers multi-worker races).
+    if (function_exists('automation_recent_send_exists') && automation_recent_send_exists($to, $subject, 20)) {
         echo json_encode([
             'status' => 'ok',
             'message' => 'Test email already sent a moment ago — check your inbox before sending again.',
@@ -412,7 +426,7 @@ if ($action === 'send_test_email') {
 
     $result = automation_send_mail(
         $to,
-        'Birkly Automation test email',
+        $subject,
         $body,
         $mail
     );
@@ -726,7 +740,8 @@ if ($action === 'run_live') {
 
     $start_time = microtime(true);
     try {
-        $success = execute_automation($automation, $run_context);
+        $execDetails = [];
+        $success = execute_automation($automation, $run_context, $execDetails);
         $runtime = (microtime(true) - $start_time) * 1000;
         $actionCount = count($automation['actions'] ?? []);
         if ($actionCount === 0 && !empty($automation['graph']['nodes'])) {
@@ -736,6 +751,27 @@ if ($action === 'run_live') {
             ));
         }
 
+        $deliveryNote = null;
+        if ($needsMail) {
+            if ($mailMethod === 'smtp') {
+                $deliveryNote = 'Email transport: SMTP via '
+                    . ($health['mail']['smtp_host'] ?? '?')
+                    . ' From ' . ($health['mail']['from_email'] ?? '')
+                    . '.';
+            } elseif ($mailMethod === 'log') {
+                $deliveryNote = 'Email transport: Log only (no inbox delivery). Check Setup → Recent sends.';
+            } else {
+                $deliveryNote = 'Email transport: PHP mail() From '
+                    . ($health['mail']['from_email'] ?? '')
+                    . '. On cloud hosts this usually never arrives — switch to SMTP in Setup.';
+            }
+        }
+
+        $errors = array_values(array_filter(array_map('strval', $execDetails['errors'] ?? [])));
+        if (!$success && $errors === []) {
+            $errors[] = 'Automation finished with errors. Open Logs for details.';
+        }
+
         echo json_encode([
             'status' => 'ok',
             'data' => [
@@ -743,10 +779,11 @@ if ($action === 'run_live') {
                 'runtime_ms' => $runtime,
                 'actions_executed' => $actionCount,
                 'manual_run' => true,
-                'delivery_note' => $needsMail
-                    ? ('Email uses PHP mail() From ' . ($health['mail']['from_email'] ?? '') . '. If nothing arrives, check spam and Automation → Setup.')
-                    : null,
+                'errors' => $errors,
+                'results' => $execDetails['results'] ?? [],
+                'delivery_note' => $deliveryNote,
                 'setup_warnings' => $health['warnings'],
+                'mail_method' => $mailMethod,
             ]
         ]);
     } catch (Exception $e) {
