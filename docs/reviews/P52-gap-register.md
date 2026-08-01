@@ -1,13 +1,13 @@
 # Phase 52 — Gap register (PHP-native SSR)
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** Open — phase approved 2026-08-01; gaps close with M1→M5
+**Status:** In progress — phase approved 2026-08-01; M1 landed (G52-01..03 closed), M2–M5 open
 
 | ID | Area | Gap | Severity | Milestone | Status |
 |----|------|-----|----------|-----------|--------|
-| G52-01 | Engine | No PHP implementation of public template `render()` | **Blocker** | M1 | Open |
-| G52-02 | Engine | No shared fixture suite proving PHP ≡ JS output | **Blocker** | M1 | Open |
-| G52-03 | Engine | Style/script brace protection must exist in PHP (P51 regression class) | High | M1 | Open |
+| G52-01 | Engine | No PHP implementation of public template `render()` | **Blocker** | M1 | **Closed (M1)** — `core/birkly_template_engine.php` (`birkly_template_engine_render`), pure PHP, mirrors JS pipeline order |
+| G52-02 | Engine | No shared fixture suite proving PHP ≡ JS output | **Blocker** | M1 | **Closed (M1)** — `tests/template-engine/fixtures/*.json` dual-run byte-identical via `tests/template_engine_parity_test.php` + `tests/template-engine/render-fixtures.js` |
+| G52-03 | Engine | Style/script brace protection must exist in PHP (P51 regression class) | High | M1 | **Closed (M1)** — `birkly_template_engine_extract_protected_blocks` + V-PHP-11 fixtures (`11-protection.json`) |
 | G52-04 | SSR | `project_ssr.php` hard-depends on Node `proc_open` for render | **Blocker** | M2 | Open |
 | G52-05 | SSR | Fallback reason `node_missing` is a product failure mode for localhost | High | M2/M3 | Open |
 | G52-06 | Defaults | `render_mode` defaults to `client` — SSR not default for managed projects | High | M3 | Open |

@@ -1,0 +1,71 @@
+{
+    "section": "V-PHP-06",
+    "title": "date format filter",
+    "cases": [
+        {
+            "name": "format Y-m-d",
+            "html": "{created_at format \"Y-m-d\"}",
+            "data": { "entry": { "created_at": "2025-01-05T16:45:00" } },
+            "expected": "2025-01-05"
+        },
+        {
+            "name": "format F j, Y",
+            "html": "{created_at format \"F j, Y\"}",
+            "data": { "entry": { "created_at": "2025-01-05T16:45:00" } },
+            "expected": "January 5, 2025"
+        },
+        {
+            "name": "format Y-m-d H:i includes time",
+            "html": "{created_at format \"Y-m-d H:i\"}",
+            "data": { "entry": { "created_at": "2025-01-05T16:45:00" } },
+            "expected": "2025-01-05 16:45"
+        },
+        {
+            "name": "format m/d/Y",
+            "html": "{created_at format \"m/d/Y\"}",
+            "data": { "entry": { "created_at": "2025-01-05T16:45:00" } },
+            "expected": "01/05/2025"
+        },
+        {
+            "name": "format Y-m-d H:i:s",
+            "html": "{created_at format \"Y-m-d H:i:s\"}",
+            "data": { "entry": { "created_at": "2025-01-05T16:45:07" } },
+            "expected": "2025-01-05 16:45:07"
+        },
+        {
+            "name": "short month, two digit year, bare hour",
+            "html": "{created_at format \"M j y G:i\"}",
+            "data": { "entry": { "created_at": "2025-08-09T07:05:00" } },
+            "expected": "Aug 9 25 7:05"
+        },
+        {
+            "name": "month without leading zero",
+            "html": "{created_at format \"n/j/Y\"}",
+            "data": { "entry": { "created_at": "2025-11-03T00:00:00" } },
+            "expected": "11/3/2025"
+        },
+        {
+            "name": "unknown characters pass through, known codes substitute everywhere",
+            "html": "{updated_at format \"Y review\"}",
+            "data": { "entry": { "updated_at": "2024-12-31T10:00:00" } }
+        },
+        {
+            "name": "unparseable date returns raw value",
+            "html": "{created_at format \"Y-m-d\"}",
+            "data": { "entry": { "created_at": "not-a-date" } },
+            "expected": "not-a-date"
+        },
+        {
+            "name": "no format outputs raw stored value",
+            "html": "{created_at}",
+            "data": { "entry": { "created_at": "2025-01-05T16:45:00" } },
+            "expected": "2025-01-05T16:45:00"
+        },
+        {
+            "name": "single quoted format is swallowed by the field-path branch (engine quirk, use double quotes)",
+            "html": "{created_at format 'F j, Y'}",
+            "data": { "entry": { "created_at": "2026-06-15T08:30:00" } },
+            "expected": ""
+        }
+    ]
+}

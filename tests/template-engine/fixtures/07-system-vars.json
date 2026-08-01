@@ -1,0 +1,50 @@
+{
+    "section": "V-PHP-08",
+    "title": "current.language, query.*, current_year",
+    "cases": [
+        {
+            "name": "current.language",
+            "html": "{current.language}",
+            "data": { "current": { "language": "fr" } },
+            "expected": "fr"
+        },
+        {
+            "name": "query slug quoted",
+            "html": "{query.'slug'}",
+            "data": { "query": { "slug": "my-post", "lang": "fr" } },
+            "expected": "my-post"
+        },
+        {
+            "name": "query slug bare",
+            "html": "{query.slug}",
+            "data": { "query": { "slug": "my-post" } },
+            "expected": "my-post"
+        },
+        {
+            "name": "current_year",
+            "html": "{current_year}",
+            "data": { "current_year": 2026 },
+            "expected": "2026"
+        },
+        {
+            "name": "context path with numeric segment",
+            "html": "{site_elements.'hero'.'content'.0.'value'}",
+            "data": {
+                "site_elements": { "hero": { "content": [{ "value": "Welcome" }] } }
+            },
+            "expected": "Welcome"
+        },
+        {
+            "name": "missing context path renders empty",
+            "html": "a{current.missing}b",
+            "data": { "current": { "language": "en" } },
+            "expected": "ab"
+        },
+        {
+            "name": "system vars combine with static text",
+            "html": "<footer>© {current_year} — {current.language}</footer>",
+            "data": { "current_year": 2026, "current": { "language": "en" } },
+            "expected": "<footer>© 2026 — en</footer>"
+        }
+    ]
+}

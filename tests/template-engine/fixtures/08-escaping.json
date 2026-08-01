@@ -1,0 +1,61 @@
+{
+    "section": "V-PHP-09",
+    "title": "HTML escaping + trusted content/html paths",
+    "cases": [
+        {
+            "name": "script tag in title is escaped",
+            "html": "{for each entry in 'items'}{title}{endfor}",
+            "data": {
+                "items": [{ "title": "<script>alert(1)</script>", "name": "<b>x</b>" }]
+            },
+            "expected": "&lt;script&gt;alert(1)&lt;/script&gt;"
+        },
+        {
+            "name": "non-content field escaped by default",
+            "html": "{for each entry in 'items'}{'name'}{endfor}",
+            "data": {
+                "items": [{ "title": "t", "name": "<b>x</b>" }]
+            },
+            "expected": "&lt;b&gt;x&lt;/b&gt;"
+        },
+        {
+            "name": "escapeHtml false yields raw output",
+            "html": "{for each entry in 'items'}{'name'}{endfor}",
+            "data": {
+                "items": [{ "title": "t", "name": "<b>x</b>" }]
+            },
+            "options": { "escapeHtml": false },
+            "expected": "<b>x</b>"
+        },
+        {
+            "name": "content field is trusted HTML",
+            "html": "{for each entry in 'items'}{'content'}{endfor}",
+            "data": {
+                "items": [{ "title": "t", "content": "<p>rich <strong>html</strong></p>" }]
+            },
+            "expected": "<p>rich <strong>html</strong></p>"
+        },
+        {
+            "name": "field with html in name is trusted",
+            "html": "{for each entry in 'items'}{'body_html'}{endfor}",
+            "data": {
+                "items": [{ "title": "t", "body_html": "<div>raw</div>" }]
+            },
+            "expected": "<div>raw</div>"
+        },
+        {
+            "name": "quotes and ampersands escape",
+            "html": "{for each entry in 'items'}{'name'}{endfor}",
+            "data": {
+                "items": [{ "name": "Tom & Jerry's \"show\"" }]
+            },
+            "expected": "Tom &amp; Jerry&#39;s &quot;show&quot;"
+        },
+        {
+            "name": "context path output is escaped",
+            "html": "{query.'q'}",
+            "data": { "query": { "q": "<img src=x>" } },
+            "expected": "&lt;img src=x&gt;"
+        }
+    ]
+}

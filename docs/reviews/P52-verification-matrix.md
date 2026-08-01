@@ -1,7 +1,7 @@
 # Phase 52 — Verification matrix
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** Pending — phase approved 2026-08-01; fill as milestones land
+**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP) verified 2026-08-01, M2–M5 pending
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -9,20 +9,25 @@ Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
 ## V-PHP — PHP template engine (M1)
 
+Verified 2026-08-01 by `php tests/template_engine_php_test.php` (60/60),
+`php tests/template_engine_parity_test.php` (148/148, byte-identical PHP vs JS
+on the full fixture set — no whitespace normalization needed), with
+`node tests/template-engine/run.js` still green (58/58).
+
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-PHP-01 | `birkly_template_engine_render($html, $data, $options)` exists | Unit | cms-developer | pending |
-| V-PHP-02 | Loops + filters + limit match JS fixtures | PHP + JS dual | cms-developer | pending |
-| V-PHP-03 | Ordering: newest / oldest / last-updated / order | Dual | cms-developer | pending |
-| V-PHP-04 | from…get block + inline | Dual | cms-developer | pending |
-| V-PHP-05 | if / else / has / exist / comparisons | Dual | cms-developer | pending |
-| V-PHP-06 | Date `format` filter | Dual | cms-developer | pending |
-| V-PHP-07 | Sub-collections `of` / `.current` | Dual | cms-developer | pending |
-| V-PHP-08 | System vars: language, query, current_year | Dual | cms-developer | pending |
-| V-PHP-09 | HTML escaping + trusted content/html paths | Dual | cms-developer | pending |
-| V-PHP-10 | `{entry for}` / public form → placeholders (not executed as PHP) | Dual | cms-developer | pending |
-| V-PHP-11 | `<style>` / `<script>` brace bodies preserved | Dual | cms-developer | pending |
-| V-PHP-12 | Byte-identical (or approved normalize) PHP vs JS on full fixture set | Parity harness | cms-developer | pending |
+| V-PHP-01 | `birkly_template_engine_render($html, $data, $options)` exists | Unit | cms-developer | pass |
+| V-PHP-02 | Loops + filters + limit match JS fixtures | PHP + JS dual | cms-developer | pass |
+| V-PHP-03 | Ordering: newest / oldest / last-updated / order | Dual | cms-developer | pass |
+| V-PHP-04 | from…get block + inline | Dual | cms-developer | pass |
+| V-PHP-05 | if / else / has / exist / comparisons | Dual | cms-developer | pass |
+| V-PHP-06 | Date `format` filter | Dual | cms-developer | pass |
+| V-PHP-07 | Sub-collections `of` / `.current` | Dual | cms-developer | pass |
+| V-PHP-08 | System vars: language, query, current_year | Dual | cms-developer | pass |
+| V-PHP-09 | HTML escaping + trusted content/html paths | Dual | cms-developer | pass |
+| V-PHP-10 | `{entry for}` / public form → placeholders (not executed as PHP) | Dual | cms-developer | pass |
+| V-PHP-11 | `<style>` / `<script>` brace bodies preserved | Dual | cms-developer | pass |
+| V-PHP-12 | Byte-identical (or approved normalize) PHP vs JS on full fixture set | Parity harness | cms-developer | pass |
 
 ---
 

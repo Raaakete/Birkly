@@ -1,0 +1,96 @@
+{
+    "section": "V-PHP-10-edge",
+    "title": "edge cases: empty/missing collections, nesting, malformed braces",
+    "cases": [
+        {
+            "name": "empty collection renders nothing between text",
+            "html": "before{for each entry in 'nothing'}row{endfor}after",
+            "data": { "nothing": [] },
+            "expected": "beforeafter"
+        },
+        {
+            "name": "undefined collection renders empty",
+            "html": "{for each entry in 'undefinedcol'}row{endfor}",
+            "data": {},
+            "expected": ""
+        },
+        {
+            "name": "nested loops render parent and children",
+            "html": "{for each entry in 'blog'}<post>{title}{for each entry in 'comments'}<c>{'author'}</c>{endfor}</post>{endfor}",
+            "data": {
+                "blog": [
+                    { "title": "P1", "comments": [{ "author": "C1" }, { "author": "C2" }] },
+                    { "title": "P2", "comments": [{ "author": "C3" }] }
+                ]
+            }
+        },
+        {
+            "name": "malformed braces do not throw",
+            "html": "ok {for each entry in 'blog' <broken title} {endfor} {unclosed",
+            "data": {
+                "blog": [
+                    { "title": "P1" },
+                    { "title": "P2" }
+                ]
+            }
+        },
+        {
+            "name": "empty braces render empty",
+            "html": "a{}b",
+            "data": {},
+            "expected": "ab"
+        },
+        {
+            "name": "whitespace-only braces render empty",
+            "html": "a{   }b",
+            "data": {},
+            "expected": "ab"
+        },
+        {
+            "name": "unknown variable renders empty",
+            "html": "a{missing_field}b",
+            "data": { "title": "x" },
+            "expected": "ab"
+        },
+        {
+            "name": "control-word prefix strips entry dot path",
+            "html": "a{entry.title}b",
+            "data": { "entry": { "title": "T" } },
+            "expected": "ab"
+        },
+        {
+            "name": "unclosed brace is left alone",
+            "html": "a{unclosed",
+            "data": {},
+            "expected": "a{unclosed"
+        },
+        {
+            "name": "stray endfor is stripped",
+            "html": "a{endfor}b",
+            "data": {},
+            "expected": "ab"
+        },
+        {
+            "name": "loop variable named row does not merge entry",
+            "html": "{for each row in 'items'}<i>{title}</i>{endfor}",
+            "data": {
+                "items": [{ "title": "First" }, { "title": "Second" }],
+                "entry": { "title": "Outer" }
+            }
+        },
+        {
+            "name": "unicode content survives round trip",
+            "html": "{for each entry in 'blog'}<p>{title}</p>{endfor}",
+            "data": {
+                "blog": [{ "title": "Grüße aus Köln — çğüşöı 中文 🎉" }]
+            }
+        },
+        {
+            "name": "null and boolean field values",
+            "html": "{for each entry in 'items'}[{'flag'}|{'missing'}|{'label'}]{endfor}",
+            "data": {
+                "items": [{ "flag": true, "label": null }]
+            }
+        }
+    ]
+}
