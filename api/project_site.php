@@ -305,7 +305,7 @@ if ($action === 'overview') {
             'last_change' => $lastChange,
             'allowed_extensions' => $fs->allowedExtensions(),
             'show_visit_button' => (bool) ($projectSettings['show_visit_button'] ?? false),
-            'render_mode' => (string) ($projectSettings['render_mode'] ?? 'client'),
+            'render_mode' => (string) ($projectSettings['render_mode'] ?? 'server'),
             'hosting_type' => (string) ($projectSettings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($projectSettings['ssr_cache_ttl'] ?? 60),
             'ssr_runtime' => birkly_project_ssr_runtime_status(),
@@ -417,7 +417,7 @@ if ($action === 'save_settings') {
         'message' => 'Project settings saved',
         'data' => [
             'show_visit_button' => (bool) ($settings['show_visit_button'] ?? false),
-            'render_mode' => (string) ($settings['render_mode'] ?? 'client'),
+            'render_mode' => (string) ($settings['render_mode'] ?? 'server'),
             'hosting_type' => (string) ($settings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($settings['ssr_cache_ttl'] ?? 60),
             'ssr_cache_invalidated' => $renderSettings['ssr_affected'],

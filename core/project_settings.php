@@ -22,8 +22,11 @@ function birkly_project_settings_defaults(): array
 {
     return [
         'show_visit_button' => false,
-        // P51: server-side render controls
-        'render_mode' => 'client',  // client | server | auto
+        // P51: server-side render controls.
+        // P52-M3: server is the default for Birkly-hosted projects (PHP-only
+        // in-process engine, no Node). Applies to missing/unset keys only —
+        // a saved "client" in settings/project.json is always honored.
+        'render_mode' => 'server',  // client | server | auto
         'hosting_type' => 'birkly', // birkly | external
         'ssr_cache_ttl' => 60,
     ];
@@ -47,8 +50,9 @@ function birkly_load_project_settings(): array
  */
 function birkly_save_project_settings(array $patch): bool
 {
-    // Read raw file (not defaults-merged) so we never persist default client
-    // mode over a missing key when the caller only patches another field.
+    // Read raw file (not defaults-merged) so we never persist the default
+    // render_mode over a missing key when the caller only patches another
+    // field. A key stays absent until explicitly saved.
     $existing = birkly_project_settings_storage()->read('project.json');
     if (!is_array($existing)) {
         $existing = [];

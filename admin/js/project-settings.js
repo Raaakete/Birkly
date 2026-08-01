@@ -293,15 +293,11 @@
         updateRenderingDisabledState();
     }
 
+    // P52: SSR runs on the built-in PHP template engine — no Node.js involved.
+    // The only runtime failure worth surfacing is a missing/broken engine file.
     function ssrRuntimeMessage(reason) {
-        if (reason === 'node_missing') {
-            return 'Server rendering cannot run: Node.js is not installed in this CMS runtime. Redeploy with a Birkly image that includes Node (P51), or the public site will keep falling back to client-side rendering.';
-        }
-        if (reason === 'proc_open_disabled') {
-            return 'Server rendering cannot run: PHP proc_open is disabled on this host.';
-        }
-        if (reason === 'cli_missing' || reason === 'engine_missing') {
-            return 'Server rendering cannot run: shared template engine files are missing from this install.';
+        if (reason === 'engine_missing') {
+            return 'Server rendering cannot run: the built-in PHP template engine is missing from this install. Pages will fall back to client-side rendering.';
         }
         if (reason) {
             return 'Server rendering is not ready on this host (' + reason + '). Pages will fall back to client-side rendering.';
@@ -338,8 +334,9 @@
         var ttl = document.getElementById('project-ssr-cache-ttl');
         var btn = document.getElementById('project-save-rendering-btn');
 
-        // Prevent overwriting persisted server mode with the HTML default
-        // ("client") if the user hits Save before overview finishes loading.
+        // Prevent overwriting a persisted render mode (e.g. a saved "client")
+        // with the HTML default ("server") if the user hits Save before the
+        // overview finishes loading.
         if (!state.renderSettingsLoaded) {
             BirklyFeedback.toast('Wait for rendering settings to load, then try again', 'warning');
             return Promise.resolve();
@@ -357,7 +354,7 @@
             body: JSON.stringify({
                 action: 'save_settings',
                 hosting_type: hostingType ? hostingType.value : 'birkly',
-                render_mode: renderMode ? renderMode.value : 'client',
+                render_mode: renderMode ? renderMode.value : 'server',
                 ssr_cache_ttl: ttlValue,
                 _csrf: getCsrfToken()
             })

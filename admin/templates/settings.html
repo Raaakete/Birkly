@@ -302,7 +302,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <section class="card project-rendering-card" id="project-server-rendering" data-settings-search="server rendering ssr render mode cache ttl hosting">
             <div class="section-header">
               <h2>Server rendering</h2>
-              <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering only applies to Birkly-hosted project sites; external sites always render on the client.</p>
+              <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering is the default for Birkly-hosted project sites and runs on the built-in PHP engine — no Node.js required. External sites always render on the client.</p>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -316,11 +316,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="form-group">
                 <label for="project-render-mode">Render mode</label>
                 <select id="project-render-mode" class="input">
-                  <option value="client">Client-side</option>
-                  <option value="server">Server-side</option>
+                  <option value="server" selected>Server-side (default)</option>
                   <option value="auto">Auto</option>
+                  <option value="client">Client-side</option>
                 </select>
-                <small class="form-help">Client renders in the browser. Server pre-renders HTML. Auto uses the server when possible and falls back to the client.</small>
+                <small class="form-help">Server pre-renders HTML with the built-in PHP engine — recommended and default for Birkly-hosted projects. Auto uses the server when possible and falls back to the client. Client renders in the browser only.</small>
               </div>
             </div>
             <div class="form-row">

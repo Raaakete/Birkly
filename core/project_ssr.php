@@ -35,11 +35,10 @@ require_once __DIR__ . '/project_settings.php';
  */
 function birkly_project_ssr_settings(): array
 {
-    $defaults = [
-        'render_mode' => 'client',
-        'hosting_type' => 'birkly',
-        'ssr_cache_ttl' => 60,
-    ];
+    // Single source of truth for defaults (P52-M3: render_mode=server for
+    // Birkly hosting). A saved "client" in settings/project.json still wins —
+    // defaults only fill missing keys.
+    $defaults = birkly_project_settings_defaults();
 
     $settings = birkly_load_project_settings();
     $merged = array_merge($defaults, $settings);
@@ -52,7 +51,7 @@ function birkly_project_ssr_settings(): array
 
     $merged['render_mode'] = in_array($merged['render_mode'], ['client', 'server', 'auto'], true)
         ? $merged['render_mode']
-        : 'client';
+        : $defaults['render_mode'];
     $merged['hosting_type'] = in_array($merged['hosting_type'], ['birkly', 'external'], true)
         ? $merged['hosting_type']
         : 'birkly';
@@ -441,8 +440,8 @@ function birkly_project_ssr_engine_available(): bool
  * Runtime readiness for SSR (used by admin overview + diagnostics).
  *
  * P52-M2: readiness means the in-process PHP template engine is available.
- * Node / proc_open / CLI checks are gone — `reason` is never `node_missing`.
- * (Admin copy for the retired Node reasons is cleaned up in P52-M3.)
+ * Node / proc_open / CLI checks are gone — `reason` is never `node_missing`
+ * (admin copy for the retired Node reasons was removed in P52-M3).
  *
  * @return array{ready:bool,engine:'php'|false,reason:?string}
  */
