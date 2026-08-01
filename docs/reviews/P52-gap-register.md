@@ -1,7 +1,7 @@
 # Phase 52 — Gap register (PHP-native SSR)
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** Open — proposed 2026-08-01
+**Status:** Open — phase approved 2026-08-01; gaps close with M1→M5
 
 | ID | Area | Gap | Severity | Milestone | Status |
 |----|------|-----|----------|-----------|--------|

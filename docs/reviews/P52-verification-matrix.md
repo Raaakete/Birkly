@@ -1,7 +1,7 @@
 # Phase 52 — Verification matrix
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** Pending — proposed 2026-08-01
+**Status:** Pending — phase approved 2026-08-01; fill as milestones land
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
