@@ -1,6 +1,11 @@
 <?php
 /**
- * Project SSR pipeline tests (P51-M2) — V-SSR-01..10.
+ * Project SSR pipeline tests (P51-M2) — V-SSR-01..10,
+ * plus P52-M2 cutover coverage — V-CUT-01..04/07/08.
+ *
+ * P52-M2: render is in-process PHP (core/birkly_template_engine.php).
+ * Render smoke MUST pass without Node; only the legacy Node-collect parity
+ * check may SKIP when Node is unavailable.
  *
  * Plain PHP assert script (mirrors tests/hosting_urls_test.php style).
  * Run: php tests/project_ssr_test.php
@@ -172,7 +177,8 @@ try {
     assert_true('collect finds header get_entry', $hasHeaderEntry);
     assert_true('collect finds sub-collection parent (comments)', $hasComments);
 
-    // Parity with Node CLI collect (if node available).
+    // Legacy parity with Node CLI collect — optional, SKIPs without Node.
+    // (Node helpers are @deprecated; this block goes away with them in P52-M4.)
     $node = birkly_project_ssr_node_binary();
     $cliParity = null;
     if (is_string($node) && $node !== '') {
@@ -235,14 +241,72 @@ try {
     assert_true('build_data sets query', ($data['query']['lang'] ?? '') === 'de');
     assert_true('build_data sets site_elements map', is_array($data['site_elements'] ?? null));
 
-    echo "\n[V-SSR-02/04] render smoke via Node CLI\n";
+    echo "\n[V-SSR-02/04, V-CUT-01] render smoke via in-process PHP engine (required — no Node)\n";
     $rendered = birkly_project_ssr_render('<p>{title}</p>', ['title' => 'Hi']);
-    if ($rendered !== null) {
-        assert_true('render returns rendered HTML', $rendered === '<p>Hi</p>', 'got: ' . var_export($rendered, true));
-        $escaped = birkly_project_ssr_render("{for each entry in 'items'}{title}{endfor}", ['items' => [['title' => '<script>x</script>']]]);
-        assert_true('render escapes untrusted field', is_string($escaped) && strpos($escaped, '<script>') === false && strpos($escaped, '&lt;script&gt;') !== false);
-    } else {
-        echo "  render smoke: SKIP (node unavailable)\n";
+    assert_true('render returns rendered HTML', $rendered === '<p>Hi</p>', 'got: ' . var_export($rendered, true));
+    $escaped = birkly_project_ssr_render("{for each entry in 'items'}{title}{endfor}", ['items' => [['title' => '<script>x</script>']]]);
+    assert_true('render escapes untrusted field', is_string($escaped) && strpos($escaped, '<script>') === false && strpos($escaped, '&lt;script&gt;') !== false);
+    $unescaped = birkly_project_ssr_render('<p>{title}</p>', ['title' => '<b>x</b>'], ['escapeHtml' => false]);
+    assert_true('render passes escapeHtml=false through', $unescaped === '<p><b>x</b></p>', 'got: ' . var_export($unescaped, true));
+
+    echo "\n[V-CUT-02] runtime status ready without Node\n";
+    $status = birkly_project_ssr_runtime_status();
+    assert_true('runtime status ready=true', ($status['ready'] ?? false) === true, 'status=' . json_encode($status));
+    assert_true('runtime status engine=php', ($status['engine'] ?? null) === 'php');
+    assert_true('runtime status reason is null (never node_missing)', array_key_exists('reason', $status) && $status['reason'] === null);
+
+    echo "\n[V-CUT-02/08] render + runtime status in Node-absent subprocess (PATH without node)\n";
+    $probeCode = 'require $argv[1] . "/core/project_ssr.php";'
+        . '$out = birkly_project_ssr_render("<p>{title}</p>", ["title" => "Hi"]);'
+        . 'echo (($out === "<p>Hi</p>") ? "RENDER_OK" : "RENDER_FAIL");'
+        . '$st = birkly_project_ssr_runtime_status();'
+        . 'echo "|" . ((($st["ready"] ?? false) === true) ? "READY" : "NOTREADY");'
+        . 'echo "|reason=" . (($st["reason"] ?? null) === null ? "null" : (string) $st["reason"]);';
+    $probeCmd = 'env PATH=/usr/bin:/bin BIRKLY_NODE_BIN= '
+        . escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($probeCode) . ' ' . escapeshellarg($root);
+    $probeOut = (string) shell_exec($probeCmd);
+    assert_true('Node-absent PATH: render works', strpos($probeOut, 'RENDER_OK') !== false, 'out=' . $probeOut);
+    assert_true('Node-absent PATH: runtime status ready', strpos($probeOut, '|READY|') !== false, 'out=' . $probeOut);
+    assert_true('Node-absent PATH: reason=null', strpos($probeOut, 'reason=null') !== false, 'out=' . $probeOut);
+
+    echo "\n[V-CUT-03] engine exception falls back cleanly (stubbed engine throws)\n";
+    $throwCode = 'function birkly_template_engine_render($h, $d, $o = []) { throw new RuntimeException("boom"); }'
+        . 'require $argv[1] . "/core/project_ssr.php";'
+        . '$out = birkly_project_ssr_render("<p>{title}</p>", ["title" => "Hi"]);'
+        . 'echo (($out === null) ? "NULL" : "NOTNULL") . "|" . birkly_project_ssr_last_error();';
+    $throwCmd = escapeshellarg(PHP_BINARY) . ' -r ' . escapeshellarg($throwCode) . ' ' . escapeshellarg($root) . ' 2>/dev/null';
+    $throwOut = (string) shell_exec($throwCmd);
+    assert_true('engine throw → render returns null', strpos($throwOut, 'NULL|') === 0, 'out=' . $throwOut);
+    assert_true('engine throw → last_error=engine_error', strpos($throwOut, '|engine_error') !== false, 'out=' . $throwOut);
+
+    echo "\n[V-CUT-01/02/04] serve path end-to-end (server mode, no Node, cache MISS→HIT)\n";
+    ssr_test_set_hosting_project_mode();
+    ssr_test_write_project_settings(['render_mode' => 'server', 'hosting_type' => 'birkly', 'ssr_cache_ttl' => 60]);
+    birkly_project_ssr_invalidate_all();
+
+    $smokeFile = $root . '/project/__p52-ssr-smoke.html';
+    file_put_contents(
+        $smokeFile,
+        "<!DOCTYPE html>\n<html><head><title>SSR smoke</title></head>\n<body><p>Year: {current_year}</p></body></html>"
+    );
+    try {
+        assert_true('smoke file gated for SSR', birkly_project_ssr_should_render($smokeFile) === true);
+
+        ob_start();
+        $served = birkly_project_ssr_serve($smokeFile, []);
+        $firstOut = (string) ob_get_clean();
+        assert_true('serve renders server-side (MISS)', $served === true);
+        assert_true('served HTML has rendered {current_year}', strpos($firstOut, 'Year: ' . date('Y')) !== false, 'out=' . substr($firstOut, 0, 200));
+        assert_true('served HTML has SSR marker', strpos($firstOut, 'name="birkly-ssr"') !== false);
+
+        ob_start();
+        $servedAgain = birkly_project_ssr_serve($smokeFile, []);
+        $secondOut = (string) ob_get_clean();
+        assert_true('second serve succeeds (HIT)', $servedAgain === true);
+        assert_true('cache HIT returns identical HTML', $secondOut === $firstOut);
+    } finally {
+        @unlink($smokeFile);
+        birkly_project_ssr_invalidate_all();
     }
 } finally {
     // Restore hosting + project settings.

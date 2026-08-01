@@ -1,22 +1,25 @@
 <?php
 /**
- * Project SSR pipeline (P51-M2).
- * ------------------------------
+ * Project SSR pipeline (P51-M2; PHP-native since P52-M2).
+ * -------------------------------------------------------
  * Optional server-side rendering for Birkly-hosted project sites (`project/`).
- * Renders the shared template engine (`birkly-template-engine.js`) through a
- * tiny Node CLI bridge (`scripts/birkly-ssr-cli.js`) and caches the output.
+ * Renders templates in-process with the PHP template engine
+ * (`core/birkly_template_engine.php`, fixture-parity-tested against the shared
+ * JS engine `birkly-template-engine.js`) and caches the output. No Node
+ * runtime is involved — the former Node CLI bridge (`scripts/birkly-ssr-cli.js`)
+ * is retired from the render/serve path and slated for deletion in P52-M4.
  *
  * Design guarantees:
  *   - SSR is opt-in (render_mode=server|auto) and only for Birkly hosting with
  *     public_site_mode=project. External hosting never triggers SSR.
- *   - Graceful fallback: any failure (Node missing, timeout, engine error)
- *     returns false so the caller serves the original static file and the
+ *   - Graceful fallback: any failure (engine missing, engine exception)
+ *     returns null so the caller serves the original static file and the
  *     client renders normally.
  *   - Only published content is exposed — data is loaded through the existing
  *     public read APIs (`page_bundle_runner`), never raw drafts.
  *   - Untrusted field values are HTML-escaped by the engine.
  *
- * See docs/reviews/P51-ssr-notes.md.
+ * See docs/reviews/P51-ssr-notes.md and docs/reviews/P52-php-native-ssr-plan.md.
  */
 
 declare(strict_types=1);
@@ -356,7 +359,11 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
 
 /**
  * Locate a usable Node binary (env override, then PATH / common locations).
- * Returns null when Node is not available — callers must fall back to client.
+ * Returns null when Node is not available.
+ *
+ * @deprecated P52-M2 — SSR renders in-process via the PHP template engine and
+ *             no longer shells out to Node. Not called from the render/serve
+ *             path; kept only until P52-M4 deletes the Node SSR surface.
  */
 function birkly_project_ssr_node_binary(): ?string
 {
@@ -405,40 +412,58 @@ function birkly_project_ssr_node_binary(): ?string
 }
 
 /**
+ * Absolute path of the in-process PHP template engine.
+ */
+function birkly_project_ssr_engine_path(): string
+{
+    return __DIR__ . '/birkly_template_engine.php';
+}
+
+/**
+ * Load the PHP template engine on demand and report availability.
+ * Skips the require when `birkly_template_engine_render()` is already defined
+ * (tests may inject a stub before loading this file).
+ */
+function birkly_project_ssr_engine_available(): bool
+{
+    if (function_exists('birkly_template_engine_render')) {
+        return true;
+    }
+    $path = birkly_project_ssr_engine_path();
+    if (!is_file($path)) {
+        return false;
+    }
+    require_once $path;
+    return function_exists('birkly_template_engine_render');
+}
+
+/**
  * Runtime readiness for SSR (used by admin overview + diagnostics).
  *
- * @return array{ready:bool,node:string|null,cli:bool,engine:bool,reason:?string}
+ * P52-M2: readiness means the in-process PHP template engine is available.
+ * Node / proc_open / CLI checks are gone — `reason` is never `node_missing`.
+ * (Admin copy for the retired Node reasons is cleaned up in P52-M3.)
+ *
+ * @return array{ready:bool,engine:'php'|false,reason:?string}
  */
 function birkly_project_ssr_runtime_status(): array
 {
-    $node = birkly_project_ssr_node_binary();
-    $cli = is_file(birkly_project_root() . '/scripts/birkly-ssr-cli.js');
-    $engine = is_file(birkly_project_root() . '/birkly-template-engine.js');
-    $procOpen = function_exists('proc_open');
-
-    $reason = null;
-    if (!$procOpen) {
-        $reason = 'proc_open_disabled';
-    } elseif ($node === null) {
-        $reason = 'node_missing';
-    } elseif (!$cli) {
-        $reason = 'cli_missing';
-    } elseif (!$engine) {
-        $reason = 'engine_missing';
-    }
+    $available = birkly_project_ssr_engine_available();
 
     return [
-        'ready' => $reason === null,
-        'node' => $node,
-        'cli' => $cli,
-        'engine' => $engine,
-        'reason' => $reason,
+        'ready' => $available,
+        'engine' => $available ? 'php' : false,
+        'reason' => $available ? null : 'engine_missing',
     ];
 }
 
 /**
  * Run the Node CLI with a JSON payload on stdin and a wall-clock timeout.
  * Returns stdout on success (exit code 0), or null on any failure/timeout.
+ *
+ * @deprecated P52-M2 — SSR renders in-process via the PHP template engine.
+ *             Only the optional Node-collect parity check in tests still uses
+ *             this; kept until P52-M4 deletes the Node SSR surface.
  */
 function birkly_project_ssr_run_node(string $node, string $script, string $payload, float $timeoutSeconds = 5.0): ?string
 {
@@ -509,13 +534,6 @@ function birkly_project_ssr_run_node(string $node, string $script, string $paylo
 }
 
 /**
- * Render template HTML server-side via the Node engine bridge.
- * Returns rendered HTML, or null on any failure (caller falls back to static).
- *
- * @param array<string,mixed> $data
- * @param array<string,mixed> $options
- */
-/**
  * Last SSR render failure reason (short machine code for diagnostics headers).
  */
 function birkly_project_ssr_last_error(?string $set = null): ?string
@@ -527,53 +545,41 @@ function birkly_project_ssr_last_error(?string $set = null): ?string
     return $last;
 }
 
+/**
+ * Render template HTML server-side, in-process via the PHP template engine
+ * (P52-M2 — no Node / proc_open involved).
+ * Returns rendered HTML, or null on any failure (caller falls back to the
+ * static file + client render).
+ *
+ * @param array<string,mixed> $data
+ * @param array<string,mixed> $options engine options passthrough (escapeHtml, …)
+ */
 function birkly_project_ssr_render(string $html, array $data, array $options = []): ?string
 {
     birkly_project_ssr_last_error('');
 
-    $node = birkly_project_ssr_node_binary();
-    if ($node === null) {
-        birkly_project_ssr_last_error('node_missing');
-        error_log('birkly_project_ssr: Node.js not found — install nodejs in the runtime image');
-        return null;
-    }
-    $script = birkly_project_root() . '/scripts/birkly-ssr-cli.js';
-    if (!is_file($script)) {
-        birkly_project_ssr_last_error('cli_missing');
+    if (!birkly_project_ssr_engine_available()) {
+        birkly_project_ssr_last_error('engine_missing');
+        error_log('birkly_project_ssr: PHP template engine missing (' . birkly_project_ssr_engine_path() . ')');
         return null;
     }
 
-    $payload = json_encode([
-        'mode' => 'render',
-        'html' => $html,
-        'data' => $data,
-        'options' => $options !== [] ? $options : (object) [],
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
-    if ($payload === false) {
-        birkly_project_ssr_last_error('payload_encode');
+    try {
+        $rendered = birkly_template_engine_render($html, $data, $options);
+    } catch (Throwable $e) {
+        birkly_project_ssr_last_error('engine_error');
+        error_log('birkly_project_ssr: engine error ' . $e->getMessage());
         return null;
     }
 
-    // Homepage-sized templates can exceed 5s on cold start; keep a generous budget.
-    $timeout = isset($options['timeout']) ? (float) $options['timeout'] : 15.0;
-    $raw = birkly_project_ssr_run_node($node, $script, $payload, max(5.0, $timeout));
-    if ($raw === null || trim($raw) === '') {
-        birkly_project_ssr_last_error('node_timeout_or_fail');
+    if ($html !== '' && $rendered === '') {
+        // A non-empty template should never render to nothing — treat it as a
+        // failure so the caller serves the static file instead of a blank page.
+        birkly_project_ssr_last_error('engine_empty');
         return null;
     }
 
-    $decoded = json_decode($raw, true);
-    if (!is_array($decoded) || empty($decoded['ok'])) {
-        if (is_array($decoded) && isset($decoded['error'])) {
-            error_log('birkly_project_ssr: engine error ' . $decoded['error']);
-            birkly_project_ssr_last_error('engine_error');
-        } else {
-            birkly_project_ssr_last_error('bad_cli_response');
-        }
-        return null;
-    }
-
-    return isset($decoded['html']) ? (string) $decoded['html'] : null;
+    return $rendered;
 }
 
 /* -------------------------------------------------------------------------
