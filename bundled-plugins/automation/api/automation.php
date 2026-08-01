@@ -8,16 +8,14 @@
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
-require_once __DIR__ . '/../cms_paths.php';
-$automation_cms = automation_cms_root();
-ini_set('error_log', $automation_cms . '/logs/php_errors.log');
+ini_set('error_log', __DIR__ . '/../../../logs/php_errors.log');
 
-require_once $automation_cms . '/api/session.php';
+require_once __DIR__ . '/../../../api/session.php';
 haru_secure_session_start();
 header('Content-Type: application/json');
 
-require_once $automation_cms . '/api/auth.php';
-require_once $automation_cms . '/core/automation/bootstrap.php';
+require_once __DIR__ . '/../../../api/auth.php';
+require_once __DIR__ . '/../../../core/automation/bootstrap.php';
 
 if (!automation_bootstrap()) {
     http_response_code(404);
@@ -25,19 +23,42 @@ if (!automation_bootstrap()) {
     exit;
 }
 
-require_once $automation_cms . '/core/csrf.php';
+require_once __DIR__ . '/../../../core/csrf.php';
+require_once __DIR__ . '/../includes/cron_auth.php';
+require_once __DIR__ . '/../includes/setup_health.php';
 
 // Require admin authentication for most actions
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
-// Public actions (no auth required)
-$publicActions = ['process_queue'];
+if (!is_array($input)) {
+    $input = [];
+}
 
-if (!in_array($action, $publicActions) && !isset($_SESSION['user'])) {
+$cronActions = ['process_queue', 'process_scheduled'];
+$csrfActions = ['create', 'update', 'delete', 'dry_run', 'test', 'run_live', 'save_mail_settings', 'process_queue_now', 'send_test_email'];
+
+if (in_array($action, $cronActions, true)) {
+    if (!automation_verify_cron_request()) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+        exit;
+    }
+} elseif (!isset($_SESSION['user'])) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
     exit;
+} else {
+    requireAuth('manage_content');
+
+    if (in_array($action, $csrfActions, true)) {
+        $csrf = $input['_csrf'] ?? '';
+        if (!validate_csrf_token($csrf)) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+            exit;
+        }
+    }
 }
 
 if ($action === 'dashboard_summary') {
@@ -68,6 +89,24 @@ if ($action === 'dashboard_summary') {
             'automation_url' => function_exists('admin_url')
                 ? admin_url('automation')
                 : '/admin/index.php?page=automation',
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'cron_info') {
+    $token = automation_get_cron_token();
+    $host = $_SERVER['HTTP_HOST'] ?? 'yoursite.com';
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'https';
+    $base_url = $scheme . '://' . $host;
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'queue_cli' => 'php plugins/automation/cli/process_queue.php 10',
+            'queue_url' => $base_url . '/api/automation.php?action=process_queue&token=' . $token,
+            'scheduled_url' => $base_url . '/api/automation.php?action=process_scheduled&token=' . $token,
+            'token_created' => true,
         ],
     ]);
     exit;
@@ -112,14 +151,6 @@ if ($action === 'get') {
 
 // Create automation
 if ($action === 'create') {
-    requireAuth('manage_content');
-    
-    $csrf = $input['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
-        exit;
-    }
-    
     $result = create_automation($input);
     
     if ($result) {
@@ -136,14 +167,6 @@ if ($action === 'create') {
 
 // Update automation
 if ($action === 'update') {
-    requireAuth('manage_content');
-    
-    $csrf = $input['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
-        exit;
-    }
-    
     $automation_id = $input['automation_id'] ?? '';
     
     if (empty($automation_id)) {
@@ -169,14 +192,6 @@ if ($action === 'update') {
 
 // Delete automation
 if ($action === 'delete') {
-    requireAuth('manage_content');
-    
-    $csrf = $input['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
-        exit;
-    }
-    
     $automation_id = $input['automation_id'] ?? '';
     
     if (empty($automation_id)) {
@@ -228,8 +243,6 @@ if ($action === 'get_logs') {
 
 // Test automation (dry run)
 if ($action === 'test') {
-    requireAuth('manage_content');
-    
     $automation_id = $input['automation_id'] ?? '';
     $sample_context = $input['context'] ?? [];
     
@@ -308,6 +321,128 @@ if ($action === 'process_queue') {
     exit;
 }
 
+// Admin: process queue immediately (no cron token)
+if ($action === 'process_queue_now') {
+    $limit = (int) ($input['limit'] ?? 25);
+    if ($limit < 1) {
+        $limit = 1;
+    }
+    if ($limit > 100) {
+        $limit = 100;
+    }
+    // force=true ignores retry backoff and reclaims stale "processing" jobs
+    $processed = process_automation_queue($limit, ['force' => true]);
+    $queue = get_automation_queue_status();
+    $recent = function_exists('automation_get_recent_queue_jobs')
+        ? automation_get_recent_queue_jobs(8)
+        : [];
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'processed' => $processed,
+            'queue' => $queue,
+            'recent_jobs' => $recent,
+            'health' => automation_setup_health(),
+        ],
+    ]);
+    exit;
+}
+
+// Setup / connection readiness checklist
+if ($action === 'setup_health') {
+    echo json_encode([
+        'status' => 'ok',
+        'data' => automation_setup_health(),
+    ]);
+    exit;
+}
+
+// Save email From / SMTP settings used by Send Email actions
+if ($action === 'save_mail_settings') {
+    $saved = automation_save_mail_settings($input);
+    if ($saved === false) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Valid From email is required. For SMTP, also provide an SMTP host.',
+        ]);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'mail' => $saved,
+            'health' => automation_setup_health(),
+        ],
+    ]);
+    exit;
+}
+
+// Send a real test email using current Setup transport
+if ($action === 'send_test_email') {
+    $to = trim((string) ($input['to'] ?? ''));
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Enter a valid test recipient email']);
+        exit;
+    }
+
+    // Cross-request lock (session alone is not enough if the page binds twice
+    // or two tabs fire in the same second).
+    $dedupe = automation_acquire_test_email_lock($to, 12);
+    if (!$dedupe['acquired']) {
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Test email already sent a moment ago — check your inbox before sending again.',
+            'data' => [
+                'result' => ['ok' => true, 'method' => 'deduped'],
+                'health' => automation_setup_health(),
+            ],
+        ]);
+        exit;
+    }
+
+    $mail = automation_get_mail_settings();
+    $body = '<p>This is a Birkly Automation test email.</p>'
+        . '<p>Transport: <strong>' . htmlspecialchars((string) $mail['method']) . '</strong></p>'
+        . '<p>Plugin version: <strong>' . htmlspecialchars(automation_plugin_version()) . '</strong></p>'
+        . '<p>If you received this, Setup email delivery is working.</p>'
+        . '<p>Sent at ' . htmlspecialchars(date('c')) . '</p>';
+
+    $result = automation_send_mail(
+        $to,
+        'Birkly Automation test email',
+        $body,
+        $mail
+    );
+
+    if (empty($result['ok'])) {
+        automation_release_test_email_lock($to);
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $result['error'] ?? 'Test email failed',
+            'data' => ['result' => $result, 'health' => automation_setup_health()],
+        ]);
+        exit;
+    }
+
+    $message = !empty($result['logged']) && ($result['method'] ?? '') === 'log'
+        ? 'Test email logged (Log transport). Open Setup → Recent sends to confirm. Switch to SMTP to deliver to a real inbox.'
+        : 'Test email accepted by transport (' . ($result['method'] ?? 'mail') . '). Check the inbox (and spam).';
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => $message,
+        'data' => [
+            'result' => $result,
+            'health' => automation_setup_health(),
+        ],
+    ]);
+    exit;
+}
+
 // Preview template
 if ($action === 'preview_template') {
     require_once __DIR__ . '/../template_preview.php';
@@ -364,7 +499,7 @@ if ($action === 'process_scheduled') {
     
     // Also process plugin scheduled tasks
     if (function_exists('process_plugin_scheduled_tasks')) {
-        require_once automation_cms_root() . '/core/plugins/scheduled_tasks.php';
+        require_once __DIR__ . '/../../../core/plugins/scheduled_tasks.php';
         $plugin_tasks_executed = process_plugin_scheduled_tasks();
     } else {
         $plugin_tasks_executed = 0;
@@ -382,13 +517,14 @@ if ($action === 'process_scheduled') {
 
 // Get collections list for pickers
 if ($action === 'get_collections') {
-    $storage_core = StorageFactory::createStorage(automation_settings_dir());
-    $content_storage = StorageFactory::createStorage(automation_cms_root());
-    $col_dirs = @scandir(automation_content_dir() . '/collections') ?: [];
+    $storage_core = automation_storage();
+    $contentRoot = automation_cms_root();
+    $content_storage = StorageFactory::createStorage($contentRoot);
+    $col_dirs = @scandir($contentRoot . '/content/collections') ?: [];
     $collections = [];
     foreach ($col_dirs as $dir) {
         if ($dir === '.' || $dir === '..') continue;
-        $meta_file = automation_content_dir() . '/collections/' . $dir . '/collection.json';
+        $meta_file = $contentRoot . '/content/collections/' . $dir . '/collection.json';
         if (!is_file($meta_file)) continue;
         $meta = json_decode(file_get_contents($meta_file), true);
         if (!$meta) continue;
@@ -409,8 +545,6 @@ if ($action === 'get_collections') {
 
 // Dry run — validate config, simulate actions, return structured log (D4)
 if ($action === 'dry_run') {
-    requireAuth('manage_content');
-
     $automation_id = $input['automation_id'] ?? '';
     if (empty($automation_id)) {
         echo json_encode(['status' => 'error', 'message' => 'Automation ID required']);
@@ -464,6 +598,40 @@ if ($action === 'dry_run') {
 
     // Step: actions (dry-run — describe but do not execute)
     $actions = $automation['actions'] ?? [];
+    if (empty($actions) && !empty($automation['graph']['nodes'])) {
+        foreach ($automation['graph']['nodes'] as $node) {
+            if (($node['kind'] ?? '') !== 'action') {
+                continue;
+            }
+            $actions[] = [
+                'type' => $node['type'] ?? '',
+                'config' => $node['config'] ?? [],
+            ];
+        }
+    }
+
+    $health = automation_setup_health();
+    if (!empty($health['blocking'])) {
+        foreach ($health['blocking'] as $blockMsg) {
+            $steps[] = [
+                'type' => 'setup',
+                'label' => 'Setup required',
+                'detail' => $blockMsg,
+                'status' => 'warn',
+            ];
+            $all_ok = false;
+        }
+    } elseif (!empty($health['warnings'])) {
+        foreach (array_slice($health['warnings'], 0, 3) as $warnMsg) {
+            $steps[] = [
+                'type' => 'setup',
+                'label' => 'Setup warning',
+                'detail' => $warnMsg,
+                'status' => 'warn',
+            ];
+        }
+    }
+
     if (empty($actions)) {
         $steps[] = ['type' => 'actions', 'label' => 'Actions', 'detail' => 'No actions configured', 'status' => 'warn'];
         $all_ok = false;
@@ -471,17 +639,31 @@ if ($action === 'dry_run') {
         foreach ($actions as $i => $action_def) {
             $atype = $action_def['type'] ?? '';
             $block = get_automation_block('action', $atype);
-            $label = "Action " . ($i + 1) . ": " . ($block['name'] ?? $atype ?: 'unknown');
-            $steps[] = ['type' => 'action', 'label' => $label, 'detail' => 'Would execute (dry run — skipped)', 'status' => 'info'];
+            $label = 'Action ' . ($i + 1) . ': ' . ($block['name'] ?? ($atype !== '' ? $atype : 'unknown'));
+            $detail = automation_describe_dry_run_action($atype, $action_def['config'] ?? [], $sample_context);
+            $steps[] = ['type' => 'action', 'label' => $label, 'detail' => $detail, 'status' => 'info'];
         }
     }
+
+    $steps[] = [
+        'type' => 'notice',
+        'label' => 'Dry run only',
+        'detail' => 'No email, webhook, Slack, or other side effects were performed. Use Confirm & Run Live (or create a real entry) to execute for real.',
+        'status' => 'info',
+    ];
 
     echo json_encode([
         'status' => 'ok',
         'data'   => [
             'steps'       => $steps,
             'all_ok'      => $all_ok,
-            'action_count' => count($actions)
+            'action_count' => count($actions),
+            'dry_run' => true,
+            'setup' => [
+                'ready' => $health['ready'],
+                'blocking' => $health['blocking'],
+                'warnings' => $health['warnings'],
+            ],
         ]
     ]);
     exit;
@@ -489,14 +671,6 @@ if ($action === 'dry_run') {
 
 // Run automation live (manual trigger from admin — executes real actions)
 if ($action === 'run_live') {
-    requireAuth('manage_content');
-
-    $csrf = $input['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
-        exit;
-    }
-
     $automation_id = $input['automation_id'] ?? '';
     if (empty($automation_id)) {
         echo json_encode(['status' => 'error', 'message' => 'Automation ID required']);
@@ -519,18 +693,60 @@ if ($action === 'run_live') {
     $run_context['_manual_run'] = true;
     $run_context['_skip_conditions'] = !empty($input['skip_conditions']);
 
+    $health = automation_setup_health();
+    $actionTypes = [];
+    foreach ($automation['actions'] ?? [] as $actionDef) {
+        $actionTypes[] = (string) ($actionDef['type'] ?? '');
+    }
+    foreach ($automation['graph']['nodes'] ?? [] as $node) {
+        if (($node['kind'] ?? '') === 'action') {
+            $actionTypes[] = (string) ($node['type'] ?? '');
+        }
+    }
+    $needsMail = in_array('email', $actionTypes, true);
+    $mailMethod = (string) ($health['mail']['method'] ?? 'mail');
+    if ($needsMail && $mailMethod === 'mail' && empty($health['capabilities']['mail'])) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Email cannot be sent: PHP mail() is unavailable. Open Automation → Setup and choose SMTP or Log.',
+            'data' => ['setup' => $health],
+        ]);
+        exit;
+    }
+    if ($needsMail && $mailMethod === 'smtp' && empty($health['mail']['smtp_host'])) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'SMTP is selected but not configured. Open Automation → Setup, fill SMTP host/credentials, then Send test email.',
+            'data' => ['setup' => $health],
+        ]);
+        exit;
+    }
+
     $start_time = microtime(true);
     try {
         $success = execute_automation($automation, $run_context);
         $runtime = (microtime(true) - $start_time) * 1000;
+        $actionCount = count($automation['actions'] ?? []);
+        if ($actionCount === 0 && !empty($automation['graph']['nodes'])) {
+            $actionCount = count(array_filter(
+                $automation['graph']['nodes'],
+                static fn ($n) => ($n['kind'] ?? '') === 'action'
+            ));
+        }
 
         echo json_encode([
             'status' => 'ok',
             'data' => [
                 'success' => $success,
                 'runtime_ms' => $runtime,
-                'actions_executed' => count($automation['actions'] ?? []),
-                'manual_run' => true
+                'actions_executed' => $actionCount,
+                'manual_run' => true,
+                'delivery_note' => $needsMail
+                    ? ('Email uses PHP mail() From ' . ($health['mail']['from_email'] ?? '') . '. If nothing arrives, check spam and Automation → Setup.')
+                    : null,
+                'setup_warnings' => $health['warnings'],
             ]
         ]);
     } catch (Exception $e) {

@@ -14,6 +14,7 @@ plugins/automation/
 ├── queue.php                  # Async execution queue
 ├── rate_limit.php
 ├── registry.php               # Trigger/condition/action blocks
+├── security.php               # Outbound URL validation + redaction helpers
 ├── scheduler.php
 ├── template_preview.php
 ├── blocks/
@@ -78,15 +79,27 @@ Collection and sub-collection filters use the picker UI in the builder — selec
 
 ### Cron setup (queue processing)
 
-Add to server crontab (every minute):
+Preferred CLI command (every minute, from the CMS root):
+
 ```
-* * * * * curl -s "https://yoursite.com/api/automation.php?action=process_queue"
+* * * * * php plugins/automation/cli/process_queue.php 10
 ```
 
-Or for scheduled triggers (every minute):
+HTTP cron calls require the Automation cron token. Admins can copy token-protected URLs from the Automation health banner when queued jobs are pending.
+
+Queue processor:
+
 ```
-* * * * * curl -s "https://yoursite.com/api/automation.php?action=process_scheduled"
+* * * * * curl -s "https://yoursite.com/api/automation.php?action=process_queue&token=YOUR_AUTOMATION_CRON_TOKEN"
 ```
+
+Scheduled trigger processor:
+
+```
+* * * * * curl -s "https://yoursite.com/api/automation.php?action=process_scheduled&token=YOUR_AUTOMATION_CRON_TOKEN"
+```
+
+Unauthenticated HTTP cron calls return `403`.
 
 ## API (when plugin active)
 
@@ -99,11 +112,12 @@ Or for scheduled triggers (every minute):
 | `POST ?action=update` | Update workflow |
 | `POST ?action=delete` | Delete workflow |
 | `POST ?action=dry_run` | Simulate without executing actions |
-| `POST ?action=test` | Live test (executes actions) |
+| `POST ?action=test` | Side-effect-free test execution |
 | `GET ?action=get_logs` | Execution logs |
 | `GET ?action=queue_status` | Queue statistics |
+| `GET ?action=cron_info` | Admin-only secure cron commands |
 
-Requires admin session + `manage_content` permission.
+Requires admin session + `manage_content` permission, except token-protected cron actions. Mutating/test/live/dry-run POST actions require CSRF.
 
 ## Extending
 
@@ -124,10 +138,18 @@ register_automation_block('action', 'my_action', [
 ## Tests
 
 ```bash
-php tests/automation_plugin_test.php
-# or full suite:
 php tests/run.php
 ```
+
+The test harness creates a temporary CMS-like fixture from this source repo and covers trigger filters, dry-run/test safety, queue retry state, outbound URL validation, failure status, cron token matching, and secret redaction.
+
+## Marketplace packaging
+
+```bash
+php scripts/build-plugin-zip.php
+```
+
+This writes `build/birkly-automation-<version>.zip` plus a `.sha256` file. See `docs/MARKETPLACE-PACKAGING-CHECKLIST.md`.
 
 ## Context pack
 
