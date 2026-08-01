@@ -1,7 +1,7 @@
-# P52 — PHP-native SSR notes (M2/M3)
+# P52 — PHP-native SSR notes (M2/M3/M4)
 
-**Status:** M2 implemented 2026-08-01 (cutover to PHP engine); M3 implemented 2026-08-01 (defaults + ops)
-**Scope:** Project SSR renders in-process with the PHP template engine; `render_mode` defaults to `server` for Birkly hosting; Node.js removed from the Docker runtime.
+**Status:** M2 implemented 2026-08-01 (cutover to PHP engine); M3 implemented 2026-08-01 (defaults + ops); M4 implemented 2026-08-01 (Node SSR surface deleted)
+**Scope:** Project SSR renders in-process with the PHP template engine; `render_mode` defaults to `server` for Birkly hosting; Node.js removed from the Docker runtime; the Node SSR CLI and its PHP helpers are deleted.
 **Plan:** `P52-php-native-ssr-plan.md` · **Predecessor:** `P51-ssr-notes.md` (cache, `trusted_ssr`, style protection — still valid)
 
 ---
@@ -15,6 +15,7 @@
 | Docker image | `nodejs` apt package required for SSR | **PHP-only** — no `nodejs`, no `node --version` build check |
 | Runtime readiness | Node binary + `proc_open` + CLI file | PHP engine file present (`engine: 'php'`) |
 | Fallback reasons | `node_missing`, `node_timeout_or_fail`, … | `engine_missing`, `engine_error`, `engine_empty` — **never** `node_missing` |
+| Node SSR surface | CLI script + `birkly_project_ssr_node_binary()` / `birkly_project_ssr_run_node()` + `BIRKLY_NODE_BIN` env | **Deleted (M4)** — no `proc_open` on the SSR path, no Node SSR CLI, no `BIRKLY_NODE_BIN` |
 
 ## PHP in-process engine
 
@@ -88,12 +89,21 @@ serves the original static file and the browser client renders normally:
   before templating and restored after (V-PHP-11 in the PHP engine).
 - **Settings persistence + admin Save guard.**
 
+## Node SSR surface deleted (M4)
+
+- The Node SSR CLI (formerly at `scripts/`), its PHP helpers
+  (`…_node_binary()`, `…_run_node()`), the `BIRKLY_NODE_BIN` env hook, and the
+  CLI smoke test + its `ci-check.sh` step are all deleted. `core/project_ssr.php`
+  contains no `proc_open` and never shells out.
+- The optional Node-collect parity block in `tests/project_ssr_test.php` went
+  with the helpers — PHP `collect_requests` assertions remain required.
+- Node stays in CI **only** for the JS engine SSOT tests
+  (`tests/template-engine/run.js`, `parity_client_server_test.js`, region/client
+  unit tests) and the PHP↔JS fixture parity harness
+  (`tests/template_engine_parity_test.php`, intentional per plan D4). None of
+  these run on the serve path; the Docker runtime has no Node (M3).
+
 ## Remaining P52 work
 
-- **M4:** delete the Node SSR surface (`scripts/birkly-ssr-cli.js`,
-  `birkly_project_ssr_node_binary()`, `birkly_project_ssr_run_node()`,
-  `BIRKLY_NODE_BIN`, `ssr_cli_test.js` CI step). Node stays in CI for the JS
-  engine SSOT tests (`tests/template-engine/run.js`, parity) — only the Docker
-  runtime loses it.
 - **M5:** localhost HTTP smoke asserting `X-Birkly-Render: server` (V-CI-02),
   perf + security note refresh, ROADMAP closure.

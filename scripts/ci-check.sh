@@ -21,9 +21,6 @@ node tests/template-engine/run.js
 echo "==> Client/server render parity suite (V-DEC-01..08)"
 node tests/template-engine/parity_client_server_test.js
 
-echo "==> SSR Node CLI bridge smoke (V-SSR-CLI)"
-node tests/template-engine/ssr_cli_test.js
-
 echo "==> Project SSR pipeline tests (V-SSR-01..10)"
 php tests/project_ssr_test.php
 

@@ -1,7 +1,7 @@
 # Phase 52 — Verification matrix
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP), M2 (V-CUT) and M3 (V-DEF, V-OPS) verified 2026-08-01, M4–M5 pending
+**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP), M2 (V-CUT), M3 (V-DEF, V-OPS) and M4 (V-DEL) verified 2026-08-01, M5 pending
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -87,12 +87,22 @@ Verified 2026-08-01: `grep -n nodejs Dockerfile` → no matches;
 
 ## V-DEL — Delete Node surface (M4)
 
+Verified 2026-08-01: `rg -n "birkly_project_ssr_run_node|birkly_project_ssr_node_binary|birkly-ssr-cli"`
+matches nothing in `core/`, `api/`, `admin/`, `scripts/`, `tests/` (only
+historical review docs); `rg -n proc_open core/ api/ admin/ scripts/` → only
+negation comments in `core/project_ssr.php` and the security blocklist regex
+in `admin/template_safe_renderer.php`. `php tests/project_ssr_test.php`
+(57/57), `php tests/project_ssr_settings_api_test.php`,
+`php tests/template_engine_php_test.php` (60/60),
+`php tests/template_engine_parity_test.php` (148/148) and
+`bash scripts/ci-check.sh` all green after the deletion.
+
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-DEL-01 | No `proc_open` to Node on SSR path | Code grep | cms-developer | pending |
-| V-DEL-02 | `birkly-ssr-cli.js` removed or clearly non-runtime | Repo | cms-developer | pending |
-| V-DEL-03 | `BIRKLY_NODE_BIN` unused / undocumented for SSR | Code + docs | cms-developer | pending |
-| V-DEL-04 | CI SSR jobs do not install Node for render | CI config | cms-developer | pending |
+| V-DEL-01 | No `proc_open` to Node on SSR path | Code grep | cms-developer | **pass** — `birkly_project_ssr_run_node()`/`birkly_project_ssr_node_binary()` deleted from `core/project_ssr.php`; no `proc_open` anywhere on the SSR render/serve path |
+| V-DEL-02 | `birkly-ssr-cli.js` removed or clearly non-runtime | Repo | cms-developer | **pass** — `scripts/birkly-ssr-cli.js` deleted (not archived); `tests/template-engine/ssr_cli_test.js` deleted with it |
+| V-DEL-03 | `BIRKLY_NODE_BIN` unused / undocumented for SSR | Code + docs | cms-developer | **pass** — no SSR code reads `BIRKLY_NODE_BIN`; the only remaining reader is the PHP↔JS fixture parity harness (`tests/template_engine_parity_test.php`, intentional D4); SSR docs describe the env hook as deleted |
+| V-DEL-04 | CI SSR jobs do not install Node for render | CI config | cms-developer | **pass** — `ci-check.sh` dropped the `ssr_cli_test.js` step; remaining Node steps test the browser-SSOT JS engine + client (run.js, parity_client_server, regions, loading), not host Node SSR |
 
 ---
 
