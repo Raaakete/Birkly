@@ -24,6 +24,7 @@ require_once __DIR__ . '/queue.php';
 
 // Setup / connection readiness helpers (mail From, dry-run descriptions)
 require_once __DIR__ . '/includes/setup_health.php';
+require_once __DIR__ . '/includes/side_effects.php';
 
 // Load scheduler
 require_once __DIR__ . '/scheduler.php';

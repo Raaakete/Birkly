@@ -41,17 +41,44 @@ function automation_with_queue_lock(callable $callback)
  */
 function enqueue_automation($trigger_type, $context = [])
 {
-    $written = automation_with_queue_lock(function () use ($trigger_type, $context) {
+    if (!function_exists('automation_claim_side_effect')) {
+        require_once __DIR__ . '/includes/side_effects.php';
+    }
+
+    // Collapse duplicate enqueue storms (double form submit / double API call).
+    $fingerprint = automation_enqueue_fingerprint((string) $trigger_type, is_array($context) ? $context : []);
+    if (!automation_claim_side_effect($fingerprint, 15)) {
+        // Still drain the queue so the first job runs.
+        automation_inline_process_queue(5);
+        return true;
+    }
+
+    $written = automation_with_queue_lock(function () use ($trigger_type, $context, $fingerprint) {
         $storage = automation_storage();
         $queue = $storage->read('automation_queue.json') ?? [];
         if (!is_array($queue)) {
             $queue = [];
         }
 
+        // Skip if an identical pending/processing job is already queued.
+        foreach ($queue as $existing) {
+            if (!is_array($existing)) {
+                continue;
+            }
+            $status = (string) ($existing['status'] ?? 'pending');
+            if (!in_array($status, ['pending', 'processing'], true)) {
+                continue;
+            }
+            if (($existing['fingerprint'] ?? '') === $fingerprint) {
+                return true;
+            }
+        }
+
         $job = [
             'id' => uniqid('job_', true),
             'trigger_type' => $trigger_type,
             'context' => $context,
+            'fingerprint' => $fingerprint,
             'created_at' => date('c'),
             'attempts' => 0,
             'status' => 'pending',
