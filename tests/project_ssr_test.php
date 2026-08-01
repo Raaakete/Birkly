@@ -1,11 +1,15 @@
 <?php
 /**
  * Project SSR pipeline tests (P51-M2) — V-SSR-01..10,
- * plus P52-M2 cutover coverage — V-CUT-01..04/07/08.
+ * plus P52-M2 cutover coverage — V-CUT-01..04/07/08,
+ * plus P52-M3 defaults coverage — V-DEF-01/02/04/05/06.
  *
  * P52-M2: render is in-process PHP (core/birkly_template_engine.php).
  * Render smoke MUST pass without Node; only the legacy Node-collect parity
  * check may SKIP when Node is unavailable.
+ *
+ * P52-M3: render_mode defaults to server for Birkly hosting. A saved
+ * "client" in settings/project.json must survive load (no migration).
  *
  * Plain PHP assert script (mirrors tests/hosting_urls_test.php style).
  * Run: php tests/project_ssr_test.php
@@ -74,17 +78,29 @@ function ssr_test_set_hosting_none_mode(): void
 }
 
 try {
-    echo "\n[V-SSR settings] defaults + env override\n";
+    echo "\n[V-SSR settings, V-DEF-01/02] defaults + env override\n";
 
-    // Clean project.json so pure defaults apply.
+    // V-DEF-01: missing project.json → pure defaults apply (server since P52-M3).
     if (is_file($projectSettingsFile)) {
         unlink($projectSettingsFile);
     }
     putenv('BIRKLY_SSR_RENDER_MODE');
     $settings = birkly_project_ssr_settings();
-    assert_true('default render_mode is client', $settings['render_mode'] === 'client');
+    assert_true('default render_mode is server (V-DEF-01)', $settings['render_mode'] === 'server');
     assert_true('default hosting_type is birkly', $settings['hosting_type'] === 'birkly');
     assert_true('default ssr_cache_ttl is 60', $settings['ssr_cache_ttl'] === 60);
+
+    // V-DEF-02: an existing saved "client" must never be overwritten by the
+    // new default (migration-style assertion: only missing keys pick up server).
+    ssr_test_write_project_settings(['render_mode' => 'client', 'ssr_cache_ttl' => 30]);
+    $settings = birkly_project_ssr_settings();
+    assert_true('saved render_mode=client preserved on load (V-DEF-02)', $settings['render_mode'] === 'client');
+    assert_true('saved client not rewritten in project.json (V-DEF-02)', strpos((string) file_get_contents($projectSettingsFile), '"client"') !== false);
+
+    // Saving an unrelated key must not persist a render_mode over the saved client.
+    birkly_save_project_settings(['show_visit_button' => true]);
+    $settings = birkly_project_ssr_settings();
+    assert_true('unrelated save keeps saved client (V-DEF-02)', $settings['render_mode'] === 'client');
 
     ssr_test_write_project_settings(['render_mode' => 'server', 'ssr_cache_ttl' => 120]);
     $settings = birkly_project_ssr_settings();
@@ -98,12 +114,19 @@ try {
 
     ssr_test_write_project_settings(['render_mode' => 'bogus']);
     $settings = birkly_project_ssr_settings();
-    assert_true('invalid render_mode falls back to client', $settings['render_mode'] === 'client');
+    assert_true('invalid render_mode falls back to server', $settings['render_mode'] === 'server');
 
-    echo "\n[V-SSR-10] gating (hosting + mode + external)\n";
+    echo "\n[V-SSR-10, V-DEF-05/06] gating (hosting + mode + external)\n";
 
     // enabled requires hosting project mode + render_mode server/auto + hosting_type birkly
     ssr_test_set_hosting_project_mode();
+
+    // V-DEF-05: with no project.json at all, Birkly hosting + project mode
+    // now gets SSR by default (render_mode defaults to server).
+    if (is_file($projectSettingsFile)) {
+        unlink($projectSettingsFile);
+    }
+    assert_true('defaults + project hosting → SSR enabled (V-DEF-05)', birkly_project_ssr_enabled() === true);
 
     ssr_test_write_project_settings(['render_mode' => 'client', 'hosting_type' => 'birkly']);
     assert_true('client mode → SSR disabled', birkly_project_ssr_enabled() === false);
@@ -115,7 +138,11 @@ try {
     assert_true('auto mode + project hosting → SSR enabled', birkly_project_ssr_enabled() === true);
 
     ssr_test_write_project_settings(['render_mode' => 'server', 'hosting_type' => 'external']);
-    assert_true('external hosting_type → SSR disabled', birkly_project_ssr_enabled() === false);
+    assert_true('external hosting_type → SSR disabled (V-DEF-06)', birkly_project_ssr_enabled() === false);
+
+    // V-DEF-06: external hosting cannot SSR even on pure defaults.
+    ssr_test_write_project_settings(['hosting_type' => 'external']);
+    assert_true('external + default render_mode → SSR disabled (V-DEF-06)', birkly_project_ssr_enabled() === false);
 
     // hosting mode none disables SSR regardless of settings
     ssr_test_set_hosting_none_mode();
@@ -304,6 +331,16 @@ try {
         $secondOut = (string) ob_get_clean();
         assert_true('second serve succeeds (HIT)', $servedAgain === true);
         assert_true('cache HIT returns identical HTML', $secondOut === $firstOut);
+
+        // V-DEF-04: auto mode prefers the server path when the PHP engine is
+        // available (renders server-side instead of falling back to client).
+        ssr_test_write_project_settings(['render_mode' => 'auto', 'hosting_type' => 'birkly', 'ssr_cache_ttl' => 60]);
+        birkly_project_ssr_invalidate_all();
+        ob_start();
+        $servedAuto = birkly_project_ssr_serve($smokeFile, []);
+        $autoOut = (string) ob_get_clean();
+        assert_true('auto mode renders server-side (V-DEF-04)', $servedAuto === true);
+        assert_true('auto mode output is rendered', strpos($autoOut, 'Year: ' . date('Y')) !== false, 'out=' . substr($autoOut, 0, 200));
     } finally {
         @unlink($smokeFile);
         birkly_project_ssr_invalidate_all();

@@ -1,6 +1,15 @@
 # P51-M2 — Project SSR pipeline notes
 
-**Status:** Implemented 2026-07-31 (cms-developer)
+> **P52 update (2026-08-01):** The Node CLI bridge described below is **retired**.
+> Project SSR now renders in-process with the PHP template engine
+> (`core/birkly_template_engine.php`) — no Node.js on the host, no `proc_open`,
+> and `render_mode` defaults to `server` for Birkly hosting. Node-specific
+> sections here (CLI bridge, `BIRKLY_NODE_BIN`, `node_missing` fallback reason,
+> Docker `nodejs` requirement) are historical. Cache design, `trusted_ssr`,
+> style/script brace protection, settings persistence, and the security notes
+> remain valid. See `P52-ssr-notes.md`.
+
+**Status:** Implemented 2026-07-31 (cms-developer); Node bridge retired in P52 — see note above
 **Scope:** Optional server-side rendering for Birkly-hosted `project/` sites, built on the shared template engine from M1. No third-party frameworks, no build-time export, template syntax unchanged.
 
 ---

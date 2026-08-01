@@ -1,7 +1,7 @@
 # Phase 52 — Verification matrix
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP) and M2 (V-CUT) verified 2026-08-01, M3–M5 pending
+**Status:** In progress — phase approved 2026-08-01; M1 (V-PHP), M2 (V-CUT) and M3 (V-DEF, V-OPS) verified 2026-08-01, M4–M5 pending
 
 Legend: **pass** | **fail** | **skip** | **manual** | **pending**
 
@@ -53,25 +53,35 @@ Verified 2026-08-01 by `php tests/project_ssr_test.php` (51/51, including with
 
 ## V-DEF — Defaults (M3)
 
+Verified 2026-08-01 by `php tests/project_ssr_test.php` (58/58, incl. new
+V-DEF-01/02/04/05/06 assertions) plus `php tests/project_ssr_settings_api_test.php`,
+`php tests/template_engine_php_test.php` (60/60) and
+`php tests/template_engine_parity_test.php` (148/148) still green.
+
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-DEF-01 | Fresh defaults: `render_mode=server` | Unit | cms-developer | pending |
-| V-DEF-02 | Existing saved `client` not overwritten | Migration test | cms-developer | pending |
-| V-DEF-03 | Admin UI presents Server as default/recommended | UI | frontend-developer | pending |
-| V-DEF-04 | `auto` prefers server when PHP engine available | Integration | cms-developer | pending |
-| V-DEF-05 | Birkly hosting + project mode → SSR on by default | Smoke | qa-verifier | pending |
-| V-DEF-06 | External hosting still cannot SSR | API + UI | cms-developer | pending |
+| V-DEF-01 | Fresh defaults: `render_mode=server` | Unit | cms-developer | **pass** — missing `settings/project.json` → `birkly_project_ssr_settings()` returns `server`; invalid values also fall back to `server` |
+| V-DEF-02 | Existing saved `client` not overwritten | Migration test | cms-developer | **pass** — `project.json` with `"render_mode":"client"` still loads as client; file bytes keep `"client"`; unrelated `birkly_save_project_settings()` patch does not inject a render_mode |
+| V-DEF-03 | Admin UI presents Server as default/recommended | UI | frontend-developer | **pass** — `settings.html` lists `Server-side (default)` first + `selected`; help text says server is the Birkly-hosted default (PHP engine, no Node); Save stays disabled until overview loads (P51 guard intact) |
+| V-DEF-04 | `auto` prefers server when PHP engine available | Integration | cms-developer | **pass** — serve smoke in `render_mode=auto` renders server-side via the PHP engine (no client fallback) |
+| V-DEF-05 | Birkly hosting + project mode → SSR on by default | Smoke | qa-verifier | **pass** — no `project.json` + `public_site_mode=project` → `birkly_project_ssr_enabled()===true`; full localhost HTTP header smoke remains M5 (V-CI-02) |
+| V-DEF-06 | External hosting still cannot SSR | API + UI | cms-developer | **pass** — `hosting_type=external` disables SSR both with explicit `server` and with pure defaults; UI still disables SSR controls for External |
 
 ---
 
 ## V-OPS — Ops / Docker / docs (M3)
 
+Verified 2026-08-01: `grep -n nodejs Dockerfile` → no matches;
+`grep -rn node_missing admin/ api/ core/` → only the negation comment in the
+`birkly_project_ssr_runtime_status()` docblock ("`reason` is never
+`node_missing`") — no emitters, no admin copy.
+
 | ID | Check | Method | Owner | Status |
 |----|-------|--------|-------|--------|
-| V-OPS-01 | Dockerfile has no `nodejs` package | File review | cms-developer | pending |
-| V-OPS-02 | Admin runtime status has no Node requirement | UI + API | frontend-developer | pending |
-| V-OPS-03 | Docs state PHP-only SSR for localhost + Docker | Docs | docs-writer / cms | pending |
-| V-OPS-04 | `node_missing` fallback reason gone from happy diagnostics | Code | cms-developer | pending |
+| V-OPS-01 | Dockerfile has no `nodejs` package | File review | cms-developer | **pass** — `nodejs` removed from apt install, `node --version` check dropped, header comment states PHP-only SSR |
+| V-OPS-02 | Admin runtime status has no Node requirement | UI + API | frontend-developer | **pass** — API `ssr_runtime` reports `{ready, engine:'php', reason}` only (M2); `ssrRuntimeMessage()` dropped `node_missing`/`proc_open_disabled`/`cli_missing` copy and only warns on `engine_missing` |
+| V-OPS-03 | Docs state PHP-only SSR for localhost + Docker | Docs | docs-writer / cms | **pass** — `P52-ssr-notes.md` (localhost `php -S` + Docker sections), `P51-ssr-notes.md` top note (Node bridge retired), `choose-your-stack.md` built-in-SSR note |
+| V-OPS-04 | `node_missing` fallback reason gone from happy diagnostics | Code | cms-developer | **pass** — no `node_missing` in `admin/`, `api/`, `core/`; render path emits only `engine_missing`/`engine_error`/`engine_empty`; remaining mentions are historical docs + deprecated M4-slated helpers |
 
 ---
 
