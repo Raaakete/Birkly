@@ -1,7 +1,7 @@
-# P52 — PHP-native SSR notes (M2/M3/M4)
+# P52 — PHP-native SSR notes
 
-**Status:** M2 implemented 2026-08-01 (cutover to PHP engine); M3 implemented 2026-08-01 (defaults + ops); M4 implemented 2026-08-01 (Node SSR surface deleted)
-**Scope:** Project SSR renders in-process with the PHP template engine; `render_mode` defaults to `server` for Birkly hosting; Node.js removed from the Docker runtime; the Node SSR CLI and its PHP helpers are deleted.
+**Status:** Complete 2026-08-01 (M1–M5)  
+**Scope:** Project SSR renders in-process with the PHP template engine; `render_mode` defaults to `server` for Birkly hosting; Node.js removed from the Docker runtime; the Node SSR CLI and its PHP helpers are deleted.  
 **Plan:** `P52-php-native-ssr-plan.md` · **Predecessor:** `P51-ssr-notes.md` (cache, `trusted_ssr`, style protection — still valid)
 
 ---
@@ -103,7 +103,39 @@ serves the original static file and the browser client renders normally:
   (`tests/template_engine_parity_test.php`, intentional per plan D4). None of
   these run on the serve path; the Docker runtime has no Node (M3).
 
-## Remaining P52 work
+## Performance (M5)
 
-- **M5:** localhost HTTP smoke asserting `X-Birkly-Render: server` (V-CI-02),
-  perf + security note refresh, ROADMAP closure.
+Measured on this host against `project/index.html` (same template bytes):
+
+| Path | Approx. cost |
+|------|----------------|
+| **PHP in-process** `birkly_template_engine_render()` (avg of 50 warm runs) | **~0.013 ms** |
+| **Prior Node spawn** (`spawnSync` → require engine → `render`) | **~22.5 ms** |
+
+Cache **HIT** path is unchanged (read file + send headers) — dominant win is
+MISS: no process spawn, no JSON stdin bridge, no wall-clock CLI timeout budget.
+Absolute numbers vary by hardware/template size; the order-of-magnitude gap
+(in-process µs–ms vs spawn tens of ms) is the product-relevant result.
+
+## Security (M5 refresh)
+
+| Concern | Status |
+|---------|--------|
+| HTML escaping | Untrusted field values escaped by default in both engines; paths containing `content` / `html` stay trusted HTML by convention (parity fixtures cover XSS-style titles) |
+| Draft / unpublished leak | Data still loads only through published public reads (`page_bundle_runner` + `trusted_ssr`); drafts never enter the SSR data bag |
+| Cache key isolation | Key = `sha256(path + language + content-revision + relevant query)`; content edits bust revision; `utm_*` ignored; TTL + invalidate-on-save unchanged |
+| Fallback | Engine failures serve static HTML + `X-Birkly-Render: client-fallback` — never a half-rendered privileged payload |
+| Host surface | No `proc_open` / Node on the SSR path — smaller attack surface than P51 |
+
+## Localhost smoke (M5 / V-CI-02)
+
+```bash
+env PATH=/usr/bin:/bin BIRKLY_NODE_BIN= php -S 127.0.0.1:8765 -t . server-router.php
+curl -sI http://127.0.0.1:8765/index.html
+# → X-Birkly-Render: server
+# → X-Birkly-SSR-Cache: MISS  (then HIT on repeat)
+```
+
+Verified 2026-08-01 with default `render_mode=server` (no `project.json`),
+`public_site_mode=project`, Node absent from PATH. Artifact:
+`p52-m5-localhost-ssr-smoke.txt`.

@@ -27,27 +27,27 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**Active phase:** **P52** (PHP-native SSR) — approved 2026-08-01. Execute via lead-engineer.
+**Active phase:** none — P52 complete 2026-08-01. Next phase requires human + product-planner approval.
 
-Focus delivered: shared `birkly-template-engine.js`, optional SSR for Birkly-hosted `project/` sites, admin render settings, client loading helpers, client↔engine decoupling.
+Focus delivered: PHP-native SSR (default for Birkly hosting), shared JS engine for the browser client, admin render settings, client loading helpers.
 
 ---
 
-## Active — Phase 52 (PHP-native SSR)
+## Completed — Phase 52 (PHP-native SSR)
 
-**Status:** Approved 2026-08-01 — in execution  
-**Artifacts:** `docs/reviews/P52-php-native-ssr-plan.md`, `P52-gap-register.md`, `P52-verification-matrix.md`, `P52-lead-engineer-handoff.md`  
-**Handoff prompt:** `docs/reviews/P52-lead-engineer-prompt.md`
+**Status:** Complete (2026-08-01)  
+**Artifacts:** `docs/reviews/P52-php-native-ssr-plan.md`, `P52-gap-register.md`, `P52-verification-matrix.md`, `P52-ssr-notes.md`, `P52-lead-engineer-handoff.md`  
+**PRs:** #457 (M1), #458 (M2), #459 (M3), #460 (M4), M5 closure branch
 
 | Milestone | Focus | Status |
 |-----------|--------|--------|
-| P52-M1 | PHP `render()` port + JS↔PHP fixture parity | Ready |
-| P52-M2 | Cut over `project_ssr.php` to in-process PHP (no Node) | Pending M1 |
-| P52-M3 | Default `render_mode=server` for Birkly hosting; drop Docker Node | Pending M2 |
-| P52-M4 | Delete Node SSR CLI / helpers | Pending M3 |
-| P52-M5 | CI, localhost PHP-only smoke, closure | Pending M4 |
+| P52-M1 | PHP `render()` port + JS↔PHP fixture parity | Done |
+| P52-M2 | Cut over `project_ssr.php` to in-process PHP (no Node) | Done |
+| P52-M3 | Default `render_mode=server` for Birkly hosting; drop Docker Node | Done |
+| P52-M4 | Delete Node SSR CLI / helpers | Done |
+| P52-M5 | CI, localhost PHP-only smoke, closure | Done |
 
-**Product intent:** Localhost and Birkly-hosted project sites use SSR by default; PHP is the only built-in host runtime. Browser keeps the JS engine via `birkly-client.js` (not an author/npm dependency).
+**Outcome:** Localhost and Birkly-hosted project sites SSR with PHP only; Node gone from Docker and the SSR path; `render_mode=server` is the default for Birkly hosting (saved `client` preserved); JS↔PHP fixture parity green.
 
 ---
 

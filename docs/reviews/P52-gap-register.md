@@ -1,7 +1,7 @@
 # Phase 52 — Gap register (PHP-native SSR)
 
 **Plan:** `P52-php-native-ssr-plan.md`  
-**Status:** In progress — phase approved 2026-08-01; M1 landed (G52-01..03 closed), M2 landed (G52-04 closed), M3 landed (G52-05..07/09 closed), M4 landed (G52-08 fully closed, G52-10 closed), M5 open
+**Status:** **Closed** — phase approved 2026-08-01; M1–M5 complete 2026-08-01; all gaps closed
 
 | ID | Area | Gap | Severity | Milestone | Status |
 |----|------|-----|----------|-----------|--------|
@@ -15,7 +15,7 @@
 | G52-08 | Ops | Admin/runtime status surfaces Node availability | Medium | M3/M4 | **Closed (M4)** — runtime status reports PHP engine readiness only (M2), admin copy no longer mentions Node (M3), and the deprecated `birkly_project_ssr_node_binary()`/`birkly_project_ssr_run_node()` dead code is deleted (M4); API `ssr_runtime` shape is `{ready, engine:'php', reason}` with no node/cli keys |
 | G52-09 | Docs | P51 notes / stack docs describe Node as SSR requirement | Medium | M3 | **Closed (M3)** — `P52-ssr-notes.md` documents PHP-only SSR for localhost + Docker; `P51-ssr-notes.md` carries a top note marking the Node bridge retired; `admin/docs/snapshots/choose-your-stack.md` clarifies built-in SSR is PHP-only (Node row = external author infrastructure only) |
 | G52-10 | Cleanup | `scripts/birkly-ssr-cli.js` + Node helpers remain after cutover | Medium | M4 | **Closed (M4)** — CLI script deleted, `ssr_cli_test.js` deleted, `ci-check.sh` step removed, Node-collect parity block dropped from `tests/project_ssr_test.php`; no `proc_open` on the SSR path; Node remains only for the JS engine SSOT tests + the PHP↔JS fixture parity harness (intentional, plan D4) |
-| G52-11 | Local | Localhost PHP-only path not guaranteed for `X-Birkly-Render: server` | **Blocker** | M2/M5 | **Partially closed (M2)** — unit + integration proof: render, runtime status, and full `birkly_project_ssr_serve()` (MISS→HIT) all pass in a `PATH=/usr/bin:/bin` (Node-absent) environment; remaining slice: full localhost HTTP smoke asserting the `X-Birkly-Render: server` header → M5 (V-CI-02) |
+| G52-11 | Local | Localhost PHP-only path not guaranteed for `X-Birkly-Render: server` | **Blocker** | M2/M5 | **Closed (M5)** — localhost `php -S` with Node absent from PATH returns `X-Birkly-Render: server` (V-CI-02); unit/integration Node-absent path already green from M2 |
 
 ## Closed by P51 (context — not reopened)
 

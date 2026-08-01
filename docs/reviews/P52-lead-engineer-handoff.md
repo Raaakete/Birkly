@@ -1,6 +1,6 @@
 # Phase 52 — Lead-engineer handoff (PHP-native SSR)
 
-**Status:** **Approved** 2026-08-01 — execute autonomously  
+**Status:** **Complete** 2026-08-01 — M1→M5 executed; human notified at M5  
 **Human rule:** Execute M1→M5. Notify human **once** at P52-M5 with verification matrix green + localhost PHP-only SSR smoke.
 
 **Master plan:** `docs/reviews/P52-php-native-ssr-plan.md`  

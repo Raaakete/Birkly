@@ -1,6 +1,6 @@
 # Phase 52 — PHP-native SSR (remove Node runtime)
 
-**Status:** Approved 2026-08-01 (Keven) — ready for lead-engineer execution  
+**Status:** Complete 2026-08-01 — M1–M5 executed; verification matrix green  
 **Date:** 2026-08-01  
 **Driver:** Product — SSR must be the default for Birkly-managed/local projects; PHP is the only accepted built-in host complexity. Node as an SSR runtime is a mission mismatch (“no libraries / frameworks / dependencies” for authors and hosts alike).
 
