@@ -61,31 +61,48 @@ Site-owner guide: [Birkly-Docs — Dokploy hosting](https://github.com/Raaakete/
 
 ## Plugin dev git sync (test/staging)
 
-For **git-cloned** official plugins under `/app/data/plugins/` (e.g. from **Birkly-Other-Things**), enable automatic `git pull` on every container start. Config lives on the **data volume** — **Dokploy CMS redeploys do not disable it**.
+For **git-cloned** official plugins under `/app/data/plugins/` (e.g. from **Birkly-Other-Things**), the container keeps them on GitHub `main` automatically (default every **60s**). Config lives on the **data volume** and also accepts **Dokploy environment variables** (no terminal required).
 
-1. Clone plugin repos into `/app/data/plugins/{id}` (folder name = plugin id: `commerce`, `events`, …).
-2. One-time in Dokploy Terminal:
+### Recommended setup (Dokploy UI only)
+
+1. Clone plugin repos once into `/app/data/plugins/{id}` (folder name = plugin id: `commerce`, `events`, `automation`, `user_management`, `studio`).
+2. In Dokploy → your test CMS app → **Environment**, set:
+
+   | Variable | Value |
+   |----------|--------|
+   | `GITHUB_TOKEN` | fine-grained PAT (`github_pat_…`) or classic (`ghp_…`) |
+   | `PLUGIN_DEV_SYNC_ENABLED` | `1` (optional if `GITHUB_TOKEN` is set — bootstrap enables sync) |
+
+3. **Redeploy** the app. Entrypoint writes/updates `/app/data/settings/plugin_dev_sync.env` from those vars and starts the pull loop.
+4. Confirm in logs: `/app/data/logs/plugin-dev-sync.log` should show `updated … oldsha -> newsha` or `already up to date` with the **current** GitHub tip — not only `pulled` with no SHA.
+
+### PAT requirements
+
+Create a **fine-grained** GitHub PAT with:
+
+- **Resource owner:** `Birkly-Other-Things` (not your personal account)
+- **Repository access:** all repos (or the five plugin repos)
+- **Permissions:** Contents **Read-only** (Metadata is automatic)
+- If the org requires approval: approve the token under org → Settings → Personal access tokens
+
+Classic `ghp_` tokens with `repo` scope also work.
+
+If logs show `Invalid username or token`, the token is wrong, not approved for the org, or a **stale token is still stored on the volume**. Set a fresh `GITHUB_TOKEN` in Dokploy env and **Redeploy** (process env wins over the volume file).
+
+### Optional terminal enable (legacy)
 
 ```bash
 GITHUB_TOKEN=github_pat_your_read_token ./scripts/plugin-dev-sync-enable.sh
 ```
 
-Create a **fine-grained** GitHub PAT with **Contents: Read** on the `Birkly-Other-Things` plugin repos (or the whole org). Classic `ghp_` tokens also work. If pulls log `Invalid username or token`, the token is expired, revoked, or missing repo access — create a new PAT and update `GITHUB_TOKEN` in `settings/plugin_dev_sync.env` on the volume.
-
-Or without token for public repos:
-
-```bash
-./scripts/plugin-dev-sync-enable.sh
-```
-
-3. Redeploy CMS anytime — entrypoint restarts the background pull loop (default **60s**).
+### Files
 
 | File on volume | Purpose |
 |----------------|---------|
 | `settings/plugin_dev_sync.env` | `PLUGIN_DEV_SYNC_ENABLED=1`, org, token, interval, plugin ids |
-| `logs/plugin-dev-sync.log` | Pull log |
+| `logs/plugin-dev-sync.log` | Sync log (includes SHAs after each run) |
 
-Disable: set `PLUGIN_DEV_SYNC_ENABLED=0` in that env file.
+Disable: set `PLUGIN_DEV_SYNC_ENABLED=0` in Dokploy env or in that env file, then Redeploy.
 
 Entrypoint also links `/app/data/core`, `fieldtypes`, and `api` to the image (required for git-cloned plugins) and **does not overwrite** a git-cloned `automation` folder with the bundled copy.
 

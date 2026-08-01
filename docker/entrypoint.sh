@@ -128,8 +128,14 @@ if [ -f /app/scripts/emergency-deactivate-broken-plugins.php ]; then
 fi
 
 # Plugin dev git sync (config on data volume — survives Dokploy redeploys).
-if [ "$USE_DATA_ROOT" -eq 1 ] && [ -x /app/scripts/plugin-dev-sync-start-loop.sh ]; then
-  /app/scripts/plugin-dev-sync-start-loop.sh || true
+# Dokploy UI: set GITHUB_TOKEN (+ optional PLUGIN_DEV_SYNC_ENABLED=1), then Redeploy.
+if [ "$USE_DATA_ROOT" -eq 1 ]; then
+  if [ -x /app/scripts/plugin-dev-sync-bootstrap-from-env.sh ]; then
+    /app/scripts/plugin-dev-sync-bootstrap-from-env.sh || true
+  fi
+  if [ -x /app/scripts/plugin-dev-sync-start-loop.sh ]; then
+    /app/scripts/plugin-dev-sync-start-loop.sh || true
+  fi
 fi
 
 echo "[entrypoint] Starting php-fpm..."
