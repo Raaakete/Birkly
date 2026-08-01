@@ -30,6 +30,8 @@ Ask one question: **who renders the page?**
 | SPA | Your framework | Public API / `Birkly.fetch` | **No** Birkly tags in JSX; JSON → components (or `Birkly.render` into a ref) |
 | SSR / build-time | PHP / Node / CI | Public API or `page_bundle.php` | Your engine, or `Birkly.render` if you run the client string engine in Node |
 
+**Birkly-hosted project sites get SSR built in.** Server rendering is the default for Birkly-hosted `project/` sites and runs on the CMS's in-process **PHP template engine** — no Node.js on the host. The PHP/Node/CI row above only applies when you run SSR or a build step on **your own** external infrastructure. Toggle the mode in Settings → Site delivery → Server rendering.
+
 **Shared rules**
 
 - Single entry: `{from 'collection' get entry 'slug'}…{endget}` (not `{entry}…{endentry}`).
