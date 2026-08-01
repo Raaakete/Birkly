@@ -477,7 +477,7 @@ async function loadSetupHealth() {
     const versionLine = document.getElementById('automation-plugin-version-line');
     if (versionLine) {
       versionLine.textContent = 'Plugin version: ' + (data.plugin_version || 'unknown')
-        + ' — if this is below 1.1.5, redeploy/sync the Automation plugin before debugging further.';
+        + ' — if this is below 1.1.6, redeploy/sync the Automation plugin before debugging further.';
     }
     if (data.queue) {
       window.__automationQueueStats = {

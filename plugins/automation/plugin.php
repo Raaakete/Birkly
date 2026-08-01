@@ -20,7 +20,7 @@ if (function_exists('register_plugin_admin_meta')) {
         'permission' => 'manage_content',
         'page_slugs' => ['automation', 'automation-editor'],
         'sub_pages' => [
-            'automation-editor' => ['title' => 'Editor', 'permission' => 'manage_content'],
+            'automation-editor' => ['title' => 'New automation', 'permission' => 'manage_content'],
         ],
         'sidebar' => [
             'show' => true,

@@ -5,14 +5,9 @@
 
 <div class="automation-page automation-editor-page plugin-page">
   <div class="automation-editor-topbar">
-    <div class="automation-editor-topbar-left">
-      <a class="btn btn-secondary btn-sm" id="automation-editor-back" href="{admin_url 'automation'}">← Automations</a>
-      <div class="automation-editor-title-wrap">
-        <label class="sr-only" for="automation-editor-name">Automation name</label>
-        <input type="text" id="automation-editor-name" class="input automation-editor-name" placeholder="Automation name" required>
-      </div>
-    </div>
-    <div class="automation-editor-topbar-right">
+    <div class="automation-editor-topbar-actions">
+      <button type="button" class="btn btn-primary" id="automation-editor-save">Save</button>
+      <button type="button" class="btn btn-secondary btn-sm" id="automation-editor-test" hidden title="Simulate only — does not send email or webhooks">Test (dry run)</button>
       <label class="checkbox-label">
         <input type="checkbox" id="automation-editor-enabled" checked>
         <span>Enabled</span>
@@ -21,8 +16,10 @@
         <input type="checkbox" id="automation-editor-stop-on-failure">
         <span>Stop on failure</span>
       </label>
-      <button type="button" class="btn btn-secondary btn-sm" id="automation-editor-test" hidden title="Simulate only — does not send email or webhooks">Test (dry run)</button>
-      <button type="button" class="btn btn-primary" id="automation-editor-save">Save</button>
+      <div class="automation-editor-title-wrap">
+        <label class="sr-only" for="automation-editor-name">Automation name</label>
+        <input type="text" id="automation-editor-name" class="input automation-editor-name" placeholder="Automation name" required>
+      </div>
     </div>
   </div>
 
