@@ -8,6 +8,11 @@
 // Load block registry first
 require_once __DIR__ . '/registry.php';
 
+// Context helpers before action blocks (email defaults / template vars)
+require_once __DIR__ . '/includes/context.php';
+require_once __DIR__ . '/includes/setup_health.php';
+require_once __DIR__ . '/includes/side_effects.php';
+
 // Load core blocks
 require_once __DIR__ . '/blocks/triggers.php';
 require_once __DIR__ . '/blocks/triggers_scheduled.php';
@@ -21,10 +26,6 @@ require_once __DIR__ . '/executor.php';
 
 // Load queue system
 require_once __DIR__ . '/queue.php';
-
-// Setup / connection readiness helpers (mail From, dry-run descriptions)
-require_once __DIR__ . '/includes/setup_health.php';
-require_once __DIR__ . '/includes/side_effects.php';
 
 // Load scheduler
 require_once __DIR__ . '/scheduler.php';
