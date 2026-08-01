@@ -1619,9 +1619,15 @@ function renderDryRunResult(data, automationId) {
   `;
 }
 
+let liveRunInFlight = false;
+let lastLiveRunStartedAt = 0;
 async function confirmLiveRun(automationId) {
+  const now = Date.now();
+  if (liveRunInFlight || (now - lastLiveRunStartedAt) < 8000) return;
   if (!confirm('Run this automation live now? Real actions (emails, webhooks, etc.) will execute.')) return;
 
+  liveRunInFlight = true;
+  lastLiveRunStartedAt = Date.now();
   const content = document.getElementById('automation-logs-content');
   content.innerHTML = '<div class="loading-state">Running live…</div>';
 
@@ -1667,6 +1673,8 @@ async function confirmLiveRun(automationId) {
     }
   } catch (error) {
     content.innerHTML = `<div class="error-state">Error: ${escapeHtml(error.message)}</div>`;
+  } finally {
+    liveRunInFlight = false;
   }
 }
 

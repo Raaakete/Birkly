@@ -47,6 +47,21 @@ register_automation_block('action', 'email', [
         if (!function_exists('automation_send_mail')) {
             require_once __DIR__ . '/../includes/setup_health.php';
         }
+        if (!function_exists('automation_claim_side_effect')) {
+            require_once __DIR__ . '/../includes/side_effects.php';
+        }
+
+        // Prevent duplicate delivers when the same trigger is processed twice
+        // (double enqueue, double live-run click, duplicate action nodes).
+        $claimKey = automation_email_side_effect_key($to, $subject, $context);
+        if (!automation_claim_side_effect($claimKey, 60)) {
+            return [
+                'sent' => true,
+                'deduped' => true,
+                'to' => $to,
+                'method' => 'deduped',
+            ];
+        }
 
         $html = nl2br(htmlspecialchars($body, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
         $result = automation_send_mail($to, $subject, $html);

@@ -32,8 +32,17 @@ function execute_automations($trigger_type, $context = []) {
     ]);
     
     $executed_count = 0;
+    $seenAutomationIds = [];
     
     foreach ($automations as $automation) {
+        $automationId = (string) ($automation['id'] ?? '');
+        if ($automationId !== '') {
+            if (isset($seenAutomationIds[$automationId])) {
+                continue;
+            }
+            $seenAutomationIds[$automationId] = true;
+        }
+
         $trigger = $automation['trigger'] ?? [];
         $trigger_config = $trigger['type'] ?? '';
         
