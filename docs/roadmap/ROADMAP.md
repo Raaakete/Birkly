@@ -14,7 +14,7 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 ---
 
-## Current state (verified 2026-07-31)
+## Current state (verified 2026-08-01)
 
 | Area | Status |
 |------|--------|
