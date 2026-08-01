@@ -1,0 +1,39 @@
+{
+    "section": "V-PHP-10",
+    "title": "{entry for} / {public_form} placeholders",
+    "cases": [
+        {
+            "name": "entry for block becomes encoded placeholder",
+            "html": "{entry for 'contact'}<input name=\"{name}\" required><textarea name=\"{message}\"></textarea><button type=\"submit\">Send</button>{endentry}",
+            "data": {}
+        },
+        {
+            "name": "entry for block keeps surrounding markup",
+            "html": "<main>{entry for 'inquiries'}<label>Email</label>{endentry}</main>",
+            "data": {}
+        },
+        {
+            "name": "unclosed entry for drops the open tag",
+            "html": "x{entry for 'contact'}<input>",
+            "data": {}
+        },
+        {
+            "name": "public_form inline placeholder",
+            "html": "<section>{public_form 'newsletter'}</section>",
+            "data": {},
+            "expected": "<section><div class=\"birkly-form-placeholder\" data-birkly-collection=\"newsletter\"></div></section>"
+        },
+        {
+            "name": "public_form slug is escaped",
+            "html": "{public_form 'a<b'}",
+            "data": {}
+        },
+        {
+            "name": "entry for placeholder not executed as template",
+            "html": "{entry for 'contact'}{for each entry in 'blog'}{title}{endfor}{endentry}",
+            "data": {
+                "blog": [{ "title": "ShouldNotRender" }]
+            }
+        }
+    ]
+}

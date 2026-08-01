@@ -1,0 +1,47 @@
+{
+    "section": "V-PHP-11",
+    "title": "style/script/noscript brace protection",
+    "cases": [
+        {
+            "name": "full page CSS and JS braces survive render",
+            "html": "<!DOCTYPE html><html><head><style>\n.bk-card { transition: transform .35s ease; }\n[data-theme=\"dark\"] { background: #262836; color: #E7EAE4; }\n@media (max-width: 900px) { [data-feature-col] { margin-top: 0 !important; } }\n@keyframes birkly-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }\n</style><script>var x = { a: 1 };</script></head><body>\n{for each entry in 'features'}<div>{'heading'}</div>{endfor}\n</body></html>",
+            "data": {
+                "features": [{ "heading": "Hi" }]
+            }
+        },
+        {
+            "name": "noscript body is protected",
+            "html": "<noscript>{not a template}</noscript><p>{title}</p>",
+            "data": { "title": "Hello" },
+            "expected": "<noscript>{not a template}</noscript><p>Hello</p>"
+        },
+        {
+            "name": "script with attributes is protected",
+            "html": "<script type=\"application/json\" id=\"cfg\">{\"a\": {\"b\": 1}}</script>{title}",
+            "data": { "title": "T" },
+            "expected": "<script type=\"application/json\" id=\"cfg\">{\"a\": {\"b\": 1}}</script>T"
+        },
+        {
+            "name": "style inside loop body is protected once and restored per item",
+            "html": "{for each entry in 'items'}<article><style>.x { color: red; }</style>{title}</article>{endfor}",
+            "data": {
+                "items": [{ "title": "One" }, { "title": "Two" }]
+            }
+        },
+        {
+            "name": "mixed case tags are protected",
+            "html": "<STYLE>.y { padding: 0; }</STYLE>{title}",
+            "data": { "title": "Z" },
+            "expected": "<STYLE>.y { padding: 0; }</STYLE>Z"
+        },
+        {
+            "name": "template syntax inside script is not rendered",
+            "html": "<script>var tpl = \"{for each entry in 'blog'}{title}{endfor}\";</script>{title}",
+            "data": {
+                "title": "Outside",
+                "blog": [{ "title": "Inside" }]
+            },
+            "expected": "<script>var tpl = \"{for each entry in 'blog'}{title}{endfor}\";</script>Outside"
+        }
+    ]
+}
