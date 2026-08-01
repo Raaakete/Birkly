@@ -19,13 +19,11 @@ New CMS installs ship with an empty `plugins/` directory (this README and `.gitk
 For rapid plugin development against a **test** CMS (e.g. `test.birkly.cloud`):
 
 1. Clone each plugin repo into the **data volume** as `/app/data/plugins/{plugin_id}` (ids: `commerce`, `events`, `automation`, `user_management`, `studio`).
-2. Enable auto-sync once (config stays on the volume):
+2. In Dokploy → **Environment**, set `GITHUB_TOKEN` (fine-grained PAT on `Birkly-Other-Things`, Contents: Read) and Redeploy.  
+   Optional: `PLUGIN_DEV_SYNC_ENABLED=1`.
+3. Push/merge on GitHub → within ~60s the test install updates (hard-resets each clone to `origin/main`). **CMS redeploys** restart the sync loop automatically.
 
-```bash
-GITHUB_TOKEN=ghp_... ./scripts/plugin-dev-sync-enable.sh
-```
-
-3. Push/merge on GitHub → within ~60s the test install pulls (no manual scripts). **CMS redeploys** restart the sync loop automatically.
+Legacy one-time terminal enable still works: `GITHUB_TOKEN=… ./scripts/plugin-dev-sync-enable.sh`.
 
 See `docs/deployment/docker.md` § Plugin dev git sync.
 
