@@ -64,8 +64,22 @@
   }
 
   function updateBreadcrumb(name) {
-    const current = document.querySelector('.plugin-page-header .breadcrumbs .current');
-    if (current && name) current.textContent = name;
+    const label = String(name || '').trim() || 'New automation';
+    const selectors = [
+      '#admin-topbar-breadcrumbs .current',
+      '#admin-topbar-breadcrumbs .breadcrumb-segment--current',
+      '.plugin-page-header .breadcrumbs .current',
+      '.page-header .breadcrumbs .current',
+      '.breadcrumbs .current'
+    ];
+    const seen = new Set();
+    selectors.forEach((sel) => {
+      document.querySelectorAll(sel).forEach((el) => {
+        if (seen.has(el)) return;
+        seen.add(el);
+        el.textContent = label;
+      });
+    });
   }
 
   function initEditor() {
@@ -488,10 +502,11 @@
     const id = params.get('id') || '';
     const isNew = params.get('new') === '1' || !id;
 
-    const back = document.getElementById('automation-editor-back');
-    if (back && window.Birkly?.url) {
-      back.setAttribute('href', adminPageUrl('automation'));
-    }
+    // Breadcrumbs move into the topbar after DOMContentLoaded — sync name again.
+    updateBreadcrumb(document.getElementById('automation-editor-name')?.value || 'New automation');
+    setTimeout(() => {
+      updateBreadcrumb(document.getElementById('automation-editor-name')?.value || 'New automation');
+    }, 0);
 
     try {
       if (isNew && !id) {

@@ -512,12 +512,25 @@ function test_editor_page_files_exist(): void
     assert_true(str_contains($plugin, "register_admin_page('automation-editor'"), 'plugin should register automation-editor page');
     assert_true(str_contains($plugin, "'automation-editor'"), 'plugin meta should include editor sub-page');
     assert_true(str_contains($html, 'id="node-canvas"'), 'editor page should include canvas');
+    assert_true(!str_contains($html, 'automation-editor-back'), 'editor should not show a redundant back button');
+    assert_true(str_contains($html, 'automation-editor-topbar-actions'), 'editor actions should be in a left-aligned action group');
+    assert_true(
+        strpos($html, 'id="automation-editor-save"') < strpos($html, 'id="automation-editor-test"'),
+        'primary Save action should come before secondary Test'
+    );
+    assert_true(str_contains($js, 'updateBreadcrumb'), 'editor should sync automation name into breadcrumbs');
+    assert_true(str_contains($js, 'admin-topbar-breadcrumbs'), 'breadcrumb sync should target the admin topbar');
     assert_true(str_contains($js, 'automation-editor'), 'editor page script should target editor route');
     assert_true(str_contains($editor, '_startConnect'), 'node editor should support port connections');
     assert_true(str_contains($editor, 'data-port="true"'), 'condition nodes should expose If-true ports');
     assert_true(str_contains($editor, '_buildSearchableCollectionPicker'), 'inspector should offer searchable collection picker');
     assert_true(str_contains($editor, '_nodeSummary'), 'nodes should render setting summaries');
     assert_true(str_contains($editor, 'node-palette-tabs'), 'palette should expose category tabs');
+
+    $css = (string) file_get_contents($root . '/admin/automation.css');
+    assert_true(str_contains($css, 'justify-content: flex-start'), 'editor topbar actions should align left');
+    assert_true(str_contains($css, '100dvh'), 'editor page should fill available viewport height');
+    assert_true(str_contains($css, '.automation-editor-page .node-canvas.automation-editor-canvas'), 'canvas should fill remaining shell height');
 }
 
 function test_graph_branching_execution(): void
