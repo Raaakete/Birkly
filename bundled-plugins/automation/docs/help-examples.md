@@ -9,9 +9,18 @@ Copy these recipes, then adapt collection names and addresses.
 
 ```text
 To: editors@yourdomain.com
-Subject: New entry: {{entry.title}}
-Body: Collection {{collection}} received "{{entry.title}}".
+Subject: {{automation.name}}
+Body:
+{{trigger_summary}}
+
+Title: {{entry.title}}
+Collection: {{collection}}
+
+Open in Birkly:
+{{entry_admin_url}}
 ```
+
+Name the automation something useful (e.g. “Notify editors of new posts”) — that becomes the subject. The body summarizes the trigger (new entry in the collection) and includes an admin link/button to the entry.
 
 **Setup:** SMTP + Send test email first.
 
