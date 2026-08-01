@@ -153,8 +153,8 @@
         type: 'email',
         config: {
           to: '',
-          subject: 'Entry Published: {{entry.title}}',
-          body: 'A new entry has been published.\n\nTitle: {{entry.title}}\nCollection: {{collection}}\nPublished at: {{now}}'
+          subject: '{{automation.name}}',
+          body: '{{trigger_summary}}\n\nTitle: {{entry.title}}\nCollection: {{collection}}\nPublished at: {{now}}\n\nOpen in Birkly:\n{{entry_admin_url}}'
         }
       }]
     },
@@ -183,8 +183,8 @@
         type: 'email',
         config: {
           to: '',
-          subject: 'New sub-entry in {{parent_collection}}',
-          body: 'A new sub-entry was created.\n\nParent: {{parent_collection}} / {{parent_entry_id}}\nSub-collection: {{sub_collection}}'
+          subject: '{{automation.name}}',
+          body: '{{trigger_summary}}\n\nParent: {{parent_collection}} / {{parent_entry_id}}\nSub-collection: {{sub_collection}}\n\nOpen in Birkly:\n{{entry_admin_url}}'
         }
       }]
     }

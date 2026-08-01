@@ -47,14 +47,31 @@ Calls PHP `mail()`. Fine on some classic shared hosts with a local MTA. On cloud
 
 ## Templates in email fields
 
-Subject and body support `{{variable}}` placeholders, for example:
+Subject and body support `{{variable}}` placeholders.
+
+**Recommended defaults** (used when you add a Send Email node):
 
 ```text
-Subject: New {{collection}} entry: {{entry.title}}
-Body: Created by {{user.name}} at {{entry.created_at}}
+Subject: {{automation.name}}
+Body:
+{{trigger_summary}}
+
+Title: {{entry.title}}
+Collection: {{collection}}
+
+Open in Birkly:
+{{entry_admin_url}}
 ```
 
-Available variables depend on the trigger context (entry fields, collection, status change fields, webhook payload, etc.).
+| Variable | Meaning |
+|----------|---------|
+| `{{automation.name}}` | Name of the workflow (best email subject) |
+| `{{trigger_summary}}` | e.g. `New entry in "blog": My title` |
+| `{{entry.title}}` / `{{entry.status}}` | Entry fields |
+| `{{collection}}` | Collection slug |
+| `{{entry_admin_url}}` | Admin link to open the entry (emails also get an **Open entry** button) |
+
+Other variables depend on the trigger (status change fields, webhook payload, etc.).
 
 ## Proving delivery
 

@@ -477,7 +477,7 @@ async function loadSetupHealth() {
     const versionLine = document.getElementById('automation-plugin-version-line');
     if (versionLine) {
       versionLine.textContent = 'Plugin version: ' + (data.plugin_version || 'unknown')
-        + ' — if this is below 1.1.2, redeploy/sync the Automation plugin before debugging further.';
+        + ' — if this is below 1.1.5, redeploy/sync the Automation plugin before debugging further.';
     }
     if (data.queue) {
       window.__automationQueueStats = {
@@ -856,8 +856,8 @@ const AUTOMATION_TEMPLATES = [
           type: 'email',
           config: {
             to: '',
-            subject: 'Entry Published: {{entry.title}}',
-            body: 'A new entry has been published.\n\nTitle: {{entry.title}}\nCollection: {{collection}}\nPublished at: {{now}}'
+            subject: '{{automation.name}}',
+            body: '{{trigger_summary}}\n\nTitle: {{entry.title}}\nCollection: {{collection}}\nPublished at: {{now}}\n\nOpen in Birkly:\n{{entry_admin_url}}'
           }
         }
       ]
@@ -900,8 +900,8 @@ const AUTOMATION_TEMPLATES = [
           type: 'email',
           config: {
             to: '',
-            subject: 'New sub-entry in {{parent_collection}}',
-            body: 'A new sub-entry was created.\n\nParent: {{parent_collection}} / {{parent_entry_id}}\nSub-collection: {{sub_collection}}'
+            subject: '{{automation.name}}',
+            body: '{{trigger_summary}}\n\nParent: {{parent_collection}} / {{parent_entry_id}}\nSub-collection: {{sub_collection}}\n\nOpen in Birkly:\n{{entry_admin_url}}'
           }
         }
       ]

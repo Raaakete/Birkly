@@ -61,10 +61,16 @@ function generate_sample_automation_context($trigger_type = null) {
             'name' => 'Jane User'
         ],
         'timestamp' => date('c'),
+        'now' => date('Y-m-d H:i:s'),
         'site' => [
             'name' => 'Sample Site',
             'url' => 'https://example.com'
-        ]
+        ],
+        'automation' => [
+            'id' => 'sample_automation',
+            'name' => 'Sample Automation',
+        ],
+        'automation_name' => 'Sample Automation',
     ];
     
     // Add trigger-specific context
@@ -85,6 +91,8 @@ function generate_sample_automation_context($trigger_type = null) {
         case 'status_changed':
             $context['old_status'] = 'draft';
             $context['new_status'] = 'published';
+            $context['from_status'] = 'draft';
+            $context['to_status'] = 'published';
             break;
         case 'webhook_inbound':
             $context['webhook_id'] = 'sample_webhook';
@@ -94,6 +102,20 @@ function generate_sample_automation_context($trigger_type = null) {
                 'data' => ['key' => 'value']
             ];
             break;
+    }
+
+    if (!function_exists('automation_enrich_execution_context')) {
+        $contextFile = __DIR__ . '/includes/context.php';
+        if (is_file($contextFile)) {
+            require_once $contextFile;
+        }
+    }
+    if (function_exists('automation_enrich_execution_context')) {
+        $context = automation_enrich_execution_context($context, [
+            'id' => 'sample_automation',
+            'name' => 'Sample Automation',
+            'trigger' => ['type' => $trigger_type ?: 'entry_created'],
+        ], $trigger_type ?: 'entry_created');
     }
     
     return $context;
@@ -188,6 +210,25 @@ function get_automation_context_variables($trigger_type = null) {
             'description' => 'Collection slug',
             'type' => 'string'
         ],
+        'automation' => [
+            'description' => 'The running workflow',
+            'fields' => [
+                'automation.name' => 'Automation name (good email subject)',
+                'automation.id' => 'Automation id'
+            ]
+        ],
+        'trigger_summary' => [
+            'description' => 'Human summary, e.g. New entry in "blog": Title',
+            'type' => 'string'
+        ],
+        'entry_admin_url' => [
+            'description' => 'Admin link to open the entry in Birkly',
+            'type' => 'string'
+        ],
+        'entry_url' => [
+            'description' => 'Alias of entry_admin_url',
+            'type' => 'string'
+        ],
         'user' => [
             'description' => 'Current user object',
             'fields' => [
@@ -198,6 +239,10 @@ function get_automation_context_variables($trigger_type = null) {
         ],
         'timestamp' => [
             'description' => 'Current timestamp (ISO 8601)',
+            'type' => 'string'
+        ],
+        'now' => [
+            'description' => 'Current local date/time',
             'type' => 'string'
         ],
         'site' => [

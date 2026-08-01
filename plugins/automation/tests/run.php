@@ -41,6 +41,7 @@ $tests = [
     'dry run describes side effects clearly' => 'test_dry_run_describes_side_effects',
     'force queue processing ignores retry backoff' => 'test_force_queue_ignores_retry',
     'duplicate email side effects are deduped' => 'test_email_side_effect_dedupe',
+    'email context uses automation name and entry link' => 'test_email_context_and_link',
 ];
 
 $failures = 0;
@@ -391,6 +392,65 @@ function test_email_side_effect_dedupe(): void
         (int) ($after['total'] ?? 0) <= (int) ($before['total'] ?? 0) + 0,
         'second enqueue for same entry should not add another job'
     );
+}
+
+function test_email_context_and_link(): void
+{
+    $summary = automation_trigger_summary('entry_created', [
+        'collection' => 'blog',
+        'entry' => ['title' => 'Hello World'],
+    ]);
+    assert_true(str_contains($summary, 'blog'), 'trigger summary should include collection');
+    assert_true(str_contains($summary, 'Hello World'), 'trigger summary should include entry title');
+
+    $enriched = automation_enrich_execution_context(
+        [
+            'entry' => ['id' => 'e1', 'title' => 'Hello World', 'status' => 'published', 'collection' => 'blog'],
+            'collection' => 'blog',
+        ],
+        [
+            'id' => 'auto-1',
+            'name' => 'Notify editors',
+            'trigger' => ['type' => 'entry_created'],
+        ],
+        'entry_created'
+    );
+
+    assert_true(($enriched['automation']['name'] ?? '') === 'Notify editors', 'context should expose automation.name');
+    assert_true(!empty($enriched['entry_admin_url']), 'context should expose entry_admin_url');
+    assert_true(str_contains((string) $enriched['entry_admin_url'], 'entry-editor'), 'admin url should point at entry-editor');
+    assert_true(str_contains((string) $enriched['entry_admin_url'], 'collection=blog'), 'admin url should include collection');
+    assert_true(str_contains((string) $enriched['trigger_summary'], 'New entry'), 'trigger_summary should describe create');
+
+    $defaults = automation_default_email_templates();
+    assert_true($defaults['subject'] === '{{automation.name}}', 'default subject should be automation.name');
+    assert_true(str_contains($defaults['body'], '{{entry_admin_url}}'), 'default body should include entry link');
+
+    $html = automation_format_email_html(
+        "Notify editors\n\nOpen:\n" . $enriched['entry_admin_url'],
+        $enriched
+    );
+    assert_true(str_contains($html, 'Open entry in Birkly'), 'email html should include CTA button');
+    assert_true(str_contains($html, 'href="' . htmlspecialchars((string) $enriched['entry_admin_url'], ENT_QUOTES)), 'email html should link to entry');
+
+    automation_save_mail_settings([
+        'method' => 'log',
+        'from_email' => 'alerts@example.com',
+        'from_name' => 'Alerts',
+    ]);
+
+    $block = get_automation_block('action', 'email');
+    $result = call_user_func($block['handler'], [
+        'to' => 'user@example.com',
+        'subject' => 'new entry',
+        'body' => '{{trigger_summary}}',
+    ], $enriched);
+
+    assert_true(!empty($result['sent']), 'email with literal new entry subject should still send');
+    assert_true(($result['subject'] ?? '') === 'Notify editors', 'literal new entry subject should fall back to automation name');
+
+    $schema = $block['schema'] ?? [];
+    assert_true(($schema['subject']['default'] ?? '') === '{{automation.name}}', 'email schema default subject is automation.name');
 }
 
 function test_force_queue_ignores_retry(): void
