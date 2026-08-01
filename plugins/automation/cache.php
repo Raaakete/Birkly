@@ -3,8 +3,7 @@
  * Automation System Caching for Birkly
  */
 
-require_once __DIR__ . '/cms_paths.php';
-require_once automation_cms_root() . '/core/cache.php';
+require_once __DIR__ . '/../../core/cache.php';
 
 define('AUTOMATION_CACHE_PREFIX', 'automation_');
 define('AUTOMATION_BLOCKS_CACHE_KEY', AUTOMATION_CACHE_PREFIX . 'blocks');

@@ -73,12 +73,31 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
   if [ -d /app/bundled-plugins/automation ]; then
     auto_dir="$DATA_ROOT/plugins/automation"
+    plugin_json_version() {
+      # Prefer php (always in image); fall back to sed.
+      f="$1"
+      [ -f "$f" ] || { echo ""; return 0; }
+      if command -v php >/dev/null 2>&1; then
+        php -r '$j=@json_decode(@file_get_contents($argv[1]), true); echo is_array($j)&&isset($j["version"])?(string)$j["version"]:"";' "$f" 2>/dev/null || true
+      else
+        sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$f" 2>/dev/null | head -1
+      fi
+    }
+    bundled_ver="$(plugin_json_version /app/bundled-plugins/automation/plugin.json)"
+    installed_ver="$(plugin_json_version "$auto_dir/plugin.json")"
     if [ -f "$auto_dir/plugin.php" ] && [ -d "$auto_dir/.git" ]; then
-      echo "[entrypoint] automation is a git dev clone — skip bundled copy"
+      echo "[entrypoint] automation is a git dev clone — skip bundled copy (installed=${installed_ver:-unknown})"
     elif [ ! -f "$auto_dir/plugin.php" ]; then
       echo "[entrypoint] Seeding bundled automation plugin to data volume..."
       mkdir -p "$auto_dir" 2>/dev/null || true
       cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
+    elif [ -n "$bundled_ver" ] && [ "$bundled_ver" != "$installed_ver" ]; then
+      # Seeded/marketplace copies never got updates before — refresh when image bundle differs.
+      echo "[entrypoint] Refreshing automation plugin from bundle (${installed_ver:-none} -> ${bundled_ver})..."
+      mkdir -p "$auto_dir" 2>/dev/null || true
+      cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
+    else
+      echo "[entrypoint] automation plugin already present (version ${installed_ver:-unknown})"
     fi
   fi
   # Git-cloned plugins under /app/data/plugins need CMS paths via ../.. from realpath.

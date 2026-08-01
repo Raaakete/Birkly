@@ -10,6 +10,7 @@ require_once $automation_plugin_dir . '/init.php';
 
 if (function_exists('register_admin_page')) {
     register_admin_page('automation', $automation_plugin_dir . '/admin/automation.html');
+    register_admin_page('automation-editor', $automation_plugin_dir . '/admin/automation-editor.html');
 }
 
 if (function_exists('register_plugin_admin_meta')) {
@@ -17,7 +18,10 @@ if (function_exists('register_plugin_admin_meta')) {
         'title' => 'Automation',
         'root_page' => 'automation',
         'permission' => 'manage_content',
-        'page_slugs' => ['automation'],
+        'page_slugs' => ['automation', 'automation-editor'],
+        'sub_pages' => [
+            'automation-editor' => ['title' => 'Editor', 'permission' => 'manage_content'],
+        ],
         'sidebar' => [
             'show' => true,
             'label' => 'Automation',
