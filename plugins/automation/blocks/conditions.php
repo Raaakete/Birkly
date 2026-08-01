@@ -101,9 +101,10 @@ register_automation_block('condition', 'collection_filter', [
     'category' => 'Content',
     'schema' => [
         'collection' => [
-            'type' => 'string',
-            'label' => 'Collection Slug',
-            'required' => true
+            'type' => 'collection_picker',
+            'label' => 'Collection',
+            'required' => true,
+            'description' => 'Choose which collection this condition checks'
         ]
     ],
     'handler' => function($config, $context) {
@@ -175,6 +176,10 @@ register_automation_block('condition', 'rate_limit_guard', [
         ]
     ],
     'handler' => function($config, $context) {
+        if (!empty($context['_dry_run']) || !empty($context['_test_mode'])) {
+            return true;
+        }
+
         $limit = (int)($config['limit'] ?? 100);
         $key_template = $config['key'] ?? '';
         

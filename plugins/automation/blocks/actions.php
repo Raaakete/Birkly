@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/../registry.php';
 require_once __DIR__ . '/../executor.php';
+require_once __DIR__ . '/../security.php';
 
 // Email Action
 register_automation_block('action', 'email', [
@@ -38,17 +39,28 @@ register_automation_block('action', 'email', [
         if (empty($to) || empty($subject)) {
             throw new Exception('Email to and subject are required');
         }
-        
-        $headers = "From: Birkly <noreply@birkly.local>\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        
-        $result = @mail($to, $subject, nl2br(htmlspecialchars($body)), $headers);
-        
-        if (!$result) {
-            throw new Exception('Failed to send email');
+
+        if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception('Invalid recipient email address: ' . $to);
+        }
+
+        if (!function_exists('automation_send_mail')) {
+            require_once __DIR__ . '/../includes/setup_health.php';
+        }
+
+        $html = nl2br(htmlspecialchars($body, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+        $result = automation_send_mail($to, $subject, $html);
+        if (empty($result['ok'])) {
+            throw new Exception($result['error'] ?? 'Failed to send email. Open Automation → Setup and configure SMTP or Log transport.');
         }
         
-        return ['sent' => true, 'to' => $to];
+        return [
+            'sent' => true,
+            'to' => $to,
+            'from' => $result['from'] ?? null,
+            'method' => $result['method'] ?? null,
+            'logged' => !empty($result['logged']),
+        ];
     }
 ]);
 
@@ -87,6 +99,13 @@ register_automation_block('action', 'webhook', [
         if (empty($url)) {
             throw new Exception('Webhook URL is required');
         }
+        if (!in_array($method, ['GET', 'POST', 'PUT'], true)) {
+            throw new Exception('Unsupported webhook method');
+        }
+        $url_check = automation_validate_outbound_url($url);
+        if (!$url_check['ok']) {
+            throw new Exception('Webhook URL rejected: ' . ($url_check['error'] ?? 'invalid URL'));
+        }
         
         // Render payload template
         $payload_json = render_automation_template($payload_text, $context);
@@ -99,6 +118,11 @@ register_automation_block('action', 'webhook', [
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+        }
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
         
         if ($method === 'POST' || $method === 'PUT') {
             curl_setopt($ch, CURLOPT_POSTFIELDS, is_array($payload) ? json_encode($payload) : $payload);
@@ -155,8 +179,8 @@ register_automation_block('action', 'set_status', [
             throw new Exception('Entry ID, collection, and status are required');
         }
         
-        require_once automation_cms_root() . '/api/admin_entries.php';
-        require_once automation_cms_root() . '/core/storage/StorageFactory.php';
+        require_once __DIR__ . '/../../../api/admin_entries.php';
+        require_once __DIR__ . '/../../../core/storage/StorageFactory.php';
         
         $storage = get_storage();
         $entry_path = "collections/{$collection}/entries/{$entry_id}.json";
@@ -204,7 +228,7 @@ register_automation_block('action', 'set_field', [
             throw new Exception('Entry ID, collection, and field are required');
         }
         
-        require_once automation_cms_root() . '/core/storage/StorageFactory.php';
+        require_once __DIR__ . '/../../../core/storage/StorageFactory.php';
         
         $storage = get_storage();
         $entry_path = "collections/{$collection}/entries/{$entry_id}.json";
@@ -291,8 +315,8 @@ register_automation_block('action', 'create_entry', [
         $fields['status'] = $status;
         
         // Create entry via API
-        require_once automation_cms_root() . '/api/admin_entries.php';
-        require_once automation_cms_root() . '/core/storage/StorageFactory.php';
+        require_once __DIR__ . '/../../../api/admin_entries.php';
+        require_once __DIR__ . '/../../../core/storage/StorageFactory.php';
         
         $storage = get_storage();
         $entry_id = uniqid('entry_', true);

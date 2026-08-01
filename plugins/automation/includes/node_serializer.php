@@ -14,6 +14,11 @@
  */
 function automation_canvas_from_workflow(array $automation): array
 {
+    $graph = $automation['graph'] ?? null;
+    if (is_array($graph) && !empty($graph['nodes']) && is_array($graph['nodes'])) {
+        return automation_normalize_canvas($graph);
+    }
+
     $nodes = [];
     $edges = [];
     $y = 80;
@@ -50,7 +55,7 @@ function automation_canvas_from_workflow(array $automation): array
             'y' => $y,
         ];
         if ($prevId !== null) {
-            $edges[] = ['from' => $prevId, 'to' => $id];
+            $edges[] = ['from' => $prevId, 'to' => $id, 'branch' => 'default'];
         }
         $prevId = $id;
         $y += 140;
@@ -71,11 +76,72 @@ function automation_canvas_from_workflow(array $automation): array
             'y' => $y,
         ];
         if ($prevId !== null) {
-            $edges[] = ['from' => $prevId, 'to' => $id];
+            $prevKind = 'trigger';
+            foreach ($nodes as $n) {
+                if (($n['id'] ?? '') === $prevId) {
+                    $prevKind = (string) ($n['kind'] ?? 'trigger');
+                    break;
+                }
+            }
+            $edges[] = [
+                'from' => $prevId,
+                'to' => $id,
+                'branch' => $prevKind === 'condition' ? 'true' : 'default',
+            ];
         }
         $prevId = $id;
         $y += 140;
         $index++;
+    }
+
+    return ['nodes' => $nodes, 'edges' => $edges];
+}
+
+/**
+ * @param array $canvas
+ * @return array{nodes: array<int, array>, edges: array<int, array>}
+ */
+function automation_normalize_canvas(array $canvas): array
+{
+    $nodes = [];
+    foreach ($canvas['nodes'] ?? [] as $node) {
+        if (!is_array($node) || empty($node['id'])) {
+            continue;
+        }
+        $kind = (string) ($node['kind'] ?? '');
+        if (!in_array($kind, ['trigger', 'condition', 'action'], true)) {
+            continue;
+        }
+        $nodes[] = [
+            'id' => (string) $node['id'],
+            'kind' => $kind,
+            'type' => (string) ($node['type'] ?? ''),
+            'config' => is_array($node['config'] ?? null) ? $node['config'] : [],
+            'x' => is_numeric($node['x'] ?? null) ? (float) $node['x'] : 0,
+            'y' => is_numeric($node['y'] ?? null) ? (float) $node['y'] : 0,
+        ];
+    }
+
+    $ids = [];
+    foreach ($nodes as $node) {
+        $ids[$node['id']] = true;
+    }
+
+    $edges = [];
+    foreach ($canvas['edges'] ?? [] as $edge) {
+        if (!is_array($edge)) {
+            continue;
+        }
+        $from = (string) ($edge['from'] ?? '');
+        $to = (string) ($edge['to'] ?? '');
+        if ($from === '' || $to === '' || !isset($ids[$from], $ids[$to])) {
+            continue;
+        }
+        $branch = (string) ($edge['branch'] ?? 'default');
+        if (!in_array($branch, ['default', 'true', 'false'], true)) {
+            $branch = 'default';
+        }
+        $edges[] = ['from' => $from, 'to' => $to, 'branch' => $branch];
     }
 
     return ['nodes' => $nodes, 'edges' => $edges];

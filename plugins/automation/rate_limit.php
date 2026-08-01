@@ -1,13 +1,13 @@
 <?php
+require_once __DIR__ . '/cms_paths.php';
+
 /**
  * Automation Rate Limiting for Birkly
  * 
  * Prevents automations from executing too frequently.
  */
 
-require_once __DIR__ . '/cms_paths.php';
 require_once automation_cms_root() . '/core/storage/StorageFactory.php';
-require_once __DIR__ . '/automation.php';
 
 /**
  * Check if automation can execute (rate limit check)
