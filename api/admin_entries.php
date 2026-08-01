@@ -398,13 +398,8 @@ switch ($action) {
 function saveEntry() {
     $collectionSlug = $_POST['collection'] ?? '';
     $entryId = $_POST['entry_id'] ?? '';
-    // Check both POST and GET for action (form sends action=save in URL)
-    $action = $_POST['action'] ?? $_GET['action'] ?? 'create';
-    
-    // If entry_id is provided, it's an update, not a create
-    if (($action === 'save' || $action === 'create') && !empty($entryId)) {
-        $action = 'update';
-    }
+    // Editor always uses ?action=save; entry_id decides create vs update.
+    $action = birkly_resolve_entry_save_action($entryId);
 
     // SECURITY: saving entries requires write permission
     requireAuth('write');
@@ -870,6 +865,8 @@ function saveEntry() {
     
     // Save entry to file
     $entryFile = "$entriesDir/$entryId.json";
+    // Ground truth for create vs update (file may not exist even if entry_id was posted).
+    $isNewEntry = ($action === 'create') || !is_file($entryFile);
     $jsonOutput = json_encode($entryOutput, JSON_PRETTY_PRINT);
     if ($jsonOutput === false) {
         error_log("JSON encode error: " . json_last_error_msg());
@@ -896,8 +893,8 @@ function saveEntry() {
                 $oldStatus = $entry['status'] ?? '';
                 $newStatus = $entryOutput['status'] ?? '';
                 
-                // Determine trigger type
-                if ($action === 'create') {
+                // Determine trigger type from create/update resolution (not URL action=save).
+                if ($isNewEntry) {
                     enqueue_automation('entry_created', [
                         'entry' => $entryOutput,
                         'collection' => $collectionSlug
@@ -928,7 +925,7 @@ function saveEntry() {
             // Set flag to prevent webhooks.php from executing its switch statement
             $GLOBALS['__HARU_INTERNAL_CALL'] = true;
             require_once __DIR__ . '/webhooks.php';
-            $webhookEvent = $action === 'create' ? 'entry.created' : 'entry.updated';
+            $webhookEvent = $isNewEntry ? 'entry.created' : 'entry.updated';
             
             // Also trigger publish/unpublish events if status changed
             if (isset($entryData['status'])) {
