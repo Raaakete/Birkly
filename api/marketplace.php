@@ -412,6 +412,9 @@ if ($action === 'install') {
                 'include_demo_entries' => !empty($install['include_demo_entries']),
                 'backup_path' => $install['backup_path'] ?? null,
                 'warnings' => $install['warnings'] ?? [],
+                'safe_update' => !empty($install['safe_update']),
+                'skipped_files' => $install['skipped_files'] ?? [],
+                'updated_files' => $install['updated_files'] ?? [],
             ],
         ]);
         exit;
@@ -809,6 +812,139 @@ if ($action === 'install_template_pack_zip' || $action === 'preflight_template_p
             'include_demo_entries' => !empty($install['include_demo_entries']),
             'backup_path' => $install['backup_path'] ?? null,
             'warnings' => $install['warnings'] ?? [],
+            'safe_update' => !empty($install['safe_update']),
+            'skipped_files' => $install['skipped_files'] ?? [],
+            'updated_files' => $install['updated_files'] ?? [],
+        ],
+    ]);
+    exit;
+}
+
+// P53-M7/M8 — Installed pack status, per-file reset, replace-all (Hub Installed hooks)
+if ($action === 'list_installed_template_packs') {
+    $packs = birkly_marketplace_get_installed_template_packs();
+    $rows = [];
+    foreach ($packs as $slug => $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $rows[] = [
+            'slug' => $slug,
+            'pack_id' => $row['pack_id'] ?? $slug,
+            'version' => $row['version'] ?? '',
+            'source' => $row['source'] ?? '',
+            'installed_collections' => $row['installed_collections'] ?? [],
+            'project_site' => !empty($row['project_site']),
+            'file_hashes_count' => is_array($row['file_hashes'] ?? null) ? count($row['file_hashes']) : 0,
+            'installed_at' => $row['installed_at'] ?? null,
+            'updated_at' => $row['updated_at'] ?? null,
+        ];
+    }
+    echo json_encode(['status' => 'ok', 'data' => ['packs' => $rows]]);
+    exit;
+}
+
+if ($action === 'template_pack_status') {
+    $slug = trim((string) ($input['slug'] ?? $_GET['slug'] ?? ''));
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'slug is required', 'code' => 'missing_slug']);
+        exit;
+    }
+    $status = birkly_marketplace_template_pack_update_status($slug);
+    echo json_encode([
+        'status' => !empty($status['ok']) ? 'ok' : 'error',
+        'message' => !empty($status['ok']) ? 'Pack status' : implode('; ', $status['errors'] ?? ['Status failed']),
+        'code' => $status['code'] ?? null,
+        'data' => $status,
+    ]);
+    exit;
+}
+
+if ($action === 'reset_template_pack_file') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $slug = trim((string) ($input['slug'] ?? ''));
+    $path = trim((string) ($input['path'] ?? $input['file'] ?? ''));
+    if ($slug === '' || $path === '') {
+        echo json_encode(['status' => 'error', 'message' => 'slug and path are required', 'code' => 'missing_params']);
+        exit;
+    }
+    $result = birkly_marketplace_reset_template_pack_file($slug, $path, [
+        'version' => (string) ($input['version'] ?? ''),
+        'zip_path' => (string) ($input['zip_path'] ?? ''),
+    ]);
+    if (empty($result['ok'])) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => implode('; ', $result['errors'] ?? ['Reset failed']),
+            'code' => $result['code'] ?? 'reset_failed',
+            'errors' => $result['errors'] ?? [],
+        ]);
+        exit;
+    }
+    log_security_event('marketplace_template_pack_file_reset', [
+        'slug' => $slug,
+        'path' => $path,
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+    ]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'File reset to pack version',
+        'data' => $result,
+    ]);
+    exit;
+}
+
+if ($action === 'replace_all_template_pack') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $slug = trim((string) ($input['slug'] ?? ''));
+    if ($slug === '') {
+        echo json_encode(['status' => 'error', 'message' => 'slug is required', 'code' => 'missing_slug']);
+        exit;
+    }
+    $packOptions = birkly_marketplace_api_pack_options($input);
+    $result = birkly_marketplace_replace_all_template_pack($slug, array_merge($packOptions, [
+        'version' => (string) ($input['version'] ?? ''),
+        'zip_path' => (string) ($input['zip_path'] ?? ''),
+        'confirm_replace_all' => !empty($packOptions['confirm_replace_all']) || !empty($input['confirm_replace_all']),
+        'source' => 'replace_all',
+    ]));
+    if (empty($result['ok'])) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => implode('; ', $result['errors'] ?? ['Replace all failed']),
+            'code' => $result['code'] ?? 'replace_all_failed',
+            'errors' => $result['errors'] ?? [],
+            'data' => [
+                'backup_path' => $result['backup_path'] ?? null,
+            ],
+        ]);
+        exit;
+    }
+    log_security_event('marketplace_template_pack_replace_all', [
+        'slug' => $slug,
+        'version' => $result['version'] ?? '',
+        'backup_path' => $result['backup_path'] ?? null,
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+    ]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Site pack replaced from vendor copy (backup created when site was dirty)',
+        'data' => [
+            'offer_type' => 'template_pack',
+            'pack_id' => $result['pack_id'] ?? $slug,
+            'version' => $result['version'] ?? '',
+            'replace_all' => true,
+            'backup_path' => $result['backup_path'] ?? null,
+            'installed_collections' => $result['installed_collections'] ?? [],
+            'skipped_files' => $result['skipped_files'] ?? [],
         ],
     ]);
     exit;

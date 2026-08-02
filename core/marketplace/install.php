@@ -669,7 +669,8 @@ function birkly_marketplace_install_theme(string $slug, string $version, string 
 }
 
 /**
- * Persist Hub/site-pack install metadata (P53-M2 / M3–M6).
+ * Persist Hub/site-pack install metadata (P53-M2 / M3–M8).
+ * Meta may include file_hashes (P53-M7), skipped_files, cached_zip (P53-M8).
  *
  * @param list<string> $installedCollections
  * @param array<string,mixed> $meta
@@ -689,16 +690,21 @@ function birkly_marketplace_save_template_pack_source(
         $data = [];
     }
 
-    $data[$slug] = array_merge([
+    $previous = isset($data[$slug]) && is_array($data[$slug]) ? $data[$slug] : [];
+    $installedAt = (string) ($previous['installed_at'] ?? gmdate('Y-m-d\TH:i:s\Z'));
+
+    $row = array_merge($previous, [
         'marketplace_slug' => $slug,
         'offer_type' => 'template_pack',
         'version' => $version,
-        'source' => (string) ($meta['source'] ?? 'marketplace'),
+        'source' => (string) ($meta['source'] ?? $previous['source'] ?? 'marketplace'),
         'installed_collections' => array_values($installedCollections),
         'project_site' => $projectSite,
         'project_root' => rtrim($projectRoot, '/\\') . '/' . (function_exists('birkly_public_site_dir') ? birkly_public_site_dir() : 'project'),
-        'installed_at' => gmdate('Y-m-d\TH:i:s\Z'),
+        'installed_at' => $installedAt,
+        'updated_at' => gmdate('Y-m-d\TH:i:s\Z'),
     ], $meta);
+    $data[$slug] = $row;
     $storage->write('installed_template_packs.json', $data);
 }
 
