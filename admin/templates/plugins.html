@@ -89,7 +89,7 @@
                     <polyline points="7,10 12,15 17,10"></polyline>
                     <line x1="12" y1="15" x2="12" y2="3"></line>
                 </svg>
-                {translate 'admin.install_plugin'}
+                {translate 'admin.upload_site_pack'}
             </button>
         </div>
 
@@ -141,30 +141,42 @@
     </div>
 </div>
 
-<!-- Install Plugin Modal (local zip/url — legacy) -->
+<!-- Upload site pack (P53-M3–M6) -->
 <div id="install-plugin-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>{translate 'admin.install_plugin'}</h2>
+            <h2>{translate 'admin.upload_site_pack'}</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-install-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <p class="form-help">{translate 'admin.marketplace_install_hint'}</p>
+            <p class="form-help">{translate 'admin.upload_site_pack_hint'}</p>
             <form id="install-plugin-form">
                 <div class="form-group">
-                    <label for="plugin-url">{translate 'admin.plugin_url_or_zip'}</label>
-                    <input type="url" id="plugin-url" name="plugin_url" class="input" placeholder="https://example.com/plugin.zip">
-                    <small class="form-help">{translate 'admin.plugin_url_help'}</small>
+                    <label for="plugin-file">{translate 'admin.site_pack_zip_file'}</label>
+                    <input type="file" id="plugin-file" name="plugin_file" accept=".zip,application/zip" class="input">
+                    <small class="form-help">{translate 'admin.site_pack_zip_help'}</small>
                 </div>
                 <div class="form-group">
-                    <label for="plugin-file">{translate 'admin.or_upload_plugin_file'}</label>
-                    <input type="file" id="plugin-file" name="plugin_file" accept=".zip" class="input">
+                    <label for="pack-overwrite-mode">{translate 'admin.pack_overwrite_mode'}</label>
+                    <select id="pack-overwrite-mode" name="overwrite_mode" class="input">
+                        <option value="merge">{translate 'admin.pack_overwrite_merge'}</option>
+                        <option value="replace">{translate 'admin.pack_overwrite_replace'}</option>
+                        <option value="fresh-only">{translate 'admin.pack_overwrite_fresh_only'}</option>
+                    </select>
+                    <small class="form-help">{translate 'admin.pack_overwrite_help'}</small>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="pack-include-demo-entries" name="include_demo_entries" value="1">
+                        {translate 'admin.pack_include_demo_entries'}
+                    </label>
+                    <small class="form-help">{translate 'admin.pack_include_demo_entries_help'}</small>
                 </div>
             </form>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-plugin-action="close-install-modal">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" data-plugin-action="install-from-file">{translate 'admin.install_plugin'}</button>
+            <button type="button" class="btn btn-primary" data-plugin-action="install-from-file">{translate 'admin.install_site_pack'}</button>
         </div>
     </div>
 </div>
@@ -205,8 +217,25 @@
                 <input type="text" id="marketplace-license-key" class="input" placeholder="BIRKLY-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
                 <small class="form-help">{translate 'admin.license_key_help'}</small>
             </div>
+            <div id="marketplace-pack-options" hidden>
+                <div class="form-group">
+                    <label for="marketplace-pack-overwrite-mode">{translate 'admin.pack_overwrite_mode'}</label>
+                    <select id="marketplace-pack-overwrite-mode" class="input">
+                        <option value="merge">{translate 'admin.pack_overwrite_merge'}</option>
+                        <option value="replace">{translate 'admin.pack_overwrite_replace'}</option>
+                        <option value="fresh-only">{translate 'admin.pack_overwrite_fresh_only'}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="marketplace-pack-include-demo" value="1">
+                        {translate 'admin.pack_include_demo_entries'}
+                    </label>
+                </div>
+            </div>
             <input type="hidden" id="marketplace-install-slug" value="">
             <input type="hidden" id="marketplace-install-version" value="">
+            <input type="hidden" id="marketplace-install-offer-type" value="plugin">
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-plugin-action="close-marketplace-install">{translate 'admin.cancel'}</button>

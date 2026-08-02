@@ -669,16 +669,18 @@ function birkly_marketplace_install_theme(string $slug, string $version, string 
 }
 
 /**
- * Persist Hub/site-pack install metadata (P53-M2).
+ * Persist Hub/site-pack install metadata (P53-M2 / M3–M6).
  *
  * @param list<string> $installedCollections
+ * @param array<string,mixed> $meta
  */
 function birkly_marketplace_save_template_pack_source(
     string $slug,
     string $version,
     array $installedCollections,
     bool $projectSite,
-    string $projectRoot
+    string $projectRoot,
+    array $meta = []
 ): void {
     require_once dirname(__DIR__, 2) . '/api/storage.php';
     $storage = new Storage(birkly_marketplace_settings_dir());
@@ -687,29 +689,34 @@ function birkly_marketplace_save_template_pack_source(
         $data = [];
     }
 
-    $data[$slug] = [
+    $data[$slug] = array_merge([
         'marketplace_slug' => $slug,
         'offer_type' => 'template_pack',
         'version' => $version,
-        'source' => 'marketplace',
+        'source' => (string) ($meta['source'] ?? 'marketplace'),
         'installed_collections' => array_values($installedCollections),
         'project_site' => $projectSite,
         'project_root' => rtrim($projectRoot, '/\\') . '/' . (function_exists('birkly_public_site_dir') ? birkly_public_site_dir() : 'project'),
         'installed_at' => gmdate('Y-m-d\TH:i:s\Z'),
-    ];
+    ], $meta);
     $storage->write('installed_template_packs.json', $data);
 }
 
 /**
  * Install a site pack (offer_type template_pack) into collections + project/.
- * Uses the same extract engine as Ops starters — never themes/ (P53-D3 / P53-M2).
+ * Uses the same shared engine as manual ZIP upload — never themes/ (P53-D3).
  *
+ * @param array<string,mixed> $options overwrite_mode, include_demo_entries, confirm_required_plugins, …
  * @return array<string, mixed>
  */
-function birkly_marketplace_install_template_pack(string $slug, string $version, string $licenseKey = ''): array
-{
-    if (!function_exists('birkly_ops_extract_starter_zip')) {
-        require_once dirname(__DIR__) . '/ops_starters_client.php';
+function birkly_marketplace_install_template_pack(
+    string $slug,
+    string $version,
+    string $licenseKey = '',
+    array $options = []
+): array {
+    if (!function_exists('birkly_marketplace_install_template_pack_from_zip')) {
+        require_once __DIR__ . '/template_pack.php';
     }
 
     $release = birkly_marketplace_release_download($slug, $version);
@@ -726,46 +733,26 @@ function birkly_marketplace_install_template_pack(string $slug, string $version,
     }
 
     $zipPath = $download['path'];
-    $projectRoot = function_exists('birkly_project_root')
-        ? birkly_project_root()
-        : dirname(__DIR__, 2);
-    $extract = birkly_ops_extract_starter_zip($zipPath, $projectRoot);
+    $options = array_merge([
+        'source' => 'marketplace',
+        'slug' => $slug,
+        'version' => $version,
+        // Hub / existing sites: demo entries OFF by default (P53-D5 / P53-M6)
+        'include_demo_entries' => false,
+        'overwrite_mode' => 'merge',
+    ], $options);
+    $options['source'] = (string) ($options['source'] ?? 'marketplace');
+    $options['slug'] = $slug;
+    $options['version'] = $version;
+
+    $result = birkly_marketplace_install_template_pack_from_zip($zipPath, $options);
     @unlink($zipPath);
 
-    if (empty($extract['success'])) {
-        $errors = $extract['errors'] ?? [];
-        if ($errors === [] && !empty($extract['message'])) {
-            $errors[] = (string) $extract['message'];
-        }
-        if ($errors === []) {
-            $errors[] = 'Site pack extract failed';
-        }
-        return ['ok' => false, 'errors' => $errors];
-    }
-
-    $installedCollections = array_values($extract['installed_collections'] ?? []);
-    $projectSite = !empty($extract['project_site']);
-    birkly_marketplace_save_template_pack_source(
-        $slug,
-        $version,
-        $installedCollections,
-        $projectSite,
-        $projectRoot
-    );
-
-    return [
-        'ok' => true,
-        'source' => 'marketplace',
-        'offer_type' => 'template_pack',
-        'version' => $version,
-        'installed_collections' => $installedCollections,
-        'project_site' => $projectSite,
-        'path' => rtrim($projectRoot, '/\\') . '/' . (function_exists('birkly_public_site_dir') ? birkly_public_site_dir() : 'project'),
-        'errors' => [],
-    ];
+    return $result;
 }
 
 /**
+ * @param array<string,mixed> $options
  * @return array<string, mixed>
  */
 function birkly_marketplace_install_offer(
@@ -774,10 +761,12 @@ function birkly_marketplace_install_offer(
     string $licenseKey,
     string $offerType = 'plugin',
     bool $upgrade = false,
-    bool $consentAccepted = false
+    bool $consentAccepted = false,
+    array $options = []
 ): array {
     if ($offerType === 'template_pack') {
-        return birkly_marketplace_install_template_pack($slug, $version, $licenseKey);
+        $options['consent_accepted'] = $consentAccepted || !empty($options['consent_accepted']);
+        return birkly_marketplace_install_template_pack($slug, $version, $licenseKey, $options);
     }
 
     if ($offerType === 'theme') {
