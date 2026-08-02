@@ -43,7 +43,7 @@
             admin: 'Admin',
             content: 'Content',
             commerce: 'Commerce',
-            marketplace: 'Marketplace',
+            marketplace: 'Hub',
             plugins: 'Plugins',
             ai: 'AI & MCP',
             other: 'Other',
