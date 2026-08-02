@@ -2519,6 +2519,82 @@
         }
     }
 
+    /**
+     * P53-M7/M8 — API hooks for Hub Installed (M11).
+     * Safe updates skip user-touched files server-side; these helpers expose
+     * per-file reset and rare replace-all with confirm.
+     */
+    async function listInstalledTemplatePacks() {
+        var response = await fetch(url('/api/marketplace.php?action=list_installed_template_packs'), {
+            credentials: 'same-origin',
+        });
+        var result = await parseMarketplaceResponse(response);
+        if (!response.ok || result.status === 'error') {
+            throw new Error(result.message || 'Failed to list installed site packs');
+        }
+        return (result.data && result.data.packs) || [];
+    }
+
+    async function getTemplatePackStatus(slug) {
+        var response = await fetch(url('/api/marketplace.php?action=template_pack_status&slug=' + encodeURIComponent(slug)), {
+            credentials: 'same-origin',
+        });
+        var result = await parseMarketplaceResponse(response);
+        if (!response.ok || result.status === 'error') {
+            throw new Error(result.message || 'Failed to load pack status');
+        }
+        return result.data || {};
+    }
+
+    async function resetTemplatePackFile(slug, path) {
+        var response = await fetch(url('/api/marketplace.php'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'reset_template_pack_file',
+                _csrf: csrfToken(),
+                slug: slug,
+                path: path,
+            }),
+        });
+        var result = await parseMarketplaceResponse(response);
+        if (!response.ok || result.status === 'error') {
+            throw new Error(result.message || 'Reset failed');
+        }
+        return result.data || {};
+    }
+
+    async function replaceAllTemplatePack(slug, options) {
+        options = options || {};
+        var confirmed = options.confirm_replace_all === true
+            || window.confirm(t(
+                'pack_replace_all_confirm',
+                'Replace all files from this site pack? A backup is created first. User edits will be overwritten.'
+            ));
+        if (!confirmed) {
+            return { cancelled: true };
+        }
+        var response = await fetch(url('/api/marketplace.php'), {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'replace_all_template_pack',
+                _csrf: csrfToken(),
+                slug: slug,
+                confirm_replace_all: 1,
+                include_demo_entries: options.include_demo_entries ? 1 : 0,
+                version: options.version || '',
+            }),
+        });
+        var result = await parseMarketplaceResponse(response);
+        if (!response.ok || result.status === 'error') {
+            throw new Error(result.message || 'Replace all failed');
+        }
+        return result.data || {};
+    }
+
     function initMarketplaceFilters() {
         ['marketplace-filter-type', 'marketplace-filter-category', 'marketplace-sort', 'marketplace-price'].forEach(function (id) {
             var el = document.getElementById(id);
@@ -2592,6 +2668,11 @@
         backToMarketplaceBrowse: backToMarketplaceBrowse,
         openOfferEmbedModal: openOfferEmbedModal,
         closeOfferEmbedModal: closeOfferEmbedModal,
+        // P53-M7/M8 — Hub Installed hooks (full UI in M11)
+        listInstalledTemplatePacks: listInstalledTemplatePacks,
+        getTemplatePackStatus: getTemplatePackStatus,
+        resetTemplatePackFile: resetTemplatePackFile,
+        replaceAllTemplatePack: replaceAllTemplatePack,
     };
 
     window.togglePlugin = togglePlugin;
