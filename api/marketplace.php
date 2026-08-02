@@ -26,7 +26,19 @@ require_once '../core/plugins/validation.php';
 require_once '../core/marketplace.php';
 require_once '../core/cloud_account.php';
 
-$rawInput = json_decode(file_get_contents('php://input'), true);
+$contentType = (string) ($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '');
+$isMultipart = stripos($contentType, 'multipart/form-data') !== false;
+
+$rawInput = [];
+if (!$isMultipart) {
+    $decoded = json_decode((string) file_get_contents('php://input'), true);
+    if (is_array($decoded)) {
+        $rawInput = $decoded;
+    }
+} else {
+    $rawInput = $_POST;
+}
+
 $input = [];
 if (is_array($rawInput)) {
     foreach ($rawInput as $key => $value) {
@@ -40,7 +52,7 @@ if (is_array($rawInput)) {
     }
 }
 $input = array_merge($input, sanitize_input($input));
-$action = $input['action'] ?? $_GET['action'] ?? '';
+$action = $input['action'] ?? $_GET['action'] ?? $_POST['action'] ?? '';
 
 requireAuth('manage_plugins');
 
@@ -347,13 +359,29 @@ if ($action === 'install') {
         }
     }
 
-    $install = birkly_marketplace_install_offer($slug, $version, $licenseKey, $offerType, false, $consentAccepted);
+    $packOptions = $offerType === 'template_pack' ? birkly_marketplace_api_pack_options($input) : [];
+    $install = birkly_marketplace_install_offer(
+        $slug,
+        $version,
+        $licenseKey,
+        $offerType,
+        false,
+        $consentAccepted,
+        $packOptions
+    );
     if (!$install['ok']) {
+        $code = (string) ($install['code'] ?? '');
         echo json_encode([
             'status' => 'error',
             'message' => 'Install failed: ' . implode('; ', $install['errors'] ?? []),
+            'code' => $code !== '' ? $code : 'install_failed',
             'errors' => $install['errors'] ?? [],
             'preflight' => $install['preflight'] ?? null,
+            'data' => [
+                'missing_required_plugins' => $install['missing_required_plugins'] ?? ($install['preflight']['missing_required_plugins'] ?? []),
+                'warnings' => $install['warnings'] ?? ($install['preflight']['warnings'] ?? []),
+                'consent' => $install['consent'] ?? null,
+            ],
         ]);
         exit;
     }
@@ -364,6 +392,8 @@ if ($action === 'install') {
             'version' => $version,
             'offer_type' => $offerType,
             'installed_collections' => $install['installed_collections'] ?? [],
+            'overwrite_mode' => $install['overwrite_mode'] ?? null,
+            'include_demo_entries' => !empty($install['include_demo_entries']),
             'free_install' => $freeInstall,
             'user' => $_SESSION['user']['email'] ?? 'unknown',
         ]);
@@ -378,6 +408,10 @@ if ($action === 'install') {
                 'installed_collections' => $install['installed_collections'] ?? [],
                 'project_site' => !empty($install['project_site']),
                 'path' => $install['path'] ?? '',
+                'overwrite_mode' => $install['overwrite_mode'] ?? 'merge',
+                'include_demo_entries' => !empty($install['include_demo_entries']),
+                'backup_path' => $install['backup_path'] ?? null,
+                'warnings' => $install['warnings'] ?? [],
             ],
         ]);
         exit;
@@ -671,6 +705,110 @@ if ($action === 'upgrade') {
         'data' => [
             'plugin_id' => $pluginId,
             'version' => $targetVersion,
+        ],
+    ]);
+    exit;
+}
+
+// P53-M3 — Manual ZIP upload (same engine as Hub template_pack)
+if ($action === 'install_template_pack_zip' || $action === 'preflight_template_pack_zip') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    if (!isset($_FILES['pack_file']) && !isset($_FILES['file'])) {
+        echo json_encode(['status' => 'error', 'message' => 'No pack ZIP uploaded', 'code' => 'missing_file']);
+        exit;
+    }
+
+    $file = $_FILES['pack_file'] ?? $_FILES['file'];
+    if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        echo json_encode(['status' => 'error', 'message' => 'Pack ZIP upload failed', 'code' => 'upload_failed']);
+        exit;
+    }
+
+    $tmpName = (string) ($file['tmp_name'] ?? '');
+    $origName = (string) ($file['name'] ?? 'pack.zip');
+    if ($tmpName === '' || !is_uploaded_file($tmpName)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid uploaded file', 'code' => 'upload_failed']);
+        exit;
+    }
+
+    if (!str_ends_with(strtolower($origName), '.zip')) {
+        echo json_encode(['status' => 'error', 'message' => 'File must be a .zip site pack', 'code' => 'invalid_pack']);
+        exit;
+    }
+
+    $stored = sys_get_temp_dir() . '/birkly-pack-upload-' . getmypid() . '-' . bin2hex(random_bytes(4)) . '.zip';
+    if (!@move_uploaded_file($tmpName, $stored)) {
+        // Fallback for tests / non-HTTP contexts
+        if (!@copy($tmpName, $stored)) {
+            echo json_encode(['status' => 'error', 'message' => 'Could not store uploaded ZIP', 'code' => 'upload_failed']);
+            exit;
+        }
+    }
+
+    $packOptions = birkly_marketplace_api_pack_options($input);
+    $packOptions['source'] = 'upload';
+
+    if ($action === 'preflight_template_pack_zip') {
+        $preflight = birkly_marketplace_preflight_template_pack($stored, $packOptions);
+        @unlink($stored);
+        echo json_encode([
+            'status' => !empty($preflight['ok']) || !empty($preflight['requires_plugin_confirmation']) ? 'ok' : 'error',
+            'message' => !empty($preflight['ok']) || !empty($preflight['requires_plugin_confirmation'])
+                ? 'Pack preflight complete'
+                : implode('; ', $preflight['errors'] ?? ['Preflight failed']),
+            'code' => $preflight['code'] ?? null,
+            'data' => $preflight,
+        ]);
+        exit;
+    }
+
+    $install = birkly_marketplace_install_template_pack_from_zip($stored, $packOptions);
+    @unlink($stored);
+
+    if (empty($install['ok'])) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => implode('; ', $install['errors'] ?? ['Site pack install failed']),
+            'code' => $install['code'] ?? 'install_failed',
+            'errors' => $install['errors'] ?? [],
+            'preflight' => $install['preflight'] ?? null,
+            'data' => [
+                'missing_required_plugins' => $install['missing_required_plugins'] ?? ($install['preflight']['missing_required_plugins'] ?? []),
+                'warnings' => $install['warnings'] ?? ($install['preflight']['warnings'] ?? []),
+                'consent' => $install['consent'] ?? null,
+            ],
+        ]);
+        exit;
+    }
+
+    log_security_event('marketplace_template_pack_uploaded', [
+        'pack_id' => $install['pack_id'] ?? '',
+        'version' => $install['version'] ?? '',
+        'overwrite_mode' => $install['overwrite_mode'] ?? null,
+        'include_demo_entries' => !empty($install['include_demo_entries']),
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Site pack installed from ZIP',
+        'data' => [
+            'offer_type' => 'template_pack',
+            'pack_id' => $install['pack_id'] ?? '',
+            'version' => $install['version'] ?? '',
+            'source' => 'upload',
+            'installed_collections' => $install['installed_collections'] ?? [],
+            'project_site' => !empty($install['project_site']),
+            'path' => $install['path'] ?? '',
+            'overwrite_mode' => $install['overwrite_mode'] ?? 'merge',
+            'include_demo_entries' => !empty($install['include_demo_entries']),
+            'backup_path' => $install['backup_path'] ?? null,
+            'warnings' => $install['warnings'] ?? [],
         ],
     ]);
     exit;
