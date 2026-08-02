@@ -7,15 +7,19 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 require_once 'auth.php';
 
-function log_security_event($event, $details = []) {
+function log_security_event($event, $details = [], $user = null) {
     $logDir = dirname(__DIR__) . '/logs';
     if (!file_exists($logDir)) {
         mkdir($logDir, 0700, true);
     }
     $logFile = $logDir . '/security.log';
+    $actor = $user;
+    if ($actor === null || $actor === '') {
+        $actor = $_SESSION['user']['email'] ?? 'guest';
+    }
     $entry = [
         'timestamp' => date('c'),
-        'user' => $_SESSION['user']['email'] ?? 'guest',
+        'user' => $actor,
         'event' => $event,
         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
         'details' => $details
