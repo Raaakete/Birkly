@@ -90,10 +90,10 @@ Always read plugin ai-context **after** confirming plugin is active — fieldtyp
 
 ### “Add e-commerce to my site”
 
-1. `read_birkly_docs` `plugins-overview` + `commerce`
+1. `read_birkly_docs` `plugins-overview` + `commerce-store-kit` (starter build) / `commerce` (depth)
 2. `list_plugins` — Commerce installed and active?
 3. If no: **Marketplace → birkly-commerce → Install → Enable**
-4. If yes: `commerce` playbook — catalog collection, variants, cart templates
+4. If yes: follow **`commerce-store-kit`** for collection + 3 products + checkout; use `commerce` for variants/subscriptions
 5. Payment connection: user completes **Commerce → Connections** in admin
 
 ### “Enable automation for Slack on new orders”

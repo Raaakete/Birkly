@@ -26,7 +26,7 @@ $coreTopics = [
     'templating', 'admin', 'plugins', 'ai', 'mcp',
     'sub-collections', 'site-building', 'web-project-patterns', 'playbooks-index',
     'ai-quality-guide', 'fieldtypes', 'collection-groups',
-    'content-model', 'public-forms', 'commerce', 'automation',
+    'content-model', 'public-forms', 'commerce', 'commerce-store-kit', 'automation',
     'agent-guide', 'mcp-setup', 'ai-connections', 'plugins-overview',
     'media', 'cms-pages', 'content-editor', 'settings-roles', 'user-management', 'events',
 ];
@@ -101,7 +101,16 @@ $catalog = birkly_ai_playbook_catalog();
 assert_true('playbook catalog has playbooks-index', isset($catalog['playbooks-index']));
 assert_true('playbook catalog has ai-quality-guide', isset($catalog['ai-quality-guide']));
 assert_true('playbook catalog has fieldtypes', isset($catalog['fieldtypes']));
+assert_true('playbook catalog has commerce-store-kit', isset($catalog['commerce-store-kit']));
 assert_true('playbook catalog count >= 20', count($catalog) >= 20);
+
+$storeKit = readBirklyDocsTopic('commerce-store-kit');
+assert_true(
+    'commerce-store-kit has step order for products + checkout',
+    is_array($storeKit)
+        && str_contains((string) ($storeKit['text'] ?? ''), 'weight_grams')
+        && str_contains((string) ($storeKit['text'] ?? ''), 'commerce-storefront.js')
+);
 
 $topics = birkly_ai_detect_playbook_topics('how do I connect Cursor via MCP', []);
 assert_true(

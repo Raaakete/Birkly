@@ -34,6 +34,7 @@ Read this when the user's request spans multiple areas or you are unsure which p
 | `ai-connections` | Built-in admin chat assistant, API keys, approvals |
 | `plugins-overview` | Install, enable, marketplace, official plugins |
 | `commerce` | Shop, cart, checkout, variants, subscriptions (plugin) |
+| `commerce-store-kit` | End-to-end store kit: products collection, 3 ship products, tax/ship settings, checkout page (P3-M2) |
 | `automation` | Workflows, triggers, webhooks, Slack/email (plugin) |
 | `events` | RSVP, tickets, calendar (plugin; needs Commerce for paid) |
 | `user-management` | Site registration, login, tiers, member content (plugin) |
@@ -72,7 +73,7 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 | Media | `media` | https://docs.birkly.com/01-admin/media-library.html |
 | Content editor | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
 | Marketplace | `plugins-overview` | https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
-| Commerce | `commerce` | https://docs.birkly.com/06-extensibility/plugins/commerce.html |
+| Commerce | `commerce`, `commerce-store-kit` | https://docs.birkly.com/06-extensibility/plugins/commerce.html |
 | User plugin | `user-management` | https://docs.birkly.com/06-extensibility/user-plugin.html |
 | Template language (full) | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
 | Platform overview | `admin` (context pack) | `docs/ai/birkly-context-pack.md` |
@@ -94,7 +95,8 @@ Structured content?
 └─ Rich article body → content-editor
 
 Sell / automate / members?
-├─ Products & checkout → plugins-overview → commerce
+├─ Seed a starter shop (collection + 3 products + checkout) → commerce-store-kit (+ commerce)
+├─ Products & checkout (concepts / variants / subscriptions) → plugins-overview → commerce
 ├─ When X then Y → automation
 ├─ Events & RSVP → events (+ commerce if paid)
 └─ Login & registration → user-management
@@ -109,7 +111,7 @@ AI connectivity?
 
 | Plugin | Depends on | Playbook |
 |--------|------------|----------|
-| Commerce | — | `commerce` |
+| Commerce | — | `commerce` (reference); `commerce-store-kit` (starter build) |
 | Automation | — | `automation` |
 | Events | Commerce (paid tickets) | `events` |
 | User Management | — | `user-management` |

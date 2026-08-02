@@ -4,6 +4,8 @@
 
 Use for: online shop, cart, checkout, product variants, subscriptions, digital/physical/event fulfillment.
 
+**Starter kit (P3-M2):** To seed a physical store (collection + 3 ship products + tax/ship guidance + checkout page), follow **`commerce-store-kit`** step order instead of improvising from this reference.
+
 ## Content model (two axes)
 
 1. **fulfillment** — after payment: `ship` | `deliver` | `register` | `none`
