@@ -358,7 +358,32 @@ if ($action === 'install') {
         exit;
     }
 
-    if (in_array($offerType, ['theme', 'template_pack'], true)) {
+    if ($offerType === 'template_pack') {
+        log_security_event('marketplace_template_pack_installed', [
+            'slug' => $slug,
+            'version' => $version,
+            'offer_type' => $offerType,
+            'installed_collections' => $install['installed_collections'] ?? [],
+            'free_install' => $freeInstall,
+            'user' => $_SESSION['user']['email'] ?? 'unknown',
+        ]);
+
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Site pack installed successfully',
+            'data' => [
+                'offer_type' => 'template_pack',
+                'version' => $install['version'] ?? $version,
+                'source' => $install['source'] ?? 'marketplace',
+                'installed_collections' => $install['installed_collections'] ?? [],
+                'project_site' => !empty($install['project_site']),
+                'path' => $install['path'] ?? '',
+            ],
+        ]);
+        exit;
+    }
+
+    if ($offerType === 'theme') {
         log_security_event('marketplace_theme_installed', [
             'theme' => $install['theme_id'] ?? '',
             'slug' => $slug,
