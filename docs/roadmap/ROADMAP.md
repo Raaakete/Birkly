@@ -27,13 +27,14 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**P52** complete 2026-08-01.
+**P52** complete 2026-08-01. **P53** Hub & site packs approved 2026-08-02 (see Ops planning).
 
-**Active phase:** **P53 — Hub & site packs** (approved 2026-08-02). Lead executes M0→M14; notify at M14.
+**Active phase:** **P54 — Commerce 0→1** (approved 2026-08-02). Lead executes **P0 only** until DoD; notify before P1.
 
-- Canonical plan + handoff live in private Ops: `Birkly-Marketplace/internal/planning/reviews/P53-hub-site-packs-plan.md` and `P53-lead-engineer-handoff.md`
-- Focus: rename Marketplace → **Hub** · site packs (`template_pack`) via shared install engine (Hub + manual ZIP) · required-plugins confirm · safe pack updates · provider pack publish
-- Distinct from paused/killed **P42 marketing template pack**
+- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P54-commerce-0-to-1-plan.md` · `P54-lead-engineer-handoff.md`
+- Plugin baseline **1.0.14**; pointer in plugin: `docs/COMMERCE-0-TO-1.md`
+- Focus: trust + IA (Connections→Settings, Analytics→Dashboard) · inventory ledger SoR · freeze `tax_lines` · stub honesty · then parity → providers → Birkly differentiation
+- Distinct from P53 Hub/site packs (separate track)
 
 Focus delivered (P52): PHP-native SSR (default for Birkly hosting), shared JS engine for the browser client, admin render settings, client loading helpers.
 
