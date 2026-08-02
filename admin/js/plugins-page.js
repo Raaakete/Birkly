@@ -410,19 +410,85 @@
         }
     }
 
-    async function executeMarketplaceInstall(slug, version, licenseKey, consentAccepted) {
-        var payload = {
+    function collectHubPackOptions() {
+        var offerTypeEl = document.getElementById('marketplace-install-offer-type');
+        var offerType = offerTypeEl ? offerTypeEl.value : 'plugin';
+        if (offerType !== 'template_pack') {
+            return {};
+        }
+        var modeEl = document.getElementById('marketplace-pack-overwrite-mode');
+        var demoEl = document.getElementById('marketplace-pack-include-demo');
+        return {
+            overwrite_mode: modeEl ? modeEl.value : 'merge',
+            include_demo_entries: demoEl && demoEl.checked ? 1 : 0,
+        };
+    }
+
+    function formatMissingPluginsList(missing) {
+        if (!missing || !missing.length) {
+            return '';
+        }
+        return missing.map(function (row) {
+            return '- ' + (row.ref || row.marketplace_slug || row.plugin_id || 'plugin');
+        }).join('\n');
+    }
+
+    async function confirmRequiredPluginsIfNeeded(err) {
+        if (!err || err.code !== 'required_plugins_confirmation_required') {
+            return false;
+        }
+        var missing = (err.data && err.data.missing_required_plugins) || [];
+        var list = formatMissingPluginsList(missing) || '- (required plugins)';
+        var message = t(
+            'confirm_required_plugins',
+            'This site pack requires plugins that are not installed:\n\n{list}\n\nInstall the missing required plugins, then continue with the pack?'
+        ).replace('{list}', list);
+        return BirklyFeedback.confirm(message);
+    }
+
+    async function executeMarketplaceInstall(slug, version, licenseKey, consentAccepted, packExtras) {
+        var payload = Object.assign({
             slug: slug,
             version: version,
             consent_accepted: consentAccepted ? 1 : 0,
-        };
+        }, collectHubPackOptions(), packExtras || {});
         if (licenseKey) {
             payload.license_key = licenseKey;
         }
-        await marketplaceApi('install', payload);
+        try {
+            await marketplaceApi('install', payload);
+        } catch (err) {
+            if (err.code === 'required_plugins_confirmation_required') {
+                var confirmed = await confirmRequiredPluginsIfNeeded(err);
+                if (!confirmed) {
+                    return;
+                }
+                payload.confirm_required_plugins = 1;
+                payload.consent_accepted = 1;
+                await marketplaceApi('install', payload);
+            } else if (err.code === 'consent_required' && err.data && err.data.consent) {
+                openInstallConsentModal({
+                    slug: err.data.consent.slug || slug,
+                    version: err.data.consent.version || version,
+                    licenseKey: licenseKey,
+                    manifest: err.data.consent.permissions_manifest || {},
+                    packRetry: true,
+                });
+                return;
+            } else {
+                throw err;
+            }
+        }
         closeMarketplaceInstallModal();
         closeInstallConsentModal();
-        reloadAfterPluginChange(t('install_success', 'Plugin installed successfully'), 'installed');
+        var offerTypeEl = document.getElementById('marketplace-install-offer-type');
+        var isPack = offerTypeEl && offerTypeEl.value === 'template_pack';
+        reloadAfterPluginChange(
+            isPack
+                ? t('site_pack_install_success', 'Site pack installed successfully')
+                : t('install_success', 'Plugin installed successfully'),
+            'installed'
+        );
     }
 
     async function ensureInstallConsentThenRun(slug, version, licenseKey) {
@@ -2287,8 +2353,14 @@
 
     function openMarketplaceInstall(slug, title, version, isFree) {
         var free = isFree === true || isFree === 'true';
+        var offer = findCachedOffer(slug) || {};
+        var offerType = offer.offer_type || 'plugin';
         document.getElementById('marketplace-install-slug').value = slug;
         document.getElementById('marketplace-install-version').value = version || '';
+        var offerTypeEl = document.getElementById('marketplace-install-offer-type');
+        if (offerTypeEl) {
+            offerTypeEl.value = offerType;
+        }
         document.getElementById('marketplace-install-title').textContent =
             t('install_from_marketplace', 'Install from Hub') + ': ' + title;
         document.getElementById('marketplace-install-summary').textContent =
@@ -2298,6 +2370,19 @@
         var licenseGroup = document.getElementById('marketplace-license-group');
         if (licenseGroup) {
             licenseGroup.hidden = free;
+        }
+
+        var packOptions = document.getElementById('marketplace-pack-options');
+        if (packOptions) {
+            packOptions.hidden = offerType !== 'template_pack';
+        }
+        var demoEl = document.getElementById('marketplace-pack-include-demo');
+        if (demoEl) {
+            demoEl.checked = false;
+        }
+        var modeEl = document.getElementById('marketplace-pack-overwrite-mode');
+        if (modeEl) {
+            modeEl.value = 'merge';
         }
 
         var modal = document.getElementById('marketplace-install-modal');
@@ -2362,8 +2447,76 @@
         switchTab('marketplace');
     }
 
-    function installFromFile() {
-        showMessage(t('manual_install_unavailable', 'Manual zip install is not available yet. Use the Hub tab with your license key.'), 'info');
+    async function installFromFile() {
+        var fileInput = document.getElementById('plugin-file');
+        var file = fileInput && fileInput.files && fileInput.files[0] ? fileInput.files[0] : null;
+        if (!file) {
+            showMessage(t('select_site_pack_zip', 'Choose a site pack ZIP file'), 'error');
+            return;
+        }
+
+        var modeEl = document.getElementById('pack-overwrite-mode');
+        var demoEl = document.getElementById('pack-include-demo-entries');
+        var overwriteMode = modeEl ? modeEl.value : 'merge';
+        var includeDemo = demoEl && demoEl.checked;
+
+        var btn = document.querySelector('[data-plugin-action="install-from-file"]');
+        if (btn) {
+            btn.disabled = true;
+        }
+
+        async function postPackZip(confirmRequired) {
+            var form = new FormData();
+            form.append('action', 'install_template_pack_zip');
+            form.append('_csrf', csrfToken());
+            form.append('pack_file', file);
+            form.append('overwrite_mode', overwriteMode);
+            form.append('include_demo_entries', includeDemo ? '1' : '0');
+            if (confirmRequired) {
+                form.append('confirm_required_plugins', '1');
+                form.append('consent_accepted', '1');
+            }
+            var response = await fetch(url('/api/marketplace.php'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: form,
+            });
+            var result = await parseMarketplaceResponse(response);
+            if (!response.ok || result.status === 'error') {
+                var err = new Error(result.message || 'Install failed');
+                err.code = result.code || '';
+                err.data = result.data || null;
+                throw err;
+            }
+            return result;
+        }
+
+        try {
+            await postPackZip(false);
+            closeInstallModal();
+            reloadAfterPluginChange(t('site_pack_upload_success', 'Site pack installed from ZIP'), 'installed');
+        } catch (err) {
+            if (err.code === 'required_plugins_confirmation_required') {
+                var confirmed = await confirmRequiredPluginsIfNeeded(err);
+                if (!confirmed) {
+                    showMessage(t('cancel', 'Cancelled'), 'info');
+                    return;
+                }
+                try {
+                    await postPackZip(true);
+                    closeInstallModal();
+                    reloadAfterPluginChange(t('site_pack_upload_success', 'Site pack installed from ZIP'), 'installed');
+                } catch (err2) {
+                    showMessage(err2.message, 'error');
+                }
+                return;
+            }
+            showMessage(err.message, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+            }
+        }
     }
 
     function initMarketplaceFilters() {
