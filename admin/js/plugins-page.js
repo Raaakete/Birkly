@@ -287,12 +287,12 @@
     async function parseMarketplaceResponse(response) {
         var body = await response.text();
         if (!body || !body.trim()) {
-            throw new Error(t('marketplace_empty_response', 'Marketplace request failed (empty server response). Try again or check server logs.'));
+            throw new Error(t('marketplace_empty_response', 'Hub request failed (empty server response). Try again or check server logs.'));
         }
         try {
             return JSON.parse(body);
         } catch (parseErr) {
-            throw new Error(t('marketplace_invalid_response', 'Marketplace request failed (invalid server response). Try again or check server logs.'));
+            throw new Error(t('marketplace_invalid_response', 'Hub request failed (invalid server response). Try again or check server logs.'));
         }
     }
 
@@ -492,7 +492,7 @@
             return t('marketplace_type_theme', 'Theme');
         }
         if (offerType === 'template_pack') {
-            return t('marketplace_type_template', 'Template pack');
+            return t('marketplace_type_template', 'Site pack');
         }
         if (offerType === 'fieldtype') {
             return t('marketplace_type_fieldtype', 'Fieldtype');
@@ -1687,9 +1687,9 @@
             grid.innerHTML =
                 '<div class="empty-state plugins-empty-state">' +
                 '<p>' + escapeHtml(t('no_plugins_installed', 'No plugins installed yet.')) + '</p>' +
-                '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse the Marketplace tab to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
+                '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse the Hub tab to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
                 '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
-                escapeHtml(t('browse_marketplace', 'Browse Marketplace')) +
+                escapeHtml(t('browse_marketplace', 'Browse Hub')) +
                 '</button>' +
                 '</div>';
             return;
@@ -1734,7 +1734,7 @@
                 (plugin.description ? '<p class="plugin-description">' + escapeHtml(plugin.description) + '</p>' : '') +
                 '<div class="plugin-meta">' +
                 '<span class="plugin-version">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-                (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="marketplace-tag">Marketplace</span>' : '') +
+                (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="marketplace-tag">Hub</span>' : '') +
                 (plugin.license_ref ? '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
                 reviewChip +
                 '</div>' +
@@ -1909,7 +1909,7 @@
         if (count > 0) {
             showMessage(count + ' plugin update(s) available', 'info');
         } else {
-            showMessage('All marketplace plugins are up to date', 'success');
+            showMessage('All Hub plugins are up to date', 'success');
         }
     }
 
@@ -2290,7 +2290,7 @@
         document.getElementById('marketplace-install-slug').value = slug;
         document.getElementById('marketplace-install-version').value = version || '';
         document.getElementById('marketplace-install-title').textContent =
-            t('install_from_marketplace', 'Install from Marketplace') + ': ' + title;
+            t('install_from_marketplace', 'Install from Hub') + ': ' + title;
         document.getElementById('marketplace-install-summary').textContent =
             version ? 'Latest version: v' + version : 'Latest release will be installed.';
         document.getElementById('marketplace-license-key').value = '';
@@ -2363,7 +2363,7 @@
     }
 
     function installFromFile() {
-        showMessage(t('manual_install_unavailable', 'Manual zip install is not available yet. Use the Marketplace tab with your license key.'), 'info');
+        showMessage(t('manual_install_unavailable', 'Manual zip install is not available yet. Use the Hub tab with your license key.'), 'info');
     }
 
     function initMarketplaceFilters() {
