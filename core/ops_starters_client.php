@@ -424,11 +424,28 @@ function birkly_ops_starters_install_probe(string $projectRoot, string $starterI
 }
 
 /**
- * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string,errors?:list<string>}
+ * Extract Ops starter / site-pack zip into content/collections + project/.
+ *
+ * Options (P53-M6):
+ * - include_demo_entries (bool, default true): when false, skip collection entry JSON files
+ * - zip_prefix (string): optional wrapper directory prefix ending with /
+ *
+ * Default include_demo_entries=true preserves onboarding / Ops starter behavior.
+ *
+ * @param array<string,mixed> $options
+ * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string,errors?:list<string>,include_demo_entries?:bool}
  */
-function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): array
+function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, array $options = []): array
 {
     $errors = [];
+    $includeDemoEntries = array_key_exists('include_demo_entries', $options)
+        ? (bool) $options['include_demo_entries']
+        : true;
+    $zipPrefix = (string) ($options['zip_prefix'] ?? '');
+    if ($zipPrefix !== '' && !str_ends_with($zipPrefix, '/')) {
+        $zipPrefix .= '/';
+    }
+
     $collectionsReady = birkly_ensure_content_collections_dir($projectRoot);
     if (!$collectionsReady['ok']) {
         return [
@@ -437,12 +454,24 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
             'project_site' => false,
             'message' => $collectionsReady['error'] ?? 'Collections directory is not ready',
             'errors' => [$collectionsReady['error'] ?? 'Collections directory is not ready'],
+            'include_demo_entries' => $includeDemoEntries,
         ];
     }
 
     $zip = new ZipArchive();
     if ($zip->open($zipPath) !== true) {
-        return ['success' => false, 'installed_collections' => [], 'project_site' => false, 'message' => 'Cannot open starter zip'];
+        return [
+            'success' => false,
+            'installed_collections' => [],
+            'project_site' => false,
+            'message' => 'Cannot open starter zip',
+            'include_demo_entries' => $includeDemoEntries,
+        ];
+    }
+
+    // Auto-detect wrapper prefix when not provided (manifest.json in a single top folder).
+    if ($zipPrefix === '' && function_exists('birkly_marketplace_template_pack_zip_prefix')) {
+        $zipPrefix = birkly_marketplace_template_pack_zip_prefix($zip);
     }
 
     $contentRoot = $collectionsReady['path'];
@@ -453,22 +482,51 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
 
     $installed = [];
     $hasProject = false;
+    $skippedEntries = 0;
 
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = (string) $zip->getNameIndex($i);
-        if ($name === 'manifest.json' || str_ends_with($name, '/')) {
+        $normalized = str_replace('\\', '/', $name);
+        if (str_contains($normalized, '..')) {
+            $errors[] = 'Unsafe path in zip: ' . $normalized;
+            continue;
+        }
+        if (str_ends_with($normalized, '/')) {
             continue;
         }
 
-        if (str_starts_with($name, 'collections/')) {
-            $relative = substr($name, strlen('collections/'));
+        $relativeName = $zipPrefix !== '' && str_starts_with($normalized, $zipPrefix)
+            ? substr($normalized, strlen($zipPrefix))
+            : $normalized;
+        $relativeName = ltrim($relativeName, '/');
+        if ($relativeName === '' || $relativeName === 'manifest.json') {
+            continue;
+        }
+
+        if (str_starts_with($relativeName, 'collections/')) {
+            $relative = substr($relativeName, strlen('collections/'));
             if ($relative === '' || str_contains($relative, '..')) {
                 continue;
             }
+            // P53-M6: demo/sample entries are opt-in — skip collections/*/entries/**
+            if (!$includeDemoEntries && preg_match('#(^|/)entries(/|$)#', $relative)) {
+                $skippedEntries++;
+                $slug = explode('/', $relative, 2)[0];
+                if ($slug !== '') {
+                    $installed[$slug] = true;
+                }
+                continue;
+            }
             $dest = $contentRoot . '/' . $relative;
+            $realContentRoot = realpath($contentRoot) ?: $contentRoot;
             $destDir = dirname($dest);
             if (!is_dir($destDir) && !@mkdir($destDir, 0775, true)) {
                 $errors[] = 'Cannot create directory ' . $destDir;
+                continue;
+            }
+            $resolvedDest = realpath($destDir);
+            if ($resolvedDest === false || !str_starts_with($resolvedDest, rtrim($realContentRoot, '/\\'))) {
+                $errors[] = 'Refusing path outside collections: ' . $relative;
                 continue;
             }
             $contents = $zip->getFromIndex($i);
@@ -485,8 +543,8 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
             continue;
         }
 
-        if (str_starts_with($name, 'project/')) {
-            $relative = substr($name, strlen('project/'));
+        if (str_starts_with($relativeName, 'project/')) {
+            $relative = substr($relativeName, strlen('project/'));
             if ($relative === '' || str_contains($relative, '..')) {
                 continue;
             }
@@ -494,6 +552,12 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
             $destDir = dirname($dest);
             if (!is_dir($destDir) && !@mkdir($destDir, 0775, true)) {
                 $errors[] = 'Cannot create directory ' . $destDir;
+                continue;
+            }
+            $realProjectRoot = realpath($projectSiteRoot) ?: $projectSiteRoot;
+            $resolvedDest = realpath($destDir);
+            if ($resolvedDest === false || !str_starts_with($resolvedDest, rtrim($realProjectRoot, '/\\'))) {
+                $errors[] = 'Refusing path outside project: ' . $relative;
                 continue;
             }
             $contents = $zip->getFromIndex($i);
@@ -518,6 +582,8 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot): a
         'success' => $success,
         'installed_collections' => $installedSlugs,
         'project_site' => $hasProject,
+        'include_demo_entries' => $includeDemoEntries,
+        'skipped_entry_files' => $skippedEntries,
         'message' => $success
             ? 'Starter template installed from Ops'
             : ($errors !== []
