@@ -29,7 +29,7 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **P52** complete 2026-08-01. **P53** Hub & site packs approved 2026-08-02 (see Ops planning).
 
-**Active phase:** **P54 — Commerce 0→1** (approved 2026-08-02). Lead executes **P0 only** until DoD; notify before P1.
+**Active phase:** **P54 — Commerce 0→1** (**complete** 2026-08-02). Commerce plugin **1.0.29**; Automation recipes **1.1.7**; AI topic `commerce-store-kit`.
 
 - Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P54-commerce-0-to-1-plan.md` · `P54-lead-engineer-handoff.md`
 - Plugin baseline **1.0.14**; pointer in plugin: `docs/COMMERCE-0-TO-1.md`
