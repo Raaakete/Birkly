@@ -426,14 +426,15 @@ function birkly_ops_starters_install_probe(string $projectRoot, string $starterI
 /**
  * Extract Ops starter / site-pack zip into content/collections + project/.
  *
- * Options (P53-M6):
+ * Options (P53-M6 / M7):
  * - include_demo_entries (bool, default true): when false, skip collection entry JSON files
  * - zip_prefix (string): optional wrapper directory prefix ending with /
+ * - skip_pack_paths (list<string>): pack-relative paths to leave on disk (e.g. project/index.html)
  *
  * Default include_demo_entries=true preserves onboarding / Ops starter behavior.
  *
  * @param array<string,mixed> $options
- * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string,errors?:list<string>,include_demo_entries?:bool}
+ * @return array{success:bool,installed_collections:list<string>,project_site:bool,message:string,errors?:list<string>,include_demo_entries?:bool,written_paths?:list<string>,skipped_paths?:list<string>}
  */
 function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, array $options = []): array
 {
@@ -444,6 +445,16 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
     $zipPrefix = (string) ($options['zip_prefix'] ?? '');
     if ($zipPrefix !== '' && !str_ends_with($zipPrefix, '/')) {
         $zipPrefix .= '/';
+    }
+    $skipPackPaths = [];
+    foreach ((array) ($options['skip_pack_paths'] ?? []) as $skipPath) {
+        if (!is_string($skipPath) || $skipPath === '') {
+            continue;
+        }
+        $normalizedSkip = ltrim(str_replace('\\', '/', $skipPath), '/');
+        if ($normalizedSkip !== '' && !str_contains($normalizedSkip, '..')) {
+            $skipPackPaths[$normalizedSkip] = true;
+        }
     }
 
     $collectionsReady = birkly_ensure_content_collections_dir($projectRoot);
@@ -483,6 +494,8 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
     $installed = [];
     $hasProject = false;
     $skippedEntries = 0;
+    $writtenPaths = [];
+    $skippedPaths = [];
 
     for ($i = 0; $i < $zip->numFiles; $i++) {
         $name = (string) $zip->getNameIndex($i);
@@ -500,6 +513,20 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
             : $normalized;
         $relativeName = ltrim($relativeName, '/');
         if ($relativeName === '' || $relativeName === 'manifest.json') {
+            continue;
+        }
+
+        if (isset($skipPackPaths[$relativeName])) {
+            $skippedPaths[] = $relativeName;
+            if (str_starts_with($relativeName, 'collections/')) {
+                $slug = explode('/', substr($relativeName, strlen('collections/')), 2)[0] ?? '';
+                if ($slug !== '') {
+                    $installed[$slug] = true;
+                }
+            }
+            if (str_starts_with($relativeName, 'project/')) {
+                $hasProject = true;
+            }
             continue;
         }
 
@@ -540,6 +567,7 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
             }
             $slug = explode('/', $relative, 2)[0];
             $installed[$slug] = true;
+            $writtenPaths[] = $relativeName;
             continue;
         }
 
@@ -570,6 +598,7 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
                 continue;
             }
             $hasProject = true;
+            $writtenPaths[] = $relativeName;
         }
     }
 
@@ -584,6 +613,8 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
         'project_site' => $hasProject,
         'include_demo_entries' => $includeDemoEntries,
         'skipped_entry_files' => $skippedEntries,
+        'written_paths' => array_values(array_unique($writtenPaths)),
+        'skipped_paths' => array_values(array_unique($skippedPaths)),
         'message' => $success
             ? 'Starter template installed from Ops'
             : ($errors !== []

@@ -1,6 +1,6 @@
 <?php
 /**
- * P53 Wave 1 — Shared site-pack install engine (Hub + manual ZIP).
+ * P53 Wave 1–2 — Shared site-pack install engine (Hub + manual ZIP).
  *
  * Overwrite modes (P53-D8):
  * - replace: backup (if dirty) then remove pack-targeted collections + project overlay, then extract
@@ -9,6 +9,8 @@
  *
  * Demo entries (P53-D5): schema + project always; entry JSON only when include_demo_entries
  * Required plugins (P53-D4): missing required_plugins block until confirm; recommended warn-only
+ * Safe updates (P53-D6 / M7): track per-file hashes; user-touched project/ + entry content skip
+ * Reset / replace-all (P53-M8): per-file restore; rare full replace with backup + confirm
  */
 
 declare(strict_types=1);
@@ -44,7 +46,416 @@ function birkly_marketplace_api_pack_options(array $input): array
         'install_missing_plugins' => !array_key_exists('install_missing_plugins', $input)
             || !empty($input['install_missing_plugins']),
         'consent_accepted' => !empty($input['consent_accepted']) || !empty($input['consentAccepted']),
+        'safe_update' => !empty($input['safe_update']) || !empty($input['safeUpdate']),
+        'force_overwrite_user_files' => !empty($input['force_overwrite_user_files']) || !empty($input['forceOverwriteUserFiles']),
+        'confirm_replace_all' => !empty($input['confirm_replace_all']) || !empty($input['confirmReplaceAll']),
     ];
+}
+
+/**
+ * Whether a pack-relative path is protected from silent overwrite (P53-D6).
+ */
+function birkly_marketplace_template_pack_is_protected_path(string $relativePath): bool
+{
+    $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+    if ($relativePath === '' || str_contains($relativePath, '..')) {
+        return false;
+    }
+    if (str_starts_with($relativePath, 'project/')) {
+        return true;
+    }
+    // Entry content only — schema/collection.json may always update.
+    return (bool) preg_match('#^collections/[^/]+/entries/#', $relativePath);
+}
+
+/**
+ * Resolve a pack-relative path to an absolute disk path under the site root.
+ */
+function birkly_marketplace_template_pack_disk_path(string $projectRoot, string $packRelative): ?string
+{
+    $packRelative = ltrim(str_replace('\\', '/', $packRelative), '/');
+    if ($packRelative === '' || str_contains($packRelative, '..')) {
+        return null;
+    }
+    if (!function_exists('birkly_content_collections_dir')) {
+        require_once dirname(__DIR__) . '/ops_starters_client.php';
+    }
+    if (!function_exists('birkly_public_site_dir')) {
+        require_once dirname(__DIR__) . '/project_site.php';
+    }
+
+    if (str_starts_with($packRelative, 'project/')) {
+        $rel = substr($packRelative, strlen('project/'));
+        if ($rel === '') {
+            return null;
+        }
+        return rtrim($projectRoot, '/\\') . '/' . birkly_public_site_dir() . '/' . $rel;
+    }
+    if (str_starts_with($packRelative, 'collections/')) {
+        $rel = substr($packRelative, strlen('collections/'));
+        if ($rel === '') {
+            return null;
+        }
+        return birkly_content_collections_dir($projectRoot) . '/' . $rel;
+    }
+
+    return null;
+}
+
+/**
+ * Enumerate installable file paths inside a pack zip (collections/ + project/).
+ *
+ * @return list<string>
+ */
+function birkly_marketplace_template_pack_enumerate_zip_files(string $zipPath, string $prefix = ''): array
+{
+    if (!class_exists('ZipArchive') || !is_file($zipPath)) {
+        return [];
+    }
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath) !== true) {
+        return [];
+    }
+    if ($prefix === '' && function_exists('birkly_marketplace_template_pack_zip_prefix')) {
+        $prefix = birkly_marketplace_template_pack_zip_prefix($zip);
+    }
+    if ($prefix !== '' && !str_ends_with($prefix, '/')) {
+        $prefix .= '/';
+    }
+
+    $files = [];
+    for ($i = 0; $i < $zip->numFiles; $i++) {
+        $name = $zip->getNameIndex($i);
+        if (!is_string($name) || $name === '') {
+            continue;
+        }
+        $normalized = str_replace('\\', '/', $name);
+        if (str_contains($normalized, '..') || str_ends_with($normalized, '/')) {
+            continue;
+        }
+        if (function_exists('birkly_marketplace_should_skip_zip_entry') && birkly_marketplace_should_skip_zip_entry($normalized)) {
+            continue;
+        }
+        $relative = $prefix !== '' && str_starts_with($normalized, $prefix)
+            ? substr($normalized, strlen($prefix))
+            : $normalized;
+        $relative = ltrim($relative, '/');
+        if ($relative === '' || $relative === 'manifest.json') {
+            continue;
+        }
+        if (str_starts_with($relative, 'collections/') || str_starts_with($relative, 'project/')) {
+            $files[] = $relative;
+        }
+    }
+    $zip->close();
+    sort($files);
+    return array_values(array_unique($files));
+}
+
+/**
+ * Read pack-relative file bytes from a zip.
+ */
+function birkly_marketplace_template_pack_zip_file_contents(string $zipPath, string $packRelative, string $prefix = ''): ?string
+{
+    $packRelative = ltrim(str_replace('\\', '/', $packRelative), '/');
+    if ($packRelative === '' || str_contains($packRelative, '..') || !is_file($zipPath)) {
+        return null;
+    }
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath) !== true) {
+        return null;
+    }
+    if ($prefix === '') {
+        $prefix = birkly_marketplace_template_pack_zip_prefix($zip);
+    }
+    if ($prefix !== '' && !str_ends_with($prefix, '/')) {
+        $prefix .= '/';
+    }
+    $raw = $zip->getFromName($prefix . $packRelative);
+    if ($raw === false) {
+        $raw = $zip->getFromName(ltrim($prefix . $packRelative, './'));
+    }
+    $zip->close();
+    return is_string($raw) ? $raw : null;
+}
+
+/**
+ * Build sha256 map for protected pack files present on disk after install.
+ *
+ * @param list<string>|null $onlyPaths limit to these pack-relative paths
+ * @return array<string,string>
+ */
+function birkly_marketplace_compute_template_pack_file_hashes(
+    string $zipPath,
+    string $projectRoot,
+    string $prefix = '',
+    ?array $onlyPaths = null
+): array {
+    $files = birkly_marketplace_template_pack_enumerate_zip_files($zipPath, $prefix);
+    $allow = null;
+    if ($onlyPaths !== null) {
+        $allow = [];
+        foreach ($onlyPaths as $p) {
+            if (is_string($p) && $p !== '') {
+                $allow[ltrim(str_replace('\\', '/', $p), '/')] = true;
+            }
+        }
+    }
+
+    $hashes = [];
+    foreach ($files as $rel) {
+        if (!birkly_marketplace_template_pack_is_protected_path($rel)) {
+            continue;
+        }
+        if ($allow !== null && !isset($allow[$rel])) {
+            continue;
+        }
+        $disk = birkly_marketplace_template_pack_disk_path($projectRoot, $rel);
+        if ($disk === null || !is_file($disk)) {
+            // Fall back to zip content hash when file was just written or skipped demo.
+            $contents = birkly_marketplace_template_pack_zip_file_contents($zipPath, $rel, $prefix);
+            if ($contents === null) {
+                continue;
+            }
+            $hashes[$rel] = hash('sha256', $contents);
+            continue;
+        }
+        $hashes[$rel] = hash_file('sha256', $disk) ?: hash('sha256', (string) file_get_contents($disk));
+    }
+    return $hashes;
+}
+
+/**
+ * Paths whose on-disk content differs from the recorded vendor hash (user-touched).
+ *
+ * @param array<string,string> $recordedHashes
+ * @return list<string>
+ */
+function birkly_marketplace_template_pack_user_touched_paths(string $projectRoot, array $recordedHashes): array
+{
+    $touched = [];
+    foreach ($recordedHashes as $rel => $expected) {
+        if (!is_string($rel) || $rel === '' || !is_string($expected) || $expected === '') {
+            continue;
+        }
+        if (!birkly_marketplace_template_pack_is_protected_path($rel)) {
+            continue;
+        }
+        $disk = birkly_marketplace_template_pack_disk_path($projectRoot, $rel);
+        if ($disk === null || !is_file($disk)) {
+            continue;
+        }
+        $actual = hash_file('sha256', $disk) ?: '';
+        if ($actual !== '' && !hash_equals($expected, $actual)) {
+            $touched[] = $rel;
+        }
+    }
+    sort($touched);
+    return $touched;
+}
+
+/**
+ * Plan safe update skips for protected files (P53-M7).
+ *
+ * @param array<string,string> $recordedHashes
+ * @return array{skip:list<string>,update:list<string>,missing:list<string>}
+ */
+function birkly_marketplace_plan_safe_template_pack_update(
+    string $zipPath,
+    string $projectRoot,
+    array $recordedHashes,
+    string $prefix = '',
+    bool $includeDemoEntries = false
+): array {
+    $files = birkly_marketplace_template_pack_enumerate_zip_files($zipPath, $prefix);
+    $skip = [];
+    $update = [];
+    $missing = [];
+
+    foreach ($files as $rel) {
+        if (!birkly_marketplace_template_pack_is_protected_path($rel)) {
+            continue;
+        }
+        if (!$includeDemoEntries && preg_match('#^collections/[^/]+/entries/#', $rel)) {
+            continue;
+        }
+        $disk = birkly_marketplace_template_pack_disk_path($projectRoot, $rel);
+        if ($disk === null || !is_file($disk)) {
+            $missing[] = $rel;
+            $update[] = $rel;
+            continue;
+        }
+        $expected = (string) ($recordedHashes[$rel] ?? '');
+        if ($expected === '') {
+            // No prior hash — treat as updatable (first tracked install of this file).
+            $update[] = $rel;
+            continue;
+        }
+        $actual = hash_file('sha256', $disk) ?: '';
+        if ($actual !== '' && !hash_equals($expected, $actual)) {
+            $skip[] = $rel;
+            continue;
+        }
+        $update[] = $rel;
+    }
+
+    return [
+        'skip' => array_values(array_unique($skip)),
+        'update' => array_values(array_unique($update)),
+        'missing' => array_values(array_unique($missing)),
+    ];
+}
+
+/**
+ * @return array<string,mixed>
+ */
+function birkly_marketplace_get_installed_template_packs(): array
+{
+    require_once dirname(__DIR__, 2) . '/api/storage.php';
+    $storage = new Storage(birkly_marketplace_settings_dir());
+    $data = $storage->read('installed_template_packs.json') ?? [];
+    return is_array($data) ? $data : [];
+}
+
+/**
+ * @return array<string,mixed>|null
+ */
+function birkly_marketplace_get_installed_template_pack(string $slug): ?array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return null;
+    }
+    $all = birkly_marketplace_get_installed_template_packs();
+    if (isset($all[$slug]) && is_array($all[$slug])) {
+        return $all[$slug];
+    }
+    // Also match by pack_id when Hub slug differs.
+    foreach ($all as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        if ((string) ($row['pack_id'] ?? '') === $slug || (string) ($row['marketplace_slug'] ?? '') === $slug) {
+            return $row;
+        }
+    }
+    return null;
+}
+
+function birkly_marketplace_template_pack_cache_dir(): string
+{
+    $dir = rtrim(birkly_marketplace_settings_dir(), '/\\') . '/template_pack_cache';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir;
+}
+
+/**
+ * Keep a local copy of the installed pack zip for reset / replace-all (P53-M8).
+ */
+function birkly_marketplace_cache_template_pack_zip(string $slug, string $version, string $zipPath): ?string
+{
+    $slug = preg_replace('/[^a-z0-9_-]/i', '', $slug) ?? '';
+    $version = preg_replace('/[^a-zA-Z0-9._+-]/', '', $version) ?? '';
+    if ($slug === '' || $version === '' || !is_file($zipPath)) {
+        return null;
+    }
+    $dir = birkly_marketplace_template_pack_cache_dir() . '/' . $slug;
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+        return null;
+    }
+    $dest = $dir . '/' . $version . '.zip';
+    if (!@copy($zipPath, $dest)) {
+        return null;
+    }
+    $latest = $dir . '/latest.zip';
+    @copy($dest, $latest);
+    return $dest;
+}
+
+function birkly_marketplace_cached_template_pack_zip(string $slug, ?string $version = null): ?string
+{
+    $slug = preg_replace('/[^a-z0-9_-]/i', '', $slug) ?? '';
+    if ($slug === '') {
+        return null;
+    }
+    $dir = birkly_marketplace_template_pack_cache_dir() . '/' . $slug;
+    if ($version !== null && $version !== '') {
+        $version = preg_replace('/[^a-zA-Z0-9._+-]/', '', $version) ?? '';
+        $path = $dir . '/' . $version . '.zip';
+        return is_file($path) ? $path : null;
+    }
+    $latest = $dir . '/latest.zip';
+    if (is_file($latest)) {
+        return $latest;
+    }
+    $installed = birkly_marketplace_get_installed_template_pack($slug);
+    if ($installed) {
+        $ver = (string) ($installed['version'] ?? '');
+        if ($ver !== '') {
+            $path = $dir . '/' . preg_replace('/[^a-zA-Z0-9._+-]/', '', $ver) . '.zip';
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Merge new hashes into registry hashes: written paths update; skipped keep prior vendor hash.
+ *
+ * @param array<string,string> $previous
+ * @param array<string,string> $fromZip
+ * @param list<string> $writtenPaths
+ * @param list<string> $skippedPaths
+ * @return array<string,string>
+ */
+function birkly_marketplace_merge_template_pack_file_hashes(
+    array $previous,
+    array $fromZip,
+    array $writtenPaths,
+    array $skippedPaths
+): array {
+    $merged = $previous;
+    $written = [];
+    foreach ($writtenPaths as $p) {
+        if (is_string($p) && $p !== '') {
+            $written[ltrim(str_replace('\\', '/', $p), '/')] = true;
+        }
+    }
+    $skipped = [];
+    foreach ($skippedPaths as $p) {
+        if (is_string($p) && $p !== '') {
+            $skipped[ltrim(str_replace('\\', '/', $p), '/')] = true;
+        }
+    }
+    foreach ($fromZip as $rel => $hash) {
+        if (!is_string($rel) || !is_string($hash) || $hash === '') {
+            continue;
+        }
+        if (!birkly_marketplace_template_pack_is_protected_path($rel)) {
+            continue;
+        }
+        if (isset($skipped[$rel])) {
+            if (isset($previous[$rel])) {
+                $merged[$rel] = $previous[$rel];
+            }
+            continue;
+        }
+        // Refresh hash when we wrote the file, or when it is newly tracked.
+        if (isset($written[$rel]) || !isset($previous[$rel])) {
+            $merged[$rel] = $hash;
+        }
+    }
+    foreach ($skipped as $rel => $_true) {
+        if (isset($previous[$rel])) {
+            $merged[$rel] = $previous[$rel];
+        }
+    }
+    ksort($merged);
+    return $merged;
 }
 
 function birkly_marketplace_normalize_overwrite_mode(string $mode, string $default = 'merge'): string
@@ -622,6 +1033,11 @@ function birkly_marketplace_install_missing_pack_plugins(array $missing, bool $c
  * - slug / version: registry keys
  * - project_root: override
  * - skip_backup: bool (tests)
+ * - safe_update: bool — skip user-touched project/ + entry content (P53-M7)
+ * - force_overwrite_user_files: bool — disable safe skip even when hashes exist
+ *
+ * Safe update auto-enables for merge when this pack is already registered with file hashes
+ * (unless force_overwrite_user_files). Replace mode always overwrites after backup wipe.
  *
  * @param array<string,mixed> $options
  * @return array<string,mixed>
@@ -645,6 +1061,8 @@ function birkly_marketplace_install_template_pack_from_zip(string $zipPath, arra
     $source = (string) ($options['source'] ?? 'upload');
     $slug = trim((string) ($options['slug'] ?? ''));
     $version = trim((string) ($options['version'] ?? ''));
+    $forceOverwriteUser = !empty($options['force_overwrite_user_files']);
+    $safeUpdateOpt = !empty($options['safe_update']);
 
     $preflight = birkly_marketplace_preflight_template_pack($zipPath, [
         'project_root' => $projectRoot,
@@ -674,12 +1092,32 @@ function birkly_marketplace_install_template_pack_from_zip(string $zipPath, arra
         return ['ok' => false, 'errors' => $validation['errors'] ?? ['Invalid pack'], 'code' => 'invalid_pack'];
     }
     $manifest = $validation['manifest'] ?? [];
+    $zipPrefix = (string) ($validation['prefix'] ?? '');
     if ($slug === '') {
         $slug = (string) ($manifest['id'] ?? 'site-pack');
     }
     if ($version === '') {
         $version = (string) ($manifest['version'] ?? '0.0.0');
     }
+
+    $existing = birkly_marketplace_get_installed_template_pack($slug);
+    if ($existing === null && (string) ($manifest['id'] ?? '') !== '' && (string) ($manifest['id'] ?? '') !== $slug) {
+        $existing = birkly_marketplace_get_installed_template_pack((string) $manifest['id']);
+    }
+    $previousHashes = [];
+    if (is_array($existing['file_hashes'] ?? null)) {
+        foreach ($existing['file_hashes'] as $k => $v) {
+            if (is_string($k) && is_string($v) && $v !== '') {
+                $previousHashes[$k] = $v;
+            }
+        }
+    }
+    // P53-D6: when prior vendor hashes exist, merge updates skip user-touched files
+    // unless explicitly forced. Callers may also pass safe_update for clarity.
+    $useSafeUpdate = !$forceOverwriteUser
+        && $overwriteMode === 'merge'
+        && $previousHashes !== []
+        && ($safeUpdateOpt || $previousHashes !== []);
 
     $missingRequired = $preflight['missing_required_plugins'] ?? [];
     if ($missingRequired !== [] && !$confirmRequired) {
@@ -748,9 +1186,29 @@ function birkly_marketplace_install_template_pack_from_zip(string $zipPath, arra
         ];
     }
 
+    // Replace wipes targets — hashes from previous install no longer apply to disk.
+    if ($overwriteMode === 'replace') {
+        $useSafeUpdate = false;
+        $previousHashes = [];
+    }
+
+    $skipPaths = [];
+    $safePlan = null;
+    if ($useSafeUpdate) {
+        $safePlan = birkly_marketplace_plan_safe_template_pack_update(
+            $zipPath,
+            $projectRoot,
+            $previousHashes,
+            $zipPrefix,
+            $includeDemo
+        );
+        $skipPaths = $safePlan['skip'] ?? [];
+    }
+
     $extract = birkly_ops_extract_starter_zip($zipPath, $projectRoot, [
         'include_demo_entries' => $includeDemo,
-        'zip_prefix' => (string) ($validation['prefix'] ?? ''),
+        'zip_prefix' => $zipPrefix,
+        'skip_pack_paths' => $skipPaths,
     ]);
 
     if (empty($extract['success'])) {
@@ -767,11 +1225,43 @@ function birkly_marketplace_install_template_pack_from_zip(string $zipPath, arra
             'code' => 'extract_failed',
             'backup_path' => $prepare['backup_path'] ?? null,
             'preflight' => $preflight,
+            'skipped_files' => $skipPaths,
         ];
     }
 
     $installedCollections = array_values($extract['installed_collections'] ?? []);
     $projectSite = !empty($extract['project_site']);
+    $writtenPaths = array_values($extract['written_paths'] ?? []);
+    $skippedFromExtract = array_values($extract['skipped_paths'] ?? $skipPaths);
+
+    // Hashes for protected files from this zip; merge with prior for skipped user-touched files.
+    $zipHashes = birkly_marketplace_compute_template_pack_file_hashes(
+        $zipPath,
+        $projectRoot,
+        $zipPrefix,
+        null
+    );
+    // Only assign zip hashes for paths that exist on disk after extract (respect demo opt-out).
+    $diskAwareHashes = [];
+    foreach ($zipHashes as $rel => $hash) {
+        if (!$includeDemo && preg_match('#^collections/[^/]+/entries/#', $rel)) {
+            continue;
+        }
+        $disk = birkly_marketplace_template_pack_disk_path($projectRoot, $rel);
+        if ($disk !== null && is_file($disk)) {
+            $diskAwareHashes[$rel] = hash_file('sha256', $disk) ?: $hash;
+        } elseif (in_array($rel, $skippedFromExtract, true) && isset($previousHashes[$rel])) {
+            $diskAwareHashes[$rel] = $previousHashes[$rel];
+        }
+    }
+    $fileHashes = birkly_marketplace_merge_template_pack_file_hashes(
+        $previousHashes,
+        $diskAwareHashes,
+        $writtenPaths,
+        $skippedFromExtract
+    );
+
+    $cachedZip = birkly_marketplace_cache_template_pack_zip($slug, $version, $zipPath);
 
     birkly_marketplace_save_template_pack_source(
         $slug,
@@ -786,6 +1276,10 @@ function birkly_marketplace_install_template_pack_from_zip(string $zipPath, arra
             'pack_id' => (string) ($manifest['id'] ?? $slug),
             'backup_path' => $prepare['backup_path'] ?? null,
             'required_plugins_installed' => $pluginsInstalled,
+            'file_hashes' => $fileHashes,
+            'safe_update' => $useSafeUpdate,
+            'skipped_files' => $skippedFromExtract,
+            'cached_zip' => $cachedZip,
         ]
     );
 
@@ -805,5 +1299,243 @@ function birkly_marketplace_install_template_pack_from_zip(string $zipPath, arra
         'path' => rtrim($projectRoot, '/\\') . '/' . (function_exists('birkly_public_site_dir') ? birkly_public_site_dir() : 'project'),
         'errors' => [],
         'preflight' => $preflight,
+        'safe_update' => $useSafeUpdate,
+        'skipped_files' => $skippedFromExtract,
+        'updated_files' => $writtenPaths,
+        'file_hashes' => $fileHashes,
+        'safe_plan' => $safePlan,
+    ];
+}
+
+/**
+ * Resolve a pack zip for reset/replace: explicit path, cache, or marketplace download.
+ *
+ * @param array<string,mixed> $options
+ * @return array{ok:bool,path?:string,cleanup?:bool,error?:string,code?:string,version?:string}
+ */
+function birkly_marketplace_resolve_template_pack_zip_for_slug(string $slug, array $options = []): array
+{
+    $slug = trim($slug);
+    $version = trim((string) ($options['version'] ?? ''));
+    $explicit = trim((string) ($options['zip_path'] ?? ''));
+    if ($explicit !== '' && is_file($explicit)) {
+        return ['ok' => true, 'path' => $explicit, 'cleanup' => false, 'version' => $version];
+    }
+
+    $cached = birkly_marketplace_cached_template_pack_zip($slug, $version !== '' ? $version : null);
+    if ($cached !== null) {
+        $installed = birkly_marketplace_get_installed_template_pack($slug);
+        if ($version === '' && is_array($installed)) {
+            $version = (string) ($installed['version'] ?? '');
+        }
+        return ['ok' => true, 'path' => $cached, 'cleanup' => false, 'version' => $version];
+    }
+
+    if ($version === '') {
+        $installed = birkly_marketplace_get_installed_template_pack($slug);
+        $version = is_array($installed) ? (string) ($installed['version'] ?? '') : '';
+    }
+    if ($version === '') {
+        return ['ok' => false, 'error' => 'No cached pack zip and version unknown — re-upload or provide version', 'code' => 'pack_zip_missing'];
+    }
+
+    if (!function_exists('birkly_marketplace_release_download')) {
+        return ['ok' => false, 'error' => 'Marketplace download unavailable', 'code' => 'pack_zip_missing'];
+    }
+    $release = birkly_marketplace_release_download($slug, $version);
+    if (empty($release['ok'])) {
+        return ['ok' => false, 'error' => $release['error'] ?? 'Release lookup failed', 'code' => 'pack_zip_missing'];
+    }
+    $download = birkly_marketplace_download_artifact(
+        (string) ($release['download_url'] ?? ''),
+        $release['checksum_sha256'] ?? null
+    );
+    if (empty($download['ok']) || empty($download['path'])) {
+        return ['ok' => false, 'error' => $download['error'] ?? 'Download failed', 'code' => 'pack_zip_missing'];
+    }
+    birkly_marketplace_cache_template_pack_zip($slug, $version, (string) $download['path']);
+    return ['ok' => true, 'path' => (string) $download['path'], 'cleanup' => true, 'version' => $version];
+}
+
+/**
+ * P53-M8 — Restore one pack file from the vendor zip (updates hash).
+ *
+ * @param array<string,mixed> $options zip_path?, version?, project_root?
+ * @return array<string,mixed>
+ */
+function birkly_marketplace_reset_template_pack_file(string $slug, string $packRelativePath, array $options = []): array
+{
+    $packRelativePath = ltrim(str_replace('\\', '/', $packRelativePath), '/');
+    if ($packRelativePath === '' || str_contains($packRelativePath, '..')) {
+        return ['ok' => false, 'errors' => ['Invalid pack file path'], 'code' => 'invalid_path'];
+    }
+    if (!birkly_marketplace_template_pack_is_protected_path($packRelativePath)
+        && !str_starts_with($packRelativePath, 'collections/')
+        && !str_starts_with($packRelativePath, 'project/')) {
+        return ['ok' => false, 'errors' => ['Path must be under project/ or collections/'], 'code' => 'invalid_path'];
+    }
+
+    $projectRoot = (string) ($options['project_root'] ?? (function_exists('birkly_project_root') ? birkly_project_root() : dirname(__DIR__, 2)));
+    $resolved = birkly_marketplace_resolve_template_pack_zip_for_slug($slug, $options);
+    if (!$resolved['ok']) {
+        return ['ok' => false, 'errors' => [$resolved['error'] ?? 'Pack zip not found'], 'code' => $resolved['code'] ?? 'pack_zip_missing'];
+    }
+    $zipPath = (string) $resolved['path'];
+    $cleanup = !empty($resolved['cleanup']);
+
+    $validation = birkly_marketplace_validate_template_pack_zip($zipPath);
+    if (!$validation['ok']) {
+        if ($cleanup) {
+            @unlink($zipPath);
+        }
+        return ['ok' => false, 'errors' => $validation['errors'] ?? ['Invalid pack'], 'code' => 'invalid_pack'];
+    }
+    $prefix = (string) ($validation['prefix'] ?? '');
+    $contents = birkly_marketplace_template_pack_zip_file_contents($zipPath, $packRelativePath, $prefix);
+    if ($contents === null) {
+        if ($cleanup) {
+            @unlink($zipPath);
+        }
+        return ['ok' => false, 'errors' => ['File not found in pack: ' . $packRelativePath], 'code' => 'file_not_in_pack'];
+    }
+
+    $disk = birkly_marketplace_template_pack_disk_path($projectRoot, $packRelativePath);
+    if ($disk === null) {
+        if ($cleanup) {
+            @unlink($zipPath);
+        }
+        return ['ok' => false, 'errors' => ['Cannot resolve disk path'], 'code' => 'invalid_path'];
+    }
+    $dir = dirname($disk);
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+        if ($cleanup) {
+            @unlink($zipPath);
+        }
+        return ['ok' => false, 'errors' => ['Cannot create destination directory'], 'code' => 'write_failed'];
+    }
+    if (@file_put_contents($disk, $contents) === false) {
+        if ($cleanup) {
+            @unlink($zipPath);
+        }
+        return ['ok' => false, 'errors' => ['Cannot write file'], 'code' => 'write_failed'];
+    }
+
+    $hash = hash('sha256', $contents);
+    $installed = birkly_marketplace_get_installed_template_pack($slug) ?? [];
+    $hashes = is_array($installed['file_hashes'] ?? null) ? $installed['file_hashes'] : [];
+    if (birkly_marketplace_template_pack_is_protected_path($packRelativePath)) {
+        $hashes[$packRelativePath] = $hash;
+    }
+    $version = (string) ($resolved['version'] ?? $installed['version'] ?? ($validation['manifest']['version'] ?? '0.0.0'));
+    $collections = array_values((array) ($installed['installed_collections'] ?? ($validation['manifest']['collections'] ?? [])));
+
+    birkly_marketplace_save_template_pack_source(
+        $slug,
+        $version,
+        $collections,
+        !empty($installed['project_site']) || str_starts_with($packRelativePath, 'project/'),
+        $projectRoot,
+        array_merge($installed, [
+            'file_hashes' => $hashes,
+            'pack_id' => (string) ($installed['pack_id'] ?? $validation['manifest']['id'] ?? $slug),
+            'last_reset_file' => $packRelativePath,
+            'last_reset_at' => gmdate('Y-m-d\TH:i:s\Z'),
+        ])
+    );
+
+    if ($cleanup) {
+        @unlink($zipPath);
+    }
+
+    return [
+        'ok' => true,
+        'slug' => $slug,
+        'path' => $packRelativePath,
+        'disk_path' => $disk,
+        'hash' => $hash,
+        'version' => $version,
+        'errors' => [],
+    ];
+}
+
+/**
+ * P53-M8 — Rare full restore from pack with backup + explicit confirm.
+ *
+ * @param array<string,mixed> $options
+ * @return array<string,mixed>
+ */
+function birkly_marketplace_replace_all_template_pack(string $slug, array $options = []): array
+{
+    if (empty($options['confirm_replace_all'])) {
+        return [
+            'ok' => false,
+            'errors' => ['Replace all requires confirm_replace_all=true (destructive — backup will be created)'],
+            'code' => 'confirm_replace_all_required',
+        ];
+    }
+
+    $resolved = birkly_marketplace_resolve_template_pack_zip_for_slug($slug, $options);
+    if (!$resolved['ok']) {
+        return ['ok' => false, 'errors' => [$resolved['error'] ?? 'Pack zip not found'], 'code' => $resolved['code'] ?? 'pack_zip_missing'];
+    }
+
+    $projectRoot = (string) ($options['project_root'] ?? (function_exists('birkly_project_root') ? birkly_project_root() : dirname(__DIR__, 2)));
+    $includeDemo = array_key_exists('include_demo_entries', $options)
+        ? (bool) $options['include_demo_entries']
+        : (bool) ((birkly_marketplace_get_installed_template_pack($slug)['include_demo_entries'] ?? false));
+
+    $result = birkly_marketplace_install_template_pack_from_zip((string) $resolved['path'], [
+        'project_root' => $projectRoot,
+        'slug' => $slug,
+        'version' => (string) ($resolved['version'] ?? $options['version'] ?? ''),
+        'source' => (string) ($options['source'] ?? 'replace_all'),
+        'overwrite_mode' => 'replace',
+        'include_demo_entries' => $includeDemo,
+        'confirm_required_plugins' => true,
+        'install_missing_plugins' => !empty($options['install_missing_plugins']),
+        'consent_accepted' => !empty($options['consent_accepted']),
+        'force_overwrite_user_files' => true,
+        'skip_backup' => !empty($options['skip_backup']),
+    ]);
+
+    if (!empty($resolved['cleanup'])) {
+        @unlink((string) $resolved['path']);
+    }
+
+    if (!empty($result['ok'])) {
+        $result['replace_all'] = true;
+    }
+    return $result;
+}
+
+/**
+ * Status helper for Hub Installed (M11): which protected files are user-touched.
+ *
+ * @return array<string,mixed>
+ */
+function birkly_marketplace_template_pack_update_status(string $slug, array $options = []): array
+{
+    $installed = birkly_marketplace_get_installed_template_pack($slug);
+    if ($installed === null) {
+        return ['ok' => false, 'errors' => ['Pack not installed'], 'code' => 'not_installed'];
+    }
+    $projectRoot = (string) ($options['project_root'] ?? (function_exists('birkly_project_root') ? birkly_project_root() : dirname(__DIR__, 2)));
+    $hashes = is_array($installed['file_hashes'] ?? null) ? $installed['file_hashes'] : [];
+    $touched = birkly_marketplace_template_pack_user_touched_paths($projectRoot, $hashes);
+
+    return [
+        'ok' => true,
+        'slug' => $slug,
+        'pack_id' => $installed['pack_id'] ?? $slug,
+        'version' => $installed['version'] ?? '',
+        'file_hashes_count' => count($hashes),
+        'user_touched_files' => $touched,
+        'cached_zip' => birkly_marketplace_cached_template_pack_zip($slug),
+        'installed' => [
+            'installed_collections' => $installed['installed_collections'] ?? [],
+            'project_site' => !empty($installed['project_site']),
+            'source' => $installed['source'] ?? '',
+            'installed_at' => $installed['installed_at'] ?? null,
+        ],
     ];
 }
