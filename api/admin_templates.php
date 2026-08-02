@@ -504,7 +504,7 @@ function getDashboardData() {
             'id' => 'install_marketplace_plugins',
             'label' => __('admin.install_marketplace_plugins'),
             'completed' => false,
-            'link' => birkly_admin_url('plugins', ['tab' => 'marketplace']),
+            'link' => birkly_admin_url('plugins', ['tab' => 'discover']),
         ];
     }
 
@@ -3347,22 +3347,41 @@ function getEntryDetailData() {
 
 function getPluginsData() {
     require_once __DIR__ . '/../core/build_info.php';
-    $tab = isset($_GET['tab']) ? (string) $_GET['tab'] : 'marketplace';
-    if (!in_array($tab, ['marketplace', 'installed'], true)) {
-        $tab = 'marketplace';
+    $tab = isset($_GET['tab']) ? (string) $_GET['tab'] : 'discover';
+    if ($tab === 'marketplace') {
+        $tab = 'discover';
     }
+    $hubTabs = ['discover', 'installed', 'updates', 'licenses', 'upload'];
+    if (!in_array($tab, $hubTabs, true)) {
+        $tab = 'discover';
+    }
+
+    $titles = [
+        'discover' => __('admin.hub_tab_discover'),
+        'installed' => __('admin.hub_tab_installed'),
+        'updates' => __('admin.hub_tab_updates'),
+        'licenses' => __('admin.hub_tab_licenses'),
+        'upload' => __('admin.hub_tab_upload'),
+    ];
 
     return [
         'active_tab' => $tab,
-        'page_title' => $tab === 'installed' ? __('admin.installed_plugins') : __('admin.marketplace'),
-        'marketplace_title' => __('admin.marketplace'),
-        'installed_title' => __('admin.installed_plugins'),
+        'page_title' => $titles[$tab] ?? __('admin.marketplace'),
+        'discover_title' => $titles['discover'],
+        'marketplace_title' => $titles['discover'],
+        'installed_title' => $titles['installed'],
+        'updates_title' => $titles['updates'],
+        'licenses_title' => $titles['licenses'],
+        'upload_title' => $titles['upload'],
         'plugins_css_url' => birkly_admin_asset_url('/admin/css/pages/plugins.css'),
         'plugins_page_js_url' => birkly_admin_asset_url('/admin/js/plugins-page.js'),
         'i18n' => [
             'no_plugins_installed' => __('admin.no_plugins_installed'),
             'no_plugins_marketplace_hint' => __('admin.no_plugins_marketplace_hint'),
+            'no_site_packs_installed' => __('admin.no_site_packs_installed'),
+            'no_site_packs_hint' => __('admin.no_site_packs_hint'),
             'browse_marketplace' => __('admin.browse_marketplace'),
+            'upload_site_pack' => __('admin.upload_site_pack'),
             'price_free' => __('admin.price_free'),
             'price_from' => __('admin.price_from'),
             'install' => __('admin.install'),
@@ -3379,6 +3398,7 @@ function getPluginsData() {
             'marketplace_type_fieldtype' => __('admin.marketplace_type_fieldtype'),
             'marketplace_filter_category_all' => __('admin.marketplace_filter_category_all'),
             'marketplace_filter_all_categories' => __('admin.marketplace_filter_all_categories'),
+            'marketplace_filter_all_types' => __('admin.marketplace_filter_all_types'),
             'marketplace_no_reviews' => __('admin.marketplace_no_reviews'),
             'marketplace_downloads' => __('admin.marketplace_downloads'),
             'marketplace_offers_count' => __('admin.marketplace_offers_count'),
@@ -3428,6 +3448,21 @@ function getPluginsData() {
             'requires_birkly' => __('admin.marketplace_requires_birkly'),
             'requires_php' => __('admin.marketplace_requires_php'),
             'changelog' => __('admin.marketplace_changelog'),
+            'hub_pack_has_project' => __('admin.hub_pack_has_project'),
+            'hub_pack_collections' => __('admin.hub_pack_collections'),
+            'hub_pack_replace_all' => __('admin.hub_pack_replace_all'),
+            'hub_pack_replaced' => __('admin.hub_pack_replaced'),
+            'hub_updates_none' => __('admin.hub_updates_none'),
+            'hub_updates_none_hint' => __('admin.hub_updates_none_hint'),
+            'hub_licenses_none' => __('admin.hub_licenses_none'),
+            'hub_licenses_none_hint' => __('admin.hub_licenses_none_hint'),
+            'hub_license_activated' => __('admin.hub_license_activated'),
+            'pack_replace_all_confirm' => __('admin.pack_replace_all_confirm'),
+            'cancel' => __('admin.cancel'),
+            'site_pack_upload_success' => __('admin.site_pack_upload_success'),
+            'select_site_pack_zip' => __('admin.select_site_pack_zip'),
+            'site_pack_install_success' => __('admin.site_pack_install_success'),
+            'confirm_required_plugins' => __('admin.confirm_required_plugins'),
         ],
     ];
 }
