@@ -669,6 +669,103 @@ function birkly_marketplace_install_theme(string $slug, string $version, string 
 }
 
 /**
+ * Persist Hub/site-pack install metadata (P53-M2).
+ *
+ * @param list<string> $installedCollections
+ */
+function birkly_marketplace_save_template_pack_source(
+    string $slug,
+    string $version,
+    array $installedCollections,
+    bool $projectSite,
+    string $projectRoot
+): void {
+    require_once dirname(__DIR__, 2) . '/api/storage.php';
+    $storage = new Storage(birkly_marketplace_settings_dir());
+    $data = $storage->read('installed_template_packs.json') ?? [];
+    if (!is_array($data)) {
+        $data = [];
+    }
+
+    $data[$slug] = [
+        'marketplace_slug' => $slug,
+        'offer_type' => 'template_pack',
+        'version' => $version,
+        'source' => 'marketplace',
+        'installed_collections' => array_values($installedCollections),
+        'project_site' => $projectSite,
+        'project_root' => rtrim($projectRoot, '/\\') . '/' . (function_exists('birkly_public_site_dir') ? birkly_public_site_dir() : 'project'),
+        'installed_at' => gmdate('Y-m-d\TH:i:s\Z'),
+    ];
+    $storage->write('installed_template_packs.json', $data);
+}
+
+/**
+ * Install a site pack (offer_type template_pack) into collections + project/.
+ * Uses the same extract engine as Ops starters — never themes/ (P53-D3 / P53-M2).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_marketplace_install_template_pack(string $slug, string $version, string $licenseKey = ''): array
+{
+    if (!function_exists('birkly_ops_extract_starter_zip')) {
+        require_once dirname(__DIR__) . '/ops_starters_client.php';
+    }
+
+    $release = birkly_marketplace_release_download($slug, $version);
+    if (!$release['ok']) {
+        return ['ok' => false, 'errors' => [$release['error'] ?? 'Release lookup failed']];
+    }
+
+    $download = birkly_marketplace_download_artifact(
+        (string) ($release['download_url'] ?? ''),
+        $release['checksum_sha256'] ?? null
+    );
+    if (!$download['ok'] || empty($download['path'])) {
+        return ['ok' => false, 'errors' => [$download['error'] ?? 'Download failed']];
+    }
+
+    $zipPath = $download['path'];
+    $projectRoot = function_exists('birkly_project_root')
+        ? birkly_project_root()
+        : dirname(__DIR__, 2);
+    $extract = birkly_ops_extract_starter_zip($zipPath, $projectRoot);
+    @unlink($zipPath);
+
+    if (empty($extract['success'])) {
+        $errors = $extract['errors'] ?? [];
+        if ($errors === [] && !empty($extract['message'])) {
+            $errors[] = (string) $extract['message'];
+        }
+        if ($errors === []) {
+            $errors[] = 'Site pack extract failed';
+        }
+        return ['ok' => false, 'errors' => $errors];
+    }
+
+    $installedCollections = array_values($extract['installed_collections'] ?? []);
+    $projectSite = !empty($extract['project_site']);
+    birkly_marketplace_save_template_pack_source(
+        $slug,
+        $version,
+        $installedCollections,
+        $projectSite,
+        $projectRoot
+    );
+
+    return [
+        'ok' => true,
+        'source' => 'marketplace',
+        'offer_type' => 'template_pack',
+        'version' => $version,
+        'installed_collections' => $installedCollections,
+        'project_site' => $projectSite,
+        'path' => rtrim($projectRoot, '/\\') . '/' . (function_exists('birkly_public_site_dir') ? birkly_public_site_dir() : 'project'),
+        'errors' => [],
+    ];
+}
+
+/**
  * @return array<string, mixed>
  */
 function birkly_marketplace_install_offer(
@@ -679,7 +776,11 @@ function birkly_marketplace_install_offer(
     bool $upgrade = false,
     bool $consentAccepted = false
 ): array {
-    if (in_array($offerType, ['theme', 'template_pack'], true)) {
+    if ($offerType === 'template_pack') {
+        return birkly_marketplace_install_template_pack($slug, $version, $licenseKey);
+    }
+
+    if ($offerType === 'theme') {
         return birkly_marketplace_install_theme($slug, $version, $licenseKey, $offerType);
     }
 
