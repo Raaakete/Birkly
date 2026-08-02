@@ -5,28 +5,28 @@
   <div class="page-header-actions"></div>
 </div>
 <div class="plugins-page">
-    <div class="plugins-tabs tabs-v2-root" role="tablist" aria-label="{translate 'admin.marketplace'}">
-        <div class="tabs">
-        <button type="button" class="tab plugins-tab" data-tab="discover" role="tab" aria-selected="false">
+    <div class="plugins-tabs tabs-v2-root">
+        <div class="tabs" role="tablist" aria-label="{translate 'admin.marketplace'}">
+        <button type="button" class="tab plugins-tab" id="hub-tab-discover" data-tab="discover" role="tab" aria-controls="plugins-tab-discover" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_discover'}
         </button>
-        <button type="button" class="tab plugins-tab" data-tab="installed" role="tab" aria-selected="false">
+        <button type="button" class="tab plugins-tab" id="hub-tab-installed" data-tab="installed" role="tab" aria-controls="plugins-tab-installed" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_installed'}
         </button>
-        <button type="button" class="tab plugins-tab" data-tab="updates" role="tab" aria-selected="false">
+        <button type="button" class="tab plugins-tab" id="hub-tab-updates" data-tab="updates" role="tab" aria-controls="plugins-tab-updates" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_updates'}
             <span class="update-badge hidden" id="plugins-update-badge" title="{translate 'admin.updates_available'}">0</span>
         </button>
-        <button type="button" class="tab plugins-tab" data-tab="licenses" role="tab" aria-selected="false">
+        <button type="button" class="tab plugins-tab" id="hub-tab-licenses" data-tab="licenses" role="tab" aria-controls="plugins-tab-licenses" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_licenses'}
         </button>
-        <button type="button" class="tab plugins-tab" data-tab="upload" role="tab" aria-selected="false">
+        <button type="button" class="tab plugins-tab" id="hub-tab-upload" data-tab="upload" role="tab" aria-controls="plugins-tab-upload" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_upload'}
         </button>
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-discover" role="tabpanel" hidden>
+    <div class="plugins-tab-panel" id="plugins-tab-discover" role="tabpanel" aria-labelledby="hub-tab-discover" hidden>
         <div id="marketplace-browse-view">
         <div class="marketplace-toolbar">
             <div class="hub-type-filters" role="group" aria-label="{translate 'admin.marketplace_filter_type'}">
@@ -101,7 +101,7 @@
         <div id="marketplace-offer-detail" class="marketplace-offer-detail" hidden></div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-installed" role="tabpanel" hidden>
+    <div class="plugins-tab-panel" id="plugins-tab-installed" role="tabpanel" aria-labelledby="hub-tab-installed" hidden>
         <div class="hub-installed-sections">
             <section class="hub-installed-section" aria-labelledby="hub-installed-packs-heading">
                 <div class="hub-section-header">
@@ -130,7 +130,7 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-updates" role="tabpanel" hidden>
+    <div class="plugins-tab-panel" id="plugins-tab-updates" role="tabpanel" aria-labelledby="hub-tab-updates" hidden>
         <div class="main-actions-bar">
             <button class="btn btn-secondary" type="button" data-plugin-action="check-updates">
                 {translate 'admin.check_updates'}
@@ -143,7 +143,7 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-licenses" role="tabpanel" hidden>
+    <div class="plugins-tab-panel" id="plugins-tab-licenses" role="tabpanel" aria-labelledby="hub-tab-licenses" hidden>
         <div class="hub-licenses-layout">
             <section class="hub-licenses-activate" aria-labelledby="hub-licenses-activate-heading">
                 <h2 id="hub-licenses-activate-heading" class="hub-section-title">{translate 'admin.hub_activate_license'}</h2>
@@ -170,7 +170,7 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-upload" role="tabpanel" hidden>
+    <div class="plugins-tab-panel" id="plugins-tab-upload" role="tabpanel" aria-labelledby="hub-tab-upload" hidden>
         <div class="hub-upload-panel">
             <h2 class="hub-section-title">{translate 'admin.upload_site_pack'}</h2>
             <p class="form-help">{translate 'admin.upload_site_pack_hint'}</p>
