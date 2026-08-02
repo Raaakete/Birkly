@@ -1,10 +1,13 @@
 /**
- * Plugins admin page — installed plugins + marketplace browse/install/update (P9-M6).
+ * Hub admin page — Discover · Installed · Updates · Licenses · Upload pack (P53-M11).
+ * marketplace_* API routes unchanged; buyer labels say Hub.
  */
 (function () {
     'use strict';
 
+    var HUB_TABS = ['discover', 'installed', 'updates', 'licenses', 'upload'];
     var installedPlugins = [];
+    var installedPacks = [];
     var updateMap = {};
     var marketplaceFilterOptions = { categories: [], offer_types: [] };
     var currentOfferSlug = null;
@@ -103,6 +106,10 @@
             upgradePlugin(el.getAttribute('data-plugin-id'));
         } else if (action === 'switch-marketplace') {
             switchToMarketplace();
+        } else if (action === 'switch-upload') {
+            switchTab('upload');
+        } else if (action === 'set-offer-type') {
+            setOfferTypeFilter(el.getAttribute('data-offer-type') || '');
         } else if (action === 'back-marketplace') {
             backToMarketplaceBrowse();
         } else if (action === 'open-offer') {
@@ -122,10 +129,12 @@
             checkAllUpdates();
         } else if (action === 'open-install-modal') {
             openInstallModal();
-        } else if (action === 'close-install-modal') {
-            closeInstallModal();
         } else if (action === 'install-from-file') {
             installFromFile();
+        } else if (action === 'activate-license') {
+            activateHubLicense();
+        } else if (action === 'replace-all-pack') {
+            replaceAllPackFromUi(el.getAttribute('data-pack-slug'));
         } else if (action === 'close-offer-embed') {
             closeOfferEmbedModal();
         } else if (action === 'view-provider-profile') {
@@ -177,10 +186,13 @@
                     action === 'install-free' ||
                     action === 'upgrade' ||
                     action === 'open-install' ||
-                    action === 'close-install-modal' ||
                     action === 'close-marketplace-install' ||
                     action === 'open-install-modal' ||
                     action === 'install-from-file' ||
+                    action === 'activate-license' ||
+                    action === 'replace-all-pack' ||
+                    action === 'set-offer-type' ||
+                    action === 'switch-upload' ||
                     action === 'install-marketplace' ||
                     action === 'close-review-modal' ||
                     action === 'submit-review' ||
@@ -194,8 +206,6 @@
 
             if (e.target.id === 'marketplace-offer-embed-modal' && e.target.classList.contains('active')) {
                 closeOfferEmbedModal();
-            } else if (e.target.id === 'install-plugin-modal' && e.target.classList.contains('active')) {
-                closeInstallModal();
             } else if (e.target.id === 'marketplace-install-modal' && e.target.classList.contains('active')) {
                 closeMarketplaceInstallModal();
             } else if (e.target.id === 'marketplace-consent-modal' && e.target.classList.contains('active')) {
@@ -214,11 +224,6 @@
                 } else {
                     closeOfferEmbedModal();
                 }
-                return;
-            }
-            var installModal = document.getElementById('install-plugin-modal');
-            if (installModal && installModal.classList.contains('active')) {
-                closeInstallModal();
                 return;
             }
             var marketplaceInstallModal = document.getElementById('marketplace-install-modal');
@@ -1556,7 +1561,7 @@
         }
         setEmbedOfferTab('offer');
         updateMarketplaceUrl('');
-        updatePageTitle('marketplace');
+        updatePageTitle('discover');
     }
 
     function ratingTierClass(summary) {
@@ -1745,6 +1750,119 @@
         }
     }
 
+    function renderPluginCard(plugin, options) {
+        options = options || {};
+        var update = updateMap[plugin.id] || {};
+        var hasUpdate = !!update.update_available;
+        var active = !!plugin.active;
+        var health = plugin.health || {};
+        var healthStatus = health.status || 'unknown';
+        var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
+        var healthClass = 'health-' + healthStatus;
+        var offerSlug = resolvePluginOfferSlug(plugin);
+        var hasMarketplaceOffer = !!(plugin.has_marketplace_offer || offerSlug);
+        var reviewStatus = reviewStatusMap[plugin.id] || {};
+        var reviewChip = options.hideReview ? '' : renderPluginReviewChip(plugin.id, offerSlug, reviewStatus);
+        var pluginNameHtml = offerSlug
+            ? '<button type="button" class="plugin-name-link" data-plugin-action="open-offer" data-offer-slug="' +
+                escapeHtml(offerSlug) + '">' + escapeHtml(plugin.name) + '</button>'
+            : escapeHtml(plugin.name);
+        var detailsButton = offerSlug
+            ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-offer" data-offer-slug="' +
+                escapeHtml(offerSlug) + '">' + escapeHtml(t('offer_details', 'Details')) + '</button>'
+            : '';
+        return (
+            '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
+            '<div class="plugin-header">' +
+            '<div>' +
+            '<h3 class="plugin-name">' + pluginNameHtml + '</h3>' +
+            (hasUpdate ? '<span class="update-pill">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
+            '</div>' +
+            '<div class="plugin-header-badges">' +
+            '<span class="health-badge ' + healthClass + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
+            escapeHtml(healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)) +
+            '</span>' +
+            '<span class="status-badge ' + (active ? 'status-active' : 'status-inactive') + '">' +
+            (active ? 'Active' : 'Inactive') +
+            '</span>' +
+            '</div>' +
+            '</div>' +
+            (plugin.description ? '<p class="plugin-description">' + escapeHtml(plugin.description) + '</p>' : '') +
+            '<div class="plugin-meta">' +
+            '<span class="plugin-version">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
+            (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="marketplace-tag">Hub</span>' : '') +
+            (plugin.license_ref ? '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
+            reviewChip +
+            '</div>' +
+            '<div class="plugin-actions">' +
+            detailsButton +
+            (hasUpdate
+                ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
+                : '') +
+            (options.hideManage ? '' :
+                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
+                (active ? 'Deactivate' : 'Activate') +
+                '</button>' +
+                '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">Delete</button>') +
+            '</div>' +
+            '</div>'
+        );
+    }
+
+    function renderInstalledPacks() {
+        var grid = document.getElementById('installed-packs-grid');
+        if (!grid) return;
+
+        if (!installedPacks.length) {
+            grid.innerHTML =
+                '<div class="empty-state plugins-empty-state">' +
+                '<p>' + escapeHtml(t('no_site_packs_installed', 'No site packs installed yet.')) + '</p>' +
+                '<p class="form-help">' + escapeHtml(t('no_site_packs_hint', 'Install a site pack from Discover, or upload a pack ZIP.')) + '</p>' +
+                '<div class="hub-empty-actions">' +
+                '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
+                escapeHtml(t('browse_marketplace', 'Browse Hub')) +
+                '</button>' +
+                '<button type="button" class="btn btn-secondary" data-plugin-action="switch-upload">' +
+                escapeHtml(t('upload_site_pack', 'Upload pack')) +
+                '</button>' +
+                '</div>' +
+                '</div>';
+            return;
+        }
+
+        grid.innerHTML = installedPacks.map(function (pack) {
+            var slug = pack.slug || pack.pack_id || '';
+            var title = pack.pack_id || slug;
+            var collections = Array.isArray(pack.installed_collections) ? pack.installed_collections : [];
+            var source = pack.source || '';
+            return (
+                '<div class="card plugin-card pack-card">' +
+                '<div class="plugin-header">' +
+                '<div>' +
+                '<h3 class="plugin-name">' + escapeHtml(title) + '</h3>' +
+                '<span class="marketplace-offer-type-badge marketplace-offer-type-badge--template_pack">' +
+                escapeHtml(t('marketplace_type_template', 'Site pack')) +
+                '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="plugin-meta">' +
+                (pack.version ? '<span class="plugin-version">v' + escapeHtml(pack.version) + '</span>' : '') +
+                (source ? '<span class="marketplace-tag">' + escapeHtml(source) + '</span>' : '') +
+                (pack.project_site ? '<span class="license-ref">' + escapeHtml(t('hub_pack_has_project', 'Includes project files')) + '</span>' : '') +
+                '</div>' +
+                (collections.length
+                    ? '<p class="plugin-description">' + escapeHtml(t('hub_pack_collections', 'Collections')) + ': ' +
+                        escapeHtml(collections.join(', ')) + '</p>'
+                    : '') +
+                '<div class="plugin-actions">' +
+                '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="replace-all-pack" data-pack-slug="' +
+                escapeHtml(slug) + '">' + escapeHtml(t('hub_pack_replace_all', 'Replace all')) + '</button>' +
+                '</div>' +
+                '</div>'
+            );
+        }).join('');
+    }
+
     function renderInstalledPlugins() {
         var grid = document.getElementById('plugins-grid');
         if (!grid) return;
@@ -1753,7 +1871,7 @@
             grid.innerHTML =
                 '<div class="empty-state plugins-empty-state">' +
                 '<p>' + escapeHtml(t('no_plugins_installed', 'No plugins installed yet.')) + '</p>' +
-                '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse the Hub tab to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
+                '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse Discover to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
                 '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
                 escapeHtml(t('browse_marketplace', 'Browse Hub')) +
                 '</button>' +
@@ -1762,57 +1880,60 @@
         }
 
         grid.innerHTML = installedPlugins.map(function (plugin) {
+            return renderPluginCard(plugin);
+        }).join('');
+    }
+
+    function renderUpdatesPanel() {
+        var grid = document.getElementById('hub-updates-grid');
+        if (!grid) return;
+
+        var withUpdates = installedPlugins.filter(function (plugin) {
             var update = updateMap[plugin.id] || {};
-            var hasUpdate = !!update.update_available;
-            var active = !!plugin.active;
-            var health = plugin.health || {};
-            var healthStatus = health.status || 'unknown';
-            var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
-            var healthClass = 'health-' + healthStatus;
-            var offerSlug = resolvePluginOfferSlug(plugin);
-            var hasMarketplaceOffer = !!(plugin.has_marketplace_offer || offerSlug);
-            var reviewStatus = reviewStatusMap[plugin.id] || {};
-            var reviewChip = renderPluginReviewChip(plugin.id, offerSlug, reviewStatus);
-            var pluginNameHtml = offerSlug
-                ? '<button type="button" class="plugin-name-link" data-plugin-action="open-offer" data-offer-slug="' +
-                    escapeHtml(offerSlug) + '">' + escapeHtml(plugin.name) + '</button>'
-                : escapeHtml(plugin.name);
-            var detailsButton = offerSlug
-                ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-offer" data-offer-slug="' +
-                    escapeHtml(offerSlug) + '">' + escapeHtml(t('offer_details', 'Details')) + '</button>'
-                : '';
+            return !!update.update_available;
+        });
+
+        if (!withUpdates.length) {
+            grid.innerHTML =
+                '<div class="empty-state plugins-empty-state">' +
+                '<p>' + escapeHtml(t('hub_updates_none', 'All Hub plugins are up to date.')) + '</p>' +
+                '<p class="form-help">' + escapeHtml(t('hub_updates_none_hint', 'Check again after new releases are published.')) + '</p>' +
+                '</div>';
+            return;
+        }
+
+        grid.innerHTML = withUpdates.map(function (plugin) {
+            return renderPluginCard(plugin, { hideManage: true });
+        }).join('');
+    }
+
+    function renderLicensesPanel() {
+        var grid = document.getElementById('hub-licenses-grid');
+        if (!grid) return;
+
+        var licensed = installedPlugins.filter(function (plugin) {
+            return !!(plugin.license_ref);
+        });
+
+        if (!licensed.length) {
+            grid.innerHTML =
+                '<div class="empty-state plugins-empty-state">' +
+                '<p>' + escapeHtml(t('hub_licenses_none', 'No licenses bound to this installation yet.')) + '</p>' +
+                '<p class="form-help">' + escapeHtml(t('hub_licenses_none_hint', 'Activate a license key above, or install a paid offer from Discover.')) + '</p>' +
+                '</div>';
+            return;
+        }
+
+        grid.innerHTML = licensed.map(function (plugin) {
             return (
-                '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
+                '<div class="card plugin-card">' +
                 '<div class="plugin-header">' +
-                '<div>' +
-                '<h3 class="plugin-name">' + pluginNameHtml + '</h3>' +
-                (hasUpdate ? '<span class="update-pill">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
+                '<h3 class="plugin-name">' + escapeHtml(plugin.name || plugin.id) + '</h3>' +
                 '</div>' +
-                '<div class="plugin-header-badges">' +
-                '<span class="health-badge ' + healthClass + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
-                escapeHtml(healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)) +
-                '</span>' +
-                '<span class="status-badge ' + (active ? 'status-active' : 'status-inactive') + '">' +
-                (active ? 'Active' : 'Inactive') +
-                '</span>' +
-                '</div>' +
-                '</div>' +
-                (plugin.description ? '<p class="plugin-description">' + escapeHtml(plugin.description) + '</p>' : '') +
                 '<div class="plugin-meta">' +
                 '<span class="plugin-version">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-                (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="marketplace-tag">Hub</span>' : '') +
-                (plugin.license_ref ? '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
-                reviewChip +
-                '</div>' +
-                '<div class="plugin-actions">' +
-                detailsButton +
-                (hasUpdate
-                    ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
-                    : '') +
-                '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
-                (active ? 'Deactivate' : 'Activate') +
-                '</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">Delete</button>' +
+                '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' +
+                (plugin.marketplace_slug ? '<span class="marketplace-tag">' + escapeHtml(plugin.marketplace_slug) + '</span>' : '') +
                 '</div>' +
                 '</div>'
             );
@@ -1821,8 +1942,12 @@
 
     async function loadInstalled() {
         var grid = document.getElementById('plugins-grid');
+        var packsGrid = document.getElementById('installed-packs-grid');
         if (grid) {
-            grid.innerHTML = renderPluginSkeletonCards(6);
+            grid.innerHTML = renderPluginSkeletonCards(4);
+        }
+        if (packsGrid) {
+            packsGrid.innerHTML = renderPluginSkeletonCards(2);
         }
 
         var response = await fetch(url('/api/plugins.php?action=list'), { credentials: 'same-origin' });
@@ -1831,8 +1956,81 @@
             throw new Error(result.message || 'Failed to load plugins');
         }
         installedPlugins = (result.data && result.data.plugins) || [];
+        try {
+            installedPacks = await listInstalledTemplatePacks();
+        } catch (e) {
+            installedPacks = [];
+        }
         await loadReviewStatuses();
+        renderInstalledPacks();
         renderInstalledPlugins();
+    }
+
+    async function loadUpdatesTab() {
+        var grid = document.getElementById('hub-updates-grid');
+        if (grid) {
+            grid.innerHTML = renderPluginSkeletonCards(4);
+        }
+        if (!installedPlugins.length) {
+            var response = await fetch(url('/api/plugins.php?action=list'), { credentials: 'same-origin' });
+            var result = await parsePluginsResponse(response);
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to load plugins');
+            }
+            installedPlugins = (result.data && result.data.plugins) || [];
+        }
+        await refreshUpdateBadge(true);
+        renderUpdatesPanel();
+    }
+
+    async function loadLicensesTab() {
+        var grid = document.getElementById('hub-licenses-grid');
+        if (grid) {
+            grid.innerHTML = renderPluginSkeletonCards(3);
+        }
+        if (!installedPlugins.length) {
+            var response = await fetch(url('/api/plugins.php?action=list'), { credentials: 'same-origin' });
+            var result = await parsePluginsResponse(response);
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to load plugins');
+            }
+            installedPlugins = (result.data && result.data.plugins) || [];
+        }
+        renderLicensesPanel();
+    }
+
+    async function activateHubLicense() {
+        var input = document.getElementById('hub-license-key');
+        var licenseKey = input ? input.value.trim() : '';
+        if (!licenseKey) {
+            showMessage(t('enter_license_key', 'Enter your license key'), 'error');
+            return;
+        }
+        try {
+            var result = await marketplaceApi('activate_license', { license_key: licenseKey });
+            showMessage(result.message || t('hub_license_activated', 'License activated'), 'success');
+            if (input) {
+                input.value = '';
+            }
+            await loadLicensesTab();
+        } catch (err) {
+            showMessage(err.message, 'error');
+        }
+    }
+
+    async function replaceAllPackFromUi(slug) {
+        if (!slug) return;
+        try {
+            var result = await replaceAllTemplatePack(slug);
+            if (result && result.cancelled) {
+                return;
+            }
+            showMessage(t('hub_pack_replaced', 'Site pack files replaced'), 'success');
+            installedPacks = await listInstalledTemplatePacks();
+            renderInstalledPacks();
+        } catch (err) {
+            showMessage(err.message, 'error');
+        }
     }
 
     async function loadReviewStatuses() {
@@ -1961,6 +2159,7 @@
             var count = (result.data && result.data.update_count) || 0;
             setUpdateBadge(count);
             renderInstalledPlugins();
+            renderUpdatesPanel();
             return count;
         } catch (err) {
             if (!silent) {
@@ -1974,8 +2173,9 @@
         var count = await refreshUpdateBadge(false);
         if (count > 0) {
             showMessage(count + ' plugin update(s) available', 'info');
+            switchTab('updates');
         } else {
-            showMessage('All Hub plugins are up to date', 'success');
+            showMessage(t('hub_updates_none', 'All Hub plugins are up to date'), 'success');
         }
     }
 
@@ -2051,7 +2251,7 @@
             return;
         }
         var pageUrl = new URL(window.location.href);
-        pageUrl.searchParams.set('tab', 'marketplace');
+        pageUrl.searchParams.set('tab', 'discover');
         if (slug) {
             pageUrl.searchParams.set('offer', slug);
         } else {
@@ -2267,29 +2467,37 @@
         loadMarketplace();
     }
 
+    function normalizeHubTab(tab) {
+        if (tab === 'marketplace') {
+            return 'discover';
+        }
+        if (HUB_TABS.indexOf(tab) !== -1) {
+            return tab;
+        }
+        return 'discover';
+    }
+
     function updatePageTitle(tab) {
         var el = document.getElementById('plugins-page-title');
         var titles = window.PluginsPageTitles || {};
         if (!el) {
             return;
         }
-        if (tab === 'installed' && titles.installed) {
-            el.textContent = titles.installed;
-        } else if (titles.marketplace) {
-            el.textContent = titles.marketplace;
+        tab = normalizeHubTab(tab);
+        if (titles[tab]) {
+            el.textContent = titles[tab];
+        } else if (titles.discover) {
+            el.textContent = titles.discover;
         }
     }
 
     function getInitialTab() {
-        if (window.PluginsPageInitialTab === 'marketplace' || window.PluginsPageInitialTab === 'installed') {
-            return window.PluginsPageInitialTab;
+        var fromWindow = normalizeHubTab(window.PluginsPageInitialTab || '');
+        if (window.PluginsPageInitialTab && HUB_TABS.indexOf(fromWindow) !== -1) {
+            return fromWindow;
         }
         var params = new URLSearchParams(window.location.search);
-        var tab = params.get('tab');
-        if (tab === 'marketplace' || tab === 'installed') {
-            return tab;
-        }
-        return 'marketplace';
+        return normalizeHubTab(params.get('tab') || 'discover');
     }
 
     function getInitialOfferSlug() {
@@ -2297,7 +2505,26 @@
         return params.get('offer') || '';
     }
 
+    function syncOfferTypeFilterChips(offerType) {
+        var type = offerType || '';
+        document.querySelectorAll('.hub-type-filter').forEach(function (btn) {
+            var active = (btn.getAttribute('data-offer-type') || '') === type;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        });
+        var select = document.getElementById('marketplace-filter-type');
+        if (select && select.value !== type) {
+            select.value = type;
+        }
+    }
+
+    function setOfferTypeFilter(offerType) {
+        syncOfferTypeFilterChips(offerType || '');
+        loadMarketplace();
+    }
+
     function switchTab(tab) {
+        tab = normalizeHubTab(tab);
         updatePageTitle(tab);
         document.querySelectorAll('.plugins-tab').forEach(function (btn) {
             var active = btn.getAttribute('data-tab') === tab;
@@ -2305,12 +2532,12 @@
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
         });
         document.querySelectorAll('.plugins-tab-panel').forEach(function (panel) {
-            var isInstalled = panel.id === 'plugins-tab-installed';
-            var show = (tab === 'installed' && isInstalled) || (tab === 'marketplace' && !isInstalled);
+            var panelTab = (panel.id || '').replace('plugins-tab-', '');
+            var show = panelTab === tab;
             panel.classList.toggle('active', show);
             panel.hidden = !show;
         });
-        if (tab === 'marketplace') {
+        if (tab === 'discover') {
             var offerSlug = getInitialOfferSlug();
             if (offerSlug) {
                 openOfferDetail(offerSlug);
@@ -2324,14 +2551,20 @@
             loadInstalled()
                 .then(function () { return refreshUpdateBadge(true); })
                 .catch(function (err) { showMessage(err.message, 'error'); });
+        } else if (tab === 'updates') {
+            currentOfferSlug = null;
+            loadUpdatesTab().catch(function (err) { showMessage(err.message, 'error'); });
+        } else if (tab === 'licenses') {
+            currentOfferSlug = null;
+            loadLicensesTab().catch(function (err) { showMessage(err.message, 'error'); });
+        } else if (tab === 'upload') {
+            currentOfferSlug = null;
         }
         if (window.history && typeof window.history.replaceState === 'function') {
             var pageUrl = new URL(window.location.href);
-            if (tab === 'installed') {
-                pageUrl.searchParams.delete('tab');
+            pageUrl.searchParams.set('tab', tab);
+            if (tab !== 'discover') {
                 pageUrl.searchParams.delete('offer');
-            } else {
-                pageUrl.searchParams.set('tab', tab);
             }
             window.history.replaceState({}, '', pageUrl.pathname + pageUrl.search + pageUrl.hash);
         }
@@ -2342,13 +2575,11 @@
     }
 
     function openInstallModal() {
-        var modal = document.getElementById('install-plugin-modal');
-        if (modal) modal.classList.add('active');
+        switchTab('upload');
     }
 
     function closeInstallModal() {
-        var modal = document.getElementById('install-plugin-modal');
-        if (modal) modal.classList.remove('active');
+        // Upload pack is a Hub tab (P53-M11); no modal to close.
     }
 
     function openMarketplaceInstall(slug, title, version, isFree) {
@@ -2444,7 +2675,7 @@
     }
 
     function switchToMarketplace() {
-        switchTab('marketplace');
+        switchTab('discover');
     }
 
     async function installFromFile() {
@@ -2493,7 +2724,6 @@
 
         try {
             await postPackZip(false);
-            closeInstallModal();
             reloadAfterPluginChange(t('site_pack_upload_success', 'Site pack installed from ZIP'), 'installed');
         } catch (err) {
             if (err.code === 'required_plugins_confirmation_required') {
@@ -2504,7 +2734,6 @@
                 }
                 try {
                     await postPackZip(true);
-                    closeInstallModal();
                     reloadAfterPluginChange(t('site_pack_upload_success', 'Site pack installed from ZIP'), 'installed');
                 } catch (err2) {
                     showMessage(err2.message, 'error');
@@ -2600,6 +2829,9 @@
             var el = document.getElementById(id);
             if (el) {
                 el.addEventListener('change', function () {
+                    if (id === 'marketplace-filter-type') {
+                        syncOfferTypeFilterChips(el.value || '');
+                    }
                     loadMarketplace();
                 });
             }
@@ -2621,6 +2853,8 @@
                 }
             });
         }
+        var typeSelect = document.getElementById('marketplace-filter-type');
+        syncOfferTypeFilterChips(typeSelect ? typeSelect.value : '');
     }
 
     function initTabs() {
@@ -2639,12 +2873,12 @@
         var tab = getInitialTab();
         switchTab(tab);
         try {
-            if (tab === 'installed') {
-                await loadInstalled();
+            // Badge on Updates tab for all entry points
+            if (tab !== 'updates') {
                 await refreshUpdateBadge(true);
             }
         } catch (err) {
-            showMessage(err.message, 'error');
+            // Non-blocking — Hub still usable offline from registry
         }
     }
 
@@ -2664,11 +2898,13 @@
         loadMarketplace: loadMarketplace,
         switchToMarketplace: switchToMarketplace,
         switchTab: switchTab,
+        setOfferTypeFilter: setOfferTypeFilter,
+        activateHubLicense: activateHubLicense,
         openOfferDetail: openOfferDetail,
         backToMarketplaceBrowse: backToMarketplaceBrowse,
         openOfferEmbedModal: openOfferEmbedModal,
         closeOfferEmbedModal: closeOfferEmbedModal,
-        // P53-M7/M8 — Hub Installed hooks (full UI in M11)
+        // P53-M7/M8/M11 — Hub Installed pack hooks
         listInstalledTemplatePacks: listInstalledTemplatePacks,
         getTemplatePackStatus: getTemplatePackStatus,
         resetTemplatePackFile: resetTemplatePackFile,
