@@ -16,7 +16,14 @@ function is_plugins_tab_active(string $tab): bool {
     if ($page !== 'plugins') {
         return false;
     }
-    $current = isset($_GET['tab']) ? (string) $_GET['tab'] : 'marketplace';
+    $current = isset($_GET['tab']) ? (string) $_GET['tab'] : 'discover';
+    if ($current === 'marketplace') {
+        $current = 'discover';
+    }
+    // Sidebar Hub link stays active for every Hub IA tab.
+    if ($tab === 'marketplace' || $tab === 'discover') {
+        return in_array($current, ['discover', 'installed', 'updates', 'licenses', 'upload'], true);
+    }
     return $current === $tab;
 }
 
@@ -148,7 +155,7 @@ if (empty($userAvatar)) {
                 <div class="nav-section" id="nav-plugins-section">
                     <ul class="nav-links" id="links-plugins">
                         <li class="nav-item">
-                            <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'marketplace'])) ?>" class="nav-link <?= is_plugins_tab_active('marketplace') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">
+                            <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'discover'])) ?>" class="nav-link <?= is_plugins_tab_active('discover') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">
                                 <?= birkly_icon('shopping-bag', ['class' => 'nav-icon']) ?>
                                 <span class="nav-label"><?= __('admin.marketplace') ?></span>
                             </a>
