@@ -2528,14 +2528,23 @@
         updatePageTitle(tab);
         document.querySelectorAll('.plugins-tab').forEach(function (btn) {
             var active = btn.getAttribute('data-tab') === tab;
-            btn.classList.toggle('active', active);
-            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            if (window.Birkly && window.Birkly.TabsA11y && typeof window.Birkly.TabsA11y.syncTabButton === 'function') {
+                window.Birkly.TabsA11y.syncTabButton(btn, active);
+            } else {
+                btn.classList.toggle('active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                btn.tabIndex = active ? 0 : -1;
+            }
         });
         document.querySelectorAll('.plugins-tab-panel').forEach(function (panel) {
             var panelTab = (panel.id || '').replace('plugins-tab-', '');
             var show = panelTab === tab;
-            panel.classList.toggle('active', show);
-            panel.hidden = !show;
+            if (window.Birkly && window.Birkly.TabsA11y && typeof window.Birkly.TabsA11y.syncTabPanel === 'function') {
+                window.Birkly.TabsA11y.syncTabPanel(panel, show);
+            } else {
+                panel.classList.toggle('active', show);
+                panel.hidden = !show;
+            }
         });
         if (tab === 'discover') {
             var offerSlug = getInitialOfferSlug();
@@ -2863,6 +2872,17 @@
                 switchTab(btn.getAttribute('data-tab'));
             });
         });
+        var tablist = document.querySelector('.plugins-tabs .tabs[role="tablist"]');
+        if (tablist && window.Birkly && window.Birkly.TabsA11y && typeof window.Birkly.TabsA11y.enhance === 'function') {
+            window.Birkly.TabsA11y.enhance(tablist, {
+                activateOnFocus: true,
+                onActivate: function (targetTab) {
+                    if (targetTab) {
+                        switchTab(targetTab);
+                    }
+                },
+            });
+        }
         initMarketplaceFilters();
     }
 
