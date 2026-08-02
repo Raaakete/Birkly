@@ -59,6 +59,17 @@ assert_true(
     in_array('commerce', $commerceTopics, true),
     'topics: ' . implode(', ', $commerceTopics)
 );
+assert_true(
+    'store build prompt adds commerce-store-kit',
+    in_array('commerce-store-kit', $commerceTopics, true),
+    'topics: ' . implode(', ', $commerceTopics)
+);
+$storeKitTopics = birkly_ai_detect_playbook_topics('run the MCP store kit and seed products', []);
+assert_true(
+    'store kit phrase detects commerce-store-kit',
+    in_array('commerce-store-kit', $storeKitTopics, true),
+    'topics: ' . implode(', ', $storeKitTopics)
+);
 
 // Auto inject gates
 assert_true(

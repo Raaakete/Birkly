@@ -47,7 +47,7 @@ User request
 | Public forms | `public-forms` | /04-integration/public-forms.html |
 | MCP / Cursor | `mcp-setup` | /01-admin/mcp-connections.html |
 | Media | `media` | /01-admin/media-library.html |
-| Commerce | `commerce` | /06-extensibility/plugins/commerce.html |
+| Commerce | `commerce`, `commerce-store-kit` | /06-extensibility/plugins/commerce.html |
 | Collection sidebar groups | `collection-groups` | /02-content/collection-groups.html |
 | Rich text fields | `content-editor` | /02-content/content-editor.html |
 | Plugins | `plugins-overview` | /06-extensibility/marketplace-go-live.html |
