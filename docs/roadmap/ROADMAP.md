@@ -27,9 +27,9 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**Active phase:** none — P52 complete 2026-08-01.
+**P52** complete 2026-08-01.
 
-**Proposed next:** **P53 — Hub & site packs** (product-planner, 2026-08-02) — awaiting human approval.
+**Active phase:** **P53 — Hub & site packs** (approved 2026-08-02). Lead executes M0→M14; notify at M14.
 
 - Canonical plan + handoff live in private Ops: `Birkly-Marketplace/internal/planning/reviews/P53-hub-site-packs-plan.md` and `P53-lead-engineer-handoff.md`
 - Focus: rename Marketplace → **Hub** · site packs (`template_pack`) via shared install engine (Hub + manual ZIP) · required-plugins confirm · safe pack updates · provider pack publish
