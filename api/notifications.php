@@ -110,7 +110,9 @@ function getPreferenceKeyForEvent($event) {
         'role_changed' => 'role_changed',
         'login_failed' => 'security_events',
         'rate_limited' => 'security_events',
-        'permission_denied' => 'security_events'
+        'permission_denied' => 'security_events',
+        // Commerce events intentionally unmapped → shown by default
+        // (see shouldShowNotification fallback).
     ];
     return $mapping[$event] ?? null;
 }
@@ -256,13 +258,44 @@ function formatNotification($entry, $currentUserEmail) {
                 return null;
             }
             break;
+
+        case 'commerce_order_created':
+            $notification['message'] = $details['message']
+                ?? sprintf('New order %s', $details['order_id'] ?? '');
+            $notification['icon'] = '🛒';
+            $notification['color'] = 'blue';
+            $notification['category'] = 'commerce';
+            $notification['link'] = $details['link'] ?? '/admin/commerce.html#orders';
+            break;
+
+        case 'commerce_order_paid':
+            $notification['message'] = $details['message']
+                ?? sprintf('Order %s paid', $details['order_id'] ?? '');
+            $notification['icon'] = '💳';
+            $notification['color'] = 'green';
+            $notification['category'] = 'commerce';
+            $notification['link'] = $details['link'] ?? '/admin/commerce.html#orders';
+            break;
+
+        case 'commerce_subscription_created':
+            $notification['message'] = $details['message']
+                ?? sprintf('New subscription %s', $details['subscription_id'] ?? '');
+            $notification['icon'] = '🔁';
+            $notification['color'] = 'green';
+            $notification['category'] = 'commerce';
+            $notification['link'] = $details['link'] ?? '/admin/commerce.html#subscriptions';
+            break;
             
         default:
             // Generic notification for other events
-            $notification['message'] = ucfirst(str_replace('_', ' ', $event));
+            $notification['message'] = $details['message']
+                ?? ucfirst(str_replace('_', ' ', $event));
             $notification['icon'] = '📢';
             $notification['color'] = 'gray';
             $notification['category'] = 'other';
+            if (!empty($details['link'])) {
+                $notification['link'] = $details['link'];
+            }
             break;
     }
     
