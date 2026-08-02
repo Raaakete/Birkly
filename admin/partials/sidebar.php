@@ -144,7 +144,7 @@ if (empty($userAvatar)) {
                 }
                 ?>
                 
-                <!-- Second Section: Plugins — Marketplace + installed plugin pages -->
+                <!-- Second Section: Plugins — Hub + installed plugin pages -->
                 <div class="nav-section" id="nav-plugins-section">
                     <ul class="nav-links" id="links-plugins">
                         <li class="nav-item">
