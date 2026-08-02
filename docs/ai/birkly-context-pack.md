@@ -10,7 +10,7 @@ Step-by-step runbooks for complex tasks. System prompt lists all slugs; load dep
 - **`playbooks-index`** — master routing & decision tree
 - **Core:** `content-model`, `fieldtypes`, `site-building`, `web-project-patterns`, `templating`, `public-forms`, `sub-collections`, `collection-groups`, `cms-pages`, `media`, `content-editor`
 - **AI:** `agent-guide`, `mcp-setup`, `ai-connections`
-- **Plugins:** `plugins-overview`, `commerce`, `automation`, `events`, `user-management`
+- **Plugins:** `plugins-overview`, `commerce`, `commerce-store-kit`, `automation`, `events`, `user-management`
 - **Admin:** `settings-roles`
 
 MCP: `birkly://docs/{topic}` for each playbook.
