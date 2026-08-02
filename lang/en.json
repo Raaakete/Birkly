@@ -468,6 +468,7 @@
         "site_pack_install_success": "Site pack installed successfully",
         "site_pack_upload_success": "Site pack installed from ZIP",
         "select_site_pack_zip": "Choose a site pack ZIP file",
+        "pack_replace_all_confirm": "Replace all files from this site pack? A backup is created first. User edits will be overwritten.",
         "install_marketplace_plugins": "Install plugins from the Hub",
         "install_marketplace_plugins_hint": "Add Commerce, Events, and other official extensions",
         "loading_marketplace": "Loading Hub...",
