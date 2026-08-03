@@ -64,7 +64,7 @@ if (!$cancelUrl) {
     }
 }
 ?><div class="collection-editor-page">
-    <div class="page-header pt-m pb-m">
+    <div class="page-header">
         <div class="page-header-left">
         <div class="breadcrumbs">
             <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
@@ -662,13 +662,13 @@ if (!$cancelUrl) {
                                 <div class="info-item u-pt-4 u-border-top">
                                     <label><?= __('admin.multi_language_support') ?></label>
                                     <div class="u-row-3">
-                                        <label class="toggle-switch">
+                                        <label class="switch">
                                             <?php if ($isSubCollection): ?>
                                                 <input type="checkbox" name="sub_collections[0][multilanguage_enabled]" id="sub-collection-multilanguage_enabled" value="1" <?= !empty($subCollectionData['multilanguage']['enabled']) ? 'checked' : '' ?>>
                                             <?php else: ?>
                                                 <input type="checkbox" name="multilanguage_enabled" id="multilanguage_enabled" value="1" <?= !empty($collection['multilanguage']['enabled']) ? 'checked' : '' ?>>
                                             <?php endif; ?>
-                                            <span class="toggle-slider"></span>
+                                            <span class="switch__slider"></span>
                                         </label>
                                         <span class="u-weight-medium">Enable multi-language support for this <?= $isSubCollection ? 'sub-collection' : 'collection' ?></span>
                                     </div>

@@ -1,5 +1,11 @@
 /* ============================================
-   Birkly Icon Component
+   Birkly Admin — Icon component (P41 contract)
+   ============================================
+
+   `.birkly-icon` plus its size modifiers are the contract emitted by
+   birkly_icon() (core/icons.php) and Birkly.icon(). The context rules below
+   pin icon sizes inside chrome that would otherwise inherit an em-based
+   size. Raw px is correct here: these are icon dimensions, not spacing.
    ============================================ */
 
 .birkly-icon {
@@ -58,7 +64,7 @@
   align-items: center;
   justify-content: center;
   line-height: 0;
-  color: var(--text-secondary, #72746F);
+  color: var(--text-secondary);
 }
 
 .fieldtype-type-icon .birkly-icon,

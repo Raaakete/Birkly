@@ -574,16 +574,16 @@
             const users = (result.status === 'ok' && result.data?.users) ? result.data.users : [];
 
             if (!users.length) {
-                usersContainer.innerHTML = '<p class="text-muted">No users available.</p>';
+                usersContainer.innerHTML = '<p class="u-fg-secondary">No users available.</p>';
                 return;
             }
 
             usersContainer.innerHTML = users.map(user => {
                 const label = user.name || user.email || user.id;
-                return `<label class="mcp-checkbox-label"><input type="checkbox" name="allowed_users" value="${escapeHtml(user.id)}"> ${escapeHtml(label)} <span class="text-muted">(${escapeHtml(user.role || '')})</span></label>`;
+                return `<label class="mcp-checkbox-label"><input type="checkbox" name="allowed_users" value="${escapeHtml(user.id)}"> ${escapeHtml(label)} <span class="u-fg-secondary">(${escapeHtml(user.role || '')})</span></label>`;
             }).join('');
         } catch (error) {
-            usersContainer.innerHTML = '<p class="text-muted">Could not load users.</p>';
+            usersContainer.innerHTML = '<p class="u-fg-secondary">Could not load users.</p>';
         }
     }
 

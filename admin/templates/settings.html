@@ -8,7 +8,7 @@ if (empty($availableLangs)) {
     ];
 }
 ?>
-<div class="page-header pt-m pb-m settings-page-header">
+<div class="page-header settings-page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
   </div>
@@ -1348,9 +1348,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
                 <small class="data-list-meta">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
               </div>
-              <label class="toggle-switch" for="domain-enable-analytics">
+              <label class="switch" for="domain-enable-analytics">
                 <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
-                <span class="toggle-slider"></span>
+                <span class="switch__slider"></span>
               </label>
             </div>
           </div>
@@ -1403,9 +1403,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
                 <small class="data-list-meta">Track visitor statistics for this domain.</small>
               </div>
-              <label class="toggle-switch" for="edit-domain-enable-analytics">
+              <label class="switch" for="edit-domain-enable-analytics">
                 <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
-                <span class="toggle-slider"></span>
+                <span class="switch__slider"></span>
               </label>
             </div>
           </div>

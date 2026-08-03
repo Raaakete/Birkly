@@ -1605,9 +1605,9 @@ async function deletePlugin(pluginId) {
                 '<span class="data-list-title">Website analytics</span>' +
                 '<small class="data-list-meta">Self-hosted visitor tracking for this domain.</small>' +
                 '</div>' +
-                '<label class="toggle-switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
+                '<label class="switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
                 '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
-                '<span class="toggle-slider"></span>' +
+                '<span class="switch__slider"></span>' +
                 '</label>' +
                 '</div>' +
                 (trackingScriptHtml ? '<div class="domain-tracking-script u-stack-2">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +

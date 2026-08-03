@@ -1,14 +1,28 @@
-/* BirklyFeedback toast + confirm/prompt modals */
+/* ============================================
+   Birkly Admin — BirklyFeedback (P56)
+   ============================================
+
+   Toasts plus the confirm / prompt dialogs built by admin/js/ui-feedback.js.
+
+   The dialogs are ordinary modals: JS gives each root `modal-backdrop` and
+   each panel `modal-content`, so scrim, radius, elevation and the entrance
+   rise all come from components/modals.css. Only the fade-in coupling to the
+   `.active` class and the narrower panel width live here.
+
+   Toast tones use the soft semantic surfaces (brief §4.4); the icon disc is
+   the one place a solid semantic fill is correct, because it is a badge on
+   that surface rather than a panel of its own.
+   ============================================ */
 
 .birkly-feedback-toast-region {
   position: fixed;
-  bottom: var(--space-6, 1.5rem);
-  right: var(--space-6, 1.5rem);
-  z-index: 12000;
+  inset-block-end: var(--space-6);
+  inset-inline-end: var(--space-6);
+  z-index: var(--z-toast);
   display: flex;
   flex-direction: column-reverse;
-  gap: var(--space-2, 0.5rem);
-  max-width: min(420px, calc(100vw - 2rem));
+  gap: var(--space-2);
+  max-width: min(26rem, calc(100vw - var(--space-8)));
   pointer-events: none;
 }
 
@@ -16,20 +30,20 @@
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3, 0.75rem);
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  border-radius: var(--radius-md, 0.5rem);
-  font-size: 0.875rem;
-  line-height: 1.45;
-  color: var(--text-primary, #20221D);
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.08));
-  animation: birkly-feedback-toast-in 0.22s ease-out;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  box-shadow: var(--elevation-2);
+  animation: birkly-feedback-toast-in var(--motion-base) var(--ease-out);
 }
 
 .birkly-feedback-toast--leaving {
-  animation: birkly-feedback-toast-out 0.2s ease-in forwards;
+  animation: birkly-feedback-toast-out var(--motion-base) var(--ease-out) forwards;
 }
 
 .birkly-feedback-toast__icon {
@@ -39,113 +53,110 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  border-radius: var(--radius-pill);
+  background: var(--neutral-surface);
+  color: var(--neutral-fg);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
   line-height: 1;
-  margin-top: 0.1rem;
 }
 
 .birkly-feedback-toast__message {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .birkly-feedback-toast__close {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-xs);
+  height: var(--control-xs);
+  margin-block-start: calc(var(--space-1) * -1);
+  margin-inline-end: calc(var(--space-2) * -1);
+  padding: 0;
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
-  opacity: 0.55;
-  font-size: 1.125rem;
+  opacity: 0.6;
+  font-size: var(--text-md);
   line-height: 1;
-  padding: 0;
   cursor: pointer;
-  margin-top: -0.1rem;
+  transition: opacity var(--motion-fast) var(--ease-out);
 }
 
 .birkly-feedback-toast__close:hover {
   opacity: 1;
 }
 
+/* ---- Tones ---- */
 .birkly-feedback-toast--success {
-  border-color: var(--success-300, #86efac);
-  background: var(--success-50, #f0fdf4);
-  color: var(--success-800, #166534);
+  border-color: var(--success-border);
+  background: var(--success-surface);
+  color: var(--success-fg);
 }
 
 .birkly-feedback-toast--success .birkly-feedback-toast__icon {
-  background: var(--success-500, #22c55e);
-  color: #fff;
+  background: var(--success-solid);
+  color: var(--ink-on-success);
 }
 
 .birkly-feedback-toast--error {
-  border-color: var(--error-300, #fca5a5);
-  background: var(--error-50, #fef2f2);
-  color: var(--error-800, #991b1b);
+  border-color: var(--danger-border);
+  background: var(--danger-surface);
+  color: var(--danger-fg);
 }
 
 .birkly-feedback-toast--error .birkly-feedback-toast__icon {
-  background: var(--error-500, #ef4444);
-  color: #fff;
+  background: var(--danger-solid);
+  color: var(--ink-on-danger);
 }
 
 .birkly-feedback-toast--warning {
-  border-color: var(--warning-300, #fcd34d);
-  background: var(--warning-50, #fffbeb);
-  color: var(--warning-800, #92400e);
+  border-color: var(--warning-border);
+  background: var(--warning-surface);
+  color: var(--warning-fg);
 }
 
 .birkly-feedback-toast--warning .birkly-feedback-toast__icon {
-  background: var(--warning-500, #f59e0b);
-  color: #fff;
+  background: var(--warning-solid);
+  color: var(--ink-on-warning);
 }
 
 .birkly-feedback-toast--info {
-  border-color: var(--primary-200, #a7f3d0);
-  background: var(--primary-50, #ecfdf5);
-  color: var(--primary-800, #065f46);
+  border-color: var(--info-border);
+  background: var(--info-surface);
+  color: var(--info-fg);
 }
 
 .birkly-feedback-toast--info .birkly-feedback-toast__icon {
-  background: var(--primary-500, #10b981);
-  color: #fff;
+  background: var(--info-solid);
+  color: var(--ink-on-info);
 }
 
 @keyframes birkly-feedback-toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(0.75rem) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes birkly-feedback-toast-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(0.5rem);
-  }
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(8px); }
 }
 
-/* Shared dialog shell */
+/* ============================================
+   Confirm / prompt dialogs
+   ============================================ */
+
+/* JS shows the root with an inline display before adding .active, so the
+   scrim fades rather than snapping. Everything else is .modal-backdrop. */
 .birkly-feedback-confirm-modal,
 .birkly-feedback-prompt-modal {
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-4, 1rem);
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
-  transition: opacity 0.18s ease;
+  transition: opacity var(--motion-base) var(--ease-out);
 }
 
 .birkly-feedback-confirm-modal.active,
@@ -154,73 +165,45 @@
 }
 
 .birkly-feedback-dialog {
-  max-width: 480px;
-  width: 100%;
-  border-radius: var(--radius-lg, 0.75rem);
-  box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08));
-  transform: translateY(8px) scale(0.98);
-  transition: transform 0.18s ease;
+  max-width: 30rem;
 }
 
-.birkly-feedback-confirm-modal.active .birkly-feedback-dialog,
-.birkly-feedback-prompt-modal.active .birkly-feedback-dialog {
-  transform: translateY(0) scale(1);
+.birkly-feedback-confirm-modal .modal-body,
+.birkly-feedback-prompt-modal .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .birkly-feedback-confirm-modal .modal-body p,
 .birkly-feedback-prompt-modal .modal-body p {
-  margin: 0 0 var(--space-3, 0.75rem);
-  line-height: 1.5;
-  color: var(--text-secondary, #4b5563);
+  color: var(--text-secondary);
 }
 
-.birkly-feedback-confirm-details[hidden] {
-  display: none;
+.birkly-feedback-confirm-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .birkly-feedback-confirm-details__intro {
-  margin: 0 0 var(--space-2, 0.5rem);
-  color: var(--text-secondary, #4b5563);
-  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .birkly-feedback-confirm-details__list {
-  margin: 0;
-  padding-left: 1.25rem;
-  color: var(--text-primary, #111827);
+  padding-inline-start: var(--space-5);
+  list-style: disc;
+  color: var(--text-primary);
 }
 
 .birkly-feedback-confirm-details__list li + li {
-  margin-top: var(--space-1, 0.25rem);
+  margin-block-start: var(--space-1);
 }
 
 .birkly-feedback-prompt-modal #birkly-feedback-prompt-input {
   width: 100%;
 }
 
-.birkly-feedback-confirm-modal .modal-footer,
-.birkly-feedback-prompt-modal .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: var(--space-2, 0.5rem);
-  flex-wrap: wrap;
-}
-
 .birkly-feedback-confirm-modal--danger .modal-header h2 {
-  color: var(--error-700, #b91c1c);
-}
-
-[data-theme="dark"] .birkly-feedback-toast,
-.theme-dark .birkly-feedback-toast {
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .birkly-feedback-toast,
-  .birkly-feedback-dialog,
-  .birkly-feedback-confirm-modal,
-  .birkly-feedback-prompt-modal {
-    animation: none !important;
-    transition: none !important;
-  }
+  color: var(--danger-fg);
 }

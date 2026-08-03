@@ -1,4 +1,4 @@
-<div class="page-header pt-m pb-m">
+<div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current">{translate 'admin.account_settings'}</span></div>
   </div>
@@ -149,9 +149,9 @@
               <span class="data-list-title">{translate 'admin.notify_entry_published'}</span>
               <small class="data-list-meta">{translate 'admin.notify_entry_published_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-entry-published" name="entry_published" {if user.notification_preferences.entry_published exist}{if user.notification_preferences.entry_published == true}checked{endif}{else}checked{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
 
@@ -160,9 +160,9 @@
               <span class="data-list-title">{translate 'admin.notify_entry_review'}</span>
               <small class="data-list-meta">{translate 'admin.notify_entry_review_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-entry-review" name="entry_review" {if user.notification_preferences.entry_review exist}{if user.notification_preferences.entry_review == true}checked{endif}{else}checked{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
 
@@ -171,9 +171,9 @@
               <span class="data-list-title">{translate 'admin.notify_entry_commented'}</span>
               <small class="data-list-meta">{translate 'admin.notify_entry_commented_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-entry-commented" name="entry_commented" {if user.notification_preferences.entry_commented exist}{if user.notification_preferences.entry_commented == true}checked{endif}{else}checked{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
 
@@ -184,9 +184,9 @@
               <span class="data-list-title">{translate 'admin.notify_invitation_accepted'}</span>
               <small class="data-list-meta">{translate 'admin.notify_invitation_accepted_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-invitation-accepted" name="invitation_accepted" {if user.notification_preferences.invitation_accepted exist}{if user.notification_preferences.invitation_accepted == true}checked{endif}{else}checked{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
 
@@ -195,9 +195,9 @@
               <span class="data-list-title">{translate 'admin.notify_role_changed'}</span>
               <small class="data-list-meta">{translate 'admin.notify_role_changed_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-role-changed" name="role_changed" {if user.notification_preferences.role_changed exist}{if user.notification_preferences.role_changed == true}checked{endif}{else}checked{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
 
@@ -208,9 +208,9 @@
               <span class="data-list-title">{translate 'admin.notify_system_updates'}</span>
               <small class="data-list-meta">{translate 'admin.notify_system_updates_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-system-updates" name="system_updates" {if user.notification_preferences.system_updates exist}{if user.notification_preferences.system_updates == true}checked{endif}{else}checked{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
 
@@ -219,9 +219,9 @@
               <span class="data-list-title">{translate 'admin.notify_security_events'}</span>
               <small class="data-list-meta">{translate 'admin.notify_security_events_desc'}</small>
             </div>
-            <label class="toggle-switch">
+            <label class="switch">
               <input type="checkbox" id="notify-security-events" name="security_events" {if user.notification_preferences.security_events exist}{if user.notification_preferences.security_events == true}checked{endif}{else}{if user.role == 'admin'}checked{endif}{endif}>
-              <span class="toggle-slider"></span>
+              <span class="switch__slider"></span>
             </label>
           </div>
       </div>
