@@ -173,9 +173,16 @@
 .u-mr-3 { margin-inline-end: var(--space-3); }
 .u-mr-4 { margin-inline-end: var(--space-4); }
 .u-mx-auto { margin-inline: auto; }
+.u-mx-0 { margin-inline: 0; }
+.u-mx-2 { margin-inline: var(--space-2); }
+.u-mx-4 { margin-inline: var(--space-4); }
 .u-my-0 { margin-block: 0; }
+.u-my-1 { margin-block: var(--space-1); }
+.u-my-2 { margin-block: var(--space-2); }
+.u-my-3 { margin-block: var(--space-3); }
 .u-my-4 { margin-block: var(--space-4); }
 .u-my-6 { margin-block: var(--space-6); }
+.u-my-8 { margin-block: var(--space-8); }
 
 .u-p-0 { padding: 0; }
 .u-p-1 { padding: var(--space-1); }
@@ -186,24 +193,34 @@
 .u-p-6 { padding: var(--space-6); }
 .u-p-8 { padding: var(--space-8); }
 .u-pt-0 { padding-block-start: 0; }
+.u-pt-1 { padding-block-start: var(--space-1); }
 .u-pt-2 { padding-block-start: var(--space-2); }
 .u-pt-3 { padding-block-start: var(--space-3); }
 .u-pt-4 { padding-block-start: var(--space-4); }
+.u-pt-5 { padding-block-start: var(--space-5); }
 .u-pt-6 { padding-block-start: var(--space-6); }
+.u-pt-8 { padding-block-start: var(--space-8); }
 .u-pb-0 { padding-block-end: 0; }
+.u-pb-1 { padding-block-end: var(--space-1); }
 .u-pb-2 { padding-block-end: var(--space-2); }
 .u-pb-3 { padding-block-end: var(--space-3); }
 .u-pb-4 { padding-block-end: var(--space-4); }
+.u-pb-5 { padding-block-end: var(--space-5); }
 .u-pb-6 { padding-block-end: var(--space-6); }
+.u-pb-8 { padding-block-end: var(--space-8); }
 .u-px-0 { padding-inline: 0; }
+.u-px-1 { padding-inline: var(--space-1); }
 .u-px-2 { padding-inline: var(--space-2); }
 .u-px-3 { padding-inline: var(--space-3); }
 .u-px-4 { padding-inline: var(--space-4); }
+.u-px-5 { padding-inline: var(--space-5); }
 .u-px-6 { padding-inline: var(--space-6); }
 .u-py-0 { padding-block: 0; }
+.u-py-1 { padding-block: var(--space-1); }
 .u-py-2 { padding-block: var(--space-2); }
 .u-py-3 { padding-block: var(--space-3); }
 .u-py-4 { padding-block: var(--space-4); }
+.u-py-5 { padding-block: var(--space-5); }
 .u-py-6 { padding-block: var(--space-6); }
 
 .u-gap-0 { gap: 0; }
@@ -420,7 +437,6 @@
   to { transform: rotate(360deg); }
 }
 
-.u-hide-print { }
 @media print {
   .u-hide-print { display: none; }
 }
