@@ -27,14 +27,16 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**P52** complete 2026-08-01. **P53** Hub & site packs approved 2026-08-02 (see Ops planning).
+**P52** complete 2026-08-01. **P53** Hub & site packs approved 2026-08-02 (see Ops planning). **P54** Commerce 0→1 complete 2026-08-02.
 
-**Active phase:** **P54 — Commerce 0→1** (**complete** 2026-08-02). Commerce plugin **1.0.29**; Automation recipes **1.1.7**; AI topic `commerce-store-kit`.
+**Active phase:** **P55 — Hub payments & entitlements** (**approved** 2026-08-03).
 
-- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P54-commerce-0-to-1-plan.md` · `P54-lead-engineer-handoff.md`
-- Plugin baseline **1.0.14**; pointer in plugin: `docs/COMMERCE-0-TO-1.md`
-- Focus: trust + IA (Connections→Settings, Analytics→Dashboard) · inventory ledger SoR · freeze `tax_lines` · stub honesty · then parity → providers → Birkly differentiation
-- Distinct from P53 Hub/site packs (separate track)
+- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P55-hub-payments-entitlements-plan.md` · `P55-lead-engineer-handoff.md`
+- Focus: provider-as-seller paid Hub offers · Stripe Connect application fee · hybrid entitlements · no-key free installs · activation reuse · trials/freemium · refunds/chargebacks/Ops · docs/legal alignment
+- Out of scope: Mollie/multi-PSP/regional PSPs, Birkly MoR for third-party offers, perfect DRM
+- Distinct from P54 Commerce (site-merchant payments) — Hub marketplace fee collection is a separate track
+
+**Previous:** P54 Commerce 0→1 complete — Commerce plugin **1.0.29+**; Automation recipes **1.1.7**; AI topic `commerce-store-kit`. Canonical: `P54-commerce-0-to-1-plan.md`.
 
 Focus delivered (P52): PHP-native SSR (default for Birkly hosting), shared JS engine for the browser client, admin render settings, client loading helpers.
 
