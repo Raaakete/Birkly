@@ -104,7 +104,7 @@
                 '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_sources_why', 'Pick at least one narrative source — where agents should read the truth about you (About page, homepage, etc.).')) + '</p>' +
                 '<div class="form-group"><label for="ag-wiz-source-collection">' + escapeHtml(t('collection', 'Collection')) + '</label>' +
                 '<select id="ag-wiz-source-collection" class="input"><option value="">' + escapeHtml(t('select_collection', 'Select collection')) + '</option></select></div>' +
-                '<div class="form-group"><label for="ag-wiz-source-entry">' + escapeHtml(t('entry', 'Entry')) + ' <span class="text-muted">(' + escapeHtml(t('ag_wizard_optional', 'optional')) + ')</span></label>' +
+                '<div class="form-group"><label for="ag-wiz-source-entry">' + escapeHtml(t('entry', 'Entry')) + ' <span class="u-fg-secondary">(' + escapeHtml(t('ag_wizard_optional', 'optional')) + ')</span></label>' +
                 '<select id="ag-wiz-source-entry" class="input"><option value="">' + escapeHtml(t('select_entry', 'Select entry')) + '</option></select></div>' +
                 '<div class="form-group"><label for="ag-wiz-source-url">' + escapeHtml(t('ag_wizard_or_url', 'Or external URL')) + '</label>' +
                 '<input type="url" id="ag-wiz-source-url" class="input" placeholder="https://…"></div>' +

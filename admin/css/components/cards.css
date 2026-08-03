@@ -105,6 +105,11 @@
 /* Flush — child owns its own padding (tables, lists) */
 .card--flush > .card-body { padding: 0; }
 
+/* Padded — the card IS the body. For JS-composed cards whose children cannot
+   easily be wrapped in a .card-body (P56-M11: hosting wizard preview). */
+.card--padded { padding: var(--space-6); }
+.card--padded.card--compact { padding: var(--space-4); }
+
 .card--sunken {
   background: var(--surface-sunken);
   border-color: var(--border-subtle);
