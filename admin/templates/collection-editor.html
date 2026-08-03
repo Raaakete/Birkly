@@ -92,7 +92,7 @@ if (!$cancelUrl) {
     include __DIR__ . '/components/sticky-save-bar.php';
     ?>
     
-    <form id="collection-form" class="collection-form" method="POST" action="/api/admin_collections.php">
+    <form id="collection-form" class="collection-form u-stack-6" method="POST" action="/api/admin_collections.php">
         <?php if ($isSubCollection): ?>
             <input type="hidden" name="action" value="<?= !empty($subCollectionData['slug']) ? 'update_sub_collection' : 'add_sub_collection' ?>">
             <input type="hidden" name="collection_slug" value="<?= htmlspecialchars($collection['slug'] ?? $_GET['collection'] ?? '') ?>">
@@ -205,7 +205,6 @@ if (!$cancelUrl) {
                                                 <div class="fieldtype-field">
                                                     <label class="checkbox-label">
                                                         <input type="checkbox" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
-                                                        <span class="checkmark"></span>
                                                         <span>Mandatory Field</span>
                                                     </label>
                                                 </div>
@@ -272,7 +271,6 @@ if (!$cancelUrl) {
                                                 <div class="fieldtype-field">
                                                     <label class="checkbox-label">
                                                         <input type="checkbox" name="sub_collections[0][sub_collections][<?= $index ?>][auto_publish]" value="1" <?= !empty($nestedSubCollection['auto_publish']) ? 'checked' : '' ?>>
-                                                        <span class="checkmark"></span>
                                                         <span>Auto-publish</span>
                                                     </label>
                                                 </div>
@@ -360,7 +358,6 @@ if (!$cancelUrl) {
                                                 <div class="fieldtype-field">
                                                     <label class="checkbox-label">
                                                         <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
-                                                        <span class="checkmark"></span>
                                                         <span>Mandatory Field</span>
                                                     </label>
                                                 </div>
@@ -498,7 +495,6 @@ if (!$cancelUrl) {
                                                                 <div class="fieldtype-field">
                                                                     <label class="checkbox-label">
                                                                         <input type="checkbox" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
-                                                                        <span class="checkmark"></span>
                                                                         <span>Mandatory Field</span>
                                                                     </label>
                                                                 </div>
@@ -1246,7 +1242,7 @@ echo htmlspecialchars($formCode);
                 <div class="fieldtype-title">
                     <span class="fieldtype-type" data-fieldtype="">
                         <span class="fieldtype-type-icon" aria-hidden="true"></span>
-                        <span class="fieldtype-type-label">__TYPE__</span>
+                        <span class="fieldtype-type-label u-label">__TYPE__</span>
                     </span>
                     <span class="fieldtype-name">__NAME__</span>
                 </div>
@@ -1285,7 +1281,6 @@ echo htmlspecialchars($formCode);
                 <div class="fieldtype-field">
                     <label class="checkbox-label">
                         <input type="checkbox" name="fields[__INDEX__][required]" value="1" __REQUIRED_CHECKED__>
-                        <span class="checkmark"></span>
                         <span>Mandatory Field</span>
                     </label>
                 </div>
@@ -1479,7 +1474,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="fieldtype-field">
                             <label class="checkbox-label">
                                 <input type="checkbox" name="sub_collections[0][schema][fields][${fieldIndex}][required]" value="1">
-                                <span class="checkmark"></span>
                                 <span>Mandatory Field</span>
                             </label>
                         </div>
@@ -1635,7 +1629,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const safeLabel = String(label || 'Select Type').toUpperCase();
         return '<span class="fieldtype-type" data-fieldtype="' + safeName.replace(/"/g, '&quot;') + '">' +
             '<span class="fieldtype-type-icon" aria-hidden="true">' + getFieldtypeIcon(safeName, 14) + '</span>' +
-            '<span class="fieldtype-type-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
+            '<span class="fieldtype-type-label u-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
             '</span>';
     }
     
@@ -2449,7 +2443,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <div class="fieldtype-field">
                                             <label class="checkbox-label">
                                                 <input type="checkbox" name="sub_collections[${index}][schema][fields][${fieldIndex}][required]" value="1" ${field.required ? 'checked' : ''}>
-                                                <span class="checkmark"></span>
                                                 <span>Mandatory Field</span>
                                             </label>
                                         </div>
@@ -2594,7 +2587,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="fieldtype-field">
                                         <label class="checkbox-label">
                                             <input type="checkbox" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][required]" value="1">
-                                            <span class="checkmark"></span>
                                             <span>Mandatory Field</span>
                                         </label>
                                     </div>
