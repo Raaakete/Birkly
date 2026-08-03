@@ -131,4 +131,19 @@
 
   /* ---- Layering ---- */
   --z-index-modal: var(--z-modal);
+
+  /* ---- Names used by official plugin CSS that the admin never defined ----
+     Commerce, Events, Studio and User Management reference these. Only
+     --surface-secondary ever existed in admin tokens; the other seven were
+     always falling back to the plugins' own hardcoded hex, which is exactly
+     why those plugins render wrong in dark mode. Defining them here makes
+     that plugin CSS theme-correct without touching the plugins (P56-D4). */
+  --surface-secondary: var(--surface-sunken);
+  --surface-color: var(--surface);
+  --bg-subtle: var(--surface-sunken);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --text-muted: var(--text-secondary);
+  --color-border: var(--border-subtle);
+  --danger-color: var(--danger-fg);
 }
