@@ -163,6 +163,15 @@ function save_plugin_states() {
         if (!empty($plugin['license_ref'])) {
             $state['license_ref'] = $plugin['license_ref'];
         }
+        if (!empty($plugin['entitlement_token'])) {
+            $state['entitlement_token'] = $plugin['entitlement_token'];
+        }
+        if (!empty($plugin['entitlement']) && is_array($plugin['entitlement'])) {
+            $state['entitlement'] = $plugin['entitlement'];
+        }
+        if (!empty($plugin['entitlement_grace_started_at'])) {
+            $state['entitlement_grace_started_at'] = $plugin['entitlement_grace_started_at'];
+        }
         $states[$id] = $state;
     }
     
@@ -190,6 +199,15 @@ function load_plugin_states() {
             }
             if (!empty($state['license_ref'])) {
                 $birkly_plugins[$id]['license_ref'] = $state['license_ref'];
+            }
+            if (!empty($state['entitlement_token'])) {
+                $birkly_plugins[$id]['entitlement_token'] = $state['entitlement_token'];
+            }
+            if (!empty($state['entitlement']) && is_array($state['entitlement'])) {
+                $birkly_plugins[$id]['entitlement'] = $state['entitlement'];
+            }
+            if (!empty($state['entitlement_grace_started_at'])) {
+                $birkly_plugins[$id]['entitlement_grace_started_at'] = $state['entitlement_grace_started_at'];
             }
         }
     }
