@@ -56,24 +56,54 @@ strong, b { font-weight: var(--weight-semibold); }
 
 /* ============================================
    Links — accent text ramp (6.4:1). Never --accent on light surfaces.
+
+   The admin is an application, not a document, so links are NOT underlined by
+   default: an underline on every table cell, list row and card title reads as
+   noise. Colour plus a hover underline carries the affordance. Running text
+   is the exception — inside .prose, .rich-text and paragraphs, underlines are
+   restored because there the link needs to be identifiable mid-sentence.
    ============================================ */
 a {
   color: var(--text-link);
-  text-decoration: underline;
+  text-decoration: none;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
   transition: color var(--motion-fast) var(--ease-out);
 }
 
-a:hover { color: var(--text-link-hover); }
+a:hover {
+  color: var(--text-link-hover);
+  text-decoration: underline;
+}
 
-/* Links that are chrome (nav, breadcrumbs, cards) opt out of underline */
-a.u-unstyled,
-nav a,
-.breadcrumbs a,
+/* Running text — underline always visible */
+.prose a,
+.rich-text a,
+p > a,
+li > a,
+.callout a,
+.field-help a,
+.section-description a {
+  text-decoration: underline;
+}
+
+/* Controls and chrome never underline, even on hover */
 a.btn,
 a.card,
-a.nav-link {
+a.nav-link,
+a.data-list-item,
+a.dropdown-item,
+a.tab,
+a.chip,
+.breadcrumbs a:hover,
+nav a:hover,
+a.btn:hover,
+a.card:hover,
+a.nav-link:hover,
+a.data-list-item:hover,
+a.dropdown-item:hover,
+a.tab:hover,
+a.chip:hover {
   text-decoration: none;
 }
 
