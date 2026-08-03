@@ -25,10 +25,12 @@
         const feed = document.getElementById('activity-feed');
         if (!feed) return;
 
+        const loadMoreBtn = document.getElementById('load-more');
+
         if (filteredActivity.length === 0) {
-            feed.innerHTML = '<div class="text-center"><p>No activity found</p></div>';
-            const loadMoreBtn = document.getElementById('load-more');
-            if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+            feed.innerHTML = '<div class="empty-state empty-state--compact">'
+                + '<p class="empty-state__description">No activity found</p></div>';
+            if (loadMoreBtn) loadMoreBtn.hidden = true;
             return;
         }
 
@@ -39,20 +41,18 @@
             const message = item.message || item.event || 'Activity';
             const user = item.user || 'Unknown';
             const category = item.category || 'other';
-            html += '<div class="activity-item" style="padding:1rem;border-bottom:1px solid var(--border-light);">';
-            html += '<div style="display:flex;justify-content:space-between;gap:1rem;">';
-            html += '<strong>' + escapeHtml(message) + '</strong>';
-            html += '<span style="color:var(--text-secondary);font-size:0.875rem;">' + escapeHtml(timestamp) + '</span>';
-            html += '</div>';
-            html += '<div style="margin-top:0.25rem;font-size:0.875rem;color:var(--text-secondary);">';
-            html += escapeHtml(user) + ' · ' + escapeHtml(category);
-            html += '</div></div>';
+            html += '<div class="activity-item">'
+                + '<div class="activity-content u-stack-1">'
+                + '<div class="u-split"><span class="activity-message">' + escapeHtml(message) + '</span>'
+                + '<span class="u-text-xs u-fg-secondary">' + escapeHtml(timestamp) + '</span></div>'
+                + '<div class="activity-meta"><span>' + escapeHtml(user) + '</span><span>'
+                + escapeHtml(category) + '</span></div>'
+                + '</div></div>';
         });
         feed.innerHTML = html;
 
-        const loadMoreBtn = document.getElementById('load-more');
         if (loadMoreBtn) {
-            loadMoreBtn.style.display = items.length < filteredActivity.length ? 'block' : 'none';
+            loadMoreBtn.hidden = items.length >= filteredActivity.length;
         }
     }
 
@@ -72,7 +72,7 @@
     function loadActivity() {
         const feed = document.getElementById('activity-feed');
         if (feed) {
-            feed.innerHTML = '<div class="text-center"><div class="spinner">Loading...</div></div>';
+            feed.innerHTML = '<div class="loading-state"><p>Loading...</p></div>';
         }
 
         const filter = document.getElementById('category-filter')?.value || 'all';
@@ -91,7 +91,8 @@
             .catch(function (error) {
                 console.error('Activity load error:', error);
                 if (feed) {
-                    feed.innerHTML = '<div class="text-center">Error loading activity</div>';
+                    feed.innerHTML = '<div class="empty-state empty-state--compact empty-state--error" role="alert">'
+                        + '<p class="empty-state__description">Error loading activity</p></div>';
                 }
             });
     }

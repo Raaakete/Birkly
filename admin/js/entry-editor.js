@@ -65,8 +65,7 @@
     function hideUnsavedBadge() {
         const badge = document.getElementById('editor-unsaved-badge');
         if (badge) {
-            badge.hidden = true;
-            badge.style.display = 'none';
+            badge.classList.remove('is-visible');
         }
     }
 
@@ -419,20 +418,12 @@
             
             // Show publish date field when status is "scheduled"
             if (publishScheduleGroup) {
-                if (status === 'scheduled') {
-                    publishScheduleGroup.style.display = 'block';
-                } else {
-                    publishScheduleGroup.style.display = 'none';
-                }
+                publishScheduleGroup.hidden = status !== 'scheduled';
             }
             
             // Show unpublish date field when status is "published"
             if (expireScheduleGroup) {
-                if (status === 'published') {
-                    expireScheduleGroup.style.display = 'block';
-                } else {
-                    expireScheduleGroup.style.display = 'none';
-                }
+                expireScheduleGroup.hidden = status !== 'published';
             }
             
             // Show reviewer field when status is "pending_review"
@@ -441,7 +432,7 @@
                 const reviewerHidden = document.getElementById('reviewer_hidden');
                 
                 if (status === 'pending_review') {
-                    reviewerGroup.style.display = 'block';
+                    reviewerGroup.hidden = false;
                     // When showing, sync the hidden input value to the select if select is empty
                     if (reviewerSelect && reviewerHidden) {
                         // If select is empty but hidden has value, try to set select from hidden
@@ -467,7 +458,7 @@
                         }
                     }
                 } else {
-                    reviewerGroup.style.display = 'none';
+                    reviewerGroup.hidden = true;
                     // When hiding, sync the reviewer value to the hidden input to preserve it
                     if (reviewerSelect && reviewerHidden) {
                         // Always preserve the select value (user ID) in the hidden input
@@ -570,13 +561,13 @@
             const isReviewStatus = ['pending_review', 'approved', 'rejected'].includes(status);
             
             if (reviewerGroup) {
-                reviewerGroup.style.display = isReviewStatus ? 'block' : 'none';
+                reviewerGroup.hidden = !isReviewStatus;
             }
             if (reviewNotesGroup) {
                 reviewNotesGroup.style.display = isReviewStatus ? 'block' : 'none';
             }
             if (reviewActionGroup) {
-                reviewActionGroup.style.display = status === 'pending_review' ? 'block' : 'none';
+                reviewActionGroup.hidden = status !== 'pending_review';
             }
         }
         
@@ -1824,13 +1815,7 @@
                 
                 // Update content
                 languageTabContents.forEach(content => {
-                    if (content.dataset.lang === langCode) {
-                        content.style.display = 'block';
-                        content.classList.add('active');
-                    } else {
-                        content.style.display = 'none';
-                        content.classList.remove('active');
-                    }
+                    content.classList.toggle('active', content.dataset.lang === langCode);
                 });
             });
         });

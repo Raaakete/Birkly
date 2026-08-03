@@ -22,7 +22,6 @@
 @import url('core/compat-tokens.css');
 @import url('core/reset.css');
 @import url('core/typography.css');
-@import url('core/helpers.css');
 @import url('core/utilities.css');
 
 /* ============================================
@@ -61,6 +60,7 @@
 @import url('pages/dashboard.css');
 @import url('pages/settings.css');
 @import url('pages/content.css');
+@import url('pages/collection-editor.css');
 @import url('pages/media.css');
 @import url('pages/ai-presence.css');
 @import url('pages/plugins.css');
@@ -71,7 +71,6 @@
 /* ============================================
    Plugin API
    ============================================ */
-@import url('plugins/plugin-api.css');
 @import url('plugins/fieldtype-api.css');
 
 /* ============================================
@@ -81,6 +80,12 @@
 @import url('feedback-button.css');
 
 /* ============================================
-   Legacy Styles (if any remain)
+   Helpers + final overrides — MUST load last
+   ============================================
+   Utilities are the composition layer: a u-* helper has to beat a component
+   that sets the same property at equal specificity, and source order is what
+   decides that. Loading helpers before components silently killed them
+   (P56-M7 finding).
    ============================================ */
-/* All styles have been migrated to modular files above */
+@import url('core/helpers.css');
+@import url('core/overrides.css');

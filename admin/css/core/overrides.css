@@ -1,0 +1,31 @@
+/* ============================================
+   Birkly Admin — Final cascade overrides (P56)
+   ============================================
+
+   Loaded LAST, after components and helpers. Contains only rules that must
+   win on source order rather than specificity. Nothing else belongs here.
+   ============================================ */
+
+/* ============================================
+   The `hidden` attribute must actually hide.
+
+   Components legitimately set `display: flex/grid` on a class. An attribute
+   selector has the same specificity as a class, so the UA's
+   `[hidden] { display: none }` loses to `.card { display: flex }` and the
+   element stays visible. Three separate P56 migrations independently hit
+   this and each worked around it locally.
+
+   Declaring it here — after every component — fixes it once for the whole
+   admin, with no !important, and makes `hidden` the safe replacement for
+   inline `style="display:none"` (brief §6.3).
+   ============================================ */
+[hidden] {
+  display: none;
+}
+
+/* Some legacy markup uses `aria-hidden` as a visibility switch on containers
+   that are removed from layout entirely. Honour it only when paired with the
+   hidden attribute pattern, never on decorative icons. */
+[aria-hidden="true"][data-hidden] {
+  display: none;
+}

@@ -23,14 +23,14 @@
         </div>
     </div>
     
-    <div class="roles-container">
-        <div class="roles-grid" id="roles-grid">
+    <div class="page-body">
+        <div class="roles-grid u-grid-auto" id="roles-grid">
             {if roles exist}
                 {for each role in roles}
-                    <div class="role-card">
-                        <div class="role-header">
-                            <h3>{role.name}</h3>
-                            <div class="role-actions">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">{role.name}</h3>
+                            <div class="card-actions">
                                 <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["{role.id}"]' title="{translate 'admin.edit_role'}" aria-label="{translate 'admin.edit_role'} {role.name}">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
@@ -45,12 +45,13 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="role-description">
+                        <div class="card-body u-stack-4">
+                        <p class="card-description">
                             {if role.description exist}{role.description}{else}No description{endif}
-                        </div>
-                        <div class="role-permissions">
-                            <h4>{translate 'admin.permissions'}:</h4>
-                            <div class="permissions-list">
+                        </p>
+                        <div class="u-stack-2">
+                            <h4 class="u-label">{translate 'admin.permissions'}</h4>
+                            <div class="u-cluster">
                                 <?php $rolePermissions = $role['permissions'] ?? []; ?>
                                 <?php if (!empty($rolePermissions)): ?>
                                     <?php foreach ($rolePermissions as $permission): ?>
@@ -59,16 +60,16 @@
                                             ? ($permission['label'] ?? $permission['name'] ?? json_encode($permission))
                                             : (string) $permission;
                                         ?>
-                                        <span class="permission-badge"><?= htmlspecialchars($permissionLabel) ?></span>
+                                        <span class="badge badge-neutral"><?= htmlspecialchars($permissionLabel) ?></span>
                                     <?php endforeach; ?>
                                 <?php else: ?>
-                                    <span class="no-permissions">{translate 'admin.no_permissions'}</span>
+                                    <span class="u-text-sm u-fg-tertiary">{translate 'admin.no_permissions'}</span>
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <div class="role-users">
-                            <h4>{translate 'admin.users_with_role'}:</h4>
-                            <div class="users-list">
+                        <div class="u-stack-2">
+                            <h4 class="u-label">{translate 'admin.users_with_role'}</h4>
+                            <div class="u-cluster">
                                 <?php 
                                 $roleUsers = array_filter($users ?? [], function($user) use ($role) {
                                     return ($user['role'] ?? '') === ($role['name'] ?? '');
@@ -76,14 +77,15 @@
                                 if (!empty($roleUsers)):
                                     foreach ($roleUsers as $user):
                                 ?>
-                                    <span class="user-badge"><?= htmlspecialchars($user['email'] ?? '') ?></span>
+                                    <span class="badge badge-neutral"><?= htmlspecialchars($user['email'] ?? '') ?></span>
                                 <?php 
                                     endforeach;
                                 else:
                                 ?>
-                                    <span class="no-users">{translate 'admin.no_users'}</span>
+                                    <span class="u-text-sm u-fg-tertiary">{translate 'admin.no_users'}</span>
                                 <?php endif; ?>
                             </div>
+                        </div>
                         </div>
                     </div>
                 {endfor}
@@ -98,8 +100,8 @@
 </div>
 
 <!-- Add/Edit Role Modal -->
-<div id="role-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
+<div id="role-modal" class="modal">
+    <div class="modal-content modal--md">
         <div class="modal-header">
             <h2 id="role-modal-title">{translate 'admin.add_role'}</h2>
             <button class="modal-close" data-admin-action="closeRoleModal">&times;</button>

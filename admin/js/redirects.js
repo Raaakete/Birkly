@@ -38,17 +38,15 @@
         if (!feedback) {
             return;
         }
+        feedback.classList.remove('u-fg-danger', 'u-fg-success');
         if (!message) {
-            feedback.style.display = 'none';
+            feedback.hidden = true;
             feedback.textContent = '';
-            feedback.style.color = '';
             return;
         }
-        feedback.style.display = 'block';
+        feedback.hidden = false;
         feedback.textContent = message;
-        feedback.style.color = tone === 'error'
-            ? 'var(--danger-600, #dc2626)'
-            : 'var(--success-600, #16a34a)';
+        feedback.classList.add(tone === 'error' ? 'u-fg-danger' : 'u-fg-success');
     }
 
     function resetForm() {
@@ -71,23 +69,21 @@
         }
         if (!redirects.length) {
             tableBody.innerHTML = '';
-            emptyState.style.display = 'block';
+            emptyState.hidden = false;
             return;
         }
 
-        emptyState.style.display = 'none';
+        emptyState.hidden = true;
         tableBody.innerHTML = redirects.map(function (redirect) {
             return '<tr>' +
                 '<td><code>' + escapeHtml(redirect.from_path || '') + '</code></td>' +
                 '<td><code>' + escapeHtml(redirect.to_path || '') + '</code></td>' +
                 '<td>' + escapeHtml(String(redirect.type || 301)) + '</td>' +
-                '<td>' + (redirect.enabled ? '<span class="status-badge published">Enabled</span>' : '<span class="status-badge unpublished">Disabled</span>') + '</td>' +
+                '<td>' + (redirect.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-neutral">Disabled</span>') + '</td>' +
                 '<td>' + escapeHtml(redirect.updated_at || '—') + '</td>' +
-                '<td>' +
-                    '<div style="display:flex; gap:0.5rem; flex-wrap:wrap;">' +
-                        '<button type="button" class="btn btn-secondary btn-sm redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">Edit</button>' +
-                        '<button type="button" class="btn btn-danger btn-sm redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">Delete</button>' +
-                    '</div>' +
+                '<td class="cell-actions">' +
+                    '<button type="button" class="btn btn-secondary btn-sm redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">Edit</button>' +
+                    '<button type="button" class="btn btn-danger btn-sm redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">Delete</button>' +
                 '</td>' +
             '</tr>';
         }).join('');

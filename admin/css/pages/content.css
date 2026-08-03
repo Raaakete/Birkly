@@ -1,188 +1,218 @@
 /* ============================================
-   Content Management Page Styles
+   Birkly Admin — Content hub + entries list (P56)
+   ============================================
+
+   Page-specific layout ONLY. Everything else comes from the design language:
+
+     components/cards.css        .card, .collection-card, .collection-header,
+                                 .dragging, .drop-target, .drag-handle
+     components/forms.css        .field / .field-block, .input, .field-help
+     components/tabs.css         .tab-panel / .tab-content / .tab-pane
+     components/tables.css       .entries-smart-table, .table-row, bulk toolbar
+     components/empty-states.css .empty-state and friends
+     components/dropdowns.css    .dropdown, .dropdown-menu, .dropdown-item
+     layout/header.css           .main-actions-bar, .section-header, .page-body
+
+   Reference: internal/planning/reviews/P56-M1-design-language-brief.md
    ============================================ */
 
-/* Editor sidebar tabs — override global tabs.css (.tab-content { display: none }) */
+/* ============================================
+   1. Editor sidebar tabs (entry editor + collection editor)
+
+   sidebar-tabs.js drives these two sidebars and treats `.tab-content` as the
+   panel CONTAINER rather than a panel, so the shared `display: none` from
+   components/tabs.css has to be reversed for this one dialect. Scoped to
+   `.sidebar-tabs` so no other tab surface is affected.
+   ============================================ */
+.sidebar-tabs {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.sidebar-tabs .tabs {
+  padding-inline: var(--space-2);
+  background: var(--surface-sunken);
+}
+
+.sidebar-tabs .tab { flex: 1 1 auto; justify-content: center; }
+
 .sidebar-tabs .tab-content {
   display: block;
+  padding: var(--space-4);
 }
 
-.sidebar-tabs .tab-pane {
-  display: none;
-}
+.sidebar-tabs .tab-pane { display: none; }
 
 .sidebar-tabs .tab-pane.active {
-  display: block;
-}
-
-/* Entry Form */
-.entry-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6, 1.5rem);
+  gap: var(--space-4);
 }
 
-/* Collection Form */
-.collection-form {
+/* ============================================
+   2. Templating reference panels
+   Shared by the entry editor and the collection editor sidebars.
+   ============================================ */
+.templating-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6, 1.5rem);
+  gap: var(--space-4);
 }
 
-/* Content Header */
-.content-header {
-  margin-bottom: var(--space-6, 1.5rem);
-}
-
-.content-header h1 {
-  margin: 0 0 var(--space-2, 0.5rem) 0;
-  color: var(--text-primary, #20221D);
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.content-header p {
+.templating-intro {
   margin: 0;
-  color: var(--text-secondary, #72746F);
-  font-size: 1rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
-/* Entry Editor */
-.entry-editor {
+.templating-intro a {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+.templating-section {
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.templating-section .section-header {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.templating-section .section-header h4 {
+  margin: 0;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+.field-slugs-list { padding-inline: var(--space-3); }
+
+.field-slug-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.field-slug-item:last-child { border-block-end: none; }
+
+.field-slug-label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.field-slug-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.field-slug-value code {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent-text);
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-sm);
+  height: var(--control-sm);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out),
+              color var(--motion-fast) var(--ease-out);
+}
+
+.copy-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.code-example,
+.templating-meta-snippet pre {
+  margin: 0;
+  padding: var(--space-3);
+  background: var(--surface);
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  color: var(--text-primary);
+}
+
+.code-example code {
+  background: transparent;
+  padding: 0;
+  border: none;
+  color: inherit;
+  font: inherit;
+  white-space: pre;
+}
+
+/* ============================================
+   3. Editor field anatomy
+   .field-block is a structural alias of .field (forms.css). These are the
+   page additions: a stacked label group, a sub-label, a feedback slot and a
+   control well that keeps wide fieldtype widgets inside the column.
+   ============================================ */
+.editor-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6, 1.5rem);
-}
-
-/* Block Editor */
-.block-editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4, 1rem);
-}
-
-.block-item {
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-4, 1rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-  transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.block-item:hover {
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-  border-color: var(--primary-300, #93c5fd);
-}
-
-.block-type-select {
-  margin-bottom: var(--space-2, 0.5rem);
-  max-width: 220px;
-  align-self: flex-start;
-}
-
-.block-item .btn-danger {
-  align-self: flex-end;
-  margin-top: var(--space-2, 0.5rem);
-}
-
-.block-item .block-drag-handle {
-  position: absolute;
-  left: -28px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: grab;
-  color: var(--text-tertiary, #C4C6C1);
-  font-size: 1.2em;
-  opacity: 0.7;
-  transition: color 0.2s;
-}
-
-.block-item .block-drag-handle:hover {
-  color: var(--primary-500);
-  opacity: 1;
-}
-
-.block-field .btn {
-  margin-top: var(--space-2, 0.5rem);
-  min-width: 120px;
-}
-
-/* Collection Management */
-.collection-editor {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6, 1.5rem);
-}
-
-.collection-header {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  margin-bottom: var(--space-4, 1rem);
-  gap: var(--space-2, 0.5rem);
-}
-
-.collection-actions {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-}
-
-/* Collection actions buttons use unified button styles from components/buttons.css */
-/* Use .btn-sm for smaller buttons if needed */
-.collection-actions .btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Field Management — stacked label-above-control (P30) */
-.field-block {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  background: var(--bg-elevated, #ffffff);
-  border-radius: var(--border-radius-s, 4px);
-  margin-bottom: var(--space-4, 1rem);
-  padding: var(--space-4, 1rem) var(--space-6, 1.5rem);
-  position: relative;
+  gap: var(--space-5);
   min-width: 0;
 }
 
 .field-header {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  width: 100%;
-  min-height: auto;
-  border-right: none;
-  margin-right: 0;
-  margin-bottom: var(--space-2, 0.5rem);
-  padding-bottom: 0;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
 .field-title {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1, 0.25rem);
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--text-primary, #20221D);
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
 }
 
-label.field-title {
-  cursor: pointer;
+label.field-title { cursor: pointer; }
+
+.field-feedback {
+  font-size: var(--text-xs);
+  color: var(--danger-fg);
+  line-height: var(--leading-normal);
 }
+
+.field-feedback:empty { display: none; }
 
 .field-subtitle {
-  font-size: 0.75rem;
-  color: var(--text-tertiary, #C4C6C1);
-  margin-top: var(--space-1, 0.25rem);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  line-height: var(--leading-normal);
 }
 
 .field-control {
@@ -190,9 +220,7 @@ label.field-title {
   min-width: 0;
 }
 
-.field-control > * {
-  max-width: 100%;
-}
+.field-control > * { max-width: 100%; }
 
 .field-control .fieldtype-wrapper,
 .field-control .content-editor-root,
@@ -203,1264 +231,327 @@ label.field-title {
 .field-control .dynamic-items-field {
   width: 100%;
   max-width: 100%;
-  box-sizing: border-box;
 }
 
-.field-control input,
-.field-control select,
-.field-control textarea {
+/* ============================================
+   4. Content hub — collection groups
+   ============================================ */
+/* Starter templates in the first-run empty state are .card--interactive
+   buttons; only the button element reset is page-owned. */
+button.starter-template-card {
   width: 100%;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  background: var(--bg-primary, #ffffff);
-  color: var(--text-primary, #20221D);
-  font-size: 1rem;
-  font-family: inherit;
-  transition: all 0.2s ease;
-  box-sizing: border-box;
-  min-height: 50px;
+  font: inherit;
+  text-align: start;
 }
 
-.field-control input:focus,
-.field-control select:focus,
-.field-control textarea:focus {
-  outline: none;
-  border-color: var(--primary-500);
-  box-shadow: var(--focus-ring-subtle);
-}
+button.starter-template-card[aria-busy="true"] { opacity: 0.6; }
 
-.field-typename {
-  font-size: 0.8rem;
-  color: var(--text-tertiary, #C4C6C1);
-  line-height: 0.8rem;
-}
-
-/* Status Choices */
-.status-choices {
-  display: flex;
-  gap: var(--space-3, 0.75rem);
-}
-
-.status-choice input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.status-choice .status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.status-choice input[type="radio"]:focus + .status-badge {
-  outline: 2px solid var(--focus-ring, #8ab4f8);
-  outline-offset: 2px;
-}
-
-.status-choice input[type="radio"]:checked + .status-badge.draft,
-.status-choice input[type="radio"]:checked + .status-badge.published {
-  box-shadow: 0 0 0 2px var(--color-neutral-400, #D9DBD5) inset;
-}
-
-/* Content Groups */
-.content-groups {
+.collections-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4, 1rem);
+  gap: var(--space-8);
 }
 
-.group-item {
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-4, 1rem);
+.collection-group,
+.collection-subgroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
-.group-header {
+.group-header,
+.subgroup-header {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
-  justify-content: space-between;
-  margin-bottom: var(--space-3, 0.75rem);
+  gap: var(--space-2);
+  min-width: 0;
   cursor: grab;
   user-select: none;
+}
+
+.group-header:active,
+.subgroup-header:active { cursor: grabbing; }
+
+.group-title,
+.subgroup-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+}
+
+.subgroup-title { font-size: var(--text-base); }
+
+.group-title-icon,
+.subgroup-icon {
+  margin-inline-end: var(--space-1);
+  line-height: 1;
 }
 
 .group-actions {
   display: flex;
-  gap: var(--space-2, 0.5rem);
-}
-
-.group-actions .btn-icon {
-  padding: var(--space-1, 0.25rem);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm, 0.375rem);
-  cursor: pointer;
-  color: var(--text-tertiary, #C4C6C1);
-  transition: all 0.2s;
-}
-
-.group-actions .btn-icon:hover {
-  background: var(--bg-tertiary, #f5f5f5);
-  color: var(--text-primary, #20221D);
-}
-
-/* Responsive */
-@media (max-width: 767px) {
-  .content-page {
-    padding: var(--space-4, 1rem);
-  }
-
-  .block-item .block-drag-handle {
-    left: 0;
-    top: 0;
-    transform: none;
-  }
-}
-
-/* Content hub empty state */
-.content-empty-state {
-  padding: var(--space-8, 2rem);
-  text-align: center;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.content-empty-state__title {
-  margin: var(--space-4, 1rem) 0 var(--space-2, 0.5rem);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.content-empty-state__message {
-  margin: 0 0 var(--space-6, 1.5rem);
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.content-empty-state__actions {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-3, 0.75rem);
-  margin-bottom: var(--space-6, 1.5rem);
-}
-
-.content-empty-state__templates-title {
-  margin: 0 0 var(--space-4, 1rem);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.content-starter-template-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-3, 0.75rem);
-  text-align: left;
-}
-
-.content-starter-template-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-  padding: var(--space-4, 1rem);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-md, 0.5rem);
-  background: var(--bg-elevated);
-  cursor: pointer;
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.content-starter-template-card:hover {
-  border-color: var(--primary-500);
-  box-shadow: var(--shadow-sm);
-}
-
-.content-starter-template-card:disabled {
-  opacity: 0.6;
-  cursor: wait;
-}
-
-.content-starter-template-card strong {
-  font-size: 0.9375rem;
-  color: var(--text-primary);
-}
-
-.content-starter-template-card span {
-  font-size: 0.8125rem;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
-/* Collection Editor Layout */
-.collection-editor {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: var(--space-6, 1.5rem);
-  height: calc(100vh - 120px);
-  overflow: hidden;
-}
-
-.collection-editor .editor-main {
-  overflow-y: auto;
-  padding-right: var(--space-4, 1rem);
-}
-
-.collection-editor .editor-sidebar {
-  overflow-y: auto;
-  border-left: 1px solid var(--border-light, #f3f4f6);
-  padding-left: var(--space-4, 1rem);
-}
-
-/* Field Management */
-.fields-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 0.75rem);
-}
-
-.field-card {
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-lg, 0.75rem);
-  padding: var(--space-4, 1rem);
-  transition: all var(--transition-normal, 200ms ease);
-  cursor: grab;
-}
-
-.field-card:hover {
-  border-color: var(--primary-300, #93c5fd);
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-}
-
-.field-card.dragging {
-  opacity: 0.5;
-  transform: rotate(2deg);
-  cursor: grabbing;
-}
-
-.field-card.drag-over {
-  border-color: var(--primary-500);
-  background: var(--primary-50, #eff6ff);
-}
-
-.field-card-header {
-  display: flex;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
-}
-
-.field-drag-handle {
-  color: var(--text-tertiary, #C4C6C1);
-  cursor: grab;
-  padding: var(--space-1, 0.25rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  transition: all var(--transition-fast, 150ms ease);
-}
-
-.field-drag-handle:hover {
-  color: var(--text-secondary, #72746F);
-  background: var(--bg-tertiary, #f5f5f5);
-}
-
-.field-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.field-name {
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  margin-bottom: var(--space-1, 0.25rem);
-  font-size: 0.95rem;
-}
-
-.field-meta {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-  align-items: center;
-  font-size: 0.8rem;
-}
-
-.field-type {
-  background: var(--primary-100, #dbeafe);
-  color: var(--primary-700, #1d4ed8);
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  font-weight: 500;
-}
-
-.field-required {
-  background: var(--warning-50, #fffbeb);
-  color: var(--warning-600, #d97706);
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  font-weight: 500;
-}
-
-.field-actions {
-  display: flex;
-  gap: var(--space-1, 0.25rem);
-}
-
-.field-help {
-  margin-top: var(--space-2, 0.5rem);
-  padding: var(--space-2, 0.5rem);
-  background: var(--bg-secondary, #fafafa);
-  border-radius: var(--radius-sm, 0.375rem);
-  font-size: 0.85rem;
-  color: var(--text-secondary, #72746F);
-  border-left: 3px solid var(--primary-300, #93c5fd);
-}
-
-/* Field Types Reference */
-.field-types-reference {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-}
-
-.field-type-item {
-  padding: var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-light, #f3f4f6);
-}
-
-.field-type-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--text-primary, #20221D);
-  margin-bottom: var(--space-1, 0.25rem);
-}
-
-.field-type-desc {
-  font-size: 0.8rem;
-  color: var(--text-secondary, #72746F);
-  line-height: 1.4;
-}
-
-/* Field Type Configurations */
-.field-type-config {
-  margin-top: var(--space-4, 1rem);
-  padding: var(--space-4, 1rem);
-  background: var(--bg-secondary, #fafafa);
-  border-radius: var(--radius-lg, 0.75rem);
-  border: 1px solid var(--border-light, #f3f4f6);
-}
-
-.field-type-config h4 {
-  margin: 0 0 var(--space-2, 0.5rem) 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.field-type-config p {
-  margin: 0 0 var(--space-3, 0.75rem) 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.options-container {
-  margin-bottom: var(--space-3, 0.75rem);
-}
-
-.option-row {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-  align-items: center;
-  margin-bottom: var(--space-2, 0.5rem);
-  padding: var(--space-2, 0.5rem);
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--radius-md, 0.5rem);
-}
-
-.option-row input {
-  flex: 1;
-  min-width: 0;
-}
-
-/* ============================================
-   Entries Toolbar & Dropdown
-   ============================================ */
-.entries-toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-2, 0.5rem);
-}
-
-/* Columns Dropdown - Styles moved to components/dropdowns.css */
-
-@media (max-width: 600px) {
-  .entries-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-1, 0.25rem);
-  }
-}
-
-/* ============================================
-   Drag & Drop Styles for Entries
-   ============================================ */
-.drag-handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-  opacity: 0.6;
-  transition: opacity 0.15s;
-  cursor: grab;
-  touch-action: none;
+  gap: var(--space-1);
   flex-shrink: 0;
-  line-height: 0;
-}
-
-.collection-card .drag-handle {
-  width: 16px;
-  height: 16px;
-  pointer-events: auto;
-  cursor: grab;
-}
-
-.cell-drag:not(td) {
-  cursor: grab;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.cell-drag:not(td):active {
-  cursor: grabbing;
-}
-
-.table-body {
-  position: relative;
-}
-
-/* Entry drop indicator */
-.entry-drop-indicator {
-  position: absolute;
-  height: 3px;
-  background: var(--primary-500);
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 1000;
-  box-shadow: var(--focus-glow);
-  animation: dropIndicatorPulse 1s ease-in-out infinite;
-}
-
-@keyframes dropIndicatorPulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* ============================================
-   Fieldtype Styles
-   ============================================ */
-
-/* Tags Fieldtype */
-.tags-field {
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-4, 1rem);
-  min-height: 48px;
-}
-
-.tags-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-1, 0.25rem);
-}
-
-.tag-chip {
-  display: inline-flex;
-  align-items: center;
-  background: var(--primary-100, #dbeafe);
-  color: var(--primary-700, #1e40af);
-  border-radius: var(--radius-xl, 0.75rem);
-  padding: 0.25em 0.75em;
-  font-size: 0.95em;
-  margin-right: var(--space-1, 0.25rem);
-  margin-bottom: var(--space-1, 0.25rem);
-  border: 1px solid var(--primary-200, #bfdbfe);
-  transition: background 0.2s, color 0.2s;
-}
-
-.tag-chip:hover {
-  background: var(--primary-200, #bfdbfe);
-  color: var(--primary-900, #1e3a8a);
-}
-
-.tag-remove {
-  margin-left: 0.5em;
-  color: var(--error-500, #ef4444);
-  cursor: pointer;
-  font-size: 1.1em;
-  font-weight: bold;
-  transition: color 0.2s;
-}
-
-.tag-remove:hover {
-  color: var(--error-600, #dc2626);
-}
-
-.tags-field input[type='text'] {
-  border: none;
-  background: transparent;
-  outline: none;
-  font-size: 1em;
-  padding: 0.5em 0;
-  min-width: 120px;
-}
-
-.tags-field input[type='text']:focus {
-  background: var(--bg-primary, #ffffff);
-}
-
-/* Block Fieldtype */
-.block-field {
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--radius-lg, 0.75rem);
-  padding: var(--space-4, 1rem);
-  margin-bottom: var(--space-6, 1.5rem);
-}
-
-.block-items {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4, 1rem);
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.block-item {
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-4, 1rem);
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-  transition: box-shadow 0.2s, border-color 0.2s;
-}
-
-.block-item:hover {
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-  border-color: var(--primary-300, #93c5fd);
-}
-
-.block-type-select {
-  margin-bottom: var(--space-2, 0.5rem);
-  max-width: 220px;
-  align-self: flex-start;
-}
-
-.block-item .btn-danger {
-  align-self: flex-end;
-  margin-top: var(--space-2, 0.5rem);
-}
-
-.block-item .block-drag-handle {
-  position: absolute;
-  left: -28px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: grab;
-  color: var(--text-tertiary, #94a3b8);
-  font-size: 1.2em;
-  opacity: 0.7;
-  transition: color 0.2s;
-}
-
-.block-item .block-drag-handle:hover {
-  color: var(--primary-500);
-  opacity: 1;
-}
-
-.block-field .btn {
-  margin-top: var(--space-2, 0.5rem);
-  min-width: 120px;
-}
-
-/* Collection Grid Layout */
-.group-collections,
-.ungrouped-collections {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-4, 1rem);
-  min-height: 100px;
-  padding: var(--space-4, 1rem) 0;
-  transition: background-color 0.2s;
-}
-
-/* Responsive Media Queries */
-@media (max-width: 1023px) {
-  .collection-editor {
-    grid-template-columns: 1fr;
-    gap: var(--space-4, 1rem);
-  }
-  
-  .collection-editor .editor-sidebar {
-    border-left: none;
-    border-top: 1px solid var(--border-light, #f3f4f6);
-    padding-left: 0;
-    padding-top: var(--space-4, 1rem);
-  }
-}
-
-@media (max-width: 767px) {
-  .group-collections,
-  .ungrouped-collections {
-    grid-template-columns: 1fr;
-  }
-  
-  .field-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-2, 0.5rem);
-  }
-  
-  .field-actions {
-    align-self: flex-end;
-  }
-  
-  .field-meta {
-    flex-wrap: wrap;
-  }
-}
-
-/* ============================================
-   Collection Groups
-   ============================================ */
-.collections-container {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8, 2rem);
-}
-
-.collection-group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-0, 0rem);
-}
-
-.collection-group.ungrouped {
-  margin-top: var(--space-4, 1rem);
-}
-
-.group-drag-handle {
-  cursor: grab;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  touch-action: none;
-  user-select: none;
-  pointer-events: auto;
-}
-
-.group-drag-handle svg,
-.group-drag-handle img {
-  width: 16px;
-  height: 16px;
-  pointer-events: none;
-}
-
-.collection-group:hover .group-drag-handle {
-  opacity: 1;
-}
-
-.collection-group.dragging .group-drag-handle {
-  cursor: grabbing;
-}
-
-.group-header {
-  cursor: grab;
-  user-select: none;
-}
-
-.group-header .group-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-}
-
-.group-header .group-actions {
   cursor: default;
 }
 
-.group-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  flex: 1;
+.group-drag-handle {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
 }
 
-.collection-group.collapsed .group-collections,
-.collection-group.collapsed .ungrouped-collections {
-  display: none;
-}
+.collection-group:hover .group-drag-handle,
+.collection-subgroup:hover .group-drag-handle { color: var(--text-secondary); }
 
-.collection-group.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-}
+/* Track sizing comes from the u-grid-auto helper that content-groups.js puts
+   on each grid; only the min-width guard is page-owned. */
+.group-collections,
+.ungrouped-collections { min-width: 0; }
 
-.collection-group.drag-over-group-above {
-  border-top: 3px solid var(--primary-500);
-  margin-top: var(--space-2, 0.5rem);
-  padding-top: var(--space-2, 0.5rem);
-}
+.collection-group.collapsed > .group-collections,
+.collection-group.collapsed > .collection-subgroups,
+.collection-subgroup.collapsed > .group-collections { display: none; }
 
-.collection-group.drag-over-group-below {
-  border-bottom: 3px solid var(--primary-500);
-  margin-bottom: var(--space-2, 0.5rem);
-  padding-bottom: var(--space-2, 0.5rem);
-}
-
-.group-drop-indicator {
-  position: absolute;
-  height: 3px;
-  background: var(--primary-500) !important;
-  border-radius: 2px;
-  z-index: 10000 !important;
-  pointer-events: none;
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  box-shadow: var(--focus-glow) !important;
-}
-
-/* Completely disable collection drop zones when dragging a group */
-body.dragging-group .drop-zone {
-  pointer-events: none !important;
-}
-
-body.dragging-group .drop-zone.drag-over {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  pointer-events: none !important;
-}
-
-/* Ensure group drop indicators are visible when dragging groups */
-body.dragging-group .group-drop-indicator {
-  pointer-events: auto !important;
-  z-index: 1001 !important;
+/* Nested groups are indented by a rail, not by margins */
+.collection-subgroups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--border-subtle);
 }
 
 /* ============================================
-   Drag & Drop Styles for Collections
+   5. Content hub — drag and drop affordances
+   .dragging / .drop-target / .drag-handle are owned by components/cards.css.
+   These are the hub-only extras: drop wells, ghost placeholder, insert line.
    ============================================ */
-.drag-placeholder {
-  background: var(--focus-fill-subtle) !important;
-  border: 2px dashed var(--primary-500) !important;
-  border-radius: 4px;
-  transition: opacity 0.1s ease-out, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), height 0.1s ease-out;
-  opacity: 0;
-  transform: scale(0.95);
-  animation: placeholderFadeIn 0.1s ease-out forwards;
-}
-
-@keyframes placeholderFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Dragging state */
-.dragging {
-  opacity: 0.6 !important;
-  cursor: grabbing !important;
-  transform: scale(1.02) !important;
-  transition: opacity 0.1s ease-out, transform 0.1s ease-out !important;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1) !important;
-  z-index: 10000 !important;
-}
-
-/* Drag and Drop Styles */
-.draggable {
-  cursor: move;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
-              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s ease-out;
-  user-select: none;
-  position: relative;
-}
-
-.draggable.dragging {
-  opacity: 0.5;
-  transform: scale(0.95);
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
-  z-index: 1000;
-  pointer-events: none;
-}
-
-.draggable > a {
-  pointer-events: none;
-}
-
-.draggable.dragging > a {
-  pointer-events: none;
-}
-
-.draggable > a:hover {
-  text-decoration: none;
-}
-
-.draggable:hover .drag-handle {
-  opacity: 1;
-}
-
-.draggable .collection-actions {
-  pointer-events: auto;
-}
-
-/* Drop Zones */
 .drop-zone {
-  border-radius: var(--border-radius-s, 4px);
-  transition: all 0.2s;
   position: relative;
+  border-radius: var(--radius-md);
+  transition: background-color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
 }
 
-.drop-zone.empty-drop-zone,
-.grid.empty-drop-zone {
-  border: 2px dashed var(--border-medium, #e5e7eb);
-  background: var(--bg-secondary, #fafafa);
+.drop-zone.empty-drop-zone {
+  min-height: 6rem;
+  border: 1px dashed var(--border-default);
+  background: var(--surface-sunken);
 }
 
-.drop-zone.drag-over,
-.grid.group-collections.drag-over,
-.grid.ungrouped-collections.drag-over {
-  background: var(--primary-50, #eff6ff);
-  border: 2px dashed var(--primary-500);
-  box-shadow: inset 0 0 0 3px var(--primary-100, #dbeafe);
-}
-
-.drop-zone.drag-over .empty-drop-message,
-.grid.drag-over .empty-drop-message {
-  display: block;
+.drop-zone.drag-over {
+  border: 1px dashed var(--accent-focus);
+  background: var(--accent-soft);
 }
 
 .empty-drop-message {
-  display: none;
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
   transform: translate(-50%, -50%);
-  color: var(--text-tertiary, #94a3b8);
-  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
   pointer-events: none;
-  z-index: 1;
 }
 
-/* Drop Indicator - Blue line showing where card will be dropped */
-.drop-indicator {
+.drag-placeholder {
+  border: 1px dashed var(--accent-focus);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+}
+
+/* Insert line shown between cards / rows / groups while dragging */
+.drop-indicator,
+.cross-group-drop-indicator,
+.group-drop-indicator {
   position: absolute;
-  background: var(--primary-500);
-  border-radius: 2px;
+  height: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-focus);
   pointer-events: none;
-  z-index: 1000;
-  box-shadow: var(--focus-glow);
-  animation: dropIndicatorPulse 1s ease-in-out infinite;
+  z-index: var(--z-dragging);
 }
 
-/* Cross-group drop indicator */
-.cross-group-drop-indicator {
-  position: absolute;
-  background: var(--primary-500);
-  border-radius: 2px;
-  pointer-events: none;
-  z-index: 1000;
-  box-shadow: var(--focus-glow);
-  animation: dropIndicatorPulse 1s ease-in-out infinite;
-}
+/* While a whole group is in flight, collection wells must not react */
+body.dragging-group .drop-zone { pointer-events: none; }
 
-/* Smooth transitions for collection cards and groups when reordering */
-.collection-card,
-.collection-group {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity 0.2s ease-out,
-              box-shadow 0.2s ease-out;
+body.dragging-group .drop-zone.drag-over {
+  border-color: transparent;
+  background: transparent;
 }
 
 /* ============================================
-   Collection Actions Bar
-   ============================================ */
-.collection-actions-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3, 0.75rem);
-  width: 100%;
-}
-
-.collection-actions-bar-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-}
-
-.collection-actions-bar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  margin-left: auto;
-}
-
-.collection-actions-dropdown {
-  position: relative;
-}
-
-/* ============================================
-   Collection Actions & Filter Styles
-   ============================================ */
-.collection-actions-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2, 0.5rem);
-  min-height: var(--admin-control-size, 2.625rem);
-  height: var(--admin-control-size, 2.625rem);
-  padding: 0 var(--space-3, 0.75rem);
-  min-width: auto;
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--border-radius-s, 4px);
-  color: var(--text-primary, #20221D);
-  cursor: pointer;
-  box-sizing: border-box;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  font-weight: 500;
-  font-family: inherit;
-  white-space: nowrap;
-  transition:
-    background-color var(--transition-fast, 150ms ease),
-    border-color var(--transition-fast, 150ms ease),
-    color var(--transition-fast, 150ms ease);
-}
-
-.collection-actions-trigger.btn {
-  min-height: var(--admin-control-size, 2.625rem);
-  height: var(--admin-control-size, 2.625rem);
-}
-
-.collection-actions-trigger:hover {
-  background: var(--bg-hover, #f3f4f6);
-  color: var(--text-primary, #20221D);
-}
-
-.collection-actions-trigger[aria-expanded="true"] {
-  background: var(--bg-hover, #f3f4f6);
-}
-
-/* Custom select dropdown styles moved to components/dropdowns.css */
-
-/* Filter label styling */
-.collection-filter-label {
-  font-size: 0.875rem;
-  color: var(--text-secondary, #72746F);
-  white-space: nowrap;
-}
-
-/* Collection actions menu and item styles moved to components/dropdowns.css */
-
-@media (max-width: 767px) {
-  .collection-actions-bar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .collection-actions-bar-right {
-    margin-left: 0;
-    flex-wrap: wrap;
-  }
-}
-
-/* Entries mobile filter drawer (P44-M10)
-   Desktop must NOT use display:contents — that leaks drawer children into the
-   toolbar even when [hidden], duplicating Search / Status filters. */
-.entries-filter-toggle {
-  display: none;
-}
-
-.entries-toolbar-filters--desktop {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-}
-
-.entries-filter-drawer {
-  display: none !important;
-}
-
-.entries-filter-drawer[hidden] {
-  display: none !important;
-}
-
-@media (max-width: 480px) {
-  .entries-filter-toggle {
-    display: inline-flex;
-  }
-
-  .entries-toolbar-filters--desktop {
-    display: none;
-  }
-
-  .entries-filter-drawer:not([hidden]) {
-    display: block !important;
-    position: fixed;
-    inset: 0;
-    z-index: 1100;
-  }
-
-  .entries-filter-drawer[hidden] {
-    display: none !important;
-  }
-
-  .entries-filter-drawer__backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--bg-overlay, rgba(0, 0, 0, 0.45));
-  }
-
-  .entries-filter-drawer__panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    max-height: 85vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-elevated, #ffffff);
-    border-radius: var(--radius-lg, 0.75rem) var(--radius-lg, 0.75rem) 0 0;
-    box-shadow: var(--shadow-xl);
-  }
-
-  .entries-filter-drawer__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-4, 1rem);
-    border-bottom: 1px solid var(--border-light);
-  }
-
-  .entries-filter-drawer__title {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-
-  .entries-filter-drawer__body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3, 0.75rem);
-    padding: var(--space-4, 1rem);
-    overflow-y: auto;
-  }
-
-  .entries-filter-drawer__footer {
-    padding: var(--space-4, 1rem);
-    border-top: 1px solid var(--border-light);
-  }
-
-  .entries-filter-drawer__body .collection-search-input,
-  .entries-filter-drawer__body .collection-filter-select {
-    width: 100%;
-    min-width: 0;
-  }
-
-  body.entries-filter-drawer-open {
-    overflow: hidden;
-  }
-}
-
-.entries-smart-table.is-loading {
-  opacity: 0.72;
-  transition: opacity var(--transition-fast, 150ms ease);
-}
-
-.entries-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3, 0.75rem);
-  margin-top: var(--space-4, 1rem);
-  padding: var(--space-3, 0.75rem) 0;
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
-}
-
-.entries-pagination__summary {
-  min-width: 0;
-}
-
-.entries-pagination__controls {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-2, 0.5rem);
-  flex-wrap: wrap;
-  margin-left: auto;
-}
-
-.entries-pagination__pages {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1, 0.25rem);
-}
-
-.entries-pagination__link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: var(--radius-sm, 0.375rem);
-  background: var(--bg-elevated, #ffffff);
-  color: var(--text-primary, #20221D);
-  text-decoration: none;
-  transition: background var(--transition-fast, 150ms ease), border-color var(--transition-fast, 150ms ease), color var(--transition-fast, 150ms ease);
-}
-
-.entries-pagination__link:hover {
-  background: var(--bg-hover, #f3f4f6);
-  border-color: var(--border-medium, #d1d5db);
-}
-
-.entries-pagination__link.is-active {
-  background: var(--text-primary, #20221D);
-  border-color: var(--text-primary, #20221D);
-  color: var(--bg-elevated, #ffffff);
-}
-
-.entries-pagination__link.is-disabled {
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-@media (max-width: 767px) {
-  .entries-pagination {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .entries-pagination__controls {
-    justify-content: space-between;
-    margin-left: 0;
-  }
-}
-
-/* ============================================
-   Content overview view toggle & list layout
+   6. Content hub — view toggle and list mode
    ============================================ */
 .content-view-toggle {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1, 0.25rem);
-  padding: 0.25rem;
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
-  background: var(--bg-elevated, #ffffff);
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
 }
 
+.content-view-toggle .btn-icon { width: var(--control-sm); height: var(--control-sm); }
+
 .content-view-toggle .btn-icon.active {
-  background: var(--color-neutral-100, #f3f4f6);
-  color: var(--text-primary, #20221D);
+  background: var(--surface);
+  color: var(--text-primary);
 }
 
 .collections-container[data-view="list"] .group-collections,
 .collections-container[data-view="list"] .ungrouped-collections {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  grid-template-columns: none;
-  padding: 0;
-  background: var(--border-light, #f3f4f6);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  overflow: visible;
+  gap: var(--space-2);
 }
 
-.collections-container[data-view="list"] .collection-card:hover {
-  background: var(--bg-secondary, #fafafa);
+/* ============================================
+   7. Entries list — toolbar filters
+   Mobile-first: filters live in a bottom sheet, desktop shows them inline.
+   ============================================ */
+.collection-filter-label {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
-/* Nested collection groups */
-.collection-subgroups {
+.entries-toolbar-filters--desktop { display: none; }
+
+.entries-filter-toggle { display: inline-flex; }
+
+.entries-filter-drawer { display: none; }
+
+.entries-filter-drawer:not([hidden]) {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-drawer);
+}
+
+.entries-filter-drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+}
+
+.entries-filter-drawer__panel {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4, 1rem);
-  margin-top: var(--space-3, 0.75rem);
-  padding-left: var(--space-4, 1rem);
-  border-left: 2px solid var(--border-light, #f3f4f6);
+  max-height: 85vh;
+  background: var(--surface-raised);
+  border-start-start-radius: var(--radius-lg);
+  border-start-end-radius: var(--radius-lg);
+  box-shadow: var(--elevation-3);
 }
 
-.collection-subgroup {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-}
-
-.collection-subgroup .subgroup-header {
+.entries-filter-drawer__header {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
-  cursor: grab;
-  user-select: none;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
-.collection-subgroup .subgroup-title {
+.entries-filter-drawer__title {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  flex: 1;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
 
-.collection-subgroup .subgroup-icon {
-  font-size: 1.1rem;
-  line-height: 1;
+.entries-filter-drawer__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow-y: auto;
 }
 
-.collection-subgroup.collapsed .group-collections {
-  display: none;
+.entries-filter-drawer__footer {
+  padding: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
 }
 
-.group-title-icon {
-  font-size: 1.1rem;
-  line-height: 1;
-  margin-right: var(--space-1, 0.25rem);
+body.entries-filter-drawer-open { overflow: hidden; }
+
+@media (min-width: 640px) {
+  .entries-toolbar-filters--desktop {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .entries-filter-toggle,
+  .entries-filter-drawer,
+  .entries-filter-drawer:not([hidden]) { display: none; }
+}
+
+/* ============================================
+   8. Entries list — table state and pagination
+   ============================================ */
+.entries-smart-table.is-loading {
+  opacity: 0.72;
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+
+/* components/tables.css sets `display: flex` on the bulk bar, which beats the
+   UA `[hidden]` rule. Until the component honours `[hidden]` itself, the page
+   restores it so the template can drop `style="display:none"`. */
+.entries-page .bulk-actions-toolbar[hidden],
+.entry-detail-page .bulk-actions-toolbar[hidden] { display: none; }
+
+.entries-pagination {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.entries-pagination__summary { min-width: 0; }
+
+.entries-pagination__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Page numbers are .btn/.btn-sm; only the numeric alignment is page-owned. */
+.entries-pagination__pages {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 768px) {
+  .entries-pagination {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .entries-pagination__controls {
+    justify-content: flex-end;
+    margin-inline-start: auto;
+  }
 }

@@ -104,7 +104,7 @@
     function updateHttpsWarning() {
         const banner = document.getElementById('ai-https-warning');
         if (banner) {
-            banner.style.display = isPublicHttps() ? 'none' : 'block';
+            banner.hidden = isPublicHttps();
         }
     }
 
@@ -229,9 +229,9 @@
 
     function typeBadge(type) {
         if (type === 'personal') {
-            return '<span class="mcp-type-pill mcp-type-personal">Personal</span>';
+            return '<span class="badge badge-success">Personal</span>';
         }
-        return '<span class="mcp-type-pill mcp-type-service">Service</span>';
+        return '<span class="badge badge-info">Service</span>';
     }
 
     function visibilitySummary(agent) {
@@ -334,10 +334,10 @@
         const banner = document.getElementById('ai-agents-migration-banner');
 
         if (addBtn) {
-            addBtn.style.display = isAdmin ? '' : 'none';
+            addBtn.hidden = !isAdmin;
         }
         if (intro) {
-            intro.style.display = isAdmin ? '' : 'none';
+            intro.hidden = !isAdmin;
         }
 
         if (banner && isAdmin) {
@@ -346,9 +346,9 @@
                 const users = agent.allowed_users || [];
                 return roles.length === 1 && roles[0] === 'admin' && users.length === 0;
             });
-            banner.style.display = hasAdminOnly ? 'block' : 'none';
+            banner.hidden = !hasAdminOnly;
         } else if (banner) {
-            banner.style.display = 'none';
+            banner.hidden = true;
         }
     }
 
@@ -466,7 +466,7 @@
         if (personalRadio) personalRadio.checked = true;
 
         const successPanel = document.getElementById('mcp-create-success');
-        if (successPanel) successPanel.style.display = 'none';
+        if (successPanel) successPanel.hidden = true;
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
@@ -637,7 +637,7 @@
                 const urlInput = document.getElementById('mcp-new-connector-url');
                 if (successPanel && urlInput) {
                     urlInput.value = resolveConnectorUrl(agentUrl);
-                    successPanel.style.display = 'block';
+                    successPanel.hidden = false;
                 }
                 if (agentId) {
                     setTimeout(() => {

@@ -29,10 +29,11 @@ function showMessage(message, type) {
     const messageEl = document.getElementById('settings-message');
     if (!messageEl) return;
     messageEl.textContent = message;
-    messageEl.className = 'message ' + (type === 'success' ? 'success' : type === 'error' ? 'error' : type || 'info');
-    messageEl.style.display = 'flex';
+    messageEl.className = 'main-actions-message message settings-toast message-'
+        + (type === 'success' ? 'success' : type === 'error' ? 'error' : type || 'info');
+    messageEl.hidden = false;
     setTimeout(function () {
-        messageEl.style.display = 'none';
+        messageEl.hidden = true;
     }, 5000);
 }
 
@@ -57,72 +58,51 @@ function createPermissionsGrid(containerId, permissions = {}) {
         console.error('Container not found:', containerId);
         return;
     }
-    
+
     // Verify container is inside a form
-    const form = container.closest('form');
-    if (!form) {
+    if (!container.closest('form')) {
         console.warn('Permissions grid container is not inside a form');
     }
-    
+
     container.innerHTML = '';
-    
+
     availableResources.forEach(resource => {
         const section = document.createElement('div');
-        section.className = 'permission-section';
-        section.style.cssText = 'background: var(--bg-secondary, #f8f9fa); border: 1px solid var(--border-color, #e2e8f0); border-radius: var(--radius-md, 8px); padding: 1rem;';
-        
+        section.className = 'permission-section card card--sunken u-p-4 u-stack-2';
+
+        const heading = document.createElement('h4');
+        heading.className = 'u-label';
+        heading.textContent = resource;
+        section.appendChild(heading);
+
+        const checkboxesDiv = document.createElement('div');
+        checkboxesDiv.className = 'permission-checkboxes u-stack-1';
+        section.appendChild(checkboxesDiv);
+
         availableActions.forEach(action => {
             const label = document.createElement('label');
-            label.className = 'checkbox-label';
-            label.style.cssText = 'display: flex; align-items: center; font-size: 0.875rem; color: var(--text-primary, #1e293b); cursor: pointer; user-select: none; padding: 0.5rem; border-radius: 4px; transition: background-color 0.15s ease;';
-            
+            label.className = 'check';
+
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.name = `permissions[${resource}][]`;
             checkbox.value = action;
             checkbox.setAttribute('data-resource', resource);
             checkbox.checked = hasPermission(permissions, resource, action);
-            // Simple, clear checkbox styling
-            checkbox.style.cssText = 'width: 20px; height: 20px; min-width: 20px; min-height: 20px; cursor: pointer; margin: 0; margin-right: 8px; flex-shrink: 0;';
-            
-            checkbox.addEventListener('click', async function (e) {
+            checkbox.addEventListener('click', function (e) {
                 e.stopPropagation();
             });
-            
+
             const span = document.createElement('span');
             span.textContent = action.charAt(0).toUpperCase() + action.slice(1);
-            span.style.cssText = 'cursor: pointer;';
-            
+
             label.appendChild(checkbox);
             label.appendChild(span);
-            
-            // Simple hover effect
-            label.addEventListener('mouseenter', function() {
-                this.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-            });
-            
-            label.addEventListener('mouseleave', function() {
-                this.style.backgroundColor = '';
-            });
-            
-            const checkboxesDiv = section.querySelector('.permission-checkboxes') || document.createElement('div');
-            if (!section.querySelector('.permission-checkboxes')) {
-                checkboxesDiv.className = 'permission-checkboxes';
-                checkboxesDiv.style.cssText = 'display: flex; flex-direction: column; gap: 0.5rem;';
-                
-                const h4 = document.createElement('h4');
-                h4.textContent = resource;
-                h4.style.cssText = 'margin: 0 0 0.5rem 0; font-size: 0.9rem; color: var(--text-primary, #1e293b); text-transform: capitalize; font-weight: 600;';
-                section.appendChild(h4);
-                section.appendChild(checkboxesDiv);
-            }
-            
             checkboxesDiv.appendChild(label);
         });
-        
+
         container.appendChild(section);
     });
-    
 }
 
 function hasPermission(permissions, resource, action) {
@@ -1380,7 +1360,7 @@ async function deletePlugin(pluginId) {
             return;
         }
         
-        listContainer.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading domains...</p></div>';
+        listContainer.innerHTML = '<div class="loading-state"><p>Loading domains...</p></div>';
         
         try {
             var response = await fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
@@ -1395,12 +1375,12 @@ async function deletePlugin(pluginId) {
             if (data.status === 'ok' && data.data && data.data.licenses) {
                 renderDomains(data.data.licenses);
             } else {
-                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No domains registered yet.</p></div>';
+                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains registered yet.</p></div>';
             }
             attachDomainsCopyButtons(document.getElementById('domains'));
         } catch (error) {
             console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="message error" role="alert"><div class="message-content"><p class="message-text">Error loading domains: ' + escapeHtml(error.message) + '</p></div></div>';
+            listContainer.innerHTML = '<div class="message message-error" role="alert">Error loading domains: ' + escapeHtml(error.message) + '</div>';
         }
     }
     
@@ -1417,14 +1397,14 @@ async function deletePlugin(pluginId) {
         var trackingCode = buildDomainTrackingScript(domainName);
         var codeId = 'domain-script-' + domainName.replace(/[^a-zA-Z0-9_-]/g, '-');
         return '' +
-            '<div class="domains-code-block domains-code-block--nested">' +
+            '<div class="domains-code-block">' +
             '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(trackingCode) + '</code></pre>' +
             '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="Copy code">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
             '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
             '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
             '</svg>Copy</button></div>' +
-            '<p class="domains-code-hint">Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.</p>';
+            '<p class="form-help">Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.</p>';
     }
 
     function attachDomainsCopyButtons(root) {
@@ -1532,7 +1512,7 @@ async function deletePlugin(pluginId) {
         }
 
         container.hidden = false;
-        container.innerHTML = '<div class="loading-state"><div class="spinner"></div><p>Loading analytics report...</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>Loading analytics report...</p></div>';
 
         try {
             var endDate = new Date().toISOString().slice(0, 10);
@@ -1548,15 +1528,15 @@ async function deletePlugin(pluginId) {
 
             var report = payload.data;
             container.innerHTML =
-                '<div class="domain-analytics-report-card">' +
-                '<div class="domain-analytics-report-summary">' +
-                '<div><strong>' + escapeHtml(String(report.page_views || 0)) + '</strong><span>Page views (30d)</span></div>' +
-                '<div><strong>' + escapeHtml(String(report.unique_visitors || 0)) + '</strong><span>Visitors (30d)</span></div>' +
+                '<div class="card card--sunken u-p-4 u-stack-4">' +
+                '<div class="u-grid-auto-sm">' +
+                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.page_views || 0)) + '</span><span class="stat-label">Page views (30d)</span></div>' +
+                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.unique_visitors || 0)) + '</span><span class="stat-label">Visitors (30d)</span></div>' +
                 '</div>' +
                 renderAnalyticsReportSections(report) +
                 '</div>';
         } catch (error) {
-            container.innerHTML = '<div class="message error" role="alert"><div class="message-content"><p class="message-text">Error loading analytics report: ' + escapeHtml(error.message) + '</p></div></div>';
+            container.innerHTML = '<div class="message message-error" role="alert">Error loading analytics report: ' + escapeHtml(error.message) + '</div>';
         }
     }
 
@@ -1570,7 +1550,7 @@ async function deletePlugin(pluginId) {
         attachDomainsCopyButtons(document.getElementById('domains'));
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No domains registered yet. Click "Register domain" to add one.</p></div>';
+            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains registered yet. Click "Register domain" to add one.</p></div>';
             return;
         }
 
@@ -1584,57 +1564,59 @@ async function deletePlugin(pluginId) {
             var domainName = String(domain.domain || '');
             var domainEscaped = escapeHtml(domainName);
             var emailEscaped = escapeHtml(domain.customer_email || 'N/A');
-            var statusClass = domain.status === 'active' ? 'success' : 'secondary';
+            var statusClass = domain.status === 'active' ? 'success' : 'neutral';
             var statusText = domain.status || 'active';
-            var permClass = permissionLevel === 'read_write' ? 'primary' : 'info';
+            var permClass = permissionLevel === 'read_write' ? 'accent' : 'info';
             var permText = permissionLevel === 'read_write' ? 'Read & Write' : 'Read Only';
             var registeredDate = domain.registered_at ? new Date(domain.registered_at).toLocaleDateString() : 'N/A';
             var readLimit = rateLimits.read && rateLimits.read.limit ? rateLimits.read.limit : 100;
             var writeLimit = rateLimits.write && rateLimits.write.limit ? rateLimits.write.limit : 10;
-            var readColsHtml = readCollections.length > 0 ? '<div class="detail-row"><strong>Read collections:</strong> <span>' + escapeHtml(readCollections.join(', ')) + '</span></div>' : '';
-            var writeColsHtml = writeCollections.length > 0 ? '<div class="detail-row"><strong>Write collections:</strong> <span>' + escapeHtml(writeCollections.join(', ')) + '</span></div>' : '';
+            var readColsHtml = readCollections.length > 0 ? '<span class="kv-key">Read collections</span><span class="kv-value">' + escapeHtml(readCollections.join(', ')) + '</span>' : '';
+            var writeColsHtml = writeCollections.length > 0 ? '<span class="kv-key">Write collections</span><span class="kv-value">' + escapeHtml(writeCollections.join(', ')) + '</span>' : '';
             var trackingScriptHtml = renderDomainTrackingScript(domainName, analyticsEnabled);
 
             return '' +
-                '<article class="domain-card">' +
-                '<div class="domain-header">' +
-                '<div class="domain-info">' +
-                '<h4 class="domain-name">' + domainEscaped + '</h4>' +
-                '<div class="domain-badges">' +
+                '<article class="domain-card card">' +
+                '<div class="card-header">' +
+                '<div class="u-stack-2 u-min-w-0">' +
+                '<h4 class="card-title u-text-base">' + domainEscaped + '</h4>' +
+                '<div class="u-cluster">' +
                 '<span class="badge badge-' + statusClass + '">' + escapeHtml(statusText) + '</span>' +
                 '<span class="badge badge-' + permClass + '">' + permText + '</span>' +
                 (analyticsEnabled ? '<span class="badge badge-success">Analytics on</span>' : '') +
                 '</div>' +
                 '</div>' +
-                '<div class="domain-actions">' +
+                '<div class="card-actions">' +
                 '<button type="button" class="btn btn-sm btn-secondary" data-domain="' + domainEscaped + '" data-action="edit">Edit</button>' +
                 '<button type="button" class="btn btn-sm btn-danger" data-domain="' + domainEscaped + '" data-action="delete">Delete</button>' +
                 '</div>' +
                 '</div>' +
-                '<div class="domain-details">' +
-                '<div class="detail-row"><strong>Email:</strong> <span>' + emailEscaped + '</span></div>' +
-                '<div class="detail-row"><strong>Registered:</strong> <span>' + registeredDate + '</span></div>' +
-                '<div class="detail-row"><strong>Rate limits:</strong> <span>Read ' + readLimit + '/min · Write ' + writeLimit + '/hour</span></div>' +
+                '<div class="card-body u-stack-4">' +
+                '<div class="kv">' +
+                '<span class="kv-key">Email</span><span class="kv-value">' + emailEscaped + '</span>' +
+                '<span class="kv-key">Registered</span><span class="kv-value">' + registeredDate + '</span>' +
+                '<span class="kv-key">Rate limits</span><span class="kv-value">Read ' + readLimit + '/min · Write ' + writeLimit + '/hour</span>' +
                 readColsHtml +
                 writeColsHtml +
                 '</div>' +
-                '<div class="domain-analytics-panel">' +
-                '<div class="preference-item domain-analytics-toggle-row">' +
-                '<div class="preference-label">' +
-                '<div class="preference-title">Website analytics</div>' +
-                '<small class="preference-desc">Self-hosted visitor tracking for this domain.</small>' +
+                '<div class="u-stack-3">' +
+                '<div class="data-list-item domain-analytics-toggle-row">' +
+                '<div class="data-list-main">' +
+                '<span class="data-list-title">Website analytics</span>' +
+                '<small class="data-list-meta">Self-hosted visitor tracking for this domain.</small>' +
                 '</div>' +
                 '<label class="toggle-switch" aria-label="Toggle analytics for ' + domainEscaped + '">' +
                 '<input type="checkbox" class="domain-analytics-toggle" data-domain="' + domainEscaped + '"' + (analyticsEnabled ? ' checked' : '') + '>' +
                 '<span class="toggle-slider"></span>' +
                 '</label>' +
                 '</div>' +
-                (trackingScriptHtml ? '<div class="domain-tracking-script">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
+                (trackingScriptHtml ? '<div class="domain-tracking-script u-stack-2">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
                 (analyticsEnabled ?
-                    '<div class="domain-analytics-report-actions">' +
+                    '<div class="u-cluster">' +
                     '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
                     '</div>' +
                     '<div class="domain-analytics-report" hidden></div>' : '') +
+                '</div>' +
                 '</div>' +
                 '</article>';
         }).join('');
@@ -2080,7 +2062,7 @@ window.deleteDomain = async function(domainName) {
         if (!tbody) return;
         
         if (refresh) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;"><div class="spinner">Loading...</div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>Loading...</p></div></td></tr>';
         }
         
         // Load both audit logs and activity
@@ -2154,7 +2136,7 @@ window.deleteDomain = async function(domainName) {
             console.error('Error loading logs:', error);
             const tbody = document.getElementById('log-entries');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">Error loading logs: ' + error.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">Error loading logs: ' + escapeHtml(error.message) + '</p></div></td></tr>';
             }
         });
     }
@@ -2168,10 +2150,10 @@ window.deleteDomain = async function(domainName) {
         const logsToShow = filteredLogs.slice(0, endIndex);
         
         if (logsToShow.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 2rem;">No log entries found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">No log entries found</p></div></td></tr>';
             const loadMoreBtn = document.getElementById('load-more');
             if (loadMoreBtn) {
-                loadMoreBtn.style.display = 'none';
+                loadMoreBtn.hidden = true;
             }
             return;
         }
@@ -2180,19 +2162,19 @@ window.deleteDomain = async function(domainName) {
         logsToShow.forEach(log => {
             const timestamp = new Date(log.timestamp).toLocaleString();
             const category = log.category || getEventCategory(log.event);
-            const categoryBadge = category === 'content' ? 'badge-info' : category === 'users' ? 'badge-success' : category === 'system' ? 'badge-warning' : 'badge-secondary';
+            const categoryBadge = category === 'content' ? 'badge-info' : category === 'users' ? 'badge-success' : category === 'system' ? 'badge-warning' : 'badge-neutral';
             const formattedDetails = formatEventDetails(log);
             const fullDetails = log.details ? JSON.stringify(log.details, null, 2) : '';
             
             html += `
-                <tr class="activity-log-row">
-                    <td class="activity-log-cell activity-log-cell--muted">${timestamp}</td>
-                    <td class="activity-log-cell">${escapeHtml(log.user || 'Unknown')}</td>
-                    <td class="activity-log-cell"><span class="badge ${categoryBadge}">${escapeHtml(log.event || 'Unknown')}</span></td>
-                    <td class="activity-log-cell"><span class="badge badge-secondary">${escapeHtml(category)}</span></td>
-                    <td class="activity-log-cell activity-log-cell--muted">${escapeHtml(log.ip || 'Unknown')}</td>
-                    <td class="activity-log-cell">
-                        ${formattedDetails ? `<details class="activity-log-details"><summary class="activity-log-details__summary">View Details</summary><div class="activity-log-details__body"><pre class="activity-log-details__pre">${escapeHtml(formattedDetails)}</pre></div></details>` : '-'}
+                <tr>
+                    <td class="u-fg-secondary u-nowrap">${timestamp}</td>
+                    <td>${escapeHtml(log.user || 'Unknown')}</td>
+                    <td><span class="badge ${categoryBadge}">${escapeHtml(log.event || 'Unknown')}</span></td>
+                    <td><span class="badge badge-neutral">${escapeHtml(category)}</span></td>
+                    <td class="u-fg-secondary u-nowrap">${escapeHtml(log.ip || 'Unknown')}</td>
+                    <td>
+                        ${formattedDetails ? `<details><summary class="u-clickable u-text-sm">View Details</summary><pre class="u-surface-sunken u-radius-sm u-p-3 u-mt-2 u-text-xs u-mono u-scroll-x">${escapeHtml(formattedDetails)}</pre></details>` : '-'}
                     </td>
                 </tr>
             `;
@@ -2202,7 +2184,7 @@ window.deleteDomain = async function(domainName) {
         
         const loadMoreBtn = document.getElementById('load-more');
         if (loadMoreBtn) {
-            loadMoreBtn.style.display = (endIndex < filteredLogs.length) ? 'block' : 'none';
+            loadMoreBtn.hidden = endIndex >= filteredLogs.length;
         }
     }
     
@@ -2258,10 +2240,10 @@ async function loadDenylist() {
             const data = result.data || {};
             renderDenylist(data.resources || [], data.deny_collections || [], data.deny_spaces || []);
         } else {
-            container.innerHTML = `<p class="error">Error loading denylist: ${result.message}</p>`;
+            container.innerHTML = `<div class="message message-error" role="alert">Error loading denylist: ${escapeHtml(result.message || '')}</div>`;
         }
     } catch (error) {
-        container.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+        container.innerHTML = `<div class="message message-error" role="alert">Error: ${escapeHtml(error.message)}</div>`;
     }
 }
 window.loadDenylist = loadDenylist;
@@ -2269,12 +2251,14 @@ window.loadDenylist = loadDenylist;
 function renderDenylistItem(resource, type) {
     const label = type === 'collection' ? 'collection' : (type === 'space' ? 'space' : 'pattern');
     return `
-        <div class="denylist-item">
-            <code>${escapeHtml(resource)}</code>
-            <span class="denylist-type-badge">${label}</span>
-            <button type="button" class="btn btn-sm btn-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
-                Remove
-            </button>
+        <div class="data-list-item">
+            <code class="u-mono u-text-sm u-fill u-break-word">${escapeHtml(resource)}</code>
+            <span class="badge badge-neutral">${label}</span>
+            <div class="data-list-actions">
+                <button type="button" class="btn btn-sm btn-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
+                    Remove
+                </button>
+            </div>
         </div>
     `;
 }
@@ -2289,7 +2273,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     let html = '';
 
     if ((denyCollections || []).length > 0) {
-        html += '<h3 class="settings-subheading">Protected collections</h3><div class="denylist-list">';
+        html += '<h3 class="u-label">Protected collections</h3><div class="data-list data-list--flush">';
         denyCollections.forEach(resource => {
             html += renderDenylistItem(resource, 'collection');
         });
@@ -2297,7 +2281,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if (customResources.length > 0) {
-        html += '<h3 class="settings-subheading" style="margin-top: 1rem;">Custom patterns</h3><div class="denylist-list">';
+        html += '<h3 class="u-label u-mt-4">Custom patterns</h3><div class="data-list data-list--flush">';
         customResources.forEach(resource => {
             html += renderDenylistItem(resource, 'pattern');
         });
@@ -2305,7 +2289,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if ((denySpaces || []).length > 0) {
-        html += '<h3 class="settings-subheading" style="margin-top: 1rem;">Protected spaces</h3><div class="denylist-list">';
+        html += '<h3 class="u-label u-mt-4">Protected spaces</h3><div class="data-list data-list--flush">';
         denySpaces.forEach(resource => {
             html += renderDenylistItem(resource, 'space');
         });
@@ -2425,7 +2409,7 @@ async function removeDenylistResource(resource) {
 document.getElementById('storage-backend')?.addEventListener('change', function() {
     const dbConfig = document.getElementById('database-config');
     if (dbConfig) {
-        dbConfig.style.display = ['mysql', 'postgresql'].includes(this.value) ? 'block' : 'none';
+        dbConfig.hidden = !['mysql', 'postgresql'].includes(this.value);
     }
 });
 
@@ -2600,7 +2584,7 @@ function syncSavedLogoState(generalForm, logoPath) {
 
     var preview = document.getElementById('logo-preview');
     if (preview) {
-        preview.style.display = 'block';
+        preview.hidden = false;
     }
 }
 
@@ -2721,7 +2705,7 @@ function initGlobalSave() {
                         const previewImg = document.getElementById('logo-preview-img');
                         if (preview && previewImg) {
                             previewImg.src = event.target.result;
-                            preview.style.display = 'block';
+                            preview.hidden = false;
                         }
                     };
                     reader.readAsDataURL(file);

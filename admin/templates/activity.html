@@ -12,29 +12,29 @@
 
 <div class="activity-page">
     <div class="main-actions-bar">
-        <div class="collection-actions-bar">
-        <div class="collection-actions-bar-left">
+        <div class="main-actions-left">
             <button class="btn btn-secondary" id="refresh-activity">{translate 'admin.refresh'}</button>
         </div>
-        <div class="collection-actions-bar-right">
-            <select id="category-filter" class="input">
+        <div class="main-actions-right u-nowrap-flex">
+            <select id="category-filter" class="input u-w-auto">
                 <option value="all">{translate 'admin.all_activity'}</option>
                 <option value="content">{translate 'admin.content'}</option>
                 <option value="users">{translate 'admin.users'}</option>
                 <option value="system">{translate 'admin.system'}</option>
             </select>
         </div>
-        </div>
     </div>
-    
-    <div class="activity-feed" id="activity-feed">
-        <div class="text-center">
-            <div class="spinner">{translate 'admin.loading_activity'}...</div>
+
+    <div class="page-body u-stack-4">
+        <div id="activity-feed" class="u-stack-3">
+            <div class="loading-state">
+                <p>{translate 'admin.loading_activity'}...</p>
+            </div>
         </div>
-    </div>
-    
-    <div class="pagination">
-        <button class="btn btn-secondary" id="load-more" style="display: none;">{translate 'admin.load_more'}</button>
+
+        <div class="u-center">
+            <button class="btn btn-secondary" id="load-more" hidden>{translate 'admin.load_more'}</button>
+        </div>
     </div>
 </div>
 

@@ -210,8 +210,13 @@ select.input-sm,
 }
 .input-lg { height: var(--control-lg); }
 
-/* Search input with leading icon */
-.input-search { padding-inline-start: var(--space-8); }
+/* Search input with leading icon.
+   Declared AFTER the shared control block above: that block's selector list
+   includes input[type="search"], and an element selector beats a class at
+   equal specificity, so declaring this earlier left the icon gutter dead
+   (P56-M7 finding). */
+.input-search,
+input[type="search"].input-search { padding-inline-start: var(--space-8); }
 
 .input-icon-wrap {
   position: relative;
