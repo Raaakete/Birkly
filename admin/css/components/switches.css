@@ -135,11 +135,9 @@
   transform: translateX(20px);
 }
 
-/* Preference Item Context */
-.preference-item .switch,
-.preference-item .toggle-switch {
-  min-width: 32px;
-  min-height: 18px;
-  margin-left: auto;
+/* Preference rows (.data-list-item) keep the switch pinned to the trailing edge. */
+.data-list-item > .switch,
+.data-list-item > .toggle-switch {
+  margin-inline-start: auto;
 }
 

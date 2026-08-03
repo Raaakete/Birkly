@@ -20,7 +20,7 @@ $stickySaveBarSaveLabel = __('admin.save_settings');
 $stickySaveBarMessageId = 'settings-message';
 $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="settings-dirty-badge" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
+$stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="badge badge-warning" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 $stickySaveBarRightHtml = ''
     . '<label class="u-hidden" for="settings-search-input">Search settings</label>'
     . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="Search settings" autocomplete="off">'
@@ -95,11 +95,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-stack">
             <div class="settings-pane-section" data-settings-search="general project name description logo timezone language branding">
               <section class="card">
-                <div class="section-header">
+                <div class="card-header">
                   <h2><?= __('admin.project_information') ?></h2>
                 </div>
+                <div class="card-body u-stack-4">
                 <p class="section-description"><?= __('admin.project_information_help') ?></p>
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
                     <label for="project-name"><?= __('admin.project_name') ?></label>
                     <input type="text" id="project-name" name="projectName" class="input" value="<?= htmlspecialchars($settings['admin']['project_name'] ?? $settings['site']['name'] ?? '') ?>" required>
@@ -116,7 +117,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     </select>
                   </div>
                 </div>
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
                     <label for="site-language">Site language</label>
                     <select id="site-language" name="siteLanguage" class="input">
@@ -142,25 +143,27 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <input type="file" id="project-logo" name="project_logo" class="input" accept="image/*">
                   <small class="form-help"><?= __('admin.project_logo_help') ?></small>
                   <?php if (!empty($settings['branding']['logoPath'])): ?>
-                    <div class="logo-preview-block">
-                      <p class="logo-preview-label"><?= __('admin.current_logo') ?>:</p>
+                    <div class="u-stack-2">
+                      <p class="u-label"><?= __('admin.current_logo') ?></p>
                       <img src="<?= htmlspecialchars($settings['branding']['logoPath']) ?>" alt="<?= __('admin.current_logo') ?>" class="logo-preview-img">
-                      <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger logo-remove-btn"><?= __('admin.remove_logo') ?></button>
+                      <button type="button" id="remove-logo-btn" class="btn btn-sm btn-danger u-w-fit"><?= __('admin.remove_logo') ?></button>
                     </div>
                   <?php endif; ?>
-                  <div id="logo-preview" class="logo-preview-block" style="display: none;">
-                    <p class="logo-preview-label"><?= __('admin.preview') ?>:</p>
+                  <div id="logo-preview" class="u-stack-2" hidden>
+                    <p class="u-label"><?= __('admin.preview') ?></p>
                     <img id="logo-preview-img" src="" alt="<?= __('admin.logo_preview') ?>" class="logo-preview-img">
                   </div>
+                </div>
                 </div>
               </section>
             </div>
 
             <div class="settings-pane-section" data-settings-search="general media uploads images thumbnails quality">
               <section class="card">
-                <div class="section-header">
+                <div class="card-header">
                   <h2><?= __('admin.media_settings') ?></h2>
                 </div>
+                <div class="card-body u-stack-4">
                 <?php
                   $mediaSettings = $settings['media'] ?? [];
                   $maxUploadBytes = (int) ($mediaSettings['max_upload_size'] ?? $mediaSettings['maxUploadSize'] ?? 0);
@@ -185,7 +188,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       $createThumbnails = true;
                   }
                 ?>
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
                     <label for="media-max-upload-size"><?= __('admin.max_upload_size_mb') ?></label>
                     <input type="number" id="media-max-upload-size" name="mediaMaxUploadSize" class="input" value="<?= htmlspecialchars((string) $maxUploadMb) ?>" min="1" max="100">
@@ -195,7 +198,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <input type="number" id="media-image-quality" name="mediaImageQuality" class="input" value="<?= htmlspecialchars((string) $imageQuality) ?>" min="10" max="100">
                   </div>
                 </div>
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
                     <label for="media-thumbnail-width"><?= __('admin.thumbnail_width_px') ?></label>
                     <input type="number" id="media-thumbnail-width" name="mediaThumbnailWidth" class="input" value="<?= htmlspecialchars((string) $thumbWidth) ?>" min="50" max="1000">
@@ -211,6 +214,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <span><?= __('admin.create_thumbnails_automatically') ?></span>
                   </label>
                 </div>
+                </div>
               </section>
             </div>
           </div>
@@ -220,9 +224,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="tab-pane" id="site-delivery">
         <div class="settings-stack">
           <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains hosting dns analytics public site local development tracking"><div class="settings-stack domains-settings">
-<section class="card domains-header-card">
-            <div class="section-header">
-              <div class="section-header__copy">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-heading">
                 <h2><?= __('admin.domain_management_and_analytics') ?></h2>
                 <p class="section-description"><?= __('admin.domain_management_description') ?></p>
               </div>
@@ -233,13 +237,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </section>
 
-          <section class="card domains-dev-card">
-            <div class="section-header">
-              <div class="section-header__copy">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-heading">
                 <h3><?= __('admin.local_development') ?></h3>
                 <p class="section-description"><?= __('admin.local_development_script_help') ?></p>
               </div>
             </div>
+            <div class="card-body u-stack-4">
             <?php
             $localhostScript = '<script src="' . htmlspecialchars(birkly_url('/birkly-client.js'), ENT_QUOTES, 'UTF-8') . '" data-tracking-id="localhost"></script>';
             ?>
@@ -250,61 +255,72 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <?= __('admin.copy_code') ?>
               </button>
             </div>
-            <p class="domains-code-hint"><?= __('admin.tracking_script_hint') ?></p>
+            <p class="form-help"><?= __('admin.tracking_script_hint') ?></p>
+            </div>
           </section>
 
-          <section class="card domains-list-section">
-            <div class="section-header">
+          <section class="card">
+            <div class="card-header">
               <h3><?= __('admin.registered_domains') ?></h3>
             </div>
+            <div class="card-body u-stack-4">
             <div id="domains-list" class="domains-list">
               <div class="loading-state">
-                <div class="spinner"></div>
                 <p><?= __('admin.loading_domains') ?>...</p>
               </div>
+            </div>
             </div>
           </section>
 
           <section class="card hosting-settings">
-            <div class="section-header">
-              <h2><?= __('admin.hosting_urls') ?></h2>
-              <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
+            <div class="card-header">
+              <div class="card-heading">
+                <h2><?= __('admin.hosting_urls') ?></h2>
+                <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
+              </div>
             </div>
+            <div class="card-body u-stack-4">
             <div id="hosting-wizard-mount"></div>
-            <p data-hosting-project-link style="display:none;" class="form-help project-hosting-link">Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=site-delivery') ?>">Settings → Site delivery</a>.</p>
+            <p data-hosting-project-link class="form-help" hidden>Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=site-delivery') ?>">Settings → Site delivery</a>.</p>
+            </div>
           </section>
         </div></div>
           <div id="project" class="settings-pane-section" data-settings-search="site delivery project files upload editor public site activity access server rendering ssr render mode cache"><div class="settings-stack project-settings">
-          <section class="card project-simple-card">
-            <div class="section-header project-simple-header">
+          <section class="card">
+            <div class="card-header">
               <div>
                 <h2>Project files</h2>
                 <p class="section-description">Bundled public site workspace. Upload files or visit your live site.</p>
               </div>
               <a href="#" id="project-visit-public-link" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer" hidden>Visit public site</a>
             </div>
-            <div class="project-simple-toolbar">
+            <div class="card-body u-stack-4">
+            <div class="u-cluster">
               <button type="button" class="btn btn-secondary btn-sm" id="project-simple-upload-btn">Upload files</button>
-              <input type="file" id="project-simple-upload-input" class="project-upload-input" multiple hidden>
+              <input type="file" id="project-simple-upload-input" multiple hidden>
             </div>
             <div id="project-simple-file-list" class="project-simple-file-list">
-              <div class="loading-state"><div class="spinner"></div><p>Loading files...</p></div>
+              <div class="loading-state"><p>Loading files...</p></div>
             </div>
-            <div class="form-group project-advanced-toggle-row">
+            <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="project-advanced-editor-toggle">
                 Advanced file editor
               </label>
               <small class="form-help">Browse folders, edit source files, and view activity.</small>
             </div>
+            </div>
           </section>
 
-          <section class="card project-rendering-card" id="project-server-rendering" data-settings-search="server rendering ssr render mode cache ttl hosting">
-            <div class="section-header">
-              <h2>Server rendering</h2>
-              <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering is the default for Birkly-hosted project sites and runs on the built-in PHP engine — no Node.js required. External sites always render on the client.</p>
+          <section class="card" id="project-server-rendering" data-settings-search="server rendering ssr render mode cache ttl hosting">
+            <div class="card-header">
+              <div class="card-heading">
+                <h2>Server rendering</h2>
+                <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering is the default for Birkly-hosted project sites and runs on the built-in PHP engine — no Node.js required. External sites always render on the client.</p>
+              </div>
             </div>
-            <div class="form-row">
+            <div class="card-body u-stack-4">
+            <div class="form-grid">
               <div class="form-group">
                 <label for="project-hosting-type">Hosting</label>
                 <select id="project-hosting-type" class="input">
@@ -323,95 +339,110 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <small class="form-help">Server pre-renders HTML with the built-in PHP engine — recommended and default for Birkly-hosted projects. Auto uses the server when possible and falls back to the client. Client renders in the browser only.</small>
               </div>
             </div>
-            <div class="form-row">
+            <div class="form-grid">
               <div class="form-group">
                 <label for="project-ssr-cache-ttl">Cache TTL (seconds)</label>
                 <input type="number" id="project-ssr-cache-ttl" class="input" min="0" max="86400" step="1" inputmode="numeric">
                 <small class="form-help">How long pre-rendered pages are cached. <code>0</code> disables caching (every request re-renders). Max 86400 (24h).</small>
               </div>
             </div>
-            <p class="form-help project-rendering-note" id="project-rendering-external-note" role="status" aria-live="polite" hidden>Server rendering is disabled while hosting is set to External. Switch to Birkly hosted to enable SSR.</p>
-            <p class="form-help project-rendering-note project-rendering-runtime-note" id="project-rendering-runtime-note" role="status" aria-live="polite" hidden></p>
-            <div class="project-rendering-actions">
+            <p class="form-help" id="project-rendering-external-note" role="status" aria-live="polite" hidden>Server rendering is disabled while hosting is set to External. Switch to Birkly hosted to enable SSR.</p>
+            <p class="form-help project-rendering-runtime-note" id="project-rendering-runtime-note" role="status" aria-live="polite" hidden></p>
+            <div class="u-cluster">
               <button type="button" class="btn btn-primary btn-sm" id="project-save-rendering-btn" disabled>Save rendering settings</button>
               <button type="button" class="btn btn-secondary btn-sm" id="project-invalidate-ssr-btn">Invalidate SSR cache</button>
+            </div>
             </div>
           </section>
 
           <div id="project-advanced-panel" class="project-advanced-panel" hidden>
-          <section class="card project-overview-card">
-            <div class="section-header">
-              <h2>Project overview</h2>
-              <p class="section-description">Bundled public site workspace on this installation. Content can also be consumed on external sites via the public API and Domains whitelist.</p>
+          <section class="card">
+            <div class="card-header">
+              <div class="card-heading">
+                <h2>Project overview</h2>
+                <p class="section-description">Bundled public site workspace on this installation. Content can also be consumed on external sites via the public API and Domains whitelist.</p>
+              </div>
             </div>
-            <div id="project-overview-content" class="project-overview-grid">
-              <div class="loading-state"><div class="spinner"></div><p>Loading project info...</p></div>
+            <div class="card-body u-stack-4">
+            <div id="project-overview-content" class="u-grid-auto-sm">
+              <div class="loading-state"><p>Loading project info...</p></div>
             </div>
-            <div class="form-group project-visit-toggle">
+            <div class="form-group">
               <label class="checkbox-label">
                 <input type="checkbox" id="project-show-visit-button">
                 Show “Visit project” in admin header
               </label>
               <small class="form-help">Opens <code>project/index.html</code> in a new tab when the file exists.</small>
             </div>
+            </div>
           </section>
 
-          <section class="card project-files-card">
-            <div class="section-header project-files-header">
+          <section class="card">
+            <div class="card-header">
               <div>
                 <h2>Files</h2>
                 <p class="section-description">Browse, edit, upload, and organize files in the bundled site workspace.</p>
               </div>
-              <div class="project-files-actions">
+              <div class="card-actions">
                 <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn">New folder</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn">Upload</button>
-                <input type="file" id="project-upload-input" class="project-upload-input" multiple hidden>
+                <input type="file" id="project-upload-input" multiple hidden>
                 <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn">New file</button>
               </div>
             </div>
+            <div class="card-body u-stack-4">
             <div class="project-files-layout">
               <div class="project-file-tree-wrap">
                 <div id="project-file-breadcrumb" class="project-file-breadcrumb">project/</div>
                 <div id="project-file-tree" class="project-file-tree">
-                  <div class="loading-state"><div class="spinner"></div></div>
+                  <div class="loading-state"></div>
                 </div>
               </div>
               <div class="project-file-preview-wrap">
-                <div class="project-file-preview-header">
+                <div class="u-split u-px-4 u-py-3 u-border-bottom">
                   <h3 id="project-preview-title">Preview</h3>
-                  <div class="project-file-preview-actions">
-                    <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" style="display:none;">Save</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" style="display:none;">Delete</button>
+                  <div class="u-cluster">
+                    <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" hidden>Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" hidden>Delete</button>
                   </div>
                 </div>
-                <div id="project-file-preview-area" class="project-file-preview-area">
-                  <p class="text-muted project-file-placeholder">Select a file to preview or edit</p>
+                <div id="project-file-preview-area">
+                  <p class="u-text-sm u-fg-tertiary u-p-4">Select a file to preview or edit</p>
                   <textarea id="project-file-editor" class="project-file-editor" hidden spellcheck="false"></textarea>
                   <pre id="project-file-preview" class="project-file-preview" hidden></pre>
                   <img id="project-file-image" class="project-file-image" alt="" hidden>
                 </div>
               </div>
             </div>
+            </div>
           </section>
 
-          <section class="card project-activity-card">
-            <div class="section-header">
-              <h2>Activity</h2>
-              <p class="section-description">Recent project file changes and settings updates, with who made each change.</p>
+          <section class="card">
+            <div class="card-header">
+              <div class="card-heading">
+                <h2>Activity</h2>
+                <p class="section-description">Recent project file changes and settings updates, with who made each change.</p>
+              </div>
             </div>
+            <div class="card-body u-stack-4">
             <div id="project-activity-list" class="project-activity-list">
-              <div class="loading-state"><div class="spinner"></div></div>
+              <div class="loading-state"></div>
+            </div>
             </div>
           </section>
 
-          <section class="card project-access-card">
-            <div class="section-header">
-              <h2>Access</h2>
-              <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
+          <section class="card">
+            <div class="card-header">
+              <div class="card-heading">
+                <h2>Access</h2>
+                <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
+              </div>
             </div>
-            <div class="project-access-links">
+            <div class="card-body u-stack-4">
+            <div class="u-cluster">
               <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=ai') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
               <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=site-delivery') ?>" class="btn btn-secondary btn-sm">Domains</a>
+            </div>
             </div>
           </section>
           </div>
@@ -423,9 +454,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="tab-pane" id="team-access">
         <div class="settings-stack team-access-settings">
           <div class="settings-pane-section" data-settings-search="team access users invitations admins editors roles users management"><section class="card">
-            <div class="section-header">
+          <div class="card-header">
             <h2><?= __('admin.user_management') ?></h2>
-            <div class="user-actions">
+            <div class="card-actions">
               <button class="btn btn-secondary" data-admin-action="openInviteUserModal">
                 <?= birkly_icon('envelope', ['size' => 16]) ?>
                 Invite User
@@ -436,13 +467,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </button>
             </div>
           </div>
-          <p class="settings-help-note">
+    <div class="card-body u-stack-4">
+          <p class="settings-help">
             CMS users here manage the admin panel. Site visitors and members are managed separately in <strong>Site Users</strong> (User Management plugin).
           </p>
-          <div class="users-grid">
+          <div class="u-grid-auto-lg">
             <?php if (empty($users)): ?>
               <div class="empty-state empty-state--compact">
-                <p class="empty-state__message"><?= __('admin.no_users_found') ?></p>
+                <p class="empty-state__description"><?= __('admin.no_users_found') ?></p>
                 <div class="empty-state__action">
                   <button class="btn btn-primary" data-admin-action="openAddUserModal"><?= __('admin.add_first_user') ?></button>
                 </div>
@@ -457,19 +489,19 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 $userCreated = $user['created_at'] ?? $user['created'] ?? null;
                 $userLastLogin = $user['last_login'] ?? $user['lastLogin'] ?? null;
               ?>
-                <div class="card user-card">
-                  <div class="user-header">
-                    <div class="user-avatar">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="collection-icon" aria-hidden="true">
                       <?= htmlspecialchars($userInitial) ?>
                     </div>
-                    <div class="user-info">
-                      <h4><?= htmlspecialchars($userLabel) ?></h4>
+                    <div class="u-stack-1 u-min-w-0 u-fill">
+                      <h4 class="card-title u-text-base u-truncate"><?= htmlspecialchars($userLabel) ?></h4>
                       <?php if ($userSubtitle !== ''): ?>
-                        <p class="user-email"><?= htmlspecialchars($userSubtitle) ?></p>
+                        <p class="card-description u-truncate"><?= htmlspecialchars($userSubtitle) ?></p>
                       <?php endif; ?>
-                      <span class="role-badge <?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?>"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
+                      <span class="badge <?= ($user['role'] ?? 'viewer') === 'admin' ? 'badge-accent' : 'badge-neutral' ?> u-w-fit"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
                     </div>
-                    <div class="user-actions">
+                    <div class="card-actions">
                       <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
                         <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                       </button>
@@ -478,36 +510,48 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       </button>
                     </div>
                   </div>
-                  <div class="user-details">
-                    <p><strong>Created:</strong> <?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : 'Unknown' ?></p>
-                    <p><strong>Last Login:</strong> <?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></p>
+                  <div class="card-body u-stack-3">
+                    <div class="u-stack-1 u-text-sm">
+                      <div class="u-split">
+                        <span class="u-fg-secondary">Created</span>
+                        <span><?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : 'Unknown' ?></span>
+                      </div>
+                      <div class="u-split">
+                        <span class="u-fg-secondary">Last login</span>
+                        <span><?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></span>
+                      </div>
+                    </div>
                     <?php
                       $mcpSessions = is_array($user['mcp_sessions'] ?? null) ? $user['mcp_sessions'] : [];
                       $byoaiConnections = is_array($user['byoai_connections'] ?? null) ? $user['byoai_connections'] : [];
                       $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
                     ?>
-                    <div class="user-ai-connections">
-                      <p><strong>AI connections:</strong></p>
+                    <div class="u-stack-2">
+                      <p class="u-label">AI connections</p>
                       <?php if (!$hasAiConnections): ?>
-                        <p class="user-ai-empty">None active</p>
+                        <p class="u-text-sm u-fg-tertiary">None active</p>
                       <?php else: ?>
-                        <ul class="user-ai-list">
+                        <ul class="data-list data-list--flush data-list--compact">
                           <?php foreach ($byoaiConnections as $connection):
                             $connectedAt = $connection['created_at'] ?? '';
                             $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
                           ?>
-                            <li>
-                              <span class="user-ai-name"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
-                              <span class="user-ai-meta">outbound · since <?= htmlspecialchars($connectedLabel) ?></span>
+                            <li class="data-list-item">
+                              <span class="data-list-main">
+                                <span class="data-list-title"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
+                                <span class="data-list-meta">outbound · since <?= htmlspecialchars($connectedLabel) ?></span>
+                              </span>
                             </li>
                           <?php endforeach; ?>
                           <?php foreach ($mcpSessions as $session):
                             $connectedAt = $session['connected_at'] ?? '';
                             $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
                           ?>
-                            <li>
-                              <span class="user-ai-name"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
-                              <span class="user-ai-meta">MCP · since <?= htmlspecialchars($connectedLabel) ?></span>
+                            <li class="data-list-item">
+                              <span class="data-list-main">
+                                <span class="data-list-title"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
+                                <span class="data-list-meta">MCP · since <?= htmlspecialchars($connectedLabel) ?></span>
+                              </span>
                             </li>
                           <?php endforeach; ?>
                         </ul>
@@ -521,7 +565,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         </button>
                         <?php endif; ?>
                         <?php if (!empty($byoaiConnections)): ?>
-                        <p class="user-ai-hint">Manage built-in assistant keys under <strong>Settings → AI</strong>.</p>
+                        <p class="u-text-sm u-fg-secondary">Manage built-in assistant keys under <strong>Settings → AI</strong>.</p>
                         <?php endif; ?>
                       <?php endif; ?>
                     </div>
@@ -530,21 +574,23 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <?php endforeach; ?>
             <?php endif; ?>
           </div>
-        </section></div>
+    </div>
+  </section></div>
           <div class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
-            <div class="section-header">
+          <div class="card-header">
             <h2>Role Management</h2>
             <button class="btn btn-primary" data-admin-action="openAddRoleModal">
               <?= birkly_icon('plus', ['size' => 16]) ?>
               Add Role
             </button>
           </div>
-          <div class="roles-grid">
+    <div class="card-body u-stack-4">
+          <div class="u-grid-auto">
             <?php foreach ($settings['roles'] ?? [] as $role): ?>
-            <div class="card role-card">
-              <div class="role-header">
-                <h3><?= htmlspecialchars($role['name']) ?></h3>
-                <div class="role-actions">
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title"><?= htmlspecialchars($role['name']) ?></h3>
+                <div class="card-actions">
                   <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
                     <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                   </button>
@@ -553,26 +599,29 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </button>
                 </div>
               </div>
-              <p class="role-description"><?= htmlspecialchars($role['description']) ?></p>
-              <div class="role-permissions">
+              <div class="card-body u-stack-4">
+              <p class="card-description"><?= htmlspecialchars($role['description']) ?></p>
+              <div class="u-stack-3">
                 <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
                   $resourceLabel = $resource === '*' ? 'All resources' : ucfirst(str_replace('_', ' ', (string) $resource));
                   $actionList = is_array($actions) ? $actions : [$actions];
                 ?>
-                <div class="permission-group">
-                  <div class="permission-group-label"><?= htmlspecialchars($resourceLabel) ?>:</div>
-                  <div class="permission-pills">
+                <div class="u-stack-2">
+                  <div class="u-label"><?= htmlspecialchars($resourceLabel) ?></div>
+                  <div class="u-cluster">
                     <?php foreach ($actionList as $action): ?>
-                    <span class="permission-pill"><?= htmlspecialchars((string) $action) ?></span>
+                    <span class="badge badge-neutral"><?= htmlspecialchars((string) $action) ?></span>
                     <?php endforeach; ?>
                   </div>
                 </div>
                 <?php endforeach; ?>
               </div>
+              </div>
             </div>
             <?php endforeach; ?>
           </div>
-        </section></div>
+    </div>
+  </section></div>
         </div>
       </div>
 
@@ -581,10 +630,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-stack">
             <div class="settings-pane-section" data-settings-search="security sessions passwords csrf login attempts timeout lockout">
               <section class="card">
-                <div class="section-header">
+                <div class="card-header">
                   <h2><?= __('admin.session_security') ?></h2>
                 </div>
-                <div class="form-row">
+                <div class="card-body u-stack-4">
+                <div class="form-grid">
                   <div class="form-group">
                     <label for="security-session-timeout"><?= __('admin.session_timeout_minutes') ?></label>
                     <input type="number" id="security-session-timeout" name="securitySessionTimeout" class="input" value="<?= htmlspecialchars(isset($settings['security']['session_timeout']) ? ($settings['security']['session_timeout'] / 60) : ($settings['security']['sessionTimeout'] ?? '60')) ?>" min="5" max="1440">
@@ -594,7 +644,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <input type="number" id="security-max-login-attempts" name="securityMaxLoginAttempts" class="input" value="<?= htmlspecialchars($settings['security']['max_login_attempts'] ?? $settings['security']['maxLoginAttempts'] ?? '5') ?>" min="3" max="20">
                   </div>
                 </div>
-                <div class="form-row">
+                <div class="form-grid">
                   <div class="form-group">
                     <label for="security-password-min-length"><?= __('admin.password_min_length') ?></label>
                     <input type="number" id="security-password-min-length" name="securityPasswordMinLength" class="input" value="<?= htmlspecialchars($settings['security']['password_min_length'] ?? $settings['security']['passwordMinLength'] ?? '8') ?>" min="6" max="50">
@@ -616,14 +666,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <span><?= __('admin.enable_csrf_protection') ?></span>
                   </label>
                 </div>
+                </div>
               </section>
             </div>
 
             <div class="settings-pane-section" data-settings-search="security two factor 2fa authentication policy grace period">
               <section class="card">
-                <div class="section-header">
+                <div class="card-header">
                   <h2>Two-factor authentication policy</h2>
                 </div>
+                <div class="card-body u-stack-4">
                 <p class="settings-help">When enabled, all admin users must set up two-factor authentication. Users without 2FA receive a configurable grace period before login is blocked.</p>
                 <div class="form-group">
                   <label class="checkbox-label">
@@ -636,17 +688,19 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
                   <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
                 </div>
+                </div>
               </section>
             </div>
 
             <div class="settings-pane-section" data-settings-search="security denylist plugin security protected collections custom patterns spaces">
               <section class="card">
-                <div class="section-header">
+                <div class="card-header">
                   <h2><?= __('admin.plugin_security_denylist') ?></h2>
                 </div>
+                <div class="card-body u-stack-4">
                 <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
-                <div class="denylist-add-toolbar settings-section-header-row">
-                  <div class="form-group settings-form-group--inline">
+                <div class="u-cluster-3 u-align-end">
+                  <div class="form-group u-fill">
                     <label for="denylist-collection-select">Protect collection</label>
                     <select id="denylist-collection-select" class="input">
                       <option value="">Loading collections…</option>
@@ -660,11 +714,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     Add custom pattern
                   </button>
                 </div>
-                <p class="settings-help settings-help--tight">Spaces denylist is reserved for a future release (stub).</p>
+                <p class="settings-help">Spaces denylist is reserved for a future release (stub).</p>
                 <div id="denylist-management">
-                  <div class="text-center">
-                    <div class="spinner">Loading denylist...</div>
-                  </div>
+                  <div class="loading-state"><p>Loading denylist...</p></div>
+                </div>
                 </div>
               </section>
             </div>
@@ -687,45 +740,50 @@ include __DIR__ . '/components/sticky-save-bar.php';
           $domainsTabUrl = admin_url('settings') . '?tab=site-delivery';
         ?>
         <section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.api_information') ?></h2>
+          <div class="card-header">
+            <h2><?= __('admin.api_information') ?></h2>
 </div>
+          <div class="card-body u-stack-4">
           <p class="settings-help"><?= __('admin.api_info_help') ?></p>
           
-          <div class="api-info-grid">
-            <div class="api-info-card">
-              <h3 class="api-info-card__title">API Endpoint</h3>
-              <p class="api-info-card__text">The API is available at: <code class="api-info-card__code"><?= htmlspecialchars($apiEndpoint) ?></code></p>
+          <div class="u-grid-auto">
+            <div class="card card--sunken u-p-4 u-stack-2">
+              <h3 class="u-label">API endpoint</h3>
+              <p class="u-text-sm">The API is available at: <code class="u-mono u-break-word"><?= htmlspecialchars($apiEndpoint) ?></code></p>
             </div>
-            <div class="api-info-card">
-              <h3 class="api-info-card__title">Authentication</h3>
-              <p class="api-info-card__text">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Manage domains</a></p>
+            <div class="card card--sunken u-p-4 u-stack-2">
+              <h3 class="u-label">Authentication</h3>
+              <p class="u-text-sm">Admin API requests use session cookies after login. Public content API access requires registered domains<?= $domainCount > 0 ? ' (' . (int) $domainCount . ' registered)' : '' ?>. <a href="<?= htmlspecialchars($domainsTabUrl) ?>">Manage domains</a></p>
             </div>
-            <div class="api-info-card">
-              <h3 class="api-info-card__title">Rate Limiting</h3>
+            <div class="card card--sunken u-p-4 u-stack-2">
+              <h3 class="u-label">Rate limiting</h3>
               <?php if ($domainCount > 0): ?>
-              <p class="api-info-card__text">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab.</p>
+              <p class="u-text-sm">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>">Domains</a> tab.</p>
               <?php else: ?>
-              <p class="api-info-card__text">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>" class="api-info-card__link">Domains</a> tab to enable API access controls.</p>
+              <p class="u-text-sm">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>">Domains</a> tab to enable API access controls.</p>
               <?php endif; ?>
             </div>
+          </div>
           </div>
         </section>
 
         <section class="card">
-            <div class="section-header">
-  <h2><?= __('admin.api_documentation') ?></h2>
+          <div class="card-header">
+            <h2><?= __('admin.api_documentation') ?></h2>
 </div>
+          <div class="card-body u-stack-4">
           <p class="settings-help">For detailed API documentation, including available endpoints, request/response formats, and authentication methods, please refer to the Birkly documentation or contact your system administrator.</p>
+          </div>
         </section>
 <section class="card">
-            <div class="section-header">
+  <div class="card-header">
             <div>
               <h2><?= __('admin.webhooks') ?></h2>
               <p class="settings-help"><?= __('admin.webhooks_description') ?></p>
             </div>
             <button type="button" class="btn btn-primary" id="create-webhook"><?= __('admin.create_webhook') ?></button>
           </div>
+  <div class="card-body u-stack-4">
           <div class="table-container">
             <table class="table" id="webhooks-table">
               <thead>
@@ -740,88 +798,96 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </thead>
               <tbody id="webhooks-list">
                 <tr>
-                  <td colspan="6" class="text-center">
-                    <div class="spinner">Loading...</div>
+                  <td colspan="6">
+                    <div class="loading-state"><p>Loading...</p></div>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </section>
+  </div>
+</section>
         </div></div>
         </div>
       </div>
 
       <div class="tab-pane" id="ai">
         <div class="settings-stack ai-settings">
-          <div id="ai-integrations" class="settings-pane-section" data-settings-search="ai assistant mcp connections service agents outbound personal connector"><div class="ai-integrations-settings">
-          <div class="settings-section ai-integrations-intro">
-            <h2>AI</h2>
-            <p class="settings-help ai-intro-lead">Connect AI apps to Birkly or chat inside the admin.</p>
-            <p class="ai-intro-docs">
-              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections" class="ai-docs-link">Step-by-step guide</a>
-              ·
-              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer" class="ai-docs-link">Documentation</a>
+          <div id="ai-integrations" class="settings-pane-section" data-settings-search="ai assistant mcp connections service agents outbound personal connector"><div class="u-stack-6">
+          <div class="section-header">
+            <div class="u-stack-1">
+              <h2 class="section-title">AI</h2>
+              <p class="settings-help">Connect AI apps to Birkly or chat inside the admin.</p>
+            </div>
+            <p class="u-cluster-3 u-text-sm">
+              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections">Step-by-step guide</a>
+              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer">Documentation</a>
             </p>
           </div>
 
-          <div class="tip-box tip-box-warning ai-https-warning" id="ai-https-warning" style="display: none;" role="alert">
-            <strong>Claude requires an HTTPS Connector URL</strong>
-            <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
+          <div class="callout callout-warning" id="ai-https-warning" role="alert" hidden>
+            <div class="callout-body u-stack-1">
+              <p class="callout-title">Claude requires an HTTPS Connector URL</p>
+              <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
+            </div>
           </div>
 
-          <div class="tip-box tip-box-info ai-migration-banner" id="ai-agents-migration-banner" style="display: none;" role="status">
-            <strong>Service agent visibility updated</strong>
-            <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
+          <div class="callout callout-info" id="ai-agents-migration-banner" role="status" hidden>
+            <div class="callout-body u-stack-1">
+              <p class="callout-title">Service agent visibility updated</p>
+              <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
+            </div>
           </div>
 
-          <div class="ai-connection-kinds-grid">
-            <div class="card ai-connection-kind-card" id="ai-kind-personal">
-              <div class="ai-kind-header">
-                <h3>Personal connector</h3>
-                <p class="settings-help">Connect Claude, ChatGPT, or Cursor with your own Birkly permissions. Every team member uses the same URL but signs in with their own account.</p>
+          <div class="ai-connection-kinds-grid u-grid-auto-lg">
+            <div class="card" id="ai-kind-personal">
+              <div class="card-header">
+                <div class="card-heading">
+                  <h3 class="card-title">Personal connector</h3>
+                  <p class="card-description">Connect Claude, ChatGPT, or Cursor with your own Birkly permissions. Every team member uses the same URL but signs in with their own account.</p>
+                </div>
               </div>
-              <div id="ai-personal-agent-card" class="ai-kind-body">
-                <div class="loading">Loading personal connector...</div>
+              <div id="ai-personal-agent-card" class="card-body">
+                <div class="loading-state"><p>Loading personal connector...</p></div>
               </div>
             </div>
 
-            <div class="card ai-connection-kind-card" id="ai-kind-service">
-              <div class="ai-kind-header section-header">
-                <div>
-                  <h3>Service agents</h3>
-                  <p class="settings-help ai-service-intro" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
+            <div class="card" id="ai-kind-service">
+              <div class="card-header">
+                <div class="u-stack-1">
+                  <h3 class="card-title">Service agents</h3>
+                  <p class="card-description" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
                 </div>
-                <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" style="display: none;">
+                <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" hidden>
                   <?= birkly_icon('plus', ['size' => 16]) ?>
                   Add agent
                 </button>
               </div>
-              <div class="connections-list ai-kind-body" id="ai-service-agents-list">
-                <div class="loading">Loading connections...</div>
+              <div class="connections-list card-body" id="ai-service-agents-list">
+                <div class="loading-state"><p>Loading connections...</p></div>
               </div>
             </div>
 
-            <div class="card ai-connection-kind-card" id="ai-kind-assistant">
-              <div class="ai-kind-header section-header">
-                <div>
-                  <h3>Built-in assistant</h3>
-                  <p class="settings-help">Chat with AI inside Birkly using your provider API key.</p>
+            <div class="card" id="ai-kind-assistant">
+              <div class="card-header">
+                <div class="u-stack-1">
+                  <h3 class="card-title">Built-in assistant</h3>
+                  <p class="card-description">Chat with AI inside Birkly using your provider API key.</p>
                 </div>
                 <button class="btn btn-secondary" id="add-connection-btn" type="button">
                   <?= birkly_icon('plus', ['size' => 16]) ?>
                   Quick connect
                 </button>
               </div>
-              <div class="connections-list ai-kind-body" id="connections-list">
-                <div class="loading">Loading connections...</div>
+              <div class="connections-list card-body" id="connections-list">
+                <div class="loading-state"><p>Loading connections...</p></div>
               </div>
             </div>
           </div>
 
-          <details class="ai-dev-details">
-            <summary>Developer / debug</summary>
-            <div class="ai-dev-body">
+          <details class="card u-p-4">
+            <summary class="u-clickable u-weight-medium">Developer / debug</summary>
+            <div class="u-stack-2 u-pt-3 u-text-sm u-fg-secondary">
               <p>For local development only. Not needed for normal setup.</p>
               <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
             </div>
@@ -829,8 +895,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </div>
 
         <!-- Built-in assistant quick connect modal -->
-        <div class="modal" id="add-connection-modal" style="display: none;">
-          <div class="modal-content connection-wizard-modal">
+        <div class="modal" id="add-connection-modal">
+          <div class="modal-content modal--md">
             <div class="modal-header">
               <h2 id="connection-modal-title">Quick connect assistant</h2>
               <button class="btn-icon modal-close" id="close-modal-btn">
@@ -840,7 +906,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <form id="add-connection-form" class="modal-body">
               <input type="hidden" id="connection-id" name="id">
 
-              <div id="wizard-error" class="wizard-error" style="display: none;" role="alert"></div>
+              <div id="wizard-error" class="message message-error" role="alert" hidden></div>
 
               <p class="modal-intro-text" id="assistant-modal-intro">Connect an AI provider for the in-admin chat button. You need a developer API key — consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access.</p>
 
@@ -857,7 +923,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <small><?= __('admin.connection_friendly_name_help') ?></small>
               </div>
 
-              <div class="form-group" id="api-url-group" style="display: none;">
+              <div class="form-group" id="api-url-group" hidden>
                 <label for="connection-api-url"><?= __('admin.api_url') ?></label>
                 <input type="url" id="connection-api-url" name="api_url" class="input" placeholder="https://api.example.com/v1/chat/completions">
                 <small id="api-url-hint">API endpoint URL (required for custom providers)</small>
@@ -869,10 +935,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <small><?= __('admin.api_key_help') ?></small>
               </div>
 
-              <div class="form-group" id="ollama-hint" style="display: none;">
-                <div class="byoai-key-explainer ollama-hint-box">
-                  <strong>Ollama runs locally</strong>
-                  <p>No API key needed. Make sure Ollama is running (default: <code>http://localhost:11434</code>).</p>
+              <div class="form-group" id="ollama-hint" hidden>
+                <div class="callout callout-info">
+                  <div class="callout-body u-stack-1">
+                    <p class="callout-title">Ollama runs locally</p>
+                    <p>No API key needed. Make sure Ollama is running (default: <code>http://localhost:11434</code>).</p>
+                  </div>
                 </div>
               </div>
 
@@ -883,8 +951,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
               <div class="form-group" id="connection-model-group">
                 <label for="connection-model-search"><?= __('admin.model') ?></label>
-                <div class="ai-model-picker" id="connection-model-picker">
-                  <div class="ai-model-picker-toolbar">
+                <div class="u-stack-2" id="connection-model-picker">
+                  <div class="u-cluster">
                     <input type="search" id="connection-model-search" class="input" placeholder="Search models…" autocomplete="off" aria-controls="connection-model-list">
                     <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh">Refresh</button>
                   </div>
@@ -892,7 +960,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="Models"></div>
                   <p id="connection-model-status" class="form-help ai-model-picker-status"></p>
                 </div>
-                <input type="text" id="connection-model-custom" name="model_custom" class="input connection-model-custom" placeholder="<?= __('admin.enter_model_name') ?>">
+                <input type="text" id="connection-model-custom" name="model_custom" class="input" placeholder="<?= __('admin.enter_model_name') ?>">
                 <small class="form-help">Models are loaded live from your provider. Search the list or type a model ID.</small>
               </div>
 
@@ -906,14 +974,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <input type="hidden" id="connection-shared-type" name="shared_type" value="none">
 
               <div class="form-group">
-                <label>
+                <label class="check">
                   <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
-                  Require approval for AI actions
+                  <span>Require approval for AI actions</span>
                 </label>
                 <small><?= __('admin.ai_approval_mode_help') ?></small>
               </div>
 
-              <div class="modal-footer connection-wizard-footer">
+              <div class="modal-footer">
                 <button type="button" class="btn btn-secondary modal-close"><?= __('admin.cancel') ?></button>
                 <button type="submit" class="btn btn-primary" id="connection-submit-btn"><?= __('admin.connect') ?></button>
               </div>
@@ -922,8 +990,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </div>
 
         <!-- Add agent modal -->
-        <div class="modal" id="add-mcp-modal" style="display: none;">
-          <div class="modal-content">
+        <div class="modal" id="add-mcp-modal">
+          <div class="modal-content modal--md">
             <div class="modal-header">
               <h2 id="mcp-modal-title">Add AI agent</h2>
               <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
@@ -931,27 +999,27 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
-              <fieldset class="mcp-agent-type-fieldset">
-                <legend class="mcp-agent-type-legend">What type of agent do you need?</legend>
-                <div class="mcp-agent-type-picker" role="radiogroup" aria-label="Agent type">
+              <fieldset class="u-stack-3">
+                <legend class="u-label u-mb-2">What type of agent do you need?</legend>
+                <div class="u-grid-auto-sm" role="radiogroup" aria-label="Agent type">
                   <label class="mcp-agent-type-option">
                     <input type="radio" name="agent_type" value="personal" id="mcp-agent-type-personal" checked>
                     <span class="mcp-agent-type-card">
-                      <span class="mcp-agent-type-name">Personal <span class="mcp-type-pill mcp-type-personal">Dynamic</span></span>
+                      <span class="mcp-agent-type-name">Personal <span class="badge badge-success">Dynamic</span></span>
                       <span class="mcp-agent-type-desc">Each user connects with <strong>their own</strong> Birkly role and permissions. One shared URL for the whole team.</span>
                     </span>
                   </label>
                   <label class="mcp-agent-type-option">
                     <input type="radio" name="agent_type" value="service" id="mcp-agent-type-service">
                     <span class="mcp-agent-type-card">
-                      <span class="mcp-agent-type-name">Service <span class="mcp-type-pill mcp-type-service">Fixed role</span></span>
+                      <span class="mcp-agent-type-name">Service <span class="badge badge-info">Fixed role</span></span>
                       <span class="mcp-agent-type-desc">A shared bot that <strong>always</strong> acts as a specific CMS role (e.g. always editor). You choose who can use it.</span>
                     </span>
                   </label>
                 </div>
               </fieldset>
 
-              <div id="mcp-personal-agent-panel" class="mcp-agent-type-panel">
+              <div id="mcp-personal-agent-panel" class="u-stack-4 u-mt-4">
                 <p class="modal-intro-text">The personal connector is already set up for your site. Copy its URL and paste it in Claude, ChatGPT, or Cursor — each team member signs in with their own account.</p>
                 <div class="mcp-snippet-block">
                   <label for="mcp-modal-personal-url">Personal connector URL</label>
@@ -962,14 +1030,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
               </div>
 
-              <div id="mcp-service-agent-panel" class="mcp-agent-type-panel" hidden>
+              <div id="mcp-service-agent-panel" class="u-stack-4 u-mt-4" hidden>
                 <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it.</p>
 
-                <div class="mcp-preset-hints" role="group" aria-label="Service agent presets">
-                  <span class="mcp-preset-label">Quick presets:</span>
-                  <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content">Content assistant</button>
-                  <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder">Site builder</button>
-                  <small class="form-hint-block">Site builder uses the <strong>Admin</strong> role so connected AI can read and write <code>project/</code> HTML, CSS, and JS alongside CMS content.</small>
+                <div class="u-stack-2" role="group" aria-label="Service agent presets">
+                  <div class="u-cluster">
+                    <span class="u-label">Quick presets</span>
+                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content">Content assistant</button>
+                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder">Site builder</button>
+                  </div>
+                  <small class="form-help">Site builder uses the <strong>Admin</strong> role so connected AI can read and write <code>project/</code> HTML, CSS, and JS alongside CMS content.</small>
                 </div>
 
                 <div class="form-group">
@@ -979,7 +1049,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
 
                 <div class="form-group">
-                  <label for="mcp-agent-description">Description <span class="text-muted">(optional)</span></label>
+                  <label for="mcp-agent-description">Description <span class="u-fg-tertiary">(optional)</span></label>
                   <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="e.g. Helps draft blog posts">
                 </div>
 
@@ -996,15 +1066,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
                 <div class="form-group">
                   <label>Who can use this agent</label>
-                  <small class="form-hint-block">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
+                  <small class="form-help">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
                   <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
                     <div class="loading-inline">Loading roles...</div>
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label>Individual users <span class="text-muted">(optional)</span></label>
-                  <div id="mcp-allowed-users" class="mcp-checkbox-group mcp-user-picker" role="group" aria-label="Users that can use this agent">
+                  <label>Individual users <span class="u-fg-tertiary">(optional)</span></label>
+                  <div id="mcp-allowed-users" class="mcp-checkbox-group" role="group" aria-label="Users that can use this agent">
                     <div class="loading-inline">Loading users...</div>
                   </div>
                 </div>
@@ -1014,7 +1084,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
               <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="oauth">
 
-              <div id="mcp-create-success" class="mcp-success-panel" style="display: none;">
+              <div id="mcp-create-success" class="callout callout-success u-stack-3" hidden>
                 <p><strong>Service agent created!</strong> Copy the Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
                 <div class="mcp-snippet-block">
                   <label for="mcp-new-connector-url">Connector URL</label>
@@ -1057,45 +1127,37 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <div class="settings-stack system-settings">
           <div class="settings-pane-section" data-settings-search="system updates current version install download maintenance release notes">
             <section class="card">
-              <div class="section-header">
+              <div class="card-header">
                 <h2><?= __('admin.system_updates') ?></h2>
               </div>
-              <div class="updates-content">
-                <div class="card">
+              <div class="card-body u-stack-4">
+              <div class="u-stack-4">
+                <div class="card card--sunken">
                   <div class="card-header">
-                    <h3><?= __('admin.current_version') ?></h3>
-                    <div class="version-badge current">
-                      <span id="current-version"><?= __('admin.loading') ?>...</span>
-                    </div>
+                    <h3 class="card-title"><?= __('admin.current_version') ?></h3>
+                    <span class="badge badge-info" id="current-version"><?= __('admin.loading') ?>...</span>
                   </div>
-                  <div class="card-body">
+                  <div class="card-body u-stack-3">
                     <p><?= __('admin.birkly_running_version') ?> <strong id="current-version-text"><?= __('admin.loading') ?>...</strong></p>
-                    <div class="version-info">
-                      <div class="info-item">
-                        <span class="label"><?= __('admin.installation_date') ?>:</span>
-                        <span class="value" id="install-date"><?= __('admin.unknown') ?></span>
-                      </div>
-                      <div class="info-item">
-                        <span class="label"><?= __('admin.last_update') ?>:</span>
-                        <span class="value" id="last-update"><?= __('admin.never') ?></span>
-                      </div>
+                    <div class="kv">
+                      <span class="kv-key"><?= __('admin.installation_date') ?></span>
+                      <span class="kv-value" id="install-date"><?= __('admin.unknown') ?></span>
+                      <span class="kv-key"><?= __('admin.last_update') ?></span>
+                      <span class="kv-value" id="last-update"><?= __('admin.never') ?></span>
                     </div>
                   </div>
                 </div>
 
-                <div class="card" id="update-status-card">
+                <div class="card card--sunken" id="update-status-card">
                   <div class="card-header">
-                    <h3><?= __('admin.update_status') ?></h3>
-                    <div class="update-status" id="update-status">
-                      <div class="status-indicator loading">
-                        <div class="spinner"></div>
-                        <span><?= __('admin.checking_for_updates') ?>...</span>
-                      </div>
+                    <h3 class="card-title"><?= __('admin.update_status') ?></h3>
+                    <div id="update-status">
+                      <span class="badge badge-neutral"><?= __('admin.checking_for_updates') ?>...</span>
                     </div>
                   </div>
-                  <div class="card-body" id="update-details" style="display: none;">
+                  <div class="card-body u-stack-3" id="update-details" hidden>
                     <div id="update-info"></div>
-                    <div class="update-actions" id="update-actions" style="display: none;">
+                    <div class="u-cluster" id="update-actions" hidden>
                       <button type="button" class="btn btn-primary" id="download-update-btn">
                         <?= birkly_icon('import', ['size' => 16]) ?>
                         Download Update
@@ -1108,6 +1170,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   </div>
                 </div>
               </div>
+              </div>
             </section>
           </div>
 
@@ -1115,11 +1178,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="settings-stack infrastructure-settings">
               <form id="storage-form" class="settings-form">
                 <section class="card">
-                  <div class="section-header">
+                  <div class="card-header">
                     <h2><?= __('admin.storage_backend') ?></h2>
                   </div>
+                  <div class="card-body u-stack-4">
                   <p class="settings-help"><?= __('admin.storage_backend_help') ?></p>
-                  <div class="form-row">
+                  <div class="form-grid">
                     <div class="form-group">
                       <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
                       <select id="storage-backend" name="storage_backend" class="input">
@@ -1132,8 +1196,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     </div>
                   </div>
 
-                  <div id="database-config" style="display: <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? 'block' : 'none' ?>;">
-                    <div class="form-row">
+                  <div id="database-config" class="u-stack-4" <?= in_array($storageDriver, ['mysql', 'postgresql'], true) ? '' : 'hidden' ?>>
+                    <div class="form-grid">
                       <div class="form-group">
                         <label for="db-host"><?= __('admin.database_host') ?></label>
                         <input type="text" id="db-host" name="db_host" value="<?= htmlspecialchars((string) $dbHost) ?>" class="input" placeholder="localhost">
@@ -1144,7 +1208,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-grid">
                       <div class="form-group">
                         <label for="db-name"><?= __('admin.database_name') ?></label>
                         <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
@@ -1155,7 +1219,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-grid">
                       <div class="form-group">
                         <label for="db-password"><?= __('admin.database_password') ?></label>
                         <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
@@ -1166,36 +1230,40 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-grid">
                       <div class="form-group">
                         <button type="button" class="btn btn-secondary" data-admin-action="testDatabaseConnection"><?= __('admin.test_connection') ?></button>
-                        <small id="db-test-result" style="margin-left: 1rem;"></small>
+                        <small id="db-test-result" class="u-ml-4" aria-live="polite"></small>
                       </div>
                     </div>
+                  </div>
                   </div>
                 </section>
 
                 <section class="card">
-                  <div class="section-header">
+                  <div class="card-header">
                     <h3><?= __('admin.migration') ?></h3>
                   </div>
+                  <div class="card-body u-stack-4">
                   <p class="settings-help"><?= __('admin.migration_help') ?></p>
-                  <div class="form-row">
+                  <div class="form-grid">
                     <div class="form-group">
                       <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
                       <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
                     </div>
+                  </div>
                   </div>
                 </section>
               </form>
 
               <form id="monitoring-form" class="settings-form">
                 <section class="card">
-                  <div class="section-header">
+                  <div class="card-header">
                     <h2><?= __('admin.monitoring_alerts') ?></h2>
                   </div>
+                  <div class="card-body u-stack-4">
                   <p class="settings-help"><?= __('admin.monitoring_alerts_help') ?></p>
-                  <div class="form-row">
+                  <div class="form-grid">
                     <div class="form-group">
                       <label for="monitoring-alert-email"><?= __('admin.alert_email') ?></label>
                       <input type="email" id="monitoring-alert-email" name="monitoringAlertEmail" class="input" value="<?= htmlspecialchars($monitoringAlertEmail) ?>" placeholder="ops@example.com">
@@ -1207,18 +1275,20 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       <small class="form-help"><?= __('admin.alert_webhook_url_help') ?></small>
                     </div>
                   </div>
+                  </div>
                 </section>
               </form>
             </div>
           </div>
 
           <div class="settings-pane-section" data-settings-search="system danger rebuild reset onboarding destructive">
-            <section class="card settings-danger-zone">
-              <div class="section-header">
+            <section class="card card--danger">
+              <div class="card-header">
                 <h2><?= __('admin.danger_zone') ?></h2>
               </div>
+              <div class="card-body u-stack-4">
               <p class="section-description"><?= __('admin.rebuild_system_description') ?></p>
-              <ul class="settings-danger-list">
+              <ul class="settings-list">
                 <li><?= __('admin.rebuild_system_removes_content') ?></li>
                 <li><?= __('admin.rebuild_system_removes_onboarding') ?></li>
                 <li><?= __('admin.rebuild_system_keeps_users') ?></li>
@@ -1226,6 +1296,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <button type="button" class="btn btn-danger" id="open-rebuild-system-btn">
                 <?= __('admin.rebuild_system_button') ?>
               </button>
+              </div>
             </section>
           </div>
         </div>
@@ -1236,8 +1307,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
   <!-- Domain Management Modals -->
   <!-- Add Domain Modal -->
-  <div id="add-domain-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
+  <div id="add-domain-modal" class="modal-backdrop">
+    <div class="modal-content modal--md">
       <div class="modal-header">
         <h2><?= __('admin.register_domain') ?></h2>
         <button class="modal-close-btn" data-admin-action="closeAddDomainModal">&times;</button>
@@ -1247,7 +1318,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="form-group">
             <label for="domain-name"><?= __('admin.domain_name') ?> *</label>
             <input type="text" id="domain-name" name="domain" required class="input" placeholder="example.com">
-            <small class="text-muted">Enter the domain name without http:// or https://</small>
+            <small class="form-help">Enter the domain name without http:// or https://</small>
           </div>
           <div class="form-group">
             <label for="domain-email"><?= __('admin.customer_email') ?> *</label>
@@ -1259,23 +1330,23 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <option value="read_only">Read Only</option>
               <option value="read_write" selected>Read & Write</option>
             </select>
-            <small class="text-muted">Read Only: Can fetch content. Read & Write: Can fetch and submit content.</small>
+            <small class="form-help">Read Only: Can fetch content. Read & Write: Can fetch and submit content.</small>
           </div>
-          <div class="form-row">
-            <div class="form-group" style="flex: 1;">
+          <div class="form-grid">
+            <div class="form-group">
               <label><?= __('admin.read_rate_limit_per_minute') ?></label>
               <input type="number" id="domain-read-limit" name="read_limit" value="100" min="1" class="input">
             </div>
-            <div class="form-group" style="flex: 1;">
+            <div class="form-group">
               <label><?= __('admin.write_rate_limit_per_hour') ?></label>
               <input type="number" id="domain-write-limit" name="write_limit" value="10" min="1" class="input">
             </div>
           </div>
           <div class="form-group">
-            <div class="preference-item domain-analytics-toggle-row">
-              <div class="preference-label">
-                <div class="preference-title"><?= __('admin.enable_analytics_tracking') ?></div>
-                <small class="preference-desc">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
+            <div class="data-list-item domain-analytics-toggle-row">
+              <div class="data-list-main">
+                <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
+                <small class="data-list-meta">Track visitor statistics for this domain. Zero-dependency, self-hosted analytics with complete privacy.</small>
               </div>
               <label class="toggle-switch" for="domain-enable-analytics">
                 <input type="checkbox" id="domain-enable-analytics" name="enable_analytics" value="1">
@@ -1293,8 +1364,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Edit Domain Modal -->
-  <div id="edit-domain-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
+  <div id="edit-domain-modal" class="modal-backdrop">
+    <div class="modal-content modal--md">
       <div class="modal-header">
         <h2><?= __('admin.edit_domain') ?></h2>
         <button class="modal-close-btn" data-admin-action="closeEditDomainModal">&times;</button>
@@ -1316,21 +1387,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <option value="inactive"><?= __('admin.inactive') ?></option>
             </select>
           </div>
-          <div class="form-row">
-            <div class="form-group" style="flex: 1;">
+          <div class="form-grid">
+            <div class="form-group">
               <label>Read Rate Limit (per minute)</label>
               <input type="number" id="edit-domain-read-limit" name="read_limit" min="1" class="input">
             </div>
-            <div class="form-group" style="flex: 1;">
+            <div class="form-group">
               <label>Write Rate Limit (per hour)</label>
               <input type="number" id="edit-domain-write-limit" name="write_limit" min="1" class="input">
             </div>
           </div>
           <div class="form-group">
-            <div class="preference-item domain-analytics-toggle-row">
-              <div class="preference-label">
-                <div class="preference-title"><?= __('admin.enable_analytics_tracking') ?></div>
-                <small class="preference-desc">Track visitor statistics for this domain.</small>
+            <div class="data-list-item domain-analytics-toggle-row">
+              <div class="data-list-main">
+                <span class="data-list-title"><?= __('admin.enable_analytics_tracking') ?></span>
+                <small class="data-list-meta">Track visitor statistics for this domain.</small>
               </div>
               <label class="toggle-switch" for="edit-domain-enable-analytics">
                 <input type="checkbox" id="edit-domain-enable-analytics" name="enable_analytics" value="1">
@@ -1349,8 +1420,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
   <!-- Role Management Modals -->
   <!-- Add Role Modal -->
-  <div id="add-role-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 800px;">
+  <div id="add-role-modal" class="modal-backdrop">
+    <div class="modal-content modal--lg">
       <div class="modal-header">
         <h2><?= __('admin.add_new_role') ?></h2>
         <button class="modal-close-btn" data-admin-action="closeAddRoleModal">&times;</button>
@@ -1367,7 +1438,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-group">
             <label><?= __('admin.permissions') ?></label>
-            <div class="permissions-grid" id="add-permissions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+            <div class="permissions-grid" id="add-permissions-grid">
               <!-- Permissions will be populated by JavaScript -->
             </div>
           </div>
@@ -1381,8 +1452,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Edit Role Modal -->
-  <div id="edit-role-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 800px;">
+  <div id="edit-role-modal" class="modal-backdrop">
+    <div class="modal-content modal--lg">
       <div class="modal-header">
         <h2><?= __('admin.edit_role') ?></h2>
         <button class="modal-close-btn" data-admin-action="closeEditRoleModal">&times;</button>
@@ -1400,7 +1471,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-group">
             <label><?= __('admin.permissions') ?></label>
-            <div class="permissions-grid" id="edit-permissions-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 0.5rem;">
+            <div class="permissions-grid" id="edit-permissions-grid">
               <!-- Permissions will be populated by JavaScript -->
             </div>
           </div>
@@ -1489,14 +1560,14 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Rebuild System Modal -->
-  <div id="rebuild-system-modal" class="modal-backdrop" style="display: none;">
+  <div id="rebuild-system-modal" class="modal-backdrop">
     <div class="modal-content">
       <div class="modal-header">
         <h2><?= __('admin.rebuild_system_title') ?></h2>
         <button type="button" class="modal-close-btn" id="close-rebuild-system-modal" aria-label="<?= __('admin.cancel') ?>">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="settings-danger-warning"><?= __('admin.rebuild_system_warning') ?></p>
+        <p class="callout callout-danger"><?= __('admin.rebuild_system_warning') ?></p>
         <div class="form-group">
           <label for="rebuild-system-confirmation"><?= __('admin.rebuild_system_confirm_label') ?></label>
           <input type="text" id="rebuild-system-confirmation" class="input" autocomplete="off" placeholder="<?= __('admin.rebuild_system_confirm_placeholder') ?>">
@@ -1546,8 +1617,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
   </div>
 
   <!-- Webhook Modal -->
-  <div id="webhook-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
+  <div id="webhook-modal" class="modal-backdrop">
+    <div class="modal-content modal--md">
       <div class="modal-header">
         <h2 id="webhook-modal-title"><?= __('admin.create_webhook') ?></h2>
         <button type="button" class="modal-close-btn" data-admin-action="closeWebhookModal">&times;</button>
@@ -1561,18 +1632,18 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-group">
             <label><?= __('admin.events') ?> *</label>
-            <div class="checkbox-group">
-              <label><input type="checkbox" name="events[]" value="entry.created"> <?= __('admin.entry_created') ?></label>
-              <label><input type="checkbox" name="events[]" value="entry.updated"> <?= __('admin.entry_updated') ?></label>
-              <label><input type="checkbox" name="events[]" value="entry.deleted"> <?= __('admin.entry_deleted') ?></label>
-              <label><input type="checkbox" name="events[]" value="entry.published"> <?= __('admin.entry_published') ?></label>
-              <label><input type="checkbox" name="events[]" value="collection.created"> <?= __('admin.collection_created') ?></label>
-              <label><input type="checkbox" name="events[]" value="*"> <?= __('admin.all_events') ?></label>
+            <div class="u-stack-2">
+              <label class="check"><input type="checkbox" name="events[]" value="entry.created"> <?= __('admin.entry_created') ?></label>
+              <label class="check"><input type="checkbox" name="events[]" value="entry.updated"> <?= __('admin.entry_updated') ?></label>
+              <label class="check"><input type="checkbox" name="events[]" value="entry.deleted"> <?= __('admin.entry_deleted') ?></label>
+              <label class="check"><input type="checkbox" name="events[]" value="entry.published"> <?= __('admin.entry_published') ?></label>
+              <label class="check"><input type="checkbox" name="events[]" value="collection.created"> <?= __('admin.collection_created') ?></label>
+              <label class="check"><input type="checkbox" name="events[]" value="*"> <?= __('admin.all_events') ?></label>
             </div>
           </div>
           <div class="form-group">
             <label for="webhook-collections"><?= __('admin.collections') ?></label>
-            <select id="webhook-collections" name="collections[]" class="input" multiple style="min-height: 100px;">
+            <select id="webhook-collections" name="collections[]" class="input u-h-auto" multiple size="6">
               <option value="*"><?= __('admin.all_collections') ?></option>
             </select>
           </div>
@@ -1581,9 +1652,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <input type="text" id="webhook-secret" name="secret" class="input" placeholder="<?= __('admin.optional') ?>">
           </div>
           <div class="form-group">
-            <label>
+            <label class="check">
               <input type="checkbox" id="webhook-active" name="active" checked>
-              <?= __('admin.webhook_active') ?>
+              <span><?= __('admin.webhook_active') ?></span>
             </label>
           </div>
         </form>

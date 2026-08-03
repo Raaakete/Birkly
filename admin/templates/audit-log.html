@@ -12,19 +12,18 @@
 
 <div class="audit-log-page">
     <div class="main-actions-bar">
-        <div class="collection-actions-bar">
-        <div class="collection-actions-bar-left">
+        <div class="main-actions-left">
             <button class="btn btn-secondary" id="refresh-logs">{translate 'admin.refresh'}</button>
         </div>
-        <div class="collection-actions-bar-right">
-            <select id="event-filter" class="input">
+        <div class="main-actions-right u-nowrap-flex">
+            <select id="event-filter" class="input u-w-auto">
                 <option value="">{translate 'admin.all_events'}</option>
             </select>
-            <input type="date" id="date-filter" class="input" placeholder="{translate 'admin.filter_by_date'}">
-        </div>
+            <input type="date" id="date-filter" class="input u-w-auto" placeholder="{translate 'admin.filter_by_date'}">
         </div>
     </div>
-    
+
+    <div class="page-body u-stack-4">
     <div class="table-container">
         <table class="table" id="audit-log-table">
             <thead>
@@ -38,16 +37,17 @@
             </thead>
             <tbody id="log-entries">
                 <tr>
-                    <td colspan="5" class="text-center">
-                        <div class="spinner">{translate 'admin.loading'}...</div>
+                    <td colspan="5">
+                        <div class="loading-state"><p>{translate 'admin.loading'}...</p></div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
-    
-    <div class="pagination">
-        <button class="btn btn-secondary" id="load-more" style="display: none;">{translate 'admin.load_more'}</button>
+
+    <div class="u-center">
+        <button class="btn btn-secondary" id="load-more" hidden>{translate 'admin.load_more'}</button>
+    </div>
     </div>
 </div>
 

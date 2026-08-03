@@ -217,6 +217,99 @@
 }
 
 /* ============================================
+   Sheet — bottom sheet for mobile filter/option panels.
+
+   Distinct from .modal (a centred dialog): a sheet is anchored to the bottom
+   edge and is the standard pattern for "filters" on a list page. Added in
+   P56 after the entries and media migrations both hand-rolled it.
+
+     <div class="sheet" id="filters">
+       <div class="sheet-backdrop"></div>
+       <div class="sheet-panel">
+         <header class="sheet-header">…</header>
+         <div class="sheet-body">…</div>
+         <footer class="sheet-footer">…</footer>
+       </div>
+     </div>
+   ============================================ */
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet.open,
+.sheet.show,
+.sheet.active { display: flex; }
+
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay);
+}
+
+.sheet-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 85vh;
+  background: var(--surface);
+  border-block-start: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--elevation-3);
+  animation: sheet-enter var(--motion-base) var(--ease-out);
+}
+
+@keyframes sheet-enter {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-block-end: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.sheet-body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sheet-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+  flex-shrink: 0;
+}
+
+/* Above --bp-sm a sheet's contents normally render inline instead; pages opt
+   in by also applying .sheet--mobile-only. */
+@media (min-width: 640px) {
+  .sheet--mobile-only { display: none; }
+}
+
+/* ============================================
    Responsive — full-height sheet on small screens
    ============================================ */
 @media (max-width: 639px) {

@@ -25,6 +25,12 @@ function birklyMediaModalEscapeHtml(text) {
     return div.innerHTML;
 }
 
+function birklyMediaModalIcon(name, size) {
+    return (typeof Birkly !== 'undefined' && typeof Birkly.icon === 'function')
+        ? Birkly.icon(name, { size: size })
+        : '';
+}
+
 window.Birkly.MediaModal = {
     isOpen: false,
     currentCallback: null,
@@ -98,27 +104,28 @@ window.Birkly.MediaModal = {
     // Render modal HTML
     render() {
         this.modal = document.createElement('div');
-        this.modal.className = 'media-modal-overlay';
-        this.modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: center; z-index: 12000;';
+        this.modal.className = 'modal-backdrop media-modal-overlay show';
+        this.modal.setAttribute('role', 'dialog');
+        this.modal.setAttribute('aria-modal', 'true');
         this.modal.innerHTML = `
-            <div class="media-modal" style="background: white; border-radius: 8px; width: 80%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column;">
-                <div class="media-modal-header" style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-                    <h3 style="margin: 0;">Select Media</h3>
-                    <button type="button" class="media-modal-close" data-media-modal-action="close" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+            <div class="modal-content modal--lg">
+                <div class="modal-header">
+                    <h3 class="modal-title">Select media</h3>
+                    <button type="button" class="modal-close" data-media-modal-action="close" aria-label="Close">&times;</button>
                 </div>
-                <div class="media-modal-content" style="padding: 20px; flex: 1; overflow-y: auto;">
-                    <div class="media-upload-section" style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
-                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,application/pdf" style="display: none;">
-                        <button type="button" class="btn btn-primary" data-media-modal-action="upload-trigger" style="padding: 8px 16px; background: var(--color-primary, #7CE3BF); color: var(--text-inverse, #fff); border: none; border-radius: 4px; cursor: pointer;">
-                            Upload New Media
+                <div class="modal-body u-stack-5">
+                    <div class="media-upload-section">
+                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,application/pdf" class="u-hidden">
+                        <button type="button" class="btn btn-primary" data-media-modal-action="upload-trigger">
+                            Upload new media
                         </button>
                     </div>
-                    <div class="media-grid" id="birkly-media-modal-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
-                        <div class="media-loading" style="text-align: center; padding: 40px; color: #666;">Loading media...</div>
+                    <div class="media-picker-grid" id="birkly-media-modal-grid">
+                        <div class="loading-state"><p class="empty-state-text">Loading media…</p></div>
                     </div>
                 </div>
-                <div class="media-modal-footer" style="padding: 20px; border-top: 1px solid #ddd; text-align: right;">
-                    <button type="button" class="btn btn-secondary" data-media-modal-action="close" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-media-modal-action="close">Cancel</button>
                 </div>
             </div>
         `;
@@ -128,7 +135,7 @@ window.Birkly.MediaModal = {
         try {
             const uploadSection = this.modal.querySelector('.media-upload-section');
             if (!birklyMediaModalHasPermission('upload') && uploadSection) {
-                uploadSection.style.display = 'none';
+                uploadSection.hidden = true;
             }
         } catch (_) {}
         
@@ -179,7 +186,7 @@ window.Birkly.MediaModal = {
             return;
         }
         
-        grid.innerHTML = '<div class="media-loading" style="text-align: center; padding: 40px; color: #666;">Loading media...</div>';
+        grid.innerHTML = '<div class="loading-state"><p class="empty-state-text">Loading media…</p></div>';
         
         try {
             const response = await fetch(Birkly.url('/api/admin_media.php?action=list'), { credentials: 'same-origin' });
@@ -192,18 +199,18 @@ window.Birkly.MediaModal = {
             
             if (result.status === 'ok' && Array.isArray(result.data)) {
                 if (!result.data.length) {
-                    grid.innerHTML = '<div class="media-error" style="text-align: center; padding: 40px; color: #666;">No media files yet. Upload one above.</div>';
+                    grid.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state-text">No media files yet. Upload one above.</p></div>';
                     return;
                 }
                 this.renderMediaGrid(result.data);
             } else {
                 const msg = result.message || result.error || (response.status === 403 ? 'You do not have permission to view media.' : 'Failed to load media');
-                grid.innerHTML = '<div class="media-error" style="text-align: center; padding: 40px; color: #666;">' + birklyMediaModalEscapeHtml(msg) + '</div>';
+                grid.innerHTML = '<div class="error-state"><p class="empty-state-text">' + birklyMediaModalEscapeHtml(msg) + '</p></div>';
             }
         } catch (error) {
             console.error('Error loading media:', error);
             if (this.isOpen && this.modal) {
-                grid.innerHTML = '<div class="media-error" style="text-align: center; padding: 40px; color: #666;">Error loading media</div>';
+                grid.innerHTML = '<div class="error-state"><p class="empty-state-text">Error loading media</p></div>';
             }
         }
     },
@@ -224,20 +231,18 @@ window.Birkly.MediaModal = {
         grid.innerHTML = '';
         
         media.forEach((item) => {
-            const mediaItem = document.createElement('div');
-            mediaItem.className = 'media-item';
-            mediaItem.style.cssText = 'border: 1px solid #ddd; border-radius: 4px; padding: 10px; cursor: pointer; transition: all 0.2s;';
+            const mediaItem = document.createElement('button');
+            mediaItem.type = 'button';
+            mediaItem.className = 'card card--interactive media-picker-item';
             const imgUrl = birklyMediaModalResolveUrl(item.url || item.thumbnail || '');
             const isImage = String(item.type || item.category || '').indexOf('image') === 0 || /\.(jpe?g|png|gif|webp|svg)$/i.test(item.name || '');
             const previewHtml = isImage && imgUrl
-                ? '<img src="' + birklyMediaModalEscapeHtml(imgUrl) + '" alt="' + birklyMediaModalEscapeHtml(item.name || '') + '" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">'
-                : '<div style="width:100%;height:100px;display:flex;align-items:center;justify-content:center;background:#f3f4f6;border-radius:4px;font-size:12px;color:#666;">' + birklyMediaModalEscapeHtml(item.category || item.type || 'File') + '</div>';
+                ? '<img src="' + birklyMediaModalEscapeHtml(imgUrl) + '" alt="' + birklyMediaModalEscapeHtml(item.name || '') + '">'
+                : (birklyMediaModalIcon('file-text', 32) || birklyMediaModalEscapeHtml(item.category || item.type || 'File'));
             mediaItem.innerHTML =
-                '<div class="media-item-preview" style="margin-bottom: 8px;">' + previewHtml + '</div>' +
-                '<div class="media-item-info" style="text-align: center;">' +
-                '<div class="media-item-name" style="font-weight: 500; font-size: 12px; margin-bottom: 4px;">' + birklyMediaModalEscapeHtml(item.name || item.title || item.id || 'Media') + '</div>' +
-                '<div class="media-item-size" style="font-size: 10px; color: #666;">' + birklyMediaModalEscapeHtml(String(item.size_formatted || item.size || '')) + '</div>' +
-                '</div>';
+                '<span class="media-picker-thumb">' + previewHtml + '</span>' +
+                '<span class="media-picker-name">' + birklyMediaModalEscapeHtml(item.name || item.title || item.id || 'Media') + '</span>' +
+                '<span class="media-picker-size">' + birklyMediaModalEscapeHtml(String(item.size_formatted || item.size || '')) + '</span>';
             
             mediaItem.addEventListener('click', () => {
                 if (this.isOpen) {
@@ -306,138 +311,3 @@ window.Birkly.MediaModal = {
 
 // Create alias for easier access
 window.MediaModal = window.Birkly.MediaModal;
-
-// Add CSS for media modal
-const mediaModalCSS = `
-.media-modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.media-modal {
-    background: white;
-    border-radius: 8px;
-    width: 80%;
-    max-width: 800px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.media-modal-header {
-    padding: 20px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.media-modal-header h3 {
-    margin: 0;
-}
-
-.media-modal-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-}
-
-.media-modal-content {
-    padding: 20px;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.media-upload-section {
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
-}
-
-.media-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
-}
-
-.media-item {
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.media-item:hover {
-    border-color: var(--color-primary, #7CE3BF);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.media-item-preview {
-    margin-bottom: 8px;
-}
-
-.media-item-preview img {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-.media-item-info {
-    text-align: center;
-}
-
-.media-item-name {
-    font-weight: 500;
-    font-size: 12px;
-    margin-bottom: 4px;
-}
-
-.media-item-size {
-    font-size: 10px;
-    color: #666;
-}
-
-.media-loading, .media-error {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-}
-
-.media-modal-footer {
-    padding: 20px;
-    border-top: 1px solid #ddd;
-    text-align: right;
-}
-`;
-
-// Inject CSS when DOM is ready
-function injectMediaModalCSS() {
-    // Check if CSS is already injected
-    if (document.getElementById('media-modal-css')) {
-        return;
-    }
-    
-    const style = document.createElement('style');
-    style.id = 'media-modal-css';
-    style.textContent = mediaModalCSS;
-    document.head.appendChild(style);
-}
-
-// Inject CSS immediately if DOM is ready, otherwise wait
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectMediaModalCSS);
-} else {
-    injectMediaModalCSS();
-} 

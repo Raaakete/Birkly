@@ -1,4 +1,4 @@
-<div class="page-header pt-m pb-m">
+<div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs"><span class="current">{translate 'admin.media'}</span></div>
     </div>
@@ -6,145 +6,142 @@
 </div>
 
 <div class="main-actions-bar">
-  <div class="collection-actions-bar">
-    <div class="collection-actions-bar-left">
-      <button type="button" class="btn btn-primary" data-media-action="upload">{translate 'admin.upload_media'}</button>
-      <button type="button" class="btn btn-secondary" data-media-action="create-folder">{translate 'admin.new_folder'}</button>
+  <div class="main-actions-left">
+    <button type="button" class="btn btn-primary" data-media-action="upload">{translate 'admin.upload_media'}</button>
+    <button type="button" class="btn btn-secondary" data-media-action="create-folder">{translate 'admin.new_folder'}</button>
+  </div>
+  <div class="main-actions-right">
+    <div class="btn-group" role="group" aria-label="Media view">
+      <button type="button" class="btn" id="media-view-grid" data-media-view="grid" aria-label="Grid view" title="Grid view">
+        <span data-icon="squares-four" data-icon-size="16" aria-hidden="true"></span>
+      </button>
+      <button type="button" class="btn" id="media-view-list" data-media-view="list" aria-label="List view" title="List view">
+        <span data-icon="list" data-icon-size="16" aria-hidden="true"></span>
+      </button>
     </div>
-    <div class="collection-actions-bar-right media-toolbar">
-      <div class="media-view-toggle" role="group" aria-label="Media view">
-        <button type="button" class="btn-icon" id="media-view-grid" data-media-view="grid" aria-label="Grid view" title="Grid view">
-          <span data-icon="squares-four" data-icon-size="16" aria-hidden="true"></span>
-        </button>
-        <button type="button" class="btn-icon" id="media-view-list" data-media-view="list" aria-label="List view" title="List view">
-          <span data-icon="list" data-icon-size="16" aria-hidden="true"></span>
-        </button>
-      </div>
-      <div class="toolbar-search">
-        <input type="text" id="media-search" placeholder="{translate 'admin.search_media'}" class="search-input">
-      </div>
-      <div class="toolbar-filters">
-        <select id="type-filter" class="filter-select">
-          <option value="">{translate 'admin.all_types'}</option>
-          <option value="image">{translate 'admin.images'}</option>
-          <option value="video">{translate 'admin.videos'}</option>
-          <option value="audio">{translate 'admin.audio'}</option>
-          <option value="document">{translate 'admin.documents'}</option>
-        </select>
-      </div>
+    <div class="input-icon-wrap media-toolbar-search">
+      <span data-icon="magnifying-glass" data-icon-size="16" aria-hidden="true"></span>
+      <input type="search" id="media-search" placeholder="{translate 'admin.search_media'}" class="input input-search" aria-label="{translate 'admin.search_media'}">
     </div>
+    <select id="type-filter" class="select media-toolbar-filter" aria-label="{translate 'admin.all_types'}">
+      <option value="">{translate 'admin.all_types'}</option>
+      <option value="image">{translate 'admin.images'}</option>
+      <option value="video">{translate 'admin.videos'}</option>
+      <option value="audio">{translate 'admin.audio'}</option>
+      <option value="document">{translate 'admin.documents'}</option>
+    </select>
   </div>
 </div>
 
-<div id="media-bulk-toolbar" class="bulk-actions-toolbar" style="display: none;">
-  <div class="bulk-actions-content">
-    <span class="bulk-actions-count"><span id="media-selected-count">0</span> {translate 'admin.selected'}</span>
-    <div class="bulk-actions-buttons">
-      <button type="button" class="btn btn-sm" data-media-action="move-selected">{translate 'admin.move_to_folder'}</button>
-      <button type="button" class="btn btn-sm btn-danger" data-media-action="delete-selected">{translate 'admin.delete'}</button>
-      <button type="button" class="btn btn-sm btn-secondary" data-media-action="clear-selection">{translate 'admin.cancel'}</button>
+<div class="media-page page-body u-stack-6">
+  <div id="media-bulk-toolbar" class="bulk-actions-toolbar" hidden>
+    <div class="bulk-actions-content">
+      <span class="bulk-actions-count"><span id="media-selected-count">0</span> {translate 'admin.selected'}</span>
+      <div class="bulk-actions-buttons">
+        <button type="button" class="btn btn-sm" data-media-action="move-selected">{translate 'admin.move_to_folder'}</button>
+        <button type="button" class="btn btn-sm btn-danger" data-media-action="delete-selected">{translate 'admin.delete'}</button>
+        <button type="button" class="btn btn-sm btn-secondary" data-media-action="clear-selection">{translate 'admin.cancel'}</button>
+      </div>
     </div>
   </div>
-</div>
 
   <div class="media-layout">
-    <!-- Sidebar -->
-    <aside class="media-sidebar">
-      <div class="sidebar-content" id="folder-tree">
+    <!-- Folder tree -->
+    <aside class="media-sidebar card card--flush">
+      <div class="media-tree" id="folder-tree">
         <div class="folder-item all" data-media-folder="all">
           <span data-icon="archive" data-icon-size="16" aria-hidden="true"></span>
-          <span>{translate 'admin.all_media'}</span>
+          <span class="folder-name">{translate 'admin.all_media'}</span>
         </div>
         <div class="folder-item root" data-media-folder="">
           <span data-icon="folder-root" data-icon-size="16" aria-hidden="true"></span>
-          <span>{translate 'admin.root_folder'}</span>
+          <span class="folder-name">{translate 'admin.root_folder'}</span>
         </div>
         <div id="folder-list-container"></div>
       </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="media-main">
-      <div class="media-current-folder" id="media-breadcrumb" aria-label="Current folder"></div>
+    <!-- Assets -->
+    <main class="media-main u-stack-4">
+      <div class="media-current-folder u-cluster" id="media-breadcrumb" aria-label="Current folder"></div>
       <div class="media-drop-zone" id="media-drop-zone" aria-hidden="true">
-        <div class="media-drop-zone__inner">
+        <div class="u-stack-1">
           <strong>Drop files to upload</strong>
-          <span>Files upload into the current folder.</span>
+          <span class="u-text-sm">Files upload into the current folder.</span>
         </div>
       </div>
       <div class="media-grid" id="media-grid">
-        <div class="empty-state empty-state--loading media-loading" aria-live="polite">
-          <div class="spinner" aria-hidden="true"></div>
-          <p class="empty-state__message">{translate 'admin.loading_media'}</p>
+        <div class="loading-state" aria-live="polite">
+          <p class="empty-state-text">{translate 'admin.loading_media'}</p>
         </div>
       </div>
     </main>
   </div>
+</div>
 
-  <!-- Upload Modal -->
-  <div id="upload-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>{translate 'admin.upload_media'}</h3>
-        <button type="button" class="modal-close" data-media-action="close-upload">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="upload-form" enctype="multipart/form-data">
-          <div class="form-group">
-            <label for="file-input">{translate 'admin.select_file'}</label>
-            <input type="file" id="file-input" name="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" required>
-          </div>
-          <div class="form-group">
-            <label for="upload-title">{translate 'admin.title_optional'}</label>
-            <input type="text" id="upload-title" name="title" placeholder="{translate 'admin.enter_title'}">
-          </div>
-          <div class="form-group">
-            <label for="upload-folder">{translate 'admin.current_folder'}: <span id="current-upload-folder">{translate 'admin.root'}</span></label>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-media-action="close-upload">{translate 'admin.cancel'}</button>
-        <button type="button" class="btn btn-primary" data-media-action="confirm-upload">{translate 'admin.upload'}</button>
-      </div>
+<!-- Upload Modal -->
+<div id="upload-modal" class="modal">
+  <div class="modal-content modal--md">
+    <div class="modal-header">
+      <h3 class="modal-title">{translate 'admin.upload_media'}</h3>
+      <button type="button" class="modal-close" data-media-action="close-upload" aria-label="{translate 'admin.close'}">&times;</button>
     </div>
-  </div>
-
-  <!-- Media Details Modal -->
-  <div id="media-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 id="media-modal-title">{translate 'admin.media_details'}</h3>
-        <button type="button" class="modal-close" data-media-action="close-media">&times;</button>
-      </div>
-      <div class="modal-body" id="media-modal-body">
-        <!-- Content will be populated by JavaScript -->
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-media-action="save-media">{translate 'admin.save'}</button>
-        <button type="button" class="btn btn-secondary" data-media-action="open-move">{translate 'admin.move_to_folder'}</button>
-        <button type="button" class="btn btn-danger" data-media-action="delete-media">{translate 'admin.delete'}</button>
-        <button type="button" class="btn btn-secondary" data-media-action="close-media">{translate 'admin.close'}</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Move Media Modal -->
-  <div id="move-modal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>{translate 'admin.move_to_folder'}</h3>
-        <button type="button" class="modal-close" data-media-action="close-move">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="folder-tree-move" id="folder-tree-move">
-          <!-- Will be populated by JavaScript -->
+    <div class="modal-body">
+      <form id="upload-form" class="u-stack-4" enctype="multipart/form-data">
+        <div class="field">
+          <label class="field-label" for="file-input">{translate 'admin.select_file'}</label>
+          <input type="file" id="file-input" name="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar" required>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-media-action="close-move">{translate 'admin.cancel'}</button>
-        <button type="button" class="btn btn-primary" data-media-action="confirm-move">{translate 'admin.move'}</button>
+        <div class="field">
+          <label class="field-label" for="upload-title">{translate 'admin.title_optional'}</label>
+          <input type="text" id="upload-title" name="title" class="input" placeholder="{translate 'admin.enter_title'}">
+        </div>
+        <p class="field-help">{translate 'admin.current_folder'}: <span id="current-upload-folder">{translate 'admin.root'}</span></p>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-media-action="close-upload">{translate 'admin.cancel'}</button>
+      <button type="button" class="btn btn-primary" data-media-action="confirm-upload">{translate 'admin.upload'}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Media Details Modal -->
+<div id="media-modal" class="modal">
+  <div class="modal-content modal--lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="media-modal-title">{translate 'admin.media_details'}</h3>
+      <button type="button" class="modal-close" data-media-action="close-media" aria-label="{translate 'admin.close'}">&times;</button>
+    </div>
+    <div class="modal-body" id="media-modal-body">
+      <!-- Content will be populated by JavaScript -->
+    </div>
+    <div class="modal-footer modal-footer--split">
+      <button type="button" class="btn btn-danger" data-media-action="delete-media">{translate 'admin.delete'}</button>
+      <div class="u-cluster">
+        <button type="button" class="btn btn-secondary" data-media-action="open-move">{translate 'admin.move_to_folder'}</button>
+        <button type="button" class="btn btn-secondary" data-media-action="close-media">{translate 'admin.close'}</button>
+        <button type="button" class="btn btn-primary" data-media-action="save-media">{translate 'admin.save'}</button>
       </div>
     </div>
   </div>
+</div>
 
+<!-- Move Media Modal -->
+<div id="move-modal" class="modal">
+  <div class="modal-content modal--sm">
+    <div class="modal-header">
+      <h3 class="modal-title">{translate 'admin.move_to_folder'}</h3>
+      <button type="button" class="modal-close" data-media-action="close-move" aria-label="{translate 'admin.close'}">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="folder-tree-move" id="folder-tree-move">
+        <!-- Will be populated by JavaScript -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-media-action="close-move">{translate 'admin.cancel'}</button>
+      <button type="button" class="btn btn-primary" data-media-action="confirm-move">{translate 'admin.move'}</button>
+    </div>
+  </div>
+</div>
