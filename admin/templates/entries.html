@@ -44,45 +44,45 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     </div>
     
     <div class="main-actions-bar">
-        <div class="collection-actions-bar">
-            <div class="collection-actions-bar-left">
-                <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('entry-editor', ['collection' => $collection['slug'] ?? ''])) ?>" aria-label="Create new entry in <?= $collectionTitle ?>">
-                    <?= __('admin.new_entry') ?>
-                </a>
-            </div>
-            
-            <div class="collection-actions-bar-right">
-                <button type="button" class="btn btn-secondary entries-filter-toggle" id="entries-filter-toggle" aria-expanded="false" aria-controls="entries-filter-drawer">
-                    <?= __('admin.entries_filters') ?>
-                </button>
-                <div class="entries-filter-drawer" id="entries-filter-drawer" hidden>
-                    <div class="entries-filter-drawer__backdrop" data-entries-filter-close></div>
-                    <div class="entries-filter-drawer__panel" role="dialog" aria-label="<?= htmlspecialchars(__('admin.entries_filters')) ?>">
-                        <div class="entries-filter-drawer__header">
-                            <h2 class="entries-filter-drawer__title"><?= __('admin.entries_filters') ?></h2>
-                            <button type="button" class="btn btn-icon entries-filter-drawer__close" data-entries-filter-close aria-label="<?= htmlspecialchars(__('admin.entries_close_filters')) ?>">&times;</button>
-                        </div>
-                        <div class="entries-filter-drawer__body">
-                            <label for="entries-search" class="collection-filter-label"><?= __('admin.search') ?></label>
-                            <input type="search" id="entries-search" class="input collection-search-input" placeholder="<?= htmlspecialchars(__('admin.entries_search_entries')) ?>" value="<?= htmlspecialchars($currentSearchQuery, ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
-                            <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?></label>
-                            <select id="status-filter" class="collection-filter-select">
-                                <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
-                                <option value="published" <?= $currentStatusFilter === 'published' ? 'selected' : '' ?>><?= __('admin.published') ?></option>
-                                <option value="unpublished" <?= $currentStatusFilter === 'unpublished' ? 'selected' : '' ?>><?= __('admin.unpublished') ?></option>
-                                <option value="scheduled" <?= $currentStatusFilter === 'scheduled' ? 'selected' : '' ?>><?= __('admin.scheduled') ?></option>
-                                <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>><?= __('admin.pending_review') ?></option>
-                                <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>><?= __('admin.trashed') ?></option>
-                            </select>
-                        </div>
-                        <div class="entries-filter-drawer__footer">
-                            <button type="button" class="btn btn-primary" data-entries-filter-close><?= __('admin.entries_apply_filters') ?></button>
-                        </div>
+        <div class="main-actions-left">
+            <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('entry-editor', ['collection' => $collection['slug'] ?? ''])) ?>" aria-label="Create new entry in <?= $collectionTitle ?>">
+                <?= __('admin.new_entry') ?>
+            </a>
+        </div>
+
+        <div class="main-actions-right">
+            <button type="button" class="btn btn-secondary entries-filter-toggle" id="entries-filter-toggle" aria-expanded="false" aria-controls="entries-filter-drawer">
+                <?= __('admin.entries_filters') ?>
+            </button>
+            <div class="entries-filter-drawer" id="entries-filter-drawer" hidden>
+                <div class="entries-filter-drawer__backdrop" data-entries-filter-close></div>
+                <div class="entries-filter-drawer__panel" role="dialog" aria-label="<?= htmlspecialchars(__('admin.entries_filters')) ?>">
+                    <div class="entries-filter-drawer__header">
+                        <h2 class="entries-filter-drawer__title"><?= __('admin.entries_filters') ?></h2>
+                        <button type="button" class="btn btn-icon entries-filter-drawer__close" data-entries-filter-close aria-label="<?= htmlspecialchars(__('admin.entries_close_filters')) ?>">&times;</button>
+                    </div>
+                    <div class="entries-filter-drawer__body">
+                        <label for="entries-search" class="collection-filter-label"><?= __('admin.search') ?></label>
+                        <input type="search" id="entries-search" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_search_entries')) ?>" value="<?= htmlspecialchars($currentSearchQuery, ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
+                        <label for="status-filter" class="collection-filter-label"><?= __('admin.filter') ?></label>
+                        <select id="status-filter" class="collection-filter-select">
+                            <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
+                            <option value="published" <?= $currentStatusFilter === 'published' ? 'selected' : '' ?>><?= __('admin.published') ?></option>
+                            <option value="unpublished" <?= $currentStatusFilter === 'unpublished' ? 'selected' : '' ?>><?= __('admin.unpublished') ?></option>
+                            <option value="scheduled" <?= $currentStatusFilter === 'scheduled' ? 'selected' : '' ?>><?= __('admin.scheduled') ?></option>
+                            <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>><?= __('admin.pending_review') ?></option>
+                            <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>><?= __('admin.trashed') ?></option>
+                        </select>
+                    </div>
+                    <div class="entries-filter-drawer__footer">
+                        <button type="button" class="btn btn-primary" data-entries-filter-close><?= __('admin.entries_apply_filters') ?></button>
                     </div>
                 </div>
-                <div class="entries-toolbar-filters entries-toolbar-filters--desktop">
+            </div>
+
+            <div class="entries-toolbar-filters--desktop">
                 <label for="entries-search-desktop" class="collection-filter-label sr-only"><?= __('admin.search') ?></label>
-                <input type="search" id="entries-search-desktop" class="input collection-search-input entries-search-desktop" placeholder="<?= htmlspecialchars(__('admin.entries_search_entries')) ?>" value="<?= htmlspecialchars($currentSearchQuery, ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
+                <input type="search" id="entries-search-desktop" class="input entries-search-desktop" placeholder="<?= htmlspecialchars(__('admin.entries_search_entries')) ?>" value="<?= htmlspecialchars($currentSearchQuery, ENT_QUOTES, 'UTF-8') ?>" autocomplete="off">
                 <label for="status-filter-desktop" class="collection-filter-label sr-only"><?= __('admin.filter') ?></label>
                 <select id="status-filter-desktop" class="collection-filter-select entries-status-desktop">
                     <option value="" <?= $currentStatusFilter === '' ? 'selected' : '' ?>><?= __('admin.all_statuses') ?></option>
@@ -92,64 +92,64 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                     <option value="pending_review" <?= $currentStatusFilter === 'pending_review' ? 'selected' : '' ?>><?= __('admin.pending_review') ?></option>
                     <option value="trashed" <?= $currentStatusFilter === 'trashed' ? 'selected' : '' ?>><?= __('admin.trashed') ?></option>
                 </select>
-                </div>
-                
-                <div class="dropdown">
-                    <button type="button" class="dropdown-trigger collection-actions-trigger" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
-                        <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
-                        <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item collection-actions-item">
-                            <span class="dropdown-item-label">Edit this collection</span>
-                        </a>
-                        <a href="<?= htmlspecialchars($createSubCollectionUrl) ?>" class="dropdown-item collection-actions-item">
-                            <span class="dropdown-item-label">Create sub-collection</span>
-                        </a>
-                        <?php if ($isTrashView): ?>
-                        <a href="<?= htmlspecialchars($entriesReturnUrl) ?>" class="dropdown-item collection-actions-item">
-                            <span class="dropdown-item-label">Back to active entries</span>
-                        </a>
-                        <?php elseif ($trashedCount > 0): ?>
-                        <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item collection-actions-item">
-                            <span class="dropdown-item-label">View trash (<?= (int) $trashedCount ?>)</span>
-                        </a>
-                        <?php endif; ?>
-                    </div>
+            </div>
+
+            <div class="dropdown">
+                <button type="button" class="dropdown-trigger btn-icon" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
+                    <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
+                </button>
+                <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
+                    <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item">
+                        <span class="dropdown-item-label">Edit this collection</span>
+                    </a>
+                    <a href="<?= htmlspecialchars($createSubCollectionUrl) ?>" class="dropdown-item">
+                        <span class="dropdown-item-label">Create sub-collection</span>
+                    </a>
+                    <?php if ($isTrashView): ?>
+                    <a href="<?= htmlspecialchars($entriesReturnUrl) ?>" class="dropdown-item">
+                        <span class="dropdown-item-label">Back to active entries</span>
+                    </a>
+                    <?php elseif ($trashedCount > 0): ?>
+                    <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item">
+                        <span class="dropdown-item-label">View trash (<?= (int) $trashedCount ?>)</span>
+                    </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
-    
-    <div id="bulk-actions-toolbar" class="bulk-actions-toolbar" style="display: none;">
-        <div class="bulk-actions-content">
-            <span class="bulk-actions-count">
-                <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
-            </span>
-            <div class="bulk-actions-buttons">
-                <?php if (!$isTrashView): ?>
-                    <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
-                    <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
-                    <label class="sr-only" for="bulk-field-name">Field to edit</label>
-                    <select id="bulk-field-name" class="collection-filter-select">
-                        <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
-                        <?php foreach ($bulkEditableFields as $field): ?>
-                            <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
-                                <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <label class="sr-only" for="bulk-field-value">Field value</label>
-                    <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
-                    <button class="btn btn-sm" id="bulk-field-apply-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_apply_field_edit')) ?>"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
-                    <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_move_to_trash')) ?>"><?= __('admin.entries_bulk_move_to_trash') ?></button>
-                <?php else: ?>
-                    <button class="btn btn-sm" id="bulk-restore-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_restore')) ?>"><?= __('admin.entries_bulk_restore') ?></button>
-                <?php endif; ?>
-                <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
+
+    <div class="page-body u-stack-6">
+        <div id="bulk-actions-toolbar" class="bulk-actions-toolbar" hidden>
+            <div class="bulk-actions-content">
+                <span class="bulk-actions-count">
+                    <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
+                </span>
+                <div class="bulk-actions-buttons">
+                    <?php if (!$isTrashView): ?>
+                        <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
+                        <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
+                        <label class="sr-only" for="bulk-field-name">Field to edit</label>
+                        <select id="bulk-field-name" class="collection-filter-select">
+                            <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
+                            <?php foreach ($bulkEditableFields as $field): ?>
+                                <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
+                                    <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <label class="sr-only" for="bulk-field-value">Field value</label>
+                        <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
+                        <button class="btn btn-sm" id="bulk-field-apply-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_apply_field_edit')) ?>"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
+                        <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_move_to_trash')) ?>"><?= __('admin.entries_bulk_move_to_trash') ?></button>
+                    <?php else: ?>
+                        <button class="btn btn-sm" id="bulk-restore-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_restore')) ?>"><?= __('admin.entries_bulk_restore') ?></button>
+                    <?php endif; ?>
+                    <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
+                </div>
             </div>
         </div>
-    </div>
-    
+
     <?php
     $hasSubCollections = !empty($collection['sub_collections']) && is_array($collection['sub_collections']) && count($collection['sub_collections']) > 0;
     
@@ -216,30 +216,31 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
             <?php if ($totalPages > 1): ?>
                 <?php if ($currentPage > 1): ?>
                     <?php $prevParams = $paginationBaseParams; $prevParams['page'] = $currentPage - 1; ?>
-                    <a class="entries-pagination__link entries-pagination__link--nav" href="<?= htmlspecialchars(admin_url('entries', $prevParams)) ?>" data-entries-page="<?= (int) ($currentPage - 1) ?>">Previous</a>
+                    <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', $prevParams)) ?>" data-entries-page="<?= (int) ($currentPage - 1) ?>">Previous</a>
                 <?php else: ?>
-                    <span class="entries-pagination__link entries-pagination__link--nav is-disabled" aria-disabled="true">Previous</span>
+                    <span class="btn btn-secondary btn-sm" aria-disabled="true">Previous</span>
                 <?php endif; ?>
 
                 <div class="entries-pagination__pages">
                     <?php for ($pageNumber = $pageWindowStart; $pageNumber <= $pageWindowEnd; $pageNumber++): ?>
                         <?php $pageParams = $paginationBaseParams; $pageParams['page'] = $pageNumber; ?>
                         <?php if ($pageNumber === $currentPage): ?>
-                            <span class="entries-pagination__link is-active" aria-current="page"><?= (int) $pageNumber ?></span>
+                            <span class="btn btn-primary btn-sm" aria-current="page"><?= (int) $pageNumber ?></span>
                         <?php else: ?>
-                            <a class="entries-pagination__link" href="<?= htmlspecialchars(admin_url('entries', $pageParams)) ?>" data-entries-page="<?= (int) $pageNumber ?>"><?= (int) $pageNumber ?></a>
+                            <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', $pageParams)) ?>" data-entries-page="<?= (int) $pageNumber ?>"><?= (int) $pageNumber ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
                 </div>
 
                 <?php if ($currentPage < $totalPages): ?>
                     <?php $nextParams = $paginationBaseParams; $nextParams['page'] = $currentPage + 1; ?>
-                    <a class="entries-pagination__link entries-pagination__link--nav" href="<?= htmlspecialchars(admin_url('entries', $nextParams)) ?>" data-entries-page="<?= (int) ($currentPage + 1) ?>">Next</a>
+                    <a class="btn btn-secondary btn-sm" href="<?= htmlspecialchars(admin_url('entries', $nextParams)) ?>" data-entries-page="<?= (int) ($currentPage + 1) ?>">Next</a>
                 <?php else: ?>
-                    <span class="entries-pagination__link entries-pagination__link--nav is-disabled" aria-disabled="true">Next</span>
+                    <span class="btn btn-secondary btn-sm" aria-disabled="true">Next</span>
                 <?php endif; ?>
             <?php endif; ?>
         </div>
+    </div>
     </div>
 </div>
 

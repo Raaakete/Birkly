@@ -143,8 +143,53 @@
    ============================================ */
 .entries-smart-table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 0;
   font-size: var(--text-sm);
+}
+
+/* Horizontal scroll viewport. The actions column parks at the right edge and
+   becomes sticky once the viewport is scrolled (entries.js toggles
+   .is-scrolled-x), so row actions stay reachable on narrow screens. */
+.entries-smart-table .table-viewport {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.entries-smart-table .smart-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.entries-smart-table .head-actions,
+.entries-smart-table .cell-actions {
+  position: static;
+  z-index: var(--z-raised);
+  width: 7rem;
+  min-width: 7rem;
+  max-width: 7rem;
+  padding: var(--space-2);
+  border-inline-start: 1px solid var(--border-subtle);
+  background: var(--surface);
+  text-align: center;
+}
+
+.entries-smart-table .head-actions {
+  height: var(--control-md);
+  background: var(--surface-sunken);
+}
+
+/* Sticky only while scrolled, so the shadow does not sit there permanently */
+.entries-smart-table.is-scrolled-x .head-actions,
+.entries-smart-table.is-scrolled-x .cell-actions {
+  position: sticky;
+  inset-inline-end: 0;
+  box-shadow: -6px 0 12px -6px rgba(32, 34, 29, 0.12);
 }
 
 .entries-smart-table thead th {

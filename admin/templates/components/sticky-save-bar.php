@@ -37,7 +37,7 @@ $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
             </div>
         <?php endif; ?>
         <?php if ($stickySaveBarMessageId): ?>
-            <div id="<?= htmlspecialchars($stickySaveBarMessageId) ?>" class="<?= htmlspecialchars(trim('main-actions-message ' . $stickySaveBarMessageClass)) ?>" style="display: none;" role="status" aria-live="polite"></div>
+            <div id="<?= htmlspecialchars($stickySaveBarMessageId) ?>" class="<?= htmlspecialchars(trim('main-actions-message ' . $stickySaveBarMessageClass)) ?>" role="status" aria-live="polite" hidden></div>
         <?php endif; ?>
         <?php if ($stickySaveBarStatusHtml): ?>
             <?= $stickySaveBarStatusHtml ?>

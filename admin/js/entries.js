@@ -234,7 +234,7 @@
         }
 
         if (bulkActionsToolbar) {
-            bulkActionsToolbar.style.display = count > 0 ? 'block' : 'none';
+            bulkActionsToolbar.hidden = count === 0;
         }
 
         if (selectAllCheckbox) {
@@ -647,27 +647,27 @@
         if (totalPages > 1) {
             if (page > 1) {
                 const prevState = Object.assign({}, listState, meta, { page: page - 1 });
-                controls += '<a class="entries-pagination__link entries-pagination__link--nav" href="' + escapeHtml(buildEntriesPageUrl(prevState)) + '" data-entries-page="' + escapeHtml(page - 1) + '">Previous</a>';
+                controls += '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(buildEntriesPageUrl(prevState)) + '" data-entries-page="' + escapeHtml(page - 1) + '">Previous</a>';
             } else {
-                controls += '<span class="entries-pagination__link entries-pagination__link--nav is-disabled" aria-disabled="true">Previous</span>';
+                controls += '<span class="btn btn-secondary btn-sm" aria-disabled="true">Previous</span>';
             }
 
             controls += '<div class="entries-pagination__pages">';
             for (let pageNumber = windowStart; pageNumber <= windowEnd; pageNumber += 1) {
                 if (pageNumber === page) {
-                    controls += '<span class="entries-pagination__link is-active" aria-current="page">' + escapeHtml(pageNumber) + '</span>';
+                    controls += '<span class="btn btn-primary btn-sm" aria-current="page">' + escapeHtml(pageNumber) + '</span>';
                 } else {
                     const pageState = Object.assign({}, listState, meta, { page: pageNumber });
-                    controls += '<a class="entries-pagination__link" href="' + escapeHtml(buildEntriesPageUrl(pageState)) + '" data-entries-page="' + escapeHtml(pageNumber) + '">' + escapeHtml(pageNumber) + '</a>';
+                    controls += '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(buildEntriesPageUrl(pageState)) + '" data-entries-page="' + escapeHtml(pageNumber) + '">' + escapeHtml(pageNumber) + '</a>';
                 }
             }
             controls += '</div>';
 
             if (page < totalPages) {
                 const nextState = Object.assign({}, listState, meta, { page: page + 1 });
-                controls += '<a class="entries-pagination__link entries-pagination__link--nav" href="' + escapeHtml(buildEntriesPageUrl(nextState)) + '" data-entries-page="' + escapeHtml(page + 1) + '">Next</a>';
+                controls += '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(buildEntriesPageUrl(nextState)) + '" data-entries-page="' + escapeHtml(page + 1) + '">Next</a>';
             } else {
-                controls += '<span class="entries-pagination__link entries-pagination__link--nav is-disabled" aria-disabled="true">Next</span>';
+                controls += '<span class="btn btn-secondary btn-sm" aria-disabled="true">Next</span>';
             }
         }
 

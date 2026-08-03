@@ -10,17 +10,17 @@
     <button type="button" class="btn btn-primary" id="account-save-btn">{translate 'admin.save_changes'}</button>
   </div>
   <div class="main-actions-right">
-    <div id="account-save-message" class="main-actions-message message settings-toast" style="display: none;" role="status" aria-live="polite"></div>
+    <div id="account-save-message" class="main-actions-message message settings-toast" role="status" aria-live="polite" hidden></div>
   </div>
 </div>
 
 <div class="account-settings-page">
   <div class="settings-stack">
-  <section class="card settings-section">
-    <div class="section-header">
-      <h2>{translate 'admin.profile_information'}</h2>
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">{translate 'admin.profile_information'}</h2>
     </div>
-    <form id="account-profile-form" class="settings-form" enctype="multipart/form-data">
+    <form id="account-profile-form" class="settings-form card-body u-stack-4" enctype="multipart/form-data">
       <div class="form-group">
         <label for="account-name">{translate 'admin.name'}</label>
         <input type="text" id="account-name" name="name" value="{user.name}" required>
@@ -39,26 +39,26 @@
         <small>{translate 'admin.avatar_upload_instructions'}</small>
         {if user.avatar exist}
           <div class="avatar-preview-wrap">
-            <p class="text-muted">{translate 'admin.current_avatar'}:</p>
+            <p class="u-text-sm u-fg-secondary">{translate 'admin.current_avatar'}:</p>
             <img src="{user.avatar}" alt="{translate 'admin.current_avatar'}">
             <div class="avatar-actions">
               <button type="button" id="remove-avatar-btn" class="btn btn-danger btn-sm">{translate 'admin.remove_avatar'}</button>
             </div>
           </div>
         {endif}
-        <div id="avatar-preview" class="avatar-preview-wrap" style="display: none;">
-          <p class="text-muted">{translate 'admin.preview'}:</p>
+        <div id="avatar-preview" class="avatar-preview-wrap" hidden>
+          <p class="u-text-sm u-fg-secondary">{translate 'admin.preview'}:</p>
           <img id="avatar-preview-img" src="" alt="{translate 'admin.preview'}">
         </div>
       </div>
     </form>
   </section>
 
-  <section class="card settings-section">
-    <div class="section-header">
-      <h2>{translate 'admin.change_password'}</h2>
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">{translate 'admin.change_password'}</h2>
     </div>
-    <form id="account-password-form" class="settings-form">
+    <form id="account-password-form" class="settings-form card-body u-stack-4">
       <div class="form-group">
         <label for="current-password">{translate 'admin.current_password'} *</label>
         <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
@@ -66,7 +66,7 @@
       <div class="form-group">
         <label for="new-password">{translate 'admin.new_password'} *</label>
         <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
-        <small class="text-muted">{translate 'admin.password_min_length'}</small>
+        <small class="form-help">{translate 'admin.password_min_length'}</small>
       </div>
       <div class="form-group">
         <label for="confirm-password">{translate 'admin.confirm_new_password'} *</label>
@@ -76,15 +76,15 @@
         <button type="submit" class="btn btn-primary">{translate 'admin.change_password'}</button>
       </div>
       
-      <div id="password-message" class="settings-message" style="display: none;"></div>
+      <div id="password-message" class="message" role="status" aria-live="polite" hidden></div>
     </form>
   </section>
 
-  <section class="card settings-section">
-    <div class="section-header">
-      <h2>{translate 'admin.language_preferences'}</h2>
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">{translate 'admin.language_preferences'}</h2>
     </div>
-    <form id="account-language-form" class="settings-form">
+    <form id="account-language-form" class="settings-form card-body u-stack-4">
       <div class="form-group">
         <label for="account-language">{translate 'admin.admin_panel_language'}</label>
         <select id="account-language" name="language" class="input">
@@ -98,49 +98,56 @@
         </select>
         <small>{translate 'admin.language_setting_description'}</small>
       </div>
-      <div id="language-message" class="settings-message" style="display: none;"></div>
+      <div id="language-message" class="message" role="status" aria-live="polite" hidden></div>
     </form>
   </section>
 
-  <section class="card settings-section">
-    <div class="section-header">
-      <h2>{translate 'admin.birkly_cloud_account'}</h2>
-      <p class="section-description text-muted">{translate 'admin.cloud_account_description'}</p>
-    </div>
-    <div id="cloud-account-status">
-      <div class="text-center">
-        <div class="spinner">{translate 'admin.loading_cloud_account'}</div>
+  <section class="card">
+    <div class="card-header">
+      <div class="card-heading">
+        <h2 class="card-title">{translate 'admin.birkly_cloud_account'}</h2>
+        <p class="card-description">{translate 'admin.cloud_account_description'}</p>
       </div>
     </div>
-    <div id="cloud-account-message" class="settings-message" style="display: none;"></div>
+    <div class="card-body u-stack-4">
+      <div id="cloud-account-status">
+        <div class="loading-state">
+          <p>{translate 'admin.loading_cloud_account'}</p>
+        </div>
+      </div>
+      <div id="cloud-account-message" class="message" role="status" aria-live="polite" hidden></div>
+    </div>
   </section>
 
-  <section class="card settings-section">
-    <div class="section-header">
-      <h2>{translate 'admin.two_factor_authentication'}</h2>
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">{translate 'admin.two_factor_authentication'}</h2>
     </div>
-    <div id="account-2fa-status">
-      <div class="text-center">
-        <div class="spinner">{translate 'admin.loading_2fa_status'}</div>
+    <div class="card-body u-stack-4">
+      <div id="account-2fa-status">
+        <div class="loading-state">
+          <p>{translate 'admin.loading_2fa_status'}</p>
+        </div>
+      </div>
+      <div id="account-2fa-message" class="message" role="status" aria-live="polite" hidden></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <div class="card-heading">
+        <h2 class="card-title">{translate 'admin.notification_preferences'}</h2>
+        <p class="card-description">{translate 'admin.notification_preferences_help'}</p>
       </div>
     </div>
-    <div id="account-2fa-message" class="settings-message" style="display: none;"></div>
-  </section>
+    <form id="account-notifications-form" class="settings-form card-body u-stack-4">
+      <div class="data-list data-list--flush">
+          <h3 class="u-label u-pt-2">{translate 'admin.content_events'}</h3>
 
-  <section class="card settings-section">
-    <div class="section-header">
-      <h2>{translate 'admin.notification_preferences'}</h2>
-      <p class="section-description text-muted">{translate 'admin.notification_preferences_help'}</p>
-    </div>
-    <form id="account-notifications-form" class="settings-form">
-      <div class="form-group">
-        <div class="notification-preferences">
-          <h3 class="preference-group-title">{translate 'admin.content_events'}</h3>
-
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_entry_published'}</div>
-              <small class="preference-desc">{translate 'admin.notify_entry_published_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_entry_published'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_entry_published_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-entry-published" name="entry_published" {if user.notification_preferences.entry_published exist}{if user.notification_preferences.entry_published == true}checked{endif}{else}checked{endif}>
@@ -148,10 +155,10 @@
             </label>
           </div>
 
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_entry_review'}</div>
-              <small class="preference-desc">{translate 'admin.notify_entry_review_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_entry_review'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_entry_review_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-entry-review" name="entry_review" {if user.notification_preferences.entry_review exist}{if user.notification_preferences.entry_review == true}checked{endif}{else}checked{endif}>
@@ -159,10 +166,10 @@
             </label>
           </div>
 
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_entry_commented'}</div>
-              <small class="preference-desc">{translate 'admin.notify_entry_commented_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_entry_commented'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_entry_commented_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-entry-commented" name="entry_commented" {if user.notification_preferences.entry_commented exist}{if user.notification_preferences.entry_commented == true}checked{endif}{else}checked{endif}>
@@ -170,12 +177,12 @@
             </label>
           </div>
 
-          <h3 class="preference-group-title">{translate 'admin.user_events'}</h3>
+          <h3 class="u-label u-pt-2">{translate 'admin.user_events'}</h3>
 
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_invitation_accepted'}</div>
-              <small class="preference-desc">{translate 'admin.notify_invitation_accepted_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_invitation_accepted'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_invitation_accepted_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-invitation-accepted" name="invitation_accepted" {if user.notification_preferences.invitation_accepted exist}{if user.notification_preferences.invitation_accepted == true}checked{endif}{else}checked{endif}>
@@ -183,10 +190,10 @@
             </label>
           </div>
 
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_role_changed'}</div>
-              <small class="preference-desc">{translate 'admin.notify_role_changed_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_role_changed'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_role_changed_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-role-changed" name="role_changed" {if user.notification_preferences.role_changed exist}{if user.notification_preferences.role_changed == true}checked{endif}{else}checked{endif}>
@@ -194,12 +201,12 @@
             </label>
           </div>
 
-          <h3 class="preference-group-title">{translate 'admin.system_events'}</h3>
+          <h3 class="u-label u-pt-2">{translate 'admin.system_events'}</h3>
 
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_system_updates'}</div>
-              <small class="preference-desc">{translate 'admin.notify_system_updates_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_system_updates'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_system_updates_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-system-updates" name="system_updates" {if user.notification_preferences.system_updates exist}{if user.notification_preferences.system_updates == true}checked{endif}{else}checked{endif}>
@@ -207,41 +214,40 @@
             </label>
           </div>
 
-          <div class="preference-item">
-            <div class="preference-label">
-              <div class="preference-title">{translate 'admin.notify_security_events'}</div>
-              <small class="preference-desc">{translate 'admin.notify_security_events_desc'}</small>
+          <div class="data-list-item">
+            <div class="data-list-main">
+              <span class="data-list-title">{translate 'admin.notify_security_events'}</span>
+              <small class="data-list-meta">{translate 'admin.notify_security_events_desc'}</small>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="notify-security-events" name="security_events" {if user.notification_preferences.security_events exist}{if user.notification_preferences.security_events == true}checked{endif}{else}{if user.role == 'admin'}checked{endif}{endif}>
               <span class="toggle-slider"></span>
             </label>
           </div>
-        </div>
       </div>
-      <div id="notifications-message" class="settings-message" style="display: none;"></div>
+      <div id="notifications-message" class="message" role="status" aria-live="polite" hidden></div>
     </form>
   </section>
   </div>
 </div>
 
 <!-- 2FA Modals -->
-<div id="account-2fa-setup-modal" class="modal-backdrop" style="display: none;">
-  <div class="modal-content" style="max-width: 520px;">
+<div id="account-2fa-setup-modal" class="modal-backdrop">
+  <div class="modal-content modal--md">
     <div class="modal-header">
       <h2>{translate 'admin.setup_2fa'}</h2>
       <button class="modal-close-btn" type="button" data-admin-action="accountClose2FASetupModal">&times;</button>
     </div>
     <div class="modal-body">
       <div id="account-2fa-setup-content">
-        <div class="text-center"><div class="spinner">Initializing 2FA setup...</div></div>
+        <div class="loading-state"><p>Initializing 2FA setup...</p></div>
       </div>
     </div>
   </div>
 </div>
 
-<div id="account-2fa-disable-modal" class="modal-backdrop" style="display: none;">
-  <div class="modal-content" style="max-width: 520px;">
+<div id="account-2fa-disable-modal" class="modal-backdrop">
+  <div class="modal-content modal--md">
     <div class="modal-header">
       <h2>{translate 'admin.disable_2fa'}</h2>
       <button class="modal-close-btn" type="button" data-admin-action="accountClose2FADisableModal">&times;</button>
@@ -267,8 +273,8 @@
   </div>
 </div>
 
-<div id="account-2fa-regenerate-modal" class="modal-backdrop" style="display: none;">
-  <div class="modal-content" style="max-width: 520px;">
+<div id="account-2fa-regenerate-modal" class="modal-backdrop">
+  <div class="modal-content modal--md">
     <div class="modal-header">
       <h2>{translate 'admin.regenerate_backup_codes'}</h2>
       <button class="modal-close-btn" type="button" data-admin-action="accountClose2FARegenerateModal">&times;</button>

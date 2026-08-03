@@ -118,45 +118,20 @@ if (!$cancelUrl) {
                 <div class="editor-content">
                     <!-- Parent Collection Notice (for sub-collections) -->
                     <?php if ($isSubCollection): ?>
-                        <?php if ($hasParentSubCollection): ?>
-                            <div class="card" style="margin-bottom: var(--space-4, 16px); background: var(--info-50, #eff6ff); border: 1px solid var(--info-200, #bfdbfe);">
-                                <div style="padding: var(--space-3, 12px);">
-                                    <div style="display: flex; align-items: center; margin-bottom: var(--space-2, 8px);">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-2, 8px); color: var(--info-600, #2563eb);">
-                                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                                        </svg>
-                                        <strong style="color: var(--info-900, #1e3a8a); font-size: 14px;">Nested Sub-Collection</strong>
-                                    </div>
-                                    <div style="font-size: 13px; color: var(--info-700, #1d4ed8); line-height: 1.5;">
-                                        <div style="margin-bottom: var(--space-1, 4px);">
-                                            <strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?>
-                                        </div>
-                                        <div>
-                                            <strong>Parent Sub-Collection:</strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? 'Sub-Collection') ?>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="callout callout-info">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                            </svg>
+                            <div class="callout-body u-stack-1">
+                                <p class="callout-title"><?= $hasParentSubCollection ? 'Nested Sub-Collection' : 'Sub-Collection' ?></p>
+                                <p><strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></p>
+                                <?php if ($hasParentSubCollection): ?>
+                                    <p><strong>Parent Sub-Collection:</strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? 'Sub-Collection') ?></p>
+                                <?php else: ?>
+                                    <p>This sub-collection belongs to the parent collection above and will be attached to entries in that collection.</p>
+                                <?php endif; ?>
                             </div>
-                        <?php else: ?>
-                            <div class="card" style="margin-bottom: var(--space-4, 16px); background: var(--info-50, #eff6ff); border: 1px solid var(--info-200, #bfdbfe);">
-                                <div style="padding: var(--space-3, 12px);">
-                                    <div style="display: flex; align-items: center; margin-bottom: var(--space-2, 8px);">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: var(--space-2, 8px); color: var(--info-600, #2563eb);">
-                                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                                        </svg>
-                                        <strong style="color: var(--info-900, #1e3a8a); font-size: 14px;">Sub-Collection</strong>
-                                    </div>
-                                    <div style="font-size: 13px; color: var(--info-700, #1d4ed8); line-height: 1.5;">
-                                        <div>
-                                            <strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?>
-                                        </div>
-                                        <div style="margin-top: var(--space-1, 4px);">
-                                            This sub-collection belongs to the parent collection above and will be attached to entries in that collection.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endif; ?>
+                        </div>
                     <?php endif; ?>
                     
                     <!-- Collection/Sub-Collection Title (Required, First Field) -->
@@ -176,7 +151,7 @@ if (!$cancelUrl) {
                     
                     <?php if ($isSubCollection): ?>
                         <!-- Sub-Collection Fields Schema -->
-                        <div class="fields-section" style="margin-top: 2rem;">
+                        <div class="fields-section u-mt-6">
                             <h2 class="section-title">Sub-Collection Fields</h2>
                             <p class="section-description">Define the fields that sub-entries in this sub-collection will have.</p>
                             
@@ -186,7 +161,7 @@ if (!$cancelUrl) {
                                 if (!empty($subFields)): 
                                     foreach ($subFields as $fieldIndex => $subField): 
                                 ?>
-                                    <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>" style="margin-bottom: 1rem;">
+                                    <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>">
                                         <div class="fieldtype-header">
                                             <div class="fieldtype-title">
                                                 <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
@@ -243,14 +218,14 @@ if (!$cancelUrl) {
                                 ?>
                             </div>
                             
-                            <button type="button" id="add-sub-collection-field-btn" class="btn btn-secondary" style="margin-top: 1rem;">
+                            <button type="button" id="add-sub-collection-field-btn" class="btn btn-secondary">
                                 <?= birkly_icon('plus', ['size' => 16]) ?>
                                 Add Field
                             </button>
                         </div>
                         
                         <!-- Sub-Collections Section (for nested sub-collections) -->
-                        <div class="fields-section" style="margin-top: 2rem;">
+                        <div class="fields-section u-mt-6">
                             <h2 class="section-title">Sub-Collections</h2>
                             <p class="section-description">Configure nested sub-collections that can be attached to entries in this sub-collection. For example, a "Comments" sub-collection might have "Replies" as a nested sub-collection.</p>
                             
@@ -390,7 +365,7 @@ if (!$cancelUrl) {
                                                     </label>
                                                 </div>
                                             </div>
-                                            <div class="fieldtype-config" data-field-index="<?= $index ?>"<?php if (($field['type'] ?? '') !== 'select' || empty($field['options'])): ?> style="display: none;"<?php endif; ?>>
+                                            <div class="fieldtype-config" data-field-index="<?= $index ?>"<?php if (($field['type'] ?? '') !== 'select' || empty($field['options'])): ?> hidden<?php endif; ?>>
                                                 <?php if (($field['type'] ?? '') === 'select' && !empty($field['options'])): ?>
                                                     <div class="field-config-section">
                                                         <label>Options (one per line, format: label|value)</label>
@@ -417,7 +392,7 @@ if (!$cancelUrl) {
                     </div>
                     
                     <!-- Sub-Collections Section -->
-                    <div class="fields-section" style="margin-top: 2rem;">
+                    <div class="fields-section u-mt-6">
                         <h2 class="section-title">Sub-Collections</h2>
                         <p class="section-description">Configure sub-collections that can be attached to entries in this collection. For example, a blog post collection might have "Comments" and "Ratings" as sub-collections.</p>
                         
@@ -470,8 +445,8 @@ if (!$cancelUrl) {
                                         </div>
                                         
                                         <!-- Sub-Collection Fields Schema -->
-                                        <div class="sub-collection-fields-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                                            <h4 style="margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600;">Fields Schema</h4>
+                                        <div class="sub-collection-fields-section">
+                                            <h4>Fields Schema</h4>
                                             <div class="sub-collection-fields-container" data-sub-collection-index="<?= $index ?>">
                                                 <?php 
                                                 // Check for fields in schema[fields] structure first (form sends this), then fall back to direct fields (saved structure)
@@ -479,7 +454,7 @@ if (!$cancelUrl) {
                                                 if (!empty($subFields)): 
                                                     foreach ($subFields as $fieldIndex => $subField): 
                                                 ?>
-                                                    <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>" style="margin-bottom: 1rem;">
+                                                    <div class="fieldtype-section" data-sub-field-index="<?= $fieldIndex ?>">
                                                         <div class="fieldtype-header">
                                                             <div class="fieldtype-title">
                                                                 <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
@@ -535,7 +510,7 @@ if (!$cancelUrl) {
                                                 endif; 
                                                 ?>
                                             </div>
-                                            <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="<?= $index ?>" style="margin-top: 0.5rem;">
+                                            <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="<?= $index ?>">
                                                 <?= birkly_icon('plus', ['size' => 16]) ?>
                                                 Add Field
                                             </button>
@@ -591,7 +566,7 @@ if (!$cancelUrl) {
                                         <label for="sub-collection-slug-sidebar">Slug</label>
                                         <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subCollectionData['slug'] ?? '') ?>" placeholder="auto-generated">
                                         <input type="hidden" name="sub_collections[0][auto_slug]" id="sub_auto_slug" value="<?= !empty($subAutoSlugChecked) ? '1' : '0' ?>">
-                                        <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                        <label class="auto-slug-toggle">
                                             <input type="checkbox" id="sub_auto_slug_checkbox" <?= !empty($subAutoSlugChecked) ? 'checked' : '' ?>>
                                             Auto-generate slug from title
                                         </label>
@@ -619,7 +594,7 @@ if (!$cancelUrl) {
                                             <option value="admin_only" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
                                             <option value="public_api" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
                                         </select>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Choose how entries can be created for this sub-collection
                                         </small>
                                     </div>
@@ -633,7 +608,7 @@ if (!$cancelUrl) {
                                         <label for="slug">Slug</label>
                                         <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated">
                                         <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($collAutoSlugChecked) ? '1' : '0' ?>">
-                                        <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                        <label class="auto-slug-toggle">
                                             <input type="checkbox" id="auto_slug_checkbox" <?= !empty($collAutoSlugChecked) ? 'checked' : '' ?>>
                                             Auto-generate slug from title
                                         </label>
@@ -647,7 +622,7 @@ if (!$cancelUrl) {
                                     <div class="info-item">
                                         <label for="icon">Icon (emoji)</label>
                                         <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="e.g. 📝" maxlength="8" inputmode="text">
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Optional emoji shown on the content overview card
                                         </small>
                                     </div>
@@ -655,7 +630,7 @@ if (!$cancelUrl) {
                                     <div class="info-item">
                                         <label for="icon_key">Icon key</label>
                                         <input type="text" name="icon_key" id="icon_key" class="input" value="<?= htmlspecialchars($collection['icon_key'] ?? '') ?>" placeholder="e.g. document-text">
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Optional icon font key for future use
                                         </small>
                                     </div>
@@ -677,16 +652,16 @@ if (!$cancelUrl) {
                                             <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
                                             <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
                                         </select>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Choose how entries can be created for this collection
                                         </small>
                                     </div>
                                 <?php endif; ?>
                                 
                                 <!-- Multi-Language Configuration -->
-                                <div class="info-item" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                <div class="info-item u-pt-4 u-border-top">
                                     <label><?= __('admin.multi_language_support') ?></label>
-                                    <div style="display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-2);">
+                                    <div class="u-row-3">
                                         <label class="toggle-switch">
                                             <?php if ($isSubCollection): ?>
                                                 <input type="checkbox" name="sub_collections[0][multilanguage_enabled]" id="sub-collection-multilanguage_enabled" value="1" <?= !empty($subCollectionData['multilanguage']['enabled']) ? 'checked' : '' ?>>
@@ -695,16 +670,16 @@ if (!$cancelUrl) {
                                             <?php endif; ?>
                                             <span class="toggle-slider"></span>
                                         </label>
-                                        <span style="font-weight: 500;">Enable multi-language support for this <?= $isSubCollection ? 'sub-collection' : 'collection' ?></span>
+                                        <span class="u-weight-medium">Enable multi-language support for this <?= $isSubCollection ? 'sub-collection' : 'collection' ?></span>
                                     </div>
-                                    <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    <small class="form-text">
                                         When enabled, entries can have content in multiple languages
                                     </small>
                                     
                                     <?php if ($isSubCollection): ?>
-                                        <div id="sub-collection-multilanguage-settings" style="display: <?= !empty($subCollectionData['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
-                                            <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;"><?= __('admin.languages') ?></label>
-                                            <div id="sub-collection-language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
+                                        <div id="sub-collection-multilanguage-settings" class="u-stack-2 u-mt-3"<?= !empty($subCollectionData['multilanguage']['enabled']) ? '' : ' hidden' ?>>
+                                            <label class="u-weight-medium"><?= __('admin.languages') ?></label>
+                                            <div id="sub-collection-language-tags-container" class="language-tags-container">
                                                 <?php
                                                 $selectedLangs = $subCollectionData['multilanguage']['languages'] ?? [];
                                                 foreach ($selectedLangs as $langCode):
@@ -715,16 +690,16 @@ if (!$cancelUrl) {
                                                         <input type="hidden" name="sub_collections[0][multilanguage_languages][]" value="<?= htmlspecialchars($langCode) ?>">
                                                     </span>
                                                 <?php endforeach; ?>
-                                                <input type="text" id="sub-collection-language-input" placeholder="Type language code or name..." style="border: none; outline: none; flex: 1; min-width: 200px; font-size: 0.875rem;" autocomplete="off">
+                                                <input type="text" id="sub-collection-language-input" placeholder="Type language code or name..." autocomplete="off">
                                             </div>
-                                            <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            <small class="form-text">
                                                 Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
                                             </small>
                                         </div>
                                     <?php else: ?>
-                                        <div id="multilanguage-settings" style="display: <?= !empty($collection['multilanguage']['enabled']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
-                                            <label style="display: block; margin-bottom: var(--space-2); font-weight: 500;"><?= __('admin.languages') ?></label>
-                                            <div id="language-tags-container" style="display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); min-height: 40px; padding: var(--space-2); border: 1px solid var(--border-color); border-radius: var(--border-radius-s); background: var(--bg-primary);">
+                                        <div id="multilanguage-settings" class="u-stack-2 u-mt-3"<?= !empty($collection['multilanguage']['enabled']) ? '' : ' hidden' ?>>
+                                            <label class="u-weight-medium"><?= __('admin.languages') ?></label>
+                                            <div id="language-tags-container" class="language-tags-container">
                                                 <?php
                                                 $selectedLangs = $collection['multilanguage']['languages'] ?? [];
                                                 foreach ($selectedLangs as $langCode):
@@ -735,9 +710,9 @@ if (!$cancelUrl) {
                                                         <input type="hidden" name="multilanguage_languages[]" value="<?= htmlspecialchars($langCode) ?>">
                                                     </span>
                                                 <?php endforeach; ?>
-                                                <input type="text" id="language-input" placeholder="Type language code or name..." style="border: none; outline: none; flex: 1; min-width: 200px; font-size: 0.875rem;" autocomplete="off">
+                                                <input type="text" id="language-input" placeholder="Type language code or name..." autocomplete="off">
                                             </div>
-                                            <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                            <small class="form-text">
                                                 Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
                                             </small>
                                         </div>
@@ -746,17 +721,17 @@ if (!$cancelUrl) {
                                 
                                 <!-- Public API Settings (shown when Public API is selected) -->
                                 <?php if ($isSubCollection): ?>
-                                    <div id="sub-collection-public-api-settings" style="display: <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                    <div id="sub-collection-public-api-settings" class="u-stack-3 u-pt-4 u-border-top"<?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
                                 <?php else: ?>
-                                    <div id="public-api-settings" style="display: <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'block' : 'none' ?>; margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                                    <div id="public-api-settings" class="u-stack-3 u-pt-4 u-border-top"<?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
                                 <?php endif; ?>
-                                    <h4 style="font-size: 0.875rem; font-weight: 600; margin: 0 0 var(--space-3) 0; color: var(--text-primary);">Public API Settings</h4>
+                                    <h4 class="section-title">Public API Settings</h4>
                                     
                                     <div class="info-item">
                                         <label>API Key</label>
-                                        <div class="info-value" style="display: flex; align-items: center; gap: var(--space-2);">
+                                        <div class="info-value">
                                             <?php if ($isSubCollection): ?>
-                                                <code id="sub-collection-api-key-display" style="font-size: 0.75rem; background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); flex: 1; word-break: break-all;">
+                                                <code id="sub-collection-api-key-display">
                                                     <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : 'Not generated yet' ?>
                                                 </code>
                                                 <button type="button" id="sub-collection-generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
@@ -767,7 +742,7 @@ if (!$cancelUrl) {
                                                 </button>
                                                 <input type="hidden" name="sub_collections[0][api_key]" id="sub-collection-api_key" value="<?= htmlspecialchars($subCollectionData['api_key'] ?? '') ?>">
                                             <?php else: ?>
-                                                <code id="api-key-display" style="font-size: 0.75rem; background: var(--bg-secondary); padding: var(--space-1) var(--space-2); border-radius: var(--radius-sm); flex: 1; word-break: break-all;">
+                                                <code id="api-key-display">
                                                     <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : 'Not generated yet' ?>
                                                 </code>
                                                 <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
@@ -790,7 +765,7 @@ if (!$cancelUrl) {
                                             <?php endif; ?>
                                             <span>Auto-publish submissions</span>
                                         </label>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             If enabled, entries will be published automatically. Otherwise, they'll be saved as drafts for review.
                                         </small>
                                     </div>
@@ -802,7 +777,7 @@ if (!$cancelUrl) {
                                         <?php else: ?>
                                             <input type="number" name="api_settings[rate_limit]" id="rate_limit" class="input" value="<?= htmlspecialchars($collection['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
                                         <?php endif; ?>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Maximum number of submissions allowed per hour per API key
                                         </small>
                                     </div>
@@ -814,7 +789,7 @@ if (!$cancelUrl) {
                                         <?php else: ?>
                                             <input type="email" name="api_settings[notification_email]" id="notification_email" class="input" value="<?= htmlspecialchars($collection['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
                                         <?php endif; ?>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Optional: Receive email notifications when new entries are submitted
                                         </small>
                                     </div>
@@ -834,13 +809,13 @@ if (!$cancelUrl) {
                                                 <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
                                             </select>
                                         <?php endif; ?>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                        <small class="form-text">
                                             Optional: Add CAPTCHA protection (requires configuration)
                                         </small>
                                     </div>
                                     
                                     <?php if ($isSubCollection): ?>
-                                        <div id="sub-collection-captcha-settings" style="display: <?= !empty($subCollectionData['api_settings']['captcha_provider']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                        <div id="sub-collection-captcha-settings" class="u-stack-2 u-mt-3"<?= !empty($subCollectionData['api_settings']['captcha_provider']) ? '' : ' hidden' ?>>
                                             <div class="info-item">
                                                 <label>CAPTCHA Site Key</label>
                                                 <input type="text" name="sub_collections[0][api_settings][captcha_site_key]" id="sub-collection-captcha_site_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
@@ -851,7 +826,7 @@ if (!$cancelUrl) {
                                             </div>
                                         </div>
                                     <?php else: ?>
-                                        <div id="captcha-settings" style="display: <?= !empty($collection['api_settings']['captcha_provider']) ? 'block' : 'none' ?>; margin-top: var(--space-3);">
+                                        <div id="captcha-settings" class="u-stack-2 u-mt-3"<?= !empty($collection['api_settings']['captcha_provider']) ? '' : ' hidden' ?>>
                                             <div class="info-item">
                                                 <label>CAPTCHA Site Key</label>
                                                 <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
@@ -938,7 +913,7 @@ if (!$cancelUrl) {
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="text-muted">No fields defined yet. Add fields to see their slugs.</p>
+                                            <p class="u-text-sm u-fg-secondary">No fields defined yet. Add fields to see their slugs.</p>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -1075,7 +1050,7 @@ echo htmlspecialchars($collectionExample);
                                             <?= birkly_icon('copy', ['size' => 14]) ?>
                                         </button>
                                     </div>
-                                    <p class="text-muted" style="font-size: 0.75rem; margin-bottom: var(--space-3);">
+                                    <p class="u-text-xs u-fg-secondary">
                                         Copy and paste this code into your website to create a form that submits to this collection.
                                     </p>
                                     <pre class="code-example" id="form-code"><code><?php
@@ -1315,7 +1290,7 @@ echo htmlspecialchars($formCode);
                     </label>
                 </div>
             </div>
-            <div class="fieldtype-config" data-field-index="__INDEX__" style="display: none;">
+            <div class="fieldtype-config" data-field-index="__INDEX__" hidden>
                 <!-- Fieldtype-specific configuration will be loaded here -->
             </div>
         </div>
@@ -1323,8 +1298,8 @@ echo htmlspecialchars($formCode);
 </script>
 
 <!-- Fieldtype Selection Modal -->
-<div id="fieldtype-selector-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 800px; width: 90%;">
+<div id="fieldtype-selector-modal" class="modal">
+    <div class="modal-content modal--lg">
         <div class="modal-header">
             <h2>Select Field Type</h2>
             <button type="button" class="btn-icon modal-close" id="close-fieldtype-modal">
@@ -1339,681 +1314,7 @@ echo htmlspecialchars($formCode);
     </div>
 </div>
 
-<style>
-.collection-editor-page {
-    padding: var(--space-6);
-}
-
-.editor-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
-    gap: var(--space-6);
-    margin-top: var(--space-6);
-}
-
-.editor-main {
-    min-width: 0;
-}
-
-.editor-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-}
-
-.fields-section {
-    margin-top: var(--space-4);
-}
-
-.section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0 0 var(--space-2) 0;
-    color: var(--text-primary);
-}
-
-.section-description {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    margin: 0 0 var(--space-4) 0;
-}
-
-/* Fieldtype Section */
-.fieldtype-section {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--space-4);
-    overflow: hidden;
-}
-
-.fieldtype-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.fieldtype-header-main {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    min-width: 0;
-    flex: 1;
-}
-
-.fieldtype-title {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    min-width: 0;
-    flex-wrap: wrap;
-}
-
-.fieldtype-header-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    flex-shrink: 0;
-}
-
-.fieldtype-type {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    background: var(--bg-tertiary);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    line-height: 1.2;
-}
-
-.fieldtype-type-label {
-    line-height: 1.2;
-}
-
-.fieldtype-name {
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.fieldtype-body {
-    padding: var(--space-4);
-}
-
-.fieldtype-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-    margin-bottom: var(--space-4);
-}
-
-.fieldtype-row:last-child {
-    margin-bottom: 0;
-}
-
-.fieldtype-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-}
-
-.fieldtype-field label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.fieldtype-field .required {
-    color: var(--error-500);
-}
-
-.fieldtype-config {
-    margin-top: var(--space-4);
-    padding: var(--space-4);
-    background: var(--bg-secondary);
-    border-radius: var(--radius);
-    border: 1px solid var(--border-light);
-}
-
-.field-config-section {
-    margin-bottom: var(--space-4);
-}
-
-.field-config-section:last-child {
-    margin-bottom: 0;
-}
-
-.field-config-section label {
-    display: block;
-    margin-bottom: var(--space-2);
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.field-config-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-}
-
-.field-config-field {
-    display: flex;
-    flex-direction: column;
-}
-
-.options-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
-    margin-bottom: var(--space-3);
-    max-height: 300px;
-    overflow-y: auto;
-    padding: var(--space-2);
-    background: var(--bg-primary);
-    border-radius: var(--radius);
-    border: 1px solid var(--border-light);
-}
-
-.option-item {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: var(--space-2);
-    align-items: center;
-}
-
-.option-item .input {
-    margin: 0;
-}
-
-.add-option-controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr auto;
-    gap: var(--space-2);
-    align-items: end;
-}
-
-.form-text {
-    display: block;
-    margin-top: var(--space-1);
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-/* Fieldtype Selector Modal */
-#fieldtype-selector-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-#fieldtype-selector-modal .modal-content {
-    background: var(--bg-primary);
-    border-radius: var(--radius-md);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-}
-
-#fieldtype-selector-modal .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-5);
-    border-bottom: 1px solid var(--border-light);
-}
-
-#fieldtype-selector-modal .modal-header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-#fieldtype-selector-modal .modal-close {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: var(--space-2);
-    color: var(--text-secondary);
-    transition: color var(--transition-fast);
-}
-
-#fieldtype-selector-modal .modal-close:hover {
-    color: var(--text-primary);
-}
-
-#fieldtype-selector-modal .modal-body {
-    padding: var(--space-5);
-    overflow-y: auto;
-    flex: 1;
-}
-
-.fieldtype-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-6);
-}
-
-.fieldtype-category-header {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: var(--space-3);
-    padding-bottom: var(--space-2);
-    border-bottom: 2px solid var(--border-light);
-}
-
-.fieldtype-category-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: var(--space-4);
-    margin-bottom: var(--space-2);
-}
-
-.fieldtype-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-4);
-    background: var(--bg-secondary);
-    border: 2px solid var(--border-light);
-    border-radius: var(--radius-md);
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    text-align: center;
-    min-height: 140px;
-}
-
-.fieldtype-card:hover {
-    border-color: var(--primary-500);
-    background: var(--bg-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.fieldtype-card:active {
-    transform: translateY(0);
-}
-
-.fieldtype-card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 64px;
-    height: 64px;
-    margin-bottom: var(--space-3);
-    color: var(--text-secondary, #64748b);
-    background: var(--bg-tertiary);
-    border-radius: var(--radius-md);
-    padding: var(--space-3);
-    line-height: 0;
-}
-
-.fieldtype-card-name {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    text-align: center;
-    word-break: break-word;
-}
-
-/* Sidebar */
-.editor-sidebar {
-    position: sticky;
-    top: var(--space-6);
-    height: fit-content;
-    max-height: calc(100vh - 120px);
-    overflow-y: auto;
-}
-
-.sidebar-tabs {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-.tab-nav {
-    display: flex;
-    border-bottom: 1px solid var(--border-light);
-    background: var(--bg-secondary);
-}
-
-.tab-btn {
-    flex: 1;
-    padding: var(--space-3) var(--space-4);
-    border: none;
-    background: transparent;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    transition: all 0.2s;
-}
-
-.tab-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-}
-
-.tab-btn.active {
-    color: var(--primary-600);
-    border-bottom-color: var(--primary-600);
-    background: var(--bg-primary);
-}
-
-.tab-content {
-    padding: var(--space-4);
-}
-
-.tab-pane {
-    display: none;
-}
-
-.tab-pane.active {
-    display: block;
-}
-
-.info-item {
-    margin-bottom: var(--space-4);
-}
-
-.info-item:last-child {
-    margin-bottom: 0;
-}
-
-.info-item label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: var(--space-2);
-}
-
-.info-value {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-}
-
-.info-value .link {
-    color: var(--primary-600);
-    text-decoration: none;
-    font-size: 0.75rem;
-}
-
-.info-value .link:hover {
-    text-decoration: underline;
-}
-
-.remove-field-btn {
-    background: transparent;
-    border: 1px solid var(--error-200);
-    color: var(--error-600);
-}
-
-.field-move-up-btn,
-.field-move-down-btn {
-    background: transparent;
-    border: 1px solid var(--border-light);
-    color: var(--text-secondary);
-}
-
-.field-move-up-btn:hover,
-.field-move-down-btn:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--border-color);
-}
-
-.field-move-up-btn:disabled,
-.field-move-down-btn:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    background: transparent;
-}
-
-.remove-field-btn:hover {
-    background: var(--error-50);
-    border-color: var(--error-300);
-}
-
-.collection-editor-page .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    cursor: pointer;
-    user-select: none;
-    line-height: 1.5;
-    margin: 0;
-}
-
-.collection-editor-page .checkbox-label > span:last-child {
-    line-height: 1.5;
-    display: inline-block;
-}
-
-.collection-editor-page .checkbox-label input[type="checkbox"] {
-    display: none !important;
-    width: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    opacity: 0 !important;
-    position: absolute !important;
-}
-
-.collection-editor-page .checkmark {
-    width: 20px;
-    height: 20px;
-    min-width: 20px;
-    min-height: 20px;
-    border: 2px solid #d1d5db;
-    border-radius: 4px;
-    position: relative;
-    transition: all 0.2s ease;
-    background: #ffffff;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    vertical-align: middle;
-}
-
-.collection-editor-page .checkbox-label:hover .checkmark {
-    border-color: #9ca3af;
-}
-
-.collection-editor-page .checkbox-label input[type="checkbox"]:checked + .checkmark {
-    background: #3b82f6;
-    border-color: #3b82f6;
-}
-
-.collection-editor-page .checkbox-label input[type="checkbox"]:checked + .checkmark::after {
-    content: '';
-    position: absolute;
-    left: 6px;
-    top: 3px;
-    width: 5px;
-    height: 9px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-    display: block;
-    box-sizing: border-box;
-}
-
-/* Templating Tab Styles */
-.templating-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-}
-
-.templating-intro {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-4) 0;
-}
-
-.templating-intro a {
-    color: var(--primary-600);
-    text-decoration: underline;
-}
-
-.templating-section {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-3) var(--space-4);
-    background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.section-header h4 {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.field-slugs-list {
-    padding: var(--space-3) var(--space-4);
-}
-
-.field-slug-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-2) 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.field-slug-item:last-child {
-    border-bottom: none;
-}
-
-.field-slug-label {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.field-slug-value {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-}
-
-.field-slug-value code {
-    background: var(--bg-primary);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.813rem;
-    color: var(--primary-700);
-    border: 1px solid var(--border-light);
-}
-
-.copy-btn {
-    background: transparent;
-    border: none;
-    padding: var(--space-1);
-    cursor: pointer;
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.copy-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.copy-btn:active {
-    transform: scale(0.95);
-}
-
-.code-example {
-    margin: 0;
-    padding: var(--space-4);
-    background: var(--bg-primary);
-    border: none;
-    border-radius: 0;
-    overflow-x: auto;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.813rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-}
-
-.code-example code {
-    background: transparent;
-    padding: 0;
-    border: none;
-    color: inherit;
-    font-family: inherit;
-    font-size: inherit;
-    white-space: pre;
-}
-
-/* Tighten the sidebar before the --bp-xl laptop range. */
-@media (max-width: 1439px) {
-    .editor-layout {
-        grid-template-columns: minmax(0, 1fr) minmax(260px, 300px);
-        gap: var(--space-5);
-    }
-}
-
-/* Keep both editor columns usable through the --bp-xl laptop range. */
-@media (max-width: 1279px) {
-    .editor-layout {
-        grid-template-columns: minmax(0, 1fr) minmax(240px, 280px);
-        gap: var(--space-4);
-    }
-}
-
-@media (max-width: 1023px) {
-    .editor-layout {
-        grid-template-columns: 1fr;
-    }
-    
-    .editor-sidebar {
-        position: static;
-        max-height: none;
-    }
-}
-</style>
+<link rel="stylesheet" href="<?= birkly_url('/admin/css/pages/collection-editor.css') ?>">
 
 <!-- Collection save success modal (P50) -->
 <div id="col-save-success-modal" class="modal col-save-success-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="col-save-success-title" aria-describedby="col-save-success-message">
@@ -2032,39 +1333,6 @@ echo htmlspecialchars($formCode);
     </div>
 </div>
 
-<style>
-.main-actions-bar--saved .btn-primary {
-    box-shadow: 0 0 0 3px rgba(82, 196, 154, 0.35);
-}
-.ag-wizard-panel--success {
-    text-align: center;
-    padding: var(--space-l, 1.5rem) var(--space-m, 1rem);
-}
-.ag-wizard-success-icon {
-    width: 3.5rem;
-    height: 3.5rem;
-    margin: 0 auto var(--space-m, 1rem);
-    border-radius: 50%;
-    background: var(--primary-100, #d1fae5);
-    color: var(--primary-700, #047857);
-    font-size: 1.75rem;
-    line-height: 3.5rem;
-    font-weight: 700;
-}
-.ag-wizard-success-meta {
-    font-size: 0.875rem;
-    line-height: 1.55;
-    color: var(--text-secondary, #72746F);
-    margin: 0 0 var(--space-m, 1rem);
-}
-.ag-wizard-success-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-s, 0.75rem);
-    justify-content: center;
-    margin-top: var(--space-m, 1rem);
-}
-</style>
 
 <script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
@@ -2179,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return '<option value="' + val + '"' + selected + '>' + (ft.label || ft.name) + '</option>';
         }).join('');
         const fieldHtml = `
-            <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
+            <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                 <div class="fieldtype-header">
                     <div class="fieldtype-title">
                         ${renderFieldtypeTypeBadgeHtml(selectedFieldtype, typeLabel)}
@@ -2348,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fieldtypeModalTarget === 'collection' && !fieldsContainer) return;
         if (fieldtypeModalTarget === 'sub-collection-schema' && !subCollectionFieldsContainer) return;
         populateFieldtypeModalGrid(addFieldFromModalSelection);
-        fieldtypeModal.style.display = 'flex';
+        fieldtypeModal.classList.add('show');
     }
     
     function getFieldtypeIcon(name, size) {
@@ -2434,20 +1702,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Close modal
     if (closeFieldtypeModal && fieldtypeModal) {
         closeFieldtypeModal.addEventListener('click', function() {
-            fieldtypeModal.style.display = 'none';
+            fieldtypeModal.classList.remove('show');
         });
         
         // Close on backdrop click
         fieldtypeModal.addEventListener('click', function(e) {
             if (e.target === fieldtypeModal) {
-                fieldtypeModal.style.display = 'none';
+                fieldtypeModal.classList.remove('show');
             }
         });
         
         // Close on Escape key
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && fieldtypeModal.style.display === 'flex') {
-                fieldtypeModal.style.display = 'none';
+            if (e.key === 'Escape' && fieldtypeModal.classList.contains('show')) {
+                fieldtypeModal.classList.remove('show');
             }
         });
     }
@@ -2474,7 +1742,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.html) {
-                    configContainer.style.display = 'block';
+                    configContainer.hidden = false;
                     configContainer.innerHTML = data.html;
                     
                     // Extract and execute any inline scripts
@@ -2498,13 +1766,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.initFieldtypeConfig(fieldIndex, fieldtype, configContainer);
                     }
                 } else {
-                    configContainer.style.display = 'none';
+                    configContainer.hidden = true;
                     configContainer.innerHTML = '';
                 }
             })
             .catch(error => {
                 console.error('Error loading fieldtype config:', error);
-                configContainer.style.display = 'none';
+                configContainer.hidden = true;
                 configContainer.innerHTML = '';
             });
 
@@ -2672,7 +1940,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (multilanguageEnabled && multilanguageSettings) {
         multilanguageEnabled.addEventListener('change', function() {
-            multilanguageSettings.style.display = this.checked ? 'block' : 'none';
+            multilanguageSettings.hidden = !this.checked;
             if (this.checked) {
                 setTimeout(initLanguageInput, 100);
             }
@@ -3008,9 +2276,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (entryMethodSelect && publicApiSettings) {
         entryMethodSelect.addEventListener('change', function() {
             if (this.value === 'public_api') {
-                publicApiSettings.style.display = 'block';
+                publicApiSettings.hidden = false;
             } else {
-                publicApiSettings.style.display = 'none';
+                publicApiSettings.hidden = true;
             }
         });
     }
@@ -3019,9 +2287,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (captchaProviderSelect && captchaSettings) {
         captchaProviderSelect.addEventListener('change', function() {
             if (this.value) {
-                captchaSettings.style.display = 'block';
+                captchaSettings.hidden = false;
             } else {
-                captchaSettings.style.display = 'none';
+                captchaSettings.hidden = true;
             }
         });
     }
@@ -3141,11 +2409,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <!-- Sub-Collection Fields Schema -->
-                <div class="sub-collection-fields-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                    <h4 style="margin-bottom: 1rem; font-size: 0.9rem; font-weight: 600;">Fields Schema</h4>
+                <div class="sub-collection-fields-section">
+                    <h4>Fields Schema</h4>
                     <div class="sub-collection-fields-container" data-sub-collection-index="${index}">
                         ${((data.schema && data.schema.fields) || data.fields) ? (data.schema?.fields || data.fields || []).map((field, fieldIndex) => `
-                            <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
+                            <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                                 <div class="fieldtype-header">
                                     <div class="fieldtype-title">
                                         ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || 'Select Type')}
@@ -3190,7 +2458,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         `).join('') : ''}
                     </div>
-                    <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="${index}" style="margin-top: 0.5rem;">
+                    <button type="button" class="btn btn-sm btn-secondary add-sub-field-btn" data-sub-collection-index="${index}">
                         <?= birkly_icon('plus', ['size' => 16]) ?>
                         Add Field
                     </button>
@@ -3292,7 +2560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (container && subCollectionIndex !== null) {
                     const fieldIndex = container.querySelectorAll('.fieldtype-section[data-sub-field-index]').length;
                     const fieldHtml = `
-                        <div class="fieldtype-section" data-sub-field-index="${fieldIndex}" style="margin-bottom: 1rem;">
+                        <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                             <div class="fieldtype-header">
                                 <div class="fieldtype-title">
                                     ${renderFieldtypeTypeBadgeHtml('', 'Select Type')}

@@ -73,23 +73,20 @@ function resolveMediaItemUrl(url) {
     };
   }
 
-  function notify(message, background, timeout) {
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.textContent = message;
-    notification.style.cssText = 'position: fixed; top: 20px; right: 20px; max-width: 360px; white-space: pre-line; background: ' + background + '; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1400; box-shadow: 0 4px 12px rgba(0,0,0,0.2);';
-    document.body.appendChild(notification);
-    window.setTimeout(function () {
-      notification.remove();
-    }, timeout);
+  function notify(message, type) {
+    if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+      window.BirklyFeedback.toast(message, type);
+      return;
+    }
+    console[type === 'error' ? 'error' : 'log'](message);
   }
 
   function showSuccess(message) {
-    notify(message, '#10b981', 3000);
+    notify(message, 'success');
   }
 
   function showError(message) {
-    notify(message, '#ef4444', 5000);
+    notify(message, 'error');
   }
 
   function initMediaPage() {
@@ -333,7 +330,7 @@ function resolveMediaItemUrl(url) {
       const folderItem = document.createElement('div');
       folderItem.className = 'folder-item';
       folderItem.dataset.path = folder.path || '';
-      folderItem.style.paddingLeft = ((folder.level || 0) * 20 + 8) + 'px';
+      folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
       folderItem.addEventListener('click', async function () {
         navigateToFolder(folder.path || '');
       });
@@ -341,14 +338,14 @@ function resolveMediaItemUrl(url) {
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
         '<span class="folder-name">' + escapeHtml(folder.name || '') + '</span>' +
-        '<span class="folder-count">(' + escapeHtml(folder.count || 0) + ')</span>';
+        '<span class="badge badge-count">' + escapeHtml(folder.count || 0) + '</span>';
 
       const actions = document.createElement('div');
       actions.className = 'folder-actions';
 
       const addButton = document.createElement('button');
       addButton.type = 'button';
-      addButton.className = 'btn-icon';
+      addButton.className = 'btn-icon btn-icon-xs';
       addButton.setAttribute('aria-label', 'Create subfolder in ' + (folder.name || 'folder'));
       addButton.title = 'Create subfolder';
       addButton.innerHTML = icon('plus', { size: 12 });
@@ -359,7 +356,7 @@ function resolveMediaItemUrl(url) {
 
       const renameButton = document.createElement('button');
       renameButton.type = 'button';
-      renameButton.className = 'btn-icon btn-icon--edit';
+      renameButton.className = 'btn-icon btn-icon-xs btn-icon--edit';
       renameButton.setAttribute('aria-label', 'Rename folder ' + (folder.name || 'folder'));
       renameButton.title = 'Rename folder';
       renameButton.innerHTML = icon('pencil-simple', { size: 12 });
@@ -370,7 +367,7 @@ function resolveMediaItemUrl(url) {
 
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
-      deleteButton.className = 'btn-icon btn-icon--danger';
+      deleteButton.className = 'btn-icon btn-icon-xs btn-icon--danger';
       deleteButton.setAttribute('aria-label', 'Delete folder ' + (folder.name || 'folder'));
       deleteButton.title = 'Delete folder';
       deleteButton.innerHTML = icon('trash', { size: 12 });
@@ -430,7 +427,7 @@ function resolveMediaItemUrl(url) {
       folderItem.type = 'button';
       folderItem.className = 'folder-item-move';
       folderItem.dataset.path = folder.path || '';
-      folderItem.style.paddingLeft = ((folder.level || 0) * 20 + 8) + 'px';
+      folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
         '<span>' + escapeHtml(folder.name || '') + '</span>';
@@ -493,7 +490,9 @@ function resolveMediaItemUrl(url) {
     grid.innerHTML = '';
 
     if (!items.length) {
-      grid.innerHTML = '<div class="empty-state empty-state--compact"><h3 class="empty-state__title">No media found</h3><p class="empty-state__message">Upload files or change the current filters.</p></div>';
+      grid.innerHTML = '<div class="empty-state empty-state--compact">' +
+        '<p class="empty-state-title">No media found</p>' +
+        '<p class="empty-state-text">Upload files or change the current filters.</p></div>';
       updateSelectionToolbar();
       return;
     }
@@ -508,29 +507,28 @@ function resolveMediaItemUrl(url) {
 
   function createMediaCard(item) {
     const card = document.createElement('article');
-    card.className = 'card media-card';
+    card.className = 'card card--interactive media-card';
     card.dataset.mediaId = item.id;
     card.classList.toggle('is-selected', state.selectedIds.has(item.id));
 
-    const thumb = document.createElement('button');
-    thumb.type = 'button';
-    thumb.className = 'thumb media-card__preview';
-    thumb.innerHTML = getMediaThumbnailHTML(item);
-    thumb.addEventListener('click', async function () {
+    const preview = document.createElement('button');
+    preview.type = 'button';
+    preview.className = 'media-card__preview';
+    preview.setAttribute('aria-label', 'Open ' + (item.name || 'media item'));
+    preview.innerHTML = getMediaThumbnailHTML(item);
+    bindThumbnailFallback(preview);
+    preview.addEventListener('click', async function () {
       viewMedia(item.id);
     });
 
     const meta = document.createElement('div');
-    meta.className = 'meta';
-
-    const metaHead = document.createElement('div');
-    metaHead.className = 'media-card__meta-head';
+    meta.className = 'media-card__meta';
 
     const checkboxLabel = document.createElement('label');
-    checkboxLabel.className = 'media-card__select';
+    checkboxLabel.className = 'u-inline-flex u-shrink-0 u-clickable';
     checkboxLabel.innerHTML =
       '<input type="checkbox" class="media-select-checkbox" aria-label="Select ' + escapeHtml(item.name || 'media item') + '">' +
-      '<span>Select</span>';
+      '<span class="u-sr-only">Select</span>';
 
     const checkbox = checkboxLabel.querySelector('input');
     checkbox.checked = state.selectedIds.has(item.id);
@@ -543,7 +541,7 @@ function resolveMediaItemUrl(url) {
 
     const nameEl = document.createElement('button');
     nameEl.type = 'button';
-    nameEl.className = 'name media-card__name';
+    nameEl.className = 'media-card__name';
     nameEl.title = item.name || 'Untitled';
     nameEl.textContent = item.name || 'Untitled';
     nameEl.addEventListener('click', async function () {
@@ -551,29 +549,42 @@ function resolveMediaItemUrl(url) {
     });
 
     const infoEl = document.createElement('div');
-    infoEl.className = 'info';
-    infoEl.textContent = String(item.category || 'file') + ' - ' + String(item.size_formatted || '0 B');
+    infoEl.className = 'u-text-xs u-fg-secondary';
+    infoEl.textContent = String(item.category || 'file') + ' · ' + String(item.size_formatted || '0 B');
 
-    metaHead.appendChild(checkboxLabel);
+    const metaHead = document.createElement('div');
+    metaHead.className = 'u-split u-gap-2';
+    metaHead.append(nameEl, checkboxLabel);
+
     meta.appendChild(metaHead);
-    meta.appendChild(nameEl);
     meta.appendChild(infoEl);
 
     if (item.alt_text) {
       const altEl = document.createElement('div');
-      altEl.className = 'media-card__alt';
+      altEl.className = 'u-text-xs u-fg-secondary u-clamp-2';
       altEl.textContent = 'Alt: ' + item.alt_text;
       meta.appendChild(altEl);
     }
 
-    card.appendChild(thumb);
+    card.appendChild(preview);
     card.appendChild(meta);
     return card;
   }
 
+  /** Swap a broken image for the generic icon without an inline onerror. */
+  function bindThumbnailFallback(preview) {
+    const image = preview.querySelector('img');
+    const fallback = preview.querySelector('[data-thumb-fallback]');
+    if (!image || !fallback) return;
+    image.addEventListener('error', function () {
+      image.remove();
+      fallback.hidden = false;
+    });
+  }
+
   function getMediaThumbnailHTML(item) {
     if (!item) {
-      return '<div class="file-thumb">' + icon('file-text', { size: 48 }) + '</div>';
+      return icon('file-text', { size: 48 });
     }
 
     const category = String(item.category || 'file');
@@ -581,19 +592,19 @@ function resolveMediaItemUrl(url) {
     const name = escapeHtml(String(item.name || 'Untitled'));
 
     if (category === 'image' && url) {
-      return '<img src="' + escapeHtml(url) + '" alt="' + name + '" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' +
-        '<div class="image-error" style="display:none;">' + icon('image', { size: 48 }) + '</div>';
+      return '<img src="' + escapeHtml(url) + '" alt="' + name + '">' +
+        '<div data-thumb-fallback hidden>' + icon('image', { size: 48 }) + '</div>';
     }
 
     if (category === 'video') {
-      return '<div class="video-thumb">' + icon('play', { size: 48 }) + '</div>';
+      return icon('play', { size: 48 });
     }
 
     if (category === 'audio') {
-      return '<div class="audio-thumb">' + icon('music-notes', { size: 48 }) + '</div>';
+      return icon('music-notes', { size: 48 });
     }
 
-    return '<div class="file-thumb">' + icon('file-text', { size: 48 }) + '</div>';
+    return icon('file-text', { size: 48 });
   }
 
   function uploadMedia() {
@@ -809,37 +820,42 @@ function resolveMediaItemUrl(url) {
     const focalX = Math.max(0, Math.min(100, Math.round(Number(item.focal_point?.x || 50))));
     const focalY = Math.max(0, Math.min(100, Math.round(Number(item.focal_point?.y || 50))));
 
-    let detailGrid = '';
-    detailGrid += '<div class="detail-item"><label>Name</label><span>' + escapeHtml(item.name || '') + '</span></div>';
-    detailGrid += '<div class="detail-item"><label>Type</label><span>' + escapeHtml(item.type || '') + '</span></div>';
-    detailGrid += '<div class="detail-item"><label>Size</label><span>' + escapeHtml(item.size_formatted || '') + '</span></div>';
-    detailGrid += '<div class="detail-item"><label>Uploaded</label><span>' + escapeHtml(uploadedAt) + '</span></div>';
-    detailGrid += '<div class="detail-item"><label>Folder</label><span>' + escapeHtml(folderLabel) + '</span></div>';
-    detailGrid += '<div class="detail-item"><label>ID</label><span>' + escapeHtml(item.id || '') + '</span></div>';
+    const details = [
+      ['Name', item.name || ''],
+      ['Type', item.type || ''],
+      ['Size', item.size_formatted || ''],
+      ['Uploaded', uploadedAt],
+      ['Folder', folderLabel],
+      ['ID', item.id || ''],
+    ];
     if (item.dimensions && item.dimensions.width && item.dimensions.height) {
-      detailGrid += '<div class="detail-item"><label>Dimensions</label><span>' + escapeHtml(item.dimensions.width + ' x ' + item.dimensions.height) + '</span></div>';
+      details.push(['Dimensions', item.dimensions.width + ' × ' + item.dimensions.height]);
     }
+    const detailPairs = details.map(function (pair) {
+      return '<span class="kv-key">' + escapeHtml(pair[0]) + '</span>' +
+        '<span class="kv-value">' + escapeHtml(pair[1]) + '</span>';
+    }).join('');
 
     body.innerHTML =
-      '<div class="media-modal-body">' +
-        '<div class="media-preview">' + getMediaPreviewHTML(item) + '</div>' +
-        '<div class="media-details">' +
-          '<h4>Details</h4>' +
-          '<div class="detail-grid">' + detailGrid + '</div>' +
-          '<div class="media-edit-form">' +
-            '<div class="form-group">' +
-              '<label for="media-alt-text">Alt text</label>' +
-              '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="Describe the image for screen readers">' +
+      '<div class="u-stack-5">' +
+        '<div class="media-modal-preview">' + getMediaPreviewHTML(item) + '</div>' +
+        '<section class="u-stack-3">' +
+          '<h4 class="section-title">Details</h4>' +
+          '<div class="kv">' + detailPairs + '</div>' +
+        '</section>' +
+        '<div class="u-stack-4">' +
+          '<div class="field">' +
+            '<label class="field-label" for="media-alt-text">Alt text</label>' +
+            '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="Describe the image for screen readers">' +
+          '</div>' +
+          '<div class="u-grid-2">' +
+            '<div class="field">' +
+              '<label class="field-label" for="media-focal-x">Focal point X</label>' +
+              '<input type="number" id="media-focal-x" class="input" min="0" max="100" value="' + escapeHtml(focalX) + '">' +
             '</div>' +
-            '<div class="media-focal-fields">' +
-              '<div class="form-group">' +
-                '<label for="media-focal-x">Focal point X</label>' +
-                '<input type="number" id="media-focal-x" class="input" min="0" max="100" value="' + escapeHtml(focalX) + '">' +
-              '</div>' +
-              '<div class="form-group">' +
-                '<label for="media-focal-y">Focal point Y</label>' +
-                '<input type="number" id="media-focal-y" class="input" min="0" max="100" value="' + escapeHtml(focalY) + '">' +
-              '</div>' +
+            '<div class="field">' +
+              '<label class="field-label" for="media-focal-y">Focal point Y</label>' +
+              '<input type="number" id="media-focal-y" class="input" min="0" max="100" value="' + escapeHtml(focalY) + '">' +
             '</div>' +
           '</div>' +
         '</div>' +
@@ -861,7 +877,9 @@ function resolveMediaItemUrl(url) {
     if (category === 'audio') {
       return '<audio controls><source src="' + escapeHtml(url) + '" type="' + escapeHtml(type) + '">Your browser does not support the audio tag.</audio>';
     }
-    return '<div class="file-preview"><p>Preview not available for ' + escapeHtml(category || 'file') + ' files.</p><a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="btn btn-primary">Download file</a></div>';
+    return '<div class="u-center-col u-gap-3">' +
+      '<p class="u-text-sm u-fg-secondary">Preview not available for ' + escapeHtml(category || 'file') + ' files.</p>' +
+      '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" class="btn btn-primary">Download file</a></div>';
   }
 
   function closeMediaModal() {
@@ -1027,7 +1045,7 @@ function resolveMediaItemUrl(url) {
       count.textContent = String(selectedCount);
     }
     if (toolbar) {
-      toolbar.style.display = selectedCount > 0 ? '' : 'none';
+      toolbar.hidden = selectedCount === 0;
     }
   }
 

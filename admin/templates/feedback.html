@@ -2,7 +2,7 @@
     <div class="page-header-left">
         <div class="breadcrumbs">
             <a href="<?= admin_url('settings') ?>"><?= __('admin.settings') ?></a>
-            <span class="separator">/</span>
+            <span class="separator">›</span>
             <span class="current">Alpha Feedback</span>
         </div>
     </div>
@@ -10,16 +10,13 @@
 </div>
 
 <div class="feedback-admin-page">
-    <div class="feedback-admin-header">
-        <h1>Alpha Feedback</h1>
-        <p class="text-secondary">Review and triage feedback submitted during the closed alpha.</p>
-    </div>
+    <p class="u-text-sm u-fg-secondary u-mb-6">Review and triage feedback submitted during the closed alpha.</p>
 
-    <div class="feedback-filters card" style="padding: 1rem; margin-bottom: 1rem;">
-        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: end;">
-            <div class="form-group" style="margin: 0;">
+    <div class="main-actions-bar">
+        <div class="main-actions-left u-align-end">
+            <div class="form-group u-m-0">
                 <label for="feedback-filter-status">Status</label>
-                <select id="feedback-filter-status" class="form-control">
+                <select id="feedback-filter-status" class="input">
                     <option value="">All statuses</option>
                     <option value="new">New</option>
                     <option value="in_progress">In progress</option>
@@ -27,9 +24,9 @@
                     <option value="closed">Closed</option>
                 </select>
             </div>
-            <div class="form-group" style="margin: 0;">
+            <div class="form-group u-m-0">
                 <label for="feedback-filter-type">Type</label>
-                <select id="feedback-filter-type" class="form-control">
+                <select id="feedback-filter-type" class="input">
                     <option value="">All types</option>
                     <option value="bug">Bug</option>
                     <option value="feature">Feature request</option>
@@ -37,9 +34,9 @@
                     <option value="question">Question</option>
                 </select>
             </div>
-            <div class="form-group" style="margin: 0;">
+            <div class="form-group u-m-0">
                 <label for="feedback-filter-category">Category</label>
-                <select id="feedback-filter-category" class="form-control">
+                <select id="feedback-filter-category" class="input">
                     <option value="">All categories</option>
                     <option value="admin">Admin &amp; settings</option>
                     <option value="content">Content &amp; editor</option>
@@ -50,15 +47,19 @@
                     <option value="other">Other</option>
                 </select>
             </div>
+        </div>
+        <div class="main-actions-right">
             <button type="button" class="btn btn-secondary" id="feedback-refresh-btn">Refresh</button>
         </div>
     </div>
 
-    <div id="feedback-list-loading" class="text-secondary" style="padding: 2rem; text-align: center;">Loading feedback…</div>
+    <!-- js/feedback.js drives these three regions with element.style.display,
+         so the initial state stays inline rather than moving to [hidden]. -->
+    <div id="feedback-list-loading" class="loading-state">Loading feedback…</div>
     <div id="feedback-list-empty" class="empty-state" style="display: none;">
-        <p>No feedback submissions yet.</p>
+        <p class="empty-state-text">No feedback submissions yet.</p>
     </div>
-    <div class="table-responsive" id="feedback-table-wrap" style="display: none;">
+    <div class="table-container" id="feedback-table-wrap" style="display: none;">
         <table class="table" id="feedback-table">
             <thead>
                 <tr>
@@ -79,14 +80,14 @@
 <!-- Detail modal -->
 <div class="modal" id="feedback-detail-modal" style="display: none;">
     <div class="modal-backdrop" data-close-feedback-modal></div>
-    <div class="modal-content" style="max-width: 640px;">
+    <div class="modal-content modal--md">
         <div class="modal-header">
             <h2 id="feedback-detail-title">Feedback</h2>
             <button type="button" class="modal-close" data-close-feedback-modal aria-label="Close">×</button>
         </div>
         <div class="modal-body" id="feedback-detail-body"></div>
-        <div class="modal-footer" style="display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap;">
-            <select id="feedback-detail-status" class="form-control" style="width: auto;">
+        <div class="modal-footer">
+            <select id="feedback-detail-status" class="input u-w-auto">
                 <option value="new">New</option>
                 <option value="in_progress">In progress</option>
                 <option value="resolved">Resolved</option>

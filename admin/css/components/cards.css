@@ -247,6 +247,10 @@ a.data-list-item:hover,
   padding: var(--space-2) var(--space-4);
 }
 
+/* Flush — the list supplies no horizontal padding of its own, for when it
+   sits inside a container that already pads (dashboard widget bodies). */
+.data-list--flush .data-list-item { padding-inline: 0; }
+
 /* ============================================
    Key/value pairs — settings summaries, detail panels
    ============================================ */
@@ -274,15 +278,27 @@ a.data-list-item:hover,
 /* ============================================
    Collection cards (content page)
    Grid + list modes without the !important war the old file needed.
+
+   Note: .collections-container is a vertical stack of GROUPS, not a grid of
+   cards — the card grid is .group-collections inside each group. Getting this
+   backwards is what the old page CSS had to override (P56-M6 finding).
    ============================================ */
 .collections-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.group-collections {
   display: grid;
   gap: var(--space-4);
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  min-width: 0;
 }
 
-.collections-container.list-view,
-.collections-container--list {
+.collections-container.list-view .group-collections,
+.group-collections--list {
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
