@@ -1,142 +1,36 @@
 /* ============================================
-   Grid System Layout Component
+   Birkly Admin — Grid (P56)
+   ============================================
+
+   The legacy 12-column system (.grid-1 … .grid-12 plus -mobile/-tablet
+   variants and a stray 1080px breakpoint) is deleted. Use the u-grid*
+   helpers in core/helpers.css.
+
+   These few classes remain because existing markup uses them; each is a
+   thin alias over the helper behaviour.
    ============================================ */
 
-/* Grid Container */
 .grid {
   display: grid;
-  gap: var(--grid-gap, 20px);
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-.grid--none {
-  gap: var(--grid-gap-none, 0);
+.grid-cols-1 { grid-template-columns: minmax(0, 1fr); }
+.grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+.grid-cols-3 { grid-template-columns: minmax(0, 1fr); }
+.grid-cols-4 { grid-template-columns: minmax(0, 1fr); }
+
+.grid-cols-auto-fit { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.grid-cols-auto-fill { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+
+@media (min-width: 768px) {
+  .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-.grid--small {
-  gap: var(--grid-gap-small, 4px);
+@media (min-width: 1024px) {
+  .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-
-.grid--large {
-  gap: var(--grid-gap-large, 80px);
-}
-
-/* Grid Columns */
-.grid-cols-1 {
-  grid-template-columns: repeat(1, minmax(0, 1fr));
-}
-
-.grid-cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.grid-cols-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.grid-cols-4 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
-.grid-cols-auto-fit {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.grid-cols-auto-fill {
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-}
-
-/* Grid Gap Utilities */
-.gap-1 { gap: var(--space-1, 0.25rem); }
-.gap-2 { gap: var(--space-2, 0.5rem); }
-.gap-3 { gap: var(--space-3, 0.75rem); }
-.gap-4 { gap: var(--space-4, 1rem); }
-.gap-6 { gap: var(--space-6, 1.5rem); }
-.gap-8 { gap: var(--space-8, 2rem); }
-
-/* Responsive Grid */
-@media (max-width: 1024px) {
-  .grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .grid-cols-3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .grid-cols-4,
-  .grid-cols-3,
-  .grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================================
-   Legacy Grid System (for backward compatibility)
-   ============================================ */
-.grid-1, .grid-2, .grid-3, .grid-4, .grid-5, .grid-6, .grid-7, .grid-8, .grid-9, .grid-10, .grid-11, .grid-12 {
-  display: grid;
-  gap: var(--grid-gap, 20px);
-  box-sizing: border-box;
-  width: 100%;
-  margin: 0 auto;
-}
-
-.grid-1 { grid-template-columns: repeat(1, 1fr); }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
-.grid-5 { grid-template-columns: repeat(5, 1fr); }
-.grid-6 { grid-template-columns: repeat(6, 1fr); }
-.grid-7 { grid-template-columns: repeat(7, 1fr); }
-.grid-8 { grid-template-columns: repeat(8, 1fr); }
-.grid-9 { grid-template-columns: repeat(9, 1fr); }
-.grid-10 { grid-template-columns: repeat(10, 1fr); }
-.grid-11 { grid-template-columns: repeat(11, 1fr); }
-.grid-12 { grid-template-columns: repeat(12, 1fr); }
-
-.grid-gap-none { gap: var(--grid-gap-none, 0); }
-.grid-gap-small { gap: var(--grid-gap-small, 4px); }
-.grid-gap-large { gap: var(--grid-gap-large, 80px); }
-
-.grid-template-sidebar { grid-template-columns: 500px 1fr 1fr; }
-
-@media (max-width: 640px) {
-  .grid-1-mobile { grid-template-columns: repeat(1, 1fr); }
-  .grid-2-mobile { grid-template-columns: repeat(2, 1fr); }
-  .grid-3-mobile { grid-template-columns: repeat(3, 1fr); }
-  .grid-4-mobile { grid-template-columns: repeat(4, 1fr); }
-  .grid-5-mobile { grid-template-columns: repeat(5, 1fr); }
-  .grid-6-mobile { grid-template-columns: repeat(6, 1fr); }
-  .grid-7-mobile { grid-template-columns: repeat(7, 1fr); }
-  .grid-8-mobile { grid-template-columns: repeat(8, 1fr); }
-  .grid-9-mobile { grid-template-columns: repeat(9, 1fr); }
-  .grid-10-mobile { grid-template-columns: repeat(10, 1fr); }
-  .grid-11-mobile { grid-template-columns: repeat(11, 1fr); }
-  .grid-12-mobile { grid-template-columns: repeat(12, 1fr); }
-
-  .grid-gap-none-mobile { gap: var(--grid-gap-none, 0); }
-  .grid-gap-small-mobile { gap: var(--grid-gap-small, 4px); }
-  .grid-gap-large-mobile { gap: var(--grid-gap-large, 80px); }
-}
-
-@media (max-width: 1080px) and (min-width: 641px) {
-  .grid-1-tablet { grid-template-columns: repeat(1, 1fr); }
-  .grid-2-tablet { grid-template-columns: repeat(2, 1fr); }
-  .grid-3-tablet { grid-template-columns: repeat(3, 1fr); }
-  .grid-4-tablet { grid-template-columns: repeat(4, 1fr); }
-  .grid-5-tablet { grid-template-columns: repeat(5, 1fr); }
-  .grid-6-tablet { grid-template-columns: repeat(6, 1fr); }
-  .grid-7-tablet { grid-template-columns: repeat(7, 1fr); }
-  .grid-8-tablet { grid-template-columns: repeat(8, 1fr); }
-  .grid-9-tablet { grid-template-columns: repeat(9, 1fr); }
-  .grid-10-tablet { grid-template-columns: repeat(10, 1fr); }
-  .grid-11-tablet { grid-template-columns: repeat(11, 1fr); }
-  .grid-12-tablet { grid-template-columns: repeat(12, 1fr); }
-
-  .grid-gap-none-tablet { gap: var(--grid-gap-none, 0); }
-  .grid-gap-small-tablet { gap: var(--grid-gap-small, 4px); }
-  .grid-gap-large-tablet { gap: var(--grid-gap-large, 80px); }
-}
-
