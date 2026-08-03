@@ -26,6 +26,7 @@ require_once '../core/plugins/security.php';
 require_once '../core/plugins/validation.php';
 require_once '../core/plugins/health.php';
 require_once '../core/marketplace.php';
+require_once '../core/entitlement_helper.php';
 
 // Use the PluginStorage class from core/plugins.php
 $storage = new PluginStorage('../settings');
@@ -87,6 +88,17 @@ if ($action === 'list') {
     foreach ($plugins as $id => $plugin) {
         $health = birkly_plugin_health_check((string) $id);
         $offerSlug = birkly_marketplace_plugin_offer_slug((string) $id, $plugin);
+        $entitlementStatus = null;
+        if (!empty($plugin['entitlement']) || !empty($plugin['entitlement_token'])) {
+            $entitlement = birkly_plugin_entitlement_status((string) $id);
+            $entitlementStatus = [
+                'ok' => !empty($entitlement['ok']),
+                'status' => $entitlement['status'] ?? 'unknown',
+                'code' => $entitlement['code'] ?? '',
+                'message' => $entitlement['message'] ?? '',
+                'grace_ends_at' => $entitlement['grace_ends_at'] ?? null,
+            ];
+        }
         $plugins_list[] = [
             'id' => $id,
             'name' => $plugin['name'] ?? ucwords(str_replace(['_', '-'], ' ', $id)),
@@ -100,6 +112,7 @@ if ($action === 'list') {
             'marketplace_slug' => $plugin['marketplace_slug'] ?? null,
             'offer_slug' => $offerSlug !== '' ? $offerSlug : null,
             'license_ref' => $plugin['license_ref'] ?? null,
+            'entitlement_status' => $entitlementStatus,
             'from_marketplace' => !empty($plugin['marketplace_slug']),
             'has_marketplace_offer' => $offerSlug !== '',
             'health' => $health,
@@ -561,7 +574,27 @@ if ($action === 'update') {
     require_once __DIR__ . '/../core/marketplace.php';
 
     $current = (string) ($plugin['version'] ?? '0.0.0');
-    $check = birkly_marketplace_check_plugin_update($slug, $current);
+    $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
+    $check = birkly_marketplace_check_plugin_update($slug, $current, $licenseRef !== '' ? $licenseRef : null);
+    if (!empty($plugin['entitlement']) || !empty($plugin['entitlement_token'])) {
+        $entitlement = birkly_plugin_entitlement_status((string) $plugin_id);
+        if (empty($entitlement['ok'])) {
+            echo json_encode([
+                'status' => 'error',
+                'message' => $entitlement['message'] ?? 'Marketplace entitlement is inactive. Renew to upgrade.',
+                'code' => $entitlement['code'] ?? 'entitlement_inactive',
+            ]);
+            exit;
+        }
+    }
+    if (!empty($check['license_lapsed'])) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $check['license_warning'] ?? 'Marketplace license is inactive. Renew to upgrade.',
+            'code' => 'license_lapsed',
+        ]);
+        exit;
+    }
     if (empty($check['update_available'])) {
         echo json_encode(['status' => 'error', 'message' => 'No update available']);
         exit;
