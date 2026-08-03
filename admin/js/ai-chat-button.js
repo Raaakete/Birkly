@@ -340,7 +340,7 @@
         menu.className = 'assist-fab-menu';
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
-            <button type="button" class="assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
+            <button type="button" class="btn assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
                 ${icon('paper-plane-tilt', { size: 20 })}
                 <span>Feedback</span>
             </button>
@@ -366,7 +366,7 @@
         const badge = document.createElement('span');
         badge.id = 'ai-chat-approval-badge';
         badge.className = 'ai-chat-fab-badge';
-        badge.style.display = 'none';
+        badge.hidden = true;
         badge.setAttribute('aria-hidden', 'true');
         button.appendChild(badge);
 
@@ -418,7 +418,7 @@
         if (!badge) return;
         if (count > 0) {
             badge.textContent = count > 9 ? '9+' : String(count);
-            badge.style.display = 'flex';
+            badge.hidden = false;
             badge.setAttribute('aria-hidden', 'false');
             if (button && assistFabState === 'chat') {
                 button.setAttribute('aria-label', `Close AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
@@ -427,7 +427,7 @@
             }
         } else {
             badge.textContent = '';
-            badge.style.display = 'none';
+            badge.hidden = true;
             badge.setAttribute('aria-hidden', 'true');
             if (button) {
                 if (assistFabState === 'chat') {
@@ -442,7 +442,7 @@
         const tabBadge = document.getElementById('ai-chat-approvals-header-badge');
         if (tabBadge) {
             tabBadge.textContent = count > 0 ? (count > 9 ? '9+' : String(count)) : '';
-            tabBadge.style.display = count > 0 ? 'inline-flex' : 'none';
+            tabBadge.hidden = count === 0;
         }
     }
 
@@ -450,7 +450,6 @@
         const btn = document.getElementById('ai-chat-approvals-btn');
         if (!btn || !currentConnection) return;
         const show = currentConnection.require_approval === true || currentConnection.require_approval === '1';
-        btn.style.display = show ? 'inline-flex' : 'none';
         btn.hidden = !show;
     }
 
@@ -480,13 +479,13 @@
         panel.innerHTML = pendingApprovals.map(approval => {
             const actionType = (approval.action_type || 'unknown').replace(/_/g, ' ');
             return `
-            <div class="ai-chat-approval-card ai-chat-queue-item" id="queue-approval-${escapeHtml(approval.id)}">
-                <div class="ai-chat-approval-header">
+            <div class="card ai-chat-approval-card ai-chat-queue-item" id="queue-approval-${escapeHtml(approval.id)}">
+                <div class="ai-chat-approval-header u-split">
                     <div class="ai-chat-approval-type">${escapeHtml(actionType)}</div>
-                    <span class="ai-chat-approval-time">${formatTime(approval.created_at)}</span>
+                    <span class="ai-chat-approval-time u-text-xs u-fg-tertiary">${formatTime(approval.created_at)}</span>
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(approval.description || 'No description')}</div>
-                <div class="ai-chat-approval-actions">
+                <div class="ai-chat-approval-actions u-row-2 u-mt-3">
                     <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">Approve</button>
                     <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">Reject</button>
                 </div>
@@ -553,9 +552,9 @@
         if (!badge) return;
         if (consoleUnread > 0) {
             badge.textContent = consoleUnread > 99 ? '99+' : String(consoleUnread);
-            badge.style.display = 'inline-flex';
+            badge.hidden = false;
         } else {
-            badge.style.display = 'none';
+            badge.hidden = true;
         }
     }
 
@@ -589,10 +588,10 @@
                 return escapeHtml(line);
             }).join('<br>');
             return `
-                <div class="ai-chat-console-entry ai-chat-console-entry--${escapeHtml(level)}">
-                    <div class="ai-chat-console-entry-head">
+                <div class="card card--compact ai-chat-console-entry ai-chat-console-entry--${escapeHtml(level)}">
+                    <div class="ai-chat-console-entry-head u-split u-gap-2 u-mb-1">
                         <span class="ai-chat-console-level">${escapeHtml(levelLabel)}</span>
-                        <time class="ai-chat-console-time">${escapeHtml(formatTime(entry.time))}</time>
+                        <time class="ai-chat-console-time u-text-2xs u-fg-tertiary u-numeric u-nowrap">${escapeHtml(formatTime(entry.time))}</time>
                     </div>
                     <div class="ai-chat-console-message">${messageHtml}</div>
                     ${detailsHtml}
@@ -726,29 +725,29 @@
         chatWindow.className = 'ai-chat-window';
         chatWindow.innerHTML = `
             <div class="ai-chat-header">
-                <div class="ai-chat-header-brand">
+                <div class="ai-chat-header-brand u-row-1 u-fill">
                     <span class="ai-chat-header-prefix">AI:</span>
-                    <label for="ai-chat-connection-select" class="sr-only">AI connection</label>
+                    <label for="ai-chat-connection-select" class="u-sr-only">AI connection</label>
                     <select id="ai-chat-connection-select" class="ai-chat-connection-inline" title="Choose AI connection">
                         <option value="">Loading connections...</option>
                     </select>
                 </div>
-                <div class="ai-chat-header-actions">
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="History" aria-label="History" aria-pressed="false">
+                <div class="ai-chat-header-actions u-row-1 u-shrink-0">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="History" aria-label="History" aria-pressed="false">
                         ${icon('clock', { size: 18 })}
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="Console" aria-label="Console" aria-pressed="false">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="Console" aria-label="Console" aria-pressed="false">
                         ${icon('code', { size: 18 })}
-                        <span class="ai-chat-header-badge" id="ai-chat-console-header-badge" style="display: none;"></span>
+                        <span class="ai-chat-header-badge" id="ai-chat-console-header-badge" hidden></span>
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="Approvals" aria-label="Approvals" aria-pressed="false" hidden>
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="Approvals" aria-label="Approvals" aria-pressed="false" hidden>
                         ${icon('list-checks', { size: 18 })}
-                        <span class="ai-chat-header-badge" id="ai-chat-approvals-header-badge" style="display: none;"></span>
+                        <span class="ai-chat-header-badge" id="ai-chat-approvals-header-badge" hidden></span>
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="New chat" aria-label="New chat">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="New chat" aria-label="New chat">
                         ${icon('plus', { size: 18 })}
                     </button>
-                    <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="Fullscreen" aria-label="Toggle fullscreen">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="Fullscreen" aria-label="Toggle fullscreen">
                         ${icon('arrows-out', { size: 18 })}
                     </button>
                 </div>
@@ -765,76 +764,76 @@
                     <div class="ai-chat-overlay" id="ai-chat-overlay" aria-hidden="true">
                         <button type="button" class="ai-chat-overlay-backdrop" id="ai-chat-overlay-backdrop" aria-label="Close panel"></button>
                         <div class="ai-chat-side-panel" id="ai-chat-side-panel" role="dialog" aria-modal="true">
-                            <div class="ai-chat-side-panel-head">
+                            <div class="ai-chat-side-panel-head u-split">
                                 <span id="ai-chat-side-panel-title">History</span>
-                                <button type="button" class="ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="Back to chat" aria-label="Back to chat">
+                                <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="Back to chat" aria-label="Back to chat">
                                     ${icon('x', { size: 16 })}
                                 </button>
                             </div>
                             <div class="ai-chat-history-panel ai-chat-side-panel-body" id="ai-chat-history-panel" hidden>
-                                <div class="ai-chat-history-list" id="ai-chat-history-list"></div>
+                                <div class="ai-chat-history-list u-stack-2" id="ai-chat-history-list"></div>
                             </div>
                             <div class="ai-chat-console-panel ai-chat-side-panel-body" id="ai-chat-console-panel" hidden>
-                                <div class="ai-chat-console-toolbar">
-                                    <span class="ai-chat-console-hint">Action results and errors from this session</span>
+                                <div class="ai-chat-console-toolbar u-split u-gap-2 u-shrink-0">
+                                    <span class="ai-chat-console-hint u-text-xs u-fg-secondary">Action results and errors from this session</span>
                                     <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
                                 </div>
-                                <div class="ai-chat-console-list" id="ai-chat-console-list"></div>
+                                <div class="ai-chat-console-list u-stack-2" id="ai-chat-console-list"></div>
                             </div>
                             <div class="ai-chat-approvals-panel ai-chat-side-panel-body" id="ai-chat-approvals-panel" hidden>
-                                <div class="loading">Loading approvals...</div>
+                                <div class="loading-state">Loading approvals…</div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="ai-chat-activity" id="ai-chat-activity" hidden aria-live="polite">
-                    <div class="ai-chat-activity-inner">
-                        <span class="ai-chat-activity-icon" aria-hidden="true">${icon('sparkle', { size: 18 })}</span>
-                        <div class="ai-chat-activity-copy">
-                            <span class="ai-chat-activity-status" id="ai-chat-activity-status">Waiting for AI…</span>
-                            <span class="ai-chat-activity-tip" id="ai-chat-activity-tip"></span>
+                    <div class="ai-chat-activity-inner u-row-3 u-align-start">
+                        <span class="ai-chat-activity-icon spinner" aria-hidden="true"></span>
+                        <div class="ai-chat-activity-copy u-stack-1 u-min-w-0">
+                            <span class="ai-chat-activity-status u-text-sm u-fg-secondary" id="ai-chat-activity-status">Waiting for AI…</span>
+                            <span class="ai-chat-activity-tip u-text-xs u-fg-tertiary" id="ai-chat-activity-tip"></span>
                         </div>
                     </div>
                 </div>
                 <div class="ai-chat-composer">
-                    <div class="ai-chat-attachment-list" id="ai-chat-attachment-list" hidden></div>
+                    <div class="ai-chat-attachment-list u-cluster u-mb-2" id="ai-chat-attachment-list" hidden></div>
                     <div class="ai-chat-composer-box">
                         <textarea
                             id="ai-chat-input"
                             placeholder="Ask the AI to create or edit content… Paste or drop images and files here."
                             rows="1"
                         ></textarea>
-                        <div class="ai-chat-composer-footer">
-                            <div class="ai-chat-composer-tools">
+                        <div class="ai-chat-composer-footer u-split u-gap-2">
+                            <div class="ai-chat-composer-tools u-cluster u-gap-1 u-min-w-0">
                                 <input type="file" id="ai-chat-image-input" accept="image/*" hidden>
                                 <input type="file" id="ai-chat-doc-input" accept=".txt,.md,.json,.csv,.pdf" hidden>
-                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="Add image" aria-label="Add image" hidden>
+                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="Add image" aria-label="Add image" hidden>
                                     ${icon('image', { size: 18 })}
                                 </button>
-                                <button type="button" class="ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="Add document" aria-label="Add document" hidden>
+                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="Add document" aria-label="Add document" hidden>
                                     ${icon('file-text', { size: 18 })}
                                 </button>
                                 <div class="ai-chat-model-picker" id="ai-chat-model-picker" hidden>
-                                    <button type="button" class="ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="Choose model" aria-haspopup="listbox" aria-expanded="false">
+                                    <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="Choose model" aria-haspopup="listbox" aria-expanded="false">
                                         ${icon('sparkle', { size: 16 })}
                                         <span id="ai-chat-model-label">Model</span>
                                         ${icon('caret-down', { size: 12 })}
                                     </button>
-                                    <div class="ai-chat-model-menu" id="ai-chat-model-menu" role="listbox" hidden></div>
+                                    <div class="popover ai-chat-model-menu" id="ai-chat-model-menu" role="listbox" hidden></div>
                                 </div>
                             </div>
-                            <button type="button" class="ai-chat-send-btn" id="ai-chat-send-btn" aria-label="Send message">
+                            <button type="button" class="btn-icon btn-primary ai-chat-send-btn" id="ai-chat-send-btn" aria-label="Send message">
                                 <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 18 })}</span>
-                                <span class="ai-chat-cancel-icon" style="display:none;">${icon('stop', { size: 18 })}</span>
+                                <span class="ai-chat-cancel-icon" hidden>${icon('stop', { size: 18 })}</span>
                             </button>
                         </div>
                     </div>
-                    <div class="ai-chat-quick-actions" id="ai-chat-quick-actions" hidden></div>
+                    <div class="ai-chat-quick-actions u-cluster u-mt-2" id="ai-chat-quick-actions" hidden></div>
                 </div>
             </div>
-            <div class="ai-chat-connection-selector" id="ai-chat-connection-selector" style="display: none;" aria-hidden="true">
-                <div class="ai-chat-connection-list" id="ai-chat-connection-list">
-                    <div class="loading">Loading connections...</div>
+            <div class="ai-chat-connection-selector" id="ai-chat-connection-selector" hidden aria-hidden="true">
+                <div class="ai-chat-connection-list u-stack-2" id="ai-chat-connection-list">
+                    <div class="loading-state">Loading connections…</div>
                 </div>
             </div>
         `;
@@ -1008,7 +1007,7 @@
         if (chatTooltipEl) return chatTooltipEl;
         chatTooltipEl = document.createElement('div');
         chatTooltipEl.id = 'ai-chat-tooltip';
-        chatTooltipEl.className = 'ai-chat-tooltip';
+        chatTooltipEl.className = 'tooltip ai-chat-tooltip';
         chatTooltipEl.hidden = true;
         chatTooltipEl.setAttribute('role', 'tooltip');
         document.body.appendChild(chatTooltipEl);
@@ -1129,7 +1128,7 @@
                 : context;
             const selectedClass = active && active === model.id ? ' selected' : '';
             const selectedAttr = active && active === model.id ? ' aria-selected="true"' : '';
-            return '<button type="button" role="option" class="ai-chat-model-option' + selectedClass + '"' + selectedAttr + ' data-model="' + id + '">' +
+            return '<button type="button" role="option" class="dropdown-item ai-chat-model-option' + selectedClass + '"' + selectedAttr + ' data-model="' + id + '">' +
                 '<span class="ai-chat-model-option-name">' + name + '</span>' +
                 (name !== id ? '<span class="ai-chat-model-option-meta">' + id + '</span>' : '') +
                 meta +
@@ -1536,9 +1535,9 @@
         list.hidden = false;
         list.innerHTML = pendingAttachments.map(function (item, index) {
             const iconName = item.type === 'image' ? 'image' : 'file-text';
-            return '<span class="ai-chat-attachment-chip">' + icon(iconName, { size: 14 }) +
-                '<span>' + escapeHtml(item.name) + '</span>' +
-                '<button type="button" data-remove-attachment="' + index + '" aria-label="Remove">×</button></span>';
+            return '<span class="chip ai-chat-attachment-chip">' + icon(iconName, { size: 14 }) +
+                '<span class="u-truncate">' + escapeHtml(item.name) + '</span>' +
+                '<button type="button" class="chip-remove" data-remove-attachment="' + index + '" aria-label="Remove">×</button></span>';
         }).join('');
         list.querySelectorAll('[data-remove-attachment]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -1707,7 +1706,7 @@
         
         const composer = document.querySelector('.ai-chat-composer');
         if (composer) {
-            composer.style.display = 'none';
+            composer.hidden = true;
         }
     }
 
@@ -1757,7 +1756,7 @@
                     // Show composer
                     const composer = document.querySelector('.ai-chat-composer');
                     if (composer) {
-                        composer.style.display = 'block';
+                        composer.hidden = false;
                     }
                     
                     // Focus input
@@ -1823,8 +1822,8 @@
         btn.title = streaming ? 'Cancel' : 'Send';
         const sendIcon = btn.querySelector('.ai-chat-send-icon');
         const cancelIcon = btn.querySelector('.ai-chat-cancel-icon');
-        if (sendIcon) sendIcon.style.display = streaming ? 'none' : '';
-        if (cancelIcon) cancelIcon.style.display = streaming ? '' : 'none';
+        if (sendIcon) sendIcon.hidden = streaming;
+        if (cancelIcon) cancelIcon.hidden = !streaming;
     }
 
     const CHAT_ACTIVITY_STATUS_CYCLE = [
@@ -2270,7 +2269,7 @@
         if (!messageEl) return messageId;
         const retryBtn = document.createElement('button');
         retryBtn.type = 'button';
-        retryBtn.className = 'ai-chat-retry-btn';
+        retryBtn.className = 'btn btn-sm ai-chat-retry-btn';
         retryBtn.textContent = 'Retry';
         retryBtn.addEventListener('click', retryLastMessage);
         messageEl.querySelector('.ai-chat-message-content')?.appendChild(retryBtn);
@@ -2319,7 +2318,7 @@
         }
         container.hidden = false;
         container.innerHTML = actions.map(function(action) {
-            return '<button type="button" class="ai-chat-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
+            return '<button type="button" class="chip chip--interactive ai-chat-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
         }).join('');
         container.querySelectorAll('.ai-chat-quick-chip').forEach(function(chip) {
             chip.addEventListener('click', async function () {
@@ -2345,11 +2344,11 @@
 
         const wrap = document.createElement('div');
         wrap.id = 'ai-page-quick-actions';
-        wrap.className = 'ai-page-quick-actions';
+        wrap.className = 'ai-page-quick-actions u-cluster u-mt-3';
         wrap.setAttribute('role', 'group');
         wrap.setAttribute('aria-label', 'AI quick actions');
         wrap.innerHTML = actions.map(function(action) {
-            return '<button type="button" class="ai-chat-quick-chip ai-page-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
+            return '<button type="button" class="chip chip--interactive ai-chat-quick-chip ai-page-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
         }).join('');
 
         bar.appendChild(wrap);
@@ -2491,10 +2490,10 @@
         }
         list.innerHTML = recent.map(function (chat) {
             return `
-            <button type="button" class="ai-chat-history-item" data-conv-id="${escapeHtml(chat.id)}" data-conn-id="${escapeHtml(chat.connection_id || '')}">
+            <button type="button" class="card card--interactive ai-chat-history-item" data-conv-id="${escapeHtml(chat.id)}" data-conn-id="${escapeHtml(chat.connection_id || '')}">
                 <strong>${escapeHtml(chat.title || 'Chat')}</strong>
-                <span class="ai-chat-history-meta">${escapeHtml(chat.connection_name || '')} · ${formatTime(chat.updated_at)}</span>
-                <span class="ai-chat-history-preview">${escapeHtml(chat.preview || '')}</span>
+                <span class="ai-chat-history-meta u-text-2xs u-fg-tertiary">${escapeHtml(chat.connection_name || '')} · ${formatTime(chat.updated_at)}</span>
+                <span class="ai-chat-history-preview u-clamp-2 u-text-xs u-fg-secondary">${escapeHtml(chat.preview || '')}</span>
             </button>`;
         }).join('');
         list.querySelectorAll('.ai-chat-history-item').forEach(function (btn) {
@@ -2652,17 +2651,17 @@
         }
         
         cardDiv.innerHTML = `
-            <div class="ai-chat-approval-card">
-                <div class="ai-chat-approval-header">
+            <div class="card ai-chat-approval-card">
+                <div class="ai-chat-approval-header u-split">
                     <div class="ai-chat-approval-type">${escapeHtml(actionTypeLabel)}</div>
                     <div class="ai-chat-approval-meta">
-                        <span class="ai-chat-approval-status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
-                        <span class="ai-chat-approval-time">${formatTime(approval.created_at)}</span>
+                        <span class="badge ai-chat-approval-status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>
+                        <span class="ai-chat-approval-time u-text-xs u-fg-tertiary">${formatTime(approval.created_at)}</span>
                     </div>
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(description)}</div>
                 ${actionDataHtml ? `<div class="ai-chat-approval-data">${actionDataHtml}</div>` : ''}
-                <div class="ai-chat-approval-actions">
+                <div class="ai-chat-approval-actions u-row-2 u-mt-3">
                     ${status === 'pending' ? `
                     <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">
                         ✓ Approve
@@ -2789,7 +2788,7 @@
         
         // Render markdown for assistant messages, plain text for user messages
         const renderedContent = isLoading 
-            ? '<div class="ai-chat-loading">...</div>' 
+            ? '<span class="spinner" role="status" aria-label="Loading"></span>' 
             : (role === 'assistant'
                 ? renderMarkdown(sanitizeChatDisplayText(content))
                 : (role === 'error'

@@ -254,254 +254,106 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
     <title>Login - <?= htmlspecialchars($projectName) ?> Admin</title>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
-    <style>
-        body.auth-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--background-global, var(--color-neutral-100, #f8f9f7));
-        }
-
-        .auth-card {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-light);
-            border-radius: var(--border-radius-m, 8px);
-            box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-            padding: 3rem;
-            width: 100%;
-            max-width: 420px;
-            margin: 2rem;
-        }
-        
-        .auth-card__header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .auth-card__logo {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .auth-card__logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
-        .auth-card__header h1 {
-            color: var(--text-primary);
-            margin: 0 0 0.5rem 0;
-            font-size: 1.875rem;
-            font-weight: 700;
-        }
-        
-        .auth-card__header p {
-            color: var(--text-secondary);
-            margin: 0;
-            font-size: 0.875rem;
-        }
-        
-        .auth-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-        
-        .auth-form .form-group {
-            margin-bottom: 0;
-        }
-        
-        .auth-form .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            font-weight: 500;
-            font-size: 14px;
-        }
-        
-        .auth-form .form-group input[type="email"],
-        .auth-form .form-group input[type="password"] {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-size: 14px;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        
-        .auth-form .form-group input:focus {
-            outline: none;
-            border-color: var(--color-primary, var(--primary-500));
-            box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.25);
-        }
-        
-        .auth-form .login-button {
-            background: var(--color-primary);
-            color: var(--color-darkest, #4a4d47);
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            margin-top: 0.5rem;
-        }
-        
-        .auth-form .login-button:hover {
-            background: var(--color-primary-hover);
-        }
-        
-        .auth-form .login-button:active {
-            background: var(--color-primary-active);
-            transform: translateY(1px);
-        }
-        
-        .auth-card .message {
-            margin-bottom: 1.5rem;
-        }
-        
-        .auth-card__footer {
-            text-align: center;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border-light);
-        }
-        
-        .auth-card__footer p {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin: 0;
-        }
-        
-        .auth-card__footer a {
-            color: var(--color-primary, var(--primary-600));
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .auth-card__footer a:hover {
-            color: var(--primary-700);
-            text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-            .auth-card {
-                padding: 2rem 1.5rem;
-                margin: 1rem;
-            }
-        }
-    </style>
 </head>
 <body class="auth-page">
-    <div class="auth-card login-container">
-        <div class="auth-card__header login-header">
-            <div class="auth-card__logo login-logo">
-                <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?> Logo">
-            </div>
-            <h1>Welcome Back</h1>
-            <p>Sign in to your <?= htmlspecialchars($projectName) ?> admin account</p>
-        </div>
-        
-        <?php if ($error): ?>
-            <div class="message error" role="alert">
-                <div class="message-content">
-                    <p class="message-text"><?= htmlspecialchars($error) ?></p>
+    <main class="auth-shell">
+        <section class="card auth-card">
+            <div class="card-body u-stack-6">
+                <div class="u-center-col u-stack-2">
+                    <img class="auth-logo" src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?> logo">
+                    <h1 class="auth-title">Welcome back</h1>
+                    <p class="auth-subtitle">Sign in to your <?= htmlspecialchars($projectName) ?> admin account</p>
                 </div>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($success): ?>
-            <div class="message success" role="status">
-                <div class="message-content">
-                    <p class="message-text"><?= htmlspecialchars($success) ?></p>
-                </div>
-            </div>
-        <?php endif; ?>
 
-        <?php if ($notice): ?>
-            <div class="message success" role="status">
-                <div class="message-content">
-                    <p class="message-text"><?= htmlspecialchars($notice) ?></p>
-                </div>
-                <form method="POST" action="<?= htmlspecialchars(birkly_url('/admin/logout.php')) ?>" style="margin-top: 10px;">
-                    <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
-                    <button type="submit" class="login-button" style="margin-top: 0;">Log out</button>
+                <?php if ($error): ?>
+                    <div class="callout callout-danger" role="alert">
+                        <div class="callout-body"><p><?= htmlspecialchars($error) ?></p></div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($success): ?>
+                    <div class="callout callout-success" role="status">
+                        <div class="callout-body"><p><?= htmlspecialchars($success) ?></p></div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($notice): ?>
+                    <div class="callout callout-warning" role="status">
+                        <div class="callout-body u-stack-3">
+                            <p><?= htmlspecialchars($notice) ?></p>
+                            <form method="POST" action="<?= htmlspecialchars(birkly_url('/admin/logout.php')) ?>">
+                                <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
+                                <button type="submit" class="btn btn-secondary btn-sm">Log out</button>
+                            </form>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <form class="auth-form u-stack-4" id="login-form" method="POST" action="<?= htmlspecialchars(birkly_url('/admin/login.php')) ?>">
+                    <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
+
+                    <div class="field">
+                        <label class="field-label" for="email">Email address</label>
+                        <input
+                            class="input"
+                            type="email"
+                            id="email"
+                            name="email"
+                            value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
+                            required
+                            autocomplete="email"
+                            placeholder="admin@example.com"
+                        >
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label" for="password">Password</label>
+                        <input
+                            class="input"
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Enter your password"
+                        >
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg btn-full u-mt-2" id="login-submit">
+                        Sign in
+                    </button>
                 </form>
+
+                <div class="auth-footer u-stack-3">
+                    <?php
+                    require_once __DIR__ . '/../core/platform.php';
+                    if (birkly_alpha_program_enabled()):
+                        $termsUrl = birkly_legal_terms_url();
+                        $privacyUrl = birkly_legal_privacy_url();
+                    ?>
+                    <p class="u-text-xs u-fg-secondary u-m-0">
+                        <?= htmlspecialchars(birkly_program_status_label()) ?> ·
+                        <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer">Terms</a>
+                        ·
+                        <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer">Privacy</a>
+                        ·
+                        <a href="https://birkly.com/#waitlist" target="_blank" rel="noopener noreferrer">Request invite</a>
+                    </p>
+                    <?php endif; ?>
+                    <p class="u-text-sm u-fg-secondary u-m-0">Need help? Contact your system administrator.</p>
+                </div>
             </div>
-        <?php endif; ?>
-        
-        <form class="auth-form login-form" method="POST" action="<?= htmlspecialchars(birkly_url('/admin/login.php')) ?>">
-            <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
-            
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input 
-                    type="email" 
-                    id="email" 
-                    name="email" 
-                    value="<?= htmlspecialchars($_POST['email'] ?? '') ?>"
-                    required 
-                    autocomplete="email"
-                    placeholder="admin@example.com"
-                >
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    required 
-                    autocomplete="current-password"
-                    placeholder="Enter your password"
-                >
-            </div>
-            
-            <button type="submit" class="login-button">
-                Sign In
-            </button>
-        </form>
-        
-        <div class="auth-card__footer login-footer">
-            <?php
-            require_once __DIR__ . '/../core/platform.php';
-            if (birkly_alpha_program_enabled()):
-                $termsUrl = birkly_legal_terms_url();
-                $privacyUrl = birkly_legal_privacy_url();
-            ?>
-            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                <?= htmlspecialchars(birkly_program_status_label()) ?> ·
-                <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer">Terms</a>
-                ·
-                <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer">Privacy</a>
-                ·
-                <a href="https://birkly.com/#waitlist" target="_blank" rel="noopener noreferrer">Request invite</a>
-            </p>
-            <?php endif; ?>
-            <p>Need help? <a href="#" onclick="alert('Contact your system administrator')">Contact Support</a></p>
-        </div>
-    </div>
-    
+        </section>
+    </main>
+
     <script<?= $__birklyLoginNonceAttr ?>>
         // Auto-focus email field
         document.getElementById('email').focus();
-        
+
         // Handle form submission
-        document.querySelector('.login-form').addEventListener('submit', function(e) {
-            const button = document.querySelector('.login-button');
-            button.textContent = 'Signing In...';
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            const button = document.getElementById('login-submit');
+            button.textContent = 'Signing in…';
             button.disabled = true;
         });
     </script>
