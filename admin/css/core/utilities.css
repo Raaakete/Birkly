@@ -1,36 +1,18 @@
 /* ============================================
-   Birkly Admin — Legacy helper bridge (P56, transitional)
+   Birkly Admin — Legacy helper bridge (P56)
    ============================================
 
-   The 616-line unprefixed helper layer was removed in P56. This bridge keeps
-   only the classes still referenced by admin markup or JS, so templates keep
-   working while surfaces migrate to the u-* layer (core/helpers.css).
+   The original 616-line unprefixed helper layer is gone. Every class it
+   provided has been migrated to the u-* layer (core/helpers.css) except one.
 
-   Each entry is deleted as its last usage migrates. Nothing new may be added
-   here — new work uses u-* helpers.
+   `.loading` survives because it is a STATE class toggled by admin JS on
+   containers (~66 call sites), not a layout helper written in markup. It is
+   kept unprefixed so `classList.add('loading')` keeps working.
 
-   Removal: P56-M11, once usage counts reach zero.
-   Reference: internal/planning/reviews/P56-M1-design-language-brief.md §7.2
+   Component-specific loading states live with their components
+   (.btn-loading, .loading-state, .skeleton, .spinner).
    ============================================ */
 
-/* Page-header rhythm — every template still uses .page-header.pt-m.pb-m */
-.pt-m { padding-block-start: var(--space-4); }
-.pb-m { padding-block-end: var(--space-4); }
-.mt-s { margin-block-start: var(--space-3); }
-.mt-m { margin-block-start: var(--space-4); }
-.mt-xl { margin-block-start: var(--space-10); }
-
-/* Text */
-.text-center { text-align: center; }
-.text-muted { color: var(--text-secondary); }
-
-/* Layout */
-.flex { display: flex; }
-.relative { position: relative; }
-.absolute { position: absolute; }
-.fixed { position: fixed; }
-
-/* Generic loading overlay (component variants live with their components) */
 .loading {
   position: relative;
   color: transparent;
@@ -49,8 +31,4 @@
   border-block-start-color: var(--accent-text);
   border-radius: 50%;
   animation: u-spin 0.6s linear infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loading::after { animation: none; }
 }

@@ -98,6 +98,13 @@
   --accent-border: var(--mint-200);
   --ink-on-accent: var(--neutral-900);         /* 10.4:1 on mint */
 
+  /* Control tracks — switch/slider rails. A background needs its own token:
+     using a --border-* token as a fill (the pre-P56 habit) is dishonest, and
+     --neutral-surface is invisible against --surface. */
+  --control-track: var(--neutral-300);
+  --control-track-hover: var(--neutral-600);
+  --control-knob: var(--surface);
+
   /* ============================================
      6. Semantic colours (brief §4.4)
      Status indicators use {sem}-surface + {sem}-fg.
@@ -295,6 +302,10 @@
   --dk-accent-soft-hover: #1D4238;
   --dk-accent-border: #2D6B57;
 
+  --dk-control-track: #444840;
+  --dk-control-track-hover: #5F635A;
+  --dk-control-knob: #E7EAE2;
+
   --dk-success-surface: #16301F;
   --dk-success-border: #24492F;
   --dk-success-fg: #7BD79B;
@@ -348,6 +359,10 @@
   --accent-soft-hover: var(--dk-accent-soft-hover);
   --accent-border: var(--dk-accent-border);
 
+  --control-track: var(--dk-control-track);
+  --control-track-hover: var(--dk-control-track-hover);
+  --control-knob: var(--dk-control-knob);
+
   --success-surface: var(--dk-success-surface);
   --success-border: var(--dk-success-border);
   --success-fg: var(--dk-success-fg);
@@ -400,6 +415,10 @@
     --accent-soft: var(--dk-accent-soft);
     --accent-soft-hover: var(--dk-accent-soft-hover);
     --accent-border: var(--dk-accent-border);
+
+    --control-track: var(--dk-control-track);
+    --control-track-hover: var(--dk-control-track-hover);
+    --control-knob: var(--dk-control-knob);
 
     --success-surface: var(--dk-success-surface);
     --success-border: var(--dk-success-border);

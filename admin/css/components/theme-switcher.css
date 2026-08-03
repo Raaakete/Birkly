@@ -1,20 +1,21 @@
 /* ============================================
-   Theme Switcher Component
+   Birkly Admin — Theme switcher (P56)
+   ============================================
+
+   The switcher is a plain `.dropdown` + `.dropdown-menu` + `.dropdown-item`
+   (see admin/partials/theme-switcher.php). Menu surface, width and the
+   selected-item highlight all come from components/dropdowns.css.
+
+   `.theme-switcher-dropdown` and `.theme-switcher-menu` carry no styles —
+   they are query hooks for admin/js/theme.js and stay in the markup.
+
+   What is genuinely local: only one of the three trigger glyphs is shown at
+   a time, and theme.js picks it with `.is-active`.
    ============================================ */
 
 .theme-switcher-wrap {
   display: inline-flex;
   align-items: stretch;
-}
-
-.theme-switcher-dropdown {
-  display: inline-flex;
-  align-items: stretch;
-  position: relative;
-}
-
-.theme-switcher-trigger {
-  position: relative;
 }
 
 .theme-switcher-trigger-icon {
@@ -25,13 +26,4 @@
 
 .theme-switcher-trigger-icon.is-active {
   display: inline-flex;
-}
-
-.theme-switcher-menu {
-  min-width: 180px;
-}
-
-.theme-switcher-menu .theme-option.active {
-  background: var(--bg-hover, #f3f4f6);
-  font-weight: 600;
 }

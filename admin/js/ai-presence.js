@@ -234,7 +234,7 @@
             var label = src.label || src.url || (src.ref && src.ref.label) || 'Source';
             var meta = (src.role || '') + (src.type ? ' · ' + src.type : '');
             if (src.link_status && src.link_status !== 'unknown') meta += ' · ' + src.link_status;
-            li.innerHTML = '<strong>' + escapeHtml(label) + '</strong> <span class="text-muted">' +
+            li.innerHTML = '<strong>' + escapeHtml(label) + '</strong> <span class="u-fg-secondary">' +
                 escapeHtml(meta) + '</span>' +
                 (src.url ? ' <a href="' + escapeHtml(src.url) + '" target="_blank" rel="noopener">↗</a>' : '') +
                 (onRemove ? ' <button type="button" class="btn-link ap-remove-source" data-idx="' + idx + '">Remove</button>' : '');
@@ -361,7 +361,7 @@
         if (!list) return;
         list.innerHTML = '';
         if (!results || !results.length) {
-            list.innerHTML = '<li class="text-muted">No external links to check yet.</li>';
+            list.innerHTML = '<li class="u-fg-secondary">No external links to check yet.</li>';
             return;
         }
         results.forEach(function (row) {
@@ -1141,7 +1141,7 @@
             var li = document.createElement('li');
             li.innerHTML = '<strong>' + escapeHtml(ref.label || ref.collection || ref.entry_id) + '</strong> ' +
                 '<span class="badge">' + escapeHtml(ref.role || 'reference') + '</span> ' +
-                '<span class="text-muted">(' + escapeHtml(ref.ref_type) + ')</span>' +
+                '<span class="u-fg-secondary">(' + escapeHtml(ref.ref_type) + ')</span>' +
                 (state.canEdit ? ' <button type="button" class="btn-link ap-remove-connected" data-idx="' +
                     idx + '">Remove</button>' : '');
             list.appendChild(li);
@@ -1176,9 +1176,9 @@
         } else {
             html += '<p class="badge">' + escapeHtml(claim.status || 'pending_review') + '</p>';
         }
-        if (claim.notes) html += '<p class="text-muted">' + escapeHtml(claim.notes) + '</p>';
+        if (claim.notes) html += '<p class="u-fg-secondary">' + escapeHtml(claim.notes) + '</p>';
         var srcCount = (claim.sources || []).length;
-        if (srcCount) html += '<p class="text-muted">' + srcCount + ' direct source link(s)</p>';
+        if (srcCount) html += '<p class="u-fg-secondary">' + srcCount + ' direct source link(s)</p>';
         el.innerHTML = html;
         var sel = el.querySelector('.ap-claim-status');
         if (sel) {
@@ -1231,7 +1231,7 @@
             li.innerHTML = escapeHtml(ev.title || ev.url || ev.id) +
                 ' <span class="badge">' + escapeHtml(ev.type || 'other') + '</span> ' +
                 '<span class="badge">' + escapeHtml(ev.verification_status || 'unverified') + '</span>' +
-                (ev.rating ? ' <span class="text-muted">' + escapeHtml(String(ev.rating)) + '★</span>' : '') +
+                (ev.rating ? ' <span class="u-fg-secondary">' + escapeHtml(String(ev.rating)) + '★</span>' : '') +
                 (ev.link_status && ev.link_status !== 'unknown' ?
                     ' <span class="badge">' + escapeHtml(ev.link_status) + '</span>' : '') +
                 (state.canEdit ?
@@ -1320,7 +1320,7 @@
         list.innerHTML = '';
         list.className = 'ap-version-timeline';
         if (!state.versions.length) {
-            list.innerHTML = '<li class="text-muted">' + escapeHtml(t('ag_no_versions', 'No published versions yet.')) + '</li>';
+            list.innerHTML = '<li class="u-fg-secondary">' + escapeHtml(t('ag_no_versions', 'No published versions yet.')) + '</li>';
             return;
         }
         state.versions.forEach(function (v) {
@@ -1334,7 +1334,7 @@
                 '<div class="ap-version-timeline-marker" aria-hidden="true"></div>' +
                 '<div class="ap-version-timeline-body">' +
                 '<strong>' + escapeHtml(t('ag_version_label', 'Version {n}').replace('{n}', String(v.version))) + '</strong>' +
-                '<span class="text-muted">' + escapeHtml(when) + summary + '</span>' +
+                '<span class="u-fg-secondary">' + escapeHtml(when) + summary + '</span>' +
                 (jsonUrl ? ' <button type="button" class="btn-link ap-version-open-json" data-version="' +
                     escapeHtml(String(v.version)) + '">' + escapeHtml(t('ag_view_json', 'View JSON')) + '</button>' : '') +
                 '</div>';
@@ -1363,7 +1363,7 @@
             card.innerHTML =
                 '<h4>' + escapeHtml(prod.name || 'Unnamed') + '</h4>' +
                 '<span class="badge">' + escapeHtml(prod.type || 'product') + '</span>' +
-                (prod.category ? ' <span class="text-muted">' + escapeHtml(prod.category) + '</span>' : '') +
+                (prod.category ? ' <span class="u-fg-secondary">' + escapeHtml(prod.category) + '</span>' : '') +
                 (prod.media_url || prod.external_image_url ?
                     '<img class="ap-product-card-thumb" src="' +
                     escapeHtml(prod.media_url || prod.external_image_url) + '" alt="">' : '') +
@@ -1390,7 +1390,7 @@
             li.innerHTML = '<strong>' + escapeHtml(rel.name || 'Unnamed') + '</strong> ' +
                 '<span class="badge">' + escapeHtml(rel.type || 'partner') + '</span>' +
                 (rel.url ? ' <a href="' + escapeHtml(rel.url) + '" target="_blank" rel="noopener">Link</a>' : '') +
-                (rel.description ? '<p class="text-muted">' + escapeHtml(rel.description) + '</p>' : '') +
+                (rel.description ? '<p class="u-fg-secondary">' + escapeHtml(rel.description) + '</p>' : '') +
                 (state.canEdit ? ' <button type="button" class="btn-link ap-remove-relationship" data-idx="' +
                     idx + '">Remove</button>' : '');
             list.appendChild(li);
