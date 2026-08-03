@@ -1,0 +1,233 @@
+/* ============================================
+   Birkly Admin — Legacy token compatibility layer (P56)
+   ============================================
+
+   WHY THIS FILE EXISTS
+   P56-D3 is a hard cut, but P56-D4 forbids forcing plugin CSS rewrites.
+   Official plugins reference legacy token names (Commerce alone has ~187
+   var(--…) references). This file maps every legacy name onto a canonical
+   token from core/variables.css so:
+
+     1. Plugin CSS keeps working and picks up the new design automatically.
+     2. Un-migrated admin page CSS renders in the new language immediately,
+        so the admin is visually coherent before every page is rewritten.
+
+   RULES
+   - Aliases only. No selectors, no rules, no !important.
+   - Core admin CSS must NOT use any name defined here (CI-enforced).
+     If you are writing new admin CSS, use core/variables.css.
+   - This file SHRINKS as surfaces migrate. Target at M11 exit: <= 40 aliases
+     covering only names used by plugin code outside admin/.
+
+   Owner: cms-developer. Removal: follow-up plugin-adoption phase.
+   Reference: internal/planning/reviews/P56-M1-design-language-brief.md §9.3
+   ============================================ */
+
+:root {
+  /* ---- Brand / primary ---- */
+  --color-primary: var(--accent);
+  --color-primary-hover: var(--accent-hover);
+  --color-primary-active: var(--accent-active);
+  --color-primary-strong: var(--accent-text);
+  --color-primary-soft: var(--accent-soft);
+  --primary-color: var(--accent);
+  --brand-primary: var(--accent-text);
+  --brand-secondary: var(--accent);
+
+  --primary-50: var(--mint-50);
+  --primary-100: var(--mint-100);
+  --primary-200: var(--mint-200);
+  --primary-300: var(--mint-300);
+  --primary-400: var(--mint-400);
+  --primary-500: var(--mint-500);
+  --primary-600: var(--mint-600);
+  --primary-700: var(--mint-700);
+  --primary-800: var(--mint-800);
+  --primary-900: var(--mint-900);
+  --primary-light: var(--mint-100);
+  --primary: var(--accent);
+
+  /* ---- Neutral scales (legacy warm + legacy cool grey collapse onto one ramp) ---- */
+  --color-neutral-50: var(--neutral-50);
+  --color-neutral-100: var(--neutral-50);
+  --color-neutral-200: var(--neutral-100);
+  --color-neutral-300: var(--neutral-200);
+  --color-neutral-400: var(--neutral-300);
+  --color-neutral-500: var(--neutral-400);
+  --color-neutral-600: var(--neutral-500);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-900: var(--neutral-900);
+
+  --gray-50: var(--neutral-50);
+  --gray-100: var(--neutral-100);
+  --gray-200: var(--neutral-200);
+  --gray-300: var(--neutral-300);
+  --gray-400: var(--neutral-500);
+  --gray-500: var(--neutral-600);
+  --gray-600: var(--neutral-700);
+  --gray-700: var(--neutral-800);
+  --gray-800: var(--neutral-900);
+  --gray-900: var(--neutral-950);
+
+  --color-black: var(--text-primary);
+  --color-white: var(--surface);
+  --color-base-white: var(--surface);
+  --color-darkest: var(--neutral-800);
+  --color-dark: var(--text-secondary);
+  --color-mid: var(--neutral-600);
+  --color-light: var(--border-subtle);
+  --color-lightest: var(--surface-sunken);
+  --color-secondary: var(--neutral-500);
+  --color-positiv: var(--success-surface);
+  --color-negativ: var(--danger-surface);
+
+  /* ---- Surfaces ---- */
+  --bg-primary: var(--surface);
+  --bg-secondary: var(--surface-sunken);
+  --bg-tertiary: var(--surface-sunken);
+  --bg-elevated: var(--surface);
+  --bg-hover: var(--surface-hover);
+  --bg-overlay: var(--overlay);
+  --background-global: var(--canvas);
+  --surface-secondary: var(--surface-sunken);
+  --color-surface-muted: var(--surface-sunken);
+
+  /* ---- Borders ---- */
+  --border-light: var(--border-subtle);
+  --border-medium: var(--border-default);
+  --border-color: var(--border-subtle);
+
+  /* ---- Semantic ramps ----
+     Legacy code uses numeric steps; each maps onto the nearest new role.
+     Note: legacy "error" is the new "danger". */
+  --success-50: var(--success-surface);
+  --success-100: var(--success-surface);
+  --success-200: var(--success-border);
+  --success-500: var(--success-solid);
+  --success-600: var(--success-fg);
+  --success-700: var(--success-fg);
+  --color-success: var(--success-fg);
+  --color-success-light: var(--success-surface);
+
+  --error-50: var(--danger-surface);
+  --error-100: var(--danger-surface);
+  --error-200: var(--danger-border);
+  --error-500: var(--danger-solid);
+  --error-600: var(--danger-fg);
+  --error-700: var(--danger-fg);
+  --color-error: var(--danger-fg);
+  --color-error-light: var(--danger-surface);
+  --danger-100: var(--danger-surface);
+  --danger-600: var(--danger-fg);
+  --danger-700: var(--danger-fg);
+
+  --warning-50: var(--warning-surface);
+  --warning-100: var(--warning-surface);
+  --warning-200: var(--warning-border);
+  --warning-500: var(--warning-solid);
+  --warning-600: var(--warning-fg);
+  --warning-700: var(--warning-fg);
+  --color-warning: var(--warning-fg);
+  --color-warning-light: var(--warning-surface);
+
+  --info-50: var(--info-surface);
+  --info-100: var(--info-surface);
+  --info-200: var(--info-border);
+  --info-500: var(--info-solid);
+  --info-600: var(--info-fg);
+  --info-700: var(--info-fg);
+
+  --notif-color-blue: var(--info-surface);
+  --notif-color-green: var(--success-surface);
+  --notif-color-orange: var(--warning-surface);
+  --notif-color-red: var(--danger-surface);
+  --notif-color-purple: var(--neutral-surface);
+  --notif-color-gray: var(--neutral-surface);
+
+  /* ---- Spacing: legacy px scale + the undefined --space-* word scale ----
+     The word scale (--space-xs … --space-xl) was referenced 176x in
+     ai-presence.css / agent-guide-wizard.css but never defined; every use
+     silently fell back. Defining it here puts those surfaces on the grid
+     until they migrate. */
+  --spacing-xxs: var(--space-1);
+  --spacing-xs: var(--space-2);
+  --spacing-s: var(--space-3);
+  --spacing-m: var(--space-4);
+  --spacing-l: var(--space-6);
+  --spacing-xl: var(--space-10);
+  --spacing-xxl: var(--space-16);
+
+  --space-xs: var(--space-2);
+  --space-s: var(--space-3);
+  --space-m: var(--space-4);
+  --space-l: var(--space-6);
+  --space-xl: var(--space-8);
+
+  /* ---- Radius ---- */
+  --radius-xl: var(--radius-lg);
+  --radius-2xl: var(--radius-lg);
+  --radius-full: var(--radius-pill);
+  --border-radius-none: var(--radius-none);
+  --border-radius-s: var(--radius-sm);
+  --border-radius-m: var(--radius-sm);
+  --border-radius-l: var(--radius-md);
+  --border-radius-xl: var(--radius-lg);
+  --border-radius-round: var(--radius-pill);
+
+  /* ---- Shadows ---- */
+  --shadow-sm: var(--elevation-1);
+  --shadow-md: var(--elevation-2);
+  --shadow-lg: var(--elevation-2);
+  --shadow-xl: var(--elevation-3);
+
+  /* ---- Motion ---- */
+  --transition-fast: var(--motion-fast) var(--ease-out);
+  --transition-normal: var(--motion-base) var(--ease-out);
+  --transition-slow: var(--motion-slow) var(--ease-out);
+
+  /* ---- Typography ---- */
+  --font-primary: var(--font-sans);
+  --font-secondary: var(--font-sans);
+  --font-article: var(--font-sans);
+  --font-size-default: var(--text-base);
+  --font-size-large: var(--text-lg);
+  --font-size-small: var(--text-xs);
+  --font-color-default: var(--text-secondary);
+  --font-color-dark: var(--text-primary);
+  --font-color-light: var(--text-tertiary);
+  --font-weight-light: var(--weight-regular);
+  --font-weight-default: var(--weight-regular);
+  --font-weight-strong: var(--weight-medium);
+  --font-weight-bold: var(--weight-semibold);
+  --font-lineheight-default: var(--leading-normal);
+  --font-lineheight-large: var(--leading-relaxed);
+  --font-lineheight-small: var(--leading-snug);
+  --font-lineheight-xsmall: var(--leading-tight);
+
+  /* ---- Focus ---- */
+  --focus-ring-color: var(--focus-color);
+  --focus-ring-subtle: var(--focus-ring);
+  --focus-ring-tight: var(--focus-ring);
+  --focus-glow: var(--focus-ring);
+  --focus-glow-strong: var(--focus-ring);
+
+  /* ---- Admin chrome ---- */
+  --admin-chrome-tile-size: var(--chrome-row);
+  --admin-chrome-row-height: var(--chrome-row);
+  --admin-chrome-stack-gap: var(--chrome-stack-gap);
+  --admin-chrome-content-gap: var(--chrome-content-gap);
+  --admin-control-size: var(--control-md);
+  --admin-sticky-save-top: 0;
+  --admin-shell-edge-padding: var(--shell-edge-padding);
+
+  /* ---- Layout ---- */
+  --container-width-large: var(--page-max);
+  --container-width-small: var(--page-max-narrow);
+  --grid-gap: var(--space-5);
+  --grid-gap-none: 0;
+  --grid-gap-small: var(--space-1);
+  --grid-gap-large: var(--space-16);
+  --breakpoint-mobile: var(--bp-sm);
+  --breakpoint-tablet: var(--bp-xl);
+}
