@@ -132,20 +132,16 @@ window.Birkly.MediaModal = {
             }
         } catch (_) {}
         
-        // Prevent clicks inside the dialog from bubbling to the overlay
-        const inner = this.modal.querySelector('.media-modal');
-        if (inner) {
-            inner.addEventListener('click', (e) => e.stopPropagation());
-        }
-
-        // Bind actions (CSP-safe — no inline handlers)
+        // Bind actions on the overlay (CSP-safe — no inline handlers).
+        // Backdrop close uses e.target === this.modal, so inner dialog clicks
+        // must NOT stopPropagation or Cancel / Upload never reach this handler.
         this.modal.addEventListener('click', (e) => {
             if (e.target === this.modal) {
                 this.close();
                 return;
             }
             const actionEl = e.target.closest('[data-media-modal-action]');
-            if (!actionEl) return;
+            if (!actionEl || !this.modal.contains(actionEl)) return;
             const action = actionEl.getAttribute('data-media-modal-action');
             if (action === 'close') {
                 this.close();
@@ -273,20 +269,26 @@ window.Birkly.MediaModal = {
             const result = await response.json();
             
             if (result.status === 'ok' && result.data) {
-                if (global.BirklyFeedback && global.BirklyFeedback.toast) {
-                    global.BirklyFeedback.toast('Media uploaded', 'success');
+                if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+                    window.BirklyFeedback.toast('Media uploaded', 'success');
                 }
                 await this.loadMedia();
                 this.selectMedia(result.data);
             } else {
                 const msg = result.message || result.error || 'Unknown error';
-                if (global.BirklyFeedback && global.BirklyFeedback.toast) {
-                    global.BirklyFeedback.toast('Upload failed: ' + msg, 'error');
+                if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+                    window.BirklyFeedback.toast('Upload failed: ' + msg, 'error');
+                } else {
+                    alert('Upload failed: ' + msg);
                 }
             }
         } catch (error) {
             console.error('Upload error:', error);
-            BirklyFeedback.toast('Upload failed: ' + error.message, 'error')
+            if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+                window.BirklyFeedback.toast('Upload failed: ' + error.message, 'error');
+            } else {
+                alert('Upload failed: ' + (error && error.message ? error.message : 'Unknown error'));
+            }
         }
     },
     
