@@ -31,13 +31,13 @@ $starterCards = [
 ?>
 
 <div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>" data-ai-step="<?= $showAiOnboardingStep ? '1' : '0' ?>">
-    <div class="onboarding-container">
-        <div class="onboarding-header">
+    <div class="onboarding-container u-stack-6">
+        <div class="onboarding-header u-row">
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="onboarding-logo">
             <h1 class="onboarding-header-title"><?= htmlspecialchars($projectName) ?></h1>
         </div>
 
-        <div class="onboarding-progress" id="onboarding-progress" style="display: none;">
+        <div class="onboarding-progress u-stack-4" id="onboarding-progress" hidden>
             <div class="progress-track">
                 <div class="progress-fill" id="progress-fill"></div>
             </div>
@@ -52,30 +52,30 @@ $starterCards = [
         </div>
 
         <!-- Step 0: First user -->
-        <div class="onboarding-step" id="step-first-user" data-step="0" style="display: none;">
+        <div class="onboarding-step" id="step-first-user" data-step="0" hidden>
             <div class="onboarding-content">
                 <div class="step-header step-header--brand">
                     <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="step-brand-logo">
                     <h2 class="step-title"><?= __('admin.create_admin_account') ?></h2>
                 </div>
-                <form id="first-user-form" class="onboarding-form">
-                    <div class="form-group">
-                        <label for="first-user-name"><?= __('admin.name') ?></label>
-                        <input type="text" id="first-user-name" name="name" required autocomplete="name" placeholder="John Doe" minlength="2">
+                <form id="first-user-form" class="onboarding-form u-stack-5">
+                    <div class="field">
+                        <label class="field-label" for="first-user-name"><?= __('admin.name') ?></label>
+                        <input class="input" type="text" id="first-user-name" name="name" required autocomplete="name" placeholder="John Doe" minlength="2">
                     </div>
-                    <div class="form-group">
-                        <label for="first-user-email"><?= __('admin.email_address') ?></label>
-                        <input type="email" id="first-user-email" name="email" required autocomplete="email" placeholder="admin@example.com">
+                    <div class="field">
+                        <label class="field-label" for="first-user-email"><?= __('admin.email_address') ?></label>
+                        <input class="input" type="email" id="first-user-email" name="email" required autocomplete="email" placeholder="admin@example.com">
                     </div>
-                    <div class="form-group">
-                        <label for="first-user-password"><?= __('admin.password') ?></label>
-                        <input type="password" id="first-user-password" name="password" required autocomplete="new-password" minlength="8">
+                    <div class="field">
+                        <label class="field-label" for="first-user-password"><?= __('admin.password') ?></label>
+                        <input class="input" type="password" id="first-user-password" name="password" required autocomplete="new-password" minlength="8">
                     </div>
-                    <div class="form-group">
-                        <label for="first-user-password-confirm"><?= __('admin.confirm_password') ?></label>
-                        <input type="password" id="first-user-password-confirm" name="password_confirm" required autocomplete="new-password" minlength="8">
+                    <div class="field">
+                        <label class="field-label" for="first-user-password-confirm"><?= __('admin.confirm_password') ?></label>
+                        <input class="input" type="password" id="first-user-password-confirm" name="password_confirm" required autocomplete="new-password" minlength="8">
                     </div>
-                    <div id="first-user-error" class="message error" style="display: none;" aria-live="polite" role="alert"></div>
+                    <div id="first-user-error" class="callout callout-danger" hidden aria-live="polite" role="alert"></div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-lg"><?= __('admin.create_admin_account') ?></button>
                     </div>
@@ -86,7 +86,7 @@ $starterCards = [
         <!-- Step 1: Welcome + running info (merged) -->
         <div class="onboarding-step" id="step-welcome" data-step="1">
             <div class="onboarding-content">
-                <div class="welcome-header">
+                <div class="welcome-header u-center-col u-stack-2">
                     <h1><?= __('admin.welcome_to_birkly_exclamation') ?></h1>
                     <p class="welcome-subtitle">Birkly is installed and running. A few quick steps to finish setup.</p>
                 </div>
@@ -94,27 +94,27 @@ $starterCards = [
                     <p id="install-context-body">Loading…</p>
                 </div>
                 <div class="onboarding-actions onboarding-actions--split">
-                    <button type="button" class="btn btn-outline btn-muted" data-onboarding-action="skip"><?= __('admin.skip_setup') ?></button>
+                    <button type="button" class="btn btn-ghost" data-onboarding-action="skip"><?= __('admin.skip_setup') ?></button>
                     <button type="button" class="btn btn-primary btn-lg" data-onboarding-action="next"><?= __('admin.get_started') ?></button>
                 </div>
             </div>
         </div>
 
         <!-- Step 2: Site info -->
-        <div class="onboarding-step" id="step-site-info" data-step="2" style="display: none;">
+        <div class="onboarding-step" id="step-site-info" data-step="2" hidden>
             <div class="onboarding-content">
                 <div class="step-header">
                     <h2 class="step-title"><?= __('admin.project_information') ?></h2>
                     <p class="step-subtitle"><?= __('admin.project_name_help') ?></p>
                 </div>
-                <form id="site-info-form" class="onboarding-form" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="project-name"><?= __('admin.project_name') ?></label>
-                        <input type="text" id="project-name" name="project_name" placeholder="<?= __('admin.my_project') ?>" required minlength="2">
+                <form id="site-info-form" class="onboarding-form u-stack-5" enctype="multipart/form-data">
+                    <div class="field">
+                        <label class="field-label" for="project-name"><?= __('admin.project_name') ?></label>
+                        <input class="input" type="text" id="project-name" name="project_name" placeholder="<?= __('admin.my_project') ?>" required minlength="2">
                     </div>
-                    <div class="form-group">
-                        <label for="project-description"><?= __('admin.project_description') ?> <span class="label-optional">(<?= __('admin.optional') ?>)</span></label>
-                        <textarea id="project-description" name="project_description" rows="3"></textarea>
+                    <div class="field">
+                        <label class="field-label" for="project-description"><?= __('admin.project_description') ?> <span class="label-optional">(<?= __('admin.optional') ?>)</span></label>
+                        <textarea class="textarea" id="project-description" name="project_description" rows="3"></textarea>
                     </div>
                     <p class="onboarding-hosting-defer"><?= __('admin.onboarding_hosting_defer') ?></p>
                     <div class="onboarding-actions onboarding-actions--split">
@@ -126,7 +126,7 @@ $starterCards = [
         </div>
 
         <!-- Step 3: Starter templates -->
-        <div class="onboarding-step" id="step-starter-templates" data-step="3" style="display: none;">
+        <div class="onboarding-step" id="step-starter-templates" data-step="3" hidden>
             <div class="onboarding-content">
                 <div class="step-header">
                     <h2 class="step-title">Choose a starter template</h2>
@@ -155,7 +155,7 @@ $starterCards = [
                 <div class="onboarding-actions onboarding-actions--split">
                     <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                     <div class="onboarding-actions-right">
-                        <button type="button" class="btn btn-outline btn-muted" data-onboarding-action="skip-starter">Skip</button>
+                        <button type="button" class="btn btn-ghost" data-onboarding-action="skip-starter">Skip</button>
                         <button type="button" class="btn btn-primary" data-onboarding-action="apply-starter" id="starter-continue" disabled><?= __('admin.continue') ?></button>
                     </div>
                 </div>
@@ -164,7 +164,7 @@ $starterCards = [
 
         <!-- Step 4: Connect AI (optional, web server only) -->
         <?php if ($showAiOnboardingStep): ?>
-        <div class="onboarding-step" id="step-connect-ai" data-step="4" style="display: none;">
+        <div class="onboarding-step" id="step-connect-ai" data-step="4" hidden>
             <div class="onboarding-content">
                 <div class="step-header step-header--optional">
                     <div class="step-optional-badge"><?= __('admin.optional') ?></div>
@@ -178,50 +178,52 @@ $starterCards = [
                 </div>
 
                 <div id="ai-panel-chat" class="ai-mode-panel">
-                    <div class="ai-wizard" id="onboarding-ai-wizard">
-                        <div class="ai-wizard-step">
+                    <div class="ai-wizard u-stack-5" id="onboarding-ai-wizard">
+                        <div class="ai-wizard-step u-stack-3 u-align-start">
                             <label for="onboarding-ai-provider"><?= __('admin.ai_provider') ?></label>
                             <select id="onboarding-ai-provider" class="input"><option value="">Loading providers…</option></select>
                         </div>
-                        <div class="ai-wizard-step">
-                            <div class="form-group" id="onboarding-api-url-group" style="display:none;">
-                                <label for="onboarding-ai-api-url">API URL</label>
+                        <div class="ai-wizard-step u-stack-3 u-align-start">
+                            <div class="field u-w-full" id="onboarding-api-url-group" hidden>
+                                <label class="field-label" for="onboarding-ai-api-url">API URL</label>
                                 <input type="url" id="onboarding-ai-api-url" class="input" placeholder="http://localhost:11434">
                             </div>
-                            <div class="form-group" id="onboarding-api-key-group">
-                                <label for="onboarding-ai-api-key"><?= __('admin.api_key') ?></label>
+                            <div class="field u-w-full" id="onboarding-api-key-group">
+                                <label class="field-label" for="onboarding-ai-api-key"><?= __('admin.api_key') ?></label>
                                 <input type="password" id="onboarding-ai-api-key" class="input" autocomplete="off">
                             </div>
-                            <div id="onboarding-ollama-hint" class="ollama-hint-box" style="display:none;">
+                            <div id="onboarding-ollama-hint" class="ollama-hint-box u-w-full" hidden>
                                 <strong>Ollama runs locally</strong>
                                 <p>No API key needed.</p>
                             </div>
-                            <button type="button" class="btn btn-secondary btn-sm" id="onboarding-test-ai-btn">Test connection</button>
-                            <span id="onboarding-test-ai-status"></span>
+                            <div class="u-cluster">
+                                <button type="button" class="btn btn-secondary btn-sm" id="onboarding-test-ai-btn">Test connection</button>
+                                <span class="u-text-sm u-fg-secondary" id="onboarding-test-ai-status"></span>
+                            </div>
                         </div>
-                        <div class="ai-wizard-step">
+                        <div class="ai-wizard-step u-stack-3 u-align-start">
                             <label for="onboarding-ai-role"><?= __('admin.role') ?></label>
                             <select id="onboarding-ai-role" class="input"><option value="author">Author</option></select>
-                            <label class="checkbox-label" style="margin-top:1rem;display:block;">
+                            <label class="check">
                                 <input type="checkbox" id="onboarding-ai-require-approval" checked>
-                                Require approval for AI actions
+                                <span>Require approval for AI actions</span>
                             </label>
                         </div>
                     </div>
                 </div>
 
                 <div id="ai-panel-external" class="ai-mode-panel" hidden>
-                    <div class="install-context-card">
+                    <div class="install-context-card u-stack-3">
                         <p><strong>Let outside AI tools access your CMS</strong></p>
                         <p>Use <strong>Settings → AI &amp; Integrations → MCP</strong> to create inbound endpoints for Claude Desktop, Cursor, or custom agents. Each endpoint gets its own URL and API key.</p>
-                        <a href="<?= admin_url('settings') ?>#mcp-connections" class="btn btn-secondary btn-sm" target="_blank">Open MCP settings</a>
+                        <a href="<?= admin_url('settings') ?>#mcp-connections" class="btn btn-secondary btn-sm u-self-start" target="_blank">Open MCP settings</a>
                     </div>
                 </div>
 
                 <div class="onboarding-actions onboarding-actions--split onboarding-actions--ai">
                     <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                     <div class="onboarding-actions-right">
-                        <button type="button" class="btn btn-outline btn-muted ai-skip-btn" data-onboarding-action="skip-ai"><?= __('admin.skip_for_now') ?></button>
+                        <button type="button" class="btn btn-ghost ai-skip-btn" data-onboarding-action="skip-ai"><?= __('admin.skip_for_now') ?></button>
                         <button type="button" class="btn btn-primary" id="onboarding-save-ai-btn" data-onboarding-action="save-ai"><?= __('admin.connect_ai') ?></button>
                     </div>
                 </div>
