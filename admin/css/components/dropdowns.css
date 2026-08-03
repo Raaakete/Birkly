@@ -1,409 +1,305 @@
 /* ============================================
-   Unified Dropdown System - Simple Wrapper
+   Birkly Admin — Dropdowns / menus (P56)
    ============================================
-   
-   Simple dropdown wrapper that can be used everywhere.
-   Just wrap your content in .dropdown and use .dropdown-menu for the menu.
-   
-   Usage:
-   <div class="dropdown">
-     <button class="dropdown-trigger">Click me</button>
-     <div class="dropdown-menu">
-       <a href="#" class="dropdown-item">Item 1</a>
-       <a href="#" class="dropdown-item">Item 2</a>
+
+   The old file carried 52 !important declarations fighting forms.css and
+   page CSS. This version wins on correct specificity instead.
+
+     <div class="dropdown">
+       <button class="dropdown-trigger" aria-expanded="false" aria-haspopup="true">…</button>
+       <div class="dropdown-menu">
+         <button class="dropdown-item">
+           <span class="dropdown-item-icon">…</span>
+           <span class="dropdown-item-label">Label</span>
+         </button>
+       </div>
      </div>
-   </div>
-   
+
+   Menus sit at --z-popover (above modals) so menus inside dialogs work.
+   Reference: P56-M1 brief §5.3, §7.2
    ============================================ */
 
-/* Dropdown Container - Simple wrapper */
 .dropdown {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  min-width: 0;
 }
 
-/* Dropdown Menu - Hidden by default */
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + var(--space-2, 0.5rem));
-  left: 0;
-  min-width: 200px;
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-s, 4px);
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
-  z-index: 1000;
-  padding: var(--space-1, 0.25rem) 0;
-  display: none;
-  overflow: hidden;
-}
-
-/* Dropdown Menu - Right Aligned */
-.dropdown-menu-right {
-  left: auto;
-  right: 0;
-}
-
-/* Prevent dropdown from going off-screen to the right */
-.dropdown-menu-right {
-  left: auto;
-  right: 0;
-  /* Ensure it doesn't go off-screen */
-  max-width: calc(100vw - var(--space-4, 1rem));
-}
-
-/* If dropdown would go off-screen on generic pages, flip alignment */
-@media (max-width: 768px) {
-  .dropdown-menu-right:not(.notifications-dropdown) {
-    right: auto;
-    left: 0;
-  }
-}
-
-/* Topbar notifications — keep anchored to the right edge on mobile */
-.admin-topbar .notifications-dropdown.dropdown-menu-right,
-.notifications-wrapper .notifications-dropdown {
-  right: 0;
-  left: auto;
-}
-
-/* Dropdown Menu - Show when active */
-.dropdown-menu.show,
-.dropdown-menu.active {
-  display: block;
-}
-
-/* Dropdown Item */
-.dropdown-item {
-  display: flex;
+.dropdown-trigger {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
-  width: 100%;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  color: var(--text-primary, #20221D);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  line-height: 1.5;
-  transition: background-color var(--transition-fast, 150ms ease);
-  text-align: left;
-  border: none;
-  background: none;
+  gap: var(--space-2);
+  min-width: 0;
   cursor: pointer;
-  white-space: nowrap;
+  font-family: inherit;
 }
 
-.dropdown-item:hover {
-  background: var(--bg-hover, #f3f4f6);
-  color: var(--text-primary, #20221D);
+.dropdown-trigger[aria-expanded="true"] .dropdown-chevron,
+.dropdown-trigger[aria-expanded="true"] .user-menu-chevron {
+  transform: rotate(180deg);
 }
 
-.dropdown-item:focus {
-  outline: none;
-  background: var(--bg-hover, #f3f4f6);
-}
-
-/* Dropdown Item - With Icon */
-.dropdown-item-icon {
+.dropdown-chevron {
+  display: inline-flex;
   flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  color: var(--text-secondary, #72746F);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.dropdown-item:hover .dropdown-item-icon {
-  color: var(--text-primary, #20221D);
-}
-
-/* Dropdown Item - Label */
-.dropdown-item-label {
-  flex: 1;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-primary, #20221D);
-  line-height: 1.5;
-}
-
-/* Dropdown Divider */
-.dropdown-divider {
-  height: 1px;
-  background: var(--border-light, #f3f4f6);
-  margin: var(--space-1, 0.25rem) 0;
-  border: none;
-  padding: 0;
-}
-
-/* Dropdown Item - Danger/Destructive */
-.dropdown-item-danger {
-  color: var(--error-600, #dc2626);
-}
-
-.dropdown-item-danger:hover {
-  background: var(--error-50, #fef2f2);
-  color: var(--error-700, #b91c1c);
-}
-
-.dropdown-item-danger .dropdown-item-icon {
-  color: var(--error-600, #dc2626);
-}
-
-.dropdown-item-danger:hover .dropdown-item-icon {
-  color: var(--error-700, #b91c1c);
-}
-
-/* Dropdown Item - Disabled */
-.dropdown-item:disabled,
-.dropdown-item.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-/* Legacy Support - Keep old classes working */
-.collection-actions-menu {
-  position: absolute;
-  top: calc(100% + var(--space-2, 0.5rem));
-  right: 0;
-  min-width: 220px;
-  max-width: calc(100vw - var(--space-4, 1rem));
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-s, 4px);
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05));
-  z-index: 1000;
-  overflow: hidden;
-  padding: var(--space-1, 0.25rem) 0;
-  display: none;
-}
-
-.collection-actions-menu.show,
-.collection-actions-menu.active {
-  display: block;
-}
-
-.collection-actions-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3, 0.75rem);
-  width: 100%;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  color: var(--text-primary, #20221D);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color var(--transition-fast, 150ms ease);
-  text-align: left;
-  border: none;
-  background: none;
-  cursor: pointer;
-}
-
-.collection-actions-item:hover {
-  background: var(--bg-hover, #f3f4f6);
-}
-
-.collection-actions-item svg {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  color: var(--text-secondary, #72746F);
-}
-
-.collection-actions-item:hover svg {
-  color: var(--text-primary, #20221D);
-}
-
-.collection-actions-item span {
-  flex: 1;
-}
-
-/* Dropdown Menu - With Checkboxes (for column selection, etc.) */
-.dropdown-menu.columns-dropdown,
-.dropdown-menu:has(label),
-.dropdown-menu:has(input[type="checkbox"]) {
-  padding: var(--space-2, 0.5rem);
-}
-
-.dropdown-menu label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  font-size: 0.98em;
-  margin-bottom: var(--space-2, 0.5rem);
-  cursor: pointer;
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-}
-
-.dropdown-menu label:hover {
-  background: var(--bg-hover, #f3f4f6);
-}
-
-.dropdown-menu input[type="checkbox"] {
-  margin-right: var(--space-2, 0.5rem);
-  flex-shrink: 0;
-}
-
-/* Collection Actions Menu - Responsive positioning */
-@media (max-width: 768px) {
-  .collection-actions-menu.dropdown-menu-right {
-    right: auto;
-    left: 0;
-  }
+  color: var(--text-tertiary);
+  transition: transform var(--motion-fast) var(--ease-out);
 }
 
 /* ============================================
-   Custom Select Dropdown
-   ============================================
-   Converts native select elements to custom dropdowns
+   Menu surface
    ============================================ */
-
-/* Custom Select Container */
-.custom-select {
-  display: inline-block;
+.dropdown-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-start: 0;
+  z-index: var(--z-popover);
+  display: none;
+  flex-direction: column;
+  min-width: 11rem;
+  max-width: min(20rem, 90vw);
+  max-height: 20rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-2);
 }
 
-/* Custom Select Trigger Button */
+.dropdown-menu.show,
+.dropdown-menu.active,
+.dropdown-menu.open,
+.dropdown.open > .dropdown-menu,
+.dropdown.active > .dropdown-menu {
+  display: flex;
+}
+
+.dropdown-menu-right,
+.dropdown-menu--right {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+
+.dropdown-menu--up {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + var(--space-1));
+}
+
+/* ============================================
+   Menu items
+   ============================================ */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: var(--control-md);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  text-align: start;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.dropdown-item:hover:not(:disabled),
+.dropdown-item:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.dropdown-item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: -2px;
+}
+
+.dropdown-item:disabled,
+.dropdown-item[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropdown-item[aria-selected="true"],
+.dropdown-item.active {
+  background: var(--surface-selected);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+.dropdown-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+.dropdown-item-icon svg,
+.dropdown-item-icon .birkly-icon { width: 1rem; height: 1rem; }
+
+.dropdown-item:hover .dropdown-item-icon { color: var(--text-secondary); }
+
+.dropdown-item-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-item-meta {
+  flex-shrink: 0;
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.dropdown-item-danger,
+.dropdown-item--danger { color: var(--danger-fg); }
+.dropdown-item-danger .dropdown-item-icon,
+.dropdown-item--danger .dropdown-item-icon { color: var(--danger-fg); }
+.dropdown-item-danger:hover,
+.dropdown-item--danger:hover {
+  background: var(--danger-surface);
+  color: var(--danger-fg);
+}
+
+.dropdown-divider,
+.dropdown-menu hr {
+  height: 1px;
+  margin: var(--space-1) 0;
+  border: none;
+  background: var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.dropdown-header,
+.dropdown-section-label {
+  padding: var(--space-2) var(--space-3) var(--space-1);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+.dropdown-empty {
+  padding: var(--space-4) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* ============================================
+   Custom select — a dropdown that behaves like a form control
+   ============================================ */
+.custom-select {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
 .custom-select-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-2, 0.5rem);
-  padding: 0.5rem 2.5rem 0.5rem 1rem;
-  min-height: 3.125rem;
-  width: auto;
-  box-sizing: border-box;
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: var(--radius-s, 4px);
-  background: var(--bg-elevated, #ffffff);
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4L6 8L10 4' stroke='%2372746F' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  background-size: 12px 12px;
-  color: var(--text-primary, #20221D);
-  font-size: 1rem;
-  line-height: 1.5;
+  gap: var(--space-2);
+  width: 100%;
+  height: var(--control-md);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
   font-family: inherit;
-  font-weight: 500;
+  font-size: var(--text-base);
   cursor: pointer;
-  transition: all var(--transition-fast, 150ms ease);
-  white-space: nowrap;
-  margin: 0;
-  outline: none;
+  transition: border-color var(--motion-fast) var(--ease-out);
 }
 
-.custom-select-trigger:hover {
-  background-color: var(--bg-hover, #f3f4f6);
-  border-color: var(--border-strong, #d1d5db);
+.custom-select-trigger:hover { border-color: var(--border-control-hover); }
+
+.custom-select-trigger:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+  border-color: var(--accent-focus);
 }
 
-.custom-select-trigger:focus,
-.custom-select-trigger[aria-expanded="true"] {
-  outline: none;
-  border-color: var(--primary-500);
-  box-shadow: var(--focus-ring-subtle);
-}
-
-/* Custom Select Menu */
 .custom-select-menu {
-  min-width: 200px;
-  max-width: 300px;
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-start: 0;
+  z-index: var(--z-popover);
+  display: none;
+  flex-direction: column;
+  min-width: 100%;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-2);
 }
 
-/* Custom Select Item - Selected State */
-.custom-select-item.selected {
-  background: var(--bg-hover, #f3f4f6);
-  font-weight: 600;
-}
+.custom-select-menu.show,
+.custom-select.open > .custom-select-menu { display: flex; }
 
-/* Legacy: Native Select Fallback Styling */
-select.collection-filter-select:not([data-custom-select="true"]),
-.collection-filter-select:not([data-custom-select="true"]) {
-  width: auto !important;
-  padding: 0.5rem 2.5rem 0.5rem 1rem !important;
-  box-sizing: border-box !important;
-  border: 1px solid var(--border-medium, #e5e7eb) !important;
-  border-radius: var(--radius-s, 4px) !important;
-  background: var(--bg-elevated, #ffffff) !important;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4L6 8L10 4' stroke='%2372746F' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 0.75rem center !important;
-  background-size: 12px 12px !important;
-  color: var(--text-primary, #20221D) !important;
-  font-size: 1rem !important;
-  line-height: 1.5 !important;
-  font-family: inherit !important;
-  font-weight: 500 !important;
-  cursor: pointer !important;
-  transition: all var(--transition-fast, 150ms ease) !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  vertical-align: middle !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
-  -moz-appearance: none !important;
-  margin: 0 !important;
-  outline: none !important;
-}
-
-.collection-filter-select:focus {
-  outline: none !important;
-  border-color: var(--primary-500) !important;
-  box-shadow: var(--focus-ring-subtle) !important;
-}
-
-/* Collection Actions Bar - Size Matching */
-/* Ensure filter select and trigger button match primary button height exactly */
-.collection-actions-bar-right select.collection-filter-select,
-.collection-actions-bar-right .collection-filter-select,
-.collection-actions-bar-right .collection-actions-trigger {
-  display: inline-flex;
+.custom-select-item {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: var(--admin-control-size, 2.625rem);
-  height: var(--admin-control-size, 2.625rem);
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+  gap: var(--space-2);
+  min-height: var(--control-md);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  text-align: start;
+  cursor: pointer;
 }
 
-.collection-actions-bar-right .collection-actions-trigger svg {
-  display: block;
-  flex-shrink: 0;
+.custom-select-item:hover { background: var(--surface-hover); }
+.custom-select-item[aria-selected="true"] {
+  background: var(--surface-selected);
+  font-weight: var(--weight-medium);
 }
 
-/* For btn-sm context (sub-collection pages) - match btn-sm height exactly */
-.collection-actions-bar-sm .collection-actions-bar-right select.collection-filter-select,
-.collection-actions-bar-sm .collection-actions-bar-right .collection-filter-select {
-  width: auto !important;
-  padding: 0.25rem 2rem 0.25rem 0.75rem !important;
-  padding-right: 2rem !important;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4L6 8L10 4' stroke='%2372746F' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 0.5rem center !important;
-  background-size: 10px 10px !important;
-  font-size: 0.75rem !important;
-  line-height: 1.5 !important;
-  font-weight: 500 !important;
-  min-height: 1.875rem !important;
-  height: 1.875rem !important;
+/* ============================================
+   Popover — generic anchored surface
+   ============================================ */
+.popover {
+  position: absolute;
+  z-index: var(--z-popover);
+  min-width: 12rem;
+  padding: var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-2);
 }
 
-.collection-actions-bar-sm .collection-actions-bar-right .collection-actions-trigger {
-  padding: 0.25rem 0.75rem !important;
-  font-size: 0.75rem !important;
-  line-height: 1.5 !important;
-  font-weight: 500 !important;
-  min-height: 1.875rem !important;
-  height: 1.875rem !important;
-}
-
-.collection-actions-bar-sm .collection-actions-bar-right .collection-actions-trigger.btn {
-  padding: 0.25rem 0.75rem !important;
-  font-size: 0.75rem !important;
-  line-height: 1.5 !important;
-  font-weight: 500 !important;
-  min-height: 1.875rem !important;
-  height: 1.875rem !important;
+/* ============================================
+   Tooltip
+   ============================================ */
+.tooltip {
+  position: absolute;
+  z-index: var(--z-tooltip);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-inverse);
+  color: var(--text-inverse);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: var(--elevation-2);
 }

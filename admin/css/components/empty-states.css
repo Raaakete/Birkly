@@ -1,119 +1,126 @@
 /* ============================================
-   Empty State Component — unified pattern
+   Birkly Admin — Empty / loading / error states (P56)
+   ============================================
+
+   ONE pattern. Replaces .content-empty-state*, .dash-empty*,
+   .empty-state-friendly, .coming-soon and .ap-panel-empty (brief §7.2).
+
+   Every async region needs all three states (brief §8.2 rule 10).
+
+     <div class="empty-state">
+       <div class="empty-state-icon">…</div>
+       <p class="empty-state-title">No entries yet</p>
+       <p class="empty-state-text">Create your first entry to get started.</p>
+       <div class="empty-state-actions"><button class="btn btn-primary">New entry</button></div>
+     </div>
    ============================================ */
 
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: var(--space-10, 2.5rem) var(--space-6, 1.5rem);
-  color: var(--text-secondary, #72746F);
-  gap: var(--space-3, 0.75rem);
-}
-
-.empty-state > p,
-.empty-state__message {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  max-width: 36ch;
-}
-
-.empty-state__title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.empty-state__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg, 0.75rem);
-  background: var(--color-neutral-100, #F8F9F7);
-  color: var(--text-tertiary, #9B9D98);
-  flex-shrink: 0;
-}
-
-.empty-state__action {
-  margin-top: var(--space-2, 0.5rem);
-}
-
-.empty-state a:not(.btn) {
-  color: var(--color-primary, var(--primary-600));
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.empty-state a:not(.btn):hover {
-  text-decoration: underline;
-}
-
-.empty-state--compact {
-  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
-}
-
-.empty-state--loading,
-.empty-state.loading {
-  color: var(--text-tertiary, #9B9D98);
-}
-
-.empty-state--error,
-.empty-state.error {
-  color: var(--error-600, #dc2626);
-}
-
-.empty-state-friendly {
-  text-align: center;
-  padding: var(--space-6, 1.5rem) var(--space-4, 1rem);
-  color: var(--text-secondary, #72746F);
-}
-
-.empty-state-friendly strong {
-  color: var(--text-primary, #20221D);
-  display: block;
-  margin-bottom: var(--space-2, 0.5rem);
-}
-
-/* Loading / error shells (used in settings, domains, media) */
+.empty-state,
 .loading-state,
-.error-state {
+.error-state,
+.coming-soon {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
   text-align: center;
-  padding: var(--space-10, 2.5rem) var(--space-5, 1.25rem);
-  color: var(--text-secondary, #72746F);
-  gap: var(--space-3, 0.75rem);
+  min-width: 0;
+  color: var(--text-secondary);
 }
 
-.loading-state p,
-.error-state p {
+.empty-state-icon,
+.empty-state__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+}
+.empty-state-icon svg,
+.empty-state__icon svg,
+.empty-state-icon .birkly-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.empty-state-title,
+.empty-state__title,
+.coming-soon h1,
+.coming-soon h2 {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
 }
 
-.error-state {
-  color: var(--error-600, #dc2626);
+.empty-state-text,
+.empty-state__description,
+.empty-state p,
+.coming-soon p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+  max-width: var(--measure-sm);
 }
 
-.spinner {
-  border: 3px solid var(--border-color, #e5e7eb);
-  border-top: 3px solid var(--color-primary, var(--primary-500));
+.empty-state-actions,
+.empty-state__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-1);
+  flex-wrap: wrap;
+}
+
+/* Compact variant for inside small panels and table bodies */
+.empty-state--compact {
+  padding: var(--space-6) var(--space-4);
+  gap: var(--space-2);
+}
+.empty-state--compact .empty-state-icon { width: 2rem; height: 2rem; }
+.empty-state--compact .empty-state-title { font-size: var(--text-base); }
+
+/* Inline variant — single line, for list footers */
+.empty-state--inline {
+  flex-direction: row;
+  padding: var(--space-4);
+  gap: var(--space-2);
+  text-align: start;
+  justify-content: flex-start;
+}
+
+/* Error tone */
+.error-state,
+.empty-state--error { color: var(--danger-fg); }
+.error-state .empty-state-icon,
+.empty-state--error .empty-state-icon {
+  background: var(--danger-surface);
+  border-color: var(--danger-border);
+  color: var(--danger-fg);
+}
+.error-state .empty-state-title,
+.empty-state--error .empty-state-title { color: var(--danger-fg); }
+
+/* Loading state — spinner instead of an icon tile */
+.loading-state::before {
+  content: "";
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border-default);
+  border-block-start-color: var(--accent-text);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  animation: empty-state-spin 1s linear infinite;
-  flex-shrink: 0;
+  animation: u-spin 0.6s linear infinite;
 }
 
-@keyframes empty-state-spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
+/* Empty state filling a table body */
+td > .empty-state,
+.table-container > .empty-state { border: none; }

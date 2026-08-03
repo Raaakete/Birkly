@@ -447,7 +447,7 @@
 }
 
 .media-actions .btn-icon:hover {
-  background: #fff;
+  background: var(--surface);
   transform: scale(1.1);
 }
 
