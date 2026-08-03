@@ -82,14 +82,29 @@ table {
   border-spacing: 0;
 }
 
-/* Focus styles */
+/* Focus styles — one ring for the whole admin (brief §5.5) */
 :focus-visible {
-  outline: 2px solid var(--primary-500);
-  outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 /* Remove focus outline for mouse users */
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* ============================================
+   Reduced motion — ONE global block (brief §5.4).
+   Components must not ship their own prefers-reduced-motion rules.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
