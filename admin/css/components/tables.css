@@ -1,611 +1,284 @@
 /* ============================================
-   Table Component - Unified System
+   Birkly Admin — Tables (P56)
+   ============================================
+
+   Density (brief §2.3): body row 40px, compact 32px, header 36px.
+   Header is a sunken band with an uppercase micro-label.
+   Numeric columns must carry u-numeric (tabular figures).
+
+     <div class="table-container">
+       <table class="table">…</table>
+     </div>
+
+   .entries-smart-table is a documented specialization, not a second system.
+   Reference: P56-M1 brief §2.3, §7.3, §10.2
    ============================================ */
 
-/* Table Container */
 .table-container {
+  width: 100%;
+  min-width: 0;
   overflow-x: auto;
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--radius-lg, 0.75rem);
-  background: var(--bg-primary, #ffffff);
+  overscroll-behavior-x: contain;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
-/* Base Table */
+/* Inside a flush card the container supplies no chrome of its own */
+.card--flush .table-container,
+.card > .table-container {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
-}
-
-.table th,
-.table td {
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  text-align: left;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-}
-
-.table th {
-  background: var(--bg-secondary, #fafafa);
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table tr:hover {
-  background: var(--bg-secondary, #fafafa);
-}
-
-/* Table Variants */
-.table--striped tbody tr:nth-child(even) {
-  background: var(--bg-secondary, #fafafa);
-}
-
-.table--bordered th,
-.table--bordered td {
-  border: 1px solid var(--border-light, #f3f4f6);
-}
-
-.table--hover tbody tr:hover {
-  background: var(--bg-hover, #f3f4f6);
-}
-
-/* Table Actions */
-.table .actions {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-}
-
-.table .actions .btn {
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  font-size: 0.75rem;
-}
-
-/* Smart Table (Specialized for Entries) */
-.entries-smart-table {
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  max-width: 100%;
-  min-width: 0;
-}
-
-.entries-smart-table .table-viewport {
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-.entries-smart-table .smart-table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: separate;
   border-spacing: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
 }
 
-.entries-smart-table .table-head th {
-  position: sticky;
-  top: 0;
-  z-index: 2;
-}
-
-.entries-smart-table .head-row,
-.entries-smart-table .table-row {
-  transition: background var(--transition-normal, 200ms ease);
-}
-
-.entries-smart-table .table-row:hover td {
-  background: var(--color-neutral-200, #F4F6F2);
-}
-
-.entries-smart-table .table-row:hover td.cell-actions {
-  background: var(--color-neutral-200, #F4F6F2);
-}
-
-.entries-smart-table .head-cell,
-.entries-smart-table .cell {
-  padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-  height: 60px;
-  vertical-align: middle;
-  text-align: left;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-  box-sizing: border-box;
-}
-
-.entries-smart-table .head-cell {
-  background: var(--color-neutral-200, #F4F6F2);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #72746F);
-  letter-spacing: 0.02em;
-  height: 36px;
+.table thead th {
+  height: 2.25rem;
+  padding: 0 var(--space-4);
+  background: var(--surface-sunken);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
   white-space: nowrap;
 }
 
-.entries-smart-table .cell {
-  background: var(--bg-elevated, #ffffff);
-}
-
-.entries-smart-table .head-checkbox,
-.entries-smart-table .cell-checkbox {
-  width: 40px;
-  min-width: 40px;
-  max-width: 40px;
-  text-align: center;
-}
-
-.entries-smart-table .head-drag,
-.entries-smart-table td.cell-drag {
-  width: 36px;
-  min-width: 36px;
-  max-width: 36px;
-  padding: 0;
-  text-align: center;
+.table tbody td {
+  height: 2.5rem;
+  padding: var(--space-2) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
   vertical-align: middle;
-  display: table-cell;
-  cursor: grab;
-  color: var(--text-tertiary, #C4C6C1);
+  color: var(--text-primary);
 }
 
-.entries-smart-table td.cell-drag:active {
-  cursor: grabbing;
+.table tbody tr:last-child td { border-block-end: none; }
+
+.table tbody tr {
+  transition: background-color var(--motion-fast) var(--ease-out);
 }
 
-.entries-smart-table button.entry-drag-handle {
-  appearance: none;
-  -webkit-appearance: none;
-  display: inline-flex;
+.table tbody tr:hover,
+.table--hover tbody tr:hover,
+.table-row:hover { background: var(--surface-hover); }
+
+.table tbody tr.is-selected,
+.table tbody tr[aria-selected="true"] { background: var(--surface-selected); }
+
+/* Primary cell text */
+.table .cell-title,
+.table td .title {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+.table .cell-muted,
+.table td .muted {
+  color: var(--text-secondary);
+}
+
+/* Numeric / date columns */
+.table .cell-numeric,
+.table td.numeric,
+.table th.numeric {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row actions — revealed on hover, always available to keyboard */
+.cell-actions,
+.table .row-actions {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 60px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: inherit;
-  pointer-events: auto;
-  color: inherit;
-  font: inherit;
-  line-height: 0;
+  justify-content: flex-end;
+  gap: var(--space-1);
 }
 
-.entries-smart-table button.entry-drag-handle:focus {
-  outline: none;
-}
+.table tbody tr .cell-actions { opacity: 0.55; transition: opacity var(--motion-fast) var(--ease-out); }
+.table tbody tr:hover .cell-actions,
+.table tbody tr:focus-within .cell-actions { opacity: 1; }
 
-.entries-smart-table button.entry-drag-handle:focus-visible {
-  outline: 2px solid var(--focus-ring, #8ab4f8);
-  outline-offset: -2px;
-}
+/* Column width helpers */
+.table .col-shrink { width: 1%; white-space: nowrap; }
+.table .col-checkbox { width: 2.5rem; }
+.table .col-drag { width: 2rem; }
 
-.entries-smart-table .entry-drag-handle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 60px;
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  cursor: inherit;
-  pointer-events: auto;
-}
+/* ---- Modifiers ---- */
+.table--compact tbody td { height: 2rem; padding-block: var(--space-1); }
+.table--compact thead th { height: 2rem; }
 
-body.entries-table-dragging {
-  user-select: none;
-  -webkit-user-select: none;
-}
+.table--bordered th,
+.table--bordered td { border: 1px solid var(--border-subtle); }
 
-body.entries-table-dragging .entries-smart-table .smart-table {
-  cursor: grabbing;
-}
+.table--striped tbody tr:nth-child(even) { background: var(--surface-sunken); }
+.table--striped tbody tr:nth-child(even):hover { background: var(--surface-hover); }
 
-.entries-smart-table .table-row:hover td.cell-drag,
-.entries-smart-table .entry-drag-handle:hover {
-  background: var(--bg-hover, #f3f4f6);
-  color: var(--text-secondary, #72746F);
-}
-
-.entries-smart-table tr.drag-placeholder-row {
-  opacity: 1 !important;
-  transform: none !important;
-  animation: none !important;
-  background: transparent !important;
-  border: none !important;
-}
-
-.entries-smart-table .drag-placeholder-row .drag-placeholder-cell {
-  height: 60px;
-  padding: 0;
-  border: 2px dashed var(--primary-400, #60a5fa) !important;
-  border-radius: 0;
-  background: rgba(59, 130, 246, 0.08) !important;
-  box-sizing: border-box;
-  opacity: 1 !important;
-  transform: none !important;
-  animation: none !important;
-}
-
-.entries-smart-table .table-row.is-drag-source {
-  opacity: 1;
-  box-shadow: none;
-}
-
-.entries-smart-table .head-sub-entries,
-.entries-smart-table .cell-sub-entries {
-  width: 60px;
-  min-width: 60px;
-  max-width: 60px;
-  text-align: center;
-}
-
-.entries-smart-table .head-title,
-.entries-smart-table .cell-title {
-  width: auto;
-  min-width: 12rem;
-  max-width: none;
-}
-
-.entries-smart-table .head-status,
-.entries-smart-table .cell-status {
-  width: 180px;
-  min-width: 180px;
-  max-width: 180px;
-}
-
-.entries-smart-table .head-actions,
-.entries-smart-table .cell-actions {
-  position: static;
-  width: 112px;
-  min-width: 112px;
-  max-width: 112px;
-  padding: var(--space-2, 0.5rem);
-  border-left: 1px solid var(--border-light, #f3f4f6);
-  background: var(--bg-elevated, #ffffff);
-  text-align: center;
-  z-index: 1;
-}
-
-.entries-smart-table.is-scrolled-x .head-actions,
-.entries-smart-table.is-scrolled-x .cell-actions {
+/* Sticky header inside a scrolling container */
+.table--sticky thead th {
   position: sticky;
-  right: 0;
-  z-index: 3;
-  box-shadow: -6px 0 12px -6px rgba(0, 0, 0, 0.12);
+  inset-block-start: 0;
+  z-index: var(--z-raised);
 }
 
-.entries-smart-table .head-actions {
-  background: var(--color-neutral-200, #F4F6F2);
-  height: 36px;
-  z-index: 4;
+/* Sortable headers */
+.table th[aria-sort],
+.table th.sortable { cursor: pointer; user-select: none; }
+.table th[aria-sort]:hover,
+.table th.sortable:hover { color: var(--text-secondary); }
+.table th[aria-sort="ascending"],
+.table th[aria-sort="descending"] { color: var(--text-primary); }
+
+/* ============================================
+   Entries smart table — specialization of .table
+   ============================================ */
+.entries-smart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
 }
 
-.entries-smart-table .cell-actions-inner {
-  display: inline-flex;
+.entries-smart-table thead th {
+  height: 2.25rem;
+  padding: 0 var(--space-3);
+  background: var(--surface-sunken);
+  border-block-end: 1px solid var(--border-subtle);
+  text-align: start;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+.entries-smart-table tbody td {
+  height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.entries-smart-table tbody tr:hover { background: var(--surface-hover); }
+.entries-smart-table tbody tr:last-child td { border-block-end: none; }
+
+.entries-smart-table.is-scrolled-x { box-shadow: inset 8px 0 8px -8px rgba(32, 34, 29, 0.12); }
+
+.table-row.dragging:not(.drop-target) {
+  opacity: 0.85;
+  box-shadow: var(--elevation-2);
+}
+.table-row.drag-over {
+  background: var(--accent-soft);
+  outline: 1px solid var(--accent-focus);
+  outline-offset: -1px;
+}
+
+/* ============================================
+   Bulk actions toolbar
+   ============================================ */
+.bulk-actions-toolbar {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-sm);
 }
 
-.entries-smart-table .cell-actions .btn-icon {
-  margin: 0;
+.bulk-actions-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+}
+
+.bulk-actions-count {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--accent-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bulk-actions-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ============================================
+   Fieldtype cell previews (media, gallery, lists)
+   ============================================ */
+.ft-media-preview,
+.ft-list-image-square {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
-.entries-smart-table .cell-title,
-.entries-smart-table .cell-status,
-.entries-smart-table .cell-field {
-  cursor: pointer;
-}
-
-.entries-smart-table .head-field,
-.entries-smart-table .cell-field {
-  width: var(--col-field, 240px);
-  min-width: var(--col-field-min, var(--col-field, 240px));
-  max-width: var(--col-field, 240px);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.entries-smart-table .cell-title .title-text {
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  max-width: 100%;
-  flex: 1 1 auto;
-}
-
-.entries-smart-table .cell-title {
-  overflow: hidden;
-}
-
-.entries-smart-table .entry-slug-meta {
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary, #6b7280);
-}
-
-.entries-smart-table .entry-slug-link {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: var(--primary-600, #2563eb);
-  text-decoration: none;
-}
-
-/* Selected Row */
-.entries-smart-table .table-row[data-entry-selected="true"] td {
-  background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
-}
-
-.entries-smart-table .table-row[data-entry-selected="true"] td.cell-actions {
-  background: var(--color-primary-light, rgba(124, 227, 191, 0.1));
-}
-
-/* Smart Table Status Badge Styles — compact pill in table cells */
-.entries-smart-table .cell-status .status-badge {
+.ft-gallery-preview-container {
   display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  text-transform: capitalize;
-  background: var(--gray-100, #f3f4f6);
-  color: var(--gray-700, #374151);
+  align-items: center;
+  gap: var(--space-1);
 }
 
-.entries-smart-table .cell-status .status-badge.published {
-  background: var(--success-50, #f0fdf4);
-  color: var(--success-600, #16a34a);
+.ft-gallery-preview {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
 }
 
-.entries-smart-table .cell-status .status-badge.draft {
-  background: var(--warning-50, #fffbeb);
-  color: var(--warning-600, #d97706);
+.ft-gallery-count,
+.ft-list-badge,
+.sub-entry-count-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  height: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
-.entries-smart-table .cell-status .status-badge.pending_review,
-.entries-smart-table .cell-status .status-badge.review-status.pending {
-  background: var(--warning-50, #fffbeb);
-  color: var(--warning-700, #b45309);
-  border: 1px solid var(--warning-200, #fde68a);
-}
-
-.entries-smart-table .cell-status .status-badge.approved,
-.entries-smart-table .cell-status .status-badge.review-status.approved {
-  background: var(--success-50, #f0fdf4);
-  color: var(--success-700, #15803d);
-  border: 1px solid var(--success-200, #bbf7d0);
-}
-
-.entries-smart-table .cell-status .status-badge.rejected,
-.entries-smart-table .cell-status .status-badge.review-status.rejected {
-  background: var(--error-50, #fef2f2);
-  color: var(--error-700, #b91c1c);
-  border: 1px solid var(--error-200, #fecaca);
-}
-
-.entries-smart-table .cell-status {
+.ft-list-text {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 18rem;
+}
+
+.ft-list-empty {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
 }
 
 .reviewer-indicator {
   display: inline-flex;
   align-items: center;
-  color: var(--text-secondary, #72746F);
-  cursor: help;
+  gap: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
 }
-
-/* Bulk Actions Toolbar */
-.bulk-actions-toolbar {
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  margin-bottom: var(--space-4, 1rem);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.bulk-actions-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-4, 1rem);
-}
-
-.bulk-actions-count {
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.bulk-actions-buttons {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-}
-
-/* Header/body field columns share widths via table layout */
-.entries-smart-table .cell-field .ft-list-text,
-.entries-smart-table .cell-field .cell-excerpt,
-.entries-smart-table .cell-field .field-text,
-.entries-smart-table .cell-field > span:not(.ft-gallery-preview-container):not(.ft-list-badge) {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Allow field cells to wrap content when needed (for images, badges, etc.) */
-.entries-smart-table .cell-field .ft-media-preview,
-.entries-smart-table .cell-field .ft-gallery-preview-container,
-.entries-smart-table .cell-field .ft-gallery-count {
-  white-space: normal;
-  overflow: visible;
-}
-
-/* Fieldtype list fallback visuals */
-.ft-list-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--gray-100, #f3f4f6);
-  color: var(--gray-700, #374151);
-  font-size: 12px;
-}
-
-.ft-list-empty {
-  color: var(--text-tertiary, #C4C6C1);
-}
-
-/* Sub-entry count badge */
-.sub-entry-count-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--bg-secondary, #fafafa);
-  color: var(--text-secondary, #72746F);
-  font-size: 0.75rem;
-  font-weight: 500;
-  min-width: 24px;
-  height: 24px;
-}
-
-.ft-list-text {
-  color: var(--text-secondary, #72746F);
-}
-
-/* Media preview in table cells */
-.ft-media-preview {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-  flex-shrink: 0;
-}
-
-/* Gallery preview container */
-.ft-gallery-preview-container {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.ft-list-image-square {
-  width: 36px;
-  height: 36px;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-  flex-shrink: 0;
-}
-
-.ft-gallery-preview {
-  width: 36px;
-  height: 36px;
-  object-fit: cover;
-  border-radius: 4px;
-  display: block;
-  flex-shrink: 0;
-}
-
-.ft-gallery-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  height: 40px;
-  background: var(--color-neutral-200, #F4F6F2);
-  color: var(--text-secondary, #72746F);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-@media (max-width: 480px) {
-  .table-container {
-    font-size: 0.875rem;
-  }
-  
-  .table {
-    font-size: 0.75rem;
-  }
-}
-
-/* Below --bp-xl (1280px), keep all columns visible — title still flexes. */
-@media (max-width: 1279px) {
-  .entries-smart-table .head-title,
-  .entries-smart-table .cell-title {
-    min-width: 10rem;
-  }
-
-  .entries-smart-table .head-status,
-  .entries-smart-table .cell-status {
-    width: 120px;
-    min-width: 120px;
-    max-width: 120px;
-  }
-}
-
-/* Mobile — horizontal scroll in viewport only; compact fixed columns */
-@media (max-width: 767px) {
-  .entries-smart-table .table-viewport {
-    overflow-x: auto;
-  }
-
-  .entries-smart-table .smart-table {
-    table-layout: auto;
-    width: max-content;
-    min-width: 100%;
-  }
-
-  .entries-smart-table .head-title,
-  .entries-smart-table .cell-title {
-    width: 10rem;
-    min-width: 10rem;
-    max-width: 14rem;
-  }
-
-  .entries-smart-table .head-field,
-  .entries-smart-table .cell-field {
-    width: min(var(--col-field, 200px), 200px);
-    min-width: 140px;
-    max-width: 200px;
-  }
-}
-
-/* ============================================
-   Drag & Drop States for Tables
-   ============================================ */
-.table-row.dragging:not(.drag-placeholder-row) {
-  opacity: 0.5;
-}
-
-.table-row.drag-over {
-  outline: 2px dashed var(--primary-400, #60a5fa);
-  background: var(--primary-50, #eff6ff);
-}
-
-.table-row:hover .cell-drag:not(td) {
-  opacity: 1;
-}
-

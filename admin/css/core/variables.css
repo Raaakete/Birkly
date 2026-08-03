@@ -18,14 +18,17 @@
      1. Primitive ramps — never used directly by components
      ============================================ */
 
-  /* Warm neutral ramp */
+  /* Warm neutral ramp.
+     Steps 75-200 are tuned so a white panel reads clearly against the
+     tinted canvas while its hairline border stays visible on both. */
   --neutral-0: #FFFFFF;
   --neutral-50: #F8F9F7;
-  --neutral-100: #F1F3EE;
-  --neutral-200: #E7EAE4;
-  --neutral-300: #D9DBD5;
-  --neutral-400: #C4C6C1;
-  --neutral-500: #A8ABA4;
+  --neutral-75: #F1F3EE;
+  --neutral-100: #E7EAE2;
+  --neutral-200: #DDE1D8;
+  --neutral-300: #CBD0C4;
+  --neutral-400: #B3B8AC;
+  --neutral-500: #9CA096;
   --neutral-600: #8E9089;
   --neutral-700: #5E605B;
   --neutral-800: #3D403A;
@@ -48,12 +51,12 @@
   /* ============================================
      2. Surfaces — four layers (brief §4.1)
      ============================================ */
-  --canvas: var(--neutral-50);
+  --canvas: var(--neutral-75);
   --surface: var(--neutral-0);
   --surface-sunken: var(--neutral-100);
   --surface-raised: var(--neutral-0);
-  --surface-hover: #F4F6F2;
-  --surface-active: var(--neutral-200);
+  --surface-hover: var(--neutral-50);
+  --surface-active: var(--neutral-100);
   --surface-selected: var(--mint-50);
   --surface-inverse: var(--neutral-900);
   --overlay: rgba(32, 34, 29, 0.32);
@@ -265,13 +268,13 @@
      17. Dark theme values — remapped in the selectors below.
      Defined once here so the remap is not duplicated three times.
      ============================================ */
-  --dk-canvas: #161815;
-  --dk-surface: #1F211D;
-  --dk-surface-sunken: #121411;
-  --dk-surface-raised: #262823;
-  --dk-surface-hover: #262823;
-  --dk-surface-active: #2E312B;
-  --dk-surface-selected: #1D2A25;
+  --dk-canvas: #131511;
+  --dk-surface: #252821;
+  --dk-surface-sunken: #0D0F0B;
+  --dk-surface-raised: #2E322A;
+  --dk-surface-hover: #2E322A;
+  --dk-surface-active: #363A31;
+  --dk-surface-selected: #1E3A30;
   --dk-surface-inverse: #F1F3EE;
   --dk-overlay: rgba(0, 0, 0, 0.56);
 
@@ -280,10 +283,10 @@
   --dk-text-tertiary: #82857E;
   --dk-text-inverse: #161815;
 
-  --dk-border-subtle: #2E312B;
-  --dk-border-default: #3A3D36;
-  --dk-border-control: #5A5D55;
-  --dk-border-control-hover: #74776F;
+  --dk-border-subtle: #363A31;
+  --dk-border-default: #444840;
+  --dk-border-control: #5F635A;
+  --dk-border-control-hover: #7A7E74;
   --dk-border-strong: #8A8D85;
 
   --dk-accent-text: #8CECCA;                 /* 11.6:1 on dark surface */
