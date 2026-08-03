@@ -29,9 +29,9 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **P52** complete 2026-08-01. **P53** Hub & site packs approved 2026-08-02 (see Ops planning). **P54** Commerce 0→1 complete 2026-08-02.
 
-**Active phase:** **P55 — Hub payments & entitlements** (**approved** 2026-08-03).
+**Active phase:** **P55 — Hub payments & entitlements** (**implementation ready for human review** 2026-08-03).
 
-- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P55-hub-payments-entitlements-plan.md` · `P55-lead-engineer-handoff.md`
+- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P55-hub-payments-entitlements-plan.md` · `P55-lead-engineer-handoff.md` · `P55-M14-human-notify.md`
 - Focus: provider-as-seller paid Hub offers · Stripe Connect application fee · hybrid entitlements · no-key free installs · activation reuse · trials/freemium · refunds/chargebacks/Ops · docs/legal alignment
 - Out of scope: Mollie/multi-PSP/regional PSPs, Birkly MoR for third-party offers, perfect DRM
 - Distinct from P54 Commerce (site-merchant payments) — Hub marketplace fee collection is a separate track

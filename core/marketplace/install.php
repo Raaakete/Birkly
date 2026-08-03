@@ -345,7 +345,9 @@ function birkly_marketplace_install_plugin(
     string $version,
     string $licenseKey,
     bool $upgrade = false,
-    bool $consentAccepted = false
+    bool $consentAccepted = false,
+    string $entitlementToken = '',
+    array $entitlement = []
 ): array {
     birkly_marketplace_ensure_plugins_core();
     $consentCheck = birkly_marketplace_require_install_consent($slug, $version, $consentAccepted);
@@ -395,7 +397,7 @@ function birkly_marketplace_install_plugin(
         return ['ok' => false, 'errors' => $depErrors, 'preflight' => $preview];
     }
 
-    birkly_marketplace_save_plugin_source($pluginId, $slug, $version, $licenseKey);
+    birkly_marketplace_save_plugin_source($pluginId, $slug, $version, $licenseKey, $entitlementToken, $entitlement);
 
     if ($consentAccepted) {
         $permInfo = birkly_marketplace_install_permissions($slug, $version);
@@ -417,7 +419,14 @@ function birkly_marketplace_install_plugin(
     ];
 }
 
-function birkly_marketplace_save_plugin_source(string $pluginId, string $slug, string $version, string $licenseKey): void
+function birkly_marketplace_save_plugin_source(
+    string $pluginId,
+    string $slug,
+    string $version,
+    string $licenseKey,
+    string $entitlementToken = '',
+    array $entitlement = []
+): void
 {
     birkly_marketplace_ensure_plugins_core();
     global $birkly_plugins;
@@ -430,6 +439,13 @@ function birkly_marketplace_save_plugin_source(string $pluginId, string $slug, s
         $birkly_plugins[$pluginId]['marketplace_version'] = $version;
         if ($licenseKey !== '' && !str_starts_with($licenseKey, 'BIRKLY-LOCAL-')) {
             $birkly_plugins[$pluginId]['license_ref'] = birkly_marketplace_license_ref($licenseKey);
+        }
+        if ($entitlementToken !== '') {
+            $birkly_plugins[$pluginId]['entitlement_token'] = $entitlementToken;
+        }
+        if ($entitlement !== []) {
+            $birkly_plugins[$pluginId]['entitlement'] = $entitlement;
+            unset($birkly_plugins[$pluginId]['entitlement_grace_started_at']);
         }
         if (isset($birkly_plugins[$pluginId]['version'])) {
             $birkly_plugins[$pluginId]['version'] = $version;
@@ -458,6 +474,18 @@ function birkly_marketplace_installed_plugin_updates(): array
         $current = (string) ($plugin['version'] ?? $plugin['marketplace_version'] ?? '0.0.0');
         $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
         $check = birkly_marketplace_check_plugin_update($slug, $current, $licenseRef !== '' ? $licenseRef : null);
+        $entitlementStatus = null;
+        if (!empty($plugin['entitlement']) || !empty($plugin['entitlement_token'])) {
+            if (!function_exists('birkly_plugin_entitlement_status')) {
+                require_once dirname(__DIR__) . '/entitlement_helper.php';
+            }
+            $entitlementStatus = birkly_plugin_entitlement_status((string) $id);
+            if (empty($entitlementStatus['ok'])) {
+                $check['license_lapsed'] = true;
+                $check['license_warning'] = $entitlementStatus['message'] ?? 'Marketplace entitlement is inactive.';
+                $check['update_available'] = false;
+            }
+        }
         $updates[$id] = [
             'plugin_id' => $id,
             'marketplace_slug' => $slug,
@@ -466,6 +494,7 @@ function birkly_marketplace_installed_plugin_updates(): array
             'update_available' => !empty($check['update_available']),
             'license_lapsed' => !empty($check['license_lapsed']),
             'license_warning' => $check['license_warning'] ?? null,
+            'entitlement_status' => $entitlementStatus,
             'check_ok' => !empty($check['ok']),
             'error' => $check['error'] ?? null,
         ];
@@ -779,5 +808,13 @@ function birkly_marketplace_install_offer(
         return birkly_marketplace_install_theme($slug, $version, $licenseKey, $offerType);
     }
 
-    return birkly_marketplace_install_plugin($slug, $version, $licenseKey, $upgrade, $consentAccepted);
+    return birkly_marketplace_install_plugin(
+        $slug,
+        $version,
+        $licenseKey,
+        $upgrade,
+        $consentAccepted,
+        (string) ($options['entitlement_token'] ?? ''),
+        is_array($options['entitlement'] ?? null) ? $options['entitlement'] : []
+    );
 }
