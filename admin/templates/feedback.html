@@ -9,8 +9,8 @@
     <div class="page-header-actions"></div>
 </div>
 
-<div class="feedback-admin-page">
-    <p class="u-text-sm u-fg-secondary u-mb-6">Review and triage feedback submitted during the closed alpha.</p>
+<div class="page-body u-stack-6">
+    <p class="u-text-sm u-fg-secondary">Review and triage feedback submitted during the closed alpha.</p>
 
     <div class="main-actions-bar">
         <div class="main-actions-left u-align-end">
@@ -53,13 +53,11 @@
         </div>
     </div>
 
-    <!-- js/feedback.js drives these three regions with element.style.display,
-         so the initial state stays inline rather than moving to [hidden]. -->
     <div id="feedback-list-loading" class="loading-state">Loading feedback…</div>
-    <div id="feedback-list-empty" class="empty-state" style="display: none;">
+    <div id="feedback-list-empty" class="empty-state" hidden>
         <p class="empty-state-text">No feedback submissions yet.</p>
     </div>
-    <div class="table-container" id="feedback-table-wrap" style="display: none;">
+    <div class="table-container" id="feedback-table-wrap" hidden>
         <table class="table" id="feedback-table">
             <thead>
                 <tr>
@@ -78,7 +76,7 @@
 </div>
 
 <!-- Detail modal -->
-<div class="modal" id="feedback-detail-modal" style="display: none;">
+<div class="modal" id="feedback-detail-modal">
     <div class="modal-backdrop" data-close-feedback-modal></div>
     <div class="modal-content modal--md">
         <div class="modal-header">

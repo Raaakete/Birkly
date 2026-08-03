@@ -1,0 +1,103 @@
+/* ============================================
+   Birkly Admin — Auth shell (login + 2FA verify) — P56
+   ============================================
+
+   Serves admin/login.php and admin/verify-2fa.php. Both pages bypass
+   layout_head.php, so they link style.css directly and get this file
+   through the Pages import block.
+
+     <body class="auth-page">
+       <main class="auth-shell u-stack-4">
+         <section class="card auth-card">
+           <div class="card-body u-stack-6">…</div>
+         </section>
+       </main>
+     </body>
+
+   Everything inside the card is framework: .field/.input, .btn.btn-primary
+   .btn-full, .callout for messages. This file only owns the page canvas,
+   the card width, and the one control the framework has no primitive for
+   (the letter-spaced one-time-code input).
+   ============================================ */
+
+body.auth-page {
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: var(--canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 25rem;
+}
+
+.auth-card {
+  width: 100%;
+}
+
+/* Brand mark above the heading */
+.auth-logo {
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+}
+
+.auth-subtitle {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+/* Auth pages are the one place a --control-lg field is right: a single
+   focused task, no surrounding chrome competing for the row height. */
+.auth-form .input {
+  height: var(--control-lg);
+}
+
+/* One-time code / backup code — wide tracking so digits are countable */
+.auth-code-input {
+  height: var(--control-lg);
+  font-size: var(--text-lg);
+  text-align: center;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+}
+
+.auth-code-input.u-mono {
+  letter-spacing: 0.25em;
+  text-indent: 0.25em;
+}
+
+.auth-footer {
+  border-block-start: 1px solid var(--border-subtle);
+  padding-block-start: var(--space-5);
+  text-align: center;
+}
+
+.auth-footer a {
+  color: var(--text-link);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+}
+
+.auth-footer a:hover {
+  color: var(--text-link-hover);
+  text-decoration: underline;
+}

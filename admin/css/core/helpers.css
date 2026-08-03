@@ -373,7 +373,12 @@
 .u-invisible { visibility: hidden; }
 .u-visible { visibility: visible; }
 
-.u-sr-only {
+/* .sr-only is the same helper under the pre-P56 name. It is still emitted by
+   templates and JS across the admin (entries, hosting wizard, accessibility
+   captions), and it used to be declared inside css/ai-chat-button.css — an
+   accidental dependency on a global feature stylesheet (P56-M10 finding). */
+.u-sr-only,
+.sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
