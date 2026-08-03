@@ -166,6 +166,87 @@
   border-spacing: 0;
 }
 
+/* With table-layout: fixed every column needs an explicit width, or the ones
+   without get squeezed to zero while their headers paint over each other.
+   Dropping these is what collapsed the checkbox/drag/title/status columns. */
+.entries-smart-table .head-checkbox,
+.entries-smart-table .cell-checkbox {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  max-width: 2.5rem;
+}
+
+.entries-smart-table .head-drag,
+.entries-smart-table td.cell-drag {
+  width: 2.25rem;
+  min-width: 2.25rem;
+  max-width: 2.25rem;
+  text-align: center;
+}
+
+/* table-layout: fixed honours `width` and ignores `min-width`, so an `auto`
+   title column collapses to zero as soon as the fixed columns sum past the
+   container. It needs a real width; the viewport scrolls instead. */
+.entries-smart-table .head-title,
+.entries-smart-table .cell-title {
+  width: 14rem;
+  min-width: 14rem;
+}
+
+.entries-smart-table .head-status,
+.entries-smart-table .cell-status {
+  width: 8rem;
+  min-width: 8rem;
+  max-width: 8rem;
+}
+
+/* Fixed table layout means a cell will happily paint over its neighbour, so
+   every column that can hold long content must clip. Losing these rules is
+   what made the entries columns overlap. */
+.entries-smart-table .head-field,
+.entries-smart-table .cell-field {
+  width: var(--col-field, 15rem);
+  min-width: var(--col-field-min, var(--col-field, 15rem));
+  max-width: var(--col-field, 15rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.entries-smart-table .cell-title { overflow: hidden; }
+
+.entries-smart-table .cell-title .title-text,
+.entries-smart-table .cell-field .ft-list-text,
+.entries-smart-table .cell-field .cell-excerpt,
+.entries-smart-table .cell-field .field-text,
+.entries-smart-table .cell-field > span:not(.ft-gallery-preview-container):not(.ft-list-badge) {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.entries-smart-table .cell-title .title-text {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+/* Media and badge cells are allowed to breathe — they are not text */
+.entries-smart-table .cell-field .ft-media-preview,
+.entries-smart-table .cell-field .ft-gallery-preview-container,
+.entries-smart-table .cell-field .ft-gallery-count {
+  white-space: normal;
+  overflow: visible;
+}
+
+.entries-smart-table .entry-slug-meta {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
 .entries-smart-table .head-actions,
 .entries-smart-table .cell-actions {
   position: static;
@@ -177,6 +258,15 @@
   border-inline-start: 1px solid var(--border-subtle);
   background: var(--surface);
   text-align: center;
+}
+
+/* Below --bp-md, stop forcing fixed columns and let the viewport scroll */
+@media (max-width: 767px) {
+  .entries-smart-table .smart-table {
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+  }
 }
 
 .entries-smart-table .head-actions {
