@@ -119,6 +119,7 @@ function birkly_marketplace_settings(): array
         'marketplace_url' => rtrim($url, '/'),
         'installation_owner_email' => trim((string) ($stored['installation_owner_email'] ?? '')),
         'display_currency' => $displayCurrency,
+        'entitlement_secret' => trim((string) ($stored['entitlement_secret'] ?? (getenv('BIRKLY_MARKETPLACE_ENTITLEMENT_SECRET') ?: ''))),
     ];
     return $GLOBALS['__birkly_marketplace_settings'];
 }
@@ -515,6 +516,161 @@ function birkly_marketplace_purchase_url(string $slug): string
     return birkly_marketplace_url() . '/buy/' . rawurlencode($slug);
 }
 
+function birkly_marketplace_site_url(): string
+{
+    $envUrl = trim((string) (getenv('BIRKLY_CMS_BASE_URL') ?: ''));
+    if ($envUrl !== '') {
+        return rtrim($envUrl, '/');
+    }
+
+    $host = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    if ($host === '') {
+        return '';
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+    return ($https ? 'https://' : 'http://') . $host;
+}
+
+function birkly_marketplace_environment(?string $siteUrl = null): string
+{
+    $host = '';
+    $siteUrl = trim((string) ($siteUrl ?? birkly_marketplace_site_url()));
+    if ($siteUrl !== '') {
+        $host = strtolower((string) (parse_url($siteUrl, PHP_URL_HOST) ?: ''));
+    }
+    if ($host === '') {
+        $host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    }
+    $host = preg_replace('/:\d+$/', '', $host) ?? $host;
+    $host = trim($host, '[]');
+
+    if (
+        in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0'], true)
+        || str_ends_with($host, '.local')
+        || str_ends_with($host, '.test')
+        || str_ends_with($host, '.dev')
+        || str_starts_with($host, 'staging.')
+        || str_contains($host, '.staging.')
+        || str_contains($host, '-staging.')
+        || str_contains($host, '.dev.')
+        || str_contains($host, '-dev.')
+    ) {
+        return 'staging';
+    }
+
+    return 'production';
+}
+
+/**
+ * @return array<string, string>
+ */
+function birkly_marketplace_activation_context(): array
+{
+    $siteUrl = birkly_marketplace_site_url();
+    return [
+        'environment' => birkly_marketplace_environment($siteUrl),
+        'site_url' => $siteUrl,
+    ];
+}
+
+function birkly_marketplace_return_url(string $slug = '', string $planId = ''): string
+{
+    $base = birkly_marketplace_site_url();
+    if ($base === '') {
+        return '';
+    }
+
+    $url = rtrim($base, '/') . '/admin/index.php?page=plugins&tab=discover';
+    if ($slug !== '') {
+        $url .= '&offer=' . rawurlencode($slug) . '&hub_install=1';
+    }
+    if ($planId !== '') {
+        $url .= '&plan_id=' . rawurlencode($planId);
+    }
+
+    return $url;
+}
+
+function birkly_marketplace_error_message(string $code, string $fallback = ''): string
+{
+    return match ($code) {
+        'inactive', 'license_inactive', 'entitlement_inactive' => 'This entitlement is inactive. Activate a valid license or complete checkout before installing.',
+        'held', 'entitlement_held' => 'This entitlement is on hold. Update payment or contact the marketplace provider.',
+        'expired', 'entitlement_expired', 'license_expired' => 'This entitlement has expired. Renew it before installing or updating.',
+        'revoked', 'entitlement_revoked' => 'This entitlement was revoked and cannot be used on this installation.',
+        'seat_limit', 'seat_limit_reached', 'activation_limit_reached' => 'This license has reached its activation or seat limit. Deactivate another installation or buy more seats.',
+        'wrong_offer', 'offer_mismatch', 'license_offer_mismatch' => 'This license belongs to a different Hub offer.',
+        'license_required', 'checkout_required' => 'This paid offer needs checkout or a valid license key before install.',
+        default => $fallback !== '' ? $fallback : 'Marketplace entitlement check failed.',
+    };
+}
+
+/**
+ * @return array{ok:bool,order?:array,license?:array,entitlement?:array,entitlement_token?:string,psp?:array,checkout_url?:string,code?:string,error?:string}
+ */
+function birkly_marketplace_start_checkout(string $slug, array $options = []): array
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return ['ok' => false, 'error' => 'Offer slug required', 'code' => 'missing_slug'];
+    }
+
+    $context = birkly_marketplace_activation_context();
+    $body = [
+        'offer_slug' => $slug,
+        'installation_id' => birkly_installation_id(),
+        'environment' => $context['environment'],
+        'site_url' => $context['site_url'],
+        'return_url' => (string) ($options['return_url'] ?? birkly_marketplace_return_url($slug, (string) ($options['plan_id'] ?? ''))),
+    ];
+
+    foreach (['email', 'plan_id', 'promo_code', 'quantity'] as $key) {
+        if (isset($options[$key]) && trim((string) $options[$key]) !== '') {
+            $body[$key] = $options[$key];
+        }
+    }
+
+    $response = birkly_marketplace_request('POST', '/api/v1/checkout', $body);
+    if (!$response['ok'] || !is_array($response['data'])) {
+        $code = is_array($response['data']) ? (string) ($response['data']['error'] ?? '') : '';
+        return [
+            'ok' => false,
+            'error' => birkly_marketplace_error_message($code, $response['error'] ?? 'Checkout failed'),
+            'code' => $code !== '' ? $code : 'checkout_failed',
+        ];
+    }
+
+    $data = $response['data'];
+    if (empty($data['ok'])) {
+        $code = (string) ($data['error'] ?? 'checkout_failed');
+        return [
+            'ok' => false,
+            'error' => birkly_marketplace_error_message($code, (string) ($data['message'] ?? 'Checkout failed')),
+            'code' => $code,
+        ];
+    }
+
+    $psp = is_array($data['psp'] ?? null) ? $data['psp'] : [];
+    $checkoutUrl = (string) (
+        $data['checkout_url']
+        ?? $psp['checkout_url']
+        ?? $psp['url']
+        ?? ''
+    );
+
+    return [
+        'ok' => true,
+        'order' => is_array($data['order'] ?? null) ? $data['order'] : [],
+        'license' => is_array($data['license'] ?? null) ? $data['license'] : [],
+        'entitlement' => is_array($data['entitlement'] ?? null) ? $data['entitlement'] : [],
+        'entitlement_token' => (string) ($data['entitlement_token'] ?? ''),
+        'psp' => $psp,
+        'checkout_url' => $checkoutUrl,
+    ];
+}
+
 /**
  * @return array{ok:bool,active:bool,status?:string,pricing_model?:string,code?:string,error?:string,license_lapsed?:bool}
  */
@@ -544,22 +700,25 @@ function birkly_marketplace_verify_license_status(string $slug, string $licenseR
 
     $data = $response['data'];
     if (empty($data['ok'])) {
+        $code = (string) ($data['error'] ?? 'license_inactive');
         return [
             'ok' => false,
             'active' => false,
-            'error' => (string) ($data['message'] ?? 'License inactive'),
-            'code' => (string) ($data['error'] ?? 'license_inactive'),
+            'error' => birkly_marketplace_error_message($code, (string) ($data['message'] ?? 'License inactive')),
+            'code' => $code,
             'license_lapsed' => true,
         ];
     }
 
     $status = (string) ($data['status'] ?? 'active');
+    $activeStatuses = ['active', 'trialing', 'grace'];
     return [
         'ok' => true,
-        'active' => $status === 'active',
+        'active' => in_array($status, $activeStatuses, true),
         'status' => $status,
         'pricing_model' => (string) ($data['pricing_model'] ?? 'one_time'),
-        'license_lapsed' => $status !== 'active',
+        'license_lapsed' => !in_array($status, $activeStatuses, true),
+        'error' => in_array($status, $activeStatuses, true) ? null : birkly_marketplace_error_message($status),
     ];
 }
 
@@ -602,6 +761,51 @@ function birkly_marketplace_plugin_offer_slug(string $pluginId, array $plugin): 
     }
 
     return (string) (birkly_official_marketplace_slugs()[$pluginId] ?? '');
+}
+
+/**
+ * Attach an activated entitlement to an installed plugin with the matching offer slug.
+ */
+function birkly_marketplace_attach_entitlement_to_installed_offer(
+    string $offerSlug,
+    string $licenseKey = '',
+    string $entitlementToken = '',
+    array $entitlement = []
+): ?string {
+    $offerSlug = trim($offerSlug);
+    if ($offerSlug === '' || (!function_exists('get_all_plugins') && !function_exists('load_plugins'))) {
+        return null;
+    }
+    if (!function_exists('get_all_plugins')) {
+        return null;
+    }
+
+    global $birkly_plugins;
+    $plugins = get_all_plugins();
+    foreach ($plugins as $id => $plugin) {
+        if (birkly_marketplace_plugin_offer_slug((string) $id, is_array($plugin) ? $plugin : []) !== $offerSlug) {
+            continue;
+        }
+        if (!isset($birkly_plugins[$id])) {
+            continue;
+        }
+        if ($licenseKey !== '') {
+            $birkly_plugins[$id]['license_ref'] = birkly_marketplace_license_ref($licenseKey);
+        }
+        if ($entitlementToken !== '') {
+            $birkly_plugins[$id]['entitlement_token'] = $entitlementToken;
+        }
+        if ($entitlement !== []) {
+            $birkly_plugins[$id]['entitlement'] = $entitlement;
+            unset($birkly_plugins[$id]['entitlement_grace_started_at']);
+        }
+        if (function_exists('save_plugin_states')) {
+            save_plugin_states();
+        }
+        return (string) $id;
+    }
+
+    return null;
 }
 
 /**
@@ -777,35 +981,45 @@ function birkly_marketplace_claim_free_license(string $slug): array
     if (empty($detail['fallback'])) {
         $installId = preg_replace('/[^a-zA-Z0-9._-]/', '', birkly_installation_id()) ?: 'install';
         $email = $installId . '@install.birkly.local';
-        $checkout = birkly_marketplace_request('POST', '/api/v1/checkout', [
-            'offer_slug' => $slug,
-            'email' => $email,
-        ]);
+        $checkout = birkly_marketplace_start_checkout($slug, ['email' => $email]);
 
-        if ($checkout['ok'] && is_array($checkout['data'])) {
-            $licenseKey = (string) (
-                $checkout['data']['license']['license_key']
-                ?? $checkout['data']['order']['license_key']
-                ?? ''
-            );
+        if ($checkout['ok']) {
+            $checkoutLicense = is_array($checkout['license'] ?? null) ? $checkout['license'] : [];
+            $checkoutOrder = is_array($checkout['order'] ?? null) ? $checkout['order'] : [];
+            $licenseKey = (string) ($checkoutLicense['license_key'] ?? $checkoutOrder['license_key'] ?? '');
             if ($licenseKey !== '') {
                 $activation = birkly_marketplace_activate_license($licenseKey);
                 if ($activation['ok']) {
                     return [
                         'ok' => true,
-                        'license_key' => $licenseKey,
                         'offer_slug' => (string) ($activation['offer_slug'] ?? $slug),
+                        'entitlement_token' => (string) ($activation['entitlement_token'] ?? ''),
+                        'entitlement' => is_array($activation['entitlement'] ?? null) ? $activation['entitlement'] : [],
                         'source' => 'marketplace',
                     ];
                 }
+            }
+            if (!empty($checkout['entitlement']) || !empty($checkout['entitlement_token'])) {
+                return [
+                    'ok' => true,
+                    'offer_slug' => (string) (($checkout['entitlement']['offer_slug'] ?? '') ?: $slug),
+                    'entitlement_token' => (string) ($checkout['entitlement_token'] ?? ''),
+                    'entitlement' => is_array($checkout['entitlement'] ?? null) ? $checkout['entitlement'] : [],
+                    'source' => 'marketplace',
+                ];
             }
         }
     }
 
     return [
         'ok' => true,
-        'license_key' => birkly_marketplace_local_free_license_key($slug),
         'offer_slug' => $slug,
+        'entitlement' => [
+            'offer_slug' => $slug,
+            'status' => 'active',
+            'pricing_model' => 'free',
+            'source' => 'local',
+        ],
         'source' => 'local',
     ];
 }
@@ -813,42 +1027,90 @@ function birkly_marketplace_claim_free_license(string $slug): array
 /**
  * @return array{ok:bool,code?:string,offer_slug?:string,license?:array,error?:string}
  */
-function birkly_marketplace_activate_license(string $licenseKey): array
+function birkly_marketplace_activate_license(string $licenseKey, array $options = []): array
 {
     $licenseKey = trim($licenseKey);
     if ($licenseKey === '') {
         return ['ok' => false, 'error' => 'License key is required', 'code' => 'missing_license_key'];
     }
 
-    $response = birkly_marketplace_request('POST', '/api/v1/licenses/activate', [
+    $context = birkly_marketplace_activation_context();
+    $payload = [
         'license_key' => $licenseKey,
         'installation_id' => birkly_installation_id(),
-    ]);
+        'environment' => (string) ($options['environment'] ?? $context['environment']),
+        'site_url' => (string) ($options['site_url'] ?? $context['site_url']),
+    ];
+    if (isset($options['offer_slug']) && trim((string) $options['offer_slug']) !== '') {
+        $payload['offer_slug'] = trim((string) $options['offer_slug']);
+    }
+
+    $response = birkly_marketplace_request('POST', '/api/v1/licenses/activate', $payload);
 
     if (!$response['ok'] || !is_array($response['data'])) {
         $code = is_array($response['data']) ? (string) ($response['data']['error'] ?? '') : '';
         return [
             'ok' => false,
-            'error' => $response['error'] ?? 'License activation failed',
+            'error' => birkly_marketplace_error_message($code, $response['error'] ?? 'License activation failed'),
             'code' => $code !== '' ? $code : 'activation_failed',
         ];
     }
 
     $data = $response['data'];
     if (empty($data['ok'])) {
+        $code = (string) ($data['error'] ?? 'activation_failed');
         return [
             'ok' => false,
-            'error' => (string) ($data['message'] ?? 'License activation failed'),
-            'code' => (string) ($data['error'] ?? 'activation_failed'),
+            'error' => birkly_marketplace_error_message($code, (string) ($data['message'] ?? 'License activation failed')),
+            'code' => $code,
         ];
     }
 
+    $entitlement = is_array($data['entitlement'] ?? null) ? $data['entitlement'] : [];
     return [
         'ok' => true,
         'code' => (string) ($data['code'] ?? 'activated'),
-        'offer_slug' => (string) ($data['offer_slug'] ?? ''),
+        'offer_slug' => (string) (($data['offer_slug'] ?? '') ?: ($entitlement['offer_slug'] ?? '')),
         'license' => is_array($data['license'] ?? null) ? $data['license'] : [],
+        'entitlement_token' => (string) ($data['entitlement_token'] ?? ''),
+        'entitlement' => $entitlement,
+        'activation' => is_array($data['activation'] ?? null) ? $data['activation'] : [],
     ];
+}
+
+/**
+ * @return array{ok:bool,code?:string,error?:string}
+ */
+function birkly_marketplace_deactivate_license(string $licenseKey, ?string $installationId = null): array
+{
+    $licenseKey = trim($licenseKey);
+    if ($licenseKey === '') {
+        return ['ok' => false, 'error' => 'License key is required', 'code' => 'missing_license_key'];
+    }
+
+    $response = birkly_marketplace_request('POST', '/api/v1/licenses/deactivate', [
+        'license_key' => $licenseKey,
+        'installation_id' => $installationId ?? birkly_installation_id(),
+    ]);
+    if (!$response['ok'] || !is_array($response['data'])) {
+        $code = is_array($response['data']) ? (string) ($response['data']['error'] ?? '') : '';
+        return [
+            'ok' => false,
+            'error' => birkly_marketplace_error_message($code, $response['error'] ?? 'License deactivation failed'),
+            'code' => $code !== '' ? $code : 'deactivation_failed',
+        ];
+    }
+
+    if (empty($response['data']['ok'])) {
+        $code = (string) ($response['data']['error'] ?? 'deactivation_failed');
+        return [
+            'ok' => false,
+            'error' => birkly_marketplace_error_message($code, (string) ($response['data']['message'] ?? 'License deactivation failed')),
+            'code' => $code,
+        ];
+    }
+
+    return ['ok' => true, 'code' => (string) ($response['data']['code'] ?? 'deactivated')];
 }
 
 /**
@@ -909,7 +1171,7 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
         $licenseStatus = birkly_marketplace_verify_license_status($slug, $licenseRef);
         if (!$licenseStatus['active']) {
             $result['license_lapsed'] = true;
-            $result['license_warning'] = 'Marketplace license is inactive. Renew your subscription to receive updates.';
+            $result['license_warning'] = $licenseStatus['error'] ?? 'Marketplace license is inactive. Renew your subscription to receive updates.';
             $result['update_available'] = false;
         }
     }

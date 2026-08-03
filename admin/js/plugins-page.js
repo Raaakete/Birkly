@@ -116,6 +116,12 @@
             openOfferDetail(el.getAttribute('data-offer-slug'));
         } else if (action === 'install-free') {
             installFreePlugin(el.getAttribute('data-offer-slug'), el.getAttribute('data-offer-version'));
+        } else if (action === 'checkout-offer') {
+            startMarketplaceCheckout(el.getAttribute('data-offer-slug'), {
+                planId: el.getAttribute('data-plan-id') || '',
+                promoCode: el.getAttribute('data-promo-code') || '',
+                quantity: el.getAttribute('data-quantity') || '',
+            });
         } else if (action === 'open-install') {
             openMarketplaceInstall(
                 el.getAttribute('data-offer-slug'),
@@ -184,6 +190,7 @@
                     action === 'select-pricing-discount' ||
                     action === 'open-review' ||
                     action === 'install-free' ||
+                    action === 'checkout-offer' ||
                     action === 'upgrade' ||
                     action === 'open-install' ||
                     action === 'close-marketplace-install' ||
@@ -407,7 +414,7 @@
         try {
             await executeMarketplaceInstall(pending.slug, pending.version || '', pending.licenseKey || '', true);
         } catch (err) {
-            showMessage(err.message, 'error');
+            showMessage(marketplaceErrorMessage(err), 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -1021,6 +1028,22 @@
         providerBox.hidden = embedModalView !== 'offer' || html === '';
     }
 
+    function marketplaceReturnUrl(slug, planId) {
+        var pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.set('tab', 'discover');
+        if (slug) {
+            pageUrl.searchParams.set('offer', slug);
+            pageUrl.searchParams.set('hub_install', '1');
+        }
+        if (planId) {
+            pageUrl.searchParams.set('plan_id', planId);
+        }
+        pageUrl.searchParams.delete('license_key');
+        pageUrl.searchParams.delete('activation_key');
+        pageUrl.searchParams.delete('license');
+        return pageUrl.toString();
+    }
+
     function marketplacePurchaseUrl(slug, options) {
         var base = marketplaceBaseUrl || 'https://marketplace.birkly.cloud';
         var purchaseUrl = base.replace(/\/$/, '') + '/buy/' + encodeURIComponent(slug || '');
@@ -1035,6 +1058,7 @@
         if (options.quantity && parseInt(options.quantity, 10) > 1) {
             params.push('quantity=' + encodeURIComponent(String(options.quantity)));
         }
+        params.push('return_url=' + encodeURIComponent(options.returnUrl || marketplaceReturnUrl(slug, options.planId || '')));
         if (params.length) {
             purchaseUrl += '?' + params.join('&');
         }
@@ -1225,9 +1249,11 @@
             purchaseOptions.planId = planId;
         }
         return (
-            '<a class="btn btn-sm btn-primary" href="' + escapeHtml(marketplacePurchaseUrl(slug, purchaseOptions)) +
-            '" target="_blank" rel="noopener noreferrer">' +
-            escapeHtml(t('buy', 'Buy')) + '</a>'
+            '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="checkout-offer" data-offer-slug="' +
+            escapeHtml(slug) + '" data-plan-id="' + escapeHtml(purchaseOptions.planId || '') +
+            '" data-promo-code="' + escapeHtml(purchaseOptions.promoCode || '') +
+            '" data-quantity="' + escapeHtml(purchaseOptions.quantity || '') + '">' +
+            escapeHtml(t('checkout', 'Checkout')) + '</button>'
         );
     }
 
@@ -1413,11 +1439,14 @@
             !getOfferInstallState(resolvedOffer).installed
         ) {
             html +=
+                '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="checkout-offer" data-offer-slug="' +
+                escapeHtml(slug) + '">' +
+                escapeHtml(t('checkout', 'Checkout')) + '</button>' +
                 '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-install" data-offer-slug="' +
                 escapeHtml(slug) + '" data-offer-title="' + escapeHtml(resolvedOffer.title || slug) +
                 '" data-offer-version="' + escapeHtml(resolvedOffer.latest_version || '') +
                 '" data-offer-free="false">' +
-                escapeHtml(t('install_with_license', 'Install with license')) + '</button>';
+                escapeHtml(t('activate_license_key', 'Activate key')) + '</button>';
         }
         return html;
     }
@@ -1671,12 +1700,13 @@
         }
 
         return (
-            '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(marketplacePurchaseUrl(slug)) + '" target="_blank" rel="noopener noreferrer">' +
-            escapeHtml(t('purchase', 'Purchase')) + '</a>' +
-            '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="open-install" data-offer-slug="' +
+            '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="checkout-offer" data-offer-slug="' +
+            escapeHtml(slug) + '">' +
+            escapeHtml(t('checkout', 'Checkout')) + '</button>' +
+            '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-install" data-offer-slug="' +
             escapeHtml(slug) + '" data-offer-title="' + escapeHtml(title) + '" data-offer-version="' +
             escapeHtml(version) + '" data-offer-free="false">' +
-            escapeHtml(t('install_with_license', 'Install')) + '</button>'
+            escapeHtml(t('activate_license_key', 'Activate key')) + '</button>'
         );
     }
 
@@ -2014,7 +2044,58 @@
             }
             await loadLicensesTab();
         } catch (err) {
-            showMessage(err.message, 'error');
+            showMessage(marketplaceErrorMessage(err), 'error');
+        }
+    }
+
+    function marketplaceErrorMessage(err) {
+        var code = err && err.code ? String(err.code) : '';
+        if (code === 'held' || code === 'entitlement_held') {
+            return t('entitlement_held', 'This entitlement is on hold. Update payment or contact the marketplace provider.');
+        }
+        if (code === 'expired' || code === 'entitlement_expired' || code === 'license_expired') {
+            return t('entitlement_expired', 'This entitlement has expired. Renew it before installing or updating.');
+        }
+        if (code === 'seat_limit' || code === 'seat_limit_reached' || code === 'activation_limit_reached') {
+            return t('entitlement_seat_limit', 'This license has reached its activation or seat limit.');
+        }
+        if (code === 'wrong_offer' || code === 'offer_mismatch' || code === 'license_offer_mismatch') {
+            return t('entitlement_wrong_offer', 'This license belongs to a different Hub offer.');
+        }
+        if (code === 'inactive' || code === 'license_inactive' || code === 'entitlement_inactive') {
+            return t('entitlement_inactive', 'This entitlement is inactive. Activate a valid license or complete checkout.');
+        }
+        return (err && err.message) || t('marketplace_request_failed', 'Hub request failed.');
+    }
+
+    async function startMarketplaceCheckout(slug, options) {
+        if (!slug) {
+            return;
+        }
+        options = options || {};
+        var payload = {
+            slug: slug,
+            plan_id: options.planId || '',
+            promo_code: options.promoCode || '',
+            quantity: options.quantity || '',
+            return_url: marketplaceReturnUrl(slug, options.planId || ''),
+        };
+        try {
+            var result = await marketplaceApi('checkout', payload);
+            var data = result.data || {};
+            var checkoutUrl = data.checkout_url || (data.psp && (data.psp.checkout_url || data.psp.url)) || '';
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+                return;
+            }
+            window.location.href = marketplacePurchaseUrl(slug, {
+                planId: options.planId || '',
+                promoCode: options.promoCode || '',
+                quantity: options.quantity || '',
+                returnUrl: payload.return_url,
+            });
+        } catch (err) {
+            showMessage(marketplaceErrorMessage(err), 'error');
         }
     }
 
@@ -2029,7 +2110,7 @@
             installedPacks = await listInstalledTemplatePacks();
             renderInstalledPacks();
         } catch (err) {
-            showMessage(err.message, 'error');
+            showMessage(marketplaceErrorMessage(err), 'error');
         }
     }
 
@@ -2380,13 +2461,15 @@
                 reviews: result.data.reviews || [],
                 rating_summary: result.data.rating_summary || offer.rating_summary || null,
             });
+            maybeResumeHubInstall(offer);
         } catch (err) {
             var cached = findCachedOffer(slug);
             if (cached) {
                 openOfferEmbedModal(slug, cached, null);
+                maybeResumeHubInstall(cached);
                 return;
             }
-            showMessage(err.message, 'error');
+            showMessage(marketplaceErrorMessage(err), 'error');
         }
     }
 
@@ -2503,6 +2586,49 @@
     function getInitialOfferSlug() {
         var params = new URLSearchParams(window.location.search);
         return params.get('offer') || '';
+    }
+
+    function getCheckoutReturnLicenseKey() {
+        var params = new URLSearchParams(window.location.search);
+        return params.get('license_key') || params.get('activation_key') || params.get('license') || '';
+    }
+
+    function shouldResumeHubInstall(slug) {
+        var params = new URLSearchParams(window.location.search);
+        return !!slug && params.get('offer') === slug && (
+            params.get('hub_install') === '1' ||
+            params.get('install') === '1' ||
+            getCheckoutReturnLicenseKey() !== ''
+        );
+    }
+
+    function clearCheckoutReturnSensitiveParams() {
+        if (!window.history || typeof window.history.replaceState !== 'function') {
+            return;
+        }
+        var pageUrl = new URL(window.location.href);
+        pageUrl.searchParams.delete('license_key');
+        pageUrl.searchParams.delete('activation_key');
+        pageUrl.searchParams.delete('license');
+        window.history.replaceState({}, '', pageUrl.pathname + pageUrl.search + pageUrl.hash);
+    }
+
+    function maybeResumeHubInstall(offer) {
+        if (!offer || !offer.slug || !shouldResumeHubInstall(offer.slug) || isFreeOffer(offer) || getOfferInstallState(offer).installed) {
+            return;
+        }
+        openMarketplaceInstall(offer.slug, offer.title || offer.slug, offer.latest_version || '', false);
+        var returnedKey = getCheckoutReturnLicenseKey();
+        if (returnedKey) {
+            var licenseInput = document.getElementById('marketplace-license-key');
+            if (licenseInput) {
+                licenseInput.value = returnedKey;
+            }
+            clearCheckoutReturnSensitiveParams();
+            showMessage(t('hub_checkout_return_ready', 'Checkout complete. Review and install with the returned license key.'), 'success');
+        } else {
+            showMessage(t('hub_checkout_return_manual_key', 'Checkout complete. Paste your activation key to finish installing.'), 'info');
+        }
     }
 
     function syncOfferTypeFilterChips(offerType) {
@@ -2675,7 +2801,7 @@
                 });
                 return;
             }
-            showMessage(err.message, 'error');
+            showMessage(marketplaceErrorMessage(err), 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
