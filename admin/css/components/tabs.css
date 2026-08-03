@@ -1,69 +1,283 @@
 /* ============================================
-   Tabs Component - Unified System
+   Birkly Admin — Tabs (P56)
+   ============================================
+
+   ONE tab system. Merges the former tabs.css + tabs-v2.css and absorbs the
+   page-local tab dialects (.tab-pane vs .tab-content, .language-tab-*,
+   .plugins-tab*, .ap-*-tab*, .marketplace-embed-tab*) — brief §7.2.
+
+     <div class="tabs-root">
+       <div class="tabs" role="tablist">
+         <button class="tab" role="tab" aria-selected="true">General</button>
+       </div>
+     </div>
+     <div class="tab-panel active">…</div>
+
+   Panel class: .tab-panel is canonical; .tab-content and .tab-pane are kept
+   because templates and JS use both.
+
+   .tabs-v2-root and the picker/more hooks are retained: tabs-v2.js drives
+   the responsive overflow behaviour and those class names are its contract.
    ============================================ */
 
-/* Tabs Container */
+.tabs-root,
+.tabs-v2-root {
+  position: relative;
+  min-width: 0;
+}
+
+/* ============================================
+   Tab strip — underline rail on a hairline
+   ============================================ */
 .tabs {
   display: flex;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-  margin-bottom: var(--space-6, 1.5rem);
-  background: transparent;
-  border-radius: 0;
-  overflow-x: auto;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  border-block-end: 1px solid var(--border-subtle);
 }
 
-/* Tab Button */
 .tab {
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-lg);
+  padding-inline: var(--space-3);
   border: none;
-  color: var(--text-secondary, #72746F);
-  cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-bottom: 2px solid transparent;
-  transition: all var(--transition-fast, 150ms ease);
+  border-block-end: 2px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: 1;
   white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  margin-block-end: -1px;
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
 }
 
-.tab:hover {
-  color: var(--text-primary, #20221D);
-  background: transparent;
+.tab > svg,
+.tab > .birkly-icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
 }
 
-.tab.active {
-  color: var(--text-primary, #20221D);
-  font-weight: 600;
-  border-bottom-color: var(--primary-600, #52C49A);
-  background: transparent;
+.tab:hover:not(.active):not([aria-selected="true"]) {
+  color: var(--text-primary);
+  background: var(--surface-hover);
 }
 
-/* Tab Content */
-.tab-content {
+.tab.active,
+.tab[aria-selected="true"] {
+  color: var(--text-primary);
+  border-block-end-color: var(--accent);
+}
+
+.tab:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: -2px;
+}
+
+.tab:disabled,
+.tab[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--surface-active);
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   Panels
+   ============================================ */
+.tab-panel,
+.tab-content,
+.tab-pane {
   display: none;
+  min-width: 0;
 }
 
-.tab-content.active {
+.tab-panel.active,
+.tab-content.active,
+.tab-pane.active,
+.tab-panel[aria-hidden="false"] {
   display: block;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .tabs {
-    flex-wrap: wrap;
-    overflow-x: auto;
-    flex-direction: row;
-  }
-  
-  .tab {
-    border-right: none;
-    border-bottom: 2px solid transparent;
-    flex-shrink: 0;
-  }
-  
-  .tab.active {
-    border-right-color: transparent;
-    border-bottom-color: var(--primary-500);
-  }
+/* ============================================
+   Segmented control — for mode switches that were bespoke tab dialects
+   (view switches, assist/source mode toggles)
+   ============================================ */
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
 }
 
+.segmented-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: calc(var(--control-md) - 6px);
+  padding-inline: var(--space-3);
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out),
+              color var(--motion-fast) var(--ease-out);
+}
+
+.segmented-item:hover:not(.active):not([aria-selected="true"]) { color: var(--text-primary); }
+
+.segmented-item.active,
+.segmented-item[aria-selected="true"],
+.segmented-item[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: var(--elevation-1);
+}
+
+.segmented-item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 1px;
+}
+
+.segmented-item > svg,
+.segmented-item > .birkly-icon { width: 1rem; height: 1rem; }
+
+/* ============================================
+   Responsive overflow (tabs-v2.js contract)
+   Desktop: wrap · Tablet: scroll + More · Mobile: select picker
+   ============================================ */
+.tabs-v2-root .tabs {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tabs-v2-root .tabs::-webkit-scrollbar { display: none; }
+
+.tabs-v2--desktop .tabs {
+  overflow-x: visible;
+  flex-wrap: wrap;
+}
+
+.tabs-v2--scroll .tabs { padding-inline-end: 4.5rem; }
+
+.tabs-v2--picker .tabs { display: none; }
+
+.tabs-v2-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--control-lg);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.tabs-v2-picker-wrap:focus-within {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.tabs-v2-picker-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.tabs-v2-picker {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  background-image: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.tabs-v2-picker:focus { outline: none; }
+
+.tabs-v2-picker-chevron {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.tabs-v2-more-wrap {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  z-index: var(--z-raised);
+}
+
+.tabs-v2-more-menu {
+  position: absolute;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-end: 0;
+  z-index: var(--z-popover);
+  min-width: 12rem;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-2);
+}
+
+.tabs-v2-more-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  text-align: start;
+  cursor: pointer;
+}
+
+.tabs-v2-more-item:hover { background: var(--surface-hover); }
+.tabs-v2-more-item[hidden] { display: none; }

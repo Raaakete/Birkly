@@ -1339,7 +1339,7 @@
   flex: 1 1 auto;
   min-height: 0;
   border: 0;
-  background: #fff;
+  background: var(--surface);
 }
 
 .marketplace-empty-state {

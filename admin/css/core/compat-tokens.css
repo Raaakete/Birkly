@@ -47,38 +47,42 @@
   --primary-light: var(--mint-100);
   --primary: var(--accent);
 
-  /* ---- Neutral scales (legacy warm + legacy cool grey collapse onto one ramp) ---- */
-  --color-neutral-50: var(--neutral-50);
-  --color-neutral-100: var(--neutral-50);
-  --color-neutral-200: var(--neutral-100);
-  --color-neutral-300: var(--neutral-200);
-  --color-neutral-400: var(--neutral-300);
-  --color-neutral-500: var(--neutral-400);
-  --color-neutral-600: var(--neutral-500);
-  --color-neutral-700: var(--neutral-700);
-  --color-neutral-800: var(--neutral-800);
-  --color-neutral-900: var(--neutral-900);
+  /* ---- Neutral scales ----
+     These map onto SEMANTIC tokens, not raw ramp steps, so legacy CSS that
+     uses them as surfaces/borders/text flips correctly in dark mode.
+     Mapping to primitives here is what left un-migrated panels stuck light
+     in dark mode (e.g. the dashboard analytics tile). */
+  --color-neutral-50: var(--surface-sunken);
+  --color-neutral-100: var(--surface-sunken);
+  --color-neutral-200: var(--surface-active);
+  --color-neutral-300: var(--border-subtle);
+  --color-neutral-400: var(--border-default);
+  --color-neutral-500: var(--border-control);
+  --color-neutral-600: var(--text-tertiary);
+  --color-neutral-700: var(--text-secondary);
+  --color-neutral-800: var(--text-secondary);
+  --color-neutral-900: var(--text-primary);
 
-  --gray-50: var(--neutral-50);
-  --gray-100: var(--neutral-100);
-  --gray-200: var(--neutral-200);
-  --gray-300: var(--neutral-300);
-  --gray-400: var(--neutral-500);
-  --gray-500: var(--neutral-600);
-  --gray-600: var(--neutral-700);
-  --gray-700: var(--neutral-800);
-  --gray-800: var(--neutral-900);
-  --gray-900: var(--neutral-950);
+  --gray-50: var(--surface-sunken);
+  --gray-100: var(--surface-sunken);
+  --gray-200: var(--border-subtle);
+  --gray-300: var(--border-default);
+  --gray-400: var(--border-control);
+  --gray-500: var(--text-tertiary);
+  --gray-600: var(--text-secondary);
+  --gray-700: var(--text-secondary);
+  --gray-800: var(--text-primary);
+  --gray-900: var(--text-primary);
 
   --color-black: var(--text-primary);
   --color-white: var(--surface);
   --color-base-white: var(--surface);
-  --color-darkest: var(--neutral-800);
+  --color-darkest: var(--text-primary);
   --color-dark: var(--text-secondary);
-  --color-mid: var(--neutral-600);
+  --color-mid: var(--text-tertiary);
   --color-light: var(--border-subtle);
   --color-lightest: var(--surface-sunken);
-  --color-secondary: var(--neutral-500);
+  --color-secondary: var(--text-tertiary);
   --color-positiv: var(--success-surface);
   --color-negativ: var(--danger-surface);
 
