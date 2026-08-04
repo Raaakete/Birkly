@@ -125,7 +125,7 @@ Birkly.Nav = {
 
 Birkly.Utils = {
     /**
-     * Wrap .btn contents in .btn-spin so the shared label roll-out/in hover
+     * Wrap .btn contents in .btn-spin so the shared label bounce hover
      * animation can run. Skips icon-only, link, and loading buttons.
      * Safe to call repeatedly; also enhances buttons added later via
      * pointerover (first hover).
