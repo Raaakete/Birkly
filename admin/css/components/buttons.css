@@ -7,7 +7,7 @@
    HOVER: background + border transition directly to --btn-hover /
    --btn-hover-border (no wash bloom, no label bounce).
    Primary: brand mint → hover mint-200 (lighter than fill, darker than mint-100).
-   Secondary: filled neutral well, no border → lighter on hover.
+   Secondary: filled well (--btn-secondary-*), no border → lighter on hover.
 
    PRESS: 1px translateY on :active.
    ============================================ */
