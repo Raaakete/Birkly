@@ -337,7 +337,7 @@ function resolveMediaItemUrl(url) {
 
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
-        '<span class="side-nav-label folder-name">' + escapeHtml(folder.name || '') + '</span>' +
+        '<span class="side-nav-label folder-name" data-text="' + escapeHtml(folder.name || '') + '">' + escapeHtml(folder.name || '') + '</span>' +
         '<span class="badge badge-count">' + escapeHtml(folder.count || 0) + '</span>';
 
       const actions = document.createElement('div');
@@ -416,7 +416,7 @@ function resolveMediaItemUrl(url) {
     rootItem.className = 'side-nav-item folder-item-move';
     rootItem.innerHTML =
       icon('folder-root', { size: 16 }) +
-      '<span class="side-nav-label">Root folder</span>';
+      '<span class="side-nav-label" data-text="Root folder">Root folder</span>';
     rootItem.addEventListener('click', async function () {
       selectMoveFolder('');
     });
@@ -430,7 +430,7 @@ function resolveMediaItemUrl(url) {
       folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
-        '<span class="side-nav-label">' + escapeHtml(folder.name || '') + '</span>';
+        '<span class="side-nav-label" data-text="' + escapeHtml(folder.name || '') + '">' + escapeHtml(folder.name || '') + '</span>';
       folderItem.addEventListener('click', async function () {
         selectMoveFolder(folder.path || '');
       });

@@ -7,9 +7,10 @@
      Horizontal (.tabs / .segmented / .language-tabs-nav)
        • No gap between items — continuous bottom edge
        • Regular — 1px grey bottom border
-       • Hover  — 3px grey bottom border (weight unchanged)
-       • Active — 3px mint bottom border (weight unchanged)
-       • Padding — ~14px / 20px; font-weight fixed to avoid layout shift
+       • Hover  — 3px grey bottom border + semibold
+       • Active — 3px mint bottom border + semibold
+       • Padding — ~14px / 20px
+       • Bold without reflow — `.nav-text[data-text]` reserves semibold width
 
      Vertical (.side-nav--track / .media-tree)
        • Same thicknesses on the inline-start edge
@@ -97,8 +98,7 @@
   color: var(--text-secondary);
   font-family: inherit;
   font-size: var(--text-base);
-  /* Fixed weight — changing regular→bold reflows glyphs and flickers the row */
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-regular);
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -109,6 +109,33 @@
     border-color var(--motion-fast) var(--ease-out),
     border-width var(--motion-fast) var(--ease-out),
     padding var(--motion-fast) var(--ease-out);
+}
+
+/*
+ * Bold-without-reflow: invisible semibold twin sets the label width, so
+ * regular → semibold on hover/active does not widen the item.
+ * Requires data-text="…" matching the visible label.
+ */
+.nav-text,
+.side-nav-label[data-text],
+.folder-name[data-text] {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+}
+.nav-text::after,
+.side-nav-label[data-text]::after,
+.folder-name[data-text]::after {
+  content: attr(data-text);
+  font-weight: var(--weight-semibold);
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
 }
 
 /* Horizontal — continuous bottom border */
@@ -150,7 +177,7 @@
   transition: color var(--motion-fast) var(--ease-out);
 }
 
-/* Hover — 3px grey bar; weight stays put */
+/* Hover — 3px grey bar + bold (width reserved by .nav-text twin) */
 .tab:hover:not(.active):not([aria-selected="true"]),
 .segmented-item:hover:not(.active):not([aria-selected="true"]):not([aria-pressed="true"]),
 .side-nav-item:hover:not(.active):not([aria-selected="true"]),
@@ -161,6 +188,7 @@
   --nav-bar: 3px;
   --nav-bar-color: var(--border-default);
   color: var(--text-primary);
+  font-weight: var(--weight-semibold);
   background: transparent;
   box-shadow: none;
 }
@@ -174,7 +202,7 @@
   color: var(--text-secondary);
 }
 
-/* Active — 3px mint bar; weight stays put */
+/* Active — 3px mint bar + bold */
 .tab.active,
 .tab[aria-selected="true"],
 .segmented-item.active,
@@ -193,6 +221,7 @@
   --nav-bar-color: var(--accent);
   background: transparent;
   color: var(--text-primary);
+  font-weight: var(--weight-semibold);
   box-shadow: none;
 }
 
@@ -292,7 +321,7 @@ summary.side-nav-group-title {
   border-inline-start: var(--nav-bar) solid var(--nav-bar-color);
   border-radius: 0;
   font-size: var(--text-base);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-regular);
   text-transform: none;
   letter-spacing: var(--tracking-normal);
   color: var(--text-primary);
@@ -328,6 +357,7 @@ summary.side-nav-group-title:hover {
   --nav-bar: 3px;
   --nav-bar-color: var(--border-default);
   color: var(--text-primary);
+  font-weight: var(--weight-semibold);
   background: transparent;
 }
 
