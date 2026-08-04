@@ -143,6 +143,7 @@ function birkly_normalize_dashboard_widget_roles($roles): ?array
 function birkly_get_core_dashboard_widgets(): array
 {
     $widgets = [
+        // Sizes: md = 1× column, lg = 2× columns (see .dash-widget--1x / --2x).
         ['id' => 'content-snapshot', 'title' => 'Content overview', 'size' => 'md', 'priority' => 5, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
         ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'lg', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
         ['id' => 'recent-collections', 'title' => 'Recent collections', 'size' => 'md', 'priority' => 20, 'mount' => 'recentCollections'],
@@ -152,7 +153,7 @@ function birkly_get_core_dashboard_widgets(): array
         ['id' => 'drafts', 'title' => 'Drafts', 'size' => 'md', 'priority' => 35, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'drafts'],
         ['id' => 'system-status', 'title' => 'System health', 'size' => 'md', 'priority' => 40, 'endpoint' => '/api/dashboard.php?action=performance', 'mount' => 'systemStatus', 'refresh' => 30, 'roles' => ['admin']],
         ['id' => 'security', 'title' => 'Security', 'size' => 'md', 'priority' => 45, 'endpoint' => '/api/dashboard.php?action=activity&limit=10&filter=users', 'mount' => 'security', 'roles' => ['admin']],
-        ['id' => 'updates', 'title' => 'Updates & alerts', 'size' => 'md', 'priority' => 50, 'endpoint' => '/api/dashboard.php?action=notifications', 'mount' => 'updates', 'roles' => ['admin']],
+        ['id' => 'updates', 'title' => 'Updates & alerts', 'size' => 'lg', 'priority' => 50, 'endpoint' => '/api/dashboard.php?action=notifications', 'mount' => 'updates', 'roles' => ['admin']],
     ];
 
     return array_values(array_filter(array_map('birkly_normalize_dashboard_widget', $widgets)));
@@ -593,7 +594,12 @@ function birkly_apply_dashboard_layout(array $widgets, array $layout): array
             continue;
         }
         $id = (string) $widget['id'];
-        $widget['size'] = 'md';
+        // Honor registry default size; user layout may override (md = 1×, lg = 2×).
+        if (isset($sizes[$id]) && in_array($sizes[$id], ['sm', 'md', 'lg', 'full'], true)) {
+            $widget['size'] = $sizes[$id];
+        } else {
+            $widget['size'] = (string) ($widget['size'] ?? 'md');
+        }
         $widget['hidden'] = isset($hidden[$id]);
         $byId[$id] = $widget;
     }
