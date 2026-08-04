@@ -36,7 +36,18 @@
     }
 
     function empty(message) {
-        return '<p class="dash-empty">' + escapeHtml(message) + '</p>';
+        return '<div class="empty-state empty-state--compact"><p class="empty-state-text">' +
+            escapeHtml(message) + '</p></div>';
+    }
+
+    function loading(message) {
+        return '<div class="loading-state empty-state--compact"><p class="empty-state-text">' +
+            escapeHtml(message) + '</p></div>';
+    }
+
+    function errorState(message) {
+        return '<div class="error-state empty-state--compact"><p class="empty-state-title">' +
+            escapeHtml(message) + '</p></div>';
     }
 
     function formatTimeAgo(timestamp) {
@@ -50,53 +61,71 @@
         return date.toLocaleDateString();
     }
 
-    function statTile(value, label, modifier) {
-        const mod = modifier ? ' dash-stat-tile--' + modifier : '';
-        return '<div class="dash-stat-tile' + mod + '"><span class="dash-stat-tile__value">' +
-            escapeHtml(value ?? 0) + '</span><span class="dash-stat-tile__label">' + escapeHtml(label) + '</span></div>';
+    const STAT_TONE_CLASS = {
+        good: ' u-fg-success',
+        published: ' u-fg-success',
+        warning: ' u-fg-warning',
+        drafts: ' u-fg-warning',
+        error: ' u-fg-danger',
+    };
+
+    function statTile(value, label, tone) {
+        const toneClass = STAT_TONE_CLASS[tone] || '';
+        return '<div class="stat"><span class="stat-label">' + escapeHtml(label) +
+            '</span><span class="stat-value' + toneClass + '">' + escapeHtml(value ?? 0) + '</span></div>';
     }
 
     function statGrid(tiles) {
-        return '<div class="dash-stat-grid">' + tiles.join('') + '</div>';
+        return '<div class="dash-metrics">' + tiles.join('') + '</div>';
     }
 
     function feedList(items) {
-        return '<ul class="dash-feed">' + items.join('') + '</ul>';
+        return '<div class="data-list">' + items.join('') + '</div>';
     }
 
     function feedItem(options) {
         const title = options.href
-            ? '<a class="dash-feed__title" href="' + escapeHtml(options.href) + '">' + escapeHtml(options.title) + '</a>'
-            : '<span class="dash-feed__title">' + escapeHtml(options.title) + '</span>';
-        const meta = options.meta ? '<span class="dash-feed__meta">' + options.meta + '</span>' : '';
-        const aside = options.aside ? '<div class="dash-feed__aside">' + options.aside + '</div>' : '';
-        return '<li class="dash-feed__item"><div class="dash-feed__main">' + title + meta + '</div>' + aside + '</li>';
+            ? '<a class="data-list-title" href="' + escapeHtml(options.href) + '">' + escapeHtml(options.title) + '</a>'
+            : '<span class="data-list-title">' + escapeHtml(options.title) + '</span>';
+        const meta = options.meta ? '<span class="data-list-meta">' + options.meta + '</span>' : '';
+        const aside = options.aside ? '<div class="data-list-actions">' + options.aside + '</div>' : '';
+        return '<div class="data-list-item"><div class="data-list-main">' + title + meta + '</div>' + aside + '</div>';
     }
 
     function statusBadge(status) {
         if (status === 'pending_review') {
-            return '<span class="dash-badge dash-badge--review">Pending review</span>';
+            return '<span class="badge badge-warning">Pending review</span>';
         }
         const published = status === 'published';
-        const label = published ? 'Published' : 'Draft';
-        const className = published ? 'dash-badge dash-badge--published' : 'dash-badge dash-badge--draft';
-        return '<span class="' + className + '">' + label + '</span>';
+        return published
+            ? '<span class="badge badge-success">Published</span>'
+            : '<span class="badge badge-neutral">Draft</span>';
     }
+
+    const CALLOUT_TONE_CLASS = {
+        warning: 'callout-warning',
+        info: 'callout-info',
+        muted: 'callout-neutral',
+    };
 
     function callout(value, title, description, href, hrefLabel, tone) {
         const link = href
-            ? '<a class="dash-callout__link" href="' + escapeHtml(href) + '">' + escapeHtml(hrefLabel) + '</a>'
+            ? '<a href="' + escapeHtml(href) + '">' + escapeHtml(hrefLabel) + '</a>'
             : '';
-        return '<div class="dash-callout dash-callout--' + tone + '">' +
-            '<span class="dash-callout__value">' + escapeHtml(value) + '</span>' +
-            '<div class="dash-callout__copy"><strong>' + escapeHtml(title) + '</strong>' +
-            (description ? '<span>' + escapeHtml(description) + '</span>' : '') + link + '</div></div>';
+        return '<div class="callout ' + (CALLOUT_TONE_CLASS[tone] || 'callout-neutral') + '">' +
+            '<span class="u-text-2xl u-weight-semibold u-numeric u-leading-tight">' + escapeHtml(value) + '</span>' +
+            '<div class="callout-body"><p class="callout-title">' + escapeHtml(title) + '</p>' +
+            (description ? '<p>' + escapeHtml(description) + '</p>' : '') + link + '</div></div>';
     }
 
     function alertItem(title, message, tone) {
-        return '<li class="dash-alert dash-alert--' + (tone || 'info') + '">' +
-            '<div class="dash-alert__copy"><strong>' + escapeHtml(title) + '</strong>' +
-            '<span>' + escapeHtml(message) + '</span></div></li>';
+        return '<div class="callout ' + (CALLOUT_TONE_CLASS[tone] || 'callout-info') + '">' +
+            '<div class="callout-body"><p class="callout-title">' + escapeHtml(title) + '</p>' +
+            '<p>' + escapeHtml(message) + '</p></div></div>';
+    }
+
+    function footerLinks(links) {
+        return links ? '<div class="u-cluster-3 u-text-sm u-mt-3">' + links + '</div>' : '';
     }
 
     function registerCoreMounts() {
@@ -159,9 +188,9 @@
 
             function renderBarGroup(title, rows, labelKey, valueKey, labelType) {
                 if (!Array.isArray(rows) || rows.length === 0) {
-                    return '<div class="analytics-bar-group analytics-bar-group--empty">' +
-                        '<h4 class="analytics-bar-group__title">' + escapeHtml(title) + '</h4>' +
-                        '<p class="analytics-bar-group__empty">No data yet</p></div>';
+                    return '<div class="u-stack-2">' +
+                        '<h4 class="u-label">' + escapeHtml(title) + '</h4>' +
+                        '<p class="u-text-sm u-fg-tertiary">No data yet</p></div>';
                 }
 
                 const max = Math.max.apply(null, rows.map(function (row) { return Number(row[valueKey] || 0); }).concat([1]));
@@ -169,19 +198,19 @@
                     const count = Number(row[valueKey] || 0);
                     const width = Math.max(8, Math.round((count / max) * 100));
                     const label = formatLabel(row[labelKey], labelType);
-                    return '<li class="analytics-bar">' +
-                        '<div class="analytics-bar__meta">' +
-                        '<span class="analytics-bar__label" title="' + escapeHtml(String(row[labelKey] || '')) + '">' + escapeHtml(label) + '</span>' +
-                        '<span class="analytics-bar__value">' + escapeHtml(count.toLocaleString()) + '</span>' +
+                    return '<li class="u-stack-1">' +
+                        '<div class="u-split u-gap-3">' +
+                        '<span class="u-text-sm u-truncate" title="' + escapeHtml(String(row[labelKey] || '')) + '">' + escapeHtml(label) + '</span>' +
+                        '<span class="u-text-sm u-numeric u-fg-secondary u-shrink-0">' + escapeHtml(count.toLocaleString()) + '</span>' +
                         '</div>' +
-                        '<div class="analytics-bar__track" aria-hidden="true">' +
-                        '<span class="analytics-bar__fill" style="width:' + width + '%"></span>' +
+                        '<div class="progress" aria-hidden="true">' +
+                        '<div class="progress-bar" style="width:' + width + '%"></div>' +
                         '</div></li>';
                 }).join('');
 
-                return '<div class="analytics-bar-group">' +
-                    '<h4 class="analytics-bar-group__title">' + escapeHtml(title) + '</h4>' +
-                    '<ul class="analytics-bars">' + items + '</ul></div>';
+                return '<div class="u-stack-2">' +
+                    '<h4 class="u-label">' + escapeHtml(title) + '</h4>' +
+                    '<ul class="u-stack-3">' + items + '</ul></div>';
             }
 
             const insights = data.insights || {};
@@ -189,48 +218,44 @@
             const visitors = Number(data.total_visitors || 0);
             const viewsPerVisitor = visitors > 0 ? (pageViews / visitors).toFixed(1) : '—';
 
+            function kpi(value, label, hint) {
+                return '<div class="stat">' +
+                    '<span class="stat-label">' + escapeHtml(label) + '</span>' +
+                    '<span class="stat-value">' + escapeHtml(value) + '</span>' +
+                    '<span class="stat-meta">' + escapeHtml(hint) + '</span>' +
+                    '</div>';
+            }
+
+            function panel(title, groups) {
+                return '<section class="card card--compact">' +
+                    '<div class="card-header"><h3 class="card-title">' + escapeHtml(title) + '</h3></div>' +
+                    '<div class="card-body u-stack-4">' + groups + '</div></section>';
+            }
+
             setContent(element,
-                '<div class="analytics-widget">' +
-                '<div class="analytics-widget__summary">' +
-                '<div class="analytics-kpi analytics-kpi--primary">' +
-                '<span class="analytics-kpi__value">' + escapeHtml(pageViews.toLocaleString()) + '</span>' +
-                '<span class="analytics-kpi__label">Page views</span>' +
-                '<span class="analytics-kpi__hint">Last 30 days</span>' +
+                '<div class="u-stack-5">' +
+                '<div class="u-grid-3">' +
+                kpi(pageViews.toLocaleString(), 'Page views', 'Last 30 days') +
+                kpi(visitors.toLocaleString(), 'Visitors', 'Last 30 days') +
+                kpi(String(viewsPerVisitor), 'Pages / visitor', 'Engagement') +
                 '</div>' +
-                '<div class="analytics-kpi">' +
-                '<span class="analytics-kpi__value">' + escapeHtml(visitors.toLocaleString()) + '</span>' +
-                '<span class="analytics-kpi__label">Visitors</span>' +
-                '<span class="analytics-kpi__hint">Last 30 days</span>' +
+                '<div class="u-grid-2">' +
+                panel('Visitor journey',
+                    renderBarGroup('Entrance pages', insights.entrance_pages, 'path', 'entrances', 'path') +
+                    renderBarGroup('Exit pages', insights.exit_pages, 'path', 'exits', 'path') +
+                    renderBarGroup('Traffic sources', insights.traffic_sources, 'source', 'visits', 'source')) +
+                panel('Audience',
+                    renderBarGroup('Devices', insights.devices, 'device_type', 'visits', 'device') +
+                    renderBarGroup('Locations', insights.countries, 'country', 'visits', 'country') +
+                    renderBarGroup('Browsers', insights.browsers, 'browser', 'visits', 'browser')) +
                 '</div>' +
-                '<div class="analytics-kpi analytics-kpi--muted">' +
-                '<span class="analytics-kpi__value">' + escapeHtml(String(viewsPerVisitor)) + '</span>' +
-                '<span class="analytics-kpi__label">Pages / visitor</span>' +
-                '<span class="analytics-kpi__hint">Engagement</span>' +
-                '</div>' +
-                '</div>' +
-                '<div class="analytics-widget__panels">' +
-                '<section class="analytics-panel">' +
-                '<h3 class="analytics-panel__title">Visitor journey</h3>' +
-                renderBarGroup('Entrance pages', insights.entrance_pages, 'path', 'entrances', 'path') +
-                renderBarGroup('Exit pages', insights.exit_pages, 'path', 'exits', 'path') +
-                renderBarGroup('Traffic sources', insights.traffic_sources, 'source', 'visits', 'source') +
-                '</section>' +
-                '<section class="analytics-panel">' +
-                '<h3 class="analytics-panel__title">Audience</h3>' +
-                renderBarGroup('Devices', insights.devices, 'device_type', 'visits', 'device') +
-                renderBarGroup('Locations', insights.countries, 'country', 'visits', 'country') +
-                renderBarGroup('Browsers', insights.browsers, 'browser', 'visits', 'browser') +
-                '</section>' +
-                '</div>' +
-                '<div class="dash-widget-footer-links">' +
-                '<a class="dash-widget-footer-link" href="' + escapeHtml(adminUrl('settings') + '#domains') + '">Per-domain reports in Settings → Domains</a>' +
-                '</div>' +
+                footerLinks('<a href="' + escapeHtml(adminUrl('settings') + '#domains') + '">Per-domain reports in Settings → Domains</a>') +
                 '</div>'
             );
         });
 
         dashboard.registerMount('recentCollections', function (element) {
-            setContent(element, '<p class="dash-empty dash-empty--loading">Loading collections…</p>');
+            setContent(element, loading('Loading collections…'));
             fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(function (payload) {
@@ -247,16 +272,16 @@
                             title: name,
                             href: adminUrl('entries', { collection: slug }),
                             meta: escapeHtml(count) + ' ' + (Number(count) === 1 ? 'entry' : 'entries'),
-                            aside: '<span class="dash-feed__chevron" aria-hidden="true">→</span>',
+                            aside: '<span class="u-fg-tertiary" aria-hidden="true">→</span>',
                         });
                     });
                     setContent(element, feedList(items));
                 })
-                .catch(function () { setContent(element, empty('Unable to load collections.')); });
+                .catch(function () { setContent(element, errorState('Unable to load collections.')); });
         });
 
         dashboard.registerMount('recentEntries', function (element) {
-            setContent(element, '<p class="dash-empty dash-empty--loading">Loading entries…</p>');
+            setContent(element, loading('Loading entries…'));
             fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(function (payload) {
@@ -299,7 +324,7 @@
                     });
                     setContent(element, feedList(items));
                 })
-                .catch(function () { setContent(element, empty('Unable to load entries.')); });
+                .catch(function () { setContent(element, errorState('Unable to load entries.')); });
         });
 
         dashboard.registerMount('pendingReview', function (element, widget, data) {
@@ -336,11 +361,10 @@
                 return acc;
             }, {})).map(function (queue) {
                 const label = queue.name + ' (' + queue.count + ')';
-                return '<a class="dash-widget-footer-link" href="' + escapeHtml(adminUrl('entries', { collection: queue.slug, status: 'pending_review' })) + '">' +
+                return '<a href="' + escapeHtml(adminUrl('entries', { collection: queue.slug, status: 'pending_review' })) + '">' +
                     escapeHtml(label) + ' →</a>';
             }).join('');
-            const footer = '<div class="dash-widget-footer-links">' + queueLinks + '</div>';
-            setContent(element, feedList(items) + footer);
+            setContent(element, feedList(items) + footerLinks(queueLinks));
         });
 
         dashboard.registerMount('recentActivity', function (element, widget, data) {
@@ -350,13 +374,13 @@
                 .slice(0, 10)
                 .map(function (item) {
                     const time = formatTimeAgo(item.timestamp);
-                    return '<div class="dash-activity-row">' +
-                        '<span class="dash-activity-row__message">' + escapeHtml(item.message || item.event || 'Activity') + '</span>' +
-                        '<span class="dash-activity-row__time">' + escapeHtml(time || '—') + '</span>' +
+                    return '<div class="data-list-item">' +
+                        '<span class="u-fill u-truncate">' + escapeHtml(item.message || item.event || 'Activity') + '</span>' +
+                        '<span class="u-text-xs u-fg-tertiary u-nowrap">' + escapeHtml(time || '—') + '</span>' +
                         '</div>';
                 });
             setContent(element, rows.length
-                ? '<div class="dash-activity-list">' + rows.join('') + '</div>'
+                ? '<div class="data-list dash-scroll">' + rows.join('') + '</div>'
                 : empty('No recent activity.'));
         });
 
@@ -377,7 +401,7 @@
         });
 
         dashboard.registerMount('systemStatus', function (element, widget, data) {
-            if (!data) return setContent(element, empty('System status is unavailable.'));
+            if (!data) return setContent(element, errorState('System status is unavailable.'));
             const responseMs = Number(data.api_response_time || 0);
             const responseTone = responseMs < 100 ? 'good' : responseMs < 500 ? 'warning' : 'error';
             setContent(element, statGrid([
@@ -405,9 +429,9 @@
                 setContent(element, empty('No updates or alerts.'));
                 return;
             }
-            setContent(element, '<ul class="dash-alert-list">' + notifications.map(function (item) {
+            setContent(element, '<div class="u-stack-2">' + notifications.map(function (item) {
                 return alertItem(item.title, item.message, item.type || 'info');
-            }).join('') + '</ul>');
+            }).join('') + '</div>');
         });
 
         dashboard.registerMount('commerceStats', renderCommerce);
@@ -448,7 +472,7 @@
             });
         });
         const footer = data.events_url
-            ? '<a class="dash-widget-footer-link" href="' + escapeHtml(data.events_url) + '">Manage events →</a>'
+            ? footerLinks('<a href="' + escapeHtml(data.events_url) + '">Manage events →</a>')
             : '';
         setContent(element, feedList(items) + footer);
     }
@@ -477,7 +501,7 @@
                 return Birkly.Dashboard.mountWidget(body, widget, data);
             })
             .catch(function () {
-                setContent(body, empty('Unable to load this widget.'));
+                setContent(body, errorState('Unable to load this widget.'));
                 return false;
             });
     }
@@ -492,16 +516,16 @@
         card.dataset.dashboardWidget = widget.id;
 
         const heading = document.createElement('div');
-        heading.className = 'dash-widget-header';
+        heading.className = 'card-header';
 
         const title = document.createElement('h2');
-        title.className = 'dash-widget-title';
+        title.className = 'card-title';
         title.textContent = widget.title || widget.id;
         heading.appendChild(title);
 
         const body = document.createElement('div');
-        body.className = 'dash-widget-body dash-widget-content';
-        body.innerHTML = '<p class="dash-empty dash-empty--loading">Loading…</p>';
+        body.className = 'card-body dash-widget-body';
+        body.innerHTML = loading('Loading…');
         card.append(heading, body);
         return { card: card, body: body };
     }
@@ -725,11 +749,13 @@
                 dashboardState.layout = payload?.data?.layout || dashboardState.layout;
                 renderWidgets();
             })
-            .catch(function () { grid.innerHTML = empty('Unable to load dashboard widgets.'); });
+            .catch(function () { grid.innerHTML = errorState('Unable to load dashboard widgets.'); });
     }
 
     function setupOnboardingHandlers() {
         const modal = document.getElementById('onboarding-complete-modal');
+        // layout_footer.php also opens/closes this modal via inline display, so
+        // the inline style stays authoritative here.
         const close = () => { if (modal) modal.style.display = 'none'; };
         document.getElementById('onboarding-complete-close')?.addEventListener('click', close);
         document.getElementById('onboarding-complete-close-btn')?.addEventListener('click', close);
@@ -741,7 +767,7 @@
             const demoCard = document.getElementById('onboarding-complete-demo-card');
             const demoLink = document.getElementById('onboarding-complete-demo-link');
             if (demoUrl && demoCard && demoLink) {
-                demoCard.style.display = '';
+                demoCard.hidden = false;
                 demoLink.href = demoUrl;
             }
         }

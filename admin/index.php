@@ -400,31 +400,31 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
             <?php include __DIR__ . '/partials/2fa-grace-banner.php'; ?>
             <?php
             $renderAdminError = static function (string $title, string $message, ?Throwable $e = null, array $context = []): void {
-                echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                echo '<h2>' . htmlspecialchars($title) . '</h2>';
+                echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block">';
+                echo '<div class="callout-body u-stack-3">';
+                echo '<h2 class="callout-title">' . htmlspecialchars($title) . '</h2>';
                 echo '<p>' . htmlspecialchars($message) . '</p>';
                 if (!empty($context['error_step'])) {
-                    echo '<p style="font-size: 0.9rem;"><strong>Step:</strong> <code>' . htmlspecialchars((string) $context['error_step']) . '</code></p>';
+                    echo '<p class="u-text-sm"><strong>Step:</strong> <code>' . htmlspecialchars((string) $context['error_step']) . '</code></p>';
                 }
                 if (!empty($context['error_file'])) {
-                    echo '<p style="font-size: 0.85rem;"><strong>File:</strong> <code>' . htmlspecialchars((string) $context['error_file']) . '</code>'
+                    echo '<p class="u-text-sm"><strong>File:</strong> <code>' . htmlspecialchars((string) $context['error_file']) . '</code>'
                         . (!empty($context['error_line']) ? ' <strong>line</strong> ' . (int) $context['error_line'] : '')
                         . '</p>';
                 }
                 if ($e !== null) {
-                    echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto; font-size: 0.85rem;">'
-                        . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                    echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
                 }
                 require_once __DIR__ . '/../core/build_info.php';
                 $build = birkly_build_info();
-                echo '<p style="margin-top: 1rem; font-size: 0.9rem;"><strong>Deploy check:</strong> '
+                echo '<p class="u-text-sm"><strong>Deploy check:</strong> '
                     . 'git <code>' . htmlspecialchars((string) ($build['git_commit'] ?? 'unknown')) . '</code>, '
                     . 'content mode <code>' . htmlspecialchars((string) ($build['content_template_mode'] ?? '?')) . '</code>, '
                     . 'index bypass <code>' . htmlspecialchars((string) ($build['index_content_bypass'] ?? '?')) . '</code>. '
                     . '<a href="' . htmlspecialchars(birkly_url('/admin/deploy-check.php')) . '">Full diagnostics</a></p>';
-                echo '<p style="font-size: 0.85rem; opacity: 0.85;">Pull the full Birkly repo root on the server (folders <code>admin/</code>, <code>api/</code>, <code>core/</code> as siblings), not only <code>admin/</code>.</p>';
-                echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                echo '</div>';
+                echo '<p class="u-text-sm u-fg-secondary">Pull the full Birkly repo root on the server (folders <code>admin/</code>, <code>api/</code>, <code>core/</code> as siblings), not only <code>admin/</code>.</p>';
+                echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                echo '</div></div></div>';
             };
 
             // Direct PHP templates — never use the directive parser (avoids syntax errors on live)
@@ -492,20 +492,20 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                 
                 // Check if there's an error in the data
                 if (isset($data['error'])) {
-                    echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                    echo '<h2>Error Loading Page</h2>';
+                    echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
+                    echo '<h2 class="callout-title">Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($data['error']) . '</p>';
-                    echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                    echo '</div>';
+                    echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                    echo '</div></div></div>';
                 } else {
                     try {
                         $output = render_template_file($templatePath, $data);
                         if (empty($output)) {
-                            echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                            echo '<h2>Error Rendering Template</h2>';
+                            echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
+                            echo '<h2 class="callout-title">Error Rendering Template</h2>';
                             echo '<p>The template rendered empty output. This might be a template parsing error.</p>';
                             echo '<p><strong>Debug Info:</strong></p>';
-                            echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">';
+                            echo '<pre>';
                             echo 'Page: ' . htmlspecialchars($page) . "\n";
                             echo 'Template: ' . htmlspecialchars($templatePath) . "\n";
                             echo 'Data keys: ' . implode(', ', array_keys($data)) . "\n";
@@ -516,18 +516,18 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                                 echo 'Entry ID: ' . htmlspecialchars($data['entry']['id'] ?? 'N/A') . "\n";
                             }
                             echo '</pre>';
-                            echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                            echo '</div>';
+                            echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                            echo '</div></div></div>';
                         } else {
                             echo $output;
                         }
                     } catch (Throwable $e) {
-                        echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                        echo '<h2>Template Rendering Error</h2>';
+                        echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
+                        echo '<h2 class="callout-title">Template Rendering Error</h2>';
                         echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
-                        echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                        echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                        echo '</div>';
+                        echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                        echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                        echo '</div></div></div>';
                     }
                 }
             } elseif (in_array($page, [
@@ -539,11 +539,11 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                 try {
                     $data = fetch_admin_page_data($page, $_GET);
                     if (isset($data['error'])) {
-                        echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                        echo '<h2>Error Loading Page</h2>';
+                        echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
+                        echo '<h2 class="callout-title">Error Loading Page</h2>';
                         echo '<p>' . htmlspecialchars($data['error']) . '</p>';
-                        echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                        echo '</div>';
+                        echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                        echo '</div></div></div>';
                     } else {
                         // Check if template uses PHP tags or template directives
                         $templateContent = file_get_contents($templatePath);
@@ -564,11 +564,11 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         if ($usesTemplateDirectives) {
                             $output = render_template_file($templatePath, $data);
                             if (empty($output)) {
-                                echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                                echo '<h2>Error Rendering Template</h2>';
+                                echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
+                                echo '<h2 class="callout-title">Error Rendering Template</h2>';
                                 echo '<p>The template rendered empty output.</p>';
-                                echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                                echo '</div>';
+                                echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                                echo '</div></div></div>';
                             } else {
                                 echo $output;
                             }
@@ -578,12 +578,12 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         }
                     }
                 } catch (Throwable $e) {
-                    echo '<div class="error-message" style="padding: 2rem; margin: 2rem; background: #fee; border: 1px solid #fcc; border-radius: 8px;">';
-                    echo '<h2>Error Loading Page</h2>';
+                    echo '<div class="page-body u-stack-6"><div class="callout callout-danger callout--block"><div class="callout-body u-stack-3">';
+                    echo '<h2 class="callout-title">Error Loading Page</h2>';
                     echo '<p>' . htmlspecialchars($e->getMessage()) . '</p>';
-                    echo '<pre style="background: #f8f8f8; padding: 1rem; border-radius: 4px; overflow: auto;">' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
-                    echo '<a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a>';
-                    echo '</div>';
+                    echo '<pre>' . htmlspecialchars($e->getTraceAsString()) . '</pre>';
+                    echo '<div><a href="' . htmlspecialchars(admin_url('dashboard')) . '" class="btn btn-primary">Back to Dashboard</a></div>';
+                    echo '</div></div></div>';
                 }
             } elseif ($isPluginAdminPage) {
                 $pluginPath = $birkly_admin_pages[$page] ?? '';
@@ -596,29 +596,29 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     if ($usesTemplateDirectives && function_exists('render_template_file')) {
                         $data = fetch_admin_page_data($page, $_GET);
                         $output = render_template_file($pluginPath, $data ?? []);
-                        echo $output ?: '<div class="error">Failed to render plugin page</div>';
+                        echo $output ?: '<div class="callout callout-danger">Failed to render plugin page</div>';
                     } else {
                         include $pluginPath;
                     }
                 } else {
-                    echo '<div class="coming-soon">';
-                    echo '<h1>Plugin Not Found</h1>';
-                    echo '<p>The plugin page could not be loaded.</p>';
-                    echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
+                    echo '<div class="empty-state">';
+                    echo '<p class="empty-state-title">Plugin Not Found</p>';
+                    echo '<p class="empty-state-text">The plugin page could not be loaded.</p>';
+                    echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a></div>';
                     echo '</div>';
                 }
             } elseif ($page === 'automation' && !birkly_is_plugin_active('automation')) {
-                echo '<div class="coming-soon">';
-                echo '<h1>Automation Unavailable</h1>';
-                echo '<p>The Automation plugin is not active. Enable it from the Plugins page.</p>';
-                echo '<a href="' . admin_url('plugins') . '" class="btn btn-primary">Go to Plugins</a>';
+                echo '<div class="empty-state">';
+                echo '<p class="empty-state-title">Automation Unavailable</p>';
+                echo '<p class="empty-state-text">The Automation plugin is not active. Enable it from the Plugins page.</p>';
+                echo '<div class="empty-state-actions"><a href="' . admin_url('plugins') . '" class="btn btn-primary">Go to Plugins</a></div>';
                 echo '</div>';
             } else {
                 // Show "coming soon" for unimplemented pages
-                echo '<div class="coming-soon">';
-                echo '<h1>Coming Soon</h1>';
-                echo '<p>The ' . htmlspecialchars(ucfirst($page)) . ' page is not implemented yet.</p>';
-                echo '<a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a>';
+                echo '<div class="empty-state">';
+                echo '<p class="empty-state-title">Coming Soon</p>';
+                echo '<p class="empty-state-text">The ' . htmlspecialchars(ucfirst($page)) . ' page is not implemented yet.</p>';
+                echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a></div>';
                 echo '</div>';
             }
             ?>

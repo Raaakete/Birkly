@@ -48,7 +48,7 @@ const onboarding = {
                 const saveBtn = document.getElementById('onboarding-save-ai-btn');
                 if (chatPanel) chatPanel.hidden = this.aiMode !== 'chat';
                 if (extPanel) extPanel.hidden = this.aiMode !== 'external';
-                if (saveBtn) saveBtn.style.display = this.aiMode === 'chat' ? '' : 'none';
+                if (saveBtn) saveBtn.hidden = this.aiMode !== 'chat';
             });
         });
     },
@@ -164,10 +164,10 @@ const onboarding = {
         const password = document.getElementById('first-user-password').value;
         const passwordConfirm = document.getElementById('first-user-password-confirm').value;
 
-        errorDiv.style.display = 'none';
+        errorDiv.hidden = true;
         if (password !== passwordConfirm) {
             errorDiv.textContent = 'Passwords do not match';
-            errorDiv.style.display = 'block';
+            errorDiv.hidden = false;
             return;
         }
 
@@ -183,12 +183,12 @@ const onboarding = {
                 window.location.reload();
             } else {
                 errorDiv.textContent = data.message || 'Failed to create account';
-                errorDiv.style.display = 'block';
+                errorDiv.hidden = false;
                 submitBtn.disabled = false;
             }
         } catch (error) {
             errorDiv.textContent = 'An error occurred. Please try again.';
-            errorDiv.style.display = 'block';
+            errorDiv.hidden = false;
             submitBtn.disabled = false;
         }
     },
@@ -197,12 +197,12 @@ const onboarding = {
         this.currentStep = step;
         const stepName = this.getStepName(step);
         document.querySelectorAll('.onboarding-step').forEach(el => {
-            el.style.display = el.id === `step-${stepName}` ? 'block' : 'none';
+            el.hidden = el.id !== `step-${stepName}`;
         });
 
         const header = document.querySelector('.onboarding-header');
         if (header) {
-            header.style.display = step === 0 ? 'none' : '';
+            header.hidden = step === 0;
         }
 
         if (step === 1) this.renderInstallContext();
@@ -245,7 +245,7 @@ const onboarding = {
     updateProgress() {
         const progressEl = document.getElementById('onboarding-progress');
         if (progressEl) {
-            progressEl.style.display = this.currentStep === 0 ? 'none' : '';
+            progressEl.hidden = this.currentStep === 0;
         }
         const pct = this.maxSteps > 1
             ? Math.min(100, ((this.currentStep - 1) / (this.maxSteps - 1)) * 100)
@@ -471,9 +471,9 @@ const onboarding = {
         const ollamaHint = document.getElementById('onboarding-ollama-hint');
         const isOllama = provider === 'ollama';
         const isCustom = provider === 'custom';
-        if (keyGroup) keyGroup.style.display = isOllama ? 'none' : '';
-        if (urlGroup) urlGroup.style.display = (isOllama || isCustom) ? '' : 'none';
-        if (ollamaHint) ollamaHint.style.display = isOllama ? '' : 'none';
+        if (keyGroup) keyGroup.hidden = isOllama;
+        if (urlGroup) urlGroup.hidden = !(isOllama || isCustom);
+        if (ollamaHint) ollamaHint.hidden = !isOllama;
     },
 
     async testAIConnection() {

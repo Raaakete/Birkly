@@ -30,7 +30,14 @@
             resolved: 'Resolved',
             closed: 'Closed',
         };
-        return `<span class="status-badge status-${escapeHtml(status)}">${escapeHtml(labels[status] || status)}</span>`;
+        const tones = {
+            new: 'badge-info',
+            in_progress: 'badge-warning',
+            resolved: 'badge-success',
+            closed: 'badge-neutral',
+        };
+        const tone = tones[status] || 'badge-neutral';
+        return `<span class="badge ${tone}">${escapeHtml(labels[status] || status)}</span>`;
     }
 
     function typeLabel(type) {
@@ -59,9 +66,9 @@
         const type = document.getElementById('feedback-filter-type')?.value || '';
         const category = document.getElementById('feedback-filter-category')?.value || '';
 
-        if (loading) loading.style.display = 'block';
-        if (empty) empty.style.display = 'none';
-        if (wrap) wrap.style.display = 'none';
+        if (loading) loading.hidden = false;
+        if (empty) empty.hidden = true;
+        if (wrap) wrap.hidden = true;
 
         const params = new URLSearchParams({ action: 'list' });
         if (status) params.set('status', status);
@@ -86,16 +93,16 @@
         const wrap = document.getElementById('feedback-table-wrap');
         const tbody = document.getElementById('feedback-table-body');
 
-        if (loading) loading.style.display = 'none';
+        if (loading) loading.hidden = true;
 
         if (!items.length) {
-            if (empty) empty.style.display = 'block';
-            if (wrap) wrap.style.display = 'none';
+            if (empty) empty.hidden = false;
+            if (wrap) wrap.hidden = true;
             return;
         }
 
-        if (empty) empty.style.display = 'none';
-        if (wrap) wrap.style.display = 'block';
+        if (empty) empty.hidden = true;
+        if (wrap) wrap.hidden = false;
 
         if (!tbody) return;
 
@@ -143,12 +150,12 @@
                 </div>
             `;
         }
-        if (modal) modal.style.display = 'flex';
+        if (modal) modal.classList.add('show');
     }
 
     function closeDetail() {
         const modal = document.getElementById('feedback-detail-modal');
-        if (modal) modal.style.display = 'none';
+        if (modal) modal.classList.remove('show');
         selectedId = null;
     }
 

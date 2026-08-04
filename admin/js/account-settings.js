@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const previewImg = document.getElementById('avatar-preview-img');
                         if (preview && previewImg) {
                             previewImg.src = e.target.result;
-                            preview.style.display = 'block';
+                            preview.hidden = false;
                         }
                     };
                     reader.readAsDataURL(file);
@@ -314,28 +314,29 @@ async function loadCloudAccountStatus() {
         if (data.status !== 'ok') throw new Error(data.message || 'Failed to load cloud account status');
         renderCloudAccountStatus(container, data.data || {});
     } catch (err) {
-        container.innerHTML = '<p class="text-muted">Error loading cloud account status</p>';
+        container.innerHTML = '<p class="u-fg-danger" role="alert">Error loading cloud account status</p>';
     }
 }
 
 function renderCloudAccountStatus(container, status) {
     if (status.linked) {
-        container.innerHTML = '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">'
+        container.innerHTML = '<div class="u-stack-4"><div class="u-cluster-3">'
             + '<span class="badge badge-success">Linked</span>'
-            + '<span class="text-muted">' + escapeHtml(status.email || '') + '</span></div>'
-            + '<button class="btn btn-danger btn-sm" type="button" id="cloud-account-unlink-btn">Unlink cloud account</button>';
+            + '<span class="u-text-sm u-fg-secondary">' + escapeHtml(status.email || '') + '</span></div>'
+            + '<button class="btn btn-danger btn-sm" type="button" id="cloud-account-unlink-btn">Unlink cloud account</button></div>';
         document.getElementById('cloud-account-unlink-btn')?.addEventListener('click', unlinkCloudAccount);
         return;
     }
 
     if (status.oauth_reachable === false) {
         const msg = status.oauth_message || 'Birkly Cloud sign-in is temporarily unavailable. Your local CMS login is unaffected.';
-        container.innerHTML = '<p class="text-muted" style="margin-bottom:16px;">' + escapeHtml(msg) + '</p>';
+        container.innerHTML = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(msg) + '</p>';
         return;
     }
 
-    container.innerHTML = '<p class="text-muted" style="margin-bottom:16px;">No Birkly cloud account is linked to this installation.</p>'
-        + '<button class="btn btn-primary" type="button" id="cloud-account-link-btn">Link Birkly cloud account</button>';
+    container.innerHTML = '<div class="u-stack-4">'
+        + '<p class="u-text-sm u-fg-secondary">No Birkly cloud account is linked to this installation.</p>'
+        + '<button class="btn btn-primary u-w-fit" type="button" id="cloud-account-link-btn">Link Birkly cloud account</button></div>';
     document.getElementById('cloud-account-link-btn')?.addEventListener('click', startCloudAccountLink);
 }
 
@@ -380,9 +381,9 @@ function showCloudAccountMessage(message, type) {
     const el = document.getElementById('cloud-account-message');
     if (!el) return;
     el.textContent = message;
-    el.className = 'settings-message ' + (type || 'info');
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 5000);
+    el.className = 'message message-' + (type || 'info');
+    el.hidden = false;
+    setTimeout(() => { el.hidden = true; }, 5000);
 }
 
 async function loadAccount2FAStatus() {
@@ -397,7 +398,7 @@ async function loadAccount2FAStatus() {
         renderAccount2FAStatus(container, !!data.enabled, data.enabled_at, data.backup_codes_count);
     } catch (err) {
         console.error('Error loading 2FA status:', err);
-        container.innerHTML = '<p class="text-muted">Error loading 2FA status</p>';
+        container.innerHTML = '<p class="u-fg-danger" role="alert">Error loading 2FA status</p>';
     }
 }
 
@@ -407,13 +408,13 @@ function renderAccount2FAStatus(container, enabled, enabledAt, backupCodesCount)
 
     if (enabled) {
         container.innerHTML = `
-          <div class="2fa-status-enabled">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+          <div class="u-stack-4">
+            <div class="u-cluster-3">
               <span class="badge badge-success">Enabled</span>
-              <span class="text-muted">${escapeHtml(enabledDate ? `Enabled on ${enabledDate}` : '')}</span>
+              <span class="u-text-sm u-fg-secondary">${escapeHtml(enabledDate ? `Enabled on ${enabledDate}` : '')}</span>
             </div>
-            <p class="text-muted" style="margin-bottom:16px;">You have ${codesCount} backup codes remaining.</p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <p class="u-text-sm u-fg-secondary">You have ${codesCount} backup codes remaining.</p>
+            <div class="u-cluster">
               <button class="btn btn-secondary btn-sm" type="button" id="account-2fa-regenerate-btn" onclick="openAccount2FARegenerateModal()">Regenerate Backup Codes</button>
               <button class="btn btn-danger btn-sm" type="button" id="account-2fa-disable-btn" onclick="openAccount2FADisableModal()">Disable 2FA</button>
             </div>
@@ -424,9 +425,9 @@ function renderAccount2FAStatus(container, enabled, enabledAt, backupCodesCount)
         document.getElementById('account-2fa-regenerate-btn')?.addEventListener('click', openAccount2FARegenerateModal);
     } else {
         container.innerHTML = `
-          <div class="2fa-status-disabled">
-            <p class="text-muted" style="margin-bottom:16px;">Two-factor authentication is not enabled for your account.</p>
-            <button class="btn btn-primary" type="button" id="account-2fa-enable-btn" onclick="openAccount2FASetupModal()">Enable 2FA</button>
+          <div class="u-stack-4">
+            <p class="u-text-sm u-fg-secondary">Two-factor authentication is not enabled for your account.</p>
+            <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-enable-btn" onclick="openAccount2FASetupModal()">Enable 2FA</button>
           </div>
         `;
         document.getElementById('account-2fa-enable-btn')?.addEventListener('click', openAccount2FASetupModal);
@@ -443,7 +444,7 @@ async function openAccount2FASetupModal() {
 
     modal.style.display = 'flex';
     modal.classList.add('active');
-    content.innerHTML = '<div class="text-center"><div class="spinner">Setting up 2FA...</div></div>';
+    content.innerHTML = '<div class="loading-state"><p>Setting up 2FA...</p></div>';
 
     try {
         const response = await fetch(Birkly.url('/api/2fa.php?action=setup'), {
@@ -460,34 +461,36 @@ async function openAccount2FASetupModal() {
         const manualKey = escapeHtml(data.data.manual_entry_key || '');
 
         content.innerHTML = `
-          <div class="account-2fa-step1">
-            <h3 style="margin-top:0;">Step 1: Scan QR Code</h3>
-            <p class="text-muted">Scan this QR code with your authenticator app.</p>
-            <div style="text-align:center;margin:24px 0;">
-              <img src="${qrUrl}" alt="2FA QR Code" style="border:1px solid #ddd;border-radius:8px;padding:16px;background:white;">
+          <div class="account-2fa-step1 u-stack-4">
+            <h3 class="u-text-md u-weight-semibold">Step 1: Scan QR Code</h3>
+            <p class="u-text-sm u-fg-secondary">Scan this QR code with your authenticator app.</p>
+            <img class="account-2fa-qr u-mx-auto" src="${qrUrl}" alt="2FA QR Code">
+            <div class="u-surface-sunken u-radius-sm u-p-3 u-stack-2">
+              <p class="u-label">Manual entry</p>
+              <code class="u-block u-mono u-text-sm u-break-word">${manualKey}</code>
             </div>
-            <div style="background:#f8f9fa;padding:12px;border-radius:8px;margin:16px 0;">
-              <p style="margin:0;font-size:0.875em;color:#666;"><strong>Manual Entry:</strong></p>
-              <code style="display:block;margin-top:8px;font-size:0.875em;word-break:break-all;">${manualKey}</code>
+            <div class="u-cluster">
+              <button class="btn btn-primary" type="button" id="account-2fa-step1-next">I have scanned the code</button>
+              <button class="btn btn-secondary" type="button" id="account-2fa-cancel">Cancel</button>
             </div>
-            <button class="btn btn-primary" type="button" id="account-2fa-step1-next">I have scanned the code</button>
-            <button class="btn btn-secondary" type="button" id="account-2fa-cancel" style="margin-left:8px;">Cancel</button>
           </div>
-          <div class="account-2fa-step2" style="display:none;">
-            <h3 style="margin-top:0;">Step 2: Verify Code</h3>
-            <p class="text-muted">Enter the 6-digit code from your authenticator app:</p>
+          <div class="account-2fa-step2 u-stack-4" hidden>
+            <h3 class="u-text-md u-weight-semibold">Step 2: Verify Code</h3>
+            <p class="u-text-sm u-fg-secondary">Enter the 6-digit code from your authenticator app:</p>
             <div class="form-group">
               <label for="account-2fa-verify-code">Verification Code</label>
-              <input type="text" id="account-2fa-verify-code" class="input" placeholder="000000" maxlength="6" style="text-align:center;letter-spacing:0.5rem;font-size:1.5rem;">
+              <input type="text" id="account-2fa-verify-code" class="input account-2fa-code-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
             </div>
-            <button class="btn btn-primary" type="button" id="account-2fa-enable-confirm">Enable 2FA</button>
-            <button class="btn btn-secondary" type="button" id="account-2fa-cancel2" style="margin-left:8px;">Cancel</button>
+            <div class="u-cluster">
+              <button class="btn btn-primary" type="button" id="account-2fa-enable-confirm">Enable 2FA</button>
+              <button class="btn btn-secondary" type="button" id="account-2fa-cancel2">Cancel</button>
+            </div>
           </div>
         `;
 
         document.getElementById('account-2fa-step1-next')?.addEventListener('click', async () => {
-            content.querySelector('.account-2fa-step1').style.display = 'none';
-            content.querySelector('.account-2fa-step2').style.display = 'block';
+            content.querySelector('.account-2fa-step1').hidden = true;
+            content.querySelector('.account-2fa-step2').hidden = false;
             document.getElementById('account-2fa-verify-code')?.focus();
         });
         document.getElementById('account-2fa-cancel')?.addEventListener('click', accountClose2FASetupModal);
@@ -498,7 +501,7 @@ async function openAccount2FASetupModal() {
         });
     } catch (err) {
         console.error('2FA setup error:', err);
-        content.innerHTML = `<p class="text-danger">Error: ${escapeHtml(err.message || 'Unknown error')}</p>`;
+        content.innerHTML = `<p class="u-fg-danger" role="alert">Error: ${escapeHtml(err.message || 'Unknown error')}</p>`;
     }
 }
 
@@ -537,13 +540,13 @@ async function enableAccount2FA() {
         const codesHtml = codes.map(c => escapeHtml(c)).join('<br>');
         if (content) {
             content.innerHTML = `
-              <div class="account-2fa-step3">
-                <h3 style="margin-top:0;">Step 3: Save Backup Codes</h3>
-                <p class="text-muted">Save these backup codes in a safe place. Each code can be used once.</p>
-                <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin:16px 0;">
-                  <code style="display:block;font-family:monospace;line-height:2;font-size:0.875em;">${codesHtml}</code>
+              <div class="account-2fa-step3 u-stack-4">
+                <h3 class="u-text-md u-weight-semibold">Step 3: Save Backup Codes</h3>
+                <p class="u-text-sm u-fg-secondary">Save these backup codes in a safe place. Each code can be used once.</p>
+                <div class="u-surface-sunken u-radius-sm u-p-4">
+                  <code class="u-block u-mono u-text-sm u-leading-relaxed">${codesHtml}</code>
                 </div>
-                <button class="btn btn-primary" type="button" id="account-2fa-done">Done</button>
+                <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-done">Done</button>
               </div>
             `;
             document.getElementById('account-2fa-done')?.addEventListener('click', async () => {
@@ -643,10 +646,10 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
         const content = document.getElementById('account-2fa-regenerate-form');
         if (content) {
             content.innerHTML = `
-              <div class="account-2fa-backup-list">
-                <p class="text-muted">Here are your new backup codes. Store them in a safe place. Each code can be used once.</p>
-                <div style="background:#f8f9fa;padding:16px;border-radius:8px;margin:16px 0;">
-                  <code style="display:block;font-family:monospace;line-height:2;font-size:0.875em;">${codesHtml}</code>
+              <div class="account-2fa-backup-list u-stack-4">
+                <p class="u-text-sm u-fg-secondary">Here are your new backup codes. Store them in a safe place. Each code can be used once.</p>
+                <div class="u-surface-sunken u-radius-sm u-p-4">
+                  <code class="u-block u-mono u-text-sm u-leading-relaxed">${codesHtml}</code>
                 </div>
                 <div class="form-actions">
                   <button type="button" class="btn btn-primary" id="account-2fa-regenerate-done">Done</button>
@@ -921,12 +924,12 @@ function showMessage(element, message, type) {
     if (!element) return;
     
     element.textContent = message;
-    element.className = `settings-message ${type}`;
-    element.style.display = 'block';
-    
+    element.className = `message message-${type}`;
+    element.hidden = false;
+
     // Auto-hide after 5 seconds
     setTimeout(() => {
-        element.style.display = 'none';
+        element.hidden = true;
     }, 5000);
 }
 

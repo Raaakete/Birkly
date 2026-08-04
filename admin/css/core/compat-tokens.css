@@ -1,0 +1,149 @@
+/* ============================================
+   Birkly Admin — Legacy token compatibility layer (P56)
+   ============================================
+
+   WHY THIS FILE EXISTS
+   P56-D3 is a hard cut, but P56-D4 forbids forcing plugin CSS rewrites.
+   Bundled plugins and fieldtypes ship their own stylesheets that reference
+   legacy admin token names. This file maps each onto a canonical token from
+   core/variables.css so plugin CSS keeps working AND picks up the new design.
+
+   SCOPE IS MEASURED, NOT GUESSED
+   Every alias below is referenced by code OUTSIDE admin/css — verify with:
+
+     rg -o 'var\(--[a-z0-9-]+' --glob '!admin/css/**' \
+       plugins fieldtypes core admin/js admin/templates admin/partials \
+       | sed 's/.*var(--//' | sort -u
+
+   Admin CSS itself uses ZERO of these names (CI-enforced). If you are writing
+   admin CSS, use core/variables.css.
+
+   The P56-M1 brief set a target of <= 40 aliases. The measured requirement is
+   ~75: bundled Commerce, Automation, Events, Studio and the fieldtype library
+   reference that many distinct legacy names. Cutting further would mean
+   rewriting plugin CSS, which P56-D4 explicitly rules out. The list shrinks
+   in the follow-up plugin-adoption phase, not here.
+
+   Owner: cms-developer. Removal: follow-up plugin-adoption phase.
+   Reference: internal/planning/reviews/P56-M1-design-language-brief.md §9.3
+   ============================================ */
+
+:root {
+  /* ---- Brand / primary ---- */
+  --primary: var(--accent);
+  --primary-50: var(--mint-50);
+  --primary-100: var(--mint-100);
+  --primary-200: var(--mint-200);
+  --primary-300: var(--mint-300);
+  --primary-400: var(--mint-400);
+  --primary-500: var(--mint-500);
+  --primary-600: var(--mint-600);
+  --primary-700: var(--mint-700);
+  --primary-800: var(--mint-800);
+  --color-primary: var(--accent);
+  --color-primary-strong: var(--accent-text);
+  --color-primary-soft: var(--accent-soft);
+  --color-primary-muted: var(--accent-muted);
+  --color-primary-border: var(--accent-border);
+
+  /* ---- Surfaces ----
+     These map onto SEMANTIC tokens, never raw ramp steps, so plugin CSS that
+     uses them as backgrounds flips correctly in dark mode. Mapping them to
+     primitives is what left un-migrated panels stuck light (P56 finding). */
+  --bg-primary: var(--surface);
+  --bg-secondary: var(--surface-sunken);
+  --bg-tertiary: var(--surface-sunken);
+  --bg-elevated: var(--surface);
+  --bg-hover: var(--surface-hover);
+  --bg-overlay: var(--overlay);
+  --surface-1: var(--surface);
+  --surface-muted: var(--surface-sunken);
+  --color-neutral-200: var(--surface-active);
+  --color-black: var(--text-primary);
+
+  --gray-50: var(--surface-sunken);
+  --gray-100: var(--surface-sunken);
+  --gray-200: var(--border-subtle);
+  --gray-300: var(--border-default);
+  --gray-400: var(--border-control);
+  --gray-500: var(--text-tertiary);
+  --gray-800: var(--text-primary);
+  --gray-900: var(--text-primary);
+
+  /* ---- Borders ---- */
+  --border-light: var(--border-subtle);
+  --border-medium: var(--border-default);
+  --border-color: var(--border-subtle);
+
+  /* ---- Semantic ramps ----
+     Legacy code uses numeric steps; each maps onto the nearest new role.
+     Legacy "error" is the new "danger". */
+  --success-50: var(--success-surface);
+  --success-100: var(--success-surface);
+  --success-200: var(--success-border);
+  --success-500: var(--success-solid);
+  --success-600: var(--success-fg);
+  --success-700: var(--success-fg);
+  --success-800: var(--success-fg);
+
+  --error-50: var(--danger-surface);
+  --error-100: var(--danger-surface);
+  --error-200: var(--danger-border);
+  --error-500: var(--danger-solid);
+  --error-600: var(--danger-fg);
+  --error-700: var(--danger-fg);
+  --error-800: var(--danger-fg);
+  --color-error: var(--danger-fg);
+  --danger-100: var(--danger-surface);
+  --danger-700: var(--danger-fg);
+
+  --warning-50: var(--warning-surface);
+  --warning-100: var(--warning-surface);
+  --warning-200: var(--warning-border);
+  --warning-500: var(--warning-solid);
+  --warning-600: var(--warning-fg);
+  --warning-700: var(--warning-fg);
+  --warning-800: var(--warning-fg);
+  --warning-900: var(--warning-fg);
+
+  --info-500: var(--info-solid);
+
+  /* ---- Radius ---- */
+  --radius-xs: var(--radius-sm);
+  --radius-full: var(--radius-pill);
+  --radius-round: var(--radius-pill);
+
+  /* ---- Shadows ---- */
+  --shadow-sm: var(--elevation-1);
+  --shadow-md: var(--elevation-2);
+  --shadow-lg: var(--elevation-2);
+  --shadow-xl: var(--elevation-3);
+  --shadow-2xl: var(--elevation-3);
+
+  /* ---- Motion ---- */
+  --transition-fast: var(--motion-fast) var(--ease-out);
+  --transition-base: var(--motion-base) var(--ease-out);
+
+  /* ---- Typography ---- */
+  --font-family-mono: var(--font-mono);
+  --font-size-base: var(--text-base);
+  --font-medium: var(--weight-medium);
+
+  /* ---- Layering ---- */
+  --z-index-modal: var(--z-modal);
+
+  /* ---- Names used by official plugin CSS that the admin never defined ----
+     Commerce, Events, Studio and User Management reference these. Only
+     --surface-secondary ever existed in admin tokens; the other seven were
+     always falling back to the plugins' own hardcoded hex, which is exactly
+     why those plugins render wrong in dark mode. Defining them here makes
+     that plugin CSS theme-correct without touching the plugins (P56-D4). */
+  --surface-secondary: var(--surface-sunken);
+  --surface-color: var(--surface);
+  --bg-subtle: var(--surface-sunken);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --text-muted: var(--text-secondary);
+  --color-border: var(--border-subtle);
+  --danger-color: var(--danger-fg);
+}

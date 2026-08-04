@@ -1,5 +1,5 @@
 <!-- Help Page v1 — manifest search + snapshot content (P3-M11) -->
-<div class="page-header pt-m pb-m">
+<div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
             <span class="current">{translate 'admin.help'}</span>
@@ -9,10 +9,7 @@
 </div>
 
 <div class="help-page help-page-v1">
-    <div class="help-header">
-        <h1><?= __('admin.documentation') ?></h1>
-        <p class="help-subtitle"><?= __('admin.everything_you_need_to_know') ?></p>
-    </div>
+    <p class="u-text-sm u-fg-secondary u-mb-6"><?= __('admin.everything_you_need_to_know') ?></p>
 
     <div class="help-search-bar">
         <div class="help-search-wrap">
@@ -30,16 +27,14 @@
     <div class="help-layout">
         <div class="help-content">
             <div id="help-topic-content">
-                <p class="text-secondary">Loading documentation…</p>
+                <p class="loading-state">Loading documentation…</p>
             </div>
         </div>
 
         <aside class="help-sidebar">
             <nav class="help-nav">
-                <div class="help-nav-section">
-                    <h2 class="help-nav-section-title">Documentation</h2>
-                    <div class="help-nav-accordion" id="help-topic-nav-platform"></div>
-                </div>
+                <h2 class="u-label u-px-4 u-py-2">Documentation</h2>
+                <div id="help-topic-nav-platform"></div>
             </nav>
         </aside>
     </div>

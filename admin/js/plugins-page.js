@@ -6,6 +6,24 @@
     'use strict';
 
     var HUB_TABS = ['discover', 'installed', 'updates', 'licenses', 'upload'];
+    var HEALTH_BADGE_TONES = {
+        healthy: 'badge-success',
+        warning: 'badge-warning',
+        error: 'badge-danger',
+        unknown: 'badge-neutral',
+    };
+    var RATING_TIER_HELPERS = {
+        good: 'u-fg-success',
+        fair: 'u-fg-warning',
+        poor: 'u-fg-danger',
+        none: 'u-fg-secondary',
+    };
+    var OFFER_TYPE_BADGE_TONES = {
+        plugin: 'badge-info',
+        theme: 'badge-info',
+        template_pack: 'badge-warning',
+        fieldtype: 'badge-success',
+    };
     var installedPlugins = [];
     var installedPacks = [];
     var updateMap = {};
@@ -66,16 +84,13 @@
         var cards = '';
         for (var i = 0; i < n; i++) {
             cards +=
-                '<div class="plugin-card plugin-card--skeleton" aria-hidden="true">' +
-                '<div class="plugin-skeleton-header">' +
-                '<div class="plugin-skeleton-line plugin-skeleton-line--title"></div>' +
-                '<div class="plugin-skeleton-pill"></div>' +
-                '</div>' +
-                '<div class="plugin-skeleton-line plugin-skeleton-line--body"></div>' +
-                '<div class="plugin-skeleton-line plugin-skeleton-line--short"></div>' +
-                '<div class="plugin-skeleton-actions">' +
-                '<div class="plugin-skeleton-pill plugin-skeleton-pill--btn"></div>' +
-                '<div class="plugin-skeleton-pill plugin-skeleton-pill--btn"></div>' +
+                '<div class="card plugin-card" aria-hidden="true">' +
+                '<div class="skeleton skeleton-title"></div>' +
+                '<div class="skeleton skeleton-text"></div>' +
+                '<div class="skeleton skeleton-text"></div>' +
+                '<div class="u-grid-2 u-gap-2 u-mt-2">' +
+                '<div class="skeleton skeleton-row"></div>' +
+                '<div class="skeleton skeleton-row"></div>' +
                 '</div>' +
                 '</div>';
         }
@@ -87,10 +102,10 @@
         var cards = '';
         for (var i = 0; i < n; i++) {
             cards +=
-                '<div class="marketplace-card marketplace-card--skeleton" aria-hidden="true">' +
-                '<div class="plugin-skeleton-line plugin-skeleton-line--title"></div>' +
-                '<div class="plugin-skeleton-line plugin-skeleton-line--body"></div>' +
-                '<div class="plugin-skeleton-line plugin-skeleton-line--short"></div>' +
+                '<div class="card plugin-card" aria-hidden="true">' +
+                '<div class="skeleton skeleton-title"></div>' +
+                '<div class="skeleton skeleton-text"></div>' +
+                '<div class="skeleton skeleton-text"></div>' +
                 '</div>';
         }
         return cards;
@@ -345,7 +360,7 @@
         var parts = [];
         var perms = manifest.permissions || [];
         if (perms.length) {
-            parts.push('<h4>Capabilities</h4><ul class="consent-perm-list">');
+            parts.push('<h4>Capabilities</h4><ul>');
             perms.forEach(function (perm) {
                 parts.push('<li><code>' + escapeHtml(perm) + '</code></li>');
             });
@@ -353,7 +368,7 @@
         }
         var hooks = manifest.hooks || [];
         if (hooks.length) {
-            parts.push('<h4>Hooks</h4><ul class="consent-perm-list">');
+            parts.push('<h4>Hooks</h4><ul>');
             hooks.forEach(function (hook) {
                 parts.push('<li><code>' + escapeHtml(hook) + '</code></li>');
             });
@@ -368,7 +383,7 @@
             }
         });
         if (accessLines.length) {
-            parts.push('<h4>Data access</h4><ul class="consent-perm-list">' + accessLines.join('') + '</ul>');
+            parts.push('<h4>Data access</h4><ul>' + accessLines.join('') + '</ul>');
         }
         if (!parts.length) {
             return '<p class="form-help">This plugin does not declare elevated permissions.</p>';
@@ -579,11 +594,9 @@
     }
 
     function renderOfferTypeBadge(offerType) {
-        var typeClass = offerTypeCssClass(offerType);
+        var tone = OFFER_TYPE_BADGE_TONES[offerTypeCssClass(offerType)] || 'badge-neutral';
         return (
-            '<span class="marketplace-offer-type-badge marketplace-offer-type-badge--' +
-            escapeHtml(typeClass) +
-            '">' +
+            '<span class="badge badge-sm ' + tone + '">' +
             escapeHtml(offerTypeLabel(offerType || 'plugin')) +
             '</span>'
         );
@@ -714,7 +727,7 @@
             return '';
         }
         var byLabel = t('offer_by_provider', 'by {provider}').replace('{provider}', name);
-        return '<p class="marketplace-offer-provider">' + escapeHtml(byLabel) + '</p>';
+        return '<p class="u-text-xs u-fg-tertiary u-m-0">' + escapeHtml(byLabel) + '</p>';
     }
 
     function renderProviderProfileBox(provider) {
@@ -731,21 +744,21 @@
             ? '<img class="marketplace-provider-card-avatar" src="' + escapeHtml(provider.avatar_url) + '" alt="">'
             : '<div class="marketplace-provider-card-avatar marketplace-provider-card-avatar--placeholder" aria-hidden="true">' + escapeHtml(initial) + '</div>';
         var taglineHtml = provider.tagline
-            ? '<p class="marketplace-provider-card-tagline">' + escapeHtml(provider.tagline) + '</p>'
+            ? '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(provider.tagline) + '</p>'
             : '';
         var profileLink = provider.published === true && providerId
-            ? '<button type="button" class="btn btn-secondary btn-sm marketplace-provider-card-action" data-plugin-action="view-provider-profile" data-provider-id="' +
+            ? '<button type="button" class="btn btn-secondary btn-sm u-shrink-0" data-plugin-action="view-provider-profile" data-provider-id="' +
               escapeHtml(providerId) + '">' +
               escapeHtml(t('view_provider_profile', 'View provider profile')) +
               '</button>'
             : '';
 
         return (
-            '<div class="marketplace-provider-card">' +
+            '<div class="u-row-3">' +
             avatarHtml +
-            '<div class="marketplace-provider-card-body">' +
-            '<p class="marketplace-provider-card-label">' + escapeHtml(t('provider', 'Provider')) + '</p>' +
-            '<p class="marketplace-provider-card-name">' + escapeHtml(name) + '</p>' +
+            '<div class="u-stack-1 u-fill">' +
+            '<p class="u-label u-m-0">' + escapeHtml(t('provider', 'Provider')) + '</p>' +
+            '<p class="u-text-base u-weight-medium u-m-0">' + escapeHtml(name) + '</p>' +
             taglineHtml +
             '</div>' +
             profileLink +
@@ -764,21 +777,21 @@
             : '<div class="marketplace-embed-offer-header-icon marketplace-embed-offer-header-icon--placeholder" aria-hidden="true">' + escapeHtml(initial) + '</div>';
         var tagline = offer.tagline || offer.summary || '';
         var taglineHtml = tagline
-            ? '<p class="marketplace-embed-offer-header-tagline">' + escapeHtml(tagline) + '</p>'
+            ? '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-2">' + escapeHtml(tagline) + '</p>'
             : '';
         return (
-            '<div class="marketplace-embed-offer-header-inner">' +
+            '<div class="u-row-3 u-align-start">' +
             iconHtml +
-            '<div class="marketplace-embed-offer-header-body">' +
-            '<div class="marketplace-embed-offer-header-title-row">' +
-            '<h3 class="marketplace-embed-offer-header-title">' + escapeHtml(offer.title || offer.slug || '') + '</h3>' +
+            '<div class="u-stack-1 u-fill">' +
+            '<div class="u-cluster u-gap-2">' +
+            '<h3 class="u-text-lg u-weight-semibold u-m-0">' + escapeHtml(offer.title || offer.slug || '') + '</h3>' +
             renderOfferTypeBadge(offer.offer_type || 'plugin') +
             (isOfferComingSoon(offer) ? renderComingSoonBadge(offer) : '') +
             '</div>' +
             taglineHtml +
             '</div>' +
-            '<div class="marketplace-embed-offer-header-meta">' +
-            '<span class="marketplace-embed-offer-header-price">' + escapeHtml(formatPrice(offer)) + '</span>' +
+            '<div class="u-stack-1 u-align-end u-shrink-0">' +
+            '<span class="u-text-base u-weight-semibold u-numeric">' + escapeHtml(formatPrice(offer)) + '</span>' +
             renderOfferRatingStat(offer.rating_summary) +
             '</div>' +
             '</div>'
@@ -900,11 +913,11 @@
         var summaryHtml = '';
         if (ratingSummary && ratingSummary.count) {
             summaryHtml =
-                '<div class="marketplace-reviews-summary">' +
-                '<p class="marketplace-reviews-summary-score">' + escapeHtml(formatRating(ratingSummary)) + '</p>' +
-                '<p class="marketplace-reviews-summary-count">' +
+                '<div class="stat u-mb-4">' +
+                '<span class="stat-value u-numeric">' + escapeHtml(formatRating(ratingSummary)) + '</span>' +
+                '<span class="stat-meta">' +
                 escapeHtml(String(ratingSummary.count)) + ' ' + escapeHtml(t('marketplace_reviews_count', 'reviews')) +
-                '</p></div>';
+                '</span></div>';
         }
 
         var installedMatch = findInstalledPluginByOfferSlug(slug);
@@ -913,13 +926,13 @@
             var reviewStatus = reviewStatusMap[installedMatch.id] || {};
             if (reviewStatus.can_review) {
                 writeReviewHtml =
-                    '<div class="marketplace-reviews-write">' +
+                    '<div class="u-cluster u-mb-4">' +
                     '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
                     escapeHtml(installedMatch.id) + '" data-offer-slug="' + escapeHtml(slug) + '">' +
                     escapeHtml(t('rate_plugin', 'Rate this plugin')) + '</button></div>';
             } else if (reviewStatus.has_review) {
                 writeReviewHtml =
-                    '<div class="marketplace-reviews-write">' +
+                    '<div class="u-cluster u-mb-4">' +
                     '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-review" data-plugin-id="' +
                     escapeHtml(installedMatch.id) + '" data-offer-slug="' + escapeHtml(slug) + '">' +
                     escapeHtml(t('your_review', 'Your review')) + '</button></div>';
@@ -930,38 +943,40 @@
             return (
                 summaryHtml +
                 writeReviewHtml +
-                '<p class="marketplace-empty-state">' + escapeHtml(t('marketplace_no_reviews', 'No reviews yet')) + '</p>'
+                '<div class="empty-state empty-state--compact"><p class="empty-state-title">' +
+                escapeHtml(t('marketplace_no_reviews', 'No reviews yet')) + '</p></div>'
             );
         }
 
         var items = reviews.map(function (review) {
             var verifiedHtml = review.verified_installation
-                ? '<span class="marketplace-review-verified">' + escapeHtml(t('marketplace_review_verified', 'Verified installation')) + '</span>'
+                ? '<span class="badge badge-sm badge-success">' + escapeHtml(t('marketplace_review_verified', 'Verified installation')) + '</span>'
                 : '';
             var replyHtml = review.provider_reply && review.provider_reply.body
-                ? '<div class="marketplace-review-reply"><p class="marketplace-review-reply-label">' +
-                    escapeHtml(t('marketplace_provider_reply', 'Provider reply')) + '</p><p>' +
+                ? '<div class="callout callout-neutral callout--block u-mt-3"><p class="u-label u-mb-1">' +
+                    escapeHtml(t('marketplace_provider_reply', 'Provider reply')) + '</p><p class="u-text-sm u-m-0">' +
                     escapeHtml(review.provider_reply.body) + '</p></div>'
                 : '';
             return (
-                '<article class="marketplace-review-item">' +
-                '<div class="marketplace-review-meta">' +
+                '<article class="card"><div class="card-body u-stack-2">' +
+                '<div class="u-cluster u-gap-2">' +
                 '<span class="marketplace-review-stars" aria-hidden="true">' + renderReviewStars(review.rating) + '</span>' +
-                '<span class="marketplace-review-date">' + escapeHtml(formatReviewDate(review.created_at)) + '</span>' +
+                '<span class="u-text-xs u-fg-tertiary u-numeric">' + escapeHtml(formatReviewDate(review.created_at)) + '</span>' +
                 verifiedHtml +
                 '</div>' +
-                '<p class="marketplace-review-body">' + escapeHtml(review.body || '') + '</p>' +
+                '<p class="marketplace-review-body u-text-sm u-m-0">' + escapeHtml(review.body || '') + '</p>' +
                 replyHtml +
-                '</article>'
+                '</div></article>'
             );
         }).join('');
 
-        return summaryHtml + writeReviewHtml + '<div class="marketplace-reviews-list">' + items + '</div>';
+        return summaryHtml + writeReviewHtml + '<div class="u-stack-3">' + items + '</div>';
     }
 
     function renderOfferVersionsPanel(offer, releases) {
         if (!releases || !releases.length) {
-            return '<p class="marketplace-empty-state">' + escapeHtml(t('marketplace_no_versions', 'No release history yet.')) + '</p>';
+            return '<div class="empty-state empty-state--compact"><p class="empty-state-title">' +
+                escapeHtml(t('marketplace_no_versions', 'No release history yet.')) + '</p></div>';
         }
 
         var latestVersion = (offer && offer.latest_version) || '';
@@ -969,23 +984,22 @@
             return compareVersionStrings(b.version, a.version);
         });
 
-        return sorted.map(function (release, index) {
+        return '<div class="u-stack-3">' + sorted.map(function (release, index) {
             var version = release.version || '';
             var isLatest = version !== '' && (version === latestVersion || (latestVersion === '' && index === 0));
             var changelog = release.changelog || t('marketplace_no_changelog', 'No changelog provided.');
             var published = formatReviewDate(release.published_at);
             return (
-                '<article class="marketplace-version-item' + (isLatest ? ' is-latest' : '') + '">' +
-                '<header class="marketplace-version-header">' +
-                '<div><h4 class="marketplace-version-title">v' + escapeHtml(version) +
-                (isLatest ? ' <span class="marketplace-version-badge">' + escapeHtml(t('marketplace_latest_version', 'Latest')) + '</span>' : '') +
-                '</h4>' +
-                (published ? '<p class="marketplace-version-date">' + escapeHtml(published) + '</p>' : '') +
-                '</div></header>' +
-                '<div class="marketplace-version-changelog">' + escapeHtml(changelog) + '</div>' +
-                '</article>'
+                '<article class="card' + (isLatest ? ' card--accent' : '') + '"><div class="card-body u-stack-2">' +
+                '<div class="u-cluster u-gap-2">' +
+                '<h4 class="u-text-base u-weight-semibold u-numeric u-m-0">v' + escapeHtml(version) + '</h4>' +
+                (isLatest ? '<span class="badge badge-sm badge-success">' + escapeHtml(t('marketplace_latest_version', 'Latest')) + '</span>' : '') +
+                (published ? '<span class="u-text-xs u-fg-tertiary u-numeric u-push-right">' + escapeHtml(published) + '</span>' : '') +
+                '</div>' +
+                '<div class="marketplace-version-changelog u-text-sm u-fg-secondary">' + escapeHtml(changelog) + '</div>' +
+                '</div></article>'
             );
-        }).join('');
+        }).join('') + '</div>';
     }
 
     function updateEmbedModalPanels() {
@@ -1172,7 +1186,7 @@
                 : row.compare_at_cents;
             var compareDisplay = (convertPriceCents(compareMonthly, fromCurrency, marketplaceDisplayCurrency) / 100).toFixed(2) +
                 ' ' + marketplaceDisplayCurrency;
-            parts.push('<span class="marketplace-pricing-compare">' + escapeHtml(compareDisplay) + '</span>');
+            parts.push('<s class="u-text-xs u-fg-tertiary u-numeric">' + escapeHtml(compareDisplay) + '</s>');
         }
 
         if (row.kind === 'subscription') {
@@ -1185,10 +1199,10 @@
             var suffix = row.interval === 'year'
                 ? t('marketplace_pricing_billed_yearly', '/month · billed yearly')
                 : t('marketplace_pricing_per_month', '/month');
-            parts.push('<span class="marketplace-pricing-current">' + escapeHtml(amount + suffix) + '</span>');
+            parts.push('<span class="u-text-sm u-weight-semibold u-numeric">' + escapeHtml(amount + suffix) + '</span>');
         } else {
             var cents = convertPriceCents(row.amount_cents || 0, fromCurrency, marketplaceDisplayCurrency);
-            parts.push('<span class="marketplace-pricing-current">' +
+            parts.push('<span class="u-text-sm u-weight-semibold u-numeric">' +
                 escapeHtml((cents / 100).toFixed(2) + ' ' + marketplaceDisplayCurrency) +
                 '</span>');
         }
@@ -1265,10 +1279,10 @@
 
         var noneChecked = selectedEmbedDiscountId === '' ? ' checked' : '';
         var optionsHtml =
-            '<label class="marketplace-pricing-discount-option" data-plugin-action="select-pricing-discount" data-discount-id="">' +
+            '<label class="data-list-item data-list-item--interactive u-row-3" data-plugin-action="select-pricing-discount" data-discount-id="">' +
             '<input type="radio" name="embed-pricing-discount" value=""' + noneChecked + '>' +
-            '<span class="marketplace-pricing-discount-option-body">' +
-            '<span class="marketplace-pricing-discount-option-label">' + escapeHtml(t('marketplace_pricing_no_discount', 'Standard pricing')) + '</span>' +
+            '<span class="data-list-main">' +
+            '<span class="data-list-title">' + escapeHtml(t('marketplace_pricing_no_discount', 'Standard pricing')) + '</span>' +
             '</span></label>';
 
         optionsHtml += discounts.map(function (discount, index) {
@@ -1284,26 +1298,26 @@
                 metaParts.push(promoCode);
             }
             return (
-                '<label class="marketplace-pricing-discount-option" data-plugin-action="select-pricing-discount" data-discount-id="' + escapeHtml(id) + '">' +
+                '<label class="data-list-item data-list-item--interactive u-row-3" data-plugin-action="select-pricing-discount" data-discount-id="' + escapeHtml(id) + '">' +
                 '<input type="radio" name="embed-pricing-discount" value="' + escapeHtml(id) + '"' + checked + '>' +
-                '<span class="marketplace-pricing-discount-option-body">' +
-                '<span class="marketplace-pricing-discount-option-label">' + escapeHtml(String(discount.label || id)) + '</span>' +
-                '<span class="marketplace-pricing-discount-option-meta">' + escapeHtml(metaParts.join(' · ')) + '</span>' +
+                '<span class="data-list-main">' +
+                '<span class="data-list-title">' + escapeHtml(String(discount.label || id)) + '</span>' +
+                '<span class="data-list-meta">' + escapeHtml(metaParts.join(' · ')) + '</span>' +
                 '</span></label>'
             );
         }).join('');
 
         var selectedDiscount = getSelectedEmbedDiscount(offer);
         var checkoutHint = selectedDiscount
-            ? '<p class="marketplace-pricing-discount-checkout-hint">' +
+            ? '<p class="u-text-xs u-fg-tertiary u-m-0">' +
                 escapeHtml(t('marketplace_pricing_discount_checkout_hint', 'Buy buttons use the selected discount at checkout.')) +
                 '</p>'
             : '';
 
         return (
-            '<div class="marketplace-pricing-discounts">' +
-            '<p class="marketplace-pricing-discounts-title">' + escapeHtml(t('marketplace_pricing_discounts', 'Discount offers')) + '</p>' +
-            '<div class="marketplace-pricing-discount-options" role="radiogroup" aria-label="' + escapeHtml(t('marketplace_pricing_select_discount', 'Select a discount offer')) + '">' +
+            '<div class="u-stack-2 u-mt-4">' +
+            '<p class="u-label u-m-0">' + escapeHtml(t('marketplace_pricing_discounts', 'Discount offers')) + '</p>' +
+            '<div class="data-list data-list--compact data-list--flush" role="radiogroup" aria-label="' + escapeHtml(t('marketplace_pricing_select_discount', 'Select a discount offer')) + '">' +
             optionsHtml +
             '</div>' +
             checkoutHint +
@@ -1323,27 +1337,27 @@
 
         var bodyRows = rows.map(function (row) {
             var promoHtml = row.promo_label
-                ? ' <span class="marketplace-pricing-promo">' + escapeHtml(row.promo_label) + '</span>'
+                ? ' <span class="badge badge-sm badge-success">' + escapeHtml(row.promo_label) + '</span>'
                 : '';
             return (
                 '<tr>' +
                 '<th scope="row">' + escapeHtml(row.label) + promoHtml + '</th>' +
-                '<td class="marketplace-pricing-amount">' + formatPricingRowPriceHtml(row, pricing) + '</td>' +
-                '<td class="marketplace-pricing-action">' + renderOfferPricingRowAction(offer, row) + '</td>' +
+                '<td class="numeric">' + formatPricingRowPriceHtml(row, pricing) + '</td>' +
+                '<td class="col-shrink">' + renderOfferPricingRowAction(offer, row) + '</td>' +
                 '</tr>'
             );
         }).join('');
 
         return (
-            '<div class="marketplace-pricing-table-wrap">' +
-            '<h3 class="marketplace-pricing-table-title">' + escapeHtml(t('marketplace_pricing', 'Pricing')) + '</h3>' +
-            '<table class="marketplace-pricing-table">' +
+            '<div class="u-stack-3">' +
+            '<h3 class="section-title">' + escapeHtml(t('marketplace_pricing', 'Pricing')) + '</h3>' +
+            '<div class="table-container"><table class="table table--compact">' +
             '<thead><tr>' +
             '<th scope="col">' + escapeHtml(t('marketplace_pricing_plan', 'Plan')) + '</th>' +
-            '<th scope="col">' + escapeHtml(t('marketplace_pricing_price', 'Price')) + '</th>' +
-            '<th scope="col">' + escapeHtml(t('marketplace_pricing_action', 'Action')) + '</th>' +
+            '<th scope="col" class="numeric">' + escapeHtml(t('marketplace_pricing_price', 'Price')) + '</th>' +
+            '<th scope="col" class="col-shrink">' + escapeHtml(t('marketplace_pricing_action', 'Action')) + '</th>' +
             '</tr></thead>' +
-            '<tbody>' + bodyRows + '</tbody></table>' +
+            '<tbody>' + bodyRows + '</tbody></table></div>' +
             renderOfferPricingDiscounts(offer, pricing) +
             '</div>'
         );
@@ -1385,7 +1399,7 @@
         if (reviewStatus.has_review && reviewStatus.review) {
             var rating = String(reviewStatus.review.rating || '');
             return (
-                '<button type="button" class="plugin-review-chip plugin-review-chip--rated" data-plugin-action="open-review" data-plugin-id="' +
+                '<button type="button" class="chip chip--interactive chip--selected" data-plugin-action="open-review" data-plugin-id="' +
                 escapeHtml(pluginId) + '" data-offer-slug="' + escapeHtml(offerSlug) + '">' +
                 '\u2605 ' + escapeHtml(rating) + ' \u00b7 ' + escapeHtml(t('your_review', 'Your review')) +
                 '</button>'
@@ -1393,7 +1407,7 @@
         }
         if (reviewStatus.can_review) {
             return (
-                '<button type="button" class="plugin-review-chip" data-plugin-action="open-review" data-plugin-id="' +
+                '<button type="button" class="chip chip--interactive" data-plugin-action="open-review" data-plugin-id="' +
                 escapeHtml(pluginId) + '" data-offer-slug="' + escapeHtml(offerSlug) + '">' +
                 escapeHtml(t('rate_plugin', 'Rate this plugin')) +
                 '</button>'
@@ -1641,7 +1655,7 @@
             return '';
         }
         return (
-            '<span class="marketplace-offer-status-badge marketplace-offer-status-badge--coming-soon">' +
+            '<span class="badge badge-sm badge-accent">' +
             escapeHtml(t('marketplace_coming_soon', 'Coming soon')) +
             '</span>'
         );
@@ -1711,10 +1725,9 @@
     }
 
     function renderOfferRatingStat(summary) {
-        var tier = ratingTierClass(summary);
         return (
-            '<span class="marketplace-stat marketplace-stat--rating marketplace-rating--' +
-            escapeHtml(tier) +
+            '<span class="u-text-sm u-weight-medium u-numeric ' +
+            escapeHtml(RATING_TIER_HELPERS[ratingTierClass(summary)] || 'u-fg-secondary') +
             '">' +
             escapeHtml(formatRating(summary)) +
             '</span>'
@@ -1724,16 +1737,14 @@
     function renderOfferMetaRows(offer) {
         var versionText = offer.latest_version ? 'v' + escapeHtml(offer.latest_version) : '';
         return (
-            '<div class="marketplace-offer-stats">' +
-            '<div class="marketplace-offer-stats-row marketplace-offer-stats-row--primary">' +
-            '<span class="marketplace-stat marketplace-stat--price">' + escapeHtml(formatPrice(offer)) + '</span>' +
+            '<div class="marketplace-offer-stats u-stack-1">' +
+            '<div class="u-split u-gap-3">' +
+            '<span class="u-text-base u-weight-semibold u-numeric">' + escapeHtml(formatPrice(offer)) + '</span>' +
             renderOfferRatingStat(offer.rating_summary) +
             '</div>' +
-            '<div class="marketplace-offer-stats-row marketplace-offer-stats-row--secondary">' +
-            (versionText
-                ? '<span class="marketplace-stat marketplace-stat--version">' + versionText + '</span>'
-                : '<span class="marketplace-stat marketplace-stat--version marketplace-stat--empty"></span>') +
-            '<span class="marketplace-stat marketplace-stat--downloads">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
+            '<div class="u-split u-gap-3 u-text-xs u-fg-secondary">' +
+            '<span class="u-numeric">' + versionText + '</span>' +
+            '<span class="u-numeric">' + escapeHtml(formatDownloads(offer.download_count)) + '</span>' +
             '</div>' +
             '</div>'
         );
@@ -1772,12 +1783,8 @@
     function setUpdateBadge(count) {
         var badge = document.getElementById('plugins-update-badge');
         if (!badge) return;
-        if (count > 0) {
-            badge.textContent = String(count);
-            badge.classList.remove('hidden');
-        } else {
-            badge.classList.add('hidden');
-        }
+        badge.textContent = String(count);
+        badge.hidden = count <= 0;
     }
 
     function renderPluginCard(plugin, options) {
@@ -1788,13 +1795,13 @@
         var health = plugin.health || {};
         var healthStatus = health.status || 'unknown';
         var healthTitle = [].concat(health.errors || [], health.warnings || []).join('; ');
-        var healthClass = 'health-' + healthStatus;
+        var healthTone = HEALTH_BADGE_TONES[healthStatus] || 'badge-neutral';
         var offerSlug = resolvePluginOfferSlug(plugin);
         var hasMarketplaceOffer = !!(plugin.has_marketplace_offer || offerSlug);
         var reviewStatus = reviewStatusMap[plugin.id] || {};
         var reviewChip = options.hideReview ? '' : renderPluginReviewChip(plugin.id, offerSlug, reviewStatus);
         var pluginNameHtml = offerSlug
-            ? '<button type="button" class="plugin-name-link" data-plugin-action="open-offer" data-offer-slug="' +
+            ? '<button type="button" class="btn btn-link" data-plugin-action="open-offer" data-offer-slug="' +
                 escapeHtml(offerSlug) + '">' + escapeHtml(plugin.name) + '</button>'
             : escapeHtml(plugin.name);
         var detailsButton = offerSlug
@@ -1803,28 +1810,28 @@
             : '';
         return (
             '<div class="card plugin-card' + (hasUpdate ? ' has-update' : '') + '">' +
-            '<div class="plugin-header">' +
-            '<div>' +
-            '<h3 class="plugin-name">' + pluginNameHtml + '</h3>' +
-            (hasUpdate ? '<span class="update-pill">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
+            '<div class="u-split u-align-start u-gap-3">' +
+            '<div class="u-stack-1 u-min-w-0">' +
+            '<h3 class="card-title">' + pluginNameHtml + '</h3>' +
+            (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
             '</div>' +
-            '<div class="plugin-header-badges">' +
-            '<span class="health-badge ' + healthClass + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
+            '<div class="u-cluster u-gap-1 u-shrink-0">' +
+            '<span class="badge badge-sm ' + healthTone + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
             escapeHtml(healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)) +
             '</span>' +
-            '<span class="status-badge ' + (active ? 'status-active' : 'status-inactive') + '">' +
+            '<span class="status-badge badge-sm ' + (active ? 'status-active' : 'status-inactive') + '">' +
             (active ? 'Active' : 'Inactive') +
             '</span>' +
             '</div>' +
             '</div>' +
-            (plugin.description ? '<p class="plugin-description">' + escapeHtml(plugin.description) + '</p>' : '') +
-            '<div class="plugin-meta">' +
-            '<span class="plugin-version">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-            (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="marketplace-tag">Hub</span>' : '') +
-            (plugin.license_ref ? '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
+            (plugin.description ? '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(plugin.description) + '</p>' : '') +
+            '<div class="u-cluster u-gap-2">' +
+            '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
+            (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="tag">Hub</span>' : '') +
+            (plugin.license_ref ? '<span class="chip u-mono" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
             reviewChip +
             '</div>' +
-            '<div class="plugin-actions">' +
+            '<div class="u-cluster u-mt-auto u-pt-2">' +
             detailsButton +
             (hasUpdate
                 ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
@@ -1845,10 +1852,10 @@
 
         if (!installedPacks.length) {
             grid.innerHTML =
-                '<div class="empty-state plugins-empty-state">' +
-                '<p>' + escapeHtml(t('no_site_packs_installed', 'No site packs installed yet.')) + '</p>' +
-                '<p class="form-help">' + escapeHtml(t('no_site_packs_hint', 'Install a site pack from Discover, or upload a pack ZIP.')) + '</p>' +
-                '<div class="hub-empty-actions">' +
+                '<div class="empty-state empty-state--compact">' +
+                '<p class="empty-state-title">' + escapeHtml(t('no_site_packs_installed', 'No site packs installed yet.')) + '</p>' +
+                '<p class="empty-state-text">' + escapeHtml(t('no_site_packs_hint', 'Install a site pack from Discover, or upload a pack ZIP.')) + '</p>' +
+                '<div class="empty-state-actions">' +
                 '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
                 escapeHtml(t('browse_marketplace', 'Browse Hub')) +
                 '</button>' +
@@ -1866,25 +1873,23 @@
             var collections = Array.isArray(pack.installed_collections) ? pack.installed_collections : [];
             var source = pack.source || '';
             return (
-                '<div class="card plugin-card pack-card">' +
-                '<div class="plugin-header">' +
-                '<div>' +
-                '<h3 class="plugin-name">' + escapeHtml(title) + '</h3>' +
-                '<span class="marketplace-offer-type-badge marketplace-offer-type-badge--template_pack">' +
+                '<div class="card plugin-card">' +
+                '<div class="u-stack-1">' +
+                '<h3 class="card-title">' + escapeHtml(title) + '</h3>' +
+                '<span class="badge badge-warning badge-sm u-self-start">' +
                 escapeHtml(t('marketplace_type_template', 'Site pack')) +
                 '</span>' +
                 '</div>' +
-                '</div>' +
-                '<div class="plugin-meta">' +
-                (pack.version ? '<span class="plugin-version">v' + escapeHtml(pack.version) + '</span>' : '') +
-                (source ? '<span class="marketplace-tag">' + escapeHtml(source) + '</span>' : '') +
-                (pack.project_site ? '<span class="license-ref">' + escapeHtml(t('hub_pack_has_project', 'Includes project files')) + '</span>' : '') +
+                '<div class="u-cluster u-gap-2">' +
+                (pack.version ? '<span class="chip u-numeric">v' + escapeHtml(pack.version) + '</span>' : '') +
+                (source ? '<span class="tag">' + escapeHtml(source) + '</span>' : '') +
+                (pack.project_site ? '<span class="chip">' + escapeHtml(t('hub_pack_has_project', 'Includes project files')) + '</span>' : '') +
                 '</div>' +
                 (collections.length
-                    ? '<p class="plugin-description">' + escapeHtml(t('hub_pack_collections', 'Collections')) + ': ' +
+                    ? '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(t('hub_pack_collections', 'Collections')) + ': ' +
                         escapeHtml(collections.join(', ')) + '</p>'
                     : '') +
-                '<div class="plugin-actions">' +
+                '<div class="u-cluster u-mt-auto u-pt-2">' +
                 '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="replace-all-pack" data-pack-slug="' +
                 escapeHtml(slug) + '">' + escapeHtml(t('hub_pack_replace_all', 'Replace all')) + '</button>' +
                 '</div>' +
@@ -1899,12 +1904,14 @@
 
         if (!installedPlugins.length) {
             grid.innerHTML =
-                '<div class="empty-state plugins-empty-state">' +
-                '<p>' + escapeHtml(t('no_plugins_installed', 'No plugins installed yet.')) + '</p>' +
-                '<p class="form-help">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse Discover to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
+                '<div class="empty-state empty-state--compact">' +
+                '<p class="empty-state-title">' + escapeHtml(t('no_plugins_installed', 'No plugins installed yet.')) + '</p>' +
+                '<p class="empty-state-text">' + escapeHtml(t('no_plugins_marketplace_hint', 'Browse Discover to install official plugins like Commerce and Events — free for Birkly sites.')) + '</p>' +
+                '<div class="empty-state-actions">' +
                 '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
                 escapeHtml(t('browse_marketplace', 'Browse Hub')) +
                 '</button>' +
+                '</div>' +
                 '</div>';
             return;
         }
@@ -1925,9 +1932,9 @@
 
         if (!withUpdates.length) {
             grid.innerHTML =
-                '<div class="empty-state plugins-empty-state">' +
-                '<p>' + escapeHtml(t('hub_updates_none', 'All Hub plugins are up to date.')) + '</p>' +
-                '<p class="form-help">' + escapeHtml(t('hub_updates_none_hint', 'Check again after new releases are published.')) + '</p>' +
+                '<div class="empty-state empty-state--compact">' +
+                '<p class="empty-state-title">' + escapeHtml(t('hub_updates_none', 'All Hub plugins are up to date.')) + '</p>' +
+                '<p class="empty-state-text">' + escapeHtml(t('hub_updates_none_hint', 'Check again after new releases are published.')) + '</p>' +
                 '</div>';
             return;
         }
@@ -1947,27 +1954,27 @@
 
         if (!licensed.length) {
             grid.innerHTML =
-                '<div class="empty-state plugins-empty-state">' +
-                '<p>' + escapeHtml(t('hub_licenses_none', 'No licenses bound to this installation yet.')) + '</p>' +
-                '<p class="form-help">' + escapeHtml(t('hub_licenses_none_hint', 'Activate a license key above, or install a paid offer from Discover.')) + '</p>' +
+                '<div class="empty-state empty-state--compact">' +
+                '<p class="empty-state-title">' + escapeHtml(t('hub_licenses_none', 'No licenses bound to this installation yet.')) + '</p>' +
+                '<p class="empty-state-text">' + escapeHtml(t('hub_licenses_none_hint', 'Activate a license key above, or install a paid offer from Discover.')) + '</p>' +
                 '</div>';
             return;
         }
 
-        grid.innerHTML = licensed.map(function (plugin) {
+        grid.innerHTML = '<div class="card card--flush"><div class="card-body"><div class="data-list">' + licensed.map(function (plugin) {
             return (
-                '<div class="card plugin-card">' +
-                '<div class="plugin-header">' +
-                '<h3 class="plugin-name">' + escapeHtml(plugin.name || plugin.id) + '</h3>' +
+                '<div class="data-list-item">' +
+                '<div class="data-list-main">' +
+                '<span class="data-list-title">' + escapeHtml(plugin.name || plugin.id) + '</span>' +
+                '<span class="data-list-meta u-mono">#' + escapeHtml(plugin.license_ref) + '</span>' +
                 '</div>' +
-                '<div class="plugin-meta">' +
-                '<span class="plugin-version">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-                '<span class="license-ref" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' +
-                (plugin.marketplace_slug ? '<span class="marketplace-tag">' + escapeHtml(plugin.marketplace_slug) + '</span>' : '') +
+                '<div class="data-list-actions">' +
+                '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
+                (plugin.marketplace_slug ? '<span class="tag">' + escapeHtml(plugin.marketplace_slug) + '</span>' : '') +
                 '</div>' +
                 '</div>'
             );
-        }).join('');
+        }).join('') + '</div></div></div>';
     }
 
     async function loadInstalled() {
@@ -2287,27 +2294,27 @@
         }
 
         if (!offers.length) {
-            grid.innerHTML = '<div class="empty-state"><p>No offers found.</p></div>';
+            grid.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state-title">No offers found.</p></div>';
             return;
         }
 
         grid.innerHTML = offers.map(function (offer) {
             var slug = offer.slug || '';
             return (
-                '<article class="marketplace-offer-card" role="button" tabindex="0" data-offer-slug="' + escapeHtml(slug) + '">' +
+                '<article class="card card--interactive marketplace-offer-card" role="button" tabindex="0" data-offer-slug="' + escapeHtml(slug) + '">' +
                 '<div class="marketplace-offer-media">' + offerImageHtml(offer) + '</div>' +
                 '<div class="marketplace-offer-body">' +
-                '<div class="marketplace-offer-heading">' +
-                '<h3 class="marketplace-offer-title">' +
-                '<button type="button" class="marketplace-offer-title-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
+                '<div class="u-stack-1">' +
+                '<h3 class="card-title">' +
+                '<button type="button" class="btn btn-link" data-plugin-action="open-offer" data-offer-slug="' + escapeHtml(slug) + '">' +
                 escapeHtml(offer.title || slug) +
                 '</button>' +
                 '</h3>' +
                 renderOfferCardProvider(offer) +
                 '</div>' +
-                '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(offer.summary || '') + '</p>' +
                 renderOfferMetaRows(offer) +
-                '<div class="marketplace-offer-actions">' +
+                '<div class="u-cluster u-pt-2">' +
                 renderOfferActionButtons(offer, true) +
                 '</div>' +
                 '</div>' +
@@ -2347,13 +2354,13 @@
             return '';
         }
         return (
-            '<div class="marketplace-offer-detail-section">' +
-            '<h3>Screenshots</h3>' +
+            '<section class="u-stack-3">' +
+            '<h3 class="section-title">Screenshots</h3>' +
             '<div class="marketplace-screenshots">' +
             shots.map(function (src) {
                 return '<img src="' + escapeHtml(src) + '" alt="" loading="lazy">';
             }).join('') +
-            '</div></div>'
+            '</div></section>'
         );
     }
 
@@ -2375,11 +2382,11 @@
         }).join('');
 
         return (
-            '<div class="marketplace-offer-detail-section">' +
-            '<h3>' + escapeHtml(t('releases', 'Releases')) + '</h3>' +
-            '<table class="marketplace-release-table">' +
+            '<section class="u-stack-3">' +
+            '<h3 class="section-title">' + escapeHtml(t('releases', 'Releases')) + '</h3>' +
+            '<div class="table-container"><table class="table table--compact">' +
             '<thead><tr><th>Version</th><th>Published</th><th>' + escapeHtml(t('changelog', 'Changelog')) + '</th></tr></thead>' +
-            '<tbody>' + rows + '</tbody></table></div>'
+            '<tbody>' + rows + '</tbody></table></div></section>'
         );
     }
 
@@ -2390,39 +2397,37 @@
         var providerId = offer.provider_id || '';
 
         return (
-            '<div class="marketplace-offer-detail-inner">' +
-            '<button type="button" class="btn btn-secondary btn-sm" data-plugin-action="back-marketplace">' +
+            '<div class="u-stack-6">' +
+            '<button type="button" class="btn btn-secondary btn-sm u-self-start" data-plugin-action="back-marketplace">' +
             escapeHtml(t('back_to_marketplace', 'Back to marketplace')) +
             '</button>' +
             '<div class="marketplace-offer-detail-header">' +
-            '<div>' +
+            '<div class="u-stack-3">' +
             '<div class="marketplace-offer-detail-media">' + offerImageHtml(offer) + '</div>' +
-            '<span class="marketplace-offer-type">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
-            '<h2 class="marketplace-offer-title">' + escapeHtml(offer.title || slug) + '</h2>' +
-            '<p class="marketplace-offer-summary">' + escapeHtml(offer.summary || '') + '</p>' +
+            '<span class="u-label">' + escapeHtml(offerTypeLabel(offer.offer_type || 'plugin')) + '</span>' +
+            '<h2 class="u-text-xl u-weight-semibold u-m-0">' + escapeHtml(offer.title || slug) + '</h2>' +
+            '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(offer.summary || '') + '</p>' +
             renderOfferMetaRows(offer) +
             '</div>' +
-            '<aside class="marketplace-offer-detail-sidebar">' +
-            '<div class="marketplace-offer-detail-pricing">' + renderOfferPricingTable(offer) + '</div>' +
-            '</aside>' +
+            '<aside class="card"><div class="card-body">' + renderOfferPricingTable(offer) + '</div></aside>' +
             '</div>' +
-            '<div class="marketplace-offer-detail-section">' +
-            '<h3>' + escapeHtml(t('description', 'Description')) + '</h3>' +
-            '<div class="marketplace-offer-description">' + escapeHtml(description) + '</div>' +
-            '</div>' +
+            '<section class="u-stack-3">' +
+            '<h3 class="section-title">' + escapeHtml(t('description', 'Description')) + '</h3>' +
+            '<div class="marketplace-offer-description u-text-sm u-max-w-measure-md">' + escapeHtml(description) + '</div>' +
+            '</section>' +
             renderOfferDetailScreenshots(offer) +
-            '<div class="marketplace-offer-detail-section">' +
-            '<h3>' + escapeHtml(t('compatibility', 'Compatibility')) + '</h3>' +
-            '<dl class="marketplace-detail-meta-list">' +
+            '<section class="u-stack-3">' +
+            '<h3 class="section-title">' + escapeHtml(t('compatibility', 'Compatibility')) + '</h3>' +
+            '<dl class="kv">' +
             (compatibility.requires_birkly
-                ? '<div><dt>' + escapeHtml(t('requires_birkly', 'Requires Birkly')) + '</dt><dd>' + escapeHtml(compatibility.requires_birkly) + '</dd></div>'
+                ? '<dt class="kv-key">' + escapeHtml(t('requires_birkly', 'Requires Birkly')) + '</dt><dd class="kv-value">' + escapeHtml(compatibility.requires_birkly) + '</dd>'
                 : '') +
             (compatibility.requires_php
-                ? '<div><dt>' + escapeHtml(t('requires_php', 'Requires PHP')) + '</dt><dd>' + escapeHtml(compatibility.requires_php) + '</dd></div>'
+                ? '<dt class="kv-key">' + escapeHtml(t('requires_php', 'Requires PHP')) + '</dt><dd class="kv-value">' + escapeHtml(compatibility.requires_php) + '</dd>'
                 : '') +
-            '</dl></div>' +
+            '</dl></section>' +
             (providerId
-                ? '<div class="marketplace-offer-detail-section"><h3>' + escapeHtml(t('provider', 'Provider')) + '</h3><p>' + escapeHtml(providerId) + '</p></div>'
+                ? '<section class="u-stack-3"><h3 class="section-title">' + escapeHtml(t('provider', 'Provider')) + '</h3><p class="u-text-sm u-m-0">' + escapeHtml(providerId) + '</p></section>'
                 : '') +
             renderOfferDetailReleases(releases) +
             '</div>'

@@ -52,12 +52,8 @@
         const updateDetails = el('update-details');
         if (!statusIndicator) return;
 
-        statusIndicator.innerHTML =
-            '<div class="status-indicator loading">' +
-            '<div class="spinner"></div>' +
-            '<span>Checking for updates...</span>' +
-            '</div>';
-        if (updateDetails) updateDetails.style.display = 'none';
+        statusIndicator.innerHTML = '<span class="badge badge-neutral">Checking for updates...</span>';
+        if (updateDetails) updateDetails.hidden = true;
     }
 
     function showError(message) {
@@ -67,17 +63,14 @@
         const updateInfo = el('update-info');
 
         if (statusIndicator) {
-            statusIndicator.innerHTML =
-                '<div class="status-indicator error"><span>Update check failed</span></div>';
+            statusIndicator.innerHTML = '<span class="badge badge-danger">Update check failed</span>';
         }
         if (updateInfo) {
             updateInfo.innerHTML =
-                '<div class="update-error"><p>' +
-                escapeHtml(message || 'Unknown error') +
-                '</p></div>';
+                '<p class="u-fg-danger">' + escapeHtml(message || 'Unknown error') + '</p>';
         }
-        if (updateDetails) updateDetails.style.display = 'block';
-        if (updateActions) updateActions.style.display = 'block';
+        if (updateDetails) updateDetails.hidden = false;
+        if (updateActions) updateActions.hidden = false;
     }
 
     function escapeHtml(text) {
@@ -90,10 +83,10 @@
         const changelog = el('changelog-content');
         if (!changelog) return;
         if (!notes) {
-            changelog.innerHTML = '<p>No release notes available.</p>';
+            changelog.innerHTML = '<p class="u-fg-secondary">No release notes available.</p>';
             return;
         }
-        changelog.innerHTML = '<div class="changelog-markdown">' + escapeHtml(notes).replace(/\n/g, '<br>') + '</div>';
+        changelog.innerHTML = '<div class="u-text-sm u-leading-normal">' + escapeHtml(notes).replace(/\n/g, '<br>') + '</div>';
     }
 
     function updateVersionLabels(version) {
@@ -123,7 +116,7 @@
         btn.type = 'button';
         btn.className = 'btn btn-primary';
         btn.id = 'install-update-btn';
-        btn.style.display = 'none';
+        btn.hidden = true;
         btn.innerHTML =
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
             '<path d="M12 2v6m0 0l3-3m-3 3L9 5"></path>' +
@@ -145,36 +138,34 @@
         renderChangelog(data.release_notes || '');
 
         if (data.update_available) {
-            statusIndicator.innerHTML =
-                '<div class="status-indicator available"><span>Update available</span></div>';
+            statusIndicator.innerHTML = '<span class="badge badge-warning">Update available</span>';
             updateInfo.innerHTML =
-                '<div class="update-available">' +
-                '<h3>Version ' + escapeHtml(data.latest_version) + ' is available</h3>' +
+                '<div class="u-stack-2">' +
+                '<h3 class="u-text-md u-weight-semibold">Version ' + escapeHtml(data.latest_version) + ' is available</h3>' +
                 '<p>You are running version ' + escapeHtml(data.current_version) + '.</p>' +
-                (data.published_at ? '<p class="text-muted">Published: ' + escapeHtml(data.published_at) + '</p>' : '') +
+                (data.published_at ? '<p class="u-text-sm u-fg-secondary">Published: ' + escapeHtml(data.published_at) + '</p>' : '') +
                 '</div>';
         } else {
-            statusIndicator.innerHTML =
-                '<div class="status-indicator up-to-date"><span>Up to date</span></div>';
+            statusIndicator.innerHTML = '<span class="badge badge-success">Up to date</span>';
             updateInfo.innerHTML =
-                '<div class="update-current">' +
-                '<h3>You are up to date</h3>' +
+                '<div class="u-stack-2">' +
+                '<h3 class="u-text-md u-weight-semibold">You are up to date</h3>' +
                 '<p>Running version ' + escapeHtml(data.current_version) + '.</p>' +
                 '</div>';
         }
 
         if (updateActions) {
-            updateActions.style.display = 'block';
+            updateActions.hidden = false;
             const downloadBtn = el('download-update-btn');
             if (downloadBtn) {
-                downloadBtn.style.display = data.update_available ? '' : 'none';
+                downloadBtn.hidden = !data.update_available;
             }
             const installBtn = el('install-update-btn');
             if (installBtn) {
-                installBtn.style.display = 'none';
+                installBtn.hidden = true;
             }
         }
-        if (updateDetails) updateDetails.style.display = 'block';
+        if (updateDetails) updateDetails.hidden = false;
         downloadedPackage = null;
     }
 
@@ -213,11 +204,11 @@
                 downloadedPackage = result.data;
                 ensureInstallButton();
                 const installBtn = el('install-update-btn');
-                if (installBtn) installBtn.style.display = '';
+                if (installBtn) installBtn.hidden = false;
                 const updateInfo = el('update-info');
                 if (updateInfo) {
                     updateInfo.innerHTML +=
-                        '<p class="update-downloaded">Update downloaded (' +
+                        '<p class="u-fg-success">Update downloaded (' +
                         Math.round((result.data.size || 0) / 1024) +
                         ' KB). Click <strong>Install Update</strong> to apply.</p>';
                 }

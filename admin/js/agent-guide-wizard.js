@@ -44,30 +44,30 @@
         var stepsHtml = STEP_IDS.map(function (id, i) {
             var num = i + 1;
             var label = t('ag_wizard_step_' + id, id);
-            return '<button type="button" class="ag-wizard-step-btn" data-step="' + num + '" role="tab" aria-selected="false" disabled>' +
+            return '<button type="button" class="tab ag-wizard-step-btn" data-step="' + num + '" role="tab" aria-selected="false" disabled>' +
                 escapeHtml(String(num) + '. ' + label) + '</button>';
         }).join('');
 
         return '' +
-            '<div id="ag-wizard-modal" class="modal ag-wizard-modal ap-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ag-wizard-title">' +
+            '<div id="ag-wizard-modal" class="modal ap-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ag-wizard-title">' +
             '<div class="modal-backdrop" data-ag-wizard-close="1"></div>' +
-            '<div class="modal-content modal--xl ag-wizard-content">' +
-            '<div class="modal-header ag-wizard-header">' +
-            '<h2 id="ag-wizard-title" class="ag-wizard-title">' + escapeHtml(t('ag_wizard_title', 'Set up your Agent Guide')) + '</h2>' +
-            '<button type="button" class="modal-close ag-wizard-close" data-ag-wizard-close="1" aria-label="' + escapeHtml(t('close', 'Close')) + '">&times;</button>' +
+            '<div class="modal-content modal--lg ag-wizard-content">' +
+            '<div class="modal-header">' +
+            '<h2 id="ag-wizard-title" class="modal-title">' + escapeHtml(t('ag_wizard_title', 'Set up your Agent Guide')) + '</h2>' +
+            '<button type="button" class="modal-close" data-ag-wizard-close="1" aria-label="' + escapeHtml(t('close', 'Close')) + '">&times;</button>' +
             '</div>' +
-            '<div class="ag-wizard-steps" role="tablist" aria-label="' + escapeHtml(t('ag_wizard_steps_label', 'Setup steps')) + '">' + stepsHtml + '</div>' +
-            '<div class="ag-wizard-body" id="ag-wizard-panels"></div>' +
-            '<div class="ag-wizard-footer">' +
+            '<div class="tabs ag-wizard-steps" role="tablist" aria-label="' + escapeHtml(t('ag_wizard_steps_label', 'Setup steps')) + '">' + stepsHtml + '</div>' +
+            '<div class="modal-body u-stack-4" id="ag-wizard-panels"></div>' +
+            '<div class="modal-footer ag-wizard-footer">' +
             '<button type="button" class="btn btn-secondary ag-wizard-back" hidden>' + escapeHtml(t('ag_wizard_back', 'Back')) + '</button>' +
             '<button type="button" class="btn btn-link ag-wizard-skip-step" hidden>' + escapeHtml(t('ag_wizard_skip_step', 'Skip this step')) + '</button>' +
-            '<div class="ag-wizard-footer-spacer"></div>' +
+            '<div class="u-fill"></div>' +
             '<button type="button" class="btn btn-primary ag-wizard-next">' + escapeHtml(t('ag_wizard_continue', 'Continue')) + '</button>' +
             '<button type="button" class="btn btn-primary ag-wizard-publish" hidden>' + escapeHtml(t('publish_ai_presence', 'Publish')) + '</button>' +
             '<button type="button" class="btn btn-primary ag-wizard-done" hidden>' + escapeHtml(t('ag_wizard_done', 'Go to Overview')) + '</button>' +
             '</div>' +
             '<div class="ag-wizard-loading" id="ag-wizard-loading" hidden aria-live="polite" aria-busy="true">' +
-            '<div class="ag-wizard-loading-spinner" aria-hidden="true"></div>' +
+            '<div class="spinner spinner-lg" aria-hidden="true"></div>' +
             '<p id="ag-wizard-loading-msg"></p></div>' +
             '</div></div>';
     };
@@ -75,74 +75,74 @@
     AgentGuideWizard.prototype.panelHtml = function () {
         return {
             welcome: '' +
-                '<section class="ag-wizard-panel" data-step-panel="1">' +
-                '<p class="ag-wizard-lede">' + escapeHtml(t('ag_wizard_welcome_lede', 'Publish a structured guide so AI systems can discover who you are, what you offer, and what you stand behind.')) + '</p>' +
-                '<div class="ag-wizard-why card">' +
-                '<h3>' + escapeHtml(t('ag_wizard_why_title', 'Why set this up?')) + '</h3>' +
+                '<section class="ag-wizard-panel u-stack-4" data-step-panel="1">' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_welcome_lede', 'Publish a structured guide so AI systems can discover who you are, what you offer, and what you stand behind.')) + '</p>' +
+                '<div class="card u-p-4 u-stack-2">' +
+                '<h3 class="card-title">' + escapeHtml(t('ag_wizard_why_title', 'Why set this up?')) + '</h3>' +
                 '<p>' + escapeHtml(t('ag_wizard_why_body', 'After publish, your guide is available at a public URL. Chatbots and agents can read it instead of guessing from scattered pages.')) + '</p>' +
                 '</div>' +
-                '<div class="ag-wizard-choice-grid">' +
-                '<button type="button" class="card ag-wizard-choice ag-wizard-choice-guided">' +
+                '<div class="u-grid-2">' +
+                '<button type="button" class="card card--interactive u-p-4 u-stack-1 u-align-text-left ag-wizard-choice-guided">' +
                 '<strong>' + escapeHtml(t('ag_wizard_choice_guided', 'Guided setup')) + '</strong>' +
                 '<span>' + escapeHtml(t('ag_wizard_choice_guided_desc', 'Step-by-step — best for first publish (~15 min).')) + '</span></button>' +
-                '<button type="button" class="card ag-wizard-choice ag-wizard-choice-advanced">' +
+                '<button type="button" class="card card--interactive u-p-4 u-stack-1 u-align-text-left ag-wizard-choice-advanced">' +
                 '<strong>' + escapeHtml(t('ag_wizard_choice_advanced', 'Advanced editing')) + '</strong>' +
                 '<span>' + escapeHtml(t('ag_wizard_choice_advanced_desc', 'Skip the wizard and use Essentials or full tabs.')) + '</span></button>' +
                 '</div></section>',
             identity: '' +
-                '<section class="ag-wizard-panel" data-step-panel="2" hidden>' +
-                '<p class="ag-wizard-why-text">' + escapeHtml(t('ag_wizard_identity_why', 'Your official name and short description appear in public JSON and help agents introduce you correctly.')) + '</p>' +
+                '<section class="ag-wizard-panel u-stack-4" data-step-panel="2" hidden>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_identity_why', 'Your official name and short description appear in public JSON and help agents introduce you correctly.')) + '</p>' +
                 '<div class="form-group"><label for="ag-wiz-name">' + escapeHtml(t('ai_presence_official_name', 'Official name')) + '</label>' +
                 '<input type="text" id="ag-wiz-name" class="input" required></div>' +
                 '<div class="form-group"><label for="ag-wiz-short">' + escapeHtml(t('ai_presence_short_description', 'Short description')) + '</label>' +
                 '<textarea id="ag-wiz-short" class="input" rows="2" required></textarea></div>' +
                 '<div class="form-group"><label for="ag-wiz-website">' + escapeHtml(t('ai_presence_website', 'Website')) + '</label>' +
                 '<input type="url" id="ag-wiz-website" class="input" placeholder="https://…"></div>' +
-                '<p class="ag-wizard-outcome">' + escapeHtml(t('ag_wizard_identity_outcome', 'After publish: agents see your name and summary in the public Agent Guide JSON.')) + '</p></section>',
+                '<p class="callout callout-accent callout--block u-text-sm u-m-0">' + escapeHtml(t('ag_wizard_identity_outcome', 'After publish: agents see your name and summary in the public Agent Guide JSON.')) + '</p></section>',
             sources: '' +
-                '<section class="ag-wizard-panel" data-step-panel="3" hidden>' +
-                '<p class="ag-wizard-why-text">' + escapeHtml(t('ag_wizard_sources_why', 'Pick at least one narrative source — where agents should read the truth about you (About page, homepage, etc.).')) + '</p>' +
+                '<section class="ag-wizard-panel u-stack-4" data-step-panel="3" hidden>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_sources_why', 'Pick at least one narrative source — where agents should read the truth about you (About page, homepage, etc.).')) + '</p>' +
                 '<div class="form-group"><label for="ag-wiz-source-collection">' + escapeHtml(t('collection', 'Collection')) + '</label>' +
                 '<select id="ag-wiz-source-collection" class="input"><option value="">' + escapeHtml(t('select_collection', 'Select collection')) + '</option></select></div>' +
-                '<div class="form-group"><label for="ag-wiz-source-entry">' + escapeHtml(t('entry', 'Entry')) + ' <span class="text-muted">(' + escapeHtml(t('ag_wizard_optional', 'optional')) + ')</span></label>' +
+                '<div class="form-group"><label for="ag-wiz-source-entry">' + escapeHtml(t('entry', 'Entry')) + ' <span class="u-fg-secondary">(' + escapeHtml(t('ag_wizard_optional', 'optional')) + ')</span></label>' +
                 '<select id="ag-wiz-source-entry" class="input"><option value="">' + escapeHtml(t('select_entry', 'Select entry')) + '</option></select></div>' +
                 '<div class="form-group"><label for="ag-wiz-source-url">' + escapeHtml(t('ag_wizard_or_url', 'Or external URL')) + '</label>' +
                 '<input type="url" id="ag-wiz-source-url" class="input" placeholder="https://…"></div>' +
-                '<p class="ag-wizard-outcome">' + escapeHtml(t('ag_wizard_sources_outcome', 'Published JSON links to these sources so agents can cite them.')) + '</p></section>',
+                '<p class="callout callout-accent callout--block u-text-sm u-m-0">' + escapeHtml(t('ag_wizard_sources_outcome', 'Published JSON links to these sources so agents can cite them.')) + '</p></section>',
             enrich: '' +
-                '<section class="ag-wizard-panel" data-step-panel="4" hidden>' +
-                '<p class="ag-wizard-why-text">' + escapeHtml(t('ag_wizard_enrich_why', 'Optional: add key positioning messages — what you are best known for and one differentiator.')) + '</p>' +
+                '<section class="ag-wizard-panel u-stack-4" data-step-panel="4" hidden>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_enrich_why', 'Optional: add key positioning messages — what you are best known for and one differentiator.')) + '</p>' +
                 '<div class="form-group"><label for="ag-wiz-best-known">' + escapeHtml(t('ai_presence_best_known_for', 'Best known for')) + '</label>' +
                 '<textarea id="ag-wiz-best-known" class="input" rows="2" placeholder="' + escapeHtml(t('ag_wizard_one_per_line', 'One per line')) + '"></textarea></div>' +
                 '<div class="form-group"><label for="ag-wiz-diff">' + escapeHtml(t('ai_presence_differentiators', 'Differentiators')) + '</label>' +
                 '<textarea id="ag-wiz-diff" class="input" rows="2" placeholder="' + escapeHtml(t('ag_wizard_one_per_line', 'One per line')) + '"></textarea></div>' +
-                '<div class="ag-wizard-ai-block">' +
+                '<div class="u-stack-3">' +
                 '<button type="button" class="btn btn-secondary btn-sm" id="ag-wiz-suggest-enrich">' + escapeHtml(t('ag_wizard_suggest_from_sources', 'Suggest from sources')) + '</button>' +
-                '<ul id="ag-wiz-suggestions" class="ap-suggestion-list mt-s"></ul></div>' +
-                '<p class="ag-wizard-outcome">' + escapeHtml(t('ag_wizard_enrich_outcome', 'These messages help agents answer “what makes you different?”')) + '</p></section>',
+                '<ul id="ag-wiz-suggestions" class="ap-card-list"></ul></div>' +
+                '<p class="callout callout-accent callout--block u-text-sm u-m-0">' + escapeHtml(t('ag_wizard_enrich_outcome', 'These messages help agents answer “what makes you different?”')) + '</p></section>',
             claims: '' +
-                '<section class="ag-wizard-panel" data-step-panel="5" hidden>' +
-                '<p class="ag-wizard-why-text">' + escapeHtml(t('ag_wizard_claims_why', 'Add 1–3 factual claims with a proof URL. Supported status needs evidence — link a press release, case study, or review page.')) + '</p>' +
+                '<section class="ag-wizard-panel u-stack-4" data-step-panel="5" hidden>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_claims_why', 'Add 1–3 factual claims with a proof URL. Supported status needs evidence — link a press release, case study, or review page.')) + '</p>' +
                 '<div class="form-group"><label for="ag-wiz-claim">' + escapeHtml(t('ai_presence_claim_statement', 'Claim statement')) + '</label>' +
                 '<textarea id="ag-wiz-claim" class="input" rows="2"></textarea></div>' +
                 '<div class="form-group"><label for="ag-wiz-claim-url">' + escapeHtml(t('ag_wizard_claim_proof_url', 'Proof URL')) + '</label>' +
                 '<input type="url" id="ag-wiz-claim-url" class="input" placeholder="https://…"></div>' +
-                '<p class="ag-wizard-outcome">' + escapeHtml(t('ag_wizard_claims_outcome', 'Supported claims appear in the public summary view for agents.')) + '</p></section>',
+                '<p class="callout callout-accent callout--block u-text-sm u-m-0">' + escapeHtml(t('ag_wizard_claims_outcome', 'Supported claims appear in the public summary view for agents.')) + '</p></section>',
             publish: '' +
-                '<section class="ag-wizard-panel" data-step-panel="6" hidden>' +
-                '<p class="ag-wizard-why-text">' + escapeHtml(t('ag_wizard_publish_why', 'Publishing writes your draft to the public Agent Guide URL. You can update anytime — republish when ready.')) + '</p>' +
-                '<label class="checkbox-label"><input type="checkbox" id="ag-wiz-pub-enabled" checked> ' +
+                '<section class="ag-wizard-panel u-stack-4" data-step-panel="6" hidden>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_publish_why', 'Publishing writes your draft to the public Agent Guide URL. You can update anytime — republish when ready.')) + '</p>' +
+                '<label class="u-row-2 u-text-sm"><input type="checkbox" id="ag-wiz-pub-enabled" checked> ' +
                 escapeHtml(t('ai_presence_enable_publishing', 'Enable public publishing for AI systems')) + '</label>' +
-                '<dl class="ai-presence-urls mt-s" id="ag-wiz-public-url-preview"></dl>' +
-                '<p class="ag-wizard-outcome">' + escapeHtml(t('ag_wizard_publish_outcome', 'After publish you get a success screen with your live URL and version number.')) + '</p></section>',
+                '<dl class="ai-presence-urls" id="ag-wiz-public-url-preview"></dl>' +
+                '<p class="callout callout-accent callout--block u-text-sm u-m-0">' + escapeHtml(t('ag_wizard_publish_outcome', 'After publish you get a success screen with your live URL and version number.')) + '</p></section>',
             success: '' +
-                '<section class="ag-wizard-panel ag-wizard-panel--success" data-step-panel="7" hidden>' +
+                '<section class="ag-wizard-panel u-stack-4 u-align-text-center" data-step-panel="7" hidden>' +
                 '<div class="ag-wizard-success-icon" aria-hidden="true">✓</div>' +
                 '<h3>' + escapeHtml(t('ag_wizard_success_title', 'Agent Guide is live')) + '</h3>' +
-                '<p id="ag-wiz-success-meta" class="ag-wizard-success-meta"></p>' +
+                '<p id="ag-wiz-success-meta" class="u-text-sm u-fg-secondary u-m-0"></p>' +
                 '<dl class="ai-presence-urls"><dt>' + escapeHtml(t('ag_wizard_public_json', 'Public JSON')) + '</dt>' +
                 '<dd><code id="ag-wiz-success-url"></code></dd></dl>' +
-                '<div class="ag-wizard-success-actions">' +
+                '<div class="u-cluster u-justify-center">' +
                 '<button type="button" class="btn btn-primary" id="ag-wiz-copy-url">' + escapeHtml(t('ag_wizard_copy_url', 'Copy URL')) + '</button>' +
                 '<a class="btn btn-secondary" id="ag-wiz-open-json" target="_blank" rel="noopener">' + escapeHtml(t('ag_wizard_open_json', 'Open public JSON')) + '</a>' +
                 '<button type="button" class="btn btn-secondary" id="ag-wiz-preview-q">' + escapeHtml(t('ag_wizard_try_preview', 'Try a preview question')) + '</button>' +
@@ -607,11 +607,11 @@
         list.innerHTML = '';
         this.wizardSuggestions.forEach(function (s) {
             var li = document.createElement('li');
-            li.className = 'ap-suggestion-item';
+            li.className = 'card card--sunken u-p-3 u-stack-2';
             var valPreview = typeof s.value === 'string' ? s.value : JSON.stringify(s.value);
             if (valPreview.length > 120) valPreview = valPreview.slice(0, 120) + '…';
             li.innerHTML = '<strong>' + escapeHtml(s.label || s.field) + '</strong><p>' + escapeHtml(valPreview) + '</p>' +
-                '<div class="ap-item-actions">' +
+                '<div class="u-cluster u-gap-2">' +
                 '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' + escapeHtml(s.id) + '">' +
                 escapeHtml(t('accept', 'Accept')) + '</button> ' +
                 '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' + escapeHtml(s.id) + '">' +

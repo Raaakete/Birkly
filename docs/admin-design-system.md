@@ -1,274 +1,119 @@
 # Birkly admin design system
 
-Developer reference for admin UI tokens, components, and interaction patterns. Canonical source: `admin/css/core/variables.css`. Phase 44 (P44) extends Phase 41 with settings IA, save semantics, hosting wizard, and feedback standards.
+> **This file is a pointer, not a reference.**
+>
+> The design language — tokens, the `u-*` helper layer, the component catalog, the page-chrome recipe and the do/don't rules — is documented once, publicly, in Birkly-Docs:
+>
+> - **[Admin design language](https://docs.birkly.com/01-admin/admin-design-language.html)** — the build kit
+> - **[Plugin admin styling](https://docs.birkly.com/06-plugin-economy/plugin-admin-styling.html)** — adoption tiers, the public class contract, the `.fieldtype-*` API
+> - **[Admin design system](https://docs.birkly.com/01-admin/design-system.html)** — short overview, icons, theming
+>
+> Source repo: `Raaakete/Birkly-Docs` → `01-admin/admin-design-language.md`, `06-plugin-economy/plugin-admin-styling.md`.
+>
+> **Do not re-document tokens, classes or values here.** A second reference drifts, and this one already did. When admin CSS changes, update Birkly-Docs.
 
-**Related:** Birkly-Docs `guides/admin-ux.md` (user-facing) · `docs/reviews/P44-verification-matrix.md` (V-UX checklist)
-
----
-
-## CSS tokens
-
-All tokens are defined in `admin/css/core/variables.css` and consumed via `var(--token-name)`.
-
-### Primary (mint)
-
-| Token | Light default | Use |
-|-------|---------------|-----|
-| `--color-primary` | `#7CE3BF` | Primary buttons, brand accent |
-| `--color-primary-hover` | `#8CECCA` | Hover / dark-theme primary |
-| `--color-primary-active` | `#79E1BD` | Pressed state |
-| `--primary-50` … `--primary-900` | Mint scale | Backgrounds, borders, focus rings |
-| `--primary-light` | `var(--primary-100)` | Subtle highlight fills |
-
-Prefer `--primary-500` / `--primary-600` for focus outlines and active states. Do **not** use Tailwind blue (`#3b82f6`, `#2563eb`) in new admin CSS.
-
-### Neutrals, semantic, surfaces
-
-- **Neutrals:** `--color-neutral-100` … `--color-neutral-900`, `--gray-*` (legacy)
-- **Semantic:** `--success-*`, `--error-*`, `--warning-*`
-- **Surfaces:** `--bg-primary`, `--bg-secondary`, `--bg-elevated`, `--background-global`
-- **Text:** `--text-primary`, `--text-secondary`, `--text-tertiary`
-- **Borders:** `--border-light`, `--border-medium`, `--border-strong`
-
-Dark mode remaps these via `[data-theme="dark"]` and `@media (prefers-color-scheme: dark)` for `[data-theme="system"]`.
-
-### Spacing
-
-Rem-based scale (preferred):
-
-| Token | Value |
-|-------|-------|
-| `--space-1` | 0.25rem (4px) |
-| `--space-2` | 0.5rem (8px) |
-| `--space-3` | 0.75rem (12px) |
-| `--space-4` | 1rem (16px) |
-| `--space-6` | 1.5rem (24px) |
-| `--space-8` | 2rem (32px) |
-| `--space-10` | 2.5rem (40px) |
-| `--space-12` | 3rem (48px) |
-
-Legacy px tokens (`--spacing-xs`, `--spacing-m`, etc.) remain for older rules.
-
-### Typography
-
-| Token | Value |
-|-------|-------|
-| `--font-sans` / `--font-primary` | System UI stack (see below) |
-| `--font-mono` | SF Mono, Cascadia Code, Consolas, … |
-| `--font-size-default` | 16px |
-| `--font-lineheight-default` | 150% |
-
-Body and headings: `admin/css/core/typography.css`. Links use `--primary-700` on light backgrounds for WCAG AA contrast.
-
-### Radius, shadow, breakpoints
-
-- **Radius:** `--radius-sm` (6px) through `--radius-2xl` (24px)
-- **Shadow:** `--shadow-sm` … `--shadow-xl`
-- **Breakpoints (document only — use literal values in `@media`):** `--bp-sm` 640px, `--bp-md` 768px, `--bp-lg` 1024px, `--bp-xl` 1280px
+Everything below is CMS-contributor-specific: where things live in this repo, and the JS class contracts that a redesign must not break.
 
 ---
 
-## Font decision: system UI stack
+## Canonical sources in this repo
 
-**P44-D8 / P44-M2:** General Sans was removed. Admin uses the native system UI stack only — no CDN webfont, no `@font-face` for brand text.
+| Concern | Path |
+|---------|------|
+| Tokens (only file allowed to contain hex) | `admin/css/core/variables.css` |
+| Legacy token aliases (plugin compatibility only) | `admin/css/core/compat-tokens.css` |
+| Reset, focus ring, global reduced-motion block | `admin/css/core/reset.css` |
+| Element typography, `.prose`, `.rich-text` | `admin/css/core/typography.css` |
+| `u-*` helper layer | `admin/css/core/helpers.css` |
+| Source-order overrides (`[hidden]`) | `admin/css/core/overrides.css` |
+| Components | `admin/css/components/*.css` |
+| Sidebar, topbar, page chrome, main content, grid | `admin/css/layout/*.css` |
+| Fieldtype CSS API (frozen class names) | `admin/css/plugins/fieldtype-api.css` |
+| Plugin page chrome + plugin dialect bridges | `admin/css/plugin-page.css` |
+| Import hub and load order | `admin/css/style.css` |
+| Residual page stylesheets (not a pattern to copy) | `admin/css/pages/*.css` |
 
-```css
---font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
---font-primary: var(--font-sans);
-```
-
-`--font-secondary` (Mergian) and `--font-article` (Newsreader) are reserved for marketing/content contexts, not loaded in admin shell.
-
----
-
-## Buttons
-
-Unified in `admin/css/components/buttons.css`. Base class: `.btn`.
-
-| Variant | Class | Notes |
-|---------|-------|-------|
-| Primary | `.btn--primary` or `.btn-primary` | Mint fill, dark text |
-| Secondary | `.btn--secondary` / `.btn-secondary` | Neutral gray |
-| Danger | `.btn--danger` / `.btn-danger` | Destructive actions |
-| Success / Warning | `.btn--success`, `.btn--warning` | Semantic actions |
-| Sizes | `.btn--sm`, `.btn--lg` | Compact / large |
-| Icon | `.btn--icon`, `.btn-icon` | Icon-only controls |
-
-Focus: `outline: 2px solid var(--primary-500)` with `outline-offset: 2px` on `:focus-visible`.
+**Load order matters.** `core/helpers.css` and `core/overrides.css` are imported **last**, after every component. A `u-*` helper has to beat a component that sets the same property at equal specificity, and source order is what decides that.
 
 ---
 
-## Form validation (`.was-validated` pattern)
+## Rules enforced in CI
+
+`internal/cms/scripts/design-language-check.sh` (Birkly-Ops) gates:
+
+1. No raw hex outside `core/variables.css` (plus one documented third-party-brand exception).
+2. No legacy token name in admin CSS — those exist only in the compat shim for plugin CSS.
+3. Every `var(--x)` resolves to a definition.
+4. No raw `z-index` layer number; `--z-*` only (`0` and `1` allowed as intra-stacking-context values).
+5. Media queries use only 640 / 768 / 1024 / 1280 / 1440 and their `max-width` complements.
+6. `!important` budget — allowlisted to the global reduced-motion block in `core/reset.css`.
+7. No `transition: all`.
+8. No `[data-theme]` rule outside the token file and the topbar shadow cast in `layout/header.css`.
+9. Every public contract class is defined somewhere in admin CSS.
+10. `compat-tokens.css` contains only aliases, inside budget.
+11. No `color: var(--accent | --primary-500 | --primary-700)` — the accent-as-text ban.
+12. Total admin CSS code lines and the largest single page stylesheet stay within budget.
+13. Inline `style="` attributes and inline `<style>` blocks in templates stay within budget.
+
+Run it before opening a UI PR.
+
+---
+
+## JS class contracts
+
+CSS deletion without the matching JS edit is the most likely way a redesign silently breaks a page. These scripts build or toggle markup and depend on the class names shown.
+
+| Script | Contract |
+|--------|----------|
+| `admin/js/layout_footer.php` inline / topbar hoist | `moveBreadcrumbsToTopbar()` moves `.page-header .breadcrumbs` into `#admin-topbar-breadcrumbs` and adds `.page-header--hoisted-empty` to the emptied row |
+| `admin/js/breadcrumb-truncate.js` | Adds `.breadcrumb-segment`, `.breadcrumb-segment--current`, `.breadcrumb-ellipsis`, `.breadcrumbs--collapsed`, `.breadcrumbs--segment-ellipsis` |
+| `admin/js/sticky-save-bar.js` | Toggles `.is-stuck` / `.is-stuck-enter` on `.main-actions-bar--sticky`; expects `.main-actions-left`, `.main-actions-right`, `.main-actions-tools`, `.main-actions-message` |
+| `admin/js/tabs-v2.js` | Owns `.tabs-v2-root`, `.tabs-v2--desktop`, `.tabs-v2--scroll`, `.tabs-v2--picker`, `.tabs-v2-picker-wrap`, `.tabs-v2-more-wrap`, `.tabs-v2-more-menu`, `.tabs-v2-more-item` |
+| `admin/js/ui-feedback.js` | `BirklyFeedback.toast/confirm/prompt`. Dialogs are ordinary `.modal-backdrop` + `.modal-content` modals; toasts use `.birkly-feedback-toast*` |
+| `admin/js/global-search.js` | `.search-overlay`, `.search-overlay-backdrop`, `.search-overlay-content` — a third overlay root alongside `.modal` |
+| `admin/js/entries.js` | `.entries-smart-table`, `.table-viewport`, `.head-actions`, `.cell-actions`, `.is-scrolled-x` |
+| `admin/js/theme.js` | Sets `data-theme` on `<html>` and `<body>` (`light` / `dark` / `system`) |
+| `admin/js/icon.js` | `Birkly.icon()`, `Birkly.iconImg()`, `Birkly.initIcons()` hydrating `[data-icon]`; registry parity with `core/icons.php` |
+
+`.loading` is kept unprefixed in `core/utilities.css` because admin JS toggles it on containers via `classList.add('loading')`. `.sr-only` is aliased to `.u-sr-only` for the same reason.
+
+---
+
+## Shared template partials
+
+| Partial | Purpose |
+|---------|---------|
+| `admin/templates/components/sticky-save-bar.php` | The sticky action zone |
+| `admin/templates/components/empty-state.html` | Empty state with optional action |
+| `admin/templates/components/status-badge.html` | Status pill |
+| `admin/templates/components/form-field.html` | Field wrapper |
+| `admin/templates/components/modal.html` | Modal shell |
+| `admin/templates/components/page-header.html`, `breadcrumb-builder.html` | Breadcrumb title source |
+| `admin/templates/components/smart-table.php`, `smart-table.html` | Entry-list table |
+| `admin/partials/plugin_page_shell.php` | Plugin breadcrumb header behind `{plugin_page_header}` |
+
+---
+
+## Form validation pattern
 
 `admin/css/components/forms.css` — invalid styling applies **only after** the user submits or the form opts in:
 
-1. Add `was-validated` (or `submitted`) to the `<form>` on submit attempt.
-2. Invalid fields show `--error-700` border when `:invalid`, not `:placeholder-shown`, and not `:focus`.
+1. Add `was-validated` to the `<form>` on submit attempt.
+2. Invalid controls then show a `--danger-fg` border.
 
-```html
-<form id="general-form" class="was-validated" novalidate>
-  <div class="form-group">
-    <label for="site-url">Site URL</label>
-    <input type="url" id="site-url" class="input" required>
-  </div>
-</form>
-```
-
-Explicit states (no automatic `:valid` green):
-
-- `.form-group--error` / `.form-group.error` — server-side or JS errors
-- `.form-group--success` — explicit success only
-
-Entry/collection editors use `.field-block--error` with the same color tokens.
+Explicit states, independent of `:invalid`: `.is-invalid` on the control, or `.field-error-state` / `.form-group--error` / `.form-group.error` / `.field-block--error` on the wrapper. `.is-valid` / `.field-success-state` for explicit success only.
 
 **Do not** style `:valid` globally — empty optional fields would show permanent success chrome.
 
 ---
 
-## Save bar patterns
+## Font decision
 
-Component: `admin/templates/components/sticky-save-bar.php` + `admin/css/components/sticky-save-bar.css`.
-
-### Per-area save (Settings)
-
-Logic: `admin/js/settings-page.js` (P44-M1, M3, M4).
-
-| Tab | Save model |
-|-----|------------|
-| **General, Security, Storage, Monitoring** | Sticky bar visible; button label per tab (“Save general settings”, etc.) |
-| **Hosting, Project, Domains, Webhooks, Redirects, AI, Users, Activity, API** | Sticky bar **hidden** (`main-actions-bar--sticky.is-hidden`); each tab has its own save or inline API actions |
-
-`GLOBAL_SAVE_TABS` and `INDEPENDENT_SAVE_TABS` in `settings-page.js` are the source of truth.
-
-### Dirty state
-
-- Forms in `GLOBAL_SAVE_TABS` are snapshotted on load; `input`/`change` events compare serialized values.
-- `#settings-dirty-badge` (“Unsaved changes”) appears when dirty and the global save bar is visible.
-- `beforeunload` warns if the user navigates away with unsaved general/security/storage/monitoring edits.
-
-### When global save is hidden
-
-Hosting uses the wizard’s own **Save hosting** button. Project uses per-file save and upload. Domains/webhooks/redirects persist via immediate API calls. Hiding the misleading global **Save settings** on those tabs prevents users from thinking all tabs were saved.
-
-Other pages (Account, Entry editor) include the sticky bar with page-specific labels via the same PHP partial.
-
----
-
-## Feedback: `BirklyFeedback` toast + confirm
-
-**Target API (P44-M7):** replace `alert()` / `confirm()` with a shared module.
-
-```javascript
-// Toast — non-blocking, auto-dismiss
-BirklyFeedback.toast('Hosting settings saved', 'success'); // success | error | warning | info
-
-// Confirm — returns Promise<boolean>
-const ok = await BirklyFeedback.confirm('Skip setup? You can finish later from the dashboard.');
-```
-
-### Requirements
-
-| Concern | Rule |
-|---------|------|
-| Toast container | Fixed position; `role="status"` and `aria-live="polite"` |
-| Confirm | Modal from `admin/css/components/modals.css`; focus trap; Escape closes |
-| Errors | Toast or inline message — never blocking `alert()` for routine failures |
-| Success | Toast preferred; Settings may use `#settings-message` inline toast |
-
-### Styles
-
-- **Messages:** `admin/css/components/messages.css` (`.message.success`, `.message.error`, …)
-- **Modals:** `admin/css/components/modals.css`
-- **Reference implementation:** MCP tab local toast (`.mcp-ui-toast` in `settings.css`) — migrate to `BirklyFeedback` in M7
-
-### Transitional APIs
-
-Until M7 lands everywhere:
-
-- `Birkly.Utils.showNotification(message, type)` — basic DOM notification (`admin/js/utils.js`)
-- Hosting wizard checks `Birkly.Utils.showToast` when present; prefer `BirklyFeedback.toast` in new code
-
----
-
-## Settings information architecture (4 areas)
-
-Level 1 sub-nav in `admin/templates/settings.html`:
-
-| Area | `data-area` | Tabs |
-|------|-------------|------|
-| **Site** | `site` | General, Hosting, Domains, Project, Redirects |
-| **Team & security** | `team` | Users & Roles, Security, Activity & audit |
-| **Integrations** | `integrations` | API, Webhooks, AI |
-| **Infrastructure** | `infrastructure` | Storage, Monitoring |
-
-URL scheme: `?page=settings&area=site&tab=hosting`. Legacy `?tab=hosting` (no `area`) is rewritten client-side to include `area`.
-
-Horizontal tabs inside each area use **tabs-v2** (`admin/js/tabs-v2.js`, `admin/css/components/tabs-v2.css`) — max ~5 tabs per group instead of 13 in one row.
-
----
-
-## Hosting wizard component
-
-Shared between **Settings → Hosting** and **onboarding** (P44-M5).
-
-| File | Role |
-|------|------|
-| `admin/js/hosting-wizard.js` | `window.BirklyHostingWizard.create(container, options)` |
-| `admin/js/hosting-settings.js` | Mounts wizard on Settings tab |
-| `admin/css/components/hosting-wizard.css` | Step UI, Dokploy checklist, preview |
-| `api/hosting.php` | Load/save (P43 backend — no routing changes in P44) |
-
-### Steps
-
-1. **CMS URL** — “Where do you log in?” + “Use current host” + self-hosted toggle
-2. **Public site** — None / Elsewhere / In Birkly (`project/`)
-3. **Preview** — Summary copy + `birkly-client.js` snippet
-
-When **Self-hosted / Docker (Dokploy)** is checked, the Dokploy checklist is shown (not inside a collapsed `<details>`).
-
-```javascript
-BirklyHostingWizard.create(document.getElementById('hosting-wizard-mount'), {
-  id: 'settings-hosting-wizard',
-  mode: 'settings',
-  onSave: function (payload) { /* optional hook */ }
-});
-```
-
----
-
-## Hex audit / grep guidance
-
-**Rule:** No Tailwind blue in `admin/css/`.
-
-```bash
-# Must return zero matches (P44 V-UX-16)
-rg '#3b82f6' admin/css/
-
-# Also avoid blue fallbacks in var() — prefer mint scale
-rg '2563eb|59, 130, 246' admin/css/
-```
-
-`#3b82f6` in `admin/css/` is **zero** as of P44-M11. Remaining cleanup (M2/M9): `rgba(59, 130, 246, …)` focus shadows in some files, `#2563eb` fallbacks in `var(--primary-600, #2563eb)`, and ContentEditor `fieldtypes/ContentEditor/editor.css` (outside `admin/css/` but same token rules apply).
-
-When adding focus rings:
+Admin uses the native system UI stack only — no CDN webfont, no `@font-face` for brand text, per project values.
 
 ```css
-outline: 2px solid var(--primary-500);
-box-shadow: 0 0 0 3px rgba(124, 227, 191, 0.25); /* mint, not blue */
+--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+--font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
 ```
 
----
-
-## Quick file map
-
-| Concern | Path |
-|---------|------|
-| Tokens | `admin/css/core/variables.css` |
-| Typography | `admin/css/core/typography.css` |
-| Buttons | `admin/css/components/buttons.css` |
-| Forms | `admin/css/components/forms.css` |
-| Save bar | `admin/templates/components/sticky-save-bar.php` |
-| Settings logic | `admin/js/settings-page.js` |
-| Hosting wizard | `admin/js/hosting-wizard.js` |
-| Accessibility | `admin/js/accessibility.js` |
-| Empty states | `admin/css/components/empty-states.css` |
+There is no `--font-primary`, `--font-secondary` or `--font-article`.

@@ -1,455 +1,422 @@
 /* ============================================
-   Card Component - Unified System
+   Birkly Admin — Cards / panels (P56)
+   ============================================
+
+   THE default surface. Border-only by design: --elevation-0. A shadow on a
+   static card is a review failure (brief P2).
+
+     <section class="card">
+       <header class="card-header">
+         <h2 class="card-title">Title</h2>
+         <div class="card-actions">…</div>
+       </header>
+       <div class="card-body u-stack-4">…</div>
+       <footer class="card-footer">…</footer>
+     </section>
+
+   Modifiers: --compact | --flush | --interactive | --sunken | --accent
+   Reference: P56-M1 brief §4.1, §5.2, §10.2
    ============================================ */
 
-/* Base Card */
 .card {
-  background: var(--bg-elevated, #ffffff);
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  padding: var(--space-6, 1.5rem);
   display: flex;
   flex-direction: column;
-  min-height: 200px;
-  box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
-  transition: box-shadow var(--transition-fast, 150ms ease), border-color var(--transition-fast, 150ms ease);
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-0);
+  color: var(--text-primary);
 }
 
-.card:hover {
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-}
-
-.card h3 {
-  margin: 0 0 var(--space-4, 1rem) 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-/* Split card layout (header + body) */
-.card:has(> .card-header) {
-  padding: 0;
-  min-height: auto;
-}
-
+/* ---- Regions ---- */
 .card-header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4, 1rem);
-  padding: var(--space-6, 1.5rem);
-  padding-bottom: var(--space-4, 1rem);
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-block-end: 1px solid var(--border-subtle);
+  min-width: 0;
+}
+
+.card-title {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  min-width: 0;
 }
 
 .card-header h2,
 .card-header h3 {
   margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
 
-.card-body {
-  padding: var(--space-6, 1.5rem);
-  padding-top: var(--space-4, 1rem);
+.card-subtitle,
+.card-description {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+  max-width: var(--measure-md);
 }
 
-/* Make links inside cards behave like block and inherit color */
-.card > a {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-}
-
-/* Card Variants */
-.card--compact {
-  padding: var(--space-4, 1rem);
-  min-height: auto;
-}
-
-.card--elevated {
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
-}
-
-.card--bordered {
-  border-width: 2px;
-  border-color: var(--border-medium, #e5e7eb);
-}
-
-/* Collection-specific card styles */
-.card .collection-header .title {
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.card .collection-description {
-  font-size: 0.875rem;
-  color: var(--text-secondary, #72746F);
-  margin-top: 0;
-}
-
-.card .collection-footer {
+.card-actions {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
   align-items: center;
-  margin-top: auto;
-  padding-top: var(--space-4, 1rem);
-  border-top: 1px solid var(--border-light, #f3f4f6);
-}
-
-/* Make collection cards clickable */
-a.card {
-  text-decoration: none;
-  color: var(--text-primary, #20221D);
-  transition: all 0.2s ease;
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-a.card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-}
-
-/* Collection Card Container */
-.collection-card {
-  position: relative;
-  cursor: pointer;
-  user-select: none;
-}
-
-.collection-card .collection-header {
-  user-select: none;
-}
-
-.collection-card .collection-menu-wrapper,
-.collection-card .entry-count-link {
-  cursor: pointer;
-  user-select: auto;
-}
-
-.collection-card .drag-handle {
-  pointer-events: auto;
-  cursor: grab;
-  z-index: 5;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
-.collection-card .collection-menu-wrapper {
-  pointer-events: auto;
-  z-index: 10;
+.card-body {
+  padding: var(--space-6);
+  min-width: 0;
 }
 
-/* Collection card dragging state */
-.collection-card.dragging {
-  opacity: 0.6 !important;
-  cursor: grabbing !important;
-  transform: none !important;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
-  z-index: 10000 !important;
-  pointer-events: none;
-}
-
-.collection-card.dragging * {
-  pointer-events: none;
-}
-
-/* Collection Header (standalone, not in .card) */
-.collection-header {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: flex-start;
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.collection-header .title {
+.card-footer {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
-  margin: 0 0 var(--space-2, 0.5rem) 0;
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: var(--text-primary, #20221D);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+  border-end-start-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
 }
 
-.collection-header .title .collection-title {
-  color: inherit;
+/* A header stacked with its description */
+.card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
 }
 
-.collection-footer .entry-count-link {
+/* ---- Modifiers ---- */
+.card--compact > .card-header { padding: var(--space-3) var(--space-4); }
+.card--compact > .card-body { padding: var(--space-4); }
+.card--compact > .card-footer { padding: var(--space-3) var(--space-4); }
+
+/* Flush — child owns its own padding (tables, lists) */
+.card--flush > .card-body { padding: 0; }
+
+/* Padded — the card IS the body. For JS-composed cards whose children cannot
+   easily be wrapped in a .card-body (P56-M11: hosting wizard preview). */
+.card--padded { padding: var(--space-6); }
+.card--padded.card--compact { padding: var(--space-4); }
+
+.card--sunken {
+  background: var(--surface-sunken);
+  border-color: var(--border-subtle);
+}
+
+.card--accent {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+}
+
+.card--danger {
+  background: var(--danger-surface);
+  border-color: var(--danger-border);
+}
+
+.card--borderless { border-color: transparent; }
+
+/* Interactive — the only card allowed a shadow, and only on hover */
+.card--interactive,
+a.card {
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+.card--interactive:hover,
+a.card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--elevation-1);
+}
+.card--interactive:focus-visible,
+a.card:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Legacy aliases kept for un-migrated markup */
+.card--bordered { border-color: var(--border-default); }
+.card--elevated { box-shadow: var(--elevation-1); }
+
+/* ============================================
+   Stat — a labelled metric. Replaces .dash-stat-tile and friends.
+   Flat surface, no gradient (brief P2/P6).
+   ============================================ */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.stat-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+.stat-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-meta {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   Data list — a rows-in-a-panel list. Pages hand-rolled this repeatedly.
+   ============================================ */
+.data-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.data-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+  padding: var(--space-3) var(--space-6);
+  border-block-end: 1px solid var(--border-subtle);
+  min-width: 0;
   color: inherit;
   text-decoration: none;
 }
+.data-list-item:last-child { border-block-end: none; }
 
-.collection-footer .entry-count-link:hover {
-  color: var(--primary-600);
-  text-decoration: underline;
+a.data-list-item,
+.data-list-item--interactive {
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+a.data-list-item:hover,
+.data-list-item--interactive:hover { background: var(--surface-hover); }
+
+.data-list-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
-/* Collection Description (standalone) */
-.collection-description {
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
-  line-height: 1.4;
+.data-list-title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.data-list-meta {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.data-list-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.data-list--compact .data-list-item {
+  min-height: 2.25rem;
+  padding: var(--space-2) var(--space-4);
+}
+
+/* Flush — the list supplies no horizontal padding of its own, for when it
+   sits inside a container that already pads (dashboard widget bodies). */
+.data-list--flush .data-list-item { padding-inline: 0; }
+
+/* ============================================
+   Key/value pairs — settings summaries, detail panels
+   ============================================ */
+.kv {
+  display: grid;
+  grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+}
+.kv-key {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+.kv-value {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .kv { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+  .kv-value { margin-block-end: var(--space-2); }
+}
+
+/* ============================================
+   Collection cards (content page)
+   Grid + list modes without the !important war the old file needed.
+
+   Note: .collections-container is a vertical stack of GROUPS, not a grid of
+   cards — the card grid is .group-collections inside each group. Getting this
+   backwards is what the old page CSS had to override (P56-M6 finding).
+   ============================================ */
+.collections-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+.group-collections {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  min-width: 0;
+}
+
+.collections-container.list-view .group-collections,
+.group-collections--list {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.collection-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.collection-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .collection-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: var(--control-md);
+  height: var(--control-md);
   flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  font-size: 1.25rem;
-  line-height: 1;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent-text);
 }
+.collection-icon svg,
+.collection-icon .birkly-icon { width: 1.125rem; height: 1.125rem; }
 
 .collection-icon-key {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+}
+
+.collection-description {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.collection-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-block-start: auto;
+}
+
+.entry-count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.collection-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* List row mode */
+.collection-card--list-row {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+.collection-card--list-row .collection-header { flex: 1 1 auto; }
+.collection-card--list-row .collection-description {
+  flex: 1 1 auto;
+  -webkit-line-clamp: 1;
+  margin: 0;
+}
+.collection-card--list-row .collection-footer {
+  margin: 0;
+  flex: 0 0 auto;
+  gap: var(--space-3);
+}
+
+/* Drag and drop — token layering, no scale, no giant shadow */
+.collection-card.dragging,
+.dragging {
+  opacity: 0.85;
+  box-shadow: var(--elevation-2);
+  z-index: var(--z-dragging);
+}
+
+.drop-target,
+.collection-card.drop-target {
+  border-color: var(--accent-focus);
+  background: var(--accent-soft);
+}
+
+.drag-handle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  font-size: 0.7rem;
-  color: var(--text-tertiary, #9ca3af);
-  background: var(--bg-tertiary, #f5f5f5);
-  border-radius: var(--radius-sm, 0.375rem);
-}
-
-/* Dashboard widget cards (P31 G1-01) */
-.card.dash-widget {
-  min-width: 0;
-  min-height: 0;
-  gap: var(--space-4, 1rem);
-  padding: var(--space-5, 1.25rem) var(--space-6, 1.5rem);
-}
-
-.card.dash-widget .dash-widget-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3, 0.75rem);
-  flex-wrap: wrap;
-}
-
-.card.dash-widget .dash-widget-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.card.dash-widget .dash-widget-body {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Collection Footer (standalone) */
-.collection-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-}
-
-/* Entry Count */
-.entry-count {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1, 0.25rem);
-  font-size: 0.875rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.entry-count .sub-entries-count {
-  color: var(--text-tertiary, #9ca3af);
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-/* Collection Actions */
-.collection-actions {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-}
-
-.collection-actions .btn-icon {
-  padding: var(--space-2, 0.5rem);
-  border: none;
-  background: transparent;
-  border-radius: var(--radius-md, 0.5rem);
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.collection-actions .btn-icon:hover {
-  background: var(--bg-primary, #ffffff);
-}
-
-.collection-actions .btn-icon:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Collection Menu (3-dot menu) - Uses Unified Dropdown Component */
-.collection-menu-wrapper.dropdown {
-  position: relative;
-  z-index: 10;
-}
-
-/* Override dropdown-trigger for collection menu button */
-.collection-menu-wrapper .dropdown-trigger.collection-menu-btn {
-  padding: var(--space-2, 0.5rem);
-  border: none;
-  background: transparent;
-  border-radius: var(--radius-md, 0.5rem);
-  cursor: pointer;
-  transition: background-color 0.2s;
-  color: var(--text-secondary, #72746F);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  min-height: auto;
-  min-width: auto;
-}
-
-.collection-menu-wrapper .dropdown-trigger.collection-menu-btn:hover {
-  background: var(--bg-hover, #f3f4f6);
-  color: var(--text-primary, #20221D);
-}
-
-.collection-menu-wrapper .dropdown-trigger.collection-menu-btn[aria-expanded="true"] {
-  background: var(--bg-hover, #f3f4f6);
-  color: var(--text-primary, #20221D);
-}
-
-/* Collection menu dropdown - positioned above the button */
-.collection-menu-wrapper .dropdown-menu.collection-menu-dropdown {
-  position: absolute;
-  bottom: 100%;
-  top: auto;
-  right: 0;
-  left: auto;
-  margin-bottom: var(--space-2, 0.5rem);
-  margin-top: 0;
-  z-index: 1100;
-}
-
-/* List view: open menu downward so it is not clipped by group containers */
-.collections-container[data-view="list"] .collection-menu-wrapper .dropdown-menu.collection-menu-dropdown,
-.card.collection-card.collection-card--list-row .collection-menu-wrapper .dropdown-menu.collection-menu-dropdown {
-  bottom: auto;
-  top: calc(100% + var(--space-1, 0.25rem));
-  margin-bottom: 0;
-}
-
-.collections-container[data-view="list"] .collection-card:has(.collection-menu-btn[aria-expanded="true"]),
-.card.collection-card.collection-card--list-row:has(.collection-menu-btn[aria-expanded="true"]) {
-  position: relative;
-  z-index: 30;
-}
-
-.collections-container[data-view="list"] .collection-card:has(.collection-menu-btn[aria-expanded="true"]) .collection-menu-wrapper,
-.card.collection-card.collection-card--list-row:has(.collection-menu-btn[aria-expanded="true"]) .collection-menu-wrapper {
-  z-index: 40;
-}
-
-/* Legacy support - ensure collection-menu-item works with unified dropdown */
-.collection-menu-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3, 0.75rem);
-}
-
-.collection-menu-item svg {
+  color: var(--text-tertiary);
+  cursor: grab;
   flex-shrink: 0;
 }
+.drag-handle:active { cursor: grabbing; }
 
-/* List view: compact table-row collections */
-.collections-container[data-view="list"] .card.collection-card,
-.card.collection-card.collection-card--list-row {
-  min-height: 0 !important;
-  height: auto !important;
-  padding: 0.5rem 0.75rem !important;
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 0.75rem;
-  box-shadow: none;
-  border-radius: 0;
-  border: none;
-}
+.collection-menu-wrapper { position: relative; }
 
-.collections-container[data-view="list"] .card.collection-card:hover,
-.card.collection-card.collection-card--list-row:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.collections-container[data-view="list"] .card.collection-card .collection-header,
-.card.collection-card.collection-card--list-row .collection-header {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  flex: 1 1 auto;
-  min-width: 0;
-  margin-bottom: 0 !important;
-  gap: 0.5rem;
-}
-
-.collections-container[data-view="list"] .card.collection-card .collection-header .title,
-.card.collection-card.collection-card--list-row .collection-header .title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 !important;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  min-width: 0;
-}
-
-.collections-container[data-view="list"] .card.collection-card .collection-header .title .collection-title,
-.card.collection-card.collection-card--list-row .collection-header .title .collection-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.collections-container[data-view="list"] .card.collection-card .collection-description,
-.card.collection-card.collection-card--list-row .collection-description {
-  display: none !important;
-}
-
-.collections-container[data-view="list"] .card.collection-card .collection-footer,
-.card.collection-card.collection-card--list-row .collection-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-  border-top: none !important;
-  flex-shrink: 0;
-  align-self: center;
-}
-
-.collections-container[data-view="list"] .card.collection-card .drag-handle,
-.card.collection-card.collection-card--list-row .drag-handle {
-  flex-shrink: 0;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .card {
-    border-radius: var(--radius-md, 0.5rem);
-  }
-}
-
+/* Dashboard widget is a card, not its own component */
+.card.dash-widget { min-width: 0; }
