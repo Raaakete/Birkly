@@ -69,15 +69,22 @@
 .hub-upload-panel { max-width: 34rem; }
 
 /* ============================================
-   Discover toolbar
+   Discover toolbar — a plain search input (no button, filters as-you-type
+   and on Enter, matching the Entries toolbar) in `.main-actions-left`, and
+   the type/category/sort/currency/price selects in `.main-actions-right`.
    ============================================ */
-.marketplace-search {
-  flex: 1 1 18rem;
-  max-width: 26rem;
-  min-width: 0;
+/* Search + result count must stay on one line — the shared
+   `.main-actions-left` sets `flex-wrap: wrap` for pages that pack multiple
+   buttons in there, but this pair (input + a few words of count text) should
+   never wrap onto two lines. */
+#marketplace-browse-view .main-actions-left {
+  flex-wrap: nowrap;
 }
 
-.marketplace-search .input { flex: 1 1 auto; min-width: 0; }
+.marketplace-search {
+  flex: 0 1 18rem;
+  min-width: 0;
+}
 
 .marketplace-filter-select {
   width: auto;

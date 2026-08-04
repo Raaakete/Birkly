@@ -77,9 +77,9 @@
             welcome: '' +
                 '<section class="ag-wizard-panel u-stack-4" data-step-panel="1">' +
                 '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_welcome_lede', 'Publish a structured guide so AI systems can discover who you are, what you offer, and what you stand behind.')) + '</p>' +
-                '<div class="card u-p-4 u-stack-2">' +
-                '<h3 class="card-title">' + escapeHtml(t('ag_wizard_why_title', 'Why set this up?')) + '</h3>' +
-                '<p>' + escapeHtml(t('ag_wizard_why_body', 'After publish, your guide is available at a public URL. Chatbots and agents can read it instead of guessing from scattered pages.')) + '</p>' +
+                '<div class="u-stack-1">' +
+                '<h3 class="card-section-title u-m-0">' + escapeHtml(t('ag_wizard_why_title', 'Why set this up?')) + '</h3>' +
+                '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('ag_wizard_why_body', 'After publish, your guide is available at a public URL. Chatbots and agents can read it instead of guessing from scattered pages.')) + '</p>' +
                 '</div>' +
                 '<div class="u-grid-2">' +
                 '<button type="button" class="card card--interactive u-p-4 u-stack-1 u-align-text-left ag-wizard-choice-guided">' +

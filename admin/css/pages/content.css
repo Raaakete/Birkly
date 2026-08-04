@@ -410,11 +410,17 @@ body.dragging-group .drop-zone.drag-over {
   color: var(--text-primary);
 }
 
-.collections-container[data-view="list"] .group-collections,
-.collections-container[data-view="list"] .ungrouped-collections {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+/* List-mode grid switch (single column, flush rows) and the collection-card
+   list-row layout itself are owned by components/cards.css, keyed off the
+   `.list-view` class content-groups.js toggles on this container.
+
+   The shared rule only names `.group-collections` — content-groups.js gives
+   the root "Ungrouped Collections" grid its own class, `.ungrouped-
+   collections`, so it needs the same single-column switch mirrored here
+   rather than editing the shared component file. */
+.collections-container.list-view .ungrouped-collections {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
 
 /* ============================================
@@ -499,6 +505,16 @@ body.entries-filter-drawer-open { overflow: hidden; }
   .entries-filter-toggle,
   .entries-filter-drawer,
   .entries-filter-drawer:not([hidden]) { display: none; }
+}
+
+/* The status filter and the "…" more-actions dropdown are two independent
+   controls, not one grouped control — a divider keeps them from reading as
+   a single merged element when the borderless dropdown trigger sits flush
+   against the status select. */
+.entries-page .main-actions-right > .dropdown {
+  margin-inline-start: var(--space-2);
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--border-subtle);
 }
 
 /* ============================================

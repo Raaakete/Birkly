@@ -14,7 +14,10 @@
    .form-group and .field-block are kept as structural aliases of .field
    because plugin CSS and existing templates rely on them.
 
-   Control boundaries use --border-control (3.23:1) to satisfy WCAG 1.4.11.
+   Text controls use the dedicated --field-border family (quieter than
+   --border-control, which stays reserved for buttons/custom-selects), and
+   focus is a neutral dark grey — never accent/green, so an active field is
+   never mistaken for a validated/success one (design pass 2).
    No focus transforms, no `transition: all`.
    Reference: P56-M1 brief §4.2, §6, §10.2
    ============================================ */
@@ -117,7 +120,7 @@ textarea {
   min-width: 0;
   height: var(--control-md);
   padding: 0 var(--space-3);
-  border: 1px solid var(--border-control);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text-primary);
@@ -142,7 +145,7 @@ textarea,
 .input:hover:not(:disabled):not(:focus),
 select:hover:not(:disabled):not(:focus),
 textarea:hover:not(:disabled):not(:focus) {
-  border-color: var(--border-control-hover);
+  border-color: var(--field-border-hover);
 }
 
 .input:focus,
@@ -155,9 +158,14 @@ input[type="password"]:focus,
 input[type="search"]:focus,
 input[type="url"]:focus,
 input[type="number"]:focus {
-  outline: var(--focus-outline);
+  /* Outline colour matches the border, not the global (mint) focus ring —
+     otherwise the ring alone recreates the "looks like success" impression
+     the neutral border was meant to fix. Every OTHER control keeps the
+     brand-coloured ring; only text fields sit next to the success/danger
+     border-colour states closely enough for the confusion to matter. */
+  outline: 2px solid var(--field-border-focus);
   outline-offset: 0;
-  border-color: var(--accent-focus);
+  border-color: var(--field-border-focus);
 }
 
 .input::placeholder,

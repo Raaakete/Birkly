@@ -281,7 +281,6 @@
         var hostingType = document.getElementById('project-hosting-type');
         var renderMode = document.getElementById('project-render-mode');
         var ttl = document.getElementById('project-ssr-cache-ttl');
-        var saveBtn = document.getElementById('project-save-rendering-btn');
         if (hostingType && data.hosting_type) hostingType.value = data.hosting_type;
         if (renderMode && data.render_mode) renderMode.value = data.render_mode;
         if (ttl && data.ssr_cache_ttl != null) ttl.value = data.ssr_cache_ttl;
@@ -289,7 +288,6 @@
             ssrRuntime = data.ssr_runtime;
         }
         state.renderSettingsLoaded = true;
-        if (saveBtn) saveBtn.disabled = false;
         updateRenderingDisabledState();
     }
 
@@ -328,17 +326,20 @@
         }
     }
 
+    // Rendering settings save automatically on change — there is no dedicated
+    // "Save rendering settings" button (removed P56-R2 #3: the top Save
+    // Settings button only covers General/Security/System, so this section,
+    // like Domains/Redirects/Webhooks elsewhere in Site delivery, saves
+    // itself immediately instead of duplicating a page-level save action).
     function saveRenderingSettings() {
         var hostingType = document.getElementById('project-hosting-type');
         var renderMode = document.getElementById('project-render-mode');
         var ttl = document.getElementById('project-ssr-cache-ttl');
-        var btn = document.getElementById('project-save-rendering-btn');
 
         // Prevent overwriting a persisted render mode (e.g. a saved "client")
-        // with the HTML default ("server") if the user hits Save before the
+        // with the HTML default ("server") if a change fires before the
         // overview finishes loading.
         if (!state.renderSettingsLoaded) {
-            BirklyFeedback.toast('Wait for rendering settings to load, then try again', 'warning');
             return Promise.resolve();
         }
 
@@ -346,7 +347,6 @@
         if (isNaN(ttlValue) || ttlValue < 0) ttlValue = 0;
         if (ttlValue > 86400) ttlValue = 86400;
 
-        if (btn) btn.disabled = true;
         return fetchJson(apiUrl('/api/project_site.php?action=save_settings'), {
             method: 'POST',
             credentials: 'same-origin',
@@ -364,7 +364,6 @@
         }).catch(function (error) {
             BirklyFeedback.toast(error.message || 'Failed to save rendering settings', 'error');
         }).then(function () {
-            if (btn) btn.disabled = false;
             updateRenderingDisabledState();
         });
     }
@@ -606,19 +605,25 @@
         var hostingType = document.getElementById('project-hosting-type');
         if (hostingType && hostingType.dataset.bound !== '1') {
             hostingType.dataset.bound = '1';
-            hostingType.addEventListener('change', updateRenderingDisabledState);
+            hostingType.addEventListener('change', function () {
+                updateRenderingDisabledState();
+                saveRenderingSettings();
+            });
         }
 
         var renderModeSelect = document.getElementById('project-render-mode');
         if (renderModeSelect && renderModeSelect.dataset.bound !== '1') {
             renderModeSelect.dataset.bound = '1';
-            renderModeSelect.addEventListener('change', updateRenderingDisabledState);
+            renderModeSelect.addEventListener('change', function () {
+                updateRenderingDisabledState();
+                saveRenderingSettings();
+            });
         }
 
-        var saveRenderingBtn = document.getElementById('project-save-rendering-btn');
-        if (saveRenderingBtn && saveRenderingBtn.dataset.bound !== '1') {
-            saveRenderingBtn.dataset.bound = '1';
-            saveRenderingBtn.addEventListener('click', function () {
+        var ttlInput = document.getElementById('project-ssr-cache-ttl');
+        if (ttlInput && ttlInput.dataset.bound !== '1') {
+            ttlInput.dataset.bound = '1';
+            ttlInput.addEventListener('change', function () {
                 saveRenderingSettings();
             });
         }
@@ -789,6 +794,11 @@
         bindSimpleEvents();
         loadPublicSiteUrl();
         refreshSimpleFiles();
+        // Server rendering fields live outside the advanced-only panel, so
+        // they (and renderSettingsLoaded, which gates autosave) need the
+        // overview fetch on every visit to this tab — not just when the
+        // advanced file editor is toggled on.
+        loadOverview();
 
         var toggle = document.getElementById('project-advanced-editor-toggle');
         if (toggle && toggle.checked) {

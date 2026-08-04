@@ -591,8 +591,8 @@
                 (hasSubCollections
                     ? '<td class="cell cell-sub-entries">' +
                         (subEntryCount > 0
-                            ? '<a href="' + escapeHtml(titleUrl) + '" class="sub-entry-count-badge" title="' + escapeHtml(String(subEntryCount) + ' sub-entries') + '" style="display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 24px; padding: 0 8px; background: var(--primary-100, #e0e7ff); color: var(--primary-700, #4338ca); border-radius: 12px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s;"><span style="margin-right: 2px;">+</span>' + escapeHtml(subEntryCount) + '</a>'
-                            : '<span style="color: var(--text-tertiary, #9ca3af); font-size: 12px;">–</span>') +
+                            ? '<a href="' + escapeHtml(titleUrl) + '" class="badge badge-accent badge-count sub-entry-count-badge" title="' + escapeHtml(String(subEntryCount) + ' sub-entries') + '">+' + escapeHtml(subEntryCount) + '</a>'
+                            : '<span class="u-text-xs u-fg-tertiary">&ndash;</span>') +
                     '</td>'
                     : '') +
                 '<td class="cell cell-title">' +
@@ -607,15 +607,15 @@
                 fieldCells +
                 '<td class="cell cell-actions">' +
                     '<div class="cell-actions-inner">' +
-                        '<a class="btn-icon btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
+                        '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
                             icon('pencil-simple', { size: 16 }) +
                         '</a>' +
                         (!isTrashedEntry
-                            ? '<button type="button" class="btn-icon duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Duplicate ' + title) + '" title="Duplicate">' + icon('copy', { size: 16 }) + '</button>'
+                            ? '<button type="button" class="btn-icon btn-icon-sm duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Duplicate ' + title) + '" title="Duplicate">' + icon('copy', { size: 16 }) + '</button>'
                             : '') +
                         (isTrashedEntry
-                            ? '<button type="button" class="btn-icon restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Restore ' + title) + '" title="Restore">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
-                            : '<button type="button" class="btn-icon btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Move to trash ' + title) + '" title="Move to trash">' + icon('trash', { size: 16 }) + '</button>') +
+                            ? '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Restore ' + title) + '" title="Restore">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
+                            : '<button type="button" class="btn-icon btn-icon-sm btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Move to trash ' + title) + '" title="Move to trash">' + icon('trash', { size: 16 }) + '</button>') +
                     '</div>' +
                 '</td>' +
             '</tr>';

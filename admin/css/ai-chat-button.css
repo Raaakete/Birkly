@@ -130,13 +130,17 @@
 /* The standalone feedback button is replaced by the launcher menu item */
 .assist-fab-active #feedback-floating-wrap { display: none; }
 
-/* ---- 2. Panel shell ---- */
+/* ---- 2. Panel shell ----
+   Open/close animate via opacity + an 8px rise (the modal-entrance
+   convention), not a hard display:none/flex swap — the swap is what made
+   closing feel instant/jarring. display stays flex always; visibility +
+   pointer-events keep it out of the layout/hit-test/a11y tree while closed. */
 .ai-chat-window {
   position: fixed;
   inset-block-end: 5.5rem;
   inset-inline-end: var(--space-6);
   z-index: var(--z-drawer);
-  display: none;
+  display: flex;
   flex-direction: column;
   width: min(58rem, calc(100vw - var(--space-12)));
   height: min(51rem, calc(100vh - var(--space-16) - var(--space-6)));
@@ -145,6 +149,22 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--elevation-3);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(var(--space-2));
+  transform-origin: bottom right;
+  transition:
+    opacity var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out),
+    visibility var(--motion-base);
+}
+
+.ai-chat-window.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .ai-chat-window.ai-chat-fullscreen { inset: 0; width: 100vw; height: 100vh; border: none; border-radius: 0; }

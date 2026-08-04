@@ -69,10 +69,15 @@
         error: ' u-fg-danger',
     };
 
-    function statTile(value, label, tone) {
+    function birklyIcon(name, opts) {
+        return (window.Birkly && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
+    }
+
+    function statTile(value, label, tone, iconName) {
         const toneClass = STAT_TONE_CLASS[tone] || '';
-        return '<div class="stat"><span class="stat-label">' + escapeHtml(label) +
-            '</span><span class="stat-value' + toneClass + '">' + escapeHtml(value ?? 0) + '</span></div>';
+        const icon = iconName ? birklyIcon(iconName, { size: 14, class: 'u-fg-tertiary' }) : '';
+        return '<div class="stat"><span class="stat-label u-row-1">' + icon + escapeHtml(label) +
+            '</span><span class="stat-value u-numeric' + toneClass + '">' + escapeHtml(value ?? 0) + '</span></div>';
     }
 
     function statGrid(tiles) {
@@ -83,13 +88,20 @@
         return '<div class="data-list">' + items.join('') + '</div>';
     }
 
+    // Whole row is the click target (not just the title) — the row itself
+    // is an <a class="data-list-item"> per the .data-list component contract
+    // (components/cards.css), which already carries the full-row hover tint.
+    // A chevron fades in on hover as the "creative but subtle" affordance.
     function feedItem(options) {
-        const title = options.href
-            ? '<a class="data-list-title" href="' + escapeHtml(options.href) + '">' + escapeHtml(options.title) + '</a>'
-            : '<span class="data-list-title">' + escapeHtml(options.title) + '</span>';
+        const title = '<span class="data-list-title">' + escapeHtml(options.title) + '</span>';
         const meta = options.meta ? '<span class="data-list-meta">' + options.meta + '</span>' : '';
         const aside = options.aside ? '<div class="data-list-actions">' + options.aside + '</div>' : '';
-        return '<div class="data-list-item"><div class="data-list-main">' + title + meta + '</div>' + aside + '</div>';
+        const chevron = options.href
+            ? '<span class="dash-row-arrow" aria-hidden="true">' + birklyIcon('caret-right', { size: 14 }) + '</span>'
+            : '';
+        const tag = options.href ? 'a' : 'div';
+        const hrefAttr = options.href ? ' href="' + escapeHtml(options.href) + '"' : '';
+        return '<' + tag + ' class="data-list-item"' + hrefAttr + '><div class="data-list-main">' + title + meta + '</div>' + aside + chevron + '</' + tag + '>';
     }
 
     function statusBadge(status) {
@@ -134,12 +146,31 @@
 
         dashboard.registerMount('contentSnapshot', function (element, widget, data) {
             const stats = data && data.stats ? data.stats : {};
-            setContent(element, statGrid([
-                statTile(stats.collections, 'Collections', 'collections'),
-                statTile(stats.total_entries, 'Entries', 'entries'),
-                statTile(stats.published, 'Published', 'published'),
-                statTile(stats.drafts, 'Drafts', 'drafts'),
-            ]));
+            const collections = Number(stats.collections || 0);
+            const total = Number(stats.total_entries || 0);
+            const published = Number(stats.published || 0);
+            const drafts = Number(stats.drafts || 0);
+            const publishedPct = total > 0 ? Math.round((published / total) * 100) : 0;
+
+            setContent(element,
+                '<div class="card-section">' +
+                '<div class="u-grid-2">' +
+                statTile(collections, 'Collections', null, 'stack') +
+                statTile(total, 'Entries', null, 'article') +
+                '</div>' +
+                '</div>' +
+                '<div class="card-section">' +
+                '<div class="u-split">' +
+                '<span class="stat-label">Published</span>' +
+                '<span class="badge badge-success u-numeric">' + publishedPct + '%</span>' +
+                '</div>' +
+                '<div class="progress u-mt-2"><div class="progress-bar" style="width:' + publishedPct + '%"></div></div>' +
+                '<div class="u-split u-mt-2">' +
+                '<span class="u-text-xs u-fg-secondary">' + birklyIcon('check-square', { size: 12 }) + ' <span class="u-numeric">' + published + '</span> published</span>' +
+                '<span class="u-text-xs u-fg-secondary">' + birklyIcon('file-text', { size: 12 }) + ' <span class="u-numeric">' + drafts + '</span> draft' + (drafts === 1 ? '' : 's') + '</span>' +
+                '</div>' +
+                '</div>'
+            );
         });
 
         dashboard.registerMount('analyticsMini', function (element, widget, data) {
@@ -221,24 +252,30 @@
             function kpi(value, label, hint) {
                 return '<div class="stat">' +
                     '<span class="stat-label">' + escapeHtml(label) + '</span>' +
-                    '<span class="stat-value">' + escapeHtml(value) + '</span>' +
+                    '<span class="stat-value u-numeric">' + escapeHtml(value) + '</span>' +
                     '<span class="stat-meta">' + escapeHtml(hint) + '</span>' +
                     '</div>';
             }
 
+            // A titled group of bar charts. Previously wrapped in a nested
+            // `.card` inside this widget's own card body (box-in-box) — now a
+            // `.card-section`, so the divider comes from spacing, not a
+            // second border (shared rules: no box-in-box).
             function panel(title, groups) {
-                return '<section class="card card--compact">' +
-                    '<div class="card-header"><h3 class="card-title">' + escapeHtml(title) + '</h3></div>' +
-                    '<div class="card-body u-stack-4">' + groups + '</div></section>';
+                return '<div class="u-stack-4">' +
+                    '<h3 class="card-section-title">' + escapeHtml(title) + '</h3>' +
+                    groups + '</div>';
             }
 
             setContent(element,
-                '<div class="u-stack-5">' +
+                '<div class="card-section">' +
                 '<div class="u-grid-3">' +
                 kpi(pageViews.toLocaleString(), 'Page views', 'Last 30 days') +
                 kpi(visitors.toLocaleString(), 'Visitors', 'Last 30 days') +
                 kpi(String(viewsPerVisitor), 'Pages / visitor', 'Engagement') +
                 '</div>' +
+                '</div>' +
+                '<div class="card-section">' +
                 '<div class="u-grid-2">' +
                 panel('Visitor journey',
                     renderBarGroup('Entrance pages', insights.entrance_pages, 'path', 'entrances', 'path') +
@@ -249,8 +286,8 @@
                     renderBarGroup('Locations', insights.countries, 'country', 'visits', 'country') +
                     renderBarGroup('Browsers', insights.browsers, 'browser', 'visits', 'browser')) +
                 '</div>' +
-                footerLinks('<a href="' + escapeHtml(adminUrl('settings') + '#domains') + '">Per-domain reports in Settings → Domains</a>') +
-                '</div>'
+                '</div>' +
+                footerLinks('<a href="' + escapeHtml(adminUrl('settings') + '#domains') + '">Per-domain reports in Settings → Domains</a>')
             );
         });
 
@@ -271,8 +308,7 @@
                         return feedItem({
                             title: name,
                             href: adminUrl('entries', { collection: slug }),
-                            meta: escapeHtml(count) + ' ' + (Number(count) === 1 ? 'entry' : 'entries'),
-                            aside: '<span class="u-fg-tertiary" aria-hidden="true">→</span>',
+                            meta: '<span class="u-numeric">' + escapeHtml(count) + '</span> ' + (Number(count) === 1 ? 'entry' : 'entries'),
                         });
                     });
                     setContent(element, feedList(items));
@@ -373,11 +409,11 @@
                 .filter(item => !['update_check', 'system_update_check'].includes(item.event))
                 .slice(0, 10)
                 .map(function (item) {
-                    const time = formatTimeAgo(item.timestamp);
-                    return '<div class="data-list-item">' +
-                        '<span class="u-fill u-truncate">' + escapeHtml(item.message || item.event || 'Activity') + '</span>' +
-                        '<span class="u-text-xs u-fg-tertiary u-nowrap">' + escapeHtml(time || '—') + '</span>' +
-                        '</div>';
+                    return feedItem({
+                        title: item.message || item.event || 'Activity',
+                        href: adminUrl('activity'),
+                        meta: formatTimeAgo(item.timestamp) || '',
+                    });
                 });
             setContent(element, rows.length
                 ? '<div class="data-list dash-scroll">' + rows.join('') + '</div>'
@@ -403,12 +439,37 @@
         dashboard.registerMount('systemStatus', function (element, widget, data) {
             if (!data) return setContent(element, errorState('System status is unavailable.'));
             const responseMs = Number(data.api_response_time || 0);
-            const responseTone = responseMs < 100 ? 'good' : responseMs < 500 ? 'warning' : 'error';
-            setContent(element, statGrid([
-                statTile(responseMs + 'ms', 'API response', responseTone),
-                statTile((data.media?.size_mb || 0) + ' MB', 'Media storage', 'storage'),
-                statTile(data.cache?.files || 0, 'Cache files', 'cache'),
-            ]));
+            const responseTone = responseMs < 100 ? 'success' : responseMs < 500 ? 'warning' : 'danger';
+            const responseLabel = responseMs < 100 ? 'Fast' : responseMs < 500 ? 'Moderate' : 'Slow';
+            const mediaMb = Number(data.media?.size_mb || 0);
+            // No storage quota is exposed by the API — this reads as a soft
+            // reference band (500 MB), not a literal "% of your plan".
+            const mediaPct = Math.min(100, Math.round((mediaMb / 500) * 100));
+            const cacheEnabled = !!(data.cache && data.cache.enabled);
+            const cacheFiles = Number(data.cache?.files || 0);
+
+            setContent(element,
+                '<div class="card-section u-stack-1">' +
+                '<div class="u-split">' +
+                '<span class="stat-label">API response</span>' +
+                '<span class="badge badge-' + responseTone + '">' + escapeHtml(responseLabel) + '</span>' +
+                '</div>' +
+                '<span class="stat-value u-numeric">' + responseMs + 'ms</span>' +
+                '</div>' +
+                '<div class="card-section">' +
+                '<div class="u-split">' +
+                '<span class="stat-label">Media storage</span>' +
+                '<span class="stat-meta u-numeric">' + mediaMb + ' MB</span>' +
+                '</div>' +
+                '<div class="progress u-mt-2"><div class="progress-bar" style="width:' + mediaPct + '%"></div></div>' +
+                '</div>' +
+                '<div class="card-section">' +
+                '<div class="u-split">' +
+                '<span class="stat-label">Cache files</span>' +
+                '<span class="badge ' + (cacheEnabled ? 'badge-neutral' : 'badge-warning') + ' u-numeric">' + cacheFiles + '</span>' +
+                '</div>' +
+                '</div>'
+            );
         });
 
         dashboard.registerMount('security', function (element, widget, data) {
