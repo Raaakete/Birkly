@@ -1,50 +1,24 @@
 /* ============================================
-   Birkly Admin — Secondary navigation (P56, design pass 2)
+   Birkly Admin — Secondary navigation (P56)
    ============================================
 
-   ONE nav concept, besides the main sidebar: an item is a padded, rounded
-   "chip" that fills with --surface-selected when active — the same active
-   language the sidebar uses for its own items — in either a HORIZONTAL
-   strip (.tabs, tab-style pages: Settings, Plugins, AI Presence) or a
-   VERTICAL list (.side-nav, doc/tree-style pages: Help, Media), with an
-   optional nested sub-list for the vertical mode (Help's per-topic children).
+   ONE nav item language for everything outside the main sidebar:
 
-   This file merges the former tabs.css + tabs-v2.css and absorbs the
-   page-local tab dialects (.tab-pane vs .tab-content, .language-tab-*,
-   .plugins-tab*, .ap-*-tab*, .marketplace-embed-tab*) — brief §7.2 — and
-   replaces the underline-indicator tab style with the pill/fill style below.
+     Horizontal → .tabs > .tab  (Settings, Hub, AI Presence, editor sidebars)
+     Vertical   → .side-nav > .side-nav-item  (Media, Help)
+                  optional .side-nav-sub > .side-nav-sub-item (Help topics)
 
-   Horizontal:
+   Same chip: transparent rest, --surface-hover hover, --surface-selected
+   active fill. Orientation is the only structural difference; vertical adds
+   full-width items + optional nested sub-list.
 
-     <div class="tabs-root">
-       <div class="tabs" role="tablist">
-         <button class="tab" role="tab" aria-selected="true">General</button>
-       </div>
-     </div>
-     <div class="tab-panel active">…</div>
+   Aliases kept for existing hooks:
+     .language-tab-btn  → same as .tab
+     .language-tabs-nav → same as .tabs
+     .folder-item-move  → same as .side-nav-item (.selected ≡ .active)
 
-   Vertical, with sub-nav:
-
-     <nav class="side-nav">
-       <div class="side-nav-group">
-         <p class="side-nav-group-title">Getting started</p>
-         <a class="side-nav-item active" href="…">Overview</a>
-         <a class="side-nav-item" href="…">Installation</a>
-       </div>
-       <div class="side-nav-group">
-         <a class="side-nav-item" aria-expanded="true">Content</a>
-         <div class="side-nav-sub">
-           <a class="side-nav-sub-item active" href="…">Collections</a>
-           <a class="side-nav-sub-item" href="…">Entries</a>
-         </div>
-       </div>
-     </nav>
-
-   Panel class: .tab-panel is canonical; .tab-content and .tab-pane are kept
-   because templates and JS use both.
-
-   .tabs-v2-root and the picker/more hooks are retained: tabs-v2.js drives
-   the responsive overflow behaviour and those class names are its contract.
+   Panel class: .tab-panel is canonical; .tab-content and .tab-pane remain
+   because templates/JS use both. .tabs-v2-* is the overflow contract.
    ============================================ */
 
 .tabs-root,
@@ -54,23 +28,18 @@
 }
 
 /* ============================================
-   Tab strip — horizontal orientation of the shared nav item
+   Shared nav item — horizontal (.tab) and vertical (.side-nav-item)
    ============================================ */
-.tabs {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 0;
-  padding-block-end: var(--space-2);
-  border-block-end: 1px solid var(--border-subtle);
-}
-
 .tab,
 .side-nav-item,
-.side-nav-sub-item {
+.side-nav-sub-item,
+.language-tab-btn,
+.folder-item-move {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  height: var(--control-md);
+  padding-inline: var(--space-3);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -82,15 +51,10 @@
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
+  box-sizing: border-box;
   transition:
     color var(--motion-fast) var(--ease-out),
     background-color var(--motion-fast) var(--ease-out);
-}
-
-.tab {
-  height: var(--control-lg);
-  padding-inline: var(--space-3);
-  font-weight: var(--weight-medium);
 }
 
 .tab > svg,
@@ -98,7 +62,10 @@
 .side-nav-item > svg,
 .side-nav-item > .birkly-icon,
 .side-nav-sub-item > svg,
-.side-nav-sub-item > .birkly-icon {
+.side-nav-sub-item > .birkly-icon,
+.language-tab-btn > svg,
+.folder-item-move > svg,
+.folder-item-move > .birkly-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
@@ -108,44 +75,56 @@
 
 .tab:hover:not(.active):not([aria-selected="true"]),
 .side-nav-item:hover:not(.active):not([aria-selected="true"]),
-.side-nav-sub-item:hover:not(.active) {
+.side-nav-sub-item:hover:not(.active),
+.language-tab-btn:hover:not(.active):not([aria-selected="true"]),
+.folder-item-move:hover:not(.active):not(.selected) {
   color: var(--text-primary);
   background: var(--surface-hover);
 }
+
 .tab:hover > svg, .tab:hover > .birkly-icon,
 .side-nav-item:hover > svg, .side-nav-item:hover > .birkly-icon,
-.side-nav-sub-item:hover > svg, .side-nav-sub-item:hover > .birkly-icon {
+.side-nav-sub-item:hover > svg, .side-nav-sub-item:hover > .birkly-icon,
+.folder-item-move:hover > svg, .folder-item-move:hover > .birkly-icon {
   color: var(--text-secondary);
 }
 
-/* Active — a filled pill, not an underline. Same surface the sidebar uses
-   for its own active item, so the two nav families read as one family. */
 .tab.active,
 .tab[aria-selected="true"],
 .side-nav-item.active,
 .side-nav-item[aria-selected="true"],
 .side-nav-sub-item.active,
-.side-nav-sub-item[aria-selected="true"] {
+.side-nav-sub-item[aria-selected="true"],
+.language-tab-btn.active,
+.language-tab-btn[aria-selected="true"],
+.folder-item-move.active,
+.folder-item-move.selected {
   background: var(--surface-selected);
   color: var(--text-primary);
   font-weight: var(--weight-medium);
 }
+
 .tab.active > svg, .tab.active > .birkly-icon,
 .tab[aria-selected="true"] > svg, .tab[aria-selected="true"] > .birkly-icon,
 .side-nav-item.active > svg, .side-nav-item.active > .birkly-icon,
-.side-nav-sub-item.active > svg, .side-nav-sub-item.active > .birkly-icon {
+.side-nav-sub-item.active > svg, .side-nav-sub-item.active > .birkly-icon,
+.folder-item-move.active > svg, .folder-item-move.selected > svg,
+.folder-item-move.active > .birkly-icon, .folder-item-move.selected > .birkly-icon {
   color: var(--accent-text);
 }
 
 .tab:focus-visible,
 .side-nav-item:focus-visible,
-.side-nav-sub-item:focus-visible {
+.side-nav-sub-item:focus-visible,
+.language-tab-btn:focus-visible,
+.folder-item-move:focus-visible {
   outline: var(--focus-outline);
   outline-offset: -2px;
 }
 
 .tab:disabled,
-.tab[aria-disabled="true"] {
+.tab[aria-disabled="true"],
+.language-tab-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -167,8 +146,25 @@
 .tab[aria-selected="true"] .tab-count { background: var(--surface); }
 
 /* ============================================
-   Side nav — vertical orientation of the same nav item, with an optional
-   nested sub-list (Help's per-topic children, a collapsible section, etc).
+   Horizontal strip
+   ============================================ */
+.tabs,
+.language-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.tab,
+.language-tab-btn {
+  font-weight: var(--weight-medium);
+}
+
+/* ============================================
+   Vertical list (+ optional sub-nav)
    ============================================ */
 .side-nav {
   display: flex;
@@ -192,13 +188,33 @@
   text-transform: uppercase;
   letter-spacing: var(--tracking-label);
   color: var(--text-tertiary);
+  list-style: none;
+  cursor: default;
+  user-select: none;
+}
+
+/* Accordion group title (Help uses <details>/<summary>) */
+summary.side-nav-group-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  cursor: pointer;
+}
+summary.side-nav-group-title::-webkit-details-marker { display: none; }
+summary.side-nav-group-title::before {
+  content: "▸";
+  display: inline-block;
+  color: var(--text-tertiary);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+details.side-nav-group[open] > summary.side-nav-group-title::before {
+  transform: rotate(90deg);
 }
 
 .side-nav-item,
-.side-nav-sub-item {
+.folder-item-move {
   width: 100%;
-  height: var(--control-md);
-  padding-inline: var(--space-3);
   justify-content: flex-start;
 }
 
@@ -210,22 +226,23 @@
   white-space: nowrap;
 }
 
-/* Sub-nav — nested list under a parent item, indented */
 .side-nav-sub {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   margin-block-start: var(--space-1);
-  padding-inline-start: var(--space-4);
+  padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--border-subtle);
 }
 
-.side-nav-sub-item { height: var(--control-sm); font-size: var(--text-sm); }
-
-/* Expand/collapse chevron on a parent item that owns a .side-nav-sub */
-.side-nav-item[aria-expanded] {
-  cursor: pointer;
+.side-nav-sub-item {
+  width: 100%;
+  height: var(--control-sm);
+  justify-content: flex-start;
+  font-size: var(--text-sm);
 }
+
+.side-nav-item[aria-expanded] { cursor: pointer; }
 .side-nav-item .side-nav-chevron {
   margin-inline-start: auto;
   flex-shrink: 0;
@@ -251,9 +268,11 @@
   display: block;
 }
 
+.language-tab-content { display: none; }
+.language-tab-content.active { display: block; }
+
 /* ============================================
-   Segmented control — for mode switches that were bespoke tab dialects
-   (view switches, assist/source mode toggles)
+   Segmented control — mode switches (view toggles)
    ============================================ */
 .segmented {
   display: inline-flex;
@@ -304,7 +323,6 @@
 
 /* ============================================
    Responsive overflow (tabs-v2.js contract)
-   Desktop: wrap · Tablet: scroll + More · Mobile: select picker
    ============================================ */
 .tabs-v2-root .tabs {
   flex-wrap: nowrap;
