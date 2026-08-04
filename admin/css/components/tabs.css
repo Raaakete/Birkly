@@ -7,9 +7,9 @@
      Horizontal (.tabs / .segmented / .language-tabs-nav)
        • No gap between items — continuous bottom edge
        • Regular — 1px grey bottom border
-       • Hover  — 3px grey bottom border + semibold
-       • Active — 3px mint bottom border + semibold
-       • Padding — 12px / 16px (space-3 / space-4)
+       • Hover  — 3px grey bottom border (weight unchanged)
+       • Active — 3px mint bottom border (weight unchanged)
+       • Padding — ~14px / 20px; font-weight fixed to avoid layout shift
 
      Vertical (.side-nav--track / .media-tree)
        • Same thicknesses on the inline-start edge
@@ -78,6 +78,8 @@
 .folder-item-move {
   --nav-bar: 1px;
   --nav-bar-color: var(--border-subtle);
+  --nav-pad-block: calc(var(--space-4) - 2px); /* 14px */
+  --nav-pad-inline: var(--space-5);            /* 20px */
   position: relative;
   z-index: 1;
   display: inline-flex;
@@ -85,17 +87,18 @@
   justify-content: center;
   gap: var(--space-2);
   height: auto;
-  /* 12 / 16 — padding-end/start adjusted so 1px→3px bar doesn’t shift layout */
-  padding-block-start: var(--space-3);
-  padding-inline: var(--space-4);
-  padding-block-end: calc(var(--space-3) + 1px - var(--nav-bar));
+  /* pad-block-end shrinks as the bar grows so 1px→3px doesn’t jump */
+  padding-block-start: var(--nav-pad-block);
+  padding-inline: var(--nav-pad-inline);
+  padding-block-end: calc(var(--nav-pad-block) + 1px - var(--nav-bar));
   border: none;
   border-radius: 0;
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
   font-size: var(--text-base);
-  font-weight: var(--weight-regular);
+  /* Fixed weight — changing regular→bold reflows glyphs and flickers the row */
+  font-weight: var(--weight-medium);
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -103,7 +106,6 @@
   box-sizing: border-box;
   transition:
     color var(--motion-fast) var(--ease-out),
-    font-weight var(--motion-fast) var(--ease-out),
     border-color var(--motion-fast) var(--ease-out),
     border-width var(--motion-fast) var(--ease-out),
     padding var(--motion-fast) var(--ease-out);
@@ -123,8 +125,8 @@
 .folder-item-move {
   justify-content: flex-start;
   width: 100%;
-  padding-inline-start: calc(var(--space-4) + 1px - var(--nav-bar));
-  padding-block-end: var(--space-3);
+  padding-inline-start: calc(var(--nav-pad-inline) + 1px - var(--nav-bar));
+  padding-block-end: var(--nav-pad-block);
   border-inline-start: var(--nav-bar) solid var(--nav-bar-color);
 }
 
@@ -148,7 +150,7 @@
   transition: color var(--motion-fast) var(--ease-out);
 }
 
-/* Hover — 3px grey bar + bold */
+/* Hover — 3px grey bar; weight stays put */
 .tab:hover:not(.active):not([aria-selected="true"]),
 .segmented-item:hover:not(.active):not([aria-selected="true"]):not([aria-pressed="true"]),
 .side-nav-item:hover:not(.active):not([aria-selected="true"]),
@@ -159,7 +161,6 @@
   --nav-bar: 3px;
   --nav-bar-color: var(--border-default);
   color: var(--text-primary);
-  font-weight: var(--weight-semibold);
   background: transparent;
   box-shadow: none;
 }
@@ -173,7 +174,7 @@
   color: var(--text-secondary);
 }
 
-/* Active — 3px mint bar + bold */
+/* Active — 3px mint bar; weight stays put */
 .tab.active,
 .tab[aria-selected="true"],
 .segmented-item.active,
@@ -192,7 +193,6 @@
   --nav-bar-color: var(--accent);
   background: transparent;
   color: var(--text-primary);
-  font-weight: var(--weight-semibold);
   box-shadow: none;
 }
 
@@ -278,19 +278,21 @@
 summary.side-nav-group-title {
   --nav-bar: 1px;
   --nav-bar-color: transparent;
+  --nav-pad-block: calc(var(--space-4) - 2px); /* 14px */
+  --nav-pad-inline: var(--space-5);            /* 20px */
   position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  padding-block: var(--space-3);
-  padding-inline-end: var(--space-4);
-  padding-inline-start: calc(var(--space-4) + 1px - var(--nav-bar));
+  padding-block: var(--nav-pad-block);
+  padding-inline-end: var(--nav-pad-inline);
+  padding-inline-start: calc(var(--nav-pad-inline) + 1px - var(--nav-bar));
   border: none;
   border-inline-start: var(--nav-bar) solid var(--nav-bar-color);
   border-radius: 0;
   font-size: var(--text-base);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-medium);
   text-transform: none;
   letter-spacing: var(--tracking-normal);
   color: var(--text-primary);
@@ -299,7 +301,6 @@ summary.side-nav-group-title {
   user-select: none;
   transition:
     color var(--motion-fast) var(--ease-out),
-    font-weight var(--motion-fast) var(--ease-out),
     border-color var(--motion-fast) var(--ease-out),
     border-width var(--motion-fast) var(--ease-out),
     padding var(--motion-fast) var(--ease-out);
@@ -326,7 +327,6 @@ details.side-nav-group[open] > summary.side-nav-group-title::after {
 summary.side-nav-group-title:hover {
   --nav-bar: 3px;
   --nav-bar-color: var(--border-default);
-  font-weight: var(--weight-semibold);
   color: var(--text-primary);
   background: transparent;
 }
