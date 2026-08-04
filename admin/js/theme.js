@@ -253,6 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Birkly.Utils && typeof Birkly.Utils.enhanceButtons === 'function') {
         Birkly.Utils.enhanceButtons(document);
     }
+    if (Birkly.Nav && typeof Birkly.Nav.init === 'function') {
+        Birkly.Nav.init();
+    }
 });
 
 /* Enhance dynamically inserted buttons on first hover (modals, tables, etc.) */
