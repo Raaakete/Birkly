@@ -1,0 +1,373 @@
+/* ============================================
+   Birkly Admin — Collection editor (P56)
+   ============================================
+
+   Loaded only by admin/templates/collection-editor.html, mirroring the way
+   entry-editor.html loads pages/entry-editor-sidebar.css. Everything here was
+   previously an inline <style> block inside that template.
+
+   Shared editor chrome (sidebar tab shell, templating panels, field anatomy,
+   copy button, code examples) lives in pages/content.css.
+   Modal shell, buttons, inputs, badges and cards come from components/.
+   ============================================ */
+
+/* ============================================
+   1. Page shell
+   ============================================ */
+.collection-editor-page .editor-sidebar {
+  position: sticky;
+  inset-block-start: var(--space-6);
+  max-height: calc(100vh - var(--space-16));
+  overflow-y: auto;
+}
+
+@media (max-width: 1023px) {
+  .collection-editor-page .editor-sidebar {
+    position: static;
+    max-height: none;
+  }
+}
+
+.fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* ============================================
+   2. Field schema rows
+   Each configured field is a panel: header strip + body form grid.
+   ============================================ */
+.fieldtype-section {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.fieldtype-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-sunken);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.fieldtype-header-main {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fieldtype-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.fieldtype-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.fieldtype-type {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  height: 1.375rem;
+  padding-inline: var(--space-2);
+  border: 1px solid var(--neutral-border);
+  border-radius: var(--radius-sm);
+  background: var(--neutral-surface);
+  color: var(--neutral-fg);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fieldtype-name {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  min-width: 0;
+}
+
+.fieldtype-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.fieldtype-row,
+.field-config-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .fieldtype-row,
+  .field-config-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.fieldtype-field,
+.field-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.fieldtype-field > label,
+.field-config-section > label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   3. Per-fieldtype configuration (select options, etc.)
+   ============================================ */
+.fieldtype-config {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.field-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 18rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.option-item,
+.add-option-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* ============================================
+   4. Sub-collection blocks
+   ============================================ */
+.sub-collection-fields-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.sub-collection-fields-section > h4 {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   5. Fieldtype picker (inside the shared .modal shell)
+   ============================================ */
+.fieldtype-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.fieldtype-category-header {
+  margin: 0 0 var(--space-3);
+  padding-block-end: var(--space-2);
+  border-block-end: 1px solid var(--border-subtle);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.fieldtype-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.fieldtype-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 8rem;
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
+}
+
+.fieldtype-card:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.fieldtype-card:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.fieldtype-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-12);
+  height: var(--space-12);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+  line-height: 0;
+}
+
+.fieldtype-card-name {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* ============================================
+   6. Sidebar info rows and checkbox rows
+   .checkbox-label has no component owner yet, so it is scoped to this page.
+   ============================================ */
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.info-item > label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+.info-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.info-value .link {
+  color: var(--text-link);
+  font-size: var(--text-xs);
+}
+
+.info-value .link:hover { text-decoration: underline; }
+
+.info-value code {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.collection-editor-page .checkbox-label,
+.collection-editor-page .auto-slug-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  cursor: pointer;
+  user-select: none;
+}
+
+/* ============================================
+   7. Language tag input
+   ============================================ */
+.language-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-lg);
+  padding: var(--space-2);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.language-tags-container input[type="text"] {
+  flex: 1 1 12rem;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: var(--text-sm);
+}
+
+.language-tags-container input[type="text"]:focus { outline: none; }
+
+/* ============================================
+   8. Save confirmation modal
+   ============================================ */
+.ag-wizard-success-meta {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   9. `hidden` support for flex blocks
+   Flex/grid `display` on a class beats the UA `[hidden]` rule, so anything
+   the template or its script toggles has to opt back in. This is what lets
+   the markup drop `style="display:none"` entirely.
+   ============================================ */
+.collection-editor-page .fieldtype-config[hidden],
+.collection-editor-page .form-group[hidden],
+.collection-editor-page .field-block[hidden],
+.collection-editor-page .info-item[hidden] { display: none; }

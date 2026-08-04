@@ -1,387 +1,445 @@
 /* ============================================
-   Birkly CSS Variables - Single Source of Truth
+   Birkly Admin — Design Tokens (canonical)
+   ============================================
+
+   Single source of truth for the admin design language (P56).
+   Legacy token names are aliased in core/compat-tokens.css.
+
+   Rules:
+   - Every value in admin/css/ comes from a token here. No raw hex.
+   - Dark mode is a token remap only. Components never write dark rules.
+   - Contrast ratios noted inline are measured sRGB (WCAG 2.1).
+
+   Reference: internal/planning/reviews/P56-M1-design-language-brief.md
    ============================================ */
 
 :root {
   /* ============================================
-     Brand Colors
+     1. Primitive ramps — never used directly by components
      ============================================ */
-  --color-primary: #7CE3BF;
-  --color-primary-hover: #8CECCA;
-  --color-primary-active: #79E1BD;
-  --color-secondary: #A1B0A1;
-  
-  /* ============================================
-     Neutral Color Scale
-     ============================================ */
-  --color-neutral-100: #F8F9F7;
-  --color-neutral-200: #F4F6F2;
-  --color-neutral-300: #E7EAE4;
-  --color-neutral-400: #D9DBD5;
-  --color-neutral-500: #C4C6C1;
-  --color-neutral-600: #9B9D98;
-  --color-neutral-700: #72746F;
-  --color-neutral-800: #494B46;
-  --color-neutral-900: #20221D;
-  
-  --color-black: #000;
-  --color-white: #fff;
-  --color-darkest: #4a4d47;
-  --color-dark: #8e928b;
-  --color-light: #dce2d7;
-  --color-lightest: #f4f6f1;
-  --color-positiv: #e4f1ec;
-  --color-negativ: #f3eced;
-  
-  /* ============================================
-     Primary Color Scale (Mint — derived from --color-primary)
-     ============================================ */
-  --primary-50: #EDFCF7;
-  --primary-100: #D4F8ED;
-  --primary-200: #AEF0DC;
-  --primary-300: #88E8C9;
-  --primary-400: #7CE3BF;
-  --primary-500: #7CE3BF;
-  --primary-600: #52C49A;
-  --primary-700: #3DA882;
-  --primary-800: #2D8C6B;
-  --primary-900: #1D6B52;
-  --primary-light: var(--primary-100);
-  
-  /* ============================================
-     Gray Scale (for compatibility)
-     ============================================ */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
-  
-  /* ============================================
-     Semantic Colors - Success
-     ============================================ */
-  --success-50: #f0fdf4;
-  --success-100: #dcfce7;
-  --success-200: #bbf7d0;
-  --success-500: #22c55e;
-  --success-600: #16a34a;
-  --success-700: #15803d;
-  --color-success: var(--success-600);
-  --color-success-light: var(--success-100);
-  
-  /* ============================================
-     Semantic Colors - Error
-     ============================================ */
-  --error-50: #fef2f2;
-  --error-100: #fee2e2;
-  --error-200: #fecaca;
-  --error-500: #ef4444;
-  --error-600: #dc2626;
-  --error-700: #b91c1c;
-  --color-error: var(--error-600);
-  --color-error-light: var(--error-100);
-  
-  /* ============================================
-     Semantic Colors - Warning
-     ============================================ */
-  --warning-50: #fffbeb;
-  --warning-100: #fef3c7;
-  --warning-200: #fde68a;
-  --warning-500: #f59e0b;
-  --warning-600: #d97706;
-  --warning-700: #92400e;
-  --color-warning: var(--warning-600);
-  --color-warning-light: var(--warning-100);
-  
-  /* ============================================
-     Background Colors
-     ============================================ */
-  --bg-primary: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-tertiary: #f5f5f5;
-  --bg-elevated: #ffffff;
-  --bg-hover: #f3f4f6;
-  --bg-overlay: rgba(0, 0, 0, 0.5);
-  --background-global: #f8f9f7;
-  --color-base-white: #fff;
-  
-  /* ============================================
-     Text Colors
-     ============================================ */
-  --text-primary: var(--color-neutral-900, #20221D);
-  --text-secondary: var(--color-neutral-700, #72746F);
-  --text-tertiary: var(--color-neutral-500, #C4C6C1);
-  --text-inverse: #ffffff;
-  
-  /* ============================================
-     Border Colors
-     ============================================ */
-  --border-light: #f3f4f6;
-  --border-medium: #e5e7eb;
-  --border-strong: #d1d5db;
-  --border-color: var(--border-medium, #e5e7eb);
 
-  /* Focus rings — primary-700 for WCAG 3:1 contrast on white */
-  --focus-ring-color: var(--primary-700, #3DA882);
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
-  --focus-ring-subtle: 0 0 0 3px color-mix(in srgb, var(--focus-ring-color) 18%, transparent);
-  --focus-ring-tight: 0 0 0 2px color-mix(in srgb, var(--focus-ring-color) 35%, transparent);
-  --focus-outline: 2px solid var(--focus-ring-color);
-  --admin-chrome-tile-size: 2.5rem;
-  --admin-chrome-row-height: var(--admin-chrome-tile-size);
-  --admin-chrome-stack-gap: var(--space-6, 1.5rem);
-  --admin-chrome-content-gap: var(--space-6, 1.5rem);
-  --admin-control-size: var(--admin-chrome-tile-size);
-  --admin-sticky-save-top: 0;
-  
+  /* Warm neutral ramp.
+     Steps 75-200 are tuned so a white panel reads clearly against the
+     tinted canvas while its hairline border stays visible on both. */
+  --neutral-0: #FFFFFF;
+  --neutral-50: #F8F9F7;
+  --neutral-75: #F1F3EE;
+  --neutral-100: #E7EAE2;
+  --neutral-200: #DDE1D8;
+  --neutral-300: #CBD0C4;
+  --neutral-400: #B3B8AC;
+  --neutral-500: #9CA096;
+  --neutral-600: #8E9089;
+  --neutral-700: #5E605B;
+  --neutral-800: #3D403A;
+  --neutral-900: #20221D;
+  --neutral-950: #161815;
+
+  /* Mint ramp (P41 brand — unchanged hues, extended dark end for text use) */
+  --mint-50: #EDFCF7;
+  --mint-100: #D4F8ED;
+  --mint-200: #AEF0DC;
+  --mint-300: #88E8C9;
+  --mint-400: #7CE3BF;
+  --mint-500: #7CE3BF;
+  --mint-600: #52C49A;
+  --mint-700: #3DA882;
+  --mint-800: #2D8C6B;
+  --mint-900: #1D6B52;
+  --mint-950: #17604A;
+
   /* ============================================
-     Spacing System (rem-based)
+     2. Surfaces — four layers (brief §4.1)
      ============================================ */
-  --space-1: 0.25rem;   /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-5: 1.25rem;  /* 20px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
-  --space-10: 2.5rem;  /* 40px */
-  --space-12: 3rem;    /* 48px */
-  --space-16: 4rem;    /* 64px */
-  
-  /* Legacy spacing (px-based) - for backward compatibility */
-  --spacing-xxs: 4px;
-  --spacing-xs: 8px;
-  --spacing-s: 12px;
-  --spacing-m: 18px;
-  --spacing-l: 26px;
-  --spacing-xl: 40px;
-  --spacing-xxl: 80px;
-  
+  --canvas: var(--neutral-75);
+  --surface: var(--neutral-0);
+  --surface-sunken: var(--neutral-100);
+  --surface-raised: var(--neutral-0);
+  --surface-hover: var(--neutral-50);
+  --surface-active: var(--neutral-100);
+  --surface-selected: var(--mint-50);
+  --surface-inverse: var(--neutral-900);
+  --overlay: rgba(32, 34, 29, 0.32);
+
   /* ============================================
-     Border Radius
+     3. Text (brief §4.5)
      ============================================ */
-  --radius-sm: 0.375rem;   /* 6px */
-  --radius-md: 0.5rem;     /* 8px */
-  --radius-lg: 0.75rem;    /* 12px */
-  --radius-xl: 1rem;       /* 16px */
-  --radius-2xl: 1.5rem;     /* 24px */
-  
-  /* Legacy border radius (for backward compatibility) */
-  --border-radius-s: 4px;
-  --border-radius-m: 8px;
-  --border-radius-l: 20px;
-  --border-radius-xl: 24px;
-  --border-radius-round: 1000px;
-  --border-radius-none: 0px;
-  
+  --text-primary: var(--neutral-900);      /* 16.1:1 on surface */
+  --text-secondary: var(--neutral-700);    /*  6.4:1 on surface */
+  --text-tertiary: var(--neutral-600);     /*  3.4:1 — non-essential only */
+  --text-inverse: var(--neutral-50);
+  --text-link: var(--accent-text);
+  --text-link-hover: var(--accent-text-hover);
+
   /* ============================================
-     Shadows
+     4. Borders (brief §4.2)
+     subtle/default are decorative hairlines.
+     control* are functional boundaries and meet WCAG 1.4.11 (3:1).
      ============================================ */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
+  --border-subtle: var(--neutral-200);
+  --border-default: var(--neutral-300);
+  --border-control: var(--neutral-600);        /* 3.23:1 on surface */
+  --border-control-hover: var(--neutral-700);
+  --border-strong: var(--neutral-700);
+
   /* ============================================
-     Typography
+     5. Accent — split fill / text ramps (brief §4.3)
+     Mint is a LIGHT colour: fill under dark ink, never text on light.
+     ============================================ */
+  --accent: var(--mint-400);
+  --accent-hover: #8CECCA;
+  --accent-active: #79E1BD;
+  --accent-muted: var(--mint-600);             /* decorative only, never text */
+  --accent-focus: var(--mint-800);             /* 4.14:1 — focus rings */
+  --accent-text: var(--mint-900);              /* 6.41:1 — accent text + links */
+  --accent-text-hover: var(--mint-950);        /* 7.48:1 */
+  --accent-soft: var(--mint-50);
+  --accent-soft-hover: var(--mint-100);
+  --accent-border: var(--mint-200);
+  --ink-on-accent: var(--neutral-900);         /* 10.4:1 on mint */
+
+  /* Control tracks — switch/slider rails. A background needs its own token:
+     using a --border-* token as a fill (the pre-P56 habit) is dishonest, and
+     --neutral-surface is invisible against --surface. */
+  --control-track: var(--neutral-300);
+  --control-track-hover: var(--neutral-600);
+  --control-knob: var(--surface);
+
+  /* ============================================
+     6. Semantic colours (brief §4.4)
+     Status indicators use {sem}-surface + {sem}-fg.
+     {sem}-solid is for destructive/confirm buttons only.
+     ============================================ */
+  --success-surface: #E8F5EC;
+  --success-border: #BFE0CC;
+  --success-fg: #1B6E3C;                       /* 6.3:1 on surface */
+  --success-solid: #24793F;                    /* 5.4:1 with white ink */
+  --ink-on-success: var(--neutral-0);
+
+  --warning-surface: #FDF3E3;
+  --warning-border: #F0DCAE;
+  --warning-fg: #7A5200;                       /* 6.9:1 on surface */
+  --warning-solid: #E0A100;                    /* takes DARK ink */
+  --ink-on-warning: var(--neutral-900);
+
+  --danger-surface: #FDEDED;
+  --danger-border: #F2C6C6;
+  --danger-fg: #A32020;                        /* 7.5:1 on surface */
+  --danger-solid: #D33A3A;                     /* 4.7:1 with white ink */
+  --ink-on-danger: var(--neutral-0);
+
+  --info-surface: #E9F1FA;
+  --info-border: #C3D9EF;
+  --info-fg: #1F5C99;                          /* 6.9:1 on surface */
+  --info-solid: #2A6FB5;                       /* 5.2:1 with white ink */
+  --ink-on-info: var(--neutral-0);
+
+  /* Neutral status tone (draft, archived, disabled) */
+  --neutral-surface: var(--neutral-100);
+  --neutral-border: var(--neutral-300);
+  --neutral-fg: var(--neutral-700);
+
+  /* ============================================
+     7. Spacing — 4px grid, one scale (brief §2.1)
+     ============================================ */
+  --space-0: 0;
+  --space-1: 0.25rem;   /*  4px */
+  --space-2: 0.5rem;    /*  8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* ============================================
+     8. Typography (brief §3)
      ============================================ */
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-  /* System UI stack — no CDN webfont; General Sans removed (P44-M2) */
-  --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-secondary: 'Mergian Regular', sans-serif;
-  --font-article: "Newsreader", serif;
-  
-  --font-size-default: 16px;
-  --font-size-large: 20px;
-  --font-size-small: 12px;
-  
-  --font-color-default: var(--color-dark);
-  --font-color-dark: var(--color-black);
-  --font-color-light: var(--color-secondary);
-  
-  --font-weight-default: 400;
-  --font-weight-strong: 500;
-  --font-weight-bold: 500;
-  --font-weight-light: 300;
-  
-  --font-lineheight-default: 150%;
-  --font-lineheight-large: 170%;
-  --font-lineheight-small: 130%;
-  --font-lineheight-xsmall: 110%;
-  
+
+  --text-2xs: 0.6875rem;   /* 11px — uppercase micro-labels, table headers */
+  --text-xs: 0.75rem;      /* 12px — badges, help text, timestamps */
+  --text-sm: 0.8125rem;    /* 13px — dense tables, secondary, toolbars */
+  --text-base: 0.875rem;   /* 14px — DEFAULT UI text */
+  --text-md: 1rem;         /* 16px — prose / help docs only */
+  --text-lg: 1.125rem;     /* 18px — card + section titles */
+  --text-xl: 1.375rem;     /* 22px — page title (breadcrumb current) */
+  --text-2xl: 1.75rem;     /* 28px — auth / onboarding / empty-state heroes */
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-label: 0.04em;
+
   /* ============================================
-     Transitions
+     9. Radius — four steps (brief §5.1)
      ============================================ */
-  --transition-fast: 150ms ease;
-  --transition-normal: 200ms ease;
-  --transition-slow: 300ms ease;
-  
+  --radius-none: 0;
+  --radius-sm: 6px;     /* controls: buttons, inputs, badges, nav items */
+  --radius-md: 10px;    /* panels: cards, tables, sections, wells */
+  --radius-lg: 14px;    /* overlays: modals, drawers, popovers */
+  --radius-pill: 999px;
+
   /* ============================================
-     Layout
+     10. Control sizes (brief §2.2)
      ============================================ */
-  --container-width-large: 1920px;
-  --container-width-small: 800px;
-  
-  --grid-gap: 20px;
-  --grid-gap-none: 0px;
-  --grid-gap-small: 4px;
-  --grid-gap-large: 80px;
-  
+  --control-xs: 1.5rem;    /* 24px — inline cell actions */
+  --control-sm: 1.75rem;   /* 28px — dense toolbars */
+  --control-md: 2.25rem;   /* 36px — DEFAULT page controls */
+  --control-lg: 2.5rem;    /* 40px — chrome row only */
+
+  /* Shared chrome rhythm (sidebar brand row == topbar row == page title row) */
+  --chrome-row: var(--control-lg);
+  --chrome-stack-gap: var(--space-6);
+  --chrome-content-gap: var(--space-6);
+
   /* ============================================
-     Breakpoints
+     11. Elevation — borders do the work (brief §5.2)
      ============================================ */
-  /* Canonical admin breakpoints. Use these names in responsive documentation
-     and keep media-query values aligned; CSS custom properties cannot be used
-     directly in @media conditions in supported browsers. */
+  --elevation-0: none;
+  --elevation-1: 0 1px 2px rgba(32, 34, 29, 0.06);
+  --elevation-2: 0 4px 12px rgba(32, 34, 29, 0.10);
+  --elevation-3: 0 16px 40px rgba(32, 34, 29, 0.16);
+
+  /* ============================================
+     12. Layering — one scale (brief §5.3)
+     Popover sits above modal so menus inside dialogs work.
+     ============================================ */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-dragging: 50;
+  --z-sticky: 100;
+  --z-chrome: 200;
+  --z-backdrop: 300;
+  --z-drawer: 310;
+  --z-modal: 400;
+  --z-popover: 500;
+  --z-toast: 600;
+  --z-tooltip: 700;
+
+  /* ============================================
+     13. Motion (brief §5.4)
+     ============================================ */
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 240ms;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ============================================
+     14. Focus (brief §5.5)
+     ============================================ */
+  --focus-color: var(--accent-focus);
+  --focus-outline: 2px solid var(--focus-color);
+  --focus-outline-offset: 2px;
+  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--focus-color) 30%, transparent);
+
+  /* ============================================
+     15. Measure and page width (brief §2.4)
+     ============================================ */
+  --measure-sm: 42ch;
+  --measure-md: 68ch;
+  --measure-lg: 90ch;
+  --page-max: 1440px;
+  --page-max-narrow: 880px;
+
+  /* Shell */
+  --sidebar-width: 280px;
+  --sidebar-width-collapsed: 4.5rem;
+  --shell-edge-padding: var(--space-10);
+
+  /* ============================================
+     16. Breakpoints — documentation only.
+     Custom properties cannot be used in @media conditions;
+     keep literal values in sync with these (brief §2.5).
+     Allowed: 640 / 768 / 1024 / 1280 / 1440, min-width only.
+     ============================================ */
   --bp-sm: 640px;
   --bp-md: 768px;
   --bp-lg: 1024px;
   --bp-xl: 1280px;
   --bp-2xl: 1440px;
 
-  /* Legacy aliases */
-  --breakpoint-mobile: var(--bp-sm);
-  --breakpoint-tablet: var(--bp-xl);
-  
   /* ============================================
-     Brand Aliases (for compatibility)
+     17. Dark theme values — remapped in the selectors below.
+     Defined once here so the remap is not duplicated three times.
      ============================================ */
-  --brand-primary: var(--primary-600);
-  --brand-secondary: var(--primary-400);
-  --primary-color: var(--primary-500);
-  
-  /* ============================================
-     Notification Colors
-     ============================================ */
-  --notif-color-blue: #D4F8ED;
-  --notif-color-green: #dcfce7;
-  --notif-color-orange: #fed7aa;
-  --notif-color-red: #fee2e2;
-  --notif-color-purple: #e9d5ff;
-  --notif-color-gray: #f3f4f6;
+  --dk-canvas: #131511;
+  --dk-surface: #252821;
+  --dk-surface-sunken: #0D0F0B;
+  --dk-surface-raised: #2E322A;
+  --dk-surface-hover: #2E322A;
+  --dk-surface-active: #363A31;
+  --dk-surface-selected: #1E3A30;
+  --dk-surface-inverse: #F1F3EE;
+  --dk-overlay: rgba(0, 0, 0, 0.56);
 
-  --surface: var(--bg-elevated);
-  --surface-secondary: var(--bg-secondary);
+  --dk-text-primary: #F4F6F2;
+  --dk-text-secondary: #B4B7B0;
+  --dk-text-tertiary: #82857E;
+  --dk-text-inverse: #161815;
 
-  /* ============================================
-     Dark Theme Token Values (applied via selectors below)
-     ============================================ */
-  --dark-bg-primary: #20221D;
-  --dark-bg-secondary: #2A2C27;
-  --dark-bg-tertiary: #494B46;
-  --dark-bg-elevated: #2A2C27;
-  --dark-bg-hover: #494B46;
-  --dark-bg-overlay: rgba(0, 0, 0, 0.7);
-  --dark-background-global: #20221D;
-  --dark-text-primary: #F8F9F7;
-  --dark-text-secondary: #C4C6C1;
-  --dark-text-tertiary: #9B9D98;
-  --dark-text-inverse: #20221D;
-  --dark-border-light: #494B46;
-  --dark-border-medium: #5A5C57;
-  --dark-border-strong: #72746F;
-  --dark-color-primary: #8CECCA;
-  --dark-color-neutral-100: #2A2C27;
-  --dark-color-neutral-200: #494B46;
-  --dark-color-lightest: #2A2C27;
-  --dark-color-base-white: #2A2C27;
-  --dark-color-black: #F8F9F7;
-  --dark-notif-blue: #1D6B52;
-  --dark-notif-green: #14532d;
-  --dark-notif-orange: #78350f;
-  --dark-notif-red: #7f1d1d;
-  --dark-notif-purple: #581c87;
-  --dark-notif-gray: #494B46;
+  --dk-border-subtle: #363A31;
+  --dk-border-default: #444840;
+  --dk-border-control: #5F635A;
+  --dk-border-control-hover: #7A7E74;
+  --dk-border-strong: #8A8D85;
+
+  --dk-accent-text: #8CECCA;                 /* 11.6:1 on dark surface */
+  --dk-accent-focus: #7CE3BF;
+  --dk-accent-soft: #17352B;
+  --dk-accent-soft-hover: #1D4238;
+  --dk-accent-border: #2D6B57;
+
+  --dk-control-track: #444840;
+  --dk-control-track-hover: #5F635A;
+  --dk-control-knob: #E7EAE2;
+
+  --dk-success-surface: #16301F;
+  --dk-success-border: #24492F;
+  --dk-success-fg: #7BD79B;
+  --dk-warning-surface: #33260C;
+  --dk-warning-border: #4D3A12;
+  --dk-warning-fg: #E8BC5E;
+  --dk-danger-surface: #331A1A;
+  --dk-danger-border: #4D2626;
+  --dk-danger-fg: #F09393;
+  --dk-info-surface: #15263A;
+  --dk-info-border: #22405E;
+  --dk-info-fg: #8CBEEA;
+  --dk-neutral-surface: #262823;
+  --dk-neutral-border: #3A3D36;
+  --dk-neutral-fg: #B4B7B0;
+
+  --dk-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --dk-elevation-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --dk-elevation-3: 0 16px 40px rgba(0, 0, 0, 0.6);
 }
 
 /* ============================================
-   Dark Theme
+   Dark theme remap — token values only.
    ============================================ */
 [data-theme="dark"] {
-  --bg-primary: var(--dark-bg-primary);
-  --bg-secondary: var(--dark-bg-secondary);
-  --bg-tertiary: var(--dark-bg-tertiary);
-  --bg-elevated: var(--dark-bg-elevated);
-  --bg-hover: var(--dark-bg-hover);
-  --bg-overlay: var(--dark-bg-overlay);
-  --background-global: var(--dark-background-global);
+  --canvas: var(--dk-canvas);
+  --surface: var(--dk-surface);
+  --surface-sunken: var(--dk-surface-sunken);
+  --surface-raised: var(--dk-surface-raised);
+  --surface-hover: var(--dk-surface-hover);
+  --surface-active: var(--dk-surface-active);
+  --surface-selected: var(--dk-surface-selected);
+  --surface-inverse: var(--dk-surface-inverse);
+  --overlay: var(--dk-overlay);
 
-  --text-primary: var(--dark-text-primary);
-  --text-secondary: var(--dark-text-secondary);
-  --text-tertiary: var(--dark-text-tertiary);
-  --text-inverse: var(--dark-text-inverse);
+  --text-primary: var(--dk-text-primary);
+  --text-secondary: var(--dk-text-secondary);
+  --text-tertiary: var(--dk-text-tertiary);
+  --text-inverse: var(--dk-text-inverse);
 
-  --border-light: var(--dark-border-light);
-  --border-medium: var(--dark-border-medium);
-  --border-strong: var(--dark-border-strong);
-  --border-color: var(--border-medium);
+  --border-subtle: var(--dk-border-subtle);
+  --border-default: var(--dk-border-default);
+  --border-control: var(--dk-border-control);
+  --border-control-hover: var(--dk-border-control-hover);
+  --border-strong: var(--dk-border-strong);
 
-  --color-primary: var(--dark-color-primary);
-  --primary-color: var(--color-primary);
+  --accent-text: var(--dk-accent-text);
+  --accent-text-hover: var(--dk-accent-text);
+  --accent-focus: var(--dk-accent-focus);
+  --accent-soft: var(--dk-accent-soft);
+  --accent-soft-hover: var(--dk-accent-soft-hover);
+  --accent-border: var(--dk-accent-border);
 
-  --color-neutral-100: var(--dark-color-neutral-100);
-  --color-neutral-200: var(--dark-color-neutral-200);
-  --color-lightest: var(--dark-color-lightest);
-  --color-base-white: var(--dark-color-base-white);
-  --color-black: var(--dark-color-black);
+  --control-track: var(--dk-control-track);
+  --control-track-hover: var(--dk-control-track-hover);
+  --control-knob: var(--dk-control-knob);
 
-  --surface: var(--bg-elevated);
-  --surface-secondary: var(--bg-secondary);
+  --success-surface: var(--dk-success-surface);
+  --success-border: var(--dk-success-border);
+  --success-fg: var(--dk-success-fg);
+  --warning-surface: var(--dk-warning-surface);
+  --warning-border: var(--dk-warning-border);
+  --warning-fg: var(--dk-warning-fg);
+  --danger-surface: var(--dk-danger-surface);
+  --danger-border: var(--dk-danger-border);
+  --danger-fg: var(--dk-danger-fg);
+  --info-surface: var(--dk-info-surface);
+  --info-border: var(--dk-info-border);
+  --info-fg: var(--dk-info-fg);
+  --neutral-surface: var(--dk-neutral-surface);
+  --neutral-border: var(--dk-neutral-border);
+  --neutral-fg: var(--dk-neutral-fg);
 
-  --notif-color-blue: var(--dark-notif-blue);
-  --notif-color-green: var(--dark-notif-green);
-  --notif-color-orange: var(--dark-notif-orange);
-  --notif-color-red: var(--dark-notif-red);
-  --notif-color-purple: var(--dark-notif-purple);
-  --notif-color-gray: var(--dark-notif-gray);
+  --elevation-1: var(--dk-elevation-1);
+  --elevation-2: var(--dk-elevation-2);
+  --elevation-3: var(--dk-elevation-3);
+
+  color-scheme: dark;
 }
 
-/* ============================================
-   System Theme Detection
-   ============================================ */
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] {
-    --bg-primary: var(--dark-bg-primary);
-    --bg-secondary: var(--dark-bg-secondary);
-    --bg-tertiary: var(--dark-bg-tertiary);
-    --bg-elevated: var(--dark-bg-elevated);
-    --bg-hover: var(--dark-bg-hover);
-    --bg-overlay: var(--dark-bg-overlay);
-    --background-global: var(--dark-background-global);
+    --canvas: var(--dk-canvas);
+    --surface: var(--dk-surface);
+    --surface-sunken: var(--dk-surface-sunken);
+    --surface-raised: var(--dk-surface-raised);
+    --surface-hover: var(--dk-surface-hover);
+    --surface-active: var(--dk-surface-active);
+    --surface-selected: var(--dk-surface-selected);
+    --surface-inverse: var(--dk-surface-inverse);
+    --overlay: var(--dk-overlay);
 
-    --text-primary: var(--dark-text-primary);
-    --text-secondary: var(--dark-text-secondary);
-    --text-tertiary: var(--dark-text-tertiary);
-    --text-inverse: var(--dark-text-inverse);
+    --text-primary: var(--dk-text-primary);
+    --text-secondary: var(--dk-text-secondary);
+    --text-tertiary: var(--dk-text-tertiary);
+    --text-inverse: var(--dk-text-inverse);
 
-    --border-light: var(--dark-border-light);
-    --border-medium: var(--dark-border-medium);
-    --border-strong: var(--dark-border-strong);
-    --border-color: var(--border-medium);
+    --border-subtle: var(--dk-border-subtle);
+    --border-default: var(--dk-border-default);
+    --border-control: var(--dk-border-control);
+    --border-control-hover: var(--dk-border-control-hover);
+    --border-strong: var(--dk-border-strong);
 
-    --color-primary: var(--dark-color-primary);
-    --primary-color: var(--color-primary);
+    --accent-text: var(--dk-accent-text);
+    --accent-text-hover: var(--dk-accent-text);
+    --accent-focus: var(--dk-accent-focus);
+    --accent-soft: var(--dk-accent-soft);
+    --accent-soft-hover: var(--dk-accent-soft-hover);
+    --accent-border: var(--dk-accent-border);
 
-    --color-neutral-100: var(--dark-color-neutral-100);
-    --color-neutral-200: var(--dark-color-neutral-200);
-    --color-lightest: var(--dark-color-lightest);
-    --color-base-white: var(--dark-color-base-white);
-    --color-black: var(--dark-color-black);
+    --control-track: var(--dk-control-track);
+    --control-track-hover: var(--dk-control-track-hover);
+    --control-knob: var(--dk-control-knob);
 
-    --surface: var(--bg-elevated);
-    --surface-secondary: var(--bg-secondary);
+    --success-surface: var(--dk-success-surface);
+    --success-border: var(--dk-success-border);
+    --success-fg: var(--dk-success-fg);
+    --warning-surface: var(--dk-warning-surface);
+    --warning-border: var(--dk-warning-border);
+    --warning-fg: var(--dk-warning-fg);
+    --danger-surface: var(--dk-danger-surface);
+    --danger-border: var(--dk-danger-border);
+    --danger-fg: var(--dk-danger-fg);
+    --info-surface: var(--dk-info-surface);
+    --info-border: var(--dk-info-border);
+    --info-fg: var(--dk-info-fg);
+    --neutral-surface: var(--dk-neutral-surface);
+    --neutral-border: var(--dk-neutral-border);
+    --neutral-fg: var(--dk-neutral-fg);
 
-    --notif-color-blue: var(--dark-notif-blue);
-    --notif-color-green: var(--dark-notif-green);
-    --notif-color-orange: var(--dark-notif-orange);
-    --notif-color-red: var(--dark-notif-red);
-    --notif-color-purple: var(--dark-notif-purple);
-    --notif-color-gray: var(--dark-notif-gray);
+    --elevation-1: var(--dk-elevation-1);
+    --elevation-2: var(--dk-elevation-2);
+    --elevation-3: var(--dk-elevation-3);
+
+    color-scheme: dark;
   }
 }

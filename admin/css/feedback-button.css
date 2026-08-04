@@ -1,180 +1,135 @@
-/* Alpha feedback floating button (P3-M10) — standalone hidden when unified assist FAB is active */
+/* ============================================
+   Birkly Admin — Feedback widget + help affordances (P56)
+   ============================================
 
-.feedback-floating-wrap {
-    /* positioning deprecated: unified assist FAB in ai-chat-button.css */
-}
+   The floating feedback button is legacy: the unified assist launcher in
+   ai-chat-button.css hides #feedback-floating-wrap and offers "Send feedback"
+   as a menu item. The button survives only as the fallback when that launcher
+   is not mounted, so it is styled as a plain circular accent control.
 
+   The feedback modal, its form and the admin feedback list use .modal, .field,
+   .input, .select, .textarea, .table, .badge and .callout directly — nothing
+   here duplicates them.
+
+   NOTE for the design lead: the help-search, contextual-help-link and
+   admin-legal-footer families below are the only definitions of those classes
+   in the admin. They are not feedback UI and belong in pages/help.css and a
+   footer layout file; they are kept here (retokenised) so nothing loses its
+   styling before that move.
+   ============================================ */
+
+/* ---- 1. Floating feedback button (legacy fallback) ---- */
 .feedback-floating-btn {
-    border-radius: 50%;
-    border: none;
-    background: var(--color-primary, #7CE3BF);
-    color: var(--text-inverse, #ffffff);
-    cursor: pointer;
-    box-shadow: var(--shadow-md, 0 4px 14px rgba(0, 0, 0, 0.2));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  box-shadow: var(--elevation-2);
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
 }
 
-.feedback-floating-btn:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-lg, 0 6px 18px rgba(0, 0, 0, 0.25));
-}
+.feedback-floating-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 
 .feedback-floating-btn:focus-visible {
-    outline: 2px solid var(--color-primary, #7CE3BF);
-    outline-offset: 2px;
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
-.feedback-modal .feedback-privacy-notice a {
-    color: var(--color-primary, #7CE3BF);
-}
-
-.feedback-admin-page {
-    padding: 0 1.5rem 2rem;
-}
-
-.feedback-admin-header {
-    margin-bottom: 1.5rem;
-}
-
-.feedback-admin-header h1 {
-    font-size: 1.5rem;
-    margin-bottom: 0.25rem;
-}
-
-.status-badge {
-    display: inline-block;
-    padding: 0.15rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.status-new { background: #dbeafe; color: #1d4ed8; }
-.status-in_progress { background: #fef3c7; color: #b45309; }
-.status-resolved { background: #d1fae5; color: #047857; }
-.status-closed { background: #e5e7eb; color: #4b5563; }
-
-/* Contextual help link (P3-M11) */
+/* ---- 2. Contextual help link — the "?" beside a section title ---- */
 .contextual-help-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
-    margin-left: 0.35rem;
-    border-radius: 50%;
-    border: 1px solid var(--border-color, #d1d5db);
-    color: var(--text-secondary, #6b7280);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-decoration: none;
-    vertical-align: middle;
-    line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-inline-start: var(--space-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: middle;
 }
 
 .contextual-help-link:hover {
-    background: var(--bg-secondary, #f3f4f6);
-    color: var(--primary-color, #6366f1);
-    border-color: var(--primary-color, #6366f1);
+  background: var(--surface-hover);
+  border-color: var(--accent-border);
+  color: var(--accent-text);
 }
 
-/* Help search (P3-M11) */
-.help-search-bar {
-    margin-bottom: 1.5rem;
-}
+/* ---- 3. Help search ---- */
+.help-search-bar { margin-block-end: var(--space-6); }
+.help-search-wrap { position: relative; max-width: var(--measure-sm); }
 
 .help-search-input {
-    width: 100%;
-    max-width: 480px;
-    padding: 0.65rem 1rem 0.65rem 2.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 1rem;
+  width: 100%;
+  height: var(--control-lg);
+  padding-inline: var(--space-10) var(--space-4);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-base);
 }
 
-.help-search-wrap {
-    position: relative;
-    max-width: 480px;
-}
+.help-search-input:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-outline-offset); }
 
 .help-search-wrap svg {
-    position: absolute;
-    left: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-secondary);
-    pointer-events: none;
+  position: absolute;
+  inset-inline-start: var(--space-3);
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
 }
 
 .help-search-results {
-    margin-top: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-secondary);
-    max-height: 240px;
-    overflow-y: auto;
-    display: none;
+  display: none;
+  margin-block-start: var(--space-3);
+  max-height: 15rem;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
 }
 
-.help-search-results.is-open {
-    display: block;
-}
+.help-search-results.is-open { display: block; }
 
 .help-search-result-item {
-    display: block;
-    padding: 0.65rem 1rem;
-    color: inherit;
-    text-decoration: none;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
+  display: block;
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.help-search-result-item:last-child {
-    border-bottom: none;
-}
+.help-search-result-item:last-child { border-block-end: none; }
 
 .help-search-result-item:hover,
-.help-search-result-item.is-active {
-    background: var(--bg-tertiary, #e5e7eb);
-}
+.help-search-result-item.is-active { background: var(--surface-hover); }
 
-.help-search-result-title {
-    font-weight: 600;
-}
+.help-search-result-title { font-weight: var(--weight-semibold); }
+.help-search-result-keywords { font-size: var(--text-xs); color: var(--text-secondary); }
 
-.help-search-result-keywords {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
-
-.help-doc-source {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-}
-
+/* ---- 4. Admin legal footer ---- */
 .admin-legal-footer {
-    margin-top: auto;
-    padding: 1rem 0 0;
-    border-top: 1px solid var(--border-light, #e5e7eb);
+  margin-block-start: auto;
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
 }
 
-.admin-legal-footer-text {
-    margin: 0;
-    font-size: 0.8125rem;
-    color: var(--text-secondary, #6b7280);
-    text-align: center;
-}
+.admin-legal-footer-text { margin: 0; font-size: var(--text-xs); color: var(--text-secondary); text-align: center; }
 
-.admin-legal-footer a {
-    color: var(--text-secondary, #6b7280);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.admin-legal-footer a:hover {
-    color: var(--primary-color, #6366f1);
-}
+.admin-legal-footer a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; }
+.admin-legal-footer a:hover { color: var(--text-link); }

@@ -67,7 +67,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     <style><?= $fieldtypeAssets['css_inline'] ?></style>
 <?php endif; ?>
     
-    <div class="page-header pt-m pb-m">
+    <div class="page-header">
         <div class="page-header-left">
         <div class="breadcrumbs">
             <?php if (!empty($breadcrumbs)): ?>
@@ -141,8 +141,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
                                 <div class="language-tab-content <?= $langIdx === 0 ? 'active' : '' ?>"
                                      data-lang="<?= htmlspecialchars($langCode) ?>"
-                                     role="tabpanel"
-                                     <?= $langIdx === 0 ? '' : 'style="display:none"' ?>>
+                                     role="tabpanel">
                                     <?php foreach ($languageFields[$langCode] ?? [] as $field): ?>
                                         <?php
                                         $fieldName = $field['name'] ?? '';
@@ -238,11 +237,11 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <label for="slug">Slug</label>
                                 <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="Auto-generated">
                                 <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($autoSlugChecked) ? '1' : '0' ?>">
-                                <label class="auto-slug-toggle" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                                <label class="auto-slug-toggle">
                                     <input type="checkbox" id="auto_slug_checkbox" <?= !empty($autoSlugChecked) ? 'checked' : '' ?>>
                                     Auto-generate slug from title
                                 </label>
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     URL-friendly identifier for this entry
                                 </small>
                                 <div class="permalink-preview" id="permalink-preview">
@@ -254,12 +253,12 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         </button>
                                     </div>
                                     <?php if (empty($sidebar['site_url'])): ?>
-                                        <small class="form-text" style="display: block; margin-top: 0.25rem;">Set your site URL in <a href="<?= admin_url('settings') ?>">Settings</a> for a full preview.</small>
+                                        <small class="form-text">Set your site URL in <a href="<?= admin_url('settings') ?>">Settings</a> for a full preview.</small>
                                     <?php endif; ?>
                                 </div>
                             </div>
                             
-                            <div class="info-item" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                            <div class="info-item u-pt-4 u-border-top">
                                 <label for="status">Status</label>
                                 <select name="status" id="status" class="input">
                                     <option value="unpublished" <?= in_array($entry['status'] ?? 'unpublished', ['unpublished', 'draft']) ? 'selected' : '' ?>>Unpublished</option>
@@ -271,29 +270,29 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             </div>
                             
                             <!-- Scheduled: Show Publish At field -->
-                            <div class="form-group" id="publish-schedule-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'scheduled' ? 'block' : 'none' ?>;">
+                            <div class="form-group" id="publish-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'scheduled' ? '' : 'hidden' ?>>
                                 <label for="published_at">Publish At</label>
                                 <input type="datetime-local" name="published_at" id="published_at" class="input" 
                                        value="<?= !empty($entry['published_at']) ? date('Y-m-d\TH:i', strtotime($entry['published_at'])) : '' ?>"
                                        data-value="<?= htmlspecialchars($entry['published_at'] ?? '') ?>">
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     The entry will be automatically published at this date and time
                                 </small>
                             </div>
                             
                             <!-- Published: Show Unpublish At field -->
-                            <div class="form-group" id="expire-schedule-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'published' ? 'block' : 'none' ?>;">
+                            <div class="form-group" id="expire-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'published' ? '' : 'hidden' ?>>
                                 <label for="expires_at">Unpublish At</label>
                                 <input type="datetime-local" name="expires_at" id="expires_at" class="input"
                                        value="<?= !empty($entry['expires_at']) ? date('Y-m-d\TH:i', strtotime($entry['expires_at'])) : '' ?>"
                                        data-value="<?= htmlspecialchars($entry['expires_at'] ?? '') ?>">
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     Optional: The entry will be automatically unpublished at this date and time
                                 </small>
                             </div>
                             
                             <!-- Pending Review: Show Reviewer selection -->
-                            <div class="form-group" id="reviewer-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? 'block' : 'none' ?>;">
+                            <div class="form-group" id="reviewer-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
                                 <label for="reviewer">Notify Reviewer</label>
                                 <select name="reviewer" id="reviewer" class="input">
                                     <option value="">Select a reviewer...</option>
@@ -327,13 +326,13 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 </select>
                                 <!-- Hidden input to preserve reviewer value when field is hidden -->
                                 <input type="hidden" name="reviewer_hidden" id="reviewer_hidden" value="<?= htmlspecialchars($currentReviewer) ?>">
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     Select a user to notify when this entry is submitted for review
                                 </small>
                             </div>
 
                             <?php if (!empty($can_review_entry)): ?>
-                                <div class="entry-review-actions" id="review-action-group" style="display: <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? 'block' : 'none' ?>;">
+                                <div class="entry-review-actions" id="review-action-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
                                     <div class="entry-review-actions__title">Review actions</div>
                                     <div class="entry-review-actions__buttons">
                                         <button type="button" class="btn btn-secondary btn-sm" id="approve-entry">Approve</button>
@@ -344,7 +343,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <?php endif; ?>
                             
                             <!-- Entry Information Section -->
-                            <div class="entry-info-section" style="margin-top: var(--space-4); padding-top: var(--space-4); border-top: 1px solid var(--border-light);">
+                            <div class="entry-info-section">
                                 <?php if (!empty($entry['id'])): ?>
                                     <div class="entry-info-item">
                                         <div class="entry-info-label">Entry ID</div>
@@ -444,16 +443,16 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <h4>Revisions</h4>
                                         <button type="button" class="btn btn-secondary btn-sm" id="refresh-entry-revisions-btn">Refresh</button>
                                     </div>
-                                    <p class="text-muted" style="font-size: 0.8125rem; margin: 0 0 var(--space-3) 0;">
+                                    <p class="u-text-xs u-fg-secondary">
                                         Review previous saved versions and restore an older revision when needed.
                                     </p>
-                                    <div id="entry-revisions-feedback" class="entry-revisions-feedback" style="display: none;" aria-live="polite"></div>
+                                    <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
                                     <div id="entry-revisions-list" class="entry-revisions-list">
                                         <div class="entry-revisions-empty">Loading revisions…</div>
                                     </div>
                                 </div>
                             <?php endif; ?>
-                            <div id="sidebar-validation" class="sidebar-validation" style="display:none;" aria-live="polite"></div>
+                            <div id="sidebar-validation" class="sidebar-validation" hidden aria-live="polite"></div>
                         </div>
                         
                         <!-- Meta Data Tab -->
@@ -467,7 +466,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <div class="meta-preview-card">
                                 <h5>Social preview</h5>
                                 <div class="social-preview">
-                                    <div class="social-preview-image" id="social-preview-image" style="display:none;"></div>
+                                    <div class="social-preview-image" id="social-preview-image" hidden></div>
                                     <div class="social-preview-body">
                                         <div class="social-preview-site"><?= htmlspecialchars(parse_url($sidebar['site_url'] ?? '', PHP_URL_HOST) ?: 'yoursite.com') ?></div>
                                         <div class="social-preview-title" id="social-preview-title">Page title</div>
@@ -493,7 +492,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <div class="form-group">
                                 <label for="meta_keywords">Meta Keywords</label>
                                 <input type="text" name="meta_keywords" id="meta_keywords" class="input" value="<?= htmlspecialchars($entry['meta_keywords'] ?? '') ?>" placeholder="keyword1, keyword2, keyword3">
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     Optional — less important for modern SEO, but can help topical clarity
                                 </small>
                             </div>
@@ -516,7 +515,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     <input type="text" name="og_image" id="og_image" class="input" value="<?= htmlspecialchars($entry['og_image'] ?? '') ?>" placeholder="URL to image for social media sharing">
                                     <button type="button" class="btn btn-secondary btn-sm" id="og-image-pick-btn">Choose</button>
                                 </div>
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     Recommended: 1200×630px — shown when shared on social networks
                                 </small>
                             </div>
@@ -524,13 +523,13 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <div class="form-group">
                                 <label for="canonical_url">Canonical URL</label>
                                 <input type="url" name="canonical_url" id="canonical_url" class="input" value="<?= htmlspecialchars($entry['canonical_url'] ?? '') ?>" placeholder="https://example.com/preferred-url">
-                                <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                <small class="form-text">
                                     Optional — tell search engines the preferred URL if duplicates exist
                                 </small>
                             </div>
 
                             <div class="form-group">
-                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <label class="checkbox-label">
                                     <input type="checkbox" name="robots_noindex" id="robots_noindex" value="1" <?= !empty($entry['robots_noindex']) ? 'checked' : '' ?>>
                                     <span>Hide from search engines (noindex)</span>
                                 </label>
@@ -545,14 +544,14 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     <li>Your site template must output these fields — Birkly stores them; your HTML renders them.</li>
                                 </ul>
                                 <div class="form-group">
-                                    <label for="ai_summary">AI summary <span style="font-weight:400;color:var(--text-secondary)">(optional)</span></label>
+                                    <label for="ai_summary">AI summary <span class="u-fg-secondary u-weight-regular">(optional)</span></label>
                                     <textarea name="ai_summary" id="ai_summary" class="input" rows="2" placeholder="One or two sentences in plain language for AI assistants and crawlers"><?= htmlspecialchars($entry['ai_summary'] ?? '') ?></textarea>
                                 </div>
                                 <div class="form-group">
                                     <label for="structured_data_json">Structured data (JSON-LD)</label>
                                     <textarea name="structured_data_json" id="structured_data_json" class="input" rows="6" placeholder='{"@context":"https://schema.org",...}'><?= htmlspecialchars($entry['structured_data_json'] ?? '') ?></textarea>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="generate-structured-data-btn" style="margin-top: 0.5rem;">Generate Article schema</button>
-                                    <small class="form-text" style="display: block; margin-top: 0.25rem; color: var(--text-secondary); font-size: 0.75rem;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="generate-structured-data-btn">Generate Article schema</button>
+                                    <small class="form-text">
                                         Paste into your template's <code>&lt;head&gt;</code> as <code>&lt;script type="application/ld+json"&gt;</code>
                                     </small>
                                 </div>
@@ -570,7 +569,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <?php if (!empty($sidebar['collection_template'])): ?>
                                     <div class="templating-section">
                                         <div class="section-header"><h4>Collection template</h4></div>
-                                        <p class="text-muted" style="font-size:0.8125rem;margin:0;"><code><?= htmlspecialchars($sidebar['collection_template']) ?></code></p>
+                                        <p class="u-text-xs u-fg-secondary"><code><?= htmlspecialchars($sidebar['collection_template']) ?></code></p>
                                     </div>
                                 <?php endif; ?>
 
@@ -619,7 +618,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="text-muted">No fields defined yet. Add fields to see their slugs.</p>
+                                            <p class="u-text-sm u-fg-secondary">No fields defined yet. Add fields to see their slugs.</p>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -741,457 +740,6 @@ echo htmlspecialchars($collectionExample);
     </div>
 </div>
 
-<style>
-/* Sidebar Tabs Styles */
-.sidebar-tabs {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-.tab-nav {
-    display: flex;
-    border-bottom: 1px solid var(--border-light);
-    background: var(--bg-secondary);
-}
-
-.tab-btn {
-    flex: 1;
-    padding: var(--space-3) var(--space-4);
-    border: none;
-    background: transparent;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    transition: all 0.2s;
-}
-
-.tab-btn:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-}
-
-.tab-btn.active {
-    color: var(--primary-600);
-    border-bottom-color: var(--primary-600);
-    background: var(--bg-primary);
-}
-
-.tab-content {
-    padding: var(--space-4);
-}
-
-.tab-pane {
-    display: none;
-}
-
-.tab-pane.active {
-    display: block;
-}
-
-/* Entry editor language tabs (multilanguage collections) */
-.entry-language-tabs.language-tabs-container {
-    margin-bottom: var(--space-6, 1.5rem);
-}
-
-.entry-language-tabs .language-tabs-nav {
-    display: flex;
-    gap: var(--space-2, 0.5rem);
-    border-bottom: 2px solid var(--border-color, #e5e7eb);
-    margin-bottom: var(--space-4, 1rem);
-}
-
-.entry-language-tabs .language-tab-btn {
-    padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-secondary, #72746F);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin-bottom: -2px;
-}
-
-.entry-language-tabs .language-tab-btn:hover {
-    color: var(--text-primary, #20221D);
-    border-bottom-color: var(--border-color, #e5e7eb);
-}
-
-.entry-language-tabs .language-tab-btn.active {
-    color: var(--text-primary, #20221D);
-    border-bottom-color: var(--color-dark, #1a1a1a);
-    font-weight: 600;
-}
-
-.entry-language-tabs .language-tab-content {
-    display: none;
-}
-
-.entry-language-tabs .language-tab-content.active {
-    display: block;
-}
-
-/* Templating Tab Styles */
-.templating-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-}
-
-.templating-intro {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    margin: 0 0 var(--space-4) 0;
-}
-
-.templating-intro a {
-    color: var(--primary-600);
-    text-decoration: underline;
-}
-
-.templating-section {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-3) var(--space-4);
-    background: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-light);
-}
-
-.section-header h4 {
-    margin: 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.field-slugs-list {
-    padding: var(--space-3) var(--space-4);
-}
-
-.field-slug-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-2) 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.field-slug-item:last-child {
-    border-bottom: none;
-}
-
-.field-slug-label {
-    font-size: 0.875rem;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.field-slug-value {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-}
-
-.field-slug-value code {
-    background: var(--bg-primary);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.813rem;
-    color: var(--primary-700);
-    border: 1px solid var(--border-light);
-}
-
-.copy-btn {
-    background: transparent;
-    border: none;
-    padding: var(--space-1);
-    cursor: pointer;
-    color: var(--text-secondary);
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.copy-btn:hover {
-    background: var(--bg-hover);
-    color: var(--text-primary);
-}
-
-.copy-btn:active {
-    transform: scale(0.95);
-}
-
-.code-example {
-    margin: 0;
-    padding: var(--space-4);
-    background: var(--bg-primary);
-    border: none;
-    border-radius: 0;
-    overflow-x: auto;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.813rem;
-    line-height: 1.6;
-    color: var(--text-primary);
-}
-
-.code-example code {
-    background: transparent;
-    padding: 0;
-    border: none;
-    color: inherit;
-    font-family: inherit;
-    font-size: inherit;
-    white-space: pre;
-}
-
-/* Entry Information Section */
-.entry-info-section {
-    background: var(--bg-secondary, #f9fafb);
-    border: 1px solid var(--border-light, #e5e7eb);
-    border-radius: var(--radius-md, 0.5rem);
-    padding: var(--space-4, 1rem);
-    margin-bottom: var(--space-4, 1rem);
-}
-
-.entry-info-item {
-    margin-bottom: var(--space-3, 0.75rem);
-}
-
-.entry-info-item:last-child {
-    margin-bottom: 0;
-}
-
-.entry-info-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-3, 0.75rem);
-    margin-bottom: var(--space-3, 0.75rem);
-}
-
-.entry-info-row:last-child {
-    margin-bottom: 0;
-}
-
-.entry-info-item.entry-info-half {
-    margin-bottom: 0;
-}
-
-.entry-info-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--text-secondary, #6b7280);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: var(--space-1, 0.25rem);
-}
-
-.entry-info-value {
-    font-size: 0.875rem;
-    color: var(--text-primary, #111827);
-    line-height: 1.5;
-}
-
-.entry-info-id {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.813rem;
-    background: var(--bg-primary, #ffffff);
-    padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-    border-radius: var(--radius-sm, 0.25rem);
-    border: 1px solid var(--border-light, #e5e7eb);
-    word-break: break-all;
-}
-
-.entry-info-date {
-    font-weight: 500;
-    color: var(--text-primary, #111827);
-    margin-bottom: 0.125rem;
-}
-
-.entry-info-time {
-    font-size: 0.813rem;
-    color: var(--text-secondary, #6b7280);
-}
-
-.entry-info-user-name {
-    font-weight: 500;
-    color: var(--text-primary, #111827);
-    margin-bottom: 0.125rem;
-}
-
-.entry-info-user-email {
-    font-size: 0.813rem;
-    color: var(--text-secondary, #6b7280);
-}
-
-.entry-revisions-section {
-    background: var(--bg-secondary, #f9fafb);
-    border: 1px solid var(--border-light, #e5e7eb);
-    border-radius: var(--radius-md, 0.5rem);
-    padding: var(--space-4, 1rem);
-    margin-bottom: var(--space-4, 1rem);
-}
-
-.entry-revisions-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2, 0.5rem);
-}
-
-.entry-revision-item {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: var(--space-3, 0.75rem);
-    padding: var(--space-3, 0.75rem);
-    border: 1px solid var(--border-light, #e5e7eb);
-    border-radius: var(--radius-sm, 0.375rem);
-    background: var(--bg-primary, #fff);
-}
-
-.entry-revision-item.is-current {
-    border-color: var(--primary-300, #93c5fd);
-    background: var(--primary-50, #eff6ff);
-}
-
-.entry-revision-meta {
-    min-width: 0;
-}
-
-.entry-revision-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-primary, #111827);
-}
-
-.entry-revision-subtitle {
-    font-size: 0.8125rem;
-    color: var(--text-secondary, #6b7280);
-    margin-top: 0.125rem;
-}
-
-.entry-revision-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2, 0.5rem);
-    flex-shrink: 0;
-}
-
-.entry-revisions-empty,
-.entry-revisions-feedback {
-    font-size: 0.8125rem;
-    color: var(--text-secondary, #6b7280);
-}
-
-.entry-revisions-feedback.is-error {
-    color: var(--danger-600, #dc2626);
-}
-
-.entry-revisions-feedback.is-success {
-    color: var(--success-600, #16a34a);
-}
-
-.entry-save-success-banner {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3, 0.75rem);
-    margin: 0 0 var(--space-4, 1rem);
-    padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-    background: linear-gradient(90deg, rgba(22, 163, 74, 0.12), rgba(22, 163, 74, 0.04));
-    border: 1px solid rgba(22, 163, 74, 0.35);
-    border-radius: var(--radius-md, 0.5rem);
-    color: var(--success-700, #15803d);
-    font-weight: 600;
-    transform: translateY(-8px);
-    opacity: 0;
-    transition: opacity 0.35s ease, transform 0.35s ease;
-}
-
-.entry-save-success-banner.is-visible {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-.entry-save-success-banner__icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 50%;
-    background: var(--success-500, #22c55e);
-    color: #fff;
-    font-size: 0.875rem;
-    flex-shrink: 0;
-}
-
-.entry-save-success-body {
-    text-align: center;
-    padding: var(--space-l, 1.5rem) var(--space-m, 1rem);
-}
-
-.entry-save-success-icon {
-    width: 3.5rem;
-    height: 3.5rem;
-    margin: 0 auto var(--space-m, 1rem);
-    border-radius: 50%;
-    background: var(--primary-100, #d1fae5);
-    color: var(--primary-700, #047857);
-    font-size: 1.75rem;
-    line-height: 3.5rem;
-    font-weight: 700;
-    animation: entry-save-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes entry-save-pop {
-    0% { transform: scale(0.6); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-.entry-save-success-meta {
-    font-size: 0.875rem;
-    line-height: 1.55;
-    color: var(--text-secondary, #72746F);
-    margin: 0 0 var(--space-m, 1rem);
-}
-
-.entry-save-success-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-s, 0.75rem);
-    justify-content: center;
-}
-
-.main-actions-bar--saved .btn-primary,
-.main-actions-bar--saving .btn-primary {
-    transition: box-shadow 0.3s ease, opacity 0.2s ease;
-}
-
-.main-actions-bar--saved .btn-primary {
-    box-shadow: 0 0 0 3px rgba(82, 196, 154, 0.35);
-}
-
-.main-actions-bar--saving .btn-primary {
-    opacity: 0.85;
-    pointer-events: none;
-}
-</style>
 
 <?php if (!empty($fieldtypeAssets['js_files']) && is_array($fieldtypeAssets['js_files'])): ?>
     <?php foreach ($fieldtypeAssets['js_files'] as $jsFile): ?>

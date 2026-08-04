@@ -430,7 +430,7 @@
 
     function appendCollectionsGrid(parent, group, groupId) {
         const grid = document.createElement('div');
-        grid.className = 'grid group-collections drop-zone';
+        grid.className = 'u-grid-auto group-collections drop-zone';
         grid.dataset.groupId = groupId;
 
         let groupCollections = collections.filter((col) =>
@@ -565,57 +565,67 @@
 
     function renderEmptyCollectionsState() {
         const wrap = document.createElement('div');
-        wrap.className = 'content-empty-state card';
+        wrap.className = 'u-stack-6';
+
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
 
         const iconWrap = document.createElement('div');
-        iconWrap.className = 'empty-state__icon';
+        iconWrap.className = 'empty-state-icon';
         iconWrap.setAttribute('aria-hidden', 'true');
         iconWrap.innerHTML = icon('stack', { size: 32 });
 
         const title = document.createElement('h2');
-        title.className = 'content-empty-state__title';
+        title.className = 'empty-state-title';
         title.textContent = 'Create your first collection';
 
         const message = document.createElement('p');
-        message.className = 'content-empty-state__message';
+        message.className = 'empty-state-text';
         message.textContent = 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.';
 
         const actions = document.createElement('div');
-        actions.className = 'content-empty-state__actions';
+        actions.className = 'empty-state-actions';
         const createBtn = document.createElement('a');
         createBtn.className = 'btn btn-primary';
         createBtn.href = adminUrl('collection-editor');
         createBtn.textContent = 'New collection';
         actions.appendChild(createBtn);
 
-        wrap.appendChild(iconWrap);
-        wrap.appendChild(title);
-        wrap.appendChild(message);
-        wrap.appendChild(actions);
+        empty.appendChild(iconWrap);
+        empty.appendChild(title);
+        empty.appendChild(message);
+        empty.appendChild(actions);
+        wrap.appendChild(empty);
 
         const selectable = (starterTemplates || []).filter((t) => t && t.id && t.id !== 'blank' && t.selectable !== false);
         if (selectable.length > 0) {
+            const templates = document.createElement('section');
+            templates.className = 'u-stack-3';
+
             const templatesHeading = document.createElement('h3');
-            templatesHeading.className = 'content-empty-state__templates-title';
+            templatesHeading.className = 'section-title';
             templatesHeading.textContent = 'Or start with a template';
 
             const grid = document.createElement('div');
-            grid.className = 'content-starter-template-grid';
+            grid.className = 'u-grid-auto';
 
             selectable.slice(0, 4).forEach((template) => {
                 const card = document.createElement('button');
                 card.type = 'button';
-                card.className = 'content-starter-template-card';
-                card.innerHTML = '<strong>' + escapeHtml(template.label || template.id) + '</strong>'
-                    + '<span>' + escapeHtml(template.description || '') + '</span>';
+                card.className = 'card card--interactive card--compact starter-template-card';
+                card.innerHTML = '<div class="card-body u-stack-1">'
+                    + '<strong class="card-title">' + escapeHtml(template.label || template.id) + '</strong>'
+                    + '<span class="u-text-sm u-fg-secondary">' + escapeHtml(template.description || '') + '</span>'
+                    + '</div>';
                 card.addEventListener('click', function () {
                     installStarterTemplate(template.id, card);
                 });
                 grid.appendChild(card);
             });
 
-            wrap.appendChild(templatesHeading);
-            wrap.appendChild(grid);
+            templates.appendChild(templatesHeading);
+            templates.appendChild(grid);
+            wrap.appendChild(templates);
         }
 
         return wrap;
@@ -629,10 +639,10 @@
 
     async function installStarterTemplate(templateId, buttonEl) {
         if (!templateId || buttonEl?.disabled) return;
-        const originalText = buttonEl?.textContent;
+        const originalMarkup = buttonEl?.innerHTML;
         if (buttonEl) {
             buttonEl.disabled = true;
-            buttonEl.textContent = 'Installing…';
+            buttonEl.setAttribute('aria-busy', 'true');
         }
         try {
             const response = await fetch(apiUrl('/api/demo.php?action=install_starter'), {
@@ -660,7 +670,10 @@
             }
             if (buttonEl) {
                 buttonEl.disabled = false;
-                buttonEl.textContent = originalText || 'Install';
+                buttonEl.removeAttribute('aria-busy');
+                if (typeof originalMarkup === 'string') {
+                    buttonEl.innerHTML = originalMarkup;
+                }
             }
         }
     }
@@ -708,7 +721,7 @@
         header.appendChild(actions);
 
         const grid = document.createElement('div');
-        grid.className = 'grid ungrouped-collections drop-zone';
+        grid.className = 'u-grid-auto ungrouped-collections drop-zone';
         grid.dataset.groupId = 'ungrouped';
 
         if (collectionsList.length === 0) {
@@ -728,19 +741,19 @@
         return section;
     }
 
-    function renderCollectionIcon(collection, title) {
+    function renderCollectionIcon(collection, header) {
         if (collection.icon) {
             const icon = document.createElement('span');
             icon.className = 'collection-icon';
             icon.textContent = collection.icon;
             icon.setAttribute('aria-hidden', 'true');
-            title.insertBefore(icon, title.firstChild);
+            header.appendChild(icon);
         } else if (collection.icon_key) {
             const icon = document.createElement('span');
             icon.className = 'collection-icon-key';
             icon.textContent = collection.icon_key.slice(0, 2).toUpperCase();
             icon.title = collection.icon_key;
-            title.insertBefore(icon, title.firstChild);
+            header.appendChild(icon);
         }
     }
 
@@ -753,30 +766,21 @@
         const header = document.createElement('div');
         header.className = 'collection-header';
 
+        header.appendChild(createDragHandle('Drag to reorder'));
+        renderCollectionIcon(collection, header);
+
         const title = document.createElement('h3');
-        title.className = 'title';
-
-        const dragHandle = createDragHandle('Drag to reorder');
-        const titleText = document.createElement('span');
-        titleText.className = 'collection-title';
-        titleText.textContent = collection.name || 'Untitled';
-
-        title.appendChild(dragHandle);
-        renderCollectionIcon(collection, title);
-        title.appendChild(titleText);
-
-        const description = document.createElement('div');
-        description.className = 'collection-description';
-        const descP = document.createElement('p');
-        const descText = (collection.description || '').trim();
-        descP.textContent = descText;
-        if (!descText) {
-            description.style.display = 'none';
-        }
-        description.appendChild(descP);
-
+        title.className = 'card-title collection-title';
+        title.textContent = collection.name || 'Untitled';
         header.appendChild(title);
-        header.appendChild(description);
+
+        const descText = (collection.description || '').trim();
+        let description = null;
+        if (descText) {
+            description = document.createElement('p');
+            description.className = 'collection-description';
+            description.textContent = descText;
+        }
 
         const footer = document.createElement('div');
         footer.className = 'collection-footer';
@@ -816,18 +820,18 @@
         menuDropdown.className = 'dropdown-menu dropdown-menu-right collection-menu-dropdown';
 
         const viewEntriesItem = document.createElement('a');
-        viewEntriesItem.className = 'dropdown-item collection-menu-item';
+        viewEntriesItem.className = 'dropdown-item';
         viewEntriesItem.href = adminUrl('entries', { collection: collection.slug });
         viewEntriesItem.innerHTML = icon('file-text', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">View Entries</span>';
 
         const editItem = document.createElement('a');
-        editItem.className = 'dropdown-item collection-menu-item';
+        editItem.className = 'dropdown-item';
         editItem.href = adminUrl('collection-editor', { collection: collection.slug });
         editItem.innerHTML = icon('pencil-simple', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Edit Collection</span>';
 
         const duplicateItem = document.createElement('button');
         duplicateItem.type = 'button';
-        duplicateItem.className = 'dropdown-item collection-menu-item';
+        duplicateItem.className = 'dropdown-item';
         duplicateItem.innerHTML = icon('copy', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Duplicate Collection</span>';
         duplicateItem.onclick = (e) => {
             e.preventDefault();
@@ -838,7 +842,7 @@
 
         const deleteItem = document.createElement('button');
         deleteItem.type = 'button';
-        deleteItem.className = 'dropdown-item dropdown-item-danger collection-menu-item collection-menu-item-danger';
+        deleteItem.className = 'dropdown-item dropdown-item-danger';
         deleteItem.innerHTML = icon('trash', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Delete Collection</span>';
         deleteItem.onclick = (e) => {
             e.preventDefault();
@@ -858,6 +862,9 @@
         footer.appendChild(menuWrapper);
 
         card.appendChild(header);
+        if (description) {
+            card.appendChild(description);
+        }
         card.appendChild(footer);
 
         card.addEventListener('click', async function (e) {

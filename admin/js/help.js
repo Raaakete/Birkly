@@ -96,16 +96,16 @@
 
     function renderInline(text) {
         let html = escapeHtml(text);
-        html = html.replace(/`([^`]+)`/g, '<code class="help-inline-code">$1</code>');
+        html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, href) => {
             const topicId = resolveTopicIdFromHref(href);
             if (topicId) {
-                return '<a href="#" class="help-inline-link help-topic-link" data-help-topic-link="' +
+                return '<a href="#" class="help-topic-link" data-help-topic-link="' +
                     escapeHtml(topicId) + '">' + escapeHtml(label) + '</a>';
             }
             if (/^https?:\/\//i.test(href)) {
-                return '<a href="' + escapeHtml(href) + '" class="help-inline-link" target="_blank" rel="noopener">' +
+                return '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener">' +
                     escapeHtml(label) + '</a>';
             }
             return '<span class="help-link-muted">' + escapeHtml(label) + '</span>';
@@ -113,11 +113,21 @@
         return html;
     }
 
+    const CALLOUT_TONES = {
+        note: 'callout-info',
+        tip: 'callout-success',
+        warning: 'callout-warning',
+        example: 'callout-neutral',
+        action: 'callout-accent',
+        test: 'callout-neutral',
+    };
+
     function renderCallout(type, body) {
         const label = type.charAt(0).toUpperCase() + type.slice(1);
-        return '<div class="help-callout help-callout-' + escapeHtml(type) + '">' +
-            '<div class="help-callout-label">' + escapeHtml(label) + '</div>' +
-            '<div class="help-callout-body">' + renderInline(body) + '</div></div>';
+        const tone = CALLOUT_TONES[type] || 'callout-neutral';
+        return '<div class="callout callout--block ' + tone + '">' +
+            '<div class="callout-title">' + escapeHtml(label) + '</div>' +
+            '<div class="callout-body">' + renderInline(body) + '</div></div>';
     }
 
     function renderMarkdown(md) {
@@ -159,7 +169,7 @@
             }
 
             if (/^---+$/.test(trimmed)) {
-                blocks.push('<hr class="help-hr">');
+                blocks.push('<hr>');
                 i++;
                 continue;
             }
@@ -186,7 +196,7 @@
                 if (tableLines.length >= 2) {
                     const headerCells = tableLines[0].split('|').filter((c) => c.trim() !== '');
                     const bodyLines = tableLines.slice(2);
-                    let table = '<div class="help-table-wrap"><table><thead><tr>';
+                    let table = '<div class="table-container"><table class="table table--compact"><thead><tr>';
                     headerCells.forEach((c) => { table += '<th>' + renderInline(c.trim()) + '</th>'; });
                     table += '</tr></thead><tbody>';
                     bodyLines.forEach((row) => {
@@ -212,7 +222,7 @@
                 if (calloutMatch) {
                     blocks.push(renderCallout(calloutMatch[1].toLowerCase(), calloutMatch[2]));
                 } else {
-                    blocks.push('<blockquote class="help-blockquote">' + renderInline(quoteText) + '</blockquote>');
+                    blocks.push('<blockquote>' + renderInline(quoteText) + '</blockquote>');
                 }
                 continue;
             }
@@ -223,7 +233,7 @@
                     items.push(lines[i].trim().replace(/^-\s+/, ''));
                     i++;
                 }
-                blocks.push('<ul class="help-list">' +
+                blocks.push('<ul>' +
                     items.map((item) => '<li>' + renderInline(item) + '</li>').join('') +
                     '</ul>');
                 continue;
@@ -235,7 +245,7 @@
                     items.push(lines[i].trim().replace(/^\d+\.\s+/, ''));
                     i++;
                 }
-                blocks.push('<ol class="help-list help-list-ordered">' +
+                blocks.push('<ol>' +
                     items.map((item) => '<li>' + renderInline(item) + '</li>').join('') +
                     '</ol>');
                 continue;
@@ -262,7 +272,7 @@
         html = html.replace(
             /(<h[23][^>]*help-doc-label-further[^>]*>[\s\S]*?<\/h[23]>)([\s\S]*?)(?=<h[12]|$)/i,
             (_, heading, body) =>
-                '<section class="help-further-reading">' + heading + body + '</section>'
+                '<section class="card u-p-6">' + heading + body + '</section>'
         );
 
         return html;
@@ -367,7 +377,7 @@
         navRoot.innerHTML = groups.map((group) => {
             const isOpen = group.id === activeSection || group.topics.some((t) => t.id === currentId);
             const items = group.topics.map((topic) => `
-                <li class="help-nav-item">
+                <li>
                     <a href="#" class="help-nav-link ${topic.id === currentId ? 'active' : ''}"
                        data-help-topic-link="${escapeHtml(topic.id)}">
                         ${escapeHtml(topic.title)}
@@ -398,12 +408,12 @@
         const content = document.getElementById('help-topic-content');
         if (!content) return;
 
-        content.innerHTML = '<p class="text-secondary">Loading…</p>';
+        content.innerHTML = '<p class="loading-state">Loading…</p>';
 
         try {
             let banner = '';
             if (manifest && manifest._loadedFrom === 'offline') {
-                banner = '<div class="alert alert-info help-offline-banner">' +
+                banner = '<div class="help-offline-banner callout callout-info callout--block u-mb-4">' +
                     escapeHtml(manifest._offlineMessage || 'Offline Help mode') + '</div>';
             }
             if (!topic.snapshot) {
@@ -418,12 +428,12 @@
 
             const sectionLabel = navSectionLabel(navSectionForTopic(topic));
             content.innerHTML = banner +
-                '<div class="help-topic-meta"><span class="help-topic-category">' + escapeHtml(sectionLabel) + '</span></div>' +
-                '<article class="markdown-content help-article">' + renderMarkdown(md) + '</article>';
+                '<div class="u-mb-4"><span class="badge badge-accent">' + escapeHtml(sectionLabel) + '</span></div>' +
+                '<article class="prose markdown-content">' + renderMarkdown(md) + '</article>';
 
             bindTopicLinks(content);
         } catch (err) {
-            content.innerHTML = '<div class="alert alert-info"><p>Could not load topic: ' + escapeHtml(err.message) + '</p></div>';
+            content.innerHTML = '<p class="error-state">Could not load topic: ' + escapeHtml(err.message) + '</p>';
         }
 
         const results = document.getElementById('help-search-results');
@@ -441,7 +451,7 @@
 
         function renderResults(matches) {
             if (!matches.length) {
-                results.innerHTML = '<div class="help-search-result-item" style="cursor:default;color:var(--text-secondary)">No matches</div>';
+                results.innerHTML = '<div class="help-search-result-item u-fg-secondary">No matches</div>';
                 results.classList.add('is-open');
                 return;
             }
@@ -500,7 +510,7 @@
         } catch (err) {
             const content = document.getElementById('help-topic-content');
             if (content) {
-                content.innerHTML = '<div class="alert alert-error">Help system error: ' + escapeHtml(err.message) + '</div>';
+                content.innerHTML = '<p class="error-state">Help system error: ' + escapeHtml(err.message) + '</p>';
             }
         }
     });

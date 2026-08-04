@@ -1,21 +1,32 @@
-/* P7 — Plugin admin pages share entries.html layout contract */
+/* ============================================
+   Birkly Admin — Plugin page chrome (P56)
+   ============================================
+
+   `.plugin-page` is a documented contract: every official plugin (commerce,
+   automation, events, user management) wraps its admin screen in it so the
+   screen inherits core page layout. `layout/main-content.css` declares the
+   base; this file is the variant plus the compatibility bridge that maps each
+   plugin's own tab / toolbar / docs dialect onto the P56 components.
+
+   Everything under plugins/ is outside P56-M9's edit scope, so the plugin-side
+   selectors below are KEPT (retokenised, not deleted). When a plugin adopts
+   .tabs / .tab / .main-actions-bar directly, its bridge rule here can go.
+   ============================================ */
 
 .plugin-page,
 .commerce-page.plugin-page,
 .automation-page.plugin-page,
 .events-page.plugin-page,
 .user-management-page.plugin-page {
-  padding: 0 0 2rem;
-  width: 100%;
   max-width: none;
   margin: 0;
+  padding: 0 0 var(--space-8);
 }
 
-.plugin-page-header {
-  padding-left: 0;
-  padding-right: 0;
-}
+.plugin-page-header { padding-inline: 0; }
 
+/* The breadcrumb .current segment is the page title — plugin toolbars must not
+   print a second one. */
 .plugin-page .payments-toolbar h1,
 .plugin-page .automation-toolbar h1,
 .plugin-page .events-toolbar h1,
@@ -23,217 +34,203 @@
   display: none;
 }
 
-/* Primary actions — top-left inside active tab content */
+/* ============================================
+   Toolbars
+   ============================================ */
 .plugin-page .tab-panel-actions {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
   flex-wrap: wrap;
-  margin-bottom: var(--space-4, 1rem);
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--space-2);
+  margin-block-end: var(--space-4);
 }
 
 .plugin-page .main-actions-bar {
   justify-content: flex-start;
-  margin-bottom: var(--space-4, 1rem);
+  margin-block-end: var(--space-4);
 }
 
 .plugin-page .main-actions-bar .plugin-actions-left {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
-  margin-right: auto;
+  gap: var(--space-2);
+  margin-inline-end: auto;
 }
 
-/* Unified tab strip (commerce reference) */
+/* ============================================
+   Tab bridge — plugin tab dialects rendered as the .tabs component
+   ============================================ */
 .plugin-page .payments-tabs,
 .plugin-page .commerce-tabs,
 .plugin-page .events-tabs,
 .plugin-page .settings-tabs.plugin-tabs .tabs {
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-  margin-bottom: var(--space-6, 1.5rem);
   flex-wrap: wrap;
+  gap: 0;
+  margin-block-end: var(--space-6);
+  border-block-end: 1px solid var(--border-subtle);
+  background: transparent;
   overflow-x: auto;
   overflow-y: hidden;
-  background: transparent;
-  border-radius: 0;
-  -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
 }
 
 .plugin-page .payments-tab,
 .plugin-page .events-tab,
 .plugin-page .settings-tabs.plugin-tabs .tab {
-  background: none;
-  border: none;
-  padding: 0.75rem 1.25rem;
-  cursor: pointer;
-  font-size: 0.9375rem;
-  color: var(--text-secondary, #6b7280);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  font-weight: 500;
-  white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-block-end: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .plugin-page .payments-tab.active,
 .plugin-page .events-tab.active,
 .plugin-page .settings-tabs.plugin-tabs .tab.active {
-  color: var(--text-primary, #111827);
-  border-bottom-color: var(--primary-600, #52C49A);
-  font-weight: 600;
+  border-block-end-color: var(--accent);
   background: transparent;
+  color: var(--text-primary);
 }
 
-.plugin-page .payments-tab-panel[hidden],
-.plugin-page .events-tab-panel[hidden] {
-  display: none !important;
-}
-
-.plugin-page .payments-panel-header {
-  margin-bottom: var(--space-4, 1rem);
-}
+.plugin-page .payments-panel-header { margin-block-end: var(--space-4); }
 
 .plugin-page .payments-panel-header h2 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
 }
 
-/* Site Users — readable form width on wide screens */
-.user-management-page.plugin-page .settings-form {
-  max-width: 960px;
-}
+/* ============================================
+   Site Users — readable form width on wide screens
+   ============================================ */
+.user-management-page.plugin-page .settings-form { max-width: 60rem; }
 
 .user-management-page.plugin-page .settings-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4, 1rem);
+  gap: var(--space-4);
 }
 
-.user-management-page.plugin-page .settings-stack .card {
-  margin: 0;
-}
+.user-management-page.plugin-page .settings-stack .card { margin: 0; }
 
 .user-management-page.plugin-page .settings-stack .section-header h2 {
   margin: 0;
-  font-size: 1.0625rem;
+  font-size: var(--text-lg);
 }
 
 .user-management-page.plugin-page .settings-stack .section-description,
 .user-management-page.plugin-page .settings-stack .text-muted {
-  color: var(--text-secondary, #6b7280);
-  font-size: 0.875rem;
-  margin: 0 0 var(--space-3, 0.75rem);
+  margin: 0 0 var(--space-3);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .user-management-page.plugin-page .settings-stack .form-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4, 1rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .user-management-page.plugin-page .settings-stack .form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .user-management-page.plugin-page .settings-stack .form-group label {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.user-management-page.plugin-page .settings-stack .form-group label input[type="checkbox"] {
-  margin-top: 0.2rem;
+  gap: var(--space-2);
+  font-weight: var(--weight-medium);
 }
 
 .user-management-page.plugin-page .settings-stack .form-group small {
   display: block;
-  margin-top: 0.35rem;
+  margin-block-start: var(--space-1);
 }
 
 .user-management-page.plugin-page #profile-collection-settings {
-  margin-top: var(--space-3, 0.75rem);
-  padding: var(--space-4, 1rem);
-  background: var(--bg-secondary, #f9fafb);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: 8px;
+  margin-block-start: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
 }
 
-@media (max-width: 768px) {
-  .user-management-page.plugin-page .settings-stack .form-row {
-    grid-template-columns: 1fr;
-  }
-}
+.user-management-page.plugin-page .settings-tab-panels .card { max-width: 100%; }
 
-.user-management-page.plugin-page .settings-tab-panels .card {
-  max-width: 100%;
-}
-
-/* In-plugin documentation panel */
+/* ============================================
+   In-plugin documentation panel (js/plugin-docs-tab.js)
+   ============================================ */
 .plugin-docs-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) 1fr;
-  gap: var(--space-6, 1.5rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
   align-items: start;
 }
 
 .plugin-docs-nav {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  border-right: 1px solid var(--border-color, #e5e7eb);
-  padding-right: var(--space-4, 1rem);
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+@media (min-width: 768px) {
+  .plugin-docs-layout { grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); }
+
+  .plugin-docs-nav {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    padding-block-end: 0;
+    padding-inline-end: var(--space-4);
+    border-block-end: none;
+    border-inline-end: 1px solid var(--border-subtle);
+  }
 }
 
 .plugin-docs-nav-item {
-  text-align: left;
+  padding: var(--space-2) var(--space-3);
   border: none;
+  border-radius: var(--radius-sm);
   background: transparent;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-align: start;
   cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--text-secondary, #6b7280);
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
 }
 
 .plugin-docs-nav-item:hover,
 .plugin-docs-nav-item.is-active {
-  background: var(--bg-secondary, #f3f4f6);
-  color: var(--text-primary, #111827);
-  font-weight: 600;
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
 }
 
 .plugin-docs-content {
   min-width: 0;
-  max-width: 900px;
+  max-width: var(--measure-lg);
 }
+
+/* plugin-docs-tab.js emits bare .markdown-content, not .prose — give the
+   headings the same rhythm until that renderer adopts .prose. */
+.plugin-docs-content .markdown-content > * + * { margin-block-start: var(--space-4); }
 
 .plugin-docs-content .markdown-content h1,
 .plugin-docs-content .markdown-content h2,
 .plugin-docs-content .markdown-content h3 {
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
-}
-
-.plugin-docs-content pre {
-  overflow-x: auto;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 6px;
-}
-
-@media (max-width: 768px) {
-  .plugin-docs-layout {
-    grid-template-columns: 1fr;
-  }
-  .plugin-docs-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    border-right: none;
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
-    padding-right: 0;
-    padding-bottom: var(--space-3, 0.75rem);
-  }
+  margin-block-start: var(--space-6);
+  margin-block-end: var(--space-2);
 }

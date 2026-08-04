@@ -118,7 +118,7 @@
     function setLoading(containerId, message) {
         var container = document.getElementById(containerId);
         if (!container) return;
-        container.innerHTML = '<div class="loading-state"><div class="spinner"></div>' +
+        container.innerHTML = '<div class="loading-state">' +
             (message ? '<p>' + escapeHtml(message) + '</p>' : '') + '</div>';
     }
 
@@ -148,7 +148,7 @@
         var container = document.getElementById('project-simple-file-list');
         if (!container) return Promise.resolve();
 
-        container.innerHTML = '<div class="loading-state"><div class="spinner"></div></div>';
+        container.innerHTML = '<div class="loading-state"></div>';
         return loadFileTree('').then(function (payload) {
             renderSimpleFileList((payload.data && payload.data.entries) || []);
         }).catch(function (error) {

@@ -40,8 +40,10 @@
             '</div>' +
             '<div class="hosting-wizard-panels">' +
             '<section class="hosting-wizard-panel active" data-step-panel="1">' +
+            '<div class="u-stack-1">' +
             '<h3 class="hosting-wizard-panel-title">' + escapeHtml(t('hosting_wizard_cms_title', 'Where do you log in?')) + '</h3>' +
             '<p class="hosting-wizard-panel-desc">' + escapeHtml(t('hosting_wizard_cms_desc', 'Admin panel, API, and birkly-client.js base URL.')) + '</p>' +
+            '</div>' +
             '<div class="form-group">' +
             '<label for="' + id + '-cms-url">' + escapeHtml(t('hosting_wizard_cms_url', 'CMS URL')) + '</label>' +
             '<div class="input-with-action">' +
@@ -88,7 +90,7 @@
             '</section>' +
             '<section class="hosting-wizard-panel" data-step-panel="3" hidden>' +
             '<h3 class="hosting-wizard-panel-title">' + escapeHtml(t('hosting_wizard_preview_title', 'Preview')) + '</h3>' +
-            '<div class="hosting-wizard-preview card">' +
+            '<div class="hosting-wizard-preview card card--padded">' +
             '<p class="hosting-wizard-preview-line">' + escapeHtml(t('hosting_wizard_preview_manage', 'You manage content at')) + ' <strong class="hosting-wizard-preview-cms">—</strong></p>' +
             '<p class="hosting-wizard-preview-line hosting-wizard-preview-public-wrap" hidden>' + escapeHtml(t('hosting_wizard_preview_visitors', 'Visitors see')) + ' <strong class="hosting-wizard-preview-public">—</strong></p>' +
             '<p class="hosting-wizard-preview-line hosting-wizard-preview-none">' + escapeHtml(t('hosting_wizard_preview_none', 'No public site configured on this install.')) + '</p>' +

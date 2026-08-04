@@ -1,0 +1,511 @@
+/* ============================================
+   Birkly Admin — Helper classes (u-*)
+   ============================================
+
+   The composition layer. Pages should be built from components + these
+   helpers and ship ZERO page-specific CSS.
+
+   RULES (brief §6.1)
+   - Prefix: u-  (guarantees no collision with plugin-private CSS)
+   - NO !important, ever. If a helper loses a specificity fight, the
+     component is too specific — fix the component.
+   - Single-purpose and immutable. Helpers never set component internals.
+   - Rule of three: if the same 3+ helper combo recurs on 3+ surfaces,
+     promote it to a component.
+   - Responsive variants use an explicit suffix: u-hide-below-md
+
+   Reference: internal/planning/reviews/P56-M1-design-language-brief.md §6
+   ============================================ */
+
+/* ============================================
+   1. Layout primitives
+   The highest-value family: these replace hand-rolled flex/grid chrome.
+   ============================================ */
+
+/* Vertical stack — owns vertical rhythm so children never set margins */
+.u-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.u-stack-0 { display: flex; flex-direction: column; gap: 0; }
+.u-stack-1 { display: flex; flex-direction: column; gap: var(--space-1); }
+.u-stack-2 { display: flex; flex-direction: column; gap: var(--space-2); }
+.u-stack-3 { display: flex; flex-direction: column; gap: var(--space-3); }
+.u-stack-4 { display: flex; flex-direction: column; gap: var(--space-4); }
+.u-stack-5 { display: flex; flex-direction: column; gap: var(--space-5); }
+.u-stack-6 { display: flex; flex-direction: column; gap: var(--space-6); }
+.u-stack-8 { display: flex; flex-direction: column; gap: var(--space-8); }
+.u-stack-10 { display: flex; flex-direction: column; gap: var(--space-10); }
+
+/* Flow — margin-based rhythm for prose / rich text where flex breaks layout */
+.u-flow > * + * { margin-block-start: var(--space-4); }
+.u-flow-2 > * + * { margin-block-start: var(--space-2); }
+.u-flow-3 > * + * { margin-block-start: var(--space-3); }
+.u-flow-6 > * + * { margin-block-start: var(--space-6); }
+
+/* Horizontal row — no wrap */
+.u-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+}
+.u-row-1 { display: flex; align-items: center; gap: var(--space-1); }
+.u-row-2 { display: flex; align-items: center; gap: var(--space-2); }
+.u-row-3 { display: flex; align-items: center; gap: var(--space-3); }
+.u-row-4 { display: flex; align-items: center; gap: var(--space-4); }
+.u-row-6 { display: flex; align-items: center; gap: var(--space-6); }
+
+/* Cluster — wrapping row of related items */
+.u-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.u-cluster-3 { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.u-cluster-4 { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); }
+
+/* Split — pushes last child to the far edge */
+.u-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.u-split-start { align-items: flex-start; }
+
+/* Center */
+.u-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.u-center-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* Grid */
+.u-grid { display: grid; gap: var(--space-4); }
+.u-grid-2 { display: grid; gap: var(--space-4); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.u-grid-3 { display: grid; gap: var(--space-4); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.u-grid-4 { display: grid; gap: var(--space-4); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.u-grid-auto { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.u-grid-auto-sm { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+.u-grid-auto-lg { display: grid; gap: var(--space-6); grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+
+/* Main + aside layout (editors, detail pages) */
+.u-sidebar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+/* Flex child behaviour */
+.u-fill { flex: 1 1 auto; min-width: 0; }
+.u-shrink-0 { flex-shrink: 0; }
+.u-grow-0 { flex-grow: 0; }
+.u-wrap { flex-wrap: wrap; }
+.u-nowrap-flex { flex-wrap: nowrap; }
+.u-col { flex-direction: column; }
+.u-push-right { margin-inline-start: auto; }
+.u-push-bottom { margin-block-start: auto; }
+
+/* Alignment */
+.u-align-start { align-items: flex-start; }
+.u-align-center { align-items: center; }
+.u-align-end { align-items: flex-end; }
+.u-align-baseline { align-items: baseline; }
+.u-align-stretch { align-items: stretch; }
+.u-justify-start { justify-content: flex-start; }
+.u-justify-center { justify-content: center; }
+.u-justify-end { justify-content: flex-end; }
+.u-justify-between { justify-content: space-between; }
+.u-self-start { align-self: flex-start; }
+.u-self-center { align-self: center; }
+.u-self-end { align-self: flex-end; }
+
+/* Display */
+.u-block { display: block; }
+.u-inline-block { display: inline-block; }
+.u-inline { display: inline; }
+.u-flex { display: flex; }
+.u-inline-flex { display: inline-flex; }
+.u-contents { display: contents; }
+
+/* ============================================
+   2. Spacing
+   ============================================ */
+.u-m-0 { margin: 0; }
+.u-m-auto { margin: auto; }
+.u-mt-0 { margin-block-start: 0; }
+.u-mt-1 { margin-block-start: var(--space-1); }
+.u-mt-2 { margin-block-start: var(--space-2); }
+.u-mt-3 { margin-block-start: var(--space-3); }
+.u-mt-4 { margin-block-start: var(--space-4); }
+.u-mt-5 { margin-block-start: var(--space-5); }
+.u-mt-6 { margin-block-start: var(--space-6); }
+.u-mt-8 { margin-block-start: var(--space-8); }
+.u-mt-auto { margin-block-start: auto; }
+.u-mb-0 { margin-block-end: 0; }
+.u-mb-1 { margin-block-end: var(--space-1); }
+.u-mb-2 { margin-block-end: var(--space-2); }
+.u-mb-3 { margin-block-end: var(--space-3); }
+.u-mb-4 { margin-block-end: var(--space-4); }
+.u-mb-5 { margin-block-end: var(--space-5); }
+.u-mb-6 { margin-block-end: var(--space-6); }
+.u-mb-8 { margin-block-end: var(--space-8); }
+.u-ml-0 { margin-inline-start: 0; }
+.u-ml-1 { margin-inline-start: var(--space-1); }
+.u-ml-2 { margin-inline-start: var(--space-2); }
+.u-ml-3 { margin-inline-start: var(--space-3); }
+.u-ml-4 { margin-inline-start: var(--space-4); }
+.u-ml-auto { margin-inline-start: auto; }
+.u-mr-0 { margin-inline-end: 0; }
+.u-mr-1 { margin-inline-end: var(--space-1); }
+.u-mr-2 { margin-inline-end: var(--space-2); }
+.u-mr-3 { margin-inline-end: var(--space-3); }
+.u-mr-4 { margin-inline-end: var(--space-4); }
+.u-mx-auto { margin-inline: auto; }
+.u-mx-0 { margin-inline: 0; }
+.u-mx-2 { margin-inline: var(--space-2); }
+.u-mx-4 { margin-inline: var(--space-4); }
+.u-my-0 { margin-block: 0; }
+.u-my-1 { margin-block: var(--space-1); }
+.u-my-2 { margin-block: var(--space-2); }
+.u-my-3 { margin-block: var(--space-3); }
+.u-my-4 { margin-block: var(--space-4); }
+.u-my-6 { margin-block: var(--space-6); }
+.u-my-8 { margin-block: var(--space-8); }
+
+.u-p-0 { padding: 0; }
+.u-p-1 { padding: var(--space-1); }
+.u-p-2 { padding: var(--space-2); }
+.u-p-3 { padding: var(--space-3); }
+.u-p-4 { padding: var(--space-4); }
+.u-p-5 { padding: var(--space-5); }
+.u-p-6 { padding: var(--space-6); }
+.u-p-8 { padding: var(--space-8); }
+.u-pt-0 { padding-block-start: 0; }
+.u-pt-1 { padding-block-start: var(--space-1); }
+.u-pt-2 { padding-block-start: var(--space-2); }
+.u-pt-3 { padding-block-start: var(--space-3); }
+.u-pt-4 { padding-block-start: var(--space-4); }
+.u-pt-5 { padding-block-start: var(--space-5); }
+.u-pt-6 { padding-block-start: var(--space-6); }
+.u-pt-8 { padding-block-start: var(--space-8); }
+.u-pb-0 { padding-block-end: 0; }
+.u-pb-1 { padding-block-end: var(--space-1); }
+.u-pb-2 { padding-block-end: var(--space-2); }
+.u-pb-3 { padding-block-end: var(--space-3); }
+.u-pb-4 { padding-block-end: var(--space-4); }
+.u-pb-5 { padding-block-end: var(--space-5); }
+.u-pb-6 { padding-block-end: var(--space-6); }
+.u-pb-8 { padding-block-end: var(--space-8); }
+.u-px-0 { padding-inline: 0; }
+.u-px-1 { padding-inline: var(--space-1); }
+.u-px-2 { padding-inline: var(--space-2); }
+.u-px-3 { padding-inline: var(--space-3); }
+.u-px-4 { padding-inline: var(--space-4); }
+.u-px-5 { padding-inline: var(--space-5); }
+.u-px-6 { padding-inline: var(--space-6); }
+.u-py-0 { padding-block: 0; }
+.u-py-1 { padding-block: var(--space-1); }
+.u-py-2 { padding-block: var(--space-2); }
+.u-py-3 { padding-block: var(--space-3); }
+.u-py-4 { padding-block: var(--space-4); }
+.u-py-5 { padding-block: var(--space-5); }
+.u-py-6 { padding-block: var(--space-6); }
+
+.u-gap-0 { gap: 0; }
+.u-gap-1 { gap: var(--space-1); }
+.u-gap-2 { gap: var(--space-2); }
+.u-gap-3 { gap: var(--space-3); }
+.u-gap-4 { gap: var(--space-4); }
+.u-gap-5 { gap: var(--space-5); }
+.u-gap-6 { gap: var(--space-6); }
+.u-gap-8 { gap: var(--space-8); }
+.u-gap-x-2 { column-gap: var(--space-2); }
+.u-gap-x-4 { column-gap: var(--space-4); }
+.u-gap-y-2 { row-gap: var(--space-2); }
+.u-gap-y-4 { row-gap: var(--space-4); }
+
+/* ============================================
+   3. Typography
+   ============================================ */
+.u-text-2xs { font-size: var(--text-2xs); line-height: var(--leading-snug); }
+.u-text-xs { font-size: var(--text-xs); line-height: var(--leading-normal); }
+.u-text-sm { font-size: var(--text-sm); line-height: var(--leading-normal); }
+.u-text-base { font-size: var(--text-base); line-height: var(--leading-normal); }
+.u-text-md { font-size: var(--text-md); line-height: var(--leading-relaxed); }
+.u-text-lg { font-size: var(--text-lg); line-height: var(--leading-snug); letter-spacing: var(--tracking-tight); }
+.u-text-xl { font-size: var(--text-xl); line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
+.u-text-2xl { font-size: var(--text-2xl); line-height: var(--leading-tight); letter-spacing: var(--tracking-tight); }
+
+.u-weight-regular { font-weight: var(--weight-regular); }
+.u-weight-medium { font-weight: var(--weight-medium); }
+.u-weight-semibold { font-weight: var(--weight-semibold); }
+
+.u-leading-tight { line-height: var(--leading-tight); }
+.u-leading-normal { line-height: var(--leading-normal); }
+.u-leading-relaxed { line-height: var(--leading-relaxed); }
+
+.u-align-text-left { text-align: left; }
+.u-align-text-center { text-align: center; }
+.u-align-text-right { text-align: right; }
+
+.u-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.u-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.u-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.u-nowrap { white-space: nowrap; }
+.u-break-word { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Tabular figures — required on numeric table columns and stat values */
+.u-numeric { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.u-mono { font-family: var(--font-mono); }
+
+/* Uppercase micro-label — the ONLY sanctioned uppercase treatment */
+.u-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+/* ============================================
+   4. Colour / tone — semantic only
+   ============================================ */
+.u-fg-primary { color: var(--text-primary); }
+.u-fg-secondary { color: var(--text-secondary); }
+.u-fg-tertiary { color: var(--text-tertiary); }
+.u-fg-inverse { color: var(--text-inverse); }
+.u-fg-accent { color: var(--accent-text); }
+.u-fg-success { color: var(--success-fg); }
+.u-fg-warning { color: var(--warning-fg); }
+.u-fg-danger { color: var(--danger-fg); }
+.u-fg-info { color: var(--info-fg); }
+.u-fg-inherit { color: inherit; }
+
+.u-bg-canvas { background: var(--canvas); }
+.u-bg-surface { background: var(--surface); }
+.u-bg-sunken { background: var(--surface-sunken); }
+.u-bg-raised { background: var(--surface-raised); }
+.u-bg-accent-soft { background: var(--accent-soft); }
+.u-bg-success-soft { background: var(--success-surface); }
+.u-bg-warning-soft { background: var(--warning-surface); }
+.u-bg-danger-soft { background: var(--danger-surface); }
+.u-bg-info-soft { background: var(--info-surface); }
+.u-bg-neutral-soft { background: var(--neutral-surface); }
+.u-bg-transparent { background: transparent; }
+
+/* ============================================
+   5. Surface / shape
+   ============================================ */
+.u-surface {
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.u-surface-sunken {
+  background: var(--surface-sunken);
+  border-radius: var(--radius-md);
+}
+.u-border { border: 1px solid var(--border-subtle); }
+.u-border-top { border-block-start: 1px solid var(--border-subtle); }
+.u-border-bottom { border-block-end: 1px solid var(--border-subtle); }
+.u-border-left { border-inline-start: 1px solid var(--border-subtle); }
+.u-border-right { border-inline-end: 1px solid var(--border-subtle); }
+.u-border-none { border: none; }
+.u-border-default { border-color: var(--border-default); }
+.u-border-strong { border-color: var(--border-strong); }
+
+.u-radius-none { border-radius: 0; }
+.u-radius-sm { border-radius: var(--radius-sm); }
+.u-radius-md { border-radius: var(--radius-md); }
+.u-radius-lg { border-radius: var(--radius-lg); }
+.u-radius-pill { border-radius: var(--radius-pill); }
+
+.u-elevation-0 { box-shadow: var(--elevation-0); }
+.u-elevation-1 { box-shadow: var(--elevation-1); }
+.u-elevation-2 { box-shadow: var(--elevation-2); }
+.u-elevation-3 { box-shadow: var(--elevation-3); }
+
+/* ============================================
+   6. Size / measure
+   ============================================ */
+.u-w-full { width: 100%; }
+.u-w-auto { width: auto; }
+.u-w-fit { width: fit-content; }
+.u-h-full { height: 100%; }
+.u-h-auto { height: auto; }
+.u-min-w-0 { min-width: 0; }
+.u-min-h-0 { min-height: 0; }
+
+.u-max-w-measure-sm { max-width: var(--measure-sm); }
+.u-max-w-measure-md { max-width: var(--measure-md); }
+.u-max-w-measure-lg { max-width: var(--measure-lg); }
+.u-max-w-page { max-width: var(--page-max); }
+.u-max-w-page-narrow { max-width: var(--page-max-narrow); }
+.u-max-w-full { max-width: 100%; }
+
+.u-h-control-sm { height: var(--control-sm); }
+.u-h-control-md { height: var(--control-md); }
+.u-h-control-lg { height: var(--control-lg); }
+.u-square-control-sm { width: var(--control-sm); height: var(--control-sm); }
+.u-square-control-md { width: var(--control-md); height: var(--control-md); }
+.u-square-control-lg { width: var(--control-lg); height: var(--control-lg); }
+
+.u-aspect-square { aspect-ratio: 1 / 1; }
+.u-aspect-video { aspect-ratio: 16 / 9; }
+.u-object-cover { object-fit: cover; width: 100%; height: 100%; }
+.u-object-contain { object-fit: contain; }
+
+/* ============================================
+   7. State / visibility
+   ============================================ */
+.u-hidden { display: none; }
+.u-invisible { visibility: hidden; }
+.u-visible { visibility: visible; }
+
+/* .sr-only is the same helper under the pre-P56 name. It is still emitted by
+   templates and JS across the admin (entries, hosting wizard, accessibility
+   captions), and it used to be declared inside css/ai-chat-button.css — an
+   accidental dependency on a global feature stylesheet (P56-M10 finding). */
+.u-sr-only,
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.u-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+.u-loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+}
+.u-loading::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin: -0.5rem 0 0 -0.5rem;
+  border: 2px solid var(--border-default);
+  border-block-start-color: var(--accent-text);
+  border-radius: 50%;
+  animation: u-spin 0.6s linear infinite;
+}
+
+@keyframes u-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media print {
+  .u-hide-print { display: none; }
+}
+
+/* Responsive visibility — min-width only, five canonical breakpoints */
+@media (min-width: 640px) { .u-hide-above-sm { display: none; } }
+@media (min-width: 768px) { .u-hide-above-md { display: none; } }
+@media (min-width: 1024px) { .u-hide-above-lg { display: none; } }
+@media (min-width: 1280px) { .u-hide-above-xl { display: none; } }
+
+.u-hide-below-sm { display: none; }
+@media (min-width: 640px) { .u-hide-below-sm { display: revert; } }
+.u-hide-below-md { display: none; }
+@media (min-width: 768px) { .u-hide-below-md { display: revert; } }
+.u-hide-below-lg { display: none; }
+@media (min-width: 1024px) { .u-hide-below-lg { display: revert; } }
+.u-hide-below-xl { display: none; }
+@media (min-width: 1280px) { .u-hide-below-xl { display: revert; } }
+
+/* Responsive grid collapse */
+.u-grid-2, .u-grid-3, .u-grid-4 { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 768px) {
+  .u-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .u-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .u-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1024px) {
+  .u-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .u-grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.u-sidebar-layout { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1024px) {
+  .u-sidebar-layout { grid-template-columns: minmax(0, 1fr) minmax(260px, 300px); }
+}
+@media (min-width: 1440px) {
+  .u-sidebar-layout { grid-template-columns: minmax(0, 1fr) minmax(280px, 340px); }
+}
+
+/* ============================================
+   8. Interaction
+   ============================================ */
+.u-focus-ring:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+.u-clickable { cursor: pointer; }
+.u-no-select { user-select: none; }
+.u-scroll-x { overflow-x: auto; overscroll-behavior-x: contain; }
+.u-scroll-y { overflow-y: auto; overscroll-behavior-y: contain; }
+.u-overflow-hidden { overflow: hidden; }
+.u-overflow-visible { overflow: visible; }
+.u-sticky-top {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+}
+
+/* ============================================
+   9. Position
+   ============================================ */
+.u-relative { position: relative; }
+.u-absolute { position: absolute; }
+.u-fixed { position: fixed; }
+.u-sticky { position: sticky; }
+.u-static { position: static; }
+.u-inset-0 { inset: 0; }
+.u-z-raised { z-index: var(--z-raised); }
+.u-z-sticky { z-index: var(--z-sticky); }
+.u-z-popover { z-index: var(--z-popover); }
+.u-z-modal { z-index: var(--z-modal); }
+.u-z-toast { z-index: var(--z-toast); }

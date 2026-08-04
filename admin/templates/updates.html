@@ -1,5 +1,5 @@
 <!-- System Updates Page -->
-<div class="page-header pt-m pb-m">
+<div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
             <span class="current">{translate 'admin.updates'}</span>
@@ -21,26 +21,20 @@
         </div>
     </div>
 
-    <div class="updates-content">
+    <div class="page-body u-stack-4">
         <!-- Current Version Card -->
         <div class="card">
             <div class="card-header">
-                <h2>{translate 'admin.current_version'}</h2>
-                <div class="version-badge current">
-                    <span id="current-version">Loading...</span>
-                </div>
+                <h2 class="card-title">{translate 'admin.current_version'}</h2>
+                <span class="badge badge-info" id="current-version">Loading...</span>
             </div>
-            <div class="card-body">
+            <div class="card-body u-stack-3">
                 <p>{translate 'admin.version_running'} <strong id="current-version-text">Loading...</strong></p>
-                <div class="version-info">
-                    <div class="info-item">
-                        <span class="label">{translate 'admin.installation_date'}:</span>
-                        <span class="value" id="install-date">Unknown</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="label">{translate 'admin.last_update'}:</span>
-                        <span class="value" id="last-update">Never</span>
-                    </div>
+                <div class="kv">
+                    <span class="kv-key">{translate 'admin.installation_date'}</span>
+                    <span class="kv-value" id="install-date">Unknown</span>
+                    <span class="kv-key">{translate 'admin.last_update'}</span>
+                    <span class="kv-value" id="last-update">Never</span>
                 </div>
             </div>
         </div>
@@ -48,17 +42,14 @@
         <!-- Update Status Card -->
         <div class="card" id="update-status-card">
             <div class="card-header">
-                <h2>{translate 'admin.update_status'}</h2>
-                <div class="update-status" id="update-status">
-                    <div class="status-indicator loading">
-                        <div class="spinner"></div>
-                        <span>{translate 'admin.checking_updates'}...</span>
-                    </div>
+                <h2 class="card-title">{translate 'admin.update_status'}</h2>
+                <div id="update-status">
+                    <span class="badge badge-neutral">{translate 'admin.checking_updates'}...</span>
                 </div>
             </div>
-            <div class="card-body" id="update-details" style="display: none;">
+            <div class="card-body u-stack-3" id="update-details" hidden>
                 <div id="update-info"></div>
-                <div class="update-actions" id="update-actions" style="display: none;">
+                <div class="u-cluster" id="update-actions" hidden>
                     <button class="btn btn-primary" id="download-update-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -74,23 +65,21 @@
         <!-- Changelog Card -->
         <div class="card">
             <div class="card-header">
-                <h2>{translate 'admin.changelog'}</h2>
+                <h2 class="card-title">{translate 'admin.changelog'}</h2>
             </div>
             <div class="card-body">
                 <div id="changelog-content">
-                    <div class="spinner">Loading changelog...</div>
+                    <div class="loading-state"><p>Loading changelog...</p></div>
                 </div>
             </div>
         </div>
 
-        <!-- Backup Reminder Card -->
-        <div class="card card-warning">
-            <div class="card-header">
-                <h2>⚠️ {translate 'admin.important_reminder'}</h2>
-            </div>
-            <div class="card-body">
+        <!-- Backup Reminder -->
+        <div class="callout callout-warning">
+            <div class="callout-body u-stack-2">
+                <p class="callout-title">{translate 'admin.important_reminder'}</p>
                 <p><strong>{translate 'admin.backup_before_update'}</strong></p>
-                <ul>
+                <ul class="settings-list">
                     <li>{translate 'admin.backup_database'}</li>
                     <li>{translate 'admin.backup_files'}</li>
                     <li>{translate 'admin.test_backup'}</li>

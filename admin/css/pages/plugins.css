@@ -1,939 +1,221 @@
 /* ============================================
-   Plugins Management Page Styles
+   Birkly Admin — Hub page (P56)
+   ============================================
+
+   Discover · Installed · Updates · Licenses · Upload pack, plus the embedded
+   Hub offer modal.
+
+   The page-local card / badge / health / tab / toolbar / table dialects were
+   deleted in P56-M9. The markup now uses .card, .badge, .chip, .tabs,
+   .tab-panel, .table, .main-actions-bar, .section-header, .skeleton and the
+   u-* helpers. What is left here is genuinely page-specific: the two offer
+   grids, the offer cover frame, the offer-detail split and the modal shell
+   that hosts the marketplace iframe.
+
+   .plugins-tab / .plugins-tab-panel / .hub-type-filter / .marketplace-embed-tab
+   carry NO styling — they are behaviour hooks read by js/plugins-page.js and
+   js/tabs-v2.js. Do not restore rules for them.
    ============================================ */
 
-/* Plugins Grid */
-.plugins-grid {
+.plugins-page { min-width: 0; }
+
+.plugins-page > .tabs-v2-root { margin-block-end: var(--space-6); }
+
+/* ============================================
+   Card grids — Discover results and installed plugins/packs
+   ============================================ */
+.plugins-grid,
+.marketplace-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-5, 1.25rem);
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--space-4);
+  min-width: 0;
 }
 
-/* Plugin Card */
+/* State blocks fill the whole grid rather than sitting in one column */
+.plugins-grid > .empty-state,
+.plugins-grid > .loading-state,
+.plugins-grid > .error-state,
+.marketplace-grid > .empty-state,
+.marketplace-grid > .loading-state,
+.marketplace-grid > .error-state {
+  grid-column: 1 / -1;
+}
+
+/* Installed plugin / site-pack tile — a .card with page padding */
 .plugin-card {
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-5, 1.25rem);
-  transition: all 0.3s ease;
+  gap: var(--space-3);
+  padding: var(--space-4);
 }
 
-.plugin-card:hover {
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-}
+.plugin-card.has-update { border-color: var(--warning-border); }
 
-.plugin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-3, 0.75rem);
-}
-
-.plugin-header-badges {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-}
-
-.health-badge {
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: capitalize;
-}
-
-.health-healthy {
-  background: var(--success-100, #dcfce7);
-  color: var(--success-700, #15803d);
-}
-
-.health-warning {
-  background: var(--warning-100, #fef3c7);
-  color: var(--warning-700, #92400e);
-}
-
-.health-error,
-.health-unknown {
-  background: var(--error-100, #fee2e2);
-  color: var(--error-700, #b91c1c);
-}
-
-.plugin-name {
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  font-size: 1rem;
-}
-
-.plugin-name-link {
-  appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  font-weight: 600;
-  color: var(--color-primary, #059669);
-  text-align: left;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.plugin-name-link:hover {
-  color: var(--color-primary-dark, #047857);
-}
-
-.plugin-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.plugin-review-chip {
-  appearance: none;
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-sm, 0.375rem);
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--text-secondary, #72746F);
-  cursor: pointer;
-}
-
-.plugin-review-chip:hover {
-  border-color: var(--color-primary, #059669);
-  color: var(--color-primary, #059669);
-}
-
-.plugin-review-chip--rated {
-  background: color-mix(in srgb, var(--warning-500, #f59e0b) 12%, var(--bg-primary, #fff));
-  border-color: color-mix(in srgb, var(--warning-500, #f59e0b) 35%, var(--border-color, #e5e7eb));
-  color: var(--text-primary, #20221D);
-}
-
-.plugin-version {
-  background: var(--bg-secondary, #fafafa);
-  color: var(--text-secondary, #72746F);
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  font-size: 0.75rem;
-}
-
-.plugin-description {
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
-  margin-bottom: var(--space-4, 1rem);
-  line-height: 1.5;
-}
-
-.plugin-status {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.status-badge {
-  padding: var(--space-1, 0.25rem) var(--space-2, 0.5rem);
-  border-radius: var(--radius-sm, 0.375rem);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.status-active {
-  background: var(--success-500, #22c55e);
-  color: white;
-}
-
-.status-inactive {
-  background: var(--gray-500, #6b7280);
-  color: white;
-}
-
-.plugin-actions {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-  margin-top: var(--space-4, 1rem);
-  padding-top: var(--space-4, 1rem);
-  border-top: 1px solid var(--border-light, #f3f4f6);
-}
-
-.plugin-actions .btn {
-  flex: 1;
-}
-
-/* Plugin Settings */
-.plugin-settings {
-  margin-top: var(--space-6, 1.5rem);
-}
-
-.plugin-settings-section {
-  margin-bottom: var(--space-6, 1.5rem);
-  padding-bottom: var(--space-6, 1.5rem);
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-}
-
-.plugin-settings-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.plugin-settings-section h3 {
-  margin: 0 0 var(--space-4, 1rem) 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-/* Plugin Permissions */
-.plugin-permissions {
-  margin-top: var(--space-6, 1.5rem);
-}
-
-.permissions-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-  margin-top: var(--space-4, 1rem);
-}
-
-.permission-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  background: var(--bg-secondary, #fafafa);
-  border-radius: var(--radius-md, 0.5rem);
-  border: 1px solid var(--border-color, #e5e7eb);
-}
-
-.permission-item input[type="checkbox"] {
-  margin: 0;
-}
-
-.permission-item label {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-primary, #20221D);
-  cursor: pointer;
-  flex: 1;
-}
-
-/* Plugin / marketplace skeleton loaders (P44-M10) */
-.plugin-card--skeleton,
-.marketplace-card--skeleton {
-  pointer-events: none;
-  border-color: var(--border-light);
-  background: var(--bg-elevated);
-}
-
-.plugin-skeleton-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-3, 0.75rem);
-}
-
-.plugin-skeleton-line {
-  height: 0.75rem;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
-  background-size: 200% 100%;
-  animation: plugin-skeleton-shimmer 1.2s ease-in-out infinite;
-}
-
-.plugin-skeleton-line--title {
-  width: 55%;
-  height: 1rem;
-}
-
-.plugin-skeleton-line--body {
-  width: 100%;
-  margin-bottom: var(--space-2, 0.5rem);
-}
-
-.plugin-skeleton-line--short {
-  width: 40%;
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.plugin-skeleton-pill {
-  width: 4rem;
-  height: 1.25rem;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
-  background-size: 200% 100%;
-  animation: plugin-skeleton-shimmer 1.2s ease-in-out infinite;
-}
-
-.plugin-skeleton-pill--btn {
-  width: 5.5rem;
-  height: 2rem;
-  border-radius: var(--radius-sm, 0.375rem);
-}
-
-.plugin-skeleton-actions {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-}
-
-@keyframes plugin-skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .plugins-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .plugin-actions {
-    flex-direction: column;
-  }
-
-  .plugin-actions .btn {
-    width: 100%;
-  }
-}
-
-/* Hub IA (P53-M11) — Discover · Installed · Updates · Licenses · Upload pack */
-.hub-type-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.hub-type-filter {
-  appearance: none;
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-sm, 0.375rem);
-  color: var(--text-secondary, #72746F);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-}
-
-.hub-type-filter:hover {
-  border-color: var(--primary-500, #7CE3BF);
-  color: var(--text-primary, #20221D);
-}
-
-.hub-type-filter.active {
-  background: color-mix(in srgb, var(--primary-500, #7CE3BF) 18%, var(--bg-primary, #fff));
-  border-color: var(--primary-600, #52C49A);
-  color: var(--text-primary, #20221D);
-  font-weight: 600;
-}
-
-.hub-installed-sections {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8, 2rem);
-}
-
-.hub-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3, 0.75rem);
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.hub-section-title {
-  margin: 0 0 var(--space-3, 0.75rem);
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.hub-section-header .hub-section-title {
-  margin-bottom: 0;
-}
-
-.hub-empty-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
-  justify-content: center;
-}
-
+/* ============================================
+   Licenses + Upload tabs
+   ============================================ */
 .hub-licenses-layout {
   display: grid;
-  gap: var(--space-8, 2rem);
   grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  min-width: 0;
 }
 
-@media (min-width: 960px) {
-  .hub-licenses-layout {
-    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
-    align-items: start;
-  }
+@media (min-width: 1024px) {
+  .hub-licenses-layout { grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); }
 }
 
-.hub-license-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 0.75rem);
-  max-width: 28rem;
-}
+.hub-license-form,
+.hub-upload-panel { max-width: 34rem; }
 
-.hub-upload-panel {
-  max-width: 36rem;
-}
-
-.hub-upload-form .form-group {
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.hub-upload-actions {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-  margin-top: var(--space-2, 0.5rem);
-}
-
-.plugins-page .visually-hidden {
-  position: absolute !important;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Marketplace / Hub tabs — works with Tab v2 wrapper */
-.plugins-tabs.tabs-v2-root {
-  display: block;
-  margin-bottom: var(--space-5, 1.25rem);
-  border-bottom: none;
-}
-
-.plugins-tabs:not(.tabs-v2-root) {
-  display: flex;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-5, 1.25rem);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-}
-
-.plugins-tabs .tabs {
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
-  margin-bottom: 0;
-  background: transparent;
-  border-radius: 0;
-  flex-wrap: wrap;
-  row-gap: 0;
-}
-
-.plugins-tab,
-.plugins-tabs .tab.plugins-tab {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--text-secondary, #72746F);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-}
-
-.plugins-tabs .tab.plugins-tab.active,
-.plugins-tab.active {
-  color: var(--text-primary, #20221D);
-  border-bottom: 2px solid var(--primary-600, #52C49A);
-  font-weight: 600;
-  background: transparent;
-}
-
-.plugins-tab-panel {
-  display: none;
-}
-
-.plugins-tab-panel.active {
-  display: block;
-}
-
-.update-badge {
-  background: var(--warning-500, #f59e0b);
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 0.1rem 0.4rem;
-  border-radius: 999px;
-  min-width: 1.25rem;
-  text-align: center;
-}
-
-.update-badge.hidden {
-  display: none;
-}
-
-.plugin-card.has-update {
-  border-color: var(--warning-500, #f59e0b);
-}
-
-.update-pill {
-  display: inline-block;
-  font-size: 0.75rem;
-  background: #fef3c7;
-  color: #92400e;
-  padding: 0.15rem 0.5rem;
-  border-radius: var(--radius-sm, 0.375rem);
-  margin-top: 0.25rem;
-}
-
-.marketplace-tag,
-.trust-badge,
-.license-ref {
-  font-size: 0.75rem;
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-sm, 0.375rem);
-  background: var(--bg-secondary, #fafafa);
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-toolbar {
-  margin-bottom: var(--space-5, 1.25rem);
-}
-
-.marketplace-toolbar-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4, 1rem);
-}
-
+/* ============================================
+   Discover toolbar
+   ============================================ */
 .marketplace-search {
-  display: flex;
-  gap: var(--space-3, 0.75rem);
-  flex: 0 1 420px;
-  min-width: 0;
-  width: 100%;
-  max-width: 420px;
-}
-
-.marketplace-search .input {
-  flex: 1;
+  flex: 1 1 18rem;
+  max-width: 26rem;
   min-width: 0;
 }
 
-.marketplace-result-count {
-  flex: 1 1 auto;
-  margin: 0;
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--text-secondary, #72746F);
-  white-space: nowrap;
-}
-
-.marketplace-filters {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  flex: 0 0 auto;
-  margin-left: auto;
-}
+.marketplace-search .input { flex: 1 1 auto; min-width: 0; }
 
 .marketplace-filter-select {
   width: auto;
-  min-width: 8.75rem;
+  min-width: 9rem;
   max-width: 11rem;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
 }
 
-.marketplace-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-5, 1.25rem);
-}
-
-.marketplace-offer-card {
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-  cursor: pointer;
-}
-
-.marketplace-offer-card:hover {
-  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
-  border-color: var(--primary-200, #bfdbfe);
-}
+/* ============================================
+   Offer card — cover frame + body
+   ============================================ */
+.marketplace-offer-card { overflow: hidden; }
 
 .marketplace-offer-media {
   position: relative;
-  width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 160px;
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
   overflow: hidden;
+  background: var(--surface-sunken);
+  border-block-end: 1px solid var(--border-subtle);
 }
 
-.marketplace-offer-image,
-.marketplace-offer-cover {
+.marketplace-offer-cover,
+.marketplace-offer-image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
 .marketplace-offer-media-badges {
   position: absolute;
-  top: var(--space-3, 0.75rem);
-  left: var(--space-3, 0.75rem);
-  z-index: 2;
+  inset-block-start: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: var(--z-raised);
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  max-width: calc(100% - 1.5rem);
-}
-
-.marketplace-offer-type-badge {
-  position: static;
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.25rem 0.55rem;
-  border-radius: var(--radius-sm, 0.375rem);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-}
-
-.marketplace-offer-type-badge--plugin {
-  color: #5b21b6;
-  background: #ede9fe;
-}
-
-.marketplace-offer-type-badge--template_pack {
-  color: #92400e;
-  background: #fef3c7;
-}
-
-.marketplace-offer-type-badge--fieldtype {
-  color: #047857;
-  background: #d1fae5;
-}
-
-.marketplace-offer-type-badge--theme {
-  color: #0369a1;
-  background: #e0f2fe;
-}
-
-.marketplace-offer-status-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 0.25rem 0.55rem;
-  border-radius: var(--radius-sm, 0.375rem);
-}
-
-.marketplace-offer-media-badges .marketplace-offer-status-badge {
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
-}
-
-.marketplace-offer-status-badge--coming-soon {
-  color: #92400e;
-  background: #fef3c7;
-  border-color: #fcd34d;
-}
-
-.marketplace-offer-media-badges .marketplace-offer-status-badge--coming-soon {
-  border-color: rgba(255, 255, 255, 0.65);
+  gap: var(--space-1);
+  max-width: calc(100% - var(--space-6));
 }
 
 .marketplace-offer-icon-badge {
   position: absolute;
-  left: var(--space-3, 0.75rem);
-  bottom: var(--space-3, 0.75rem);
-  z-index: 1;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md, 0.375rem);
+  inset-block-end: var(--space-3);
+  inset-inline-start: var(--space-3);
+  z-index: var(--z-raised);
+  width: 3rem;
+  height: 3rem;
   object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-sm);
 }
 
+/* Generated cover fallback — a flat tone tile carrying the offer initial.
+   Real product artwork renders through .marketplace-offer-cover; this tile is
+   UI chrome, so it takes a token surface rather than the old gradient. */
 .marketplace-offer-placeholder {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  width: 100%;
+  height: 100%;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
 }
 
 .marketplace-offer-placeholder.placeholder-theme {
-  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  background: var(--info-surface);
+  color: var(--info-fg);
 }
 
 .marketplace-offer-placeholder.placeholder-template_pack {
-  background: linear-gradient(135deg, #fbbf24 0%, #fde68a 100%);
+  background: var(--warning-surface);
+  color: var(--warning-fg);
 }
 
 .marketplace-offer-placeholder.placeholder-fieldtype {
-  background: linear-gradient(135deg, #10b981 0%, #6ee7b7 100%);
+  background: var(--success-surface);
+  color: var(--success-fg);
 }
 
 .marketplace-offer-body {
-  padding: var(--space-4, 1rem) var(--space-5, 1.25rem) var(--space-5, 1.25rem);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3, 0.75rem);
-  flex: 1;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  padding: var(--space-4);
+  min-width: 0;
 }
 
-.marketplace-offer-type {
-  font-size: 0.7rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--primary-600, #2563eb);
-  background: var(--primary-50, #eff6ff);
-  padding: 0.2rem 0.5rem;
-  border-radius: var(--radius-sm, 0.375rem);
-}
+.marketplace-offer-stats { margin-block-start: auto; }
 
-.marketplace-offer-heading {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-
-.marketplace-offer-title {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  line-height: 1.2;
-}
-
-.marketplace-offer-summary {
-  margin: var(--space-2, 0.5rem) 0 var(--space-3, 0.75rem);
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.marketplace-offer-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-top: auto;
-}
-
-.marketplace-offer-stats-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3, 0.75rem);
-}
-
-.marketplace-offer-stats-row--primary {
-  font-size: 0.9375rem;
-}
-
-.marketplace-offer-stats-row--secondary {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-stat--price {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-stat--rating {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  text-align: right;
-}
-
-.marketplace-stat--version {
-  text-align: left;
-}
-
-.marketplace-stat--downloads {
-  text-align: right;
-}
-
-.marketplace-rating--good {
-  color: #15803d;
-}
-
-.marketplace-rating--fair {
-  color: #a16207;
-}
-
-.marketplace-rating--poor {
-  color: #b91c1c;
-}
-
-.marketplace-rating--none {
-  font-weight: 400;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-offer-title-link {
-  background: none;
-  border: none;
-  padding: 0;
-  margin: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  color: inherit;
-}
-
-.marketplace-offer-title-link:hover {
-  color: var(--primary-600, #2563eb);
-}
-
-.marketplace-offer-actions .btn + .btn {
-  margin-top: var(--space-2, 0.5rem);
-}
-
-.marketplace-offer-detail {
-  max-width: 960px;
-}
+/* ============================================
+   Offer detail view
+   ============================================ */
+.marketplace-offer-detail { max-width: 60rem; }
 
 .marketplace-offer-detail-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: var(--space-6, 1.5rem);
-  margin-bottom: var(--space-6, 1.5rem);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .marketplace-offer-detail-header { grid-template-columns: minmax(0, 1fr) minmax(0, 18rem); }
 }
 
 .marketplace-offer-detail-media {
+  position: relative;
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-md, 0.5rem);
   overflow: hidden;
-  margin-bottom: var(--space-4, 1rem);
-  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-}
-
-.marketplace-offer-detail-media img,
-.marketplace-offer-detail-media .marketplace-offer-placeholder {
-  width: 100%;
-  height: 100%;
-  min-height: 200px;
-}
-
-.marketplace-offer-detail-sidebar {
-  background: var(--bg-secondary, #fafafa);
-  border: 1px solid var(--border-color, #e5e7eb);
-  border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-5, 1.25rem);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 0.75rem);
-  align-self: start;
-}
-
-.marketplace-offer-detail-price {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-offer-detail-section {
-  margin-bottom: var(--space-6, 1.5rem);
-}
-
-.marketplace-offer-detail-section h3 {
-  margin: 0 0 var(--space-3, 0.75rem);
-  font-size: 1.125rem;
-}
-
-.marketplace-offer-description {
-  color: var(--text-secondary, #72746F);
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.marketplace-release-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.marketplace-release-table th,
-.marketplace-release-table td {
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-  text-align: left;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
 .marketplace-screenshots {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-3, 0.75rem);
-  margin-top: var(--space-3, 0.75rem);
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-3);
 }
 
 .marketplace-screenshots img {
   width: 100%;
-  border-radius: var(--radius-sm, 0.375rem);
-  border: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
 }
 
-.marketplace-detail-meta-list {
-  display: grid;
-  gap: var(--space-2, 0.5rem);
-  font-size: 0.875rem;
-}
-
-.marketplace-detail-meta-list dt {
-  font-weight: 600;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-detail-meta-list dd {
-  margin: 0;
-}
-
+/* ============================================
+   Embedded Hub modal — iframe + pricing/reviews/versions panels
+   ============================================ */
 .marketplace-offer-embed-modal {
-  width: min(960px, 96vw);
-  height: min(720px, 92vh);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.marketplace-offer-embed-modal .marketplace-embed-body {
-  max-height: none;
+  width: min(60rem, 96vw);
+  height: min(45rem, 92vh);
+  max-width: min(60rem, 96vw);
 }
 
 .marketplace-embed-shell {
@@ -944,159 +226,37 @@
   overflow: hidden;
 }
 
-.marketplace-embed-offer-header {
+.marketplace-offer-embed-modal .tabs {
   flex: 0 0 auto;
-  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-  border-bottom: 1px solid var(--border-subtle, #e8e9e4);
-  background: var(--surface-elevated, #fff);
+  padding-inline: var(--space-5);
 }
 
-.marketplace-embed-offer-header[hidden] {
-  display: none !important;
-}
-
-.marketplace-embed-offer-header-inner {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4, 1rem);
-  min-width: 0;
-}
-
-.marketplace-embed-offer-header-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md, 8px);
-  object-fit: cover;
-  flex: 0 0 auto;
-  background: var(--surface-muted, #f7f8f5);
-  border: 1px solid var(--border-subtle, #e8e9e4);
-}
-
-.marketplace-embed-offer-header-icon--placeholder {
-  display: flex;
-  align-items: center;
+.marketplace-offer-embed-modal .tab {
+  flex: 1 1 0;
   justify-content: center;
-  font-weight: 700;
-  font-size: 1.125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-embed-offer-header-body {
-  flex: 1 1 auto;
   min-width: 0;
 }
 
-.marketplace-embed-offer-header-title-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-}
-
-.marketplace-embed-offer-header-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-embed-offer-header-tagline {
-  margin: var(--space-1, 0.25rem) 0 0;
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.marketplace-embed-offer-header-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-1, 0.25rem);
+.marketplace-embed-offer-header,
+.marketplace-embed-provider-box {
   flex: 0 0 auto;
+  padding: var(--space-4) var(--space-5);
 }
 
-.marketplace-embed-offer-header-price {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-  white-space: nowrap;
-}
-
-.marketplace-embed-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3, 0.75rem);
-}
-
-.marketplace-embed-header h2 {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.marketplace-embed-back[hidden] {
-  display: none !important;
-}
-
-.marketplace-offer-provider {
-  margin: 0;
-  font-size: 0.75rem;
-  color: #a3a8a3;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
-}
+.marketplace-embed-offer-header { border-block-end: 1px solid var(--border-subtle); }
 
 .marketplace-embed-provider-box {
-  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-  border-top: 1px solid var(--border-subtle, #e8e9e4);
-  background: var(--surface-muted, #f7f8f5);
-  flex: 0 0 auto;
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
 }
 
-.marketplace-embed-provider-box[hidden] {
-  display: none !important;
-}
-
-.marketplace-embed-tabs {
+.marketplace-embed-body {
   display: flex;
-  gap: 0;
-  padding: 0 var(--space-5, 1.25rem);
-  border-bottom: 1px solid var(--border-subtle, #e8e9e4);
-  background: var(--surface-elevated, #fff);
-  flex: 0 0 auto;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
   overflow: hidden;
-}
-
-.marketplace-embed-tabs[hidden] {
-  display: none !important;
-}
-
-.marketplace-embed-tab {
-  appearance: none;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  background: transparent;
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
-  flex: 1 1 0;
-  min-width: 0;
-  text-align: center;
-}
-
-.marketplace-embed-tab:hover {
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-embed-tab.active {
-  color: var(--text-primary, #20221D);
-  border-bottom-color: var(--primary-600, #2563eb);
 }
 
 .marketplace-embed-panel {
@@ -1111,226 +271,11 @@
   flex-direction: column;
 }
 
-.marketplace-embed-panel[data-embed-panel="offer"] {
-  overflow: hidden;
-}
+.marketplace-embed-panel[data-embed-panel="offer"] { overflow: hidden; }
 
 .marketplace-embed-panel-inner {
-  padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
   flex: 1 1 auto;
-}
-
-.marketplace-pricing-table-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3, 0.75rem);
-}
-
-.marketplace-pricing-table-title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-pricing-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.marketplace-pricing-table th,
-.marketplace-pricing-table td {
-  padding: var(--space-3, 0.75rem);
-  border-bottom: 1px solid var(--border-subtle, #e8e9e4);
-  vertical-align: middle;
-  text-align: left;
-}
-
-.marketplace-pricing-table thead th {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary, #72746F);
-  background: var(--surface-muted, #f7f8f5);
-}
-
-.marketplace-pricing-table tbody th {
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-pricing-amount {
-  white-space: nowrap;
-}
-
-.marketplace-pricing-compare {
-  display: inline-block;
-  margin-right: var(--space-2, 0.5rem);
-  text-decoration: line-through;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-pricing-current {
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-pricing-promo {
-  display: inline-block;
-  margin-left: var(--space-2, 0.5rem);
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--primary-700, #1d4ed8);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.marketplace-pricing-action {
-  width: 1%;
-  white-space: nowrap;
-  text-align: right;
-}
-
-.marketplace-pricing-discounts {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-pricing-discounts-title {
-  margin: 0 0 var(--space-2, 0.5rem);
-  font-weight: 600;
-}
-
-.marketplace-pricing-discounts ul {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
-.marketplace-pricing-discount-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2, 0.5rem);
-}
-
-.marketplace-pricing-discount-option {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3, 0.75rem);
-  padding: var(--space-3, 0.75rem);
-  border: 1px solid var(--border-subtle, #e8e9e4);
-  border-radius: var(--radius-md, 8px);
-  background: var(--surface-elevated, #fff);
-  cursor: pointer;
-}
-
-.marketplace-pricing-discount-option:has(input:checked) {
-  border-color: var(--primary-600, #2563eb);
-  background: rgba(37, 99, 235, 0.04);
-}
-
-.marketplace-pricing-discount-option input {
-  margin-top: 0.15rem;
-  flex: 0 0 auto;
-}
-
-.marketplace-pricing-discount-option-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.marketplace-pricing-discount-option-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-pricing-discount-option-meta {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-pricing-discount-checkout-hint {
-  margin: var(--space-3, 0.75rem) 0 0;
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-offer-detail-sidebar .marketplace-pricing-table-wrap {
-  width: 100%;
-}
-
-.marketplace-offer-detail-pricing .marketplace-pricing-action .btn {
-  width: 100%;
-}
-
-.marketplace-provider-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4, 1rem);
-}
-
-.marketplace-provider-card-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-md, 8px);
-  object-fit: cover;
-  flex: 0 0 auto;
-  background: var(--surface-elevated, #fff);
-  border: 1px solid var(--border-subtle, #e8e9e4);
-}
-
-.marketplace-provider-card-avatar--placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-provider-card-body {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.marketplace-provider-card-label {
-  margin: 0 0 var(--space-1, 0.25rem);
-  font-size: var(--text-xs, 0.75rem);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-provider-card-name {
-  margin: 0;
-  font-size: var(--text-lg, 1.125rem);
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-provider-card-tagline {
-  margin: var(--space-1, 0.25rem) 0 0;
-  font-size: var(--text-sm, 0.875rem);
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-provider-card-action {
-  flex: 0 0 auto;
-}
-
-.marketplace-embed-body {
-  padding: 0;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  padding: var(--space-4) var(--space-5);
 }
 
 .marketplace-offer-iframe {
@@ -1339,350 +284,45 @@
   flex: 1 1 auto;
   min-height: 0;
   border: 0;
-  background: #fff;
+  background: var(--surface);
 }
 
-.marketplace-empty-state {
-  margin: 0;
-  padding: var(--space-6, 1.5rem) 0;
-  text-align: center;
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
+.marketplace-embed-footer .marketplace-embed-back:not([hidden]) { margin-inline-end: auto; }
+
+/* ============================================
+   Square art tiles — offer icon, provider avatar
+   ============================================ */
+.marketplace-embed-offer-header-icon,
+.marketplace-provider-card-avatar {
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
 }
 
-.marketplace-reviews-summary {
+.marketplace-provider-card-avatar { width: 3.5rem; height: 3.5rem; }
+
+.marketplace-embed-offer-header-icon--placeholder,
+.marketplace-provider-card-avatar--placeholder {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-3, 0.75rem);
-  margin-bottom: var(--space-4, 1rem);
-  padding-bottom: var(--space-4, 1rem);
-  border-bottom: 1px solid var(--border-subtle, #e8e9e4);
-}
-
-.marketplace-reviews-summary-score {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-reviews-summary-count {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-reviews-write {
-  margin-bottom: var(--space-4, 1rem);
-}
-
-.marketplace-reviews-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4, 1rem);
-}
-
-.marketplace-review-item {
-  padding: var(--space-4, 1rem);
-  border: 1px solid var(--border-subtle, #e8e9e4);
-  border-radius: var(--radius-md, 8px);
-  background: var(--surface-muted, #f7f8f5);
-}
-
-.marketplace-review-meta {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2, 0.5rem);
-  margin-bottom: var(--space-2, 0.5rem);
-  font-size: 0.8125rem;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
+
+/* ============================================
+   Long-form copy blocks that keep author line breaks
+   ============================================ */
+.marketplace-offer-description,
+.marketplace-review-body,
+.marketplace-version-changelog { white-space: pre-wrap; }
 
 .marketplace-review-stars {
-  color: #eab308;
+  color: var(--warning-fg);
   letter-spacing: 0.05em;
 }
-
-.marketplace-review-date {
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-review-verified {
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(34, 197, 94, 0.12);
-  color: #15803d;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.marketplace-review-body {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  color: var(--text-primary, #20221D);
-  white-space: pre-wrap;
-}
-
-.marketplace-review-reply {
-  margin-top: var(--space-3, 0.75rem);
-  padding: var(--space-3, 0.75rem);
-  border-left: 3px solid var(--border-subtle, #e8e9e4);
-  background: var(--surface-elevated, #fff);
-  border-radius: 0 var(--radius-sm, 4px) var(--radius-sm, 4px) 0;
-}
-
-.marketplace-review-reply-label {
-  margin: 0 0 var(--space-1, 0.25rem);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-review-reply p:last-child {
-  margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
-}
-
-.marketplace-version-item {
-  padding: var(--space-4, 1rem) 0;
-  border-bottom: 1px solid var(--border-subtle, #e8e9e4);
-}
-
-.marketplace-version-item:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.marketplace-version-item.is-latest .marketplace-version-title {
-  color: var(--primary-700, #1d4ed8);
-}
-
-.marketplace-version-header {
-  margin-bottom: var(--space-2, 0.5rem);
-}
-
-.marketplace-version-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
-}
-
-.marketplace-version-badge {
-  display: inline-block;
-  margin-left: var(--space-2, 0.5rem);
-  padding: 0.1rem 0.45rem;
-  border-radius: 999px;
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--primary-700, #1d4ed8);
-  font-size: 0.75rem;
-  font-weight: 600;
-  vertical-align: middle;
-}
-
-.marketplace-version-date {
-  margin: var(--space-1, 0.25rem) 0 0;
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.marketplace-version-changelog {
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--text-primary, #20221D);
-  white-space: pre-wrap;
-}
-
-.marketplace-embed-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2, 0.5rem);
-  justify-content: flex-end;
-}
-
-.marketplace-embed-offer-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2, 0.5rem);
-  justify-content: flex-end;
-  margin-left: auto;
-}
-
-.marketplace-embed-footer .marketplace-embed-back:not([hidden]) {
-  margin-right: auto;
-}
-
-.marketplace-embed-footer .btn + .btn {
-  margin-top: 0;
-}
-
-@media (max-width: 768px) {
-  .marketplace-offer-detail-header {
-    grid-template-columns: 1fr;
-  }
-}
-
-.marketplace-offer-actions {
-  padding-top: var(--space-2, 0.5rem);
-}
-
-.marketplace-offer-actions .btn {
-  width: 100%;
-}
-
-.marketplace-offer-card {
-  padding: 0;
-}
-
-.marketplace-hint {
-  margin-top: var(--space-2, 0.5rem);
-}
-
-.plugins-empty-state {
-  text-align: center;
-  padding: var(--space-8, 2rem) var(--space-5, 1.25rem);
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-.plugins-empty-state .form-help {
-  margin: var(--space-3, 0.75rem) 0 var(--space-5, 1.25rem);
-}
-
-/* P33 responsive — plugins + marketplace */
-@media (max-width: 1023px) {
-  .plugins-page {
-    min-width: 0;
-  }
-
-  .plugins-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .marketplace-toolbar {
-    margin-bottom: var(--space-4, 1rem);
-  }
-
-  .marketplace-toolbar-row {
-    flex-wrap: wrap;
-    gap: var(--space-3, 0.75rem);
-  }
-
-  .marketplace-search {
-    flex: 1 1 100%;
-    max-width: none;
-  }
-
-  .marketplace-search .btn {
-    width: auto;
-  }
-
-  .marketplace-result-count {
-    flex: 1 1 100%;
-  }
-
-  .marketplace-filters {
-    flex: 1 1 100%;
-    flex-wrap: wrap;
-    margin-left: 0;
-  }
-
-  .marketplace-filter-select {
-    flex: 1 1 calc(33.333% - 0.5rem);
-    min-width: 8rem;
-    max-width: none;
-  }
-}
-
-@media (max-width: 767px) {
-  .marketplace-toolbar-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .marketplace-search {
-    flex-direction: column;
-  }
-
-  .marketplace-search .btn {
-    width: 100%;
-  }
-
-  .marketplace-filters {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .marketplace-filter-select {
-    width: 100%;
-    flex: 1 1 auto;
-  }
-
-  .plugin-card {
-    padding: var(--space-4, 1rem);
-  }
-
-  .plugin-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .plugin-actions .btn {
-    width: 100%;
-  }
-}
-
-.plugin-review-rating {
-  border: none;
-  margin: 0 0 1rem;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-}
-
-.plugin-review-rating label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.9rem;
-}
-
-.plugin-review-existing {
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  background: var(--surface-muted, #f4f4f5);
-}
-
-.marketplace-consent-modal {
-  max-width: 560px;
-}
-
-.marketplace-consent-manifest h4 {
-  margin: 1rem 0 0.5rem;
-  font-size: 0.95rem;
-}
-
-.marketplace-consent-manifest h4:first-child {
-  margin-top: 0;
-}
-
-.consent-perm-list {
-  margin: 0 0 0.75rem;
-  padding-left: 1.25rem;
-}
-
-.consent-perm-list li {
-  margin-bottom: 0.35rem;
-}
-
-.consent-perm-list code {
-  font-size: 0.85rem;
-}
-

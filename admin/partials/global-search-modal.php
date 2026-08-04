@@ -10,7 +10,7 @@
                 placeholder="Search collections and entries..."
                 autocomplete="off"
             />
-            <button class="search-close" type="button" id="search-close-btn" aria-label="Close search">×</button>
+            <button class="modal-close-btn" type="button" id="search-close-btn" aria-label="Close search">&times;</button>
         </div>
         <div class="search-results" id="search-results">
             <div class="search-empty-state">

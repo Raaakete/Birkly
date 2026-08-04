@@ -1,5 +1,5 @@
 <!-- Webhooks Management Page -->
-<div class="page-header pt-m pb-m">
+<div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
             <a href="{admin_url 'settings'}">{translate 'admin.settings'}</a>
@@ -16,7 +16,8 @@
             <button class="btn btn-primary" id="create-webhook">{translate 'admin.create_webhook'}</button>
         </div>
     </div>
-    
+
+    <div class="page-body u-stack-4">
     <div class="table-container">
         <table class="table" id="webhooks-table">
             <thead>
@@ -31,18 +32,19 @@
             </thead>
             <tbody id="webhooks-list">
                 <tr>
-                    <td colspan="6" class="text-center">
-                        <div class="spinner">Loading...</div>
+                    <td colspan="6">
+                        <div class="loading-state"><p>Loading...</p></div>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
+    </div>
 </div>
 
 <!-- Webhook Modal -->
-<div id="webhook-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
+<div id="webhook-modal" class="modal">
+    <div class="modal-content modal--md">
         <div class="modal-header">
             <h2 id="modal-title">{translate 'admin.create_webhook'}</h2>
             <button class="modal-close" data-admin-action="closeWebhookModal">&times;</button>
@@ -60,19 +62,19 @@
                 
                 <div class="form-group">
                     <label>{translate 'admin.events'} *</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" name="events[]" value="entry.created"> {translate 'admin.entry_created'}</label>
-                        <label><input type="checkbox" name="events[]" value="entry.updated"> {translate 'admin.entry_updated'}</label>
-                        <label><input type="checkbox" name="events[]" value="entry.deleted"> {translate 'admin.entry_deleted'}</label>
-                        <label><input type="checkbox" name="events[]" value="entry.published"> {translate 'admin.entry_published'}</label>
-                        <label><input type="checkbox" name="events[]" value="collection.created"> {translate 'admin.collection_created'}</label>
-                        <label><input type="checkbox" name="events[]" value="*"> {translate 'admin.all_events'}</label>
+                    <div class="u-stack-2">
+                        <label class="check"><input type="checkbox" name="events[]" value="entry.created"> {translate 'admin.entry_created'}</label>
+                        <label class="check"><input type="checkbox" name="events[]" value="entry.updated"> {translate 'admin.entry_updated'}</label>
+                        <label class="check"><input type="checkbox" name="events[]" value="entry.deleted"> {translate 'admin.entry_deleted'}</label>
+                        <label class="check"><input type="checkbox" name="events[]" value="entry.published"> {translate 'admin.entry_published'}</label>
+                        <label class="check"><input type="checkbox" name="events[]" value="collection.created"> {translate 'admin.collection_created'}</label>
+                        <label class="check"><input type="checkbox" name="events[]" value="*"> {translate 'admin.all_events'}</label>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="webhook-collections">{translate 'admin.collections'}</label>
-                    <select id="webhook-collections" name="collections[]" class="input" multiple style="min-height: 100px;">
+                    <select id="webhook-collections" name="collections[]" class="input u-h-auto" multiple size="6">
                         <option value="*">{translate 'admin.all_collections'}</option>
                         <!-- Collections will be loaded via JavaScript -->
                     </select>
@@ -92,9 +94,9 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>
+                    <label class="check">
                         <input type="checkbox" id="webhook-active" name="active" checked>
-                        {translate 'admin.webhook_active'}
+                        <span>{translate 'admin.webhook_active'}</span>
                     </label>
                 </div>
             </form>
@@ -102,21 +104,21 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-admin-action="closeWebhookModal">{translate 'admin.cancel'}</button>
             <button type="button" class="btn btn-primary" id="save-webhook">{translate 'admin.save'}</button>
-            <button type="button" class="btn btn-sm" id="test-webhook" style="margin-left: auto;">{translate 'admin.test_webhook'}</button>
+            <button type="button" class="btn btn-sm btn-secondary u-ml-auto" id="test-webhook">{translate 'admin.test_webhook'}</button>
         </div>
     </div>
 </div>
 
 <!-- Webhook Logs Modal -->
-<div id="webhook-logs-modal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 800px;">
+<div id="webhook-logs-modal" class="modal">
+    <div class="modal-content modal--lg">
         <div class="modal-header">
             <h2>{translate 'admin.webhook_logs'}</h2>
             <button class="modal-close" data-admin-action="closeWebhookLogsModal">&times;</button>
         </div>
         <div class="modal-body">
             <div id="webhook-logs-content">
-                <div class="spinner">Loading logs...</div>
+                <div class="loading-state"><p>Loading logs...</p></div>
             </div>
         </div>
         <div class="modal-footer">

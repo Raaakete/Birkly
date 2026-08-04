@@ -12,32 +12,32 @@ $termsUrl = birkly_legal_terms_url();
     </button>
 </div>
 
-<div class="modal feedback-modal" id="feedback-submit-modal" style="display: none;">
+<div class="modal feedback-modal" id="feedback-submit-modal">
     <div class="modal-backdrop" data-close-feedback-submit></div>
-    <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-content modal--md">
         <div class="modal-header">
             <h2>Send feedback</h2>
             <button type="button" class="modal-close" data-close-feedback-submit aria-label="Close">×</button>
         </div>
-        <form id="feedback-submit-form" class="modal-body">
-            <p class="feedback-privacy-notice text-secondary" style="font-size: 0.875rem; margin-bottom: 1rem;">
+        <form id="feedback-submit-form" class="modal-body u-stack-4">
+            <p class="feedback-privacy-notice u-text-sm u-fg-secondary">
                 Your feedback helps improve Birkly during the closed alpha. Submissions include your account email,
                 the current page, and browser info. See our
                 <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer">privacy policy</a>
                 and <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer">alpha terms</a>.
             </p>
-            <div class="form-group">
-                <label for="feedback-type">Type</label>
-                <select id="feedback-type" name="type" class="form-control" required>
+            <div class="field">
+                <label class="field-label" for="feedback-type">Type</label>
+                <select id="feedback-type" name="type" class="select" required>
                     <option value="bug">Bug report</option>
                     <option value="feature">Feature request</option>
                     <option value="feedback" selected>General feedback</option>
                     <option value="question">Question / support</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="feedback-category">Category</label>
-                <select id="feedback-category" name="category" class="form-control" required>
+            <div class="field">
+                <label class="field-label" for="feedback-category">Category</label>
+                <select id="feedback-category" name="category" class="select" required>
                     <option value="admin">Admin &amp; settings</option>
                     <option value="content">Content &amp; editor</option>
                     <option value="commerce">Commerce</option>
@@ -47,23 +47,23 @@ $termsUrl = birkly_legal_terms_url();
                     <option value="other" selected>Other</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="feedback-title">Subject</label>
-                <input type="text" id="feedback-title" name="title" class="form-control" maxlength="200" required placeholder="Brief summary">
+            <div class="field">
+                <label class="field-label" for="feedback-title">Subject</label>
+                <input type="text" id="feedback-title" name="title" class="input" maxlength="200" required placeholder="Brief summary">
             </div>
-            <div class="form-group">
-                <label for="feedback-description">Description</label>
-                <textarea id="feedback-description" name="description" class="form-control" rows="5" maxlength="5000" required placeholder="What happened? What did you expect?"></textarea>
-                <p class="text-secondary" style="font-size: 0.8125rem; margin-top: 0.5rem; margin-bottom: 0;">
+            <div class="field">
+                <label class="field-label" for="feedback-description">Description</label>
+                <textarea id="feedback-description" name="description" class="textarea" rows="5" maxlength="5000" required placeholder="What happened? What did you expect?"></textarea>
+                <p class="field-help">
                     Optional: paste a screenshot into the description, or email one to
                     <a href="mailto:hello@birkly.com?subject=Birkly%20alpha%20feedback%20screenshot">hello@birkly.com</a>
                     with the subject line above.
                 </p>
             </div>
-            <div id="feedback-submit-error" class="alert alert-error" style="display: none;"></div>
-            <div id="feedback-submit-success" class="alert alert-success" style="display: none;">Thank you! Your feedback was submitted.</div>
+            <div id="feedback-submit-error" class="callout callout-danger" hidden></div>
+            <div id="feedback-submit-success" class="callout callout-success" hidden>Thank you! Your feedback was submitted.</div>
         </form>
-        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+        <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-close-feedback-submit>Cancel</button>
             <button type="submit" form="feedback-submit-form" class="btn btn-primary" id="feedback-submit-btn">Submit</button>
         </div>
