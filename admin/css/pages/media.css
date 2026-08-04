@@ -45,12 +45,10 @@
   }
 }
 
+/* Track chrome comes from components/tabs.css (.media-tree is a vertical
+   segmented track). Page file only owns scroll constraints. */
 .media-tree {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
   max-height: 28rem;
-  padding: var(--space-2);
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }

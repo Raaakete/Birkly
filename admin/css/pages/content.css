@@ -24,8 +24,7 @@
    components/tabs.css has to be reversed for this one dialect. Scoped to
    `.sidebar-tabs` so no other tab surface is affected.
    ============================================ */
-/* Sidebar panel chrome — tabs inside use the shared .tabs/.tab item language
-   (no sunken strip, no equal-width stretch). */
+/* Sidebar panel chrome — tabs use the shared segmented track language. */
 .sidebar-tabs {
   background: var(--surface);
   border: 1px solid var(--border-subtle);
@@ -34,7 +33,7 @@
 }
 
 .sidebar-tabs .tabs {
-  padding-inline: var(--space-2);
+  margin: var(--space-2);
   margin-block-end: 0;
 }
 
