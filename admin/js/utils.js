@@ -5,6 +5,124 @@
 
 window.Birkly = window.Birkly || {};
 
+/**
+ * Sliding thumb for secondary nav tracks (Agent Guide segmented pattern).
+ * Tracks: .tabs / .segmented / .language-tabs-nav / .side-nav--track /
+ *         .side-nav-sub / .media-tree
+ */
+Birkly.Nav = {
+    TRACK_SEL: '.tabs, .segmented, .language-tabs-nav, .side-nav--track, .media-tree',
+    ITEM_SEL: '.tab, .segmented-item, .language-tab-btn, .side-nav-item, .side-nav-sub-item, .folder-item, .folder-item-move',
+
+    init() {
+        if (this._inited) return;
+        this._inited = true;
+        this._syncing = false;
+        this.refresh(document);
+
+        document.addEventListener('click', (event) => {
+            const item = event.target && event.target.closest
+                ? event.target.closest(this.ITEM_SEL)
+                : null;
+            if (!item) return;
+            const track = item.closest(this.TRACK_SEL);
+            if (!track) return;
+            requestAnimationFrame(() => this.syncTrack(track));
+            setTimeout(() => this.syncTrack(track), 50);
+        }, true);
+
+        window.addEventListener('resize', () => this.refresh(document));
+
+        // Watch for active-state changes from page JS — ignore our own
+        // .nav-thumb mutations so we never re-enter syncTrack in a loop.
+        this._observer = new MutationObserver((mutations) => {
+            if (this._syncing) return;
+            const tracks = new Set();
+            for (const m of mutations) {
+                const el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+                if (!el || (el.classList && el.classList.contains('nav-thumb'))) continue;
+                if (m.type === 'attributes' && m.attributeName === 'class' &&
+                    el.classList && el.classList.contains('nav-thumb')) continue;
+                const track = el.closest ? el.closest(this.TRACK_SEL) : null;
+                if (track) tracks.add(track);
+                if (el.matches && el.matches(this.TRACK_SEL)) tracks.add(el);
+            }
+            tracks.forEach((t) => this.syncTrack(t));
+        });
+        this._observer.observe(document.documentElement, {
+            subtree: true,
+            childList: true,
+            attributes: true,
+            attributeFilter: ['class', 'aria-selected', 'aria-pressed']
+        });
+    },
+
+    refresh(root) {
+        const scope = root && root.querySelectorAll ? root : document;
+        scope.querySelectorAll(this.TRACK_SEL).forEach((track) => this.syncTrack(track, true));
+    },
+
+    _itemsInTrack(track) {
+        return Array.from(track.querySelectorAll(this.ITEM_SEL)).filter((el) => {
+            const owner = el.closest(this.TRACK_SEL);
+            return owner === track;
+        });
+    },
+
+    _activeItem(track) {
+        const items = this._itemsInTrack(track);
+        return items.find((el) => (
+            el.classList.contains('active') ||
+            el.classList.contains('selected') ||
+            el.getAttribute('aria-selected') === 'true' ||
+            el.getAttribute('aria-pressed') === 'true'
+        )) || null;
+    },
+
+    syncTrack(track, instant) {
+        if (!track || !track.isConnected || this._syncing) return;
+        this._syncing = true;
+        try {
+            let thumb = track.querySelector(':scope > .nav-thumb');
+            if (!thumb) {
+                thumb = document.createElement('span');
+                thumb.className = 'nav-thumb';
+                thumb.setAttribute('aria-hidden', 'true');
+                track.insertBefore(thumb, track.firstChild);
+                instant = true;
+            }
+
+            const active = this._activeItem(track);
+            if (!active || active.hidden) {
+                thumb.classList.remove('is-ready');
+                return;
+            }
+
+            const trackRect = track.getBoundingClientRect();
+            const itemRect = active.getBoundingClientRect();
+            if (itemRect.width < 1 || itemRect.height < 1) {
+                thumb.classList.remove('is-ready');
+                return;
+            }
+
+            const left = itemRect.left - trackRect.left + track.scrollLeft;
+            const top = itemRect.top - trackRect.top + track.scrollTop;
+
+            if (instant) thumb.classList.add('is-instant');
+            thumb.style.width = `${Math.round(itemRect.width)}px`;
+            thumb.style.height = `${Math.round(itemRect.height)}px`;
+            thumb.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+            thumb.classList.add('is-ready');
+            if (instant) {
+                void thumb.offsetWidth;
+                thumb.classList.remove('is-instant');
+            }
+        } finally {
+            this._syncing = false;
+        }
+    }
+};
+
 Birkly.Utils = {
     /**
      * Wrap .btn contents in .btn-spin so the shared label roll-out/in hover

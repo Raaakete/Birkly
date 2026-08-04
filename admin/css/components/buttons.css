@@ -63,17 +63,17 @@ a.btn { text-decoration: none; }
 }
 
 .btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-link) > .btn-spin {
-  animation: btn-label-spin 0.52s var(--ease-out);
+  animation: btn-label-spin 0.28s var(--ease-out);
 }
 
 @keyframes btn-label-spin {
   0%   { transform: translateY(0) rotateX(0deg); opacity: 1; }
-  38%  { transform: translateY(-0.65em) rotateX(82deg); opacity: 0; }
-  42%  { transform: translateY(0.65em) rotateX(-82deg); opacity: 0; }
+  40%  { transform: translateY(-0.55em) rotateX(78deg); opacity: 0; }
+  45%  { transform: translateY(0.55em) rotateX(-78deg); opacity: 0; }
   100% { transform: translateY(0) rotateX(0deg); opacity: 1; }
 }
 
-.btn:hover:not(:disabled):not([aria-disabled="true"]) {
+.btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-primary):not(.btn-danger):not(.btn-success):not(.btn-warning) {
   background: var(--surface-hover);
   border-color: var(--border-control-hover);
 }
@@ -110,16 +110,19 @@ a.btn { text-decoration: none; }
   background: var(--accent);
   border-color: var(--accent);
   color: var(--ink-on-accent);
+  box-shadow: none;
 }
-.btn-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 86%, black 14%);
-  border-color: color-mix(in srgb, var(--accent) 86%, black 14%);
+/* Darken the mint fill itself — no soft ring / light outline on hover.
+   Specificity must beat the base .btn:hover:not(...) chain. */
+.btn.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--mint-600);
+  border-color: var(--mint-600);
   color: var(--ink-on-accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
+  box-shadow: none;
 }
-.btn-primary:active:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 78%, black 22%);
-  border-color: color-mix(in srgb, var(--accent) 78%, black 22%);
+.btn.btn-primary:active:not(:disabled) {
+  background: var(--mint-700);
+  border-color: var(--mint-700);
   box-shadow: none;
 }
 
@@ -186,15 +189,15 @@ a.btn { text-decoration: none; }
   border-color: var(--danger-solid);
   color: var(--ink-on-danger);
 }
-.btn-danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger-fg) 92%, black 8%);
-  border-color: color-mix(in srgb, var(--danger-fg) 92%, black 8%);
+.btn.btn-danger:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: color-mix(in srgb, var(--danger-fg) 88%, black 12%);
+  border-color: color-mix(in srgb, var(--danger-fg) 88%, black 12%);
   color: var(--ink-on-danger);
-  box-shadow: 0 0 0 4px var(--danger-surface);
+  box-shadow: none;
 }
-.btn-danger:active:not(:disabled) {
-  background: color-mix(in srgb, var(--danger-fg) 82%, black 18%);
-  border-color: color-mix(in srgb, var(--danger-fg) 82%, black 18%);
+.btn.btn-danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--danger-fg) 78%, black 22%);
+  border-color: color-mix(in srgb, var(--danger-fg) 78%, black 22%);
   box-shadow: none;
 }
 
@@ -203,15 +206,15 @@ a.btn { text-decoration: none; }
   border-color: var(--success-solid);
   color: var(--ink-on-success);
 }
-.btn-success:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--success-fg) 92%, black 8%);
-  border-color: color-mix(in srgb, var(--success-fg) 92%, black 8%);
+.btn.btn-success:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: color-mix(in srgb, var(--success-fg) 88%, black 12%);
+  border-color: color-mix(in srgb, var(--success-fg) 88%, black 12%);
   color: var(--ink-on-success);
-  box-shadow: 0 0 0 4px var(--success-surface);
+  box-shadow: none;
 }
-.btn-success:active:not(:disabled) {
-  background: color-mix(in srgb, var(--success-fg) 82%, black 18%);
-  border-color: color-mix(in srgb, var(--success-fg) 82%, black 18%);
+.btn.btn-success:active:not(:disabled) {
+  background: color-mix(in srgb, var(--success-fg) 78%, black 22%);
+  border-color: color-mix(in srgb, var(--success-fg) 78%, black 22%);
   box-shadow: none;
 }
 
@@ -220,15 +223,15 @@ a.btn { text-decoration: none; }
   border-color: var(--warning-solid);
   color: var(--ink-on-warning);
 }
-.btn-warning:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--warning-fg) 90%, black 10%);
-  border-color: color-mix(in srgb, var(--warning-fg) 90%, black 10%);
+.btn.btn-warning:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: color-mix(in srgb, var(--warning-fg) 85%, black 15%);
+  border-color: color-mix(in srgb, var(--warning-fg) 85%, black 15%);
   color: var(--text-inverse);
-  box-shadow: 0 0 0 4px var(--warning-surface);
+  box-shadow: none;
 }
-.btn-warning:active:not(:disabled) {
-  background: color-mix(in srgb, var(--warning-fg) 80%, black 20%);
-  border-color: color-mix(in srgb, var(--warning-fg) 80%, black 20%);
+.btn.btn-warning:active:not(:disabled) {
+  background: color-mix(in srgb, var(--warning-fg) 75%, black 25%);
+  border-color: color-mix(in srgb, var(--warning-fg) 75%, black 25%);
   box-shadow: none;
 }
 
