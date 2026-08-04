@@ -43,8 +43,15 @@
   }
 }
 
-/* Topic nav uses the shared .side-nav / .side-nav-sub language
-   (components/tabs.css). Help only owns page layout below. */
+/* Topic nav uses shared .side-nav.side-nav--track + .side-nav-sub
+   (components/tabs.css) — same vertical track as Media. Layout only below. */
+
+.help-sidebar .side-nav--track {
+  /* Match Media tree scroll behaviour on tall topic lists */
+  max-height: calc(100vh - var(--space-16));
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
 
 /* ============================================
    Article — .prose supplies the typography; these are the extras help.js

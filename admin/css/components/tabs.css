@@ -9,6 +9,9 @@
      • Regular — transparent item, optically centered in the track
      • Hover  — grey chip (--surface-active) + light drop shadow (lifted)
 
+   Horizontal and vertical (Media folder tree, Help docs) share this chrome.
+   Help adds `.side-nav-sub` — a nested inset pocket under each group title.
+
    Main #admin-sidebar is independent and is NOT styled here.
 
    Tracks:  .tabs | .segmented | .language-tabs-nav | .side-nav--track |
@@ -37,10 +40,10 @@
   flex-wrap: wrap;
   gap: var(--space-1);
   min-width: 0;
-  padding: calc(var(--space-1) * 1.5); /* ~6px — between space-1 and space-2 */
+  padding: var(--space-3); /* 12px track pad */
   border: none;
   border-radius: var(--radius-sm);
-  background: transparent; /* same as content area */
+  background: transparent; /* same as content area — never a white card */
   box-shadow: var(--elevation-inset);
   box-sizing: border-box;
 }
@@ -51,6 +54,12 @@
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: stretch;
+}
+
+/* .side-nav sets a larger stack gap; track variants stay tighter */
+.side-nav.side-nav--track,
+.side-nav.media-tree {
+  gap: var(--space-3);
 }
 
 /* Sliding active chip — positioned by Birkly.Nav */
@@ -93,7 +102,7 @@
   justify-content: center;
   gap: var(--space-2);
   height: auto;
-  padding: var(--space-2) var(--space-3); /* 8px / 12px */
+  padding: var(--space-3) var(--space-4); /* 12px / 16px */
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -238,9 +247,10 @@
   min-width: 0;
 }
 
-.side-nav-group-title {
-  margin: 0 0 var(--space-1);
-  padding-inline: var(--space-3);
+/* Rail / page label (e.g. "Documentation") — not interactive */
+.side-nav > .side-nav-group-title {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
   font-size: var(--text-2xs);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
@@ -251,22 +261,44 @@
   user-select: none;
 }
 
+/* Collapsible section headers inside the track */
 summary.side-nav-group-title {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  padding-block: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+  list-style: none;
   cursor: pointer;
+  user-select: none;
+  transition:
+    color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+summary.side-nav-group-title:hover {
+  color: var(--text-secondary);
+  background: var(--surface-active);
 }
 summary.side-nav-group-title::-webkit-details-marker { display: none; }
 summary.side-nav-group-title::before {
-  content: "▸";
-  display: inline-block;
-  color: var(--text-tertiary);
+  content: "";
+  display: block;
+  width: 0.35em;
+  height: 0.35em;
+  margin-inline-end: var(--space-1);
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  transform: rotate(-45deg); /* points right when collapsed */
   transition: transform var(--motion-fast) var(--ease-out);
 }
 details.side-nav-group[open] > summary.side-nav-group-title::before {
-  transform: rotate(90deg);
+  transform: rotate(45deg); /* points down when open */
 }
 
 .side-nav-item,
@@ -287,14 +319,19 @@ details.side-nav-group[open] > summary.side-nav-group-title::before {
   white-space: nowrap;
 }
 
-/* Nested sub-list — indent only; parent .side-nav--track owns the chrome */
+/* Sub-nav pocket — nested inset under a group (Help docs). Parent track
+   still owns the sliding .nav-thumb; this well only marks hierarchy. */
 .side-nav-sub {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   margin-block-start: var(--space-1);
-  padding-inline-start: var(--space-3);
-  border-inline-start: 1px solid var(--border-subtle);
+  margin-inline-start: var(--space-2);
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: var(--elevation-inset);
 }
 
 .side-nav-item[aria-expanded] { cursor: pointer; }

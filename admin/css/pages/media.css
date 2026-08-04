@@ -8,12 +8,9 @@
    the asset grid, the modal preview surface and the media picker overlay —
    none of which a component expresses.
 
-   The old `.media-sidebar .sidebar-header` / `.sidebar-content` namesakes of
-   the admin shell are gone; the tree is `.media-tree` (P56-M7).
-
-   Folder tree rows and the Move-media modal tree both use `.side-nav-item`
-   (components/tabs.css). `.folder-item` / `.folder-item-move` stay as JS
-   hooks only — do not re-add hover/active rules here.
+   Folder tree uses the shared vertical track (`.side-nav.side-nav--track.media-tree`)
+   from components/tabs.css — same language as Help documentation nav. No card
+   chrome. `.folder-item` / `.folder-item-move` stay as JS hooks only.
    ============================================ */
 
 /* `.bulk-actions-toolbar` sets `display: flex`, which outranks the user-agent
@@ -45,8 +42,7 @@
   }
 }
 
-/* Track chrome comes from components/tabs.css (.media-tree is a vertical
-   segmented track). Page file only owns scroll constraints. */
+/* Track chrome from components/tabs.css; page file only owns scroll. */
 .media-tree {
   max-height: 28rem;
   overflow-y: auto;
