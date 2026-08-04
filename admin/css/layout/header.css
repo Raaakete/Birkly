@@ -517,13 +517,29 @@
 
 .main-actions-right { margin-inline-start: auto; }
 
-/* Sticky variant — one per page */
+/* Sticky variant — one per page.
+   Shadow only while stuck (JS toggles .is-stuck via a sentinel). */
+.main-actions-bar-sentinel {
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .main-actions-bar--sticky {
   position: sticky;
   inset-block-start: 0;
   z-index: var(--z-sticky);
   padding-block: var(--space-3);
   background: var(--canvas);
+  box-shadow: none;
+  transition: box-shadow var(--motion-base) var(--ease-out);
+}
+
+.main-actions-bar--sticky.is-stuck {
   box-shadow: var(--elevation-1);
 }
 
