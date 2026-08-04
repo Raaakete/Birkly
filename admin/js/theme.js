@@ -57,7 +57,7 @@ Birkly.Theme = {
     initSwitcher() {
         document.querySelectorAll('.theme-option').forEach((btn) => {
             btn.addEventListener('click', () => {
-                const theme = btn.getAttribute('data-theme');
+                const theme = btn.getAttribute('data-theme-option');
                 if (!theme) {
                     return;
                 }
@@ -100,7 +100,7 @@ Birkly.Theme = {
         }
 
         document.querySelectorAll('.theme-option').forEach((btn) => {
-            const theme = btn.getAttribute('data-theme');
+            const theme = btn.getAttribute('data-theme-option');
             const active = theme === this.currentTheme;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-checked', active ? 'true' : 'false');

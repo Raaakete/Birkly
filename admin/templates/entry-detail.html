@@ -422,7 +422,7 @@
     </div>
 </div>
 
-<script>
+<script<?= $__birklyScriptNonceAttr ?? '' ?>>
 const entryDetailConfirmDelete = <?= json_encode(__('admin.confirm_delete')) ?>;
 
 document.querySelector('.delete-main-entry-btn')?.addEventListener('click', async function() {
@@ -609,7 +609,7 @@ document.querySelectorAll('.back-button').forEach(btn => {
 });
 </script>
 
-<script>
+<script<?= $__birklyScriptNonceAttr ?? '' ?>>
 // Expose collection data to JavaScript
 window.collectionData = <?= json_encode($collection ?? []) ?>;
 window.collectionSlug = <?= json_encode($collection['slug'] ?? '') ?>;
@@ -617,7 +617,7 @@ window.collectionId = <?= json_encode($collection['id'] ?? '') ?>;
 </script>
 
 <script src="<?= birkly_url('/admin/js/mouse-drag-drop.js') ?>"></script>
-<script>
+<script<?= $__birklyScriptNonceAttr ?? '' ?>>
 // Initialize drag and drop for sub-entries tables using MouseDragDrop
 document.addEventListener('DOMContentLoaded', function() {
     // Store sorters for each table

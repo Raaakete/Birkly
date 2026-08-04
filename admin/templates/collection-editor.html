@@ -203,9 +203,10 @@ if (!$cancelUrl) {
                                                     </select>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label class="checkbox-label">
+                                                    <label>Mandatory Field</label>
+                                                    <label class="switch">
                                                         <input type="checkbox" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
-                                                        <span>Mandatory Field</span>
+                                                        <span class="switch__slider"></span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -356,9 +357,10 @@ if (!$cancelUrl) {
                                                     </select>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label class="checkbox-label">
+                                                    <label>Mandatory Field</label>
+                                                    <label class="switch">
                                                         <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
-                                                        <span>Mandatory Field</span>
+                                                        <span class="switch__slider"></span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -493,9 +495,10 @@ if (!$cancelUrl) {
                                                                     </select>
                                                                 </div>
                                                                 <div class="fieldtype-field">
-                                                                    <label class="checkbox-label">
+                                                                    <label>Mandatory Field</label>
+                                                                    <label class="switch">
                                                                         <input type="checkbox" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
-                                                                        <span>Mandatory Field</span>
+                                                                        <span class="switch__slider"></span>
                                                                     </label>
                                                                 </div>
                                                             </div>
@@ -549,7 +552,8 @@ if (!$cancelUrl) {
                     <div class="tab-content">
                         <!-- Settings Tab -->
                         <div class="tab-pane active" id="settings-tab">
-                            <div class="card">
+                            <div class="u-stack-0">
+                                <div class="card-section u-stack-4">
                                 <?php if ($isSubCollection): ?>
                                     <?php if (!empty($subCollectionData['slug'])): ?>
                                         <div class="info-item">
@@ -653,9 +657,10 @@ if (!$cancelUrl) {
                                         </small>
                                     </div>
                                 <?php endif; ?>
-                                
+                                </div>
+
                                 <!-- Multi-Language Configuration -->
-                                <div class="info-item u-pt-4 u-border-top">
+                                <div class="info-item card-section">
                                     <label><?= __('admin.multi_language_support') ?></label>
                                     <div class="u-row-3">
                                         <label class="switch">
@@ -717,9 +722,9 @@ if (!$cancelUrl) {
                                 
                                 <!-- Public API Settings (shown when Public API is selected) -->
                                 <?php if ($isSubCollection): ?>
-                                    <div id="sub-collection-public-api-settings" class="u-stack-3 u-pt-4 u-border-top"<?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
+                                    <div id="sub-collection-public-api-settings" class="u-stack-3 card-section"<?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
                                 <?php else: ?>
-                                    <div id="public-api-settings" class="u-stack-3 u-pt-4 u-border-top"<?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
+                                    <div id="public-api-settings" class="u-stack-3 card-section"<?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
                                 <?php endif; ?>
                                     <h4 class="section-title">Public API Settings</h4>
                                     
@@ -835,6 +840,9 @@ if (!$cancelUrl) {
                                     <?php endif; ?>
                                 </div>
                                 
+                                <?php if (($isSubCollection && !empty($subCollectionData['slug'])) || (!$isSubCollection && !empty($collection['title']))): ?>
+                                <div class="card-section u-stack-4">
+                                <?php endif; ?>
                                 <?php if ($isSubCollection): ?>
                                     <?php if (!empty($subCollectionData['slug'])): ?>
                                         <?php
@@ -871,6 +879,9 @@ if (!$cancelUrl) {
                                         <label>Last Update</label>
                                         <div class="info-value"><?= $updatedAt ? date('m.d.Y, g:i A', strtotime($updatedAt)) : '—' ?></div>
                                     </div>
+                                <?php endif; ?>
+                                <?php if (($isSubCollection && !empty($subCollectionData['slug'])) || (!$isSubCollection && !empty($collection['title']))): ?>
+                                </div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -1279,9 +1290,10 @@ echo htmlspecialchars($formCode);
                     </select>
                 </div>
                 <div class="fieldtype-field">
-                    <label class="checkbox-label">
+                    <label>Mandatory Field</label>
+                    <label class="switch">
                         <input type="checkbox" name="fields[__INDEX__][required]" value="1" __REQUIRED_CHECKED__>
-                        <span>Mandatory Field</span>
+                        <span class="switch__slider"></span>
                     </label>
                 </div>
             </div>
@@ -1472,9 +1484,10 @@ document.addEventListener('DOMContentLoaded', function() {
                             </select>
                         </div>
                         <div class="fieldtype-field">
-                            <label class="checkbox-label">
+                            <label>Mandatory Field</label>
+                            <label class="switch">
                                 <input type="checkbox" name="sub_collections[0][schema][fields][${fieldIndex}][required]" value="1">
-                                <span>Mandatory Field</span>
+                                <span class="switch__slider"></span>
                             </label>
                         </div>
                     </div>
@@ -2441,9 +2454,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </select>
                                         </div>
                                         <div class="fieldtype-field">
-                                            <label class="checkbox-label">
+                                            <label>Mandatory Field</label>
+                                            <label class="switch">
                                                 <input type="checkbox" name="sub_collections[${index}][schema][fields][${fieldIndex}][required]" value="1" ${field.required ? 'checked' : ''}>
-                                                <span>Mandatory Field</span>
+                                                <span class="switch__slider"></span>
                                             </label>
                                         </div>
                                     </div>
@@ -2585,9 +2599,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                         </select>
                                     </div>
                                     <div class="fieldtype-field">
-                                        <label class="checkbox-label">
+                                        <label>Mandatory Field</label>
+                                        <label class="switch">
                                             <input type="checkbox" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][required]" value="1">
-                                            <span>Mandatory Field</span>
+                                            <span class="switch__slider"></span>
                                         </label>
                                     </div>
                                 </div>

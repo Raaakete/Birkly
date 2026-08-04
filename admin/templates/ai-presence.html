@@ -13,6 +13,7 @@ $stickySaveBarMessageId = 'ai-presence-message';
 $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>';
+$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
@@ -27,19 +28,27 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         <div class="u-cluster">
             <button type="button" class="btn btn-sm btn-secondary" id="ap-publish-banner-copy">{translate 'admin.ag_wizard_copy_url'}</button>
             <a class="btn btn-sm btn-primary" id="ap-publish-banner-open" target="_blank" rel="noopener">{translate 'admin.ag_wizard_open_json'}</a>
-            <button type="button" class="btn btn-sm btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.dismiss'}">×</button>
+            <button type="button" class="btn btn-sm btn-link ap-publish-banner-dismiss" aria-label="{translate 'admin.close'}">×</button>
         </div>
     </div>
 </div>
 
 <div class="ap-page">
     <div class="ap-main">
-        <section class="card u-p-4 u-cluster-4 u-mb-4" id="ap-status-strip" aria-live="polite">
-            <div class="u-cluster" id="ap-status-badges"></div>
-            <div class="u-fill u-text-sm u-fg-secondary" id="ap-status-meta"></div>
-            <div class="u-cluster">
-                <button type="button" class="btn btn-sm btn-secondary" id="ap-setup-guide-btn" hidden>{translate 'admin.ag_setup_guide'}</button>
-                <button type="button" class="btn btn-sm btn-primary" id="ap-status-publish-btn" hidden>{translate 'admin.ag_publish_updates'}</button>
+        <section class="card u-mb-6" id="ap-top-publish-toggle">
+            <div class="card-body">
+                <div class="data-list data-list--flush">
+                    <div class="data-list-item">
+                        <div class="data-list-main">
+                            <span class="data-list-title">{translate 'admin.ai_presence_enable_publishing'}</span>
+                            <small class="data-list-meta">{translate 'admin.ai_presence_pub_enabled_help'}</small>
+                        </div>
+                        <label class="switch" for="ap-pub-enabled-top">
+                            <input type="checkbox" id="ap-pub-enabled-top" data-field="publication_settings.enabled">
+                            <span class="switch__slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </section>
         <div class="segmented u-mb-6" role="group" aria-label="{translate 'admin.ag_view_mode'}">
@@ -51,6 +60,9 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <section class="card u-p-6 u-stack-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_who'}</h3>
+                        <div class="card-actions">
+                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
+                        </div>
                     </header>
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
@@ -70,7 +82,9 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <section class="card u-p-6 u-stack-4 u-mt-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_sources'}</h3>
-                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="sources">{translate 'admin.ag_manage_all'}</button>
+                        <div class="card-actions">
+                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="sources">{translate 'admin.ag_manage_all'}</button>
+                        </div>
                     </header>
                     <ul id="ap-essentials-sources-list" class="ai-presence-item-list"></ul>
                     <p id="ap-essentials-sources-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_sources_empty'}</p>
@@ -78,7 +92,9 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <section class="card u-p-6 u-stack-4 u-mt-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_messages'}</h3>
-                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
+                        <div class="card-actions">
+                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="context">{translate 'admin.ag_manage_all'}</button>
+                        </div>
                     </header>
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
@@ -94,7 +110,9 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <section class="card u-p-6 u-stack-4 u-mt-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_claims'}</h3>
-                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="claims">{translate 'admin.ag_manage_all'}</button>
+                        <div class="card-actions">
+                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="claims">{translate 'admin.ag_manage_all'}</button>
+                        </div>
                     </header>
                     <ul id="ap-essentials-claims-list" class="ai-presence-item-list"></ul>
                     <p id="ap-essentials-claims-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_select_claim'}</p>
@@ -102,16 +120,11 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <section class="card u-p-6 u-stack-4 u-mt-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_publish'}</h3>
-                        <button type="button" class="btn btn-sm btn-link ai-presence-goto-tab" data-tab="publish">{translate 'admin.ag_manage_all'}</button>
+                        <div class="card-actions">
+                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="publish">{translate 'admin.ag_manage_all'}</button>
+                        </div>
                     </header>
-                    <div class="u-stack-1 u-pb-3 u-border-bottom">
-                        <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-essentials-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
-                        <p class="form-help">{translate 'admin.ai_presence_pub_enabled_help'}</p>
-                    </div>
-                    <div class="u-cluster-3">
-                        <button type="button" class="btn btn-primary" id="ap-essentials-publish-btn">{translate 'admin.publish_ai_presence'}</button>
-                        <button type="button" class="btn btn-secondary" id="ap-essentials-save-draft">{translate 'admin.save_draft'}</button>
-                    </div>
+                    <p id="ap-essentials-publish-status" class="u-text-sm u-fg-secondary u-m-0"></p>
                 </section>
             </div>
             <div id="ap-advanced-view" class="ap-advanced-view" hidden>
@@ -127,66 +140,49 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
 
                 <div class="tab-content active" data-tab-content="overview">
-                    <section class="card u-p-6 ap-intro" id="ap-intro">
-                        <div class="ap-intro-layout">
-                            <div>
-                                <h2 class="u-text-lg u-weight-semibold u-mb-2">{translate 'admin.ai_presence_what_title'}</h2>
-                                <p class="u-text-base u-mb-4">{translate 'admin.ai_presence_what_body'}</p>
-                                <h3 class="u-text-sm u-weight-semibold u-mb-3">{translate 'admin.ai_presence_what_good_for_title'}</h3>
-                                <ul class="u-stack-1 u-text-sm u-mb-4">
-                                    <li>{translate 'admin.ai_presence_what_benefit_1'}</li>
-                                    <li>{translate 'admin.ai_presence_what_benefit_2'}</li>
-                                    <li>{translate 'admin.ai_presence_what_benefit_3'}</li>
-                                    <li>{translate 'admin.ai_presence_what_benefit_4'}</li>
-                                </ul>
-                                <p class="form-help">{translate 'admin.ai_presence_what_note'}</p>
-                            </div>
-                            <div class="ap-intro-steps-wrap">
-                                <h3 class="u-text-sm u-weight-semibold u-mb-3">{translate 'admin.ai_presence_workflow_title'}</h3>
-                            <ol class="ap-workflow" id="ap-workflow-steps">
-                                <li class="ap-workflow-step" data-workflow="sources">
-                                    <span class="ap-workflow-num">1</span>
-                                    <div class="u-fill u-min-w-0">
-                                        <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_sources'}</strong>
-                                        <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_sources_desc'}</span>
-                                    </div>
-                                </li>
-                                <li class="ap-workflow-step" data-workflow="context">
-                                    <span class="ap-workflow-num">2</span>
-                                    <div class="u-fill u-min-w-0">
-                                        <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_context'}</strong>
-                                        <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_context_desc'}</span>
-                                    </div>
-                                </li>
-                                <li class="ap-workflow-step" data-workflow="products">
-                                    <span class="ap-workflow-num">3</span>
-                                    <div class="u-fill u-min-w-0">
-                                        <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_products'}</strong>
-                                        <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_products_desc'}</span>
-                                    </div>
-                                </li>
-                                <li class="ap-workflow-step" data-workflow="claims">
-                                    <span class="ap-workflow-num">4</span>
-                                    <div class="u-fill u-min-w-0">
-                                        <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_claims'}</strong>
-                                        <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_claims_desc'}</span>
-                                    </div>
-                                </li>
-                                <li class="ap-workflow-step" data-workflow="publish">
-                                    <span class="ap-workflow-num">5</span>
-                                    <div class="u-fill u-min-w-0">
-                                        <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_publish'}</strong>
-                                        <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_publish_desc'}</span>
-                                    </div>
-                                </li>
-                            </ol>
-                            </div>
-                        </div>
-                        <button type="button" class="btn btn-link btn-sm u-mt-3" id="ap-intro-dismiss" hidden>{translate 'admin.ai_presence_dismiss_intro'}</button>
+                    <section class="card u-p-6 u-stack-4" id="ap-workflow-panel">
+                        <h3>{translate 'admin.ai_presence_workflow_title'}</h3>
+                        <ol class="ap-workflow" id="ap-workflow-steps">
+                            <li class="ap-workflow-step" data-workflow="sources">
+                                <span class="ap-workflow-num">1</span>
+                                <div class="u-fill u-min-w-0">
+                                    <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_sources'}</strong>
+                                    <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_sources_desc'}</span>
+                                </div>
+                            </li>
+                            <li class="ap-workflow-step" data-workflow="context">
+                                <span class="ap-workflow-num">2</span>
+                                <div class="u-fill u-min-w-0">
+                                    <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_context'}</strong>
+                                    <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_context_desc'}</span>
+                                </div>
+                            </li>
+                            <li class="ap-workflow-step" data-workflow="products">
+                                <span class="ap-workflow-num">3</span>
+                                <div class="u-fill u-min-w-0">
+                                    <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_products'}</strong>
+                                    <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_products_desc'}</span>
+                                </div>
+                            </li>
+                            <li class="ap-workflow-step" data-workflow="claims">
+                                <span class="ap-workflow-num">4</span>
+                                <div class="u-fill u-min-w-0">
+                                    <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_claims'}</strong>
+                                    <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_claims_desc'}</span>
+                                </div>
+                            </li>
+                            <li class="ap-workflow-step" data-workflow="publish">
+                                <span class="ap-workflow-num">5</span>
+                                <div class="u-fill u-min-w-0">
+                                    <strong class="u-block u-truncate u-text-sm">{translate 'admin.ai_presence_flow_publish'}</strong>
+                                    <span class="u-clamp-2 u-text-xs u-fg-secondary">{translate 'admin.ai_presence_flow_publish_desc'}</span>
+                                </div>
+                            </li>
+                        </ol>
                     </section>
 
                     <div id="ai-presence-overview">
-                        <div class="u-grid-2">
+                        <div class="u-grid-2 u-mt-4">
                             <div class="card u-p-6 u-stack-2">
                                 <h3>{translate 'admin.ai_presence_completeness'}</h3>
                                 <div class="u-my-4" aria-hidden="true">
@@ -579,7 +575,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </aside>
 </div>
 
-<button type="button" class="ap-assist-fab" id="ap-assist-fab" aria-controls="ap-assist-sidebar" aria-expanded="false">
+<button type="button" class="ap-assist-fab btn btn-primary" id="ap-assist-fab" aria-controls="ap-assist-sidebar" aria-expanded="false">
     <span>{translate 'admin.ai_presence_assist_title'}</span>
     <span class="badge badge-sm" id="ap-suggestion-count-fab" hidden>0</span>
 </button>
@@ -591,6 +587,33 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         <div class="spinner spinner-lg u-mx-auto" aria-hidden="true"></div>
         <p id="ap-ai-loading-msg" class="u-text-base u-m-0">{translate 'admin.ai_presence_ai_working'}</p>
         <button type="button" class="btn btn-secondary btn-sm" id="ap-ai-loading-cancel">{translate 'admin.cancel'}</button>
+    </div>
+</div>
+
+<!-- About Agent Guide modal — shown once on first visit; reopened from the topbar link -->
+<div id="ap-about-modal" class="modal ap-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ap-about-modal-title">
+    <div class="modal-backdrop" data-ap-modal-close="ap-about-modal"></div>
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h3 id="ap-about-modal-title">{translate 'admin.ai_presence_what_title'}</h3>
+            <button type="button" class="modal-close" data-ap-modal-close="ap-about-modal">&times;</button>
+        </div>
+        <div class="modal-body u-stack-4">
+            <p class="u-m-0">{translate 'admin.ai_presence_what_body'}</p>
+            <div>
+                <h4 class="u-text-sm u-weight-semibold u-mb-2">{translate 'admin.ai_presence_what_good_for_title'}</h4>
+                <ul class="u-stack-1 u-text-sm u-m-0">
+                    <li>{translate 'admin.ai_presence_what_benefit_1'}</li>
+                    <li>{translate 'admin.ai_presence_what_benefit_2'}</li>
+                    <li>{translate 'admin.ai_presence_what_benefit_3'}</li>
+                    <li>{translate 'admin.ai_presence_what_benefit_4'}</li>
+                </ul>
+            </div>
+            <p class="form-help u-m-0">{translate 'admin.ai_presence_what_note'}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-ap-modal-close="ap-about-modal">{translate 'admin.ai_presence_about_got_it'}</button>
+        </div>
     </div>
 </div>
 
@@ -625,28 +648,30 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         </div>
         <form id="ap-product-form">
             <div class="modal-body ap-modal-body-scroll">
-                <div class="u-stack-4">
-                    <div class="u-grid-3">
-                        <div class="form-group"><label for="ap-product-name">{translate 'admin.name'}</label><input type="text" id="ap-product-name" class="input" required></div>
-                        <div class="form-group"><label for="ap-product-type">{translate 'admin.type'}</label>
-                            <select id="ap-product-type" class="input">
-                                <option value="product">{translate 'admin.ai_presence_type_product'}</option>
-                                <option value="service">{translate 'admin.ai_presence_type_service'}</option>
-                                <option value="bundle">{translate 'admin.ai_presence_type_bundle'}</option>
-                            </select>
+                <div class="card-body u-stack-0">
+                    <div class="card-section u-stack-4">
+                        <div class="u-grid-3">
+                            <div class="form-group"><label for="ap-product-name">{translate 'admin.name'}</label><input type="text" id="ap-product-name" class="input" required></div>
+                            <div class="form-group"><label for="ap-product-type">{translate 'admin.type'}</label>
+                                <select id="ap-product-type" class="input">
+                                    <option value="product">{translate 'admin.ai_presence_type_product'}</option>
+                                    <option value="service">{translate 'admin.ai_presence_type_service'}</option>
+                                    <option value="bundle">{translate 'admin.ai_presence_type_bundle'}</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label for="ap-product-category">{translate 'admin.ai_presence_categories'}</label><input type="text" id="ap-product-category" class="input"></div>
                         </div>
-                        <div class="form-group"><label for="ap-product-category">{translate 'admin.ai_presence_categories'}</label><input type="text" id="ap-product-category" class="input"></div>
+                        <div class="form-group ap-span-full">
+                            <label for="ap-product-short">{translate 'admin.ai_presence_short_description'}</label>
+                            <textarea id="ap-product-short" class="input" rows="3"></textarea>
+                        </div>
+                        <div class="form-group ap-span-full">
+                            <label for="ap-product-full">{translate 'admin.ai_presence_full_description'}</label>
+                            <textarea id="ap-product-full" class="input" rows="6"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group ap-span-full">
-                        <label for="ap-product-short">{translate 'admin.ai_presence_short_description'}</label>
-                        <textarea id="ap-product-short" class="input" rows="3"></textarea>
-                    </div>
-                    <div class="form-group ap-span-full">
-                        <label for="ap-product-full">{translate 'admin.ai_presence_full_description'}</label>
-                        <textarea id="ap-product-full" class="input" rows="6"></textarea>
-                    </div>
-                    <div class="card card--sunken u-p-4 u-stack-3">
-                        <h4 class="u-text-base u-weight-semibold u-mb-2">{translate 'admin.ai_presence_pricing_section'}</h4>
+                    <div class="card-section u-stack-3">
+                        <h4 class="card-section-title">{translate 'admin.ai_presence_pricing_section'}</h4>
                         <div class="u-grid-3">
                             <div class="form-group"><label for="ap-product-price-display">{translate 'admin.ai_presence_price_display'}</label><input type="text" id="ap-product-price-display" class="input" placeholder="€99/month, from $49"></div>
                             <div class="form-group"><label for="ap-product-pricing">{translate 'admin.ai_presence_pricing_model'}</label><input type="text" id="ap-product-pricing" class="input" placeholder="subscription, one-time, free"></div>
@@ -678,22 +703,24 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             <input type="url" id="ap-product-price-url" class="input" placeholder="https://…">
                         </div>
                     </div>
-                    <div class="u-grid-2">
-                        <div class="form-group"><label for="ap-product-best-for">{translate 'admin.ai_presence_best_suited_for'}</label><textarea id="ap-product-best-for" class="input" rows="3" placeholder="One per line"></textarea></div>
-                        <div class="form-group"><label for="ap-product-not-for">{translate 'admin.ai_presence_not_ideal_for'}</label><textarea id="ap-product-not-for" class="input" rows="3" placeholder="One per line"></textarea></div>
+                    <div class="card-section u-stack-4">
+                        <div class="u-grid-2">
+                            <div class="form-group"><label for="ap-product-best-for">{translate 'admin.ai_presence_best_suited_for'}</label><textarea id="ap-product-best-for" class="input" rows="3" placeholder="One per line"></textarea></div>
+                            <div class="form-group"><label for="ap-product-not-for">{translate 'admin.ai_presence_not_ideal_for'}</label><textarea id="ap-product-not-for" class="input" rows="3" placeholder="One per line"></textarea></div>
+                        </div>
                     </div>
-                    <div class="form-group card card--sunken u-p-3">
-                        <label>{translate 'admin.ai_presence_product_media'}</label>
-                        <p class="form-help u-mb-2">{translate 'admin.ai_presence_product_media_help'}</p>
-                        <div class="u-cluster u-mt-2">
+                    <div class="card-section u-stack-3">
+                        <div class="field-label">{translate 'admin.ai_presence_product_media'}</div>
+                        <p class="form-help u-m-0">{translate 'admin.ai_presence_product_media_help'}</p>
+                        <div class="u-cluster">
                             <button type="button" class="btn btn-sm btn-secondary" id="ap-product-pick-media">{translate 'admin.ai_presence_pick_media'}</button>
                             <button type="button" class="btn btn-sm btn-secondary" id="ap-product-clear-media" hidden>{translate 'admin.clear'}</button>
                         </div>
-                        <div id="ap-product-media-preview" class="u-row-2 u-mt-3" hidden>
+                        <div id="ap-product-media-preview" class="u-row-2" hidden>
                             <img id="ap-product-media-thumb" alt="" class="ap-media-thumb">
                             <span id="ap-product-media-name" class="u-text-sm u-fg-secondary"></span>
                         </div>
-                        <div class="form-group u-mt-3">
+                        <div class="form-group">
                             <label for="ap-product-external-url">{translate 'admin.ai_presence_external_media_url'}</label>
                             <input type="url" id="ap-product-external-url" class="input" placeholder="https://…">
                         </div>

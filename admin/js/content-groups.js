@@ -179,6 +179,9 @@
         const container = document.getElementById('collections-container');
         if (container) {
             container.dataset.view = currentView;
+            // components/cards.css keys the flush-row / rounded-top-bottom-only
+            // list treatment off this class, not the data-view attribute.
+            container.classList.toggle('list-view', currentView === 'list');
         }
 
         document.querySelectorAll('.collection-card').forEach((card) => {
@@ -314,6 +317,7 @@
 
         container.innerHTML = '';
         container.dataset.view = currentView;
+        container.classList.toggle('list-view', currentView === 'list');
 
         groups.forEach((group) => {
             if (group.id === 'ungrouped') return;
@@ -806,7 +810,7 @@
 
         const menuButton = document.createElement('button');
         menuButton.type = 'button';
-        menuButton.className = 'dropdown-trigger collection-menu-btn';
+        menuButton.className = 'dropdown-trigger btn-icon btn-icon-sm collection-menu-btn';
         menuButton.setAttribute('aria-label', 'Collection options');
         menuButton.setAttribute('aria-expanded', 'false');
         menuButton.setAttribute('aria-haspopup', 'true');

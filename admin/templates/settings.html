@@ -140,7 +140,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
                 <div class="form-group">
                   <label for="project-logo"><?= __('admin.project_logo') ?></label>
-                  <input type="file" id="project-logo" name="project_logo" class="input" accept="image/*">
+                  <input type="file" id="project-logo" name="project_logo" accept="image/*">
                   <small class="form-help"><?= __('admin.project_logo_help') ?></small>
                   <?php if (!empty($settings['branding']['logoPath'])): ?>
                     <div class="u-stack-2">
@@ -223,24 +223,35 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
       <div class="tab-pane" id="site-delivery">
         <div class="settings-stack">
-          <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains hosting dns analytics public site local development tracking"><div class="settings-stack domains-settings">
+          <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains dns analytics public site local development tracking">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title"><?= __('admin.domain_management_and_analytics') ?></h2>
+              <p class="settings-help"><?= __('admin.domain_management_description') ?></p>
+            </div>
+            <button type="button" class="btn btn-primary" id="register-domain-btn">
+              <?= birkly_icon('plus', ['size' => 16]) ?>
+              <?= __('admin.register_domain') ?>
+            </button>
+          </div>
+          <div class="settings-stack">
           <section class="card">
             <div class="card-header">
-              <div class="card-heading">
-                <h2><?= __('admin.domain_management_and_analytics') ?></h2>
-                <p class="section-description"><?= __('admin.domain_management_description') ?></p>
+              <h3 class="card-title"><?= __('admin.registered_domains') ?></h3>
+            </div>
+            <div class="card-body u-stack-4">
+            <div id="domains-list" class="domains-list">
+              <div class="loading-state">
+                <p><?= __('admin.loading_domains') ?>...</p>
               </div>
-              <button type="button" class="btn btn-primary" id="register-domain-btn">
-                <?= birkly_icon('plus', ['size' => 16]) ?>
-                <?= __('admin.register_domain') ?>
-              </button>
+            </div>
             </div>
           </section>
 
           <section class="card">
             <div class="card-header">
               <div class="card-heading">
-                <h3><?= __('admin.local_development') ?></h3>
+                <h3 class="card-title"><?= __('admin.local_development') ?></h3>
                 <p class="section-description"><?= __('admin.local_development_script_help') ?></p>
               </div>
             </div>
@@ -258,64 +269,31 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <p class="form-help"><?= __('admin.tracking_script_hint') ?></p>
             </div>
           </section>
+          </div>
+        </div>
 
+          <div id="hosting" class="settings-pane-section" data-settings-search="site delivery hosting urls cms url public site preview server rendering ssr render mode cache ttl">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title"><?= __('admin.hosting_urls') ?></h2>
+              <p class="settings-help">Where the CMS and public site are served from, and how project pages render.</p>
+            </div>
+          </div>
+          <div class="settings-stack">
           <section class="card">
             <div class="card-header">
-              <h3><?= __('admin.registered_domains') ?></h3>
-            </div>
-            <div class="card-body u-stack-4">
-            <div id="domains-list" class="domains-list">
-              <div class="loading-state">
-                <p><?= __('admin.loading_domains') ?>...</p>
-              </div>
-            </div>
-            </div>
-          </section>
-
-          <section class="card hosting-settings">
-            <div class="card-header">
-              <div class="card-heading">
-                <h2><?= __('admin.hosting_urls') ?></h2>
-                <p class="section-description"><?= __('admin.hosting_urls_description') ?></p>
-              </div>
+              <h3 class="card-title"><?= __('admin.hosting_urls') ?></h3>
             </div>
             <div class="card-body u-stack-4">
             <div id="hosting-wizard-mount"></div>
             <p data-hosting-project-link class="form-help" hidden>Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=site-delivery') ?>">Settings → Site delivery</a>.</p>
             </div>
           </section>
-        </div></div>
-          <div id="project" class="settings-pane-section" data-settings-search="site delivery project files upload editor public site activity access server rendering ssr render mode cache"><div class="settings-stack project-settings">
-          <section class="card">
-            <div class="card-header">
-              <div>
-                <h2>Project files</h2>
-                <p class="section-description">Bundled public site workspace. Upload files or visit your live site.</p>
-              </div>
-              <a href="#" id="project-visit-public-link" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer" hidden>Visit public site</a>
-            </div>
-            <div class="card-body u-stack-4">
-            <div class="u-cluster">
-              <button type="button" class="btn btn-secondary btn-sm" id="project-simple-upload-btn">Upload files</button>
-              <input type="file" id="project-simple-upload-input" multiple hidden>
-            </div>
-            <div id="project-simple-file-list" class="project-simple-file-list">
-              <div class="loading-state"><p>Loading files...</p></div>
-            </div>
-            <div class="form-group">
-              <label class="checkbox-label">
-                <input type="checkbox" id="project-advanced-editor-toggle">
-                Advanced file editor
-              </label>
-              <small class="form-help">Browse folders, edit source files, and view activity.</small>
-            </div>
-            </div>
-          </section>
 
-          <section class="card" id="project-server-rendering" data-settings-search="server rendering ssr render mode cache ttl hosting">
+          <section class="card" id="project-server-rendering">
             <div class="card-header">
               <div class="card-heading">
-                <h2>Server rendering</h2>
+                <h3 class="card-title">Server rendering</h3>
                 <p class="section-description">Pre-render bundled project pages on the server for faster first paint. Server-side rendering is the default for Birkly-hosted project sites and runs on the built-in PHP engine — no Node.js required. External sites always render on the client.</p>
               </div>
             </div>
@@ -348,9 +326,42 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <p class="form-help" id="project-rendering-external-note" role="status" aria-live="polite" hidden>Server rendering is disabled while hosting is set to External. Switch to Birkly hosted to enable SSR.</p>
             <p class="form-help project-rendering-runtime-note" id="project-rendering-runtime-note" role="status" aria-live="polite" hidden></p>
+            <p class="form-help">Changes here save automatically — no separate save button needed.</p>
             <div class="u-cluster">
-              <button type="button" class="btn btn-primary btn-sm" id="project-save-rendering-btn" disabled>Save rendering settings</button>
               <button type="button" class="btn btn-secondary btn-sm" id="project-invalidate-ssr-btn">Invalidate SSR cache</button>
+            </div>
+            </div>
+          </section>
+          </div>
+        </div>
+
+          <div id="project" class="settings-pane-section" data-settings-search="site delivery project files upload editor activity access">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Project files</h2>
+              <p class="settings-help">Bundled public site workspace. Upload files or visit your live site.</p>
+            </div>
+            <a href="#" id="project-visit-public-link" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden>Visit public site</a>
+          </div>
+          <div class="settings-stack">
+          <section class="card">
+            <div class="card-header">
+              <h3 class="card-title">Quick upload</h3>
+            </div>
+            <div class="card-body u-stack-4">
+            <div class="u-cluster">
+              <button type="button" class="btn btn-secondary btn-sm" id="project-simple-upload-btn">Upload files</button>
+              <input type="file" id="project-simple-upload-input" multiple hidden>
+            </div>
+            <div id="project-simple-file-list" class="project-simple-file-list">
+              <div class="loading-state"><p>Loading files...</p></div>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="project-advanced-editor-toggle">
+                Advanced file editor
+              </label>
+              <small class="form-help">Browse folders, edit source files, and view activity.</small>
             </div>
             </div>
           </section>
@@ -359,7 +370,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <section class="card">
             <div class="card-header">
               <div class="card-heading">
-                <h2>Project overview</h2>
+                <h3 class="card-title">Project overview</h3>
                 <p class="section-description">Bundled public site workspace on this installation. Content can also be consumed on external sites via the public API and Domains whitelist.</p>
               </div>
             </div>
@@ -379,10 +390,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
           <section class="card">
             <div class="card-header">
-              <div>
-                <h2>Files</h2>
-                <p class="section-description">Browse, edit, upload, and organize files in the bundled site workspace.</p>
-              </div>
+              <h3 class="card-title">Browse &amp; edit files</h3>
               <div class="card-actions">
                 <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn">New folder</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn">Upload</button>
@@ -419,12 +427,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
           <section class="card">
             <div class="card-header">
-              <div class="card-heading">
-                <h2>Activity</h2>
-                <p class="section-description">Recent project file changes and settings updates, with who made each change.</p>
-              </div>
+              <h3 class="card-title">Activity</h3>
             </div>
             <div class="card-body u-stack-4">
+            <p class="section-description">Recent project file changes and settings updates, with who made each change.</p>
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"></div>
             </div>
@@ -433,12 +439,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
           <section class="card">
             <div class="card-header">
-              <div class="card-heading">
-                <h2>Access</h2>
-                <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
-              </div>
+              <h3 class="card-title">Access</h3>
             </div>
             <div class="card-body u-stack-4">
+            <p class="section-description">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             <div class="u-cluster">
               <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=ai') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
               <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=site-delivery') ?>" class="btn btn-secondary btn-sm">Domains</a>
@@ -446,7 +450,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </section>
           </div>
-        </div></div>
+          </div>
+        </div>
           <div id="redirects" class="settings-pane-section" data-settings-search="site delivery redirects routing url rewrite forwarding"><?php include __DIR__ . '/../partials/redirects-panel.php'; ?></div>
         </div>
       </div>
@@ -874,7 +879,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h3 class="card-title">Built-in assistant</h3>
                   <p class="card-description">Chat with AI inside Birkly using your provider API key.</p>
                 </div>
-                <button class="btn btn-secondary" id="add-connection-btn" type="button">
+                <button class="btn btn-primary" id="add-connection-btn" type="button">
                   <?= birkly_icon('plus', ['size' => 16]) ?>
                   Quick connect
                 </button>
@@ -1358,7 +1363,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-admin-action="closeAddDomainModal">Cancel</button>
-        <button type="button" class="btn btn-primary" data-admin-action="registerDomain">Register Domain</button>
+        <button type="button" class="btn btn-primary" data-admin-action="registerDomain"><?= __('admin.register_domain') ?></button>
       </div>
     </div>
   </div>
@@ -1675,19 +1680,25 @@ if (!function_exists('birkly_build_info')) {
 $settingsUsersJson = json_encode($users ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 $webhookCollectionsJson = json_encode($webhook_collections ?? [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP);
 ?>
+<?php
+if (!isset($__birklyScriptNonceAttr) || $__birklyScriptNonceAttr === '') {
+    require_once __DIR__ . '/../../core/csp.php';
+    $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
+}
+?>
 <script type="application/json" id="settings-users-data"><?= $settingsUsersJson ?></script>
-<script>
+<script<?= $__birklyScriptNonceAttr ?>>
 window.webhooksData = window.webhooksData || { collections: <?= $webhookCollectionsJson ?> };
 </script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/settings-page.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/settings-page.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/updates.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/updates.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/webhooks.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/redirects.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-wizard.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-settings.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-settings.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/ai-connections.js')) ?>"></script>
-<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/mcp-connections.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/webhooks.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/redirects.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-wizard.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/ai-connections.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/mcp-connections.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 
