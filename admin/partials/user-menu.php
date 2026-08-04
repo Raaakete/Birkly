@@ -73,10 +73,6 @@ $showLegalLinks = birkly_alpha_program_enabled();
                 <?= birkly_icon('shield') ?>
                 <span>Privacy policy</span>
             </a>
-            <a href="https://birkly.com/#waitlist" class="user-menu-item" target="_blank" rel="noopener noreferrer">
-                <?= birkly_icon('envelope') ?>
-                <span>Request invite</span>
-            </a>
             <?php endif; ?>
             <div class="user-menu-divider"></div>
             <button class="user-menu-item user-menu-logout" id="logout-btn">
