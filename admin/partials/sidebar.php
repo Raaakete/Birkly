@@ -218,7 +218,10 @@ if (empty($userAvatar)) {
         if (birkly_alpha_program_enabled()):
         ?>
         <div class="sidebar-footer">
-            <p class="sidebar-program-label"><?= htmlspecialchars(birkly_program_status_label()) ?></p>
+            <p class="sidebar-program-label">
+                <span class="sidebar-program-label-full"><?= htmlspecialchars(birkly_program_status_label()) ?></span>
+                <span class="sidebar-program-label-short" aria-hidden="true">v1</span>
+            </p>
         </div>
         <?php endif; ?>
     </aside>

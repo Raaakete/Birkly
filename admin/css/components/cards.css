@@ -97,6 +97,41 @@
   min-width: 0;
 }
 
+/* ============================================
+   Card section — stacked sub-blocks INSIDE a card body, separated by a
+   divider instead of nesting a second .card.
+
+   Box-in-box is a review failure (design pass 2): once content is already
+   inside a .card, its children compose with spacing and dividers, not more
+   boxes. This is what settings sidebars, fieldtype option groups and the
+   collection editor's field blocks should use instead of a nested card.
+
+     <div class="card-body u-stack-0">
+       <div class="card-section">…</div>
+       <div class="card-section">…</div>
+     </div>
+   ============================================ */
+.card-section {
+  padding-block: var(--space-4);
+  min-width: 0;
+}
+.card-section + .card-section {
+  border-block-start: 1px solid var(--border-subtle);
+}
+.card-section:first-child { padding-block-start: 0; }
+.card-section:last-child { padding-block-end: 0; }
+
+/* Compact variant — tighter option rows (fieldtype config, dense settings) */
+.card-section--compact { padding-block: var(--space-3); }
+
+/* A section that carries its own small title row, still boxless */
+.card-section-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
 /* ---- Modifiers ---- */
 .card--compact > .card-header { padding: var(--space-3) var(--space-4); }
 .card--compact > .card-body { padding: var(--space-4); }
@@ -305,7 +340,24 @@ a.data-list-item:hover,
 .collections-container.list-view .group-collections,
 .group-collections--list {
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-2);
+  gap: 0;
+}
+
+/* Rows in the same group sit flush — a single hairline between them, not a
+   gap-with-radius per row. Only the group's own top/bottom corners round. */
+.collections-container.list-view .collection-card--list-row,
+.group-collections--list .collection-card--list-row {
+  border-radius: 0;
+}
+.collections-container.list-view .collection-card--list-row:first-child,
+.group-collections--list .collection-card--list-row:first-child {
+  border-start-start-radius: var(--radius-md);
+  border-start-end-radius: var(--radius-md);
+}
+.collections-container.list-view .collection-card--list-row:last-child,
+.group-collections--list .collection-card--list-row:last-child {
+  border-end-start-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
 }
 
 .collection-card {
@@ -315,6 +367,19 @@ a.data-list-item:hover,
   gap: var(--space-3);
   padding: var(--space-4);
   min-width: 0;
+  min-height: 11.5rem;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+.collection-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--elevation-1);
+}
+.collection-card:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
 }
 
 .collection-header {
@@ -344,11 +409,12 @@ a.data-list-item:hover,
 }
 
 .collection-description {
+  margin-block: var(--space-1);
   font-size: var(--text-sm);
   color: var(--text-secondary);
   line-height: var(--leading-normal);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -359,6 +425,7 @@ a.data-list-item:hover,
   justify-content: space-between;
   gap: var(--space-2);
   margin-block-start: auto;
+  padding-block-start: var(--space-1);
 }
 
 .entry-count {
@@ -373,24 +440,35 @@ a.data-list-item:hover,
   gap: var(--space-1);
 }
 
-/* List row mode */
+/* List row mode — a grid, not a flex row: fixed columns so title, description
+   and meta align into consistent visual columns across every row regardless
+   of how long any one row's content is. A flex row let each row negotiate
+   its own column widths independently, which read as misaligned/"centered"
+   description text row to row. */
 .collection-card--list-row {
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(160px, 22rem) minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-4);
+  min-height: auto;
+  cursor: pointer;
 }
-.collection-card--list-row .collection-header { flex: 1 1 auto; }
+/* Explicit grid-column per element — NOT source order — so a row without a
+   description still reserves its column instead of shifting entry-count and
+   the menu button one slot to the left. */
+.collection-card--list-row .collection-header { grid-column: 1; min-width: 0; }
 .collection-card--list-row .collection-description {
-  flex: 1 1 auto;
+  grid-column: 2;
   -webkit-line-clamp: 1;
   margin: 0;
+  text-align: start;
 }
 .collection-card--list-row .collection-footer {
-  margin: 0;
-  flex: 0 0 auto;
-  gap: var(--space-3);
+  display: contents;
 }
+.collection-card--list-row .entry-count { grid-column: 3; text-align: end; }
+.collection-card--list-row .collection-menu-wrapper { grid-column: 4; }
 
 /* Drag and drop — token layering, no scale, no giant shadow */
 .collection-card.dragging,

@@ -244,7 +244,7 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     </div>
 </div>
 
-<script>
+<script<?= $__birklyScriptNonceAttr ?? '' ?>>
 window.collectionData = <?= json_encode($collection ?? null, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.collectionSlug = <?= json_encode($collection['slug'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.collectionId = <?= json_encode($collection['id'] ?? '', JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;

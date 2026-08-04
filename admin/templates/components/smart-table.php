@@ -265,22 +265,22 @@ if (!empty($entries)): ?>
 
                         <td class="cell cell-actions">
                             <div class="cell-actions-inner">
-                            <a class="btn-icon btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
+                            <a class="btn-icon btn-icon-sm btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
                                 <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                             </a>
                             <?php if ($showDuplicateAction && $status !== 'trashed'): ?>
-                                <button type="button" class="btn-icon <?= htmlspecialchars($duplicateCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Duplicate <?= htmlspecialchars($title) ?>" title="Duplicate">
+                                <button type="button" class="btn-icon btn-icon-sm <?= htmlspecialchars($duplicateCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Duplicate <?= htmlspecialchars($title) ?>" title="Duplicate">
                                     <?= birkly_icon('copy', ['size' => 16]) ?>
                                 </button>
                             <?php endif; ?>
                             <?php if ($showRestoreAction && $status === 'trashed'): ?>
-                                <button type="button" class="btn-icon <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Restore <?= htmlspecialchars($title) ?>" title="Restore">
+                                <button type="button" class="btn-icon btn-icon-sm <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="Restore <?= htmlspecialchars($title) ?>" title="Restore">
                                     <?= birkly_icon('arrow-counter-clockwise', ['size' => 16]) ?>
                                 </button>
                             <?php endif; ?>
                             <?php if ($deleteCallback): ?>
                                 <?php if ($status !== 'trashed'): ?>
-                                    <button type="button" class="btn-icon btn-icon--danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= htmlspecialchars($deleteLabel) ?> <?= htmlspecialchars($title) ?>" title="<?= htmlspecialchars($deleteLabel) ?>">
+                                    <button type="button" class="btn-icon btn-icon-sm btn-icon--danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= htmlspecialchars($deleteLabel) ?> <?= htmlspecialchars($title) ?>" title="<?= htmlspecialchars($deleteLabel) ?>">
                                         <?= birkly_icon('trash', ['size' => 16]) ?>
                                     </button>
                                 <?php endif; ?>

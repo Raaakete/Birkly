@@ -35,6 +35,14 @@
   min-width: 0;
 }
 
+/* "+ Add Field" / "+ Add Sub-Collection" are actions, not full-width bars —
+   the flex column above stretches block children by default (align-items:
+   stretch), so these need to opt back out to their natural button width. */
+.fields-section > .btn,
+.sub-collection-fields-section > .btn {
+  align-self: flex-start;
+}
+
 /* ============================================
    2. Field schema rows
    Each configured field is a panel: header strip + body form grid.
@@ -140,15 +148,20 @@
 
 /* ============================================
    3. Per-fieldtype configuration (select options, etc.)
+
+   This is a divider-separated sub-block INSIDE the field's .fieldtype-section
+   card, not a second card — same contract as components/cards.css
+   .card-section (top divider + padding, no border/radius/fill of its own).
+   Every fieldtype's getConfigUI() (fieldtypes/*/*.php) renders into this
+   container, so fixing it here fixes select options, textarea rows,
+   min/max length, placeholder, etc. consistently in one place.
    ============================================ */
 .fieldtype-config {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
 }
 
 .field-config-section {

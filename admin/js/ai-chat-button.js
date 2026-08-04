@@ -273,7 +273,6 @@
         createFloatingButton();
         loadApprovalQueue();
         setInterval(loadApprovalQueue, 30000);
-        injectQuickActionChips();
 
         window.addEventListener('birkly:ai-connection-changed', function(event) {
             const detail = event.detail || {};
@@ -297,7 +296,7 @@
                     updateConnectionDropdownValue();
 
                     const chatWindow = document.getElementById('ai-chat-window');
-                    if (chatWindow && chatWindow.style.display !== 'none' && currentConnection) {
+                    if (chatWindow && chatWindow.classList.contains('is-open') && currentConnection) {
                         selectConnection(currentConnection.id);
                     }
                     return;
@@ -704,7 +703,7 @@
         const chatWindow = document.getElementById('ai-chat-window');
         
         if (chatWindow) {
-            if (chatWindow.style.display === 'none' || !chatWindow.style.display) {
+            if (!chatWindow.classList.contains('is-open')) {
                 showChatWindow();
             } else {
                 hideChatWindow();
@@ -1592,7 +1591,7 @@
         validateCurrentConnection();
         renderConnectionDropdown();
 
-        chatWindow.style.display = 'flex';
+        chatWindow.classList.add('is-open');
         document.body.classList.add('ai-chat-window-open');
         closeSidePanel();
         closeModelMenu();
@@ -1661,7 +1660,7 @@
         closeSidePanel();
         closeModelMenu();
         if (chatWindow) {
-            chatWindow.style.display = 'none';
+            chatWindow.classList.remove('is-open');
         }
         document.body.classList.remove('ai-chat-window-open');
         if (assistFabState === 'chat') {
@@ -2321,38 +2320,6 @@
             return '<button type="button" class="chip chip--interactive ai-chat-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
         }).join('');
         container.querySelectorAll('.ai-chat-quick-chip').forEach(function(chip) {
-            chip.addEventListener('click', async function () {
-                runQuickAction(chip.getAttribute('data-prompt') || '');
-            });
-        });
-    }
-
-    function injectQuickActionChips() {
-        const params = new URLSearchParams(window.location.search);
-        const page = params.get('page') || '';
-        if (page !== 'entry-editor') {
-            return;
-        }
-
-        const actions = getQuickActionsForPage();
-        if (actions.length === 0) return;
-
-        const bar = document.querySelector('.main-actions-bar') || document.querySelector('.page-header');
-        if (!bar || document.getElementById('ai-page-quick-actions')) {
-            return;
-        }
-
-        const wrap = document.createElement('div');
-        wrap.id = 'ai-page-quick-actions';
-        wrap.className = 'ai-page-quick-actions u-cluster u-mt-3';
-        wrap.setAttribute('role', 'group');
-        wrap.setAttribute('aria-label', 'AI quick actions');
-        wrap.innerHTML = actions.map(function(action) {
-            return '<button type="button" class="chip chip--interactive ai-chat-quick-chip ai-page-quick-chip" data-prompt="' + escapeHtml(action.prompt) + '">' + escapeHtml(action.label) + '</button>';
-        }).join('');
-
-        bar.appendChild(wrap);
-        wrap.querySelectorAll('.ai-page-quick-chip').forEach(function(chip) {
             chip.addEventListener('click', async function () {
                 runQuickAction(chip.getAttribute('data-prompt') || '');
             });

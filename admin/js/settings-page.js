@@ -1550,7 +1550,7 @@ async function deletePlugin(pluginId) {
         attachDomainsCopyButtons(document.getElementById('domains'));
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains registered yet. Click "Register domain" to add one.</p></div>';
+            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains yet. Click "Add domain" to connect one.</p></div>';
             return;
         }
 

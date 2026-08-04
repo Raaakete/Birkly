@@ -28,68 +28,51 @@
 
     <div class="tab-panel plugins-tab-panel" id="plugins-tab-discover" role="tabpanel" aria-labelledby="hub-tab-discover" hidden>
         <div id="marketplace-browse-view">
-        <div class="u-stack-3">
-            <div class="u-cluster" role="group" aria-label="{translate 'admin.marketplace_filter_type'}">
-                <button type="button" class="chip chip--interactive hub-type-filter active" data-plugin-action="set-offer-type" data-offer-type="" aria-pressed="true">
-                    {translate 'admin.marketplace_filter_all_types'}
-                </button>
-                <button type="button" class="chip chip--interactive hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="plugin" aria-pressed="false">
-                    {translate 'admin.marketplace_type_plugin'}
-                </button>
-                <button type="button" class="chip chip--interactive hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="template_pack" aria-pressed="false">
-                    {translate 'admin.marketplace_type_template'}
-                </button>
-                <button type="button" class="chip chip--interactive hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="theme" aria-pressed="false">
-                    {translate 'admin.marketplace_type_theme'}
-                </button>
-            </div>
-            <div class="main-actions-bar">
-                <div class="main-actions-left marketplace-search">
-                    <input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
-                    <button type="button" class="btn btn-primary" data-plugin-action="search-marketplace">{translate 'admin.search'}</button>
-                </div>
+        <div class="main-actions-bar">
+            <div class="main-actions-left">
+                <input type="search" id="marketplace-search" class="input marketplace-search" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
                 <p class="u-text-sm u-fg-secondary u-m-0" id="marketplace-result-count" hidden></p>
-                <div class="main-actions-right u-wrap">
-                    <select id="marketplace-filter-type" class="input marketplace-filter-select u-sr-only" aria-hidden="true" tabindex="-1">
-                        <option value="">{translate 'admin.marketplace_filter_type_all'}</option>
-                        <option value="plugin">{translate 'admin.marketplace_type_plugin'}</option>
-                        <option value="theme">{translate 'admin.marketplace_type_theme'}</option>
-                        <option value="template_pack">{translate 'admin.marketplace_type_template'}</option>
-                    </select>
-                    <select id="marketplace-filter-category" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_filter_category'}">
-                        <option value="">{translate 'admin.marketplace_filter_category_all'}</option>
-                    </select>
-                    <select id="marketplace-sort" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_sort'}">
-                        <option value="name">{translate 'admin.marketplace_sort_name_labeled'}</option>
-                        <option value="rating">{translate 'admin.marketplace_sort_rating_labeled'}</option>
-                        <option value="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</option>
-                    </select>
-                    <select id="marketplace-display-currency" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_display_currency'}">
-                        <option value="EUR">{translate 'admin.marketplace_currency_eur'}</option>
-                        <option value="USD">{translate 'admin.marketplace_currency_usd'}</option>
-                        <option value="GBP">{translate 'admin.marketplace_currency_gbp'}</option>
-                        <option value="CHF">{translate 'admin.marketplace_currency_chf'}</option>
-                        <option value="DKK">{translate 'admin.marketplace_currency_dkk'}</option>
-                        <option value="SEK">{translate 'admin.marketplace_currency_sek'}</option>
-                        <option value="NOK">{translate 'admin.marketplace_currency_nok'}</option>
-                        <option value="CAD">{translate 'admin.marketplace_currency_cad'}</option>
-                        <option value="AUD">{translate 'admin.marketplace_currency_aud'}</option>
-                    </select>
-                    <select id="marketplace-price" class="input marketplace-filter-select" aria-label="{translate 'admin.marketplace_price_filter'}">
-                        <option value="">{translate 'admin.marketplace_price_all_labeled'}</option>
-                        <optgroup label="{translate 'admin.marketplace_price_range_group'}">
-                            <option value="free">{translate 'admin.marketplace_price_free_labeled'}</option>
-                            <option value="under_10">{translate 'admin.marketplace_price_under_10_labeled'}</option>
-                            <option value="10_50">{translate 'admin.marketplace_price_10_50_labeled'}</option>
-                            <option value="50_100">{translate 'admin.marketplace_price_50_100_labeled'}</option>
-                            <option value="over_100">{translate 'admin.marketplace_price_over_100_labeled'}</option>
-                        </optgroup>
-                        <optgroup label="{translate 'admin.marketplace_price_sort_group'}">
-                            <option value="price_asc">{translate 'admin.marketplace_sort_price_low_labeled'}</option>
-                            <option value="price_desc">{translate 'admin.marketplace_sort_price_high_labeled'}</option>
-                        </optgroup>
-                    </select>
-                </div>
+            </div>
+            <div class="main-actions-right">
+                <select id="marketplace-filter-type" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_filter_type'}">
+                    <option value="">{translate 'admin.marketplace_filter_type_all'}</option>
+                    <option value="plugin">{translate 'admin.marketplace_type_plugin'}</option>
+                    <option value="template_pack">{translate 'admin.marketplace_type_template'}</option>
+                    <option value="theme">{translate 'admin.marketplace_type_theme'}</option>
+                </select>
+                <select id="marketplace-filter-category" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_filter_category'}">
+                    <option value="">{translate 'admin.marketplace_filter_category_all'}</option>
+                </select>
+                <select id="marketplace-sort" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_sort'}">
+                    <option value="name">{translate 'admin.marketplace_sort_name_labeled'}</option>
+                    <option value="rating">{translate 'admin.marketplace_sort_rating_labeled'}</option>
+                    <option value="downloads">{translate 'admin.marketplace_sort_downloads_labeled'}</option>
+                </select>
+                <select id="marketplace-display-currency" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_display_currency'}">
+                    <option value="EUR">{translate 'admin.marketplace_currency_eur'}</option>
+                    <option value="USD">{translate 'admin.marketplace_currency_usd'}</option>
+                    <option value="GBP">{translate 'admin.marketplace_currency_gbp'}</option>
+                    <option value="CHF">{translate 'admin.marketplace_currency_chf'}</option>
+                    <option value="DKK">{translate 'admin.marketplace_currency_dkk'}</option>
+                    <option value="SEK">{translate 'admin.marketplace_currency_sek'}</option>
+                    <option value="NOK">{translate 'admin.marketplace_currency_nok'}</option>
+                    <option value="CAD">{translate 'admin.marketplace_currency_cad'}</option>
+                    <option value="AUD">{translate 'admin.marketplace_currency_aud'}</option>
+                </select>
+                <select id="marketplace-price" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_price_filter'}">
+                    <option value="">{translate 'admin.marketplace_price_all_labeled'}</option>
+                    <optgroup label="{translate 'admin.marketplace_price_range_group'}">
+                        <option value="free">{translate 'admin.marketplace_price_free_labeled'}</option>
+                        <option value="under_10">{translate 'admin.marketplace_price_under_10_labeled'}</option>
+                        <option value="10_50">{translate 'admin.marketplace_price_10_50_labeled'}</option>
+                        <option value="50_100">{translate 'admin.marketplace_price_50_100_labeled'}</option>
+                        <option value="over_100">{translate 'admin.marketplace_price_over_100_labeled'}</option>
+                    </optgroup>
+                    <optgroup label="{translate 'admin.marketplace_price_sort_group'}">
+                        <option value="price_asc">{translate 'admin.marketplace_sort_price_low_labeled'}</option>
+                        <option value="price_desc">{translate 'admin.marketplace_sort_price_high_labeled'}</option>
+                    </optgroup>
+                </select>
             </div>
         </div>
         <div class="marketplace-grid" id="marketplace-grid">

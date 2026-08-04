@@ -3,6 +3,8 @@
 
     var LS_AI_CONN = 'ap_ai_connection';
     var CLAIM_STATUSES = ['pending_review', 'supported', 'unsupported', 'conflicting', 'expired'];
+    var ABOUT_MODAL_ID = 'ap-about-modal';
+    var ABOUT_MODAL_SEEN_KEY = 'birkly_agent_guide_intro_seen';
 
     var state = {
         draft: null,
@@ -472,6 +474,9 @@
         modal.style.display = 'none';
         modal.setAttribute('aria-hidden', 'true');
         releaseModalFocusTrap();
+        if (id === ABOUT_MODAL_ID) {
+            markAboutModalSeen();
+        }
         if (modalPreviousFocus && modalPreviousFocus.focus) {
             modalPreviousFocus.focus();
             modalPreviousFocus = null;
@@ -530,23 +535,29 @@
     }
 
     function getPublishState(data) {
+        // publication_settings.enabled is bound to live-editable fields (the
+        // top switch + the Publish tab checkbox) and must always reflect the
+        // current draft, even when a cached publish_state snapshot from the
+        // last load() is passed in — otherwise toggling the switch would not
+        // update the sticky bar / essentials status until the next reload.
+        var enabledNow = !!(state.draft && state.draft.publication_settings && state.draft.publication_settings.enabled);
         if (data && data.publish_state) {
-            var ps = data.publish_state;
+            var ps = Object.assign({}, data.publish_state, { publishing_enabled: enabledNow });
+            ps.is_live = enabledNow && !ps.never_published;
             if (state.dirty) {
-                ps = Object.assign({}, ps, { has_unpublished_changes: true });
+                ps = Object.assign(ps, { has_unpublished_changes: true });
             }
             return ps;
         }
         var meta = state.meta || {};
         var version = (meta.published_version || 0);
-        var enabled = !!(state.draft && state.draft.publication_settings && state.draft.publication_settings.enabled);
         var neverPublished = !state.published || version < 1;
-        var isLive = !neverPublished && enabled;
+        var isLive = !neverPublished && enabledNow;
         return {
             is_live: isLive,
             version: version,
             last_published_at: meta.last_published_at || null,
-            publishing_enabled: enabled,
+            publishing_enabled: enabledNow,
             has_unpublished_changes: isLive && state.dirty,
             never_published: neverPublished
         };
@@ -598,11 +609,14 @@
         var msgEl = document.getElementById('ai-presence-message');
         var pubBtn = document.getElementById('ai-presence-publish-btn');
         if (msgEl) {
-            msgEl.style.display = 'block';
             if (!ps.publishing_enabled) {
-                msgEl.textContent = t('ag_sticky_publishing_off', 'Publishing is disabled — enable it on the Publish tab.');
-                msgEl.className = 'main-actions-message message message-warning';
-            } else if (ps.never_published) {
+                msgEl.textContent = '';
+                msgEl.style.display = 'none';
+                if (pubBtn) pubBtn.disabled = true;
+                return;
+            }
+            msgEl.style.display = 'block';
+            if (ps.never_published) {
                 msgEl.textContent = t('ag_sticky_not_live', 'Not published yet — complete setup and publish when ready.');
                 msgEl.className = 'main-actions-message message message-warning';
             } else if (ps.has_unpublished_changes || state.dirty) {
@@ -655,7 +669,22 @@
         toast(t('ag_publish_toast', 'Agent Guide published'), 'success');
     }
 
-    function renderEssentials() {
+    function renderEssentials(data) {
+        var statusEl = document.getElementById('ap-essentials-publish-status');
+        if (statusEl) {
+            var ps = getPublishState(data || { meta: state.meta, publish_state: state.publishState });
+            var statusText;
+            if (!ps.publishing_enabled) {
+                statusText = t('ag_essentials_publish_off', 'Public publishing is turned off — enable it with the switch at the top of the page.');
+            } else if (ps.never_published) {
+                statusText = t('ag_essentials_publish_never', 'Not published yet. Review your content, then publish from the top of the page.');
+            } else if (ps.has_unpublished_changes || state.dirty) {
+                statusText = t('ag_essentials_publish_pending', 'Published, but you have unpublished changes.');
+            } else {
+                statusText = t('ag_essentials_publish_live', 'Published and up to date · v{version}').replace('{version}', String(ps.version));
+            }
+            statusEl.textContent = statusText;
+        }
         var sourcesList = document.getElementById('ap-essentials-sources-list');
         var sourcesEmpty = document.getElementById('ap-essentials-sources-empty');
         var claimsList = document.getElementById('ap-essentials-claims-list');
@@ -704,8 +733,6 @@
             page.classList.toggle('ap-page--essentials', state.viewMode === 'essentials');
             page.classList.toggle('ap-page--advanced', state.viewMode === 'advanced');
         }
-        var fab = document.getElementById('ap-assist-fab');
-        if (fab) fab.hidden = state.viewMode === 'essentials';
     }
 
     function initViewMode() {
@@ -952,9 +979,19 @@
         }
         setNested(state.draft, path, val);
         state.dirty = true;
+        syncFieldPeers(path, el);
         renderStatusStrip({ meta: state.meta, public_urls: state.publicUrls, publish_state: state.publishState });
         updateStickyBar({ meta: state.meta, publish_state: state.publishState });
-        renderEssentials();
+        renderEssentials({ meta: state.meta, publish_state: state.publishState });
+    }
+
+    // Some fields (e.g. publication_settings.enabled) are bound in more than
+    // one place — the top-of-page switch and the Advanced > Publish tab
+    // checkbox. Keep every bound element for a path in sync when one changes.
+    function syncFieldPeers(path, sourceEl) {
+        document.querySelectorAll('[data-field="' + path + '"]').forEach(function (peer) {
+            if (peer !== sourceEl) writeFieldEl(peer);
+        });
     }
 
     function writeFieldEl(el) {
@@ -1684,7 +1721,7 @@
         renderStatusStrip(data);
         updateStickyBar(data);
         renderOverview(data);
-        renderEssentials();
+        renderEssentials(data);
         renderSources();
         initFieldAiButtons();
         renderSocial();
@@ -1707,27 +1744,46 @@
         });
     }
 
-    function initIntroDismiss() {
-        var intro = document.getElementById('ap-intro');
-        var btn = document.getElementById('ap-intro-dismiss');
-        if (!intro || !btn) return;
-        try {
-            if (localStorage.getItem('ap_intro_dismissed') === '1') {
-                intro.classList.add('is-collapsed');
-                btn.hidden = false;
-                btn.textContent = 'Show introduction';
-            } else {
-                btn.hidden = false;
-                btn.textContent = 'Hide introduction';
-            }
-        } catch (e) { /* ignore */ }
-        btn.addEventListener('click', function () {
-            var collapsed = intro.classList.toggle('is-collapsed');
-            btn.textContent = collapsed ? 'Show introduction' : 'Hide introduction';
-            try {
-                localStorage.setItem('ap_intro_dismissed', collapsed ? '1' : '0');
-            } catch (e) { /* ignore */ }
+    function initAboutModal() {
+        bindEl('ap-about-agent-guide-btn', 'click', function () {
+            openApModal(ABOUT_MODAL_ID);
         });
+        var modal = document.getElementById(ABOUT_MODAL_ID);
+        if (modal) {
+            modal.querySelectorAll('[data-ap-modal-close="' + ABOUT_MODAL_ID + '"]').forEach(function (el) {
+                el.addEventListener('click', function () {
+                    closeApModal(ABOUT_MODAL_ID);
+                });
+            });
+        }
+        // NOTE: the first-visit auto-open used to happen here, synchronously,
+        // before load() resolves. That raced with maybeShowSetup()'s wizard
+        // auto-open (fired 400ms after data loads) and the two stacked on top
+        // of each other on a genuinely first-time page. See
+        // maybeAutoShowAboutModal(), called once we know whether the wizard
+        // is about to take that job instead.
+    }
+
+    function aboutModalSeen() {
+        try { return localStorage.getItem(ABOUT_MODAL_SEEN_KEY) === '1'; } catch (e) { return false; }
+    }
+
+    function markAboutModalSeen() {
+        try { localStorage.setItem(ABOUT_MODAL_SEEN_KEY, '1'); } catch (e) { /* ignore */ }
+    }
+
+    // Called after load() resolves and maybeShowSetup() has decided whether
+    // the setup wizard is about to auto-open. Exactly one first-time
+    // explanation should show — the wizard's own "Welcome" step already
+    // covers what Agent Guide is, so if the wizard is opening, this modal
+    // stays closed and is treated as seen rather than surfacing again later.
+    function maybeAutoShowAboutModal(wizardWillOpen) {
+        if (aboutModalSeen()) return;
+        if (wizardWillOpen) {
+            markAboutModalSeen();
+            return;
+        }
+        openApModal(ABOUT_MODAL_ID);
     }
 
     function initAssistSidebar() {
@@ -1754,11 +1810,15 @@
     function maybeShowSetup(data) {
         var draft = data.draft || {};
         var empty = !(draft.identity && draft.identity.official_name);
-        if (!draft.setup_completed_at && !draft.setup_skipped_at && empty && state.wizard) {
+        var willOpenWizard = !draft.setup_completed_at && !draft.setup_skipped_at && empty && !!state.wizard;
+        if (willOpenWizard) {
             setTimeout(function () {
                 openSetupWizard();
             }, 400);
         }
+        // Decide the about-modal's fate in the SAME tick as the wizard
+        // decision, before either has a chance to open — never stack them.
+        maybeAutoShowAboutModal(willOpenWizard);
     }
 
     function loadCollections() {
@@ -3034,7 +3094,7 @@
         state.canEdit = !config || config.canEdit !== false;
         initTabs();
         initWorkflowNav();
-        initIntroDismiss();
+        initAboutModal();
         initViewMode();
         initWizard();
         initPublishFeedback();

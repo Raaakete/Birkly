@@ -1,10 +1,20 @@
 /* ============================================
-   Birkly Admin — Tabs (P56)
+   Birkly Admin — Secondary navigation (P56, design pass 2)
    ============================================
 
-   ONE tab system. Merges the former tabs.css + tabs-v2.css and absorbs the
+   ONE nav concept, besides the main sidebar: an item is a padded, rounded
+   "chip" that fills with --surface-selected when active — the same active
+   language the sidebar uses for its own items — in either a HORIZONTAL
+   strip (.tabs, tab-style pages: Settings, Plugins, AI Presence) or a
+   VERTICAL list (.side-nav, doc/tree-style pages: Help, Media), with an
+   optional nested sub-list for the vertical mode (Help's per-topic children).
+
+   This file merges the former tabs.css + tabs-v2.css and absorbs the
    page-local tab dialects (.tab-pane vs .tab-content, .language-tab-*,
-   .plugins-tab*, .ap-*-tab*, .marketplace-embed-tab*) — brief §7.2.
+   .plugins-tab*, .ap-*-tab*, .marketplace-embed-tab*) — brief §7.2 — and
+   replaces the underline-indicator tab style with the pill/fill style below.
+
+   Horizontal:
 
      <div class="tabs-root">
        <div class="tabs" role="tablist">
@@ -12,6 +22,23 @@
        </div>
      </div>
      <div class="tab-panel active">…</div>
+
+   Vertical, with sub-nav:
+
+     <nav class="side-nav">
+       <div class="side-nav-group">
+         <p class="side-nav-group-title">Getting started</p>
+         <a class="side-nav-item active" href="…">Overview</a>
+         <a class="side-nav-item" href="…">Installation</a>
+       </div>
+       <div class="side-nav-group">
+         <a class="side-nav-item" aria-expanded="true">Content</a>
+         <div class="side-nav-sub">
+           <a class="side-nav-sub-item active" href="…">Collections</a>
+           <a class="side-nav-sub-item" href="…">Entries</a>
+         </div>
+       </div>
+     </nav>
 
    Panel class: .tab-panel is canonical; .tab-content and .tab-pane are kept
    because templates and JS use both.
@@ -27,59 +54,92 @@
 }
 
 /* ============================================
-   Tab strip — underline rail on a hairline
+   Tab strip — horizontal orientation of the shared nav item
    ============================================ */
 .tabs {
   display: flex;
   align-items: center;
   gap: var(--space-1);
   min-width: 0;
+  padding-block-end: var(--space-2);
   border-block-end: 1px solid var(--border-subtle);
 }
 
-.tab {
+.tab,
+.side-nav-item,
+.side-nav-sub-item {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  height: var(--control-lg);
-  padding-inline: var(--space-3);
   border: none;
-  border-block-end: 2px solid transparent;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
   font-size: var(--text-base);
-  font-weight: var(--weight-medium);
-  line-height: 1;
+  font-weight: var(--weight-regular);
+  line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
-  margin-block-end: -1px;
   transition:
     color var(--motion-fast) var(--ease-out),
-    border-color var(--motion-fast) var(--ease-out),
     background-color var(--motion-fast) var(--ease-out);
 }
 
+.tab {
+  height: var(--control-lg);
+  padding-inline: var(--space-3);
+  font-weight: var(--weight-medium);
+}
+
 .tab > svg,
-.tab > .birkly-icon {
+.tab > .birkly-icon,
+.side-nav-item > svg,
+.side-nav-item > .birkly-icon,
+.side-nav-sub-item > svg,
+.side-nav-sub-item > .birkly-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: color var(--motion-fast) var(--ease-out);
 }
 
-.tab:hover:not(.active):not([aria-selected="true"]) {
+.tab:hover:not(.active):not([aria-selected="true"]),
+.side-nav-item:hover:not(.active):not([aria-selected="true"]),
+.side-nav-sub-item:hover:not(.active) {
   color: var(--text-primary);
   background: var(--surface-hover);
 }
-
-.tab.active,
-.tab[aria-selected="true"] {
-  color: var(--text-primary);
-  border-block-end-color: var(--accent);
+.tab:hover > svg, .tab:hover > .birkly-icon,
+.side-nav-item:hover > svg, .side-nav-item:hover > .birkly-icon,
+.side-nav-sub-item:hover > svg, .side-nav-sub-item:hover > .birkly-icon {
+  color: var(--text-secondary);
 }
 
-.tab:focus-visible {
+/* Active — a filled pill, not an underline. Same surface the sidebar uses
+   for its own active item, so the two nav families read as one family. */
+.tab.active,
+.tab[aria-selected="true"],
+.side-nav-item.active,
+.side-nav-item[aria-selected="true"],
+.side-nav-sub-item.active,
+.side-nav-sub-item[aria-selected="true"] {
+  background: var(--surface-selected);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+.tab.active > svg, .tab.active > .birkly-icon,
+.tab[aria-selected="true"] > svg, .tab[aria-selected="true"] > .birkly-icon,
+.side-nav-item.active > svg, .side-nav-item.active > .birkly-icon,
+.side-nav-sub-item.active > svg, .side-nav-sub-item.active > .birkly-icon {
+  color: var(--accent-text);
+}
+
+.tab:focus-visible,
+.side-nav-item:focus-visible,
+.side-nav-sub-item:focus-visible {
   outline: var(--focus-outline);
   outline-offset: -2px;
 }
@@ -103,6 +163,76 @@
   font-size: var(--text-2xs);
   font-variant-numeric: tabular-nums;
 }
+.tab.active .tab-count,
+.tab[aria-selected="true"] .tab-count { background: var(--surface); }
+
+/* ============================================
+   Side nav — vertical orientation of the same nav item, with an optional
+   nested sub-list (Help's per-topic children, a collapsible section, etc).
+   ============================================ */
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.side-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.side-nav-group-title {
+  margin: 0 0 var(--space-1);
+  padding-inline: var(--space-3);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
+}
+
+.side-nav-item,
+.side-nav-sub-item {
+  width: 100%;
+  height: var(--control-md);
+  padding-inline: var(--space-3);
+  justify-content: flex-start;
+}
+
+.side-nav-item > .side-nav-label,
+.side-nav-sub-item > .side-nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Sub-nav — nested list under a parent item, indented */
+.side-nav-sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-start: var(--space-1);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--border-subtle);
+}
+
+.side-nav-sub-item { height: var(--control-sm); font-size: var(--text-sm); }
+
+/* Expand/collapse chevron on a parent item that owns a .side-nav-sub */
+.side-nav-item[aria-expanded] {
+  cursor: pointer;
+}
+.side-nav-item .side-nav-chevron {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+.side-nav-item[aria-expanded="true"] .side-nav-chevron { transform: rotate(90deg); }
 
 /* ============================================
    Panels

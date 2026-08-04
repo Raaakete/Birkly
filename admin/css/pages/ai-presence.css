@@ -49,17 +49,29 @@
   box-shadow: var(--elevation-3);
 }
 
+/* Stacked above the global assist launcher (admin/css/ai-chat-button.css
+   .assist-fab-wrap sits at the same bottom-right space-6 corner on every
+   admin page) so the two floating triggers never overlap. */
 .ap-assist-fab {
   position: fixed;
-  inset-block-end: var(--space-6);
+  inset-block-end: 5.5rem;
   inset-inline-end: var(--space-6);
-  z-index: var(--z-sticky);
+  /* Above --z-chrome: the global assist launcher's wrapper reserves layout
+     space for its (visually hidden) menu and would otherwise swallow clicks
+     aimed at this button. */
+  z-index: var(--z-drawer);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--elevation-2);
 }
 
+/* Advanced mode promotes the assist rail to a persistent desktop column;
+   Essentials keeps the compact one-column layout and off-canvas drawer (FAB
+   + slide-in panel) at every width, so AI Assist stays reachable in both
+   view modes (see ai-presence.js setViewMode). */
 @media (min-width: 1280px) {
-  .ap-page { grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); }
+  .ap-page--advanced { grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); }
 
-  .ap-assist-sidebar {
+  .ap-page--advanced .ap-assist-sidebar {
     position: sticky;
     inset-block-start: var(--space-6);
     inset-inline-end: auto;
@@ -72,42 +84,10 @@
     box-shadow: none;
   }
 
-  .ap-assist-fab { display: none; }
+  .ap-page--advanced ~ .ap-assist-fab { display: none; }
 }
 
-/* Essentials view hides the rail entirely */
 .ap-page--essentials { grid-template-columns: minmax(0, 1fr); }
-.ap-page--essentials .ap-assist-sidebar,
-.ap-page--essentials ~ .ap-assist-fab { display: none; }
-
-/* ============================================
-   Overview — intro panel with a divided steps column
-   ============================================ */
-.ap-intro-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
-  align-items: start;
-  min-width: 0;
-}
-
-.ap-intro-steps-wrap {
-  padding-block-start: var(--space-6);
-  border-block-start: 1px solid var(--border-subtle);
-}
-
-@media (min-width: 1280px) {
-  .ap-intro-layout { grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.9fr); }
-
-  .ap-intro-steps-wrap {
-    padding-block-start: 0;
-    padding-inline-start: var(--space-6);
-    border-block-start: none;
-    border-inline-start: 1px solid var(--border-subtle);
-  }
-}
-
-.ap-intro.is-collapsed .ap-intro-layout { display: none; }
 
 /* Numbered workflow — a click-through checklist of the five stages.
    .ap-card-list is the same shape for the JS-rendered card lists (sources,
