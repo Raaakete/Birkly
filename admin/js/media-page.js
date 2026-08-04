@@ -413,10 +413,10 @@ function resolveMediaItemUrl(url) {
 
     const rootItem = document.createElement('button');
     rootItem.type = 'button';
-    rootItem.className = 'folder-item-move';
+    rootItem.className = 'side-nav-item folder-item-move';
     rootItem.innerHTML =
       icon('folder-root', { size: 16 }) +
-      '<span>Root folder</span>';
+      '<span class="side-nav-label">Root folder</span>';
     rootItem.addEventListener('click', async function () {
       selectMoveFolder('');
     });
@@ -425,12 +425,12 @@ function resolveMediaItemUrl(url) {
     state.folderData.forEach(function (folder) {
       const folderItem = document.createElement('button');
       folderItem.type = 'button';
-      folderItem.className = 'folder-item-move';
+      folderItem.className = 'side-nav-item folder-item-move';
       folderItem.dataset.path = folder.path || '';
       folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
-        '<span>' + escapeHtml(folder.name || '') + '</span>';
+        '<span class="side-nav-label">' + escapeHtml(folder.name || '') + '</span>';
       folderItem.addEventListener('click', async function () {
         selectMoveFolder(folder.path || '');
       });

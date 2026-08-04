@@ -250,4 +250,14 @@ Birkly.Theme = {
 
 document.addEventListener('DOMContentLoaded', () => {
     Birkly.Theme.init();
+    if (Birkly.Utils && typeof Birkly.Utils.enhanceButtons === 'function') {
+        Birkly.Utils.enhanceButtons(document);
+    }
 });
+
+/* Enhance dynamically inserted buttons on first hover (modals, tables, etc.) */
+document.addEventListener('pointerover', (event) => {
+    const btn = event.target && event.target.closest ? event.target.closest('.btn') : null;
+    if (!btn || !Birkly.Utils || typeof Birkly.Utils._enhanceButton !== 'function') return;
+    Birkly.Utils._enhanceButton(btn);
+}, true);

@@ -540,37 +540,9 @@
   color: var(--text-secondary);
 }
 
-/* Language tabs — entry-editor.html / entry-editor.js */
-.language-tabs-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  margin-block-end: var(--space-4);
-  border-block-end: 1px solid var(--border-subtle);
-}
-
-.language-tab-btn {
-  height: var(--control-lg);
-  padding-inline: var(--space-3);
-  border-block-end: 2px solid transparent;
-  margin-block-end: -1px;
-  color: var(--text-secondary);
-  font-size: var(--text-base);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  transition: color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
-}
-
-.language-tab-btn:hover { color: var(--text-primary); }
-
-.language-tab-btn.active {
-  border-block-end-color: var(--accent);
-  color: var(--text-primary);
-}
-
-.language-tab-content { display: none; }
-.language-tab-content.active { display: block; }
+/* Language tabs use shared .tabs / .tab language (components/tabs.css).
+   .language-tabs-nav / .language-tab-btn are aliases of those primitives. */
+.language-tabs-nav { margin-block-end: var(--space-4); }
 
 /* Language chips + autocomplete — collection-editor.html */
 .language-tag {
