@@ -28,6 +28,23 @@
   padding-inline: 0;
 }
 
+/* Row-end chevron for the dashboard's feed widgets (recent collections /
+   entries / activity). The whole row is already the link
+   (`a.data-list-item`, components/cards.css carries the hover tint) — this
+   is only the "creative but subtle" affordance layered on top: a small
+   arrow that fades in on hover instead of sitting there permanently. */
+.dash-row-arrow {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+a.data-list-item:hover .dash-row-arrow,
+a.data-list-item:focus-visible .dash-row-arrow {
+  opacity: 1;
+}
+
 /* A widget body is narrower than the page, so `u-grid-auto-sm` tracks collapse
    to a single column there. Metrics get a track sized for that column instead. */
 .dash-metrics {
