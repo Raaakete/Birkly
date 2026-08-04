@@ -253,4 +253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (Birkly.Nav && typeof Birkly.Nav.init === 'function') {
         Birkly.Nav.init();
     }
+    if (Birkly.StickyBars && typeof Birkly.StickyBars.init === 'function') {
+        Birkly.StickyBars.init();
+    }
 });

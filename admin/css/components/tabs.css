@@ -7,7 +7,7 @@
      Horizontal (.tabs / .segmented / .language-tabs-nav)
        • No gap between items — continuous bottom edge
        • Regular — 1px grey bottom border
-       • Hover  — 3px grey bottom border + semibold
+       • Hover  — 3px grey bottom border (weight unchanged)
        • Active — 3px mint bottom border + semibold
        • Padding — ~14px / 20px
        • Bold without reflow — `.nav-text[data-text]` reserves semibold width
@@ -177,7 +177,7 @@
   transition: color var(--motion-fast) var(--ease-out);
 }
 
-/* Hover — 3px grey bar + bold (width reserved by .nav-text twin) */
+/* Hover — 3px grey bar; weight stays regular (only active is bold) */
 .tab:hover:not(.active):not([aria-selected="true"]),
 .segmented-item:hover:not(.active):not([aria-selected="true"]):not([aria-pressed="true"]),
 .side-nav-item:hover:not(.active):not([aria-selected="true"]),
@@ -188,7 +188,6 @@
   --nav-bar: 3px;
   --nav-bar-color: var(--border-default);
   color: var(--text-primary);
-  font-weight: var(--weight-semibold);
   background: transparent;
   box-shadow: none;
 }
@@ -357,7 +356,6 @@ summary.side-nav-group-title:hover {
   --nav-bar: 3px;
   --nav-bar-color: var(--border-default);
   color: var(--text-primary);
-  font-weight: var(--weight-semibold);
   background: transparent;
 }
 

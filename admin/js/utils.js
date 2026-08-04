@@ -25,6 +25,57 @@ Birkly.Nav = {
     syncTrack() { /* no-op — indicators are CSS ::before / ::after */ }
 };
 
+/**
+ * Sticky page CTA bars — drop shadow only while the bar is stuck.
+ * Inserts a 1px sentinel above each `.main-actions-bar--sticky` and toggles
+ * `.is-stuck` when that sentinel leaves the viewport.
+ */
+Birkly.StickyBars = {
+    init() {
+        if (this._inited) return;
+        this._inited = true;
+        this.refresh(document);
+    },
+
+    refresh(root) {
+        const scope = root && root.querySelectorAll ? root : document;
+        scope.querySelectorAll('.main-actions-bar--sticky').forEach((bar) => {
+            this.watch(bar);
+        });
+    },
+
+    watch(bar) {
+        if (!bar || bar.dataset.stickyWatch === '1') return;
+        bar.dataset.stickyWatch = '1';
+
+        let sentinel = bar.previousElementSibling;
+        if (!sentinel || !sentinel.classList.contains('main-actions-bar-sentinel')) {
+            sentinel = document.createElement('div');
+            sentinel.className = 'main-actions-bar-sentinel';
+            sentinel.setAttribute('aria-hidden', 'true');
+            if (bar.parentNode) {
+                bar.parentNode.insertBefore(sentinel, bar);
+            }
+        }
+
+        if (typeof IntersectionObserver !== 'function') {
+            const onScroll = () => {
+                const top = sentinel.getBoundingClientRect().top;
+                bar.classList.toggle('is-stuck', top < 0);
+            };
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
+            return;
+        }
+
+        const observer = new IntersectionObserver(([entry]) => {
+            // Sentinel above the bar: not intersecting ⇒ bar has stuck to top
+            bar.classList.toggle('is-stuck', entry && !entry.isIntersecting);
+        }, { root: null, threshold: 0 });
+        observer.observe(sentinel);
+    }
+};
+
 Birkly.Utils = {
     // Format date for display
     formatDate(dateString) {
