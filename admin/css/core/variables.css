@@ -218,6 +218,11 @@
   --chrome-stack-gap: var(--space-6);
   --chrome-content-gap: var(--space-6);
 
+  /* Secondary button fill — filled well, no border; hover lightens.
+     Must remap in dark (raw --neutral-* stays light-palette). */
+  --btn-secondary-bg: var(--neutral-100);
+  --btn-secondary-hover: var(--neutral-50);
+
   /* ============================================
      11. Elevation — borders do the work (brief §5.2)
      ============================================ */
@@ -351,6 +356,10 @@
   --dk-elevation-3: 0 16px 40px rgba(0, 0, 0, 0.6);
   --dk-elevation-inset: inset 0 1px 2px rgba(0, 0, 0, 0.45);
   --dk-elevation-inset-strong: inset 0 1px 3px rgba(0, 0, 0, 0.55);
+
+  /* Secondary button on dark: filled well + lighter hover (same intent as light). */
+  --dk-btn-secondary-bg: #363A31;
+  --dk-btn-secondary-hover: #444840;
 }
 
 /* ============================================
@@ -415,6 +424,9 @@
   --elevation-inset: var(--dk-elevation-inset);
   --elevation-inset-strong: var(--dk-elevation-inset-strong);
 
+  --btn-secondary-bg: var(--dk-btn-secondary-bg);
+  --btn-secondary-hover: var(--dk-btn-secondary-hover);
+
   color-scheme: dark;
 }
 
@@ -477,6 +489,9 @@
     --elevation-3: var(--dk-elevation-3);
     --elevation-inset: var(--dk-elevation-inset);
     --elevation-inset-strong: var(--dk-elevation-inset-strong);
+
+    --btn-secondary-bg: var(--dk-btn-secondary-bg);
+    --btn-secondary-hover: var(--dk-btn-secondary-hover);
 
     color-scheme: dark;
   }
