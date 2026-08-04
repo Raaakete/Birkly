@@ -4,7 +4,7 @@
 
    The dashboard is assembled from components, not from page chrome:
 
-     grid      u-grid-auto-lg
+     grid      .dashboard-widgets-grid (1× / 2× column spans)
      widget    .card.dash-widget > .card-header + .card-body.dash-widget-body
      metrics   .stat + .stat-label + .stat-value
      feeds     .data-list + .data-list-item
@@ -15,6 +15,37 @@
 
    Only layout that no component expresses stays in this file.
    ============================================ */
+
+/* Two public sizes: 1× (md/sm) and 2× (lg/full). auto-fill tracks let a
+   2× widget sit beside two 1× widgets on wide viewports. */
+.dashboard-widgets-grid {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
+  align-items: stretch;
+}
+
+.dash-widget--1x,
+.dash-widget--sm,
+.dash-widget--md {
+  grid-column: span 1;
+  min-width: 0;
+}
+
+.dash-widget--2x,
+.dash-widget--lg,
+.dash-widget--full {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+@media (max-width: 40rem) {
+  .dash-widget--2x,
+  .dash-widget--lg,
+  .dash-widget--full {
+    grid-column: span 1;
+  }
+}
 
 /* `.card` sets `display: flex`, which outranks the user-agent `[hidden]` rule.
    Restored so dashboard.js can reveal the demo tile by clearing the attribute. */

@@ -208,6 +208,17 @@
   color: var(--text-primary);
 }
 
+/* Hover rail — greyish left border (inactive items). Active keeps mint. */
+.nav-links a:hover::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: 0;
+  width: 2px;
+  border-radius: 0;
+  background: var(--border-default);
+}
+
 .nav-links a:focus-visible {
   outline: var(--focus-outline);
   outline-offset: -2px;
@@ -224,7 +235,9 @@
 }
 
 .nav-links li.active a::before,
-.nav-links a.active::before {
+.nav-links a.active::before,
+.nav-links li.active a:hover::before,
+.nav-links a.active:hover::before {
   content: "";
   position: absolute;
   inset-inline-start: 0;

@@ -473,12 +473,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 $userSubtitle = ($userEmail !== '' && strcasecmp($userEmail, $userLabel) !== 0) ? $userEmail : '';
                 $userCreated = $user['created_at'] ?? $user['created'] ?? null;
                 $userLastLogin = $user['last_login'] ?? $user['lastLogin'] ?? null;
+                $teamAvatar = trim((string) ($user['avatar'] ?? ''));
+                $teamAvatarUrl = '';
+                if ($teamAvatar !== '') {
+                  $teamAvatarUrl = (str_starts_with($teamAvatar, 'http://') || str_starts_with($teamAvatar, 'https://') || str_starts_with($teamAvatar, '//'))
+                    ? $teamAvatar
+                    : birkly_url($teamAvatar);
+                }
               ?>
                 <div class="card">
                   <div class="card-header">
-                    <div class="collection-icon" aria-hidden="true">
-                      <?= htmlspecialchars($userInitial) ?>
-                    </div>
+                    <?php if ($teamAvatarUrl !== ''): ?>
+                      <img src="<?= htmlspecialchars($teamAvatarUrl) ?>" alt="" class="avatar" width="40" height="40">
+                    <?php else: ?>
+                      <div class="avatar" aria-hidden="true"><?= htmlspecialchars($userInitial) ?></div>
+                    <?php endif; ?>
                     <div class="u-stack-1 u-min-w-0 u-fill">
                       <h4 class="card-title u-text-base u-truncate"><?= htmlspecialchars($userLabel) ?></h4>
                       <?php if ($userSubtitle !== ''): ?>

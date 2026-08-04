@@ -405,18 +405,30 @@
 
         dashboard.registerMount('recentActivity', function (element, widget, data) {
             const activity = data && Array.isArray(data.activity) ? data.activity : [];
-            const rows = activity
+            const items = activity
                 .filter(item => !['update_check', 'system_update_check'].includes(item.event))
-                .slice(0, 10)
+                .slice(0, 8)
                 .map(function (item) {
+                    const when = formatTimeAgo(item.timestamp);
+                    const metaParts = [];
+                    const actor = String(item.user || '').trim();
+                    if (actor && actor.toLowerCase() !== 'unknown') {
+                        metaParts.push(escapeHtml(actor));
+                    }
+                    if (when) metaParts.push(escapeHtml(when));
+                    const category = String(item.category || '').trim();
+                    const aside = category && category !== 'other'
+                        ? '<span class="badge badge-neutral">' + escapeHtml(category) + '</span>'
+                        : '';
                     return feedItem({
                         title: item.message || item.event || 'Activity',
                         href: adminUrl('activity'),
-                        meta: formatTimeAgo(item.timestamp) || '',
+                        meta: metaParts.join(' · '),
+                        aside: aside,
                     });
                 });
-            setContent(element, rows.length
-                ? '<div class="data-list dash-scroll">' + rows.join('') + '</div>'
+            setContent(element, items.length
+                ? feedList(items)
                 : empty('No recent activity.'));
         });
 
@@ -571,10 +583,21 @@
         return dashboardState.widgets.filter(widget => !widget.hidden);
     }
 
+    function widgetSizeClass(size) {
+        // Public sizes: 1× (sm/md) and 2× (lg/full).
+        if (size === 'lg' || size === 'full' || size === '2x') {
+            return 'dash-widget--2x';
+        }
+        return 'dash-widget--1x';
+    }
+
     function buildWidgetCard(widget) {
         const card = document.createElement('section');
-        card.className = 'card dash-widget';
+        card.className = 'card dash-widget ' + widgetSizeClass(widget.size);
         card.dataset.dashboardWidget = widget.id;
+        card.dataset.widgetSize = (widget.size === 'lg' || widget.size === 'full' || widget.size === '2x')
+            ? '2x'
+            : '1x';
 
         const heading = document.createElement('div');
         heading.className = 'card-header';
