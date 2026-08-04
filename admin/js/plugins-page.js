@@ -36,6 +36,7 @@
     var selectedEmbedDiscountId = '';
     var currentOfferDetail = null;
     var marketplaceBaseUrl = '';
+    var marketplaceSearchDebounceId = null;
     var marketplaceDisplayCurrency = 'EUR';
     var marketplaceCurrencyRates = {
         EUR: 1,
@@ -144,8 +145,6 @@
                 el.getAttribute('data-offer-version'),
                 el.getAttribute('data-offer-free') === 'true'
             );
-        } else if (action === 'search-marketplace') {
-            searchMarketplace();
         } else if (action === 'check-updates') {
             checkAllUpdates();
         } else if (action === 'open-install-modal') {
@@ -2986,9 +2985,14 @@
         }
         var search = document.getElementById('marketplace-search');
         if (search) {
+            search.addEventListener('input', function () {
+                window.clearTimeout(marketplaceSearchDebounceId);
+                marketplaceSearchDebounceId = window.setTimeout(searchMarketplace, 250);
+            });
             search.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
+                    window.clearTimeout(marketplaceSearchDebounceId);
                     searchMarketplace();
                 }
             });

@@ -385,22 +385,17 @@
             <strong>This URL uses HTTP.</strong> Claude will reject it — open Birkly with <code>https://</code> and copy the URL again.
         </p>`;
         const personalNote = isPersonal
-            ? '<li>Sign in with <strong>your</strong> Birkly account — permissions follow your role.</li>'
-            : '<li>This service agent uses a <strong>fixed role</strong> set by your admin.</li>';
+            ? 'Sign in with <strong>your</strong> Birkly account — permissions follow your role.'
+            : 'This service agent uses a <strong>fixed role</strong> set by your admin.';
 
+        // Kept intentionally brief: exact menu paths in Claude/ChatGPT/Cursor
+        // change often, so the canonical steps live in the linked guide
+        // instead of going stale here (P56-R2 #7).
         return `
         <ol class="endpoint-setup-steps">
-            <li>Copy this <strong>Connector URL</strong> below.</li>
-            <li>Open your AI app’s <strong>connectors</strong> or <strong>MCP</strong> settings (any app that supports remote MCP + OAuth).</li>
-            <li>Add a new remote server and paste the URL only — <strong>leave Client ID and Client Secret empty</strong> (OAuth is automatic).</li>
-            <li><strong>Cursor:</strong> Cursor Settings → <strong>Tools &amp; MCP</strong> → Add MCP server → paste URL → save → click <strong>Connect</strong> if prompted. You do not need to edit <code>mcp.json</code> by hand.</li>
-            <li><strong>Claude:</strong> Settings → Connectors → Add connector → paste URL.</li>
-            <li><strong>ChatGPT:</strong> Settings → Connectors → paste URL.</li>
-            ${personalNote}
-            <li>When your AI app opens Birkly in the browser, sign in and approve the connection.</li>
-            <li>Test with a read-only question, e.g. "List my Birkly collections".</li>
-            <li>For write actions, approve tool calls in your AI app (not the Birkly Approvals tab).</li>
-            <li><a href="${escapeHtml(DOCS_HELP_URL)}">Step-by-step guide</a></li>
+            <li>Copy the <strong>Connector URL</strong> below and add it as a remote MCP server in your AI app — leave Client ID/Secret empty (OAuth is automatic).</li>
+            <li>${personalNote}</li>
+            <li><a href="${escapeHtml(DOCS_HELP_URL)}">Full setup guide</a> for Claude, ChatGPT, and Cursor.</li>
         </ol>
         ${httpWarning}
         <div class="mcp-snippet-block">
