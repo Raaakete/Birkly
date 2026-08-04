@@ -11,13 +11,9 @@
    The old `.media-sidebar .sidebar-header` / `.sidebar-content` namesakes of
    the admin shell are gone; the tree is `.media-tree` (P56-M7).
 
-   Folder tree rows now carry `.side-nav-item` (components/tabs.css) for
-   hover/active visuals — `.folder-item` stays only as the JS hook
-   (media-page.js queries `.folder-item`, `.folder-item.active`,
-   `.folder-item[data-path=…]`). Do not re-add hover/active rules here; the
-   shared nav component owns that state (P56 revision round 2). The Move
-   Media modal's tree (`.folder-item-move`) is a separate, un-migrated list
-   and keeps its own full ruleset below.
+   Folder tree rows and the Move-media modal tree both use `.side-nav-item`
+   (components/tabs.css). `.folder-item` / `.folder-item-move` stay as JS
+   hooks only — do not re-add hover/active rules here.
    ============================================ */
 
 /* `.bulk-actions-toolbar` sets `display: flex`, which outranks the user-agent
@@ -106,33 +102,8 @@
   opacity: 1;
 }
 
-/* Move-media modal — a separate, un-migrated tree; keeps its own full row
-   ruleset rather than `.side-nav-item` (P56 revision round 2 scope note). */
-.folder-item-move {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--control-md);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  text-align: start;
-  cursor: pointer;
-  transition:
-    background-color var(--motion-fast) var(--ease-out),
-    color var(--motion-fast) var(--ease-out);
-}
-
-.folder-item-move:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-.folder-item-move.selected {
-  background: var(--surface-selected);
-  color: var(--accent-text);
-}
+/* Move-media modal rows use `.side-nav-item.folder-item-move`
+   (components/tabs.css). `.selected` is aliased to the shared active chip. */
 
 .folder-name {
   flex: 1 1 auto;
