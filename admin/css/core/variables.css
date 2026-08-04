@@ -225,6 +225,9 @@
   --elevation-1: 0 1px 2px rgba(32, 34, 29, 0.06);
   --elevation-2: 0 4px 12px rgba(32, 34, 29, 0.10);
   --elevation-3: 0 16px 40px rgba(32, 34, 29, 0.16);
+  /* Inset wells — secondary nav track + pressed active chip */
+  --elevation-inset: inset 0 1px 2px rgba(32, 34, 29, 0.08);
+  --elevation-inset-strong: inset 0 1px 3px rgba(32, 34, 29, 0.14);
 
   /* ============================================
      12. Layering — one scale (brief §5.3)
@@ -346,6 +349,8 @@
   --dk-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --dk-elevation-2: 0 4px 12px rgba(0, 0, 0, 0.5);
   --dk-elevation-3: 0 16px 40px rgba(0, 0, 0, 0.6);
+  --dk-elevation-inset: inset 0 1px 2px rgba(0, 0, 0, 0.45);
+  --dk-elevation-inset-strong: inset 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 /* ============================================
@@ -407,6 +412,8 @@
   --elevation-1: var(--dk-elevation-1);
   --elevation-2: var(--dk-elevation-2);
   --elevation-3: var(--dk-elevation-3);
+  --elevation-inset: var(--dk-elevation-inset);
+  --elevation-inset-strong: var(--dk-elevation-inset-strong);
 
   color-scheme: dark;
 }
@@ -468,6 +475,8 @@
     --elevation-1: var(--dk-elevation-1);
     --elevation-2: var(--dk-elevation-2);
     --elevation-3: var(--dk-elevation-3);
+    --elevation-inset: var(--dk-elevation-inset);
+    --elevation-inset-strong: var(--dk-elevation-inset-strong);
 
     color-scheme: dark;
   }
