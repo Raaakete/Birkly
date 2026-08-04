@@ -27,6 +27,12 @@
   color: var(--text-secondary);
 }
 
+/* Space below the tab strip before the first card — tabs.css owns the strip
+   itself (padding + bottom border) but not the gap to page content below it,
+   since that gap is page-owned (see plugin-page.css's equivalent rule for
+   the Plugins page's tab dialect). */
+.settings-tabs .tabs { margin-block-end: var(--space-6); }
+
 /* Save-bar toast shares the sticky row with the search field. */
 .settings-toast { max-width: min(26rem, 50vw); }
 
@@ -230,15 +236,13 @@
 /* ============================================
    4. AI connections — rows rendered by ai-connections.js / mcp-connections.js
    ============================================ */
-.ai-connection-entry {
-  min-width: 0;
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-}
-
-.ai-connection-entry + .ai-connection-entry { margin-block-start: var(--space-3); }
+/* A divider-separated row, not a nested box — same contract as .card-section
+   (P56-R2: no box-in-box), since every ai-connection-entry already lives
+   inside a .card-body (personal / service agents / built-in assistant). */
+.ai-connection-entry { min-width: 0; padding-block: var(--space-4); }
+.ai-connection-entry:first-child { padding-block-start: 0; }
+.ai-connection-entry:last-child { padding-block-end: 0; }
+.ai-connection-entry + .ai-connection-entry { border-block-start: 1px solid var(--border-subtle); }
 
 .ai-connection-entry-header {
   display: flex;

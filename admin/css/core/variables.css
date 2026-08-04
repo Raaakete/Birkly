@@ -35,6 +35,12 @@
   --neutral-900: #20221D;
   --neutral-950: #161815;
 
+  /* A half-step lighter than neutral-100, for passive fills sitting on a
+     WHITE surface (options wells, card footers, table headers). neutral-100
+     is darker than --canvas itself, which read as "too heavy" for a fill
+     nested one level inside a card — see brief revision, design pass 2. */
+  --neutral-90: #EEF0E9;
+
   /* Mint ramp (P41 brand — unchanged hues, extended dark end for text use) */
   --mint-50: #EDFCF7;
   --mint-100: #D4F8ED;
@@ -53,7 +59,7 @@
      ============================================ */
   --canvas: var(--neutral-75);
   --surface: var(--neutral-0);
-  --surface-sunken: var(--neutral-100);
+  --surface-sunken: var(--neutral-90);
   --surface-raised: var(--neutral-0);
   --surface-hover: var(--neutral-50);
   --surface-active: var(--neutral-100);
@@ -81,6 +87,15 @@
   --border-control: var(--neutral-600);        /* 3.23:1 on surface */
   --border-control-hover: var(--neutral-700);
   --border-strong: var(--neutral-700);
+
+  /* Text-field borders — a softer, distinct family from --border-control
+     (buttons, custom-selects). Resting state is deliberately quieter than a
+     button border; hover and focus strengthen it. Focus is a NEUTRAL dark
+     grey, never accent/green — a green-bordered field reads as "valid" and
+     gets confused with the success state (design pass 2). */
+  --field-border: var(--neutral-500);          /* 2.66:1 — quiet resting border */
+  --field-border-hover: var(--neutral-600);    /* 3.23:1 */
+  --field-border-focus: var(--neutral-700);    /* 6.36:1 — clearly active, still neutral */
 
   /* ============================================
      5. Accent — split fill / text ramps (brief §4.3)
@@ -256,7 +271,10 @@
 
   /* Shell */
   --sidebar-width: 280px;
-  --sidebar-width-collapsed: 4.5rem;
+  /* Collapsed nav boxes should match the logo tile's own width exactly
+     (--chrome-row, 40px) — not a wider fixed rail — so the collapsed column
+     reads as one consistent width top to bottom (design pass 2). */
+  --sidebar-width-collapsed: var(--chrome-row);
   --shell-edge-padding: var(--space-10);
 
   /* ============================================
@@ -295,6 +313,10 @@
   --dk-border-control: #5F635A;
   --dk-border-control-hover: #7A7E74;
   --dk-border-strong: #8A8D85;
+
+  --dk-field-border: #525649;         /* ~2:1 quiet resting border on dark surface */
+  --dk-field-border-hover: #5F635A;
+  --dk-field-border-focus: #B4B7B0;    /* 7.36:1 — bright, clearly active, still neutral */
 
   --dk-accent-text: #8CECCA;                 /* 11.6:1 on dark surface */
   --dk-accent-focus: #7CE3BF;
@@ -352,6 +374,10 @@
   --border-control-hover: var(--dk-border-control-hover);
   --border-strong: var(--dk-border-strong);
 
+  --field-border: var(--dk-field-border);
+  --field-border-hover: var(--dk-field-border-hover);
+  --field-border-focus: var(--dk-field-border-focus);
+
   --accent-text: var(--dk-accent-text);
   --accent-text-hover: var(--dk-accent-text);
   --accent-focus: var(--dk-accent-focus);
@@ -408,6 +434,10 @@
     --border-control: var(--dk-border-control);
     --border-control-hover: var(--dk-border-control-hover);
     --border-strong: var(--dk-border-strong);
+
+    --field-border: var(--dk-field-border);
+    --field-border-hover: var(--dk-field-border-hover);
+    --field-border-focus: var(--dk-field-border-focus);
 
     --accent-text: var(--dk-accent-text);
     --accent-text-hover: var(--dk-accent-text);

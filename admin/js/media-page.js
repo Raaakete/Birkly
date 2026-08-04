@@ -328,7 +328,7 @@ function resolveMediaItemUrl(url) {
 
     state.folderData.forEach(function (folder) {
       const folderItem = document.createElement('div');
-      folderItem.className = 'folder-item';
+      folderItem.className = 'side-nav-item folder-item';
       folderItem.dataset.path = folder.path || '';
       folderItem.style.paddingInlineStart = ((folder.level || 0) * 1.25 + 0.5) + 'rem';
       folderItem.addEventListener('click', async function () {
@@ -337,7 +337,7 @@ function resolveMediaItemUrl(url) {
 
       folderItem.innerHTML =
         icon('folder', { size: 16 }) +
-        '<span class="folder-name">' + escapeHtml(folder.name || '') + '</span>' +
+        '<span class="side-nav-label folder-name">' + escapeHtml(folder.name || '') + '</span>' +
         '<span class="badge badge-count">' + escapeHtml(folder.count || 0) + '</span>';
 
       const actions = document.createElement('div');

@@ -148,20 +148,21 @@
 }
 
 /* Horizontal scroll viewport. The actions column parks at the right edge and
-   becomes sticky once the viewport is scrolled (entries.js toggles
-   .is-scrolled-x), so row actions stay reachable on narrow screens. */
+   stays sticky at all times so row actions remain reachable on narrow
+   screens; entries.js toggles .is-scrolled-x only to drive the scroll shadow. */
 .entries-smart-table .table-viewport {
   width: 100%;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .entries-smart-table .smart-table {
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -184,12 +185,25 @@
   text-align: center;
 }
 
-/* table-layout: fixed honours `width` and ignores `min-width`, so an `auto`
-   title column collapses to zero as soon as the fixed columns sum past the
-   container. It needs a real width; the viewport scrolls instead. */
+/* Sub-entries indicator: a compact count badge, not a text column — keep it
+   pinned to a minimum footprint so it can't push the title column over. */
+.entries-smart-table .head-sub-entries,
+.entries-smart-table .cell-sub-entries {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  max-width: 2.75rem;
+  text-align: center;
+}
+
+/* The title column has no max-width: it is the one column meant to absorb
+   remaining space so the table fills the viewport instead of leaving dead
+   space after the last column. table-layout: auto (below) is required for
+   this — with table-layout: fixed, an unspecified-width column collapses to
+   zero once the other explicit-width columns already fill the table, which
+   reintroduces the title/status overlap this file used to have. */
 .entries-smart-table .head-title,
 .entries-smart-table .cell-title {
-  width: 14rem;
+  width: auto;
   min-width: 14rem;
 }
 
@@ -229,7 +243,7 @@
 }
 
 .entries-smart-table .cell-title .title-text {
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   color: var(--text-primary);
 }
 
@@ -249,7 +263,8 @@
 
 .entries-smart-table .head-actions,
 .entries-smart-table .cell-actions {
-  position: static;
+  position: sticky;
+  inset-inline-end: 0;
   z-index: var(--z-raised);
   width: 7rem;
   min-width: 7rem;
@@ -258,6 +273,18 @@
   border-inline-start: 1px solid var(--border-subtle);
   background: var(--surface);
   text-align: center;
+}
+
+/* .cell-actions-inner is a plain <div>, not a flex container by default, so
+   its .btn-icon children fell back to block/inline flow and wrapped onto a
+   second line instead of sitting centered in a single row. */
+.entries-smart-table .cell-actions-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  flex-wrap: nowrap;
+  height: 100%;
 }
 
 /* Below --bp-md, stop forcing fixed columns and let the viewport scroll */
@@ -274,11 +301,11 @@
   background: var(--surface-sunken);
 }
 
-/* Sticky only while scrolled, so the shadow does not sit there permanently */
+/* Actions column is always sticky (set above) so row actions stay reachable
+   regardless of scroll position; only the separating shadow is gated to
+   .is-scrolled-x so it doesn't sit there when there is nothing to scroll. */
 .entries-smart-table.is-scrolled-x .head-actions,
 .entries-smart-table.is-scrolled-x .cell-actions {
-  position: sticky;
-  inset-inline-end: 0;
   box-shadow: -6px 0 12px -6px rgba(32, 34, 29, 0.12);
 }
 
@@ -340,6 +367,7 @@
 }
 
 .bulk-actions-count {
+  flex-shrink: 0;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
   color: var(--accent-text);
@@ -350,6 +378,30 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* The buttons here are .btn-sm (28px), but the field-edit select becomes a
+   .custom-select-trigger (36px, min-width 8rem) and the value input is the
+   default .input (36px) — that height mismatch reads as "different sizes".
+   .custom-select also sets min-width: 0 for other layouts, which let this
+   flex item shrink below its trigger's own min-width and overlap the value
+   input next to it; flex-shrink: 0 keeps it at its intended size instead. */
+.bulk-actions-buttons > .custom-select {
+  flex-shrink: 0;
+}
+
+.bulk-actions-buttons .custom-select-trigger {
+  height: var(--control-sm);
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.bulk-actions-buttons .input {
+  height: var(--control-sm);
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+  min-width: 8rem;
 }
 
 /* ============================================
@@ -381,8 +433,7 @@
 }
 
 .ft-gallery-count,
-.ft-list-badge,
-.sub-entry-count-badge {
+.ft-list-badge {
   display: inline-flex;
   align-items: center;
   padding: 0 var(--space-2);
@@ -394,6 +445,15 @@
   font-weight: var(--weight-medium);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+/* Sub-entries count badge: uses the shared .badge/.badge-count primitives
+   (components/status-badges.css) at their most compact scale so it never
+   forces the .cell-sub-entries column wider than necessary. */
+.entries-smart-table .sub-entry-count-badge {
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding-inline: var(--space-1);
 }
 
 .ft-list-text {
