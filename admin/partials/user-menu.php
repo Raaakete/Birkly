@@ -16,6 +16,21 @@ if (!empty($userAvatar)) {
         : birkly_url($userAvatar);
 }
 
+/* Always have initials for the panel/trigger fallback (sidebar may leave
+   $avatarInitials empty when a photo is set). */
+if (empty($avatarInitials)) {
+    $initialSource = trim((string) ($userName ?? ''));
+    if ($initialSource === '') {
+        $initialSource = trim((string) ($userEmail ?? 'U'));
+    }
+    $nameParts = preg_split('/\s+/', $initialSource) ?: [];
+    if (count($nameParts) >= 2) {
+        $avatarInitials = strtoupper(substr($nameParts[0], 0, 1) . substr($nameParts[1], 0, 1));
+    } else {
+        $avatarInitials = strtoupper(substr($initialSource, 0, 2));
+    }
+}
+
 $termsUrl = birkly_legal_terms_url();
 $privacyUrl = birkly_legal_privacy_url();
 $showLegalLinks = birkly_alpha_program_enabled();
@@ -23,9 +38,9 @@ $showLegalLinks = birkly_alpha_program_enabled();
 <div class="dropdown user-menu-wrapper topbar-user-menu">
     <button class="dropdown-trigger user-menu-trigger" id="user-menu-trigger" aria-label="User menu" aria-expanded="false" aria-haspopup="true">
         <?php if (!empty($avatarDisplayUrl)): ?>
-            <img src="<?= htmlspecialchars($avatarDisplayUrl) ?>" alt="<?= htmlspecialchars($userName) ?>" class="user-avatar">
+            <img src="<?= htmlspecialchars($avatarDisplayUrl) ?>" alt="<?= htmlspecialchars($userName) ?>" class="user-avatar user-menu-trigger-face">
         <?php else: ?>
-            <div class="user-avatar-initials"><?= htmlspecialchars($avatarInitials) ?></div>
+            <div class="user-avatar-initials user-menu-trigger-face" aria-hidden="true"><?= htmlspecialchars($avatarInitials) ?></div>
         <?php endif; ?>
         <div class="user-menu-info">
             <div class="user-menu-name"><?= htmlspecialchars($userName) ?></div>
@@ -36,9 +51,9 @@ $showLegalLinks = birkly_alpha_program_enabled();
         <div class="user-menu-header">
             <div class="user-menu-avatar">
                 <?php if (!empty($avatarDisplayUrl)): ?>
-                    <img src="<?= htmlspecialchars($avatarDisplayUrl) ?>" alt="<?= htmlspecialchars($userName) ?>" class="user-avatar">
+                    <img src="<?= htmlspecialchars($avatarDisplayUrl) ?>" alt="" class="user-avatar user-menu-panel-face">
                 <?php else: ?>
-                    <div class="user-avatar-initials"><?= htmlspecialchars($avatarInitials) ?></div>
+                    <div class="user-avatar-initials user-menu-panel-face" aria-hidden="true"><?= htmlspecialchars($avatarInitials) ?></div>
                 <?php endif; ?>
             </div>
             <div class="user-menu-info">
