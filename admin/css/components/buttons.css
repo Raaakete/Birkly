@@ -101,9 +101,9 @@ a.btn { text-decoration: none; }
 }
 
 .btn-secondary {
-  --btn-hover: var(--neutral-50);     /* lighter lift on hover */
+  --btn-hover: var(--btn-secondary-hover); /* lighter lift on hover (theme token) */
   --btn-hover-border: transparent;
-  background: var(--neutral-100);     /* darker well by default */
+  background: var(--btn-secondary-bg);     /* filled well; remaps in dark */
   border-color: transparent;
   color: var(--text-primary);
 }
