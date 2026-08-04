@@ -77,3 +77,8 @@ demo-*.html
 # Session files
 sess_*
 dist/
+
+# Test-generated project fixtures (P38 AI Project Gateway test runs)
+project/pages/
+project/.well-known/agent-guide.json
+project/.well-known/brand-context.json
