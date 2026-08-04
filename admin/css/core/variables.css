@@ -89,13 +89,12 @@
   --border-strong: var(--neutral-700);
 
   /* Text-field borders — a softer, distinct family from --border-control
-     (buttons, custom-selects). Resting state is deliberately quieter than a
-     button border; hover and focus strengthen it. Focus is a NEUTRAL dark
-     grey, never accent/green — a green-bordered field reads as "valid" and
-     gets confused with the success state (design pass 2). */
-  --field-border: var(--neutral-500);          /* 2.66:1 — quiet resting border */
-  --field-border-hover: var(--neutral-600);    /* 3.23:1 */
-  --field-border-focus: var(--neutral-700);    /* 6.36:1 — clearly active, still neutral */
+     (buttons, custom-selects). Resting state is hairline-light; hover and
+     focus strengthen it. Focus is a NEUTRAL grey, never accent/green — a
+     green-bordered field reads as "valid" and gets confused with success. */
+  --field-border: var(--neutral-200);          /* soft resting border */
+  --field-border-hover: var(--neutral-400);    /* slightly stronger on hover */
+  --field-border-focus: var(--neutral-600);    /* clearly active, still neutral */
 
   /* ============================================
      5. Accent — split fill / text ramps (brief §4.3)
@@ -314,9 +313,9 @@
   --dk-border-control-hover: #7A7E74;
   --dk-border-strong: #8A8D85;
 
-  --dk-field-border: #525649;         /* ~2:1 quiet resting border on dark surface */
-  --dk-field-border-hover: #5F635A;
-  --dk-field-border-focus: #B4B7B0;    /* 7.36:1 — bright, clearly active, still neutral */
+  --dk-field-border: #3A3D36;         /* soft resting border on dark surface */
+  --dk-field-border-hover: #525649;
+  --dk-field-border-focus: #8E9188;   /* clearly active, still neutral */
 
   --dk-accent-text: #8CECCA;                 /* 11.6:1 on dark surface */
   --dk-accent-focus: #7CE3BF;
