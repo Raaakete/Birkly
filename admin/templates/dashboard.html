@@ -14,45 +14,53 @@ $showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipp
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 $isLocalDev = !empty($is_local_dev);
 ?>
-<div class="modal" id="onboarding-complete-modal" style="display: none;">
+<div class="modal" id="onboarding-complete-modal">
     <div class="modal-backdrop"></div>
-    <div class="modal-content onboarding-complete-modal-content">
+    <div class="modal-content modal--lg">
         <div class="modal-header">
-            <h2>🎉 <?= __('admin.you_are_all_set') ?></h2>
+            <h2 class="modal-title"><?= __('admin.you_are_all_set') ?></h2>
             <button class="modal-close" id="onboarding-complete-close" aria-label="<?= __('admin.close') ?>">×</button>
         </div>
         <div class="modal-body">
-            <p class="onboarding-complete-lead"><?= __('admin.birkly_ready_message') ?></p>
-            <div class="onboarding-complete-grid">
-                <div class="onboarding-complete-card">
-                    <h3><?= __('admin.create_first_entry') ?></h3>
-                    <p><?= __('admin.start_adding_content') ?></p>
-                    <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-sm"><?= __('admin.go_to_content') ?></a>
+            <p class="modal-intro-text"><?= __('admin.birkly_ready_message') ?></p>
+            <div class="u-grid-2">
+                <div class="card card--sunken">
+                    <div class="card-body u-stack-2">
+                        <h3><?= __('admin.create_first_entry') ?></h3>
+                        <p class="u-text-sm u-fg-secondary"><?= __('admin.start_adding_content') ?></p>
+                        <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-sm u-self-start u-mt-auto"><?= __('admin.go_to_content') ?></a>
+                    </div>
                 </div>
-                <div class="onboarding-complete-card" id="onboarding-complete-ai-card">
-                    <h3><?= __('admin.connect_ai_assistant') ?></h3>
-                    <p id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
-                    <a href="<?= admin_url('settings') ?>?tab=ai" class="btn btn-secondary btn-sm"><?= __('admin.ai_settings') ?></a>
+                <div class="card card--sunken" id="onboarding-complete-ai-card">
+                    <div class="card-body u-stack-2">
+                        <h3><?= __('admin.connect_ai_assistant') ?></h3>
+                        <p class="u-text-sm u-fg-secondary" id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
+                        <a href="<?= admin_url('settings') ?>?tab=ai" class="btn btn-secondary btn-sm u-self-start u-mt-auto"><?= __('admin.ai_settings') ?></a>
+                    </div>
                 </div>
-                <div class="onboarding-complete-card" id="onboarding-complete-demo-card" style="display: none;">
-                    <h3>View demo website</h3>
-                    <p>Open the starter template site that was installed with your CMS.</p>
-                    <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-sm" target="_blank" rel="noopener">Open demo site</a>
+                <div class="card card--sunken" id="onboarding-complete-demo-card" hidden>
+                    <div class="card-body u-stack-2">
+                        <h3>View demo website</h3>
+                        <p class="u-text-sm u-fg-secondary">Open the starter template site that was installed with your CMS.</p>
+                        <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-sm u-self-start u-mt-auto" target="_blank" rel="noopener">Open demo site</a>
+                    </div>
                 </div>
-                <div class="onboarding-complete-card">
-                    <h3><?= __('admin.read_documentation') ?></h3>
-                    <p><?= __('admin.learn_more_features') ?></p>
-                    <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-sm"><?= __('admin.view_docs') ?></a>
+                <div class="card card--sunken">
+                    <div class="card-body u-stack-2">
+                        <h3><?= __('admin.read_documentation') ?></h3>
+                        <p class="u-text-sm u-fg-secondary"><?= __('admin.learn_more_features') ?></p>
+                        <a href="<?= admin_url('help') ?>" class="btn btn-secondary btn-sm u-self-start u-mt-auto"><?= __('admin.view_docs') ?></a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="modal-footer onboarding-complete-footer">
+        <div class="modal-footer">
             <button class="btn btn-primary" id="onboarding-complete-close-btn"><?= __('admin.get_started') ?></button>
         </div>
     </div>
 </div>
 
-<div class="page-header pt-m pb-m">
+<div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs"><span class="current"><?= __('admin.dashboard') ?></span></div>
     </div>
@@ -68,15 +76,17 @@ $isLocalDev = !empty($is_local_dev);
 </div>
 
 <div id="dashboard-customize-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dashboard-customize-title">
-    <div class="modal-content dashboard-customize-modal">
+    <div class="modal-content modal--md">
         <div class="modal-header">
-            <h2 id="dashboard-customize-title">Customize dashboard</h2>
+            <h2 class="modal-title" id="dashboard-customize-title">Customize dashboard</h2>
             <button type="button" class="modal-close" id="dashboard-customize-close" aria-label="Close">×</button>
         </div>
         <div class="modal-body">
-            <p class="dashboard-customize-lead">Drag widgets to reorder them and use the checkboxes to show or hide widgets on your dashboard.</p>
-            <div class="dashboard-customize-toolbar">
-                <button type="button" class="btn btn-outline btn-muted btn-sm" id="dashboard-reset-layout-btn">Reset to defaults</button>
+            <p class="modal-intro-text">Drag widgets to reorder them and use the checkboxes to show or hide widgets on your dashboard.</p>
+            <div class="main-actions-bar">
+                <div class="main-actions-right">
+                    <button type="button" class="btn btn-ghost btn-sm" id="dashboard-reset-layout-btn">Reset to defaults</button>
+                </div>
             </div>
             <ul class="dashboard-widget-picker" id="dashboard-widget-picker"></ul>
         </div>
@@ -87,41 +97,43 @@ $isLocalDev = !empty($is_local_dev);
     </div>
 </div>
 
+<div class="page-body u-stack-6">
 <?php if ($showOnboarding): ?>
-<details class="welcome-dashboard" open id="onboarding-checklist-panel">
-    <summary class="welcome-dashboard-summary">
-        <span><?= __('admin.welcome_to_birkly_exclamation') ?></span>
-        <span class="welcome-dashboard-hint"><?= __('admin.complete_steps') ?></span>
-    </summary>
-    <div class="welcome-card">
-        <div class="checklist-toolbar" style="display:flex;justify-content:flex-end;margin-bottom:0.75rem;">
-            <button type="button" class="btn btn-outline btn-muted btn-sm" id="hide-checklist-btn">Hide checklist</button>
-        </div>
-        <div class="checklist-progress">
-            <div class="progress-bar-container">
+    <details class="card welcome-dashboard" open id="onboarding-checklist-panel">
+        <summary class="card-header">
+            <span class="card-title"><?= __('admin.welcome_to_birkly_exclamation') ?></span>
+            <span class="u-text-sm u-fg-secondary"><?= __('admin.complete_steps') ?></span>
+        </summary>
+        <div class="card-body u-stack-4">
+            <div class="u-stack-2">
                 <?php
                 $total = count($onboardingData['checklist'] ?? []);
                 $completed = count(array_filter($onboardingData['checklist'] ?? [], static fn ($item) => !empty($item['completed'])));
                 $progressPercent = $total > 0 ? ($completed / $total) * 100 : 0;
                 ?>
-                <div class="progress-bar-fill" style="width: <?= $progressPercent ?>%"></div>
-            </div>
-            <div class="progress-text"><?= $completed ?> <?= __('admin.of') ?> <?= $total ?> <?= __('admin.completed') ?></div>
-        </div>
-        <div class="checklist">
-            <?php foreach (($onboardingData['checklist'] ?? []) as $item): ?>
-            <div class="checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>" data-checklist-id="<?= htmlspecialchars($item['id'] ?? '') ?>">
-                <div class="checklist-label">
-                    <a href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
-                    <?php if (!empty($item['hint'])): ?><small class="checklist-hint"><?= htmlspecialchars($item['hint']) ?></small><?php endif; ?>
+                <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="<?= $total ?>" aria-valuenow="<?= $completed ?>">
+                    <div class="progress-bar" style="width: <?= $progressPercent ?>%"></div>
                 </div>
-                <?php if (empty($item['completed'])): ?><button type="button" class="btn btn-outline btn-muted btn-sm checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" title="Dismiss">×</button><?php endif; ?>
+                <p class="u-text-sm u-fg-secondary"><?= $completed ?> <?= __('admin.of') ?> <?= $total ?> <?= __('admin.completed') ?></p>
             </div>
-            <?php endforeach; ?>
+            <div class="data-list">
+                <?php foreach (($onboardingData['checklist'] ?? []) as $item): ?>
+                <div class="data-list-item checklist-item <?= !empty($item['completed']) ? 'completed' : '' ?>" data-checklist-id="<?= htmlspecialchars($item['id'] ?? '') ?>">
+                    <div class="data-list-main">
+                        <a class="data-list-title" href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
+                        <?php if (!empty($item['hint'])): ?><span class="data-list-meta"><?= htmlspecialchars($item['hint']) ?></span><?php endif; ?>
+                    </div>
+                    <?php if (empty($item['completed'])): ?><button type="button" class="btn-icon btn-icon-sm checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" aria-label="Dismiss" title="Dismiss">×</button><?php endif; ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
         </div>
-    </div>
-</details>
+        <div class="card-footer">
+            <button type="button" class="btn btn-ghost btn-sm u-push-right" id="hide-checklist-btn">Hide checklist</button>
+        </div>
+    </details>
 <?php endif; ?>
 
-<!-- Widget API v2 renders the complete dashboard here. -->
-<div class="dashboard-widget-grid" id="dashboard-widget-grid" aria-live="polite"></div>
+    <!-- Widget API v2 renders the complete dashboard here. -->
+    <div class="u-grid-auto-lg" id="dashboard-widget-grid" aria-live="polite"></div>
+</div>

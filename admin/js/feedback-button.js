@@ -10,15 +10,15 @@
         const modal = document.getElementById('feedback-submit-modal');
         const err = document.getElementById('feedback-submit-error');
         const ok = document.getElementById('feedback-submit-success');
-        if (err) { err.style.display = 'none'; err.textContent = ''; }
-        if (ok) ok.style.display = 'none';
-        if (modal) modal.style.display = 'flex';
+        if (err) { err.hidden = true; err.textContent = ''; }
+        if (ok) ok.hidden = true;
+        if (modal) modal.classList.add('show');
         document.getElementById('feedback-title')?.focus();
     }
 
     function closeModal() {
         const modal = document.getElementById('feedback-submit-modal');
-        if (modal) modal.style.display = 'none';
+        if (modal) modal.classList.remove('show');
     }
 
     async function submitFeedback(e) {
@@ -35,8 +35,8 @@
         if (!title || !description) return;
 
         if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
-        if (err) err.style.display = 'none';
-        if (ok) ok.style.display = 'none';
+        if (err) err.hidden = true;
+        if (ok) ok.hidden = true;
 
         try {
             const res = await fetch('/api/feedback.php', {
@@ -58,12 +58,12 @@
             }
 
             document.getElementById('feedback-submit-form')?.reset();
-            if (ok) ok.style.display = 'block';
+            if (ok) ok.hidden = false;
             setTimeout(closeModal, 1800);
         } catch (error) {
             if (err) {
                 err.textContent = error.message;
-                err.style.display = 'block';
+                err.hidden = false;
             }
         } finally {
             if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }

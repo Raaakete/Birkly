@@ -1,212 +1,218 @@
 /* ============================================
-   Search Overlay Component
+   Birkly Admin — Global search overlay (P56)
+   ============================================
+
+   `.search-overlay` is a third overlay root alongside `.modal` and
+   `.modal-backdrop`. The class names are a contract with
+   admin/js/global-search.js (which toggles the root's inline display and
+   rebuilds the result list), so they stay — but the surface is now built
+   from the same overlay tokens as modals: --overlay scrim, --radius-lg
+   panel, --elevation-3, --z-modal.
+
+   No z-index on the panel: the backdrop and the panel are both positioned
+   and the panel comes later in the markup, so it paints on top.
    ============================================ */
 
-/* Search Overlay */
 .search-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10000;
+  inset: 0;
+  z-index: var(--z-modal);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 10vh;
+  padding: 10vh var(--space-4) var(--space-4);
 }
 
 .search-overlay-backdrop {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  inset: 0;
+  background: var(--overlay);
 }
 
 .search-overlay-content {
   position: relative;
-  width: 100%;
-  max-width: 600px;
-  background: var(--bg-elevated, #ffffff);
-  border-radius: var(--border-radius-l, 16px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  z-index: 10001;
-  max-height: 70vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 38rem;
+  max-height: 70vh;
+  overflow: hidden;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-3);
+  animation: search-overlay-enter var(--motion-base) var(--ease-out);
 }
 
+@keyframes search-overlay-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   Query row
+   ============================================ */
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
-  padding: var(--space-4, 1rem);
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  transition: border-color var(--motion-fast) var(--ease-out);
+}
+
+/* The field itself is chrome-less, so the row carries the focus signal. */
+.search-input-wrapper:focus-within {
+  border-block-end-color: var(--accent-focus);
 }
 
 .search-icon {
   flex-shrink: 0;
-  color: var(--text-secondary, #72746F);
+  color: var(--text-tertiary);
 }
 
-.search-input {
-  flex: 1;
+input.search-input {
+  flex: 1 1 auto;
+  height: var(--control-md);
+  padding: 0;
   border: none;
-  outline: none;
-  font-size: 1rem;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
   font-family: inherit;
-  color: var(--text-primary, #20221D);
-  background: transparent;
+  font-size: var(--text-md);
 }
 
-.search-input::placeholder {
-  color: var(--text-tertiary, #94a3b8);
+input.search-input:focus {
+  outline: none;
+  border-color: transparent;
 }
 
-.search-close {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, #72746F);
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  border-radius: var(--border-radius-s, 4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color var(--transition-fast, 150ms ease);
-}
-
-.search-close:hover {
-  background: var(--color-neutral-100, #f3f4f6);
-  color: var(--text-primary, #20221D);
-}
-
+/* ============================================
+   Results
+   ============================================ */
 .search-results {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 12rem;
+  max-height: calc(70vh - 8rem);
   overflow-y: auto;
-  padding: var(--space-2, 0.5rem);
-  min-height: 200px;
-  max-height: calc(70vh - 120px);
+  overscroll-behavior: contain;
+  padding: var(--space-2);
 }
 
 .search-empty-state,
 .search-loading {
-  padding: var(--space-8, 2rem);
+  padding: var(--space-8) var(--space-4);
   text-align: center;
-  color: var(--text-secondary, #72746F);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
-.search-results-group {
-  margin-bottom: var(--space-4, 1rem);
+.search-results-group + .search-results-group {
+  margin-block-start: var(--space-4);
 }
 
 .search-results-group-header {
-  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary, #94a3b8);
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
 }
 
 .search-results-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1, 0.25rem);
+  gap: var(--space-1);
 }
 
 .search-result-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3, 0.75rem);
-  padding: var(--space-3, 0.75rem);
-  border-radius: var(--border-radius-s, 4px);
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background-color var(--transition-fast, 150ms ease);
+  transition: background-color var(--motion-fast) var(--ease-out);
 }
 
-.search-result-item:hover,
+.search-result-item:hover {
+  background: var(--surface-hover);
+}
+
 .search-result-item.selected {
-  background: var(--color-neutral-100, #f3f4f6);
+  background: var(--surface-selected);
 }
 
 .search-result-icon {
   flex-shrink: 0;
-  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
 }
 
 .search-result-content {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .search-result-title {
-  font-weight: 500;
-  color: var(--text-primary, #20221D);
-  margin-bottom: 0.125rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 
 .search-result-subtitle {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
 }
 
+/* ============================================
+   Keyboard hint footer
+   ============================================ */
 .search-footer {
-  padding: var(--space-3, 0.75rem) var(--space-4, 1rem);
-  border-top: 1px solid var(--border-light, #f3f4f6);
-  font-size: 0.75rem;
-  color: var(--text-tertiary, #94a3b8);
-  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2, 0.5rem);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
 }
 
 .search-footer kbd {
   display: inline-block;
-  padding: 0.125rem 0.375rem;
-  background: var(--color-neutral-200, #e5e7eb);
-  border: 1px solid var(--border-medium, #d1d5db);
-  border-radius: var(--border-radius-s, 4px);
-  font-size: 0.6875rem;
-  font-family: monospace;
-  color: var(--text-primary, #20221D);
-}
-
-[data-theme="dark"] .search-overlay-content {
-  background: var(--bg-elevated, #1e293b);
-  border: 1px solid var(--border-light, #334155);
-}
-
-[data-theme="dark"] .search-result-item:hover,
-[data-theme="dark"] .search-result-item.selected {
-  background: var(--bg-secondary, #0f172a);
+  padding: 0 var(--space-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  line-height: var(--leading-relaxed);
 }
 
 @media (max-width: 767px) {
   .search-overlay {
-    padding-top: 5vh;
-    padding-left: var(--space-3, 0.75rem);
-    padding-right: var(--space-3, 0.75rem);
+    padding: 5vh var(--space-3) var(--space-3);
   }
 
   .search-overlay-content {
     max-height: 85vh;
-    border-radius: var(--border-radius-m, 12px);
+  }
+
+  .search-results {
+    max-height: calc(85vh - 8rem);
   }
 }

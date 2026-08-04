@@ -1,213 +1,197 @@
 /* ============================================
-   Notifications Component - Unified System
+   Birkly Admin — Notifications (P56)
+   ============================================
+
+   The panel is a plain `.dropdown-menu` (components/dropdowns.css owns the
+   surface, the open/closed state and the layering). Everything here is the
+   notification list itself.
+
+   Item tone is set by the caller with a `u-bg-*-soft` helper on
+   `.notification-icon` — see admin/partials/layout_footer.php. The old
+   `--notif-color-*` tokens are gone.
    ============================================ */
 
-/* Notification Badge */
 .notifications-btn {
   position: relative;
 }
 
 .notification-badge {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  background: #ef4444;
-  color: white;
-  border-radius: 10px;
-  min-width: 18px;
-  height: 18px;
+  inset-block-start: -0.25rem;
+  inset-inline-end: -0.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 0 4px;
-  border: 2px solid var(--bg-primary, #ffffff);
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 var(--space-1);
+  border: 2px solid var(--canvas);
+  border-radius: var(--radius-pill);
+  background: var(--danger-solid);
+  color: var(--ink-on-danger);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
   box-sizing: border-box;
 }
 
-/* Notifications Wrapper - Uses Unified Dropdown System */
+/* ============================================
+   Panel — sizing only; the surface is .dropdown-menu
+   ============================================ */
 .notifications-wrapper.dropdown {
   position: relative;
 }
 
 .notifications-dropdown.dropdown-menu-right,
 .dropdown-menu.notifications-dropdown {
-  width: 380px;
-  max-width: calc(100vw - 2rem);
-  max-height: 600px;
+  width: 24rem;
   min-width: auto;
+  max-width: calc(100vw - var(--space-8));
+  max-height: 37.5rem;
   padding: 0;
-  display: none;
-  flex-direction: column;
   overflow: hidden;
-  right: 0;
-  left: auto;
 }
 
+/* Below --bp-md the panel is too wide to anchor; pin it across the viewport. */
 @media (max-width: 767px) {
   .notifications-wrapper .notifications-dropdown.show,
   .notifications-wrapper .notifications-dropdown.active,
   .dropdown-menu.notifications-dropdown.show,
   .dropdown-menu.notifications-dropdown.active {
     position: fixed;
-    top: calc(5rem + env(safe-area-inset-top, 0px));
-    right: 1rem;
-    left: 1rem;
+    inset-block-start: calc(5rem + env(safe-area-inset-top, 0px));
+    inset-inline: var(--space-4);
     width: auto;
     max-width: none;
-    z-index: 1100;
   }
-}
-
-/* Show notifications dropdown when active */
-.dropdown-menu.notifications-dropdown.show,
-.dropdown-menu.notifications-dropdown.active {
-  display: flex !important;
 }
 
 .notifications-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
-  background: var(--bg-primary, #ffffff);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
 }
 
 .notifications-header h3 {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-primary, #20221D);
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
 }
 
-.mark-all-read-btn {
-  padding: 0.375rem 0.75rem;
-  background: transparent;
-  border: 1px solid var(--border-light, #f3f4f6);
-  border-radius: var(--border-radius-s, 4px);
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.mark-all-read-btn:hover {
-  background: var(--bg-secondary, #fafafa);
-  color: var(--text-primary, #20221D);
-}
-
+/* ============================================
+   List
+   ============================================ */
 .notifications-list {
-  flex: 1;
+  flex: 1 1 auto;
+  max-height: 31rem;
   overflow-y: auto;
-  max-height: 500px;
+  overscroll-behavior: contain;
 }
 
 .notification-item {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
   cursor: pointer;
-  transition: background-color 0.15s;
-  position: relative;
+  transition: background-color var(--motion-fast) var(--ease-out);
 }
 
 .notification-item:hover {
-  background: var(--bg-secondary, #fafafa);
+  background: var(--surface-hover);
 }
 
 .notification-item.unread {
-  background: var(--bg-secondary, #fafafa);
+  background: var(--surface-hover);
 }
 
 .notification-item.unread::before {
-  content: '';
+  content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  inset-block: 0;
+  inset-inline-start: 0;
   width: 3px;
-  background: var(--primary-500);
+  background: var(--accent-muted);
 }
 
 .notification-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.125rem;
-  background: var(--bg-secondary, #f3f4f6);
+  width: var(--control-md);
+  height: var(--control-md);
+  border-radius: var(--radius-pill);
+  background: var(--neutral-surface);
+  font-size: var(--text-md);
+  line-height: 1;
 }
 
 .notification-content {
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .notification-message {
-  font-size: 0.875rem;
-  color: var(--text-primary, #20221D);
-  line-height: 1.4;
-  margin-bottom: 0.25rem;
+  margin-block-end: var(--space-1);
+  font-size: var(--text-base);
+  line-height: var(--leading-snug);
+  color: var(--text-primary);
 }
 
 .notification-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary, #72746F);
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 
 .notification-user {
-  font-weight: 500;
+  font-weight: var(--weight-medium);
 }
 
 .notification-time {
-  color: var(--text-tertiary, #9ca3af);
+  color: var(--text-tertiary);
 }
 
 .notification-dot {
   flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--primary-500);
-  margin-top: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-block-start: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent-muted);
 }
 
 .notifications-empty,
 .notifications-loading,
 .notifications-error {
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
   text-align: center;
-  color: var(--text-secondary, #72746F);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.notifications-error {
+  color: var(--danger-fg);
 }
 
 .notifications-footer {
-  padding: 0.75rem 1rem;
-  border-top: 1px solid var(--border-light, #f3f4f6);
-  background: var(--bg-primary, #ffffff);
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--surface-sunken);
   text-align: center;
 }
 
 .notifications-footer a {
-  color: var(--primary-600, #2563eb);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
 }
-
-.notifications-footer a:hover {
-  text-decoration: underline;
-}
-
-/* Notification color variables are defined in core/variables.css */
-

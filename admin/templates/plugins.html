@@ -1,4 +1,4 @@
-<div class="page-header pt-m pb-m">
+<div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current" id="plugins-page-title">{page_title}</span></div>
   </div>
@@ -15,7 +15,7 @@
         </button>
         <button type="button" class="tab plugins-tab" id="hub-tab-updates" data-tab="updates" role="tab" aria-controls="plugins-tab-updates" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_updates'}
-            <span class="update-badge hidden" id="plugins-update-badge" title="{translate 'admin.updates_available'}">0</span>
+            <span class="badge badge-warning badge-sm" id="plugins-update-badge" title="{translate 'admin.updates_available'}" hidden>0</span>
         </button>
         <button type="button" class="tab plugins-tab" id="hub-tab-licenses" data-tab="licenses" role="tab" aria-controls="plugins-tab-licenses" aria-selected="false" tabindex="-1">
             {translate 'admin.hub_tab_licenses'}
@@ -26,31 +26,31 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-discover" role="tabpanel" aria-labelledby="hub-tab-discover" hidden>
+    <div class="tab-panel plugins-tab-panel" id="plugins-tab-discover" role="tabpanel" aria-labelledby="hub-tab-discover" hidden>
         <div id="marketplace-browse-view">
-        <div class="marketplace-toolbar">
-            <div class="hub-type-filters" role="group" aria-label="{translate 'admin.marketplace_filter_type'}">
-                <button type="button" class="hub-type-filter active" data-plugin-action="set-offer-type" data-offer-type="" aria-pressed="true">
+        <div class="u-stack-3">
+            <div class="u-cluster" role="group" aria-label="{translate 'admin.marketplace_filter_type'}">
+                <button type="button" class="chip chip--interactive hub-type-filter active" data-plugin-action="set-offer-type" data-offer-type="" aria-pressed="true">
                     {translate 'admin.marketplace_filter_all_types'}
                 </button>
-                <button type="button" class="hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="plugin" aria-pressed="false">
+                <button type="button" class="chip chip--interactive hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="plugin" aria-pressed="false">
                     {translate 'admin.marketplace_type_plugin'}
                 </button>
-                <button type="button" class="hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="template_pack" aria-pressed="false">
+                <button type="button" class="chip chip--interactive hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="template_pack" aria-pressed="false">
                     {translate 'admin.marketplace_type_template'}
                 </button>
-                <button type="button" class="hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="theme" aria-pressed="false">
+                <button type="button" class="chip chip--interactive hub-type-filter" data-plugin-action="set-offer-type" data-offer-type="theme" aria-pressed="false">
                     {translate 'admin.marketplace_type_theme'}
                 </button>
             </div>
-            <div class="marketplace-toolbar-row">
-                <div class="marketplace-search">
+            <div class="main-actions-bar">
+                <div class="main-actions-left marketplace-search">
                     <input type="search" id="marketplace-search" class="input" placeholder="{translate 'admin.marketplace_search_placeholder'}" autocomplete="off">
                     <button type="button" class="btn btn-primary" data-plugin-action="search-marketplace">{translate 'admin.search'}</button>
                 </div>
-                <p class="marketplace-result-count" id="marketplace-result-count" hidden></p>
-                <div class="marketplace-filters">
-                    <select id="marketplace-filter-type" class="input marketplace-filter-select visually-hidden" aria-hidden="true" tabindex="-1">
+                <p class="u-text-sm u-fg-secondary u-m-0" id="marketplace-result-count" hidden></p>
+                <div class="main-actions-right u-wrap">
+                    <select id="marketplace-filter-type" class="input marketplace-filter-select u-sr-only" aria-hidden="true" tabindex="-1">
                         <option value="">{translate 'admin.marketplace_filter_type_all'}</option>
                         <option value="plugin">{translate 'admin.marketplace_type_plugin'}</option>
                         <option value="theme">{translate 'admin.marketplace_type_theme'}</option>
@@ -101,11 +101,11 @@
         <div id="marketplace-offer-detail" class="marketplace-offer-detail" hidden></div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-installed" role="tabpanel" aria-labelledby="hub-tab-installed" hidden>
-        <div class="hub-installed-sections">
-            <section class="hub-installed-section" aria-labelledby="hub-installed-packs-heading">
-                <div class="hub-section-header">
-                    <h2 id="hub-installed-packs-heading" class="hub-section-title">{translate 'admin.hub_installed_site_packs'}</h2>
+    <div class="tab-panel plugins-tab-panel" id="plugins-tab-installed" role="tabpanel" aria-labelledby="hub-tab-installed" hidden>
+        <div class="u-stack-8">
+            <section class="u-stack-4" aria-labelledby="hub-installed-packs-heading">
+                <div class="section-header">
+                    <h2 id="hub-installed-packs-heading" class="section-title">{translate 'admin.hub_installed_site_packs'}</h2>
                     <button class="btn btn-secondary btn-sm" type="button" data-plugin-action="switch-upload">
                         {translate 'admin.upload_site_pack'}
                     </button>
@@ -117,9 +117,9 @@
                 </div>
             </section>
 
-            <section class="hub-installed-section" aria-labelledby="hub-installed-plugins-heading">
-                <div class="hub-section-header">
-                    <h2 id="hub-installed-plugins-heading" class="hub-section-title">{translate 'admin.hub_installed_plugins'}</h2>
+            <section class="u-stack-4" aria-labelledby="hub-installed-plugins-heading">
+                <div class="section-header">
+                    <h2 id="hub-installed-plugins-heading" class="section-title">{translate 'admin.hub_installed_plugins'}</h2>
                 </div>
                 <div class="plugins-grid" id="plugins-grid">
                     <div class="loading-state">
@@ -130,7 +130,7 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-updates" role="tabpanel" aria-labelledby="hub-tab-updates" hidden>
+    <div class="tab-panel plugins-tab-panel" id="plugins-tab-updates" role="tabpanel" aria-labelledby="hub-tab-updates" hidden>
         <div class="main-actions-bar">
             <button class="btn btn-secondary" type="button" data-plugin-action="check-updates">
                 {translate 'admin.check_updates'}
@@ -143,24 +143,24 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-licenses" role="tabpanel" aria-labelledby="hub-tab-licenses" hidden>
+    <div class="tab-panel plugins-tab-panel" id="plugins-tab-licenses" role="tabpanel" aria-labelledby="hub-tab-licenses" hidden>
         <div class="hub-licenses-layout">
-            <section class="hub-licenses-activate" aria-labelledby="hub-licenses-activate-heading">
-                <h2 id="hub-licenses-activate-heading" class="hub-section-title">{translate 'admin.hub_activate_license'}</h2>
-                <p class="form-help">{translate 'admin.hub_activate_license_hint'}</p>
-                <div class="hub-license-form">
+            <section class="u-stack-3" aria-labelledby="hub-licenses-activate-heading">
+                <h2 id="hub-licenses-activate-heading" class="section-title">{translate 'admin.hub_activate_license'}</h2>
+                <p class="form-help u-m-0">{translate 'admin.hub_activate_license_hint'}</p>
+                <div class="hub-license-form u-stack-4">
                     <div class="form-group">
                         <label for="hub-license-key">{translate 'admin.license_key'}</label>
                         <input type="text" id="hub-license-key" class="input" placeholder="BIRKLY-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
                         <small class="form-help">{translate 'admin.license_key_help'}</small>
                     </div>
-                    <button type="button" class="btn btn-primary" data-plugin-action="activate-license">
+                    <button type="button" class="btn btn-primary u-self-start" data-plugin-action="activate-license">
                         {translate 'admin.hub_activate_license'}
                     </button>
                 </div>
             </section>
-            <section class="hub-licenses-list" aria-labelledby="hub-licenses-list-heading">
-                <h2 id="hub-licenses-list-heading" class="hub-section-title">{translate 'admin.hub_bound_licenses'}</h2>
+            <section class="u-stack-3" aria-labelledby="hub-licenses-list-heading">
+                <h2 id="hub-licenses-list-heading" class="section-title">{translate 'admin.hub_bound_licenses'}</h2>
                 <div id="hub-licenses-grid">
                     <div class="loading-state">
                         <p>{translate 'admin.loading_plugins'}</p>
@@ -170,11 +170,11 @@
         </div>
     </div>
 
-    <div class="plugins-tab-panel" id="plugins-tab-upload" role="tabpanel" aria-labelledby="hub-tab-upload" hidden>
-        <div class="hub-upload-panel" aria-labelledby="hub-upload-heading">
-            <h2 class="hub-section-title" id="hub-upload-heading">{translate 'admin.upload_site_pack'}</h2>
-            <p class="form-help">{translate 'admin.upload_site_pack_hint'}</p>
-            <form id="install-plugin-form" class="hub-upload-form">
+    <div class="tab-panel plugins-tab-panel" id="plugins-tab-upload" role="tabpanel" aria-labelledby="hub-tab-upload" hidden>
+        <div class="hub-upload-panel u-stack-3" aria-labelledby="hub-upload-heading">
+            <h2 class="section-title" id="hub-upload-heading">{translate 'admin.upload_site_pack'}</h2>
+            <p class="form-help u-m-0">{translate 'admin.upload_site_pack_hint'}</p>
+            <form id="install-plugin-form" class="u-stack-4">
                 <div class="form-group">
                     <label for="plugin-file">{translate 'admin.site_pack_zip_file'}</label>
                     <input type="file" id="plugin-file" name="plugin_file" accept=".zip,application/zip" class="input">
@@ -196,7 +196,7 @@
                     </label>
                     <small class="form-help">{translate 'admin.pack_include_demo_entries_help'}</small>
                 </div>
-                <div class="hub-upload-actions">
+                <div class="u-cluster">
                     <button type="button" class="btn btn-primary" data-plugin-action="install-from-file">{translate 'admin.install_site_pack'}</button>
                 </div>
             </form>
@@ -207,15 +207,15 @@
 <!-- Marketplace offer embed modal (P35-M27) -->
 <div id="marketplace-offer-embed-modal" class="modal-backdrop">
     <div class="modal-content marketplace-offer-embed-modal">
-        <div class="modal-header marketplace-embed-header">
+        <div class="modal-header">
             <h2 id="marketplace-embed-title">{translate 'admin.marketplace'}</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-offer-embed">&times;</button>
         </div>
-        <div id="marketplace-embed-tabs" class="marketplace-embed-tabs" role="tablist" aria-label="{translate 'admin.marketplace_offer_tabs'}">
-            <button type="button" class="marketplace-embed-tab active" role="tab" aria-selected="true" data-plugin-action="embed-offer-tab" data-embed-tab="offer">{translate 'admin.marketplace_tab_offer'}</button>
-            <button type="button" class="marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="pricing">{translate 'admin.marketplace_tab_pricing'}</button>
-            <button type="button" class="marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="reviews">{translate 'admin.marketplace_tab_reviews'}</button>
-            <button type="button" class="marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="versions">{translate 'admin.marketplace_tab_versions'}</button>
+        <div id="marketplace-embed-tabs" class="tabs" role="tablist" aria-label="{translate 'admin.marketplace_offer_tabs'}">
+            <button type="button" class="tab marketplace-embed-tab active" role="tab" aria-selected="true" data-plugin-action="embed-offer-tab" data-embed-tab="offer">{translate 'admin.marketplace_tab_offer'}</button>
+            <button type="button" class="tab marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="pricing">{translate 'admin.marketplace_tab_pricing'}</button>
+            <button type="button" class="tab marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="reviews">{translate 'admin.marketplace_tab_reviews'}</button>
+            <button type="button" class="tab marketplace-embed-tab" role="tab" aria-selected="false" data-plugin-action="embed-offer-tab" data-embed-tab="versions">{translate 'admin.marketplace_tab_versions'}</button>
         </div>
         <div class="marketplace-embed-shell">
             <div id="marketplace-embed-offer-header" class="marketplace-embed-offer-header" hidden></div>
@@ -244,16 +244,16 @@
 
 <!-- Marketplace install permission consent (P35-M17) -->
 <div id="marketplace-consent-modal" class="modal-backdrop">
-    <div class="modal-content marketplace-consent-modal">
+    <div class="modal-content modal--md">
         <div class="modal-header">
             <h2 id="marketplace-consent-title">Plugin permissions</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-install-consent">&times;</button>
         </div>
-        <div class="modal-body">
-            <p id="marketplace-consent-summary" class="settings-help">
+        <div class="modal-body u-stack-4">
+            <p id="marketplace-consent-summary" class="form-help u-m-0">
                 This plugin requests access to your site. Review the permissions below before installing.
             </p>
-            <div id="marketplace-consent-manifest" class="marketplace-consent-manifest"></div>
+            <div id="marketplace-consent-manifest" class="prose u-text-sm"></div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-plugin-action="close-install-consent">Cancel</button>
@@ -272,7 +272,7 @@
             <button class="modal-close-btn" type="button" data-plugin-action="close-marketplace-install">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="marketplace-install-summary" class="settings-help"></p>
+            <p id="marketplace-install-summary" class="form-help"></p>
             <div class="form-group" id="marketplace-license-group">
                 <label for="marketplace-license-key">{translate 'admin.license_key'}</label>
                 <input type="text" id="marketplace-license-key" class="input" placeholder="BIRKLY-XXXX-XXXX-XXXX-XXXX" autocomplete="off">
@@ -313,16 +313,16 @@
             <button class="modal-close-btn" type="button" data-plugin-action="close-review-modal">&times;</button>
         </div>
         <div class="modal-body">
-            <p id="plugin-review-summary" class="settings-help"></p>
-            <div id="plugin-review-existing" class="plugin-review-existing" hidden></div>
-            <form id="plugin-review-form">
-                <fieldset class="plugin-review-rating">
-                    <legend>Rating</legend>
-                    <label><input type="radio" name="plugin-review-rating" value="5" checked> 5 stars</label>
-                    <label><input type="radio" name="plugin-review-rating" value="4"> 4 stars</label>
-                    <label><input type="radio" name="plugin-review-rating" value="3"> 3 stars</label>
-                    <label><input type="radio" name="plugin-review-rating" value="2"> 2 stars</label>
-                    <label><input type="radio" name="plugin-review-rating" value="1"> 1 star</label>
+            <p id="plugin-review-summary" class="form-help u-m-0"></p>
+            <div id="plugin-review-existing" class="callout callout-neutral u-mt-4" hidden></div>
+            <form id="plugin-review-form" class="u-stack-4 u-mt-4">
+                <fieldset class="u-cluster-4 u-border-none u-p-0 u-m-0">
+                    <legend class="u-label u-mb-2">Rating</legend>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="5" checked> 5 stars</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="4"> 4 stars</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="3"> 3 stars</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="2"> 2 stars</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="1"> 1 star</label>
                 </fieldset>
                 <div class="form-group">
                     <label for="plugin-review-body">Your review</label>
@@ -362,7 +362,7 @@
 
 <!-- Plugin Permissions Modal -->
 <div id="plugin-permissions-modal" class="modal-backdrop">
-    <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-content modal--lg">
         <div class="modal-header">
             <h2 id="plugin-permissions-title">{translate 'admin.plugin_permissions'}</h2>
             <button class="modal-close-btn" data-admin-action="closePluginPermissionsModal">&times;</button>

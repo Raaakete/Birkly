@@ -360,7 +360,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <div class="dropdown-menu dropdown-menu-right notifications-dropdown" id="notifications-dropdown">
         <div class="notifications-header">
             <h3>Notifications</h3>
-            <button class="mark-all-read-btn" id="mark-all-read-btn" style="display: none;">Mark all as read</button>
+            <button type="button" class="btn btn-ghost btn-sm mark-all-read-btn" id="mark-all-read-btn" hidden>Mark all as read</button>
         </div>
         <div class="notifications-list" id="notifications-list">
             <div class="notifications-loading">Loading notifications...</div>
@@ -426,19 +426,34 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
             }
         }
         
+        // The API tags each notification with a colour word; map it onto the
+        // admin's semantic tone helpers rather than a raw colour.
+        const NOTIFICATION_TONES = {
+            blue: 'u-bg-info-soft',
+            green: 'u-bg-success-soft',
+            orange: 'u-bg-warning-soft',
+            red: 'u-bg-danger-soft',
+            purple: 'u-bg-neutral-soft',
+            gray: 'u-bg-neutral-soft'
+        };
+
+        function notificationToneClass(color) {
+            return NOTIFICATION_TONES[color] || 'u-bg-neutral-soft';
+        }
+
         // Render notifications
         function renderNotifications() {
             if (!notificationsList) return;
             
             if (notifications.length === 0) {
                 notificationsList.innerHTML = '<div class="notifications-empty">No notifications</div>';
-                if (markAllReadBtn) markAllReadBtn.style.display = 'none';
+                if (markAllReadBtn) markAllReadBtn.hidden = true;
                 return;
             }
             
             const hasUnread = notifications.some(n => !n.read);
             if (markAllReadBtn) {
-                markAllReadBtn.style.display = hasUnread ? 'block' : 'none';
+                markAllReadBtn.hidden = !hasUnread;
             }
             
             const html = notifications.map(notif => {
@@ -449,7 +464,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 
                 return `
                     <div class="notification-item ${readClass}" ${dataAttrs}>
-                        <div class="notification-icon" style="background-color: var(--notif-color-${notif.color || 'gray'}, #e5e7eb);">
+                        <div class="notification-icon ${notificationToneClass(notif.color)}">
                             ${notif.icon || '📢'}
                         </div>
                         <div class="notification-content">

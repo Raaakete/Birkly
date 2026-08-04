@@ -120,7 +120,7 @@
             var label = btn.getAttribute('title') || btn.textContent.trim();
             btn.setAttribute('aria-label', label);
             btn.innerHTML = AP_ICONS.sparkle;
-            btn.classList.add('ap-btn-icon-only');
+            btn.classList.add('btn-icon');
         });
     }
 
@@ -231,11 +231,10 @@
         listEl.innerHTML = '';
         (sources || []).forEach(function (src, idx) {
             var li = document.createElement('li');
-            li.className = 'ap-source-item';
             var label = src.label || src.url || (src.ref && src.ref.label) || 'Source';
             var meta = (src.role || '') + (src.type ? ' · ' + src.type : '');
             if (src.link_status && src.link_status !== 'unknown') meta += ' · ' + src.link_status;
-            li.innerHTML = '<strong>' + escapeHtml(label) + '</strong> <span class="text-muted">' +
+            li.innerHTML = '<strong>' + escapeHtml(label) + '</strong> <span class="u-fg-secondary">' +
                 escapeHtml(meta) + '</span>' +
                 (src.url ? ' <a href="' + escapeHtml(src.url) + '" target="_blank" rel="noopener">↗</a>' : '') +
                 (onRemove ? ' <button type="button" class="btn-link ap-remove-source" data-idx="' + idx + '">Remove</button>' : '');
@@ -362,13 +361,12 @@
         if (!list) return;
         list.innerHTML = '';
         if (!results || !results.length) {
-            list.innerHTML = '<li class="text-muted">No external links to check yet.</li>';
+            list.innerHTML = '<li class="u-fg-secondary">No external links to check yet.</li>';
             return;
         }
         results.forEach(function (row) {
             var li = document.createElement('li');
-            var ok = row.ok ? 'ok' : 'warn';
-            li.className = 'ap-link-health-item ap-link-health-item--' + ok;
+            li.className = row.ok ? '' : 'u-fg-warning';
             li.textContent = (row.scope || 'link') + ': ' + (row.url || row.id) +
                 ' — ' + (row.link_status || (row.ok ? 'ok' : 'failed'));
             list.appendChild(li);
@@ -565,13 +563,13 @@
 
         var badges = '';
         if (!ps.publishing_enabled) {
-            badges += '<span class="ap-live-badge ap-live-badge--off">' + escapeHtml(t('ag_badge_publishing_off', 'Publishing off')) + '</span>';
+            badges += '<span class="badge badge-neutral">' + escapeHtml(t('ag_badge_publishing_off', 'Publishing off')) + '</span>';
         } else if (ps.never_published) {
-            badges += '<span class="ap-live-badge ap-live-badge--draft">' + escapeHtml(t('ag_badge_not_live', 'Not live')) + '</span>';
+            badges += '<span class="badge badge-warning">' + escapeHtml(t('ag_badge_not_live', 'Not live')) + '</span>';
         } else {
-            badges += '<span class="ap-live-badge ap-live-badge--live">' + escapeHtml(t('ag_badge_live', 'Live · v{version}').replace('{version}', String(ps.version))) + '</span>';
+            badges += '<span class="badge badge-success">' + escapeHtml(t('ag_badge_live', 'Live · v{version}').replace('{version}', String(ps.version))) + '</span>';
             if (ps.has_unpublished_changes || state.dirty) {
-                badges += ' <span class="ap-live-badge ap-live-badge--changes">' + escapeHtml(t('ag_badge_unpublished', 'Unpublished changes')) + '</span>';
+                badges += ' <span class="badge badge-warning">' + escapeHtml(t('ag_badge_unpublished', 'Unpublished changes')) + '</span>';
             }
         }
         badgesEl.innerHTML = badges;
@@ -1029,9 +1027,9 @@
             cards.innerHTML = '';
             (c.items || []).forEach(function (item) {
                 var div = document.createElement('div');
-                div.className = 'ai-presence-status-card' + (item.complete ? ' is-complete' : '');
-                div.innerHTML = '<strong>' + escapeHtml(item.label) + '</strong><span>' +
-                    item.score + '/' + item.max + '</span>';
+                div.className = 'stat' + (item.complete ? ' ap-stat-complete' : '');
+                div.innerHTML = '<span class="stat-label">' + escapeHtml(item.label) + '</span>' +
+                    '<span class="stat-value u-text-lg u-numeric">' + item.score + '/' + item.max + '</span>';
                 cards.appendChild(div);
             });
         }
@@ -1042,7 +1040,7 @@
             var steps = data.next_steps || [];
             if (!steps.length) {
                 var doneLi = document.createElement('li');
-                doneLi.className = 'is-done';
+                doneLi.className = 'u-fg-success';
                 doneLi.textContent = t('ag_overview_ready', 'All checklist items complete — ready to publish.');
                 stepsEl.appendChild(doneLi);
             } else {
@@ -1113,7 +1111,7 @@
         list.hidden = sources.length === 0;
         sources.forEach(function (source, idx) {
             var li = document.createElement('li');
-            li.className = 'ap-source-card';
+            li.className = 'card card--sunken u-row-3 u-p-3';
             var detail = source.url || '';
             if (!detail && source.media_id) detail = 'Media: ' + source.media_id;
             if (!detail && source.ref) {
@@ -1121,14 +1119,14 @@
             }
             li.innerHTML =
                 '<div class="ap-source-card-icon" aria-hidden="true">' + escapeHtml(sourceTypeIcon(source.type)) + '</div>' +
-                '<div class="ap-source-card-body">' +
-                '<p class="ap-source-card-title">' + escapeHtml(source.label || sourceTypeLabel(source.type)) + '</p>' +
-                '<p class="ap-source-card-meta">' + escapeHtml(sourceTypeLabel(source.type)) + ' · ' +
+                '<div class="u-fill u-min-w-0">' +
+                '<p class="u-truncate u-text-sm u-weight-semibold u-m-0">' + escapeHtml(source.label || sourceTypeLabel(source.type)) + '</p>' +
+                '<p class="u-truncate u-text-xs u-fg-secondary u-m-0">' + escapeHtml(sourceTypeLabel(source.type)) + ' · ' +
                 escapeHtml(source.role || 'reference') +
                 (detail ? ' · ' + escapeHtml(detail) : '') + '</p></div>' +
                 (state.canEdit ?
-                    '<div class="ap-source-card-actions">' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-btn-icon-only ap-remove-source" data-idx="' +
+                    '<div class="u-cluster u-gap-1">' +
+                    '<button type="button" class="btn-icon ap-remove-source" data-idx="' +
                     idx + '" aria-label="Remove source" title="Remove">' + AP_ICONS.trash + '</button></div>' : '');
             list.appendChild(li);
         });
@@ -1143,7 +1141,7 @@
             var li = document.createElement('li');
             li.innerHTML = '<strong>' + escapeHtml(ref.label || ref.collection || ref.entry_id) + '</strong> ' +
                 '<span class="badge">' + escapeHtml(ref.role || 'reference') + '</span> ' +
-                '<span class="text-muted">(' + escapeHtml(ref.ref_type) + ')</span>' +
+                '<span class="u-fg-secondary">(' + escapeHtml(ref.ref_type) + ')</span>' +
                 (state.canEdit ? ' <button type="button" class="btn-link ap-remove-connected" data-idx="' +
                     idx + '">Remove</button>' : '');
             list.appendChild(li);
@@ -1155,7 +1153,7 @@
         if (!el) return;
         if (!state.selectedClaimId) {
             el.textContent = 'Select a claim to view details.';
-            el.className = 'text-muted';
+            el.className = 'u-text-sm u-fg-secondary';
             return;
         }
         var claim = (state.draft.claims || []).find(function (c) { return c.id === state.selectedClaimId; });
@@ -1163,7 +1161,7 @@
             el.textContent = 'Claim not found.';
             return;
         }
-        el.className = 'ap-claim-detail';
+        el.className = 'u-stack-2 u-text-sm';
         var html = '<p><strong>' + escapeHtml(claim.statement) + '</strong></p>';
         if (state.canEdit) {
             html += '<label>Status <select class="input ap-claim-status" data-claim-id="' +
@@ -1178,9 +1176,9 @@
         } else {
             html += '<p class="badge">' + escapeHtml(claim.status || 'pending_review') + '</p>';
         }
-        if (claim.notes) html += '<p class="text-muted">' + escapeHtml(claim.notes) + '</p>';
+        if (claim.notes) html += '<p class="u-fg-secondary">' + escapeHtml(claim.notes) + '</p>';
         var srcCount = (claim.sources || []).length;
-        if (srcCount) html += '<p class="text-muted">' + srcCount + ' direct source link(s)</p>';
+        if (srcCount) html += '<p class="u-fg-secondary">' + srcCount + ' direct source link(s)</p>';
         el.innerHTML = html;
         var sel = el.querySelector('.ap-claim-status');
         if (sel) {
@@ -1202,7 +1200,7 @@
             li.innerHTML = '<strong>' + escapeHtml(claim.statement || 'Untitled') + '</strong> ' +
                 '<span class="badge">' + escapeHtml(claim.status || 'pending_review') + '</span>' +
                 (state.canEdit ?
-                    '<div class="ap-item-actions">' +
+                    '<div class="u-cluster u-gap-2 u-mt-2">' +
                     '<button type="button" class="btn-link ap-edit-claim-btn" data-idx="' + idx + '">Edit</button>' +
                     '</div>' : '');
             li.addEventListener('click', function (e) {
@@ -1233,11 +1231,11 @@
             li.innerHTML = escapeHtml(ev.title || ev.url || ev.id) +
                 ' <span class="badge">' + escapeHtml(ev.type || 'other') + '</span> ' +
                 '<span class="badge">' + escapeHtml(ev.verification_status || 'unverified') + '</span>' +
-                (ev.rating ? ' <span class="text-muted">' + escapeHtml(String(ev.rating)) + '★</span>' : '') +
+                (ev.rating ? ' <span class="u-fg-secondary">' + escapeHtml(String(ev.rating)) + '★</span>' : '') +
                 (ev.link_status && ev.link_status !== 'unknown' ?
                     ' <span class="badge">' + escapeHtml(ev.link_status) + '</span>' : '') +
                 (state.canEdit ?
-                    '<div class="ap-item-actions">' +
+                    '<div class="u-cluster u-gap-2 u-mt-2">' +
                     '<button type="button" class="btn-link ap-edit-evidence-btn" data-idx="' + idx + '">Edit</button> ' +
                     '<button type="button" class="btn-link ap-verify-evidence" data-idx="' + idx + '">Verify</button>' +
                     '</div>' : '');
@@ -1255,17 +1253,17 @@
         items.forEach(function (ctx, idx) {
             var rep = (ctx.represents && ctx.represents.type) || 'brand';
             var card = document.createElement('div');
-            card.className = 'ap-media-card';
+            card.className = 'card u-overflow-hidden';
             var thumbUrl = ctx.media_url || (ctx.media_id ? '/media/' + encodeURIComponent(ctx.media_id) : '');
             card.innerHTML =
                 (thumbUrl ? '<img class="ap-media-card-thumb" src="' + escapeHtml(thumbUrl) + '" alt="">' :
                     '<div class="ap-media-card-thumb"></div>') +
-                '<div class="ap-media-card-body">' +
+                '<div class="u-p-3 u-stack-2">' +
                 '<strong>' + escapeHtml(ctx.media_name || ctx.media_id || 'Media') + '</strong> ' +
                 '<span class="badge">' + escapeHtml(rep) + '</span>' +
                 (ctx.description ? '<p>' + escapeHtml(ctx.description) + '</p>' : '') +
                 (state.canEdit ?
-                    '<div class="ap-item-actions">' +
+                    '<div class="u-cluster u-gap-2 u-mt-2">' +
                     '<button type="button" class="btn btn-sm btn-secondary ap-edit-media" data-idx="' + idx + '">Edit</button> ' +
                     '<button type="button" class="btn btn-sm btn-secondary ap-remove-media" data-idx="' + idx + '">Remove</button>' +
                     '</div>' : '') +
@@ -1293,7 +1291,7 @@
             warn.innerHTML = '';
             (data.staleness || []).forEach(function (w) {
                 var p = document.createElement('p');
-                p.className = 'ai-presence-warning';
+                p.className = 'callout callout-warning callout--block u-mb-2';
                 p.textContent = w.message || 'Content may be outdated.';
                 warn.appendChild(p);
             });
@@ -1322,7 +1320,7 @@
         list.innerHTML = '';
         list.className = 'ap-version-timeline';
         if (!state.versions.length) {
-            list.innerHTML = '<li class="text-muted">' + escapeHtml(t('ag_no_versions', 'No published versions yet.')) + '</li>';
+            list.innerHTML = '<li class="u-fg-secondary">' + escapeHtml(t('ag_no_versions', 'No published versions yet.')) + '</li>';
             return;
         }
         state.versions.forEach(function (v) {
@@ -1336,7 +1334,7 @@
                 '<div class="ap-version-timeline-marker" aria-hidden="true"></div>' +
                 '<div class="ap-version-timeline-body">' +
                 '<strong>' + escapeHtml(t('ag_version_label', 'Version {n}').replace('{n}', String(v.version))) + '</strong>' +
-                '<span class="text-muted">' + escapeHtml(when) + summary + '</span>' +
+                '<span class="u-fg-secondary">' + escapeHtml(when) + summary + '</span>' +
                 (jsonUrl ? ' <button type="button" class="btn-link ap-version-open-json" data-version="' +
                     escapeHtml(String(v.version)) + '">' + escapeHtml(t('ag_view_json', 'View JSON')) + '</button>' : '') +
                 '</div>';
@@ -1361,23 +1359,23 @@
         if (emptyEl) emptyEl.hidden = items.length > 0;
         items.forEach(function (prod, idx) {
             var card = document.createElement('div');
-            card.className = 'ap-product-card card';
+            card.className = 'card u-p-4 u-stack-2';
             card.innerHTML =
                 '<h4>' + escapeHtml(prod.name || 'Unnamed') + '</h4>' +
                 '<span class="badge">' + escapeHtml(prod.type || 'product') + '</span>' +
-                (prod.category ? ' <span class="text-muted">' + escapeHtml(prod.category) + '</span>' : '') +
+                (prod.category ? ' <span class="u-fg-secondary">' + escapeHtml(prod.category) + '</span>' : '') +
                 (prod.media_url || prod.external_image_url ?
-                    '<div class="ap-product-card-thumb-wrap"><img class="ap-product-card-thumb" src="' +
-                    escapeHtml(prod.media_url || prod.external_image_url) + '" alt=""></div>' : '') +
-                '<p class="ap-product-desc">' + escapeHtml(prod.short_description || prod.full_description || '') + '</p>' +
-                (prod.price_display ? '<p class="ap-product-price text-muted">' + escapeHtml(prod.price_display) + '</p>' : '') +
+                    '<img class="ap-product-card-thumb" src="' +
+                    escapeHtml(prod.media_url || prod.external_image_url) + '" alt="">' : '') +
+                '<p class="u-text-sm u-fg-secondary u-clamp-3 u-m-0">' + escapeHtml(prod.short_description || prod.full_description || '') + '</p>' +
+                (prod.price_display ? '<p class="u-text-sm u-weight-medium u-m-0">' + escapeHtml(prod.price_display) + '</p>' : '') +
                 (countProductSources(prod) ?
-                    '<p class="ap-source-badge text-muted">' + countProductSources(prod) + ' linked source(s)</p>' : '') +
+                    '<p class="u-text-xs u-fg-tertiary u-m-0">' + countProductSources(prod) + ' linked source(s)</p>' : '') +
                 (state.canEdit ?
-                    '<div class="ap-product-actions">' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-btn-icon-only ap-edit-product" data-idx="' + idx +
+                    '<div class="u-cluster u-gap-1 u-mt-auto u-pt-2">' +
+                    '<button type="button" class="btn-icon ap-edit-product" data-idx="' + idx +
                     '" aria-label="Edit" title="Edit">' + AP_ICONS.pencil + '</button>' +
-                    '<button type="button" class="btn btn-sm btn-secondary ap-btn-icon-only ap-delete-product" data-idx="' + idx +
+                    '<button type="button" class="btn-icon ap-delete-product" data-idx="' + idx +
                     '" aria-label="Delete" title="Delete">' + AP_ICONS.trash + '</button></div>' : '');
             grid.appendChild(card);
         });
@@ -1392,7 +1390,7 @@
             li.innerHTML = '<strong>' + escapeHtml(rel.name || 'Unnamed') + '</strong> ' +
                 '<span class="badge">' + escapeHtml(rel.type || 'partner') + '</span>' +
                 (rel.url ? ' <a href="' + escapeHtml(rel.url) + '" target="_blank" rel="noopener">Link</a>' : '') +
-                (rel.description ? '<p class="text-muted">' + escapeHtml(rel.description) + '</p>' : '') +
+                (rel.description ? '<p class="u-fg-secondary">' + escapeHtml(rel.description) + '</p>' : '') +
                 (state.canEdit ? ' <button type="button" class="btn-link ap-remove-relationship" data-idx="' +
                     idx + '">Remove</button>' : '');
             list.appendChild(li);
@@ -1406,7 +1404,7 @@
         var profiles = (state.draft.identity && state.draft.identity.social_profiles) || [];
         profiles.forEach(function (prof, idx) {
             var row = document.createElement('div');
-            row.className = 'form-row ap-social-row';
+            row.className = 'u-row-2 u-mb-2 ap-social-row';
             row.innerHTML =
                 '<input type="text" class="input ap-social-platform" placeholder="Platform" value="' +
                 escapeHtml(prof.platform || '') + '" data-idx="' + idx + '">' +
@@ -1462,12 +1460,11 @@
         if (!state.cmsDiff.length) {
             var inSyncMsg = (panel && panel.getAttribute('data-msg-in-sync')) ||
                 'All linked CMS entries match your draft fields.';
-            list.innerHTML = '<li class="ap-panel-status ap-panel-status--ok">' + escapeHtml(inSyncMsg) + '</li>';
+            list.innerHTML = '<li class="u-fg-success">' + escapeHtml(inSyncMsg) + '</li>';
             return;
         }
         state.cmsDiff.forEach(function (diff) {
             var li = document.createElement('li');
-            li.className = 'ap-cms-diff-item';
             var msg = diff.message || diff.type || 'Difference';
             li.innerHTML = '<strong>' + escapeHtml(diff.label || 'Entry') + '</strong> — ' +
                 escapeHtml(msg) +
@@ -1527,16 +1524,16 @@
         if (empty) empty.hidden = count > 0;
         state.suggestions.forEach(function (s) {
             var li = document.createElement('li');
-            li.className = 'ap-suggestion-item';
+            li.className = 'card card--sunken u-p-3 u-stack-2';
             var valPreview = typeof s.value === 'object' ? JSON.stringify(s.value) : String(s.value || '');
             if (valPreview.length > 180) valPreview = valPreview.slice(0, 180) + '…';
             li.innerHTML =
                 '<strong>' + escapeHtml(s.label || s.field) + '</strong> ' +
                 '<span class="badge">' + escapeHtml(s.confidence || 'medium') + '</span>' +
                 '<p>' + escapeHtml(valPreview) + '</p>' +
-                (s.source ? '<div class="ap-suggestion-meta">Source: ' + escapeHtml(s.source) + '</div>' : '') +
+                (s.source ? '<div class="u-text-xs u-fg-tertiary">Source: ' + escapeHtml(s.source) + '</div>' : '') +
                 (state.canEdit ?
-                    '<div class="ap-suggestion-actions">' +
+                    '<div class="u-cluster u-gap-2">' +
                     '<button type="button" class="btn btn-sm btn-primary ap-accept-suggestion" data-id="' +
                     escapeHtml(s.id) + '">Accept</button> ' +
                     '<button type="button" class="btn btn-sm btn-secondary ap-reject-suggestion" data-id="' +

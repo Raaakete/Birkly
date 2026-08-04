@@ -121,7 +121,7 @@
         const tbody = document.getElementById('webhooks-list');
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner">Loading...</div></td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>Loading...</p></div></td></tr>';
 
         try {
             const response = await fetch(apiUrl('/api/webhooks.php?action=list'));
@@ -129,7 +129,7 @@
             webhooks = (result.status === 'ok' && Array.isArray(result.webhooks)) ? result.webhooks : [];
             renderWebhooks();
         } catch (error) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Failed to load webhooks.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">Failed to load webhooks.</p></div></td></tr>';
         }
     }
 
@@ -138,14 +138,14 @@
         if (!tbody) return;
 
         if (!webhooks.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No webhooks configured yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">No webhooks configured yet.</p></div></td></tr>';
             return;
         }
 
         tbody.innerHTML = webhooks.map(function(webhook) {
             const events = (webhook.events || []).join(', ') || '—';
             const cols = (webhook.collections || []).join(', ') || '—';
-            const status = webhook.active ? '<span class="status-badge active">Active</span>' : '<span class="status-badge inactive">Inactive</span>';
+            const status = webhook.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-neutral">Inactive</span>';
             const lastTriggered = webhook.last_triggered ? escapeHtml(webhook.last_triggered) : '—';
 
             return '<tr>' +
@@ -154,7 +154,7 @@
                 '<td>' + escapeHtml(cols) + '</td>' +
                 '<td>' + status + '</td>' +
                 '<td>' + lastTriggered + '</td>' +
-                '<td class="table-actions">' +
+                '<td class="cell-actions">' +
                     '<button type="button" class="btn btn-sm btn-secondary" data-edit-webhook="' + escapeHtml(webhook.id) + '">Edit</button> ' +
                     '<button type="button" class="btn btn-sm btn-danger" data-delete-webhook="' + escapeHtml(webhook.id) + '">Delete</button>' +
                 '</td>' +

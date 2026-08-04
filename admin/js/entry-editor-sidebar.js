@@ -123,10 +123,10 @@
             const img = ($('og_image')?.value || '').trim();
             if (img) {
                 socialImage.style.backgroundImage = 'url(' + img + ')';
-                socialImage.style.display = 'block';
+                socialImage.hidden = false;
             } else {
                 socialImage.style.backgroundImage = '';
-                socialImage.style.display = 'none';
+                socialImage.hidden = true;
             }
         }
     }
@@ -263,10 +263,10 @@
         if (!box) return issues;
         if (issues.length === 0) {
             box.innerHTML = '';
-            box.style.display = 'none';
+            box.hidden = true;
             return issues;
         }
-        box.style.display = 'block';
+        box.hidden = false;
         box.innerHTML = issues.map(function (msg) {
             return '<div class="sidebar-validation-item">' + msg + '</div>';
         }).join('');
@@ -319,12 +319,12 @@
         if (!message) {
             feedback.textContent = '';
             feedback.className = 'entry-revisions-feedback';
-            feedback.style.display = 'none';
+            feedback.hidden = true;
             return;
         }
         feedback.textContent = message;
         feedback.className = 'entry-revisions-feedback is-' + (tone || 'success');
-        feedback.style.display = 'block';
+        feedback.hidden = false;
     }
 
     function formatRevisionDate(value) {

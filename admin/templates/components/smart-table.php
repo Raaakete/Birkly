@@ -215,13 +215,10 @@ if (!empty($entries)): ?>
                             <td class="cell cell-sub-entries">
                                 <?php if ($subEntryCount > 0): ?>
                                     <a href="<?= htmlspecialchars($titleUrl) ?>"
-                                       class="sub-entry-count-badge"
-                                       title="<?= $subEntryCount ?> sub-entries"
-                                       style="display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 24px; padding: 0 8px; background: var(--primary-100, #e0e7ff); color: var(--primary-700, #4338ca); border-radius: 12px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s;">
-                                        <span style="margin-right: 2px;">+</span><?= $subEntryCount ?>
-                                    </a>
+                                       class="badge badge-accent badge-count sub-entry-count-badge"
+                                       title="<?= $subEntryCount ?> sub-entries">+<?= $subEntryCount ?></a>
                                 <?php else: ?>
-                                    <span style="color: var(--text-tertiary, #9ca3af); font-size: 12px;">–</span>
+                                    <span class="u-text-xs u-fg-tertiary">&ndash;</span>
                                 <?php endif; ?>
                             </td>
                         <?php endif; ?>

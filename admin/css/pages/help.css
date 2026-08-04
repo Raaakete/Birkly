@@ -1,580 +1,168 @@
 /* ============================================
-   Help/Documentation Page Styles
+   Birkly Admin — Help / documentation (P56)
+   ============================================
+
+   Help is a docs reader: a topic nav rail plus one long-form article rendered
+   from markdown snapshots by js/help.js.
+
+   Deleted in P56-M9: the .coming-soon copy (now components/empty-states.css),
+   the .help-header/.help-subtitle block that duplicated the breadcrumb title,
+   the whole .help-content element-typography cascade and .help-article
+   headings (now core/typography.css `.prose`), .help-callout-* (now .callout),
+   .help-table-wrap (now .table-container), .help-list / .help-blockquote /
+   .help-hr / .help-inline-code (now plain elements inside .prose) and
+   .help-topic-category (now .badge).
+
+   .help-search-* lives in css/feedback-button.css and is out of scope here.
    ============================================ */
 
-/* Coming Soon Page */
-.coming-soon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  text-align: center;
-  padding: 2rem;
-}
-
-.coming-soon h1 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  color: var(--text-primary, #20221D);
-}
-
-.coming-soon p {
-  font-size: 1.2rem;
-  margin-bottom: 2rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.coming-soon .btn {
-  margin-top: 1rem;
-}
-
 .help-page {
-    padding: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding: var(--space-6);
 }
 
-.help-header {
-    margin-bottom: 2rem;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1.5rem;
-}
-
-.help-header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-}
-
-.help-subtitle {
-    color: var(--text-secondary);
-    font-size: 1rem;
-}
-
+/* Article + nav rail. The rail leads on narrow screens because picking a
+   topic is the first thing you do on this page. */
 .help-layout {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 2rem;
-    align-items: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
 }
 
-.help-content {
-    min-width: 0;
-}
+.help-content { min-width: 0; }
 
-.help-content h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-top: 2rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--border-color);
-}
-
-.help-content h2:first-child {
-    margin-top: 0;
-}
-
-.help-content h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.help-content h4 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.help-content p {
-    line-height: 1.7;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-}
-
-.help-content ul,
-.help-content ol {
-    margin: 1rem 0;
-    padding-left: 2rem;
-    color: var(--text-secondary);
-    line-height: 1.7;
-}
-
-.help-content li {
-    margin-bottom: 0.5rem;
-}
-
-.help-content code {
-    background: var(--code-bg, #f3f4f6);
-    padding: 0.125rem 0.375rem;
-    border-radius: 4px;
-    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-    font-size: 0.875em;
-    color: var(--code-color, #e11d48);
-}
-
-.help-content pre {
-    background: var(--code-bg, #1f2937);
-    color: #f9fafb;
-    padding: 1.5rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    margin: 1.5rem 0;
-    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-    font-size: 0.875rem;
-    line-height: 1.6;
-}
-
-.help-content pre code {
-    background: none;
-    padding: 0;
-    color: inherit;
-    font-size: inherit;
-}
-
-.help-content blockquote {
-    border-left: 4px solid var(--primary-color);
-    padding-left: 1.5rem;
-    margin: 1.5rem 0;
-    color: var(--text-secondary);
-    font-style: italic;
-}
-
-.help-content table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 1.5rem 0;
-}
-
-.help-content table th,
-.help-content table td {
-    padding: 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.help-content table th {
-    background: var(--bg-secondary);
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.help-content .example-box {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 1.5rem 0;
-}
-
-.help-content .example-box h4 {
-    margin-top: 0;
-    color: var(--primary-color);
-}
-
-.help-sidebar {
+@media (min-width: 1280px) {
+  .help-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 17.5rem); }
+  .help-sidebar {
     position: sticky;
-    top: 2rem;
-    max-height: calc(100vh - 4rem);
+    inset-block-start: var(--space-6);
+    max-height: calc(100vh - var(--space-12));
     overflow-y: auto;
+  }
 }
 
+/* ============================================
+   Topic nav — accordion of doc sections
+   ============================================ */
 .help-nav {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem 0;
+  padding-block: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
 }
 
 .help-nav-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.help-nav-item {
-    margin: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .help-nav-link {
-    display: block;
-    padding: 0.75rem 1.5rem;
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
+  display: block;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-6);
+  border-inline-start: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
 }
 
 .help-nav-link:hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+  background: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .help-nav-link.active {
-    background: var(--bg-tertiary);
-    color: var(--primary-color);
-    border-left-color: var(--primary-color);
-    font-weight: 600;
+  border-inline-start-color: var(--accent);
+  background: var(--surface-selected);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
 }
 
-.help-nav-section {
-    margin-bottom: 1.25rem;
-}
-
-.help-nav-section:last-child {
-    margin-bottom: 0;
-}
-
-.help-nav-section-title {
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-secondary);
-    padding: 0.5rem 1.5rem 0.35rem;
-    margin: 0;
-}
-
-/* Accordion nav groups */
-.help-nav-accordion {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.help-nav-group {
-    border-bottom: 1px solid var(--border-color);
-}
-
-.help-nav-group:last-child {
-    border-bottom: none;
-}
+.help-nav-group { border-block-end: 1px solid var(--border-subtle); }
+.help-nav-group:last-child { border-block-end: none; }
 
 .help-nav-group-title {
-    list-style: none;
-    cursor: pointer;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-primary);
-    padding: 0.65rem 1.25rem;
-    margin: 0;
-    user-select: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
 }
 
-.help-nav-group-title::-webkit-details-marker {
-    display: none;
-}
+.help-nav-group-title::-webkit-details-marker { display: none; }
 
 .help-nav-group-title::before {
-    content: '▸';
-    display: inline-block;
-    margin-right: 0.45rem;
-    transition: transform 0.15s ease;
-    color: var(--text-secondary);
+  content: '▸';
+  display: inline-block;
+  color: var(--text-tertiary);
+  transition: transform var(--motion-fast) var(--ease-out);
 }
 
-.help-nav-group[open] .help-nav-group-title::before {
-    transform: rotate(90deg);
+.help-nav-group[open] > .help-nav-group-title::before { transform: rotate(90deg); }
+
+/* ============================================
+   Article — .prose supplies the typography; these are the extras help.js
+   emits that prose has no opinion about.
+   ============================================ */
+
+/* Language chip floated over a fenced code block */
+.help-code-block { position: relative; }
+
+.help-code-lang {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-3);
+  z-index: var(--z-raised);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--text-tertiary);
 }
 
-.help-nav-group .help-nav-list {
-    padding-bottom: 0.35rem;
-}
-
-.help-nav-group .help-nav-link {
-    padding: 0.55rem 1.25rem 0.55rem 2rem;
-    font-size: 0.875rem;
-}
-
-/* Article typography & hierarchy */
-.help-topic-meta {
-    margin-bottom: 1rem;
-}
-
-.help-topic-category {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--primary-color);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    padding: 0.2rem 0.65rem;
-}
-
-.help-article {
-    max-width: 760px;
-}
-
-.help-article h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    line-height: 1.2;
-    color: var(--text-primary);
-    margin: 0 0 1.25rem;
-    letter-spacing: -0.02em;
-}
-
+/* Snapshot section headings ("Summary", "Beginner", …) get a colour-coded
+   rule so the reading level is visible while scrolling. */
 .help-doc-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 2rem !important;
-    padding-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .help-doc-label::before {
-    content: '';
-    display: inline-block;
-    width: 4px;
-    height: 1.1em;
-    border-radius: 2px;
-    background: var(--primary-color);
+  content: '';
+  display: inline-block;
+  flex-shrink: 0;
+  width: 2px;
+  height: 1.1em;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
 }
 
-.help-doc-label-summary::before { background: var(--primary-color); }
-.help-doc-label-beginner::before { background: #16a34a; }
-.help-doc-label-advanced::before { background: #7c3aed; }
-.help-doc-label-further::before { background: #d97706; }
+.help-doc-label-beginner::before { background: var(--success-fg); }
+.help-doc-label-advanced::before { background: var(--info-fg); }
+.help-doc-label-further::before { background: var(--warning-fg); }
 
-.help-inline-code {
-    background: var(--code-bg, #f3f4f6);
-    padding: 0.125rem 0.375rem;
-    border-radius: 4px;
-    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-    font-size: 0.875em;
-    color: var(--code-color, #be123c);
+.help-link-muted { color: var(--text-secondary); }
+
+/* Legacy PHP doc fragments under admin/docs/*.php still mark up worked
+   examples with .example-box. They are no longer wired into help.js, but the
+   markup is outside this scope, so the class keeps a tokenised surface. */
+.prose .example-box {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
 }
-
-.help-inline-link {
-    color: var(--primary-color);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.help-inline-link:hover {
-    color: var(--text-primary);
-}
-
-.help-link-muted {
-    color: var(--text-secondary);
-}
-
-.help-code-block {
-    position: relative;
-    margin: 1.5rem 0;
-}
-
-.help-code-lang {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.75rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: #9ca3af;
-    z-index: 1;
-}
-
-.help-code-block pre {
-    margin: 0;
-}
-
-.help-hr {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 2rem 0;
-}
-
-.help-blockquote {
-    border-left: 4px solid var(--border-color);
-    padding: 0.75rem 1rem;
-    margin: 1.25rem 0;
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    border-radius: 0 8px 8px 0;
-}
-
-.help-callout {
-    border-radius: 8px;
-    padding: 1rem 1.15rem;
-    margin: 1.25rem 0;
-    border: 1px solid var(--border-color);
-}
-
-.help-callout-label {
-    font-size: 0.75rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-bottom: 0.35rem;
-}
-
-.help-callout-body {
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
-
-.help-callout-note {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-}
-.help-callout-note .help-callout-label { color: #1d4ed8; }
-
-.help-callout-tip {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-}
-.help-callout-tip .help-callout-label { color: #15803d; }
-
-.help-callout-warning {
-    background: #fffbeb;
-    border-color: #fde68a;
-}
-.help-callout-warning .help-callout-label { color: #b45309; }
-
-.help-callout-example {
-    background: var(--bg-secondary);
-}
-.help-callout-example .help-callout-label { color: var(--text-primary); }
-
-.help-callout-action {
-    background: #faf5ff;
-    border-color: #e9d5ff;
-}
-.help-callout-action .help-callout-label { color: #7e22ce; }
-
-.help-callout-test {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-}
-.help-callout-test .help-callout-label { color: #475569; }
-
-.help-table-wrap {
-    overflow-x: auto;
-    margin: 1.5rem 0;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-}
-
-.help-list {
-    margin: 1rem 0;
-    padding-left: 1.5rem;
-    color: var(--text-secondary);
-    line-height: 1.7;
-}
-
-.help-list-ordered {
-    padding-left: 1.75rem;
-}
-
-.help-further-reading {
-    margin-top: 2.5rem;
-    padding: 1.25rem 1.5rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-}
-
-.help-further-reading h2,
-.help-further-reading h3 {
-    margin-top: 0 !important;
-    border-bottom: none;
-    padding-bottom: 0;
-}
-
-.help-further-reading ul {
-    margin-bottom: 0;
-}
-
-.help-nav-section-plugins {
-    border-top: 1px solid var(--border-color);
-    padding-top: 0.75rem;
-}
-
-.help-nav-section-note {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    padding: 0 1.5rem 0.5rem;
-    margin: 0;
-    font-style: italic;
-}
-
-.help-nav-badge {
-    display: inline-block;
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 0.1rem 0.35rem;
-    margin-left: 0.35rem;
-    border-radius: 4px;
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    vertical-align: middle;
-}
-
-.help-nav-item-sub .help-nav-link {
-    padding-left: 2rem;
-    font-size: 0.9375rem;
-}
-
-.help-plugin-banner {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-left: 4px solid var(--warning-color, #d97706);
-    border-radius: 6px;
-    padding: 0.75rem 1rem;
-    margin-bottom: 1.25rem;
-    font-size: 0.9375rem;
-    color: var(--text-secondary);
-}
-
-.help-search-section-tag {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-left: 0.35rem;
-}
-
-/* Responsive — align with P33 breakpoints */
-@media (max-width: 1279px) {
-    .help-page {
-        padding: var(--space-6, 1.5rem);
-    }
-
-    .help-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .help-sidebar {
-        position: static;
-        max-height: none;
-        order: -1;
-    }
-}
-
-@media (max-width: 767px) {
-    .help-page {
-        padding: var(--space-4, 1rem);
-    }
-
-    .help-header h1 {
-        font-size: 1.5rem;
-    }
-}
-

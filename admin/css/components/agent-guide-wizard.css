@@ -1,187 +1,74 @@
-/* Agent Guide setup wizard (P49-M3) */
+/* ============================================
+   Birkly Admin — Agent Guide setup wizard (P56)
+   ============================================
 
-.ag-wizard-modal .modal-content {
-  max-width: 720px;
-  width: calc(100% - 2rem);
-  max-height: calc(100vh - 2rem);
-  display: flex;
-  flex-direction: column;
-}
+   The wizard is a .modal with a .tabs strip as its step rail. The page-local
+   modal sizing, step-button, footer, choice-card, lede/outcome and spinner
+   dialects were deleted in P56-M9 — the markup now uses .modal--lg,
+   .modal-body, .modal-footer, .tabs/.tab, .card--interactive, .callout,
+   .spinner and the u-* helpers.
 
-.ag-wizard-content {
-  position: relative;
-}
+   Behaviour hooks emitted by js/agent-guide-wizard.js — .ag-wizard-back,
+   .ag-wizard-next, .ag-wizard-publish, .ag-wizard-done, .ag-wizard-skip-step,
+   .ag-wizard-choice-guided, .ag-wizard-choice-advanced, .ag-wizard-footer,
+   .ag-wizard-panel — carry NO styling beyond what is here. Do not restyle them.
+   ============================================ */
 
-.ag-wizard-header {
-  position: relative;
-  z-index: 11;
-}
+/* The loading veil is positioned against the panel, so the panel is the
+   containing block. */
+.ag-wizard-content { position: relative; }
 
-.ag-wizard-steps {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs, 0.375rem);
-  padding: 0 var(--space-m, 1rem);
-  border-bottom: 1px solid var(--border-light, #e5e7eb);
-}
-
-.ag-wizard-step-btn {
-  flex: 1 1 auto;
-  min-width: 72px;
-  padding: var(--space-xs, 0.375rem) var(--space-s, 0.5rem);
-  border: 1px solid var(--border-light, #e5e7eb);
-  border-radius: var(--radius-sm, 6px);
-  background: var(--bg-elevated, #fff);
-  color: var(--text-secondary, #72746F);
-  font-size: 0.6875rem;
-  font-weight: 500;
+/* Steps are disabled until reached; the tab component assumes clickable tabs. */
+.ag-wizard-steps .tab:disabled {
   cursor: default;
-  text-align: center;
-  line-height: 1.3;
+  opacity: 1;
+  color: var(--text-tertiary);
 }
 
-.ag-wizard-step-btn.active {
-  color: var(--text-primary, #20221D);
-  border-color: var(--primary-500, #52C49A);
-  background: var(--primary-50, #ecfdf5);
-  font-weight: 600;
-}
-
-.ag-wizard-body {
-  flex: 1;
-  overflow: auto;
-  padding: var(--space-m, 1rem);
-}
-
-.ag-wizard-panel--success {
-  text-align: center;
-  padding: var(--space-l, 1.5rem) var(--space-m, 1rem);
-}
-
+/* ============================================
+   Success panel — the one bespoke ornament in the wizard
+   ============================================ */
 .ag-wizard-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 3.5rem;
   height: 3.5rem;
-  margin: 0 auto var(--space-m, 1rem);
-  border-radius: 50%;
-  background: var(--primary-100, #d1fae5);
-  color: var(--primary-700, #047857);
-  font-size: 1.75rem;
-  line-height: 3.5rem;
-  font-weight: 700;
+  margin-inline: auto;
+  border-radius: var(--radius-pill);
+  background: var(--success-surface);
+  color: var(--success-fg);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+}
+
+/* Kept for admin/templates/collection-editor.html, which reuses the wizard
+   success layout for its own save-success modal. The wizard itself now builds
+   this panel from u-* helpers. */
+.ag-wizard-panel--success {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
 }
 
 .ag-wizard-success-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-s, 0.75rem);
+  gap: var(--space-3);
   justify-content: center;
-  margin-top: var(--space-m, 1rem);
+  margin-block-start: var(--space-4);
 }
 
-.ag-wizard-lede,
-.ag-wizard-why-text,
-.ag-wizard-outcome {
-  font-size: 0.875rem;
-  line-height: 1.55;
-  color: var(--text-secondary, #72746F);
-  margin: 0 0 var(--space-m, 1rem);
-}
-
-.ag-wizard-outcome {
-  padding: var(--space-s, 0.75rem);
-  border-left: 3px solid var(--primary-400, #6ee7b7);
-  background: var(--bg-secondary, #fafafa);
-  border-radius: 0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0;
-}
-
-.ag-wizard-choice-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-m, 1rem);
-}
-
-.ag-wizard-choice {
-  text-align: left;
-  padding: var(--space-m, 1rem);
-  cursor: pointer;
-  border: 2px solid var(--border-light, #e5e7eb);
-  transition: border-color 0.15s ease;
-}
-
-.ag-wizard-choice:hover,
-.ag-wizard-choice:focus {
-  border-color: var(--primary-500, #52C49A);
-  outline: none;
-}
-
-.ag-wizard-choice strong {
-  display: block;
-  margin-bottom: var(--space-xs, 0.25rem);
-}
-
-.ag-wizard-choice span {
-  font-size: 0.8125rem;
-  color: var(--text-secondary, #72746F);
-}
-
-.ag-wizard-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-s, 0.75rem);
-  padding: var(--space-m, 1rem);
-  border-top: 1px solid var(--border-light, #e5e7eb);
-}
-
-.ag-wizard-footer-spacer {
-  flex: 1;
-}
-
+/* ============================================
+   Busy veil — covers the panel while a step publishes or calls the model
+   ============================================ */
 .ag-wizard-loading {
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.85);
+  z-index: var(--z-raised);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-s, 0.75rem);
-  z-index: 10;
-}
-
-.ag-wizard-loading[hidden] {
-  display: none !important;
-  pointer-events: none;
-}
-
-.ag-wizard-loading-spinner {
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid var(--border-light, #e5e7eb);
-  border-top-color: var(--primary-500, #52C49A);
-  border-radius: 50%;
-  animation: ag-wizard-spin 0.8s linear infinite;
-}
-
-@keyframes ag-wizard-spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 640px) {
-  .ag-wizard-modal .modal-content {
-    width: 100%;
-    max-width: none;
-    max-height: 100vh;
-    height: 100vh;
-    border-radius: 0;
-  }
-
-  .ag-wizard-choice-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ag-wizard-step-btn {
-    font-size: 0.75rem;
-    min-width: 56px;
-  }
+  gap: var(--space-3);
+  background: var(--overlay);
 }
