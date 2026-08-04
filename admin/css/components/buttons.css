@@ -11,19 +11,12 @@
 
    Bare `.btn` is a neutral outline button — no :not() selector chains.
 
-   HOVER PHILOSOPHY (design pass 2): each variant's hover is a variant OF
-   ITSELF — a filled button darkens toward its own colour via color-mix,
-   never toward a generic grey wash shared by every variant. A grey hover on
-   every button was what made primary/secondary/outline feel interchangeable
-   on interaction. Outline/ghost still use a neutral wash because they carry
-   no fill of their own to begin with.
+   HOVER: each filled variant darkens (or lightens, for dark fills) toward its
+   own colour via color-mix. Label content rolls out/in on a short rotateX
+   spin (`.btn-spin`, wrapped by Birkly.Utils.enhanceButtons). Outline/ghost
+   use a soft wash because they carry no fill of their own.
 
-   PRESS: every button gets a tiny (1px) tactile dip on :active — the one
-   deliberate exception to "no translate" in the brief's motion section,
-   scoped to real presses (not hover) and small enough to read as physical
-   feedback rather than movement.
-
-   Reference: P56-M1 brief §2.2, §5.4 (superseded by this file's hover rules)
+   PRESS: 1px translateY on :active — tactile, not decorative motion.
    ============================================ */
 
 .btn {
@@ -46,15 +39,39 @@
   cursor: pointer;
   box-sizing: border-box;
   vertical-align: middle;
+  overflow: hidden;
+  perspective: 320px;
   transition:
-    background-color var(--motion-fast) var(--ease-out),
-    border-color var(--motion-fast) var(--ease-out),
-    color var(--motion-fast) var(--ease-out),
-    box-shadow var(--motion-fast) var(--ease-out),
+    background-color var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out),
+    color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
     transform var(--motion-fast) var(--ease-out);
 }
 
 a.btn { text-decoration: none; }
+
+/* Label / content wrapper — rolls out then back in on hover */
+.btn > .btn-spin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: inherit;
+  transform-origin: 50% 50%;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-link) > .btn-spin {
+  animation: btn-label-spin 0.52s var(--ease-out);
+}
+
+@keyframes btn-label-spin {
+  0%   { transform: translateY(0) rotateX(0deg); opacity: 1; }
+  38%  { transform: translateY(-0.65em) rotateX(82deg); opacity: 0; }
+  42%  { transform: translateY(0.65em) rotateX(-82deg); opacity: 0; }
+  100% { transform: translateY(0) rotateX(0deg); opacity: 1; }
+}
 
 .btn:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--surface-hover);
@@ -68,10 +85,6 @@ a.btn { text-decoration: none; }
   outline-offset: var(--focus-outline-offset);
 }
 
-/* prefers-reduced-motion is handled once, globally, in core/reset.css —
-   it zeroes transition-duration, so this 1px press still happens but
-   without any animated motion. No component-local rule needed here. */
-
 .btn:disabled,
 .btn[aria-disabled="true"],
 .btn.btn-disabled {
@@ -81,7 +94,9 @@ a.btn { text-decoration: none; }
 }
 
 .btn > svg,
-.btn > .birkly-icon {
+.btn > .birkly-icon,
+.btn > .btn-spin > svg,
+.btn > .btn-spin > .birkly-icon {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
@@ -91,54 +106,47 @@ a.btn { text-decoration: none; }
    Variants
    ============================================ */
 
-/* Primary — the single mint fill allowed per screen (brief P3).
-   Hover DARKENS toward its own colour (color-mix, ~8% black) instead of
-   lightening: lightening an already-bright fill on hover reads as a flash.
-   A soft ring in the accent's own soft tone gives the lift a bit of brand
-   character without touching the fill's brightness. */
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--ink-on-accent);
 }
 .btn-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 92%, black 8%);
-  border-color: color-mix(in srgb, var(--accent) 92%, black 8%);
+  background: color-mix(in srgb, var(--accent) 86%, black 14%);
+  border-color: color-mix(in srgb, var(--accent) 86%, black 14%);
   color: var(--ink-on-accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
 .btn-primary:active:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 84%, black 16%);
-  border-color: color-mix(in srgb, var(--accent) 84%, black 16%);
+  background: color-mix(in srgb, var(--accent) 78%, black 22%);
+  border-color: color-mix(in srgb, var(--accent) 78%, black 22%);
   box-shadow: none;
 }
 
-/* Secondary — filled neutral, clearly a button (not a ghost). Hover enriches
-   its OWN fill (darker neutral) rather than jumping to the same wash the
-   outline button uses, so secondary stays visually distinct from outline on
-   interaction, not just at rest. */
 .btn-secondary {
   background: var(--surface-sunken);
   border-color: var(--border-default);
   color: var(--text-primary);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--surface-sunken) 80%, var(--text-primary) 20%);
+  background: color-mix(in srgb, var(--surface-sunken) 72%, var(--text-primary) 28%);
   border-color: var(--border-control);
   color: var(--text-primary);
 }
 .btn-secondary:active:not(:disabled) {
-  background: color-mix(in srgb, var(--surface-sunken) 68%, var(--text-primary) 32%);
+  background: color-mix(in srgb, var(--surface-sunken) 60%, var(--text-primary) 40%);
 }
 
-/* Outline — explicit alias of the base look */
 .btn-outline {
   background: var(--surface);
   border-color: var(--border-control);
   color: var(--text-primary);
 }
+.btn-outline:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--surface) 88%, var(--text-primary) 12%);
+  border-color: var(--border-control-hover);
+}
 
-/* Ghost — borderless, for low-priority inline actions */
 .btn-ghost,
 .btn-muted,
 .btn-link {
@@ -148,8 +156,7 @@ a.btn { text-decoration: none; }
   font-weight: var(--weight-regular);
 }
 .btn-ghost:hover:not(:disabled),
-.btn-muted:hover:not(:disabled),
-.btn-link:hover:not(:disabled) {
+.btn-muted:hover:not(:disabled) {
   background: var(--surface-hover);
   border-color: transparent;
   color: var(--text-primary);
@@ -158,6 +165,8 @@ a.btn { text-decoration: none; }
 .btn-link {
   height: auto;
   padding: 0;
+  overflow: visible;
+  perspective: none;
   color: var(--text-link);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -172,23 +181,20 @@ a.btn { text-decoration: none; }
 }
 .btn-link:active:not(:disabled) { transform: none; }
 
-/* Semantic — solid fills reserved for destructive/confirm (brief §4.4).
-   Each already darkens toward its own -fg on hover; kept, just adding the
-   active step for a consistent three-state ladder. */
 .btn-danger {
   background: var(--danger-solid);
   border-color: var(--danger-solid);
   color: var(--ink-on-danger);
 }
 .btn-danger:hover:not(:disabled) {
-  background: var(--danger-fg);
-  border-color: var(--danger-fg);
+  background: color-mix(in srgb, var(--danger-fg) 92%, black 8%);
+  border-color: color-mix(in srgb, var(--danger-fg) 92%, black 8%);
   color: var(--ink-on-danger);
   box-shadow: 0 0 0 4px var(--danger-surface);
 }
 .btn-danger:active:not(:disabled) {
-  background: color-mix(in srgb, var(--danger-fg) 85%, black 15%);
-  border-color: color-mix(in srgb, var(--danger-fg) 85%, black 15%);
+  background: color-mix(in srgb, var(--danger-fg) 82%, black 18%);
+  border-color: color-mix(in srgb, var(--danger-fg) 82%, black 18%);
   box-shadow: none;
 }
 
@@ -198,14 +204,14 @@ a.btn { text-decoration: none; }
   color: var(--ink-on-success);
 }
 .btn-success:hover:not(:disabled) {
-  background: var(--success-fg);
-  border-color: var(--success-fg);
+  background: color-mix(in srgb, var(--success-fg) 92%, black 8%);
+  border-color: color-mix(in srgb, var(--success-fg) 92%, black 8%);
   color: var(--ink-on-success);
   box-shadow: 0 0 0 4px var(--success-surface);
 }
 .btn-success:active:not(:disabled) {
-  background: color-mix(in srgb, var(--success-fg) 85%, black 15%);
-  border-color: color-mix(in srgb, var(--success-fg) 85%, black 15%);
+  background: color-mix(in srgb, var(--success-fg) 82%, black 18%);
+  border-color: color-mix(in srgb, var(--success-fg) 82%, black 18%);
   box-shadow: none;
 }
 
@@ -215,18 +221,17 @@ a.btn { text-decoration: none; }
   color: var(--ink-on-warning);
 }
 .btn-warning:hover:not(:disabled) {
-  background: var(--warning-fg);
-  border-color: var(--warning-fg);
+  background: color-mix(in srgb, var(--warning-fg) 90%, black 10%);
+  border-color: color-mix(in srgb, var(--warning-fg) 90%, black 10%);
   color: var(--text-inverse);
   box-shadow: 0 0 0 4px var(--warning-surface);
 }
 .btn-warning:active:not(:disabled) {
-  background: color-mix(in srgb, var(--warning-fg) 85%, black 15%);
-  border-color: color-mix(in srgb, var(--warning-fg) 85%, black 15%);
+  background: color-mix(in srgb, var(--warning-fg) 80%, black 20%);
+  border-color: color-mix(in srgb, var(--warning-fg) 80%, black 20%);
   box-shadow: none;
 }
 
-/* Quiet destructive — for menus and table rows */
 .btn-danger-quiet {
   background: transparent;
   border-color: transparent;
@@ -249,7 +254,9 @@ a.btn { text-decoration: none; }
   gap: var(--space-1);
 }
 .btn-sm > svg,
-.btn-sm > .birkly-icon {
+.btn-sm > .birkly-icon,
+.btn-sm > .btn-spin > svg,
+.btn-sm > .btn-spin > .birkly-icon {
   width: 0.875rem;
   height: 0.875rem;
 }
@@ -297,11 +304,6 @@ a.btn { text-decoration: none; }
 
 /* ============================================
    Icon-only control
-
-   The button box itself never scales (that's a card-style violation on a
-   control) — but the GLYPH inside gets a very small nudge on hover. This is
-   the "creative but subtle" motion allowance for icon buttons: motion on the
-   icon, not the hit target, so it never shifts layout or feels like a card.
    ============================================ */
 .btn-icon {
   display: inline-flex;
@@ -314,6 +316,8 @@ a.btn { text-decoration: none; }
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
+  overflow: visible;
+  perspective: none;
   cursor: pointer;
   transition:
     background-color var(--motion-fast) var(--ease-out),
@@ -384,5 +388,4 @@ a.btn { text-decoration: none; }
 .btn-primary.btn-loading::after,
 .btn-primary.loading::after { color: var(--ink-on-accent); }
 
-/* Chrome-row alignment hook (topbar) — layout only, not a variant */
 .admin-visit-project-btn { height: var(--control-lg); }
