@@ -379,7 +379,7 @@
             const items = group.topics.map((topic) => `
                 <a href="#" class="side-nav-sub-item ${topic.id === currentId ? 'active' : ''}"
                    data-help-topic-link="${escapeHtml(topic.id)}">
-                    <span class="side-nav-label">${escapeHtml(topic.title)}</span>
+                    <span class="side-nav-label" data-text="${escapeHtml(topic.title)}">${escapeHtml(topic.title)}</span>
                 </a>
             `).join('');
 
