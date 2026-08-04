@@ -68,8 +68,12 @@
   color: var(--ink-on-accent);
   box-shadow: var(--elevation-2);
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out),
+    width var(--motion-slow) var(--ease-out),
+    min-width var(--motion-slow) var(--ease-out),
+    padding var(--motion-slow) var(--ease-out);
 }
 
 .ai-chat-floating-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -89,7 +93,10 @@
   flex-shrink: 0;
 }
 
-/* Three icons share one box and cross-fade between launcher states */
+/* Three icons share one box and morph between launcher states:
+   idle  → plus
+   menu  → sparkle (AI)
+   chat  → plus rotated 45° (reads as close / X) */
 .assist-fab-icon-slot {
   position: absolute;
   inset: 0;
@@ -98,14 +105,51 @@
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--motion-fast) var(--ease-out);
+  transform: scale(0.45) rotate(-90deg);
+  transition:
+    opacity var(--motion-slow) var(--ease-out),
+    transform var(--motion-slow) var(--ease-out);
 }
 
-.assist-fab-wrap.fab-idle .assist-fab-icon-plus,
-.assist-fab-wrap.fab-menu .assist-fab-icon-sparkle,
-.assist-fab-wrap.fab-chat .assist-fab-icon-close { opacity: 1; }
+.assist-fab-wrap.fab-idle .assist-fab-icon-plus {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
 
-.assist-fab-label { display: none; font-size: var(--text-sm); font-weight: var(--weight-semibold); line-height: 1; white-space: nowrap; }
+.assist-fab-wrap.fab-menu .assist-fab-icon-plus {
+  opacity: 0;
+  transform: scale(0.45) rotate(90deg);
+}
+.assist-fab-wrap.fab-menu .assist-fab-icon-sparkle {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* Plus morphs into an X by rotating 45° — no hard swap to a different glyph */
+.assist-fab-wrap.fab-chat .assist-fab-icon-plus {
+  opacity: 1;
+  transform: scale(1) rotate(45deg);
+}
+.assist-fab-wrap.fab-chat .assist-fab-icon-sparkle,
+.assist-fab-wrap.fab-chat .assist-fab-icon-close {
+  opacity: 0;
+  transform: scale(0.45) rotate(90deg);
+}
+
+.assist-fab-wrap.fab-idle .assist-fab-icon-sparkle,
+.assist-fab-wrap.fab-idle .assist-fab-icon-close,
+.assist-fab-wrap.fab-menu .assist-fab-icon-close {
+  opacity: 0;
+  transform: scale(0.45) rotate(-90deg);
+}
+
+.assist-fab-label {
+  display: none;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
 .assist-fab-wrap.fab-menu .assist-fab-label { display: inline-block; }
 
 .ai-chat-fab-badge,
