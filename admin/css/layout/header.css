@@ -279,21 +279,29 @@
   display: none;
 }
 
-/* Avatar fills the trigger cell; must not leak into the dropdown header. */
-.topbar-control-group .user-menu-trigger .user-avatar,
-.topbar-control-group .user-menu-trigger .user-avatar-initials,
-.topbar-user-menu .user-menu-trigger .user-avatar,
-.topbar-user-menu .user-menu-trigger .user-avatar-initials {
+/* Trigger face only (class is never used in the open panel). */
+.topbar-control-group .user-menu-trigger-face,
+.topbar-user-menu .user-menu-trigger .user-menu-trigger-face {
   position: absolute;
   inset: 0;
-  width: auto;
-  height: auto;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
   max-width: none;
+  max-height: none;
   margin: 0;
   padding: 0;
   border: none;
   border-radius: 0;
   object-fit: cover;
+  object-position: center;
+}
+
+.topbar-control-group .user-menu-trigger-face.user-avatar-initials,
+.topbar-user-menu .user-menu-trigger .user-menu-trigger-face.user-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .topbar-control-group .dropdown-menu {
@@ -335,7 +343,11 @@
   inset-inline-start: auto;
   inset-inline-end: 0;
   min-width: 17rem;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(32rem, calc(100vh - 5rem));
   padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* ============================================
@@ -347,29 +359,50 @@
   gap: var(--space-3);
   padding: var(--space-4);
   border-block-end: 1px solid var(--border-subtle);
+  min-width: 0;
 }
 
-.user-menu-avatar { flex-shrink: 0; }
-
-.user-menu-avatar .user-avatar,
-.user-menu-avatar .user-avatar-initials,
-.user-menu-header .user-avatar,
-.user-menu-header .user-avatar-initials {
-  position: static;
-  display: block;
+/* Fixed circular slot — keeps initials/photo centered and unclipped. */
+.topbar-user-menu .user-menu-avatar,
+.user-menu-header .user-menu-avatar {
+  position: relative;
+  flex: 0 0 2.5rem;
   width: 2.5rem;
   height: 2.5rem;
-  max-width: 2.5rem;
-  margin: 0;
-  padding: 0;
+  overflow: hidden;
   border-radius: 50%;
-  flex-shrink: 0;
-  object-fit: cover;
+  border: 1px solid var(--border-subtle);
+  background: var(--accent);
 }
 
-.user-menu-avatar .user-avatar,
-.user-menu-header .user-avatar {
-  border: 1px solid var(--border-subtle);
+.topbar-user-menu .user-menu-panel-face,
+.user-menu-header .user-menu-panel-face {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+.topbar-user-menu .user-menu-panel-face.user-avatar-initials,
+.user-menu-header .user-menu-panel-face.user-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
 }
 
 .user-menu-header .user-menu-info {

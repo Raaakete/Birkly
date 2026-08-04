@@ -16,12 +16,13 @@
    Only layout that no component expresses stays in this file.
    ============================================ */
 
-/* Two public sizes: 1× (md/sm) and 2× (lg/full). auto-fill tracks let a
-   2× widget sit beside two 1× widgets on wide viewports. */
+/* Two public sizes: 1× and 2×.
+   Reference: 1920px viewport → 4 tracks (four 1×, or two 1× + one 2×).
+   Scales down (1→2→3) and up (5→6) from that. */
 .dashboard-widgets-grid {
   display: grid;
   gap: var(--space-6);
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17.5rem), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-items: stretch;
 }
 
@@ -35,15 +36,44 @@
 .dash-widget--2x,
 .dash-widget--lg,
 .dash-widget--full {
-  grid-column: span 2;
+  grid-column: span 1;
   min-width: 0;
 }
 
-@media (max-width: 40rem) {
+@media (min-width: 720px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .dash-widget--2x,
   .dash-widget--lg,
   .dash-widget--full {
-    grid-column: span 1;
+    grid-column: span 2;
+  }
+}
+
+@media (min-width: 1100px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ~1920 viewport with sidebar ≈ four equal tracks */
+@media (min-width: 1600px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 2200px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 2600px) {
+  .dashboard-widgets-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
