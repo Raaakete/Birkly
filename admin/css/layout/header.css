@@ -201,6 +201,13 @@
   border-radius: var(--radius-sm);
   background: var(--surface);
   box-sizing: border-box;
+  /* Clip square cells (esp. the avatar) to the group's radius — cells
+     themselves stay square with no border-radius. Menus need overflow when
+     open; :has() lifts the clip only while a trigger is expanded. */
+  overflow: hidden;
+}
+
+.topbar-control-group:has([aria-expanded="true"]) {
   overflow: visible;
 }
 
@@ -222,7 +229,8 @@
 
 .topbar-control-group .topbar-icon-btn,
 .topbar-control-group .user-menu-trigger,
-.topbar-control-group .theme-switcher-trigger {
+.topbar-control-group .theme-switcher-trigger,
+.topbar-control-group .topbar-user-menu .dropdown-trigger.user-menu-trigger {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -233,7 +241,7 @@
   gap: 0;
   border: none;
   border-inline-end: 1px solid var(--border-subtle);
-  border-radius: 0;
+  border-radius: 0; /* square cells — only .topbar-control-group is rounded */
   background: transparent;
   box-shadow: none;
   box-sizing: border-box;
@@ -241,28 +249,11 @@
 
 .topbar-control-group > *:last-child .topbar-icon-btn,
 .topbar-control-group > *:last-child .user-menu-trigger,
+.topbar-control-group > *:last-child .theme-switcher-trigger,
 .topbar-control-group > .topbar-icon-btn:last-child,
-.topbar-control-group .topbar-user-menu .user-menu-trigger {
+.topbar-control-group > *:last-child .topbar-user-menu .dropdown-trigger.user-menu-trigger,
+.topbar-control-group .topbar-user-menu .dropdown-trigger.user-menu-trigger {
   border-inline-end: none;
-}
-
-/* Overflow on the group stays visible (dropdown menus escape a ~38px cell),
-   so end cells get their OWN matching corner radius instead of relying on
-   clipping — otherwise the group's rounded exterior and a square avatar fill
-   fight at the corner (design pass 2). Avatar/initials inherit whatever
-   radius their trigger resolves to. */
-.topbar-control-group > *:first-child .topbar-icon-btn,
-.topbar-control-group > *:first-child .user-menu-trigger,
-.topbar-control-group > *:first-child .theme-switcher-trigger {
-  border-start-start-radius: var(--radius-sm);
-  border-end-start-radius: var(--radius-sm);
-}
-
-.topbar-control-group > *:last-child .topbar-icon-btn,
-.topbar-control-group > *:last-child .user-menu-trigger,
-.topbar-control-group > .topbar-icon-btn:last-child {
-  border-start-end-radius: var(--radius-sm);
-  border-end-end-radius: var(--radius-sm);
 }
 
 .topbar-control-group .topbar-icon-btn:hover,
@@ -273,8 +264,12 @@
 
 .topbar-control-group .birkly-icon { display: block; margin: 0; }
 
-/* Avatar fills its cell edge to edge */
-.topbar-control-group .user-menu-trigger { overflow: hidden; }
+/* Avatar fills its cell edge to edge — square; group radius does the rounding */
+.topbar-control-group .user-menu-trigger {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0;
+}
 
 .topbar-control-group .user-menu-info,
 .topbar-control-group .user-menu-chevron,
@@ -285,13 +280,15 @@
 
 .topbar-control-group .user-avatar,
 .topbar-control-group .user-avatar-initials {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
   max-width: none;
   margin: 0;
   padding: 0;
   border: none;
-  border-radius: inherit;
+  border-radius: 0;
 }
 
 .topbar-control-group .dropdown-menu {
