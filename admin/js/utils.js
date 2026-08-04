@@ -124,42 +124,6 @@ Birkly.Nav = {
 };
 
 Birkly.Utils = {
-    /**
-     * Wrap .btn contents in .btn-spin so the shared label bounce hover
-     * animation can run. Skips icon-only, link, and loading buttons.
-     * Safe to call repeatedly; also enhances buttons added later via
-     * pointerover (first hover).
-     */
-    enhanceButtons(root) {
-        const scope = root && root.querySelectorAll ? root : document;
-        scope.querySelectorAll('.btn').forEach((btn) => {
-            Birkly.Utils._enhanceButton(btn);
-        });
-    },
-
-    _enhanceButton(btn) {
-        if (!btn || btn.nodeType !== 1) return;
-        if (btn.dataset.btnSpin === '1') return;
-        if (btn.classList.contains('btn-icon') ||
-            btn.classList.contains('btn-link') ||
-            btn.classList.contains('btn-loading') ||
-            btn.classList.contains('loading')) {
-            btn.dataset.btnSpin = 'skip';
-            return;
-        }
-        if (btn.querySelector(':scope > .btn-spin')) {
-            btn.dataset.btnSpin = '1';
-            return;
-        }
-        const wrap = document.createElement('span');
-        wrap.className = 'btn-spin';
-        while (btn.firstChild) {
-            wrap.appendChild(btn.firstChild);
-        }
-        btn.appendChild(wrap);
-        btn.dataset.btnSpin = '1';
-    },
-
     // Format date for display
     formatDate(dateString) {
         if (!dateString) return '-';
