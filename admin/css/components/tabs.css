@@ -2,16 +2,24 @@
    Birkly Admin — Secondary navigation (P56)
    ============================================
 
-   Segmented track language (Active / Regular / Hover):
+   Bar-indicator language (Active / Regular / Hover):
 
-     • Track  — same as content (transparent), light inset shadow, equal pad
-     • Active — white .nav-thumb with stronger inset (pressed into track)
-     • Regular — transparent item, optically centered in the track
-     • Hover  — grey chip (--surface-active) + light drop shadow (lifted)
+     Horizontal (.tabs / .segmented / .language-tabs-nav)
+       • Active — semibold + solid mint underline
+       • Regular — quiet text, no bar
+       • Hover  — semibold + faint mint underline
 
-   Horizontal and vertical (Media folder tree, Help docs) share this chrome.
-   Help adds `.side-nav-sub` — a nested inset pocket under each group title.
+     Vertical (.side-nav--track / .media-tree)
+       • Active — semibold + solid mint left rail
+       • Regular — quiet text, no rail
+       • Hover  — semibold + faint mint left rail
 
+     Sub-nav (.side-nav-sub)
+       • Soft vertical guide line
+       • Active mint rail sits on the guide
+       • Parents: label + chevron on the end
+
+   No sunken track, no sliding .nav-thumb chips.
    Main #admin-sidebar is independent and is NOT styled here.
 
    Tracks:  .tabs | .segmented | .language-tabs-nav | .side-nav--track |
@@ -27,7 +35,7 @@
 }
 
 /* ============================================
-   Shared track (segmented shell)
+   Shared track — transparent, no chip well
    ============================================ */
 .tabs,
 .segmented,
@@ -36,15 +44,15 @@
 .media-tree {
   position: relative;
   display: flex;
-  align-items: center; /* keep items optically centered in the inset well */
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-3); /* 12px track pad */
+  padding: 0;
   border: none;
-  border-radius: var(--radius-sm);
-  background: transparent; /* same as content area — never a white card */
-  box-shadow: var(--elevation-inset);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   box-sizing: border-box;
 }
 
@@ -56,34 +64,15 @@
   align-items: stretch;
 }
 
-/* .side-nav sets a larger stack gap; track variants stay tighter */
 .side-nav.side-nav--track,
 .side-nav.media-tree {
   gap: var(--space-3);
 }
 
-/* Sliding active chip — positioned by Birkly.Nav */
+/* Legacy sliding chip — kept inert; bar indicators replace it */
 .nav-thumb {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-start: 0;
-  z-index: 0;
-  width: 0;
-  height: 0;
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  box-shadow: var(--elevation-inset-strong); /* pressed into the track */
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    transform var(--motion-base) var(--ease-out),
-    width var(--motion-base) var(--ease-out),
-    height var(--motion-base) var(--ease-out),
-    opacity var(--motion-fast) var(--ease-out);
+  display: none !important;
 }
-
-.nav-thumb.is-ready { opacity: 1; }
-.nav-thumb.is-instant { transition: none; }
 
 /* ============================================
    Shared nav item
@@ -95,6 +84,7 @@
 .language-tab-btn,
 .folder-item,
 .folder-item-move {
+  --nav-indicator: transparent;
   position: relative;
   z-index: 1;
   display: inline-flex;
@@ -102,14 +92,14 @@
   justify-content: center;
   gap: var(--space-2);
   height: auto;
-  padding: var(--space-3) var(--space-4); /* 12px / 16px */
+  padding: var(--space-3) var(--space-4);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: var(--text-base); /* 14px */
-  font-weight: var(--weight-medium);
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
   line-height: 1;
   white-space: nowrap;
   cursor: pointer;
@@ -117,8 +107,7 @@
   box-sizing: border-box;
   transition:
     color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out),
-    box-shadow var(--motion-fast) var(--ease-out);
+    font-weight var(--motion-fast) var(--ease-out);
 }
 
 .tab > svg,
@@ -141,6 +130,38 @@
   transition: color var(--motion-fast) var(--ease-out);
 }
 
+/* ---- Horizontal underline indicator ---- */
+.tab::after,
+.segmented-item::after,
+.language-tab-btn::after {
+  content: "";
+  position: absolute;
+  inset-inline: var(--space-4);
+  inset-block-end: 0;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--nav-indicator);
+  transition: background-color var(--motion-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+/* ---- Vertical left-rail indicator ---- */
+.side-nav-item::before,
+.side-nav-sub-item::before,
+.folder-item::before,
+.folder-item-move::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: var(--space-2);
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--nav-indicator);
+  transition: background-color var(--motion-fast) var(--ease-out);
+  pointer-events: none;
+}
+
+/* Hover — faint mint bar + emphatic type */
 .tab:hover:not(.active):not([aria-selected="true"]),
 .segmented-item:hover:not(.active):not([aria-selected="true"]):not([aria-pressed="true"]),
 .side-nav-item:hover:not(.active):not([aria-selected="true"]),
@@ -148,9 +169,11 @@
 .language-tab-btn:hover:not(.active):not([aria-selected="true"]),
 .folder-item:hover:not(.active),
 .folder-item-move:hover:not(.active):not(.selected) {
+  --nav-indicator: var(--mint-200);
   color: var(--text-primary);
-  background: var(--surface-active);
-  box-shadow: var(--elevation-1); /* lifted grey chip */
+  font-weight: var(--weight-semibold);
+  background: transparent;
+  box-shadow: none;
 }
 
 .tab:hover > svg, .tab:hover > .birkly-icon,
@@ -162,7 +185,7 @@
   color: var(--text-secondary);
 }
 
-/* Active colour sits on the sliding thumb — item itself stays transparent */
+/* Active — solid mint bar + emphatic type */
 .tab.active,
 .tab[aria-selected="true"],
 .segmented-item.active,
@@ -177,9 +200,10 @@
 .folder-item.active,
 .folder-item-move.active,
 .folder-item-move.selected {
+  --nav-indicator: var(--accent);
   background: transparent;
   color: var(--text-primary);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
   box-shadow: none;
 }
 
@@ -201,7 +225,7 @@
 .folder-item:focus-visible,
 .folder-item-move:focus-visible {
   outline: var(--focus-outline);
-  outline-offset: -2px;
+  outline-offset: var(--focus-outline-offset);
 }
 
 .tab:disabled,
@@ -243,14 +267,14 @@
 .side-nav-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 0;
   min-width: 0;
 }
 
 /* Rail / page label (e.g. "Documentation") — not interactive */
 .side-nav > .side-nav-group-title {
   margin: 0;
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-1) var(--space-4);
   font-size: var(--text-2xs);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
@@ -261,44 +285,63 @@
   user-select: none;
 }
 
-/* Collapsible section headers inside the track */
+/* Expandable parent — label + end chevron; faint rail on hover */
 summary.side-nav-group-title {
+  --nav-indicator: transparent;
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-medium);
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  padding: var(--space-3) var(--space-4);
+  border-radius: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-regular);
+  text-transform: none;
+  letter-spacing: var(--tracking-normal);
+  color: var(--text-primary);
   list-style: none;
   cursor: pointer;
   user-select: none;
   transition:
     color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
-}
-summary.side-nav-group-title:hover {
-  color: var(--text-secondary);
-  background: var(--surface-active);
+    font-weight var(--motion-fast) var(--ease-out);
 }
 summary.side-nav-group-title::-webkit-details-marker { display: none; }
+
 summary.side-nav-group-title::before {
   content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block: var(--space-2);
+  width: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--nav-indicator);
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+/* Chevron on the end */
+summary.side-nav-group-title::after {
+  content: "";
   display: block;
-  width: 0.35em;
-  height: 0.35em;
-  margin-inline-end: var(--space-1);
+  width: 0.4em;
+  height: 0.4em;
+  margin-inline-start: auto;
   border-inline-end: 1.5px solid currentColor;
   border-block-end: 1.5px solid currentColor;
   transform: rotate(-45deg); /* points right when collapsed */
+  opacity: 0.55;
   transition: transform var(--motion-fast) var(--ease-out);
 }
-details.side-nav-group[open] > summary.side-nav-group-title::before {
+details.side-nav-group[open] > summary.side-nav-group-title::after {
   transform: rotate(45deg); /* points down when open */
+}
+
+summary.side-nav-group-title:hover {
+  --nav-indicator: var(--mint-200);
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  background: transparent;
 }
 
 .side-nav-item,
@@ -319,19 +362,37 @@ details.side-nav-group[open] > summary.side-nav-group-title::before {
   white-space: nowrap;
 }
 
-/* Sub-nav pocket — nested inset under a group (Help docs). Parent track
-   still owns the sliding .nav-thumb; this well only marks hierarchy. */
+/* Sub-nav — indented list with a soft vertical guide */
 .side-nav-sub {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  margin-block-start: var(--space-1);
-  margin-inline-start: var(--space-2);
-  padding: var(--space-1);
+  gap: 0;
+  margin: 0;
+  margin-inline-start: var(--space-4);
+  padding: 0;
+  padding-inline-start: var(--space-3);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   background: transparent;
-  box-shadow: var(--elevation-inset);
+  box-shadow: none;
+}
+
+.side-nav-sub::before {
+  content: "";
+  position: absolute;
+  inset-block: var(--space-2);
+  inset-inline-start: 0;
+  width: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+  pointer-events: none;
+}
+
+/* Active/hover rails sit on the guide */
+.side-nav-sub .side-nav-sub-item::before {
+  inset-inline-start: calc(-1 * var(--space-3));
+  width: 3px;
 }
 
 .side-nav-item[aria-expanded] { cursor: pointer; }
