@@ -1,23 +1,25 @@
 /* ============================================
-   Birkly Admin — Plugin page chrome (P56)
+   Birkly Admin — Plugin page chrome (P57)
    ============================================
 
-   `.plugin-page` is a documented contract: every official plugin (commerce,
-   automation, events, user management) wraps its admin screen in it so the
-   screen inherits core page layout. `layout/main-content.css` declares the
-   base; this file is the variant plus the compatibility bridge that maps each
-   plugin's own tab / toolbar / docs dialect onto the P56 components.
+   `.plugin-page` is a documented contract: official plugins wrap admin
+   screens in it so they inherit core page layout. `layout/main-content.css`
+   declares the base; this file is the variant plus docs-panel chrome and
+   a few User Management layout helpers.
 
-   Everything under plugins/ is outside P56-M9's edit scope, so the plugin-side
-   selectors below are KEPT (retokenised, not deleted). When a plugin adopts
-   .tabs / .tab / .main-actions-bar directly, its bridge rule here can go.
+   P57: official plugins adopted core `.tabs` / `.tab` / `.main-actions-bar`
+   directly, so the old payments-/events-/plugin-tabs underline bridges were
+   removed. Third-party Hub plugins that still ship private tab dialects
+   should migrate to core tabs (see Birkly-Docs plugin-admin-styling).
    ============================================ */
 
 .plugin-page,
 .commerce-page.plugin-page,
 .automation-page.plugin-page,
 .events-page.plugin-page,
-.user-management-page.plugin-page {
+.user-management-page.plugin-page,
+.sample-plugin-page.plugin-page,
+.studio-ide.plugin-page {
   max-width: none;
   margin: 0;
   padding: 0 0 var(--space-8);
@@ -59,56 +61,6 @@
 }
 
 /* ============================================
-   Tab bridge — plugin tab dialects rendered as the .tabs component
-   ============================================ */
-.plugin-page .payments-tabs,
-.plugin-page .commerce-tabs,
-.plugin-page .events-tabs,
-.plugin-page .settings-tabs.plugin-tabs .tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0;
-  margin-block-end: var(--space-6);
-  border-block-end: 1px solid var(--border-subtle);
-  background: transparent;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
-}
-
-.plugin-page .payments-tab,
-.plugin-page .events-tab,
-.plugin-page .settings-tabs.plugin-tabs .tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border: none;
-  border-block-end: 2px solid transparent;
-  background: none;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.plugin-page .payments-tab.active,
-.plugin-page .events-tab.active,
-.plugin-page .settings-tabs.plugin-tabs .tab.active {
-  border-block-end-color: var(--accent);
-  background: transparent;
-  color: var(--text-primary);
-}
-
-.plugin-page .payments-panel-header { margin-block-end: var(--space-4); }
-
-.plugin-page .payments-panel-header h2 {
-  margin: 0;
-  font-size: var(--text-lg);
-}
-
-/* ============================================
    Site Users — readable form width on wide screens
    ============================================ */
 .user-management-page.plugin-page .settings-form { max-width: 60rem; }
@@ -121,12 +73,14 @@
 
 .user-management-page.plugin-page .settings-stack .card { margin: 0; }
 
-.user-management-page.plugin-page .settings-stack .section-header h2 {
+.user-management-page.plugin-page .settings-stack .section-header h2,
+.user-management-page.plugin-page .settings-stack .card-title {
   margin: 0;
   font-size: var(--text-lg);
 }
 
 .user-management-page.plugin-page .settings-stack .section-description,
+.user-management-page.plugin-page .settings-stack .field-help,
 .user-management-page.plugin-page .settings-stack .text-muted {
   margin: 0 0 var(--space-3);
   color: var(--text-secondary);
