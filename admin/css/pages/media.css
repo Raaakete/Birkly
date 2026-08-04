@@ -8,9 +8,9 @@
    the asset grid, the modal preview surface and the media picker overlay —
    none of which a component expresses.
 
-   Folder tree uses the shared vertical track (`.side-nav.side-nav--track.media-tree`)
-   from components/tabs.css — same language as Help documentation nav. No card
-   chrome. `.folder-item` / `.folder-item-move` stay as JS hooks only.
+   Folder tree uses the shared bar-indicator side-nav
+   (`.side-nav.side-nav--track.media-tree` in components/tabs.css) — same
+   language as Help. `.folder-item` / `.folder-item-move` are JS hooks only.
    ============================================ */
 
 /* `.bulk-actions-toolbar` sets `display: flex`, which outranks the user-agent
