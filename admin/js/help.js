@@ -377,18 +377,16 @@
         navRoot.innerHTML = groups.map((group) => {
             const isOpen = group.id === activeSection || group.topics.some((t) => t.id === currentId);
             const items = group.topics.map((topic) => `
-                <li>
-                    <a href="#" class="help-nav-link ${topic.id === currentId ? 'active' : ''}"
-                       data-help-topic-link="${escapeHtml(topic.id)}">
-                        ${escapeHtml(topic.title)}
-                    </a>
-                </li>
+                <a href="#" class="side-nav-sub-item ${topic.id === currentId ? 'active' : ''}"
+                   data-help-topic-link="${escapeHtml(topic.id)}">
+                    <span class="side-nav-label">${escapeHtml(topic.title)}</span>
+                </a>
             `).join('');
 
             return `
-                <details class="help-nav-group" ${isOpen ? 'open' : ''}>
-                    <summary class="help-nav-group-title">${escapeHtml(group.label)}</summary>
-                    <ul class="help-nav-list">${items}</ul>
+                <details class="side-nav-group" ${isOpen ? 'open' : ''}>
+                    <summary class="side-nav-group-title">${escapeHtml(group.label)}</summary>
+                    <div class="side-nav-sub">${items}</div>
                 </details>
             `;
         }).join('');

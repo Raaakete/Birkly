@@ -127,10 +127,10 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                     ?>
                     <?php if ($multilanguageEnabled && !empty($multilanguageLanguages) && !empty($languageFields)): ?>
                         <div class="language-tabs-container entry-language-tabs">
-                            <div class="language-tabs-nav" role="tablist" aria-label="Entry languages">
+                            <div class="tabs language-tabs-nav" role="tablist" aria-label="Entry languages">
                                 <?php foreach ($multilanguageLanguages as $langIdx => $langCode): ?>
                                     <button type="button"
-                                            class="language-tab-btn <?= $langIdx === 0 ? 'active' : '' ?>"
+                                            class="tab language-tab-btn <?= $langIdx === 0 ? 'active' : '' ?>"
                                             data-lang="<?= htmlspecialchars($langCode) ?>"
                                             role="tab"
                                             aria-selected="<?= $langIdx === 0 ? 'true' : 'false' ?>">
