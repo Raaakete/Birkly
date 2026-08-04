@@ -2,23 +2,21 @@
    Birkly Admin — Secondary navigation (P56)
    ============================================
 
-   ONE nav item language for everything outside the main sidebar:
+   Design reference: Agent Guide Essentials/Advanced (.segmented).
+   EVERY secondary nav — horizontal tabs AND vertical side-nav — uses the
+   same track language:
 
-     Horizontal → .tabs > .tab  (Settings, Hub, AI Presence, editor sidebars)
-     Vertical   → .side-nav > .side-nav-item  (Media, Help)
-                  optional .side-nav-sub > .side-nav-sub-item (Help topics)
+     • sunken wrapper (--surface-sunken) + border + padding
+     • items sit transparent on the track
+     • a sliding .nav-thumb (white surface + elevation) animates under the
+       active item (wired by Birkly.Nav)
 
-   Same chip: transparent rest, --surface-hover hover, --surface-selected
-   active fill. Orientation is the only structural difference; vertical adds
-   full-width items + optional nested sub-list.
+   Main #admin-sidebar is independent and is NOT styled here.
 
-   Aliases kept for existing hooks:
-     .language-tab-btn  → same as .tab
-     .language-tabs-nav → same as .tabs
-     .folder-item-move  → same as .side-nav-item (.selected ≡ .active)
-
-   Panel class: .tab-panel is canonical; .tab-content and .tab-pane remain
-   because templates/JS use both. .tabs-v2-* is the overflow contract.
+   Tracks:  .tabs | .segmented | .language-tabs-nav | .side-nav--track |
+            .media-tree
+   Items:   .tab | .segmented-item | .language-tab-btn | .side-nav-item |
+            .side-nav-sub-item | .folder-item | .folder-item-move
    ============================================ */
 
 .tabs-root,
@@ -28,25 +26,81 @@
 }
 
 /* ============================================
-   Shared nav item — horizontal (.tab) and vertical (.side-nav-item)
+   Shared track (segmented shell)
+   ============================================ */
+.tabs,
+.segmented,
+.language-tabs-nav,
+.side-nav--track,
+.media-tree {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1); /* bumped from the old 2px segmented padding */
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  box-sizing: border-box;
+}
+
+/* Vertical tracks */
+.side-nav--track,
+.media-tree {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+/* Sliding active chip — positioned by Birkly.Nav */
+.nav-thumb {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 0;
+  width: 0;
+  height: 0;
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: var(--elevation-1);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    width var(--motion-base) var(--ease-out),
+    height var(--motion-base) var(--ease-out),
+    opacity var(--motion-fast) var(--ease-out);
+}
+
+.nav-thumb.is-ready { opacity: 1; }
+.nav-thumb.is-instant { transition: none; }
+
+/* ============================================
+   Shared nav item
    ============================================ */
 .tab,
+.segmented-item,
 .side-nav-item,
 .side-nav-sub-item,
 .language-tab-btn,
+.folder-item,
 .folder-item-move {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  height: var(--control-md);
+  height: calc(var(--control-md) - 4px);
   padding-inline: var(--space-3);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: var(--text-base);
-  font-weight: var(--weight-regular);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
@@ -59,11 +113,15 @@
 
 .tab > svg,
 .tab > .birkly-icon,
+.segmented-item > svg,
+.segmented-item > .birkly-icon,
 .side-nav-item > svg,
 .side-nav-item > .birkly-icon,
 .side-nav-sub-item > svg,
 .side-nav-sub-item > .birkly-icon,
 .language-tab-btn > svg,
+.folder-item > svg,
+.folder-item > .birkly-icon,
 .folder-item-move > svg,
 .folder-item-move > .birkly-icon {
   width: 1rem;
@@ -74,49 +132,62 @@
 }
 
 .tab:hover:not(.active):not([aria-selected="true"]),
+.segmented-item:hover:not(.active):not([aria-selected="true"]):not([aria-pressed="true"]),
 .side-nav-item:hover:not(.active):not([aria-selected="true"]),
 .side-nav-sub-item:hover:not(.active),
 .language-tab-btn:hover:not(.active):not([aria-selected="true"]),
+.folder-item:hover:not(.active),
 .folder-item-move:hover:not(.active):not(.selected) {
   color: var(--text-primary);
-  background: var(--surface-hover);
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
 }
 
 .tab:hover > svg, .tab:hover > .birkly-icon,
+.segmented-item:hover > svg, .segmented-item:hover > .birkly-icon,
 .side-nav-item:hover > svg, .side-nav-item:hover > .birkly-icon,
 .side-nav-sub-item:hover > svg, .side-nav-sub-item:hover > .birkly-icon,
+.folder-item:hover > svg, .folder-item:hover > .birkly-icon,
 .folder-item-move:hover > svg, .folder-item-move:hover > .birkly-icon {
   color: var(--text-secondary);
 }
 
+/* Active colour sits on the sliding thumb — item itself stays transparent */
 .tab.active,
 .tab[aria-selected="true"],
+.segmented-item.active,
+.segmented-item[aria-selected="true"],
+.segmented-item[aria-pressed="true"],
 .side-nav-item.active,
 .side-nav-item[aria-selected="true"],
 .side-nav-sub-item.active,
 .side-nav-sub-item[aria-selected="true"],
 .language-tab-btn.active,
 .language-tab-btn[aria-selected="true"],
+.folder-item.active,
 .folder-item-move.active,
 .folder-item-move.selected {
-  background: var(--surface-selected);
+  background: transparent;
   color: var(--text-primary);
   font-weight: var(--weight-medium);
+  box-shadow: none;
 }
 
 .tab.active > svg, .tab.active > .birkly-icon,
 .tab[aria-selected="true"] > svg, .tab[aria-selected="true"] > .birkly-icon,
+.segmented-item.active > svg, .segmented-item.active > .birkly-icon,
 .side-nav-item.active > svg, .side-nav-item.active > .birkly-icon,
 .side-nav-sub-item.active > svg, .side-nav-sub-item.active > .birkly-icon,
-.folder-item-move.active > svg, .folder-item-move.selected > svg,
-.folder-item-move.active > .birkly-icon, .folder-item-move.selected > .birkly-icon {
-  color: var(--accent-text);
+.folder-item.active > svg, .folder-item.active > .birkly-icon,
+.folder-item-move.selected > svg, .folder-item-move.selected > .birkly-icon {
+  color: var(--text-primary);
 }
 
 .tab:focus-visible,
+.segmented-item:focus-visible,
 .side-nav-item:focus-visible,
 .side-nav-sub-item:focus-visible,
 .language-tab-btn:focus-visible,
+.folder-item:focus-visible,
 .folder-item-move:focus-visible {
   outline: var(--focus-outline);
   outline-offset: -2px;
@@ -124,6 +195,7 @@
 
 .tab:disabled,
 .tab[aria-disabled="true"],
+.segmented-item:disabled,
 .language-tab-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -137,34 +209,18 @@
   height: 1.25rem;
   padding-inline: var(--space-1);
   border-radius: var(--radius-pill);
-  background: var(--surface-active);
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
   color: var(--text-secondary);
   font-size: var(--text-2xs);
   font-variant-numeric: tabular-nums;
 }
 .tab.active .tab-count,
-.tab[aria-selected="true"] .tab-count { background: var(--surface); }
-
-/* ============================================
-   Horizontal strip
-   ============================================ */
-.tabs,
-.language-tabs-nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 0;
-  padding-block-end: var(--space-2);
-  border-block-end: 1px solid var(--border-subtle);
-}
-
-.tab,
-.language-tab-btn {
-  font-weight: var(--weight-medium);
+.tab[aria-selected="true"] .tab-count {
+  background: var(--surface-sunken);
 }
 
 /* ============================================
-   Vertical list (+ optional sub-nav)
+   Vertical side-nav structure
    ============================================ */
 .side-nav {
   display: flex;
@@ -193,7 +249,6 @@
   user-select: none;
 }
 
-/* Accordion group title (Help uses <details>/<summary>) */
 summary.side-nav-group-title {
   display: flex;
   align-items: center;
@@ -213,19 +268,24 @@ details.side-nav-group[open] > summary.side-nav-group-title::before {
 }
 
 .side-nav-item,
+.side-nav-sub-item,
+.folder-item,
 .folder-item-move {
   width: 100%;
   justify-content: flex-start;
 }
 
 .side-nav-item > .side-nav-label,
-.side-nav-sub-item > .side-nav-label {
+.side-nav-sub-item > .side-nav-label,
+.folder-item .folder-name,
+.folder-item-move .side-nav-label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Nested sub-list — indent only; parent .side-nav--track owns the chrome */
 .side-nav-sub {
   display: flex;
   flex-direction: column;
@@ -233,13 +293,6 @@ details.side-nav-group[open] > summary.side-nav-group-title::before {
   margin-block-start: var(--space-1);
   padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--border-subtle);
-}
-
-.side-nav-sub-item {
-  width: 100%;
-  height: var(--control-sm);
-  justify-content: flex-start;
-  font-size: var(--text-sm);
 }
 
 .side-nav-item[aria-expanded] { cursor: pointer; }
@@ -270,56 +323,6 @@ details.side-nav-group[open] > summary.side-nav-group-title::before {
 
 .language-tab-content { display: none; }
 .language-tab-content.active { display: block; }
-
-/* ============================================
-   Segmented control — mode switches (view toggles)
-   ============================================ */
-.segmented {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
-}
-
-.segmented-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  height: calc(var(--control-md) - 6px);
-  padding-inline: var(--space-3);
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              color var(--motion-fast) var(--ease-out);
-}
-
-.segmented-item:hover:not(.active):not([aria-selected="true"]) { color: var(--text-primary); }
-
-.segmented-item.active,
-.segmented-item[aria-selected="true"],
-.segmented-item[aria-pressed="true"] {
-  background: var(--surface);
-  color: var(--text-primary);
-  box-shadow: var(--elevation-1);
-}
-
-.segmented-item:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: 1px;
-}
-
-.segmented-item > svg,
-.segmented-item > .birkly-icon { width: 1rem; height: 1rem; }
 
 /* ============================================
    Responsive overflow (tabs-v2.js contract)
