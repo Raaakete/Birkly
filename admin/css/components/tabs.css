@@ -4,10 +4,10 @@
 
    Segmented track language (Active / Regular / Hover):
 
-     • Track — sunken well (--surface-sunken) + hairline border + padding
-     • Active — white .nav-thumb chip under the item (Birkly.Nav)
-     • Regular — transparent item on the track
-     • Hover  — chip fill one step darker than the track (--surface-active)
+     • Track  — same as content (transparent), light inset shadow, equal pad
+     • Active — white .nav-thumb with stronger inset (pressed into track)
+     • Regular — transparent item, optically centered in the track
+     • Hover  — grey chip (--surface-active) + light drop shadow (lifted)
 
    Main #admin-sidebar is independent and is NOT styled here.
 
@@ -33,14 +33,15 @@
 .media-tree {
   position: relative;
   display: flex;
-  align-items: stretch;
+  align-items: center; /* keep items optically centered in the inset well */
   flex-wrap: wrap;
   gap: var(--space-1);
   min-width: 0;
   padding: var(--space-1);
-  border: 1px solid var(--border-subtle);
+  border: none;
   border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
+  background: transparent; /* same as content area */
+  box-shadow: var(--elevation-inset);
   box-sizing: border-box;
 }
 
@@ -62,7 +63,7 @@
   height: 0;
   border-radius: var(--radius-sm);
   background: var(--surface);
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--elevation-inset-strong); /* pressed into the track */
   opacity: 0;
   pointer-events: none;
   transition:
@@ -89,8 +90,10 @@
   z-index: 1;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
-  height: calc(var(--control-md) - 4px);
+  /* Item + equal track padding lands on --control-md overall */
+  height: calc(var(--control-md) - (var(--space-1) * 2));
   padding-inline: var(--space-3);
   border: none;
   border-radius: var(--radius-sm);
@@ -99,14 +102,15 @@
   font-family: inherit;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
-  line-height: 1.2;
+  line-height: 1;
   white-space: nowrap;
   cursor: pointer;
   text-decoration: none;
   box-sizing: border-box;
   transition:
     color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
+    background-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .tab > svg,
@@ -137,8 +141,8 @@
 .folder-item:hover:not(.active),
 .folder-item-move:hover:not(.active):not(.selected) {
   color: var(--text-primary);
-  /* One step darker than the sunken track — never lighter/whiter */
   background: var(--surface-active);
+  box-shadow: var(--elevation-1); /* lifted grey chip */
 }
 
 .tab:hover > svg, .tab:hover > .birkly-icon,
