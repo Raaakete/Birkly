@@ -4,20 +4,16 @@
 
    ONE naming convention: single dash (.btn-primary).
 
-   HOVER (design pass 3):
-   1. Label bounce — .btn-spin scales up → down → rest
-   2. Centre-out wash — ::before blooms from the middle to the sides
-      Peak wash colour lands when the label is largest; settled hover
-      colour lands when the label is back to normal.
-   Primary: brand mint → peak mint-50 (sidebar active) → end mint-100
-   (one step below peak on the ramp — still lighter than the start fill).
+   HOVER: background + border transition directly to --btn-hover /
+   --btn-hover-border (no wash bloom, no label bounce).
+   Primary end colour is mint-100 — lighter than brand start, one step
+   below the mint-50 peak on the ramp.
 
    PRESS: 1px translateY on :active.
    ============================================ */
 
 .btn {
-  --btn-hover-peak: var(--neutral-100);
-  --btn-hover-end: var(--surface-hover);
+  --btn-hover: var(--surface-hover);
   --btn-hover-border: var(--border-control-hover);
 
   position: relative;
@@ -40,9 +36,8 @@
   cursor: pointer;
   box-sizing: border-box;
   vertical-align: middle;
-  overflow: hidden;
-  isolation: isolate;
   transition:
+    background-color var(--motion-base) var(--ease-out),
     border-color var(--motion-base) var(--ease-out),
     color var(--motion-base) var(--ease-out),
     box-shadow var(--motion-base) var(--ease-out),
@@ -51,69 +46,9 @@
 
 a.btn { text-decoration: none; }
 
-/* Centre → sides wash layer */
-.btn::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 140%;
-  height: 140%;
-  border-radius: 50%;
-  background: var(--btn-hover-peak);
-  transform: translate(-50%, -50%) scale(0);
-  opacity: 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-link)::before {
-  animation: btn-wash-bloom 0.3s var(--ease-out) forwards;
-}
-
 .btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-link) {
+  background: var(--btn-hover);
   border-color: var(--btn-hover-border);
-}
-
-/* Label wrapper — bounce synced to the wash peak */
-.btn > .btn-spin {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: inherit;
-  transform-origin: 50% 50%;
-  will-change: transform;
-}
-
-.btn:hover:not(:disabled):not([aria-disabled="true"]):not(.btn-link) > .btn-spin {
-  animation: btn-label-bounce 0.3s var(--ease-out);
-}
-
-@keyframes btn-label-bounce {
-  0%   { transform: scale(1); }
-  35%  { transform: scale(1.05); } /* soft peak — wash at peak colour */
-  60%  { transform: scale(0.985); }
-  100% { transform: scale(1); }
-}
-
-@keyframes btn-wash-bloom {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 1;
-    background: var(--btn-hover-peak);
-  }
-  35% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-    background: var(--btn-hover-peak); /* over-changed at text max */
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.15);
-    opacity: 1;
-    background: var(--btn-hover-end); /* settled when text is normal */
-  }
 }
 
 .btn:active:not(:disabled) { transform: translateY(1px); }
@@ -140,13 +75,20 @@ a.btn { text-decoration: none; }
   flex-shrink: 0;
 }
 
+/* Legacy wrap from the removed bounce hover — keep layout-neutral */
+.btn > .btn-spin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: inherit;
+}
+
 /* ============================================
    Variants
    ============================================ */
 
 .btn-primary {
-  --btn-hover-peak: var(--mint-50);   /* sidebar active / surface-selected */
-  --btn-hover-end: var(--mint-100);   /* one step below peak — still lighter than brand */
+  --btn-hover: var(--mint-100);       /* lighter than brand; below mint-50 peak */
   --btn-hover-border: var(--mint-100);
   background: var(--accent);
   border-color: var(--accent);
@@ -157,11 +99,9 @@ a.btn { text-decoration: none; }
   background: var(--mint-400);
   border-color: var(--mint-400);
 }
-.btn.btn-primary:active:not(:disabled)::before { opacity: 0; animation: none; }
 
 .btn-secondary {
-  --btn-hover-peak: var(--neutral-50);
-  --btn-hover-end: var(--neutral-100);
+  --btn-hover: var(--neutral-100);
   --btn-hover-border: var(--border-control);
   background: var(--surface-sunken);
   border-color: var(--border-default);
@@ -169,8 +109,7 @@ a.btn { text-decoration: none; }
 }
 
 .btn-outline {
-  --btn-hover-peak: var(--neutral-50);
-  --btn-hover-end: var(--surface-hover);
+  --btn-hover: var(--surface-hover);
   --btn-hover-border: var(--border-control-hover);
   background: var(--surface);
   border-color: var(--border-control);
@@ -180,8 +119,7 @@ a.btn { text-decoration: none; }
 .btn-ghost,
 .btn-muted,
 .btn-link {
-  --btn-hover-peak: var(--surface-hover);
-  --btn-hover-end: var(--surface-hover);
+  --btn-hover: var(--surface-hover);
   --btn-hover-border: transparent;
   background: transparent;
   border-color: transparent;
@@ -192,7 +130,6 @@ a.btn { text-decoration: none; }
 .btn-link {
   height: auto;
   padding: 0;
-  overflow: visible;
   color: var(--text-link);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -200,7 +137,6 @@ a.btn { text-decoration: none; }
   transition: color var(--motion-fast) var(--ease-out),
               text-decoration-thickness var(--motion-fast) var(--ease-out);
 }
-.btn-link::before { display: none; }
 .btn-link:hover:not(:disabled) {
   background: transparent;
   color: var(--text-link-hover);
@@ -209,8 +145,7 @@ a.btn { text-decoration: none; }
 .btn-link:active:not(:disabled) { transform: none; }
 
 .btn-danger {
-  --btn-hover-peak: var(--danger-surface);
-  --btn-hover-end: color-mix(in srgb, var(--danger-solid) 70%, white 30%);
+  --btn-hover: color-mix(in srgb, var(--danger-solid) 70%, white 30%);
   --btn-hover-border: var(--danger-fg);
   background: var(--danger-solid);
   border-color: var(--danger-solid);
@@ -218,8 +153,7 @@ a.btn { text-decoration: none; }
 }
 
 .btn-success {
-  --btn-hover-peak: var(--success-surface);
-  --btn-hover-end: color-mix(in srgb, var(--success-solid) 70%, white 30%);
+  --btn-hover: color-mix(in srgb, var(--success-solid) 70%, white 30%);
   --btn-hover-border: var(--success-fg);
   background: var(--success-solid);
   border-color: var(--success-solid);
@@ -227,8 +161,7 @@ a.btn { text-decoration: none; }
 }
 
 .btn-warning {
-  --btn-hover-peak: var(--warning-surface);
-  --btn-hover-end: color-mix(in srgb, var(--warning-solid) 70%, white 30%);
+  --btn-hover: color-mix(in srgb, var(--warning-solid) 70%, white 30%);
   --btn-hover-border: var(--warning-fg);
   background: var(--warning-solid);
   border-color: var(--warning-solid);
@@ -236,15 +169,8 @@ a.btn { text-decoration: none; }
 }
 
 .btn-danger-quiet {
-  --btn-hover-peak: var(--danger-surface);
-  --btn-hover-end: var(--danger-surface);
+  --btn-hover: var(--danger-surface);
   --btn-hover-border: var(--danger-border);
-  background: transparent;
-  border-color: transparent;
-  color: var(--danger-fg);
-}
-
-.btn-danger-quiet {
   background: transparent;
   border-color: transparent;
   color: var(--danger-fg);
@@ -328,8 +254,6 @@ a.btn { text-decoration: none; }
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
-  overflow: visible;
-  perspective: none;
   cursor: pointer;
   transition:
     background-color var(--motion-fast) var(--ease-out),

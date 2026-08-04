@@ -2,14 +2,12 @@
    Birkly Admin — Secondary navigation (P56)
    ============================================
 
-   Design reference: Agent Guide Essentials/Advanced (.segmented).
-   EVERY secondary nav — horizontal tabs AND vertical side-nav — uses the
-   same track language:
+   Segmented track language (Active / Regular / Hover):
 
-     • sunken wrapper (--surface-sunken) + border + padding
-     • items sit transparent on the track
-     • a sliding .nav-thumb (white surface + elevation) animates under the
-       active item (wired by Birkly.Nav)
+     • Track — sunken well (--surface-sunken) + hairline border + padding
+     • Active — white .nav-thumb chip under the item (Birkly.Nav)
+     • Regular — transparent item on the track
+     • Hover  — chip fill one step darker than the track (--surface-active)
 
    Main #admin-sidebar is independent and is NOT styled here.
 
@@ -39,8 +37,8 @@
   flex-wrap: wrap;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-1); /* bumped from the old 2px segmented padding */
-  border: 1px solid var(--border-default);
+  padding: var(--space-1);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background: var(--surface-sunken);
   box-sizing: border-box;
@@ -62,7 +60,7 @@
   z-index: 0;
   width: 0;
   height: 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   box-shadow: var(--elevation-1);
   opacity: 0;
@@ -95,7 +93,7 @@
   height: calc(var(--control-md) - 4px);
   padding-inline: var(--space-3);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-secondary);
   font-family: inherit;
@@ -139,7 +137,8 @@
 .folder-item:hover:not(.active),
 .folder-item-move:hover:not(.active):not(.selected) {
   color: var(--text-primary);
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  /* One step darker than the sunken track — never lighter/whiter */
+  background: var(--surface-active);
 }
 
 .tab:hover > svg, .tab:hover > .birkly-icon,
