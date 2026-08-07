@@ -160,6 +160,14 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/* Lift overflow when a row More menu is open so upward menus/tooltips are not clipped */
+.entries-smart-table .table-viewport:has(.dropdown-trigger[aria-expanded="true"]),
+.entries-smart-table .table-viewport:has(.dropdown-menu.show),
+.entries-smart-table .table-viewport:has(.dropdown-menu.active),
+.entries-smart-table .table-viewport:has(.dropdown.open) {
+  overflow: visible;
+}
+
 .entries-smart-table .smart-table {
   width: 100%;
   table-layout: auto;
@@ -311,13 +319,13 @@
 
 .entries-smart-table.entries-l2-actions .head-actions,
 .entries-smart-table.entries-l2-actions .cell-actions {
-  width: 15rem;
-  min-width: 15rem;
-  max-width: 15rem;
+  width: 7.5rem;
+  min-width: 7.5rem;
+  max-width: 7.5rem;
 }
 
 .entries-smart-table.entries-l2-actions .cell-actions-inner {
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .entries-smart-table thead th {
