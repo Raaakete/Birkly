@@ -24,7 +24,6 @@
         versions: [],
         publicUrls: {},
         aiAbortController: null,
-        viewMode: 'essentials',
         publishState: null,
         publishingInProgress: false,
         wizard: null,
@@ -34,11 +33,12 @@
         webmcpPublicForms: [],
         webmcpSupported: null,
         webmcpLoaded: false,
-        webmcpSaving: false,
-        connectionsMounted: false
+        webmcpSaving: false
     };
 
-    var HUB_ZONES = ['guide', 'tools', 'connections', 'publish'];
+    // Connections deliberately excluded (P60 IA): AI app connections live in
+    // Settings → AI only, never in the Agent Guide hub.
+    var HUB_ZONES = ['guide', 'tools', 'publish'];
 
     // Plain-language labels/descriptions for the WebMCP tool catalog. The admin
     // API returns technical metadata (id/pack/kind/consent); the human copy
@@ -548,11 +548,12 @@
         return c.dir || c.slug || c.handle || c.id || '';
     }
 
+    // P60 IA: AI Assist is a card in the Guide → Overview tab (no drawer/FAB).
+    // "Opening" it now means revealing the Overview tab and scrolling the
+    // suggestions into view.
     function openAssistSidebar() {
-        var sidebar = document.getElementById('ap-assist-sidebar');
-        var fab = document.getElementById('ap-assist-fab');
-        if (sidebar) sidebar.classList.add('is-open');
-        if (fab) fab.setAttribute('aria-expanded', 'true');
+        showGuideTab('overview');
+        scrollAssistResults();
     }
 
     function t(key, fallback) {
@@ -761,51 +762,12 @@
         }
     }
 
-    function setViewMode(mode) {
-        state.viewMode = mode === 'advanced' ? 'advanced' : 'essentials';
-        try {
-            localStorage.setItem('ap_view_mode', state.viewMode);
-        } catch (e) { /* ignore */ }
-        var essEl = document.getElementById('ap-essentials-view');
-        var advEl = document.getElementById('ap-advanced-view');
-        var page = document.querySelector('.ap-page');
-        if (essEl) essEl.hidden = state.viewMode !== 'essentials';
-        if (advEl) advEl.hidden = state.viewMode !== 'advanced';
-        document.querySelectorAll('.ap-view-toggle-btn').forEach(function (btn) {
-            btn.classList.toggle('active', btn.getAttribute('data-view-mode') === state.viewMode);
-            btn.setAttribute('aria-pressed', btn.getAttribute('data-view-mode') === state.viewMode ? 'true' : 'false');
-        });
-        if (page) {
-            page.classList.toggle('ap-page--essentials', state.viewMode === 'essentials');
-            page.classList.toggle('ap-page--advanced', state.viewMode === 'advanced');
-        }
-        var fab = document.getElementById('ap-assist-fab');
-        var sidebar = document.getElementById('ap-assist-sidebar');
-        if (state.viewMode === 'essentials') {
-            if (fab) {
-                fab.hidden = true;
-                fab.setAttribute('aria-expanded', 'false');
-            }
-            if (sidebar) sidebar.classList.remove('is-open');
-        } else if (fab) {
-            // Shown only below the desktop rail breakpoint (CSS hides ≥1280px).
-            fab.hidden = false;
-        }
-    }
-
-    function initViewMode() {
-        try {
-            var saved = localStorage.getItem('ap_view_mode');
-            if (saved === 'advanced' || saved === 'essentials') {
-                state.viewMode = saved;
-            }
-        } catch (e) { /* ignore */ }
-        document.querySelectorAll('.ap-view-toggle-btn').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                setViewMode(btn.getAttribute('data-view-mode'));
-            });
-        });
-        setViewMode(state.viewMode);
+    // P60 IA: the Essentials/Advanced split is gone. The Guide is a single
+    // experience with a vertical sub-nav (Overview, Essentials, Sources, …).
+    // showGuideTab() ensures the Guide zone is active and selects a sub-tab.
+    function showGuideTab(tab) {
+        switchZone('guide');
+        switchTab(tab || 'overview');
     }
 
     function initWizard() {
@@ -826,12 +788,12 @@
             },
             onSkip: function () {
                 return postJson({ action: 'setup_skip' }).then(function () {
-                    setViewMode('essentials');
+                    showGuideTab('essentials');
                 });
             },
             onComplete: function () {
                 return postJson({ action: 'setup_complete', draft: state.draft }).then(function () {
-                    setViewMode('essentials');
+                    showGuideTab('essentials');
                     return load();
                 });
             },
@@ -906,8 +868,7 @@
         });
         bindEl('ap-success-overview', 'click', function () {
             closeApModal('ap-publish-success-modal');
-            setViewMode('advanced');
-            switchTab('overview');
+            showGuideTab('overview');
         });
         bindEl('ap-setup-guide-btn', 'click', openSetupWizard);
         bindEl('ap-status-publish-btn', 'click', function () {
@@ -1848,22 +1809,6 @@
             return;
         }
         openApModal(ABOUT_MODAL_ID);
-    }
-
-    function initAssistSidebar() {
-        var sidebar = document.getElementById('ap-assist-sidebar');
-        var fab = document.getElementById('ap-assist-fab');
-        if (!fab || !sidebar) return;
-        fab.addEventListener('click', function () {
-            var open = sidebar.classList.toggle('is-open');
-            fab.setAttribute('aria-expanded', open ? 'true' : 'false');
-        });
-        document.addEventListener('click', function (e) {
-            if (!sidebar.classList.contains('is-open')) return;
-            if (sidebar.contains(e.target) || fab.contains(e.target)) return;
-            sidebar.classList.remove('is-open');
-            fab.setAttribute('aria-expanded', 'false');
-        });
     }
 
     function scrollAssistResults() {
@@ -3180,8 +3125,7 @@
                 if (tab === 'publish') {
                     switchZone('publish');
                 } else {
-                    setViewMode('advanced');
-                    switchTab(tab);
+                    showGuideTab(tab);
                 }
             }
         });
@@ -3219,6 +3163,15 @@
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
             btn.tabIndex = active ? 0 : -1;
         });
+        document.querySelectorAll('.ap-status-item[data-hub-zone]').forEach(function (btn) {
+            var active = btn.getAttribute('data-hub-zone') === zone;
+            btn.classList.toggle('is-active', active);
+            if (active) {
+                btn.setAttribute('aria-current', 'page');
+            } else {
+                btn.removeAttribute('aria-current');
+            }
+        });
         document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
             var active = panel.getAttribute('data-hub-panel') === zone;
             panel.classList.toggle('active', active);
@@ -3234,9 +3187,6 @@
         if (zone === 'tools' && !state.webmcpLoaded) {
             loadWebmcpConfig();
         }
-        if (zone === 'connections') {
-            mountConnectionsZone();
-        }
         if (zone === 'publish') {
             renderPublishZone();
         }
@@ -3249,7 +3199,7 @@
         document.addEventListener('click', function (e) {
             var zoneBtn = e.target.closest('[data-hub-zone]');
             if (zoneBtn && (zoneBtn.classList.contains('tab') ||
-                zoneBtn.classList.contains('ap-spine-item') ||
+                zoneBtn.classList.contains('ap-status-item') ||
                 zoneBtn.classList.contains('ap-goto-zone'))) {
                 e.preventDefault();
                 switchZone(zoneBtn.getAttribute('data-hub-zone'));
@@ -3328,19 +3278,8 @@
             if (tVal) tVal.textContent = t('ag_webmcp_off', 'Off');
         }
 
-        // AI app connections
-        var cBadge = document.getElementById('ap-spine-connections-badge');
-        var cVal = document.getElementById('ap-spine-connections-value');
+        // Where it's hosted (Connections intentionally omitted — Settings → AI)
         var urls = state.publicUrls || {};
-        if (urls.mcp_url) {
-            badge(cBadge, t('ag_status_connected', 'Ready'), 'success');
-            if (cVal) cVal.textContent = t('ag_status_connected', 'Ready');
-        } else {
-            badge(cBadge, t('ag_status_not_set_up', 'Not set up'), 'neutral');
-            if (cVal) cVal.textContent = t('ag_status_not_set_up', 'Not set up');
-        }
-
-        // Where it's hosted
         var hBadge = document.getElementById('ap-spine-hosted-badge');
         var hVal = document.getElementById('ap-spine-hosted-value');
         var mode = urls.hosting_mode || 'none';
@@ -3555,30 +3494,6 @@
     }
 
     // ===================================================================
-    // Connections zone — mount shared Settings → AI modules (P60-M4)
-    // ===================================================================
-
-    function mountConnectionsZone() {
-        if (state.connectionsMounted) return;
-        var mount = document.getElementById('ap-connections-mount');
-        if (!mount) return;
-        state.connectionsMounted = true;
-        // The shared connection panel partial is included in the mount container
-        // server-side; here we simply initialize the same modules Settings → AI
-        // uses. Separate pages → identical IDs never collide at runtime.
-        try {
-            if (global.McpConnections && typeof global.McpConnections.init === 'function') {
-                global.McpConnections.init();
-            }
-            if (global.AiConnections && typeof global.AiConnections.init === 'function') {
-                global.AiConnections.init();
-            }
-        } catch (e) {
-            if (global.console) console.error('Connections mount failed', e);
-        }
-    }
-
-    // ===================================================================
     // Publish zone — mode-aware guide/tools/MCP read-out (P60-M7)
     // ===================================================================
 
@@ -3610,6 +3525,13 @@
                 '<dd><code>' + escapeHtml(urls.cms_canonical_url || '—') + '</code></dd>';
             guideUrls.innerHTML = rows;
         }
+
+        // Mode-specific guide notes: Birkly-hosted is live automatically; "none"
+        // needs site delivery configured first; external shows the options block.
+        var guideProjectNote = document.getElementById('ap-publish-guide-project-note');
+        if (guideProjectNote) guideProjectNote.hidden = mode !== 'project';
+        var guideNoneNote = document.getElementById('ap-publish-guide-none-note');
+        if (guideNoneNote) guideNoneNote.hidden = mode !== 'none';
 
         // External checklist
         var ext = document.getElementById('ap-publish-external');
@@ -3694,7 +3616,7 @@
     }
 
     function isAiPresencePage() {
-        return !!document.querySelector('.ap-page');
+        return !!document.querySelector('.ap-hub');
     }
 
     global.initAiPresence = function (config) {
@@ -3707,10 +3629,8 @@
         initPublishZone();
         initWorkflowNav();
         initAboutModal();
-        initViewMode();
         initWizard();
         initPublishFeedback();
-        initAssistSidebar();
         initAssistTabs();
         window.addEventListener('birkly:ai-connection-changed', function () {
             loadAiConnections();
