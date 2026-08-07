@@ -299,16 +299,8 @@
         });
         bindClick('project-git-test-btn', testConnection);
         bindClick('project-git-disconnect-btn', disconnect);
-        bindClick('project-git-push-btn', function () {
-            if (typeof window.birklyProjectGitPush === 'function') {
-                window.birklyProjectGitPush();
-            }
-        });
-        bindClick('project-git-pull-btn', function () {
-            if (typeof window.birklyProjectGitPull === 'function') {
-                window.birklyProjectGitPull();
-            }
-        });
+        bindClick('project-git-push-btn', push);
+        bindClick('project-git-pull-btn', pullPreview);
     }
 
     function bindClick(id, handler) {
@@ -395,6 +387,129 @@
                 toast(error.message, 'error');
             });
         });
+    }
+
+    // ---------------------------------------------------------------------
+    // Push / pull
+    // ---------------------------------------------------------------------
+
+    function panel() {
+        return document.getElementById('project-git-panel');
+    }
+
+    function showPanel(html) {
+        var el = panel();
+        if (!el) return;
+        el.innerHTML = html;
+        el.hidden = false;
+    }
+
+    function hidePanel() {
+        var el = panel();
+        if (!el) return;
+        el.hidden = true;
+        el.innerHTML = '';
+    }
+
+    function afterAction(result, successMessage) {
+        state.data = result.data || state.data;
+        state.editing = false;
+        render();
+
+        var conflict = result.data && result.data.conflict;
+        if (conflict) {
+            showConflict(conflict);
+            toast(result.message || 'Conflict — choose which side to keep.', 'warning');
+            return false;
+        }
+
+        toast(result.message || successMessage, 'success');
+        refreshActivity();
+        return true;
+    }
+
+    function push() {
+        var promptPromise = (window.BirklyFeedback && typeof BirklyFeedback.prompt === 'function')
+            ? BirklyFeedback.prompt('', '', {
+                title: 'Push to remote',
+                placeholder: 'Update project files from Birkly',
+                confirmLabel: 'Push'
+            })
+            : Promise.resolve('');
+
+        Promise.resolve(promptPromise).then(function (message) {
+            if (message === null) return;
+            setBusy(true);
+            return request('push', { message: message || '' }).then(function (result) {
+                afterAction(result, 'Pushed');
+            }).catch(function (error) {
+                setBusy(false);
+                toast(error.message, 'error');
+            });
+        });
+    }
+
+    function pullPreview() {
+        setBusy(true);
+        request('pull_preview', {}).then(function (result) {
+            state.data = result.data || state.data;
+            render();
+
+            var data = result.data || {};
+            if (data.conflict) {
+                showConflict(data.conflict);
+                return;
+            }
+
+            var incoming = data.incoming || [];
+            if (!incoming.length) {
+                toast('Already up to date — nothing to pull.', 'info');
+                return;
+            }
+
+            showPanel(
+                '<div class="u-stack-3">' +
+                    '<p class="u-label">Incoming changes (' + incoming.length + ')</p>' +
+                    '<p class="u-text-sm u-fg-secondary">Applying replaces these files in <code>project/</code> with the remote version. CMS content and media are not affected.</p>' +
+                    renderChangeList(incoming, 'No incoming changes.') +
+                    '<div class="u-cluster">' +
+                        '<button type="button" class="btn btn-primary btn-sm" id="project-git-pull-apply-btn">Apply changes</button>' +
+                        '<button type="button" class="btn btn-secondary btn-sm" id="project-git-pull-cancel-btn">Cancel</button>' +
+                    '</div>' +
+                '</div>'
+            );
+            bindClick('project-git-pull-apply-btn', pullApply);
+            bindClick('project-git-pull-cancel-btn', hidePanel);
+        }).catch(function (error) {
+            setBusy(false);
+            toast(error.message, 'error');
+        });
+    }
+
+    function pullApply() {
+        setBusy(true);
+        request('pull_apply', {}).then(function (result) {
+            if (afterAction(result, 'Pulled')) {
+                hidePanel();
+                if (typeof window.reloadProjectFiles === 'function') {
+                    window.reloadProjectFiles();
+                }
+            }
+        }).catch(function (error) {
+            setBusy(false);
+            toast(error.message, 'error');
+        });
+    }
+
+    function showConflict(conflict) {
+        // Placeholder until the conflict resolution UI lands; the API already
+        // refuses to overwrite either side.
+        showPanel(
+            '<div class="u-stack-3">' +
+                '<p class="u-label">Conflict</p>' +
+                '<p class="u-text-sm">' + escapeHtml(conflict.message || 'Both sides changed.') + '</p>' +
+            '</div>'
+        );
     }
 
     function refreshActivity() {

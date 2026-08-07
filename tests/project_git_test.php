@@ -345,6 +345,41 @@ try {
 }
 
 // ---------------------------------------------------------------------------
+// Conflict detection — no silent overwrite in either direction
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'conflict detection' . PHP_EOL;
+
+$clean = ['dirty' => 0, 'ahead' => 0, 'behind' => 0, 'conflicts' => [], 'changes' => []];
+assert_true('clean tree is not a conflict', birkly_project_git_conflict($clean, [], 'main') === null);
+
+$aheadOnly = array_merge($clean, ['ahead' => 2, 'changes' => [['path' => 'index.html', 'state' => 'modified']], 'dirty' => 1]);
+assert_true('local-only changes are not a conflict', birkly_project_git_conflict($aheadOnly, [], 'main') === null);
+
+$behindOnly = array_merge($clean, ['behind' => 3]);
+assert_true(
+    'remote-only changes are not a conflict',
+    birkly_project_git_conflict($behindOnly, [['path' => 'index.html', 'state' => 'modified']], 'main') === null
+);
+
+$bothChanged = array_merge($clean, [
+    'behind' => 1,
+    'dirty' => 2,
+    'changes' => [['path' => 'index.html', 'state' => 'modified'], ['path' => 'new.html', 'state' => 'added']],
+]);
+$conflict = birkly_project_git_conflict($bothChanged, [['path' => 'index.html', 'state' => 'modified']], 'main');
+assert_true('both sides changed is a conflict', is_array($conflict));
+assert_true('conflict reason is both_changed', ($conflict['reason'] ?? '') === 'both_changed');
+assert_true('conflict lists the overlapping file', ($conflict['overlapping_files'] ?? []) === ['index.html']);
+assert_true('conflict lists local files', in_array('new.html', $conflict['local_files'] ?? [], true));
+
+$diverged = array_merge($clean, ['ahead' => 1, 'behind' => 1]);
+assert_true('diverged history is a conflict', (birkly_project_git_conflict($diverged, [], 'main')['reason'] ?? '') === 'diverged');
+
+$unmerged = array_merge($clean, ['conflicts' => ['index.html']]);
+assert_true('unfinished merge is a conflict', (birkly_project_git_conflict($unmerged, [], 'main')['reason'] ?? '') === 'unmerged');
+
+// ---------------------------------------------------------------------------
 // Admin API requires a session
 // ---------------------------------------------------------------------------
 

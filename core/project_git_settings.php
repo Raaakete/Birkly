@@ -203,6 +203,51 @@ function birkly_project_git_current_user(): string
 }
 
 /**
+ * Detect a situation where applying one side would silently discard the other.
+ *
+ * @param array<string, mixed> $repository Result of ProjectGit::status()
+ * @param list<array{path: string, state: string}> $incoming Result of ProjectGit::pullPreview()
+ * @return array<string, mixed>|null Null when it is safe to push or fast-forward
+ */
+function birkly_project_git_conflict(array $repository, array $incoming, string $branch): ?array
+{
+    $unmerged = $repository['conflicts'] ?? [];
+    $dirty = (int) ($repository['dirty'] ?? 0);
+    $ahead = (int) ($repository['ahead'] ?? 0);
+    $behind = (int) ($repository['behind'] ?? 0);
+
+    $reason = null;
+    if ($unmerged !== []) {
+        $reason = 'unmerged';
+    } elseif ($behind > 0 && $dirty > 0) {
+        $reason = 'both_changed';
+    } elseif ($behind > 0 && $ahead > 0) {
+        $reason = 'diverged';
+    }
+
+    if ($reason === null) {
+        return null;
+    }
+
+    $localPaths = array_column($repository['changes'] ?? [], 'path');
+    $remotePaths = array_column($incoming, 'path');
+
+    return [
+        'reason' => $reason,
+        'branch' => $branch,
+        'message' => match ($reason) {
+            'unmerged' => 'A previous merge is unfinished. Choose which side to keep.',
+            'diverged' => 'Birkly and the remote both have new commits on ' . $branch . '. Choose which side to keep.',
+            default => 'Both Birkly and the remote changed ' . $branch . '. Choose which side to keep.',
+        },
+        'local_files' => $localPaths,
+        'remote_files' => $remotePaths,
+        'overlapping_files' => array_values(array_intersect($localPaths, $remotePaths)),
+        'unmerged_files' => $unmerged,
+    ];
+}
+
+/**
  * @param array<string, mixed> $details
  */
 function birkly_project_git_record_event(string $key, array $details): void

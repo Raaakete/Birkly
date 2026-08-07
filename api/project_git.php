@@ -15,6 +15,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/project_site.php';
+require_once __DIR__ . '/../core/project_ssr.php';
 require_once __DIR__ . '/../core/project_git.php';
 require_once __DIR__ . '/../core/project_git_settings.php';
 
@@ -72,6 +73,28 @@ function birkly_project_git_state(): array
     }
 
     return $state;
+}
+
+/**
+ * @return array{git: ProjectGit, branch: string}
+ */
+function birkly_project_git_require_connection(): array
+{
+    $config = birkly_project_git_public_config();
+    if (!$config['configured']) {
+        birkly_project_git_error('Connect a repository first.');
+    }
+
+    $stored = birkly_project_git_read();
+    $branch = ProjectGit::normalizeBranch((string) ($stored['branch'] ?? ProjectGit::DEFAULT_BRANCH));
+
+    $git = birkly_project_git_engine();
+    if (!$git->isInitialized()) {
+        $git->initialize($branch);
+    }
+    $git->setRemote((string) ($stored['remote_url'] ?? ''));
+
+    return ['git' => $git, 'branch' => $branch];
 }
 
 if ($action === 'capability') {
@@ -211,6 +234,133 @@ if ($action === 'disconnect') {
     birkly_project_git_json([
         'status' => 'ok',
         'message' => 'Disconnected. Credentials and the remote have been cleared; local git history is kept.',
+        'data' => birkly_project_git_state(),
+    ]);
+}
+
+if ($action === 'push') {
+    ['git' => $git, 'branch' => $branch] = birkly_project_git_require_connection();
+    $message = trim((string) ($input['message'] ?? ''));
+
+    try {
+        $git->stageAllowlisted();
+        $sha = $git->commit($message);
+        $git->fetch();
+        $repository = $git->status($branch);
+
+        $conflict = birkly_project_git_conflict($repository, $git->pullPreview($branch), $branch);
+        if ($conflict !== null) {
+            birkly_project_git_json([
+                'status' => 'ok',
+                'message' => $conflict['message'],
+                'data' => array_merge(birkly_project_git_state(), ['conflict' => $conflict]),
+            ]);
+        }
+
+        if ($sha === null && (int) $repository['ahead'] === 0) {
+            birkly_project_git_json([
+                'status' => 'ok',
+                'message' => 'Nothing to push — the remote already matches project/.',
+                'data' => birkly_project_git_state(),
+            ]);
+        }
+
+        $git->push($branch);
+    } catch (ProjectGitException $e) {
+        birkly_project_git_error($e->getMessage());
+        exit;
+    }
+
+    $commit = $git->lastCommit();
+    birkly_project_git_record_event('last_push', [
+        'sha' => $commit['sha'] ?? null,
+        'branch' => $branch,
+    ]);
+
+    log_security_event('project_git_pushed', [
+        'branch' => $branch,
+        'sha' => $commit['sha'] ?? null,
+        'source' => 'admin',
+    ]);
+
+    birkly_project_git_json([
+        'status' => 'ok',
+        'message' => 'Pushed project files to ' . $branch . '.',
+        'data' => birkly_project_git_state(),
+    ]);
+}
+
+if ($action === 'pull_preview') {
+    ['git' => $git, 'branch' => $branch] = birkly_project_git_require_connection();
+
+    try {
+        $git->fetch();
+        $repository = $git->status($branch);
+        $incoming = $git->pullPreview($branch);
+    } catch (ProjectGitException $e) {
+        birkly_project_git_error($e->getMessage());
+        exit;
+    }
+
+    birkly_project_git_json([
+        'status' => 'ok',
+        'data' => array_merge(birkly_project_git_state(), [
+            'incoming' => $incoming,
+            'conflict' => birkly_project_git_conflict($repository, $incoming, $branch),
+        ]),
+    ]);
+}
+
+if ($action === 'pull_apply') {
+    ['git' => $git, 'branch' => $branch] = birkly_project_git_require_connection();
+
+    try {
+        $git->fetch();
+        $repository = $git->status($branch);
+        $incoming = $git->pullPreview($branch);
+
+        $conflict = birkly_project_git_conflict($repository, $incoming, $branch);
+        if ($conflict !== null) {
+            birkly_project_git_json([
+                'status' => 'ok',
+                'message' => $conflict['message'],
+                'data' => array_merge(birkly_project_git_state(), ['conflict' => $conflict]),
+            ]);
+        }
+
+        if ((int) $repository['behind'] === 0) {
+            birkly_project_git_json([
+                'status' => 'ok',
+                'message' => 'Already up to date with ' . $branch . '.',
+                'data' => birkly_project_git_state(),
+            ]);
+        }
+
+        $git->pullApply($branch);
+    } catch (ProjectGitException $e) {
+        birkly_project_git_error($e->getMessage());
+        exit;
+    }
+
+    birkly_project_ssr_invalidate_all();
+
+    $commit = $git->lastCommit();
+    birkly_project_git_record_event('last_pull', [
+        'sha' => $commit['sha'] ?? null,
+        'branch' => $branch,
+        'files' => count($incoming),
+    ]);
+
+    log_security_event('project_git_pulled', [
+        'branch' => $branch,
+        'sha' => $commit['sha'] ?? null,
+        'files' => count($incoming),
+        'source' => 'admin',
+    ]);
+
+    birkly_project_git_json([
+        'status' => 'ok',
+        'message' => 'Pulled ' . count($incoming) . ' file' . (count($incoming) === 1 ? '' : 's') . ' from ' . $branch . '.',
         'data' => birkly_project_git_state(),
     ]);
 }
