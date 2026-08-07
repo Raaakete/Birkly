@@ -8,6 +8,15 @@ require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/../core/birkly_users.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
+
+/**
+ * Storage rooted at the install tree (cwd-safe).
+ */
+function birkly_onboarding_storage(string $dir): Storage
+{
+    return new Storage(birkly_project_root() . '/' . $dir);
+}
 
 // Helper functions - always available (even when included)
 // Helper to check if there are any users
@@ -50,13 +59,13 @@ function isFirstTimeSetup() {
         return true;
     }
     
-    $storage = new Storage('../content');
+    $storage = birkly_onboarding_storage('content');
     $collections = $storage->list('collections');
     
     // Filter out empty collections
     $hasContent = false;
     foreach ($collections as $dir) {
-        $entriesDir = __DIR__ . "/../content/collections/$dir/entries";
+        $entriesDir = birkly_project_root() . "/content/collections/$dir/entries";
         if (is_dir($entriesDir)) {
             $files = array_filter(scandir($entriesDir), function($f) {
                 return $f !== '.' && $f !== '..' && pathinfo($f, PATHINFO_EXTENSION) === 'json';
@@ -73,12 +82,12 @@ function isFirstTimeSetup() {
 
 // Helper to get site-wide onboarding settings (install path, etc.)
 function getSiteOnboardingSettings() {
-    $settingsStorage = new Storage('../settings');
+    $settingsStorage = birkly_onboarding_storage('settings');
     return $settingsStorage->read('onboarding.json') ?? [];
 }
 
 function saveSiteOnboardingSettings(array $data) {
-    $settingsStorage = new Storage('../settings');
+    $settingsStorage = birkly_onboarding_storage('settings');
     $existing = $settingsStorage->read('onboarding.json') ?? [];
     return $settingsStorage->write('onboarding.json', array_merge($existing, $data));
 }
@@ -106,7 +115,7 @@ function getOnboardingStatus($userId = null) {
     }
     
     // Check user-specific onboarding
-    $userStorage = new Storage('../users');
+    $userStorage = birkly_onboarding_storage('users');
     $userOnboardingFile = normalizeOnboardingUserKey($userId) . '_onboarding.json';
     $userOnboarding = $userStorage->read($userOnboardingFile) ?? [];
     
@@ -140,7 +149,7 @@ function getOnboardingStatus($userId = null) {
 
 // Helper to save onboarding progress
 function saveOnboardingProgress($userId, $data) {
-    $userStorage = new Storage('../users');
+    $userStorage = birkly_onboarding_storage('users');
     $userOnboardingFile = normalizeOnboardingUserKey($userId) . '_onboarding.json';
     
     $existing = $userStorage->read($userOnboardingFile) ?? [];
@@ -317,7 +326,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             exit;
         }
 
-        $settingsStorage = new Storage('../settings');
+        $settingsStorage = birkly_onboarding_storage('settings');
         $adminSettings = $settingsStorage->read('admin.json') ?? [];
         $adminSettings['project_name'] = $projectName;
         $adminSettings['project_description'] = $projectDescription;
@@ -336,7 +345,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         }
         $settingsStorage->write('site.json', $siteSettings);
 
-        $userStorage = new Storage('../users');
+        $userStorage = birkly_onboarding_storage('users');
         $existing = $userStorage->read(normalizeOnboardingUserKey($userId) . '_onboarding.json') ?? [];
         $progress = is_array($existing['progress'] ?? null) ? $existing['progress'] : [];
         $progress['project_name'] = $projectName;
@@ -354,6 +363,37 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             'status' => 'ok',
             'message' => 'Project information saved',
             'data' => getOnboardingStatus($userId),
+        ]);
+        exit;
+
+    case 'install_starter':
+        require_once __DIR__ . '/../core/demo_starter_templates.php';
+        require_once __DIR__ . '/../core/site_domain.php';
+        $templateId = strtolower(trim((string) ($input['template'] ?? $input['starter_template'] ?? '')));
+        if ($templateId === '') {
+            $templateId = 'blank';
+        }
+        $result = birkly_demo_install_starter_template($templateId, birkly_project_root());
+        if (!$result['success']) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => $result['message'] ?? 'Install failed',
+                'diagnostics' => $result['diagnostics'] ?? null,
+            ]);
+            exit;
+        }
+        birkly_ensure_site_domain_registered();
+        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        saveOnboardingProgress($userId, [
+            'starter_template' => $templateId,
+            'demo_content_installed' => $templateId !== 'blank',
+            'demo_content_kept' => $templateId !== 'blank',
+        ]);
+        echo json_encode([
+            'status' => 'ok',
+            'message' => $result['message'],
+            'data' => $result,
         ]);
         exit;
         
@@ -379,7 +419,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             $updates['progress'] = is_array($input['progress']) ? $input['progress'] : [];
         }
 
-        $userStorage = new Storage('../users');
+        $userStorage = birkly_onboarding_storage('users');
         $existing = $userStorage->read(normalizeOnboardingUserKey($userId) . '_onboarding.json') ?? [];
 
         // Store ad-hoc progress flags (e.g. demo_content_kept)
@@ -432,7 +472,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         }
         
         // Track AI skip for dashboard checklist (P19-D4 / P5.6-D)
-        $userStorage = new Storage('../users');
+        $userStorage = birkly_onboarding_storage('users');
         $existing = $userStorage->read(normalizeOnboardingUserKey($userId) . '_onboarding.json') ?? [];
         $existingProgress = $existing['progress'] ?? [];
         if (!empty($existingProgress['ai_skipped'])) {
@@ -508,7 +548,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             echo json_encode(['status' => 'error', 'message' => 'item_id required']);
             exit;
         }
-        $userStorage = new Storage('../users');
+        $userStorage = birkly_onboarding_storage('users');
         $file = normalizeOnboardingUserKey($userId) . '_onboarding.json';
         $existing = $userStorage->read($file) ?? [];
         $dismissed = $existing['checklist_dismissed'] ?? [];
@@ -524,11 +564,11 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         saveOnboardingProgress($userId, ['checklist_hidden' => true]);
         echo json_encode(['status' => 'ok', 'data' => getOnboardingStatus($userId)]);
         exit;
-        
-        default:
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-            exit;
+
+    default:
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+        exit;
     }
 }
 

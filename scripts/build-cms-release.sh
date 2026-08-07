@@ -136,17 +136,18 @@ foreach ($shippedPluginFiles as $rel) {
 }
 
 foreach ($runtimeSkeletonFiles as $rel) {
-    $src = $root . '/' . $rel;
-    if (!is_file($src)) {
-        continue;
-    }
     $dest = $staging . '/' . $rel;
     $destDir = dirname($dest);
     if (!is_dir($destDir)) {
         mkdir($destDir, 0755, true);
     }
-    if (!is_file($dest)) {
-        copy($src, $dest);
+    $src = $root . '/' . $rel;
+    if (is_file($src)) {
+        if (!is_file($dest)) {
+            copy($src, $dest);
+        }
+    } elseif (!is_file($dest)) {
+        touch($dest);
     }
 }
 
