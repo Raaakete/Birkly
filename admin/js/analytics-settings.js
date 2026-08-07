@@ -49,6 +49,15 @@
         exportBtn.hidden = preset === 'off' || !state.trackingId;
     }
 
+    function updateConsentFieldsVisibility() {
+        var wrap = document.getElementById('analytics-consent-fields');
+        if (!wrap) return;
+        var preset = selectedPreset();
+        var active = state.presets.find(function (p) { return p.id === preset; });
+        var needsConsent = !!(active && active.consent_required) || preset === 'standard' || preset === 'advanced';
+        wrap.hidden = !needsConsent;
+    }
+
     function renderPresets() {
         var mount = document.getElementById('analytics-preset-cards');
         if (!mount) return;
@@ -88,10 +97,12 @@
                 var card = input.closest('.analytics-preset-card');
                 if (card) card.classList.add('is-selected');
                 updateExportVisibility();
+                updateConsentFieldsVisibility();
             });
         });
 
         updateExportVisibility();
+        updateConsentFieldsVisibility();
     }
 
     function renderList(title, rows, labelKey, valueKey) {
