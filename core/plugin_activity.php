@@ -312,6 +312,56 @@ function birkly_plugin_activity_clear_nav(string $pluginId): int
 }
 
 /**
+ * Count unread plugin-activity items that should appear in the admin bell.
+ *
+ * @param list<string> $extraReadIds IDs already marked read in the user notifications store
+ */
+function birkly_plugin_activity_unread_notify_count(array $extraReadIds = []): int
+{
+    $extra = array_fill_keys(array_filter(array_map('strval', $extraReadIds)), true);
+    $count = 0;
+    foreach (birkly_plugin_activity_list(200) as $item) {
+        if (empty($item['notify'])) {
+            continue;
+        }
+        $id = (string) ($item['id'] ?? '');
+        if ($id === '' || !empty($item['read_at']) || isset($extra[$id])) {
+            continue;
+        }
+        $count++;
+    }
+
+    return $count;
+}
+
+/**
+ * IDs of notify-flagged plugin activity items (optionally unread only).
+ *
+ * @param list<string> $extraReadIds
+ * @return list<string>
+ */
+function birkly_plugin_activity_notify_ids(bool $unreadOnly = false, array $extraReadIds = []): array
+{
+    $extra = array_fill_keys(array_filter(array_map('strval', $extraReadIds)), true);
+    $ids = [];
+    foreach (birkly_plugin_activity_list(200) as $item) {
+        if (empty($item['notify'])) {
+            continue;
+        }
+        $id = (string) ($item['id'] ?? '');
+        if ($id === '') {
+            continue;
+        }
+        if ($unreadOnly && (!empty($item['read_at']) || isset($extra[$id]))) {
+            continue;
+        }
+        $ids[] = $id;
+    }
+
+    return $ids;
+}
+
+/**
  * Mark activity items as read (for bell integration).
  *
  * @param list<string> $ids
