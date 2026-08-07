@@ -59,6 +59,24 @@ function birkly_demo_starter_primary_collection(string $templateId): ?string
     return $catalog[$templateId]['collections'][0] ?? null;
 }
 
+/**
+ * Bundled starter zip shipped with the CMS (offline / local-PHP fallback).
+ */
+function birkly_demo_local_starter_zip_path(string $projectRoot, string $templateId): string
+{
+    $templateId = strtolower(trim($templateId));
+    if ($templateId === '' || !preg_match('/^[a-z][a-z0-9-]{0,62}$/', $templateId)) {
+        return '';
+    }
+    return rtrim($projectRoot, '/\\') . '/starters/' . $templateId . '.zip';
+}
+
+function birkly_demo_local_starter_zip_ready(string $projectRoot, string $templateId): bool
+{
+    $path = birkly_demo_local_starter_zip_path($projectRoot, $templateId);
+    return $path !== '' && is_file($path) && filesize($path) > 64;
+}
+
 function birkly_demo_starter_is_selectable(string $projectRoot, string $templateId): bool
 {
     $catalog = birkly_demo_starter_catalog();
@@ -72,6 +90,10 @@ function birkly_demo_starter_is_selectable(string $projectRoot, string $template
         return false;
     }
 
+    if (birkly_demo_local_starter_zip_ready($projectRoot, $templateId)) {
+        return true;
+    }
+
     $opsOverlay = birkly_ops_starter_availability_overlay($projectRoot);
     return isset($opsOverlay[$templateId]) && !empty($opsOverlay[$templateId]['selectable']);
 }
@@ -83,19 +105,64 @@ function birkly_demo_starter_is_selectable(string $projectRoot, string $template
 function birkly_demo_starter_availability(string $projectRoot, ?array $opsOverlay = null): array
 {
     $availability = [];
-    $opsOverlay ??= birkly_ops_starter_availability_overlay($projectRoot);
+
+    // Skip remote catalog when every onboarding-enabled pack has a bundled zip
+    // (Marsk local fallback) — avoids hanging local PHP on outbound HTTPS.
+    if ($opsOverlay === null) {
+        $needsRemote = false;
+        foreach (birkly_demo_starter_catalog() as $templateId => $pack) {
+            if ($templateId === 'blank' || empty($pack['onboarding_enabled'])) {
+                continue;
+            }
+            if (!birkly_demo_local_starter_zip_ready($projectRoot, $templateId)) {
+                $needsRemote = true;
+                break;
+            }
+        }
+        $opsOverlay = $needsRemote ? birkly_ops_starter_availability_overlay($projectRoot) : [];
+    }
 
     foreach (birkly_demo_starter_catalog() as $templateId => $pack) {
+        if ($templateId === 'blank') {
+            $availability[$templateId] = [
+                'enabled' => true,
+                'ready' => true,
+                'selectable' => true,
+                'source' => 'local',
+            ];
+            continue;
+        }
+
+        $localReady = !empty($pack['onboarding_enabled'])
+            && birkly_demo_local_starter_zip_ready($projectRoot, $templateId);
+
+        if ($localReady) {
+            $availability[$templateId] = [
+                'enabled' => true,
+                'ready' => true,
+                'selectable' => true,
+                'source' => 'local',
+            ];
+            continue;
+        }
+
+        if (isset($opsOverlay[$templateId]) && !empty($opsOverlay[$templateId]['selectable'])) {
+            $availability[$templateId] = $opsOverlay[$templateId];
+            continue;
+        }
+
         if (isset($opsOverlay[$templateId])) {
             $availability[$templateId] = $opsOverlay[$templateId];
             continue;
         }
 
+        // Catalog unreachable and no bundled zip.
         $availability[$templateId] = [
             'enabled' => !empty($pack['onboarding_enabled']),
             'ready' => false,
             'selectable' => false,
-            'source' => 'ops',
+            'source' => 'unavailable',
+            'catalog_reachable' => false,
         ];
     }
 
@@ -163,11 +230,12 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
     if ($templateId !== 'blank' && !birkly_demo_starter_is_selectable($projectRoot, $templateId)) {
         $diagnostics = birkly_ops_starters_diagnostics($templateId);
         $message = 'This starter template is not available yet';
-        if (($diagnostics['catalog_reachable'] ?? false) !== true) {
-            $message = 'Cannot reach Ops starter catalog. Ensure this server can access '
-                . birkly_ops_starters_catalog_url();
+        if (birkly_demo_local_starter_zip_ready($projectRoot, $templateId)) {
+            $message = 'Starter template could not be validated';
+        } elseif (($diagnostics['catalog_reachable'] ?? false) !== true) {
+            $message = 'Internet connection needed to download this demo pack (or use Start blank).';
         } elseif (!empty($diagnostics['errors'])) {
-            $message = 'Starter template is not available from Ops: ' . implode('; ', $diagnostics['errors']);
+            $message = 'Starter download is not available right now: ' . implode('; ', $diagnostics['errors']);
         }
         return [
             'success' => false,
@@ -241,7 +309,25 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
 
     $tmpZip = sys_get_temp_dir() . '/birkly-starter-' . $templateId . '-' . getmypid() . '.zip';
     $downloadErrors = [];
-    $download = birkly_ops_download_starter_zip($templateId, $tmpZip, $downloadErrors);
+    $download = null;
+    $localZip = birkly_demo_local_starter_zip_path($projectRoot, $templateId);
+    // Prefer bundled zip when present — local PHP often cannot complete outbound
+    // HTTPS even when the browser can reach the internet.
+    if (birkly_demo_local_starter_zip_ready($projectRoot, $templateId)) {
+        if (@copy($localZip, $tmpZip)) {
+            $download = [
+                'ok' => true,
+                'id' => $templateId,
+                'source' => 'local',
+                'path' => $localZip,
+            ];
+        } else {
+            $downloadErrors[] = 'Could not read bundled starter zip';
+        }
+    }
+    if ($download === null) {
+        $download = birkly_ops_download_starter_zip($templateId, $tmpZip, $downloadErrors);
+    }
     if ($download === null) {
         @unlink($tmpZip);
         $diagnostics = birkly_ops_starters_diagnostics($templateId);
@@ -256,7 +342,7 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
             'removed' => $removed,
             'message' => !empty($diagnostics['errors'])
                 ? 'Starter download failed: ' . implode('; ', $diagnostics['errors'])
-                : 'Starter template is not available. Check your network connection and Ops configuration.',
+                : 'Starter template is not available. Check your internet connection, or continue with Blank.',
             'diagnostics' => $diagnostics,
         ];
     }
@@ -309,7 +395,7 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         'demo_website' => $extracted['project_site'],
         'project_site' => $extracted['project_site'],
         'removed' => $removed,
-        'source' => 'ops',
+        'source' => (string) ($download['source'] ?? 'ops'),
         'message' => 'Starter template installed',
     ];
 }
