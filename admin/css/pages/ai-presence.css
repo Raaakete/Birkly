@@ -386,3 +386,75 @@
   text-align: center;
   box-shadow: var(--elevation-3);
 }
+
+/* ============================================
+   Hub status spine + zones (P60-M2)
+   One product, four zones. The spine is a single compact card that
+   deep-links into each zone; the tabs switch zones; panels toggle via the
+   [hidden] attribute set in js/ai-presence.js.
+   ============================================ */
+.ap-hub-spine-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.ap-spine-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 0;
+  background: transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: start;
+  color: inherit;
+}
+
+.ap-spine-item:hover { background: var(--surface-sunken); }
+
+.ap-spine-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ap-spine-text {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.ap-spine-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.ap-spine-value {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.ap-spine-sep {
+  width: 1px;
+  align-self: stretch;
+  min-height: 1.5rem;
+  background: var(--border-default);
+}
+
+@media (max-width: 40rem) {
+  .ap-spine-sep { display: none; }
+}
+
+/* Zone panels — visibility is driven by the [hidden] attribute; this rule is a
+   safety net so a stray display rule can never reveal an inactive zone. */
+.tab-panel[hidden] { display: none; }
+
+/* Read-only snippet rows in the Publish zone reuse .copy-snippet-row from
+   settings.css; keep the textarea monospace + non-resizable. */
+#ap-connections-mount .settings-stack { gap: var(--space-6); }
+[data-hub-panel="publish"] textarea.input {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  resize: vertical;
+}
