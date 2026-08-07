@@ -70,6 +70,18 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     
     <!-- Page uses no per-page JS here; global JS loaded in footer -->
 </head>
-<body>
+<?php
+$__birklyDeveloperModeOn = false;
+if (!function_exists('birkly_developer_mode_enabled')) {
+    $__devModeFile = __DIR__ . '/../../core/developer_mode.php';
+    if (is_file($__devModeFile)) {
+        require_once $__devModeFile;
+    }
+}
+if (function_exists('birkly_developer_mode_enabled')) {
+    $__birklyDeveloperModeOn = birkly_developer_mode_enabled();
+}
+?>
+<body<?= $__birklyDeveloperModeOn ? ' class="developer-mode-on"' : '' ?>>
     <div class="admin-layout">
 

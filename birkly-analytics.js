@@ -1,7 +1,6 @@
 /**
- * Birkly Self-Hosted Analytics Tracker
- * Zero-dependency analytics tracking script
- * 
+ * Birkly Self-Hosted Analytics Tracker (P61)
+ *
  * Usage:
  *   <script>
  *     window.HaruAnalytics = {
@@ -9,23 +8,25 @@
  *       cmsUrl: 'https://your-cms-domain.com'
  *     };
  *   </script>
+ *   <script src="https://your-cms-domain.com/birkly-analytics-consent.js"></script>
  *   <script src="https://your-cms-domain.com/birkly-analytics.js"></script>
  */
 
 (function() {
     'use strict';
-    
-    // Get configuration
+
     const config = window.HaruAnalytics || {};
     const trackingId = config.trackingId || '';
-    const cmsUrl = (config.cmsUrl || '').replace(/\/$/, ''); // Remove trailing slash
-    
+    const cmsUrl = (config.cmsUrl || '').replace(/\/$/, '');
+
     if (!trackingId || !cmsUrl) {
         console.warn('Birkly Analytics: trackingId and cmsUrl are required');
         return;
     }
-    
-    // Generate or get session ID
+
+    let publicConfig = window.BirklyAnalyticsPublicConfig || null;
+    let started = false;
+
     function getSessionId() {
         const key = 'birkly_session_' + trackingId;
         let sessionId = sessionStorage.getItem(key);
@@ -35,7 +36,7 @@
         }
         return sessionId;
     }
-    
+
     function readConsentCookie() {
         const parts = (document.cookie || '').split(';');
         for (let i = 0; i < parts.length; i++) {
@@ -44,21 +45,58 @@
                 return decodeURIComponent(p.slice('birkly_analytics_consent='.length));
             }
         }
-        return (config.consent || window.HaruAnalytics && window.HaruAnalytics.consent || '');
+        return config.consent || '';
+    }
+
+    function consentGranted() {
+        const consent = readConsentCookie();
+        return consent === 'granted' || consent === '1' || consent === true;
+    }
+
+    function consentRequired() {
+        if (publicConfig && typeof publicConfig.consent_required === 'boolean') {
+            return publicConfig.consent_required;
+        }
+        return !!config.requireConsent;
+    }
+
+    function eventsEnabled() {
+        if (publicConfig && typeof publicConfig.events === 'boolean') {
+            return publicConfig.events;
+        }
+        return !!(config.enableEvents);
+    }
+
+    function canTrack() {
+        if (publicConfig && publicConfig.collecting === false) {
+            return false;
+        }
+        if (consentRequired() && !consentGranted()) {
+            return false;
+        }
+        return true;
+    }
+
+    function getUtmParams() {
+        const params = new URLSearchParams(window.location.search);
+        return {
+            utm_source: params.get('utm_source') || '',
+            utm_medium: params.get('utm_medium') || '',
+            utm_campaign: params.get('utm_campaign') || '',
+            utm_term: params.get('utm_term') || '',
+            utm_content: params.get('utm_content') || ''
+        };
     }
 
     function sendTrack(payload) {
+        if (!canTrack()) {
+            return;
+        }
         const consent = readConsentCookie();
         if (consent) {
             payload.consent = consent;
-        }
-        // When consent helper is present and not granted, skip client send
-        // (server also gates Standard+).
-        if (window.BirklyAnalyticsConsent && consent !== 'granted' && consent !== '1') {
-            // Allow Minimal/Off server decisions; still send only if no consent helper required
-            if (config.requireConsent || (window.HaruAnalytics && window.HaruAnalytics.requireConsent)) {
-                return;
-            }
+        } else if (!consentRequired()) {
+            // Minimal / Off server-side; omit consent field
         }
 
         const url = cmsUrl + '/api/analytics.php?action=track';
@@ -77,8 +115,8 @@
         }
     }
 
-    // Track page view
     function trackPageView() {
+        const utm = getUtmParams();
         sendTrack({
             tracking_id: trackingId,
             domain: window.location.hostname,
@@ -88,12 +126,17 @@
             screen_height: window.screen.height || 0,
             language: navigator.language || navigator.userLanguage || '',
             session_id: getSessionId(),
-            event_type: 'page_view'
+            event_type: 'page_view',
+            utm_source: utm.utm_source,
+            utm_medium: utm.utm_medium,
+            utm_campaign: utm.utm_campaign,
+            utm_term: utm.utm_term,
+            utm_content: utm.utm_content
         });
     }
 
     function bindAdvancedEvents() {
-        if (!(config.enableEvents || (window.HaruAnalytics && window.HaruAnalytics.enableEvents))) {
+        if (!eventsEnabled()) {
             return;
         }
         document.addEventListener('click', function (e) {
@@ -128,31 +171,40 @@
             });
         }, true);
     }
-    bindAdvancedEvents();
-    
-    // Track page view on load
-    if (document.readyState === 'complete') {
-        trackPageView();
-    } else {
-        window.addEventListener('load', trackPageView);
-    }
-    
-    // Track page views on history changes (SPA support)
-    let lastUrl = location.href;
-    new MutationObserver(function() {
-        const url = location.href;
-        if (url !== lastUrl) {
-            lastUrl = url;
+
+    function startTracking() {
+        if (started) return;
+        if (publicConfig && publicConfig.collecting === false) return;
+        started = true;
+
+        bindAdvancedEvents();
+
+        if (document.readyState === 'complete') {
             trackPageView();
+        } else {
+            window.addEventListener('load', trackPageView);
         }
-    }).observe(document, { subtree: true, childList: true });
-    
-    // Also listen to popstate for back/forward navigation
-    window.addEventListener('popstate', function() {
-        setTimeout(trackPageView, 100);
-    });
-    
-    // Expose API for manual tracking
+
+        let lastUrl = location.href;
+        new MutationObserver(function() {
+            const url = location.href;
+            if (url !== lastUrl) {
+                lastUrl = url;
+                trackPageView();
+            }
+        }).observe(document, { subtree: true, childList: true });
+
+        window.addEventListener('popstate', function() {
+            setTimeout(trackPageView, 100);
+        });
+
+        document.addEventListener('birkly:analytics-consent', function (e) {
+            if (e && e.detail && e.detail.consent === 'granted') {
+                trackPageView();
+            }
+        });
+    }
+
     window.HaruAnalyticsTrack = function(eventName, eventData) {
         sendTrack({
             tracking_id: trackingId,
@@ -168,5 +220,33 @@
             event_data: eventData || {}
         });
     };
-})();
 
+    // Prefer config from consent helper if already loaded; otherwise fetch.
+    function boot() {
+        if (window.BirklyAnalyticsPublicConfig) {
+            publicConfig = window.BirklyAnalyticsPublicConfig;
+            startTracking();
+            return;
+        }
+        fetch(cmsUrl + '/api/analytics.php?action=public_config', {
+            credentials: 'omit',
+            cache: 'no-store'
+        }).then(function (r) { return r.json(); })
+            .then(function (payload) {
+                if (payload && payload.status === 'ok' && payload.data) {
+                    publicConfig = payload.data;
+                    window.BirklyAnalyticsPublicConfig = publicConfig;
+                    if (window.HaruAnalytics) {
+                        window.HaruAnalytics.requireConsent = !!publicConfig.consent_required;
+                        window.HaruAnalytics.enableEvents = !!publicConfig.events;
+                    }
+                }
+            })
+            .catch(function () { /* keep defaults */ })
+            .then(function () {
+                startTracking();
+            });
+    }
+
+    boot();
+})();

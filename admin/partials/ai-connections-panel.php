@@ -35,13 +35,13 @@
               </div>
             </div>
             <div class="card-body u-stack-3">
-              <ul class="hosting-wizard-checklist">
-                <li><strong>Built-in assistant / Ollama</strong> — works on localhost (outbound API or <code>localhost:11434</code>).</li>
-                <li><strong>Remote connectors</strong> (Claude / ChatGPT) → <code>http://localhost/mcp</code> — usually will not work; they need a public <code>https://</code> URL.</li>
-                <li><strong>mcp-bridge</strong> — use the local stdio bridge for AI tools on your machine (see Developer tools below).</li>
-                <li><strong>Tunnel</strong> — run <code>cloudflared</code> or ngrok to an HTTPS URL that forwards to your local <code>/mcp</code>, then paste that as the Connector URL.</li>
+              <ul class="settings-list">
+                <li><strong>Built-in assistant / Ollama on localhost</strong> — OK (outbound BYOAI or <code>http://localhost:11434</code>).</li>
+                <li><strong>Remote connectors</strong> (Claude / ChatGPT / Cursor cloud) need a <strong>public HTTPS</strong> Connector URL — plain <code>http://localhost/mcp</code> is rejected.</li>
+                <li><strong>mcp-bridge recipe</strong> — local stdio bridge for desktop AI tools: open <a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> (also under Developer / debug below).</li>
+                <li><strong>Tunnel recipe</strong> — <code>cloudflared</code> or ngrok → HTTPS → your local <code>/mcp</code>, then paste that HTTPS URL as the Connector URL.</li>
               </ul>
-              <p class="form-help">We do not recommend opening the admin panel to the public internet just for connectors. Prefer bridge or a short-lived tunnel.</p>
+              <p class="form-help">Keep security warnings on: do not expose the admin panel to the public internet as a default. Prefer mcp-bridge or a short-lived tunnel.</p>
             </div>
           </div>
 
