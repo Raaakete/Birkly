@@ -1039,7 +1039,7 @@
 
     function switchTab(tab) {
         if (!tab) return;
-        document.querySelectorAll('.ai-presence-tabs .tab[data-tab]').forEach(function (btn) {
+        document.querySelectorAll('.ap-guide-nav [data-tab]').forEach(function (btn) {
             var active = btn.getAttribute('data-tab') === tab;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -1054,11 +1054,11 @@
     function initTabs() {
         var root = document.querySelector('.ai-presence-tabs');
         if (!root) return;
-        var nav = root.querySelector('.tabs');
+        var nav = root.querySelector('.ap-guide-nav');
         if (nav) {
             nav.setAttribute('role', 'tablist');
             nav.addEventListener('click', function (e) {
-                var btn = e.target.closest('.tab[data-tab]');
+                var btn = e.target.closest('[data-tab]');
                 if (!btn || !nav.contains(btn)) return;
                 switchTab(btn.getAttribute('data-tab'));
             });
