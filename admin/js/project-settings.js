@@ -11,7 +11,8 @@
         publicSiteUrl: '',
         hasIndex: false,
         dirty: false,
-        renderSettingsLoaded: false
+        renderSettingsLoaded: false,
+        siteDeliveryMode: ''
     };
 
     function apiUrl(path) {
@@ -126,6 +127,20 @@
         container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
     }
 
+    function syncHostingTypeFromSiteDelivery(mode) {
+        // Site delivery public_site_mode is SoT: project→birkly, external→external, else birkly.
+        var hostingType = mode === 'external' ? 'external' : 'birkly';
+        var select = document.getElementById('project-hosting-type');
+        var hidden = document.getElementById('project-hosting-type-value');
+        if (select) {
+            select.value = hostingType;
+            select.disabled = true;
+        }
+        if (hidden) hidden.value = hostingType;
+        state.siteDeliveryMode = mode || 'none';
+        updateRenderingDisabledState();
+    }
+
     function loadPublicSiteUrl() {
         return fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
@@ -138,6 +153,7 @@
                     url = (hosting.cms_base_url || window.location.origin).replace(/\/$/, '') + '/project/';
                 }
                 state.publicSiteUrl = mode !== 'none' ? url : '';
+                syncHostingTypeFromSiteDelivery(mode);
                 var link = document.getElementById('project-visit-public-link');
                 if (link) {
                     if (state.publicSiteUrl) {
@@ -214,9 +230,17 @@
 
     function applyRenderSettings(data) {
         var hostingType = document.getElementById('project-hosting-type');
+        var hidden = document.getElementById('project-hosting-type-value');
         var renderMode = document.getElementById('project-render-mode');
         var ttl = document.getElementById('project-ssr-cache-ttl');
-        if (hostingType && data.hosting_type) hostingType.value = data.hosting_type;
+        // Prefer Site delivery mode when known; otherwise show persisted hosting_type.
+        if (state.siteDeliveryMode) {
+            syncHostingTypeFromSiteDelivery(state.siteDeliveryMode);
+        } else if (hostingType && data.hosting_type) {
+            hostingType.value = data.hosting_type;
+            hostingType.disabled = true;
+            if (hidden) hidden.value = data.hosting_type;
+        }
         if (renderMode && data.render_mode) renderMode.value = data.render_mode;
         if (ttl && data.ssr_cache_ttl != null) ttl.value = data.ssr_cache_ttl;
         if (data.ssr_runtime && typeof data.ssr_runtime === 'object') {
@@ -238,22 +262,26 @@
         return 'Server rendering runtime is not ready. Pages will fall back to client-side rendering.';
     }
 
-    // External hosting always renders on the client, so disable SSR controls.
+    // SSR only when Site delivery mode is project (Birkly-hosted). External/none → disabled.
     // Invalidate is also disabled when render mode is client (no SSR cache to clear).
     function updateRenderingDisabledState() {
         var hostingType = document.getElementById('project-hosting-type');
-        var isExternal = !!hostingType && hostingType.value === 'external';
+        var mode = state.siteDeliveryMode || '';
+        var isExternal = (mode && mode !== 'project') ||
+            (!!hostingType && hostingType.value === 'external');
+        var ssrDisabled = mode ? mode !== 'project' : isExternal;
         var renderMode = document.getElementById('project-render-mode');
         var ttl = document.getElementById('project-ssr-cache-ttl');
         var invalidateBtn = document.getElementById('project-invalidate-ssr-btn');
         var note = document.getElementById('project-rendering-external-note');
         var runtimeNote = document.getElementById('project-rendering-runtime-note');
         var isClientMode = !!renderMode && renderMode.value === 'client';
-        var wantsSsr = !isClientMode && !isExternal;
-        if (renderMode) renderMode.disabled = isExternal;
-        if (ttl) ttl.disabled = isExternal;
-        if (invalidateBtn) invalidateBtn.disabled = isExternal || isClientMode;
-        if (note) note.hidden = !isExternal;
+        var wantsSsr = !isClientMode && !ssrDisabled;
+        if (hostingType) hostingType.disabled = true;
+        if (renderMode) renderMode.disabled = ssrDisabled;
+        if (ttl) ttl.disabled = ssrDisabled;
+        if (invalidateBtn) invalidateBtn.disabled = ssrDisabled || isClientMode;
+        if (note) note.hidden = !ssrDisabled;
         if (runtimeNote) {
             var showRuntime = wantsSsr && ssrRuntime && ssrRuntime.ready === false;
             runtimeNote.hidden = !showRuntime;
@@ -282,13 +310,22 @@
         if (isNaN(ttlValue) || ttlValue < 0) ttlValue = 0;
         if (ttlValue > 86400) ttlValue = 86400;
 
+        // hosting_type is SoT-synced from Site delivery (select is read-only).
+        // Still send current value so API stays backward compatible.
+        var hidden = document.getElementById('project-hosting-type-value');
+        var hostingTypeValue = (hidden && hidden.value) ||
+            (hostingType ? hostingType.value : 'birkly');
+        // Never let the Project tab invent hosting_type — Site delivery syncs it.
+        if (state.siteDeliveryMode === 'external') hostingTypeValue = 'external';
+        else if (state.siteDeliveryMode === 'project') hostingTypeValue = 'birkly';
+
         return fetchJson(apiUrl('/api/project_site.php?action=save_settings'), {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'save_settings',
-                hosting_type: hostingType ? hostingType.value : 'birkly',
+                hosting_type: hostingTypeValue,
                 render_mode: renderMode ? renderMode.value : 'server',
                 ssr_cache_ttl: ttlValue,
                 _csrf: getCsrfToken()

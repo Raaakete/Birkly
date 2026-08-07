@@ -32,12 +32,14 @@ $action = $_GET['action'] ?? $input['action'] ?? '';
 
 if ($action === 'get') {
     $config = birkly_hosting_load();
+    $publicHost = birkly_hosting_public_host();
     echo json_encode([
         'status' => 'ok',
         'data' => [
             'hosting' => $config,
             'cms_host' => birkly_hosting_cms_host(),
-            'public_host' => birkly_hosting_public_host(),
+            'public_host' => $publicHost,
+            'registered_public_host' => $publicHost,
             'request_host_role' => birkly_request_host_role(),
             'same_host' => birkly_hosting_same_host(),
             'client_snippet' => birkly_hosting_client_snippet(),
@@ -80,12 +82,18 @@ if ($action === 'save') {
         exit;
     }
 
+    $saved = birkly_hosting_load();
+    $publicHost = birkly_hosting_public_host();
     echo json_encode([
         'status' => 'ok',
         'message' => 'Hosting settings saved',
         'data' => [
-            'hosting' => birkly_hosting_load(),
+            'hosting' => $saved,
             'client_snippet' => birkly_hosting_client_snippet(),
+            'cms_host' => birkly_hosting_cms_host(),
+            'public_host' => $publicHost,
+            'registered_public_host' => $publicHost,
+            'same_host' => birkly_hosting_same_host(),
         ],
     ]);
     exit;
