@@ -48,4 +48,4 @@ Buying or selling on the marketplace is governed by marketplace **Terms**, **Ref
 - [Closed alpha guide](closed-alpha-guide.md)
 - [Help and onboarding](../01-admin/help-and-onboarding.md)
 - [Account](../01-admin/account.md)
-- [Marketplace — buyer license and install](../06-extensibility/marketplace-buyer-guide.md)
+- [Marketplace — buyer entitlement and install](../06-extensibility/marketplace-buyer-guide.md)

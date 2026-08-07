@@ -122,7 +122,18 @@ php scripts/migrate-ai-agents-hybrid.php
 
 ## Requirements
 
-- Your Birkly site must use a **public HTTPS** address for external AI apps. Local or HTTP-only installs show a warning in Settings and will not work with remote connectors.
+- Your Birkly site must use a **public HTTPS** address for external AI apps. Local or HTTP-only installs show a warning in Settings / Connections and will not work with remote connectors that call `http://localhost/mcp`.
+
+### Localhost and local development
+
+| Path | Works? |
+|------|--------|
+| Built-in assistant + Ollama on localhost | Yes |
+| Remote Claude/ChatGPT connector → `http://localhost/mcp` | Usually **no** — needs public HTTPS |
+| **mcp-bridge** (stdio) | Yes — for local AI tools |
+| Tunnel (`cloudflared` / ngrok) → HTTPS → `/mcp` | Yes |
+
+Full recipes and security notes: [AI on localhost](../04-integration/ai-on-localhost.md). Prefer **Agent Guide → Connections** for the Local project / Developer debug card while you work on a laptop install.
 
 ## Security
 
@@ -140,7 +151,7 @@ Users who cannot see a service agent in Settings cannot complete OAuth for it. A
 
 ## Developer / debug
 
-For local Claude Desktop development only, `mcp-bridge.js` is available under the collapsed **Developer / debug** section on the AI settings tab. Normal users do not need this file.
+For local Claude Desktop development only, `mcp-bridge.js` is available under the collapsed **Developer / debug** (or **Local project**) section on **Agent Guide → Connections** / the AI settings tab. Normal users do not need this file. Step-by-step bridge and tunnel recipes: [AI on localhost](../04-integration/ai-on-localhost.md).
 
 ## Troubleshooting
 
@@ -158,8 +169,10 @@ For local Claude Desktop development only, `mcp-bridge.js` is available under th
 
 - [AI overview](ai-overview.md)
 - [Built-in assistant](ai-connections.md)
+- [AI on localhost](../04-integration/ai-on-localhost.md)
 - [AI approvals](ai-approvals.md)
 - [Roles and permissions](roles-and-permissions.md)
 - [Agent Guide](../02-content/agent-guide.md) — the hub that also mounts these Connections controls
 - [Website tools (WebMCP)](../04-integration/webmcp-tools.md) — a different layer: actions on your public site, not CMS connections
 - [Settings](settings.md)
+- [Developer mode](developer-mode.md)

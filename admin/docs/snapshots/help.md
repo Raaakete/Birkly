@@ -38,7 +38,7 @@ Before your first admin login, open **START_HERE.html** from the extracted relea
 2. **Install context** — Confirms how you're running Birkly (local vs cloud) based on START_HERE or the `?install=local|cloud` link.
 3. **Site info** — Set your **project name** (appears in the admin and page titles) and optionally a short description or logo.
 4. **Use case + demo content** — Pick what you're building (blog, business site, shop, docs, developer project). Optionally keep or remove starter demo content. Skippable.
-5. **Marketplace** — A hint that official plugins install from **Plugins → Marketplace** (Commerce, Events, Automation, and more). Skippable.
+5. **Hub** — A hint that official plugins install from **Plugins → Hub** (Commerce, Events, Automation, and more). Skippable.
 6. **Connect AI** *(optional)* — A **BYOAI mini-wizard**: pick provider → enter API key → test → set role and approval defaults. **Skip for now** and **Set up later** are always visible; AI is never required. Skippable.
 7. **Complete** — Summary and **Go to Dashboard**.
 
