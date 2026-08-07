@@ -515,7 +515,7 @@ function getDashboardData() {
             'id' => 'connect_ai',
             'label' => __('admin.connect_ai_assistant'),
             'completed' => false,
-            'link' => birkly_admin_url('settings') . '?tab=ai',
+            'link' => birkly_admin_url('agent-guide', ['zone' => 'connections']),
             'optional' => true,
         ];
     }

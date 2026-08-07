@@ -248,8 +248,15 @@ function birkly_hosting_repair_local_dev_urls(array $config): array
         return [$config, false];
     }
 
+    // B10: never rewrite an external public URL to the local CMS port.
+    $keys = ['cms_base_url'];
+    $mode = birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none'));
+    if ($mode !== 'external') {
+        $keys[] = 'public_site_url';
+    }
+
     $changed = false;
-    foreach (['cms_base_url', 'public_site_url'] as $key) {
+    foreach ($keys as $key) {
         $url = trim((string) ($config[$key] ?? ''));
         if ($url === '') {
             continue;
@@ -368,12 +375,38 @@ function birkly_hosting_persist(array $config, bool $registerDomains = true): bo
     if ($ok) {
         birkly_hosting_reset_cache();
         birkly_hosting_sync_admin_cms_url((string) $merged['cms_base_url']);
+        birkly_hosting_sync_project_hosting_type((string) $merged['public_site_mode']);
         if ($registerDomains) {
             birkly_hosting_register_domains($merged);
         }
     }
 
     return $ok;
+}
+
+/**
+ * Keep project.json hosting_type aligned with Site delivery mode (P61-B1).
+ * public_site_mode remains SoT: external→external, project→birkly.
+ */
+function birkly_hosting_sync_project_hosting_type(string $publicSiteMode): void
+{
+    $mode = birkly_hosting_normalize_mode($publicSiteMode);
+    if ($mode === 'none') {
+        return;
+    }
+
+    $hostingType = $mode === 'external' ? 'external' : 'birkly';
+
+    try {
+        require_once __DIR__ . '/project_settings.php';
+        $current = birkly_load_project_settings();
+        if (($current['hosting_type'] ?? '') === $hostingType) {
+            return;
+        }
+        birkly_save_project_settings(['hosting_type' => $hostingType]);
+    } catch (Throwable $e) {
+        error_log('birkly_hosting_sync_project_hosting_type: ' . $e->getMessage());
+    }
 }
 
 /**

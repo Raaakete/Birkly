@@ -13,19 +13,21 @@
 
     // Configuration
     const Birkly = {
-        // Auto-detect CMS URL from script src
+        // Prefer explicit data-cms-url (external sites) over script.src origin.
         cmsUrl: (function() {
+            const attrScript = document.querySelector('script[src*="birkly-client.js"][data-cms-url], script[data-cms-url]');
+            if (attrScript) {
+                const fromAttr = (attrScript.getAttribute('data-cms-url') || '').trim().replace(/\/$/, '');
+                if (fromAttr) {
+                    return fromAttr;
+                }
+            }
             const scripts = document.getElementsByTagName('script');
             for (let script of scripts) {
                 if (script.src && script.src.includes('birkly-client.js')) {
                     const url = new URL(script.src);
                     return url.origin;
                 }
-            }
-            // Fallback: try to detect from data attribute
-            const script = document.querySelector('script[data-cms-url]');
-            if (script) {
-                return script.getAttribute('data-cms-url');
             }
             // Last resort: current origin
             return window.location.origin;

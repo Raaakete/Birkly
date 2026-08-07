@@ -196,6 +196,19 @@ function birkly_render_plugin_page_breadcrumbs(array $meta, string $current_page
 
 function birkly_plugin_admin_sidebar_navigation(): array
 {
+    $attention = [];
+    if (function_exists('birkly_plugin_activity_nav_attention_counts')) {
+        $attention = birkly_plugin_activity_nav_attention_counts();
+    } else {
+        $activityFile = dirname(__DIR__) . '/plugin_activity.php';
+        if (is_file($activityFile)) {
+            require_once $activityFile;
+            if (function_exists('birkly_plugin_activity_nav_attention_counts')) {
+                $attention = birkly_plugin_activity_nav_attention_counts();
+            }
+        }
+    }
+
     $nav = [];
     foreach (get_active_plugin_admin_meta() as $plugin_id => $meta) {
         $sidebar = $meta['sidebar'] ?? [];
@@ -205,12 +218,15 @@ function birkly_plugin_admin_sidebar_navigation(): array
         if ($sidebar === [] && function_exists('get_all_plugins')) {
             continue;
         }
+        $hasAttention = ($attention[$plugin_id] ?? 0) > 0;
         $nav[] = [
             'id' => $plugin_id,
             'name' => (string) ($sidebar['label'] ?? $meta['title'] ?? $plugin_id),
             'page' => (string) ($meta['root_page'] ?? $meta['page'] ?? $plugin_id),
             'icon' => (string) ($sidebar['icon'] ?? ''),
             'order' => (int) ($sidebar['order'] ?? 100),
+            'attention' => $hasAttention,
+            'attention_count' => (int) ($attention[$plugin_id] ?? 0),
         ];
     }
 
