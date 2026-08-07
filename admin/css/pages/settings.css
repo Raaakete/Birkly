@@ -115,17 +115,11 @@
 }
 
 .project-file-tree-wrap,
-.project-file-preview-wrap,
-.project-simple-file-list {
+.project-file-preview-wrap {
   min-width: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--surface-sunken);
-}
-
-.project-simple-file-list {
-  max-height: 20rem;
-  overflow: auto;
 }
 
 .project-file-breadcrumb {
@@ -169,9 +163,10 @@
 
 .project-file-entry:hover { background: var(--surface-hover); }
 
-.project-file-size,
-.project-simple-file-name { font-size: var(--text-sm); }
-.project-file-size { color: var(--text-tertiary); }
+.project-file-size {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
 
 .project-file-editor,
 .project-file-preview {

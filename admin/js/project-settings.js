@@ -11,8 +11,6 @@
         publicSiteUrl: '',
         hasIndex: false,
         dirty: false,
-        advancedMode: false,
-        simpleInitialized: false,
         renderSettingsLoaded: false
     };
 
@@ -128,34 +126,6 @@
         container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
     }
 
-    function renderSimpleFileList(entries) {
-        var container = document.getElementById('project-simple-file-list');
-        if (!container) return;
-
-        var files = (entries || []).filter(function (e) { return e.type === 'file'; });
-        if (!files.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No files yet. Upload to get started.</p></div>';
-            return;
-        }
-
-        container.innerHTML = '<ul class="project-file-list">' + files.map(function (entry) {
-            return '<li><span class="project-simple-file-name">' + escapeHtml(entry.name) + '</span>' +
-                ' <span class="project-file-size">' + formatBytes(entry.size) + '</span></li>';
-        }).join('') + '</ul>';
-    }
-
-    function refreshSimpleFiles() {
-        var container = document.getElementById('project-simple-file-list');
-        if (!container) return Promise.resolve();
-
-        container.innerHTML = '<div class="loading-state"></div>';
-        return loadFileTree('').then(function (payload) {
-            renderSimpleFileList((payload.data && payload.data.entries) || []);
-        }).catch(function (error) {
-            container.innerHTML = '<div class="error-state"><p>' + escapeHtml(error.message) + '</p></div>';
-        });
-    }
-
     function loadPublicSiteUrl() {
         return fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
@@ -181,41 +151,6 @@
             .catch(function () { /* optional */ });
     }
 
-    function setAdvancedMode(enabled) {
-        state.advancedMode = !!enabled;
-        var panel = document.getElementById('project-advanced-panel');
-        if (panel) panel.hidden = !state.advancedMode;
-        if (state.advancedMode) {
-            loadOverview();
-            refreshFiles();
-            loadActivity();
-        }
-    }
-
-    function bindSimpleEvents() {
-        if (state.simpleInitialized) return;
-        state.simpleInitialized = true;
-
-        var toggle = document.getElementById('project-advanced-editor-toggle');
-        if (toggle) {
-            toggle.addEventListener('change', function () {
-                setAdvancedMode(toggle.checked);
-            });
-        }
-
-        var uploadBtn = document.getElementById('project-simple-upload-btn');
-        var uploadInput = document.getElementById('project-simple-upload-input');
-        if (uploadBtn && uploadInput) {
-            uploadBtn.addEventListener('click', async function () {
-                uploadInput.click();
-            });
-            uploadInput.addEventListener('change', function () {
-                uploadFiles(uploadInput.files);
-                uploadInput.value = '';
-            });
-        }
-    }
-
     function clearFilePreview() {
         state.selectedFile = null;
         state.dirty = false;
@@ -233,8 +168,8 @@
         if (editor) { editor.hidden = true; editor.value = ''; }
         if (preview) { preview.hidden = true; preview.textContent = ''; }
         if (image) { image.hidden = true; image.removeAttribute('src'); }
-        if (saveBtn) saveBtn.style.display = 'none';
-        if (deleteBtn) deleteBtn.style.display = 'none';
+        if (saveBtn) saveBtn.hidden = true;
+        if (deleteBtn) deleteBtn.hidden = true;
     }
 
     function loadOverview() {
@@ -469,18 +404,18 @@
         state.dirty = false;
         if (title) title.textContent = path;
         if (placeholder) placeholder.hidden = true;
-        if (deleteBtn) deleteBtn.style.display = '';
+        if (deleteBtn) deleteBtn.hidden = false;
 
         if (data.editable && editor) {
             if (preview) preview.hidden = true;
             if (image) image.hidden = true;
             editor.hidden = false;
             editor.value = data.content || '';
-            if (saveBtn) saveBtn.style.display = '';
+            if (saveBtn) saveBtn.hidden = false;
             return;
         }
 
-        if (saveBtn) saveBtn.style.display = 'none';
+        if (saveBtn) saveBtn.hidden = true;
         if (editor) editor.hidden = true;
 
         if (data.image && image) {
@@ -556,7 +491,6 @@
 
         Promise.all(uploads).then(function () {
             refreshFiles();
-            refreshSimpleFiles();
             loadActivity();
         }).catch(function (error) {
             BirklyFeedback.toast(error.message, 'error')
@@ -834,19 +768,10 @@
         }
 
         bindEvents();
-        bindSimpleEvents();
         loadPublicSiteUrl();
-        refreshSimpleFiles();
-        // Server rendering fields live outside the advanced-only panel, so
-        // they (and renderSettingsLoaded, which gates autosave) need the
-        // overview fetch on every visit to this tab — not just when the
-        // advanced file editor is toggled on.
         loadOverview();
-
-        var toggle = document.getElementById('project-advanced-editor-toggle');
-        if (toggle && toggle.checked) {
-            setAdvancedMode(true);
-        }
+        refreshFiles();
+        loadActivity();
     }
 
     window.initProjectSettings = initProjectSettings;

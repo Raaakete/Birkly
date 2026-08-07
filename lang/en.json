@@ -694,6 +694,8 @@
         "project_info": "Project Info",
         "project_information": "Project Information",
         "project_information_help": "Basic details about this project, shown in the admin and used across settings.",
+        "site_identity": "Site identity",
+        "site_identity_help": "Name, description, logo, timezone, and language for this site. Website files live under Settings → Project.",
         "project_logo": "Project Logo",
         "project_logo_help": "Shown in the admin sidebar and login screen. PNG or SVG recommended.",
         "project_name": "Project Name",
