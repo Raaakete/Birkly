@@ -33,7 +33,9 @@ if (birkly_hosting_should_redirect_admin()) {
     exit;
 }
 
-if (is_file(__DIR__ . '/../core/platform_ops.php')) {
+// Do not block onboarding HTML on outbound install registration.
+// Other admin pages throttle to at most once per several hours (see platform_ops.php).
+if ($requestedPage !== 'onboarding' && is_file(__DIR__ . '/../core/platform_ops.php')) {
     require_once __DIR__ . '/../core/platform_ops.php';
     birkly_ops_register_installation();
 }
@@ -134,7 +136,9 @@ $onboardingStatus = [
 ];
 if (isset($_SESSION['user'])) {
     $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
-    $onboardingStatus = getOnboardingStatus($userId);
+    // Never block the admin HTML shell on the remote starter catalog.
+    // Onboarding JS loads availability via /api/onboarding.php?action=status.
+    $onboardingStatus = getOnboardingStatus($userId, false);
 }
 
 // If first-time setup and onboarding not completed, redirect to welcome

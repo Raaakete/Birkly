@@ -121,7 +121,7 @@ function feedback_relay_to_platform(array $record): void
 
     if (birkly_feedback_relay_secret() === '' && is_file(__DIR__ . '/../core/platform_ops.php')) {
         require_once __DIR__ . '/../core/platform_ops.php';
-        birkly_ops_register_installation();
+        birkly_ops_register_installation(true);
     }
 
     $payload = [
