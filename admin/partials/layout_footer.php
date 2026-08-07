@@ -434,7 +434,8 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
             orange: 'u-bg-warning-soft',
             red: 'u-bg-danger-soft',
             purple: 'u-bg-neutral-soft',
-            gray: 'u-bg-neutral-soft'
+            gray: 'u-bg-neutral-soft',
+            mint: 'u-bg-accent-soft'
         };
 
         function notificationToneClass(color) {
@@ -801,15 +802,57 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                     console.error('Error loading unread count:', error);
                 });
         }
+
+        // P61 — live sidebar mint dots (SSR seeds; poll keeps them fresh without reload)
+        function applyNavAttention(counts) {
+            counts = counts && typeof counts === 'object' ? counts : {};
+            document.querySelectorAll('#links-plugins [data-plugin-id]').forEach(function (item) {
+                var pluginId = item.getAttribute('data-plugin-id') || '';
+                var has = pluginId !== '' && Number(counts[pluginId] || 0) > 0;
+                item.classList.toggle('has-attention', has);
+                var link = item.querySelector('.nav-link');
+                var label = item.querySelector('.nav-label');
+                var name = label ? (label.textContent || '').trim() : pluginId;
+                var title = has ? (name + ' (new activity)') : name;
+                if (link) {
+                    link.setAttribute('title', title);
+                    if (has) {
+                        link.setAttribute('aria-label', title);
+                    } else {
+                        link.removeAttribute('aria-label');
+                    }
+                }
+                var dot = item.querySelector('.nav-attention-dot');
+                if (dot) {
+                    dot.hidden = !has;
+                }
+            });
+        }
+
+        function loadNavAttention() {
+            fetch(Birkly.url('/api/plugin_activity.php?action=nav_attention'), { credentials: 'same-origin' })
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    if (data && data.status === 'ok') {
+                        applyNavAttention((data.data && data.data.counts) || data.counts || {});
+                    }
+                })
+                .catch(function () { /* ignore — non-critical */ });
+        }
         
         // Load unread count on page load
         loadUnreadCount();
+        loadNavAttention();
         
-        // Refresh unread count every 30 seconds
-        setInterval(loadUnreadCount, 30000);
+        // Refresh unread count + nav attention every 30 seconds
+        setInterval(function () {
+            loadUnreadCount();
+            loadNavAttention();
+        }, 30000);
         
         // Expose loadUnreadCount globally
         window.loadUnreadCount = loadUnreadCount;
+        window.loadNavAttention = loadNavAttention;
     })();
     </script>
     
