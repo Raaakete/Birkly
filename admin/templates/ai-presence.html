@@ -625,7 +625,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
             </header>
         </section>
         <div id="ap-connections-mount" class="u-stack-6" data-connections-root="hub">
-            <?php include __DIR__ . '/../partials/ai-connections-panel.php'; ?>
+            <?php $aiPanelDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__; include $aiPanelDir . '/../partials/ai-connections-panel.php'; ?>
         </div>
     </div>
 </div>
