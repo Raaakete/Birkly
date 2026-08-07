@@ -577,7 +577,12 @@
         "agent-guide.json",
         "cross-links",
         "publish",
-        "ai presence"
+        "ai presence",
+        "hub",
+        "tools",
+        "connections",
+        "webmcp",
+        "website tools"
       ],
       "docs_path": "02-content/agent-guide.html",
       "ai_topic": "agent-guide"
@@ -620,6 +625,23 @@
         "brand-context.json"
       ],
       "docs_path": "04-integration/agent-guide-public-api.html"
+    },
+    {
+      "id": "webmcp-tools",
+      "title": "Website tools (WebMCP)",
+      "keywords": [
+        "webmcp",
+        "website tools",
+        "model context protocol",
+        "browser agent",
+        "tool catalog",
+        "agent guide tools",
+        "modelcontext",
+        "registertool",
+        "confirmation",
+        "off by default"
+      ],
+      "docs_path": "04-integration/webmcp-tools.html"
     },
     {
       "id": "choose-your-stack",
