@@ -42,12 +42,22 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
         exit;
     }
     if ($action === 'get_settings') {
+        $enabledTargets = [];
+        if (birkly_analytics_collecting()) {
+            require_once __DIR__ . '/../core/analytics_config.php';
+            if (is_file(__DIR__ . '/../core/hosting_urls.php')) {
+                require_once __DIR__ . '/../core/hosting_urls.php';
+            }
+            // Heal installs that saved a preset before domain auto-enable existed.
+            $enabledTargets = birkly_analytics_ensure_site_tracking();
+        }
         echo json_encode([
             'status' => 'ok',
             'data' => [
                 'settings' => birkly_analytics_load_settings(),
                 'active' => birkly_analytics_active_preset(),
                 'presets' => array_values(birkly_analytics_preset_definitions()),
+                'tracking_enabled' => $enabledTargets,
             ],
         ]);
         exit;
@@ -64,12 +74,21 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
             echo json_encode(['status' => 'error', 'message' => 'Failed to save analytics settings']);
             exit;
         }
+        $enabledTargets = [];
+        if (birkly_analytics_collecting()) {
+            require_once __DIR__ . '/../core/analytics_config.php';
+            if (is_file(__DIR__ . '/../core/hosting_urls.php')) {
+                require_once __DIR__ . '/../core/hosting_urls.php';
+            }
+            $enabledTargets = birkly_analytics_ensure_site_tracking();
+        }
         echo json_encode([
             'status' => 'ok',
             'message' => 'Analytics settings saved',
             'data' => [
                 'settings' => birkly_analytics_load_settings(),
                 'active' => birkly_analytics_active_preset(),
+                'tracking_enabled' => $enabledTargets,
             ],
         ]);
         exit;

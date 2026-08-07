@@ -959,7 +959,7 @@
         "ai_connect_modal_hint": "Connect admin chat AI or set up MCP access for external tools like Claude Desktop and Cursor.",
         "ai_connect_after_deploy_hint": "AI connections and MCP inbound access work best on a live web server with a public URL. You can configure them anytime in Settings after you deploy.",
         "ai_settings": "AI settings",
-        "settings_ai": "Agent Guide → Connections",
+        "settings_ai": "Settings → AI",
         "setup_progress": "Setup progress",
         "click_to_upload_logo": "Click to upload logo",
         "remove": "Remove",

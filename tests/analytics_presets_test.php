@@ -53,6 +53,25 @@ try {
     ap_assert('advanced allows outbound', birkly_analytics_allows_event('outbound_click') === true);
     ap_assert('advanced allows form', birkly_analytics_allows_event('form_submit') === true);
 
+    require_once dirname(__DIR__) . '/core/analytics_enrich.php';
+    $built = birkly_analytics_build_event(
+        ['tracking_id' => 'localhost', 'path' => '/', 'event_type' => 'form_submit'],
+        '203.0.113.9',
+        'Mozilla/5.0',
+        time()
+    );
+    ap_assert('build keeps form_submit type', ($built['event_type'] ?? '') === 'form_submit');
+    ap_assert('build sets ip_hash', isset($built['ip_hash']) && $built['ip_hash'] !== '');
+    $filtered = birkly_analytics_apply_preset_to_event($built);
+    ap_assert('advanced keeps ip_hash', is_array($filtered) && isset($filtered['ip_hash']));
+    ap_assert('advanced strips raw ip field preference', is_array($filtered) && !isset($filtered['ip']));
+
+    require_once dirname(__DIR__) . '/core/analytics_config.php';
+    $enabled = birkly_analytics_ensure_site_tracking();
+    ap_assert('ensure enables localhost', in_array('localhost', $enabled, true));
+    $ids = birkly_analytics_load_tracking_ids();
+    ap_assert('localhost tracking enabled', !empty($ids['localhost']['enabled']));
+
     $defs = birkly_analytics_preset_definitions();
     foreach (['off', 'minimal', 'standard', 'advanced'] as $id) {
         ap_assert('preset ' . $id . ' has tradeoff copy', isset($defs[$id]['upside'], $defs[$id]['downside']));

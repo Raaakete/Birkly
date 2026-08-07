@@ -2,7 +2,7 @@
 
 Let **Claude**, **ChatGPT**, or **Cursor** work with your Birkly content. Birkly provides two kinds of **AI agent**:
 
-> Open **Agent Guide → Connections** (`?page=agent-guide&zone=connections`) — the home for AI app connections (Birkly MCP). The old Settings → AI tab was removed in P60.1. See [Agent Guide](../02-content/agent-guide.md). This is different from **website tools (WebMCP)** — Agent Guide → Tools — which controls what an AI helper can do on your *public site*, not what connects to your CMS. See [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
+> Open **Settings → AI** (`?page=settingsOpen **Agent Guide → Connections** (`?page=agent-guide&zone=connections`) — the home for AI app connections (Birkly MCP). The old Settings → AI tab was removed in P60.1.tab=ai`) — the home for AI app connections (Birkly MCP). Agent Guide → Connections links here. See [Agent Guide](../02-content/agent-guide.md). This is different from **website tools (WebMCP)** — Agent Guide → Tools — which controls what an AI helper can do on your *public site*, not what connects to your CMS. See [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
 
 - **Personal connector** — one per site; every team member uses the same URL but signs in with their own account and gets **their** permissions.
 - **Service agent** — optional shared bots with a **fixed role** (e.g. always editor); admins control who can see and connect.

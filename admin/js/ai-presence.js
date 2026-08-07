@@ -37,8 +37,15 @@
         connectionsMounted: false
     };
 
-    // P60.1: Connections home is Agent Guide (Settings → AI removed).
+    // Connections tab deep-links to Settings → AI (product home for connectors).
     var HUB_ZONES = ['guide', 'tools', 'connections', 'publish'];
+
+    function settingsAiUrl() {
+        if (global.Birkly && typeof global.Birkly.adminUrl === 'function') {
+            return global.Birkly.adminUrl('settings', { tab: 'ai' });
+        }
+        return '/admin/index.php?page=settings&tab=ai';
+    }
 
     // Plain-language labels/descriptions for the WebMCP tool catalog. The admin
     // API returns technical metadata (id/pack/kind/consent); the human copy
@@ -3287,20 +3294,15 @@
     // ===================================================================
 
     function mountConnectionsZone() {
+        // Soft redirect: Agent Guide Connections is a pointer; Settings → AI is the home.
         if (state.connectionsMounted) return;
-        var mount = document.getElementById('ap-connections-mount');
-        if (!mount) return;
         state.connectionsMounted = true;
         try {
-            if (global.McpConnections && typeof global.McpConnections.init === 'function') {
-                global.McpConnections.init();
+            var params = new URLSearchParams(window.location.search);
+            if ((params.get('zone') || '').toLowerCase() === 'connections') {
+                window.location.replace(settingsAiUrl());
             }
-            if (global.AiConnections && typeof global.AiConnections.init === 'function') {
-                global.AiConnections.init();
-            }
-        } catch (e) {
-            if (global.console) console.error('Connections mount failed', e);
-        }
+        } catch (e) { /* keep CTA card if redirect fails */ }
     }
 
     // ===================================================================

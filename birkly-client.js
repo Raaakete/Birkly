@@ -151,9 +151,14 @@
                 enableAnalytics = true;
             } else if (clientScript.hasAttribute('data-tracking-id')) {
                 enableAnalytics = true;
-            } else if (trackingId && sameOriginClient && !isLocalhost) {
+            } else if (trackingId && sameOriginClient) {
+                // Same-origin project preview (including localhost) follows site-wide preset.
+                enableAnalytics = true;
+            } else if (trackingId === 'localhost') {
                 enableAnalytics = true;
             }
+        } else if (trackingId === 'localhost') {
+            enableAnalytics = true;
         }
 
         Birkly.trackingId = trackingId;
@@ -242,7 +247,11 @@
         }
 
         function canTrack() {
-            if (publicConfig && publicConfig.collecting === false) {
+            // Wait for public_config — do not track when preset/consent state is unknown.
+            if (!publicConfig) {
+                return false;
+            }
+            if (publicConfig.collecting === false) {
                 return false;
             }
             if (consentRequired() && !consentGranted()) {
