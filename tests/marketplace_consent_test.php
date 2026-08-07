@@ -54,8 +54,11 @@ assert_true(
 );
 
 $settingsDir = sys_get_temp_dir() . '/birkly-mp-consent-' . bin2hex(random_bytes(4));
+$pluginsDir = sys_get_temp_dir() . '/birkly-mp-plugins-' . bin2hex(random_bytes(4));
 mkdir($settingsDir, 0755, true);
+mkdir($pluginsDir . '/automation', 0755, true);
 $GLOBALS['__birkly_marketplace_settings_dir'] = $settingsDir;
+$GLOBALS['__birkly_plugins_dir'] = $pluginsDir;
 file_put_contents($settingsDir . '/plugins.json', json_encode([
     'automation' => [
         'active' => true,
@@ -64,6 +67,12 @@ file_put_contents($settingsDir . '/plugins.json', json_encode([
         'version' => '1.0.0',
     ],
 ], JSON_PRETTY_PRINT));
+file_put_contents($pluginsDir . '/automation/plugin.json', json_encode([
+    'name' => 'Automation',
+    'version' => '1.0.0',
+    'marketplace_slug' => 'birkly-automation',
+], JSON_PRETTY_PRINT));
+file_put_contents($pluginsDir . '/automation/plugin.php', "<?php\n");
 
 $local = birkly_marketplace_local_installed_offer('birkly-automation');
 assert_true(

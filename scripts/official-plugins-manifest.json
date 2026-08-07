@@ -52,7 +52,7 @@
     "source_paths": {
       "commerce": "plugins/commerce",
       "events": "plugins/events",
-      "automation": "plugins/automation",
+      "automation": "bundled-plugins/automation",
       "user_management": "plugins/user_management",
       "studio": "plugins/studio"
     },
