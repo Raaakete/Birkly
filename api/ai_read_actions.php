@@ -330,6 +330,18 @@ function executeReadAction($actionData, $aiUser) {
             }
         }
 
+        $activityDir = function_exists('birkly_plugin_activity_dir') ? birkly_plugin_activity_dir() : null;
+        $activityFiles = [];
+        if (is_string($activityDir) && is_dir($activityDir)) {
+            foreach (glob($activityDir . '/*.jsonl') ?: [] as $f) {
+                $activityFiles[] = [
+                    'file' => basename($f),
+                    'bytes' => filesize($f),
+                    'mtime' => date('c', filemtime($f)),
+                ];
+            }
+        }
+
         return [
             'success' => true,
             'data' => [
@@ -338,6 +350,15 @@ function executeReadAction($actionData, $aiUser) {
                 'plugin_activity' => $pluginActivity,
                 'plugin_activity_count' => count($pluginActivity),
                 'nav_attention' => $navAttention,
+                'debug' => [
+                    'birkly_root' => $birklyRoot,
+                    'data_root' => function_exists('birkly_data_root') ? birkly_data_root() : null,
+                    'activity_dir' => $activityDir,
+                    'activity_dir_exists' => is_string($activityDir) && is_dir($activityDir),
+                    'activity_dir_writable' => is_string($activityDir) && is_dir($activityDir) && is_writable($activityDir),
+                    'activity_files' => $activityFiles,
+                    'plugin_activity_php' => is_file($pluginActivityPhp),
+                ],
             ],
         ];
 
