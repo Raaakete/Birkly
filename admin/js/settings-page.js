@@ -413,22 +413,8 @@ window.migrateStorage = migrateStorage;
 // Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'site-delivery', 'project', 'team-access', 'security', 'integrations', 'analytics', 'system'
+        'general', 'site-delivery', 'project', 'team-access', 'security', 'ai', 'integrations', 'analytics', 'system'
     ];
-
-    // Legacy Settings → AI aliases redirect to Agent Guide → Connections (P60.1).
-    var AGENT_GUIDE_CONNECTIONS_ALIASES = {
-        ai: true,
-        'ai-integrations': true,
-        'ai-connections': true,
-        'mcp-connections': true,
-        'outbound-connections': true,
-        'inbound-mcp': true,
-        'ai-kind-assistant': true,
-        'ai-kind-personal': true,
-        'ai-kind-service': true,
-        'ai-kind-builtin': true
-    };
 
     var TAB_ALIASES = {
         domains: 'site-delivery',
@@ -447,6 +433,11 @@ window.migrateStorage = migrateStorage;
         storage: 'system',
         api: 'integrations',
         'activity-log': 'system',
+        'ai-integrations': 'ai',
+        'ai-connections': 'ai',
+        'mcp-connections': 'ai',
+        'outbound-connections': 'ai',
+        'inbound-mcp': 'ai',
         analytics: 'analytics',
         tracking: 'analytics',
         'analytics-presets': 'analytics',
@@ -455,8 +446,20 @@ window.migrateStorage = migrateStorage;
         'developer-mode': 'system'
     };
 
+    var LEGACY_AI_HASH_MAP = {
+        'ai-kind-assistant': 'ai-kind-assistant',
+        'ai-kind-builtin': 'ai-kind-assistant',
+        'ai-kind-personal': 'ai-kind-personal',
+        'ai-kind-service': 'ai-kind-service',
+        'outbound-connections': 'ai-kind-assistant',
+        'inbound-mcp': 'ai-kind-personal',
+        'mcp-connections': 'ai-kind-personal',
+        'ai-connections': 'ai-kind-personal',
+        'ai-integrations': 'ai'
+    };
+
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'project', 'team-access', 'integrations', 'analytics'
+        'site-delivery', 'project', 'team-access', 'ai', 'integrations', 'analytics'
     ];
 
     var GLOBAL_SAVE_TABS = {
@@ -495,26 +498,17 @@ window.migrateStorage = migrateStorage;
         return tabId;
     }
 
-    function agentGuideConnectionsUrl() {
-        if (window.Birkly && typeof window.Birkly.adminUrl === 'function') {
-            return window.Birkly.adminUrl('agent-guide', { zone: 'connections' });
-        }
-        return '/admin/index.php?page=agent-guide&zone=connections';
-    }
-
-    function maybeRedirectLegacyAi(tab, hash) {
-        var raw = String(tab || '').toLowerCase();
-        var h = String(hash || '').toLowerCase();
-        if (AGENT_GUIDE_CONNECTIONS_ALIASES[raw] || AGENT_GUIDE_CONNECTIONS_ALIASES[h] ||
-            (h && h.indexOf('ai-kind-') === 0)) {
-            window.location.replace(agentGuideConnectionsUrl());
-            return true;
-        }
-        return false;
-    }
-
     function resolveSettingsHash(hash) {
         if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
+
+        var lower = String(hash).toLowerCase();
+        if (LEGACY_AI_HASH_MAP[lower] || lower.indexOf('ai-kind-') === 0) {
+            return {
+                tab: 'ai',
+                scrollTo: LEGACY_AI_HASH_MAP[lower] || lower,
+                legacyHash: hash
+            };
+        }
 
         var normalized = normalizeTabId(hash);
         if (!normalized) {
@@ -533,10 +527,6 @@ window.migrateStorage = migrateStorage;
         var tab = params.get('tab');
         var scrollTo = null;
         var hash = window.location.hash.replace('#', '');
-
-        if (maybeRedirectLegacyAi(tab, hash)) {
-            return { tab: 'general', scrollTo: null, redirected: true };
-        }
 
         var resolvedHash = resolveSettingsHash(hash);
 
@@ -896,6 +886,16 @@ window.migrateStorage = migrateStorage;
             }
         } else if (tabId === 'security' && typeof window.loadDenylist === 'function') {
             window.loadDenylist();
+        } else if (tabId === 'ai') {
+            try {
+                window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
+            } catch (e) { /* ignore */ }
+            if (window.McpConnections && typeof window.McpConnections.init === 'function') {
+                window.McpConnections.init();
+            }
+            if (window.AiConnections && typeof window.AiConnections.init === 'function') {
+                window.AiConnections.init();
+            }
         } else if (tabId === 'integrations') {
             if (typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
