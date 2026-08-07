@@ -657,7 +657,7 @@
   cursor: pointer;
 }
 .analytics-preset-card.is-selected {
-  border-color: var(--border-strong);
+  border-color: var(--accent-border, var(--border-strong));
   background: var(--surface-selected);
 }
 .analytics-preset-card input[type="radio"] {
