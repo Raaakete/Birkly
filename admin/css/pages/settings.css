@@ -210,22 +210,9 @@
 .project-activity-item:last-child { border-block-end: none; }
 .project-activity-message { font-size: var(--text-sm); }
 
-.project-activity-meta,
-.project-overview-item {
+.project-activity-meta {
   font-size: var(--text-sm);
   color: var(--text-secondary);
-}
-
-.project-overview-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-.project-overview-item strong {
-  font-weight: var(--weight-medium);
-  color: var(--text-tertiary);
 }
 
 /* Git sync — change lists rendered by project-git.js */

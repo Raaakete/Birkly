@@ -188,15 +188,15 @@
         var conflicts = repo.conflicts || [];
 
         var summary = '<div class="u-grid-auto-sm">' +
-            '<div class="project-overview-item"><strong>Remote</strong><span><code>' + escapeHtml(config.remote_url || '—') + '</code></span></div>' +
-            '<div class="project-overview-item"><strong>Branch</strong><span><code>' + escapeHtml(repo.branch || config.branch || 'main') + '</code></span></div>' +
-            '<div class="project-overview-item"><strong>Authentication</strong><span>' + escapeHtml(authLabel(config)) + '</span></div>' +
-            '<div class="project-overview-item"><strong>Local changes</strong><span>' + (dirty ? dirty + ' file' + (dirty === 1 ? '' : 's') : 'None') + '</span></div>' +
-            '<div class="project-overview-item"><strong>To push</strong><span>' + (ahead ? ahead + ' commit' + (ahead === 1 ? '' : 's') : 'Nothing') + '</span></div>' +
-            '<div class="project-overview-item"><strong>To pull</strong><span>' + (behind ? behind + ' commit' + (behind === 1 ? '' : 's') : 'Nothing') + '</span></div>' +
-            '<div class="project-overview-item"><strong>Last commit</strong><span>' + (repo.last_commit ? escapeHtml(repo.last_commit.message) + ' · ' + escapeHtml(repo.last_commit.sha) : '—') + '</span></div>' +
-            '<div class="project-overview-item"><strong>Last push</strong><span>' + (config.last_push ? formatDate(config.last_push.at) : '—') + '</span></div>' +
-            '<div class="project-overview-item"><strong>Last pull</strong><span>' + (config.last_pull ? formatDate(config.last_pull.at) : '—') + '</span></div>' +
+            '<div class="kv"><div class="kv-key">Remote</div><div class="kv-value"><code>' + escapeHtml(config.remote_url || '—') + '</code></div></div>' +
+            '<div class="kv"><div class="kv-key">Branch</div><div class="kv-value"><code>' + escapeHtml(repo.branch || config.branch || 'main') + '</code></div></div>' +
+            '<div class="kv"><div class="kv-key">Authentication</div><div class="kv-value">' + escapeHtml(authLabel(config)) + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Local changes</div><div class="kv-value">' + (dirty ? dirty + ' file' + (dirty === 1 ? '' : 's') : 'None') + '</div></div>' +
+            '<div class="kv"><div class="kv-key">To push</div><div class="kv-value">' + (ahead ? ahead + ' commit' + (ahead === 1 ? '' : 's') : 'Nothing') + '</div></div>' +
+            '<div class="kv"><div class="kv-key">To pull</div><div class="kv-value">' + (behind ? behind + ' commit' + (behind === 1 ? '' : 's') : 'Nothing') + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Last commit</div><div class="kv-value">' + (repo.last_commit ? escapeHtml(repo.last_commit.message) + ' · ' + escapeHtml(repo.last_commit.sha) : '—') + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Last push</div><div class="kv-value">' + (config.last_push ? formatDate(config.last_push.at) : '—') + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Last pull</div><div class="kv-value">' + (config.last_pull ? formatDate(config.last_pull.at) : '—') + '</div></div>' +
         '</div>';
 
         var warning = '';
@@ -539,7 +539,7 @@
                     renderPathList(remote, 'No incoming file changes.') +
                 '</div>' +
                 '<div class="u-cluster">' +
-                    '<button type="button" class="btn btn-primary btn-sm" id="project-git-keep-birkly-btn">Keep Birkly</button>' +
+                    '<button type="button" class="btn btn-secondary btn-sm" id="project-git-keep-birkly-btn">Keep Birkly</button>' +
                     '<button type="button" class="btn btn-secondary btn-sm" id="project-git-keep-remote-btn">Keep remote</button>' +
                     '<button type="button" class="btn btn-secondary btn-sm" id="project-git-conflict-cancel-btn">Cancel</button>' +
                 '</div>' +

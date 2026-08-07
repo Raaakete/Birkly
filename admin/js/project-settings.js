@@ -194,13 +194,13 @@
             : '—';
 
         container.innerHTML =
-            '<div class="project-overview-item"><strong>Path</strong><span><code>' + escapeHtml(data.site_dir || 'project') + '/</code></span></div>' +
-            '<div class="project-overview-item"><strong>Public URL</strong><span>' +
+            '<div class="kv"><div class="kv-key">Path</div><div class="kv-value"><code>' + escapeHtml(data.site_dir || 'project') + '/</code></div></div>' +
+            '<div class="kv"><div class="kv-key">Public URL</div><div class="kv-value">' +
                 (data.public_url ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
-            '</span></div>' +
-            '<div class="project-overview-item"><strong>Starter</strong><span>' + starter + '</span></div>' +
-            '<div class="project-overview-item"><strong>Last change</strong><span>' + lastChange + '</span></div>' +
-            '<div class="project-overview-item"><strong>Index</strong><span>' + (data.has_index ? 'index.html present' : 'No index.html') + '</span></div>';
+            '</div></div>' +
+            '<div class="kv"><div class="kv-key">Starter</div><div class="kv-value">' + starter + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Last change</div><div class="kv-value">' + lastChange + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Index</div><div class="kv-value">' + (data.has_index ? 'index.html present' : 'No index.html') + '</div></div>';
 
         var toggle = document.getElementById('project-show-visit-button');
         if (toggle) {
@@ -374,7 +374,9 @@
         }
 
         container.innerHTML = '<ul class="project-file-list">' + entries.map(function (entry) {
-            var icon = entry.type === 'dir' ? '📁' : '📄';
+            var icon = (window.Birkly && typeof Birkly.icon === 'function')
+                ? Birkly.icon(entry.type === 'dir' ? 'folder' : 'file-text', { size: 16 })
+                : '';
             var size = entry.type === 'file' && entry.size != null ? ' <span class="project-file-size">' + formatBytes(entry.size) + '</span>' : '';
             return '<li><button type="button" class="project-file-entry" data-type="' + escapeHtml(entry.type) + '" data-path="' + escapeHtml(entry.path) + '">' +
                 icon + ' ' + escapeHtml(entry.name) + size + '</button></li>';
