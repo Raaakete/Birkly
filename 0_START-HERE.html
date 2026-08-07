@@ -360,9 +360,15 @@
 
     <script>
         const START_FILE = '0_START-HERE.html';
-        const MARKERS = { admin: 'admin/index.php', serverRouter: 'server-router.php', startServer: 'start-server.sh' };
+        // Lightweight markers only — never HEAD admin/index.php (boots full admin and
+        // blocks PHP's single-threaded built-in server while this page is probing).
+        const MARKERS = { adminDir: 'admin/', serverRouter: 'server-router.php', probe: 'api/setup_probe.php?light=1' };
         const DEFAULT_PORT = 8080;
+        const PROBE_TIMEOUT_MS = 2500;
+        const PROBE_POLL_MS = 1000;
+        const PROBE_MAX_ATTEMPTS = 45;
         let serverReady = false;
+        let probeTimer = null;
 
         function isFileProtocol() {
             return window.location.protocol === 'file:';
@@ -383,10 +389,13 @@
             return new URL(relative, window.location.href).href;
         }
 
-        function getLocalOrigin() {
-            if (!isLocalhost() && !isFileProtocol()) return window.location.origin;
-            const port = window.location.port || String(DEFAULT_PORT);
-            return 'http://localhost:' + port;
+        function abortSignal(ms) {
+            if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+                return AbortSignal.timeout(ms);
+            }
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), ms);
+            return controller.signal;
         }
 
         function buildStartHereUrl() {
@@ -406,27 +415,52 @@
         async function fileExists(relative) {
             if (isFileProtocol()) return null;
             try {
-                const res = await fetch(resolveUrl(relative), { method: 'HEAD', cache: 'no-store' });
+                const res = await fetch(resolveUrl(relative), {
+                    method: 'HEAD',
+                    cache: 'no-store',
+                    signal: abortSignal(PROBE_TIMEOUT_MS)
+                });
                 return res.ok;
             } catch (_) {
                 return false;
             }
         }
 
-        async function detectFolder() {
+        function applyFolderStatusFromProbe(data) {
+            const box = document.getElementById('folder-status');
+            if (!box || isFileProtocol()) return 'skip';
+
+            const hasAdmin = !!(data && data.has_admin);
+            const hasRouter = !!(data && data.has_server_router);
+            if (hasAdmin && hasRouter) {
+                box.style.display = 'none';
+                return 'ok';
+            }
+            if (!hasAdmin) {
+                box.className = 'status error visible';
+                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/</code>. Re-extract the zip so <code>0_START-HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
+                return 'wrong';
+            }
+            box.className = 'status warn visible';
+            box.innerHTML = '<h3>Almost there</h3><p>Found <code>admin/</code> but some files are missing. Re-extract the zip if setup fails.</p>';
+            return 'partial';
+        }
+
+        async function detectFolderFallback() {
             const box = document.getElementById('folder-status');
             if (!box) return 'skip';
-
             if (isFileProtocol()) {
                 box.className = 'status';
                 box.style.display = 'none';
                 return 'file';
             }
 
-            const hasAdmin = await fileExists(MARKERS.admin);
-            const hasRouter = await fileExists(MARKERS.serverRouter);
-            const parentHasAdmin = await fileExists('../' + MARKERS.admin);
-            const childHasAdmin = await fileExists('Birkly/' + MARKERS.admin);
+            const [hasAdmin, hasRouter, parentHasAdmin, childHasAdmin] = await Promise.all([
+                fileExists(MARKERS.adminDir),
+                fileExists(MARKERS.serverRouter),
+                fileExists('../' + MARKERS.adminDir),
+                fileExists('Birkly/' + MARKERS.adminDir)
+            ]);
 
             if (hasAdmin && hasRouter) {
                 box.style.display = 'none';
@@ -445,7 +479,7 @@
             }
             if (!hasAdmin) {
                 box.className = 'status error visible';
-                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/index.php</code>. Re-extract the zip so <code>0_START-HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
+                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/</code>. Re-extract the zip so <code>0_START-HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
                 return 'wrong';
             }
             box.className = 'status warn visible';
@@ -502,40 +536,118 @@
             }
         }
 
+        function markProbePending(el, message) {
+            if (!el) return;
+            el.className = 'probe pending';
+            el.textContent = message;
+        }
+
+        async function fetchSetupProbe(light) {
+            const path = light ? MARKERS.probe : 'api/setup_probe.php';
+            const res = await fetch(resolveUrl(path), {
+                cache: 'no-store',
+                signal: abortSignal(PROBE_TIMEOUT_MS)
+            });
+            if (!res.ok) throw new Error('probe http ' + res.status);
+            return res.json();
+        }
+
+        function applyProbeSuccess(el, data, enableOnSuccess) {
+            const d = data.data;
+            const extOk = d.extensions && d.extensions.json && d.extensions.mbstring;
+            applyFolderStatusFromProbe(d);
+            if (d.php_ok && extOk) {
+                el.className = 'probe ok';
+                el.textContent = '✓ PHP ' + d.php_version + ' — ready';
+                if (enableOnSuccess) {
+                    serverReady = true;
+                    updateLocalUrls();
+                    updateCloudUrls();
+                }
+                return true;
+            }
+            el.className = 'probe error';
+            el.textContent = 'PHP ' + d.php_version + (d.php_ok ? '' : ' (8.0+ required)') + '. Fix PHP or extensions.';
+            return false;
+        }
+
         async function runSetupProbe(targetId, enableOnSuccess) {
             const el = document.getElementById(targetId);
-            if (!el) return;
+            if (!el) return false;
             if (isFileProtocol()) {
-                el.className = 'probe pending';
-                el.textContent = 'Start the server and open this page via localhost to check PHP.';
-                return;
+                markProbePending(el, 'Start the server and open this page via localhost to check PHP.');
+                return false;
             }
             try {
-                const res = await fetch(resolveUrl('api/setup_probe.php'), { cache: 'no-store' });
-                const data = await res.json();
+                const data = await fetchSetupProbe(false);
                 if (data.status !== 'ok' || !data.data) {
                     el.className = 'probe error';
                     el.textContent = 'Could not read PHP environment. Check that the server is running.';
+                    return false;
+                }
+                return applyProbeSuccess(el, data, enableOnSuccess);
+            } catch (_) {
+                markProbePending(el, 'Server not reachable yet — start ./start-server.sh (keep that window open). Checking again…');
+                return false;
+            }
+        }
+
+        async function pollSetupProbe(targetId, enableOnSuccess) {
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            if (probeTimer) {
+                clearTimeout(probeTimer);
+                probeTimer = null;
+            }
+
+            let attempts = 0;
+            const tick = async () => {
+                attempts += 1;
+                if (isFileProtocol()) {
+                    markProbePending(el, 'Start the server and open this page via localhost to check PHP.');
                     return;
                 }
-                const d = data.data;
-                const extOk = d.extensions && d.extensions.json && d.extensions.mbstring;
-                if (d.php_ok && extOk) {
-                    el.className = 'probe ok';
-                    el.textContent = '✓ PHP ' + d.php_version + ' — ready';
-                    if (enableOnSuccess) {
-                        serverReady = true;
-                        updateLocalUrls();
-                        updateCloudUrls();
+
+                try {
+                    // Light probe while waiting (no mkdir). Full probe once reachable.
+                    const light = attempts < 3 || attempts % 3 !== 0;
+                    const data = await fetchSetupProbe(light);
+                    if (data.status === 'ok' && data.data) {
+                        if (!light) {
+                            if (applyProbeSuccess(el, data, enableOnSuccess)) return;
+                        } else if (data.data.php_ok) {
+                            // Confirm with full probe (writable dirs) once PHP answers.
+                            const full = await fetchSetupProbe(false);
+                            if (full.status === 'ok' && full.data && applyProbeSuccess(el, full, enableOnSuccess)) {
+                                return;
+                            }
+                        }
                     }
-                } else {
-                    el.className = 'probe error';
-                    el.textContent = 'PHP ' + d.php_version + (d.php_ok ? '' : ' (8.0+ required)') + '. Fix PHP or extensions.';
+                } catch (_) {
+                    // keep polling
                 }
-            } catch (_) {
-                el.className = 'probe pending';
-                el.textContent = 'Server not reachable yet — start ./start-server.sh, then refresh this page.';
-            }
+
+                if (attempts === 1) {
+                    detectFolderFallback();
+                }
+
+                if (attempts >= PROBE_MAX_ATTEMPTS) {
+                    markProbePending(el, 'Still waiting for PHP after ~45s. Confirm ./start-server.sh is running, then refresh this page.');
+                    await detectFolderFallback();
+                    return;
+                }
+
+                markProbePending(
+                    el,
+                    attempts < 3
+                        ? 'Waiting for local server…'
+                        : 'Still waiting for local server… (attempt ' + attempts + '). Keep ./start-server.sh running.'
+                );
+                probeTimer = setTimeout(tick, PROBE_POLL_MS);
+            };
+
+            markProbePending(el, 'Waiting for local server…');
+            tick();
         }
 
         function showSteps(path, card) {
@@ -583,18 +695,19 @@
             });
         });
 
-        window.addEventListener('load', async () => {
-            await detectFolder();
+        // DOMContentLoaded — do not wait for fonts/CDN on window.load before probing.
+        document.addEventListener('DOMContentLoaded', () => {
             updateLocalUrls();
             updateCloudUrls();
 
             if (!isFileProtocol() && isLocalhost()) {
-                serverReady = true;
-                await runSetupProbe('php-probe', true);
                 showSteps('local', document.querySelector('.path-card[data-path="local"]'));
+                pollSetupProbe('php-probe', true);
             } else if (!isFileProtocol() && !isLocalhost()) {
-                await runSetupProbe('cloud-probe', true);
                 showSteps('cloud', document.querySelector('.path-card[data-path="cloud"]'));
+                runSetupProbe('cloud-probe', true);
+            } else {
+                markProbePending(document.getElementById('php-probe'), 'Start the server and open this page via localhost to check PHP.');
             }
         });
     </script>

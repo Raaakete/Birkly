@@ -111,13 +111,16 @@ function birkly_ops_starters_diagnostics(?string $starterId = null): array
 /**
  * @return array<string, mixed>|null
  */
-function birkly_ops_fetch_starters_catalog(?array &$errors = null): ?array
+function birkly_ops_fetch_starters_catalog(?array &$errors = null, int $timeoutSeconds = 12, int $connectTimeoutSeconds = 6): ?array
 {
     if (!function_exists('curl_init')) {
         $errors ??= [];
         $errors[] = 'PHP curl extension is not available';
         return null;
     }
+
+    $timeoutSeconds = max(1, $timeoutSeconds);
+    $connectTimeoutSeconds = max(1, min($connectTimeoutSeconds, $timeoutSeconds));
 
     $url = birkly_ops_starters_catalog_url();
     $channel = birkly_ops_release_channel();
@@ -128,8 +131,8 @@ function birkly_ops_fetch_starters_catalog(?array &$errors = null): ?array
     curl_setopt_array($ch, [
         CURLOPT_HTTPGET => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 12,
-        CURLOPT_CONNECTTIMEOUT => 6,
+        CURLOPT_TIMEOUT => $timeoutSeconds,
+        CURLOPT_CONNECTTIMEOUT => $connectTimeoutSeconds,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTPHEADER => ['Accept: application/json'],
     ]);
@@ -627,9 +630,12 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
 /**
  * @return array<string, array{enabled:bool,ready:bool,selectable:bool,source?:string}>
  */
-function birkly_ops_starter_availability_overlay(string $projectRoot): array
+function birkly_ops_starter_availability_overlay(string $projectRoot, int $timeoutSeconds = 4, int $connectTimeoutSeconds = 2): array
 {
-    $catalog = birkly_ops_fetch_starters_catalog();
+    // Onboarding loads this on first paint — keep the Ops probe short so a
+    // blocked/slow outbound network does not make admin setup feel hung.
+    $errors = [];
+    $catalog = birkly_ops_fetch_starters_catalog($errors, $timeoutSeconds, $connectTimeoutSeconds);
     if ($catalog === null) {
         return [];
     }

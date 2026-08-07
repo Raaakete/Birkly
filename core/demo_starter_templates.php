@@ -76,10 +76,14 @@ function birkly_demo_starter_is_selectable(string $projectRoot, string $template
     return isset($opsOverlay[$templateId]) && !empty($opsOverlay[$templateId]['selectable']);
 }
 
-function birkly_demo_starter_availability(string $projectRoot): array
+/**
+ * @param array<string, array{enabled?:bool,ready?:bool,selectable?:bool,source?:string}>|null $opsOverlay
+ * @return array<string, array{enabled:bool,ready:bool,selectable:bool,source?:string}>
+ */
+function birkly_demo_starter_availability(string $projectRoot, ?array $opsOverlay = null): array
 {
     $availability = [];
-    $opsOverlay = birkly_ops_starter_availability_overlay($projectRoot);
+    $opsOverlay ??= birkly_ops_starter_availability_overlay($projectRoot);
 
     foreach (birkly_demo_starter_catalog() as $templateId => $pack) {
         if (isset($opsOverlay[$templateId])) {
