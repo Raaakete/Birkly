@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="birkly-page" content="post">
+    <meta name="birkly-collection" content="blog">
+    <title>{ title } - Birkly</title>
+    <link rel="stylesheet" href="/project/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/project/index.html">Birkly</a></h1>
+            <nav>
+                <a href="/project/index.html">Home</a>
+                <a href="/project/services.html">Services</a>
+                <a href="/project/blog.html">Blog</a>
+                <a href="/project/about.html">About</a>
+                <a href="/project/contact.html">Contact</a>
+                <div class="language-selector">
+                    <select id="language-select" data-birkly-language-select>
+                        <option value="en">English</option>
+                        <option value="de">Deutsch</option>
+                    </select>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="post-detail">
+            <div class="container">
+                <meta
+                    data-birkly-prefetch="sub_entries"
+                    data-birkly-into="comments"
+                    data-parent-collection="blog"
+                    data-parent-entry-id="{id}"
+                    data-sub-collection="comments"
+                />
+                <article class="post">
+                    <h1>{ title }</h1>
+                    <div class="post-meta">
+                        {if entry has created_at}
+                        <time>{ created_at }</time>
+                        {endif}
+                        {if entry has 'tags'}
+                            <div class="tags">
+                                {for each item in 'tags'}
+                                <span class="tag">{item}</span>
+                                {endfor}
+                            </div>
+                        {endif}
+                    </div>
+                    <div class="post-content">
+                        { content }
+                    </div>
+                    <nav class="post-navigation">
+                        <a href="/project/blog.html">← Back to Blog</a>
+                    </nav>
+                </article>
+
+                <section class="comments-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-light, #e5e7eb);">
+                    <h2>Comments</h2>
+
+                    <form class="comment-form" data-birkly-url="/api/public_sub_entry.php" data-birkly-success="reload" style="margin-bottom: 1.5rem;">
+                        <input type="hidden" name="parent_collection" value="blog">
+                        <input type="hidden" name="parent_entry_id" value="{id}">
+                        <input type="hidden" name="sub_collection" value="comments">
+                        <div class="form-group">
+                            <label for="author">Name <span class="required">*</span></label>
+                            <input type="text" name="author" id="author" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="content">Comment <span class="required">*</span></label>
+                            <textarea name="content" id="content" rows="4" required></textarea>
+                        </div>
+                        <div class="birkly-form-status" data-birkly-form-status hidden aria-live="polite"></div>
+                        <button type="submit" class="btn btn-primary">Post comment</button>
+                    </form>
+
+                    <div class="comment-list">
+                        {for each comment in 'comments' of 'blog'.current}
+                        <article class="comment" style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-secondary, #fafafa); border-radius: 8px;">
+                            <strong>{ comment.author }</strong>
+                            <p style="margin: 0.5rem 0 0;">{ comment.content }</p>
+                        </article>
+                        {endfor}
+                    </div>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; Birkly 2025</p>
+        </div>
+    </footer>
+
+    <script src="/birkly-client.js"></script>
+</body>
+</html>
