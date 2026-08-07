@@ -3164,7 +3164,13 @@
             btn.tabIndex = active ? 0 : -1;
         });
         document.querySelectorAll('.ap-status-item[data-hub-zone]').forEach(function (btn) {
-            btn.classList.toggle('is-active', btn.getAttribute('data-hub-zone') === zone);
+            var active = btn.getAttribute('data-hub-zone') === zone;
+            btn.classList.toggle('is-active', active);
+            if (active) {
+                btn.setAttribute('aria-current', 'page');
+            } else {
+                btn.removeAttribute('aria-current');
+            }
         });
         document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
             var active = panel.getAttribute('data-hub-panel') === zone;
