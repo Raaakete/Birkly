@@ -116,15 +116,19 @@
     }
 
     function updateDevBridgeLink() {
-        const link = document.getElementById('mcp-bridge-dev-link');
-        if (!link) return;
+        const links = document.querySelectorAll('#mcp-bridge-dev-link, a[data-mcp-bridge-link]');
+        if (!links.length) return;
         const base = getBaseUrl().replace(/\/$/, '');
         const path = (typeof Birkly !== 'undefined' && Birkly.url) ? Birkly.url('/mcp-bridge.js') : '/mcp-bridge.js';
+        let href;
         try {
-            link.href = path.startsWith('http') ? path : new URL(path, base + '/').href;
+            href = path.startsWith('http') ? path : new URL(path, base + '/').href;
         } catch (e) {
-            link.href = base + path;
+            href = base + path;
         }
+        links.forEach(function (link) {
+            link.href = href;
+        });
     }
 
     function initHelpTips() {
