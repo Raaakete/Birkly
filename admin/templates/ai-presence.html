@@ -37,49 +37,55 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
-<!-- Hub status spine — one product, four zones (P60-M1 §1.2) -->
-<div class="card ap-hub-spine u-mb-6" role="group" aria-label="{translate 'admin.ag_hub_spine_aria'}">
-    <div class="card-section ap-hub-spine-row">
-        <button type="button" class="ap-spine-item" data-hub-zone="guide">
+<!-- Hub: left status sidebar + main (Guide | Tools | Publish) — P60 IA restructure.
+     Connections deliberately live in Settings → AI only; not surfaced here. -->
+<div class="ap-hub ap-hub-layout">
+<nav class="ap-hub-status-nav" aria-label="{translate 'admin.ag_hub_spine_aria'}">
+    <button type="button" class="ap-status-item" data-hub-zone="guide">
+        <span class="ap-status-item-head">
+            <span class="ap-status-label">{translate 'admin.ag_hub_spine_guide'}</span>
             <span class="badge badge-neutral" id="ap-spine-guide-badge">—</span>
-            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_guide'}</span><span class="ap-spine-value" id="ap-spine-guide-value">—</span></span>
-        </button>
-        <span class="ap-spine-sep" aria-hidden="true"></span>
-        <button type="button" class="ap-spine-item" data-hub-zone="tools">
+        </span>
+        <span class="ap-status-value" id="ap-spine-guide-value">—</span>
+    </button>
+    <button type="button" class="ap-status-item" data-hub-zone="tools">
+        <span class="ap-status-item-head">
+            <span class="ap-status-label">{translate 'admin.ag_hub_spine_tools'}</span>
             <span class="badge badge-neutral" id="ap-spine-tools-badge">—</span>
-            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_tools'}</span><span class="ap-spine-value" id="ap-spine-tools-value">{translate 'admin.ag_webmcp_off'}</span></span>
-        </button>
-        <span class="ap-spine-sep" aria-hidden="true"></span>
-        <button type="button" class="ap-spine-item" data-hub-zone="connections">
-            <span class="badge badge-neutral" id="ap-spine-connections-badge">—</span>
-            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_connections'}</span><span class="ap-spine-value" id="ap-spine-connections-value">—</span></span>
-        </button>
-        <span class="ap-spine-sep" aria-hidden="true"></span>
-        <button type="button" class="ap-spine-item" data-hub-zone="publish">
+        </span>
+        <span class="ap-status-value" id="ap-spine-tools-value">{translate 'admin.ag_webmcp_off'}</span>
+    </button>
+    <button type="button" class="ap-status-item" data-hub-zone="publish">
+        <span class="ap-status-item-head">
+            <span class="ap-status-label">{translate 'admin.ag_hub_spine_hosted'}</span>
             <span class="badge badge-neutral" id="ap-spine-hosted-badge">—</span>
-            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_hosted'}</span><span class="ap-spine-value" id="ap-spine-hosted-value">—</span></span>
-        </button>
-    </div>
-</div>
+        </span>
+        <span class="ap-status-value" id="ap-spine-hosted-value">—</span>
+    </button>
+</nav>
 
-<!-- Hub zones — Guide | Tools | Connections | Publish (P60-M1 §1.1) -->
-<div class="ap-hub">
+<div class="ap-hub-main">
+<!-- Hub zones — Guide | Tools | Publish -->
 <div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
     <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">{translate 'admin.ag_hub_tab_guide'}</button>
     <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_tools'}</button>
-    <button type="button" class="tab" role="tab" id="ap-tab-connections" data-hub-zone="connections" aria-controls="ap-panel-connections" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_connections'}</button>
     <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_publish'}</button>
 </div>
 
 <div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
-<div class="ap-page">
-    <div class="ap-main">
-        <div class="segmented u-mb-6" role="group" aria-label="{translate 'admin.ag_view_mode'}">
-            <button type="button" class="segmented-item ap-view-toggle-btn active" data-view-mode="essentials">{translate 'admin.ag_view_essentials'}</button>
-            <button type="button" class="segmented-item ap-view-toggle-btn" data-view-mode="advanced">{translate 'admin.ag_view_advanced'}</button>
-        </div>
-        <div>
-            <div id="ap-essentials-view" class="u-stack-0">
+<div class="ap-guide-layout">
+    <div class="ai-presence-tabs ap-guide-tabs tabs-v2-root">
+    <nav class="tabs ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
+        <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
+        <button type="button" class="tab" data-tab="essentials">{translate 'admin.ag_view_essentials'}</button>
+        <button type="button" class="tab" data-tab="sources">{translate 'admin.ai_presence_tab_sources'}</button>
+        <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
+        <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
+        <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
+        <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
+    </nav>
+    <div class="ap-guide-panels">
+            <div class="tab-content" data-tab-content="essentials">
                 <section class="card u-p-6 u-stack-4">
                     <header class="u-split u-gap-3">
                         <h3>{translate 'admin.ag_essentials_who'}</h3>
@@ -150,20 +156,62 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     </div>
                 </div>
             </div>
-            <div id="ap-advanced-view" class="ap-advanced-view" hidden>
-            <div class="ai-presence-tabs tabs-v2-root">
-                <div class="tabs" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-                    <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
-                    <button type="button" class="tab" data-tab="sources">{translate 'admin.ai_presence_tab_sources'}</button>
-                    <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
-                    <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
-                    <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
-                    <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
-                </div>
-
-                <div class="ap-advanced-body">
-                <div class="ap-advanced-panels">
                 <div class="tab-content active" data-tab-content="overview">
+                    <!-- AI Assist is the primary Overview widget (P60 IA). It replaces
+                         the old right-hand assist rail + FAB. -->
+                    <aside class="card u-p-6 u-stack-4 ap-assist-widget" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
+                        <header class="u-stack-1">
+                            <h2 class="u-text-base u-weight-semibold u-mb-1">{translate 'admin.ai_presence_assist_title'}</h2>
+                            <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ai_presence_assist_lede'}</p>
+                        </header>
+
+                        <div class="u-stack-1">
+                            <label class="u-label u-block u-mb-1" for="ap-ai-connection">{translate 'admin.ai_provider'}</label>
+                            <select id="ap-ai-connection" class="input" aria-describedby="ap-ai-connection-hint">
+                                <option value="">{translate 'admin.ai_presence_ai_rules_only'}</option>
+                            </select>
+                            <p id="ap-ai-connection-hint" class="form-help">{translate 'admin.ai_presence_assist_connection_hint'}</p>
+                        </div>
+
+                        <div class="segmented ap-assist-tabs" role="tablist" aria-label="AI Assist modes">
+                            <button type="button" class="segmented-item ap-assist-tab active" data-assist-tab="auto" role="tab" aria-selected="true">{translate 'admin.ai_presence_assist_tab_auto'}</button>
+                            <button type="button" class="segmented-item ap-assist-tab" data-assist-tab="advanced" role="tab" aria-selected="false">{translate 'admin.ai_presence_assist_tab_advanced'}</button>
+                        </div>
+
+                        <div class="ap-assist-panel u-stack-2 active" data-assist-panel="auto" role="tabpanel">
+                            <p class="form-help">{translate 'admin.ai_presence_assist_auto_hint'}</p>
+                            <button type="button" class="btn btn-primary u-w-full" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary u-w-full" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
+                            <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
+                            <p id="ap-assist-auto-status" class="form-help"></p>
+                        </div>
+
+                        <div class="ap-assist-panel u-stack-2" data-assist-panel="advanced" role="tabpanel" hidden>
+                            <p class="form-help">{translate 'admin.ai_presence_assist_advanced_hint'}</p>
+                            <label class="u-label u-block u-mb-1" for="ap-assist-collection-search">{translate 'admin.ai_presence_studio_sources'}</label>
+                            <input type="search" id="ap-assist-collection-search" class="input" placeholder="Search collections…" autocomplete="off">
+                            <select id="ap-assist-collections" class="input" multiple size="6" aria-describedby="ap-assist-build-hint"></select>
+                            <p id="ap-assist-collections-empty" class="form-help" hidden>{translate 'admin.ai_presence_assist_no_collections'}</p>
+                            <p id="ap-assist-build-hint" class="form-help">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
+                            <button type="button" class="btn btn-sm btn-primary u-w-full u-mt-3" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
+                            <div class="u-cluster u-mt-3 u-pt-3 u-border-top">
+                                <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
+                                <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
+                            </div>
+                        </div>
+
+                        <div class="u-stack-2 u-pt-4 u-border-top" id="ap-assist-results">
+                            <div class="u-split u-wrap u-gap-2">
+                                <h3 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ai_presence_assist_review'} <span class="badge badge-sm" id="ap-suggestion-count" hidden>0</span></h3>
+                                <button type="button" class="btn btn-sm btn-primary" id="ap-accept-all-suggestions">{translate 'admin.ai_presence_accept_all'}</button>
+                            </div>
+                            <p class="form-help">{translate 'admin.ai_presence_suggestions_help'}</p>
+                            <ul id="ap-assist-suggestions" class="ap-card-list"></ul>
+                            <p id="ap-assist-empty" class="empty-state empty-state--compact">{translate 'admin.ai_presence_assist_empty'}</p>
+                        </div>
+                    </aside>
+
                     <section class="card u-p-6 u-stack-4" id="ap-workflow-panel">
                         <h3>{translate 'admin.ai_presence_workflow_title'}</h3>
                         <ol class="ap-workflow" id="ap-workflow-steps">
@@ -483,73 +531,9 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <p id="ap-media-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_media_empty'}</p>
                 </div>
 
-                </div><!-- .ap-advanced-panels -->
-
-                <aside class="ap-assist-sidebar" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
-                    <div class="card u-p-4 u-stack-4">
-                        <header class="u-stack-1">
-                            <h2 class="u-text-base u-weight-semibold u-mb-1">{translate 'admin.ai_presence_assist_title'}</h2>
-                            <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ai_presence_assist_lede'}</p>
-                        </header>
-
-                        <div class="u-stack-1">
-                            <label class="u-label u-block u-mb-1" for="ap-ai-connection">{translate 'admin.ai_provider'}</label>
-                            <select id="ap-ai-connection" class="input" aria-describedby="ap-ai-connection-hint">
-                                <option value="">{translate 'admin.ai_presence_ai_rules_only'}</option>
-                            </select>
-                            <p id="ap-ai-connection-hint" class="form-help">{translate 'admin.ai_presence_assist_connection_hint'}</p>
-                        </div>
-
-                        <div class="segmented ap-assist-tabs" role="tablist" aria-label="AI Assist modes">
-                            <button type="button" class="segmented-item ap-assist-tab active" data-assist-tab="auto" role="tab" aria-selected="true">{translate 'admin.ai_presence_assist_tab_auto'}</button>
-                            <button type="button" class="segmented-item ap-assist-tab" data-assist-tab="advanced" role="tab" aria-selected="false">{translate 'admin.ai_presence_assist_tab_advanced'}</button>
-                        </div>
-
-                        <div class="ap-assist-panel u-stack-2 active" data-assist-panel="auto" role="tabpanel">
-                            <p class="form-help">{translate 'admin.ai_presence_assist_auto_hint'}</p>
-                            <button type="button" class="btn btn-primary u-w-full" id="ap-assist-auto-fill">{translate 'admin.ai_presence_assist_auto_btn'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full" data-assist-mode="fill_gaps">{translate 'admin.ai_presence_fill_gaps'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-fill-complete">{translate 'admin.ai_presence_fill_complete'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary u-w-full" id="ap-assist-suggest-links">{translate 'admin.ai_presence_suggest_links'}</button>
-                            <p id="ap-assist-auto-status" class="form-help"></p>
-                        </div>
-
-                        <div class="ap-assist-panel u-stack-2" data-assist-panel="advanced" role="tabpanel" hidden>
-                            <p class="form-help">{translate 'admin.ai_presence_assist_advanced_hint'}</p>
-                            <label class="u-label u-block u-mb-1" for="ap-assist-collection-search">{translate 'admin.ai_presence_studio_sources'}</label>
-                            <input type="search" id="ap-assist-collection-search" class="input" placeholder="Search collections…" autocomplete="off">
-                            <select id="ap-assist-collections" class="input" multiple size="6" aria-describedby="ap-assist-build-hint"></select>
-                            <p id="ap-assist-collections-empty" class="form-help" hidden>{translate 'admin.ai_presence_assist_no_collections'}</p>
-                            <p id="ap-assist-build-hint" class="form-help">{translate 'admin.ai_presence_assist_build_sources_hint'}</p>
-                            <button type="button" class="btn btn-sm btn-primary u-w-full u-mt-3" id="ap-assist-build">{translate 'admin.ai_presence_assist_build_btn'}</button>
-                            <div class="u-cluster u-mt-3 u-pt-3 u-border-top">
-                                <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="improve">{translate 'admin.ai_presence_improve'}</button>
-                                <button type="button" class="btn btn-sm btn-secondary" data-assist-mode="claims">{translate 'admin.ai_presence_suggest_claims'}</button>
-                            </div>
-                        </div>
-
-                        <div class="u-stack-2 u-pt-4 u-border-top" id="ap-assist-results">
-                            <div class="u-split u-wrap u-gap-2">
-                                <h3 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ai_presence_assist_review'} <span class="badge badge-sm" id="ap-suggestion-count" hidden>0</span></h3>
-                                <button type="button" class="btn btn-sm btn-primary" id="ap-accept-all-suggestions">{translate 'admin.ai_presence_accept_all'}</button>
-                            </div>
-                            <p class="form-help">{translate 'admin.ai_presence_suggestions_help'}</p>
-                            <ul id="ap-assist-suggestions" class="ap-card-list"></ul>
-                            <p id="ap-assist-empty" class="empty-state empty-state--compact">{translate 'admin.ai_presence_assist_empty'}</p>
-                        </div>
-                    </div>
-                </aside>
-                </div><!-- .ap-advanced-body -->
-            </div><!-- .ai-presence-tabs -->
-            </div><!-- #ap-advanced-view -->
-            </div>
-        </div><!-- .ap-main -->
-</div><!-- .ap-page -->
-
-<button type="button" class="ap-assist-fab btn btn-primary" id="ap-assist-fab" aria-controls="ap-assist-sidebar" aria-expanded="false" hidden>
-    <span>{translate 'admin.ai_presence_assist_title'}</span>
-    <span class="badge badge-sm" id="ap-suggestion-count-fab" hidden>0</span>
-</button>
+    </div><!-- .ap-guide-panels -->
+    </div><!-- .ai-presence-tabs -->
+</div><!-- .ap-guide-layout -->
 </div><!-- .tab-panel guide -->
 
 <!-- ===================== TOOLS zone (WebMCP) — P60-M6 ===================== -->
@@ -557,6 +541,10 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     <div class="u-max-w-page u-stack-6">
         <div class="u-stack-2">
             <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">{translate 'admin.ag_tools_lede'}</p>
+            <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">
+                {translate 'admin.ag_tools_standard_body'}
+                <a href="https://developer.chrome.com/docs/ai/webmcp/imperative-api" target="_blank" rel="noopener noreferrer">{translate 'admin.ag_tools_standard_link'}</a>
+            </p>
         </div>
 
         <section class="card u-p-6 u-stack-4">
@@ -564,6 +552,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="u-stack-1 u-fill">
                     <h3 class="u-m-0">{translate 'admin.ag_tools_master_title'}</h3>
                     <p class="form-help u-m-0">{translate 'admin.ag_tools_why_off'}</p>
+                    <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
                 </div>
                 <label class="switch switch--lg" title="{translate 'admin.ag_tools_master_title'}">
                     <input type="checkbox" id="ap-webmcp-enabled">
@@ -606,29 +595,38 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <h3 class="u-m-0">{translate 'admin.ag_tools_support_title'}</h3>
                 </header>
                 <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ag_tools_support_body'}</p>
+
+                <div class="callout callout-info u-text-sm u-m-0" role="note">
+                    <div class="u-stack-2">
+                        <strong>{translate 'admin.ag_tools_pagespeed_title'}</strong>
+                        <p class="u-m-0">{translate 'admin.ag_tools_pagespeed_body'}</p>
+                        <p class="u-m-0">
+                            <a href="https://developer.chrome.com/docs/lighthouse/agentic-browsing/registered-webmcp-tools" target="_blank" rel="noopener noreferrer">{translate 'admin.ag_tools_pagespeed_link'}</a>
+                        </p>
+                    </div>
+                </div>
+
                 <details class="u-text-sm">
                     <summary class="u-weight-semibold">{translate 'admin.ag_tools_verify_title'}</summary>
-                    <p class="form-help u-mt-2">{translate 'admin.ag_tools_verify_body'}</p>
+                    <div class="u-stack-2 u-mt-2">
+                        <p class="form-help u-m-0">{translate 'admin.ag_tools_verify_body'}</p>
+                        <ol class="u-text-sm u-fg-secondary u-stack-1 u-pl-4">
+                            <li>{translate 'admin.ag_tools_verify_step1'}</li>
+                            <li>{translate 'admin.ag_tools_verify_step2'}</li>
+                            <li>{translate 'admin.ag_tools_verify_step3'}</li>
+                        </ol>
+                        <p class="u-m-0">
+                            <a href="https://developer.chrome.com/docs/ai/webmcp/imperative-api" target="_blank" rel="noopener noreferrer">{translate 'admin.ag_tools_standard_link'}</a>
+                        </p>
+                    </div>
                 </details>
             </section>
         </div>
     </div>
 </div>
 
-<!-- ===================== CONNECTIONS zone — P60-M4 ===================== -->
-<div class="tab-panel" id="ap-panel-connections" role="tabpanel" aria-labelledby="ap-tab-connections" tabindex="0" data-hub-panel="connections" hidden>
-    <div class="u-max-w-page u-stack-6">
-        <section class="card u-p-6 u-stack-3" id="ap-connections-about">
-            <header class="u-stack-1">
-                <h3 class="u-m-0">{translate 'admin.ag_connections_about_title'}</h3>
-                <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ag_connections_about_body'}</p>
-            </header>
-        </section>
-        <div id="ap-connections-mount" class="u-stack-6" data-connections-root="hub">
-            <?php $aiPanelDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__; include $aiPanelDir . '/../partials/ai-connections-panel.php'; ?>
-        </div>
-    </div>
-</div>
+<!-- Connections deliberately removed from the Agent Guide hub (P60 IA decision):
+     AI app connections (Birkly MCP) are managed in Settings → AI only. -->
 
 <!-- ===================== PUBLISH zone — P60-M7 ===================== -->
 <div class="tab-panel" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish" hidden>
@@ -650,26 +648,38 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <span class="badge badge-neutral" id="ap-publish-guide-badge">—</span>
             </header>
             <dl class="ai-presence-urls" id="ap-publish-guide-urls"></dl>
+
+            <!-- Birkly-hosted (project): live automatically, nothing to place. -->
+            <p id="ap-publish-guide-project-note" class="callout callout-success u-text-sm u-m-0" role="note" hidden>{translate 'admin.ag_publish_guide_project_note'}</p>
+
+            <!-- No site delivery configured yet. -->
+            <p id="ap-publish-guide-none-note" class="callout callout-warning u-text-sm u-m-0" role="note" hidden>{translate 'admin.ag_publish_guide_none_note'}</p>
+
+            <!-- External host: three explicit options, when-to-use each. -->
             <div id="ap-publish-external" class="u-stack-4" hidden>
                 <p class="callout callout-info u-text-sm u-m-0">{translate 'admin.ag_publish_external_intro'}</p>
                 <div class="u-stack-2">
-                    <label class="u-label u-text-sm">{translate 'admin.ag_publish_snippet_label'}</label>
+                    <span class="u-label u-text-sm">{translate 'admin.ag_publish_option1_title'}</span>
+                    <p class="form-help u-m-0">{translate 'admin.ag_publish_option1_help'}</p>
                     <div class="copy-snippet-row">
                         <textarea readonly rows="2" id="ap-publish-snippet-client" class="input u-font-mono"></textarea>
                         <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-client">{translate 'admin.copy'}</button>
                     </div>
                 </div>
                 <div class="u-stack-2">
-                    <label class="u-label u-text-sm">{translate 'admin.ag_publish_proxy_label'}</label>
+                    <span class="u-label u-text-sm">{translate 'admin.ag_publish_option2_title'}</span>
+                    <p class="form-help u-m-0">{translate 'admin.ag_publish_option2_help'}</p>
                     <div class="copy-snippet-row">
                         <textarea readonly rows="2" id="ap-publish-snippet-proxy" class="input u-font-mono"></textarea>
                         <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-proxy">{translate 'admin.copy'}</button>
                     </div>
                 </div>
                 <div class="u-stack-2">
-                    <label class="u-label u-text-sm">{translate 'admin.ag_publish_download_label'}</label>
+                    <span class="u-label u-text-sm">{translate 'admin.ag_publish_option3_title'}</span>
+                    <p class="form-help u-m-0">{translate 'admin.ag_publish_option3_help'}</p>
                     <a class="btn btn-sm btn-secondary" id="ap-publish-download-guide" download="agent-guide.json">{translate 'admin.ag_publish_download_btn'}</a>
                 </div>
+                <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_publish_external_no_copy'}</p>
             </div>
         </section>
 
@@ -688,11 +698,12 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <textarea readonly rows="2" id="ap-publish-snippet-webmcp" class="input u-font-mono"></textarea>
                     <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-webmcp">{translate 'admin.copy'}</button>
                 </div>
+                <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_publish_webmcp_external_no_copy'}</p>
             </div>
             <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="tools">{translate 'admin.ag_publish_webmcp_manage'}</button>
         </section>
 
-        <!-- Layer 3: AI app connections (Birkly MCP) -->
+        <!-- Layer 3: AI app connections (Birkly MCP) — always on the CMS; managed in Settings → AI -->
         <section class="card u-p-6 u-stack-4">
             <header class="u-stack-1">
                 <h3 class="u-m-0">{translate 'admin.ag_publish_mcp_title'}</h3>
@@ -702,7 +713,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <dt>{translate 'admin.ag_publish_mcp_url_label'}</dt>
                 <dd><code id="ap-publish-mcp-url"></code></dd>
             </dl>
-            <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="connections">{translate 'admin.ag_publish_mcp_manage'}</button>
+            <a class="btn btn-sm btn-secondary" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>">{translate 'admin.ag_publish_mcp_manage'}</a>
         </section>
 
         <!-- Deep guide publish controls (relocated from the old Guide → Publish tab) -->
@@ -761,6 +772,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
+</div><!-- .ap-hub-main -->
 </div><!-- .ap-hub -->
 
 <!-- AI loading overlay -->
@@ -792,7 +804,9 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="card-section u-stack-1">
                     <h4 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ag_about_mcp_title'}</h4>
                     <p class="u-text-sm u-m-0">{translate 'admin.ag_about_mcp_body'}</p>
-                    <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_about_mcp_where'}</p>
+                    <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_about_mcp_where'}
+                        <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>">{translate 'admin.ag_about_mcp_manage_link'}</a>
+                    </p>
                 </div>
                 <div class="card-section u-stack-1">
                     <h4 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ag_about_webmcp_title'}</h4>
@@ -1136,6 +1150,4 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 {include_style 'components/agent-guide-wizard.css'}
 {include_script 'agent-guide-wizard.js'}
-{include_script 'ai-connections.js'}
-{include_script 'mcp-connections.js'}
 {include_script 'ai-presence.js'}
