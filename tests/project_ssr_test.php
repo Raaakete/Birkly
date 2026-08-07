@@ -88,7 +88,7 @@ try {
     $settings = birkly_project_ssr_settings();
     assert_true('default render_mode is server (V-DEF-01)', $settings['render_mode'] === 'server');
     assert_true('default hosting_type is birkly', $settings['hosting_type'] === 'birkly');
-    assert_true('default ssr_cache_ttl is 60', $settings['ssr_cache_ttl'] === 60);
+    assert_true('default ssr_cache_ttl is 300 (P58-M1)', $settings['ssr_cache_ttl'] === 300);
 
     // V-DEF-02: an existing saved "client" must never be overwritten by the
     // new default (migration-style assertion: only missing keys pick up server).
@@ -279,6 +279,55 @@ try {
     $throwOut = (string) shell_exec($throwCmd);
     assert_true('engine throw → render returns null', strpos($throwOut, 'NULL|') === 0, 'out=' . $throwOut);
     assert_true('engine throw → last_error=engine_error', strpos($throwOut, '|engine_error') !== false, 'out=' . $throwOut);
+
+    echo "\n[V-SSR-06b] cheap revision + content bump busts cache key\n";
+    require_once dirname(__DIR__) . '/core/page_bundle_helpers.php';
+    require_once dirname(__DIR__) . '/core/storage/StorageFactory.php';
+    birkly_project_ssr_invalidate_all();
+    $storage = get_storage(birkly_project_root() . '/content');
+    $rev1 = birkly_page_bundle_compute_revision($storage, [], 'en');
+    birkly_public_content_revision_bump();
+    $rev2 = birkly_page_bundle_compute_revision($storage, [], 'en');
+    assert_true('content revision bump changes cache revision', $rev1 !== $rev2);
+
+    echo "\n[V-SSR-06c] draft entries excluded from SSR output\n";
+    $draftTpl = "{for each entry in 'blog'}{title}{endfor}";
+    $draftData = birkly_project_ssr_build_data($draftTpl, [], 'en', $storage);
+    $blogItems = $draftData['blog'] ?? [];
+    $hasDraft = false;
+    if (is_array($blogItems)) {
+        foreach ($blogItems as $item) {
+            if (is_array($item) && ($item['status'] ?? '') !== 'published') {
+                $hasDraft = true;
+                break;
+            }
+        }
+    }
+    assert_true('build_data blog list has no draft entries', $hasDraft === false);
+
+    echo "\n[V-SSR-06d] cache write diagnostic on MISS serve\n";
+    birkly_project_ssr_invalidate_all();
+    ssr_test_set_hosting_project_mode();
+    ssr_test_write_project_settings(['render_mode' => 'server', 'hosting_type' => 'birkly', 'ssr_cache_ttl' => 300]);
+    $writeSmoke = $root . '/project/__p58-ssr-write-smoke.html';
+    file_put_contents($writeSmoke, "<!DOCTYPE html><html><head><title>t</title></head><body><p>{current_year}</p></body></html>");
+    try {
+        ob_start();
+        $servedWrite = birkly_project_ssr_serve($writeSmoke, []);
+        $writeOut = (string) ob_get_clean();
+        assert_true('write smoke serve succeeds', $servedWrite === true);
+        // Header is set via birkly_project_ssr_send — verify cache files exist (write ok).
+        $rel = birkly_project_ssr_relative_path($writeSmoke);
+        $lang = birkly_project_ssr_language([]);
+        $reqs = birkly_project_ssr_collect_requests((string) file_get_contents($writeSmoke));
+        $rev = birkly_page_bundle_compute_revision($storage, $reqs, $lang, [$writeSmoke]);
+        $wkey = birkly_project_ssr_cache_key($rel, [], $lang, $rev);
+        $htmlCache = birkly_project_ssr_cache_dir() . '/' . $wkey . '.html';
+        assert_true('cache write created html file', is_file($htmlCache), 'path=' . $htmlCache);
+    } finally {
+        @unlink($writeSmoke);
+        birkly_project_ssr_invalidate_all();
+    }
 
     echo "\n[V-CUT-01/02/04] serve path end-to-end (server mode, no Node, cache MISS→HIT)\n";
     ssr_test_set_hosting_project_mode();

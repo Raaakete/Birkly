@@ -6,6 +6,12 @@
   "release_zip_name_pattern": "Birkly-{version}.zip",
   "runtime_skeleton_files": [
     "content/.gitkeep",
+    "media/.gitkeep",
+    "users/.gitkeep",
+    "settings/.gitkeep",
+    "logs/.gitkeep",
+    "temp/.gitkeep",
+    "cache/.gitkeep",
     "project/.gitkeep",
     "plugins/README.md",
     "plugins/.gitkeep"
@@ -23,7 +29,6 @@
     "Dockerfile",
     "docs/**",
     "invite.php",
-    "lang/**",
     "mcp-bridge.js",
     "nginx.conf.example",
     "reference-projects/**",

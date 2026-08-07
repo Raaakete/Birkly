@@ -157,6 +157,7 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
         'show_checkbox' => true,
         'show_drag' => $showDragHandles,
         'show_sub_entries' => $hasSubCollections,
+        'entries_l2_actions' => $hasSubCollections,
         'checkbox_id_prefix' => 'entry',
         'checkbox_class' => 'entry-checkbox',
         'delete_callback' => 'delete-entry-btn',
@@ -253,6 +254,7 @@ window.entriesTableFields = <?= json_encode(array_values($fields ?? []), JSON_UN
 window.entriesStatusFilter = <?= json_encode($currentStatusFilter, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.entriesTrashView = <?= json_encode($isTrashView, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.entriesHasSubCollections = <?= json_encode($hasSubCollections, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+window.entriesL2Actions = <?= json_encode($hasSubCollections, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.entriesHasDragColumn = <?= json_encode($showDragHandles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 window.entriesListState = <?= json_encode([
     'page' => $currentPage,

@@ -55,8 +55,16 @@ show_usage() {
 }
 
 # Function to check if port is in use
+HAS_LSOF=true
+if ! command -v lsof &> /dev/null; then
+    HAS_LSOF=false
+fi
+
 check_port() {
     local port=$1
+    if [ "$HAS_LSOF" = false ]; then
+        return 1
+    fi
     if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
         return 0  # Port is in use
     else
@@ -67,6 +75,10 @@ check_port() {
 # Function to kill process on port
 kill_port() {
     local port=$1
+    if [ "$HAS_LSOF" = false ]; then
+        print_warning "lsof not found — cannot kill process on port $port"
+        return 1
+    fi
     local pid=$(lsof -Pi :$port -sTCP:LISTEN -t 2>/dev/null)
     if [ ! -z "$pid" ]; then
         print_warning "Killing existing process on port $port (PID: $pid)"
@@ -179,7 +191,9 @@ check_php
 check_project
 
 # Handle port conflicts
-if check_port $PORT; then
+if [ "$HAS_LSOF" = false ] && [ "$KILL_EXISTING" = true ]; then
+    print_warning "lsof not installed — cannot check or kill processes on port $PORT"
+elif check_port $PORT; then
     if [ "$KILL_EXISTING" = true ]; then
         kill_port $PORT
     else
@@ -192,8 +206,11 @@ fi
 # Change to project directory
 cd "$ROOT_DIR"
 
-# Create logs directory if it doesn't exist
-mkdir -p logs
+# Ensure writable runtime directories exist before serving
+for dir in content media users settings logs temp cache; do
+    mkdir -p "$dir"
+done
+mkdir -p content/collections
 
 # Start the server
 print_success "Starting server on http://localhost:$PORT"

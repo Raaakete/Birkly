@@ -1,5 +1,5 @@
 /**
- * Hub admin page — Discover · Installed · Updates · Licenses · Upload pack (P53-M11).
+ * Hub admin page — Discover · Installed · Updates · Licenses · Upload (P53-M11).
  * marketplace_* API routes unchanged; buyer labels say Hub.
  */
 (function () {
@@ -1859,7 +1859,7 @@
                 escapeHtml(t('browse_marketplace', 'Browse Hub')) +
                 '</button>' +
                 '<button type="button" class="btn btn-secondary" data-plugin-action="switch-upload">' +
-                escapeHtml(t('upload_site_pack', 'Upload pack')) +
+                escapeHtml(t('upload_site_pack', 'Upload')) +
                 '</button>' +
                 '</div>' +
                 '</div>';

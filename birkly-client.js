@@ -3205,11 +3205,50 @@
         } catch (e) { /* ignore */ }
     }
 
+    /**
+     * True when the server pre-rendered this page (SSR marker in head/html).
+     */
+    function isPageSsrRendered() {
+        try {
+            const de = document.documentElement;
+            if (de && de.hasAttribute && de.hasAttribute('data-birkly-ssr')) return true;
+        } catch (e) { /* ignore */ }
+        try {
+            if (document.querySelector && document.querySelector('meta[name="birkly-ssr"]')) return true;
+        } catch (e) { /* ignore */ }
+        return false;
+    }
+
+    /**
+     * Whether Light DOM still has template regions needing client render.
+     */
+    function pageNeedsTemplateProcessing(doc, force) {
+        const regions = Birkly.render.discoverPageRegions(doc || document, null, { force: !!force });
+        return regions.length > 0;
+    }
+
+    function emitTemplatesProcessedSkipped() {
+        setupPostRenderReveals();
+        try {
+            document.dispatchEvent(new CustomEvent('birkly:templates-processed', {
+                detail: { regions: 0, scoped: false, skipped: 'ssr' }
+            }));
+        } catch (e) { /* ignore */ }
+    }
+
     async function processTemplatesV3(options) {
         const opts = normalizeProcessTemplatesOptions(options);
         const root = opts.root;
         const silent = opts.silent;
         const force = opts.force;
+
+        if (!force && !root && isPageSsrRendered() && !pageNeedsTemplateProcessing(document, force)) {
+            if (!silent) {
+                console.log('[Birkly] v3: SSR page already rendered — skipping processTemplates');
+            }
+            emitTemplatesProcessedSkipped();
+            return { regions: [], skipped: 'ssr' };
+        }
 
         const siteElements = await getAllSiteElements();
         urlParams = new URLSearchParams(window.location.search);
@@ -3940,22 +3979,32 @@
         await detectApiEndpoint();
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
 
-        const bundleRequests = collectBundleRequests();
-        const snapshotLoaded = bundleRequests.length > 0 && Birkly.bundle.shouldProbeSnapshot()
-            ? await tryLoadPageSnapshot() : false;
-        if (!snapshotLoaded && bundleRequests.length > 0) {
-            await loadPageBundle(bundleRequests);
+        const ssrSkipTemplates = isPageSsrRendered() && !pageNeedsTemplateProcessing(document, false);
+
+        if (!ssrSkipTemplates) {
+            const bundleRequests = collectBundleRequests();
+            const snapshotLoaded = bundleRequests.length > 0 && Birkly.bundle.shouldProbeSnapshot()
+                ? await tryLoadPageSnapshot() : false;
+            if (!snapshotLoaded && bundleRequests.length > 0) {
+                await loadPageBundle(bundleRequests);
+            }
+        } else {
+            Birkly.log('Birkly: SSR page — skipping bundle prefetch and template re-render');
         }
 
         // Bind generic action forms ASAP (templates can take time to process)
         bindActionForms();
         
         // Process templates immediately (don't wait for DOMContentLoaded)
-        console.log('[Birkly] init: processing templates...');
-        Birkly.log('Birkly: Processing templates...');
-        await processTemplates();
-        console.log('[Birkly] init: templates processed');
-        Birkly.log('Birkly: Templates processed');
+        if (!ssrSkipTemplates) {
+            console.log('[Birkly] init: processing templates...');
+            Birkly.log('Birkly: Processing templates...');
+            await processTemplates();
+            console.log('[Birkly] init: templates processed');
+            Birkly.log('Birkly: Templates processed');
+        } else {
+            emitTemplatesProcessedSkipped();
+        }
         // birkly:templates-processed is emitted by processTemplates() on full-document runs
         } catch (err) {
             console.error('[Birkly] init error:', err);

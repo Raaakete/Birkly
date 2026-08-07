@@ -566,13 +566,17 @@ function birkly_ai_presence_public_urls(): array
 function birkly_ai_presence_publish(): array
 {
     $draft = birkly_ai_presence_load_draft();
+    if (!isset($draft['publication_settings']) || !is_array($draft['publication_settings'])) {
+        $draft['publication_settings'] = [];
+    }
+    if (empty($draft['publication_settings']['enabled'])) {
+        $draft['publication_settings']['enabled'] = true;
+        birkly_ai_presence_save_draft($draft);
+    }
+
     $errors = birkly_ai_presence_validate($draft);
     if ($errors !== []) {
         return ['ok' => false, 'errors' => $errors];
-    }
-
-    if (empty($draft['publication_settings']['enabled'])) {
-        return ['ok' => false, 'errors' => ['Publishing is disabled in publication settings']];
     }
 
     birkly_ai_presence_ensure_dir();
@@ -606,6 +610,64 @@ function birkly_ai_presence_publish(): array
     birkly_ai_presence_write_public_exports($snapshot, $version, $now);
 
     return ['ok' => true, 'version' => $version];
+}
+
+/**
+ * Take the Agent Guide offline: disable publishing and remove public export files.
+ *
+ * @return array{ok: bool, errors?: list<string>}
+ */
+function birkly_ai_presence_unpublish(): array
+{
+    birkly_ai_presence_ensure_dir();
+    $draft = birkly_ai_presence_load_draft();
+    if (!isset($draft['publication_settings']) || !is_array($draft['publication_settings'])) {
+        $draft['publication_settings'] = [];
+    }
+    $draft['publication_settings']['enabled'] = false;
+    birkly_ai_presence_save_draft($draft);
+
+    $published = birkly_ai_presence_load_published();
+    if ($published !== null) {
+        if (!isset($published['publication_settings']) || !is_array($published['publication_settings'])) {
+            $published['publication_settings'] = [];
+        }
+        $published['publication_settings']['enabled'] = false;
+        birkly_ai_presence_write_json(birkly_ai_presence_dir() . '/published.json', $published);
+    }
+
+    birkly_ai_presence_remove_public_exports();
+
+    return ['ok' => true];
+}
+
+function birkly_ai_presence_remove_public_exports(): void
+{
+    $draft = birkly_ai_presence_load_draft();
+    $paths = [
+        (string) ($draft['publication_settings']['public_path'] ?? '/.well-known/agent-guide.json'),
+        '/.well-known/agent-guide.json',
+        '/.well-known/brand-context.json',
+    ];
+    $paths = array_values(array_unique(array_filter($paths, static fn ($p) => is_string($p) && $p !== '' && $p[0] === '/')));
+
+    $hosting = birkly_hosting_load();
+    $mode = (string) ($hosting['public_site_mode'] ?? 'none');
+    if ($mode !== 'project') {
+        return;
+    }
+
+    $wellKnownDir = birkly_project_root() . '/project/.well-known';
+    if (!is_dir($wellKnownDir)) {
+        return;
+    }
+    foreach ($paths as $path) {
+        $filename = basename($path) ?: 'agent-guide.json';
+        $file = $wellKnownDir . '/' . $filename;
+        if (is_file($file)) {
+            @unlink($file);
+        }
+    }
 }
 
 function birkly_ai_presence_prune_versions(): void

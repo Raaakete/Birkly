@@ -25,6 +25,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
+require_once __DIR__ . '/birkly_data_paths.php';
 require_once __DIR__ . '/hosting_urls.php';
 require_once __DIR__ . '/project_settings.php';
 
@@ -457,7 +458,7 @@ function birkly_project_ssr_render(string $html, array $data, array $options = [
 
 function birkly_project_ssr_cache_dir(): string
 {
-    return birkly_project_root() . '/cache/ssr';
+    return birkly_data_disk_path() . '/cache/ssr';
 }
 
 function birkly_project_ssr_ensure_cache_dir(): bool
@@ -543,6 +544,9 @@ function birkly_project_ssr_cache_put(string $key, string $html, int $ttl, strin
  */
 function birkly_project_ssr_invalidate_all(): void
 {
+    require_once __DIR__ . '/page_bundle_helpers.php';
+    birkly_public_content_revision_bump();
+
     $dir = birkly_project_ssr_cache_dir();
     if (!is_dir($dir)) {
         return;
@@ -596,13 +600,18 @@ function birkly_project_ssr_inject_marker(string $html): string
 
 /**
  * Emit rendered HTML with SSR headers.
+ *
+ * @param string|null $cacheWrite Optional write diagnostic: ok|fail|skip
  */
-function birkly_project_ssr_send(string $html, string $cacheState): void
+function birkly_project_ssr_send(string $html, string $cacheState, ?string $cacheWrite = null): void
 {
     if (!headers_sent()) {
         header('Content-Type: text/html; charset=UTF-8');
         header('X-Birkly-Render: server');
         header('X-Birkly-SSR-Cache: ' . $cacheState);
+        if ($cacheWrite !== null && $cacheWrite !== '') {
+            header('X-Birkly-SSR-Cache-Write: ' . $cacheWrite);
+        }
     }
     echo $html;
 }
@@ -638,7 +647,7 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     if ($detail !== null) {
         $revisionRequests[] = $detail;
     }
-    $revision = birkly_page_bundle_compute_revision($storage, $revisionRequests, $language);
+    $revision = birkly_page_bundle_compute_revision($storage, $revisionRequests, $language, [$filePath]);
 
     $cacheKey = birkly_project_ssr_cache_key($relative, $query, $language, $revision);
 
@@ -658,10 +667,11 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
 
     $rendered = birkly_project_ssr_inject_marker($rendered);
 
+    $cacheWrite = 'skip';
     if ($ttl > 0) {
-        birkly_project_ssr_cache_put($cacheKey, $rendered, $ttl, $relative, $revision);
+        $cacheWrite = birkly_project_ssr_cache_put($cacheKey, $rendered, $ttl, $relative, $revision) ? 'ok' : 'fail';
     }
 
-    birkly_project_ssr_send($rendered, 'MISS');
+    birkly_project_ssr_send($rendered, 'MISS', $cacheWrite);
     return true;
 }

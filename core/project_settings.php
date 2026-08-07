@@ -28,7 +28,7 @@ function birkly_project_settings_defaults(): array
         // a saved "client" in settings/project.json is always honored.
         'render_mode' => 'server',  // client | server | auto
         'hosting_type' => 'birkly', // birkly | external
-        'ssr_cache_ttl' => 60,
+        'ssr_cache_ttl' => 300,
     ];
 }
 

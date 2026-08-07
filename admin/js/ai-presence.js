@@ -60,9 +60,9 @@
         }
     }
 
-    function confirmAsync(message) {
+    function confirmAsync(message, options) {
         if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
-            return global.BirklyFeedback.confirm(message);
+            return global.BirklyFeedback.confirm(message, options);
         }
         return Promise.resolve(confirm(message));
     }
@@ -608,13 +608,8 @@
         var ps = getPublishState(data);
         var msgEl = document.getElementById('ai-presence-message');
         var pubBtn = document.getElementById('ai-presence-publish-btn');
+        var unpublishBtn = document.getElementById('ai-presence-unpublish-btn');
         if (msgEl) {
-            if (!ps.publishing_enabled) {
-                msgEl.textContent = '';
-                msgEl.style.display = 'none';
-                if (pubBtn) pubBtn.disabled = true;
-                return;
-            }
             msgEl.style.display = 'block';
             if (ps.never_published) {
                 msgEl.textContent = t('ag_sticky_not_live', 'Not published yet — complete setup and publish when ready.');
@@ -622,10 +617,13 @@
             } else if (ps.has_unpublished_changes || state.dirty) {
                 msgEl.textContent = t('ag_sticky_unpublished', 'You have unpublished changes.');
                 msgEl.className = 'main-actions-message message message-warning';
-            } else {
+            } else if (ps.is_live) {
                 msgEl.textContent = t('ag_sticky_published', 'Published at {time} — no unpublished changes.')
                     .replace('{time}', formatDateTime(ps.last_published_at));
                 msgEl.className = 'main-actions-message message message-success';
+            } else {
+                msgEl.textContent = t('ag_essentials_publish_off', 'Public publishing is turned off.');
+                msgEl.className = 'main-actions-message message message-warning';
             }
         }
         if (pubBtn) {
@@ -634,6 +632,11 @@
             pubBtn.textContent = ps.is_live && (ps.has_unpublished_changes || state.dirty)
                 ? t('ag_publish_updates', 'Publish updates')
                 : t('publish_ai_presence', 'Publish');
+        }
+        if (unpublishBtn) {
+            var showUnpublish = !ps.never_published && (ps.is_live || ps.publishing_enabled);
+            unpublishBtn.hidden = !showUnpublish;
+            unpublishBtn.disabled = state.publishingInProgress || !state.canEdit;
         }
     }
 
@@ -675,7 +678,7 @@
             var ps = getPublishState(data || { meta: state.meta, publish_state: state.publishState });
             var statusText;
             if (!ps.publishing_enabled) {
-                statusText = t('ag_essentials_publish_off', 'Public publishing is turned off — enable it with the switch at the top of the page.');
+                statusText = t('ag_essentials_publish_off', 'Public publishing is turned off — use Unpublish or enable publishing in Advanced → Publish.');
             } else if (ps.never_published) {
                 statusText = t('ag_essentials_publish_never', 'Not published yet. Review your content, then publish from the top of the page.');
             } else if (ps.has_unpublished_changes || state.dirty) {
@@ -1933,6 +1936,35 @@
         return publishInternal(true);
     }
 
+    function unpublish() {
+        if (state.publishingInProgress) {
+            return Promise.reject(new Error(t('ag_publish_in_progress', 'Publish already in progress')));
+        }
+        state.publishingInProgress = true;
+        updateStickyBar({ meta: state.meta, publish_state: state.publishState });
+        return postJson({ action: 'unpublish' }).then(function (res) {
+            if (res.status !== 'ok') {
+                throw new Error(res.message || 'Unpublish failed');
+            }
+            if (state.draft && state.draft.publication_settings) {
+                state.draft.publication_settings.enabled = false;
+            }
+            state.meta = res.data.meta || state.meta;
+            state.publishState = res.data.publish_state || getPublishState({ meta: state.meta });
+            state.dirty = false;
+            refreshAllRenders({
+                draft: state.draft,
+                meta: state.meta,
+                publish_state: state.publishState
+            });
+            toast(t('ag_unpublish_toast', 'Agent Guide unpublished'), 'success');
+            return res;
+        }).finally(function () {
+            state.publishingInProgress = false;
+            updateStickyBar({ meta: state.meta, publish_state: state.publishState });
+        });
+    }
+
     function runCopilot(mode) {
         var connId = getSelectedAiConnection();
         if (!connId && mode !== 'fill_gaps') {
@@ -2689,6 +2721,11 @@
                 : t('ag_confirm_publish', 'Publish Agent Guide to public endpoints?');
             confirmAsync(msg).then(function (ok) {
                 if (ok) publish().catch(function (e) { toast(e.message, 'error'); });
+            });
+        });
+        bindEl('ai-presence-unpublish-btn', 'click', function () {
+            confirmAsync(t('ag_confirm_unpublish', 'Unpublish the Agent Guide? Public endpoints will stop serving your guide.'), { danger: true }).then(function (ok) {
+                if (ok) unpublish().catch(function (e) { toast(e.message, 'error'); });
             });
         });
 
