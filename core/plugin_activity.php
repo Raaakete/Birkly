@@ -34,6 +34,46 @@ function birkly_plugin_activity_default_settings(): array
 }
 
 /**
+ * Schema fields for Hub Plugins settings (and per-plugin UIs).
+ * Auto-merged into every plugin so third-party plugins get toggles too.
+ *
+ * @return array<string, array{type: string, default: bool, label: string, description: string}>
+ */
+function birkly_plugin_activity_settings_schema(): array
+{
+    return [
+        'activity_notify' => [
+            'type' => 'boolean',
+            'default' => true,
+            'label' => 'Admin notifications',
+            'description' => 'Show this plugin’s activity in the topbar notification bell',
+        ],
+        'activity_nav_dot' => [
+            'type' => 'boolean',
+            'default' => true,
+            'label' => 'Sidebar visual indicator',
+            'description' => 'Show a mint attention indicator on this plugin in the sidebar until opened',
+        ],
+    ];
+}
+
+/**
+ * Merge activity toggles into a plugin settings_schema when missing.
+ *
+ * @param array<string, mixed> $schema
+ * @return array<string, mixed>
+ */
+function birkly_plugin_merge_activity_settings_schema(array $schema): array
+{
+    foreach (birkly_plugin_activity_settings_schema() as $key => $field) {
+        if (!isset($schema[$key]) || !is_array($schema[$key])) {
+            $schema[$key] = $field;
+        }
+    }
+    return $schema;
+}
+
+/**
  * Read plugin settings toggles for activity (from settings/plugins.json or plugin settings API store).
  *
  * @return array{activity_notify: bool, activity_nav_dot: bool}

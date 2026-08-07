@@ -180,6 +180,12 @@
             closeInstallConsentModal();
         } else if (action === 'accept-install-consent') {
             acceptInstallConsent();
+        } else if (action === 'open-settings') {
+            openPluginSettings(el.getAttribute('data-plugin-id'));
+        } else if (action === 'close-settings-modal') {
+            closePluginSettingsModal();
+        } else if (action === 'save-settings') {
+            savePluginSettings();
         }
     }
 
@@ -218,7 +224,10 @@
                     action === 'close-review-modal' ||
                     action === 'submit-review' ||
                     action === 'close-install-consent' ||
-                    action === 'accept-install-consent'
+                    action === 'accept-install-consent' ||
+                    action === 'open-settings' ||
+                    action === 'close-settings-modal' ||
+                    action === 'save-settings'
                 ) {
                     handlePluginAction(el);
                 }
@@ -231,6 +240,8 @@
                 closeMarketplaceInstallModal();
             } else if (e.target.id === 'marketplace-consent-modal' && e.target.classList.contains('active')) {
                 closeInstallConsentModal();
+            } else if (e.target.id === 'plugin-settings-modal' && e.target.classList.contains('active')) {
+                closePluginSettingsModal();
             }
         });
 
@@ -255,6 +266,11 @@
             var consentModal = document.getElementById('marketplace-consent-modal');
             if (consentModal && consentModal.classList.contains('active')) {
                 closeInstallConsentModal();
+                return;
+            }
+            var settingsModal = document.getElementById('plugin-settings-modal');
+            if (settingsModal && settingsModal.classList.contains('active')) {
+                closePluginSettingsModal();
             }
         });
     }
@@ -1836,6 +1852,10 @@
                 ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
                 : '') +
             (options.hideManage ? '' :
+                (plugin.has_settings
+                    ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-settings" data-plugin-id="' +
+                        escapeHtml(plugin.id) + '">' + escapeHtml(t('settings', 'Settings')) + '</button>'
+                    : '') +
                 '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
                 (active ? 'Deactivate' : 'Activate') +
                 '</button>' +
@@ -3037,6 +3057,126 @@
         }
     }
 
+    function escapeAttr(str) {
+        return escapeHtml(str).replace(/`/g, '&#96;');
+    }
+
+    function renderPluginSettingField(key, schema, value) {
+        var type = (schema && schema.type) || 'string';
+        var label = (schema && schema.label) || key;
+        var help = (schema && schema.description) || '';
+        var id = 'plugin-setting-' + key.replace(/[^a-zA-Z0-9_-]/g, '_');
+        var field = '<div class="form-group" data-setting-key="' + escapeAttr(key) + '" data-setting-type="' + escapeAttr(type) + '">';
+
+        if (type === 'boolean') {
+            var checked = value === true || value === 1 || value === '1' || value === 'true';
+            field +=
+                '<label class="u-row-2">' +
+                '<input type="checkbox" id="' + id + '" name="' + escapeAttr(key) + '"' + (checked ? ' checked' : '') + '>' +
+                '<span>' + escapeHtml(label) + '</span>' +
+                '</label>';
+        } else if (type === 'integer' || type === 'number') {
+            field +=
+                '<label for="' + id + '">' + escapeHtml(label) + '</label>' +
+                '<input type="number" class="input" id="' + id + '" name="' + escapeAttr(key) + '" value="' +
+                escapeAttr(value == null ? '' : value) + '"' +
+                (type === 'integer' ? ' step="1"' : '') + '>';
+        } else {
+            field +=
+                '<label for="' + id + '">' + escapeHtml(label) + '</label>' +
+                '<input type="text" class="input" id="' + id + '" name="' + escapeAttr(key) + '" value="' +
+                escapeAttr(value == null ? '' : value) + '">';
+        }
+
+        if (help) {
+            field += '<p class="field-help">' + escapeHtml(help) + '</p>';
+        }
+        field += '</div>';
+        return field;
+    }
+
+    async function openPluginSettings(pluginId) {
+        if (!pluginId) return;
+        var modal = document.getElementById('plugin-settings-modal');
+        var fields = document.getElementById('plugin-settings-fields');
+        var idInput = document.getElementById('plugin-settings-id');
+        var title = document.getElementById('plugin-settings-title');
+        if (!modal || !fields || !idInput) return;
+
+        idInput.value = pluginId;
+        fields.innerHTML = '<p class="field-help">' + escapeHtml(t('loading', 'Loading…')) + '</p>';
+        modal.classList.add('active');
+
+        try {
+            var result = await pluginsApi('get_settings', { plugin_id: pluginId });
+            var data = result.data || {};
+            var plugin = data.plugin || {};
+            var schema = data.settings_schema || {};
+            var settings = data.settings || {};
+            if (title) {
+                title.textContent = (plugin.name || pluginId) + ' — ' + t('plugin_settings', 'Settings');
+            }
+            var keys = Object.keys(schema);
+            if (!keys.length) {
+                fields.innerHTML = '<p class="field-help">' + escapeHtml(t('no_plugin_settings', 'No settings available.')) + '</p>';
+                return;
+            }
+            fields.innerHTML = keys.map(function (key) {
+                return renderPluginSettingField(key, schema[key], settings[key]);
+            }).join('');
+        } catch (err) {
+            fields.innerHTML = '<p class="callout callout-danger">' + escapeHtml(err.message || 'Failed to load settings') + '</p>';
+        }
+    }
+
+    function closePluginSettingsModal() {
+        var modal = document.getElementById('plugin-settings-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    async function savePluginSettings() {
+        var idInput = document.getElementById('plugin-settings-id');
+        var fields = document.getElementById('plugin-settings-fields');
+        if (!idInput || !fields) return;
+        var pluginId = idInput.value;
+        if (!pluginId) return;
+
+        var settings = {};
+        fields.querySelectorAll('[data-setting-key]').forEach(function (group) {
+            var key = group.getAttribute('data-setting-key');
+            var type = group.getAttribute('data-setting-type') || 'string';
+            var input = group.querySelector('input, select, textarea');
+            if (!key || !input) return;
+            if (type === 'boolean') {
+                settings[key] = !!input.checked;
+            } else if (type === 'integer') {
+                settings[key] = parseInt(input.value, 10);
+                if (isNaN(settings[key])) settings[key] = 0;
+            } else if (type === 'number') {
+                settings[key] = parseFloat(input.value);
+                if (isNaN(settings[key])) settings[key] = 0;
+            } else {
+                settings[key] = input.value;
+            }
+        });
+
+        try {
+            await pluginsApi('save_settings', { plugin_id: pluginId, settings: settings });
+            if (window.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+                BirklyFeedback.toast(t('settings_saved', 'Settings saved'), 'success');
+            }
+            closePluginSettingsModal();
+        } catch (err) {
+            if (window.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+                BirklyFeedback.toast(err.message || 'Failed to save settings', 'error');
+            } else {
+                alert(err.message || 'Failed to save settings');
+            }
+        }
+    }
+
     window.PluginsPage = {
         checkAllUpdates: checkAllUpdates,
         upgradePlugin: upgradePlugin,
@@ -3059,6 +3199,9 @@
         backToMarketplaceBrowse: backToMarketplaceBrowse,
         openOfferEmbedModal: openOfferEmbedModal,
         closeOfferEmbedModal: closeOfferEmbedModal,
+        openPluginSettings: openPluginSettings,
+        closePluginSettingsModal: closePluginSettingsModal,
+        savePluginSettings: savePluginSettings,
         // P53-M7/M8/M11 — Hub Installed pack hooks
         listInstalledTemplatePacks: listInstalledTemplatePacks,
         getTemplatePackStatus: getTemplatePackStatus,
@@ -3071,6 +3214,9 @@
     window.openInstallPluginModal = openInstallModal;
     window.closeInstallPluginModal = closeInstallModal;
     window.installPlugin = installFromFile;
+    window.openPluginSettings = openPluginSettings;
+    window.closePluginSettingsModal = closePluginSettingsModal;
+    window.savePluginSettings = savePluginSettings;
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
