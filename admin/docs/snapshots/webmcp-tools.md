@@ -201,6 +201,8 @@ Website tools always run on the **page origin** — wherever your HTML is actual
 
 This mirrors how your **Agent Guide JSON** reaches an external site: Birkly's canonical URL always works (`{cms}/api/public/ai_presence.php` / `{cms}/.well-known/agent-guide.json`); Publish additionally offers a **download** of `agent-guide.json` for your own `/.well-known/` folder, and a **reverse-proxy** snippet if you'd rather serve it from your own domain. **Birkly MCP** (Connections) never changes with hosting mode — AI apps always connect to your Birkly address, never your website host.
 
+On **`external`** pages, `birkly-client.js` also quietly adds a discovery `<link rel="alternate" type="application/json" href="{cms}/.well-known/agent-guide.json">` to the page `<head>` whenever it's loaded with `data-cms-url`. This gives agents a way to find your canonical Guide on the Birkly host straight away, even before you've set up a download or reverse-proxy on your own domain. It's automatic, non-visual, and added at most once per page.
+
 ### Verifying it works (technical)
 
 On a supported Chromium build (146+), enable the `#enable-webmcp-testing` flag and open a page with website tools on. Registered tools appear in the browser's model-context inspector. This is a technical, opt-in check — Birkly does not ask non-technical owners to flip browser flags as a normal step.
