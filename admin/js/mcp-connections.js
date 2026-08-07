@@ -17,6 +17,13 @@
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
         if (!pane) return false;
+        // Agent Guide → Connections (P60.1 home)
+        if (document.getElementById('ap-connections-mount')) {
+            const connectionsPanel = document.getElementById('ap-panel-connections');
+            if (connectionsPanel && !connectionsPanel.hidden) {
+                return true;
+            }
+        }
         const hash = window.location.hash.replace('#', '');
         const aiHashes = [
             'ai-integrations',
@@ -109,15 +116,19 @@
     }
 
     function updateDevBridgeLink() {
-        const link = document.getElementById('mcp-bridge-dev-link');
-        if (!link) return;
+        const links = document.querySelectorAll('#mcp-bridge-dev-link, a[data-mcp-bridge-link]');
+        if (!links.length) return;
         const base = getBaseUrl().replace(/\/$/, '');
         const path = (typeof Birkly !== 'undefined' && Birkly.url) ? Birkly.url('/mcp-bridge.js') : '/mcp-bridge.js';
+        let href;
         try {
-            link.href = path.startsWith('http') ? path : new URL(path, base + '/').href;
+            href = path.startsWith('http') ? path : new URL(path, base + '/').href;
         } catch (e) {
-            link.href = base + path;
+            href = base + path;
         }
+        links.forEach(function (link) {
+            link.href = href;
+        });
     }
 
     function initHelpTips() {
@@ -783,7 +794,7 @@
         copySnippet
     };
 
-    // Explicit mount entry point (P60-M4) so surfaces other than Settings → AI —
+    // Explicit mount entry point (P60-M4) so surfaces other than Agent Guide → Connections —
     // e.g. the Agent Guide → Connections zone — can initialize the same module.
     // `initMcpConnections` guards against double-init, so this is safe to call
     // repeatedly. The two surfaces are separate pages, so the shared DOM ids

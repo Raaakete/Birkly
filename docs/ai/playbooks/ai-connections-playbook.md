@@ -4,7 +4,7 @@ Use for: floating chat in admin, API key providers, roles, approvals, playbooks 
 
 ## Setup
 
-1. **Settings → AI → Built-in assistant** → Quick connect
+1. **Agent Guide → Connections → Built-in assistant** → Quick connect
 2. Provider: OpenAI, Anthropic, Google, OpenRouter, Ollama, Custom
 3. API key (skip for local Ollama)
 4. Test connection → Connect

@@ -1,700 +1,938 @@
 {
-  "version": 3,
-  "docs_base_url": "https://docs.birkly.com",
-  "manifest_version": "2026-07-07-p13-p15",
-  "description": "Public help manifest for Birkly CMS live fetch (P15-M3). CMS merges with bundled snapshots offline.",
-  "topics": [
-    {
-      "id": "getting-started",
-      "title": "Getting started",
-      "keywords": [
-        "start",
-        "setup",
-        "onboarding",
-        "first steps",
-        "welcome"
-      ],
-      "docs_path": "00-overview/getting-started.html",
-      "ai_topic": "playbooks-index"
-    },
-    {
-      "id": "closed-alpha",
-      "title": "Closed alpha guide",
-      "keywords": [
-        "alpha",
-        "beta",
-        "tester",
-        "feedback",
-        "invite",
-        "waitlist"
-      ],
-      "docs_path": "00-overview/closed-alpha-guide.html"
-    },
-    {
-      "id": "alpha-legal",
-      "title": "Closed alpha — legal and feedback",
-      "keywords": [
-        "legal",
-        "terms",
-        "privacy",
-        "feedback",
-        "alpha"
-      ],
-      "docs_path": "00-overview/alpha-legal.html"
-    },
-    {
-      "id": "dashboard",
-      "title": "Dashboard",
-      "keywords": [
-        "dashboard",
-        "overview",
-        "home",
-        "stats",
-        "activity"
-      ],
-      "docs_path": "01-admin/dashboard.html"
-    },
-    {
-      "id": "responsive-dashboard",
-      "title": "Responsive dashboard and widgets",
-      "keywords": [
-        "dashboard",
-        "widget",
-        "quick actions",
-        "responsive",
-        "commerce",
-        "analytics"
-      ],
-      "docs_path": "01-admin/admin-responsive-dashboard.html"
-    },
-    {
-      "id": "account",
-      "title": "Account",
-      "keywords": [
-        "account",
-        "profile",
-        "password",
-        "2fa",
-        "cloud account",
-        "sso",
-        "link"
-      ],
-      "docs_path": "01-admin/account.html"
-    },
-    {
-      "id": "admin-appearance",
-      "title": "Admin appearance — theme",
-      "keywords": [
-        "dark mode",
-        "theme",
-        "light",
-        "responsive",
-        "mobile"
-      ],
-      "docs_path": "01-admin/admin-appearance.html"
-    },
-    {
-      "id": "content-model-overview",
-      "title": "Content model overview",
-      "keywords": [
-        "content model",
-        "collections",
-        "entries",
-        "schema",
-        "decision tree",
-        "site elements",
-        "structure",
-        "overview"
-      ],
-      "docs_path": "02-content/content-model-overview.html",
-      "ai_topic": "content-model"
-    },
-    {
-      "id": "collections",
-      "title": "Collections",
-      "keywords": [
-        "collection",
-        "collections",
-        "content type",
-        "schema",
-        "fields",
-        "handle",
-        "create collection"
-      ],
-      "docs_path": "02-content/collections.html",
-      "ai_topic": "content-model"
-    },
-    {
-      "id": "entries",
-      "title": "Entries & collections",
-      "keywords": [
-        "entries",
-        "collections",
-        "content",
-        "create",
-        "edit",
-        "slug"
-      ],
-      "docs_path": "02-content/entries.html",
-      "ai_topic": "content-model"
-    },
-    {
-      "id": "collection-groups",
-      "title": "Collection groups",
-      "keywords": [
-        "groups",
-        "collection groups",
-        "groups.json",
-        "nested",
-        "navigation",
-        "content overview",
-        "collection_groups"
-      ],
-      "docs_path": "02-content/collection-groups.html",
-      "ai_topic": "collection-groups"
-    },
-    {
-      "id": "entry-editor",
-      "title": "Entry editor",
-      "keywords": [
-        "entry editor",
-        "write",
-        "publish",
-        "draft",
-        "fields",
-        "save"
-      ],
-      "docs_path": "01-admin/entry-editor.html",
-      "ai_topic": "content-model"
-    },
-    {
-      "id": "dynamic-items-field",
-      "title": "Dynamic items field",
-      "keywords": [
-        "dynamic items",
-        "dynamicitems",
-        "add block",
-        "blocks",
-        "repeating",
-        "fieldtype"
-      ],
-      "docs_path": "02-content/dynamic-items-field.html",
-      "ai_topic": "content-model"
-    },
-    {
-      "id": "site-elements-pattern",
-      "title": "Site elements pattern",
-      "keywords": [
-        "site elements",
-        "header",
-        "footer",
-        "birkly-region",
-        "chrome",
-        "layout",
-        "global"
-      ],
-      "docs_path": "02-content/site-elements-pattern.html",
-      "ai_topic": "web-project-patterns"
-    },
-    {
-      "id": "settings",
-      "title": "Settings",
-      "keywords": [
-        "settings",
-        "general",
-        "branding",
-        "security",
-        "monitoring",
-        "api",
-        "domains"
-      ],
-      "docs_path": "01-admin/settings.html",
-      "ai_topic": "settings-roles"
-    },
-    {
-      "id": "monitoring-alerts",
-      "title": "Monitoring and health alerts",
-      "keywords": [
-        "monitoring",
-        "health",
-        "alert",
-        "webhook",
-        "email",
-        "ops"
-      ],
-      "docs_path": "07-operations/monitoring-alerts.html"
-    },
-    {
-      "id": "ai",
-      "title": "AI assistant",
-      "keywords": [
-        "ai",
-        "chat",
-        "assistant",
-        "openai",
-        "ollama",
-        "anthropic",
-        "byoai",
-        "approval"
-      ],
-      "docs_path": "01-admin/ai-overview.html",
-      "ai_topic": "ai-connections"
-    },
-    {
-      "id": "ai-connections",
-      "title": "AI connections (outbound)",
-      "keywords": [
-        "ai connections",
-        "provider",
-        "api key",
-        "model",
-        "role",
-        "byoai"
-      ],
-      "docs_path": "01-admin/ai-connections.html",
-      "ai_topic": "ai-connections"
-    },
-    {
-      "id": "mcp-connections",
-      "title": "MCP connections (inbound)",
-      "keywords": [
-        "mcp",
-        "claude desktop",
-        "model context protocol",
-        "inbound",
-        "endpoint"
-      ],
-      "docs_path": "01-admin/mcp-connections.html",
-      "ai_topic": "mcp-setup"
-    },
-    {
-      "id": "automation",
-      "title": "Automation",
-      "keywords": [
-        "automation",
-        "workflow",
-        "trigger",
-        "webhook",
-        "schedule"
-      ],
-      "docs_path": "05-automation/automation-overview.html",
-      "ai_topic": "automation"
-    },
-    {
-      "id": "user-plugin",
-      "title": "User management plugin",
-      "keywords": [
-        "user plugin",
-        "registration",
-        "login",
-        "members",
-        "permissions"
-      ],
-      "docs_path": "06-extensibility/user-plugin.html",
-      "ai_topic": "user-management"
-    },
-    {
-      "id": "content-editor",
-      "title": "ContentEditor field",
-      "keywords": [
-        "content editor",
-        "rich text",
-        "blocks",
-        "html",
-        "fieldtype"
-      ],
-      "docs_path": "02-content/content-editor.html",
-      "ai_topic": "content-editor"
-    },
-    {
-      "id": "plugins",
-      "title": "Plugins",
-      "keywords": [
-        "plugins",
-        "extensions",
-        "install",
-        "enable"
-      ],
-      "docs_path": "06-extensibility/plugins.html",
-      "ai_topic": "plugins-overview"
-    },
-    {
-      "id": "marketplace",
-      "title": "Marketplace go-live",
-      "keywords": [
-        "marketplace",
-        "install",
-        "official",
-        "paid",
-        "license"
-      ],
-      "docs_path": "06-extensibility/marketplace-go-live.html",
-      "ai_topic": "plugins-overview"
-    },
-    {
-      "id": "marketplace-buyer",
-      "title": "Marketplace — buyer guide",
-      "keywords": [
-        "marketplace",
-        "buyer",
-        "license",
-        "subscription",
-        "checkout",
-        "stripe"
-      ],
-      "docs_path": "06-extensibility/marketplace-buyer-guide.html",
-      "ai_topic": "plugins-overview"
-    },
-    {
-      "id": "plugin-economy",
-      "title": "Plugin economy overview",
-      "keywords": [
-        "marketplace",
-        "plugin economy",
-        "ops",
-        "starters",
-        "extensions",
-        "catalog"
-      ],
-      "docs_path": "06-plugin-economy/overview.html"
-    },
-    {
-      "id": "plugin-economy-install",
-      "title": "Install plugins from marketplace",
-      "keywords": [
-        "install",
-        "marketplace",
-        "license",
-        "consent",
-        "permissions",
-        "activate"
-      ],
-      "docs_path": "06-plugin-economy/for-site-owners.html",
-      "ai_topic": "plugins-overview"
-    },
-    {
-      "id": "plugin-economy-providers",
-      "title": "Marketplace providers",
-      "keywords": [
-        "provider",
-        "publisher",
-        "seller",
-        "stripe connect",
-        "publish",
-        "offer"
-      ],
-      "docs_path": "06-plugin-economy/for-providers.html"
-    },
-    {
-      "id": "plugin-economy-official",
-      "title": "Official vs third-party plugins",
-      "keywords": [
-        "official",
-        "third-party",
-        "commerce",
-        "events",
-        "automation",
-        "free"
-      ],
-      "docs_path": "06-plugin-economy/official-plugins.html"
-    },
-    {
-      "id": "plugin-economy-starters",
-      "title": "Starter and template packs",
-      "keywords": [
-        "starter",
-        "template pack",
-        "onboarding",
-        "ops",
-        "project",
-        "demo"
-      ],
-      "docs_path": "06-plugin-economy/theme-and-template-packs.html"
-    },
-    {
-      "id": "plugin-economy-security",
-      "title": "Plugin security and consent",
-      "keywords": [
-        "security",
-        "consent",
-        "permissions",
-        "qc",
-        "review",
-        "denylist"
-      ],
-      "docs_path": "06-plugin-economy/security-and-review.html"
-    },
-    {
-      "id": "commerce",
-      "title": "Commerce plugin",
-      "keywords": [
-        "commerce",
-        "cart",
-        "checkout",
-        "orders",
-        "payments"
-      ],
-      "docs_path": "06-extensibility/plugins/commerce.html",
-      "ai_topic": "commerce"
-    },
-    {
-      "id": "commerce-multi-currency",
-      "title": "Commerce multi-currency",
-      "keywords": [
-        "commerce",
-        "currency",
-        "eur",
-        "usd",
-        "checkout"
-      ],
-      "docs_path": "06-extensibility/commerce-multi-currency.html"
-    },
-    {
-      "id": "commerce-live-import",
-      "title": "Commerce live import",
-      "keywords": [
-        "import",
-        "shopify",
-        "woocommerce",
-        "etsy",
-        "square",
-        "sync"
-      ],
-      "docs_path": "06-extensibility/commerce-live-import.html"
-    },
-    {
-      "id": "commerce-inventory-webhooks",
-      "title": "Commerce inventory webhooks",
-      "keywords": [
-        "webhook",
-        "inventory",
-        "stock",
-        "shopify",
-        "woocommerce",
-        "hmac"
-      ],
-      "docs_path": "06-extensibility/commerce-inventory-webhooks.html"
-    },
-    {
-      "id": "commerce-warehouse-stock",
-      "title": "Commerce warehouse stock",
-      "keywords": [
-        "warehouse",
-        "stock",
-        "sku",
-        "quantity",
-        "inventory"
-      ],
-      "docs_path": "06-extensibility/commerce-warehouse-stock.html"
-    },
-    {
-      "id": "plugin-denylist",
-      "title": "Plugin security denylist",
-      "keywords": [
-        "denylist",
-        "security",
-        "capabilities",
-        "spaces",
-        "collections"
-      ],
-      "docs_path": "06-extensibility/plugin-security-denylist.html"
-    },
-    {
-      "id": "scaffold-plugin",
-      "title": "Plugin scaffolding CLI",
-      "keywords": [
-        "scaffold",
-        "plugin",
-        "cli",
-        "developer",
-        "create"
-      ],
-      "docs_path": "06-extensibility/scaffold-plugin-cli.html"
-    },
-    {
-      "id": "media",
-      "title": "Media library",
-      "keywords": [
-        "media",
-        "images",
-        "upload",
-        "files",
-        "library"
-      ],
-      "docs_path": "01-admin/media-library.html",
-      "ai_topic": "media"
-    },
-    {
-      "id": "help",
-      "title": "Help & documentation",
-      "keywords": [
-        "help",
-        "docs",
-        "documentation",
-        "search",
-        "birkly-docs"
-      ],
-      "docs_path": "01-admin/help-and-onboarding.html",
-      "ai_topic": "playbooks-index"
-    },
-    {
-      "id": "reference-projects",
-      "title": "Reference projects",
-      "keywords": [
-        "reference",
-        "starter",
-        "blog",
-        "portfolio",
-        "demo",
-        "template",
-        "install"
-      ],
-      "docs_path": "03-templating/reference-projects.html",
-      "ai_topic": "web-project-patterns"
-    },
-    {
-      "id": "production-optimization",
-      "title": "Production optimization",
-      "keywords": [
-        "hydrate",
-        "snapshot",
-        "bake",
-        "performance",
-        "seo",
-        "birkly-client"
-      ],
-      "docs_path": "03-templating/production-optimization.html"
-    },
-    {
-      "id": "agent-guide",
-      "title": "Agent Guide",
-      "keywords": [
-        "agent guide",
-        "sources of truth",
-        "claims",
-        "evidence",
-        "well-known",
-        "agent-guide.json",
-        "cross-links",
-        "publish",
-        "ai presence",
-        "hub",
-        "tools",
-        "connections",
-        "webmcp",
-        "website tools"
-      ],
-      "docs_path": "02-content/agent-guide.html",
-      "ai_topic": "agent-guide"
-    },
-    {
-      "id": "agent-guide-getting-started",
-      "title": "Agent Guide — getting started",
-      "keywords": [
-        "agent guide",
-        "tutorial",
-        "publish",
-        "sources of truth",
-        "first steps"
-      ],
-      "docs_path": "02-content/agent-guide-getting-started.html"
-    },
-    {
-      "id": "agent-guide-claims",
-      "title": "Agent Guide — claims & cross-links",
-      "keywords": [
-        "claims",
-        "evidence",
-        "amazon",
-        "reviews",
-        "marketplace",
-        "sources of truth",
-        "proof"
-      ],
-      "docs_path": "02-content/agent-guide-claims-evidence-and-links.html"
-    },
-    {
-      "id": "agent-guide-api",
-      "title": "Agent Guide public API",
-      "keywords": [
-        "agent-guide.json",
-        "well-known",
-        "public api",
-        "graph",
-        "json-ld",
-        "brand-context.json"
-      ],
-      "docs_path": "04-integration/agent-guide-public-api.html"
-    },
-    {
-      "id": "webmcp-tools",
-      "title": "Website tools (WebMCP)",
-      "keywords": [
-        "webmcp",
-        "website tools",
-        "model context protocol",
-        "browser agent",
-        "tool catalog",
-        "agent guide tools",
-        "modelcontext",
-        "registertool",
-        "confirmation",
-        "off by default"
-      ],
-      "docs_path": "04-integration/webmcp-tools.html"
-    },
-    {
-      "id": "choose-your-stack",
-      "title": "Choose your stack",
-      "keywords": [
-        "stack",
-        "integration",
-        "html",
-        "spa",
-        "ssr",
-        "web components",
-        "react",
-        "vue"
-      ],
-      "docs_path": "04-integration/choose-your-stack.html"
-    },
-    {
-      "id": "web-components",
-      "title": "Web components",
-      "keywords": [
-        "birkly-region",
-        "data-birkly-region",
-        "custom element",
-        "enhance",
-        "shadow"
-      ],
-      "docs_path": "04-integration/web-components.html"
-    },
-    {
-      "id": "spa-react-vue",
-      "title": "SPA (React / Vue)",
-      "keywords": [
-        "react",
-        "vue",
-        "spa",
-        "json",
-        "fetch",
-        "jsx"
-      ],
-      "docs_path": "04-integration/spa-react-vue.html"
-    },
-    {
-      "id": "ssr-and-build-time",
-      "title": "SSR and build-time",
-      "keywords": [
-        "ssr",
-        "astro",
-        "next",
-        "php",
-        "page_bundle",
-        "static"
-      ],
-      "docs_path": "04-integration/ssr-and-build-time.html"
-    }
-  ]
+    "version": 3,
+    "docs_base_url": "https://docs.birkly.com",
+    "manifest_version": "2026-07-07-p13-p15",
+    "description": "Public help manifest for Birkly CMS live fetch (P15-M3). CMS merges with bundled snapshots offline.",
+    "topics": [
+        {
+            "id": "getting-started",
+            "title": "Getting started",
+            "keywords": [
+                "start",
+                "setup",
+                "onboarding",
+                "first steps",
+                "welcome"
+            ],
+            "docs_path": "00-overview/getting-started.html",
+            "ai_topic": "playbooks-index"
+        },
+        {
+            "id": "closed-alpha",
+            "title": "Closed alpha guide",
+            "keywords": [
+                "alpha",
+                "beta",
+                "tester",
+                "feedback",
+                "invite",
+                "waitlist"
+            ],
+            "docs_path": "00-overview/closed-alpha-guide.html"
+        },
+        {
+            "id": "alpha-legal",
+            "title": "Closed alpha — legal and feedback",
+            "keywords": [
+                "legal",
+                "terms",
+                "privacy",
+                "feedback",
+                "alpha"
+            ],
+            "docs_path": "00-overview/alpha-legal.html"
+        },
+        {
+            "id": "dashboard",
+            "title": "Dashboard",
+            "keywords": [
+                "dashboard",
+                "overview",
+                "home",
+                "stats",
+                "activity"
+            ],
+            "docs_path": "01-admin/dashboard.html"
+        },
+        {
+            "id": "responsive-dashboard",
+            "title": "Responsive dashboard and widgets",
+            "keywords": [
+                "dashboard",
+                "widget",
+                "quick actions",
+                "responsive",
+                "commerce",
+                "analytics"
+            ],
+            "docs_path": "01-admin/admin-responsive-dashboard.html"
+        },
+        {
+            "id": "account",
+            "title": "Account",
+            "keywords": [
+                "account",
+                "profile",
+                "password",
+                "2fa",
+                "cloud account",
+                "sso",
+                "link"
+            ],
+            "docs_path": "01-admin/account.html"
+        },
+        {
+            "id": "admin-appearance",
+            "title": "Admin appearance — theme",
+            "keywords": [
+                "dark mode",
+                "theme",
+                "light",
+                "responsive",
+                "mobile"
+            ],
+            "docs_path": "01-admin/admin-appearance.html"
+        },
+        {
+            "id": "admin-design-language",
+            "title": "Admin design language",
+            "keywords": [
+                "design",
+                "design language",
+                "design system",
+                "tokens",
+                "helpers",
+                "components",
+                "css",
+                "styling",
+                "theme"
+            ],
+            "docs_path": "01-admin/admin-design-language.html"
+        },
+        {
+            "id": "plugin-admin-styling",
+            "title": "Plugin admin styling",
+            "keywords": [
+                "plugin",
+                "styling",
+                "css",
+                "design language",
+                "tokens",
+                "fieldtype",
+                "admin page"
+            ],
+            "docs_path": "06-plugin-economy/plugin-admin-styling.html"
+        },
+        {
+            "id": "content-model-overview",
+            "title": "Content model overview",
+            "keywords": [
+                "content model",
+                "collections",
+                "entries",
+                "schema",
+                "decision tree",
+                "site elements",
+                "structure",
+                "overview"
+            ],
+            "docs_path": "02-content/content-model-overview.html",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "collections",
+            "title": "Collections",
+            "keywords": [
+                "collection",
+                "collections",
+                "content type",
+                "schema",
+                "fields",
+                "handle",
+                "create collection"
+            ],
+            "docs_path": "02-content/collections.html",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "entries",
+            "title": "Entries & collections",
+            "keywords": [
+                "entries",
+                "collections",
+                "content",
+                "create",
+                "edit",
+                "slug"
+            ],
+            "docs_path": "02-content/entries.html",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "collection-groups",
+            "title": "Collection groups",
+            "keywords": [
+                "groups",
+                "collection groups",
+                "groups.json",
+                "nested",
+                "navigation",
+                "content overview",
+                "collection_groups"
+            ],
+            "docs_path": "02-content/collection-groups.html",
+            "ai_topic": "collection-groups"
+        },
+        {
+            "id": "entry-editor",
+            "title": "Entry editor",
+            "keywords": [
+                "entry editor",
+                "write",
+                "publish",
+                "draft",
+                "fields",
+                "save"
+            ],
+            "docs_path": "01-admin/entry-editor.html",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "dynamic-items-field",
+            "title": "Dynamic items field",
+            "keywords": [
+                "dynamic items",
+                "dynamicitems",
+                "add block",
+                "blocks",
+                "repeating",
+                "fieldtype"
+            ],
+            "docs_path": "02-content/dynamic-items-field.html",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "site-elements-pattern",
+            "title": "Site elements pattern",
+            "keywords": [
+                "site elements",
+                "header",
+                "footer",
+                "birkly-region",
+                "chrome",
+                "layout",
+                "global"
+            ],
+            "docs_path": "02-content/site-elements-pattern.html",
+            "ai_topic": "web-project-patterns"
+        },
+        {
+            "id": "settings",
+            "title": "Settings",
+            "keywords": [
+                "settings",
+                "general",
+                "branding",
+                "security",
+                "monitoring",
+                "api",
+                "domains",
+                "analytics",
+                "developer mode"
+            ],
+            "docs_path": "01-admin/settings.html",
+            "ai_topic": "settings-roles"
+        },
+        {
+            "id": "analytics-presets",
+            "title": "Analytics presets",
+            "keywords": [
+                "analytics",
+                "presets",
+                "off",
+                "minimal",
+                "standard",
+                "advanced",
+                "consent",
+                "privacy",
+                "gdpr",
+                "tracking",
+                "visitor"
+            ],
+            "docs_path": "01-admin/analytics-presets.html"
+        },
+        {
+            "id": "developer-mode",
+            "title": "Developer mode",
+            "keywords": [
+                "developer mode",
+                "dx",
+                "export",
+                "template pack",
+                "site pack",
+                "system info",
+                "debug",
+                "mcp smoke"
+            ],
+            "docs_path": "01-admin/developer-mode.html"
+        },
+        {
+            "id": "monitoring-alerts",
+            "title": "Monitoring and health alerts",
+            "keywords": [
+                "monitoring",
+                "health",
+                "alert",
+                "webhook",
+                "email",
+                "ops"
+            ],
+            "docs_path": "07-operations/monitoring-alerts.html"
+        },
+        {
+            "id": "ai",
+            "title": "AI assistant",
+            "keywords": [
+                "ai",
+                "chat",
+                "assistant",
+                "openai",
+                "ollama",
+                "anthropic",
+                "byoai",
+                "approval"
+            ],
+            "docs_path": "01-admin/ai-overview.html",
+            "ai_topic": "ai-connections"
+        },
+        {
+            "id": "ai-connections",
+            "title": "AI connections (outbound)",
+            "keywords": [
+                "ai connections",
+                "provider",
+                "api key",
+                "model",
+                "role",
+                "byoai"
+            ],
+            "docs_path": "01-admin/ai-connections.html",
+            "ai_topic": "ai-connections"
+        },
+        {
+            "id": "mcp-connections",
+            "title": "MCP connections (inbound)",
+            "keywords": [
+                "mcp",
+                "claude desktop",
+                "model context protocol",
+                "inbound",
+                "endpoint",
+                "localhost",
+                "mcp-bridge",
+                "tunnel"
+            ],
+            "docs_path": "01-admin/mcp-connections.html",
+            "ai_topic": "mcp-setup"
+        },
+        {
+            "id": "automation",
+            "title": "Automation",
+            "keywords": [
+                "automation",
+                "workflow",
+                "trigger",
+                "webhook",
+                "schedule",
+                "recipe"
+            ],
+            "docs_path": "05-automation/automation-overview.html",
+            "ai_topic": "automation"
+        },
+        {
+            "id": "commerce-recipes",
+            "title": "Automation Commerce recipe pack",
+            "keywords": [
+                "recipe",
+                "commerce",
+                "post-purchase",
+                "dunning",
+                "low-stock",
+                "shipped",
+                "import_recipe"
+            ],
+            "docs_path": "05-automation/commerce-recipes.html"
+        },
+        {
+            "id": "user-plugin",
+            "title": "User management plugin",
+            "keywords": [
+                "user plugin",
+                "registration",
+                "login",
+                "members",
+                "permissions"
+            ],
+            "docs_path": "06-extensibility/user-plugin.html",
+            "ai_topic": "user-management"
+        },
+        {
+            "id": "content-editor",
+            "title": "ContentEditor field",
+            "keywords": [
+                "content editor",
+                "rich text",
+                "blocks",
+                "html",
+                "fieldtype"
+            ],
+            "docs_path": "02-content/content-editor.html",
+            "ai_topic": "content-editor"
+        },
+        {
+            "id": "plugins",
+            "title": "Plugins",
+            "keywords": [
+                "plugins",
+                "extensions",
+                "install",
+                "enable"
+            ],
+            "docs_path": "06-extensibility/plugins.html",
+            "ai_topic": "plugins-overview"
+        },
+        {
+            "id": "marketplace",
+            "title": "Marketplace go-live",
+            "keywords": [
+                "marketplace",
+                "install",
+                "official",
+                "paid",
+                "license"
+            ],
+            "docs_path": "06-extensibility/marketplace-go-live.html",
+            "ai_topic": "plugins-overview"
+        },
+        {
+            "id": "marketplace-buyer",
+            "title": "Marketplace — buyer guide",
+            "keywords": [
+                "marketplace",
+                "buyer",
+                "license",
+                "subscription",
+                "checkout",
+                "stripe"
+            ],
+            "docs_path": "06-extensibility/marketplace-buyer-guide.html",
+            "ai_topic": "plugins-overview"
+        },
+        {
+            "id": "plugin-economy",
+            "title": "Plugin economy overview",
+            "keywords": [
+                "marketplace",
+                "plugin economy",
+                "ops",
+                "starters",
+                "extensions",
+                "catalog"
+            ],
+            "docs_path": "06-plugin-economy/overview.html"
+        },
+        {
+            "id": "plugin-economy-install",
+            "title": "Install plugins from marketplace",
+            "keywords": [
+                "install",
+                "marketplace",
+                "license",
+                "consent",
+                "permissions",
+                "activate"
+            ],
+            "docs_path": "06-plugin-economy/for-site-owners.html",
+            "ai_topic": "plugins-overview"
+        },
+        {
+            "id": "plugin-economy-providers",
+            "title": "Marketplace providers",
+            "keywords": [
+                "provider",
+                "publisher",
+                "seller",
+                "stripe connect",
+                "publish",
+                "offer"
+            ],
+            "docs_path": "06-plugin-economy/for-providers.html"
+        },
+        {
+            "id": "plugin-economy-official",
+            "title": "Official vs third-party plugins",
+            "keywords": [
+                "official",
+                "third-party",
+                "commerce",
+                "events",
+                "automation",
+                "free"
+            ],
+            "docs_path": "06-plugin-economy/official-plugins.html"
+        },
+        {
+            "id": "plugin-economy-starters",
+            "title": "Hub, themes, and site packs",
+            "keywords": [
+                "hub",
+                "starter",
+                "site pack",
+                "template pack",
+                "template_pack",
+                "upload pack",
+                "onboarding",
+                "ops",
+                "project",
+                "demo",
+                "theme"
+            ],
+            "docs_path": "06-plugin-economy/theme-and-template-packs.html"
+        },
+        {
+            "id": "plugin-economy-security",
+            "title": "Plugin security and consent",
+            "keywords": [
+                "security",
+                "consent",
+                "permissions",
+                "qc",
+                "review",
+                "denylist"
+            ],
+            "docs_path": "06-plugin-economy/security-and-review.html"
+        },
+        {
+            "id": "commerce",
+            "title": "Commerce plugin",
+            "keywords": [
+                "commerce",
+                "cart",
+                "checkout",
+                "hybrid cart",
+                "orders",
+                "payments",
+                "customers",
+                "promotions",
+                "gift cards",
+                "tax",
+                "fulfillment",
+                "store kit",
+                "ops intelligence"
+            ],
+            "docs_path": "06-extensibility/plugins/commerce.html",
+            "ai_topic": "commerce"
+        },
+        {
+            "id": "commerce-hybrid-cart",
+            "title": "Commerce hybrid cart",
+            "keywords": [
+                "hybrid cart",
+                "split checkout",
+                "ship",
+                "deliver",
+                "register",
+                "subscribe",
+                "help-hybrid-cart",
+                "commerce-storefront"
+            ],
+            "docs_path": "06-extensibility/commerce-hybrid-cart.html"
+        },
+        {
+            "id": "commerce-store-kit",
+            "title": "Commerce store kit",
+            "keywords": [
+                "store kit",
+                "seed store",
+                "demo shop",
+                "starter shop",
+                "mcp",
+                "agent",
+                "commerce-store-kit"
+            ],
+            "docs_path": "06-extensibility/commerce-store-kit.html",
+            "ai_topic": "commerce-store-kit"
+        },
+        {
+            "id": "commerce-customers",
+            "title": "Commerce customers",
+            "keywords": [
+                "customers",
+                "commerce",
+                "csv",
+                "email",
+                "timeline",
+                "user management"
+            ],
+            "docs_path": "06-extensibility/commerce-customers.html"
+        },
+        {
+            "id": "commerce-promotions",
+            "title": "Commerce promotions",
+            "keywords": [
+                "discounts",
+                "promotions",
+                "coupon",
+                "free shipping",
+                "stacking",
+                "usage limit"
+            ],
+            "docs_path": "06-extensibility/commerce-promotions.html"
+        },
+        {
+            "id": "commerce-gift-cards-quotes",
+            "title": "Commerce gift cards and quotes",
+            "keywords": [
+                "gift card",
+                "store credit",
+                "quotes",
+                "draft orders",
+                "commerce_gift_card_issued"
+            ],
+            "docs_path": "06-extensibility/commerce-gift-cards-quotes.html"
+        },
+        {
+            "id": "commerce-tax",
+            "title": "Commerce tax",
+            "keywords": [
+                "tax",
+                "tax class",
+                "vat",
+                "vat_id",
+                "reverse charge",
+                "stripe tax",
+                "tax_lines",
+                "commerce"
+            ],
+            "docs_path": "06-extensibility/commerce-tax.html"
+        },
+        {
+            "id": "commerce-shipping",
+            "title": "Commerce shipping rates",
+            "keywords": [
+                "shipping",
+                "easypost",
+                "shipping zones",
+                "live rates",
+                "weight_grams",
+                "commerce"
+            ],
+            "docs_path": "06-extensibility/commerce-shipping.html"
+        },
+        {
+            "id": "commerce-fulfillment",
+            "title": "Commerce fulfillment",
+            "keywords": [
+                "fulfillment",
+                "shipment",
+                "packing slip",
+                "partial ship",
+                "tracking",
+                "easypost",
+                "commerce_tracking_updated"
+            ],
+            "docs_path": "06-extensibility/commerce-fulfillment.html"
+        },
+        {
+            "id": "commerce-multi-currency",
+            "title": "Commerce multi-currency",
+            "keywords": [
+                "commerce",
+                "currency",
+                "eur",
+                "usd",
+                "checkout"
+            ],
+            "docs_path": "06-extensibility/commerce-multi-currency.html"
+        },
+        {
+            "id": "commerce-shopify-cutover",
+            "title": "Shopify cutover playbook",
+            "keywords": [
+                "shopify",
+                "cutover",
+                "migration",
+                "import",
+                "customers",
+                "archived orders",
+                "dry-run",
+                "rollback"
+            ],
+            "docs_path": "06-extensibility/commerce-shopify-cutover.html"
+        },
+        {
+            "id": "commerce-live-import",
+            "title": "Commerce live import",
+            "keywords": [
+                "import",
+                "shopify",
+                "woocommerce",
+                "etsy",
+                "square",
+                "sync"
+            ],
+            "docs_path": "06-extensibility/commerce-live-import.html"
+        },
+        {
+            "id": "commerce-inventory-webhooks",
+            "title": "Commerce inventory webhooks",
+            "keywords": [
+                "webhook",
+                "inventory",
+                "stock",
+                "shopify",
+                "woocommerce",
+                "hmac"
+            ],
+            "docs_path": "06-extensibility/commerce-inventory-webhooks.html"
+        },
+        {
+            "id": "commerce-warehouse-stock",
+            "title": "Commerce warehouse stock",
+            "keywords": [
+                "warehouse",
+                "stock",
+                "sku",
+                "quantity",
+                "inventory"
+            ],
+            "docs_path": "06-extensibility/commerce-warehouse-stock.html"
+        },
+        {
+            "id": "plugin-denylist",
+            "title": "Plugin security denylist",
+            "keywords": [
+                "denylist",
+                "security",
+                "capabilities",
+                "spaces",
+                "collections"
+            ],
+            "docs_path": "06-extensibility/plugin-security-denylist.html"
+        },
+        {
+            "id": "scaffold-plugin",
+            "title": "Plugin scaffolding CLI",
+            "keywords": [
+                "scaffold",
+                "plugin",
+                "cli",
+                "developer",
+                "create"
+            ],
+            "docs_path": "06-extensibility/scaffold-plugin-cli.html"
+        },
+        {
+            "id": "media",
+            "title": "Media library",
+            "keywords": [
+                "media",
+                "images",
+                "upload",
+                "files",
+                "library"
+            ],
+            "docs_path": "01-admin/media-library.html",
+            "ai_topic": "media"
+        },
+        {
+            "id": "help",
+            "title": "Help & documentation",
+            "keywords": [
+                "help",
+                "docs",
+                "documentation",
+                "search",
+                "birkly-docs"
+            ],
+            "docs_path": "01-admin/help-and-onboarding.html",
+            "ai_topic": "playbooks-index"
+        },
+        {
+            "id": "reference-projects",
+            "title": "Reference projects",
+            "keywords": [
+                "reference",
+                "starter",
+                "blog",
+                "portfolio",
+                "demo",
+                "template",
+                "install"
+            ],
+            "docs_path": "03-templating/reference-projects.html",
+            "ai_topic": "web-project-patterns"
+        },
+        {
+            "id": "production-optimization",
+            "title": "Production optimization",
+            "keywords": [
+                "hydrate",
+                "snapshot",
+                "bake",
+                "performance",
+                "seo",
+                "birkly-client"
+            ],
+            "docs_path": "03-templating/production-optimization.html"
+        },
+        {
+            "id": "agent-guide",
+            "title": "Agent Guide",
+            "keywords": [
+                "agent guide",
+                "sources of truth",
+                "claims",
+                "evidence",
+                "well-known",
+                "agent-guide.json",
+                "cross-links",
+                "publish",
+                "ai presence",
+                "hub",
+                "tools",
+                "connections",
+                "webmcp",
+                "website tools"
+            ],
+            "docs_path": "02-content/agent-guide.html",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "agent-guide-getting-started",
+            "title": "Agent Guide — getting started",
+            "keywords": [
+                "agent guide",
+                "tutorial",
+                "publish",
+                "sources of truth",
+                "first steps"
+            ],
+            "docs_path": "02-content/agent-guide-getting-started.html"
+        },
+        {
+            "id": "agent-guide-claims",
+            "title": "Agent Guide — claims & cross-links",
+            "keywords": [
+                "claims",
+                "evidence",
+                "amazon",
+                "reviews",
+                "marketplace",
+                "sources of truth",
+                "proof"
+            ],
+            "docs_path": "02-content/agent-guide-claims-evidence-and-links.html"
+        },
+        {
+            "id": "agent-guide-api",
+            "title": "Agent Guide public API",
+            "keywords": [
+                "agent-guide.json",
+                "well-known",
+                "public api",
+                "graph",
+                "json-ld",
+                "brand-context.json"
+            ],
+            "docs_path": "04-integration/agent-guide-public-api.html"
+        },
+        {
+            "id": "webmcp-tools",
+            "title": "Website tools (WebMCP)",
+            "keywords": [
+                "webmcp",
+                "website tools",
+                "model context protocol",
+                "browser agent",
+                "tool catalog",
+                "agent guide tools",
+                "modelcontext",
+                "registertool",
+                "confirmation",
+                "off by default"
+            ],
+            "docs_path": "04-integration/webmcp-tools.html"
+        },
+        {
+            "id": "ai-on-localhost",
+            "title": "AI on localhost",
+            "keywords": [
+                "localhost",
+                "mcp-bridge",
+                "tunnel",
+                "cloudflared",
+                "ngrok",
+                "ollama",
+                "local development",
+                "connector",
+                "https"
+            ],
+            "docs_path": "04-integration/ai-on-localhost.html",
+            "ai_topic": "mcp-setup"
+        },
+        {
+            "id": "choose-your-stack",
+            "title": "Choose your stack",
+            "keywords": [
+                "stack",
+                "integration",
+                "html",
+                "spa",
+                "ssr",
+                "web components",
+                "react",
+                "vue"
+            ],
+            "docs_path": "04-integration/choose-your-stack.html"
+        },
+        {
+            "id": "web-components",
+            "title": "Web components",
+            "keywords": [
+                "birkly-region",
+                "data-birkly-region",
+                "custom element",
+                "enhance",
+                "shadow"
+            ],
+            "docs_path": "04-integration/web-components.html"
+        },
+        {
+            "id": "spa-react-vue",
+            "title": "SPA (React / Vue)",
+            "keywords": [
+                "react",
+                "vue",
+                "spa",
+                "json",
+                "fetch",
+                "jsx"
+            ],
+            "docs_path": "04-integration/spa-react-vue.html"
+        },
+        {
+            "id": "ssr-and-build-time",
+            "title": "SSR and build-time",
+            "keywords": [
+                "ssr",
+                "astro",
+                "next",
+                "php",
+                "page_bundle",
+                "static"
+            ],
+            "docs_path": "04-integration/ssr-and-build-time.html"
+        }
+    ]
 }

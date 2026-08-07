@@ -1,45 +1,53 @@
-# Commerce warehouse stock
+# Commerce warehouse stock (Inventory)
 
-Single-warehouse SKU inventory with decrement on paid orders and restore on full refunds (Phase 14).
+SKU inventory with decrement on paid orders and restore on full refunds. Managed under **Commerce → Inventory**.
 
 ## Summary
 
-**Warehouse stock v1** tracks `quantity_on_hand` per SKU in one logical warehouse. Paid orders decrement stock; full refunds restore it. Checkout blocks or warns when stock is insufficient. Live import and inventory webhooks can sync the same SKU rows.
+**Inventory** is the stock ledger system of record. Merchants choose a **stock mode**: **Unlimited** (ignore counts), **Simple** (one row per SKU), or **Locations** (SKU stock per warehouse). Paid orders decrement stock; full refunds restore it. Checkout blocks or warns when stock is insufficient. Live import and inventory webhooks can sync the same SKU rows.
 
 ## Beginner
 
-**Warehouse vs catalog quantity**
+**Catalog vs Inventory**
 
-- **Catalog** `quantity_available` on a Commerce entry is what customers see on the product.
-- **Warehouse** stock is SKU-level inventory used for fulfillment accuracy and checkout guards.
-- When both exist for a SKU, webhooks and import update both; checkout uses warehouse counts when a warehouse row is present.
+- **Catalog** is a checkout read model. `quantity_available` on a Commerce entry is a **projection** of Inventory Available (or null for unlimited).
+- **Inventory** is the ledger: **On hand**, **Reserved**, **Available** (on hand − reserved), and **Low threshold**.
+- Edit product names and pricing on the CMS entry; adjust countable stock in **Inventory**.
+
+**Stock modes**
+
+| Mode | Behaviour |
+|------|-----------|
+| **Unlimited** | No ledger counts; catalog shows unlimited |
+| **Simple** | One stock row per SKU |
+| **Locations** | Stock per SKU per warehouse location |
 
 **View and edit stock**
 
 1. Open **Commerce** in the admin.
-2. Go to **Catalog** and open a product (or the **Stock** tab when shown).
-3. Enter **SKU**, **Quantity on hand**, and optional **Low stock threshold**.
+2. Go to **Inventory**.
+3. Enter **SKU**, **On hand**, and optional **Low threshold** (and location when in Locations mode).
 4. Save.
 
 **Bulk import (optional)**
 
 - Export a CSV with columns `sku`, `quantity_on_hand`, `low_stock_threshold`.
-- Use **Commerce → Stock → Import CSV** when available on your build.
+- Use **Commerce → Inventory → Import CSV** when available on your build.
 
 **Checkout behaviour**
 
-- Adding to cart checks warehouse availability when a SKU row exists.
-- Checkout fails or shows a warning if `quantity_on_hand` is less than cart quantity.
+- Adding to cart checks availability when a countable SKU row exists.
+- Checkout fails or shows a warning if Available is less than cart quantity.
 - When payment completes (`order.paid`), stock decrements automatically.
 - **Full refund** restores the decremented quantity.
 
 **Low stock**
 
-- Set a threshold per SKU; admin lists or badges can highlight SKUs at or below threshold (exact UI varies by Commerce version).
+- Set a threshold per SKU; admin lists or badges can highlight SKUs at or below threshold.
 
 ## Advanced Users
 
-**Store:** `data/plugins/commerce/warehouse_stock.json`
+**Store:** `data/plugins/commerce/warehouse_stock.json` (and location rows when Locations mode is active)
 
 ```json
 {
@@ -63,14 +71,13 @@ Single-warehouse SKU inventory with decrement on paid orders and restore on full
 
 **Integration:**
 
-- `CommerceInventoryWebhookService::applyStockUpdate` updates warehouse when SKU matches
-- Live import maps external SKU to catalog; warehouse rows are manual or CSV unless synced by webhook
+- `CommerceInventoryWebhookService::applyStockUpdate` updates inventory when SKU matches
+- Live import maps external SKU to catalog; inventory rows are manual, CSV, or webhook-synced
 
-**Limitations (v1):**
+**Limitations (current):**
 
-- Single warehouse only — no multi-location routing
-- No reserved stock / allocation queues
-- Partial refunds may not restore warehouse quantity (full refund restores)
+- Reserved-stock allocation queues beyond active holds are limited
+- Partial refunds may not restore quantity (full refund restores)
 
 **Tests:** `commerce_warehouse_stock_test.php`
 

@@ -111,6 +111,7 @@ If a workflow can run twice for the same event (e.g. webhook retried), design ac
 ## Related
 
 - [Triggers](triggers.md)
+- [Commerce recipe pack](commerce-recipes.md) — import post-purchase, dunning, low-stock, shipped starters
 - [Conditions and actions](conditions-and-actions.md)
 - [Webhooks](webhooks.md)
 - [Public forms](../04-integration/public-forms.md)

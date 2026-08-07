@@ -14,8 +14,8 @@ Scheduled cron import (see [Commerce live import](commerce-live-import.md)) can 
 
 **Shopify setup**
 
-1. In **Commerce → Import**, save a Shopify live connection (store URL + access token).
-2. Open **Inventory webhooks** (or Import → Webhooks).
+1. In **Commerce → Settings → Import & migrate**, save a Shopify live connection (store URL + access token).
+2. Open **Inventory webhooks** (or Import & migrate → Webhooks).
 3. Copy the **webhook URL** and **signing secret** shown for Shopify.
 4. In Shopify Admin → Settings → Notifications → Webhooks, create:
    - Topic: **Inventory levels update**

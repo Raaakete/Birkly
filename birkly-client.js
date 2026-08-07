@@ -13,19 +13,21 @@
 
     // Configuration
     const Birkly = {
-        // Auto-detect CMS URL from script src
+        // Prefer explicit data-cms-url (external sites) over script.src origin.
         cmsUrl: (function() {
+            const attrScript = document.querySelector('script[src*="birkly-client.js"][data-cms-url], script[data-cms-url]');
+            if (attrScript) {
+                const fromAttr = (attrScript.getAttribute('data-cms-url') || '').trim().replace(/\/$/, '');
+                if (fromAttr) {
+                    return fromAttr;
+                }
+            }
             const scripts = document.getElementsByTagName('script');
             for (let script of scripts) {
                 if (script.src && script.src.includes('birkly-client.js')) {
                     const url = new URL(script.src);
                     return url.origin;
                 }
-            }
-            // Fallback: try to detect from data attribute
-            const script = document.querySelector('script[data-cms-url]');
-            if (script) {
-                return script.getAttribute('data-cms-url');
             }
             // Last resort: current origin
             return window.location.origin;
@@ -211,9 +213,94 @@
             };
         }
 
+        let publicConfig = window.BirklyAnalyticsPublicConfig || null;
+
+        function readConsentCookie() {
+            const parts = (document.cookie || '').split(';');
+            for (let i = 0; i < parts.length; i++) {
+                const p = parts[i].trim();
+                if (p.indexOf('birkly_analytics_consent=') === 0) {
+                    return decodeURIComponent(p.slice('birkly_analytics_consent='.length));
+                }
+            }
+            if (window.BirklyAnalyticsConsent && typeof window.BirklyAnalyticsConsent.get === 'function') {
+                return window.BirklyAnalyticsConsent.get() || '';
+            }
+            return '';
+        }
+
+        function consentGranted() {
+            const consent = readConsentCookie();
+            return consent === 'granted' || consent === '1';
+        }
+
+        function consentRequired() {
+            if (publicConfig && typeof publicConfig.consent_required === 'boolean') {
+                return publicConfig.consent_required;
+            }
+            return false;
+        }
+
+        function canTrack() {
+            if (publicConfig && publicConfig.collecting === false) {
+                return false;
+            }
+            if (consentRequired() && !consentGranted()) {
+                return false;
+            }
+            return true;
+        }
+
+        function ensureConsentBanner() {
+            if (!consentRequired() || consentGranted() || readConsentCookie() === 'denied') {
+                return;
+            }
+            if (window.BirklyAnalyticsConsent && typeof window.BirklyAnalyticsConsent.show === 'function') {
+                window.BirklyAnalyticsConsent.show((publicConfig && publicConfig.consent_text) || '');
+                return;
+            }
+            // Lightweight fallback if consent helper script is not present
+            if (document.getElementById('birkly-analytics-consent')) return;
+            const wrap = document.createElement('div');
+            wrap.id = 'birkly-analytics-consent';
+            wrap.setAttribute('role', 'dialog');
+            wrap.setAttribute('aria-label', 'Analytics consent');
+            wrap.style.cssText = 'position:fixed;z-index:99999;inset-inline:1rem;inset-block-end:1rem;max-width:28rem;padding:1rem 1.1rem;background:#161616;color:#f4f4f4;font:14px/1.45 system-ui,sans-serif;border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.35)';
+            const msg = document.createElement('p');
+            msg.style.margin = '0 0 .75rem';
+            msg.textContent = (publicConfig && publicConfig.consent_text) ||
+                'We use privacy-friendly analytics to understand how the site is used. You can accept or decline.';
+            const actions = document.createElement('div');
+            actions.style.cssText = 'display:flex;gap:.5rem;flex-wrap:wrap';
+            const setCookie = function (value) {
+                const secure = location.protocol === 'https:' ? '; Secure' : '';
+                document.cookie = 'birkly_analytics_consent=' + encodeURIComponent(value) +
+                    '; Path=/; Max-Age=' + (180 * 86400) + '; SameSite=Lax' + secure;
+                try {
+                    document.dispatchEvent(new CustomEvent('birkly:analytics-consent', { detail: { consent: value } }));
+                } catch (_) { /* ignore */ }
+                if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+            };
+            const accept = document.createElement('button');
+            accept.type = 'button';
+            accept.textContent = 'Accept';
+            accept.style.cssText = 'appearance:none;border:0;border-radius:6px;padding:.45rem .9rem;background:#9ef0c0;color:#102018;font-weight:600;cursor:pointer';
+            accept.addEventListener('click', function () { setCookie('granted'); });
+            const decline = document.createElement('button');
+            decline.type = 'button';
+            decline.textContent = 'Decline';
+            decline.style.cssText = 'appearance:none;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:.45rem .9rem;background:transparent;color:#f4f4f4;cursor:pointer';
+            decline.addEventListener('click', function () { setCookie('denied'); });
+            actions.appendChild(accept);
+            actions.appendChild(decline);
+            wrap.appendChild(msg);
+            wrap.appendChild(actions);
+            (document.body || document.documentElement).appendChild(wrap);
+        }
+
         function buildTrackPayload(extra) {
             const utm = getUtmParams();
-            return Object.assign({
+            const payload = Object.assign({
                 tracking_id: trackingId,
                 event_type: 'pageview',
                 domain: window.location.hostname,
@@ -231,9 +318,17 @@
                 utm_campaign: utm.utm_campaign,
                 session_id: getSessionId()
             }, extra || {});
+            const consent = readConsentCookie();
+            if (consent) {
+                payload.consent = consent;
+            }
+            return payload;
         }
 
         function sendTrackPayload(data, preferBeacon) {
+            if (!canTrack()) {
+                return;
+            }
             const url = cmsUrl + '/api/analytics.php?action=track';
             const body = JSON.stringify(data);
 
@@ -276,39 +371,99 @@
             }), true);
         }
 
-        if (document.readyState === 'complete') {
-            trackPageView();
-        } else {
-            window.addEventListener('load', trackPageView);
+        function bindAdvancedEvents() {
+            if (!(publicConfig && publicConfig.events)) {
+                return;
+            }
+            document.addEventListener('click', function (e) {
+                const a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+                if (!a) return;
+                const href = a.getAttribute('href') || '';
+                if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+                try {
+                    const url = new URL(href, window.location.href);
+                    if (url.origin !== window.location.origin) {
+                        sendTrackPayload(buildTrackPayload({
+                            event_type: 'outbound_click',
+                            referrer: url.href,
+                            path: window.location.pathname
+                        }));
+                    }
+                } catch (_) { /* ignore */ }
+            }, true);
+            document.addEventListener('submit', function (e) {
+                const form = e.target;
+                if (!form || form.tagName !== 'FORM') return;
+                sendTrackPayload(buildTrackPayload({
+                    event_type: 'form_submit',
+                    path: window.location.pathname,
+                    event_data: { form_id: form.id || form.getAttribute('name') || '' }
+                }));
+            }, true);
         }
 
-        let lastUrl = location.href;
-        new MutationObserver(function() {
-            const url = location.href;
-            if (url !== lastUrl) {
-                lastUrl = url;
+        function startTracking() {
+            ensureConsentBanner();
+            bindAdvancedEvents();
+
+            if (document.readyState === 'complete') {
                 trackPageView();
+            } else {
+                window.addEventListener('load', trackPageView);
             }
-        }).observe(document, { subtree: true, childList: true });
 
-        window.addEventListener('popstate', function() {
-            setTimeout(trackPageView, 100);
-        });
+            let lastUrl = location.href;
+            new MutationObserver(function() {
+                const url = location.href;
+                if (url !== lastUrl) {
+                    lastUrl = url;
+                    trackPageView();
+                }
+            }).observe(document, { subtree: true, childList: true });
 
-        window.addEventListener('pagehide', trackPageExit);
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'hidden') {
-                trackPageExit();
-            }
-        });
+            window.addEventListener('popstate', function() {
+                setTimeout(trackPageView, 100);
+            });
 
-        window.HaruAnalyticsTrack = function(eventName, eventData) {
-            sendTrackPayload(buildTrackPayload({
-                path: window.location.pathname,
-                event_name: eventName,
-                event_data: eventData || {}
-            }));
-        };
+            window.addEventListener('pagehide', trackPageExit);
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'hidden') {
+                    trackPageExit();
+                }
+            });
+
+            document.addEventListener('birkly:analytics-consent', function (e) {
+                if (e && e.detail && e.detail.consent === 'granted') {
+                    trackPageView();
+                }
+            });
+
+            window.HaruAnalyticsTrack = function(eventName, eventData) {
+                sendTrackPayload(buildTrackPayload({
+                    path: window.location.pathname,
+                    event_type: eventName || 'plugin_event',
+                    event_name: eventName,
+                    event_data: eventData || {}
+                }));
+            };
+        }
+
+        if (publicConfig) {
+            startTracking();
+        } else {
+            fetch(cmsUrl + '/api/analytics.php?action=public_config', {
+                credentials: 'omit',
+                cache: 'no-store'
+            }).then(function (r) { return r.json(); })
+                .then(function (payload) {
+                    if (payload && payload.status === 'ok' && payload.data) {
+                        publicConfig = payload.data;
+                        window.BirklyAnalyticsPublicConfig = publicConfig;
+                    }
+                })
+                .catch(function () { /* keep defaults */ })
+                .then(startTracking);
+        }
     }
 
     if (Birkly.trackingId && Birkly.enableAnalytics) {
