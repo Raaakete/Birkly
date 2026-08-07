@@ -305,19 +305,42 @@ function executeReadAction($actionData, $aiUser) {
         return ['success' => true, 'data' => ['page' => $page]];
         
     } elseif ($actionType === 'list_activity') {
-        // List activity logs
+        // List activity logs (legacy activity.json + P61 plugin activity bus)
         require_once __DIR__ . '/activity.php';
-        $limit = $actionPayload['limit'] ?? 50;
+        $limit = max(1, min(200, (int) ($actionPayload['limit'] ?? 50)));
+        $pluginFilter = isset($actionPayload['plugin']) ? (string) $actionPayload['plugin'] : null;
         $activityFile = $birklyRoot . '/data/activity.json';
-        
+
         $activities = [];
         if (file_exists($activityFile)) {
             $allActivities = json_decode(file_get_contents($activityFile), true) ?: [];
             $activities = array_slice(array_reverse($allActivities), 0, $limit);
         }
-        
-        return ['success' => true, 'data' => ['activities' => $activities, 'count' => count($activities)]];
-        
+
+        $pluginActivity = [];
+        $navAttention = [];
+        $pluginActivityPhp = $birklyRoot . '/core/plugin_activity.php';
+        if (is_file($pluginActivityPhp)) {
+            require_once $pluginActivityPhp;
+            if (function_exists('birkly_plugin_activity_list')) {
+                $pluginActivity = birkly_plugin_activity_list($limit, $pluginFilter);
+            }
+            if (function_exists('birkly_plugin_activity_nav_attention_counts')) {
+                $navAttention = birkly_plugin_activity_nav_attention_counts();
+            }
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'activities' => $activities,
+                'count' => count($activities),
+                'plugin_activity' => $pluginActivity,
+                'plugin_activity_count' => count($pluginActivity),
+                'nav_attention' => $navAttention,
+            ],
+        ];
+
     } elseif ($actionType === 'list_roles') {
         // List roles
         require_once __DIR__ . '/storage.php';
