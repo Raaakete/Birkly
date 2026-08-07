@@ -319,26 +319,25 @@ function executeReadAction($actionData, $aiUser) {
 
         $pluginActivity = [];
         $navAttention = [];
+        $unreadNotify = 0;
         $pluginActivityPhp = $birklyRoot . '/core/plugin_activity.php';
         if (is_file($pluginActivityPhp)) {
             require_once $pluginActivityPhp;
+            if (!empty($actionPayload['clear_nav']) && function_exists('birkly_plugin_activity_clear_nav')) {
+                $clearPlugin = (string) ($actionPayload['clear_nav_plugin'] ?? $pluginFilter ?? 'commerce');
+                birkly_plugin_activity_clear_nav($clearPlugin);
+            }
+            if (!empty($actionPayload['mark_read']) && function_exists('birkly_plugin_activity_mark_read') && function_exists('birkly_plugin_activity_notify_ids')) {
+                birkly_plugin_activity_mark_read(birkly_plugin_activity_notify_ids(false));
+            }
             if (function_exists('birkly_plugin_activity_list')) {
                 $pluginActivity = birkly_plugin_activity_list($limit, $pluginFilter);
             }
             if (function_exists('birkly_plugin_activity_nav_attention_counts')) {
                 $navAttention = birkly_plugin_activity_nav_attention_counts();
             }
-        }
-
-        $activityDir = function_exists('birkly_plugin_activity_dir') ? birkly_plugin_activity_dir() : null;
-        $activityFiles = [];
-        if (is_string($activityDir) && is_dir($activityDir)) {
-            foreach (glob($activityDir . '/*.jsonl') ?: [] as $f) {
-                $activityFiles[] = [
-                    'file' => basename($f),
-                    'bytes' => filesize($f),
-                    'mtime' => date('c', filemtime($f)),
-                ];
+            if (function_exists('birkly_plugin_activity_unread_notify_count')) {
+                $unreadNotify = birkly_plugin_activity_unread_notify_count();
             }
         }
 
@@ -350,25 +349,7 @@ function executeReadAction($actionData, $aiUser) {
                 'plugin_activity' => $pluginActivity,
                 'plugin_activity_count' => count($pluginActivity),
                 'nav_attention' => $navAttention,
-                'debug' => [
-                    'birkly_root' => $birklyRoot,
-                    'data_root' => function_exists('birkly_data_root') ? birkly_data_root() : null,
-                    'activity_dir' => $activityDir,
-                    'activity_dir_exists' => is_string($activityDir) && is_dir($activityDir),
-                    'activity_dir_writable' => is_string($activityDir) && is_dir($activityDir) && is_writable($activityDir),
-                    'activity_files' => $activityFiles,
-                    'plugin_activity_php' => is_file($pluginActivityPhp),
-                    'emit_probe' => (function_exists('birkly_plugin_activity_emit')
-                        ? birkly_plugin_activity_emit([
-                            'plugin' => 'commerce',
-                            'event' => 'mcp_emit_probe',
-                            'title' => 'MCP emit probe',
-                            'notify' => true,
-                            'nav_attention' => true,
-                            'meta' => ['source' => 'list_activity_debug'],
-                        ])
-                        : null),
-                ],
+                'unread_notify_count' => $unreadNotify,
             ],
         ];
 
