@@ -582,20 +582,26 @@
         const slug = entry && entry.slug ? String(entry.slug) : '';
         if (isTrashedEntry) {
             return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
-                '<button type="button" class="btn btn-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '">' + escapeHtml(t('restore', 'Restore')) + '</button>' +
+                '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('restore', 'Restore') + ' ' + title) + '" title="' + escapeHtml(t('restore', 'Restore')) + '">' +
+                    icon('arrow-counter-clockwise', { size: 16 }) +
+                '</button>' +
             '</div></td>';
         }
 
         const publishBtn = normalizedStatus === 'published'
-            ? '<button type="button" class="btn btn-sm entry-unpublish-btn" data-entry-id="' + escapeHtml(entryId) + '">' + escapeHtml(t('unpublish', 'Unpublish')) + '</button>'
-            : '<button type="button" class="btn btn-sm entry-publish-btn" data-entry-id="' + escapeHtml(entryId) + '">' + escapeHtml(t('publish', 'Publish')) + '</button>';
+            ? '<button type="button" class="btn-icon btn-icon-sm entry-unpublish-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('unpublish', 'Unpublish') + ' ' + title) + '" title="' + escapeHtml(t('unpublish', 'Unpublish')) + '">' +
+                icon('archive', { size: 16 }) +
+              '</button>'
+            : '<button type="button" class="btn-icon btn-icon-sm entry-publish-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml(t('publish', 'Publish') + ' ' + title) + '" title="' + escapeHtml(t('publish', 'Publish')) + '">' +
+                icon('globe', { size: 16 }) +
+              '</button>';
 
         const moreMenu = '' +
             '<div class="dropdown entry-row-more-menu">' +
-                '<button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="' + escapeHtml(t('more', 'More')) + '" aria-expanded="false" aria-haspopup="true">' +
+                '<button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="' + escapeHtml(t('more', 'More')) + '" title="' + escapeHtml(t('more', 'More')) + '" aria-expanded="false" aria-haspopup="true">' +
                     icon('dots-three-vertical', { size: 16 }) +
                 '</button>' +
-                '<div class="dropdown-menu dropdown-menu-right">' +
+                '<div class="dropdown-menu dropdown-menu-right dropdown-menu--up">' +
                     '<button type="button" class="dropdown-item dropdown-item-danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '">' +
                         icon('trash', { size: 16, class: 'dropdown-item-icon' }) +
                         '<span class="dropdown-item-label">' + escapeHtml(t('entries_bulk_move_to_trash', 'Move to trash')) + '</span>' +
@@ -618,7 +624,9 @@
             '</div>';
 
         return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
-            '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(editUrl) + '">' + escapeHtml(t('edit', 'Edit')) + '</a>' +
+            '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit', 'Edit')) + '">' +
+                icon('pencil-simple', { size: 16 }) +
+            '</a>' +
             publishBtn +
             moreMenu +
         '</div></td>';
