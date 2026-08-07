@@ -222,6 +222,52 @@ function birkly_webmcp_is_enabled(): bool
 }
 
 /**
+ * Public-form collections eligible for the submit-tool allowlist — i.e. those
+ * whose `entry_method` is `public_api`. Used by the Tools admin UI to offer a
+ * concrete allowlist rather than free-text.
+ *
+ * @return list<array{slug:string,name:string}>
+ */
+function birkly_webmcp_public_form_collections(): array
+{
+    $contentRoot = birkly_project_root() . '/content/collections';
+    $out = [];
+    if (!is_dir($contentRoot)) {
+        return $out;
+    }
+
+    foreach (scandir($contentRoot) ?: [] as $dir) {
+        if ($dir === '.' || $dir === '..' || !is_dir($contentRoot . '/' . $dir)) {
+            continue;
+        }
+        $metaPath = $contentRoot . '/' . $dir . '/collection.json';
+        if (!is_readable($metaPath)) {
+            continue;
+        }
+        $raw = file_get_contents($metaPath);
+        if ($raw === false) {
+            continue;
+        }
+        $meta = json_decode($raw, true);
+        if (!is_array($meta)) {
+            continue;
+        }
+        if (($meta['entry_method'] ?? 'admin_only') !== 'public_api') {
+            continue;
+        }
+        $slug = (string) ($meta['slug'] ?? $dir);
+        $out[] = [
+            'slug' => $slug,
+            'name' => (string) ($meta['title'] ?? $meta['name'] ?? $slug),
+        ];
+    }
+
+    usort($out, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
+
+    return $out;
+}
+
+/**
  * Public, secret-free projection of the config for the browser runtime.
  * Returns `{enabled:false}` when the master switch is off so callers can
  * treat an off site as indistinguishable from one that never heard of WebMCP.

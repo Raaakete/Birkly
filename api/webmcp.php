@@ -69,6 +69,7 @@ if ($action === 'get') {
         'data' => [
             'config' => $config,
             'catalog' => birkly_webmcp_api_catalog($config),
+            'public_forms' => birkly_webmcp_public_form_collections(),
         ],
     ]);
     exit;
@@ -100,6 +101,7 @@ if ($action === 'save') {
         'data' => [
             'config' => $config,
             'catalog' => birkly_webmcp_api_catalog($config),
+            'public_forms' => birkly_webmcp_public_form_collections(),
         ],
     ]);
     exit;
