@@ -3217,6 +3217,7 @@
             var active = btn.getAttribute('data-hub-zone') === zone;
             btn.classList.toggle('active', active);
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            btn.tabIndex = active ? 0 : -1;
         });
         document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
             var active = panel.getAttribute('data-hub-panel') === zone;
@@ -3224,11 +3225,8 @@
             panel.hidden = !active;
         });
 
-        // The sticky save bar (mint Publish) is a Guide-zone concern; keep it out
-        // of the way when the owner is in Tools/Connections/Publish so the single
-        // mint primary rule holds per zone.
-        var sticky = document.querySelector('.sticky-save-bar');
-        if (sticky) sticky.hidden = zone !== 'guide';
+        // Sticky Publish bar stays visible on every zone (P60-M1 §2.2): it is the
+        // one mint primary and the commit action for the relocated Publish controls.
 
         if (opts.updateUrl !== false) setZoneInUrl(zone);
 
@@ -3257,6 +3255,33 @@
                 switchZone(zoneBtn.getAttribute('data-hub-zone'));
             }
         });
+
+        var tablist = document.getElementById('ap-hub-tablist');
+        if (tablist) {
+            tablist.addEventListener('keydown', function (e) {
+                var tabs = Array.prototype.slice.call(
+                    tablist.querySelectorAll('.tab[data-hub-zone]')
+                );
+                if (!tabs.length) return;
+                var current = document.activeElement;
+                var idx = tabs.indexOf(current);
+                if (idx < 0) return;
+                var next = -1;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    next = (idx + 1) % tabs.length;
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    next = (idx - 1 + tabs.length) % tabs.length;
+                } else if (e.key === 'Home') {
+                    next = 0;
+                } else if (e.key === 'End') {
+                    next = tabs.length - 1;
+                }
+                if (next < 0) return;
+                e.preventDefault();
+                tabs[next].focus();
+                switchZone(tabs[next].getAttribute('data-hub-zone'));
+            });
+        }
 
         window.addEventListener('popstate', function () {
             switchZone(getInitialZone(), { updateUrl: false });
