@@ -3163,15 +3163,6 @@
             btn.setAttribute('aria-selected', active ? 'true' : 'false');
             btn.tabIndex = active ? 0 : -1;
         });
-        document.querySelectorAll('.ap-status-item[data-hub-zone]').forEach(function (btn) {
-            var active = btn.getAttribute('data-hub-zone') === zone;
-            btn.classList.toggle('is-active', active);
-            if (active) {
-                btn.setAttribute('aria-current', 'page');
-            } else {
-                btn.removeAttribute('aria-current');
-            }
-        });
         document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
             var active = panel.getAttribute('data-hub-panel') === zone;
             panel.classList.toggle('active', active);
@@ -3199,7 +3190,6 @@
         document.addEventListener('click', function (e) {
             var zoneBtn = e.target.closest('[data-hub-zone]');
             if (zoneBtn && (zoneBtn.classList.contains('tab') ||
-                zoneBtn.classList.contains('ap-status-item') ||
                 zoneBtn.classList.contains('ap-goto-zone'))) {
                 e.preventDefault();
                 switchZone(zoneBtn.getAttribute('data-hub-zone'));
@@ -3246,47 +3236,39 @@
         el.className = 'badge badge-' + (tone || 'neutral');
     }
 
+    function setTabDot(id, ok, label) {
+        var dot = document.getElementById(id);
+        if (!dot) return;
+        dot.setAttribute('data-ok', ok ? '1' : '0');
+        // Mirror status onto the parent tab for screen readers.
+        var tab = dot.closest('.tab');
+        if (tab && label) {
+            tab.setAttribute('title', label);
+            tab.setAttribute('aria-description', label);
+        }
+    }
+
     function updateSpine() {
         var ps = getPublishState({ meta: state.meta, publish_state: state.publishState });
-        // Guide
-        var gBadge = document.getElementById('ap-spine-guide-badge');
-        var gVal = document.getElementById('ap-spine-guide-value');
-        if (!ps.publishing_enabled) {
-            badge(gBadge, t('ag_status_off', 'Off'), 'neutral');
-            if (gVal) gVal.textContent = t('ag_status_off', 'Off');
-        } else if (ps.never_published) {
-            badge(gBadge, t('ag_status_draft', 'Draft'), 'warning');
-            if (gVal) gVal.textContent = t('ag_status_draft', 'Draft');
-        } else {
-            badge(gBadge, t('ag_status_published', 'Published'), 'success');
-            if (gVal) gVal.textContent = t('ag_status_published', 'Published');
-        }
+        // Guide tab: green when published & live; red otherwise.
+        var guideOk = !!(ps.publishing_enabled && !ps.never_published);
+        var guideLabel = !ps.publishing_enabled
+            ? t('ag_status_off', 'Off')
+            : (ps.never_published ? t('ag_status_draft', 'Draft') : t('ag_status_published', 'Published'));
+        setTabDot('ap-tab-dot-guide', guideOk, guideLabel);
 
-        // Website tools
-        var tBadge = document.getElementById('ap-spine-tools-badge');
-        var tVal = document.getElementById('ap-spine-tools-value');
+        // Tools tab: green when Website tools (WebMCP) are on.
         var cfg = state.webmcpConfig;
-        if (cfg && cfg.enabled) {
-            var count = 0;
-            if (cfg.tools) {
-                Object.keys(cfg.tools).forEach(function (k) { if (cfg.tools[k]) count++; });
-            }
-            badge(tBadge, t('ag_webmcp_on', 'On'), 'success');
-            if (tVal) tVal.textContent = t('ag_tools_on_count', 'On ({n})').replace('{n}', String(count));
-        } else {
-            badge(tBadge, t('ag_webmcp_off', 'Off'), 'neutral');
-            if (tVal) tVal.textContent = t('ag_webmcp_off', 'Off');
-        }
+        var toolsOk = !!(cfg && cfg.enabled);
+        setTabDot('ap-tab-dot-tools', toolsOk, toolsOk ? t('ag_webmcp_on', 'On') : t('ag_webmcp_off', 'Off'));
 
-        // Where it's hosted (Connections intentionally omitted — Settings → AI)
+        // Publish tab: green when a public site mode is configured (project/external).
         var urls = state.publicUrls || {};
-        var hBadge = document.getElementById('ap-spine-hosted-badge');
-        var hVal = document.getElementById('ap-spine-hosted-value');
         var mode = urls.hosting_mode || 'none';
+        var hostOk = mode === 'project' || mode === 'external';
         var hostLabel = mode === 'project' ? t('ag_hosted_project', 'On Birkly')
             : (mode === 'external' ? t('ag_hosted_external', 'External') : t('ag_hosted_none', 'None'));
-        badge(hBadge, hostLabel, mode === 'none' ? 'neutral' : 'info');
-        if (hVal) hVal.textContent = hostLabel;
+        setTabDot('ap-tab-dot-publish', hostOk, hostLabel);
     }
 
     // ===================================================================

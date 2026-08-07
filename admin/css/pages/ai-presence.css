@@ -17,82 +17,36 @@
    ============================================ */
 
 /* ============================================
-   Hub shell — left status sidebar + main (P60 IA)
-   The hub is a two-column layout: a persistent status sidebar (Guide /
-   Website tools / Hosting) beside the zone tabs + panels. Below the desktop
-   breakpoint it stacks, with the status nav becoming a horizontal scroller.
+   Hub — main tabs with green/red status dots
+   Guide / Tools / Publish carry a simple status dot to the right of the label.
    ============================================ */
-.ap-hub-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
-  align-items: start;
+.ap-hub {
   min-width: 0;
   padding-block-end: var(--space-8);
 }
 
-.ap-hub-main { min-width: 0; }
-
-/* Status sidebar — zone-switching read-out of Guide / Tools / Hosting state. */
-.ap-hub-status-nav {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  min-width: 0;
-}
-
-.ap-status-item {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  cursor: pointer;
-  text-align: start;
-  color: inherit;
-  transition:
-    border-color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
-}
-
-.ap-status-item:hover { border-color: var(--border-default); }
-
-.ap-status-item.is-active {
-  border-color: var(--accent-border);
-  background: var(--accent-soft);
-}
-
-.ap-status-item:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: var(--focus-outline-offset);
-}
-
-.ap-status-item-head {
-  display: flex;
+#ap-hub-tablist .tab {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
 }
 
-.ap-status-label {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+.ap-tab-dot {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+  background: var(--danger-fg);
 }
 
-.ap-status-value {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-}
+.ap-tab-dot[data-ok="1"] { background: var(--success-fg); }
+.ap-tab-dot[data-ok="0"] { background: var(--danger-fg); }
 
 /* ============================================
-   Guide — vertical sub-nav + panels (P60 IA)
-   The Guide zone is a single experience: a vertical tab rail (Overview,
-   Essentials, Sources, Context, Products, Claims, Media) beside the panels.
-   AI Assist lives inside the Overview panel as a normal card.
+   Guide — panels + right vertical sub-nav
+   Content left; Overview / Essentials / … rail on the right (desktop).
+   Overview top row: AI Assist + recommended workflow, equal columns.
    ============================================ */
 .ap-guide-layout {
   min-width: 0;
@@ -107,38 +61,38 @@
   min-width: 0;
 }
 
-/* Guide sub-nav: horizontal, scrollable on small screens; vertical rail on
-   desktop (set in the breakpoint below). Overrides the default .tabs strip. */
+/* Guide sub-nav: horizontal scroller on small screens (order above content);
+   right vertical rail on desktop. */
 .ap-guide-nav {
   display: flex;
   gap: var(--space-1);
   overflow-x: auto;
   min-width: 0;
+  order: -1;
 }
 
 .ap-guide-panels { min-width: 0; }
 
 .ap-guide-panels > .tab-content { min-width: 0; }
 
-/* AI Assist widget — the primary Overview card. Full-width, no drawer. */
-.ap-assist-widget { min-width: 0; }
+.ap-overview-top {
+  align-items: stretch;
+}
+
+.ap-overview-top > .card,
+.ap-assist-widget {
+  min-width: 0;
+  height: 100%;
+}
 
 @media (min-width: 1024px) {
-  .ap-hub-layout {
-    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
-  }
-
-  .ap-hub-status-nav {
-    flex-direction: column;
-    position: sticky;
-    inset-block-start: var(--space-6);
-  }
-
   .ap-guide-tabs {
-    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+    /* Content left, Guide sub-nav on the right */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 12rem);
   }
 
   .ap-guide-nav {
+    order: 0;
     flex-direction: column;
     overflow-x: visible;
     position: sticky;
@@ -148,6 +102,12 @@
   .ap-guide-nav .tab {
     text-align: start;
     justify-content: flex-start;
+  }
+}
+
+@media (max-width: 1023px) {
+  .ap-overview-top {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
