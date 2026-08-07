@@ -278,6 +278,16 @@ function birkly_analytics_aggregate_events(array $events): array
     $trafficSources = [];
     $campaignCounts = [];
     $sessions = [];
+    $eventCounts = [
+        'page_view' => 0,
+        'form_submit' => 0,
+        'outbound_click' => 0,
+        'plugin_event' => 0,
+        'page_exit' => 0,
+    ];
+    $outboundTargets = [];
+    $formIds = [];
+    $pluginEvents = [];
 
     foreach ($events as $event) {
         if (!is_array($event)) {
@@ -285,24 +295,51 @@ function birkly_analytics_aggregate_events(array $events): array
         }
 
         $eventType = (string) ($event['event_type'] ?? 'pageview');
+        if ($eventType === 'pageview' || $eventType === '') {
+            $eventType = 'page_view';
+        }
+        if (isset($eventCounts[$eventType])) {
+            $eventCounts[$eventType]++;
+        }
         if ($eventType === 'page_exit') {
             $path = (string) ($event['path'] ?? '/');
             $exitCounts[$path] = ($exitCounts[$path] ?? 0) + 1;
             continue;
         }
 
-        // Count page views + other collectable events toward volume; uniques use hashed visitor key.
-        if (in_array($eventType, ['page_view', 'pageview', 'form_submit', 'outbound_click', 'plugin_event'], true)
-            || $eventType === '') {
-            $pageViews++;
-        }
         $ipHash = (string) ($event['ip_hash'] ?? $event['ip'] ?? '');
         if ($ipHash !== '') {
             $uniqueVisitors[$ipHash] = true;
         }
 
         $path = (string) ($event['path'] ?? '/');
-        $pageCounts[$path] = ($pageCounts[$path] ?? 0) + 1;
+        if ($eventType === 'page_view') {
+            $pageViews++;
+            $pageCounts[$path] = ($pageCounts[$path] ?? 0) + 1;
+        } elseif ($eventType === 'outbound_click') {
+            $href = '';
+            if (is_array($event['event_data'] ?? null)) {
+                $href = (string) ($event['event_data']['href'] ?? $event['event_data']['url'] ?? '');
+            }
+            if ($href === '') {
+                $href = (string) ($event['event_name'] ?? $path);
+            }
+            if ($href !== '') {
+                $outboundTargets[$href] = ($outboundTargets[$href] ?? 0) + 1;
+            }
+        } elseif ($eventType === 'form_submit') {
+            $formId = '';
+            if (is_array($event['event_data'] ?? null)) {
+                $formId = (string) ($event['event_data']['form_id'] ?? '');
+            }
+            if ($formId === '') {
+                $formId = (string) ($event['event_name'] ?? 'form');
+            }
+            $formIds[$formId] = ($formIds[$formId] ?? 0) + 1;
+        } elseif ($eventType === 'plugin_event') {
+            $name = (string) ($event['event_name'] ?? 'plugin_event');
+            $pluginEvents[$name] = ($pluginEvents[$name] ?? 0) + 1;
+        }
 
         $referrerHost = (string) ($event['referrer_host'] ?? '');
         if ($referrerHost === '' && !empty($event['referrer'])) {
@@ -372,13 +409,18 @@ function birkly_analytics_aggregate_events(array $events): array
         }
     }
 
+    $singlePageSessions = 0;
     foreach ($sessions as $session) {
         $first = (string) ($session['first_path'] ?? '/');
         $last = (string) ($session['last_path'] ?? '/');
         $entranceCounts[$first] = ($entranceCounts[$first] ?? 0) + 1;
         $exitCounts[$last] = ($exitCounts[$last] ?? 0) + 1;
+        if ((int) ($session['views'] ?? 0) <= 1) {
+            $singlePageSessions++;
+        }
     }
 
+    $sessionCount = count($sessions);
     $formattedDailyStats = [];
     foreach ($dailyStats as $date => $stats) {
         $formattedDailyStats[] = [
@@ -387,11 +429,22 @@ function birkly_analytics_aggregate_events(array $events): array
             'visitors' => count($stats['visitors']),
         ];
     }
+    usort($formattedDailyStats, static function ($a, $b) {
+        return strcmp((string) ($a['date'] ?? ''), (string) ($b['date'] ?? ''));
+    });
+
+    $uniqueCount = count($uniqueVisitors);
+    $bounceRate = $sessionCount > 0 ? round(($singlePageSessions / $sessionCount) * 100, 1) : 0.0;
+    $pagesPerVisitor = $uniqueCount > 0 ? round($pageViews / $uniqueCount, 2) : 0.0;
 
     return [
         'page_views' => $pageViews,
-        'unique_visitors' => count($uniqueVisitors),
-        'top_pages' => birkly_analytics_rank_counts($pageCounts, 'path', 'views', 10),
+        'unique_visitors' => $uniqueCount,
+        'sessions' => $sessionCount,
+        'bounce_rate' => $bounceRate,
+        'pages_per_visitor' => $pagesPerVisitor,
+        'event_counts' => $eventCounts,
+        'top_pages' => birkly_analytics_rank_counts($pageCounts, 'path', 'views', 15),
         'entrance_pages' => birkly_analytics_rank_counts($entranceCounts, 'path', 'entrances', 10),
         'exit_pages' => birkly_analytics_rank_counts($exitCounts, 'path', 'exits', 10),
         'referrers' => birkly_analytics_rank_counts($referrerCounts, 'domain', 'visits', 10),
@@ -401,6 +454,9 @@ function birkly_analytics_aggregate_events(array $events): array
         'browsers' => birkly_analytics_rank_counts($browserCounts, 'browser', 'visits', 10),
         'operating_systems' => birkly_analytics_rank_counts($osCounts, 'os', 'visits', 10),
         'countries' => birkly_analytics_rank_counts($countryCounts, 'country', 'visits', 10),
+        'outbound_targets' => birkly_analytics_rank_counts($outboundTargets, 'url', 'clicks', 10),
+        'forms' => birkly_analytics_rank_counts($formIds, 'form', 'submits', 10),
+        'plugin_events' => birkly_analytics_rank_counts($pluginEvents, 'event', 'count', 10),
         'daily_stats' => $formattedDailyStats,
     ];
 }
@@ -431,6 +487,16 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
     $empty = [
         'page_views' => 0,
         'unique_visitors' => 0,
+        'sessions' => 0,
+        'bounce_rate' => 0.0,
+        'pages_per_visitor' => 0.0,
+        'event_counts' => [
+            'page_view' => 0,
+            'form_submit' => 0,
+            'outbound_click' => 0,
+            'plugin_event' => 0,
+            'page_exit' => 0,
+        ],
         'top_pages' => [],
         'entrance_pages' => [],
         'exit_pages' => [],
@@ -441,6 +507,9 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
         'browsers' => [],
         'operating_systems' => [],
         'countries' => [],
+        'outbound_targets' => [],
+        'forms' => [],
+        'plugin_events' => [],
         'daily_stats' => [],
     ];
 

@@ -51,9 +51,57 @@ $report = birkly_analytics_aggregate_events([
 
 assert_true($report['page_views'] === 2, 'two page views counted');
 assert_true($report['unique_visitors'] === 1, 'one visitor');
+assert_true(($report['sessions'] ?? 0) === 1, 'one session from session_id');
+assert_true(isset($report['bounce_rate']), 'bounce rate present');
+assert_true(isset($report['pages_per_visitor']), 'pages per visitor present');
 assert_true(!empty($report['entrance_pages']), 'entrance pages present');
 assert_true(!empty($report['exit_pages']), 'exit pages present');
 assert_true(!empty($report['devices']), 'devices present');
+assert_true(!empty($report['operating_systems']), 'operating systems present');
 assert_true(!empty($report['countries']), 'countries present');
+
+$advanced = birkly_analytics_aggregate_events([
+    array_merge($event, ['event_type' => 'page_view']),
+    [
+        'event_type' => 'form_submit',
+        'path' => '/contact',
+        'ip_hash' => $event['ip_hash'],
+        'session_id' => 'sess_forms',
+        'timestamp' => time() + 20,
+        'event_name' => 'contact',
+        'event_data' => ['form_id' => 'contact'],
+        'device_type' => 'mobile',
+        'browser' => 'Safari',
+        'os' => 'iOS',
+    ],
+    [
+        'event_type' => 'outbound_click',
+        'path' => '/',
+        'ip_hash' => 'visitor-b',
+        'session_id' => 'sess_out',
+        'timestamp' => time() + 25,
+        'event_data' => ['href' => 'https://example.com'],
+        'device_type' => 'desktop',
+        'browser' => 'Firefox',
+        'os' => 'Linux',
+    ],
+    [
+        'event_type' => 'plugin_event',
+        'path' => '/',
+        'ip_hash' => 'visitor-b',
+        'session_id' => 'sess_out',
+        'timestamp' => time() + 26,
+        'event_name' => 'commerce.purchase',
+        'device_type' => 'desktop',
+        'browser' => 'Firefox',
+        'os' => 'Linux',
+    ],
+]);
+assert_true(($advanced['event_counts']['form_submit'] ?? 0) === 1, 'form submit counted');
+assert_true(($advanced['event_counts']['outbound_click'] ?? 0) === 1, 'outbound counted');
+assert_true(($advanced['event_counts']['plugin_event'] ?? 0) === 1, 'plugin event counted');
+assert_true(!empty($advanced['forms']), 'forms ranking present');
+assert_true(!empty($advanced['outbound_targets']), 'outbound ranking present');
+assert_true(!empty($advanced['plugin_events']), 'plugin events ranking present');
 
 echo "analytics_enrich_test: OK\n";
