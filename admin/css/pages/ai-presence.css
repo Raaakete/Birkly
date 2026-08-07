@@ -17,9 +17,12 @@
    ============================================ */
 
 /* ============================================
-   Page shell — editor column + sticky assist rail
+   Hub shell — left status sidebar + main (P60 IA)
+   The hub is a two-column layout: a persistent status sidebar (Guide /
+   Website tools / Hosting) beside the zone tabs + panels. Below the desktop
+   breakpoint it stacks, with the status nav becoming a horizontal scroller.
    ============================================ */
-.ap-page {
+.ap-hub-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
@@ -28,84 +31,125 @@
   padding-block-end: var(--space-8);
 }
 
-.ap-main { min-width: 0; }
+.ap-hub-main { min-width: 0; }
 
-/* Advanced: rail sits beside tab *content*, not the Essentials/Advanced
-   toggle or the tab strip. Spacing separates content from tab navigation. */
-.ap-advanced-body {
+/* Status sidebar — zone-switching read-out of Guide / Tools / Hosting state. */
+.ap-hub-status-nav {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.ap-status-item {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  cursor: pointer;
+  text-align: start;
+  color: inherit;
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+
+.ap-status-item:hover { border-color: var(--border-default); }
+
+.ap-status-item.is-active {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.ap-status-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ap-status-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.ap-status-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.ap-status-value {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+/* ============================================
+   Guide — vertical sub-nav + panels (P60 IA)
+   The Guide zone is a single experience: a vertical tab rail (Overview,
+   Essentials, Sources, Context, Products, Claims, Media) beside the panels.
+   AI Assist lives inside the Overview panel as a normal card.
+   ============================================ */
+.ap-guide-layout {
+  min-width: 0;
+  padding-block-end: var(--space-8);
+}
+
+.ap-guide-tabs {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
   align-items: start;
-  margin-block-start: var(--space-6);
   min-width: 0;
 }
 
-.ap-advanced-panels { min-width: 0; }
-
-/* Below 1280px the rail is an off-canvas drawer opened by the FAB (Advanced) */
-.ap-assist-sidebar {
-  position: fixed;
-  inset-block: 0;
-  inset-inline-end: 0;
-  z-index: var(--z-drawer);
-  width: min(100vw, 22.5rem);
-  overflow-y: auto;
-  background: var(--surface);
-  border-inline-start: 1px solid var(--border-subtle);
-  transform: translateX(100%);
-  transition: transform var(--motion-slow) var(--ease-out);
+/* Guide sub-nav: horizontal, scrollable on small screens; vertical rail on
+   desktop (set in the breakpoint below). Overrides the default .tabs strip. */
+.ap-guide-nav {
+  display: flex;
+  gap: var(--space-1);
+  overflow-x: auto;
+  min-width: 0;
 }
 
-.ap-assist-sidebar.is-open {
-  transform: translateX(0);
-  box-shadow: var(--elevation-3);
-}
+.ap-guide-panels { min-width: 0; }
 
-/* Stacked above the global assist launcher (admin/css/ai-chat-button.css
-   .assist-fab-wrap sits at the same bottom-right space-6 corner on every
-   admin page) so the two floating triggers never overlap. */
-.ap-assist-fab {
-  position: fixed;
-  inset-block-end: 5.5rem;
-  inset-inline-end: var(--space-6);
-  /* Above --z-chrome: the global assist launcher's wrapper reserves layout
-     space for its (visually hidden) menu and would otherwise swallow clicks
-     aimed at this button. */
-  z-index: var(--z-drawer);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--elevation-2);
-}
+.ap-guide-panels > .tab-content { min-width: 0; }
 
-/* Essentials: no floating AI Assist FAB. */
-.ap-page--essentials ~ .ap-assist-fab,
-.ap-assist-fab[hidden] {
-  display: none !important;
-}
+/* AI Assist widget — the primary Overview card. Full-width, no drawer. */
+.ap-assist-widget { min-width: 0; }
 
-/* Advanced desktop: persistent rail aligned with content column */
-@media (min-width: 1280px) {
-  .ap-advanced-body {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+@media (min-width: 1024px) {
+  .ap-hub-layout {
+    grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
   }
 
-  .ap-page--advanced .ap-assist-sidebar {
+  .ap-hub-status-nav {
+    flex-direction: column;
     position: sticky;
     inset-block-start: var(--space-6);
-    inset-inline-end: auto;
-    z-index: var(--z-base);
-    width: auto;
-    max-height: calc(100vh - var(--space-12));
-    border-inline-start: none;
-    background: transparent;
-    transform: none;
-    box-shadow: none;
   }
 
-  .ap-page--advanced ~ .ap-assist-fab { display: none !important; }
-}
+  .ap-guide-tabs {
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  }
 
-.ap-page--essentials { grid-template-columns: minmax(0, 1fr); }
+  .ap-guide-nav {
+    flex-direction: column;
+    overflow-x: visible;
+    position: sticky;
+    inset-block-start: var(--space-6);
+  }
+
+  .ap-guide-nav .tab {
+    text-align: start;
+    justify-content: flex-start;
+  }
+}
 
 /* Numbered workflow — a click-through checklist of the five stages.
    .ap-card-list is the same shape for the JS-rendered card lists (sources,
@@ -388,72 +432,15 @@
 }
 
 /* ============================================
-   Hub status spine + zones (P60-M2)
-   One product, four zones. The spine is a single compact card that
-   deep-links into each zone; the tabs switch zones; panels toggle via the
-   [hidden] attribute set in js/ai-presence.js.
+   Hub zones (P60 IA)
+   Zone panels toggle via the [hidden] attribute set in js/ai-presence.js.
    ============================================ */
-.ap-hub-spine-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-4);
-}
-
-.ap-spine-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border: 0;
-  background: transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  text-align: start;
-  color: inherit;
-}
-
-.ap-spine-item:hover { background: var(--surface-sunken); }
-
-.ap-spine-item:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-
-.ap-spine-text {
-  display: inline-flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.ap-spine-label {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
-}
-
-.ap-spine-value {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-}
-
-.ap-spine-sep {
-  width: 1px;
-  align-self: stretch;
-  min-height: 1.5rem;
-  background: var(--border-default);
-}
-
-@media (max-width: 40rem) {
-  .ap-spine-sep { display: none; }
-}
-
 /* Zone panels — visibility is driven by the [hidden] attribute; this rule is a
    safety net so a stray display rule can never reveal an inactive zone. */
 .tab-panel[hidden] { display: none; }
 
 /* Read-only snippet rows in the Publish zone reuse .copy-snippet-row from
    settings.css; keep the textarea monospace + non-resizable. */
-#ap-connections-mount .settings-stack { gap: var(--space-6); }
 [data-hub-panel="publish"] textarea.input {
   font-family: var(--font-mono, ui-monospace, monospace);
   resize: vertical;
