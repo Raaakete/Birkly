@@ -996,6 +996,9 @@ window.migrateStorage = migrateStorage;
         }
 
         var parsed = parseSettingsUrl();
+        if (parsed.redirected) {
+            return;
+        }
         normalizeSettingsUrl(parsed);
 
         tabNav.addEventListener('click', async function (e) {

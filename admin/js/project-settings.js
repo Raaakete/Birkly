@@ -575,14 +575,7 @@
             });
         }
 
-        var hostingType = document.getElementById('project-hosting-type');
-        if (hostingType && hostingType.dataset.bound !== '1') {
-            hostingType.dataset.bound = '1';
-            hostingType.addEventListener('change', function () {
-                updateRenderingDisabledState();
-                saveRenderingSettings();
-            });
-        }
+        // Hosting select is read-only (Site delivery SoT) — no change handler.
 
         var renderModeSelect = document.getElementById('project-render-mode');
         if (renderModeSelect && renderModeSelect.dataset.bound !== '1') {
