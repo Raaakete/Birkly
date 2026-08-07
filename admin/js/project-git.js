@@ -187,7 +187,7 @@
         var dirty = repo.dirty || 0;
         var conflicts = repo.conflicts || [];
 
-        var summary = '<div class="u-grid-auto-sm">' +
+        var summary = '<div class="u-stack-3">' +
             '<div class="kv"><div class="kv-key">Remote</div><div class="kv-value"><code>' + escapeHtml(config.remote_url || '—') + '</code></div></div>' +
             '<div class="kv"><div class="kv-key">Branch</div><div class="kv-value"><code>' + escapeHtml(repo.branch || config.branch || 'main') + '</code></div></div>' +
             '<div class="kv"><div class="kv-key">Authentication</div><div class="kv-value">' + escapeHtml(authLabel(config)) + '</div></div>' +
