@@ -64,14 +64,14 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 <!-- Hub zones — Guide | Tools | Connections | Publish (P60-M1 §1.1) -->
 <div class="ap-hub">
-<div class="tabs u-mb-6" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-    <button type="button" class="tab active" role="tab" data-hub-zone="guide" aria-selected="true">{translate 'admin.ag_hub_tab_guide'}</button>
-    <button type="button" class="tab" role="tab" data-hub-zone="tools" aria-selected="false">{translate 'admin.ag_hub_tab_tools'}</button>
-    <button type="button" class="tab" role="tab" data-hub-zone="connections" aria-selected="false">{translate 'admin.ag_hub_tab_connections'}</button>
-    <button type="button" class="tab" role="tab" data-hub-zone="publish" aria-selected="false">{translate 'admin.ag_hub_tab_publish'}</button>
+<div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
+    <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">{translate 'admin.ag_hub_tab_guide'}</button>
+    <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_tools'}</button>
+    <button type="button" class="tab" role="tab" id="ap-tab-connections" data-hub-zone="connections" aria-controls="ap-panel-connections" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_connections'}</button>
+    <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_publish'}</button>
 </div>
 
-<div class="tab-panel active" data-hub-panel="guide">
+<div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
 <div class="ap-page">
     <div class="ap-main">
         <div class="segmented u-mb-6" role="group" aria-label="{translate 'admin.ag_view_mode'}">
@@ -553,7 +553,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 </div><!-- .tab-panel guide -->
 
 <!-- ===================== TOOLS zone (WebMCP) — P60-M6 ===================== -->
-<div class="tab-panel" data-hub-panel="tools" hidden>
+<div class="tab-panel" id="ap-panel-tools" role="tabpanel" aria-labelledby="ap-tab-tools" tabindex="0" data-hub-panel="tools" hidden>
     <div class="u-max-w-page u-stack-6">
         <div class="u-stack-2">
             <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">{translate 'admin.ag_tools_lede'}</p>
@@ -616,7 +616,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 </div>
 
 <!-- ===================== CONNECTIONS zone — P60-M4 ===================== -->
-<div class="tab-panel" data-hub-panel="connections" hidden>
+<div class="tab-panel" id="ap-panel-connections" role="tabpanel" aria-labelledby="ap-tab-connections" tabindex="0" data-hub-panel="connections" hidden>
     <div class="u-max-w-page u-stack-6">
         <section class="card u-p-6 u-stack-3" id="ap-connections-about">
             <header class="u-stack-1">
@@ -631,7 +631,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 </div>
 
 <!-- ===================== PUBLISH zone — P60-M7 ===================== -->
-<div class="tab-panel" data-hub-panel="publish" hidden>
+<div class="tab-panel" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish" hidden>
     <div class="u-max-w-page u-stack-6">
         <div class="u-split u-align-start u-gap-3">
             <div class="u-stack-1">
@@ -656,14 +656,14 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <label class="u-label u-text-sm">{translate 'admin.ag_publish_snippet_label'}</label>
                     <div class="copy-snippet-row">
                         <textarea readonly rows="2" id="ap-publish-snippet-client" class="input u-font-mono"></textarea>
-                        <button type="button" class="btn btn-sm btn-primary ap-copy-btn" data-copy-target="ap-publish-snippet-client">{translate 'admin.copy'}</button>
+                        <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-client">{translate 'admin.copy'}</button>
                     </div>
                 </div>
                 <div class="u-stack-2">
                     <label class="u-label u-text-sm">{translate 'admin.ag_publish_proxy_label'}</label>
                     <div class="copy-snippet-row">
                         <textarea readonly rows="2" id="ap-publish-snippet-proxy" class="input u-font-mono"></textarea>
-                        <button type="button" class="btn btn-sm btn-primary ap-copy-btn" data-copy-target="ap-publish-snippet-proxy">{translate 'admin.copy'}</button>
+                        <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-proxy">{translate 'admin.copy'}</button>
                     </div>
                 </div>
                 <div class="u-stack-2">
@@ -686,7 +686,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <label class="u-label u-text-sm">{translate 'admin.ag_publish_webmcp_snippet_label'}</label>
                 <div class="copy-snippet-row">
                     <textarea readonly rows="2" id="ap-publish-snippet-webmcp" class="input u-font-mono"></textarea>
-                    <button type="button" class="btn btn-sm btn-primary ap-copy-btn" data-copy-target="ap-publish-snippet-webmcp">{translate 'admin.copy'}</button>
+                    <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-webmcp">{translate 'admin.copy'}</button>
                 </div>
             </div>
             <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="tools">{translate 'admin.ag_publish_webmcp_manage'}</button>
