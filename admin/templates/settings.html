@@ -52,6 +52,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <?= birkly_icon('shield', ['size' => 16]) ?>
         <span class="nav-text" data-text="Security">Security</span>
       </button>
+      <button type="button" class="tab" data-tab="ai" data-settings-search="ai assistant mcp connections service agents outbound personal connector built-in chat provider">
+        <?= birkly_icon('sparkle', ['size' => 16]) ?>
+        <span class="nav-text" data-text="<?= htmlspecialchars(__('admin.ai_integrations'), ENT_QUOTES, 'UTF-8') ?>"><?= __('admin.ai_integrations') ?></span>
+      </button>
       <button type="button" class="tab" data-tab="integrations" data-settings-search="integrations api webhooks">
         <?= birkly_icon('link', ['size' => 16]) ?>
         <span class="nav-text" data-text="Integrations">Integrations</span>
@@ -320,7 +324,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="u-cluster">
               <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
               <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting') ?>" class="btn btn-secondary btn-sm">Hosting URLs</a>
-              <a href="<?= htmlspecialchars(admin_url('agent-guide', ['zone' => 'connections'])) ?>" class="btn btn-secondary btn-sm">AI connections</a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm">AI connections</a>
             </div>
             <p class="form-help">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             </div>
@@ -860,6 +864,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </div>
       </div>
 
+      <div class="tab-pane" id="ai">
+        <?php include __DIR__ . '/../partials/ai-connections-panel.php'; ?>
+      </div>
+
       <div class="tab-pane" id="analytics">
         <div class="settings-stack" id="analytics-settings-root">
           <div class="settings-pane-section" data-settings-search="analytics presets privacy consent">
@@ -867,7 +875,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="card-header">
                 <div>
                   <h2 class="section-title">Analytics</h2>
-                  <p class="settings-help">Choose how much visitor data Birkly collects. Domain toggles under Site delivery still apply.</p>
+                  <p class="settings-help">Choose how much visitor data Birkly collects. Saving Minimal+ enables tracking for your site (including localhost preview).</p>
                 </div>
               </div>
               <div class="card-body u-stack-4">
@@ -1527,6 +1535,8 @@ window.webhooksData = window.webhooksData || { collections: <?= $webhookCollecti
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-git.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/ai-connections.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/mcp-connections.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/analytics-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/developer-mode.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 
