@@ -263,7 +263,8 @@ function getDashboardData() {
         haru_secure_session_start();
     }
     $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
-    $onboardingStatus = getOnboardingStatus($userId);
+    // Dashboard checklist does not need a live starter-catalog probe.
+    $onboardingStatus = getOnboardingStatus($userId, false);
     
     // Get collections
     $collectionsPath = __DIR__ . '/../content/collections';

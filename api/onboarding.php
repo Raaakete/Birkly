@@ -92,26 +92,35 @@ function saveSiteOnboardingSettings(array $data) {
     return $settingsStorage->write('onboarding.json', array_merge($existing, $data));
 }
 
-// Helper to get onboarding status
-function getOnboardingStatus($userId = null) {
+/**
+ * Helper to get onboarding status.
+ *
+ * @param bool|null $includeStarterAvailability When null, starters are fetched only
+ *        while setup is still in progress (avoids outbound catalog hits on every admin page).
+ */
+function getOnboardingStatus($userId = null, ?bool $includeStarterAvailability = null) {
     $siteOnboarding = getSiteOnboardingSettings();
     
     $needsFirstUser = !hasUsers();
     $isFirstTime = isFirstTimeSetup();
+    $projectRoot = dirname(__DIR__);
+    require_once __DIR__ . '/../core/birkly_paths.php';
     
     // If no userId provided (not logged in yet), return basic status
     if ($userId === null) {
-        $projectRoot = dirname(__DIR__);
-        require_once __DIR__ . '/../core/demo_starter_templates.php';
-        require_once __DIR__ . '/../core/birkly_paths.php';
-        return [
+        $includeStarters = $includeStarterAvailability ?? true;
+        $status = [
             'needs_first_user' => $needsFirstUser,
             'is_first_time' => $isFirstTime,
             'completed' => false,
             'install_path' => $siteOnboarding['install_path'] ?? null,
-            'starter_availability' => birkly_demo_starter_availability($projectRoot),
             'is_local_dev' => birkly_is_local_dev_request(),
         ];
+        if ($includeStarters) {
+            require_once __DIR__ . '/../core/demo_starter_templates.php';
+            $status['starter_availability'] = birkly_demo_starter_availability($projectRoot);
+        }
+        return $status;
     }
     
     // Check user-specific onboarding
@@ -120,14 +129,17 @@ function getOnboardingStatus($userId = null) {
     $userOnboarding = $userStorage->read($userOnboardingFile) ?? [];
     
     $progress = $userOnboarding['progress'] ?? [];
-    $projectRoot = dirname(__DIR__);
-    require_once __DIR__ . '/../core/demo_starter_templates.php';
-    require_once __DIR__ . '/../core/birkly_paths.php';
+    $completed = (bool) ($userOnboarding['completed'] ?? false);
+    $includeStarters = $includeStarterAvailability;
+    if ($includeStarters === null) {
+        // Dashboard / admin chrome only needs completion flags — not a live catalog probe.
+        $includeStarters = !$completed && ($needsFirstUser || $isFirstTime);
+    }
     
-    return [
+    $status = [
         'needs_first_user' => $needsFirstUser,
         'is_first_time' => $isFirstTime,
-        'completed' => $userOnboarding['completed'] ?? false,
+        'completed' => $completed,
         'skipped' => $userOnboarding['skipped'] ?? false,
         'setup_wizard_completed' => $userOnboarding['setup_wizard_completed'] ?? false,
         'demo_content_installed' => $userOnboarding['demo_content_installed'] ?? false,
@@ -142,9 +154,13 @@ function getOnboardingStatus($userId = null) {
         'checklist_hidden' => $userOnboarding['checklist_hidden'] ?? false,
         'started_at' => $userOnboarding['started_at'] ?? null,
         'completed_at' => $userOnboarding['completed_at'] ?? null,
-        'starter_availability' => birkly_demo_starter_availability($projectRoot),
         'is_local_dev' => birkly_is_local_dev_request(),
     ];
+    if ($includeStarters) {
+        require_once __DIR__ . '/../core/demo_starter_templates.php';
+        $status['starter_availability'] = birkly_demo_starter_availability($projectRoot);
+    }
+    return $status;
 }
 
 // Helper to save onboarding progress
@@ -187,9 +203,10 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
     switch ($action) {
     case 'status':
-        // Get onboarding status - can work without authentication for first user check
+        // Get onboarding status - can work without authentication for first user check.
+        // Always include starter availability here (wizard needs it; catalog is cached).
         $userId = isset($_SESSION['user']) ? ($_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown') : null;
-        $status = getOnboardingStatus($userId);
+        $status = getOnboardingStatus($userId, true);
         
         // Persist install path from query param when wizard loads
         $installParam = $_GET['install'] ?? '';
