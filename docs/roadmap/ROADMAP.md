@@ -29,14 +29,16 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **P52** complete 2026-08-01. **P53–P57** shipped or in human review (see Ops planning). **P54** Commerce 0→1 complete 2026-08-02.
 
-**Active phase:** **P58 — Platform reliability & product polish** (**approved / executing** 2026-08-07).
+**Active phase:** **P59 — Project settings & Git sync** (**M8 human review** 2026-08-07).
 
-- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P58-reliability-product-polish-plan.md` · `P58-lead-engineer-handoff.md` · `P58-gap-register.md`
-- Focus: project-site cold first load / SSR · local PHP install / onboarding / start helper · then admin UX polish (field API name auto-fill, project download/delete, Agent Guide Unpublish + Essentials AI, Hub “Upload”, Entries L2 More menu)
-- Out of scope: full Git sync (→ P59) · Ops/Provider shell redesign · Mollie/multi-PSP · forced third-party Hub plugin CSS
-- Notify human at **P58-M8**
+- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P59-project-git-sync-plan.md` · `P59-lead-engineer-handoff.md` · `P59-gap-register.md` · `P59-M8-human-notify.md`
+- Focus: Settings → **Project** tab (Overview / Files / Rendering / Git / Activity) · Git sync for **`project/` only** (GitHub/GitLab/generic; push/pull; instance credentials)
+- Out of scope: content/media in git (site packs) · WebMCP · Ops/Provider shells · plugins via git
+- Notify human at **P59-M8**
 
-**Open human-review queue (do not block P58):** P53-M14 · P55-M14 · P56-M15 · P57-M8 (notify packs in Ops `internal/planning/reviews/`).
+**Previous:** **P58 — Platform reliability & product polish** (**M8 human review** 2026-08-07). Canonical: `P58-reliability-product-polish-plan.md` · `P58-M8-human-notify.md`.
+
+**Open human-review queue:** P53-M14 · P55-M14 · P56-M15 · P57-M8 · P58-M8 · P59-M8 (notify packs in Ops `internal/planning/reviews/`).
 
 **Previous:** P55 Hub payments & entitlements — implementation ready for human review 2026-08-03. Canonical: `P55-hub-payments-entitlements-plan.md` · `P55-M14-human-notify.md`.
 
