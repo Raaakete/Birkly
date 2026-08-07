@@ -138,6 +138,12 @@ assert_true(strpos($client, 'toolname="') !== false, 'client emits declarative t
 assert_true(strpos($client, 'tooldescription="') !== false, 'client emits declarative tooldescription attribute');
 assert_true(strpos($client, "'birkly_form_'") !== false, 'client tool name matches runtime derived name');
 
+echo "==> Runtime stamps allowlisted forms + listens for late footer forms\n";
+assert_true(strpos($js, 'stampAllowlistedForms') !== false, 'runtime stamps toolname/tooldescription on allowlisted forms');
+assert_true(strpos($js, 'birkly:footer-forms-ready') !== false, 'runtime listens for footer-forms-ready');
+assert_true(strpos($js, 'shimNavigatorModelContext') !== false, 'runtime aliases document.modelContext onto navigator when needed');
+assert_true(strpos($js, 'toolparamdescription') !== false, 'runtime stamps toolparamdescription from labels');
+
 echo "==> Public URLs honesty (cms canonical always; public_site only in project mode)\n";
 require_once $root . '/core/ai_presence.php';
 require_once $root . '/core/hosting_urls.php';
