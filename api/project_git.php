@@ -133,6 +133,7 @@ if ($action === 'connect') {
     $authMode = birkly_project_git_normalize_auth_mode((string) ($input['auth_mode'] ?? 'none'));
     $token = trim((string) ($input['token'] ?? ''));
     $sshKey = trim((string) ($input['ssh_key'] ?? ''));
+    $nostrKey = trim((string) ($input['nostr_key'] ?? ''));
     $username = trim((string) ($input['auth_username'] ?? ''));
 
     try {
@@ -150,9 +151,15 @@ if ($action === 'connect') {
     if ($authMode === 'ssh' && $sshKey === '' && empty($existing['ssh_key_encrypted'])) {
         birkly_project_git_error('An SSH private key is required for SSH authentication.');
     }
+    if ($authMode === 'nostr' && $nostrKey === '' && empty($existing['nostr_key_encrypted'])) {
+        birkly_project_git_error('A Nostr private key (nsec) is required for Buzz authentication.');
+    }
+    if ($authMode === 'nostr' && !birkly_project_git_nostr_helper_available()) {
+        birkly_project_git_error('Buzz/Nostr auth needs git-credential-nostr installed on this server’s PATH.');
+    }
 
     $patch = array_merge(
-        birkly_project_git_credential_patch($authMode, $token, $sshKey, $username),
+        birkly_project_git_credential_patch($authMode, $token, $sshKey, $username, $nostrKey),
         [
             'provider' => $provider,
             'remote_url' => $remoteUrl,

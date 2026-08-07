@@ -331,11 +331,32 @@ try {
     assert_true('ssh key is stored', $public['has_ssh_key'] === true);
     assert_true('ssh key decrypts', str_contains((string) (birkly_project_git_credentials()['ssh_key'] ?? ''), 'BEGIN OPENSSH'));
 
+    // Nostr / Buzz credentials encrypt the same way and never return the nsec.
+    birkly_project_git_write(array_merge(
+        birkly_project_git_credential_patch('nostr', '', '', '', 'nsec1supersecretbuzzkey9999'),
+        ['provider' => 'buzz', 'remote_url' => 'https://relay.example/git/abc/site']
+    ));
+    $raw = birkly_project_git_read();
+    $public = birkly_project_git_public_config();
+    assert_true('nostr key is not stored in plaintext', !str_contains(json_encode($raw), 'nsec1supersecretbuzzkey9999'));
+    assert_true('nostr provider normalizes', birkly_project_git_normalize_provider('buzz') === 'buzz');
+    assert_true('bitbucket provider normalizes', birkly_project_git_normalize_provider('bitbucket') === 'bitbucket');
+    assert_true('codeberg provider normalizes', birkly_project_git_normalize_provider('codeberg') === 'codeberg');
+    assert_true('public config reports nostr key', $public['has_nostr_key'] === true);
+    assert_true('public config never carries nsec', !str_contains(json_encode($public), 'nsec1supersecretbuzzkey9999'));
+    assert_true('nostr key decrypts', (birkly_project_git_credentials()['nostr_key'] ?? '') === 'nsec1supersecretbuzzkey9999');
+
+    $meta = birkly_project_git_provider_meta();
+    assert_true('provider meta includes Buzz', isset($meta['buzz']));
+    assert_true('provider meta includes Bitbucket', isset($meta['bitbucket']));
+    assert_true('provider meta includes Codeberg', isset($meta['codeberg']));
+
     birkly_project_git_delete();
     $public = birkly_project_git_public_config();
     assert_true('disconnect clears the remote', $public['configured'] === false);
     assert_true('disconnect clears the token', $public['has_token'] === false);
     assert_true('disconnect clears the ssh key', $public['has_ssh_key'] === false);
+    assert_true('disconnect clears the nostr key', $public['has_nostr_key'] === false);
 } finally {
     if ($settingsBackup !== null) {
         file_put_contents($settingsFile, $settingsBackup);
