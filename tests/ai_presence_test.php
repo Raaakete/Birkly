@@ -51,6 +51,8 @@ require_once $root . '/core/http_routes.php';
 $routes = birkly_http_route_map();
 assert_true(isset($routes['/.well-known/brand-context.json']), 'legacy well-known route registered');
 assert_true(isset($routes['/.well-known/agent-guide.json']), 'agent guide well-known route registered');
+assert_true(isset($routes['/llms.txt']), 'llms.txt route registered');
+assert_true(is_readable($root . '/api/llms_txt.php'), 'llms.txt handler exists');
 
 echo "==> Admin template\n";
 assert_true(is_readable($root . '/admin/templates/ai-presence.html'), 'admin template exists');
@@ -73,6 +75,14 @@ $ps2 = birkly_ai_presence_publish_state();
 assert_true($ps2['is_live'] === true, 'live after publish');
 assert_true($ps2['version'] === 1, 'version 1 after first publish');
 assert_true($ps2['has_unpublished_changes'] === false, 'no unpublished changes when draft matches');
+
+echo "==> llms.txt from published Agent Guide\n";
+$llms = birkly_ai_presence_llms_txt_body();
+assert_true(is_string($llms) && $llms !== '', 'llms.txt body when published');
+assert_true(preg_match('/^#\s+.+/m', (string) $llms) === 1, 'llms.txt has H1');
+assert_true(preg_match('/\[.+\]\(.+\)/', (string) $llms) === 1, 'llms.txt has a Markdown link');
+assert_true(strlen((string) $llms) >= 50, 'llms.txt length meets Lighthouse minimum');
+
 $draft2 = birkly_ai_presence_load_draft();
 $draft2['identity']['short_description'] = 'Changed';
 birkly_ai_presence_save_draft($draft2);
@@ -84,6 +94,7 @@ assert_true(($unpub['ok'] ?? false) === true, 'unpublish ok');
 $ps4 = birkly_ai_presence_publish_state();
 assert_true($ps4['publishing_enabled'] === false, 'publishing disabled after unpublish');
 assert_true($ps4['is_live'] === false, 'not live after unpublish');
+assert_true(birkly_ai_presence_llms_txt_body() === null, 'llms.txt null after unpublish');
 
 echo "==> i18n keys\n";
 $en = json_decode((string) file_get_contents($root . '/lang/en.json'), true);
