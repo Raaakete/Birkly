@@ -67,7 +67,7 @@ if [ -n "$DATA_ROOT" ]; then
 fi
 
 if [ "$USE_DATA_ROOT" -eq 1 ]; then
-  for name in ai_conversations ai_approvals webhooks invitations analytics mcp_audit mcp_rate feedback; do
+  for name in ai_conversations ai_approvals webhooks invitations analytics mcp_audit mcp_rate feedback activity; do
     mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
   done
   mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
@@ -108,7 +108,7 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   ln -sfn /app/core "$DATA_ROOT/core" 2>/dev/null || true
   ln -sfn /app/fieldtypes "$DATA_ROOT/fieldtypes" 2>/dev/null || true
   ln -sfn /app/api "$DATA_ROOT/api" 2>/dev/null || true
-  chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback"
+  chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback $DATA_ROOT/activity"
 else
   legacy_layout
 fi
