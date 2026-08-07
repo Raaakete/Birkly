@@ -19,6 +19,18 @@ if ($uri === false || $uri === null) {
     return false;
 }
 
+// Fast path for static assets on PHP's built-in server: do not boot routes/plugins.
+// Admin CSS uses many @import files; without this, every .css/.js hit pays full bootstrap
+// and serializes behind the single worker — making local admin feel unusable.
+// Note: do NOT include .html here — project HTML may need SSR via hosting_dispatch.
+$staticExt = '#\.(css|js|mjs|map|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|eot)$#i';
+if (preg_match($staticExt, $uri) === 1) {
+    $staticCandidate = __DIR__ . $uri;
+    if (is_file($staticCandidate)) {
+        return false;
+    }
+}
+
 require_once __DIR__ . '/core/birkly_paths.php';
 require_once __DIR__ . '/core/http_routes.php';
 require_once __DIR__ . '/core/hosting_routing.php';
@@ -28,6 +40,14 @@ if ($base !== '' && str_starts_with($uri, $base)) {
     $uri = substr($uri, strlen($base));
     if ($uri === '') {
         $uri = '/';
+    }
+}
+
+// Retry static fast-path after base-path rewrite (subdirectory installs).
+if (preg_match($staticExt, $uri) === 1) {
+    $staticCandidate = __DIR__ . $uri;
+    if (is_file($staticCandidate)) {
+        return false;
     }
 }
 

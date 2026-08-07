@@ -137,7 +137,9 @@ const onboarding = {
                     if (cont) cont.disabled = true;
                 }
                 let label = 'Internet connection needed';
-                if (meta && meta.enabled && !meta.ready) {
+                if (meta && meta.catalog_reachable === false) {
+                    label = 'Internet connection needed';
+                } else if (meta && meta.enabled && !meta.ready) {
                     label = 'Not available yet';
                 } else if (meta && !meta.enabled) {
                     label = 'Coming soon';
