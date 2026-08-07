@@ -53,7 +53,7 @@ function setAutomationEditorMode(mode) {
   const canvasPanel = document.getElementById('automation-canvas-editor');
   const canvasActions = document.getElementById('canvas-toolbar-actions');
 
-  document.querySelectorAll('.editor-mode-btn').forEach((btn) => {
+  document.querySelectorAll('.automation-editor-mode-btn').forEach((btn) => {
     const active = btn.dataset.mode === automationEditorMode;
     btn.classList.toggle('active', active);
     btn.setAttribute('aria-selected', active ? 'true' : 'false');
@@ -173,6 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
   initAutomationViewTabs();
   loadBlocks();
   loadAutomations();
+  loadRecipes();
   loadCollections();
   checkQueueHealth();
 });
@@ -270,6 +271,16 @@ function initAutomationActionDelegation() {
         }
         break;
       }
+      case 'import-recipe': {
+        const recipeId = el.getAttribute('data-automation-recipe') || '';
+        if (recipeId) importRecipe(recipeId);
+        break;
+      }
+      case 'import-recipe-pack': {
+        const pack = el.getAttribute('data-automation-pack') || 'commerce';
+        importRecipePack(pack);
+        break;
+      }
       case 'confirm-live-run':
         if (id) confirmLiveRun(id);
         break;
@@ -346,9 +357,10 @@ function hideAutomationModal(modal) {
 
 function switchAutomationView(view) {
   const target = view || 'list';
-  document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((btn) => {
+  document.querySelectorAll('.automation-view-tabs .tab').forEach((btn) => {
     const active = (btn.getAttribute('data-automation-view') || '') === target;
     btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
   });
   const listPanel = document.getElementById('automation-view-list');
   const setupPanel = document.getElementById('automation-view-setup');
@@ -444,7 +456,8 @@ async function checkQueueHealth() {
       dismissed = sessionStorage.getItem('automation-health-dismissed') === '1';
     } catch (_) {}
     if (hint) {
-      hint.style.display = (hasAutomations && jobsWaiting && completed === 0 && !dismissed) ? 'flex' : 'none';
+      hint.hidden = !(hasAutomations && jobsWaiting && completed === 0 && !dismissed);
+      hint.style.display = '';
     }
   } catch (_) {
     // Non-fatal
@@ -477,7 +490,7 @@ async function loadSetupHealth() {
     const versionLine = document.getElementById('automation-plugin-version-line');
     if (versionLine) {
       versionLine.textContent = 'Plugin version: ' + (data.plugin_version || 'unknown')
-        + ' — if this is below 1.1.6, redeploy/sync the Automation plugin before debugging further.';
+        + ' — if this is below 1.1.8, redeploy/sync the Automation plugin before debugging further.';
     }
     if (data.queue) {
       window.__automationQueueStats = {
@@ -516,7 +529,7 @@ async function loadSetupHealth() {
           <p class="automation-setup-check-detail">${escapeHtml(check.detail || '')}</p>
           ${why}
         </li>`;
-      }).join('') || '<li class="form-help">No checks available.</li>';
+      }).join('') || '<li class="field-help">No checks available.</li>';
     }
 
     if (sentList) {
@@ -527,7 +540,7 @@ async function loadSetupHealth() {
             <span class="automation-setup-check-label">${escapeHtml(row.to || '')}</span>
             <p class="automation-setup-check-detail">${escapeHtml(row.subject || '')} · ${escapeHtml(row.sent_at || '')}</p>
           </li>`).join('')
-        : '<li class="form-help">No sends recorded yet. Use Send test email after saving settings.</li>';
+        : '<li class="field-help">No sends recorded yet. Use Send test email after saving settings.</li>';
     }
 
     const jobsList = document.getElementById('automation-recent-jobs');
@@ -544,7 +557,7 @@ async function loadSetupHealth() {
             <p class="automation-setup-check-detail">${escapeHtml(note)}${job.retry_after ? ' · retry after ' + escapeHtml(String(job.retry_after)) : ''}</p>
           </li>`;
         }).join('')
-        : '<li class="form-help">No queue jobs yet. Create an entry in the watched collection to enqueue one.</li>';
+        : '<li class="field-help">No queue jobs yet. Create an entry in the watched collection to enqueue one.</li>';
     }
 
     const blocking = data.blocking || [];
@@ -735,7 +748,10 @@ function toggleCronUrlVisibility() {
 
 function dismissHealthHint() {
   const hint = document.getElementById('automation-health-hint');
-  if (hint) hint.style.display = 'none';
+  if (hint) {
+    hint.hidden = true;
+    hint.style.display = '';
+  }
   try {
     sessionStorage.setItem('automation-health-dismissed', '1');
   } catch (_) {}
@@ -789,51 +805,131 @@ function renderAutomations() {
   container.innerHTML = automations.map(automation => {
     const triggerType = automation.trigger?.type || 'unknown';
     const actionCount = automation.actions?.length || 0;
+    const badgeClass = automation.enabled ? 'badge badge-success' : 'badge badge-neutral';
     return `
-      <div class="automation-card" data-id="${escapeAttr(automation.id)}">
-        <div class="automation-card-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-          </svg>
-        </div>
-        <div class="automation-card-body">
-          <button type="button" class="automation-card-title-btn" data-automation-action="edit" data-automation-id="${escapeAttr(automation.id)}">
-            ${escapeHtml(automation.name || 'Untitled')}
-          </button>
-          <div class="automation-card-meta">
-            <span class="status-badge ${automation.enabled ? 'active' : 'inactive'}">
-              ${automation.enabled ? 'Enabled' : 'Disabled'}
-            </span>
-            <span class="automation-card-meta-sep">·</span>
-            <span>Trigger: <strong>${escapeHtml(triggerType)}</strong></span>
-            <span class="automation-card-meta-sep">·</span>
-            <span>${actionCount} action${actionCount !== 1 ? 's' : ''}</span>
+      <div class="card automation-list-card" data-id="${escapeAttr(automation.id)}">
+        <div class="card-body">
+          <div class="u-row-2 automation-list-card-row">
+            <div class="u-stack-2" style="min-width:0;flex:1">
+              <button type="button" class="automation-card-title-btn" data-automation-action="edit" data-automation-id="${escapeAttr(automation.id)}">
+                ${escapeHtml(automation.name || 'Untitled')}
+              </button>
+              <div class="u-cluster-3 automation-card-meta">
+                <span class="${badgeClass}">${automation.enabled ? 'Enabled' : 'Disabled'}</span>
+                <span class="field-help">Trigger: <strong>${escapeHtml(triggerType)}</strong></span>
+                <span class="field-help">${actionCount} action${actionCount !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+            <div class="cell-actions automation-card-actions u-cluster-2">
+              <button type="button" class="btn btn-sm btn-ghost" data-automation-action="dry-run" data-automation-id="${escapeAttr(automation.id)}" title="Test run (dry run)">Test</button>
+              <button type="button" class="btn btn-sm btn-ghost" data-automation-action="duplicate" data-automation-id="${escapeAttr(automation.id)}" title="Duplicate">Duplicate</button>
+              <button type="button" class="btn btn-sm btn-primary" data-automation-action="edit" data-automation-id="${escapeAttr(automation.id)}">Open</button>
+              <button type="button" class="btn btn-sm btn-secondary" data-automation-action="logs" data-automation-id="${escapeAttr(automation.id)}">Logs</button>
+              <button type="button" class="btn btn-sm ${automation.enabled ? 'btn-warning' : 'btn-primary'}"
+                      data-automation-action="toggle" data-automation-id="${escapeAttr(automation.id)}" data-automation-enabled="${automation.enabled ? '1' : '0'}">
+                ${automation.enabled ? 'Disable' : 'Enable'}
+              </button>
+              <button type="button" class="btn btn-sm btn-danger" data-automation-action="delete" data-automation-id="${escapeAttr(automation.id)}">Delete</button>
+            </div>
           </div>
-        </div>
-        <div class="automation-card-actions">
-          <button type="button" class="btn btn-sm btn-ghost" data-automation-action="dry-run" data-automation-id="${escapeAttr(automation.id)}" title="Test run (dry run)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polygon points="5,3 19,12 5,21 5,3"/>
-            </svg>
-            Test
-          </button>
-          <button type="button" class="btn btn-sm btn-ghost" data-automation-action="duplicate" data-automation-id="${escapeAttr(automation.id)}" title="Duplicate">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-            </svg>
-          </button>
-          <button type="button" class="btn btn-sm btn-primary" data-automation-action="edit" data-automation-id="${escapeAttr(automation.id)}">Open</button>
-          <button type="button" class="btn btn-sm btn-secondary" data-automation-action="logs" data-automation-id="${escapeAttr(automation.id)}">Logs</button>
-          <button type="button" class="btn btn-sm ${automation.enabled ? 'btn-warning' : 'btn-primary'}"
-                  data-automation-action="toggle" data-automation-id="${escapeAttr(automation.id)}" data-automation-enabled="${automation.enabled ? '1' : '0'}">
-            ${automation.enabled ? 'Disable' : 'Enable'}
-          </button>
-          <button type="button" class="btn btn-sm btn-danger" data-automation-action="delete" data-automation-id="${escapeAttr(automation.id)}">Delete</button>
         </div>
       </div>
     `;
   }).join('');
+}
+
+// ============================================================
+// Recipe packs (P54 P3-M3)
+// ============================================================
+
+let recipeCatalog = [];
+
+async function loadRecipes() {
+  try {
+    const response = await fetch(apiUrl('/api/automation.php?action=list_recipes'));
+    const result = await response.json();
+    if (result.status === 'ok') {
+      recipeCatalog = result.data?.recipes || [];
+      renderRecipesPanel();
+    }
+  } catch (error) {
+    console.warn('Failed to load automation recipes:', error);
+  }
+}
+
+function renderRecipesPanel() {
+  const panel = document.getElementById('automation-recipes-panel');
+  const grid = document.getElementById('automation-recipes-grid');
+  if (!panel || !grid) return;
+
+  if (!recipeCatalog.length) {
+    panel.hidden = true;
+    grid.innerHTML = '';
+    return;
+  }
+
+  panel.hidden = false;
+  grid.innerHTML = recipeCatalog.map((recipe) => `
+    <div class="automation-template-card">
+      <div class="automation-template-card-label">${escapeHtml(recipe.name || recipe.id)}</div>
+      <div class="automation-template-card-desc">${escapeHtml(recipe.description || '')}</div>
+      <div class="automation-template-card-meta">${escapeHtml(recipe.trigger_type || '')}${recipe.pack ? ' · ' + escapeHtml(recipe.pack) : ''}</div>
+      <div class="automation-template-card-actions">
+        <button type="button" class="btn btn-sm btn-primary" data-automation-action="import-recipe" data-automation-recipe="${escapeAttr(recipe.id)}">Import</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function importRecipe(recipeId) {
+  try {
+    const response = await fetch(apiUrl('/api/automation.php'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'import_recipe',
+        recipe_id: recipeId,
+        _csrf: getCsrfToken(),
+      }),
+    });
+    const result = await response.json();
+    if (result.status === 'ok' && result.data?.automation?.id) {
+      showMessage('Recipe imported. Review and enable when ready.', 'success');
+      await loadAutomations();
+      openAutomationEditor(result.data.automation.id);
+    } else {
+      showMessage(result.message || 'Failed to import recipe', 'error');
+    }
+  } catch (error) {
+    showMessage(error.message || 'Failed to import recipe', 'error');
+  }
+}
+
+async function importRecipePack(pack) {
+  if (!confirm('Import all recipes from the “' + pack + '” pack? Each becomes a disabled automation you can edit.')) {
+    return;
+  }
+  try {
+    const response = await fetch(apiUrl('/api/automation.php'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'import_recipe_pack',
+        pack,
+        _csrf: getCsrfToken(),
+      }),
+    });
+    const result = await response.json();
+    if (result.status === 'ok') {
+      const count = result.data?.count ?? (result.data?.imported || []).length;
+      showMessage('Imported ' + count + ' recipe' + (count === 1 ? '' : 's') + '.', 'success');
+      await loadAutomations();
+    } else {
+      showMessage(result.message || 'Failed to import recipe pack', 'error');
+    }
+  } catch (error) {
+    showMessage(error.message || 'Failed to import recipe pack', 'error');
+  }
 }
 
 // ============================================================
@@ -918,24 +1014,19 @@ function renderEmptyState(container) {
   `).join('');
 
   container.innerHTML = `
-    <div class="automation-empty-state">
-      <div class="automation-empty-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
           <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
         </svg>
       </div>
-      <h3>No automations yet</h3>
-      <p>Automations run workflows automatically when content changes, entries are published, or sub-entries are created.</p>
-      <div class="automation-empty-actions">
-        <button type="button" class="btn btn-primary" data-automation-action="create">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Create Automation
-        </button>
+      <p class="empty-state-title">No automations yet</p>
+      <p class="empty-state-text">Automations run workflows automatically when content changes, entries are published, or sub-entries are created.</p>
+      <div class="empty-state-actions">
+        <button type="button" class="btn btn-primary" data-automation-action="create">Create Automation</button>
       </div>
       <div class="automation-templates-section">
-        <h4>Start from a template</h4>
+        <h4 class="section-title">Start from a template</h4>
         <div class="automation-templates-grid">${templatesHtml}</div>
       </div>
     </div>
@@ -1070,7 +1161,7 @@ function populateAutomationForm(automation) {
 }
 
 function initAutomationViewTabs() {
-  document.querySelectorAll('.automation-view-tabs .payments-tab').forEach((btn) => {
+  document.querySelectorAll('.automation-view-tabs .tab').forEach((btn) => {
     btn.addEventListener('click', () => {
       switchAutomationView(btn.getAttribute('data-automation-view') || 'list');
     });
@@ -1119,7 +1210,7 @@ function loadTriggerConfig(triggerType, config = {}) {
 
     if (fieldSchema.description) {
       const help = document.createElement('small');
-      help.className = 'form-help';
+      help.className = 'field-help';
       help.textContent = fieldSchema.description;
       div.appendChild(help);
     }
@@ -1288,7 +1379,7 @@ function addCondition() {
 function addConditionToForm(condition, index) {
   const list = document.getElementById('conditions-list');
   const div = document.createElement('div');
-  div.className = 'block-item condition-item';
+  div.className = 'automation-block-item condition-item';
   div.dataset.index = index;
 
   const conditionBlocks = availableBlocks.conditions || {};
@@ -1298,16 +1389,16 @@ function addConditionToForm(condition, index) {
   }).join('');
 
   div.innerHTML = `
-    <div class="block-header">
-      <h4 class="block-header-title">Condition ${index + 1}</h4>
-      <button type="button" class="block-remove-btn" data-automation-action="remove-condition" data-automation-index="${index}" title="Remove">
+    <div class="automation-block-header">
+      <h4 class="automation-block-header-title">Condition ${index + 1}</h4>
+      <button type="button" class="btn btn-sm btn-ghost automation-block-remove" data-automation-action="remove-condition" data-automation-index="${index}" title="Remove">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3,6 5,6 21,6"/>
           <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
         </svg>
       </button>
     </div>
-    <div class="block-body">
+    <div class="automation-block-body">
       <div class="form-group">
         <label>Condition Type</label>
         <select name="conditions[${index}][type]" class="input condition-type-select"
@@ -1342,7 +1433,7 @@ function addAction() {
 function addActionToForm(action, index) {
   const list = document.getElementById('actions-list');
   const div = document.createElement('div');
-  div.className = 'block-item action-item';
+  div.className = 'automation-block-item action-item';
   div.dataset.index = index;
 
   const actionBlocks = availableBlocks.actions || {};
@@ -1352,28 +1443,28 @@ function addActionToForm(action, index) {
   }).join('');
 
   div.innerHTML = `
-    <div class="block-header">
-      <h4 class="block-header-title">Action ${index + 1}</h4>
-      <div class="block-header-order">
-        <button type="button" class="block-reorder-btn" data-automation-action="move-action" data-automation-index="${index}" data-automation-delta="-1" title="Move up" aria-label="Move up">
+    <div class="automation-block-header">
+      <h4 class="automation-block-header-title">Action ${index + 1}</h4>
+      <div class="automation-block-header-order">
+        <button type="button" class="btn btn-sm btn-ghost automation-block-reorder" data-automation-action="move-action" data-automation-index="${index}" data-automation-delta="-1" title="Move up" aria-label="Move up">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="18,15 12,9 6,15"/>
           </svg>
         </button>
-        <button type="button" class="block-reorder-btn" data-automation-action="move-action" data-automation-index="${index}" data-automation-delta="1" title="Move down" aria-label="Move down">
+        <button type="button" class="btn btn-sm btn-ghost automation-block-reorder" data-automation-action="move-action" data-automation-index="${index}" data-automation-delta="1" title="Move down" aria-label="Move down">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="6,9 12,15 18,9"/>
           </svg>
         </button>
       </div>
-      <button type="button" class="block-remove-btn" data-automation-action="remove-action" data-automation-index="${index}" title="Remove">
+      <button type="button" class="btn btn-sm btn-ghost automation-block-remove" data-automation-action="remove-action" data-automation-index="${index}" title="Remove">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3,6 5,6 21,6"/>
           <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/>
         </svg>
       </button>
     </div>
-    <div class="block-body">
+    <div class="automation-block-body">
       <div class="form-group">
         <label>Action Type <span class="required">*</span></label>
         <select name="actions[${index}][type]" class="input action-type-select" required data-automation-change="action-type" data-automation-index="${index}">
@@ -1416,7 +1507,7 @@ function updateReorderButtons() {
   if (!list) return;
   const items = Array.from(list.querySelectorAll('.action-item'));
   items.forEach((item, i) => {
-    const btns = item.querySelectorAll('.block-reorder-btn');
+    const btns = item.querySelectorAll('.automation-block-reorder');
     if (btns[0]) btns[0].disabled = (i === 0);
     if (btns[1]) btns[1].disabled = (i === items.length - 1);
   });
@@ -1432,19 +1523,19 @@ function removeAction(index) {
 function renumberBlocks(className, label) {
   document.querySelectorAll('.' + className).forEach((el, i) => {
     el.dataset.index = i;
-    const title = el.querySelector('.block-header-title');
+    const title = el.querySelector('.automation-block-header-title');
     if (title) title.textContent = label + ' ' + (i + 1);
     // Update select name indices
     el.querySelectorAll('[name]').forEach(input => {
       input.name = input.name.replace(/\[\d+\]/, `[${i}]`);
     });
     // Update onclick indices
-    const removeBtn = el.querySelector('.block-remove-btn');
+    const removeBtn = el.querySelector('.automation-block-remove');
     if (removeBtn) {
       const lowerLabel = label.toLowerCase();
       removeBtn.setAttribute('onclick', `remove${label}(${i})`);
     }
-    const orderBtns = el.querySelectorAll('.block-reorder-btn');
+    const orderBtns = el.querySelectorAll('.automation-block-reorder');
     if (orderBtns.length === 2) {
       orderBtns[0].setAttribute('onclick', `moveAction(${i}, -1)`);
       orderBtns[1].setAttribute('onclick', `moveAction(${i}, 1)`);
@@ -1487,7 +1578,7 @@ function renderBlockConfig(container, schema, config, namePrefix) {
 
     if (fieldSchema.description) {
       const help = document.createElement('small');
-      help.className = 'form-help';
+      help.className = 'field-help';
       help.textContent = fieldSchema.description;
       div.appendChild(help);
     }
@@ -1577,11 +1668,11 @@ function renderDryRunResult(data, automationId) {
   };
 
   const stepsHtml = steps.map(step => `
-    <div class="dry-run-step ${step.status || 'info'}">
-      <div class="dry-run-step-icon">${iconFor(step.status)}</div>
+    <div class="automation-dry-run-step ${step.status || 'info'}">
+      <div class="automation-dry-run-step-icon">${iconFor(step.status)}</div>
       <div>
-        <div class="dry-run-step-label">${escapeHtml(step.label || '')}</div>
-        <div class="dry-run-step-detail">${escapeHtml(step.detail || '')}</div>
+        <div class="automation-dry-run-step-label">${escapeHtml(step.label || '')}</div>
+        <div class="automation-dry-run-step-detail">${escapeHtml(step.detail || '')}</div>
       </div>
     </div>
   `).join('');
@@ -1596,17 +1687,17 @@ function renderDryRunResult(data, automationId) {
 
   // D4: dry-run only; show live-run confirm section
   content.innerHTML = `
-    <div class="dry-run-panel" style="background:none;border:none;padding:0">
+    <div class="automation-dry-run-panel" style="background:none;border:none;padding:0">
       <div style="margin-bottom:var(--space-3)">
-        <span class="dry-run-badge">Dry Run — nothing sent</span>
+        <span class="automation-dry-run-badge">Dry Run — nothing sent</span>
         <p style="font-size:0.8125rem;color:var(--text-secondary);margin:var(--space-2) 0 0 0">
           Simulation only. Emails, Slack, Teams, and webhooks were <strong>not</strong> sent.
           “Succeeded” here means the workflow config looks valid.
         </p>
         ${setupNotes ? `<ul style="margin:var(--space-2) 0 0;padding-left:1.1rem;font-size:0.8125rem;color:var(--warning-700,#b45309)">${setupNotes}</ul>` : ''}
       </div>
-      <div class="dry-run-steps">${stepsHtml}</div>
-      <div class="dry-run-confirm-bar">
+      <div class="automation-dry-run-steps">${stepsHtml}</div>
+      <div class="automation-dry-run-confirm-bar">
         <p>
           <strong>Run for real?</strong>
           This will execute ${actionCount} action${actionCount !== 1 ? 's' : ''} live (real email/webhook side effects).
@@ -1845,33 +1936,33 @@ function renderLogs(logs) {
   const content = document.getElementById('automation-logs-content');
 
   if (logs.length === 0) {
-    content.innerHTML = '<p class="form-help" style="text-align:center;padding:2rem 0">No execution logs yet.</p>';
+    content.innerHTML = '<p class="field-help" style="text-align:center;padding:2rem 0">No execution logs yet.</p>';
     return;
   }
 
-  content.innerHTML = '<div class="logs-list">' + logs.map(log => {
+  content.innerHTML = '<div class="automation-logs-list">' + logs.map(log => {
     const status = log.status || 'unknown';
     const executedAt = log.executed_at ? new Date(log.executed_at).toLocaleString() : '';
     const runtime = log.runtime_ms ? log.runtime_ms.toFixed(1) + 'ms' : '';
 
     return `
-      <div class="log-item ${status}">
-        <div class="log-header">
-          <span class="log-status ${status}">${status}</span>
-          <span class="log-time">${executedAt}</span>
-          ${runtime ? `<span class="log-runtime">${runtime}</span>` : ''}
+      <div class="automation-log-item ${status}">
+        <div class="automation-log-header">
+          <span class="automation-log-status ${status}">${status}</span>
+          <span class="automation-log-time">${executedAt}</span>
+          ${runtime ? `<span class="automation-log-runtime">${runtime}</span>` : ''}
         </div>
         ${log.errors?.length ? `
-          <div class="log-body">
-            <div class="log-errors">
+          <div class="automation-log-body">
+            <div class="automation-log-errors">
               <strong>Errors:</strong>
               <ul>${log.errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul>
             </div>
           </div>
         ` : ''}
         ${log.results?.length ? `
-          <div class="log-body">
-            <div class="log-results">
+          <div class="automation-log-body">
+            <div class="automation-log-results">
               <strong>Results:</strong>
               <ul>${log.results.map(r => `<li>${escapeHtml(r.action_type || 'action')}: ${r.success ? 'Success' : 'Failed'}</li>`).join('')}</ul>
             </div>
