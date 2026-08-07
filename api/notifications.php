@@ -21,6 +21,7 @@ if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 require_once 'auth.php';
 require_once 'storage.php';
 require_once '../core/csrf.php';
+require_once __DIR__ . '/../core/notification_broadcast.php';
 
 // Check authentication
 if (!isset($_SESSION['user'])) {
@@ -265,7 +266,8 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['icon'] = '🛒';
             $notification['color'] = 'blue';
             $notification['category'] = 'commerce';
-            $notification['link'] = $details['link'] ?? '/admin/commerce.html#orders';
+            $notification['link'] = $details['link']
+                ?? (function_exists('birkly_admin_url') ? birkly_admin_url('commerce') . '#orders' : '/admin/?page=commerce#orders');
             break;
 
         case 'commerce_order_paid':
@@ -274,7 +276,8 @@ function formatNotification($entry, $currentUserEmail) {
             $notification['icon'] = '💳';
             $notification['color'] = 'green';
             $notification['category'] = 'commerce';
-            $notification['link'] = $details['link'] ?? '/admin/commerce.html#orders';
+            $notification['link'] = $details['link']
+                ?? (function_exists('birkly_admin_url') ? birkly_admin_url('commerce') . '#orders' : '/admin/?page=commerce#orders');
             break;
 
         case 'commerce_subscription_created':
@@ -446,6 +449,10 @@ if ($action === 'list_recent') {
                 $event = $entry['event'] ?? '';
                 $details = $entry['details'] ?? [];
                 $entryUser = $entry['user'] ?? '';
+
+                if (birkly_notifications_skip_security_log_for_bus($event)) {
+                    continue;
+                }
                 
                 // Filter: Only show notifications where the log entry's user matches current user
                 // OR it's a review_action event (which should show to the reviewer)
@@ -466,8 +473,12 @@ if ($action === 'list_recent') {
                         continue; // Not for this user
                     }
                     error_log("DEBUG NOTIFICATION: Matched - showing notification");
-                } elseif (!$isTestNotification && $normalizedEntryUser !== $normalizedUserEmail) {
-                    // For other events, only show if user matches
+                } elseif (
+                    !$isTestNotification
+                    && $normalizedEntryUser !== $normalizedUserEmail
+                    && !isBroadcastNotificationActor($entryUser, $event)
+                ) {
+                    // For other events, only show if user matches (plugin broadcasts excepted)
                     continue; // Not for this user
                 }
                 
@@ -515,38 +526,35 @@ if ($action === 'list_recent') {
         }
 
         // P61: merge plugin activity bus items marked notify=true
-        $activityFile = __DIR__ . '/../core/plugin_activity.php';
-        if (is_file($activityFile)) {
-            require_once $activityFile;
-            if (function_exists('birkly_plugin_activity_list')) {
-                foreach (birkly_plugin_activity_list(50) as $item) {
-                    if (empty($item['notify'])) {
-                        continue;
-                    }
-                    $id = (string) ($item['id'] ?? '');
-                    if ($id === '') {
-                        continue;
-                    }
-                    $notifications[] = [
-                        'id' => $id,
-                        'event' => 'plugin_activity',
-                        'timestamp' => $item['created_at'] ?? date('c'),
-                        'user' => (string) ($item['plugin'] ?? 'plugin'),
-                        'details' => $item['meta'] ?? [],
-                        'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
-                        'icon' => '🔔',
-                        'color' => 'mint',
-                        'category' => 'plugin',
-                        'link' => $item['link'] ?? '',
-                        'plugin' => $item['plugin'] ?? '',
-                        'read' => !empty($item['read_at']) || in_array($id, $readIds, true),
-                    ];
+        birkly_notifications_load_plugin_activity();
+        if (function_exists('birkly_plugin_activity_list')) {
+            foreach (birkly_plugin_activity_list(50) as $item) {
+                if (empty($item['notify'])) {
+                    continue;
                 }
-                usort($notifications, static function ($a, $b) {
-                    return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
-                });
-                $notifications = array_slice($notifications, 0, $limit);
+                $id = (string) ($item['id'] ?? '');
+                if ($id === '') {
+                    continue;
+                }
+                $notifications[] = [
+                    'id' => $id,
+                    'event' => 'plugin_activity',
+                    'timestamp' => $item['created_at'] ?? date('c'),
+                    'user' => (string) ($item['plugin'] ?? 'plugin'),
+                    'details' => $item['meta'] ?? [],
+                    'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
+                    'icon' => '🔔',
+                    'color' => 'mint',
+                    'category' => 'plugin',
+                    'link' => $item['link'] ?? '',
+                    'plugin' => $item['plugin'] ?? '',
+                    'read' => !empty($item['read_at']) || in_array($id, $readIds, true),
+                ];
             }
+            usort($notifications, static function ($a, $b) {
+                return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
+            });
+            $notifications = array_slice($notifications, 0, $limit);
         }
         
         $unreadCount = count(array_filter($notifications, function($n) {
@@ -606,6 +614,10 @@ if ($action === 'unread_count') {
                 $event = $entry['event'] ?? '';
                 $details = $entry['details'] ?? [];
                 $entryUser = $entry['user'] ?? '';
+
+                if (birkly_notifications_skip_security_log_for_bus($event)) {
+                    continue;
+                }
                 
                 // Filter: Only show notifications where the log entry's user matches current user
                 // OR it's a review_action event (which should show to the reviewer)
@@ -623,8 +635,12 @@ if ($action === 'unread_count') {
                     if ($reviewerEmail !== $normalizedUserEmail && $normalizedEntryUser !== $normalizedUserEmail) {
                         continue; // Not for this user
                     }
-                } elseif (!$isTestNotification && $normalizedEntryUser !== $normalizedUserEmail) {
-                    // For other events, only show if user matches
+                } elseif (
+                    !$isTestNotification
+                    && $normalizedEntryUser !== $normalizedUserEmail
+                    && !isBroadcastNotificationActor($entryUser, $event)
+                ) {
+                    // For other events, only show if user matches (plugin broadcasts excepted)
                     continue; // Not for this user
                 }
                 
@@ -650,6 +666,12 @@ if ($action === 'unread_count') {
                     $unreadCount++;
                 }
             }
+        }
+
+        // P61: badge must include plugin activity bus (list_recent already merges these)
+        birkly_notifications_load_plugin_activity();
+        if (function_exists('birkly_plugin_activity_unread_notify_count')) {
+            $unreadCount += birkly_plugin_activity_unread_notify_count($readIds);
         }
         
         ob_end_clean();
@@ -690,6 +712,11 @@ if ($action === 'mark_read') {
     }
     
     markNotificationRead($userId, $notificationId);
+
+    birkly_notifications_load_plugin_activity();
+    if (function_exists('birkly_plugin_activity_mark_read')) {
+        birkly_plugin_activity_mark_read([$notificationId]);
+    }
     
     ob_end_clean();
     echo json_encode(['status' => 'ok', 'message' => 'Notification marked as read']);
@@ -745,6 +772,17 @@ if ($action === 'mark_all_read') {
         }
     }
     
+    birkly_notifications_load_plugin_activity();
+    if (function_exists('birkly_plugin_activity_notify_ids')) {
+        $notificationIds = array_values(array_unique(array_merge(
+            $notificationIds,
+            birkly_plugin_activity_notify_ids(false)
+        )));
+        if (function_exists('birkly_plugin_activity_mark_read')) {
+            birkly_plugin_activity_mark_read($notificationIds);
+        }
+    }
+
     markAllNotificationsRead($userId, $notificationIds);
     
     ob_end_clean();
