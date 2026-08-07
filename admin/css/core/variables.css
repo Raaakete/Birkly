@@ -142,6 +142,13 @@
   --danger-solid: #D33A3A;                     /* 4.7:1 with white ink */
   --ink-on-danger: var(--neutral-0);
 
+  /* Tiny status dots (Agent Guide hub tabs). Lighter than button solids so an
+     8px disc still reads as “on” / “off” at a glance. */
+  --status-dot-ok: var(--mint-200);
+  --status-dot-ok-glow: var(--mint-400);
+  --status-dot-bad: #FF8B8B;
+  --status-dot-bad-glow: #FF6B6B;
+
   --info-surface: #E9F1FA;
   --info-border: #C3D9EF;
   --info-fg: #1F5C99;                          /* 6.9:1 on surface */
