@@ -44,6 +44,12 @@ assert_true('reject path traversal', $fs->readFile('../settings/admin.json') ===
 assert_true('delete file', $fs->deleteFile('pages/edit.html'));
 assert_true('deleted file missing', $fs->readFile('pages/edit.html') === null);
 
+$fs->writeFile('pages/zip-me.html', '<p>zip</p>');
+assert_true('list includes written file', in_array('pages/zip-me.html', $fs->listAllFilePaths(), true));
+assert_true('clear project contents', $fs->clearAllContents());
+assert_true('after clear list empty', $fs->listAllFilePaths() === []);
+assert_true('gitkeep preserved', is_file($tmpdir . '/project/.gitkeep'));
+
 // Last-change helper via API include (without HTTP).
 require_once dirname(__DIR__) . '/api/storage.php';
 

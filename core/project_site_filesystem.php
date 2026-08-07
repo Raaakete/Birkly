@@ -191,6 +191,82 @@ class ProjectSiteFileSystem
     return unlink($full);
   }
 
+  /**
+   * Recursively remove all files and directories under the project root.
+   * Keeps the root directory; optionally preserves a .gitkeep file.
+   */
+  public function clearAllContents(): bool
+  {
+    if (!is_dir($this->base)) {
+      return true;
+    }
+
+    try {
+      $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($this->base, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+      );
+      foreach ($iterator as $item) {
+        $path = $item->getPathname();
+        if ($item->isDir()) {
+          if (!@rmdir($path)) {
+            return false;
+          }
+        } elseif (!@unlink($path)) {
+          return false;
+        }
+      }
+    } catch (Throwable $e) {
+      return false;
+    }
+
+    $gitkeep = $this->base . '/.gitkeep';
+    if (!is_file($gitkeep)) {
+      @file_put_contents($gitkeep, '');
+    }
+
+    return true;
+  }
+
+  /**
+   * @return list<string> Relative file paths (files only) under project root.
+   */
+  public function listAllFilePaths(): array
+  {
+    if (!is_dir($this->base)) {
+      return [];
+    }
+
+    $paths = [];
+    try {
+      $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($this->base, FilesystemIterator::SKIP_DOTS)
+      );
+      foreach ($iterator as $fileInfo) {
+        if (!$fileInfo->isFile()) {
+          continue;
+        }
+        $name = $fileInfo->getFilename();
+        if (str_starts_with($name, '.')) {
+          continue;
+        }
+        $relative = str_replace('\\', '/', substr($fileInfo->getPathname(), strlen($this->base) + 1));
+        if ($relative === '' || str_contains($relative, '..')) {
+          continue;
+        }
+        if (!$this->isAllowedPath($relative)) {
+          continue;
+        }
+        $paths[] = $relative;
+      }
+    } catch (Throwable $e) {
+      return [];
+    }
+
+    sort($paths, SORT_NATURAL | SORT_FLAG_CASE);
+    return $paths;
+  }
+
   public function resolvePath(string $relativePath, bool $allowCreate): ?string
   {
     $rel = $this->normalizeRelative($relativePath);

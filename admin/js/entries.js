@@ -30,6 +30,7 @@
     const collectionSlug = window.collectionSlug || urlParams.get('collection') || '';
     const tableFields = Array.isArray(window.entriesTableFields) ? window.entriesTableFields : [];
     const hasSubCollections = Boolean(window.entriesHasSubCollections);
+    const entriesL2Actions = Boolean(window.entriesL2Actions);
     const hasDragColumn = Boolean(window.entriesHasDragColumn);
     const initialListState = window.entriesListState || {};
 
@@ -101,6 +102,9 @@
         paginationContainer = document.getElementById('entries-pagination');
         selectAllCheckbox = document.getElementById('select-all-entries');
         entryCheckboxes = Array.from(document.querySelectorAll('.entry-checkbox'));
+        if (entriesL2Actions && entriesTable && !entriesTable.classList.contains('entries-l2-actions')) {
+            entriesTable.classList.add('entries-l2-actions');
+        }
     }
 
     function escapeHtml(value) {
@@ -542,6 +546,84 @@
         return '<span class="ft-list-empty" aria-label="' + escapeHtml(t('no_value', 'No value')) + '">–</span>';
     }
 
+    function copyTextToClipboard(text, successMessage) {
+        if (!text) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () {
+                BirklyFeedback.toast(successMessage || t('copied', 'Copied'), 'success');
+            }).catch(function () {
+                BirklyFeedback.toast(t('copy_failed', 'Could not copy to clipboard'), 'error');
+            });
+            return;
+        }
+        BirklyFeedback.toast(t('copy_failed', 'Could not copy to clipboard'), 'error');
+    }
+
+    async function handlePublishEntry(entryId, publish) {
+        const action = publish ? 'publish' : 'unpublish';
+        const confirmMsg = publish
+            ? t('entries_publish_confirm', 'Publish this entry?')
+            : t('entries_unpublish_confirm', 'Unpublish this entry?');
+        if (!(await BirklyFeedback.confirm(confirmMsg))) {
+            return;
+        }
+        const progress = showProgress(publish ? 'Publishing entry…' : 'Unpublishing entry…');
+        try {
+            await performBulkOperation(action, [entryId]);
+            progress.remove();
+            window.location.reload();
+        } catch (error) {
+            progress.remove();
+            BirklyFeedback.toast('Error: ' + error.message, 'error');
+        }
+    }
+
+    function renderL2ActionsCell(entry, entryId, title, editUrl, normalizedStatus, isTrashedEntry) {
+        const slug = entry && entry.slug ? String(entry.slug) : '';
+        if (isTrashedEntry) {
+            return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
+                '<button type="button" class="btn btn-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '">' + escapeHtml(t('restore', 'Restore')) + '</button>' +
+            '</div></td>';
+        }
+
+        const publishBtn = normalizedStatus === 'published'
+            ? '<button type="button" class="btn btn-sm entry-unpublish-btn" data-entry-id="' + escapeHtml(entryId) + '">' + escapeHtml(t('unpublish', 'Unpublish')) + '</button>'
+            : '<button type="button" class="btn btn-sm entry-publish-btn" data-entry-id="' + escapeHtml(entryId) + '">' + escapeHtml(t('publish', 'Publish')) + '</button>';
+
+        const moreMenu = '' +
+            '<div class="dropdown entry-row-more-menu">' +
+                '<button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="' + escapeHtml(t('more', 'More')) + '" aria-expanded="false" aria-haspopup="true">' +
+                    icon('dots-three-vertical', { size: 16 }) +
+                '</button>' +
+                '<div class="dropdown-menu dropdown-menu-right">' +
+                    '<button type="button" class="dropdown-item dropdown-item-danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '">' +
+                        icon('trash', { size: 16, class: 'dropdown-item-icon' }) +
+                        '<span class="dropdown-item-label">' + escapeHtml(t('entries_bulk_move_to_trash', 'Move to trash')) + '</span>' +
+                    '</button>' +
+                    '<button type="button" class="dropdown-item duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '">' +
+                        icon('copy', { size: 16, class: 'dropdown-item-icon' }) +
+                        '<span class="dropdown-item-label">' + escapeHtml(t('duplicate', 'Duplicate')) + '</span>' +
+                    '</button>' +
+                    (slug
+                        ? '<button type="button" class="dropdown-item entry-copy-slug-btn" data-slug="' + escapeHtml(slug) + '">' +
+                            icon('link', { size: 16, class: 'dropdown-item-icon' }) +
+                            '<span class="dropdown-item-label">' + escapeHtml(t('copy_slug', 'Copy slug')) + '</span>' +
+                        '</button>'
+                        : '') +
+                    '<button type="button" class="dropdown-item entry-copy-id-btn" data-entry-id="' + escapeHtml(entryId) + '">' +
+                        icon('hash', { size: 16, class: 'dropdown-item-icon' }) +
+                        '<span class="dropdown-item-label">' + escapeHtml(t('copy_id', 'Copy id')) + '</span>' +
+                    '</button>' +
+                '</div>' +
+            '</div>';
+
+        return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
+            '<a class="btn btn-sm btn-secondary" href="' + escapeHtml(editUrl) + '">' + escapeHtml(t('edit', 'Edit')) + '</a>' +
+            publishBtn +
+            moreMenu +
+        '</div></td>';
+    }
+
     function renderEntryRow(entry) {
         const entryId = entry && entry.id ? String(entry.id) : '';
         const title = entry && entry.__cells && entry.__cells.__title ? entry.__cells.__title : (entry.title || entry.slug || entryId || 'Untitled');
@@ -605,19 +687,21 @@
                         : '') +
                 '</td>' +
                 fieldCells +
-                '<td class="cell cell-actions">' +
-                    '<div class="cell-actions-inner">' +
-                        '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
-                            icon('pencil-simple', { size: 16 }) +
-                        '</a>' +
-                        (!isTrashedEntry
-                            ? '<button type="button" class="btn-icon btn-icon-sm duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Duplicate ' + title) + '" title="Duplicate">' + icon('copy', { size: 16 }) + '</button>'
-                            : '') +
-                        (isTrashedEntry
-                            ? '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Restore ' + title) + '" title="Restore">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
-                            : '<button type="button" class="btn-icon btn-icon-sm btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Move to trash ' + title) + '" title="Move to trash">' + icon('trash', { size: 16 }) + '</button>') +
-                    '</div>' +
-                '</td>' +
+                (entriesL2Actions
+                    ? renderL2ActionsCell(entry, entryId, title, editUrl, normalizedStatus, isTrashedEntry)
+                    : ('<td class="cell cell-actions">' +
+                        '<div class="cell-actions-inner">' +
+                            '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit_entry', 'Edit entry')) + '">' +
+                                icon('pencil-simple', { size: 16 }) +
+                            '</a>' +
+                            (!isTrashedEntry
+                                ? '<button type="button" class="btn-icon btn-icon-sm duplicate-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Duplicate ' + title) + '" title="Duplicate">' + icon('copy', { size: 16 }) + '</button>'
+                                : '') +
+                            (isTrashedEntry
+                                ? '<button type="button" class="btn-icon btn-icon-sm restore-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Restore ' + title) + '" title="Restore">' + icon('arrow-counter-clockwise', { size: 16 }) + '</button>'
+                                : '<button type="button" class="btn-icon btn-icon-sm btn-icon--danger delete-entry-btn" data-entry-id="' + escapeHtml(entryId) + '" aria-label="' + escapeHtml('Move to trash ' + title) + '" title="Move to trash">' + icon('trash', { size: 16 }) + '</button>') +
+                        '</div>' +
+                    '</td>')) +
             '</tr>';
     }
 
@@ -839,6 +923,30 @@
         const duplicateButton = event.target.closest('.duplicate-entry-btn');
         if (duplicateButton) {
             handleDuplicateEntry(duplicateButton.dataset.entryId || '');
+            return;
+        }
+
+        const publishButton = event.target.closest('.entry-publish-btn');
+        if (publishButton) {
+            handlePublishEntry(publishButton.dataset.entryId || '', true);
+            return;
+        }
+
+        const unpublishButton = event.target.closest('.entry-unpublish-btn');
+        if (unpublishButton) {
+            handlePublishEntry(unpublishButton.dataset.entryId || '', false);
+            return;
+        }
+
+        const copySlugButton = event.target.closest('.entry-copy-slug-btn');
+        if (copySlugButton) {
+            copyTextToClipboard(copySlugButton.dataset.slug || '', t('copy_slug_success', 'Slug copied'));
+            return;
+        }
+
+        const copyIdButton = event.target.closest('.entry-copy-id-btn');
+        if (copyIdButton) {
+            copyTextToClipboard(copyIdButton.dataset.entryId || '', t('copy_id_success', 'ID copied'));
         }
     });
 

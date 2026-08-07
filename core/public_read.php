@@ -8,25 +8,36 @@ require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/entry_slug.php';
 
 function birkly_public_resolve_collection_dir($storage, $collectionSlug, $collectionId = '') {
+    static $cache = [];
+    $cacheKey = $collectionId !== '' ? ('id:' . $collectionId) : ('slug:' . $collectionSlug);
+    if (array_key_exists($cacheKey, $cache)) {
+        return $cache[$cacheKey];
+    }
+
     $collections = $storage->list('collections');
     if ($collectionId) {
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
             if ($m && ($m['id'] ?? '') === $collectionId) {
+                $cache[$cacheKey] = $d;
                 return $d;
             }
         }
+        $cache[$cacheKey] = null;
         return null;
     }
     if (!$collectionSlug) {
+        $cache[$cacheKey] = null;
         return null;
     }
     foreach ($collections as $d) {
         $m = $storage->read("collections/$d/collection.json");
         if ($m && ($m['slug'] ?? '') === $collectionSlug) {
+            $cache[$cacheKey] = $d;
             return $d;
         }
     }
+    $cache[$cacheKey] = null;
     return null;
 }
 

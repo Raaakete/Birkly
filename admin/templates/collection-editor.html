@@ -1357,6 +1357,44 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/^-+|-+$/g, '');
     }
 
+    function normalizeFieldApiName(value) {
+        return (value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s_]/g, '')
+            .replace(/\s+/g, '_')
+            .replace(/_+/g, '_')
+            .replace(/^_+|_+$/g, '');
+    }
+
+    function initFieldApiNameGeneration(section, options) {
+        options = options || {};
+        if (!section) return;
+        const labelInput = section.querySelector('input[name*="[label]"]');
+        const nameInput = section.querySelector('input[name*="[name]"]');
+        if (!labelInput || !nameInput) return;
+
+        const autoGenerate = options.auto !== false;
+        nameInput.dataset.autoFieldName = autoGenerate ? '1' : '0';
+
+        function regenerateFieldName() {
+            if (nameInput.dataset.autoFieldName !== '1') return;
+            const label = (labelInput.value || '').trim();
+            nameInput.value = label ? normalizeFieldApiName(label) : '';
+            const titleEl = section.querySelector('.fieldtype-name');
+            if (titleEl && label) {
+                titleEl.textContent = label;
+            }
+        }
+
+        labelInput.addEventListener('input', regenerateFieldName);
+        nameInput.addEventListener('input', function() {
+            nameInput.dataset.autoFieldName = '0';
+        });
+        if (autoGenerate) {
+            regenerateFieldName();
+        }
+    }
+
     function initCollectionSlugGeneration(nameField, slugField, autoSlugHidden, autoSlugCheckbox, fallbackId) {
         if (!nameField || !slugField) return;
 
@@ -1496,6 +1534,9 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         subCollectionFieldsContainer.insertAdjacentHTML('beforeend', fieldHtml);
         const newField = subCollectionFieldsContainer.lastElementChild;
+        if (newField) {
+            initFieldApiNameGeneration(newField, { auto: true });
+        }
         const labelInput = newField ? newField.querySelector('input[name*="[label]"]') : null;
         if (collectionEditorCore) {
             collectionEditorCore.notifyStructureChange();
@@ -1687,6 +1728,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentFieldIndex = fieldElement.getAttribute('data-index') || fieldIndex;
             loadFieldtypeConfig(currentFieldIndex, fieldtypeName, fieldElement);
         });
+
+        initFieldApiNameGeneration(fieldElement, { auto: true });
         
         return fieldElement;
     }
@@ -2610,6 +2653,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     `;
                     container.insertAdjacentHTML('beforeend', fieldHtml);
+                    const newFieldSection = container.lastElementChild;
+                    if (newFieldSection) {
+                        initFieldApiNameGeneration(newFieldSection, { auto: true });
+                    }
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();
                     }
