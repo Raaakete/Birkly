@@ -1,16 +1,19 @@
 <?php
 /**
- * Hosting URL resolver tests (P43).
+ * Hosting URL resolver tests (P43 / P61-M1).
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/core/hosting_urls.php';
 require_once dirname(__DIR__) . '/core/project_site.php';
+require_once dirname(__DIR__) . '/core/project_settings.php';
 
 $failures = 0;
 $hostingFile = birkly_hosting_settings_path();
 $backup = is_readable($hostingFile) ? file_get_contents($hostingFile) : null;
+$projectFile = birkly_project_root() . '/settings/project.json';
+$projectBackup = is_readable($projectFile) ? file_get_contents($projectFile) : null;
 
 function assert_true(string $name, bool $ok, string $detail = ''): void
 {
@@ -109,6 +112,78 @@ try {
         ($repaired['cms_base_url'] ?? '') === 'http://localhost:8080'
     );
 
+    // P61-B10: external mode must not rewrite public_site_url to the local CMS port
+    [$externalRepaired] = birkly_hosting_repair_local_dev_urls([
+        'cms_base_url' => 'http://localhost',
+        'public_site_mode' => 'external',
+        'public_site_url' => 'https://www.example.com',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    assert_true(
+        'external mode still repairs cms_base_url',
+        ($externalRepaired['cms_base_url'] ?? '') === 'http://localhost:8080'
+    );
+    assert_true(
+        'external mode skips public_site_url port repair',
+        ($externalRepaired['public_site_url'] ?? '') === 'https://www.example.com'
+    );
+
+    [$externalLocal] = birkly_hosting_repair_local_dev_urls([
+        'cms_base_url' => 'http://localhost',
+        'public_site_mode' => 'external',
+        'public_site_url' => 'http://localhost:5173',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    assert_true(
+        'external repair leaves local public port alone',
+        ($externalLocal['public_site_url'] ?? '') === 'http://localhost:5173'
+    );
+
+    // P61-B1: persist syncs project.json hosting_type from public_site_mode
+    birkly_save_project_settings(['hosting_type' => 'birkly']);
+    hosting_test_write([
+        'cms_base_url' => 'https://cms.example.test',
+        'public_site_mode' => 'external',
+        'public_site_url' => 'https://www.example.test',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    $afterExternal = birkly_load_project_settings();
+    assert_true(
+        'persist external syncs hosting_type=external',
+        ($afterExternal['hosting_type'] ?? '') === 'external'
+    );
+    hosting_test_write([
+        'cms_base_url' => 'https://cms.example.test',
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://www.example.test',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    $afterProject = birkly_load_project_settings();
+    assert_true(
+        'persist project syncs hosting_type=birkly',
+        ($afterProject['hosting_type'] ?? '') === 'birkly'
+    );
+
+    // P61-B3: client snippet includes data-cms-url + absolute CMS URL
+    hosting_test_write([
+        'cms_base_url' => 'https://cms.example.test',
+        'public_site_mode' => 'external',
+        'public_site_url' => 'https://www.example.test',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    $snippet = birkly_hosting_client_snippet();
+    assert_true('client snippet non-empty', $snippet !== '');
+    assert_true('client snippet has data-cms-url', str_contains($snippet, 'data-cms-url="https://cms.example.test"'));
+    assert_true(
+        'client snippet absolute script src',
+        str_contains($snippet, 'https://cms.example.test') && str_contains($snippet, 'birkly-client.js')
+    );
+
     putenv('BIRKLY_TRUST_REQUEST_HOST=true');
     putenv('BIRKLY_CMS_BASE_URL=https://test.birkly.cloud');
     birkly_hosting_reset_cache();
@@ -152,6 +227,9 @@ try {
         file_put_contents($hostingFile, $backup);
     } elseif (is_file($hostingFile)) {
         unlink($hostingFile);
+    }
+    if ($projectBackup !== null) {
+        file_put_contents($projectFile, $projectBackup);
     }
 }
 

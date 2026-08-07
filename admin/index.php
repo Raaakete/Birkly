@@ -210,6 +210,17 @@ function fetch_admin_page_data(string $page, array $query = []): array {
     if (function_exists('get_plugin_admin_meta_for_page')) {
         $pluginMeta = get_plugin_admin_meta_for_page($page);
         if ($pluginMeta !== null) {
+            // P61: clear sidebar attention when viewing the plugin
+            $pluginId = (string) ($pluginMeta['plugin_id'] ?? '');
+            if ($pluginId !== '') {
+                $activityFile = birkly_project_root() . '/core/plugin_activity.php';
+                if (is_file($activityFile)) {
+                    require_once $activityFile;
+                    if (function_exists('birkly_plugin_activity_clear_nav')) {
+                        birkly_plugin_activity_clear_nav($pluginId);
+                    }
+                }
+            }
             return [
                 'page' => $page,
                 'plugin_admin' => $pluginMeta,

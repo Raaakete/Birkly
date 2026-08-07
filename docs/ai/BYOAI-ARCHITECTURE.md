@@ -42,7 +42,7 @@ Outbound BYOAI and inbound MCP are **independent channels**. They share permissi
 
 | Channel | Direction | Credential | Storage | Admin UI |
 |---------|-----------|------------|---------|----------|
-| **Outbound BYOAI** | Birkly → provider | Provider API key (encrypted) | `users/*.json` (`type: ai`) | Settings → **AI Connections** |
+| **Outbound BYOAI** | Birkly → provider | Provider API key (encrypted) | `users/*.json` (`type: ai`) | Agent Guide → **Connections** |
 | **Inbound MCP** | External client → Birkly | `mcp_api_key` per endpoint | `settings/mcp_endpoints.json` | Settings → **MCP Connections** |
 
 **No outbound provider key is required for inbound MCP.** A Claude Desktop user does not need an OpenAI or Anthropic API key on the Birkly instance — only an MCP endpoint key.
@@ -63,7 +63,7 @@ Outbound BYOAI and inbound MCP are **independent channels**. They share permissi
 
 ```
 Admin UI
-  Settings → AI Connections     outbound wizard, chat provider rows
+  Agent Guide → Connections     outbound wizard, chat provider rows
   Settings → MCP Connections    inbound endpoint profiles (empty state until created)
   Floating chat                 connection picker in header
     │
@@ -89,7 +89,7 @@ data/mcp_audit/            Inbound tool call audit (no secrets)
 
 ## Outbound connection lifecycle
 
-1. Admin creates connection in **Settings → AI Connections** (`action=create`).
+1. Admin creates connection in **Agent Guide → Connections** (`action=create`).
 2. Backend stores JSON user record: `provider`, `model`, `role`, `shared_type`, `allowed_users`, `require_approval`, encrypted `api_key` (except Ollama).
 3. Chat selects connection via header picker → backend resolves role → builds system prompt from curated context + permission summary.
 4. **Read actions** execute immediately if role permits.

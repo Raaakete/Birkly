@@ -308,7 +308,7 @@ Fetch summary on session start; cache 5 min keyed by `X-Agent-Guide-Version`. Re
 
 ## Further reading
 
+- [Website tools (WebMCP)](webmcp-tools.md)
+- [AI on localhost](ai-on-localhost.md)
 - [Choose your stack](choose-your-stack.md)
 - [Web components](web-components.md)
-- [SPA (React / Vue)](spa-react-vue.md)
-- [SSR and build-time](ssr-and-build-time.md)

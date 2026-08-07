@@ -1,12 +1,10 @@
 <?php
 /**
- * Shared Settings → AI connections panel (P60-M4).
+ * Shared AI connections panel (P60-M4 / P60.1).
  *
- * Included by Settings → AI (settings.html) AND the Agent Guide → Connections
- * zone (ai-presence.html). The same DOM ids are used in both places; the two
- * surfaces are separate pages so the ids never collide at runtime. The
- * connection modules (mcp-connections.js / ai-connections.js) init against
- * these ids in either location.
+ * Mounted on Agent Guide → Connections (ai-presence.html). Settings → AI was
+ * removed in P60.1 — this partial is the single home. The connection modules
+ * (mcp-connections.js / ai-connections.js) init against these DOM ids.
  */
 ?>
         <div class="settings-stack ai-settings">
@@ -26,6 +24,24 @@
             <div class="callout-body u-stack-1">
               <p class="callout-title">Claude requires an HTTPS Connector URL</p>
               <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
+            </div>
+          </div>
+
+          <div class="card" id="ai-localhost-card">
+            <div class="card-header">
+              <div class="card-heading">
+                <h3 class="card-title">Working locally?</h3>
+                <p class="card-description">How AI connects when Birkly runs on <code>localhost</code> — without exposing admin insecurely.</p>
+              </div>
+            </div>
+            <div class="card-body u-stack-3">
+              <ul class="settings-list">
+                <li><strong>Built-in assistant / Ollama on localhost</strong> — OK (outbound BYOAI or <code>http://localhost:11434</code>).</li>
+                <li><strong>Remote connectors</strong> (Claude / ChatGPT / Cursor cloud) need a <strong>public HTTPS</strong> Connector URL — plain <code>http://localhost/mcp</code> is rejected.</li>
+                <li><strong>mcp-bridge recipe</strong> — local stdio bridge for desktop AI tools: open <a href="#" data-mcp-bridge-link target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> (also under Developer / debug below).</li>
+                <li><strong>Tunnel recipe</strong> — <code>cloudflared</code> or ngrok → HTTPS → your local <code>/mcp</code>, then paste that HTTPS URL as the Connector URL.</li>
+              </ul>
+              <p class="form-help">Keep security warnings on: do not expose the admin panel to the public internet as a default. Prefer mcp-bridge or a short-lived tunnel.</p>
             </div>
           </div>
 

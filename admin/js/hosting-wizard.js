@@ -95,6 +95,20 @@
             '<p class="hosting-wizard-preview-line hosting-wizard-preview-public-wrap" hidden>' + escapeHtml(t('hosting_wizard_preview_visitors', 'Visitors see')) + ' <strong class="hosting-wizard-preview-public">—</strong></p>' +
             '<p class="hosting-wizard-preview-line hosting-wizard-preview-none">' + escapeHtml(t('hosting_wizard_preview_none', 'No public site configured on this install.')) + '</p>' +
             '</div>' +
+            '<div class="hosting-wizard-external-checklist card card--padded" hidden>' +
+            '<h4 class="hosting-wizard-checklist-title">' + escapeHtml(t('hosting_wizard_external_checklist_title', 'External site checklist')) + '</h4>' +
+            '<ul class="hosting-wizard-checklist hosting-wizard-external-list">' +
+            '<li data-check="cms">' + escapeHtml(t('hosting_wizard_check_cms', 'CMS URL set')) + '</li>' +
+            '<li data-check="public">' + escapeHtml(t('hosting_wizard_check_public', 'Public site URL set')) + '</li>' +
+            '<li data-check="domain">' + escapeHtml(t('hosting_wizard_check_domain', 'Public host allowlisted in Domains')) + '</li>' +
+            '<li data-check="cors">' + escapeHtml(t('hosting_wizard_check_cors', 'CORS ready for www↔apex and localhost')) + '</li>' +
+            '<li data-check="snippet">' + escapeHtml(t('hosting_wizard_check_snippet', 'Snippet uses absolute CMS URL + data-cms-url')) + '</li>' +
+            '</ul>' +
+            '<p class="form-help hosting-wizard-registered-host" hidden></p>' +
+            '<p class="form-help">' + escapeHtml(t('hosting_wizard_external_checklist_help', 'After save, paste the snippet on your external site. Domains allowlist enables CORS for page_bundle and public APIs.')) +
+            ' <a href="' + escapeHtml(apiUrl('/admin/index.php?page=settings&tab=site-delivery') + '#domains') + '">' +
+            escapeHtml(t('hosting_wizard_open_domains', 'Open Domains')) + '</a></p>' +
+            '</div>' +
             '<div class="hosting-wizard-snippet-block">' +
             '<label>' + escapeHtml(t('hosting_wizard_snippet_label', 'Integration snippet')) + '</label>' +
             '<pre class="domains-code-pre"><code class="hosting-wizard-snippet"></code></pre>' +
@@ -119,6 +133,8 @@
         this.hosting = null;
         this.snippet = '';
         this.sameHost = false;
+        this.publicHost = '';
+        this.registeredPublicHost = '';
         this.mode = options.mode || 'settings';
     }
 
@@ -148,7 +164,53 @@
         var publicField = this.$('.hosting-wizard-public-field');
         var sameHostField = this.$('.hosting-wizard-same-host-field');
         if (publicField) publicField.hidden = !show;
-        if (sameHostField) sameHostField.hidden = !(show && this.sameHost);
+        // Same-host landing only applies when Birkly serves the project on a shared host
+        if (sameHostField) sameHostField.hidden = !(mode === 'project' && this.sameHost);
+    };
+
+    HostingWizard.prototype.buildLiveSnippet = function (cmsUrl) {
+        var base = String(cmsUrl || '').trim().replace(/\/$/, '');
+        if (!base) {
+            return '<script src="…/birkly-client.js" data-cms-url="…"></script>';
+        }
+        return '<script src="' + base + '/birkly-client.js" data-cms-url="' + base + '"></script>';
+    };
+
+    HostingWizard.prototype.updateExternalChecklist = function (payload, cmsUrl) {
+        var box = this.$('.hosting-wizard-external-checklist');
+        if (!box) return;
+        var isExternal = payload.public_site_mode === 'external';
+        box.hidden = !isExternal;
+        if (!isExternal) return;
+
+        var publicUrl = (payload.public_site_url || '').trim();
+        var snippet = String(this.snippet || this.buildLiveSnippet(cmsUrl));
+        var domainOk = !!(this.registeredPublicHost || this.publicHost || publicUrl);
+        var checks = {
+            cms: !!cmsUrl,
+            public: !!publicUrl,
+            domain: domainOk,
+            cors: domainOk,
+            snippet: !!(cmsUrl && snippet.indexOf('data-cms-url=') !== -1 && /^https?:\/\//i.test(snippet))
+        };
+        box.querySelectorAll('[data-check]').forEach(function (li) {
+            var key = li.getAttribute('data-check');
+            var ok = !!checks[key];
+            li.classList.toggle('is-ok', ok);
+            li.setAttribute('aria-label', (ok ? 'Done: ' : 'Todo: ') + li.textContent);
+        });
+
+        var regEl = this.$('.hosting-wizard-registered-host');
+        if (regEl) {
+            var host = this.registeredPublicHost || this.publicHost || '';
+            if (host) {
+                regEl.hidden = false;
+                regEl.textContent = t('hosting_wizard_registered_host', 'Registered public host: {host}').replace('{host}', host);
+            } else {
+                regEl.hidden = true;
+                regEl.textContent = '';
+            }
+        }
     };
 
     HostingWizard.prototype.updatePreview = function () {
@@ -173,10 +235,15 @@
             if (publicEl) publicEl.textContent = publicUrl || '(configure public URL)';
         }
 
+        var liveSnippet = this.buildLiveSnippet(cmsUrl);
+        if (payload.public_site_mode === 'external' || !this.snippet) {
+            this.snippet = liveSnippet;
+        }
         var snippetEl = this.$('.hosting-wizard-snippet');
         if (snippetEl) {
-            snippetEl.textContent = this.snippet || '<script src="…/birkly-client.js" data-cms-url="…"></script>';
+            snippetEl.textContent = this.snippet || liveSnippet;
         }
+        this.updateExternalChecklist(payload, cmsUrl);
     };
 
     HostingWizard.prototype.goToStep = function (step) {
@@ -211,6 +278,8 @@
         this.hosting = data.hosting || {};
         this.snippet = data.client_snippet || '';
         this.sameHost = !!data.same_host;
+        this.publicHost = data.public_host || '';
+        this.registeredPublicHost = data.registered_public_host || data.public_host || '';
 
         var cmsInput = this.$('.hosting-wizard-cms-url');
         if (cmsInput) cmsInput.value = this.hosting.cms_base_url || data.suggested_cms_url || '';
@@ -260,6 +329,12 @@
             .then(function (payload) {
                 if (payload.status === 'ok' && payload.data) {
                     self.snippet = payload.data.client_snippet || self.snippet;
+                    self.publicHost = payload.data.public_host || self.publicHost;
+                    self.registeredPublicHost = payload.data.registered_public_host ||
+                        payload.data.public_host || self.registeredPublicHost;
+                    if (payload.data.hosting) {
+                        self.hosting = payload.data.hosting;
+                    }
                     self.updatePreview();
                 }
                 return payload;
@@ -322,14 +397,24 @@
         var saveBtn = this.$('.hosting-wizard-save');
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
+                var payloadPreview = self.getHostingPayload();
+                if (payloadPreview.public_site_mode !== 'none' && !String(payloadPreview.public_site_url || '').trim()) {
+                    BirklyFeedback.toast(t('hosting_wizard_public_url_required', 'Public site URL is required for this mode'), 'error');
+                    return;
+                }
                 saveBtn.disabled = true;
                 self.save().then(function (payload) {
                     if (payload.status === 'ok') {
-                        if (typeof self.options.onSave === 'function') {
-                            self.options.onSave(payload);
+                        // Always toast (onSave is additive — e.g. toggle project link)
+                        if (global.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+                            BirklyFeedback.toast(t('hosting_wizard_saved', 'Hosting settings saved'), 'success');
                         } else if (global.Birkly && global.Birkly.Utils && typeof global.Birkly.Utils.showToast === 'function') {
                             global.Birkly.Utils.showToast(t('hosting_wizard_saved', 'Hosting settings saved'), 'success');
                         }
+                        if (typeof self.options.onSave === 'function') {
+                            self.options.onSave(payload);
+                        }
+                        self.updatePreview();
                     } else {
                         BirklyFeedback.toast(payload.message || t('hosting_wizard_save_failed', 'Failed to save hosting settings'), 'error');
                     }
