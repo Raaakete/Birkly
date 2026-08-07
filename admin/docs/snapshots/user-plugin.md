@@ -61,7 +61,11 @@ Install and enable the plugin under **Settings → Plugins**. Admin pages **User
 
 **Ops guide (maintainers)**
 
-See platform repo `docs/user-plugin-ops.md` for checklist, backup scope, and troubleshooting.
+See platform repo `docs/user-plugin-ops.md` for checklist, backup scope, and troubleshooting. Plugin source of truth: [Birkly-Other-Things/Birkly-Plugin-User](https://github.com/Birkly-Other-Things/Birkly-Plugin-User).
+
+**Follow-up — public list/search permission filtering**
+
+Plugin-local entry visibility (`EntryPermissions`) is implemented and tested in the SoT repo. **Public** list/detail (and related read surfaces) may still skip that filter until the CMS adds a shared **public-read hook contract** (load active plugins, then filter in `core/public_read.php` / public API list and get paths). Documented as a CMS follow-up — not closable from the plugin alone. See SoT `docs/WAVE3-RELEASE-EVIDENCE.md`.
 
 ## Related
 

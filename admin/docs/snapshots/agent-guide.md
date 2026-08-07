@@ -2,27 +2,28 @@
 
 ## Summary
 
-**Agent Guide** is Birkly's single admin home for **AI communication and tools** for your site, organized as three tabs: **Guide** (this doc), **Tools**, and **Publish**. (AI app connections / Birkly MCP are managed in **Settings → AI**, not in this hub.) This page covers the **Guide** tab — Birkly's structured context layer for AI systems and connected agents. It sits on top of your existing CMS content, Media library, and other canonical sources — it does **not** replace them. You declare **sources of truth** first, then build concise summaries (identity, offerings, claims, voice), and **publish** a versioned, machine-readable snapshot on your **public site domain** so agents, crawlers, and integrations can discover and use it responsibly.
+**Agent Guide** is Birkly's single admin home for **AI communication and tools** for your site, organized as four tabs: **Guide** (this doc), **Tools**, **Connections**, and **Publish**. This page covers the **Guide** tab — Birkly's structured context layer for AI systems and connected agents. It sits on top of your existing CMS content, Media library, and other canonical sources — it does **not** replace them. You declare **sources of truth** first, then build concise summaries (identity, offerings, claims, voice), and **publish** a versioned, machine-readable snapshot on your **public site domain** so agents, crawlers, and integrations can discover and use it responsibly.
 
 Works for individuals, teams, enterprises, nonprofits, and any site that wants a single authoritative guide for automated assistants.
 
 **Product promise:** Publish an authoritative, structured, evidence-aware representation that is easier for AI systems to discover and use. This is **not** a guarantee that every AI model will ingest your guide, and it is **not** a chatbot builder.
 
-## The Agent Guide hub (three tabs)
+## The Agent Guide hub (four tabs)
 
-Agent Guide has **three tabs** — Guide, Tools, Publish. **AI app connections (Birkly MCP) are managed in Settings → AI, not in this hub.** Each layer lives in a different place — they are never the same thing:
+Agent Guide answers three different questions about AI and your site, plus a fourth tab that ties them together. All four are reached from the same admin page, but each lives in a different place — they are never the same thing:
 
 | Tab | Question it answers | Where it actually lives |
 |-----|---------------------|--------------------------|
 | **Guide** | "What should AI say about us?" | Public JSON on your site domain (`/.well-known/agent-guide.json`) — covered by this doc |
 | **Tools** | "What can an AI helper *do* on our website while someone is visiting?" | The **WebMCP** runtime, running in the visitor's browser — **off by default** |
-| **Publish** | "Where do the above actually work, given how my site is hosted?" | Mode-aware summary + hosting checklist |
+| **Connections** | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
+| **Publish** | "Where do the above actually work, given how my site is hosted?" | Mode-aware summary + hosting checklist for the other three |
 
-A **left status sidebar** (Guide / Website tools / Where it's hosted) is visible on every zone and switches between the tabs. The sticky Publish bar stays available throughout.
+A compact **status strip** at the top of the page (Guide / Website tools / AI app connections / Where it's hosted) links straight into each tab.
 
 - **Tools (WebMCP)** — see [Website tools (WebMCP)](../04-integration/webmcp-tools.md) for the full catalog, safety model, and how to enable it.
-- **Connections (Settings → AI)** — personal connector / service agent controls live in **Settings → AI** only; the Publish tab links there. See [MCP connections](../01-admin/mcp-connections.md).
-- **Publish** — see [What gets published](#what-gets-published) and [Related Birkly features](#related-birkly-features) below; the tab is **hosting-mode aware** ("On Birkly" `project/` vs. "External" vs. "None") and never shows a public URL Birkly can't actually serve for your site's hosting mode. Birkly-hosted guides are **live automatically**; external hosts choose a snippet, reverse-proxy, or downloaded file (Birkly never copies files to an external host).
+- **Connections** — the same personal connector / service agent controls as **Agent Guide → Connections**, mounted here for convenience. Both surfaces are currently live at once (Birkly is A/B-testing which one owners prefer); see [MCP connections](../01-admin/mcp-connections.md) — nothing here forks that backend or its permissions.
+- **Publish** — see [What gets published](#what-gets-published) and [Related Birkly features](#related-birkly-features) below; the tab is **hosting-mode aware** ("On Birkly" `project/` vs. "External" vs. "None") and never shows a public URL Birkly can't actually serve for your site's hosting mode.
 
 ## What problem does it solve?
 
@@ -85,7 +86,7 @@ Once your Guide is published, consider the other two hub tabs: turn on **Tools**
 
 Admin sidebar → **Agent Guide** (between Media and Marketplace).
 
-**URLs:** `/admin/?page=agent-guide` (legacy alias: `?page=ai-presence`). Deep-link a specific hub tab with `&zone=guide|tools|publish` (e.g. `?page=agent-guide&zone=tools`); the default is `guide`.
+**URLs:** `/admin/?page=agent-guide` (legacy alias: `?page=ai-presence`). Deep-link a specific hub tab with `&zone=guide|tools|connections|publish` (e.g. `?page=agent-guide&zone=tools`); the default is `guide`.
 
 **Permissions:**
 
@@ -94,25 +95,29 @@ Admin sidebar → **Agent Guide** (between Media and Marketplace).
 | View Agent Guide | `read` |
 | Edit, publish | `manage_settings` |
 
-## Guide tab: a single vertical sub-nav
+## Guide tab: Essentials vs Advanced
 
-The **Guide** tab is one experience with a **vertical sub-nav** on the left (the Essentials/Advanced toggle is gone):
+The **Guide** tab has a view-mode toggle:
 
-| Sub-tab | Purpose |
+- **Essentials** (default) — a condensed one-page view of Who we are, Sources, Key messages, and Key claims, each with a **Manage all** link into the matching Advanced tab. A compact publish status card links into the **Publish** hub tab.
+- **Advanced** — the full tabbed editor below, for anyone who wants direct access to every field.
+
+## Guide → Advanced tabs (at a glance)
+
+| Tab | Purpose |
 |-----|---------|
-| **Overview** | AI Assist (the primary widget), the workflow checklist, completeness score, source health, CMS sync drift, link checks, public URLs |
-| **Essentials** | A condensed view of Who we are, Sources, Key messages, and Key claims, each with a **Manage all** link into the matching sub-tab |
+| **Overview** | Completeness score, source health, CMS sync drift, link checks, public URLs |
 | **Sources** | `sources_of_truth[]` registry — CMS, websites, documents, media, marketplaces |
 | **Context** | Identity, positioning, terminology, relationships |
 | **Products & Services** | Structured catalog with typed source links |
 | **Claims & Evidence** | Factual statements, proof sources, review workflow |
 | **Media** | Per-asset context (what it represents, intended use, restrictions) |
 
-Full publish controls (enable publishing, version history, staleness warnings, AI preview) live one level up, in the hub's **Publish** tab — see [The Agent Guide hub](#the-agent-guide-hub-three-tabs).
+Full publish controls (enable publishing, version history, staleness warnings, AI preview) live one level up, in the hub's **Publish** tab — see [The Agent Guide hub](#the-agent-guide-hub-four-tabs).
 
-## AI Assist (Overview widget)
+## AI Assist sidebar
 
-**AI Assist** is now the primary card in **Guide → Overview** (it replaced the old right-hand rail and floating button). It helps you fill gaps without auto-saving:
+The sticky save bar and right-hand **AI Assist** panel help you fill gaps without auto-saving:
 
 - **Auto-fill / Fill gaps / Fill 100%** — AI suggestions you approve one-by-one or in bulk
 - **Suggest sources / cross-links** — Propose `sources_of_truth` entries, product→CMS links, evidence URLs
@@ -134,7 +139,7 @@ Suggestions are **never auto-saved** until you accept them. AI Assist prefers de
 | [Public API](../04-integration/agent-guide-public-api.md) | Integrators | Endpoints, views, graph, caching |
 | [MCP & agents](../04-integration/agent-guide-mcp-and-agents.md) | Developers | MCP tools, resources, agent patterns |
 | [Website tools (WebMCP)](../04-integration/webmcp-tools.md) | Everyone | The **Tools** hub tab — what visitor AI helpers can do, tool catalog, safety, hosting |
-| [MCP connections](../01-admin/mcp-connections.md) | Everyone | **Settings → AI** (not in the hub) — how AI apps connect to Birkly |
+| [MCP connections](../01-admin/mcp-connections.md) | Everyone | The **Connections** hub tab (= Agent Guide → Connections) — how AI apps connect to Birkly |
 
 ## Quick start (5 steps)
 
@@ -165,9 +170,9 @@ Legacy field **`connected_content[]`** is migrated into `sources_of_truth[]` on 
 ## Related Birkly features
 
 - **Agent Guide → Tools** — Website tools (WebMCP); what visitor-facing AI helpers can *do* on your live site. See [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
-- **Settings → AI** — How AI apps connect to your Birkly CMS (Birkly MCP). The Publish tab links here. See [MCP connections](../01-admin/mcp-connections.md).
+- **Agent Guide → Connections / Agent Guide → Connections** — How AI apps connect to your Birkly CMS. See [MCP connections](../01-admin/mcp-connections.md).
 - **Settings → Site delivery** — Public site URL where well-known and API are served
-- **Settings → AI connections** — Optional BYOAI for Assist (rules-only mode works without AI)
+- **Agent Guide → Connections** — Optional BYOAI for Assist (rules-only mode works without AI)
 - **MCP connections** — Inbound agents can read published guide context via MCP tools
 - **Admin AI chat** — Complementary; Agent Guide is structured publish, not conversational UI
 
@@ -194,11 +199,15 @@ No. Agent Guide is **curated truth + evidence + source links** — the right mod
 **Does publishing my Guide turn on website tools?**  
 No. Publishing the Guide only makes your fact-sheet JSON public. **Website tools** (the Tools tab / WebMCP) is a separate, off-by-default switch — see [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
 
-**Where do I manage AI app connections (Birkly MCP)?**  
-In **Settings → AI** only — they are no longer shown inside the Agent Guide hub. The hub's Publish tab links you straight there.
-
-**Do PageSpeed Insights results mean my website tools failed?**  
-Not necessarily. PageSpeed / Lighthouse test browsers often don't have WebMCP enabled, so they report the audit as "Not evaluated". Verify locally with Chrome 146+ and `chrome://flags/#enable-webmcp-testing` — see [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
+**Why do I see Connections both here and in Agent Guide → Connections?**  
+Birkly currently shows the same AI-connection controls in both places while it evaluates which location owners prefer. They share the same backend and settings — changes in one show up in the other. Nothing is duplicated or out of sync.
 
 **Legacy paths and tools?**  
 `/.well-known/brand-context.json`, MCP `get_brand_context`, and admin `?page=ai-presence` remain supported as aliases.
+
+## Further reading
+
+- [Content model overview](content-model-overview.md)
+- [Collections](collections.md)
+- [Entries & collections](entries.md)
+- [Collection groups](collection-groups.md)

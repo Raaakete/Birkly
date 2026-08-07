@@ -15,7 +15,7 @@ One URL per site; each team member signs in with **their own** Birkly account an
 
 ### Steps
 
-1. Admin → **Settings → AI** → **Connect your AI app**
+1. Admin → **Agent Guide → Connections**
 2. Copy **Personal connector URL** (HTTPS, ends with `/mcp`)
 3. In your AI app paste URL only — **leave Client ID/Secret empty**
    - **Cursor:** Cursor Settings → **Tools & MCP** → Add MCP server → paste URL → **Connect** (no manual `mcp.json` editing)

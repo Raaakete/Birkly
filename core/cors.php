@@ -50,9 +50,9 @@ function set_cors_headers($type = 'public', $allowedOrigins = []) {
         }
     }
     
-    // Check if origin is allowed
+    // Check if origin is allowed (exact match, www↔apex, or localhost with any port)
     $isAllowed = false;
-    if ($origin && in_array($origin, $allowedOrigins)) {
+    if ($origin && birkly_cors_origin_allowed($origin, $allowedOrigins)) {
         $isAllowed = true;
     }
     
@@ -118,11 +118,16 @@ function get_registered_domains() {
             if ($domainName === '') {
                 continue;
             }
-            // Add both http and https versions
+            // Add both http and https versions + www↔apex variants
             $cachedDomains[] = 'https://' . $domainName;
             $cachedDomains[] = 'http://' . $domainName;
-            // Also add www version if not already present
-            if (strpos($domainName, 'www.') !== 0) {
+            if (strpos($domainName, 'www.') === 0) {
+                $apex = substr($domainName, 4);
+                if ($apex !== '') {
+                    $cachedDomains[] = 'https://' . $apex;
+                    $cachedDomains[] = 'http://' . $apex;
+                }
+            } else {
                 $cachedDomains[] = 'https://www.' . $domainName;
                 $cachedDomains[] = 'http://www.' . $domainName;
             }
@@ -132,11 +137,59 @@ function get_registered_domains() {
         error_log('Failed to load registered domains: ' . $e->getMessage());
     }
     
-    // Always allow localhost for development
+    // Always allow localhost for development (ports matched in birkly_cors_origin_allowed)
     $cachedDomains[] = 'http://localhost';
     $cachedDomains[] = 'http://127.0.0.1';
     
     return array_unique($cachedDomains);
+}
+
+/**
+ * Whether a request Origin is allowed given an allowlist of scheme://host strings.
+ * Supports www↔apex expansion and localhost/127.0.0.1 with any port (P61-B5/B6).
+ *
+ * @param list<string> $allowedOrigins
+ */
+function birkly_cors_origin_allowed(string $origin, array $allowedOrigins): bool
+{
+    $origin = trim($origin);
+    if ($origin === '') {
+        return false;
+    }
+    if (in_array($origin, $allowedOrigins, true)) {
+        return true;
+    }
+
+    $parts = parse_url($origin);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return false;
+    }
+    $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
+    $host = strtolower((string) $parts['host']);
+
+    // Localhost / loopback with any port
+    if (in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+        return true;
+    }
+
+    $candidates = [$host];
+    if (str_starts_with($host, 'www.')) {
+        $candidates[] = substr($host, 4);
+    } else {
+        $candidates[] = 'www.' . $host;
+    }
+
+    foreach ($candidates as $candidate) {
+        if (in_array($scheme . '://' . $candidate, $allowedOrigins, true)) {
+            return true;
+        }
+        // Allowlist entries may omit scheme variants already expanded by get_registered_domains
+        if (in_array('https://' . $candidate, $allowedOrigins, true) || in_array('http://' . $candidate, $allowedOrigins, true)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -156,12 +209,13 @@ function set_dynamic_cors() {
     }
     
     if ($domain) {
-        // Check if domain is registered
         $registeredDomains = get_registered_domains();
-        $originUrl = ($origin ?: ($referer ? parse_url($referer, PHP_URL_SCHEME) . '://' . $domain : ''));
-        
-        if ($originUrl && in_array($originUrl, $registeredDomains)) {
-            header('Access-Control-Allow-Origin: ' . $originUrl);
+        $originUrl = $origin !== ''
+            ? $origin
+            : ((parse_url($referer, PHP_URL_SCHEME) ?: 'https') . '://' . $domain);
+
+        if ($originUrl && birkly_cors_origin_allowed($originUrl, $registeredDomains)) {
+            header('Access-Control-Allow-Origin: ' . ($origin !== '' ? $origin : $originUrl));
             header('Access-Control-Allow-Credentials: true');
         }
     }

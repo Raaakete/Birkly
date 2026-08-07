@@ -33,12 +33,12 @@
         webmcpPublicForms: [],
         webmcpSupported: null,
         webmcpLoaded: false,
-        webmcpSaving: false
+        webmcpSaving: false,
+        connectionsMounted: false
     };
 
-    // Connections deliberately excluded (P60 IA): AI app connections live in
-    // Settings → AI only, never in the Agent Guide hub.
-    var HUB_ZONES = ['guide', 'tools', 'publish'];
+    // P60.1: Connections home is Agent Guide (Settings → AI removed).
+    var HUB_ZONES = ['guide', 'tools', 'connections', 'publish'];
 
     // Plain-language labels/descriptions for the WebMCP tool catalog. The admin
     // API returns technical metadata (id/pack/kind/consent); the human copy
@@ -3178,6 +3178,9 @@
         if (zone === 'tools' && !state.webmcpLoaded) {
             loadWebmcpConfig();
         }
+        if (zone === 'connections') {
+            mountConnectionsZone();
+        }
         if (zone === 'publish') {
             renderPublishZone();
         }
@@ -3262,13 +3265,42 @@
         var toolsOk = !!(cfg && cfg.enabled);
         setTabDot('ap-tab-dot-tools', toolsOk, toolsOk ? t('ag_webmcp_on', 'On') : t('ag_webmcp_off', 'Off'));
 
-        // Publish tab: green when a public site mode is configured (project/external).
+        // Connections tab: green when Birkly MCP URL is available.
         var urls = state.publicUrls || {};
+        var connectionsOk = !!urls.mcp_url;
+        setTabDot(
+            'ap-tab-dot-connections',
+            connectionsOk,
+            connectionsOk ? t('ag_status_connected', 'Ready') : t('ag_status_not_set_up', 'Not set up')
+        );
+
+        // Publish tab: green when a public site mode is configured (project/external).
         var mode = urls.hosting_mode || 'none';
         var hostOk = mode === 'project' || mode === 'external';
         var hostLabel = mode === 'project' ? t('ag_hosted_project', 'On Birkly')
             : (mode === 'external' ? t('ag_hosted_external', 'External') : t('ag_hosted_none', 'None'));
         setTabDot('ap-tab-dot-publish', hostOk, hostLabel);
+    }
+
+    // ===================================================================
+    // Connections zone — mount shared AI connection modules (P60.1)
+    // ===================================================================
+
+    function mountConnectionsZone() {
+        if (state.connectionsMounted) return;
+        var mount = document.getElementById('ap-connections-mount');
+        if (!mount) return;
+        state.connectionsMounted = true;
+        try {
+            if (global.McpConnections && typeof global.McpConnections.init === 'function') {
+                global.McpConnections.init();
+            }
+            if (global.AiConnections && typeof global.AiConnections.init === 'function') {
+                global.AiConnections.init();
+            }
+        } catch (e) {
+            if (global.console) console.error('Connections mount failed', e);
+        }
     }
 
     // ===================================================================

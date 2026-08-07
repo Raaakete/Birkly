@@ -84,12 +84,31 @@
 }
 
 .hosting-wizard-checklist {
-  padding-inline-start: var(--space-5);
-  list-style: disc;
+  padding-inline-start: 0;
+  list-style: none;
   font-size: var(--text-base);
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
 }
 
+.hosting-wizard-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.hosting-wizard-checklist li::before {
+  content: "○";
+  flex: 0 0 auto;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+.hosting-wizard-checklist li.is-ok {
+  color: var(--text-primary);
+}
+.hosting-wizard-checklist li.is-ok::before {
+  content: "✓";
+  color: var(--success-fg, var(--status-dot-ok, var(--accent)));
+  font-weight: var(--weight-semibold, 600);
+}
 .hosting-wizard-checklist li + li {
   margin-block-start: var(--space-2);
 }

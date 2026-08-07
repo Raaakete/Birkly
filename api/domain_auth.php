@@ -215,21 +215,36 @@ class DomainAuth {
         return ['allowed' => false, 'reason' => 'unknown_operation'];
     }
     
-    // Get all registered domains for CORS
+    // Get all registered domains for CORS (include www↔apex variants)
     public function getAllowedOrigins() {
         $licenses = $this->getLicenses();
         $origins = ['http://localhost', 'http://127.0.0.1'];
+
+        $addHost = static function (array &$origins, string $host): void {
+            $host = strtolower(trim($host));
+            if ($host === '') {
+                return;
+            }
+            $origins[] = 'https://' . $host;
+            $origins[] = 'http://' . $host;
+            if (str_starts_with($host, 'www.')) {
+                $apex = substr($host, 4);
+                $origins[] = 'https://' . $apex;
+                $origins[] = 'http://' . $apex;
+            } else {
+                $origins[] = 'https://www.' . $host;
+                $origins[] = 'http://www.' . $host;
+            }
+        };
         
         foreach ($licenses as $domain => $license) {
             if (($license['status'] ?? '') === 'active' && $this->isLicenseValid($license)) {
-                $origins[] = 'https://' . $domain;
-                $origins[] = 'http://' . $domain;
+                $addHost($origins, (string) $domain);
                 
                 // Add allowed domains
                 if (isset($license['allowed_domains'])) {
                     foreach ($license['allowed_domains'] as $allowedDomain) {
-                        $origins[] = 'https://' . $allowedDomain;
-                        $origins[] = 'http://' . $allowedDomain;
+                        $addHost($origins, (string) $allowedDomain);
                     }
                 }
             }
@@ -358,31 +373,30 @@ function setDynamicCORS() {
         // No origin header, skip CORS (same-origin request)
         return;
     }
-    
+
+    require_once __DIR__ . '/../core/cors.php';
     $allowedOrigins = $domainAuth->getAllowedOrigins();
-    $parsedOrigin = parse_url($origin);
-    $originHost = ($parsedOrigin['scheme'] ?? 'http') . '://' . ($parsedOrigin['host'] ?? '');
-    
-    // Check if origin matches any allowed origin
-    $isAllowed = false;
-    foreach ($allowedOrigins as $allowed) {
-        // Match exact origin or allow localhost with any port
-        if ($originHost === $allowed || 
-            (strpos($allowed, 'localhost') !== false && strpos($origin, 'localhost') !== false)) {
+    // Merge domains.json (Site delivery auto-register) into the allowlist.
+    foreach (get_registered_domains() as $reg) {
+        $allowedOrigins[] = $reg;
+    }
+    $allowedOrigins = array_values(array_unique($allowedOrigins));
+
+    $isAllowed = function_exists('birkly_cors_origin_allowed')
+        ? birkly_cors_origin_allowed($origin, $allowedOrigins)
+        : in_array($origin, $allowedOrigins, true);
+
+    // Also accept Origin when DomainAuth validates the host (subdomain / alias rules)
+    if (!$isAllowed) {
+        $host = strtolower((string) (parse_url($origin, PHP_URL_HOST) ?: ''));
+        if ($host !== '' && !empty($domainAuth->validateDomain($host)['valid'])) {
             $isAllowed = true;
-            break;
         }
     }
     
     if ($isAllowed) {
         header('Access-Control-Allow-Origin: ' . $origin);
         header('Access-Control-Allow-Credentials: true');
-    } else {
-        // For localhost dev, allow it anyway
-        if (strpos($origin, 'localhost') !== false || strpos($origin, '127.0.0.1') !== false) {
-            header('Access-Control-Allow-Origin: ' . $origin);
-            header('Access-Control-Allow-Credentials: true');
-        }
     }
     
     header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');

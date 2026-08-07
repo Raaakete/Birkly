@@ -40,7 +40,7 @@ The first time you (or anyone) use the installation, you may see the **onboardin
 
 - **Project name** — For the admin panel only (sidebar label, browser tab). It does **not** set your website’s public title or URL.
 - **Use case** *(optional)* — Blog, business site, shop, docs, or developer project; may include demo content you can keep or remove.
-- **Marketplace** *(optional)* — A pointer to install official plugins (Commerce, Events, etc.) from **Plugins → Marketplace**.
+- **Hub** *(optional)* — A pointer to install official plugins (Commerce, Events, etc.) from **Plugins → Hub**.
 - **Connect AI** *(optional)* — A short BYOAI flow; you can always skip and return later under Settings.
 
 You can skip any step. After that, the Dashboard and sidebar are your starting point. A short **setup checklist** on the Dashboard shows essential next steps (collection, entry, marketplace plugin; Connect AI only if you skipped it in the wizard).

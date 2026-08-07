@@ -256,6 +256,7 @@ function birkly_analytics_aggregate_events(array $events): array
     $entranceCounts = [];
     $exitCounts = [];
     $trafficSources = [];
+    $campaignCounts = [];
     $sessions = [];
 
     foreach ($events as $event) {
@@ -289,6 +290,7 @@ function birkly_analytics_aggregate_events(array $events): array
         }
 
         $utmSource = (string) ($event['utm_source'] ?? '');
+        $utmCampaign = (string) ($event['utm_campaign'] ?? '');
         if ($utmSource !== '') {
             $label = 'campaign:' . $utmSource;
             if (!empty($event['utm_medium'])) {
@@ -297,6 +299,15 @@ function birkly_analytics_aggregate_events(array $events): array
             $trafficSources[$label] = ($trafficSources[$label] ?? 0) + 1;
         } elseif ($referrerHost === '') {
             $trafficSources['direct'] = ($trafficSources['direct'] ?? 0) + 1;
+        }
+        if ($utmCampaign !== '') {
+            $campaignLabel = $utmCampaign;
+            if ($utmSource !== '') {
+                $campaignLabel .= ' (' . $utmSource . ')';
+            }
+            $campaignCounts[$campaignLabel] = ($campaignCounts[$campaignLabel] ?? 0) + 1;
+        } elseif ($utmSource !== '') {
+            $campaignCounts[$utmSource] = ($campaignCounts[$utmSource] ?? 0) + 1;
         }
 
         $deviceType = (string) ($event['device_type'] ?? 'unknown');
@@ -361,6 +372,7 @@ function birkly_analytics_aggregate_events(array $events): array
         'exit_pages' => birkly_analytics_rank_counts($exitCounts, 'path', 'exits', 10),
         'referrers' => birkly_analytics_rank_counts($referrerCounts, 'domain', 'visits', 10),
         'traffic_sources' => birkly_analytics_rank_counts($trafficSources, 'source', 'visits', 10),
+        'campaigns' => birkly_analytics_rank_counts($campaignCounts, 'campaign', 'visits', 10),
         'devices' => birkly_analytics_rank_counts($deviceCounts, 'device_type', 'visits', 10),
         'browsers' => birkly_analytics_rank_counts($browserCounts, 'browser', 'visits', 10),
         'operating_systems' => birkly_analytics_rank_counts($osCounts, 'os', 'visits', 10),
@@ -400,6 +412,7 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
         'exit_pages' => [],
         'referrers' => [],
         'traffic_sources' => [],
+        'campaigns' => [],
         'devices' => [],
         'browsers' => [],
         'operating_systems' => [],

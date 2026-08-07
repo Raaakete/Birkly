@@ -1,5 +1,5 @@
 /**
- * Settings → Hosting tab — mounts shared hosting wizard (P44-M5).
+ * Settings → Site delivery — mounts shared hosting wizard (P44-M5 / P61-M1).
  */
 (function () {
     'use strict';
@@ -22,6 +22,7 @@
                 id: 'settings-hosting-wizard',
                 mode: 'settings',
                 onSave: function () {
+                    // Wizard already shows a success toast (P61-B8).
                     if (wizard) {
                         updateProjectLink(wizard.getPublicMode());
                     }
@@ -46,16 +47,9 @@
     function init() {
         if (initialized) return;
         initialized = true;
-
-        var domainsTab = document.querySelector('[data-tab="domains"]');
-        if (domainsTab) {
-            domainsTab.addEventListener('click', function () {
-                mountWizard();
-            });
-        }
-
-        var domainsPane = document.getElementById('domains');
-        if (domainsPane && domainsPane.classList.contains('active') && document.getElementById('hosting-wizard-mount')) {
+        // Site delivery tab init (settings-page.js) calls initHostingSettings.
+        // Mount immediately when the wizard container is already in the DOM.
+        if (document.getElementById('hosting-wizard-mount')) {
             mountWizard();
         }
     }
