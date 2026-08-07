@@ -174,12 +174,26 @@
         });
 
         dashboard.registerMount('analyticsMini', function (element, widget, data) {
-            if (!data || !data.has_domains) {
-                setContent(element, callout('—', 'Analytics not configured', 'Register a domain to start tracking visitors.', adminUrl('settings') + '#domains', 'Set up analytics →', 'muted'));
+            var analyticsSettingsUrl = adminUrl('settings', { tab: 'analytics' });
+            if (!data) {
+                setContent(element, callout('—', 'Analytics not configured', 'Choose a preset under Settings → Analytics.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
+                return;
+            }
+            if (data.analytics_collecting === false || data.analytics_preset === 'off') {
+                setContent(element, callout('—', 'Analytics is Off', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
                 return;
             }
             if (!data.has_analytics) {
-                setContent(element, callout('—', 'Analytics ready', 'Enable tracking for your registered domains.', adminUrl('settings') + '#domains', 'Enable analytics →', 'muted'));
+                setContent(element, callout('—', 'Tracking not enabled yet', 'Re-save your Analytics preset to enable site tracking, or enable a domain under Site delivery.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
+                return;
+            }
+            var views = Number(data.total_page_views || 0);
+            var visitors = Number(data.total_visitors || 0);
+            if (views === 0 && visitors === 0) {
+                var waitMsg = data.analytics_consent_required
+                    ? 'Preset is on. Visit your public site and accept the consent banner to start collecting.'
+                    : 'Preset is on. Visit your public site (or localhost preview) to record the first page views.';
+                setContent(element, callout('0', 'Waiting for traffic', waitMsg, analyticsSettingsUrl, 'View Analytics →', 'muted'));
                 return;
             }
 
