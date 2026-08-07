@@ -27,6 +27,24 @@
             </div>
           </div>
 
+          <div class="card" id="ai-localhost-card">
+            <div class="card-header">
+              <div class="card-heading">
+                <h3 class="card-title">Working locally?</h3>
+                <p class="card-description">How AI connects when Birkly runs on <code>localhost</code> — without exposing admin insecurely.</p>
+              </div>
+            </div>
+            <div class="card-body u-stack-3">
+              <ul class="hosting-wizard-checklist">
+                <li><strong>Built-in assistant / Ollama</strong> — works on localhost (outbound API or <code>localhost:11434</code>).</li>
+                <li><strong>Remote connectors</strong> (Claude / ChatGPT) → <code>http://localhost/mcp</code> — usually will not work; they need a public <code>https://</code> URL.</li>
+                <li><strong>mcp-bridge</strong> — use the local stdio bridge for AI tools on your machine (see Developer tools below).</li>
+                <li><strong>Tunnel</strong> — run <code>cloudflared</code> or ngrok to an HTTPS URL that forwards to your local <code>/mcp</code>, then paste that as the Connector URL.</li>
+              </ul>
+              <p class="form-help">We do not recommend opening the admin panel to the public internet just for connectors. Prefer bridge or a short-lived tunnel.</p>
+            </div>
+          </div>
+
           <div class="callout callout-info" id="ai-agents-migration-banner" role="status" hidden>
             <div class="callout-body u-stack-1">
               <p class="callout-title">Service agent visibility updated</p>

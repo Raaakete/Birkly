@@ -413,7 +413,7 @@ window.migrateStorage = migrateStorage;
 // Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'site-delivery', 'project', 'team-access', 'security', 'integrations', 'system'
+        'general', 'site-delivery', 'project', 'team-access', 'security', 'integrations', 'analytics', 'system'
     ];
 
     // Legacy Settings → AI aliases redirect to Agent Guide → Connections (P60.1).
@@ -446,11 +446,13 @@ window.migrateStorage = migrateStorage;
         monitoring: 'system',
         storage: 'system',
         api: 'integrations',
-        'activity-log': 'system'
+        'activity-log': 'system',
+        analytics: 'analytics',
+        tracking: 'analytics'
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'project', 'team-access', 'integrations'
+        'site-delivery', 'project', 'team-access', 'integrations', 'analytics'
     ];
 
     var GLOBAL_SAVE_TABS = {
@@ -894,7 +896,19 @@ window.migrateStorage = migrateStorage;
             if (typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
             }
-        } else if (tabId === 'system' && typeof window.initUpdates === 'function') {
+        } else if (tabId === 'analytics') {
+            if (typeof window.initAnalyticsSettings === 'function') {
+                window.initAnalyticsSettings();
+            }
+        } else if (tabId === 'system') {
+            if (typeof window.initDeveloperModeSettings === 'function') {
+                window.initDeveloperModeSettings();
+            }
+            if (typeof window.initUpdates === 'function') {
+                // fall through to existing updates init below
+            }
+        }
+        if (tabId === 'system' && typeof window.initUpdates === 'function') {
             window.initUpdates();
         }
 
