@@ -513,6 +513,41 @@ if ($action === 'list_recent') {
                 }
             }
         }
+
+        // P61: merge plugin activity bus items marked notify=true
+        $activityFile = __DIR__ . '/../core/plugin_activity.php';
+        if (is_file($activityFile)) {
+            require_once $activityFile;
+            if (function_exists('birkly_plugin_activity_list')) {
+                foreach (birkly_plugin_activity_list(50) as $item) {
+                    if (empty($item['notify'])) {
+                        continue;
+                    }
+                    $id = (string) ($item['id'] ?? '');
+                    if ($id === '') {
+                        continue;
+                    }
+                    $notifications[] = [
+                        'id' => $id,
+                        'event' => 'plugin_activity',
+                        'timestamp' => $item['created_at'] ?? date('c'),
+                        'user' => (string) ($item['plugin'] ?? 'plugin'),
+                        'details' => $item['meta'] ?? [],
+                        'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
+                        'icon' => '🔔',
+                        'color' => 'mint',
+                        'category' => 'plugin',
+                        'link' => $item['link'] ?? '',
+                        'plugin' => $item['plugin'] ?? '',
+                        'read' => !empty($item['read_at']) || in_array($id, $readIds, true),
+                    ];
+                }
+                usort($notifications, static function ($a, $b) {
+                    return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
+                });
+                $notifications = array_slice($notifications, 0, $limit);
+            }
+        }
         
         $unreadCount = count(array_filter($notifications, function($n) {
             return !$n['read'];

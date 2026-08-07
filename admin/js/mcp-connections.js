@@ -17,6 +17,13 @@
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
         if (!pane) return false;
+        // Agent Guide → Connections (P60.1 home)
+        if (document.getElementById('ap-connections-mount')) {
+            const connectionsPanel = document.getElementById('ap-panel-connections');
+            if (connectionsPanel && !connectionsPanel.hidden) {
+                return true;
+            }
+        }
         const hash = window.location.hash.replace('#', '');
         const aiHashes = [
             'ai-integrations',

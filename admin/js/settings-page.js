@@ -413,8 +413,22 @@ window.migrateStorage = migrateStorage;
 // Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'site-delivery', 'project', 'team-access', 'security', 'ai', 'integrations', 'system'
+        'general', 'site-delivery', 'project', 'team-access', 'security', 'integrations', 'system'
     ];
+
+    // Legacy Settings → AI aliases redirect to Agent Guide → Connections (P60.1).
+    var AGENT_GUIDE_CONNECTIONS_ALIASES = {
+        ai: true,
+        'ai-integrations': true,
+        'ai-connections': true,
+        'mcp-connections': true,
+        'outbound-connections': true,
+        'inbound-mcp': true,
+        'ai-kind-assistant': true,
+        'ai-kind-personal': true,
+        'ai-kind-service': true,
+        'ai-kind-builtin': true
+    };
 
     var TAB_ALIASES = {
         domains: 'site-delivery',
@@ -432,16 +446,11 @@ window.migrateStorage = migrateStorage;
         monitoring: 'system',
         storage: 'system',
         api: 'integrations',
-        'ai-integrations': 'ai',
-        'ai-connections': 'ai',
-        'mcp-connections': 'ai',
-        'outbound-connections': 'ai',
-        'inbound-mcp': 'ai',
         'activity-log': 'system'
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'project', 'team-access', 'ai', 'integrations'
+        'site-delivery', 'project', 'team-access', 'integrations'
     ];
 
     var GLOBAL_SAVE_TABS = {
@@ -451,14 +460,6 @@ window.migrateStorage = migrateStorage;
             formIds: ['storage-form', 'monitoring-form'],
             label: 'Save system settings'
         }
-    };
-
-    var LEGACY_AI_HASH_MAP = {
-        'ai-integrations': null,
-        'ai-connections': 'ai-kind-assistant',
-        'mcp-connections': 'ai-kind-personal',
-        'outbound-connections': 'ai-kind-assistant',
-        'inbound-mcp': 'ai-kind-service'
     };
 
     var currentTab = 'general';
@@ -488,11 +489,26 @@ window.migrateStorage = migrateStorage;
         return tabId;
     }
 
+    function agentGuideConnectionsUrl() {
+        if (window.Birkly && typeof window.Birkly.adminUrl === 'function') {
+            return window.Birkly.adminUrl('agent-guide', { zone: 'connections' });
+        }
+        return '/admin/index.php?page=agent-guide&zone=connections';
+    }
+
+    function maybeRedirectLegacyAi(tab, hash) {
+        var raw = String(tab || '').toLowerCase();
+        var h = String(hash || '').toLowerCase();
+        if (AGENT_GUIDE_CONNECTIONS_ALIASES[raw] || AGENT_GUIDE_CONNECTIONS_ALIASES[h] ||
+            (h && h.indexOf('ai-kind-') === 0)) {
+            window.location.replace(agentGuideConnectionsUrl());
+            return true;
+        }
+        return false;
+    }
+
     function resolveSettingsHash(hash) {
         if (!hash) return { tab: null, scrollTo: null, legacyHash: null };
-        if (Object.prototype.hasOwnProperty.call(LEGACY_AI_HASH_MAP, hash)) {
-            return { tab: 'ai', scrollTo: LEGACY_AI_HASH_MAP[hash], legacyHash: hash };
-        }
 
         var normalized = normalizeTabId(hash);
         if (!normalized) {
@@ -511,6 +527,11 @@ window.migrateStorage = migrateStorage;
         var tab = params.get('tab');
         var scrollTo = null;
         var hash = window.location.hash.replace('#', '');
+
+        if (maybeRedirectLegacyAi(tab, hash)) {
+            return { tab: 'general', scrollTo: null, redirected: true };
+        }
+
         var resolvedHash = resolveSettingsHash(hash);
 
         if (!tab) {
@@ -869,8 +890,6 @@ window.migrateStorage = migrateStorage;
             }
         } else if (tabId === 'security' && typeof window.loadDenylist === 'function') {
             window.loadDenylist();
-        } else if (tabId === 'ai') {
-            window.dispatchEvent(new CustomEvent('birkly:ai-integrations-tab'));
         } else if (tabId === 'integrations') {
             if (typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
@@ -1391,8 +1410,23 @@ async function deletePlugin(pluginId) {
     }
     
     function buildDomainTrackingScript(domainName) {
-        var scriptPath = apiUrl('/birkly-client.js');
-        return '<script src="' + scriptPath + '" data-tracking-id="' + domainName + '"></script>';
+        // Match birkly_hosting_client_snippet(): absolute CMS URL + data-cms-url.
+        var cmsBase = '';
+        if (window.Birkly && typeof window.Birkly.url === 'function') {
+            try {
+                cmsBase = new URL(window.Birkly.url('/'), window.location.origin).origin;
+            } catch (e) {
+                cmsBase = window.location.origin;
+            }
+        } else {
+            cmsBase = window.location.origin;
+        }
+        cmsBase = String(cmsBase || '').replace(/\/$/, '');
+        var scriptSrc = cmsBase + '/birkly-client.js';
+        var trackingAttr = domainName
+            ? ' data-tracking-id="' + String(domainName).replace(/"/g, '') + '"'
+            : '';
+        return '<script src="' + scriptSrc + '" data-cms-url="' + cmsBase + '"' + trackingAttr + '></script>';
     }
 
     function renderDomainTrackingScript(domainName, enabled) {

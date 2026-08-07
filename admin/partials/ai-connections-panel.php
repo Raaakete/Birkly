@@ -1,12 +1,10 @@
 <?php
 /**
- * Shared Settings → AI connections panel (P60-M4).
+ * Shared AI connections panel (P60-M4 / P60.1).
  *
- * Included by Settings → AI (settings.html) AND the Agent Guide → Connections
- * zone (ai-presence.html). The same DOM ids are used in both places; the two
- * surfaces are separate pages so the ids never collide at runtime. The
- * connection modules (mcp-connections.js / ai-connections.js) init against
- * these ids in either location.
+ * Mounted on Agent Guide → Connections (ai-presence.html). Settings → AI was
+ * removed in P60.1 — this partial is the single home. The connection modules
+ * (mcp-connections.js / ai-connections.js) init against these DOM ids.
  */
 ?>
         <div class="settings-stack ai-settings">
