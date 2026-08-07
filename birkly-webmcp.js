@@ -720,34 +720,41 @@
 
         WebMCP.started = true;
 
-        // Resolve config (inlined preferred, else public endpoint).
-        var cfgPromise = (typeof window !== 'undefined' && window.BIRKLY_WEBMCP_CONFIG)
-            ? Promise.resolve(window.BIRKLY_WEBMCP_CONFIG)
-            : fetch(WebMCP.cmsUrl + '/api/public/webmcp.php', { credentials: 'include' })
-                .then(function (r) { return r.json(); })
-                .then(function (res) { return (res && res.data) || { enabled: false }; })
-                .catch(function () { return { enabled: false }; });
-
-        cfgPromise.then(function (cfg) {
-            WebMCP.config = cfg || { enabled: false };
-            if (!WebMCP.config.enabled) {
-                log('disabled — registering nothing');
-                return;
-            }
-            registerAll();
-
-            // Re-scan declarative forms / attribute tools whenever the client
-            // re-renders the page (regions, SPA-style updates).
-            document.addEventListener('birkly:templates-processed', function () {
-                if (!WebMCP.config || !WebMCP.config.enabled) return;
-                registerDeclarativeForms();
-                registerAttributeTools();
-            });
+        // Re-scan declarative forms / attribute tools whenever the client
+        // re-renders the page (regions, SPA-style updates). Bound once, guarded
+        // by the resolved config.
+        document.addEventListener('birkly:templates-processed', function () {
+            if (!WebMCP.config || !WebMCP.config.enabled) return;
+            registerDeclarativeForms();
+            registerAttributeTools();
         });
 
         // Tear tools down when the page is going away.
         window.addEventListener('pagehide', abortAll);
         window.addEventListener('beforeunload', abortAll);
+
+        // Prefer the SSR-inlined config: register synchronously so agent
+        // browsers / Lighthouse see tools without waiting on a network round-trip.
+        if (typeof window !== 'undefined' && window.BIRKLY_WEBMCP_CONFIG) {
+            applyConfig(window.BIRKLY_WEBMCP_CONFIG);
+            return;
+        }
+
+        // Fallback: no inlined config — fetch the public endpoint.
+        fetch(WebMCP.cmsUrl + '/api/public/webmcp.php', { credentials: 'include' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) { return (res && res.data) || { enabled: false }; })
+            .catch(function () { return { enabled: false }; })
+            .then(applyConfig);
+    }
+
+    function applyConfig(cfg) {
+        WebMCP.config = cfg || { enabled: false };
+        if (!WebMCP.config.enabled) {
+            log('disabled — registering nothing');
+            return;
+        }
+        registerAll();
     }
 
     // ---- Public author surface (window.Birkly.webmcp) -----------------------

@@ -1944,6 +1944,23 @@
             .replace(/'/g, '&#39;');
     }
 
+    /**
+     * Declarative WebMCP tool attributes for a public ({entry for}) form.
+     *
+     * Emitting `toolname` / `tooldescription` directly on the <form> lets
+     * WebMCP-aware agent browsers and Lighthouse's Agentic Browsing audits
+     * discover the submit tool from static markup — before birkly-webmcp.js runs.
+     * The name matches birkly-webmcp.js's derived name (`birkly_form_<collection>`)
+     * so the declarative and runtime registrations stay a single, idempotent tool.
+     */
+    function birklyFormToolAttrs(collectionSlug) {
+        const slug = String(collectionSlug || '').trim();
+        if (!slug) return '';
+        const toolName = 'birkly_form_' + slug.replace(/[^a-z0-9_]/gi, '_');
+        const toolDesc = 'Submit the "' + slug + '" form on this page. Asks the visitor to confirm.';
+        return ' toolname="' + escapeHtml(toolName) + '" tooldescription="' + escapeHtml(toolDesc) + '"';
+    }
+
     function getNestedValue(obj, path) {
         if (!obj || !path) return undefined;
         const parts = String(path).split('.');
@@ -3763,7 +3780,7 @@
             return '<p style="color: red;">Error: Collection not found or Public API not enabled.</p>';
         }
         
-        let formHtml = '<form class="haru-form" data-birkly-collection="' + escapeHtml(collectionSlug) + '" data-birkly-url="/api/public_submit.php">\n';
+        let formHtml = '<form class="haru-form" data-birkly-collection="' + escapeHtml(collectionSlug) + '" data-birkly-url="/api/public_submit.php"' + birklyFormToolAttrs(collectionSlug) + '>\n';
         
         const fields = collectionInfo.schema.fields || [];
         for (const field of fields) {
@@ -4156,7 +4173,7 @@
                         // Wrap in form with auto-submission attributes.
                         // Note: api_key is no longer exposed via public API; submissions use
                         // /api/public_submit.php and the collection slug instead.
-                        const formHtml = '<form class="haru-form" data-birkly-collection="' + escapeHtml(collectionSlug) + '" data-birkly-url="/api/public_submit.php">\n' +
+                        const formHtml = '<form class="haru-form" data-birkly-collection="' + escapeHtml(collectionSlug) + '" data-birkly-url="/api/public_submit.php"' + birklyFormToolAttrs(collectionSlug) + '>\n' +
                             '<input type="hidden" name="collection" value="' + escapeHtml(collectionSlug) + '">\n' +
                             renderedContent + '\n' +
                             '</form>';
