@@ -82,3 +82,6 @@ dist/
 project/pages/
 project/.well-known/agent-guide.json
 project/.well-known/brand-context.json
+
+# Project git sync (P59) writes these into the local install's project/
+project/.gitignore

@@ -413,14 +413,19 @@ window.migrateStorage = migrateStorage;
 // Settings tabs, global save, dirty state, and settings search
 (function () {
     var VALID_TABS = [
-        'general', 'site-delivery', 'team-access', 'security', 'ai', 'integrations', 'system'
+        'general', 'site-delivery', 'project', 'team-access', 'security', 'ai', 'integrations', 'system'
     ];
 
     var TAB_ALIASES = {
         domains: 'site-delivery',
         hosting: 'site-delivery',
-        project: 'site-delivery',
         redirects: 'site-delivery',
+        'project-server-rendering': 'project',
+        'project-overview': 'project',
+        'project-files': 'project',
+        'project-rendering': 'project',
+        'project-git': 'project',
+        'project-activity': 'project',
         webhooks: 'integrations',
         security: 'security',
         'users-roles': 'team-access',
@@ -436,7 +441,7 @@ window.migrateStorage = migrateStorage;
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'team-access', 'ai', 'integrations'
+        'site-delivery', 'project', 'team-access', 'ai', 'integrations'
     ];
 
     var GLOBAL_SAVE_TABS = {
@@ -855,11 +860,12 @@ window.migrateStorage = migrateStorage;
             if (typeof window.initHostingSettings === 'function') {
                 window.initHostingSettings();
             }
-            if (typeof window.initProjectSettings === 'function') {
-                window.initProjectSettings();
-            }
             if (typeof window.initRedirectsManager === 'function') {
                 window.initRedirectsManager();
+            }
+        } else if (tabId === 'project') {
+            if (typeof window.initProjectSettings === 'function') {
+                window.initProjectSettings();
             }
         } else if (tabId === 'security' && typeof window.loadDenylist === 'function') {
             window.loadDenylist();
