@@ -35,6 +35,10 @@ require_once __DIR__ . '/core/birkly_paths.php';
 require_once __DIR__ . '/core/http_routes.php';
 require_once __DIR__ . '/core/hosting_routing.php';
 
+if (birkly_deny_git_metadata_request($uri)) {
+    return true;
+}
+
 $base = birkly_base_path();
 if ($base !== '' && str_starts_with($uri, $base)) {
     $uri = substr($uri, strlen($base));

@@ -553,6 +553,11 @@ function birkly_hosting_resolve_public_file(string $uri): ?string
         return null;
     }
 
+    require_once __DIR__ . '/project_site.php';
+    if (birkly_is_git_metadata_path($uri)) {
+        return null;
+    }
+
     $role = birkly_request_host_role();
     if ($role !== 'public' && !($role === 'cms' && str_starts_with($uri, '/project/'))) {
         if ($role === 'local') {
