@@ -189,9 +189,23 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
     $referrer = (string) ($input['referrer'] ?? '');
     $language = (string) ($input['language'] ?? '');
     $timezone = (string) ($input['timezone'] ?? '');
-    $eventType = (string) ($input['event_type'] ?? 'pageview');
-    if (!in_array($eventType, ['pageview', 'page_exit'], true)) {
-        $eventType = 'pageview';
+    $eventType = strtolower(trim((string) ($input['event_type'] ?? 'page_view')));
+    if ($eventType === '' || $eventType === 'pageview') {
+        $eventType = 'page_view';
+    }
+    $allowedTypes = [
+        'page_view',
+        'pageview',
+        'page_exit',
+        'form_submit',
+        'outbound_click',
+        'plugin_event',
+    ];
+    if (!in_array($eventType, $allowedTypes, true)) {
+        $eventType = 'page_view';
+    }
+    if ($eventType === 'pageview') {
+        $eventType = 'page_view';
     }
 
     $ua = birkly_analytics_parse_user_agent($userAgent);
@@ -207,6 +221,8 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         $entrancePath = $path;
     }
 
+    $ipHash = hash('sha256', $ip . $trackingId);
+
     return [
         'timestamp' => $timestamp,
         'event_type' => $eventType,
@@ -219,7 +235,9 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'utm_medium' => trim((string) ($input['utm_medium'] ?? '')),
         'utm_campaign' => trim((string) ($input['utm_campaign'] ?? '')),
         'user_agent' => $userAgent,
-        'ip' => hash('sha256', $ip . $trackingId),
+        // Privacy-safe visitor key (never raw IP). Presets keep ip_hash when hash_ip is on.
+        'ip_hash' => $ipHash,
+        'ip' => $ipHash,
         'screen_width' => (int) ($input['screen_width'] ?? 0),
         'screen_height' => (int) ($input['screen_height'] ?? 0),
         'viewport_width' => (int) ($input['viewport_width'] ?? 0),
@@ -233,6 +251,8 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'region' => $location['region'],
         'location_source' => $location['source'],
         'session_id' => (string) ($input['session_id'] ?? ''),
+        'event_name' => (string) ($input['event_name'] ?? ''),
+        'event_data' => is_array($input['event_data'] ?? null) ? $input['event_data'] : [],
     ];
 }
 
@@ -271,8 +291,12 @@ function birkly_analytics_aggregate_events(array $events): array
             continue;
         }
 
-        $pageViews++;
-        $ipHash = (string) ($event['ip'] ?? '');
+        // Count page views + other collectable events toward volume; uniques use hashed visitor key.
+        if (in_array($eventType, ['page_view', 'pageview', 'form_submit', 'outbound_click', 'plugin_event'], true)
+            || $eventType === '') {
+            $pageViews++;
+        }
+        $ipHash = (string) ($event['ip_hash'] ?? $event['ip'] ?? '');
         if ($ipHash !== '') {
             $uniqueVisitors[$ipHash] = true;
         }

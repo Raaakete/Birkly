@@ -1696,7 +1696,7 @@
                 <div class="ai-chat-welcome">
                     <h3>No AI Connection Found</h3>
                     <p>You need to set up an AI connection first to use the AI assistant.</p>
-                    <button class="btn btn-primary" onclick="window.location.href = (Birkly.adminUrl ? Birkly.adminUrl('agent-guide', { zone: 'connections' }) : Birkly.url('/admin/index.php?page=agent-guide&zone=connections'))">
+                    <button class="btn btn-primary" onclick="window.location.href = (Birkly.adminUrl ? Birkly.adminUrl('settings', { tab: 'ai' }) : Birkly.url('/admin/index.php?page=settings&tab=ai'))">
                         Open AI connections
                     </button>
                 </div>

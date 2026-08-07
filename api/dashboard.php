@@ -661,6 +661,9 @@ if ($action === 'analytics') {
             'tracking_count' => 0,
             'has_domains' => false,
             'has_analytics' => false,
+            'analytics_preset' => 'off',
+            'analytics_collecting' => false,
+            'analytics_consent_required' => false,
             'insights' => [
                 'entrance_pages' => [],
                 'exit_pages' => [],
@@ -671,6 +674,28 @@ if ($action === 'analytics') {
             ],
         ]
     ];
+
+    if (is_file(__DIR__ . '/../core/analytics_presets.php')) {
+        require_once __DIR__ . '/../core/analytics_presets.php';
+        $response['data']['analytics_preset'] = (string) (birkly_analytics_active_preset()['id'] ?? 'off');
+        $response['data']['analytics_collecting'] = birkly_analytics_collecting();
+        $response['data']['analytics_consent_required'] = birkly_analytics_consent_required();
+    }
+    if (is_file(__DIR__ . '/../core/analytics_config.php')) {
+        require_once __DIR__ . '/../core/analytics_config.php';
+        $trackingIds = birkly_analytics_load_tracking_ids();
+        $enabledIds = 0;
+        foreach ($trackingIds as $row) {
+            if (is_array($row) && !empty($row['enabled'])) {
+                $enabledIds++;
+            }
+        }
+        if ($enabledIds > 0) {
+            $response['data']['has_analytics'] = true;
+            $response['data']['has_domains'] = true;
+            $response['data']['tracking_count'] = max((int) $response['data']['tracking_count'], $enabledIds);
+        }
+    }
     
     // Check if files exist
     $analyticsFile = __DIR__ . '/analytics.php';
@@ -718,20 +743,35 @@ if ($action === 'analytics') {
             'traffic_sources' => [],
         ];
         
+        // Also report on tracking ids that are enabled without a license row (e.g. localhost).
+        $trackingIdsForReport = function_exists('birkly_analytics_load_tracking_ids')
+            ? birkly_analytics_load_tracking_ids()
+            : [];
+        $domainsToReport = [];
         foreach ($licenses as $domain => $license) {
             if (!empty($license['analytics_enabled'])) {
-                $analyticsEnabledCount++;
-                        $response['data']['has_analytics'] = true;
-                
-                $startDate = date('Y-m-d', strtotime('-30 days'));
-                $endDate = date('Y-m-d');
-                
-                try {
-                    $data = getAnalyticsData($domain, $startDate, $endDate);
-                            if (is_array($data)) {
+                $domainsToReport[$domain] = true;
+            }
+        }
+        foreach ($trackingIdsForReport as $tid => $cfg) {
+            if (is_array($cfg) && !empty($cfg['enabled'])) {
+                $domainsToReport[(string) $tid] = true;
+            }
+        }
+
+        foreach (array_keys($domainsToReport) as $domain) {
+            $analyticsEnabledCount++;
+            $response['data']['has_analytics'] = true;
+
+            $startDate = date('Y-m-d', strtotime('-30 days'));
+            $endDate = date('Y-m-d');
+
+            try {
+                $data = getAnalyticsData($domain, $startDate, $endDate);
+                if (is_array($data)) {
                     $totalPageViews += $data['page_views'] ?? 0;
                     $totalVisitors += $data['unique_visitors'] ?? 0;
-                    
+
                     $websites[] = [
                         'name' => $domain,
                         'domain' => $domain,
@@ -762,46 +802,45 @@ if ($action === 'analytics') {
                             $mergedInsights[$section][$label] = ($mergedInsights[$section][$label] ?? 0) + (int) ($row[$metricKey] ?? 0);
                         }
                     }
-                            }
-                } catch (Exception $e) {
-                    error_log("Error getting analytics for domain {$domain}: " . $e->getMessage());
-                        }
-                    }
                 }
+            } catch (Exception $e) {
+                error_log("Error getting analytics for domain {$domain}: " . $e->getMessage());
+            }
+        }
 
-                foreach ($mergedInsights as $section => $counts) {
-                    arsort($counts);
-                    $labelKeys = [
-                        'entrance_pages' => 'path',
-                        'exit_pages' => 'path',
-                        'devices' => 'device_type',
-                        'countries' => 'country',
-                        'browsers' => 'browser',
-                        'traffic_sources' => 'source',
-                    ];
-                    $metricKeys = [
-                        'entrance_pages' => 'entrances',
-                        'exit_pages' => 'exits',
-                        'devices' => 'visits',
-                        'countries' => 'visits',
-                        'browsers' => 'visits',
-                        'traffic_sources' => 'visits',
-                    ];
-                    $labelKey = $labelKeys[$section] ?? 'label';
-                    $metricKey = $metricKeys[$section] ?? 'visits';
-                    $rows = [];
-                    foreach (array_slice($counts, 0, 5, true) as $label => $count) {
-                        $rows[] = [$labelKey => $label, $metricKey => $count];
-                    }
-                    $mergedInsights[$section] = $rows;
-                }
-                
-                $response['data']['total_page_views'] = $totalPageViews;
-                $response['data']['total_visitors'] = $totalVisitors;
-                $response['data']['websites'] = $websites;
-                $response['data']['insights'] = $mergedInsights;
-                $response['data']['tracking_count'] = $analyticsEnabledCount;
-                $response['data']['has_domains'] = count($licenses) > 0;
+        foreach ($mergedInsights as $section => $counts) {
+            arsort($counts);
+            $labelKeys = [
+                'entrance_pages' => 'path',
+                'exit_pages' => 'path',
+                'devices' => 'device_type',
+                'countries' => 'country',
+                'browsers' => 'browser',
+                'traffic_sources' => 'source',
+            ];
+            $metricKeys = [
+                'entrance_pages' => 'entrances',
+                'exit_pages' => 'exits',
+                'devices' => 'visits',
+                'countries' => 'visits',
+                'browsers' => 'visits',
+                'traffic_sources' => 'visits',
+            ];
+            $labelKey = $labelKeys[$section] ?? 'label';
+            $metricKey = $metricKeys[$section] ?? 'visits';
+            $rows = [];
+            foreach (array_slice($counts, 0, 5, true) as $label => $count) {
+                $rows[] = [$labelKey => $label, $metricKey => $count];
+            }
+            $mergedInsights[$section] = $rows;
+        }
+
+        $response['data']['total_page_views'] = $totalPageViews;
+        $response['data']['total_visitors'] = $totalVisitors;
+        $response['data']['websites'] = $websites;
+        $response['data']['insights'] = $mergedInsights;
+        $response['data']['tracking_count'] = $analyticsEnabledCount;
+        $response['data']['has_domains'] = count($licenses) > 0 || $analyticsEnabledCount > 0;
             } catch (Throwable $e) {
                 error_log("Error in analytics handler: " . $e->getMessage());
                 // Use default empty response

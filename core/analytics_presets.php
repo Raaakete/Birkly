@@ -240,8 +240,11 @@ function birkly_analytics_apply_preset_to_event(array $event): ?array
     if (empty($preset['store_ip'])) {
         unset($event['ip']);
     }
+    // Keep privacy-safe visitor key when hash_ip is on (used for unique visitors).
     if (empty($preset['hash_ip'])) {
-        unset($event['ip_hash']);
+        unset($event['ip_hash'], $event['ip']);
+    } elseif (!isset($event['ip_hash']) && isset($event['ip'])) {
+        $event['ip_hash'] = $event['ip'];
     }
 
     // Minimal: strip device/browser/geo enrichment
