@@ -870,13 +870,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
       <div class="tab-pane" id="analytics">
         <div class="settings-stack" id="analytics-settings-root">
-          <div class="settings-pane-section" data-settings-search="analytics presets privacy consent">
+          <form id="analytics-settings-form" class="settings-form" data-settings-search="analytics presets privacy consent">
+          <div class="settings-pane-section">
             <section class="card">
               <div class="card-header">
                 <div>
                   <h2 class="section-title">Analytics</h2>
-                  <p class="settings-help">Choose how much visitor data Birkly collects. Saving Minimal+ enables tracking for your site (including localhost preview).</p>
+                  <p class="settings-help">Choose how much visitor data Birkly collects. Use Save Settings in the top bar to apply. Minimal+ enables tracking for your site (including localhost preview).</p>
                 </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="analytics-csv-export" hidden>Export CSV</button>
               </div>
               <div class="card-body u-stack-4">
                 <div id="analytics-preset-cards" class="u-stack-3" aria-live="polite">
@@ -886,30 +888,27 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div id="analytics-consent-fields" class="u-stack-3" hidden>
                   <div class="form-group">
                     <label for="analytics-consent-text">Consent banner text (Standard+)</label>
-                    <textarea id="analytics-consent-text" class="input" rows="3"></textarea>
+                    <textarea id="analytics-consent-text" name="analytics_consent_text" class="input" rows="3"></textarea>
                   </div>
                   <div class="form-group">
                     <label for="analytics-retention-days">Retention days (optional override)</label>
-                    <input type="number" id="analytics-retention-days" class="input" min="1" max="730" placeholder="Preset default">
+                    <input type="number" id="analytics-retention-days" name="analytics_retention_days" class="input" min="1" max="730" placeholder="Preset default">
                   </div>
-                </div>
-                <div class="u-cluster">
-                  <button type="button" class="btn btn-primary" id="analytics-settings-save">Save analytics settings</button>
-                  <button type="button" class="btn btn-secondary" id="analytics-csv-export" hidden>Export CSV</button>
                 </div>
               </div>
             </section>
           </div>
-          <div class="settings-pane-section" data-settings-search="analytics reports top pages referrers devices campaigns">
-            <section class="card">
+          </form>
+          <div class="settings-pane-section" data-settings-search="analytics reports top pages referrers devices campaigns funnel">
+            <section class="card analytics-report-card">
               <div class="card-header">
                 <div>
                   <h2 class="section-title">Report</h2>
-                  <p class="settings-help">Site-wide snapshot from enabled domain tracking. Empty when Analytics is Off.</p>
+                  <p class="settings-help" id="analytics-report-help">Site-wide snapshot from enabled tracking. Depth follows your preset.</p>
                 </div>
               </div>
-              <div class="card-body u-stack-4" id="analytics-report-panel">
-                <div class="empty-state"><p>Select a preset above and enable analytics on a domain to see reports.</p></div>
+              <div class="card-body u-stack-5" id="analytics-report-panel">
+                <div class="empty-state"><p>Select a preset above and save, then visit your site to see reports.</p></div>
               </div>
             </section>
           </div>

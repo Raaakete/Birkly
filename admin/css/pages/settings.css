@@ -649,43 +649,13 @@
 .permissions-grid .check:hover { background: var(--surface-hover); }
 .permissions-grid .check:has(input:checked) { background: var(--surface-selected); }
 
-/* ============================================
-   P61 — Analytics presets + developer mode cue
-   ============================================ */
-
-.analytics-preset-card {
-  cursor: pointer;
-}
+/* P61 — Analytics presets + developer mode cue (report styles: pages/analytics.css) */
+.analytics-preset-card { cursor: pointer; }
 .analytics-preset-card.is-selected {
   border-color: var(--accent-border, var(--border-strong));
   background: var(--surface-selected);
 }
-.analytics-preset-card input[type="radio"] {
-  accent-color: var(--accent-solid, var(--mint-600));
-}
-
-.analytics-trend-list .analytics-trend-row {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr 2.5rem;
-  align-items: center;
-  gap: var(--space-2);
-}
-.analytics-trend-bar {
-  display: block;
-  height: var(--space-2);
-  border-radius: var(--radius-pill);
-  background: var(--mint-400, var(--accent-solid));
-  width: var(--trend-pct, 0%);
-  max-width: 100%;
-  opacity: 0.85;
-}
-.analytics-report__section--wide {
-  grid-column: 1 / -1;
-}
-
-.developer-mode-badge {
-  white-space: nowrap;
-}
-body.developer-mode-on .admin-layout {
-  box-shadow: inset 0 0 0 1px var(--border-subtle);
-}
+.analytics-preset-card input[type="radio"] { accent-color: var(--mint-500); }
+.developer-mode-badge { white-space: nowrap; align-self: center; flex-shrink: 0; }
+.admin-topbar-actions > .developer-mode-badge { margin-inline-end: var(--space-1); }
+body.developer-mode-on .admin-layout { box-shadow: inset 0 0 0 1px var(--border-subtle); }

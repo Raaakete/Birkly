@@ -30,21 +30,21 @@ if ($showVisitProjectButton) {
     </div>
     <div class="admin-topbar-spacer"></div>
     <div class="page-header-actions admin-topbar-actions">
+        <?php
+        if (!isset($__birklyDeveloperModeOn)) {
+            if (!function_exists('birkly_developer_mode_enabled') && is_file(__DIR__ . '/../../core/developer_mode.php')) {
+                require_once __DIR__ . '/../../core/developer_mode.php';
+            }
+            $__birklyDeveloperModeOn = function_exists('birkly_developer_mode_enabled') && birkly_developer_mode_enabled();
+        }
+        ?>
+        <span id="developer-mode-badge" class="badge badge-neutral badge-sm developer-mode-badge"<?= empty($__birklyDeveloperModeOn) ? ' hidden' : '' ?> title="Developer mode is on">Developer mode</span>
         <?php if ($showVisitProjectButton && $visitProjectUrl !== ''): ?>
         <a href="<?= htmlspecialchars($visitProjectUrl) ?>" id="admin-visit-project-btn" class="btn btn-secondary btn-sm admin-visit-project-btn" target="_blank" rel="noopener noreferrer">
             Visit project
         </a>
         <?php endif; ?>
         <div class="topbar-control-group" role="group" aria-label="Workspace controls">
-            <?php
-            if (!isset($__birklyDeveloperModeOn)) {
-                if (!function_exists('birkly_developer_mode_enabled') && is_file(__DIR__ . '/../../core/developer_mode.php')) {
-                    require_once __DIR__ . '/../../core/developer_mode.php';
-                }
-                $__birklyDeveloperModeOn = function_exists('birkly_developer_mode_enabled') && birkly_developer_mode_enabled();
-            }
-            ?>
-            <span id="developer-mode-badge" class="badge badge-neutral badge-sm developer-mode-badge"<?= empty($__birklyDeveloperModeOn) ? ' hidden' : '' ?> title="Developer mode is on">Developer mode</span>
             <?php include __DIR__ . '/theme-switcher.php'; ?>
             <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
                 <?= birkly_icon('magnifying-glass') ?>

@@ -59,6 +59,7 @@
    ============================================ */
 @import url('pages/dashboard.css');
 @import url('pages/settings.css');
+@import url('pages/analytics.css');
 @import url('pages/content.css');
 @import url('pages/collection-editor.css');
 @import url('pages/media.css');
