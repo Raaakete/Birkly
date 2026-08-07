@@ -56,6 +56,13 @@ try {
     $counts = birkly_plugin_activity_nav_attention_counts();
     pa_assert('nav attention count', ($counts['commerce'] ?? 0) >= 1);
 
+    pa_assert('unread notify count', birkly_plugin_activity_unread_notify_count() >= 1);
+    $notifyIds = birkly_plugin_activity_notify_ids(true);
+    pa_assert('unread notify ids', count($notifyIds) >= 1);
+    $marked = birkly_plugin_activity_mark_read($notifyIds);
+    pa_assert('mark read', $marked >= 1);
+    pa_assert('unread after mark read', birkly_plugin_activity_unread_notify_count() === 0);
+
     $cleared = birkly_plugin_activity_clear_nav('commerce');
     pa_assert('clear nav', $cleared >= 1);
     pa_assert('nav cleared', birkly_plugin_activity_has_nav_attention('commerce') === false);
