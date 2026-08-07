@@ -59,6 +59,31 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 <div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
 <div class="ap-guide-layout">
     <div class="ai-presence-tabs ap-guide-tabs tabs-v2-root">
+    <nav class="side-nav side-nav--track ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
+        <div class="side-nav-group">
+            <button type="button" class="side-nav-item active" role="tab" data-tab="overview" aria-selected="true">
+                <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_overview'}">{translate 'admin.ai_presence_tab_overview'}</span>
+            </button>
+            <button type="button" class="side-nav-item" role="tab" data-tab="essentials" aria-selected="false">
+                <span class="side-nav-label" data-text="{translate 'admin.ag_view_essentials'}">{translate 'admin.ag_view_essentials'}</span>
+            </button>
+            <button type="button" class="side-nav-item" role="tab" data-tab="sources" aria-selected="false">
+                <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_sources'}">{translate 'admin.ai_presence_tab_sources'}</span>
+            </button>
+            <button type="button" class="side-nav-item" role="tab" data-tab="context" aria-selected="false">
+                <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_context'}">{translate 'admin.ai_presence_tab_context'}</span>
+            </button>
+            <button type="button" class="side-nav-item" role="tab" data-tab="products" aria-selected="false">
+                <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_products'}">{translate 'admin.ai_presence_tab_products'}</span>
+            </button>
+            <button type="button" class="side-nav-item" role="tab" data-tab="claims" aria-selected="false">
+                <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_claims'}">{translate 'admin.ai_presence_tab_claims'}</span>
+            </button>
+            <button type="button" class="side-nav-item" role="tab" data-tab="media" aria-selected="false">
+                <span class="side-nav-label" data-text="{translate 'admin.ai_presence_tab_media'}">{translate 'admin.ai_presence_tab_media'}</span>
+            </button>
+        </div>
+    </nav>
     <div class="ap-guide-panels">
             <div class="tab-content" data-tab-content="essentials">
                 <section class="card u-p-6 u-stack-4">
@@ -508,15 +533,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
 
     </div><!-- .ap-guide-panels -->
-    <nav class="tabs ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-        <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
-        <button type="button" class="tab" data-tab="essentials">{translate 'admin.ag_view_essentials'}</button>
-        <button type="button" class="tab" data-tab="sources">{translate 'admin.ai_presence_tab_sources'}</button>
-        <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
-        <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
-        <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
-        <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
-    </nav>
     </div><!-- .ai-presence-tabs -->
 </div><!-- .ap-guide-layout -->
 </div><!-- .tab-panel guide -->
