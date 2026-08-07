@@ -15,7 +15,17 @@ require_once __DIR__ . '/project_git.php';
 const BIRKLY_PROJECT_GIT_SETTINGS_FILE = 'project_git.json';
 
 /** @var list<string> */
-const BIRKLY_PROJECT_GIT_PROVIDERS = ['github', 'gitlab', 'generic'];
+const BIRKLY_PROJECT_GIT_PROVIDERS = [
+    'github',
+    'gitlab',
+    'bitbucket',
+    'codeberg',
+    'gitea',
+    'forgejo',
+    'sourcehut',
+    'buzz',
+    'generic',
+];
 
 function birkly_project_git_storage(): Storage
 {
@@ -70,11 +80,96 @@ function birkly_project_git_public_config(): array
         'auth_username' => (string) ($record['auth_username'] ?? ''),
         'has_token' => !empty($record['token_encrypted']),
         'has_ssh_key' => !empty($record['ssh_key_encrypted']),
+        'has_nostr_key' => !empty($record['nostr_key_encrypted']),
         'token_hint' => (string) ($record['token_hint'] ?? ''),
+        'nostr_hint' => (string) ($record['nostr_hint'] ?? ''),
         'connected_at' => $record['connected_at'] ?? null,
         'connected_by' => $record['connected_by'] ?? null,
         'last_push' => $record['last_push'] ?? null,
         'last_pull' => $record['last_pull'] ?? null,
+    ];
+}
+
+/**
+ * Human labels + connect hints for first-class providers.
+ *
+ * @return array<string, array{label: string, group: string, placeholder: string, help: string, default_auth: string, default_username: string}>
+ */
+function birkly_project_git_provider_meta(): array
+{
+    return [
+        'github' => [
+            'label' => 'GitHub',
+            'group' => 'Popular',
+            'placeholder' => 'https://github.com/your-org/your-site.git',
+            'help' => 'Use a fine-grained or classic personal access token with repository contents read/write.',
+            'default_auth' => 'token',
+            'default_username' => 'git',
+        ],
+        'gitlab' => [
+            'label' => 'GitLab',
+            'group' => 'Popular',
+            'placeholder' => 'https://gitlab.com/your-group/your-site.git',
+            'help' => 'Works with gitlab.com or self-hosted GitLab. Use a project or personal access token (api or write_repository).',
+            'default_auth' => 'token',
+            'default_username' => 'oauth2',
+        ],
+        'bitbucket' => [
+            'label' => 'Bitbucket',
+            'group' => 'Popular',
+            'placeholder' => 'https://bitbucket.org/your-workspace/your-site.git',
+            'help' => 'Use an Atlassian app password or repository access token. Username is usually your Bitbucket username (or x-token-auth for access tokens).',
+            'default_auth' => 'token',
+            'default_username' => 'x-token-auth',
+        ],
+        'codeberg' => [
+            'label' => 'Codeberg',
+            'group' => 'Open source & European',
+            'placeholder' => 'https://codeberg.org/your-org/your-site.git',
+            'help' => 'European, free Forgejo hosting. Create an access token under Settings → Applications.',
+            'default_auth' => 'token',
+            'default_username' => 'git',
+        ],
+        'gitea' => [
+            'label' => 'Gitea',
+            'group' => 'Open source & European',
+            'placeholder' => 'https://gitea.example.com/your-org/your-site.git',
+            'help' => 'Self-hosted Gitea. Use an access token with write:repository scope.',
+            'default_auth' => 'token',
+            'default_username' => 'git',
+        ],
+        'forgejo' => [
+            'label' => 'Forgejo',
+            'group' => 'Open source & European',
+            'placeholder' => 'https://forgejo.example.com/your-org/your-site.git',
+            'help' => 'Self-hosted Forgejo (Codeberg’s soft-fork lineage). Token auth matches Gitea.',
+            'default_auth' => 'token',
+            'default_username' => 'git',
+        ],
+        'sourcehut' => [
+            'label' => 'SourceHut',
+            'group' => 'Open source & European',
+            'placeholder' => 'https://git.sr.ht/~you/your-site',
+            'help' => 'Open-source git hosting (sr.ht). Use an OAuth2 personal access token as the password.',
+            'default_auth' => 'token',
+            'default_username' => 'git',
+        ],
+        'buzz' => [
+            'label' => 'Buzz',
+            'group' => 'AI-native',
+            'placeholder' => 'https://your-relay.example/git/<owner-pubkey>/<repo>',
+            'help' => 'Block’s open-source Slack/GitHub alternative. Uses standard git Smart HTTP on the relay; auth is usually Nostr (NIP-98) via git-credential-nostr on this server.',
+            'default_auth' => 'nostr',
+            'default_username' => '',
+        ],
+        'generic' => [
+            'label' => 'Other git remote',
+            'group' => 'Other',
+            'placeholder' => 'https://git.example.com/your-org/your-site.git',
+            'help' => 'Any HTTPS or SSH remote that speaks standard git. Content, media, and plugins are never included.',
+            'default_auth' => 'token',
+            'default_username' => 'birkly',
+        ],
     ];
 }
 
@@ -87,7 +182,13 @@ function birkly_project_git_normalize_provider(string $provider): string
 function birkly_project_git_normalize_auth_mode(string $mode): string
 {
     $mode = strtolower(trim($mode));
-    return in_array($mode, ['none', 'token', 'ssh'], true) ? $mode : 'none';
+    return in_array($mode, ['none', 'token', 'ssh', 'nostr'], true) ? $mode : 'none';
+}
+
+function birkly_project_git_nostr_helper_available(): bool
+{
+    $path = ProjectGit::findExecutable('git-credential-nostr');
+    return is_string($path) && $path !== '';
 }
 
 /**
@@ -117,6 +218,14 @@ function birkly_project_git_credentials(): array
         ];
     }
 
+    if ($mode === 'nostr' && !empty($record['nostr_key_encrypted'])) {
+        $key = birkly_decrypt_secret((string) $record['nostr_key_encrypted']);
+        return [
+            'mode' => 'nostr',
+            'nostr_key' => is_string($key) ? $key : '',
+        ];
+    }
+
     return ['mode' => 'none'];
 }
 
@@ -126,14 +235,21 @@ function birkly_project_git_credentials(): array
  *
  * @return array<string, mixed> Patch to merge into the record
  */
-function birkly_project_git_credential_patch(string $authMode, string $token, string $sshKey, string $username): array
-{
+function birkly_project_git_credential_patch(
+    string $authMode,
+    string $token,
+    string $sshKey,
+    string $username,
+    string $nostrKey = ''
+): array {
     $mode = birkly_project_git_normalize_auth_mode($authMode);
     $patch = ['auth_mode' => $mode];
 
     if ($mode === 'token') {
         $patch['auth_username'] = $username !== '' ? $username : 'birkly';
         $patch['ssh_key_encrypted'] = null;
+        $patch['nostr_key_encrypted'] = null;
+        $patch['nostr_hint'] = '';
         if ($token !== '') {
             $patch['token_encrypted'] = birkly_encrypt_secret($token);
             $patch['token_hint'] = birkly_project_git_secret_hint($token);
@@ -144,8 +260,22 @@ function birkly_project_git_credential_patch(string $authMode, string $token, st
     if ($mode === 'ssh') {
         $patch['token_encrypted'] = null;
         $patch['token_hint'] = '';
+        $patch['nostr_key_encrypted'] = null;
+        $patch['nostr_hint'] = '';
         if ($sshKey !== '') {
             $patch['ssh_key_encrypted'] = birkly_encrypt_secret($sshKey);
+        }
+        return $patch;
+    }
+
+    if ($mode === 'nostr') {
+        $patch['token_encrypted'] = null;
+        $patch['token_hint'] = '';
+        $patch['ssh_key_encrypted'] = null;
+        $patch['auth_username'] = '';
+        if ($nostrKey !== '') {
+            $patch['nostr_key_encrypted'] = birkly_encrypt_secret($nostrKey);
+            $patch['nostr_hint'] = birkly_project_git_secret_hint($nostrKey);
         }
         return $patch;
     }
@@ -153,6 +283,8 @@ function birkly_project_git_credential_patch(string $authMode, string $token, st
     $patch['token_encrypted'] = null;
     $patch['token_hint'] = '';
     $patch['ssh_key_encrypted'] = null;
+    $patch['nostr_key_encrypted'] = null;
+    $patch['nostr_hint'] = '';
     return $patch;
 }
 

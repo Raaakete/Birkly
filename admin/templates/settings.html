@@ -270,7 +270,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <div class="card-body u-stack-4">
             <div id="hosting-wizard-mount"></div>
-            <p data-hosting-project-link class="form-help" hidden>Manage files in <a href="<?= htmlspecialchars(admin_url('settings') . '?tab=project') ?>">Settings → Project</a>.</p>
+            <p data-hosting-project-link class="form-help" hidden>Manage files in <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">Settings → Project</a>.</p>
             </div>
           </section>
           </div>
@@ -306,9 +306,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <small class="form-help">Opens <code>project/index.html</code> in a new tab when the file exists.</small>
             </div>
             <div class="u-cluster">
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=site-delivery#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=site-delivery#hosting') ?>" class="btn btn-secondary btn-sm">Hosting URLs</a>
-              <a href="<?= htmlspecialchars(birkly_admin_url('settings') . '?tab=ai') ?>" class="btn btn-secondary btn-sm">AI integrations</a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting') ?>" class="btn btn-secondary btn-sm">Hosting URLs</a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm">AI integrations</a>
             </div>
             <p class="form-help">AI connections need the <code>manage_project_site</code> permission (Admin role by default) to read or write project files.</p>
             </div>
@@ -773,7 +773,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               $registeredDomains = json_decode(file_get_contents($domainsFile), true) ?: [];
           }
           $domainCount = is_array($registeredDomains) ? count($registeredDomains) : 0;
-          $domainsTabUrl = admin_url('settings') . '?tab=site-delivery';
+          $domainsTabUrl = admin_url('settings', ['tab' => 'site-delivery']);
         ?>
         <section class="card">
           <div class="card-header">
