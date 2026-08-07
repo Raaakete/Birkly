@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "cms_version": "1.0.0",
   "phase": "P36",
-  "description": "Runtime-only CMS release zip. Official plugins, starters, and dev tooling are not shipped.",
+  "description": "Runtime-only CMS release zip. Includes bundled starters/ for offline/local onboarding fallback. Official plugins and most dev tooling are not shipped.",
   "release_zip_name_pattern": "Birkly-{version}.zip",
   "runtime_skeleton_files": [
     "content/.gitkeep",
