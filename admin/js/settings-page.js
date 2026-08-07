@@ -448,7 +448,11 @@ window.migrateStorage = migrateStorage;
         api: 'integrations',
         'activity-log': 'system',
         analytics: 'analytics',
-        tracking: 'analytics'
+        tracking: 'analytics',
+        'analytics-presets': 'analytics',
+        'analytics-report': 'analytics',
+        developer: 'system',
+        'developer-mode': 'system'
     };
 
     var INDEPENDENT_SAVE_TABS = [

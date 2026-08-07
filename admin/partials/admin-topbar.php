@@ -36,6 +36,7 @@ if ($showVisitProjectButton) {
         </a>
         <?php endif; ?>
         <div class="topbar-control-group" role="group" aria-label="Workspace controls">
+            <span id="developer-mode-badge" class="badge badge-neutral badge-sm developer-mode-badge"<?= empty($__birklyDeveloperModeOn) ? ' hidden' : '' ?> title="Developer mode is on">Developer mode</span>
             <?php include __DIR__ . '/theme-switcher.php'; ?>
             <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
                 <?= birkly_icon('magnifying-glass') ?>
