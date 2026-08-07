@@ -1,0 +1,61 @@
+<?php
+/**
+ * Symmetric encryption for instance secrets stored in settings/ (P59-M3).
+ *
+ * Shared by AI connection keys and project git credentials so there is one
+ * key and one on-disk format. The key lives in settings/security.json and is
+ * generated on first use.
+ */
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/birkly_paths.php';
+require_once __DIR__ . '/storage/StorageFactory.php';
+
+function birkly_secret_storage(): Storage
+{
+    return new Storage(birkly_project_root() . '/settings');
+}
+
+function birkly_secret_encryption_key(): string
+{
+    $storage = birkly_secret_storage();
+    $security = $storage->read('security.json');
+    if (!is_array($security)) {
+        $security = [];
+    }
+
+    if (empty($security['encryption_key']) || !is_string($security['encryption_key'])) {
+        $security['encryption_key'] = bin2hex(random_bytes(32));
+        $storage->write('security.json', $security);
+    }
+
+    return (string) $security['encryption_key'];
+}
+
+function birkly_encrypt_secret(string $plaintext): string
+{
+    $key = birkly_secret_encryption_key();
+    $iv = random_bytes(16);
+    $encrypted = openssl_encrypt($plaintext, 'AES-256-CBC', hex2bin($key), 0, $iv);
+    if ($encrypted === false) {
+        throw new RuntimeException('Could not encrypt secret');
+    }
+    return base64_encode($iv . $encrypted);
+}
+
+/**
+ * @return string|false Plaintext, or false when the payload cannot be decrypted.
+ */
+function birkly_decrypt_secret(string $encoded)
+{
+    if ($encoded === '') {
+        return false;
+    }
+    $key = birkly_secret_encryption_key();
+    $data = base64_decode($encoded, true);
+    if ($data === false || strlen($data) <= 16) {
+        return false;
+    }
+    return openssl_decrypt(substr($data, 16), 'AES-256-CBC', hex2bin($key), 0, substr($data, 0, 16));
+}

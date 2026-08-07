@@ -11,8 +11,6 @@
         publicSiteUrl: '',
         hasIndex: false,
         dirty: false,
-        advancedMode: false,
-        simpleInitialized: false,
         renderSettingsLoaded: false
     };
 
@@ -128,34 +126,6 @@
         container.innerHTML = '<div class="error-state"><p>' + escapeHtml(message) + '</p></div>';
     }
 
-    function renderSimpleFileList(entries) {
-        var container = document.getElementById('project-simple-file-list');
-        if (!container) return;
-
-        var files = (entries || []).filter(function (e) { return e.type === 'file'; });
-        if (!files.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__message">No files yet. Upload to get started.</p></div>';
-            return;
-        }
-
-        container.innerHTML = '<ul class="project-file-list">' + files.map(function (entry) {
-            return '<li><span class="project-simple-file-name">' + escapeHtml(entry.name) + '</span>' +
-                ' <span class="project-file-size">' + formatBytes(entry.size) + '</span></li>';
-        }).join('') + '</ul>';
-    }
-
-    function refreshSimpleFiles() {
-        var container = document.getElementById('project-simple-file-list');
-        if (!container) return Promise.resolve();
-
-        container.innerHTML = '<div class="loading-state"></div>';
-        return loadFileTree('').then(function (payload) {
-            renderSimpleFileList((payload.data && payload.data.entries) || []);
-        }).catch(function (error) {
-            container.innerHTML = '<div class="error-state"><p>' + escapeHtml(error.message) + '</p></div>';
-        });
-    }
-
     function loadPublicSiteUrl() {
         return fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
@@ -181,41 +151,6 @@
             .catch(function () { /* optional */ });
     }
 
-    function setAdvancedMode(enabled) {
-        state.advancedMode = !!enabled;
-        var panel = document.getElementById('project-advanced-panel');
-        if (panel) panel.hidden = !state.advancedMode;
-        if (state.advancedMode) {
-            loadOverview();
-            refreshFiles();
-            loadActivity();
-        }
-    }
-
-    function bindSimpleEvents() {
-        if (state.simpleInitialized) return;
-        state.simpleInitialized = true;
-
-        var toggle = document.getElementById('project-advanced-editor-toggle');
-        if (toggle) {
-            toggle.addEventListener('change', function () {
-                setAdvancedMode(toggle.checked);
-            });
-        }
-
-        var uploadBtn = document.getElementById('project-simple-upload-btn');
-        var uploadInput = document.getElementById('project-simple-upload-input');
-        if (uploadBtn && uploadInput) {
-            uploadBtn.addEventListener('click', async function () {
-                uploadInput.click();
-            });
-            uploadInput.addEventListener('change', function () {
-                uploadFiles(uploadInput.files);
-                uploadInput.value = '';
-            });
-        }
-    }
-
     function clearFilePreview() {
         state.selectedFile = null;
         state.dirty = false;
@@ -233,8 +168,8 @@
         if (editor) { editor.hidden = true; editor.value = ''; }
         if (preview) { preview.hidden = true; preview.textContent = ''; }
         if (image) { image.hidden = true; image.removeAttribute('src'); }
-        if (saveBtn) saveBtn.style.display = 'none';
-        if (deleteBtn) deleteBtn.style.display = 'none';
+        if (saveBtn) saveBtn.hidden = true;
+        if (deleteBtn) deleteBtn.hidden = true;
     }
 
     function loadOverview() {
@@ -259,13 +194,13 @@
             : '—';
 
         container.innerHTML =
-            '<div class="project-overview-item"><strong>Path</strong><span><code>' + escapeHtml(data.site_dir || 'project') + '/</code></span></div>' +
-            '<div class="project-overview-item"><strong>Public URL</strong><span>' +
+            '<div class="kv"><div class="kv-key">Path</div><div class="kv-value"><code>' + escapeHtml(data.site_dir || 'project') + '/</code></div></div>' +
+            '<div class="kv"><div class="kv-key">Public URL</div><div class="kv-value">' +
                 (data.public_url ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
-            '</span></div>' +
-            '<div class="project-overview-item"><strong>Starter</strong><span>' + starter + '</span></div>' +
-            '<div class="project-overview-item"><strong>Last change</strong><span>' + lastChange + '</span></div>' +
-            '<div class="project-overview-item"><strong>Index</strong><span>' + (data.has_index ? 'index.html present' : 'No index.html') + '</span></div>';
+            '</div></div>' +
+            '<div class="kv"><div class="kv-key">Starter</div><div class="kv-value">' + starter + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Last change</div><div class="kv-value">' + lastChange + '</div></div>' +
+            '<div class="kv"><div class="kv-key">Index</div><div class="kv-value">' + (data.has_index ? 'index.html present' : 'No index.html') + '</div></div>';
 
         var toggle = document.getElementById('project-show-visit-button');
         if (toggle) {
@@ -439,7 +374,9 @@
         }
 
         container.innerHTML = '<ul class="project-file-list">' + entries.map(function (entry) {
-            var icon = entry.type === 'dir' ? '📁' : '📄';
+            var icon = (window.Birkly && typeof Birkly.icon === 'function')
+                ? Birkly.icon(entry.type === 'dir' ? 'folder' : 'file-text', { size: 16 })
+                : '';
             var size = entry.type === 'file' && entry.size != null ? ' <span class="project-file-size">' + formatBytes(entry.size) + '</span>' : '';
             return '<li><button type="button" class="project-file-entry" data-type="' + escapeHtml(entry.type) + '" data-path="' + escapeHtml(entry.path) + '">' +
                 icon + ' ' + escapeHtml(entry.name) + size + '</button></li>';
@@ -469,18 +406,18 @@
         state.dirty = false;
         if (title) title.textContent = path;
         if (placeholder) placeholder.hidden = true;
-        if (deleteBtn) deleteBtn.style.display = '';
+        if (deleteBtn) deleteBtn.hidden = false;
 
         if (data.editable && editor) {
             if (preview) preview.hidden = true;
             if (image) image.hidden = true;
             editor.hidden = false;
             editor.value = data.content || '';
-            if (saveBtn) saveBtn.style.display = '';
+            if (saveBtn) saveBtn.hidden = false;
             return;
         }
 
-        if (saveBtn) saveBtn.style.display = 'none';
+        if (saveBtn) saveBtn.hidden = true;
         if (editor) editor.hidden = true;
 
         if (data.image && image) {
@@ -556,7 +493,6 @@
 
         Promise.all(uploads).then(function () {
             refreshFiles();
-            refreshSimpleFiles();
             loadActivity();
         }).catch(function (error) {
             BirklyFeedback.toast(error.message, 'error')
@@ -834,22 +770,20 @@
         }
 
         bindEvents();
-        bindSimpleEvents();
         loadPublicSiteUrl();
-        refreshSimpleFiles();
-        // Server rendering fields live outside the advanced-only panel, so
-        // they (and renderSettingsLoaded, which gates autosave) need the
-        // overview fetch on every visit to this tab — not just when the
-        // advanced file editor is toggled on.
         loadOverview();
+        refreshFiles();
+        loadActivity();
 
-        var toggle = document.getElementById('project-advanced-editor-toggle');
-        if (toggle && toggle.checked) {
-            setAdvancedMode(true);
+        if (typeof window.initProjectGit === 'function') {
+            window.initProjectGit();
         }
     }
 
     window.initProjectSettings = initProjectSettings;
+    // Git actions append to the same feed, so they can refresh it after a run.
+    window.reloadProjectActivity = loadActivity;
+    window.reloadProjectFiles = refreshFiles;
 
     if (document.getElementById('project') && document.getElementById('project').classList.contains('active')) {
         initProjectSettings();

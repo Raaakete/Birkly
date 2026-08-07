@@ -115,17 +115,11 @@
 }
 
 .project-file-tree-wrap,
-.project-file-preview-wrap,
-.project-simple-file-list {
+.project-file-preview-wrap {
   min-width: 0;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--surface-sunken);
-}
-
-.project-simple-file-list {
-  max-height: 20rem;
-  overflow: auto;
 }
 
 .project-file-breadcrumb {
@@ -169,9 +163,10 @@
 
 .project-file-entry:hover { background: var(--surface-hover); }
 
-.project-file-size,
-.project-simple-file-name { font-size: var(--text-sm); }
-.project-file-size { color: var(--text-tertiary); }
+.project-file-size {
+  font-size: var(--text-sm);
+  color: var(--text-tertiary);
+}
 
 .project-file-editor,
 .project-file-preview {
@@ -215,22 +210,34 @@
 .project-activity-item:last-child { border-block-end: none; }
 .project-activity-message { font-size: var(--text-sm); }
 
-.project-activity-meta,
-.project-overview-item {
+.project-activity-meta {
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
 
-.project-overview-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+/* Git sync — change lists rendered by project-git.js */
+.project-git-file-list {
+  max-height: 18rem;
+  overflow: auto;
   min-width: 0;
 }
 
-.project-overview-item strong {
-  font-weight: var(--weight-medium);
-  color: var(--text-tertiary);
+.project-git-file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.project-git-file code { overflow-wrap: anywhere; }
+
+.project-git-panel {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
 }
 
 /* ============================================

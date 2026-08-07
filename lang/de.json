@@ -660,6 +660,8 @@
         "project_info": "Project Info",
         "project_information": "Projektinformationen",
         "project_information_help": "Project Information Help",
+        "site_identity": "Website-Identität",
+        "site_identity_help": "Name, Beschreibung, Logo, Zeitzone und Sprache dieser Website. Die Website-Dateien liegen unter Einstellungen → Projekt.",
         "project_logo": "Projekt-Logo",
         "project_logo_help": "Project Logo Help",
         "project_name": "Projektname",

@@ -16,6 +16,10 @@ if ($base !== '' && str_starts_with($uri, $base)) {
     }
 }
 
+if (birkly_deny_git_metadata_request($uri)) {
+    exit;
+}
+
 // Studio published sites (P22) — nginx/other hosts that route unknown paths to index.php
 if (str_starts_with($uri, '/site') && ($uri === '/site' || str_starts_with($uri, '/site/'))) {
     $entry = __DIR__ . '/api/studio_public.php';
