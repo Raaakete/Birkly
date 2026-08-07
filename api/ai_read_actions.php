@@ -323,13 +323,6 @@ function executeReadAction($actionData, $aiUser) {
         $pluginActivityPhp = $birklyRoot . '/core/plugin_activity.php';
         if (is_file($pluginActivityPhp)) {
             require_once $pluginActivityPhp;
-            if (!empty($actionPayload['clear_nav']) && function_exists('birkly_plugin_activity_clear_nav')) {
-                $clearPlugin = (string) ($actionPayload['clear_nav_plugin'] ?? $pluginFilter ?? 'commerce');
-                birkly_plugin_activity_clear_nav($clearPlugin);
-            }
-            if (!empty($actionPayload['mark_read']) && function_exists('birkly_plugin_activity_mark_read') && function_exists('birkly_plugin_activity_notify_ids')) {
-                birkly_plugin_activity_mark_read(birkly_plugin_activity_notify_ids(false));
-            }
             if (function_exists('birkly_plugin_activity_list')) {
                 $pluginActivity = birkly_plugin_activity_list($limit, $pluginFilter);
             }
