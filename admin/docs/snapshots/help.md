@@ -56,7 +56,7 @@ After onboarding, the Dashboard shows a collapsible **setup checklist** with **e
 | Create your first collection | Always (until done) | At least one collection exists. |
 | Add your first entry | Always (until done) | At least one entry exists in a collection. |
 | Install a marketplace plugin | No marketplace plugin installed yet | At least one plugin installed from Marketplace. |
-| Connect AI | You **skipped** the wizard AI step and have no AI connection yet | An AI provider is connected under Settings → AI & Integrations. |
+| Connect AI | You **skipped** the wizard AI step and have no AI connection yet | An AI provider is connected under Agent Guide → Connections. |
 
 The checklist does **not** include site settings, media upload, or template setup — those are optional extras. If you completed the AI step in the wizard, **Connect AI** never appears on the checklist. You can dismiss individual items (×) or hide the whole checklist.
 
