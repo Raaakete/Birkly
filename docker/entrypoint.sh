@@ -71,7 +71,10 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
     mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
   done
   mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
-  if [ -d /app/bundled-plugins/automation ]; then
+  # Official plugins are Hub-installed. Do not auto-seed Automation into plugins/
+  # (that made Hub show "Installed" on fresh sites). Opt-in for legacy images:
+  #   BIRKLY_SEED_AUTOMATION=1
+  if [ "${BIRKLY_SEED_AUTOMATION:-0}" = "1" ] && [ -d /app/bundled-plugins/automation ]; then
     auto_dir="$DATA_ROOT/plugins/automation"
     plugin_json_version() {
       # Prefer php (always in image); fall back to sed.
@@ -88,17 +91,18 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
     if [ -f "$auto_dir/plugin.php" ] && [ -d "$auto_dir/.git" ]; then
       echo "[entrypoint] automation is a git dev clone — skip bundled copy (installed=${installed_ver:-unknown})"
     elif [ ! -f "$auto_dir/plugin.php" ]; then
-      echo "[entrypoint] Seeding bundled automation plugin to data volume..."
+      echo "[entrypoint] Seeding bundled automation plugin to data volume (BIRKLY_SEED_AUTOMATION=1)..."
       mkdir -p "$auto_dir" 2>/dev/null || true
       cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
     elif [ -n "$bundled_ver" ] && [ "$bundled_ver" != "$installed_ver" ]; then
-      # Seeded/marketplace copies never got updates before — refresh when image bundle differs.
       echo "[entrypoint] Refreshing automation plugin from bundle (${installed_ver:-none} -> ${bundled_ver})..."
       mkdir -p "$auto_dir" 2>/dev/null || true
       cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
     else
       echo "[entrypoint] automation plugin already present (version ${installed_ver:-unknown})"
     fi
+  elif [ -d /app/bundled-plugins/automation ]; then
+    echo "[entrypoint] Skipping automation auto-seed (install from Hub; set BIRKLY_SEED_AUTOMATION=1 to restore)"
   fi
   # Git-cloned plugins under /app/data/plugins need CMS paths via ../.. from realpath.
   ln -sfn /app/core "$DATA_ROOT/core" 2>/dev/null || true

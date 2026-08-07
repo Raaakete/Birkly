@@ -388,6 +388,10 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         ];
     }
 
+    if (!empty($extracted['project_site'])) {
+        birkly_demo_enable_visit_project_after_install($projectRoot);
+    }
+
     return [
         'success' => true,
         'template' => $templateId,
@@ -397,5 +401,41 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         'removed' => $removed,
         'source' => (string) ($download['source'] ?? 'ops'),
         'message' => 'Starter template installed',
+        'visit_url' => function_exists('birkly_public_site_url')
+            ? birkly_public_site_url('/index.html')
+            : '',
     ];
+}
+
+/**
+ * After a starter with a project site is installed: show Visit project and
+ * align local hosting URLs with the current request (including :8080).
+ */
+function birkly_demo_enable_visit_project_after_install(string $projectRoot): void
+{
+    require_once __DIR__ . '/project_settings.php';
+    require_once __DIR__ . '/hosting_urls.php';
+    require_once __DIR__ . '/project_site.php';
+    require_once __DIR__ . '/birkly_paths.php';
+    require_once __DIR__ . '/site_domain.php';
+
+    birkly_save_project_settings(['show_visit_button' => true]);
+
+    $origin = birkly_hosting_request_origin_url();
+    if ($origin === '') {
+        return;
+    }
+
+    birkly_hosting_reset_cache();
+    $config = birkly_hosting_load();
+    $config['public_site_mode'] = 'project';
+    $config['public_site_url'] = $origin;
+    $config['same_host_landing'] = 'admin';
+
+    $cmsHost = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    if ($config['cms_base_url'] === '' || birkly_is_local_dev_host($cmsHost)) {
+        $config['cms_base_url'] = $origin;
+    }
+
+    birkly_hosting_persist($config, false);
 }
