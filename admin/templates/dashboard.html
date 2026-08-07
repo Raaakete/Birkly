@@ -35,7 +35,7 @@ $isLocalDev = !empty($is_local_dev);
                     <div class="card-body u-stack-2">
                         <h3><?= __('admin.connect_ai_assistant') ?></h3>
                         <p class="u-text-sm u-fg-secondary" id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
-                        <a href="<?= htmlspecialchars(admin_url('agent-guide', ['zone' => 'connections'])) ?>" class="btn btn-secondary btn-sm u-self-start u-mt-auto"><?= __('admin.ai_settings') ?></a>
+                        <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm u-self-start u-mt-auto"><?= __('admin.ai_settings') ?></a>
                     </div>
                 </div>
                 <div class="card card--sunken" id="onboarding-complete-demo-card" hidden>
