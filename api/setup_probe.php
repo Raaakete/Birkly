@@ -1,7 +1,9 @@
 <?php
 /**
  * Read-only setup environment probe (no auth).
- * Used by START_HERE.html to verify PHP and writable directories.
+ * Used by 0_START-HERE.html to verify PHP and writable directories.
+ *
+ * ?light=1 — skip mkdir/writable checks (fast poll while waiting for the server).
  */
 
 header('Content-Type: application/json');
@@ -10,7 +12,8 @@ header('Cache-Control: no-store');
 require_once __DIR__ . '/../core/birkly_paths.php';
 
 $root = birkly_project_root();
-$writable = birkly_ensure_runtime_dirs($root);
+$light = isset($_GET['light']) && (string) $_GET['light'] !== '0' && (string) $_GET['light'] !== '';
+$writable = $light ? [] : birkly_ensure_runtime_dirs($root);
 
 $extensions = ['json', 'mbstring', 'curl', 'openssl'];
 $loaded = [];
@@ -28,6 +31,7 @@ echo json_encode([
         'sapi' => PHP_SAPI,
         'extensions' => $loaded,
         'writable_dirs' => $writable,
+        'light' => $light,
         'has_lang_en' => is_file($langFile),
         'has_server_router' => is_file($root . '/server-router.php'),
         'has_start_server' => is_file($root . '/start-server.sh'),
