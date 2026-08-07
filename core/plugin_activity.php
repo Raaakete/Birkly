@@ -15,11 +15,24 @@ require_once __DIR__ . '/birkly_data_paths.php';
 function birkly_plugin_activity_dir(): string
 {
     $root = birkly_data_root();
-    if ($root !== null) {
-        return rtrim($root, '/\\') . '/activity';
+    $primary = $root !== null
+        ? (rtrim($root, '/\\') . '/activity')
+        : (birkly_project_root() . '/data/activity');
+
+    // Prefer the canonical dir when it exists or is creatable; otherwise use logs
+    // fallback written by emit when the data-volume root is not writable.
+    if (is_dir($primary)) {
+        return $primary;
     }
 
-    return birkly_project_root() . '/data/activity';
+    $fallback = $root !== null
+        ? (rtrim($root, '/\\') . '/logs/plugin_activity')
+        : (birkly_project_root() . '/logs/plugin_activity');
+    if (is_dir($fallback)) {
+        return $fallback;
+    }
+
+    return $primary;
 }
 
 /**
@@ -166,8 +179,16 @@ function birkly_plugin_activity_emit(array $payload): ?array
     }
 
     $dir = birkly_plugin_activity_dir();
-    if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
-        return null;
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true) && !is_dir($dir)) {
+        // Data-volume roots are often root-owned; fall back to logs (entrypoint chmod 777).
+        $dataRoot = birkly_data_root();
+        $fallback = $dataRoot !== null
+            ? (rtrim($dataRoot, '/\\') . '/logs/plugin_activity')
+            : (birkly_project_root() . '/logs/plugin_activity');
+        if (!is_dir($fallback) && !@mkdir($fallback, 0775, true) && !is_dir($fallback)) {
+            return null;
+        }
+        $dir = $fallback;
     }
 
     $file = $dir . '/' . date('Y-m-d') . '.jsonl';
