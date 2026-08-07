@@ -504,6 +504,10 @@ function birkly_project_ssr_cache_key(string $relativePath, array $query, string
         'lang:' . $language,
         'rev:' . $revision,
         'q:' . json_encode($relevant),
+        // WebMCP/guide injection state (P60-M7): toggling WebMCP or
+        // (un)publishing the guide changes what gets injected, so it must bust
+        // the SSR cache. Folded in here so every caller stays consistent.
+        'inj:' . birkly_project_ssr_inject_signature(),
     ];
     return hash('sha256', implode('|', $parts));
 }
@@ -729,9 +733,6 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
         $revisionRequests[] = $detail;
     }
     $revision = birkly_page_bundle_compute_revision($storage, $revisionRequests, $language, [$filePath]);
-    // Fold WebMCP/guide injection state into the revision so toggling WebMCP or
-    // (un)publishing the guide busts the SSR cache (P60-M7).
-    $revision .= '|' . birkly_project_ssr_inject_signature();
 
     $cacheKey = birkly_project_ssr_cache_key($relative, $query, $language, $revision);
 
