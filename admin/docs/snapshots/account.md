@@ -57,7 +57,7 @@ Some installations let you connect a **Birkly cloud account** alongside your loc
 
 **Avatar:** Upload to media or user assets; store URL/path in user record. Or external URL if allowed.
 
-**Cloud account link (P13):** State in `settings/cloud_account.json` (tokens stored server-side, chmod 0600). API: `api/cloud_account.php` — `start_link`, OAuth callback, `status`, `unlink`. `core/cloud_account.php` handles token refresh; status API omits secrets. Mock mode: `BIRKLY_CLOUD_ACCOUNT_MOCK=1` for CI. Marketplace tab reads `cloud_account_linked` from `api/marketplace.php`. Local `api/auth.php` login is unchanged when cloud is linked or unlinked.
+**Cloud account link (P13):** State in `settings/cloud_account.json` (tokens stored server-side, chmod 0600). API: `api/cloud_account.php` — `start_link`, OAuth callback, `status`, `unlink`. `core/cloud_account.php` handles token refresh; status API omits secrets. Mock mode: `BIRKLY_CLOUD_ACCOUNT_MOCK=1` for CI. Hub tab reads `cloud_account_linked` from `api/marketplace.php`. Local `api/auth.php` login is unchanged when cloud is linked or unlinked.
 
 ## Related
 

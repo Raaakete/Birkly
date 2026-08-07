@@ -111,7 +111,7 @@ Preflight runs on every release upload. Verified-tier offers enqueue manual revi
 
 **Incident response**
 
-Report suspicious offers via marketplace support. Platform operators can delist offers, revoke licenses, and add slug patterns to blocklists. Site owners should disable affected plugins immediately and review audit logs — see [Audit log and activity](../06-extensibility/audit-log-and-activity.md).
+Report suspicious offers via marketplace support. Platform operators can delist offers, hold or revoke entitlements, and add slug patterns to blocklists. Site owners should disable affected plugins immediately and review audit logs — see [Audit log and activity](../06-extensibility/audit-log-and-activity.md).
 
 ## Related
 
