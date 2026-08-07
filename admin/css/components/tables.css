@@ -309,6 +309,17 @@
   box-shadow: -6px 0 12px -6px rgba(32, 34, 29, 0.12);
 }
 
+.entries-smart-table.entries-l2-actions .head-actions,
+.entries-smart-table.entries-l2-actions .cell-actions {
+  width: 15rem;
+  min-width: 15rem;
+  max-width: 15rem;
+}
+
+.entries-smart-table.entries-l2-actions .cell-actions-inner {
+  justify-content: flex-start;
+}
+
 .entries-smart-table thead th {
   height: 2.25rem;
   padding: 0 var(--space-3);

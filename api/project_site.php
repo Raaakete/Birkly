@@ -366,6 +366,47 @@ if ($action === 'activity') {
     exit;
 }
 
+if ($action === 'download') {
+    requireAuth('manage_settings');
+
+    if (!class_exists('ZipArchive')) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'ZipArchive is not available on this server']);
+        exit;
+    }
+
+    birkly_ensure_public_site_path();
+    $fs = new ProjectSiteFileSystem();
+    $base = $fs->basePath();
+    $files = $fs->listAllFilePaths();
+
+    $zipName = 'project-' . date('Ymd-His') . '.zip';
+    $zipPath = sys_get_temp_dir() . '/' . $zipName;
+    $zip = new ZipArchive();
+    if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Could not create archive']);
+        exit;
+    }
+
+    foreach ($files as $relativePath) {
+        $full = $base . '/' . $relativePath;
+        if (is_file($full)) {
+            $zip->addFile($full, 'project/' . $relativePath);
+        }
+    }
+    $zip->close();
+
+    log_security_event('project_downloaded', ['source' => 'admin', 'file_count' => count($files)]);
+
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . $zipName . '"');
+    header('Content-Length: ' . (string) filesize($zipPath));
+    readfile($zipPath);
+    @unlink($zipPath);
+    exit;
+}
+
 requireAuth('manage_settings');
 
 $csrf = (string) ($input['_csrf'] ?? $_POST['_csrf'] ?? '');
@@ -585,6 +626,33 @@ if ($action === 'delete') {
         'status' => 'ok',
         'message' => 'File deleted',
         'data' => ['path' => $path],
+    ]);
+    exit;
+}
+
+if ($action === 'delete_project') {
+    $confirmPhrase = trim((string) ($input['confirm_phrase'] ?? ''));
+    if ($confirmPhrase !== 'DELETE') {
+        echo json_encode(['status' => 'error', 'message' => 'Confirmation phrase required (type DELETE)']);
+        exit;
+    }
+
+    birkly_ensure_public_site_path();
+    $fs = new ProjectSiteFileSystem();
+    if (!$fs->clearAllContents()) {
+        echo json_encode(['status' => 'error', 'message' => 'Failed to delete project contents']);
+        exit;
+    }
+
+    birkly_project_ssr_invalidate_all();
+
+    log_security_event('project_deleted', [
+        'source' => 'admin',
+    ]);
+
+    echo json_encode([
+        'status' => 'ok',
+        'message' => 'Project contents deleted',
     ]);
     exit;
 }

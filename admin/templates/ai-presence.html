@@ -12,7 +12,8 @@ $stickySaveBarSaveLabel = __('admin.publish_ai_presence');
 $stickySaveBarMessageId = 'ai-presence-message';
 $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>';
+$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="btn btn-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
 $stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
@@ -35,22 +36,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 <div class="ap-page">
     <div class="ap-main">
-        <section class="card u-mb-6" id="ap-top-publish-toggle">
-            <div class="card-body">
-                <div class="data-list data-list--flush">
-                    <div class="data-list-item">
-                        <div class="data-list-main">
-                            <span class="data-list-title">{translate 'admin.ai_presence_enable_publishing'}</span>
-                            <small class="data-list-meta">{translate 'admin.ai_presence_pub_enabled_help'}</small>
-                        </div>
-                        <label class="switch" for="ap-pub-enabled-top">
-                            <input type="checkbox" id="ap-pub-enabled-top" data-field="publication_settings.enabled">
-                            <span class="switch__slider"></span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </section>
         <div class="segmented u-mb-6" role="group" aria-label="{translate 'admin.ag_view_mode'}">
             <button type="button" class="segmented-item ap-view-toggle-btn active" data-view-mode="essentials">{translate 'admin.ag_view_essentials'}</button>
             <button type="button" class="segmented-item ap-view-toggle-btn" data-view-mode="advanced">{translate 'admin.ag_view_advanced'}</button>
@@ -67,15 +52,15 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-official-name">{translate 'admin.ai_presence_official_name'}</label>
-                            <input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name">
+                            <div class="ap-field-row"><input type="text" id="ap-essentials-official-name" class="input" data-field="identity.official_name"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.official_name" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-short-desc">{translate 'admin.ai_presence_short_description'}</label>
-                            <textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea>
+                            <div class="ap-field-row"><textarea id="ap-essentials-short-desc" class="input" rows="2" data-field="identity.short_description"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.short_description" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-website">{translate 'admin.ai_presence_website'}</label>
-                            <input type="url" id="ap-essentials-website" class="input" data-field="identity.website">
+                            <div class="ap-field-row"><input type="url" id="ap-essentials-website" class="input" data-field="identity.website"><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="identity.website" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                     </div>
                 </section>
@@ -99,11 +84,11 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <div class="ap-context-grid">
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-best-known">{translate 'admin.ai_presence_best_known_for'}</label>
-                            <textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"></textarea>
+                            <div class="ap-field-row"><textarea id="ap-essentials-best-known" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.best_known_for" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.best_known_for" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                         <div class="form-group ap-span-full">
                             <label for="ap-essentials-differentiators">{translate 'admin.ai_presence_differentiators'}</label>
-                            <textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"></textarea>
+                            <div class="ap-field-row"><textarea id="ap-essentials-differentiators" class="input" rows="2" placeholder="{translate 'admin.ag_wizard_one_per_line'}" data-field="positioning.differentiators" data-array="lines"></textarea><button type="button" class="btn btn-sm btn-secondary ap-field-ai" data-field="positioning.differentiators" title="{translate 'admin.ai_presence_field_ai_hint'}">{translate 'admin.ai_presence_field_generate'}</button></div>
                         </div>
                     </div>
                 </section>
