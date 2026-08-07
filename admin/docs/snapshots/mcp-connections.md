@@ -2,6 +2,8 @@
 
 Let **Claude**, **ChatGPT**, or **Cursor** work with your Birkly content. Birkly provides two kinds of **AI agent**:
 
+> The same controls on this page are also mounted at **Agent Guide → Connections** (`?page=agent-guide&zone=connections`) — Birkly is currently showing both while it compares which location owners prefer. It's the same backend and settings either way; nothing here is forked or out of sync. See [Agent Guide](../02-content/agent-guide.md#the-agent-guide-hub-four-tabs). This is different from **website tools (WebMCP)** — Agent Guide → Tools — which controls what an AI helper can do on your *public site*, not what connects to your CMS. See [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
+
 - **Personal connector** — one per site; every team member uses the same URL but signs in with their own account and gets **their** permissions.
 - **Service agent** — optional shared bots with a **fixed role** (e.g. always editor); admins control who can see and connect.
 
@@ -158,4 +160,6 @@ For local Claude Desktop development only, `mcp-bridge.js` is available under th
 - [Built-in assistant](ai-connections.md)
 - [AI approvals](ai-approvals.md)
 - [Roles and permissions](roles-and-permissions.md)
+- [Agent Guide](../02-content/agent-guide.md) — the hub that also mounts these Connections controls
+- [Website tools (WebMCP)](../04-integration/webmcp-tools.md) — a different layer: actions on your public site, not CMS connections
 - [Settings](settings.md)
