@@ -165,13 +165,11 @@ if (empty($userAvatar)) {
                             $pluginAttention = !empty($plugin['attention']);
                             $pluginTitle = $plugin['name'] . ($pluginAttention ? ' (new activity)' : '');
                         ?>
-                        <li class="nav-item<?= $pluginAttention ? ' has-attention' : '' ?>">
+                        <li class="nav-item<?= $pluginAttention ? ' has-attention' : '' ?>" data-plugin-id="<?= htmlspecialchars((string) ($plugin['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                             <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>" title="<?= htmlspecialchars($pluginTitle) ?>"<?= $pluginAttention ? ' aria-label="' . htmlspecialchars($pluginTitle, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
                                 <?= $plugin['icon'] ?>
                                 <span class="nav-label"><?= htmlspecialchars($plugin['name']) ?></span>
-                                <?php if ($pluginAttention): ?>
-                                <span class="nav-attention-dot" aria-hidden="true"></span>
-                                <?php endif; ?>
+                                <span class="nav-attention-dot" aria-hidden="true"<?= $pluginAttention ? '' : ' hidden' ?>></span>
                             </a>
                         </li>
                         <?php endforeach; ?>
