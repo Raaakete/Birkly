@@ -459,12 +459,13 @@ window.migrateStorage = migrateStorage;
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'project', 'team-access', 'ai', 'integrations', 'analytics'
+        'site-delivery', 'project', 'team-access', 'ai', 'integrations'
     ];
 
     var GLOBAL_SAVE_TABS = {
         general: { formIds: ['general-form'], label: 'Save general settings' },
         security: { formIds: ['security-form'], label: 'Save security settings' },
+        analytics: { formIds: ['analytics-settings-form'], label: 'Save analytics settings' },
         system: {
             formIds: ['storage-form', 'monitoring-form'],
             label: 'Save system settings'
@@ -2579,7 +2580,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Global save bar — saves all dirty form tabs, or the current tab when nothing is dirty yet
-function handleGlobalSave() {
+async function handleGlobalSave() {
     var tabId = typeof window.getSettingsCurrentTab === 'function' ? window.getSettingsCurrentTab() : 'general';
     var forms = {
         general: null,
@@ -2598,6 +2599,9 @@ function handleGlobalSave() {
         return;
     }
 
+    var saveAnalytics = tabsToSave.indexOf('analytics') >= 0 && typeof window.saveAnalyticsSettings === 'function';
+    var coreTabs = tabsToSave.filter(function (id) { return id !== 'analytics'; });
+
     tabsToSave.forEach(function (trackedTabId) {
         if (trackedTabId === 'general') {
             forms.general = document.getElementById('general-form');
@@ -2615,14 +2619,35 @@ function handleGlobalSave() {
         }
     });
 
-    if (!forms.general && !forms.security && !forms.storage && !forms.monitoring) {
+    var hasCoreForms = !!(forms.general || forms.security || forms.storage || forms.monitoring);
+    if (!hasCoreForms && !saveAnalytics) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
             BirklyFeedback.toast('Changes on this tab are saved when you confirm each action', 'info');
         }
         return;
     }
 
-    collectAndSaveSettings(tabsToSave, forms);
+    try {
+        if (saveAnalytics) {
+            await window.saveAnalyticsSettings();
+        }
+        if (hasCoreForms && coreTabs.length) {
+            await collectAndSaveSettings(coreTabs, forms);
+        } else if (saveAnalytics) {
+            if (typeof window.showMessage === 'function') {
+                window.showMessage('Settings saved successfully!', 'success');
+            } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+                BirklyFeedback.toast('Analytics settings saved', 'success');
+            }
+        }
+    } catch (err) {
+        var msg = (err && err.message) ? err.message : 'Save failed';
+        if (typeof window.showMessage === 'function') {
+            window.showMessage('Error: ' + msg, 'error');
+        } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
+            BirklyFeedback.toast(msg, 'error');
+        }
+    }
 }
 
 function syncSavedLogoState(generalForm, logoPath) {

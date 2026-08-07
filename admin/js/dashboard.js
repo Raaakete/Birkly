@@ -187,9 +187,9 @@
                 setContent(element, callout('—', 'Tracking not enabled yet', 'Re-save your Analytics preset to enable site tracking, or enable a domain under Site delivery.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
                 return;
             }
-            var views = Number(data.total_page_views || 0);
+            var pageViews = Number(data.total_page_views || 0);
             var visitors = Number(data.total_visitors || 0);
-            if (views === 0 && visitors === 0) {
+            if (pageViews === 0 && visitors === 0) {
                 var waitMsg = data.analytics_consent_required
                     ? 'Preset is on. Visit your public site and accept the consent banner to start collecting.'
                     : 'Preset is on. Visit your public site (or localhost preview) to record the first page views.';
@@ -202,7 +202,7 @@
                 if (code === 'LOCAL') return 'Local network';
                 try {
                     if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
-                        const name = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' }).of(code);
+                        var name = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' }).of(code);
                         if (name) return name;
                     }
                 } catch (_) { /* ignore */ }
@@ -210,7 +210,7 @@
             }
 
             function formatLabel(raw, type) {
-                const value = String(raw || '').trim();
+                var value = String(raw || '').trim();
                 if (!value || value.toLowerCase() === 'unknown') {
                     return 'Not detected';
                 }
@@ -238,11 +238,11 @@
                         '<p class="u-text-sm u-fg-tertiary">No data yet</p></div>';
                 }
 
-                const max = Math.max.apply(null, rows.map(function (row) { return Number(row[valueKey] || 0); }).concat([1]));
-                const items = rows.map(function (row) {
-                    const count = Number(row[valueKey] || 0);
-                    const width = Math.max(8, Math.round((count / max) * 100));
-                    const label = formatLabel(row[labelKey], labelType);
+                var max = Math.max.apply(null, rows.map(function (row) { return Number(row[valueKey] || 0); }).concat([1]));
+                var items = rows.map(function (row) {
+                    var count = Number(row[valueKey] || 0);
+                    var width = Math.max(8, Math.round((count / max) * 100));
+                    var label = formatLabel(row[labelKey], labelType);
                     return '<li class="u-stack-1">' +
                         '<div class="u-split u-gap-3">' +
                         '<span class="u-text-sm u-truncate" title="' + escapeHtml(String(row[labelKey] || '')) + '">' + escapeHtml(label) + '</span>' +
@@ -258,10 +258,8 @@
                     '<ul class="u-stack-3">' + items + '</ul></div>';
             }
 
-            const insights = data.insights || {};
-            const pageViews = Number(data.total_page_views || 0);
-            const visitors = Number(data.total_visitors || 0);
-            const viewsPerVisitor = visitors > 0 ? (pageViews / visitors).toFixed(1) : '—';
+            var insights = data.insights || {};
+            var viewsPerVisitor = visitors > 0 ? (pageViews / visitors).toFixed(1) : '—';
 
             function kpi(value, label, hint) {
                 return '<div class="stat">' +
