@@ -5,6 +5,12 @@ server {
     root /path/to/birkly;
     index index.php;
 
+    # Git metadata is never web-readable — project/.git holds the managed
+    # worktree used by Settings → Project → Git sync.
+    location ~ /\.git {
+        deny all;
+    }
+
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }

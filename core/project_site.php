@@ -97,3 +97,30 @@ function birkly_ensure_public_site_path(): void
 {
     birkly_migrate_demo_website_to_project();
 }
+
+/**
+ * Git metadata must never be readable over HTTP (P59-M2). Git sync keeps a
+ * managed worktree at project/.git; serving it would leak history, the remote
+ * URL, and anything a user committed by hand.
+ */
+function birkly_is_git_metadata_path(string $uri): bool
+{
+    return preg_match('#(^|/)\.git(/|$)#', rawurldecode($uri)) === 1;
+}
+
+/**
+ * @return bool True when the request was rejected and the caller should stop.
+ */
+function birkly_deny_git_metadata_request(string $uri): bool
+{
+    if (!birkly_is_git_metadata_path($uri)) {
+        return false;
+    }
+
+    http_response_code(403);
+    if (!headers_sent()) {
+        header('Content-Type: text/plain; charset=utf-8');
+    }
+    echo "Forbidden\n";
+    return true;
+}
