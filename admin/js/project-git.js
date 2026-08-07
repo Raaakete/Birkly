@@ -501,15 +501,91 @@
         });
     }
 
+    function renderPathList(paths, emptyMessage) {
+        if (!paths || !paths.length) {
+            return '<p class="u-text-sm u-fg-tertiary">' + escapeHtml(emptyMessage) + '</p>';
+        }
+        return '<ul class="project-git-file-list">' + paths.slice(0, 200).map(function (path) {
+            return '<li class="project-git-file"><code>' + escapeHtml(path) + '</code></li>';
+        }).join('') + '</ul>' +
+        (paths.length > 200 ? '<p class="u-text-sm u-fg-tertiary">…and ' + (paths.length - 200) + ' more</p>' : '');
+    }
+
     function showConflict(conflict) {
-        // Placeholder until the conflict resolution UI lands; the API already
-        // refuses to overwrite either side.
+        var overlapping = conflict.overlapping_files || [];
+        var unmerged = conflict.unmerged_files || [];
+        var local = conflict.local_files || [];
+        var remote = conflict.remote_files || [];
+
         showPanel(
-            '<div class="u-stack-3">' +
-                '<p class="u-label">Conflict</p>' +
-                '<p class="u-text-sm">' + escapeHtml(conflict.message || 'Both sides changed.') + '</p>' +
+            '<div class="u-stack-4">' +
+                '<div class="u-stack-2">' +
+                    '<p class="u-label">Conflict on ' + escapeHtml(conflict.branch || 'the branch') + '</p>' +
+                    '<p class="u-text-sm">' + escapeHtml(conflict.message || 'Birkly and the remote both changed.') + '</p>' +
+                    '<p class="u-text-sm u-fg-secondary">Nothing has been changed yet. Pick a side — Birkly keeps the files in <code>project/</code> and pushes them, or the remote replaces them. Files that cannot be merged, including images, always take the whole side you choose.</p>' +
+                '</div>' +
+                (unmerged.length
+                    ? '<div class="u-stack-2"><p class="u-label">Unfinished merge (' + unmerged.length + ')</p>' + renderPathList(unmerged, '') + '</div>'
+                    : '') +
+                (overlapping.length
+                    ? '<div class="u-stack-2"><p class="u-label">Changed on both sides (' + overlapping.length + ')</p>' + renderPathList(overlapping, '') + '</div>'
+                    : '') +
+                '<div class="u-stack-2">' +
+                    '<p class="u-label">Changed in Birkly (' + local.length + ')</p>' +
+                    renderPathList(local, 'No uncommitted local changes — Birkly has newer commits instead.') +
+                '</div>' +
+                '<div class="u-stack-2">' +
+                    '<p class="u-label">Changed on the remote (' + remote.length + ')</p>' +
+                    renderPathList(remote, 'No incoming file changes.') +
+                '</div>' +
+                '<div class="u-cluster">' +
+                    '<button type="button" class="btn btn-primary btn-sm" id="project-git-keep-birkly-btn">Keep Birkly</button>' +
+                    '<button type="button" class="btn btn-secondary btn-sm" id="project-git-keep-remote-btn">Keep remote</button>' +
+                    '<button type="button" class="btn btn-secondary btn-sm" id="project-git-conflict-cancel-btn">Cancel</button>' +
+                '</div>' +
             '</div>'
         );
+
+        bindClick('project-git-keep-birkly-btn', function () {
+            resolveConflict('keep_birkly');
+        });
+        bindClick('project-git-keep-remote-btn', function () {
+            resolveConflict('keep_remote');
+        });
+        bindClick('project-git-conflict-cancel-btn', function () {
+            hidePanel();
+            load(true);
+        });
+    }
+
+    function resolveConflict(strategy) {
+        var question = strategy === 'keep_birkly'
+            ? 'Keep the Birkly project files and push them over the remote branch? The remote versions of the conflicting files are replaced.'
+            : 'Replace project/ with the remote version? Local changes to those files, and local-only files, are discarded.';
+
+        var confirmPromise = (window.BirklyFeedback && typeof BirklyFeedback.confirm === 'function')
+            ? BirklyFeedback.confirm(question, {
+                danger: strategy === 'keep_remote',
+                title: strategy === 'keep_birkly' ? 'Keep Birkly' : 'Keep remote',
+                confirmLabel: strategy === 'keep_birkly' ? 'Keep Birkly' : 'Keep remote'
+            })
+            : Promise.resolve(true);
+
+        Promise.resolve(confirmPromise).then(function (confirmed) {
+            if (!confirmed) return;
+            setBusy(true);
+            return request('resolve_conflict', { strategy: strategy }).then(function (result) {
+                if (afterAction(result, 'Conflict resolved')) {
+                    hidePanel();
+                    if (typeof window.reloadProjectFiles === 'function') {
+                        window.reloadProjectFiles();
+                    }
+                }
+            }).catch(function (error) {
+                setBusy(false);
+                toast(error.message, 'error');
+            });
+        });
     }
 
     function refreshActivity() {

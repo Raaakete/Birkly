@@ -365,4 +365,56 @@ if ($action === 'pull_apply') {
     ]);
 }
 
+if ($action === 'resolve_conflict') {
+    $strategy = (string) ($input['strategy'] ?? '');
+    if (!in_array($strategy, ['keep_birkly', 'keep_remote'], true)) {
+        birkly_project_git_error('Choose Keep Birkly or Keep remote.');
+    }
+
+    ['git' => $git, 'branch' => $branch] = birkly_project_git_require_connection();
+    $message = trim((string) ($input['message'] ?? ''));
+
+    try {
+        $git->fetch();
+        $incoming = $git->pullPreview($branch);
+        $git->resolveConflict($strategy, $branch, $message);
+
+        // Keep Birkly means the remote must end up matching project/, so the
+        // resolution is only complete once it is pushed.
+        if ($strategy === 'keep_birkly') {
+            $git->push($branch);
+        }
+    } catch (ProjectGitException $e) {
+        birkly_project_git_error($e->getMessage());
+        exit;
+    }
+
+    if ($strategy === 'keep_remote') {
+        birkly_project_ssr_invalidate_all();
+    }
+
+    $commit = $git->lastCommit();
+    birkly_project_git_record_event($strategy === 'keep_birkly' ? 'last_push' : 'last_pull', [
+        'sha' => $commit['sha'] ?? null,
+        'branch' => $branch,
+        'resolved' => $strategy,
+    ]);
+
+    log_security_event('project_git_conflict_resolved', [
+        'strategy' => $strategy,
+        'branch' => $branch,
+        'sha' => $commit['sha'] ?? null,
+        'files' => count($incoming),
+        'source' => 'admin',
+    ]);
+
+    birkly_project_git_json([
+        'status' => 'ok',
+        'message' => $strategy === 'keep_birkly'
+            ? 'Kept the Birkly project files and pushed them to ' . $branch . '.'
+            : 'Replaced project/ with the remote version of ' . $branch . '.',
+        'data' => birkly_project_git_state(),
+    ]);
+}
+
 birkly_project_git_error('Invalid action');
