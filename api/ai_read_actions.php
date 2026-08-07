@@ -358,6 +358,16 @@ function executeReadAction($actionData, $aiUser) {
                     'activity_dir_writable' => is_string($activityDir) && is_dir($activityDir) && is_writable($activityDir),
                     'activity_files' => $activityFiles,
                     'plugin_activity_php' => is_file($pluginActivityPhp),
+                    'emit_probe' => (function_exists('birkly_plugin_activity_emit')
+                        ? birkly_plugin_activity_emit([
+                            'plugin' => 'commerce',
+                            'event' => 'mcp_emit_probe',
+                            'title' => 'MCP emit probe',
+                            'notify' => true,
+                            'nav_attention' => true,
+                            'meta' => ['source' => 'list_activity_debug'],
+                        ])
+                        : null),
                 ],
             ],
         ];
