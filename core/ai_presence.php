@@ -541,7 +541,11 @@ function birkly_ai_presence_next_steps(?array $draft = null): array
 
 function birkly_ai_presence_public_urls(): array
 {
-    $base = birkly_hosting_public_base_url();
+    $hosting = birkly_hosting_load();
+    $mode = (string) ($hosting['public_site_mode'] ?? 'none'); // none | project | external
+    $publicBase = birkly_hosting_public_base_url(); // '' when mode=none
+    $cmsBase = birkly_cms_base_url();
+
     $path = '/.well-known/agent-guide.json';
     $legacyPath = '/.well-known/brand-context.json';
     $draft = birkly_ai_presence_load_draft();
@@ -549,12 +553,44 @@ function birkly_ai_presence_public_urls(): array
         $path = (string) $draft['publication_settings']['public_path'];
     }
 
+    // The CMS PHP route is the guaranteed source of truth for the guide JSON and
+    // the Birkly MCP endpoint — it is always served by Birkly regardless of how
+    // the public site is hosted (P60-M0 §D). These addresses never 404.
+    $cmsCanonicalUrl = $cmsBase !== '' ? rtrim($cmsBase, '/') . '/.well-known/agent-guide.json' : '';
+    $cmsLegacyUrl = $cmsBase !== '' ? rtrim($cmsBase, '/') . $legacyPath : '';
+    $mcpUrl = $cmsBase !== '' ? rtrim($cmsBase, '/') . '/mcp' : '';
+    // Public read API is served by the CMS host (external hosts do not proxy it).
+    $apiUrl = $cmsBase !== '' ? rtrim($cmsBase, '/') . '/api/public/ai_presence.php?action=guide' : '';
+    $legacyApiUrl = $cmsBase !== '' ? rtrim($cmsBase, '/') . '/api/public/ai_presence.php?action=brand' : '';
+
+    // Birkly only serves the guide on the *public* address when it hosts the
+    // project itself (mode=project). In external mode Birkly never serves that
+    // host, so we must not advertise a public_site_url as verified (gap G5).
+    $birklyServesPublic = ($mode === 'project') && $publicBase !== '';
+    $publicSiteUrl = $birklyServesPublic ? rtrim($publicBase, '/') . $path : '';
+
+    // Back-compat `well_known_url`: always resolve to an address that actually
+    // works — the public URL when Birkly serves it, otherwise the CMS canonical.
+    $wellKnownUrl = $birklyServesPublic ? $publicSiteUrl : $cmsCanonicalUrl;
+    $legacyWellKnownUrl = $birklyServesPublic
+        ? rtrim($publicBase, '/') . $legacyPath
+        : $cmsLegacyUrl;
+
     return [
-        'public_site_base' => $base,
-        'well_known_url' => $base !== '' ? rtrim($base, '/') . $path : '',
-        'legacy_well_known_url' => $base !== '' ? rtrim($base, '/') . $legacyPath : '',
-        'api_url' => $base !== '' ? rtrim($base, '/') . '/api/public/ai_presence.php?action=guide' : '',
-        'legacy_api_url' => $base !== '' ? rtrim($base, '/') . '/api/public/ai_presence.php?action=brand' : '',
+        // Hosting honesty (P60-M7)
+        'hosting_mode' => $mode,
+        'birkly_serves_public' => $birklyServesPublic,
+        'cms_base_url' => $cmsBase,
+        'cms_canonical_url' => $cmsCanonicalUrl,
+        'mcp_url' => $mcpUrl,
+        'public_site_base' => $publicBase,
+        // Only populated when Birkly actually serves the public address.
+        'public_site_url' => $publicSiteUrl,
+        // Guaranteed-working guide address (public when served, else CMS route).
+        'well_known_url' => $wellKnownUrl,
+        'legacy_well_known_url' => $legacyWellKnownUrl,
+        'api_url' => $apiUrl,
+        'legacy_api_url' => $legacyApiUrl,
         'public_path' => $path,
         'legacy_public_path' => $legacyPath,
     ];
