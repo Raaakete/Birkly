@@ -5,6 +5,7 @@
  */
 
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/../core/secret_box.php';
 
 /**
  * Simple encryption/decryption for API keys
@@ -22,32 +23,18 @@ function ensureEncryptionKeyBootstrapped(): bool
     return is_string($key) && $key !== '';
 }
 
+// Backed by core/secret_box.php so AI keys and project git credentials share
+// one key and one format, resolved from an absolute settings path.
 function getEncryptionKey() {
-    $settingsStorage = new Storage('../settings');
-    $security = $settingsStorage->read('security.json') ?? [];
-    
-    if (!isset($security['encryption_key']) || $security['encryption_key'] === '') {
-        $key = bin2hex(random_bytes(32));
-        $security['encryption_key'] = $key;
-        $settingsStorage->write('security.json', $security);
-    }
-    
-    return $security['encryption_key'];
+    return birkly_secret_encryption_key();
 }
 
 function encryptApiKey($apiKey) {
-    $key = getEncryptionKey();
-    $iv = openssl_random_pseudo_bytes(16);
-    $encrypted = openssl_encrypt($apiKey, 'AES-256-CBC', hex2bin($key), 0, $iv);
-    return base64_encode($iv . $encrypted);
+    return birkly_encrypt_secret((string) $apiKey);
 }
 
 function decryptApiKey($encrypted) {
-    $key = getEncryptionKey();
-    $data = base64_decode($encrypted);
-    $iv = substr($data, 0, 16);
-    $encrypted = substr($data, 16);
-    return openssl_decrypt($encrypted, 'AES-256-CBC', hex2bin($key), 0, $iv);
+    return birkly_decrypt_secret((string) $encrypted);
 }
 
 /**

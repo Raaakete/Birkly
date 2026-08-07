@@ -228,6 +228,31 @@
   color: var(--text-tertiary);
 }
 
+/* Git sync — change lists rendered by project-git.js */
+.project-git-file-list {
+  max-height: 18rem;
+  overflow: auto;
+  min-width: 0;
+}
+
+.project-git-file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.project-git-file code { overflow-wrap: anywhere; }
+
+.project-git-panel {
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
 /* ============================================
    4. AI connections — rows rendered by ai-connections.js / mcp-connections.js
    ============================================ */

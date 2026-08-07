@@ -772,9 +772,16 @@
         loadOverview();
         refreshFiles();
         loadActivity();
+
+        if (typeof window.initProjectGit === 'function') {
+            window.initProjectGit();
+        }
     }
 
     window.initProjectSettings = initProjectSettings;
+    // Git actions append to the same feed, so they can refresh it after a run.
+    window.reloadProjectActivity = loadActivity;
+    window.reloadProjectFiles = refreshFiles;
 
     if (document.getElementById('project') && document.getElementById('project').classList.contains('active')) {
         initProjectSettings();

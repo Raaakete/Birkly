@@ -285,5 +285,155 @@ assert_true('allows filenames containing git', !birkly_is_git_metadata_path('/pr
 
 rrmdir($tmp);
 
+// ---------------------------------------------------------------------------
+// Credential storage — encrypted at rest, never echoed back to the browser
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'credential storage' . PHP_EOL;
+require_once dirname(__DIR__) . '/core/project_git_settings.php';
+
+$settingsFile = dirname(__DIR__) . '/settings/project_git.json';
+$settingsBackup = is_file($settingsFile) ? file_get_contents($settingsFile) : null;
+
+try {
+    birkly_project_git_delete();
+    birkly_project_git_write(array_merge(
+        birkly_project_git_credential_patch('token', 'ghp_supersecrettoken1234', '', ''),
+        [
+            'provider' => 'github',
+            'remote_url' => 'https://github.com/acme/site.git',
+            'branch' => 'main',
+        ]
+    ));
+
+    $raw = birkly_project_git_read();
+    assert_true('token is not stored in plaintext', !str_contains(json_encode($raw), 'ghp_supersecrettoken1234'));
+    assert_true('token ciphertext is stored', !empty($raw['token_encrypted']));
+
+    $credentials = birkly_project_git_credentials();
+    assert_true('token decrypts back to the original', ($credentials['token'] ?? '') === 'ghp_supersecrettoken1234');
+    assert_true('auth mode round-trips', ($credentials['mode'] ?? '') === 'token');
+
+    $public = birkly_project_git_public_config();
+    assert_true('public config reports configured', $public['configured'] === true);
+    assert_true('public config never carries the token', !str_contains(json_encode($public), 'ghp_supersecrettoken1234'));
+    assert_true('public config exposes a masked hint', $public['token_hint'] === '••••1234');
+    assert_true('public config keeps the branch', $public['branch'] === 'main');
+
+    // Saving again without re-typing the token keeps the stored one.
+    birkly_project_git_write(birkly_project_git_credential_patch('token', '', '', 'deploy'));
+    assert_true('empty token keeps the stored credential', (birkly_project_git_credentials()['token'] ?? '') === 'ghp_supersecrettoken1234');
+
+    // Switching to SSH clears the token.
+    birkly_project_git_write(birkly_project_git_credential_patch('ssh', '', "-----BEGIN OPENSSH PRIVATE KEY-----\nabc\n", ''));
+    $public = birkly_project_git_public_config();
+    assert_true('switching to ssh drops the token', $public['has_token'] === false);
+    assert_true('ssh key is stored', $public['has_ssh_key'] === true);
+    assert_true('ssh key decrypts', str_contains((string) (birkly_project_git_credentials()['ssh_key'] ?? ''), 'BEGIN OPENSSH'));
+
+    birkly_project_git_delete();
+    $public = birkly_project_git_public_config();
+    assert_true('disconnect clears the remote', $public['configured'] === false);
+    assert_true('disconnect clears the token', $public['has_token'] === false);
+    assert_true('disconnect clears the ssh key', $public['has_ssh_key'] === false);
+} finally {
+    if ($settingsBackup !== null) {
+        file_put_contents($settingsFile, $settingsBackup);
+    } elseif (is_file($settingsFile)) {
+        unlink($settingsFile);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Admin API requires a session
+// ---------------------------------------------------------------------------
+
+echo PHP_EOL . 'api auth' . PHP_EOL;
+$probe = project_git_http_probe(dirname(__DIR__));
+if ($probe === null) {
+    echo '  unauthenticated rejection: SKIP (could not start php dev server)' . PHP_EOL;
+} else {
+    assert_true('unauthenticated status → 401', $probe['status'] === 401);
+    assert_true('unauthenticated connect → 401', $probe['connect'] === 401);
+    assert_true('unauthenticated push → 401', $probe['push'] === 401);
+    assert_true('unauthenticated pull_apply → 401', $probe['pull_apply'] === 401);
+    assert_true('unauthenticated resolve_conflict → 401', $probe['resolve'] === 401);
+    assert_true('.git over HTTP → 403', $probe['git_dir'] === 403);
+}
+
+/**
+ * @return array<string, int>|null
+ */
+function project_git_http_probe(string $root): ?array
+{
+    if (!function_exists('proc_open')) {
+        return null;
+    }
+
+    $host = '127.0.0.1';
+    $port = 8600 + random_int(0, 300);
+    $cmd = escapeshellarg(PHP_BINARY ?: 'php') . ' -S ' . $host . ':' . $port . ' ' . escapeshellarg('server-router.php');
+    $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    $proc = @proc_open($cmd, $descriptors, $pipes, $root);
+    if (!is_resource($proc)) {
+        return null;
+    }
+
+    $up = false;
+    for ($i = 0; $i < 40; $i++) {
+        usleep(100000);
+        $conn = @fsockopen($host, $port, $errno, $errstr, 0.2);
+        if ($conn) {
+            fclose($conn);
+            $up = true;
+            break;
+        }
+    }
+
+    $result = null;
+    if ($up) {
+        $base = 'http://' . $host . ':' . $port;
+        $result = [
+            'status' => project_git_http_code($base . '/api/project_git.php?action=status', null),
+            'connect' => project_git_http_code($base . '/api/project_git.php?action=connect', ['action' => 'connect']),
+            'push' => project_git_http_code($base . '/api/project_git.php?action=push', ['action' => 'push']),
+            'pull_apply' => project_git_http_code($base . '/api/project_git.php?action=pull_apply', ['action' => 'pull_apply']),
+            'resolve' => project_git_http_code($base . '/api/project_git.php?action=resolve_conflict', ['action' => 'resolve_conflict']),
+            'git_dir' => project_git_http_code($base . '/project/.git/config', null),
+        ];
+    }
+
+    foreach ($pipes as $pipe) {
+        if (is_resource($pipe)) {
+            fclose($pipe);
+        }
+    }
+    proc_terminate($proc);
+    proc_close($proc);
+
+    return $result;
+}
+
+/**
+ * @param array<string, mixed>|null $body
+ */
+function project_git_http_code(string $url, ?array $body): int
+{
+    $http = ['ignore_errors' => true, 'timeout' => 5];
+    if ($body !== null) {
+        $http['method'] = 'POST';
+        $http['header'] = "Content-Type: application/json\r\n";
+        $http['content'] = json_encode($body);
+    }
+    $response = @file_get_contents($url, false, stream_context_create(['http' => $http]));
+    if ($response === false) {
+        return 0;
+    }
+    if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m) === 1) {
+        return (int) $m[1];
+    }
+    return 0;
+}
+
 echo PHP_EOL . 'project_git_test: ' . ($failures === 0 ? 'PASS' : "FAIL ($failures)") . PHP_EOL;
 exit($failures === 0 ? 0 : 1);
