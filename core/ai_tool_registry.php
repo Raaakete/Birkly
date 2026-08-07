@@ -387,7 +387,7 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         $message = 'Write action queued in Birkly (approval ID: ' . $approvalId . '). '
             . 'Open your Birkly admin panel → floating AI button → Approvals tab to approve. '
             . 'This is separate from Claude\'s "always allow" tool setting. '
-            . 'To auto-run writes from Claude, disable "Ask before changes" on the personal connector in Settings → AI.';
+            . 'To auto-run writes from Claude, disable "Ask before changes" on the personal connector in Agent Guide → Connections.';
         return ['content' => [['type' => 'text', 'text' => $message]]];
     }
 

@@ -28,7 +28,7 @@ Closed alpha means Birkly is feature-complete enough for real self-hosted trials
 2. Complete **onboarding** (project name, first admin user).
 3. Open **Help** (sidebar) for contextual docs — **Read full doc** opens Birkly-Docs topics.
 4. Install plugins from **Plugins → Marketplace** (Commerce, Events, Automation, User Management).
-5. Connect **AI** under **Settings → AI & Integrations** — start with Ollama locally if you have no API key.
+5. Connect **AI** under **Agent Guide → Connections** — start with Ollama locally if you have no API key.
 6. Optionally **link cloud account** under Account (does not replace local password).
 
 ## Reporting issues
