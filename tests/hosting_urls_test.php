@@ -81,6 +81,34 @@ try {
     assert_true('normalize url strips slash', birkly_hosting_normalize_url('https://cms.test/') === 'https://cms.test');
     assert_true('clean project path', birkly_hosting_clean_public_url('/project/index.html') === '/index.html');
 
+    $_SERVER['HTTP_HOST'] = 'localhost:8080';
+    $_SERVER['HTTPS'] = 'off';
+    unset($_SERVER['HTTP_X_FORWARDED_PROTO']);
+    assert_true(
+        'request origin keeps non-default port',
+        birkly_hosting_request_origin_url() === 'http://localhost:8080'
+    );
+    assert_true(
+        'build url from request keeps port',
+        birkly_hosting_build_url_from_request() === 'http://localhost:8080'
+    );
+    [$repaired, $changed] = birkly_hosting_repair_local_dev_urls([
+        'cms_base_url' => 'http://localhost',
+        'public_site_mode' => 'project',
+        'public_site_url' => 'http://localhost',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    assert_true('local port repair changes config', $changed === true);
+    assert_true(
+        'local port repair fixes public_site_url',
+        ($repaired['public_site_url'] ?? '') === 'http://localhost:8080'
+    );
+    assert_true(
+        'local port repair fixes cms_base_url',
+        ($repaired['cms_base_url'] ?? '') === 'http://localhost:8080'
+    );
+
     putenv('BIRKLY_TRUST_REQUEST_HOST=true');
     putenv('BIRKLY_CMS_BASE_URL=https://test.birkly.cloud');
     birkly_hosting_reset_cache();

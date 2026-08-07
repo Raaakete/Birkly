@@ -46,6 +46,15 @@ function birkly_marketplace_consent_reset(): void
  *
  * @return array{plugin_id:string,version:string}|null
  */
+function birkly_marketplace_plugins_dir(): string
+{
+    if (isset($GLOBALS['__birkly_plugins_dir']) && is_string($GLOBALS['__birkly_plugins_dir']) && $GLOBALS['__birkly_plugins_dir'] !== '') {
+        return $GLOBALS['__birkly_plugins_dir'];
+    }
+
+    return dirname(__DIR__, 2) . '/plugins';
+}
+
 function birkly_marketplace_local_installed_offer(string $slug): ?array
 {
     $slug = trim($slug);
@@ -53,7 +62,7 @@ function birkly_marketplace_local_installed_offer(string $slug): ?array
         return null;
     }
 
-    $pluginsDir = dirname(__DIR__, 2) . '/plugins';
+    $pluginsDir = birkly_marketplace_plugins_dir();
     if (!is_dir($pluginsDir)) {
         return null;
     }
