@@ -48,14 +48,14 @@ Birkly ships a small demo page (`project/webmcp-demo.html`) with a contact form,
 
 ## Three layers, one hub
 
-Agent Guide is the single admin home for "how AI works with this site," organized as four tabs. Each of the first three answers a different question and lives in a different place — they are never the same thing, even though they're all reached from Agent Guide:
+Agent Guide is the admin home for "how AI works with this site," organized as **three tabs** — Guide, Tools, Publish. **AI app connections (Birkly MCP) are not in this hub** — they live in **Settings → AI** only. Each layer answers a different question and lives in a different place — they are never the same thing:
 
-| Tab | Question it answers | Where it actually lives |
+| Layer | Question it answers | Where it actually lives |
 |-----|---------------------|--------------------------|
-| **Guide** | "What should AI say about us?" | Public JSON on your site domain (`/.well-known/agent-guide.json`) |
-| **Tools** | "What can an AI helper *do* on our website while someone is visiting?" | **This page's** WebMCP runtime — runs in the visitor's browser |
-| **Connections** | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
-| **Publish** | "Where do all of the above actually work, given how my site is hosted?" | Mode-aware summary of the three above |
+| **Guide** (hub tab) | "What should AI say about us?" | Public JSON on your site domain (`/.well-known/agent-guide.json`) |
+| **Tools** (hub tab) | "What can an AI helper *do* on our website while someone is visiting?" | **This page's** WebMCP runtime — runs in the visitor's browser |
+| **Publish** (hub tab) | "Where do all of the above actually work, given how my site is hosted?" | Mode-aware summary |
+| **Connections** (Settings → AI) | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
 
 Plain-language versions of the first three, matching what you'll see in the product:
 
@@ -205,7 +205,11 @@ On **`external`** pages, `birkly-client.js` also quietly adds a discovery `<link
 
 ### Verifying it works (technical)
 
-On a supported Chromium build (146+), enable the `#enable-webmcp-testing` flag and open a page with website tools on. Registered tools appear in the browser's model-context inspector. This is a technical, opt-in check — Birkly does not ask non-technical owners to flip browser flags as a normal step.
+On a supported Chromium build (146+), enable the `#enable-webmcp-testing` flag and open a page with website tools on. Registered tools appear in the browser's model-context inspector (DevTools → Lighthouse → Agentic Browsing). This is a technical, opt-in check — Birkly does not ask non-technical owners to flip browser flags as a normal step.
+
+**About PageSpeed Insights.** PageSpeed Insights / Lighthouse Agentic Browsing often report WebMCP audits as **"Not evaluated" / "Nicht bewertet"** because their hosted test browsers usually don't have WebMCP enabled. That does **not** mean your site failed — it means the audit browser couldn't check. Local Chrome with `#enable-webmcp-testing` (above) is the real verification. See Google's [registered WebMCP tools audit](https://developer.chrome.com/docs/lighthouse/agentic-browsing/registered-webmcp-tools) and the [WebMCP imperative API explainer](https://developer.chrome.com/docs/ai/webmcp/imperative-api).
+
+To make tools discoverable as early as possible, Birkly (a) inlines the public config on `window.BIRKLY_WEBMCP_CONFIG` **before** loading `birkly-webmcp.js`, so the runtime registers tools synchronously with no network round-trip, and (b) emits declarative `toolname` / `tooldescription` attributes on `{entry for}` public forms so a tool is visible in static markup before any JS runs.
 
 ### Safety summary
 
@@ -220,7 +224,7 @@ On a supported Chromium build (146+), enable the `#enable-webmcp-testing` flag a
 ## Related
 
 - [Agent Guide](../02-content/agent-guide.md) — the Guide tab (public fact sheet) and the wider hub
-- [MCP connections](../01-admin/mcp-connections.md) — Connections tab / Settings → AI (Birkly MCP for AI apps)
+- [MCP connections](../01-admin/mcp-connections.md) — Settings → AI (Birkly MCP for AI apps; not in the Agent Guide hub)
 - [Public forms](public-forms.md) — how `public_api` collections and `{entry for}` work under the hood
 - [Client library](client-library.md) — `birkly-client.js`, which website tools load after
 - [Agent Guide public API](agent-guide-public-api.md) — the Guide JSON website tools never duplicate
