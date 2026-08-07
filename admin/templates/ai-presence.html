@@ -37,53 +37,28 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
-<!-- Hub: left status sidebar + main (Guide | Tools | Publish) — P60 IA restructure.
-     Connections deliberately live in Settings → AI only; not surfaced here. -->
-<div class="ap-hub ap-hub-layout">
-<nav class="ap-hub-status-nav" aria-label="{translate 'admin.ag_hub_spine_aria'}">
-    <button type="button" class="ap-status-item" data-hub-zone="guide">
-        <span class="ap-status-item-head">
-            <span class="ap-status-label">{translate 'admin.ag_hub_spine_guide'}</span>
-            <span class="badge badge-neutral" id="ap-spine-guide-badge">—</span>
-        </span>
-        <span class="ap-status-value" id="ap-spine-guide-value">—</span>
-    </button>
-    <button type="button" class="ap-status-item" data-hub-zone="tools">
-        <span class="ap-status-item-head">
-            <span class="ap-status-label">{translate 'admin.ag_hub_spine_tools'}</span>
-            <span class="badge badge-neutral" id="ap-spine-tools-badge">—</span>
-        </span>
-        <span class="ap-status-value" id="ap-spine-tools-value">{translate 'admin.ag_webmcp_off'}</span>
-    </button>
-    <button type="button" class="ap-status-item" data-hub-zone="publish">
-        <span class="ap-status-item-head">
-            <span class="ap-status-label">{translate 'admin.ag_hub_spine_hosted'}</span>
-            <span class="badge badge-neutral" id="ap-spine-hosted-badge">—</span>
-        </span>
-        <span class="ap-status-value" id="ap-spine-hosted-value">—</span>
-    </button>
-</nav>
-
-<div class="ap-hub-main">
+<!-- Hub: Guide | Tools | Publish — Connections live in Settings → AI only.
+     Status is a green/red dot on each main tab (no separate status sidebar). -->
+<div class="ap-hub">
 <!-- Hub zones — Guide | Tools | Publish -->
 <div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-    <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">{translate 'admin.ag_hub_tab_guide'}</button>
-    <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_tools'}</button>
-    <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_publish'}</button>
+    <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">
+        <span>{translate 'admin.ag_hub_tab_guide'}</span>
+        <span class="ap-tab-dot" id="ap-tab-dot-guide" data-ok="0" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">
+        <span>{translate 'admin.ag_hub_tab_tools'}</span>
+        <span class="ap-tab-dot" id="ap-tab-dot-tools" data-ok="0" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">
+        <span>{translate 'admin.ag_hub_tab_publish'}</span>
+        <span class="ap-tab-dot" id="ap-tab-dot-publish" data-ok="0" aria-hidden="true"></span>
+    </button>
 </div>
 
 <div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
 <div class="ap-guide-layout">
     <div class="ai-presence-tabs ap-guide-tabs tabs-v2-root">
-    <nav class="tabs ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
-        <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
-        <button type="button" class="tab" data-tab="essentials">{translate 'admin.ag_view_essentials'}</button>
-        <button type="button" class="tab" data-tab="sources">{translate 'admin.ai_presence_tab_sources'}</button>
-        <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
-        <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
-        <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
-        <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
-    </nav>
     <div class="ap-guide-panels">
             <div class="tab-content" data-tab-content="essentials">
                 <section class="card u-p-6 u-stack-4">
@@ -157,8 +132,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
             </div>
                 <div class="tab-content active" data-tab-content="overview">
-                    <!-- AI Assist is the primary Overview widget (P60 IA). It replaces
-                         the old right-hand assist rail + FAB. -->
+                    <!-- Overview top row: AI Assist (first) + recommended workflow, equal size -->
+                    <div class="ap-overview-top u-grid-2 u-gap-4">
                     <aside class="card u-p-6 u-stack-4 ap-assist-widget" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
                         <header class="u-stack-1">
                             <h2 class="u-text-base u-weight-semibold u-mb-1">{translate 'admin.ai_presence_assist_title'}</h2>
@@ -252,6 +227,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             </li>
                         </ol>
                     </section>
+                    </div><!-- .ap-overview-top -->
 
                     <div id="ai-presence-overview">
                         <div class="u-grid-2 u-mt-4">
@@ -532,6 +508,15 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
 
     </div><!-- .ap-guide-panels -->
+    <nav class="tabs ap-guide-nav" role="tablist" aria-label="{translate 'admin.ai_presence'}">
+        <button type="button" class="tab active" data-tab="overview">{translate 'admin.ai_presence_tab_overview'}</button>
+        <button type="button" class="tab" data-tab="essentials">{translate 'admin.ag_view_essentials'}</button>
+        <button type="button" class="tab" data-tab="sources">{translate 'admin.ai_presence_tab_sources'}</button>
+        <button type="button" class="tab" data-tab="context">{translate 'admin.ai_presence_tab_context'}</button>
+        <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
+        <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
+        <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
+    </nav>
     </div><!-- .ai-presence-tabs -->
 </div><!-- .ap-guide-layout -->
 </div><!-- .tab-panel guide -->
@@ -772,7 +757,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
-</div><!-- .ap-hub-main -->
 </div><!-- .ap-hub -->
 
 <!-- AI loading overlay -->
