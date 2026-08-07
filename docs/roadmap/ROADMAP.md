@@ -27,16 +27,20 @@ This file tracks **current state** and the **active execution phase**. Full hist
 
 **Active plugins (dev tree):** automation, commerce, events, user_management, studio, sample-plugin
 
-**P52** complete 2026-08-01. **P53** Hub & site packs approved 2026-08-02 (see Ops planning). **P54** Commerce 0→1 complete 2026-08-02.
+**P52** complete 2026-08-01. **P53–P57** shipped or in human review (see Ops planning). **P54** Commerce 0→1 complete 2026-08-02.
 
-**Active phase:** **P55 — Hub payments & entitlements** (**implementation ready for human review** 2026-08-03).
+**Active phase:** **P58 — Platform reliability & product polish** (**approved / executing** 2026-08-07).
 
-- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P55-hub-payments-entitlements-plan.md` · `P55-lead-engineer-handoff.md` · `P55-M14-human-notify.md`
-- Focus: provider-as-seller paid Hub offers · Stripe Connect application fee · hybrid entitlements · no-key free installs · activation reuse · trials/freemium · refunds/chargebacks/Ops · docs/legal alignment
-- Out of scope: Mollie/multi-PSP/regional PSPs, Birkly MoR for third-party offers, perfect DRM
-- Distinct from P54 Commerce (site-merchant payments) — Hub marketplace fee collection is a separate track
+- Canonical plan + handoff (private Ops): `Birkly-Marketplace/internal/planning/reviews/P58-reliability-product-polish-plan.md` · `P58-lead-engineer-handoff.md` · `P58-gap-register.md`
+- Focus: project-site cold first load / SSR · local PHP install / onboarding / start helper · then admin UX polish (field API name auto-fill, project download/delete, Agent Guide Unpublish + Essentials AI, Hub “Upload”, Entries L2 More menu)
+- Out of scope: full Git sync (→ P59) · Ops/Provider shell redesign · Mollie/multi-PSP · forced third-party Hub plugin CSS
+- Notify human at **P58-M8**
 
-**Previous:** P54 Commerce 0→1 complete — Commerce plugin **1.0.29+**; Automation recipes **1.1.7**; AI topic `commerce-store-kit`. Canonical: `P54-commerce-0-to-1-plan.md`.
+**Open human-review queue (do not block P58):** P53-M14 · P55-M14 · P56-M15 · P57-M8 (notify packs in Ops `internal/planning/reviews/`).
+
+**Previous:** P55 Hub payments & entitlements — implementation ready for human review 2026-08-03. Canonical: `P55-hub-payments-entitlements-plan.md` · `P55-M14-human-notify.md`.
+
+P54 Commerce 0→1 complete — Commerce plugin **1.0.29+**; Automation recipes **1.1.7**; AI topic `commerce-store-kit`.
 
 Focus delivered (P52): PHP-native SSR (default for Birkly hosting), shared JS engine for the browser client, admin render settings, client loading helpers.
 
