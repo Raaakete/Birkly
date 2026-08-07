@@ -110,19 +110,101 @@
             '</div>';
     }
 
+    var PROVIDER_META = {
+        github: {
+            label: 'GitHub', group: 'Popular',
+            placeholder: 'https://github.com/your-org/your-site.git',
+            help: 'Use a fine-grained or classic personal access token with repository contents read/write.',
+            default_auth: 'token', default_username: 'git'
+        },
+        gitlab: {
+            label: 'GitLab', group: 'Popular',
+            placeholder: 'https://gitlab.com/your-group/your-site.git',
+            help: 'Works with gitlab.com or self-hosted GitLab. Use a project or personal access token (api or write_repository).',
+            default_auth: 'token', default_username: 'oauth2'
+        },
+        bitbucket: {
+            label: 'Bitbucket', group: 'Popular',
+            placeholder: 'https://bitbucket.org/your-workspace/your-site.git',
+            help: 'Use an Atlassian app password or repository access token. Username is usually your Bitbucket username (or x-token-auth for access tokens).',
+            default_auth: 'token', default_username: 'x-token-auth'
+        },
+        codeberg: {
+            label: 'Codeberg', group: 'Open source & European',
+            placeholder: 'https://codeberg.org/your-org/your-site.git',
+            help: 'European, free Forgejo hosting. Create an access token under Settings → Applications.',
+            default_auth: 'token', default_username: 'git'
+        },
+        gitea: {
+            label: 'Gitea', group: 'Open source & European',
+            placeholder: 'https://gitea.example.com/your-org/your-site.git',
+            help: 'Self-hosted Gitea. Use an access token with write:repository scope.',
+            default_auth: 'token', default_username: 'git'
+        },
+        forgejo: {
+            label: 'Forgejo', group: 'Open source & European',
+            placeholder: 'https://forgejo.example.com/your-org/your-site.git',
+            help: 'Self-hosted Forgejo (Codeberg’s soft-fork lineage). Token auth matches Gitea.',
+            default_auth: 'token', default_username: 'git'
+        },
+        sourcehut: {
+            label: 'SourceHut', group: 'Open source & European',
+            placeholder: 'https://git.sr.ht/~you/your-site',
+            help: 'Open-source git hosting (sr.ht). Use an OAuth2 personal access token as the password.',
+            default_auth: 'token', default_username: 'git'
+        },
+        buzz: {
+            label: 'Buzz', group: 'AI-native',
+            placeholder: 'https://your-relay.example/git/<owner-pubkey>/<repo>',
+            help: 'Block’s open-source Slack/GitHub alternative. Standard git Smart HTTP on the relay; auth is usually Nostr (NIP-98) via git-credential-nostr on this server.',
+            default_auth: 'nostr', default_username: ''
+        },
+        generic: {
+            label: 'Other git remote', group: 'Other',
+            placeholder: 'https://git.example.com/your-org/your-site.git',
+            help: 'Any HTTPS or SSH remote that speaks standard git. Content, media, and plugins are never included.',
+            default_auth: 'token', default_username: 'birkly'
+        }
+    };
+
+    var PROVIDER_GROUPS = [
+        { id: 'Popular', keys: ['github', 'gitlab', 'bitbucket'] },
+        { id: 'Open source & European', keys: ['codeberg', 'gitea', 'forgejo', 'sourcehut'] },
+        { id: 'AI-native', keys: ['buzz'] },
+        { id: 'Other', keys: ['generic'] }
+    ];
+
+    function providerMeta(provider) {
+        return PROVIDER_META[provider] || PROVIDER_META.generic;
+    }
+
+    function renderProviderOptions(selected) {
+        return PROVIDER_GROUPS.map(function (group) {
+            return '<optgroup label="' + escapeHtml(group.id) + '">' +
+                group.keys.map(function (key) {
+                    var meta = providerMeta(key);
+                    return '<option value="' + escapeHtml(key) + '"' + (selected === key ? ' selected' : '') + '>' +
+                        escapeHtml(meta.label) + '</option>';
+                }).join('') +
+                '</optgroup>';
+        }).join('');
+    }
+
     function renderConnectForm(config) {
         var provider = (config && config.provider) || 'github';
-        var authMode = (config && config.auth_mode) || 'token';
+        if (!PROVIDER_META[provider]) provider = 'generic';
+        var meta = providerMeta(provider);
+        var authMode = (config && config.auth_mode) || meta.default_auth || 'token';
         var isEdit = !!(config && config.configured);
+        var username = (config && config.auth_username) || meta.default_username || '';
+        var nostrHelper = !!(state.data && state.data.capability && state.data.capability.nostr_helper);
 
         return '<form id="project-git-form" class="u-stack-4">' +
             '<div class="form-grid">' +
                 '<div class="form-group">' +
                     '<label for="project-git-provider">Provider</label>' +
                     '<select id="project-git-provider" class="input">' +
-                        '<option value="github"' + (provider === 'github' ? ' selected' : '') + '>GitHub</option>' +
-                        '<option value="gitlab"' + (provider === 'gitlab' ? ' selected' : '') + '>GitLab</option>' +
-                        '<option value="generic"' + (provider === 'generic' ? ' selected' : '') + '>Other git remote</option>' +
+                        renderProviderOptions(provider) +
                     '</select>' +
                 '</div>' +
                 '<div class="form-group">' +
@@ -132,31 +214,44 @@
             '</div>' +
             '<div class="form-group">' +
                 '<label for="project-git-remote">Repository URL</label>' +
-                '<input type="text" id="project-git-remote" class="input" value="' + escapeHtml(isEdit ? config.remote_url : '') + '" placeholder="https://github.com/your-org/your-site.git" autocomplete="off" spellcheck="false">' +
-                '<small class="form-help">HTTPS or SSH URL. Only files under <code>project/</code> are pushed and pulled — CMS content, media, users and plugins stay in Birkly.</small>' +
+                '<input type="text" id="project-git-remote" class="input" value="' + escapeHtml(isEdit ? config.remote_url : '') + '" placeholder="' + escapeHtml(meta.placeholder) + '" autocomplete="off" spellcheck="false">' +
+                '<small class="form-help" id="project-git-remote-help">' + escapeHtml(meta.help) + ' Only files under <code>project/</code> sync — CMS content, media, users and plugins stay in Birkly.</small>' +
             '</div>' +
             '<div class="form-group">' +
                 '<label for="project-git-auth-mode">Authentication</label>' +
                 '<select id="project-git-auth-mode" class="input">' +
                     '<option value="token"' + (authMode === 'token' ? ' selected' : '') + '>Access token (HTTPS)</option>' +
                     '<option value="ssh"' + (authMode === 'ssh' ? ' selected' : '') + '>SSH private key</option>' +
+                    '<option value="nostr"' + (authMode === 'nostr' ? ' selected' : '') + '>Nostr key (Buzz / NIP-98)</option>' +
                     '<option value="none"' + (authMode === 'none' ? ' selected' : '') + '>None (public or local remote)</option>' +
                 '</select>' +
+                '<small class="form-help" id="project-git-auth-help">' +
+                    (authMode === 'nostr'
+                        ? (nostrHelper
+                            ? 'Uses git-credential-nostr on this server with a stored nsec. Never written into project/.'
+                            : 'This server does not have git-credential-nostr on PATH yet — install the Buzz helper before connecting with Nostr auth.')
+                        : 'Stored encrypted on this server and never written into <code>project/</code>.') +
+                '</small>' +
             '</div>' +
             '<div class="form-group" id="project-git-token-group"' + (authMode === 'token' ? '' : ' hidden') + '>' +
                 '<label for="project-git-token">Personal access token</label>' +
-                '<input type="password" id="project-git-token" class="input" placeholder="' + (config && config.has_token ? 'Stored — leave blank to keep ' + escapeHtml(config.token_hint) : 'ghp_… / glpat-…') + '" autocomplete="new-password" spellcheck="false">' +
-                '<small class="form-help">Needs read and write access to the repository. Stored encrypted on this server and never written into <code>project/</code>.</small>' +
+                '<input type="password" id="project-git-token" class="input" placeholder="' + (config && config.has_token ? 'Stored — leave blank to keep ' + escapeHtml(config.token_hint) : 'ghp_… / glpat-… / app password') + '" autocomplete="new-password" spellcheck="false">' +
+                '<small class="form-help">Needs read and write access to the repository.</small>' +
             '</div>' +
             '<div class="form-group" id="project-git-username-group"' + (authMode === 'token' ? '' : ' hidden') + '>' +
                 '<label for="project-git-username">Username (optional)</label>' +
-                '<input type="text" id="project-git-username" class="input" value="' + escapeHtml((config && config.auth_username) || '') + '" placeholder="birkly" autocomplete="off">' +
-                '<small class="form-help">Some hosts require a specific username alongside the token. Leave blank unless yours does.</small>' +
+                '<input type="text" id="project-git-username" class="input" value="' + escapeHtml(username) + '" placeholder="' + escapeHtml(meta.default_username || 'git') + '" autocomplete="off">' +
+                '<small class="form-help">Some hosts require a specific username alongside the token (e.g. Bitbucket <code>x-token-auth</code>, GitLab <code>oauth2</code>).</small>' +
             '</div>' +
             '<div class="form-group" id="project-git-ssh-group"' + (authMode === 'ssh' ? '' : ' hidden') + '>' +
                 '<label for="project-git-ssh-key">SSH private key</label>' +
                 '<textarea id="project-git-ssh-key" class="input" rows="5" spellcheck="false" placeholder="' + (config && config.has_ssh_key ? 'Stored — leave blank to keep the current key' : '-----BEGIN OPENSSH PRIVATE KEY-----') + '"></textarea>' +
-                '<small class="form-help">A deploy key with write access. Stored encrypted and written to a temporary file only while git runs.</small>' +
+                '<small class="form-help">A deploy key with write access. Written to a temporary file only while git runs.</small>' +
+            '</div>' +
+            '<div class="form-group" id="project-git-nostr-group"' + (authMode === 'nostr' ? '' : ' hidden') + '>' +
+                '<label for="project-git-nostr-key">Nostr private key</label>' +
+                '<input type="password" id="project-git-nostr-key" class="input" placeholder="' + (config && config.has_nostr_key ? 'Stored — leave blank to keep ' + escapeHtml(config.nostr_hint || '••••') : 'nsec1… or hex') + '" autocomplete="new-password" spellcheck="false">' +
+                '<small class="form-help">Buzz signs git requests with NIP-98. Prefer a relay-scoped key. Encrypted at rest; never committed under <code>project/</code>.</small>' +
             '</div>' +
             '<div class="u-cluster">' +
                 '<button type="submit" class="btn btn-primary btn-sm" id="project-git-connect-btn">' + (isEdit ? 'Save connection' : 'Connect') + '</button>' +
@@ -227,6 +322,9 @@
         if (config.auth_mode === 'ssh') {
             return config.has_ssh_key ? 'SSH key' : 'SSH key (missing)';
         }
+        if (config.auth_mode === 'nostr') {
+            return config.has_nostr_key ? 'Nostr key ' + (config.nostr_hint || '') : 'Nostr key (missing)';
+        }
         return 'None';
     }
 
@@ -250,7 +348,7 @@
 
         if (!config.configured || state.editing) {
             container.innerHTML =
-                (config.configured ? '' : '<p class="section-description">Connect a git repository to push the files in <code>project/</code> to GitHub, GitLab, or any other git remote — and pull changes back.</p>') +
+                (config.configured ? '' : '<p class="section-description">Connect a git repository to push the files in <code>project/</code> to GitHub, GitLab, Bitbucket, Codeberg, Buzz, or any other git remote — and pull changes back.</p>') +
                 renderConnectForm(config);
             bindForm();
             return;
@@ -264,19 +362,68 @@
     // Events
     // ---------------------------------------------------------------------
 
+    function syncAuthGroups() {
+        var authMode = document.getElementById('project-git-auth-mode');
+        if (!authMode) return;
+        var mode = authMode.value;
+        var tokenGroup = document.getElementById('project-git-token-group');
+        var usernameGroup = document.getElementById('project-git-username-group');
+        var sshGroup = document.getElementById('project-git-ssh-group');
+        var nostrGroup = document.getElementById('project-git-nostr-group');
+        var authHelp = document.getElementById('project-git-auth-help');
+        var nostrHelper = !!(state.data && state.data.capability && state.data.capability.nostr_helper);
+        if (tokenGroup) tokenGroup.hidden = mode !== 'token';
+        if (usernameGroup) usernameGroup.hidden = mode !== 'token';
+        if (sshGroup) sshGroup.hidden = mode !== 'ssh';
+        if (nostrGroup) nostrGroup.hidden = mode !== 'nostr';
+        if (authHelp) {
+            if (mode === 'nostr') {
+                authHelp.textContent = nostrHelper
+                    ? 'Uses git-credential-nostr on this server with a stored nsec. Never written into project/.'
+                    : 'This server does not have git-credential-nostr on PATH yet — install the Buzz helper before connecting with Nostr auth.';
+            } else {
+                authHelp.textContent = 'Stored encrypted on this server and never written into project/.';
+            }
+        }
+    }
+
+    function applyProviderDefaults(forceAuth) {
+        var providerEl = document.getElementById('project-git-provider');
+        if (!providerEl) return;
+        var meta = providerMeta(providerEl.value);
+        var remote = document.getElementById('project-git-remote');
+        var help = document.getElementById('project-git-remote-help');
+        var username = document.getElementById('project-git-username');
+        var authMode = document.getElementById('project-git-auth-mode');
+        if (remote) remote.placeholder = meta.placeholder;
+        if (help) {
+            help.textContent = meta.help + ' Only files under project/ sync — CMS content, media, users and plugins stay in Birkly.';
+        }
+        if (username && !username.value) {
+            username.placeholder = meta.default_username || 'git';
+            if (!state.editing || forceAuth) {
+                username.value = meta.default_username || '';
+            }
+        }
+        if (authMode && forceAuth) {
+            authMode.value = meta.default_auth || 'token';
+        }
+        syncAuthGroups();
+    }
+
     function bindForm() {
         var form = document.getElementById('project-git-form');
         if (!form) return;
 
         var authMode = document.getElementById('project-git-auth-mode');
         if (authMode) {
-            authMode.addEventListener('change', function () {
-                var tokenGroup = document.getElementById('project-git-token-group');
-                var usernameGroup = document.getElementById('project-git-username-group');
-                var sshGroup = document.getElementById('project-git-ssh-group');
-                if (tokenGroup) tokenGroup.hidden = authMode.value !== 'token';
-                if (usernameGroup) usernameGroup.hidden = authMode.value !== 'token';
-                if (sshGroup) sshGroup.hidden = authMode.value !== 'ssh';
+            authMode.addEventListener('change', syncAuthGroups);
+        }
+
+        var provider = document.getElementById('project-git-provider');
+        if (provider) {
+            provider.addEventListener('change', function () {
+                applyProviderDefaults(true);
             });
         }
 
@@ -325,7 +472,8 @@
             auth_mode: value('project-git-auth-mode') || 'none',
             token: value('project-git-token'),
             auth_username: value('project-git-username'),
-            ssh_key: value('project-git-ssh-key')
+            ssh_key: value('project-git-ssh-key'),
+            nostr_key: value('project-git-nostr-key')
         };
     }
 
