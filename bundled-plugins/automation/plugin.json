@@ -1,6 +1,6 @@
 {
   "name": "Automation",
-  "version": "1.1.6",
+  "version": "1.1.9",
   "description": "Workflow automation with triggers, conditions, and actions. Deactivate to disable all automation hooks, API routes, and admin UI.",
   "author": "Birkly",
   "marketplace_slug": "birkly-automation",
@@ -32,6 +32,18 @@
       "default": 100,
       "label": "Default Rate Limit (per hour)",
       "description": "Maximum automation executions per hour per workflow"
+    },
+    "activity_notify": {
+      "type": "boolean",
+      "default": true,
+      "label": "Notify on automation activity",
+      "description": "Show automation activity in the admin notification bell"
+    },
+    "activity_nav_dot": {
+      "type": "boolean",
+      "default": true,
+      "label": "Sidebar attention for automation",
+      "description": "Show a mint indicator on Automation in the sidebar until you open it"
     }
   }
 }

@@ -62,6 +62,21 @@ try {
 
     $bad = birkly_plugin_activity_emit(['plugin' => '', 'event' => 'x', 'title' => 'y']);
     pa_assert('reject empty plugin', $bad === null);
+
+    $merged = birkly_plugin_merge_activity_settings_schema([]);
+    pa_assert('merge activity schema keys', isset($merged['activity_notify'], $merged['activity_nav_dot']));
+    pa_assert('merge keeps empty-plugin has_settings', !empty($merged));
+    $custom = birkly_plugin_merge_activity_settings_schema([
+        'activity_notify' => [
+            'type' => 'boolean',
+            'default' => true,
+            'label' => 'Custom notify label',
+            'description' => 'Custom',
+        ],
+        'other' => ['type' => 'string', 'default' => 'x', 'label' => 'Other'],
+    ]);
+    pa_assert('merge preserves custom label', ($custom['activity_notify']['label'] ?? '') === 'Custom notify label');
+    pa_assert('merge keeps other keys', isset($custom['other'], $custom['activity_nav_dot']));
 } finally {
     if (is_dir($dir)) {
         foreach (glob($dir . '/*.jsonl') ?: [] as $f) {

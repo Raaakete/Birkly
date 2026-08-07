@@ -327,7 +327,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="plugin-settings-title">{translate 'admin.plugin_settings'}</h2>
-            <button class="modal-close-btn" data-admin-action="closePluginSettingsModal">&times;</button>
+            <button type="button" class="modal-close-btn" data-admin-action="closePluginSettingsModal" data-plugin-action="close-settings-modal" aria-label="Close">&times;</button>
         </div>
         <div class="modal-body">
             <form id="plugin-settings-form">
@@ -337,8 +337,8 @@
             </form>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-admin-action="closePluginSettingsModal">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" data-admin-action="savePluginSettings">{translate 'admin.save_settings'}</button>
+            <button type="button" class="btn btn-secondary" data-admin-action="closePluginSettingsModal" data-plugin-action="close-settings-modal">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-primary" data-admin-action="savePluginSettings" data-plugin-action="save-settings">{translate 'admin.save_settings'}</button>
         </div>
     </div>
 </div>

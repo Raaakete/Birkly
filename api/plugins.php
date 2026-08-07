@@ -22,6 +22,7 @@ require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once 'log.php';
 require_once '../core/plugins.php';
+require_once '../core/plugin_activity.php';
 require_once '../core/plugins/security.php';
 require_once '../core/plugins/validation.php';
 require_once '../core/plugins/health.php';
@@ -99,6 +100,9 @@ if ($action === 'list') {
                 'grace_ends_at' => $entitlement['grace_ends_at'] ?? null,
             ];
         }
+        $settingsSchema = birkly_plugin_merge_activity_settings_schema(
+            is_array($plugin['settings_schema'] ?? null) ? $plugin['settings_schema'] : []
+        );
         $plugins_list[] = [
             'id' => $id,
             'name' => $plugin['name'] ?? ucwords(str_replace(['_', '-'], ' ', $id)),
@@ -107,7 +111,7 @@ if ($action === 'list') {
             'author' => $plugin['author'] ?? 'Unknown',
             'active' => $plugin['active'] ?? false,
             'path' => $plugin['path'] ?? '',
-            'has_settings' => !empty($plugin['settings_schema'] ?? []),
+            'has_settings' => !empty($settingsSchema),
             'settings' => $plugin['settings'] ?? [],
             'marketplace_slug' => $plugin['marketplace_slug'] ?? null,
             'offer_slug' => $offerSlug !== '' ? $offerSlug : null,
@@ -322,7 +326,9 @@ if ($action === 'get_settings') {
     }
     
     $plugin = $plugins[$plugin_id];
-    $settings_schema = $plugin['settings_schema'] ?? [];
+    $settings_schema = birkly_plugin_merge_activity_settings_schema(
+        is_array($plugin['settings_schema'] ?? null) ? $plugin['settings_schema'] : []
+    );
     $current_settings = $plugin['settings'] ?? [];
     
     // Merge current settings with schema defaults
@@ -340,7 +346,8 @@ if ($action === 'get_settings') {
                 'description' => $plugin['description'] ?? ''
             ],
             'settings_schema' => $settings_schema,
-            'settings' => $settings
+            'settings' => $settings,
+            'has_settings' => !empty($settings_schema),
         ]
     ]);
     exit;
@@ -370,9 +377,11 @@ if ($action === 'save_settings') {
     }
     
     $plugin = $plugins[$plugin_id];
-    $settings_schema = $plugin['settings_schema'] ?? [];
+    $settings_schema = birkly_plugin_merge_activity_settings_schema(
+        is_array($plugin['settings_schema'] ?? null) ? $plugin['settings_schema'] : []
+    );
     
-    // Validate settings against schema
+    // Validate settings against schema (includes auto-merged activity toggles)
     $validated_settings = [];
     foreach ($settings as $key => $value) {
         if (isset($settings_schema[$key])) {
@@ -381,7 +390,10 @@ if ($action === 'save_settings') {
             // Type validation
             switch ($schema['type'] ?? 'string') {
                 case 'boolean':
-                    $validated_settings[$key] = (bool) $value;
+                    $validated_settings[$key] = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if ($validated_settings[$key] === null) {
+                        $validated_settings[$key] = (bool) $value;
+                    }
                     break;
                 case 'number':
                     $validated_settings[$key] = is_numeric($value) ? (float) $value : ($schema['default'] ?? 0);
