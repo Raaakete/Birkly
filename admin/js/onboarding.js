@@ -95,6 +95,76 @@ const onboarding = {
         });
     },
 
+    applyStarterAvailability(availability) {
+        const note = document.getElementById('starter-availability-note');
+        const cards = document.querySelectorAll('.starter-template-grid [data-starter]');
+        if (!cards.length) return;
+
+        let anyRemoteUnavailable = false;
+        let catalogMissing = false;
+
+        cards.forEach((card) => {
+            const id = card.dataset.starter;
+            if (!id || id === 'blank') return;
+
+            const meta = availability && availability[id] ? availability[id] : null;
+            const statusEl = card.querySelector('[data-starter-status]');
+            const selectable = !!(meta && meta.selectable);
+
+            if (!meta) {
+                catalogMissing = true;
+            }
+
+            card.dataset.starterSelectable = selectable ? '1' : '0';
+            card.dataset.starterPending = '0';
+            card.classList.toggle('use-case-card--disabled', !selectable);
+
+            if (selectable) {
+                card.removeAttribute('disabled');
+                card.removeAttribute('aria-disabled');
+                card.setAttribute('data-onboarding-action', 'select-starter');
+                card.setAttribute('data-onboarding-param', id);
+                if (statusEl) statusEl.remove();
+            } else {
+                anyRemoteUnavailable = true;
+                card.setAttribute('disabled', 'disabled');
+                card.setAttribute('aria-disabled', 'true');
+                card.removeAttribute('data-onboarding-action');
+                card.removeAttribute('data-onboarding-param');
+                if (this.starterTemplate === id) {
+                    this.starterTemplate = null;
+                    const cont = document.getElementById('starter-continue');
+                    if (cont) cont.disabled = true;
+                }
+                let label = 'Internet connection needed';
+                if (meta && meta.enabled && !meta.ready) {
+                    label = 'Not available yet';
+                } else if (meta && !meta.enabled) {
+                    label = 'Coming soon';
+                }
+                if (statusEl) {
+                    statusEl.textContent = label;
+                } else {
+                    const em = document.createElement('em');
+                    em.className = 'starter-coming-soon';
+                    em.setAttribute('data-starter-status', '');
+                    em.textContent = label;
+                    card.appendChild(em);
+                }
+            }
+        });
+
+        if (note) {
+            if (catalogMissing || anyRemoteUnavailable) {
+                note.hidden = false;
+                note.textContent = 'Marsk needs an internet connection from this computer so Birkly can download the demo pack. You can continue with Blank.';
+            } else {
+                note.hidden = true;
+                note.textContent = '';
+            }
+        }
+    },
+
     async checkFirstUser() {
         try {
             let statusUrl = Birkly.url('/api/onboarding.php?action=status');
@@ -111,6 +181,9 @@ const onboarding = {
                 if (typeof data.data.is_local_dev === 'boolean') {
                     this.showAiStep = !data.data.is_local_dev;
                     this.maxSteps = this.showAiStep ? 4 : 3;
+                }
+                if (data.data.starter_availability) {
+                    this.applyStarterAvailability(data.data.starter_availability);
                 }
                 if (data.data.needs_first_user) {
                     this.needsFirstUser = true;
@@ -135,6 +208,7 @@ const onboarding = {
             this.showStep(1);
         } catch (error) {
             console.error('Error checking first user:', error);
+            this.applyStarterAvailability({});
             this.showStep(1);
         }
     },

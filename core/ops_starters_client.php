@@ -113,6 +113,8 @@ function birkly_ops_starters_diagnostics(?string $starterId = null): array
  */
 function birkly_ops_fetch_starters_catalog(?array &$errors = null, int $timeoutSeconds = 12, int $connectTimeoutSeconds = 6): ?array
 {
+    static $requestCache = [];
+
     if (!function_exists('curl_init')) {
         $errors ??= [];
         $errors[] = 'PHP curl extension is not available';
@@ -126,6 +128,23 @@ function birkly_ops_fetch_starters_catalog(?array &$errors = null, int $timeoutS
     $channel = birkly_ops_release_channel();
     $query = http_build_query(['channel' => $channel]);
     $fullUrl = str_contains($url, '?') ? $url . '&' . $query : $url . '?' . $query;
+    $cacheKey = $fullUrl;
+
+    if (array_key_exists($cacheKey, $requestCache)) {
+        return $requestCache[$cacheKey];
+    }
+
+    require_once __DIR__ . '/birkly_paths.php';
+    $cacheTtl = 120; // seconds — avoids repeat outbound hits within one admin session
+    $cacheDir = rtrim(birkly_project_root(), '/\\') . '/settings';
+    $cacheFile = $cacheDir . '/.ops_starters_catalog_' . hash('sha256', $cacheKey) . '.json';
+    if (is_file($cacheFile) && (time() - (int) filemtime($cacheFile)) < $cacheTtl) {
+        $cached = json_decode((string) file_get_contents($cacheFile), true);
+        if (is_array($cached) && !empty($cached['ok']) && is_array($cached['starters'] ?? null)) {
+            $requestCache[$cacheKey] = $cached;
+            return $cached;
+        }
+    }
 
     $ch = curl_init($fullUrl);
     curl_setopt_array($ch, [
@@ -147,6 +166,7 @@ function birkly_ops_fetch_starters_catalog(?array &$errors = null, int $timeoutS
                 ? 'Catalog request error: ' . $curlError
                 : 'Catalog request failed with HTTP ' . $code;
         }
+        $requestCache[$cacheKey] = null;
         return null;
     }
 
@@ -155,9 +175,15 @@ function birkly_ops_fetch_starters_catalog(?array &$errors = null, int $timeoutS
         if ($errors !== null) {
             $errors[] = 'Catalog response was not valid JSON from Ops';
         }
+        $requestCache[$cacheKey] = null;
         return null;
     }
 
+    if (is_dir($cacheDir) || @mkdir($cacheDir, 0755, true)) {
+        @file_put_contents($cacheFile, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+    }
+
+    $requestCache[$cacheKey] = $data;
     return $data;
 }
 
@@ -630,10 +656,10 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
 /**
  * @return array<string, array{enabled:bool,ready:bool,selectable:bool,source?:string}>
  */
-function birkly_ops_starter_availability_overlay(string $projectRoot, int $timeoutSeconds = 4, int $connectTimeoutSeconds = 2): array
+function birkly_ops_starter_availability_overlay(string $projectRoot, int $timeoutSeconds = 8, int $connectTimeoutSeconds = 3): array
 {
-    // Onboarding loads this on first paint — keep the Ops probe short so a
-    // blocked/slow outbound network does not make admin setup feel hung.
+    // Prefer succeeding when the machine has internet; cache in fetch avoids
+    // repeating this cost across onboarding HTML + status API + install.
     $errors = [];
     $catalog = birkly_ops_fetch_starters_catalog($errors, $timeoutSeconds, $connectTimeoutSeconds);
     if ($catalog === null) {
