@@ -504,6 +504,10 @@ function birkly_project_ssr_cache_key(string $relativePath, array $query, string
         'lang:' . $language,
         'rev:' . $revision,
         'q:' . json_encode($relevant),
+        // WebMCP/guide injection state (P60-M7): toggling WebMCP or
+        // (un)publishing the guide changes what gets injected, so it must bust
+        // the SSR cache. Folded in here so every caller stays consistent.
+        'inj:' . birkly_project_ssr_inject_signature(),
     ];
     return hash('sha256', implode('|', $parts));
 }
@@ -614,6 +618,72 @@ function birkly_project_ssr_inject_marker(string $html): string
 }
 
 /**
+ * Inject the WebMCP runtime + Agent Guide discovery into a rendered project page
+ * (P60-M7). Project mode is Birkly-hosted, so both assets live at the CMS root:
+ *
+ *   - `birkly-webmcp.js` is injected **only when WebMCP is enabled** (default
+ *     off → no script, per M0 §C3: the cheapest, safest off is no script).
+ *   - A guide discovery `<link rel="alternate">` points agents at the CMS
+ *     well-known route when the Agent Guide is published.
+ *
+ * The runtime self-guards: even if the script loads it registers nothing unless
+ * the browser supports WebMCP and the public config says enabled.
+ */
+function birkly_project_ssr_inject_webmcp(string $html): string
+{
+    require_once __DIR__ . '/webmcp.php';
+    require_once __DIR__ . '/ai_presence.php';
+
+    $additions = '';
+
+    // Guide discovery link (published guide only) — helps agents find the
+    // canonical brand truth even before any proxy exists.
+    $meta = birkly_ai_presence_load_meta();
+    $guidePublished = (int) ($meta['published_version'] ?? 0) > 0;
+    if ($guidePublished) {
+        $urls = birkly_ai_presence_public_urls();
+        $guideUrl = (string) ($urls['cms_canonical_url'] ?? '');
+        if ($guideUrl !== '' && stripos($html, 'agent-guide.json') === false) {
+            $additions .= "\n    " . '<link rel="alternate" type="application/json" title="Agent Guide" href="'
+                . htmlspecialchars($guideUrl, ENT_QUOTES, 'UTF-8') . '">';
+        }
+    }
+
+    if ($additions !== '' && preg_match('/<head[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+        $pos = $m[0][1] + strlen($m[0][0]);
+        $html = substr($html, 0, $pos) . $additions . substr($html, $pos);
+    }
+
+    // WebMCP runtime — only when enabled; loads after birkly-client.js.
+    if (birkly_webmcp_is_enabled() && stripos($html, 'birkly-webmcp.js') === false) {
+        $src = htmlspecialchars(birkly_url('/birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
+        $tag = '<script src="' . $src . '" defer></script>';
+        if (stripos($html, '</body>') !== false) {
+            $html = preg_replace('/<\/body>/i', '    ' . $tag . "\n</body>", $html, 1) ?? $html;
+        } else {
+            $html .= "\n" . $tag;
+        }
+    }
+
+    return $html;
+}
+
+/**
+ * Cache signature for injections whose state is independent of page content
+ * (WebMCP enablement + guide published state). Folded into the SSR cache
+ * revision so toggling WebMCP or (un)publishing the guide busts the cache.
+ */
+function birkly_project_ssr_inject_signature(): string
+{
+    require_once __DIR__ . '/webmcp.php';
+    require_once __DIR__ . '/ai_presence.php';
+    $meta = birkly_ai_presence_load_meta();
+    $wm = birkly_webmcp_is_enabled() ? '1' : '0';
+    $guide = (int) ($meta['published_version'] ?? 0) > 0 ? '1' : '0';
+    return 'wm' . $wm . 'g' . $guide;
+}
+
+/**
  * Emit rendered HTML with SSR headers.
  *
  * @param string|null $cacheWrite Optional write diagnostic: ok|fail|skip
@@ -681,6 +751,7 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     }
 
     $rendered = birkly_project_ssr_inject_marker($rendered);
+    $rendered = birkly_project_ssr_inject_webmcp($rendered);
 
     $cacheWrite = 'skip';
     if ($ttl > 0) {

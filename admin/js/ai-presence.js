@@ -27,8 +27,51 @@
         viewMode: 'essentials',
         publishState: null,
         publishingInProgress: false,
-        wizard: null
+        wizard: null,
+        hubZone: 'guide',
+        webmcpConfig: null,
+        webmcpCatalog: [],
+        webmcpPublicForms: [],
+        webmcpSupported: null,
+        webmcpLoaded: false,
+        webmcpSaving: false,
+        connectionsMounted: false
     };
+
+    var HUB_ZONES = ['guide', 'tools', 'connections', 'publish'];
+
+    // Plain-language labels/descriptions for the WebMCP tool catalog. The admin
+    // API returns technical metadata (id/pack/kind/consent); the human copy
+    // lives here so it can be translated and kept out of the backend.
+    var WEBMCP_TOOL_META = {
+        birkly_get_page_context:       { label: 'Read this page',            desc: 'Lets an AI helper see the page title, address and language.' },
+        birkly_list_published_entries: { label: 'List published items',      desc: 'Lets an AI helper read the published items a page shows (e.g. blog posts).' },
+        birkly_get_published_entry:    { label: 'Read one published item',   desc: 'Lets an AI helper open a single published item by its address.' },
+        birkly_describe_form:          { label: 'Understand a form',         desc: 'Lets an AI helper see a form’s fields so it can fill them correctly.' },
+        birkly_submit_public_form:     { label: 'Submit a form',            desc: 'Lets an AI helper submit an allowed form — always after the visitor confirms.' },
+        birkly_set_language:           { label: 'Switch language',          desc: 'Lets an AI helper change the site language, only where a language picker exists.' },
+        birkly_commerce_get_cart:      { label: 'Read the cart',            desc: 'Lets an AI helper see what’s in the shopping cart.' },
+        birkly_commerce_add_to_cart:   { label: 'Add to cart',             desc: 'Lets an AI helper add a product to the cart — after the visitor confirms.' },
+        birkly_commerce_checkout:      { label: 'Start checkout',          desc: 'Lets an AI helper begin checkout. Paying always asks the visitor to confirm.' },
+        birkly_events_list:            { label: 'List events',             desc: 'Lets an AI helper read published events on the page.' },
+        birkly_events_rsvp:            { label: 'RSVP to an event',        desc: 'Lets an AI helper RSVP for the visitor — after they confirm.' },
+        birkly_user_session:           { label: 'Check sign-in',           desc: 'Lets an AI helper see whether the visitor is signed in.' },
+        birkly_user_login:             { label: 'Sign in',                 desc: 'Lets an AI helper start sign-in — off unless you opt in, and always confirmed.' }
+    };
+
+    var WEBMCP_PACK_META = {
+        core:     { label: 'Core actions',  note: '' },
+        commerce: { label: 'Shop (Commerce)', note: 'Appears on pages where your shop is active.' },
+        events:   { label: 'Events',        note: 'Appears on pages where events are shown.' },
+        user:     { label: 'Accounts',      note: 'Appears on pages with sign-in.' }
+    };
+
+    function webmcpConsentNote(tool) {
+        if (!tool || !tool.mutating) return '';
+        if (tool.consent === 'pay') return t('ag_tools_consent_pay', 'Highest consent — asks the visitor to confirm before paying.');
+        if (tool.consent === 'login') return t('ag_tools_consent_login', 'Highest consent — asks the visitor to confirm before signing in.');
+        return t('ag_tools_consent_confirm', 'Asks the visitor to confirm.');
+    }
 
     function apiUrl(path) {
         if (!path) {
@@ -796,8 +839,7 @@
                 showPublishSuccess({ meta: state.meta, public_urls: state.publicUrls, publish_state: state.publishState }, fromWizard);
             },
             onPreview: function () {
-                setViewMode('advanced');
-                switchTab('publish');
+                switchZone('publish');
             },
             loadEntries: function (collection, sel) {
                 return loadEntries(collection).then(function () {
@@ -1748,13 +1790,20 @@
         renderPublishStatus(data);
         renderCmsDiff();
         renderAssistSuggestions();
+        updateSpine();
+        renderPublishZone();
     }
 
     function initWorkflowNav() {
         document.querySelectorAll('.ap-workflow-step').forEach(function (step) {
             step.addEventListener('click', function () {
                 var tab = step.getAttribute('data-workflow');
-                if (tab) switchTab(tab);
+                if (!tab) return;
+                if (tab === 'publish') {
+                    switchZone('publish');
+                } else {
+                    switchTab(tab);
+                }
             });
         });
     }
@@ -3127,10 +3176,521 @@
 
         document.body.addEventListener('click', function (e) {
             if (e.target.classList.contains('ai-presence-goto-tab')) {
-                setViewMode('advanced');
-                switchTab(e.target.getAttribute('data-tab'));
+                var tab = e.target.getAttribute('data-tab');
+                if (tab === 'publish') {
+                    switchZone('publish');
+                } else {
+                    setViewMode('advanced');
+                    switchTab(tab);
+                }
             }
         });
+    }
+
+    // ===================================================================
+    // Hub shell — zones, status spine, deep-linking (P60-M2)
+    // ===================================================================
+
+    function getInitialZone() {
+        try {
+            var params = new URLSearchParams(window.location.search);
+            var z = (params.get('zone') || '').toLowerCase();
+            if (HUB_ZONES.indexOf(z) >= 0) return z;
+        } catch (e) { /* ignore */ }
+        return 'guide';
+    }
+
+    function setZoneInUrl(zone) {
+        try {
+            var url = new URL(window.location.href);
+            url.searchParams.set('zone', zone);
+            window.history.replaceState({}, '', url.toString());
+        } catch (e) { /* ignore */ }
+    }
+
+    function switchZone(zone, opts) {
+        if (HUB_ZONES.indexOf(zone) < 0) zone = 'guide';
+        opts = opts || {};
+        state.hubZone = zone;
+
+        document.querySelectorAll('.ap-hub .tab[data-hub-zone]').forEach(function (btn) {
+            var active = btn.getAttribute('data-hub-zone') === zone;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            btn.tabIndex = active ? 0 : -1;
+        });
+        document.querySelectorAll('[data-hub-panel]').forEach(function (panel) {
+            var active = panel.getAttribute('data-hub-panel') === zone;
+            panel.classList.toggle('active', active);
+            panel.hidden = !active;
+        });
+
+        // Sticky Publish bar stays visible on every zone (P60-M1 §2.2): it is the
+        // one mint primary and the commit action for the relocated Publish controls.
+
+        if (opts.updateUrl !== false) setZoneInUrl(zone);
+
+        // Lazy-init heavier zones on first open.
+        if (zone === 'tools' && !state.webmcpLoaded) {
+            loadWebmcpConfig();
+        }
+        if (zone === 'connections') {
+            mountConnectionsZone();
+        }
+        if (zone === 'publish') {
+            renderPublishZone();
+        }
+    }
+
+    function initHubZones() {
+        var hub = document.querySelector('.ap-hub');
+        if (!hub) return;
+
+        document.addEventListener('click', function (e) {
+            var zoneBtn = e.target.closest('[data-hub-zone]');
+            if (zoneBtn && (zoneBtn.classList.contains('tab') ||
+                zoneBtn.classList.contains('ap-spine-item') ||
+                zoneBtn.classList.contains('ap-goto-zone'))) {
+                e.preventDefault();
+                switchZone(zoneBtn.getAttribute('data-hub-zone'));
+            }
+        });
+
+        var tablist = document.getElementById('ap-hub-tablist');
+        if (tablist) {
+            tablist.addEventListener('keydown', function (e) {
+                var tabs = Array.prototype.slice.call(
+                    tablist.querySelectorAll('.tab[data-hub-zone]')
+                );
+                if (!tabs.length) return;
+                var current = document.activeElement;
+                var idx = tabs.indexOf(current);
+                if (idx < 0) return;
+                var next = -1;
+                if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    next = (idx + 1) % tabs.length;
+                } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    next = (idx - 1 + tabs.length) % tabs.length;
+                } else if (e.key === 'Home') {
+                    next = 0;
+                } else if (e.key === 'End') {
+                    next = tabs.length - 1;
+                }
+                if (next < 0) return;
+                e.preventDefault();
+                tabs[next].focus();
+                switchZone(tabs[next].getAttribute('data-hub-zone'));
+            });
+        }
+
+        window.addEventListener('popstate', function () {
+            switchZone(getInitialZone(), { updateUrl: false });
+        });
+
+        switchZone(getInitialZone(), { updateUrl: false });
+    }
+
+    function badge(el, text, tone) {
+        if (!el) return;
+        el.textContent = text;
+        el.className = 'badge badge-' + (tone || 'neutral');
+    }
+
+    function updateSpine() {
+        var ps = getPublishState({ meta: state.meta, publish_state: state.publishState });
+        // Guide
+        var gBadge = document.getElementById('ap-spine-guide-badge');
+        var gVal = document.getElementById('ap-spine-guide-value');
+        if (!ps.publishing_enabled) {
+            badge(gBadge, t('ag_status_off', 'Off'), 'neutral');
+            if (gVal) gVal.textContent = t('ag_status_off', 'Off');
+        } else if (ps.never_published) {
+            badge(gBadge, t('ag_status_draft', 'Draft'), 'warning');
+            if (gVal) gVal.textContent = t('ag_status_draft', 'Draft');
+        } else {
+            badge(gBadge, t('ag_status_published', 'Published'), 'success');
+            if (gVal) gVal.textContent = t('ag_status_published', 'Published');
+        }
+
+        // Website tools
+        var tBadge = document.getElementById('ap-spine-tools-badge');
+        var tVal = document.getElementById('ap-spine-tools-value');
+        var cfg = state.webmcpConfig;
+        if (cfg && cfg.enabled) {
+            var count = 0;
+            if (cfg.tools) {
+                Object.keys(cfg.tools).forEach(function (k) { if (cfg.tools[k]) count++; });
+            }
+            badge(tBadge, t('ag_webmcp_on', 'On'), 'success');
+            if (tVal) tVal.textContent = t('ag_tools_on_count', 'On ({n})').replace('{n}', String(count));
+        } else {
+            badge(tBadge, t('ag_webmcp_off', 'Off'), 'neutral');
+            if (tVal) tVal.textContent = t('ag_webmcp_off', 'Off');
+        }
+
+        // AI app connections
+        var cBadge = document.getElementById('ap-spine-connections-badge');
+        var cVal = document.getElementById('ap-spine-connections-value');
+        var urls = state.publicUrls || {};
+        if (urls.mcp_url) {
+            badge(cBadge, t('ag_status_connected', 'Ready'), 'success');
+            if (cVal) cVal.textContent = t('ag_status_connected', 'Ready');
+        } else {
+            badge(cBadge, t('ag_status_not_set_up', 'Not set up'), 'neutral');
+            if (cVal) cVal.textContent = t('ag_status_not_set_up', 'Not set up');
+        }
+
+        // Where it's hosted
+        var hBadge = document.getElementById('ap-spine-hosted-badge');
+        var hVal = document.getElementById('ap-spine-hosted-value');
+        var mode = urls.hosting_mode || 'none';
+        var hostLabel = mode === 'project' ? t('ag_hosted_project', 'On Birkly')
+            : (mode === 'external' ? t('ag_hosted_external', 'External') : t('ag_hosted_none', 'None'));
+        badge(hBadge, hostLabel, mode === 'none' ? 'neutral' : 'info');
+        if (hVal) hVal.textContent = hostLabel;
+    }
+
+    // ===================================================================
+    // Tools zone — WebMCP master switch, catalog, allowlist, preview (P60-M6)
+    // ===================================================================
+
+    function webmcpApiUrl() {
+        return apiUrl('/api/webmcp.php');
+    }
+
+    function webmcpSupportedInThisBrowser() {
+        if (state.webmcpSupported !== null) return state.webmcpSupported;
+        var mc = (typeof document !== 'undefined' && document.modelContext) ||
+            (typeof navigator !== 'undefined' && navigator.modelContext) || null;
+        state.webmcpSupported = !!(mc && ('registerTool' in mc));
+        return state.webmcpSupported;
+    }
+
+    function loadWebmcpConfig() {
+        return fetch(webmcpApiUrl() + '?action=get', { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Failed to load tools config');
+                state.webmcpConfig = res.data.config || { enabled: false, tools: {}, form_allowlist: [] };
+                state.webmcpCatalog = res.data.catalog || [];
+                state.webmcpPublicForms = res.data.public_forms || [];
+                state.webmcpLoaded = true;
+                renderTools();
+                updateSpine();
+                renderPublishZone();
+            })
+            .catch(function (err) {
+                toast(err.message || 'Failed to load tools config', 'error');
+            });
+    }
+
+    function saveWebmcp() {
+        if (state.webmcpSaving) return Promise.resolve();
+        state.webmcpSaving = true;
+        return postJsonTo(webmcpApiUrl(), { action: 'save', config: state.webmcpConfig })
+            .then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
+                state.webmcpConfig = res.data.config || state.webmcpConfig;
+                state.webmcpCatalog = res.data.catalog || state.webmcpCatalog;
+                renderTools();
+                updateSpine();
+                renderPublishZone();
+                toast(t('ag_tools_saved', 'Website tools updated'), 'success');
+            })
+            .catch(function (err) {
+                toast(err.message || 'Save failed', 'error');
+                // Reload authoritative state on failure.
+                return loadWebmcpConfig();
+            })
+            .finally(function () { state.webmcpSaving = false; });
+    }
+
+    function renderTools() {
+        var cfg = state.webmcpConfig || { enabled: false, tools: {}, form_allowlist: [] };
+        var master = document.getElementById('ap-webmcp-enabled');
+        if (master) master.checked = !!cfg.enabled;
+
+        var config = document.getElementById('ap-webmcp-config');
+        if (config) config.hidden = !cfg.enabled;
+
+        var supportNote = document.getElementById('ap-webmcp-support-note');
+        if (supportNote) supportNote.hidden = webmcpSupportedInThisBrowser();
+
+        if (cfg.enabled) {
+            renderToolCatalog();
+            renderAllowlist();
+            renderToolsPreview();
+        }
+    }
+
+    function renderToolCatalog() {
+        var host = document.getElementById('ap-webmcp-catalog');
+        if (!host) return;
+        host.innerHTML = '';
+        var cfg = state.webmcpConfig || { tools: {} };
+        var byPack = {};
+        (state.webmcpCatalog || []).forEach(function (tool) {
+            (byPack[tool.pack] = byPack[tool.pack] || []).push(tool);
+        });
+        ['core', 'commerce', 'events', 'user'].forEach(function (pack) {
+            var tools = byPack[pack];
+            if (!tools || !tools.length) return;
+            var packMeta = WEBMCP_PACK_META[pack] || { label: pack, note: '' };
+            var group = document.createElement('div');
+            group.className = 'card-section u-stack-2';
+            var head = '<div class="u-split u-align-baseline"><h4 class="u-text-sm u-weight-semibold u-m-0">' +
+                escapeHtml(packMeta.label) + '</h4></div>';
+            if (packMeta.note) {
+                head += '<p class="u-text-xs u-fg-secondary u-m-0">' + escapeHtml(packMeta.note) + '</p>';
+            }
+            group.innerHTML = head;
+            var list = document.createElement('ul');
+            list.className = 'data-list';
+            tools.forEach(function (tool) {
+                var meta = WEBMCP_TOOL_META[tool.id] || { label: tool.id, desc: '' };
+                var li = document.createElement('li');
+                li.className = 'data-list-item u-split u-align-start u-gap-3';
+                var consent = webmcpConsentNote(tool);
+                li.innerHTML =
+                    '<div class="u-stack-1 u-fill">' +
+                    '<strong class="u-text-sm">' + escapeHtml(meta.label) + '</strong>' +
+                    '<span class="u-text-xs u-fg-secondary">' + escapeHtml(meta.desc) + '</span>' +
+                    (consent ? '<span class="u-text-xs u-fg-tertiary">' + escapeHtml(consent) + '</span>' : '') +
+                    '</div>' +
+                    '<label class="switch"><input type="checkbox" class="ap-webmcp-tool" data-tool-id="' +
+                    escapeHtml(tool.id) + '"' + (tool.enabled ? ' checked' : '') + '><span class="switch__slider"></span></label>';
+                list.appendChild(li);
+            });
+            group.appendChild(list);
+            host.appendChild(group);
+        });
+
+        host.querySelectorAll('.ap-webmcp-tool').forEach(function (input) {
+            input.addEventListener('change', function () {
+                var id = input.getAttribute('data-tool-id');
+                if (!state.webmcpConfig.tools) state.webmcpConfig.tools = {};
+                state.webmcpConfig.tools[id] = input.checked;
+                saveWebmcp();
+            });
+        });
+    }
+
+    function renderAllowlist() {
+        var host = document.getElementById('ap-webmcp-allowlist');
+        var empty = document.getElementById('ap-webmcp-allowlist-empty');
+        var warn = document.getElementById('ap-webmcp-allowlist-warn');
+        if (!host) return;
+        host.innerHTML = '';
+        var forms = state.webmcpPublicForms || [];
+        var cfg = state.webmcpConfig || { form_allowlist: [], tools: {} };
+        var allow = cfg.form_allowlist || [];
+
+        if (empty) empty.hidden = forms.length > 0;
+        host.hidden = forms.length === 0;
+
+        forms.forEach(function (form) {
+            var row = document.createElement('label');
+            row.className = 'u-row-2 u-text-sm';
+            var checked = allow.indexOf(form.slug) >= 0;
+            row.innerHTML = '<input type="checkbox" class="ap-webmcp-allow" data-slug="' + escapeHtml(form.slug) + '"' +
+                (checked ? ' checked' : '') + '> <span>' + escapeHtml(form.name) +
+                ' <code class="u-text-xs u-fg-secondary">' + escapeHtml(form.slug) + '</code></span>';
+            host.appendChild(row);
+        });
+
+        host.querySelectorAll('.ap-webmcp-allow').forEach(function (input) {
+            input.addEventListener('change', function () {
+                var slug = input.getAttribute('data-slug');
+                var list = state.webmcpConfig.form_allowlist || [];
+                var idx = list.indexOf(slug);
+                if (input.checked && idx < 0) list.push(slug);
+                if (!input.checked && idx >= 0) list.splice(idx, 1);
+                state.webmcpConfig.form_allowlist = list;
+                saveWebmcp();
+            });
+        });
+
+        // Warn if the submit tool is on but no forms are allowed.
+        var submitOn = !!(cfg.tools && cfg.tools.birkly_submit_public_form);
+        if (warn) warn.hidden = !(submitOn && (cfg.form_allowlist || []).length === 0 && forms.length > 0);
+    }
+
+    function renderToolsPreview() {
+        var host = document.getElementById('ap-webmcp-preview');
+        var empty = document.getElementById('ap-webmcp-preview-empty');
+        if (!host) return;
+        host.innerHTML = '';
+        var cfg = state.webmcpConfig || { tools: {}, form_allowlist: [] };
+        var exposed = [];
+        (state.webmcpCatalog || []).forEach(function (tool) {
+            if (!tool.enabled) return;
+            // Submit tool only exposes when at least one form is allowlisted.
+            if (tool.id === 'birkly_submit_public_form' && (cfg.form_allowlist || []).length === 0) return;
+            var meta = WEBMCP_TOOL_META[tool.id] || { label: tool.id, desc: '' };
+            exposed.push(meta);
+        });
+
+        if (empty) empty.hidden = exposed.length > 0;
+        host.hidden = exposed.length === 0;
+        exposed.forEach(function (meta) {
+            var li = document.createElement('li');
+            li.className = 'data-list-item u-stack-1';
+            li.innerHTML = '<strong class="u-text-sm">' + escapeHtml(meta.label) + '</strong>' +
+                '<span class="u-text-xs u-fg-secondary">' + escapeHtml(meta.desc) + '</span>';
+            host.appendChild(li);
+        });
+    }
+
+    function initTools() {
+        var master = document.getElementById('ap-webmcp-enabled');
+        if (master) {
+            master.addEventListener('change', function () {
+                if (!state.webmcpConfig) state.webmcpConfig = { enabled: false, tools: {}, form_allowlist: [] };
+                state.webmcpConfig.enabled = master.checked;
+                var config = document.getElementById('ap-webmcp-config');
+                if (config) config.hidden = !master.checked;
+                saveWebmcp();
+            });
+        }
+    }
+
+    // ===================================================================
+    // Connections zone — mount shared Settings → AI modules (P60-M4)
+    // ===================================================================
+
+    function mountConnectionsZone() {
+        if (state.connectionsMounted) return;
+        var mount = document.getElementById('ap-connections-mount');
+        if (!mount) return;
+        state.connectionsMounted = true;
+        // The shared connection panel partial is included in the mount container
+        // server-side; here we simply initialize the same modules Settings → AI
+        // uses. Separate pages → identical IDs never collide at runtime.
+        try {
+            if (global.McpConnections && typeof global.McpConnections.init === 'function') {
+                global.McpConnections.init();
+            }
+            if (global.AiConnections && typeof global.AiConnections.init === 'function') {
+                global.AiConnections.init();
+            }
+        } catch (e) {
+            if (global.console) console.error('Connections mount failed', e);
+        }
+    }
+
+    // ===================================================================
+    // Publish zone — mode-aware guide/tools/MCP read-out (P60-M7)
+    // ===================================================================
+
+    function renderPublishZone() {
+        var urls = state.publicUrls || {};
+        var mode = urls.hosting_mode || 'none';
+        var ps = getPublishState({ meta: state.meta, publish_state: state.publishState });
+
+        // Mode badge
+        var modeBadge = document.getElementById('ap-publish-mode-badge');
+        var modeLabel = mode === 'project' ? t('ag_hosted_project', 'On Birkly')
+            : (mode === 'external' ? t('ag_hosted_external', 'External') : t('ag_hosted_none', 'None'));
+        badge(modeBadge, modeLabel, mode === 'none' ? 'neutral' : 'info');
+
+        // Guide card
+        var guideBadge = document.getElementById('ap-publish-guide-badge');
+        if (!ps.publishing_enabled) badge(guideBadge, t('ag_status_off', 'Off'), 'neutral');
+        else if (ps.never_published) badge(guideBadge, t('ag_status_draft', 'Draft'), 'warning');
+        else badge(guideBadge, t('ag_status_published', 'Published'), 'success');
+
+        var guideUrls = document.getElementById('ap-publish-guide-urls');
+        if (guideUrls) {
+            var rows = '';
+            if (urls.birkly_serves_public && urls.public_site_url) {
+                rows += '<dt>' + escapeHtml(t('ag_publish_public_url', 'Public URL')) + '</dt>' +
+                    '<dd><code>' + escapeHtml(urls.public_site_url) + '</code></dd>';
+            }
+            rows += '<dt>' + escapeHtml(t('ag_publish_cms_url', 'Birkly URL (always works)')) + '</dt>' +
+                '<dd><code>' + escapeHtml(urls.cms_canonical_url || '—') + '</code></dd>';
+            guideUrls.innerHTML = rows;
+        }
+
+        // External checklist
+        var ext = document.getElementById('ap-publish-external');
+        if (ext) ext.hidden = mode !== 'external';
+        if (mode === 'external') {
+            var clientSnippet = '<script src="' + (urls.cms_base_url || '') + '/birkly-client.js" data-cms-url="' +
+                (urls.cms_base_url || '') + '"></' + 'script>';
+            setSnippet('ap-publish-snippet-client', clientSnippet);
+            var proxy = 'location /.well-known/agent-guide.json {\n    proxy_pass ' + (urls.cms_canonical_url || '') + ';\n}';
+            setSnippet('ap-publish-snippet-proxy', proxy);
+            var dl = document.getElementById('ap-publish-download-guide');
+            if (dl && urls.cms_canonical_url) dl.href = urls.cms_canonical_url;
+        }
+
+        // WebMCP read-out
+        var wmBadge = document.getElementById('ap-publish-webmcp-badge');
+        var cfg = state.webmcpConfig;
+        var wmOn = !!(cfg && cfg.enabled);
+        badge(wmBadge, wmOn ? t('ag_webmcp_on', 'On') : t('ag_webmcp_off', 'Off'), wmOn ? 'success' : 'neutral');
+        var wmHelp = document.getElementById('ap-publish-webmcp-help');
+        if (wmHelp) {
+            if (mode === 'project') {
+                wmHelp.textContent = wmOn
+                    ? t('ag_publish_webmcp_project_on', 'Automatically active on your Birkly site.')
+                    : t('ag_publish_webmcp_off', 'Off. Turn on in the Tools tab.');
+            } else if (mode === 'external') {
+                wmHelp.textContent = wmOn
+                    ? t('ag_publish_webmcp_external_on', 'Add the script tags below to every page.')
+                    : t('ag_publish_webmcp_off', 'Off. Turn on in the Tools tab.');
+            } else {
+                wmHelp.textContent = t('ag_publish_webmcp_help', 'Whether AI helpers can act on your live site. Manage in the Tools tab.');
+            }
+        }
+        var wmExt = document.getElementById('ap-publish-webmcp-external');
+        if (wmExt) wmExt.hidden = !(mode === 'external' && wmOn);
+        if (mode === 'external' && wmOn) {
+            var wmSnippet = '<script src="' + (urls.cms_base_url || '') + '/birkly-client.js" data-cms-url="' +
+                (urls.cms_base_url || '') + '"></' + 'script>\n' +
+                '<script src="' + (urls.cms_base_url || '') + '/birkly-webmcp.js" data-cms-url="' +
+                (urls.cms_base_url || '') + '"></' + 'script>';
+            setSnippet('ap-publish-snippet-webmcp', wmSnippet);
+        }
+
+        // Birkly MCP URL (always CMS)
+        var mcpEl = document.getElementById('ap-publish-mcp-url');
+        if (mcpEl) mcpEl.textContent = urls.mcp_url || '—';
+    }
+
+    function setSnippet(id, value) {
+        var el = document.getElementById(id);
+        if (el) el.value = value;
+    }
+
+    function initPublishZone() {
+        document.addEventListener('click', function (e) {
+            var copyBtn = e.target.closest('.ap-copy-btn');
+            if (!copyBtn) return;
+            var targetId = copyBtn.getAttribute('data-copy-target');
+            var target = targetId ? document.getElementById(targetId) : null;
+            if (!target) return;
+            var text = target.value || target.textContent || '';
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(function () {
+                    var orig = copyBtn.textContent;
+                    copyBtn.textContent = t('copied', 'Copied');
+                    setTimeout(function () { copyBtn.textContent = orig; }, 1500);
+                });
+            }
+        });
+    }
+
+    // Small POST helper for endpoints other than ai_presence.php.
+    function postJsonTo(url, payload) {
+        payload = payload || {};
+        if (state.csrfToken && !payload._csrf) payload._csrf = state.csrfToken;
+        return fetch(url, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(function (r) { return r.json(); });
     }
 
     function isAiPresencePage() {
@@ -3142,6 +3702,9 @@
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
         initTabs();
+        initHubZones();
+        initTools();
+        initPublishZone();
         initWorkflowNav();
         initAboutModal();
         initViewMode();

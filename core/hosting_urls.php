@@ -611,12 +611,50 @@ function birkly_hosting_clean_public_url(string $uri): string
     return $uri;
 }
 
-function birkly_hosting_client_snippet(): string
+/**
+ * Client snippet for external sites.
+ *
+ * @param bool $includeWebmcp When true (and WebMCP is enabled), also emit the
+ *   `birkly-webmcp.js` tag so an external page gains visitor AI tools. Defaults
+ *   to honouring the current WebMCP enablement so callers can pass `true` and
+ *   get the right snippet without re-checking config.
+ */
+function birkly_hosting_client_snippet(bool $includeWebmcp = false): string
 {
     $cms = birkly_cms_base_url();
     if ($cms === '') {
         return '';
     }
-    $script = rtrim($cms, '/') . birkly_url('/birkly-client.js');
-    return '<script src="' . htmlspecialchars($script, ENT_QUOTES, 'UTF-8') . '" data-cms-url="' . htmlspecialchars($cms, ENT_QUOTES, 'UTF-8') . '"></script>';
+    $cmsAttr = htmlspecialchars($cms, ENT_QUOTES, 'UTF-8');
+    $clientSrc = htmlspecialchars(rtrim($cms, '/') . birkly_url('/birkly-client.js'), ENT_QUOTES, 'UTF-8');
+    $snippet = '<script src="' . $clientSrc . '" data-cms-url="' . $cmsAttr . '"></script>';
+
+    if ($includeWebmcp) {
+        $webmcp = birkly_hosting_webmcp_snippet();
+        if ($webmcp !== '') {
+            $snippet .= "\n" . $webmcp;
+        }
+    }
+
+    return $snippet;
+}
+
+/**
+ * WebMCP-only client snippet (for external sites). Empty string when WebMCP is
+ * disabled or no CMS base URL is configured — an off site advertises nothing.
+ * Loads after `birkly-client.js`, which owns page context + public API access.
+ */
+function birkly_hosting_webmcp_snippet(): string
+{
+    require_once __DIR__ . '/webmcp.php';
+    if (!birkly_webmcp_is_enabled()) {
+        return '';
+    }
+    $cms = birkly_cms_base_url();
+    if ($cms === '') {
+        return '';
+    }
+    $cmsAttr = htmlspecialchars($cms, ENT_QUOTES, 'UTF-8');
+    $webmcpSrc = htmlspecialchars(rtrim($cms, '/') . birkly_url('/birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
+    return '<script src="' . $webmcpSrc . '" data-cms-url="' . $cmsAttr . '"></script>';
 }

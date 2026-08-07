@@ -782,4 +782,14 @@
     window.mcpConnections = {
         copySnippet
     };
+
+    // Explicit mount entry point (P60-M4) so surfaces other than Settings → AI —
+    // e.g. the Agent Guide → Connections zone — can initialize the same module.
+    // `initMcpConnections` guards against double-init, so this is safe to call
+    // repeatedly. The two surfaces are separate pages, so the shared DOM ids
+    // never collide at runtime.
+    window.McpConnections = {
+        init: initMcpConnections,
+        copySnippet: copySnippet
+    };
 })();

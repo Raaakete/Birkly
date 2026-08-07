@@ -3964,6 +3964,23 @@
         document.body.appendChild(selector);
     }
     
+    function emitGuideDiscovery() {
+        try {
+            // Only for external embeds (explicit data-cms-url on the client tag).
+            var tag = document.querySelector('script[data-cms-url]');
+            if (!tag) return;
+            var cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
+            if (!cms) return;
+            if (document.querySelector('link[rel="alternate"][href*="agent-guide.json"]')) return;
+            var link = document.createElement('link');
+            link.rel = 'alternate';
+            link.type = 'application/json';
+            link.title = 'Agent Guide';
+            link.href = cms + '/.well-known/agent-guide.json';
+            (document.head || document.documentElement).appendChild(link);
+        } catch (e) { /* non-fatal */ }
+    }
+
     async function init() {
         if (Birkly.initialized) return;
         
@@ -3971,7 +3988,12 @@
         
         try {
         Birkly.log('Birkly: Initializing...');
-        
+
+        // Emit Agent Guide discovery <link> on external sites (P60-M7). When the
+        // client is loaded with data-cms-url, agents can find the canonical
+        // brand truth on the CMS host even before a reverse-proxy exists.
+        emitGuideDiscovery();
+
         // Create language selector
         createLanguageSelector();
         

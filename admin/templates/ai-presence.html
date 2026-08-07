@@ -4,6 +4,9 @@
             <span class="current">{translate 'admin.ai_presence'}</span>
         </div>
     </div>
+    <div class="page-header-right">
+        <button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">{translate 'admin.ai_presence_about_link'}</button>
+    </div>
 </div>
 
 <?php
@@ -14,7 +17,7 @@ $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
     . '<button type="button" class="btn btn-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
-$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>';
+$stickySaveBarRightHtml = '';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
@@ -34,6 +37,41 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
+<!-- Hub status spine — one product, four zones (P60-M1 §1.2) -->
+<div class="card ap-hub-spine u-mb-6" role="group" aria-label="{translate 'admin.ag_hub_spine_aria'}">
+    <div class="card-section ap-hub-spine-row">
+        <button type="button" class="ap-spine-item" data-hub-zone="guide">
+            <span class="badge badge-neutral" id="ap-spine-guide-badge">—</span>
+            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_guide'}</span><span class="ap-spine-value" id="ap-spine-guide-value">—</span></span>
+        </button>
+        <span class="ap-spine-sep" aria-hidden="true"></span>
+        <button type="button" class="ap-spine-item" data-hub-zone="tools">
+            <span class="badge badge-neutral" id="ap-spine-tools-badge">—</span>
+            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_tools'}</span><span class="ap-spine-value" id="ap-spine-tools-value">{translate 'admin.ag_webmcp_off'}</span></span>
+        </button>
+        <span class="ap-spine-sep" aria-hidden="true"></span>
+        <button type="button" class="ap-spine-item" data-hub-zone="connections">
+            <span class="badge badge-neutral" id="ap-spine-connections-badge">—</span>
+            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_connections'}</span><span class="ap-spine-value" id="ap-spine-connections-value">—</span></span>
+        </button>
+        <span class="ap-spine-sep" aria-hidden="true"></span>
+        <button type="button" class="ap-spine-item" data-hub-zone="publish">
+            <span class="badge badge-neutral" id="ap-spine-hosted-badge">—</span>
+            <span class="ap-spine-text"><span class="ap-spine-label">{translate 'admin.ag_hub_spine_hosted'}</span><span class="ap-spine-value" id="ap-spine-hosted-value">—</span></span>
+        </button>
+    </div>
+</div>
+
+<!-- Hub zones — Guide | Tools | Connections | Publish (P60-M1 §1.1) -->
+<div class="ap-hub">
+<div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
+    <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">{translate 'admin.ag_hub_tab_guide'}</button>
+    <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_tools'}</button>
+    <button type="button" class="tab" role="tab" id="ap-tab-connections" data-hub-zone="connections" aria-controls="ap-panel-connections" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_connections'}</button>
+    <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">{translate 'admin.ag_hub_tab_publish'}</button>
+</div>
+
+<div class="tab-panel active" id="ap-panel-guide" role="tabpanel" aria-labelledby="ap-tab-guide" tabindex="0" data-hub-panel="guide">
 <div class="ap-page">
     <div class="ap-main">
         <div class="segmented u-mb-6" role="group" aria-label="{translate 'admin.ag_view_mode'}">
@@ -102,15 +140,15 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <ul id="ap-essentials-claims-list" class="ai-presence-item-list"></ul>
                     <p id="ap-essentials-claims-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_select_claim'}</p>
                 </section>
-                <section class="card u-p-6 u-stack-4 u-mt-4">
-                    <header class="u-split u-gap-3">
-                        <h3>{translate 'admin.ag_essentials_publish'}</h3>
-                        <div class="card-actions">
-                            <button type="button" class="btn btn-secondary btn-sm ai-presence-goto-tab" data-tab="publish">{translate 'admin.ag_manage_all'}</button>
+                <div class="callout callout-info u-mt-4" role="note">
+                    <div class="callout-body u-cluster-4">
+                        <div class="u-fill">
+                            <strong>{translate 'admin.ag_essentials_publish'}</strong>
+                            <span id="ap-essentials-publish-status" class="u-block u-text-sm u-fg-secondary u-m-0"></span>
                         </div>
-                    </header>
-                    <p id="ap-essentials-publish-status" class="u-text-sm u-fg-secondary u-m-0"></p>
-                </section>
+                        <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="publish">{translate 'admin.ag_hub_manage_in_publish'}</button>
+                    </div>
+                </div>
             </div>
             <div id="ap-advanced-view" class="ap-advanced-view" hidden>
             <div class="ai-presence-tabs tabs-v2-root">
@@ -121,7 +159,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <button type="button" class="tab" data-tab="products">{translate 'admin.ai_presence_tab_products'}</button>
                     <button type="button" class="tab" data-tab="claims">{translate 'admin.ai_presence_tab_claims'}</button>
                     <button type="button" class="tab" data-tab="media">{translate 'admin.ai_presence_tab_media'}</button>
-                    <button type="button" class="tab" data-tab="publish">{translate 'admin.ai_presence_tab_publish'}</button>
                 </div>
 
                 <div class="ap-advanced-body">
@@ -446,61 +483,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <p id="ap-media-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ai_presence_media_empty'}</p>
                 </div>
 
-                <div class="tab-content" data-tab-content="publish">
-                    <p class="u-text-sm u-fg-secondary u-mb-4 u-max-w-measure-md">{translate 'admin.ai_presence_tab_publish_lede'}</p>
-                    <div class="card u-p-6 u-stack-4">
-                        <h3>{translate 'admin.ai_presence_publish_settings'}</h3>
-                        <div class="u-stack-1 u-pb-3 u-border-bottom">
-                            <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
-                            <p class="form-help">{translate 'admin.ai_presence_pub_enabled_help'}</p>
-                        </div>
-                        <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
-                            <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld"> {translate 'admin.ai_presence_include_json_ld'}</label>
-                            <p class="form-help">{translate 'admin.ai_presence_pub_jsonld_help'}</p>
-                        </div>
-                        <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
-                            <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-views" data-field="publication_settings.public_views_enabled"> {translate 'admin.ai_presence_public_views'}</label>
-                            <p class="form-help">{translate 'admin.ai_presence_pub_views_help'}</p>
-                        </div>
-                        <div class="form-group u-mt-3">
-                            <label for="ap-pub-path">{translate 'admin.ai_presence_public_path'}</label>
-                            <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path" placeholder="/.well-known/agent-guide.json">
-                            <p class="form-help">{translate 'admin.ai_presence_pub_path_help'}</p>
-                        </div>
-                        <p class="u-text-sm u-fg-secondary">{translate 'admin.ai_presence_publish_disclaimer'}</p>
-                    </div>
-                    <div class="card u-p-6 u-stack-4 u-mt-4">
-                        <h3>{translate 'admin.ai_presence_draft_vs_published'}</h3>
-                        <p id="ap-publish-status"></p>
-                        <div id="ap-staleness-warnings"></div>
-                        <ul id="ap-version-list" class="ai-presence-item-list u-mt-3"></ul>
-                    </div>
-                    <div class="card u-p-6 u-stack-4 u-mt-4">
-                        <h3>{translate 'admin.ai_presence_context_preview'}</h3>
-                        <p class="u-text-sm u-fg-secondary">{translate 'admin.ai_presence_preview_help'}</p>
-                        <div class="u-cluster">
-                            <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What is this brand known for?">{translate 'admin.ai_presence_preset_known_for'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What does this brand do?">{translate 'admin.ai_presence_preset_what_do'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What products or services do you offer?">{translate 'admin.ag_preview_preset_products'}</button>
-                            <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What claims are supported?">{translate 'admin.ag_preview_preset_claims'}</button>
-                        </div>
-                        <div class="u-cluster-3 u-mt-3">
-                            <input type="text" id="ap-preview-question" class="input" placeholder="{translate 'admin.ai_presence_ask_question'}">
-                            <button type="button" class="btn btn-primary btn-sm" id="ap-preview-ask">{translate 'admin.ask'}</button>
-                        </div>
-                        <div id="ap-preview-answer" class="ai-presence-preview-result u-mt-6"></div>
-                        <ul id="ap-preview-sources" class="ai-presence-item-list u-mt-3"></ul>
-                    </div>
-                    <details class="card u-p-6 u-stack-3 u-mt-4">
-                        <summary><h3 class="u-text-base u-weight-semibold">{translate 'admin.ai_presence_api_views'}</h3></summary>
-                        <p class="form-help">{translate 'admin.ai_presence_api_views_help'}</p>
-                        <dl class="ai-presence-urls">
-                            <dt>Summary</dt><dd><code id="ap-api-summary"></code></dd>
-                            <dt>Products</dt><dd><code id="ap-api-products"></code></dd>
-                            <dt>Claims</dt><dd><code id="ap-api-claims"></code></dd>
-                        </dl>
-                    </details>
-                </div>
                 </div><!-- .ap-advanced-panels -->
 
                 <aside class="ap-assist-sidebar" id="ap-assist-sidebar" aria-label="{translate 'admin.ai_presence_assist_title'}">
@@ -568,6 +550,218 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     <span>{translate 'admin.ai_presence_assist_title'}</span>
     <span class="badge badge-sm" id="ap-suggestion-count-fab" hidden>0</span>
 </button>
+</div><!-- .tab-panel guide -->
+
+<!-- ===================== TOOLS zone (WebMCP) — P60-M6 ===================== -->
+<div class="tab-panel" id="ap-panel-tools" role="tabpanel" aria-labelledby="ap-tab-tools" tabindex="0" data-hub-panel="tools" hidden>
+    <div class="u-max-w-page u-stack-6">
+        <div class="u-stack-2">
+            <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">{translate 'admin.ag_tools_lede'}</p>
+        </div>
+
+        <section class="card u-p-6 u-stack-4">
+            <div class="u-split u-align-start u-gap-4">
+                <div class="u-stack-1 u-fill">
+                    <h3 class="u-m-0">{translate 'admin.ag_tools_master_title'}</h3>
+                    <p class="form-help u-m-0">{translate 'admin.ag_tools_why_off'}</p>
+                </div>
+                <label class="switch switch--lg" title="{translate 'admin.ag_tools_master_title'}">
+                    <input type="checkbox" id="ap-webmcp-enabled">
+                    <span class="switch__slider"></span>
+                </label>
+            </div>
+            <p id="ap-webmcp-support-note" class="u-text-xs u-fg-secondary u-m-0" hidden>{translate 'admin.ag_tools_browser_note'}</p>
+        </section>
+
+        <div id="ap-webmcp-config" class="u-stack-6" hidden>
+            <section class="card u-p-6 u-stack-4">
+                <header class="u-stack-1">
+                    <h3 class="u-m-0">{translate 'admin.ag_tools_catalog_title'}</h3>
+                    <p class="form-help u-m-0">{translate 'admin.ag_tools_catalog_help'}</p>
+                </header>
+                <div id="ap-webmcp-catalog" class="u-stack-4"></div>
+            </section>
+
+            <section class="card u-p-6 u-stack-4">
+                <header class="u-stack-1">
+                    <h3 class="u-m-0">{translate 'admin.ag_tools_allowlist_title'}</h3>
+                    <p class="form-help u-m-0">{translate 'admin.ag_tools_allowlist_help'}</p>
+                </header>
+                <div id="ap-webmcp-allowlist" class="u-stack-2"></div>
+                <p id="ap-webmcp-allowlist-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ag_tools_allowlist_empty'}</p>
+                <p id="ap-webmcp-allowlist-warn" class="callout callout-warning u-text-sm u-m-0" hidden>{translate 'admin.ag_tools_allowlist_warn'}</p>
+            </section>
+
+            <section class="card u-p-6 u-stack-4">
+                <header class="u-stack-1">
+                    <h3 class="u-m-0">{translate 'admin.ag_tools_preview_title'}</h3>
+                    <p class="form-help u-m-0">{translate 'admin.ag_tools_preview_help'}</p>
+                </header>
+                <ul id="ap-webmcp-preview" class="data-list"></ul>
+                <p id="ap-webmcp-preview-empty" class="empty-state empty-state--compact" hidden>{translate 'admin.ag_tools_preview_empty'}</p>
+            </section>
+
+            <section class="card u-p-6 u-stack-3">
+                <header class="u-stack-1">
+                    <h3 class="u-m-0">{translate 'admin.ag_tools_support_title'}</h3>
+                </header>
+                <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ag_tools_support_body'}</p>
+                <details class="u-text-sm">
+                    <summary class="u-weight-semibold">{translate 'admin.ag_tools_verify_title'}</summary>
+                    <p class="form-help u-mt-2">{translate 'admin.ag_tools_verify_body'}</p>
+                </details>
+            </section>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== CONNECTIONS zone — P60-M4 ===================== -->
+<div class="tab-panel" id="ap-panel-connections" role="tabpanel" aria-labelledby="ap-tab-connections" tabindex="0" data-hub-panel="connections" hidden>
+    <div class="u-max-w-page u-stack-6">
+        <section class="card u-p-6 u-stack-3" id="ap-connections-about">
+            <header class="u-stack-1">
+                <h3 class="u-m-0">{translate 'admin.ag_connections_about_title'}</h3>
+                <p class="u-text-sm u-fg-secondary u-m-0">{translate 'admin.ag_connections_about_body'}</p>
+            </header>
+        </section>
+        <div id="ap-connections-mount" class="u-stack-6" data-connections-root="hub">
+            <?php $aiPanelDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__; include $aiPanelDir . '/../partials/ai-connections-panel.php'; ?>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== PUBLISH zone — P60-M7 ===================== -->
+<div class="tab-panel" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish" hidden>
+    <div class="u-max-w-page u-stack-6">
+        <div class="u-split u-align-start u-gap-3">
+            <div class="u-stack-1">
+                <p class="u-text-sm u-fg-secondary u-m-0 u-max-w-measure-md">{translate 'admin.ag_publish_lede'}</p>
+            </div>
+            <span class="badge badge-neutral" id="ap-publish-mode-badge">—</span>
+        </div>
+
+        <!-- Layer 1: Guide discovery -->
+        <section class="card u-p-6 u-stack-4">
+            <header class="u-split u-align-start u-gap-3">
+                <div class="u-stack-1">
+                    <h3 class="u-m-0">{translate 'admin.ag_publish_guide_title'}</h3>
+                    <p class="form-help u-m-0">{translate 'admin.ag_publish_guide_help'}</p>
+                </div>
+                <span class="badge badge-neutral" id="ap-publish-guide-badge">—</span>
+            </header>
+            <dl class="ai-presence-urls" id="ap-publish-guide-urls"></dl>
+            <div id="ap-publish-external" class="u-stack-4" hidden>
+                <p class="callout callout-info u-text-sm u-m-0">{translate 'admin.ag_publish_external_intro'}</p>
+                <div class="u-stack-2">
+                    <label class="u-label u-text-sm">{translate 'admin.ag_publish_snippet_label'}</label>
+                    <div class="copy-snippet-row">
+                        <textarea readonly rows="2" id="ap-publish-snippet-client" class="input u-font-mono"></textarea>
+                        <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-client">{translate 'admin.copy'}</button>
+                    </div>
+                </div>
+                <div class="u-stack-2">
+                    <label class="u-label u-text-sm">{translate 'admin.ag_publish_proxy_label'}</label>
+                    <div class="copy-snippet-row">
+                        <textarea readonly rows="2" id="ap-publish-snippet-proxy" class="input u-font-mono"></textarea>
+                        <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-proxy">{translate 'admin.copy'}</button>
+                    </div>
+                </div>
+                <div class="u-stack-2">
+                    <label class="u-label u-text-sm">{translate 'admin.ag_publish_download_label'}</label>
+                    <a class="btn btn-sm btn-secondary" id="ap-publish-download-guide" download="agent-guide.json">{translate 'admin.ag_publish_download_btn'}</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Layer 2: Website tools (WebMCP) — read-out only; toggle lives in Tools -->
+        <section class="card u-p-6 u-stack-4">
+            <header class="u-split u-align-start u-gap-3">
+                <div class="u-stack-1">
+                    <h3 class="u-m-0">{translate 'admin.ag_publish_webmcp_title'}</h3>
+                    <p class="form-help u-m-0" id="ap-publish-webmcp-help">{translate 'admin.ag_publish_webmcp_help'}</p>
+                </div>
+                <span class="badge badge-neutral" id="ap-publish-webmcp-badge">{translate 'admin.ag_webmcp_off'}</span>
+            </header>
+            <div id="ap-publish-webmcp-external" class="u-stack-2" hidden>
+                <label class="u-label u-text-sm">{translate 'admin.ag_publish_webmcp_snippet_label'}</label>
+                <div class="copy-snippet-row">
+                    <textarea readonly rows="2" id="ap-publish-snippet-webmcp" class="input u-font-mono"></textarea>
+                    <button type="button" class="btn btn-sm btn-secondary ap-copy-btn" data-copy-target="ap-publish-snippet-webmcp">{translate 'admin.copy'}</button>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="tools">{translate 'admin.ag_publish_webmcp_manage'}</button>
+        </section>
+
+        <!-- Layer 3: AI app connections (Birkly MCP) -->
+        <section class="card u-p-6 u-stack-4">
+            <header class="u-stack-1">
+                <h3 class="u-m-0">{translate 'admin.ag_publish_mcp_title'}</h3>
+                <p class="form-help u-m-0">{translate 'admin.ag_publish_mcp_help'}</p>
+            </header>
+            <dl class="ai-presence-urls">
+                <dt>{translate 'admin.ag_publish_mcp_url_label'}</dt>
+                <dd><code id="ap-publish-mcp-url"></code></dd>
+            </dl>
+            <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="connections">{translate 'admin.ag_publish_mcp_manage'}</button>
+        </section>
+
+        <!-- Deep guide publish controls (relocated from the old Guide → Publish tab) -->
+        <div class="card u-p-6 u-stack-4">
+            <h3>{translate 'admin.ai_presence_publish_settings'}</h3>
+            <div class="u-stack-1 u-pb-3 u-border-bottom">
+                <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-enabled" data-field="publication_settings.enabled"> {translate 'admin.ai_presence_enable_publishing'}</label>
+                <p class="form-help">{translate 'admin.ai_presence_pub_enabled_help'}</p>
+            </div>
+            <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
+                <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-jsonld" data-field="publication_settings.include_json_ld"> {translate 'admin.ai_presence_include_json_ld'}</label>
+                <p class="form-help">{translate 'admin.ai_presence_pub_jsonld_help'}</p>
+            </div>
+            <div class="u-stack-1 u-pt-3 u-pb-3 u-border-bottom">
+                <label class="u-row-2 u-text-sm"><input type="checkbox" id="ap-pub-views" data-field="publication_settings.public_views_enabled"> {translate 'admin.ai_presence_public_views'}</label>
+                <p class="form-help">{translate 'admin.ai_presence_pub_views_help'}</p>
+            </div>
+            <div class="form-group u-mt-3">
+                <label for="ap-pub-path">{translate 'admin.ai_presence_public_path'}</label>
+                <input type="text" id="ap-pub-path" class="input" data-field="publication_settings.public_path" placeholder="/.well-known/agent-guide.json">
+                <p class="form-help">{translate 'admin.ai_presence_pub_path_help'}</p>
+            </div>
+            <p class="u-text-sm u-fg-secondary">{translate 'admin.ai_presence_publish_disclaimer'}</p>
+        </div>
+        <div class="card u-p-6 u-stack-4">
+            <h3>{translate 'admin.ai_presence_draft_vs_published'}</h3>
+            <p id="ap-publish-status"></p>
+            <div id="ap-staleness-warnings"></div>
+            <ul id="ap-version-list" class="ai-presence-item-list u-mt-3"></ul>
+        </div>
+        <div class="card u-p-6 u-stack-4">
+            <h3>{translate 'admin.ai_presence_context_preview'}</h3>
+            <p class="u-text-sm u-fg-secondary">{translate 'admin.ai_presence_preview_help'}</p>
+            <div class="u-cluster">
+                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What is this brand known for?">{translate 'admin.ai_presence_preset_known_for'}</button>
+                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What does this brand do?">{translate 'admin.ai_presence_preset_what_do'}</button>
+                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What products or services do you offer?">{translate 'admin.ag_preview_preset_products'}</button>
+                <button type="button" class="btn btn-sm btn-secondary ap-preview-q" data-q="What claims are supported?">{translate 'admin.ag_preview_preset_claims'}</button>
+            </div>
+            <div class="u-cluster-3 u-mt-3">
+                <input type="text" id="ap-preview-question" class="input" placeholder="{translate 'admin.ai_presence_ask_question'}">
+                <button type="button" class="btn btn-primary btn-sm" id="ap-preview-ask">{translate 'admin.ask'}</button>
+            </div>
+            <div id="ap-preview-answer" class="ai-presence-preview-result u-mt-6"></div>
+            <ul id="ap-preview-sources" class="ai-presence-item-list u-mt-3"></ul>
+        </div>
+        <details class="card u-p-6 u-stack-3">
+            <summary><h3 class="u-text-base u-weight-semibold">{translate 'admin.ai_presence_api_views'}</h3></summary>
+            <p class="form-help">{translate 'admin.ai_presence_api_views_help'}</p>
+            <dl class="ai-presence-urls">
+                <dt>Summary</dt><dd><code id="ap-api-summary"></code></dd>
+                <dt>Products</dt><dd><code id="ap-api-products"></code></dd>
+                <dt>Claims</dt><dd><code id="ap-api-claims"></code></dd>
+            </dl>
+        </details>
+    </div>
+</div>
+
+</div><!-- .ap-hub -->
 
 <!-- AI loading overlay -->
 <div id="ap-ai-loading" class="ap-ai-loading" hidden aria-live="polite" aria-busy="true">
@@ -589,9 +783,23 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
         </div>
         <div class="modal-body u-stack-4">
             <p class="u-m-0">{translate 'admin.ai_presence_what_body'}</p>
-            <div>
-                <h4 class="u-text-sm u-weight-semibold u-mb-2">{translate 'admin.ai_presence_what_good_for_title'}</h4>
-                <ul class="u-stack-1 u-text-sm u-m-0">
+            <div class="u-stack-4">
+                <div class="card-section u-stack-1">
+                    <h4 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ag_about_guide_title'}</h4>
+                    <p class="u-text-sm u-m-0">{translate 'admin.ag_about_guide_body'}</p>
+                    <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_about_guide_where'}</p>
+                </div>
+                <div class="card-section u-stack-1">
+                    <h4 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ag_about_mcp_title'}</h4>
+                    <p class="u-text-sm u-m-0">{translate 'admin.ag_about_mcp_body'}</p>
+                    <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_about_mcp_where'}</p>
+                </div>
+                <div class="card-section u-stack-1">
+                    <h4 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ag_about_webmcp_title'}</h4>
+                    <p class="u-text-sm u-m-0">{translate 'admin.ag_about_webmcp_body'}</p>
+                    <p class="u-text-xs u-fg-secondary u-m-0">{translate 'admin.ag_about_webmcp_where'}</p>
+                </div>
+                <ul class="u-stack-1 u-text-sm u-m-0" hidden>
                     <li>{translate 'admin.ai_presence_what_benefit_1'}</li>
                     <li>{translate 'admin.ai_presence_what_benefit_2'}</li>
                     <li>{translate 'admin.ai_presence_what_benefit_3'}</li>
@@ -928,4 +1136,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 {include_style 'components/agent-guide-wizard.css'}
 {include_script 'agent-guide-wizard.js'}
+{include_script 'ai-connections.js'}
+{include_script 'mcp-connections.js'}
 {include_script 'ai-presence.js'}
