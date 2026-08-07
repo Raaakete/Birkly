@@ -655,9 +655,13 @@ function birkly_project_ssr_inject_webmcp(string $html): string
     }
 
     // WebMCP runtime — only when enabled; loads after birkly-client.js.
+    // The public config is inlined *before* the runtime script so the runtime can
+    // register tools synchronously on boot (no async fetch race) — this is what
+    // lets Lighthouse / CDP-driven agent browsers see registered tools reliably.
     if (birkly_webmcp_is_enabled() && stripos($html, 'birkly-webmcp.js') === false) {
         $src = htmlspecialchars(birkly_url('/birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
-        $tag = '<script src="' . $src . '" defer></script>';
+        $inline = birkly_webmcp_inline_config_script();
+        $tag = $inline . "\n    " . '<script src="' . $src . '" defer></script>';
         if (stripos($html, '</body>') !== false) {
             $html = preg_replace('/<\/body>/i', '    ' . $tag . "\n</body>", $html, 1) ?? $html;
         } else {
@@ -666,6 +670,28 @@ function birkly_project_ssr_inject_webmcp(string $html): string
     }
 
     return $html;
+}
+
+/**
+ * Build the inline `<script>` that publishes the public WebMCP config on
+ * `window.BIRKLY_WEBMCP_CONFIG` so the runtime can register tools synchronously
+ * on boot instead of awaiting `/api/public/webmcp.php`.
+ *
+ * Secret-free by construction: uses `birkly_webmcp_public_config()`.
+ */
+function birkly_webmcp_inline_config_script(): string
+{
+    require_once __DIR__ . '/webmcp.php';
+
+    $config = birkly_webmcp_public_config();
+    $json = json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($json === false) {
+        $json = '{"enabled":false}';
+    }
+    // Guard against `</script>` breaking out of the inline block.
+    $json = str_replace('</', '<\/', $json);
+
+    return '<script>window.BIRKLY_WEBMCP_CONFIG = ' . $json . ';</script>';
 }
 
 /**

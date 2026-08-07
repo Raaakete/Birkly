@@ -115,6 +115,29 @@ birkly_webmcp_save(['enabled' => true, 'tools' => [], 'form_allowlist' => []]);
 $onHtml = birkly_project_ssr_inject_webmcp($html);
 assert_true(stripos($onHtml, 'birkly-webmcp.js') !== false, 'SSR injects when WebMCP on');
 
+echo "==> SSR inlines the public config before the runtime (Lighthouse-friendly)\n";
+assert_true(strpos($onHtml, 'window.BIRKLY_WEBMCP_CONFIG') !== false, 'SSR inlines BIRKLY_WEBMCP_CONFIG when on');
+$cfgPos = strpos($onHtml, 'window.BIRKLY_WEBMCP_CONFIG');
+$srcPos = stripos($onHtml, 'birkly-webmcp.js');
+assert_true($cfgPos !== false && $srcPos !== false && $cfgPos < $srcPos, 'inline config appears before the runtime script tag');
+assert_true(strpos($onHtml, '"enabled":true') !== false, 'inline config marks enabled true when on');
+$inline = birkly_webmcp_inline_config_script();
+assert_true(strpos($inline, 'window.BIRKLY_WEBMCP_CONFIG') !== false, 'helper emits inline config assignment');
+assert_true(substr_count($inline, '</script>') === 1, 'inline config has a single (wrapper) </script> — JSON payload cannot break out');
+// Off = inline helper still emits a config, but {enabled:false} only.
+birkly_webmcp_save(['enabled' => false, 'tools' => [], 'form_allowlist' => []]);
+$inlineOff = birkly_webmcp_inline_config_script();
+assert_true(strpos($inlineOff, '"enabled":false') !== false, 'off inline config is {enabled:false}');
+assert_true(strpos($inlineOff, 'birkly_') === false, 'off inline config leaks no tool ids');
+birkly_webmcp_save(['enabled' => true, 'tools' => [], 'form_allowlist' => []]);
+
+echo "==> Declarative form attributes for Lighthouse (birkly-client.js)\n";
+$client = (string) file_get_contents($root . '/birkly-client.js');
+assert_true(strpos($client, 'birklyFormToolAttrs') !== false, 'client defines birklyFormToolAttrs helper');
+assert_true(strpos($client, 'toolname="') !== false, 'client emits declarative toolname attribute');
+assert_true(strpos($client, 'tooldescription="') !== false, 'client emits declarative tooldescription attribute');
+assert_true(strpos($client, "'birkly_form_'") !== false, 'client tool name matches runtime derived name');
+
 echo "==> Public URLs honesty (cms canonical always; public_site only in project mode)\n";
 require_once $root . '/core/ai_presence.php';
 require_once $root . '/core/hosting_urls.php';
