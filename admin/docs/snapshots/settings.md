@@ -41,7 +41,7 @@ If something fails (for example invalid CSRF or missing permission), the message
 
 - **Analytics** — Site-wide visitor analytics presets (**Off** / **Minimal** / **Standard** / **Advanced**), reports, and consent hooks for Standard+. See [Analytics presets](analytics-presets.md).
 
-- **AI & Integrations** — Outbound AI providers (in-admin chat) and inbound MCP endpoints. The same connector controls also appear under **Agent Guide → Connections**. See [AI overview](ai-overview.md), [AI connections](ai-connections.md), [MCP connections](mcp-connections.md), and [AI on localhost](../04-integration/ai-on-localhost.md).
+- **AI (via Agent Guide)** — Outbound AI providers and inbound MCP connectors are configured in **Agent Guide → Connections**, not under Settings. See [AI overview](ai-overview.md), [AI connections](ai-connections.md), [MCP connections](mcp-connections.md), and [AI on localhost](../04-integration/ai-on-localhost.md).
 
 - **System** — Installation/system options, including **Developer mode** (off by default) for template/site-pack export and DX tools. See [Developer mode](developer-mode.md).
 
