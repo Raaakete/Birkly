@@ -295,7 +295,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h3 class="card-title">Overview</h3>
             </div>
             <div class="card-body u-stack-4">
-            <div id="project-overview-content" class="u-grid-auto-sm">
+            <div id="project-overview-content" class="u-stack-3">
               <div class="loading-state"><p>Loading project info...</p></div>
             </div>
             <div class="form-group">
@@ -361,13 +361,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="u-split">
               <a href="<?= htmlspecialchars(birkly_url('/api/project_site.php?action=download')) ?>" class="btn btn-secondary btn-sm" id="project-download-btn">Download project</a>
             </div>
-            </div>
-          </section>
-          <section class="card card--danger">
-            <div class="card-header"><h3 class="card-title">Danger zone</h3></div>
-            <div class="card-body u-stack-4">
-              <p class="section-description">Permanently delete all files in <code>project/</code>. This cannot be undone. Download a ZIP first if you need a backup.</p>
-              <button type="button" class="btn btn-danger" id="project-delete-all-btn">Delete project</button>
             </div>
           </section>
           </div>
@@ -466,6 +459,18 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"></div>
             </div>
+            </div>
+          </section>
+          </div>
+        </div>
+
+          <div id="project-danger" class="settings-pane-section" data-settings-search="project danger delete wipe clear files">
+          <div class="settings-stack">
+          <section class="card card--danger">
+            <div class="card-header"><h3 class="card-title">Danger zone</h3></div>
+            <div class="card-body u-stack-4">
+              <p class="section-description">Permanently delete all files in <code>project/</code>. This cannot be undone. Download a ZIP first if you need a backup.</p>
+              <button type="button" class="btn btn-danger" id="project-delete-all-btn">Delete project</button>
             </div>
           </section>
           </div>
