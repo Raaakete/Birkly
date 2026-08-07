@@ -36,9 +36,50 @@
         return sessionId;
     }
     
+    function readConsentCookie() {
+        const parts = (document.cookie || '').split(';');
+        for (let i = 0; i < parts.length; i++) {
+            const p = parts[i].trim();
+            if (p.indexOf('birkly_analytics_consent=') === 0) {
+                return decodeURIComponent(p.slice('birkly_analytics_consent='.length));
+            }
+        }
+        return (config.consent || window.HaruAnalytics && window.HaruAnalytics.consent || '');
+    }
+
+    function sendTrack(payload) {
+        const consent = readConsentCookie();
+        if (consent) {
+            payload.consent = consent;
+        }
+        // When consent helper is present and not granted, skip client send
+        // (server also gates Standard+).
+        if (window.BirklyAnalyticsConsent && consent !== 'granted' && consent !== '1') {
+            // Allow Minimal/Off server decisions; still send only if no consent helper required
+            if (config.requireConsent || (window.HaruAnalytics && window.HaruAnalytics.requireConsent)) {
+                return;
+            }
+        }
+
+        const url = cmsUrl + '/api/analytics.php?action=track';
+        if (navigator.sendBeacon) {
+            const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+        } else {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).catch(function (err) {
+                console.debug('Birkly Analytics: Tracking failed', err);
+            });
+        }
+    }
+
     // Track page view
     function trackPageView() {
-        const data = {
+        sendTrack({
             tracking_id: trackingId,
             domain: window.location.hostname,
             path: window.location.pathname + window.location.search,
@@ -46,31 +87,48 @@
             screen_width: window.screen.width || 0,
             screen_height: window.screen.height || 0,
             language: navigator.language || navigator.userLanguage || '',
-            session_id: getSessionId()
-        };
-        
-        // Send tracking data
-        const url = cmsUrl + '/api/analytics.php?action=track';
-        
-        // Use sendBeacon if available (more reliable)
-        if (navigator.sendBeacon) {
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
-        } else {
-            // Fallback to fetch
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data),
-                keepalive: true
-            }).catch(function(err) {
-                // Silently fail - don't interrupt user experience
-                console.debug('Birkly Analytics: Tracking failed', err);
-            });
-        }
+            session_id: getSessionId(),
+            event_type: 'page_view'
+        });
     }
+
+    function bindAdvancedEvents() {
+        if (!(config.enableEvents || (window.HaruAnalytics && window.HaruAnalytics.enableEvents))) {
+            return;
+        }
+        document.addEventListener('click', function (e) {
+            var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!a) return;
+            var href = a.getAttribute('href') || '';
+            if (!href || href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+            try {
+                var url = new URL(href, window.location.href);
+                if (url.origin !== window.location.origin) {
+                    sendTrack({
+                        tracking_id: trackingId,
+                        domain: window.location.hostname,
+                        path: window.location.pathname,
+                        event_type: 'outbound_click',
+                        referrer: url.href,
+                        session_id: getSessionId()
+                    });
+                }
+            } catch (err) { /* ignore */ }
+        }, true);
+        document.addEventListener('submit', function (e) {
+            var form = e.target;
+            if (!form || form.tagName !== 'FORM') return;
+            sendTrack({
+                tracking_id: trackingId,
+                domain: window.location.hostname,
+                path: window.location.pathname,
+                event_type: 'form_submit',
+                session_id: getSessionId(),
+                event_data: { form_id: form.id || form.getAttribute('name') || '' }
+            });
+        }, true);
+    }
+    bindAdvancedEvents();
     
     // Track page view on load
     if (document.readyState === 'complete') {
@@ -96,7 +154,7 @@
     
     // Expose API for manual tracking
     window.HaruAnalyticsTrack = function(eventName, eventData) {
-        const data = {
+        sendTrack({
             tracking_id: trackingId,
             domain: window.location.hostname,
             path: window.location.pathname,
@@ -105,27 +163,10 @@
             screen_height: window.screen.height || 0,
             language: navigator.language || '',
             session_id: getSessionId(),
+            event_type: eventName || 'plugin_event',
             event_name: eventName,
             event_data: eventData || {}
-        };
-        
-        const url = cmsUrl + '/api/analytics.php?action=track';
-        
-        if (navigator.sendBeacon) {
-            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
-        } else {
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data),
-                keepalive: true
-            }).catch(function(err) {
-                console.debug('Birkly Analytics: Event tracking failed', err);
-            });
-        }
+        });
     };
 })();
 

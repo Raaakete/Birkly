@@ -56,7 +56,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <?= birkly_icon('link', ['size' => 16]) ?>
         <span class="nav-text" data-text="Integrations">Integrations</span>
       </button>
-      <button type="button" class="tab" data-tab="system" data-settings-search="system storage monitoring database updates version danger rebuild maintenance activity">
+      <button type="button" class="tab" data-tab="analytics" data-settings-search="analytics presets insights tracking privacy consent minimal standard advanced reports">
+        <?= birkly_icon('gauge', ['size' => 16]) ?>
+        <span class="nav-text" data-text="Analytics">Analytics</span>
+      </button>
+      <button type="button" class="tab" data-tab="system" data-settings-search="system storage monitoring database updates version danger rebuild maintenance activity developer mode export template">
         <?= birkly_icon('monitor', ['size' => 16]) ?>
         <span class="nav-text" data-text="System">System</span>
       </button>
@@ -856,6 +860,52 @@ include __DIR__ . '/components/sticky-save-bar.php';
         </div>
       </div>
 
+      <div class="tab-pane" id="analytics">
+        <div class="settings-stack" id="analytics-settings-root">
+          <div class="settings-pane-section" data-settings-search="analytics presets privacy consent">
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <h2 class="section-title">Analytics</h2>
+                  <p class="settings-help">Choose how much visitor data Birkly collects. Domain toggles under Site delivery still apply.</p>
+                </div>
+              </div>
+              <div class="card-body u-stack-4">
+                <div id="analytics-preset-cards" class="u-stack-3" aria-live="polite">
+                  <div class="loading-state"><p>Loading presets…</p></div>
+                </div>
+                <p class="form-help">Not legal advice — you remain responsible for privacy law in your region (for example GDPR).</p>
+                <div class="form-group">
+                  <label for="analytics-consent-text">Consent banner text (Standard+)</label>
+                  <textarea id="analytics-consent-text" class="input" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="analytics-retention-days">Retention days (optional override)</label>
+                  <input type="number" id="analytics-retention-days" class="input" min="1" max="730" placeholder="Preset default">
+                </div>
+                <div class="u-cluster">
+                  <button type="button" class="btn btn-primary" id="analytics-settings-save">Save analytics settings</button>
+                  <button type="button" class="btn btn-secondary" id="analytics-csv-export" hidden>Export CSV</button>
+                </div>
+              </div>
+            </section>
+          </div>
+          <div class="settings-pane-section" data-settings-search="analytics reports top pages referrers devices campaigns">
+            <section class="card">
+              <div class="card-header">
+                <div>
+                  <h2 class="section-title">Report</h2>
+                  <p class="settings-help">Site-wide snapshot from enabled domain tracking. Empty when Analytics is Off.</p>
+                </div>
+              </div>
+              <div class="card-body u-stack-4" id="analytics-report-panel">
+                <div class="empty-state"><p>Select a preset above and enable analytics on a domain to see reports.</p></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
       <div class="tab-pane" id="system">
 <?php
   $storageSettings = $settings['storage'] ?? [];
@@ -875,6 +925,36 @@ include __DIR__ . '/components/sticky-save-bar.php';
   $monitoringAlertWebhookUrl = (string) ($monitoringSettings['alert_webhook_url'] ?? '');
 ?>
         <div class="settings-stack system-settings">
+          <div class="settings-pane-section" data-settings-search="system developer mode export template pack debug">
+            <section class="card" id="developer-mode-card">
+              <div class="card-header">
+                <div>
+                  <h2 class="section-title">Developer mode</h2>
+                  <p class="settings-help">Off by default. Unlocks export and diagnostic tools for advanced installs.</p>
+                </div>
+                <label class="switch" for="developer-mode-toggle">
+                  <input type="checkbox" id="developer-mode-toggle">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="card-body u-stack-4" id="developer-mode-tools" hidden>
+                <div id="developer-system-info" class="card card--sunken">
+                  <div class="card-body"><div class="loading-state"><p>Loading system info…</p></div></div>
+                </div>
+                <div class="form-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="developer-export-include-content">
+                    <span>Include content collections in template export (never users or secrets)</span>
+                  </label>
+                </div>
+                <div class="u-cluster">
+                  <button type="button" class="btn btn-primary" id="developer-export-btn">Export template pack</button>
+                  <button type="button" class="btn btn-secondary" id="developer-smoke-btn">API / MCP smoke</button>
+                </div>
+                <pre class="domains-code-pre" id="developer-smoke-result" hidden></pre>
+              </div>
+            </section>
+          </div>
           <div class="settings-pane-section" data-settings-search="system updates current version install download maintenance release notes">
             <section class="card">
               <div class="card-header">
@@ -1445,4 +1525,6 @@ window.webhooksData = window.webhooksData || { collections: <?= $webhookCollecti
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-git.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/analytics-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/developer-mode.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 

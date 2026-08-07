@@ -46,32 +46,33 @@ function birkly_plugin_activity_settings(string $pluginId): array
         return $defaults;
     }
 
-    $settingsPath = birkly_project_root() . '/settings/plugin_settings/' . $pluginId . '.json';
-    if (!is_readable($settingsPath)) {
-        // Fallback: plugins.json nested settings (legacy)
-        $pluginsFile = birkly_project_root() . '/settings/plugins.json';
-        if (is_readable($pluginsFile)) {
-            $all = json_decode((string) file_get_contents($pluginsFile), true);
-            if (is_array($all) && isset($all[$pluginId]['settings']) && is_array($all[$pluginId]['settings'])) {
-                $stored = $all[$pluginId]['settings'];
-                return [
-                    'activity_notify' => (bool) ($stored['activity_notify'] ?? $defaults['activity_notify']),
-                    'activity_nav_dot' => (bool) ($stored['activity_nav_dot'] ?? $defaults['activity_nav_dot']),
-                ];
-            }
+    // Prefer live plugin settings API (settings/plugins.json via get_plugin_setting)
+    if (!function_exists('get_plugin_setting')) {
+        $pluginsCore = birkly_project_root() . '/core/plugins.php';
+        if (is_file($pluginsCore)) {
+            require_once $pluginsCore;
         }
-        return $defaults;
+    }
+    if (function_exists('get_plugin_setting')) {
+        return [
+            'activity_notify' => (bool) get_plugin_setting($pluginId, 'activity_notify', $defaults['activity_notify']),
+            'activity_nav_dot' => (bool) get_plugin_setting($pluginId, 'activity_nav_dot', $defaults['activity_nav_dot']),
+        ];
     }
 
-    $stored = json_decode((string) file_get_contents($settingsPath), true);
-    if (!is_array($stored)) {
-        return $defaults;
+    $pluginsFile = birkly_project_root() . '/settings/plugins.json';
+    if (is_readable($pluginsFile)) {
+        $all = json_decode((string) file_get_contents($pluginsFile), true);
+        if (is_array($all) && isset($all[$pluginId]['settings']) && is_array($all[$pluginId]['settings'])) {
+            $stored = $all[$pluginId]['settings'];
+            return [
+                'activity_notify' => (bool) ($stored['activity_notify'] ?? $defaults['activity_notify']),
+                'activity_nav_dot' => (bool) ($stored['activity_nav_dot'] ?? $defaults['activity_nav_dot']),
+            ];
+        }
     }
 
-    return [
-        'activity_notify' => (bool) ($stored['activity_notify'] ?? $defaults['activity_notify']),
-        'activity_nav_dot' => (bool) ($stored['activity_nav_dot'] ?? $defaults['activity_nav_dot']),
-    ];
+    return $defaults;
 }
 
 /**

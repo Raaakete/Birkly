@@ -76,6 +76,24 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
     }
 }
 
+
+// Public preset/consent config for trackers (no secrets)
+if ($action === 'public_config') {
+    $active = birkly_analytics_active_preset();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'preset' => (string) ($active['id'] ?? 'off'),
+            'collecting' => birkly_analytics_collecting(),
+            'consent_required' => birkly_analytics_consent_required(),
+            'consent_text' => (string) ($active['consent_text'] ?? ''),
+            'events' => !empty($active['events']),
+            'collect' => is_array($active['collect'] ?? null) ? array_values($active['collect']) : [],
+        ],
+    ]);
+    exit;
+}
+
 // Track page view (POST request from tracking script)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -500,6 +518,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete') {
         'status' => 'ok',
         'message' => 'Tracking ID deleted'
     ]);
+    exit;
+}
+
+
+// CSV export (admin-only)
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'export_csv') {
+    require_once 'auth.php';
+    require_once 'validate.php';
+    requireAuth('manage_settings');
+
+    $trackingId = $_GET['tracking_id'] ?? '';
+    $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
+    $endDate = $_GET['end_date'] ?? date('Y-m-d');
+    if ($trackingId === '') {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Tracking ID required']);
+        exit;
+    }
+
+    $analyticsDir = __DIR__ . '/../data/analytics';
+    $dataDir = $analyticsDir . '/data/' . $trackingId;
+    $rows = [];
+    $start = strtotime($startDate);
+    $end = strtotime($endDate . ' 23:59:59');
+    if ($start !== false && $end !== false && is_dir($dataDir)) {
+        $current = $start;
+        while ($current <= $end) {
+            $date = date('Y-m-d', $current);
+            $eventFile = $dataDir . '/' . $date . '.json';
+            if (is_file($eventFile)) {
+                $events = json_decode((string) file_get_contents($eventFile), true);
+                if (is_array($events)) {
+                    foreach ($events as $event) {
+                        if (is_array($event)) {
+                            $rows[] = $event;
+                        }
+                    }
+                }
+            }
+            $current = strtotime('+1 day', $current);
+        }
+    }
+
+    $filename = 'birkly-analytics-' . preg_replace('/[^a-zA-Z0-9._-]+/', '-', $trackingId) . '-' . $startDate . '_' . $endDate . '.csv';
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['timestamp', 'event_type', 'path', 'referrer', 'session_id', 'device_type', 'browser', 'os', 'country', 'utm_source', 'utm_medium', 'utm_campaign']);
+    foreach ($rows as $event) {
+        fputcsv($out, [
+            $event['timestamp'] ?? '',
+            $event['event_type'] ?? ($event['type'] ?? ''),
+            $event['path'] ?? '',
+            $event['referrer'] ?? ($event['referrer_host'] ?? ''),
+            $event['session_id'] ?? '',
+            $event['device_type'] ?? '',
+            $event['browser'] ?? '',
+            $event['os'] ?? '',
+            $event['country'] ?? '',
+            $event['utm_source'] ?? '',
+            $event['utm_medium'] ?? '',
+            $event['utm_campaign'] ?? '',
+        ]);
+    }
+    fclose($out);
     exit;
 }
 
