@@ -26,9 +26,28 @@
 
     // ---- Feature detection --------------------------------------------------
     // Prefer document.modelContext (current); fall back to navigator.modelContext
-    // (early-preview, deprecated). Register nothing if neither is usable.
+    // (early-preview, deprecated). When only document exposes the API, alias it
+    // onto navigator so agents / older Lighthouse checks that still probe
+    // navigator.modelContext can see the same object (page world only).
+    function shimNavigatorModelContext() {
+        try {
+            if (typeof document === 'undefined' || !document.modelContext) return;
+            if (typeof navigator === 'undefined') return;
+            if (typeof navigator.modelContext !== 'undefined') return;
+            try {
+                Object.defineProperty(Navigator.prototype, 'modelContext', {
+                    configurable: true,
+                    get: function () { return document.modelContext; }
+                });
+            } catch (e1) {
+                try { navigator.modelContext = document.modelContext; } catch (e2) {}
+            }
+        } catch (e) {}
+    }
+
     function getModelContext() {
         try {
+            shimNavigatorModelContext();
             var mc = (typeof document !== 'undefined' && document.modelContext)
                 || (typeof navigator !== 'undefined' && navigator.modelContext)
                 || null;
@@ -439,17 +458,102 @@
         });
     }
 
+    // ---- Declarative HTML annotations (Chrome WebMCP Declarative API) -------
+    // Lighthouse / Chrome discover tools from `toolname` + `tooldescription` on
+    // <form> elements. Project footers and hard-coded public forms often omit
+    // these; stamp them for every allowlisted public form so PageSpeed-capable
+    // browsers and agent Chrome builds can see declarative tools without waiting
+    // for authors to hand-edit markup.
+    function derivedFormToolName(collection) {
+        return 'birkly_form_' + String(collection || '').replace(/[^a-z0-9_]/gi, '_');
+    }
+
+    function stampAllowlistedForms() {
+        if (!WebMCP.config || !WebMCP.config.enabled) return;
+        if (!toolEnabled('birkly_submit_public_form')) return;
+        var forms = findPublicForms();
+        forms.forEach(function (f) {
+            if (!collectionAllowed(f.collection)) return;
+            var el = f.el;
+            if (!el) return;
+            if (!el.getAttribute('toolname')) {
+                el.setAttribute('toolname', derivedFormToolName(f.collection));
+            }
+            if (!el.getAttribute('tooldescription')) {
+                el.setAttribute(
+                    'tooldescription',
+                    'Submit the "' + f.collection + '" form on this page.'
+                );
+            }
+            // Prefer explicit param descriptions when labels are nested/complex.
+            try {
+                var controls = el.querySelectorAll('input[name], textarea[name], select[name]');
+                for (var i = 0; i < controls.length; i++) {
+                    var c = controls[i];
+                    var nm = c.getAttribute('name');
+                    if (!nm || nm === 'collection' || nm === '_csrf' || nm === '_honeypot') continue;
+                    if (c.type === 'hidden') continue;
+                    if (c.getAttribute('toolparamdescription')) continue;
+                    var label = fieldLabel(el, c, nm);
+                    if (label) c.setAttribute('toolparamdescription', label);
+                }
+            } catch (e) {}
+        });
+    }
+
+    function refreshDeclarativeForms() {
+        if (!WebMCP.config || !WebMCP.config.enabled) return;
+        stampAllowlistedForms();
+        if (WebMCP.mc) {
+            registerDeclarativeForms();
+            registerAttributeTools();
+        }
+    }
+
+    function scheduleDeclarativeRefresh() {
+        if (WebMCP._stampTimer) {
+            try { clearTimeout(WebMCP._stampTimer); } catch (e) {}
+        }
+        WebMCP._stampTimer = setTimeout(refreshDeclarativeForms, 60);
+    }
+
+    function wireFormObservers() {
+        if (WebMCP._formObserversWired) return;
+        WebMCP._formObserversWired = true;
+
+        document.addEventListener('birkly:templates-processed', refreshDeclarativeForms);
+        document.addEventListener('birkly:footer-forms-ready', refreshDeclarativeForms);
+
+        try {
+            if (typeof MutationObserver !== 'undefined') {
+                var obs = new MutationObserver(function (mutations) {
+                    if (!WebMCP.config || !WebMCP.config.enabled) return;
+                    for (var i = 0; i < mutations.length; i++) {
+                        var m = mutations[i];
+                        if (m.addedNodes && m.addedNodes.length) {
+                            scheduleDeclarativeRefresh();
+                            return;
+                        }
+                    }
+                });
+                obs.observe(document.documentElement, { childList: true, subtree: true });
+                WebMCP._formObserver = obs;
+            }
+        } catch (e) {}
+    }
+
     // ---- Declarative forms (author + {entry for}) ---------------------------
     // Any public form on the page whose collection is on the allowlist becomes a
     // per-form submit tool. Forms with explicit toolname/tooldescription use
     // those; otherwise we derive a stable name. Re-scanned on templates-processed.
     function registerDeclarativeForms() {
         if (!toolEnabled('birkly_submit_public_form')) return;
+        stampAllowlistedForms();
         abortScope('forms');
         var forms = findPublicForms();
         forms.forEach(function (f) {
             if (!collectionAllowed(f.collection)) return;
-            var name = f.toolName || ('birkly_form_' + f.collection.replace(/[^a-z0-9_]/gi, '_'));
+            var name = f.toolName || derivedFormToolName(f.collection);
             if (WebMCP.registered[name]) return;
             var props = {};
             var required = [];
@@ -711,30 +815,12 @@
 
     function start() {
         if (WebMCP.started) return;
-
-        WebMCP.mc = getModelContext();
-        if (!WebMCP.mc) {
-            // Unsupported browser — silent no-op, exactly today's behaviour.
-            return;
-        }
-
         WebMCP.started = true;
 
-        // Re-scan declarative forms / attribute tools whenever the client
-        // re-renders the page (regions, SPA-style updates). Bound once, guarded
-        // by the resolved config.
-        document.addEventListener('birkly:templates-processed', function () {
-            if (!WebMCP.config || !WebMCP.config.enabled) return;
-            registerDeclarativeForms();
-            registerAttributeTools();
-        });
-
-        // Tear tools down when the page is going away.
-        window.addEventListener('pagehide', abortAll);
-        window.addEventListener('beforeunload', abortAll);
-
-        // Prefer the SSR-inlined config: register synchronously so agent
-        // browsers / Lighthouse see tools without waiting on a network round-trip.
+        // Prefer the SSR-inlined config: stamp declarative attrs + register
+        // synchronously so agent browsers / Lighthouse see tools without waiting
+        // on a network round-trip. Stamping runs even when modelContext is
+        // missing so markup is ready if the browser adds the API later.
         if (typeof window !== 'undefined' && window.BIRKLY_WEBMCP_CONFIG) {
             applyConfig(window.BIRKLY_WEBMCP_CONFIG);
             return;
@@ -754,6 +840,22 @@
             log('disabled — registering nothing');
             return;
         }
+
+        wireFormObservers();
+        stampAllowlistedForms();
+
+        WebMCP.mc = getModelContext();
+        if (!WebMCP.mc) {
+            // Unsupported browser — keep stamped declarative attrs, skip
+            // imperative registerTool. Silent: no console spam.
+            log('modelContext unavailable — declarative attrs only');
+            return;
+        }
+
+        // Tear tools down when the page is going away.
+        window.addEventListener('pagehide', abortAll);
+        window.addEventListener('beforeunload', abortAll);
+
         registerAll();
     }
 
