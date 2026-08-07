@@ -783,6 +783,49 @@
                 });
             });
         }
+
+        var deleteProjectBtn = document.getElementById('project-delete-all-btn');
+        if (deleteProjectBtn && deleteProjectBtn.dataset.bound !== '1') {
+            deleteProjectBtn.dataset.bound = '1';
+            deleteProjectBtn.addEventListener('click', async function () {
+                var confirmed = await BirklyFeedback.confirm(
+                    'Delete the entire project folder? All HTML, CSS, JS, and assets will be removed. This cannot be undone.',
+                    { danger: true, title: 'Delete project', confirmLabel: 'Continue' }
+                );
+                if (!confirmed) return;
+                var phrase = await BirklyFeedback.prompt(
+                    'Type DELETE to confirm permanent removal of all project files.',
+                    '',
+                    { title: 'Confirm deletion', placeholder: 'DELETE', confirmLabel: 'Delete project' }
+                );
+                if (phrase !== 'DELETE') {
+                    if (phrase !== null) {
+                        BirklyFeedback.toast('Deletion cancelled — confirmation phrase did not match.', 'warning');
+                    }
+                    return;
+                }
+                fetchJson(apiUrl('/api/project_site.php?action=delete_project'), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'delete_project',
+                        confirm_phrase: 'DELETE',
+                        _csrf: getCsrfToken()
+                    })
+                }).then(function () {
+                    clearFilePreview();
+                    state.currentPath = '';
+                    state.selectedFile = null;
+                    refreshFiles();
+                    loadOverview();
+                    loadActivity();
+                    BirklyFeedback.toast('Project contents deleted.', 'success');
+                }).catch(function (error) {
+                    BirklyFeedback.toast(error.message, 'error');
+                });
+            });
+        }
     }
 
     function initProjectSettings() {

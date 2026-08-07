@@ -7,6 +7,7 @@
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 haru_secure_session_start();
 
 header('Content-Type: application/json');
@@ -232,7 +233,10 @@ switch ($action) {
     case 'install_starter':
         require_once __DIR__ . '/../core/demo_starter_templates.php';
         $templateId = strtolower(trim((string) ($input['template'] ?? $input['starter_template'] ?? '')));
-        $projectRoot = dirname(__DIR__);
+        if ($templateId === '') {
+            $templateId = 'blank';
+        }
+        $projectRoot = birkly_project_root();
         $result = birkly_demo_install_starter_template($templateId, $projectRoot);
         if (!$result['success']) {
             http_response_code(400);

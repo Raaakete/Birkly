@@ -63,6 +63,9 @@ $duplicateCallback = $options['duplicate_callback'] ?? 'duplicate-entry-btn';
 $showRestoreAction = !empty($options['show_restore_action']);
 $restoreCallback = $options['restore_callback'] ?? 'restore-entry-btn';
 $deleteLabel = $options['delete_label'] ?? __('admin.delete');
+$entriesL2Actions = !empty($options['entries_l2_actions']);
+$duplicateLabel = $options['duplicate_label'] ?? __('admin.duplicate');
+$moreLabel = $options['more_label'] ?? __('admin.more');
 
 // Helper function to get title URL (links to detail page if sub-collections exist, otherwise editor)
 $getTitleUrl = function($entry) use ($collection, $titleUrlCallback) {
@@ -122,7 +125,7 @@ $getSubEntryCount = function($entry) {
 // error_log('Smart Table Component: collection = ' . ($collection['slug'] ?? 'N/A'));
 
 if (!empty($entries)): ?>
-    <div class="entries-smart-table <?= htmlspecialchars($tableClass) ?>" <?= $options['table_data_attrs'] ?? '' ?>>
+    <div class="entries-smart-table <?= htmlspecialchars($tableClass) ?><?= $entriesL2Actions ? ' entries-l2-actions' : '' ?>" <?= $options['table_data_attrs'] ?? '' ?>>
         <div class="table-viewport">
             <table class="smart-table">
                 <thead class="table-head">
@@ -265,6 +268,47 @@ if (!empty($entries)): ?>
 
                         <td class="cell cell-actions">
                             <div class="cell-actions-inner">
+                            <?php if ($entriesL2Actions): ?>
+                                <a class="btn btn-sm btn-secondary" href="<?= htmlspecialchars($editUrl) ?>"><?= __('admin.edit') ?></a>
+                                <?php if ($status !== 'trashed'): ?>
+                                    <?php if ($status === 'published'): ?>
+                                        <button type="button" class="btn btn-sm entry-unpublish-btn" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.unpublish') ?> <?= htmlspecialchars($title) ?>"><?= __('admin.unpublish') ?></button>
+                                    <?php else: ?>
+                                        <button type="button" class="btn btn-sm entry-publish-btn" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.publish') ?> <?= htmlspecialchars($title) ?>"><?= __('admin.publish') ?></button>
+                                    <?php endif; ?>
+                                    <div class="dropdown entry-row-more-menu">
+                                        <button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="<?= htmlspecialchars($moreLabel) ?>" aria-expanded="false" aria-haspopup="true">
+                                            <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right">
+                                            <?php if ($deleteCallback): ?>
+                                                <button type="button" class="dropdown-item dropdown-item-danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>">
+                                                    <?= birkly_icon('trash', ['size' => 16, 'class' => 'dropdown-item-icon']) ?>
+                                                    <span class="dropdown-item-label"><?= htmlspecialchars($deleteLabel) ?></span>
+                                                </button>
+                                            <?php endif; ?>
+                                            <?php if ($showDuplicateAction): ?>
+                                                <button type="button" class="dropdown-item <?= htmlspecialchars($duplicateCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>">
+                                                    <?= birkly_icon('copy', ['size' => 16, 'class' => 'dropdown-item-icon']) ?>
+                                                    <span class="dropdown-item-label"><?= htmlspecialchars($duplicateLabel) ?></span>
+                                                </button>
+                                            <?php endif; ?>
+                                            <?php if (!empty($entry['slug'])): ?>
+                                                <button type="button" class="dropdown-item entry-copy-slug-btn" data-slug="<?= htmlspecialchars($entry['slug']) ?>">
+                                                    <?= birkly_icon('link', ['size' => 16, 'class' => 'dropdown-item-icon']) ?>
+                                                    <span class="dropdown-item-label"><?= __('admin.copy_slug') ?></span>
+                                                </button>
+                                            <?php endif; ?>
+                                            <button type="button" class="dropdown-item entry-copy-id-btn" data-entry-id="<?= htmlspecialchars($entryId) ?>">
+                                                <?= birkly_icon('hash', ['size' => 16, 'class' => 'dropdown-item-icon']) ?>
+                                                <span class="dropdown-item-label"><?= __('admin.copy_id') ?></span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>"><?= __('admin.restore') ?></button>
+                                <?php endif; ?>
+                            <?php else: ?>
                             <a class="btn-icon btn-icon-sm btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
                                 <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                             </a>
@@ -284,6 +328,7 @@ if (!empty($entries)): ?>
                                         <?= birkly_icon('trash', ['size' => 16]) ?>
                                     </button>
                                 <?php endif; ?>
+                            <?php endif; ?>
                             <?php endif; ?>
                             </div>
                         </td>

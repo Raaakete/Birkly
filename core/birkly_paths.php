@@ -255,6 +255,50 @@ function birkly_paths_reset_cache(): void
 }
 
 /**
+ * Writable runtime directories for a fresh CMS install (local zip / php -S).
+ *
+ * @return list<string>
+ */
+function birkly_runtime_dir_names(): array
+{
+    return ['content', 'media', 'users', 'settings', 'logs', 'temp', 'cache'];
+}
+
+/**
+ * Create missing runtime dirs under the project root (idempotent).
+ *
+ * @return array<string, array{exists: bool, writable: bool, created: bool}>
+ */
+function birkly_ensure_runtime_dirs(?string $projectRoot = null): array
+{
+    $root = rtrim($projectRoot ?? birkly_project_root(), '/\\');
+    $report = [];
+
+    foreach (birkly_runtime_dir_names() as $dir) {
+        $path = $root . '/' . $dir;
+        $created = false;
+        if (!is_dir($path)) {
+            $created = @mkdir($path, 0755, true);
+        }
+        if (is_dir($path) && !is_writable($path)) {
+            @chmod($path, 0755);
+        }
+        $report[$dir] = [
+            'exists' => is_dir($path),
+            'writable' => is_dir($path) && is_writable($path),
+            'created' => $created,
+        ];
+    }
+
+    $collectionsDir = $root . '/content/collections';
+    if (!is_dir($collectionsDir)) {
+        @mkdir($collectionsDir, 0755, true);
+    }
+
+    return $report;
+}
+
+/**
  * True when the CMS is accessed on a local dev host (localhost, loopback, .local/.test/.dev).
  */
 function birkly_is_local_dev_request(): bool

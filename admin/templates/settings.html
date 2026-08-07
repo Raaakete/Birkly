@@ -372,6 +372,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="card-header">
               <h3 class="card-title">Browse &amp; edit files</h3>
               <div class="card-actions">
+                <a href="<?= htmlspecialchars(birkly_url('/api/project_site.php?action=download')) ?>" class="btn btn-secondary btn-sm" id="project-download-btn">Download project</a>
+                <button type="button" class="btn btn-danger btn-sm" id="project-delete-all-btn">Delete project</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn">New folder</button>
                 <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn">Upload</button>
                 <input type="file" id="project-upload-input" multiple hidden>

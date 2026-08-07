@@ -49,7 +49,7 @@ $readActions = [
     'list_connections', 'list_versions', 'cms_diff', 'list_collections', 'list_collection_entries',
 ];
 $writeActions = [
-    'save_draft', 'publish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'accept_suggestions',
+    'save_draft', 'publish', 'unpublish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'accept_suggestions',
     'setup_complete', 'setup_skip', 'setup_start', 'copilot', 'field_ai', 'wizard_generate', 'wizard_apply', 'cms_refresh',
     'validate_links', 'suggest_links',
 ];
@@ -182,6 +182,24 @@ if ($action === 'publish') {
             'version' => $result['version'],
             'meta' => birkly_ai_presence_load_meta(),
             'public_urls' => birkly_ai_presence_public_urls(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'unpublish') {
+    $result = birkly_ai_presence_unpublish();
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => implode('; ', $result['errors'] ?? ['Unpublish failed'])]);
+        exit;
+    }
+    $draft = birkly_ai_presence_load_draft();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'meta' => birkly_ai_presence_load_meta(),
+            'public_urls' => birkly_ai_presence_public_urls(),
+            'publish_state' => birkly_ai_presence_publish_state($draft),
         ],
     ]);
     exit;

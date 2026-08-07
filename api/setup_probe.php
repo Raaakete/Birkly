@@ -7,26 +7,18 @@
 header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
-$root = dirname(__DIR__);
-$writableDirs = ['content', 'media', 'users', 'settings', 'logs', 'temp'];
-$writable = [];
-foreach ($writableDirs as $dir) {
-    $path = $root . '/' . $dir;
-    if (!is_dir($path)) {
-        $writable[$dir] = ['exists' => false, 'writable' => false];
-        continue;
-    }
-    $writable[$dir] = [
-        'exists' => true,
-        'writable' => is_writable($path),
-    ];
-}
+require_once __DIR__ . '/../core/birkly_paths.php';
+
+$root = birkly_project_root();
+$writable = birkly_ensure_runtime_dirs($root);
 
 $extensions = ['json', 'mbstring', 'curl', 'openssl'];
 $loaded = [];
 foreach ($extensions as $ext) {
     $loaded[$ext] = extension_loaded($ext);
 }
+
+$langFile = $root . '/lang/en.json';
 
 echo json_encode([
     'status' => 'ok',
@@ -36,6 +28,7 @@ echo json_encode([
         'sapi' => PHP_SAPI,
         'extensions' => $loaded,
         'writable_dirs' => $writable,
+        'has_lang_en' => is_file($langFile),
         'has_server_router' => is_file($root . '/server-router.php'),
         'has_start_server' => is_file($root . '/start-server.sh'),
         'has_admin' => is_dir($root . '/admin'),
