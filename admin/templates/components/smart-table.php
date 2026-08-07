@@ -269,18 +269,24 @@ if (!empty($entries)): ?>
                         <td class="cell cell-actions">
                             <div class="cell-actions-inner">
                             <?php if ($entriesL2Actions): ?>
-                                <a class="btn btn-sm btn-secondary" href="<?= htmlspecialchars($editUrl) ?>"><?= __('admin.edit') ?></a>
+                                <a class="btn-icon btn-icon-sm btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit') ?>">
+                                    <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
+                                </a>
                                 <?php if ($status !== 'trashed'): ?>
                                     <?php if ($status === 'published'): ?>
-                                        <button type="button" class="btn btn-sm entry-unpublish-btn" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.unpublish') ?> <?= htmlspecialchars($title) ?>"><?= __('admin.unpublish') ?></button>
+                                        <button type="button" class="btn-icon btn-icon-sm entry-unpublish-btn" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.unpublish') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.unpublish') ?>">
+                                            <?= birkly_icon('archive', ['size' => 16]) ?>
+                                        </button>
                                     <?php else: ?>
-                                        <button type="button" class="btn btn-sm entry-publish-btn" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.publish') ?> <?= htmlspecialchars($title) ?>"><?= __('admin.publish') ?></button>
+                                        <button type="button" class="btn-icon btn-icon-sm entry-publish-btn" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.publish') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.publish') ?>">
+                                            <?= birkly_icon('globe', ['size' => 16]) ?>
+                                        </button>
                                     <?php endif; ?>
                                     <div class="dropdown entry-row-more-menu">
-                                        <button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="<?= htmlspecialchars($moreLabel) ?>" aria-expanded="false" aria-haspopup="true">
+                                        <button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="<?= htmlspecialchars($moreLabel) ?>" title="<?= htmlspecialchars($moreLabel) ?>" aria-expanded="false" aria-haspopup="true">
                                             <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
                                         </button>
-                                        <div class="dropdown-menu dropdown-menu-right">
+                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu--up">
                                             <?php if ($deleteCallback): ?>
                                                 <button type="button" class="dropdown-item dropdown-item-danger <?= htmlspecialchars($deleteCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>">
                                                     <?= birkly_icon('trash', ['size' => 16, 'class' => 'dropdown-item-icon']) ?>
@@ -306,7 +312,9 @@ if (!empty($entries)): ?>
                                         </div>
                                     </div>
                                 <?php else: ?>
-                                    <button type="button" class="btn btn-sm <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>"><?= __('admin.restore') ?></button>
+                                    <button type="button" class="btn-icon btn-icon-sm <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.restore') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.restore') ?>">
+                                        <?= birkly_icon('arrow-counter-clockwise', ['size' => 16]) ?>
+                                    </button>
                                 <?php endif; ?>
                             <?php else: ?>
                             <a class="btn-icon btn-icon-sm btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">

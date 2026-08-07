@@ -58,6 +58,21 @@ function birkly_project_ssr_settings(): array
         : 'birkly';
     $merged['ssr_cache_ttl'] = max(0, (int) $merged['ssr_cache_ttl']);
 
+    // P58 follow-up: production had ssr_cache_ttl=0 saved, which forced every
+    // request through Cache-Write: skip (always MISS). For Birkly-hosted server
+    // SSR, treat 0 as "use default" so cold-load caching stays on. Explicit
+    // disable remains available via BIRKLY_SSR_CACHE_TTL=0 or render_mode=client.
+    $envTtl = getenv('BIRKLY_SSR_CACHE_TTL');
+    if ($envTtl !== false && trim((string) $envTtl) !== '') {
+        $merged['ssr_cache_ttl'] = max(0, (int) $envTtl);
+    } elseif (
+        (int) $merged['ssr_cache_ttl'] === 0
+        && ($merged['hosting_type'] ?? '') === 'birkly'
+        && in_array($merged['render_mode'] ?? '', ['server', 'auto'], true)
+    ) {
+        $merged['ssr_cache_ttl'] = (int) $defaults['ssr_cache_ttl'];
+    }
+
     return [
         'render_mode' => $merged['render_mode'],
         'hosting_type' => $merged['hosting_type'],

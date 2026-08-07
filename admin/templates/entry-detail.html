@@ -104,6 +104,9 @@
             'show_drag' => false,
             'show_sub_entries' => false,
             'table_class' => 'main-entry-table',
+            'entries_l2_actions' => empty($is_sub_entry_detail),
+            'show_duplicate_action' => empty($is_sub_entry_detail),
+            'duplicate_callback' => 'duplicate-main-entry-btn',
             'delete_callback' => empty($is_sub_entry_detail) ? 'delete-main-entry-btn' : null,
             'delete_data_attr' => 'data-entry-id',
             'edit_url_callback' => $buildMainEntryEditorUrl,
@@ -423,28 +426,96 @@
 
 <script<?= $__birklyScriptNonceAttr ?? '' ?>>
 const entryDetailConfirmDelete = <?= json_encode(__('admin.confirm_delete')) ?>;
+const entryDetailCollection = <?= json_encode($collection['slug'] ?? '') ?>;
+const entryDetailEntryId = <?= json_encode($entry['id'] ?? '') ?>;
+const entryDetailEntriesUrl = <?= json_encode(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>;
 
-document.querySelector('.delete-main-entry-btn')?.addEventListener('click', async function() {
-    if (!(await BirklyFeedback.confirm(entryDetailConfirmDelete, { danger: true }))) return;
+function entryDetailCsrf() {
+    return document.getElementById('csrf-token')?.value || '';
+}
 
-    fetch('/api/admin_entries.php', {
+function entryDetailPostForm(body) {
+    return fetch('/api/admin_entries.php', {
         method: 'POST',
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({
+        body: new URLSearchParams(Object.assign({ _csrf: entryDetailCsrf() }, body))
+    }).then(r => r.json());
+}
+
+document.querySelector('.main-entry-table')?.addEventListener('click', async function(event) {
+    const deleteBtn = event.target.closest('.delete-main-entry-btn');
+    if (deleteBtn) {
+        if (!(await BirklyFeedback.confirm(entryDetailConfirmDelete, { danger: true }))) return;
+        entryDetailPostForm({
             action: 'delete',
-            collection: '<?= htmlspecialchars($collection['slug'] ?? '') ?>',
-            entry_id: '<?= htmlspecialchars($entry['id'] ?? '') ?>',
-            _csrf: document.getElementById('csrf-token').value
-        })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.status === 'ok') {
-            window.location.href = <?= json_encode(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>;
-        } else {
-            BirklyFeedback.toast('Error: ' + d.message, 'error');
+            collection: entryDetailCollection,
+            entry_id: deleteBtn.getAttribute('data-entry-id') || entryDetailEntryId
+        }).then(d => {
+            if (d.status === 'ok') {
+                window.location.href = entryDetailEntriesUrl;
+            } else {
+                BirklyFeedback.toast('Error: ' + (d.message || 'Delete failed'), 'error');
+            }
+        });
+        return;
+    }
+
+    const publishBtn = event.target.closest('.entry-publish-btn, .entry-unpublish-btn');
+    if (publishBtn) {
+        const publish = publishBtn.classList.contains('entry-publish-btn');
+        const confirmMsg = publish
+            ? <?= json_encode(__('admin.entries_publish_confirm') ?: 'Publish this entry?') ?>
+            : <?= json_encode(__('admin.entries_unpublish_confirm') ?: 'Unpublish this entry?') ?>;
+        if (!(await BirklyFeedback.confirm(confirmMsg))) return;
+        const id = publishBtn.getAttribute('data-entry-id') || entryDetailEntryId;
+        fetch('/api/admin_entries.php?action=bulk', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                action: publish ? 'publish' : 'unpublish',
+                collection: entryDetailCollection,
+                entry_ids: [id],
+                _csrf: entryDetailCsrf()
+            })
+        }).then(r => r.json()).then(d => {
+            if (d.status === 'ok') window.location.reload();
+            else BirklyFeedback.toast('Error: ' + (d.message || 'Action failed'), 'error');
+        });
+        return;
+    }
+
+    const dupBtn = event.target.closest('.duplicate-main-entry-btn');
+    if (dupBtn) {
+        entryDetailPostForm({
+            action: 'duplicate',
+            collection: entryDetailCollection,
+            entry_id: dupBtn.getAttribute('data-entry-id') || entryDetailEntryId
+        }).then(d => {
+            if (d.status === 'ok') {
+                window.location.reload();
+            } else {
+                BirklyFeedback.toast('Error: ' + (d.message || 'Duplicate failed'), 'error');
+            }
+        });
+        return;
+    }
+
+    const copySlug = event.target.closest('.entry-copy-slug-btn');
+    if (copySlug) {
+        const slug = copySlug.getAttribute('data-slug') || '';
+        if (slug && navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(slug).then(() => BirklyFeedback.toast(<?= json_encode(__('admin.copied') ?: 'Copied') ?>, 'success'));
         }
-    });
+        return;
+    }
+
+    const copyId = event.target.closest('.entry-copy-id-btn');
+    if (copyId) {
+        const id = copyId.getAttribute('data-entry-id') || '';
+        if (id && navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(id).then(() => BirklyFeedback.toast(<?= json_encode(__('admin.copied') ?: 'Copied') ?>, 'success'));
+        }
+    }
 });
 
 document.querySelectorAll('.delete-sub-entry-btn').forEach(btn => {
