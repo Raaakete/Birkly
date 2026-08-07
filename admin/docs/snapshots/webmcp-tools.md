@@ -48,14 +48,14 @@ Birkly ships a small demo page (`project/webmcp-demo.html`) with a contact form,
 
 ## Three layers, one hub
 
-Agent Guide is the admin home for "how AI works with this site," organized as **three tabs** — Guide, Tools, Publish. **AI app connections (Birkly MCP) are not in this hub** — they live in **Settings → AI** only. Each layer answers a different question and lives in a different place — they are never the same thing:
+Agent Guide is the admin home for "how AI works with this site" — Guide, Tools, Connections, and Publish. Each layer answers a different question and lives in a different place — they are never the same thing:
 
 | Layer | Question it answers | Where it actually lives |
 |-----|---------------------|--------------------------|
 | **Guide** (hub tab) | "What should AI say about us?" | Public JSON on your site domain (`/.well-known/agent-guide.json`) |
 | **Tools** (hub tab) | "What can an AI helper *do* on our website while someone is visiting?" | **This page's** WebMCP runtime — runs in the visitor's browser |
 | **Publish** (hub tab) | "Where do all of the above actually work, given how my site is hosted?" | Mode-aware summary |
-| **Connections** (Settings → AI) | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
+| **Connections** (Agent Guide → Connections) | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
 
 Plain-language versions of the first three, matching what you'll see in the product:
 
@@ -224,7 +224,7 @@ To make tools discoverable as early as possible, Birkly (a) inlines the public c
 ## Related
 
 - [Agent Guide](../02-content/agent-guide.md) — the Guide tab (public fact sheet) and the wider hub
-- [MCP connections](../01-admin/mcp-connections.md) — Settings → AI (Birkly MCP for AI apps; not in the Agent Guide hub)
+- [MCP connections](../01-admin/mcp-connections.md) — Agent Guide → Connections (Birkly MCP for AI apps; not in the Agent Guide hub)
 - [Public forms](public-forms.md) — how `public_api` collections and `{entry for}` work under the hood
 - [Client library](client-library.md) — `birkly-client.js`, which website tools load after
 - [Agent Guide public API](agent-guide-public-api.md) — the Guide JSON website tools never duplicate

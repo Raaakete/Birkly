@@ -329,7 +329,7 @@ function birkly_list_human_user_records(bool $stripPassword = true): array
 }
 
 /**
- * Outbound BYOAI provider connections owned by a human user (Settings → AI → Built-in assistant).
+ * Outbound BYOAI provider connections owned by a human user (Agent Guide → Connections → Built-in assistant).
  *
  * @return list<array<string, mixed>>
  */
