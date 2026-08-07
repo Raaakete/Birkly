@@ -736,6 +736,18 @@
             page.classList.toggle('ap-page--essentials', state.viewMode === 'essentials');
             page.classList.toggle('ap-page--advanced', state.viewMode === 'advanced');
         }
+        var fab = document.getElementById('ap-assist-fab');
+        var sidebar = document.getElementById('ap-assist-sidebar');
+        if (state.viewMode === 'essentials') {
+            if (fab) {
+                fab.hidden = true;
+                fab.setAttribute('aria-expanded', 'false');
+            }
+            if (sidebar) sidebar.classList.remove('is-open');
+        } else if (fab) {
+            // Shown only below the desktop rail breakpoint (CSS hides ≥1280px).
+            fab.hidden = false;
+        }
     }
 
     function initViewMode() {

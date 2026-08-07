@@ -30,7 +30,20 @@
 
 .ap-main { min-width: 0; }
 
-/* Below 1280px the rail is an off-canvas drawer opened by the FAB */
+/* Advanced: rail sits beside tab *content*, not the Essentials/Advanced
+   toggle or the tab strip. Spacing separates content from tab navigation. */
+.ap-advanced-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+  margin-block-start: var(--space-6);
+  min-width: 0;
+}
+
+.ap-advanced-panels { min-width: 0; }
+
+/* Below 1280px the rail is an off-canvas drawer opened by the FAB (Advanced) */
 .ap-assist-sidebar {
   position: fixed;
   inset-block: 0;
@@ -64,12 +77,17 @@
   box-shadow: var(--elevation-2);
 }
 
-/* Advanced mode promotes the assist rail to a persistent desktop column;
-   Essentials keeps the compact one-column layout and off-canvas drawer (FAB
-   + slide-in panel) at every width, so AI Assist stays reachable in both
-   view modes (see ai-presence.js setViewMode). */
+/* Essentials: no floating AI Assist FAB. */
+.ap-page--essentials ~ .ap-assist-fab,
+.ap-assist-fab[hidden] {
+  display: none !important;
+}
+
+/* Advanced desktop: persistent rail aligned with content column */
 @media (min-width: 1280px) {
-  .ap-page--advanced { grid-template-columns: minmax(0, 1fr) minmax(0, 20rem); }
+  .ap-advanced-body {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 20rem);
+  }
 
   .ap-page--advanced .ap-assist-sidebar {
     position: sticky;
@@ -84,7 +102,7 @@
     box-shadow: none;
   }
 
-  .ap-page--advanced ~ .ap-assist-fab { display: none; }
+  .ap-page--advanced ~ .ap-assist-fab { display: none !important; }
 }
 
 .ap-page--essentials { grid-template-columns: minmax(0, 1fr); }
