@@ -875,13 +875,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="loading-state"><p>Loading presets…</p></div>
                 </div>
                 <p class="form-help">Not legal advice — you remain responsible for privacy law in your region.</p>
-                <div class="form-group">
-                  <label for="analytics-consent-text">Consent banner text (Standard+)</label>
-                  <textarea id="analytics-consent-text" class="input" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                  <label for="analytics-retention-days">Retention days (optional override)</label>
-                  <input type="number" id="analytics-retention-days" class="input" min="1" max="730" placeholder="Preset default">
+                <div id="analytics-consent-fields" class="u-stack-3" hidden>
+                  <div class="form-group">
+                    <label for="analytics-consent-text">Consent banner text (Standard+)</label>
+                    <textarea id="analytics-consent-text" class="input" rows="3"></textarea>
+                  </div>
+                  <div class="form-group">
+                    <label for="analytics-retention-days">Retention days (optional override)</label>
+                    <input type="number" id="analytics-retention-days" class="input" min="1" max="730" placeholder="Preset default">
+                  </div>
                 </div>
                 <div class="u-cluster">
                   <button type="button" class="btn btn-primary" id="analytics-settings-save">Save analytics settings</button>
