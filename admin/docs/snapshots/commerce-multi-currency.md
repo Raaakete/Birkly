@@ -33,7 +33,7 @@ Commerce **multi-currency v1** sets a site-wide default (`commerce_default_curre
 
 - Cart lines group by currency; mixed-currency carts checkout one currency at a time (or block mixed checkout per site policy).
 - Payment providers receive the correct currency code.
-- Order receipts and **Commerce → Analytics** CSV show the charged currency column.
+- Order receipts and **Commerce → Dashboard** CSV export show the charged currency column.
 
 **Gift cards and quotes**
 
