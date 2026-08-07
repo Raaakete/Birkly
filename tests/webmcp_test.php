@@ -103,6 +103,44 @@ if ($jsCode === 0) {
     // Node may be unavailable in some CI images — treat as skipped, not failed.
     echo "SKIP birkly-webmcp.js node --check (node unavailable)\n";
 }
+assert_true(strpos($js, "typeof document !== 'undefined'") !== false, 'runtime guards document for Node require');
+
+echo "==> SSR inject respects enable flag\n";
+require_once $root . '/core/project_ssr.php';
+$html = "<!DOCTYPE html><html><head></head><body><p>hi</p></body></html>";
+birkly_webmcp_save(['enabled' => false, 'tools' => [], 'form_allowlist' => []]);
+$offHtml = birkly_project_ssr_inject_webmcp($html);
+assert_true(stripos($offHtml, 'birkly-webmcp.js') === false, 'SSR does not inject when WebMCP off');
+birkly_webmcp_save(['enabled' => true, 'tools' => [], 'form_allowlist' => []]);
+$onHtml = birkly_project_ssr_inject_webmcp($html);
+assert_true(stripos($onHtml, 'birkly-webmcp.js') !== false, 'SSR injects when WebMCP on');
+
+echo "==> Public URLs honesty (cms canonical always; public_site only in project mode)\n";
+require_once $root . '/core/ai_presence.php';
+require_once $root . '/core/hosting_urls.php';
+$hostingBackup = is_file($root . '/settings/hosting.json') ? file_get_contents($root . '/settings/hosting.json') : null;
+birkly_hosting_persist([
+    'cms_base_url' => 'https://cms.example.test',
+    'public_site_mode' => 'external',
+    'public_site_url' => 'https://www.example.test',
+]);
+$urlsExt = birkly_ai_presence_public_urls();
+assert_true(($urlsExt['cms_canonical_url'] ?? '') !== '', 'external: cms_canonical_url present');
+assert_true(($urlsExt['public_site_url'] ?? '') === '', 'external: public_site_url empty (honesty)');
+assert_true(strpos((string) ($urlsExt['mcp_url'] ?? ''), '/mcp') !== false, 'mcp_url is CMS /mcp');
+birkly_hosting_persist([
+    'cms_base_url' => 'https://cms.example.test',
+    'public_site_mode' => 'project',
+    'public_site_url' => 'https://www.example.test',
+]);
+$urlsProj = birkly_ai_presence_public_urls();
+assert_true(($urlsProj['cms_canonical_url'] ?? '') !== '', 'project: cms_canonical_url present');
+assert_true(($urlsProj['public_site_url'] ?? '') !== '', 'project: public_site_url set when Birkly serves');
+if ($hostingBackup !== null) {
+    file_put_contents($root . '/settings/hosting.json', $hostingBackup);
+} elseif (is_file($root . '/settings/hosting.json')) {
+    @unlink($root . '/settings/hosting.json');
+}
 
 // Restore original settings state.
 if ($backup !== null) {

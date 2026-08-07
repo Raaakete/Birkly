@@ -778,10 +778,12 @@
     } catch (e) {}
 
     // ---- Boot ---------------------------------------------------------------
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', start);
-    } else {
-        start();
+    if (typeof document !== 'undefined') {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', start);
+        } else {
+            start();
+        }
     }
 
     // Export for Node-based unit tests (no DOM side effects when required).
