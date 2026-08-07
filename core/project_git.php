@@ -109,7 +109,35 @@ final class ProjectGit
             'version' => $version,
             'writable' => $writable,
             'reason' => $writable ? null : 'project_not_writable',
+            'nostr_helper' => self::findExecutable('git-credential-nostr') !== null,
+            'providers' => array_keys(function_exists('birkly_project_git_provider_meta')
+                ? birkly_project_git_provider_meta()
+                : ['github' => true, 'gitlab' => true, 'generic' => true]),
         ];
+    }
+
+    /**
+     * Resolve an executable on PATH (used for git-credential-nostr / Buzz).
+     */
+    public static function findExecutable(string $name): ?string
+    {
+        $name = trim($name);
+        if ($name === '' || str_contains($name, '/') || str_contains($name, '\\')) {
+            return null;
+        }
+
+        $pathEnv = (string) (getenv('PATH') ?: '/usr/local/bin:/usr/bin:/bin');
+        foreach (explode(PATH_SEPARATOR, $pathEnv) as $dir) {
+            $dir = rtrim($dir, "/\\");
+            if ($dir === '') {
+                continue;
+            }
+            $candidate = $dir . DIRECTORY_SEPARATOR . $name;
+            if (is_file($candidate) && is_executable($candidate)) {
+                return $candidate;
+            }
+        }
+        return null;
     }
 
     private static function canSpawnProcesses(): bool
@@ -149,12 +177,12 @@ final class ProjectGit
     // ---------------------------------------------------------------------
 
     /**
-     * @param array<string, mixed> $auth mode: none|token|ssh (+ token / username / ssh_key)
+     * @param array<string, mixed> $auth mode: none|token|ssh|nostr (+ token / username / ssh_key / nostr_key)
      */
     public function setAuth(array $auth): void
     {
         $mode = (string) ($auth['mode'] ?? 'none');
-        if (!in_array($mode, ['none', 'token', 'ssh'], true)) {
+        if (!in_array($mode, ['none', 'token', 'ssh', 'nostr'], true)) {
             $mode = 'none';
         }
 
@@ -168,6 +196,12 @@ final class ProjectGit
             }
         } elseif ($mode === 'ssh') {
             $this->auth['ssh_key'] = (string) ($auth['ssh_key'] ?? '');
+        } elseif ($mode === 'nostr') {
+            $nostrKey = trim((string) ($auth['nostr_key'] ?? ''));
+            $this->auth['nostr_key'] = $nostrKey;
+            if ($nostrKey !== '') {
+                $this->secrets[] = $nostrKey;
+            }
         }
     }
 
@@ -885,6 +919,8 @@ GITIGNORE;
             if ($sshCommand !== null) {
                 $env['GIT_SSH_COMMAND'] = $sshCommand;
             }
+
+            $this->applyNostrAuth($env, $configArgs);
         }
 
         $result = self::exec(array_merge(['git'], $configArgs, $args), $this->root, $env);
@@ -981,6 +1017,65 @@ GITIGNORE;
             $scope .= ':' . $parts['port'];
         }
         return $scope . '/';
+    }
+
+    /**
+     * Buzz (and other Nostr forges) authenticate Smart HTTP via NIP-98 using
+     * git-credential-nostr. We only enable this when the helper is installed.
+     *
+     * @param array<string, string> $env
+     * @param list<string> $configArgs
+     */
+    private function applyNostrAuth(array &$env, array &$configArgs): void
+    {
+        if (($this->auth['mode'] ?? 'none') !== 'nostr') {
+            return;
+        }
+
+        $helper = self::findExecutable('git-credential-nostr');
+        if ($helper === null) {
+            throw new ProjectGitException(
+                'Buzz/Nostr auth needs git-credential-nostr on this server’s PATH. Install the Buzz credential helper, or switch to SSH/token if your remote supports it.'
+            );
+        }
+
+        $nostrKey = (string) ($this->auth['nostr_key'] ?? '');
+        if ($nostrKey === '') {
+            throw new ProjectGitException('A Nostr private key (nsec or hex) is required for Buzz authentication.');
+        }
+
+        $env['NOSTR_PRIVATE_KEY'] = $nostrKey;
+
+        $url = $this->remoteUrl();
+        $parts = is_string($url) ? parse_url($url) : false;
+        $host = is_array($parts) ? (string) ($parts['host'] ?? '') : '';
+        $scheme = is_array($parts) ? (string) ($parts['scheme'] ?? 'https') : 'https';
+        if ($host === '') {
+            throw new ProjectGitException('Buzz remotes must be HTTPS URLs like https://relay.example/git/<owner>/<repo>.');
+        }
+
+        $helperOrigin = $scheme . '://' . $host;
+        $config = [
+            'credential.helper' => '',
+            'credential.useHttpPath' => 'true',
+            'credential.' . $helperOrigin . '.helper' => $helper,
+        ];
+
+        if (self::supportsEnvConfig()) {
+            $start = isset($env['GIT_CONFIG_COUNT']) ? (int) $env['GIT_CONFIG_COUNT'] : 0;
+            $env['GIT_CONFIG_COUNT'] = (string) ($start + count($config));
+            $index = $start;
+            foreach ($config as $key => $value) {
+                $env['GIT_CONFIG_KEY_' . $index] = $key;
+                $env['GIT_CONFIG_VALUE_' . $index] = $value;
+                $index++;
+            }
+        } else {
+            foreach ($config as $key => $value) {
+                $configArgs[] = '-c';
+                $configArgs[] = $key . '=' . $value;
+            }
+        }
     }
 
     private function sshCommand(): ?string
