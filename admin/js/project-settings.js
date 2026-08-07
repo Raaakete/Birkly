@@ -93,7 +93,16 @@
             existing.target = '_blank';
             existing.rel = 'noopener noreferrer';
             existing.textContent = 'Visit project';
-            topbar.insertBefore(existing, topbar.firstChild);
+            // Keep Developer mode badge to the left of Visit project when present.
+            var badge = document.getElementById('developer-mode-badge');
+            var insertBefore = topbar.querySelector('.topbar-control-group');
+            if (badge && badge.parentNode === topbar) {
+                topbar.insertBefore(existing, insertBefore || badge.nextSibling);
+            } else if (insertBefore) {
+                topbar.insertBefore(existing, insertBefore);
+            } else {
+                topbar.appendChild(existing);
+            }
         }
 
         existing.href = state.visitUrl;
