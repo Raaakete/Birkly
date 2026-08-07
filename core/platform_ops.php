@@ -55,11 +55,21 @@ function birkly_ops_request_signature(string $body): string
 /**
  * Register or refresh this CMS install on Ops (best-effort).
  * Persists per-install feedback_relay_secret when Ops returns one.
+ *
+ * Throttled by default so admin HTML is not blocked on every navigation.
+ * Pass $force=true from explicit admin actions (e.g. feedback) when needed.
  */
-function birkly_ops_register_installation(): void
+function birkly_ops_register_installation(bool $force = false): void
 {
     $url = birkly_ops_installations_register_url();
     if ($url === '' || !function_exists('curl_init')) {
+        return;
+    }
+
+    require_once __DIR__ . '/birkly_paths.php';
+    $stampFile = rtrim(birkly_project_root(), '/\\') . '/settings/.ops_register_stamp';
+    $ttlSeconds = 6 * 60 * 60; // 6 hours
+    if (!$force && is_file($stampFile) && (time() - (int) filemtime($stampFile)) < $ttlSeconds) {
         return;
     }
 
@@ -90,21 +100,31 @@ function birkly_ops_register_installation(): void
         CURLOPT_POSTFIELDS => $body,
         CURLOPT_HTTPHEADER => $headers,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 6,
-        CURLOPT_CONNECTTIMEOUT => 3,
+        // Keep short: this runs on the admin request path when the stamp expires.
+        CURLOPT_TIMEOUT => $force ? 6 : 3,
+        CURLOPT_CONNECTTIMEOUT => $force ? 3 : 2,
     ]);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
     if (!is_string($response) || $code < 200 || $code >= 300) {
+        // Avoid hammering a dead endpoint on every page load.
+        if (!$force) {
+            @touch($stampFile);
+        }
         return;
     }
 
     $data = json_decode($response, true);
     if (!is_array($data) || empty($data['ok'])) {
+        if (!$force) {
+            @touch($stampFile);
+        }
         return;
     }
+
+    @touch($stampFile);
 
     $installation = is_array($data['installation'] ?? null) ? $data['installation'] : [];
     $relaySecret = trim((string) ($installation['feedback_relay_secret'] ?? ''));

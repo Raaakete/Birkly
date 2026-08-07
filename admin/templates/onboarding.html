@@ -21,16 +21,15 @@ $defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 require_once $root . '/core/demo_starter_templates.php';
-require_once $root . '/core/ops_starters_client.php';
 require_once $root . '/core/birkly_paths.php';
-$opsStarterOverlay = birkly_ops_starter_availability_overlay($root);
-$opsCatalogReachable = $opsStarterOverlay !== [];
-$starterAvailability = birkly_demo_starter_availability($root, $opsStarterOverlay);
+// Do not block first paint on outbound starter catalog. JS refreshes availability
+// from /api/onboarding.php?action=status (catalog is cached server-side).
 $showAiOnboardingStep = !birkly_is_local_dev_request();
 $starterCards = [
     'marsk' => ['label' => 'Marsk', 'hint' => 'Slow living journal + demo site'],
     'blank' => ['label' => 'Start blank', 'hint' => 'No demo content'],
 ];
+$localCatalog = birkly_demo_starter_catalog();
 ?>
 
 <div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>" data-ai-step="<?= $showAiOnboardingStep ? '1' : '0' ?>">
@@ -133,32 +132,28 @@ $starterCards = [
             <div class="onboarding-content">
                 <div class="step-header">
                     <h2 class="step-title">Choose a starter template</h2>
-                    <p class="step-subtitle">Optional sample collections and a demo website. Blank works offline. Marsk downloads from the Ops starter catalog when this server can reach it.</p>
-                    <?php if (!$opsCatalogReachable): ?>
-                        <p class="step-subtitle" style="margin-top:0.5rem;">Ops catalog unreachable from this machine — Marsk stays unavailable until outbound HTTPS to <code>ops.birkly.cloud</code> works. You can continue with Blank.</p>
-                    <?php endif; ?>
+                    <p class="step-subtitle">Optional sample collections and a demo website. Blank always works. Marsk downloads a demo pack over the internet.</p>
+                    <p id="starter-availability-note" class="step-subtitle" style="margin-top:0.5rem;" hidden></p>
                 </div>
                 <div class="use-case-grid starter-template-grid">
                     <?php foreach ($starterCards as $starterId => $card): ?>
                         <?php
-                        $meta = $starterAvailability[$starterId] ?? ['selectable' => false, 'enabled' => false, 'ready' => false];
-                        $selectable = !empty($meta['selectable']);
-                        $unavailable = !$selectable && $starterId !== 'blank';
-                        $unavailableLabel = !$opsCatalogReachable
-                            ? 'Needs Ops connection'
-                            : (!empty($meta['enabled']) && empty($meta['ready'])
-                                ? 'Not published yet'
-                                : 'Coming soon');
+                        // Optimistic: local catalog marks Marsk onboarding-enabled; JS confirms via status API.
+                        $locallyEnabled = !empty($localCatalog[$starterId]['onboarding_enabled']);
+                        $selectable = $starterId === 'blank' || $locallyEnabled;
                         ?>
                         <button type="button"
                             class="use-case-card<?= $selectable ? '' : ' use-case-card--disabled' ?>"
                             data-starter="<?= htmlspecialchars($starterId) ?>"
                             data-starter-selectable="<?= $selectable ? '1' : '0' ?>"
+                            data-starter-pending="<?= ($starterId !== 'blank' && $locallyEnabled) ? '1' : '0' ?>"
                             <?= $selectable ? 'data-onboarding-action="select-starter" data-onboarding-param="' . htmlspecialchars($starterId) . '"' : 'disabled aria-disabled="true"' ?>>
                             <strong><?= htmlspecialchars($card['label']) ?></strong>
                             <span><?= htmlspecialchars($card['hint']) ?></span>
-                            <?php if ($unavailable): ?>
-                                <em class="starter-coming-soon"><?= htmlspecialchars($unavailableLabel) ?></em>
+                            <?php if ($starterId !== 'blank' && $locallyEnabled): ?>
+                                <em class="starter-coming-soon" data-starter-status>Checking…</em>
+                            <?php elseif ($starterId !== 'blank'): ?>
+                                <em class="starter-coming-soon" data-starter-status>Coming soon</em>
                             <?php endif; ?>
                         </button>
                     <?php endforeach; ?>
