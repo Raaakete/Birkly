@@ -114,7 +114,33 @@ function birkly_hosting_load(): array
 
     $config = birkly_hosting_apply_env_overrides($config);
 
+    [$config, $repairedLocal] = birkly_hosting_repair_local_dev_urls($config);
+
     $GLOBALS['__birkly_hosting_config'] = $config;
+
+    // Persist port fixes so /project → apex redirects stop using http://localhost (no port).
+    if (
+        $repairedLocal
+        && trim((string) $config['cms_base_url']) !== ''
+        && empty($GLOBALS['__birkly_hosting_persisting'])
+    ) {
+        $GLOBALS['__birkly_hosting_persisting'] = true;
+        birkly_hosting_persist($config, false);
+        unset($GLOBALS['__birkly_hosting_persisting']);
+        $GLOBALS['__birkly_hosting_config'] = $config;
+
+        // Existing local installs that already have a project site but never
+        // toggled Visit project — enable the header button once.
+        require_once __DIR__ . '/project_site.php';
+        require_once __DIR__ . '/project_settings.php';
+        if (is_file(birkly_public_site_path() . '/index.html')) {
+            $rawProject = birkly_project_settings_storage()->read('project.json');
+            if (!is_array($rawProject) || !array_key_exists('show_visit_button', $rawProject)) {
+                birkly_save_project_settings(['show_visit_button' => true]);
+            }
+        }
+    }
+
     return $config;
 }
 
@@ -175,13 +201,81 @@ function birkly_hosting_request_scheme(): string
     return 'http';
 }
 
-function birkly_hosting_build_url_from_request(): string
+/**
+ * Current request origin including non-default port (e.g. http://localhost:8080).
+ * Uses HTTP_HOST as sent by the browser — do not strip the port first.
+ */
+function birkly_hosting_request_origin_url(): string
 {
-    $host = birkly_cms_request_host();
-    if ($host === '') {
+    $httpHost = trim((string) ($_SERVER['HTTP_HOST'] ?? ''));
+    if ($httpHost === '') {
         return '';
     }
-    return birkly_hosting_normalize_url(birkly_hosting_request_scheme() . '://' . $host, false);
+
+    return birkly_hosting_normalize_url(birkly_hosting_request_scheme() . '://' . $httpHost, false);
+}
+
+function birkly_hosting_build_url_from_request(): string
+{
+    return birkly_hosting_request_origin_url();
+}
+
+/**
+ * Local php -S / reverse-proxy installs often persist public_site_url as
+ * http://localhost (port dropped). Repair when the live request has a port.
+ *
+ * @param array<string, mixed> $config
+ * @return array{0: array<string, mixed>, 1: bool} [config, changed]
+ */
+function birkly_hosting_repair_local_dev_urls(array $config): array
+{
+    require_once __DIR__ . '/birkly_paths.php';
+    require_once __DIR__ . '/site_domain.php';
+
+    if (!birkly_is_local_dev_request()) {
+        return [$config, false];
+    }
+
+    $origin = birkly_hosting_request_origin_url();
+    if ($origin === '') {
+        return [$config, false];
+    }
+
+    $originParts = parse_url($origin);
+    $originHost = birkly_normalize_host((string) ($originParts['host'] ?? ''));
+    $originPort = isset($originParts['port']) ? (int) $originParts['port'] : null;
+    if ($originHost === '' || $originPort === null) {
+        return [$config, false];
+    }
+
+    $changed = false;
+    foreach (['cms_base_url', 'public_site_url'] as $key) {
+        $url = trim((string) ($config[$key] ?? ''));
+        if ($url === '') {
+            continue;
+        }
+        $parts = parse_url($url);
+        if (!is_array($parts) || empty($parts['host'])) {
+            continue;
+        }
+        $host = birkly_normalize_host((string) $parts['host']);
+        $port = isset($parts['port']) ? (int) $parts['port'] : null;
+        if ($host !== $originHost) {
+            continue;
+        }
+        if ($port === $originPort) {
+            continue;
+        }
+        // Same local host, wrong/missing port → rewrite to the live origin (+ path).
+        $path = isset($parts['path']) ? rtrim((string) $parts['path'], '/') : '';
+        if ($path === '/') {
+            $path = '';
+        }
+        $config[$key] = rtrim($origin, '/') . $path;
+        $changed = true;
+    }
+
+    return [$config, $changed];
 }
 
 /**
