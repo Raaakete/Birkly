@@ -334,8 +334,8 @@ window.HaruFieldtypes['relation'] = {
   if (!document.getElementById('relationPickerModal')) {
     const modal = document.createElement('div');
     modal.id = 'relationPickerModal';
-    modal.className = 'modal';
-    modal.style.display = 'none';
+    modal.className = 'relation-picker-modal';
+    modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = `
       <div class="card" style="width:90vw;max-width:800px;max-height:90vh;">
         <div class="card-header flex justify-between align-center">
@@ -386,7 +386,9 @@ window.HaruFieldtypes['relation'] = {
     relationPickerCallback = callback;
     relationPickerSelected = [];
     
-    document.getElementById('relationPickerModal').style.display = 'flex';
+    const pickerModal = document.getElementById('relationPickerModal');
+    pickerModal.classList.add('is-open');
+    pickerModal.setAttribute('aria-hidden', 'false');
     document.getElementById('relationPickerSelectBtn').disabled = true;
     document.getElementById('relationPickerSelectedCount').textContent = '0';
     
@@ -401,7 +403,12 @@ window.HaruFieldtypes['relation'] = {
   }
   
   function closeRelationPicker() {
-    document.getElementById('relationPickerModal').style.display = 'none';
+    const pickerModal = document.getElementById('relationPickerModal');
+    if (pickerModal) {
+      pickerModal.classList.remove('is-open');
+      pickerModal.setAttribute('aria-hidden', 'true');
+      pickerModal.style.display = '';
+    }
     relationPickerCallback = null;
     relationPickerSelected = [];
     relationPickerItems = [];
