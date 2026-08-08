@@ -1,0 +1,115 @@
+/* Shared emoji/icon picker — P62-A5 / P56 design language */
+
+.icon-picker-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.icon-picker-field .input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.icon-picker-field-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.icon-picker-field-preview.is-empty {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+.icon-picker-open-btn {
+  flex: 0 0 auto;
+}
+
+.icon-picker-modal .modal-content {
+  max-width: 36rem;
+}
+
+.icon-picker-preview-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.icon-picker-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.icon-picker-preview.is-empty {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+.icon-picker-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-height: min(50vh, 28rem);
+  overflow: auto;
+  padding-inline-end: var(--space-1);
+}
+
+.icon-picker-group-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.icon-picker-group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
+  gap: var(--space-2);
+}
+
+.icon-picker-tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color var(--motion-fast) var(--ease-out),
+              border-color var(--motion-fast) var(--ease-out);
+}
+
+.icon-picker-tile:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.icon-picker-tile:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-offset);
+}
