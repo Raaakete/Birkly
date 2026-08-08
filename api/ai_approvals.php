@@ -481,6 +481,58 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
 }
 
 // Execute create entry
+/**
+ * Ensure plugin hooks are available for AI/MCP entry writes (Commerce catalog, etc.).
+ * Admin entry saves load plugins; MCP/AI approval path historically did not.
+ */
+function birkly_ai_ensure_plugins_loaded(): void
+{
+    require_once __DIR__ . '/../core/plugins.php';
+    if (function_exists('load_plugins')) {
+        load_plugins();
+    }
+}
+
+/**
+ * Mirror admin_entries save side-effects for AI/MCP entry writes.
+ */
+function birkly_ai_after_entry_write(array $entry, string $collectionSlug, ?array $oldEntry = null): void
+{
+    require_once __DIR__ . '/../core/cache.php';
+    $cache = new Cache();
+    $cache->invalidateCollection($collectionSlug);
+
+    require_once __DIR__ . '/../core/project_ssr.php';
+    if (function_exists('birkly_project_ssr_invalidate_all')) {
+        birkly_project_ssr_invalidate_all();
+    }
+
+    birkly_ai_ensure_plugins_loaded();
+    if (function_exists('do_action')) {
+        do_action('after_entry_save', $entry, $collectionSlug, $oldEntry);
+    }
+}
+
+/**
+ * Mirror admin delete side-effects for AI/MCP entry deletes.
+ */
+function birkly_ai_after_entry_delete(array $entry, string $collectionSlug): void
+{
+    require_once __DIR__ . '/../core/cache.php';
+    $cache = new Cache();
+    $cache->invalidateCollection($collectionSlug);
+
+    require_once __DIR__ . '/../core/project_ssr.php';
+    if (function_exists('birkly_project_ssr_invalidate_all')) {
+        birkly_project_ssr_invalidate_all();
+    }
+
+    birkly_ai_ensure_plugins_loaded();
+    if (function_exists('do_action')) {
+        do_action('after_entry_delete', $entry, $collectionSlug);
+    }
+}
+
 function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null) {
     error_log("executeCreateEntry: FUNCTION CALLED");
     error_log("executeCreateEntry: Received action data: " . json_encode($actionData));
@@ -599,6 +651,7 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
         
         if ($result) {
             error_log("executeCreateEntry: Successfully created entry: " . $entryId);
+            birkly_ai_after_entry_write($entry, $collection, null);
             return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
         } else {
             error_log("executeCreateEntry: Failed to write entry file. Path: " . $writePath);
@@ -717,6 +770,7 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     
     // Use AI user ID or original user ID for attribution
     $updatedBy = $aiUser['id'] ?? $originalUserId ?? 'ai';
+    $oldEntry = $entry;
     
     // Merge updates (only update fields that are provided)
     foreach ($updateData as $key => $value) {
@@ -745,6 +799,7 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     
     if ($result) {
         error_log("executeUpdateEntry: Successfully updated entry");
+        birkly_ai_after_entry_write($entry, $collection, $oldEntry);
         return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
     } else {
         error_log("executeUpdateEntry: Failed to write entry file");
@@ -771,10 +826,16 @@ function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null)
     }
 
     $entryFile = 'collections/' . $collectionDir . '/entries/' . $entryId . '.json';
+    $existing = $contentStorage->read($entryFile);
     
     $result = $contentStorage->delete($entryFile);
     
     if ($result) {
+        if (is_array($existing)) {
+            birkly_ai_after_entry_delete($existing, $collectionDir);
+        } else {
+            birkly_ai_after_entry_delete(['id' => $entryId], $collectionDir);
+        }
         return ['success' => true, 'data' => []];
     } else {
         return ['success' => false, 'message' => 'Failed to delete entry'];
