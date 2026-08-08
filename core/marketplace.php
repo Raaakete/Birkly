@@ -1371,3 +1371,4 @@ function birkly_marketplace_submit_installation_review(string $slug, int $rating
 require_once __DIR__ . '/marketplace/install.php';
 require_once __DIR__ . '/marketplace/template_pack.php';
 require_once __DIR__ . '/marketplace/consent.php';
+require_once __DIR__ . '/marketplace/hub_licenses.php';

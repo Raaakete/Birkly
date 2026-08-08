@@ -148,6 +148,12 @@ function set_plugin_state($plugin_id, $active) {
 
 function save_plugin_states() {
     global $birkly_plugins;
+    $storage = birkly_plugin_state_storage();
+    $existing = $storage->read('plugins.json') ?? [];
+    if (!is_array($existing)) {
+        $existing = [];
+    }
+
     $states = [];
     foreach ($birkly_plugins as $id => $plugin) {
         $state = [
@@ -174,8 +180,19 @@ function save_plugin_states() {
         }
         $states[$id] = $state;
     }
-    
-    return birkly_plugin_state_storage()->write('plugins.json', $states);
+
+    // Keep entitlement bindings when a plugin dir is temporarily missing/unloaded
+    // (e.g. leftover empty dir during Hub install) so CMS deploys cannot drop seats.
+    foreach ($existing as $id => $prev) {
+        if (!is_array($prev) || isset($states[$id])) {
+            continue;
+        }
+        if (!empty($prev['license_ref']) || !empty($prev['entitlement_token']) || !empty($prev['entitlement'])) {
+            $states[$id] = $prev;
+        }
+    }
+
+    return $storage->write('plugins.json', $states);
 }
 
 function load_plugin_states() {
