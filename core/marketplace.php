@@ -809,6 +809,38 @@ function birkly_marketplace_attach_entitlement_to_installed_offer(
 }
 
 /**
+ * Remove stored license binding and entitlement payload from an installed plugin.
+ */
+function birkly_marketplace_clear_plugin_entitlement(string $pluginId): bool
+{
+    $pluginId = trim($pluginId);
+    if ($pluginId === '' || !function_exists('get_all_plugins')) {
+        return false;
+    }
+
+    global $birkly_plugins;
+    if (!isset($birkly_plugins[$pluginId]) && function_exists('load_plugins')) {
+        load_plugins();
+    }
+    if (!isset($birkly_plugins[$pluginId])) {
+        return false;
+    }
+
+    unset(
+        $birkly_plugins[$pluginId]['license_ref'],
+        $birkly_plugins[$pluginId]['entitlement_token'],
+        $birkly_plugins[$pluginId]['entitlement'],
+        $birkly_plugins[$pluginId]['entitlement_grace_started_at']
+    );
+
+    if (function_exists('save_plugin_states')) {
+        save_plugin_states();
+    }
+
+    return true;
+}
+
+/**
  * Map marketplace offer slug → installed plugin state.
  *
  * @return array<string, array{installed:bool,plugin_id:?string,installed_version:?string,latest_version:string,update_available:bool}>

@@ -483,6 +483,14 @@
         "hub_licenses_none": "No licenses bound to this installation yet.",
         "hub_licenses_none_hint": "Activate a license key above, or install a paid offer from Discover.",
         "hub_license_activated": "License activated",
+        "hub_license_install_now": "License activated. Install the plugin on this site to use it.",
+        "hub_license_install_pending": "License activated — plugin not installed on this site yet.",
+        "install_now": "Install now",
+        "hub_revoke_license": "Revoke on this site",
+        "hub_revoke_license_hint": "Revoking frees the seat on this installation so you can activate or install the same license key on another site.",
+        "hub_revoke_license_confirm": "Revoke this license on this site? The seat will be freed so you can activate the same key on another Birkly installation.",
+        "hub_license_revoked": "License revoked on this site. You can now use this key on another installation.",
+        "enter_license_key_revoke": "Enter the license key to revoke this seat on the marketplace.",
         "hub_updates_none": "All Hub plugins are up to date.",
         "hub_updates_none_hint": "Check again after new releases are published.",
         "hub_pack_has_project": "Includes project files",
@@ -490,6 +498,15 @@
         "hub_pack_replace_all": "Replace all",
         "hub_pack_replaced": "Site pack files replaced",
         "no_site_packs_installed": "No site packs installed yet.",
-        "no_site_packs_hint": "Install a site pack from Discover, or upload a pack ZIP."
+        "no_site_packs_hint": "Install a site pack from Discover, or upload a pack ZIP.",
+        "hub_checkout_return_ready": "Checkout complete. Review and install with the returned license key.",
+        "hub_checkout_return_manual_key": "Checkout complete. Paste your activation key to finish installing.",
+        "entitlement_status_active": "Active",
+        "entitlement_status_trialing": "Trial",
+        "entitlement_status_grace": "Grace",
+        "entitlement_status_held": "On hold",
+        "entitlement_status_revoked": "Revoked",
+        "entitlement_status_expired": "Expired",
+        "entitlement_status_deactivated": "Deactivated"
     }
 }
