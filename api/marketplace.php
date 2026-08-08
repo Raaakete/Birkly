@@ -192,6 +192,36 @@ if ($action === 'activate_license') {
         );
     }
 
+    $offerTitle = $offerSlug;
+    $offerVersion = '';
+    if ($offerSlug !== '') {
+        $detail = birkly_marketplace_offer_detail($offerSlug);
+        if ($detail['ok'] && is_array($detail['offer'] ?? null)) {
+            $offerTitle = (string) ($detail['offer']['title'] ?? $offerSlug);
+            $offerVersion = (string) ($detail['offer']['latest_version'] ?? '');
+        }
+        if ($offerVersion === '') {
+            foreach ($detail['releases'] ?? [] as $release) {
+                if (!is_array($release)) {
+                    continue;
+                }
+                $ver = (string) ($release['version'] ?? '');
+                if ($ver !== '' && ($offerVersion === '' || version_compare($ver, $offerVersion, '>'))) {
+                    $offerVersion = $ver;
+                }
+            }
+        }
+        birkly_marketplace_remember_hub_license(
+            $offerSlug,
+            $licenseKey,
+            (string) ($activation['entitlement_token'] ?? ''),
+            is_array($activation['entitlement'] ?? null) ? $activation['entitlement'] : [],
+            $offerTitle,
+            $offerVersion,
+            $attachedPluginId
+        );
+    }
+
     echo json_encode([
         'status' => 'ok',
         'message' => 'License activated',
@@ -203,6 +233,9 @@ if ($action === 'activate_license') {
             'entitlement_token_stored' => (string) ($activation['entitlement_token'] ?? '') !== '',
             'attached_plugin_id' => $attachedPluginId,
             'installation_id' => birkly_installation_id(),
+            'pending_install' => $attachedPluginId === null && $offerSlug !== '',
+            'title' => $offerTitle,
+            'version' => $offerVersion,
         ],
     ]);
     exit;
@@ -292,6 +325,7 @@ if ($action === 'deactivate_license') {
     if ($pluginId !== '') {
         birkly_marketplace_clear_plugin_entitlement($pluginId);
     }
+    birkly_marketplace_forget_hub_license('', $licenseRef);
 
     echo json_encode([
         'status' => 'ok',
@@ -300,6 +334,17 @@ if ($action === 'deactivate_license') {
             'code' => $deactivation['code'] ?? 'deactivated',
             'plugin_id' => $pluginId !== '' ? $pluginId : null,
             'license_ref' => $licenseRef !== '' ? $licenseRef : null,
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'list_hub_licenses') {
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'pending' => birkly_marketplace_pending_hub_licenses(),
+            'installation_id' => birkly_installation_id(),
         ],
     ]);
     exit;
