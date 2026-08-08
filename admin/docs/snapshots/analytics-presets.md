@@ -2,7 +2,7 @@
 
 ## Summary
 
-**Settings → Analytics** controls how much visitor data Birkly collects for your public site. Choose one site-wide preset — **Off**, **Minimal**, **Standard**, or **Advanced**. Each option trades insight depth against privacy and compliance burden. Birkly shows the upsides and downsides in the admin; you remain responsible for privacy law in your region.
+**Settings → Analytics** controls how much visitor data Birkly collects for your public site. Saving Minimal+ auto-enables tracking for localhost and your site hosts. Choose one site-wide preset — **Off**, **Minimal**, **Standard**, or **Advanced**. Each option trades insight depth against privacy and compliance burden. Birkly shows the upsides and downsides in the admin; you remain responsible for privacy law in your region.
 
 > **Warning:** This page is product guidance, **not legal advice**. Birkly does not guarantee GDPR (or other) compliance. You remain responsible for privacy law in your region (for example GDPR in the EU/EEA), including consent, disclosure, and retention choices.
 

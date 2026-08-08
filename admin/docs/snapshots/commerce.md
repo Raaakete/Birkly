@@ -4,11 +4,11 @@ The **Commerce** plugin (`plugins/commerce/`) is Birkly’s content-first store:
 
 **Commerce 0→1 complete (P54 P3 / 1.0.29):** hybrid cart + split checkout, MCP/Agent store kit, Automation commerce recipes, and ops intelligence (cohorts, fulfillment SLA, low-stock trigger). This closes the foundation path from empty site → sellable catalog → checkout → ops. Do not expect P4 features here.
 
-Plugin help in admin (when Commerce is active) mirrors this overview: Help → Plugin extensions → Commerce (including **Hybrid cart** → `help-hybrid-cart`).
+**In-admin docs (Commerce 1.0.57+):** open **Commerce → Docs** for the full merchant + developer guide (grouped topics: getting started, fieldtype, catalog, tax, shipping, storefront, API, troubleshooting, and more). The same topics also appear under Help → Plugin extensions → Commerce.
 
 ## Summary
 
-Activate **Commerce** under Settings → Plugins, configure a payment provider under **Settings → Connections**, add the Commerce fieldtype to collections, and model products with **fulfillment** (ship, deliver, register, gift_card, none) plus one or more **purchase_options** (one-time and/or recurring on the same entry). Use variant **sub-entries** for SKUs. Template functions expose cart count and buy URLs on client sites.
+Activate **Commerce** under Settings → Plugins, configure a payment provider under **Commerce → Settings → Connections**, add the Commerce fieldtype to collections, and model products with **fulfillment** (ship, deliver, register, gift_card, none) plus one or more **purchase_options** (one-time and/or recurring on the same entry). Use variant **sub-entries** for SKUs. Template functions expose cart count and buy URLs on client sites.
 
 ## Beginner
 
@@ -39,7 +39,8 @@ Commerce turns Birkly entries into things you can sell: physical products, digit
 2. Open **Commerce** in the sidebar → **Settings → Connections** → add Stripe, Mollie, or another provider.
 3. Edit a collection schema → add field type **Commerce**.
 4. Create an entry with price, fulfillment, and purchase options.
-5. On your website, add a buy button using `{commerce_buy_url entry_id collection}`.
+5. On your website, add a buy button using `{commerce_buy_url entry_id collection}` (or `commerce-storefront.js` — see **Commerce → Docs → Storefront & cart**).
+6. Read **Commerce → Docs** for tax modes, shipping, hybrid cart, and project integration checklists.
 
 **Variants (sizes, options)**
 

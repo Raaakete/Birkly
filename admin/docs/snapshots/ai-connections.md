@@ -1,16 +1,16 @@
 # Built-in assistant
 
-The built-in assistant lets you chat with AI **inside** the Birkly admin using the floating chat button (bottom-right). You connect once with a provider API key under **Agent Guide → Connections → Built-in assistant**.
+The built-in assistant lets you chat with AI **inside** the Birkly admin using the floating chat button (bottom-right). You connect once with a provider API key under **Settings → AI → Built-in assistant**.
 
 Connecting Claude, ChatGPT, or Cursor to your site content is separate — see [Connect your AI app](mcp-connections.md).
 
 ## Summary
 
-Go to **Agent Guide → Connections → Built-in assistant** and click **Quick connect**. Choose a provider, enter your **API key**, test the connection, and save. Use the chat button in the admin to get help with content. Consumer subscriptions (ChatGPT Plus, Claude Pro) do **not** include API access — you need a developer API key.
+Go to **Settings → AI → Built-in assistant** and click **Quick connect**. Choose a provider, enter your **API key**, test the connection, and save. Use the chat button in the admin to get help with content. Consumer subscriptions (ChatGPT Plus, Claude Pro) do **not** include API access — you need a developer API key.
 
 ## Quick connect
 
-1. **Agent Guide → Connections** tab.
+1. **Settings → AI** tab.
 2. Under **Built-in assistant**, click **Quick connect**.
 3. Select your **provider** (OpenAI, Anthropic, Google, OpenRouter, Ollama, or Custom).
 4. Enter your **API key** (skip for Ollama).

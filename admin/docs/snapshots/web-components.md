@@ -24,16 +24,18 @@ Empty entry regions get a small default template (title + content, or site_eleme
 ### List region
 
 ```html
-<birkly-region collection="blog" list ordered="date:desc"></birkly-region>
+<birkly-region collection="blog" list ordered="newest"></birkly-region>
 ```
+
+Ordering words match loops: `newest`, `oldest`, `last-updated`, `order`. Do **not** use `ordered="date:desc"`.
 
 Or supply the card markup as children (Light DOM):
 
 ```html
-<birkly-region collection="blog" list>
+<birkly-region collection="blog" list ordered="newest">
   <article>
     <h2><a href="/blog/{slug}">{title}</a></h2>
-    <p>{excerpt}</p>
+    <p>{'excerpt'}</p>
   </article>
 </birkly-region>
 ```
@@ -80,7 +82,7 @@ this.innerHTML = '<nav>…</nav>';
 | `collection` | Collection handle (`blog`, `site_elements`, …) |
 | `entry` | Entry slug (entry mode) |
 | `list` | Presence flag — list/loop mode |
-| `ordered` | Optional sort clause for list mode (e.g. `date:desc`) |
+| `ordered` | Optional sort for list mode: `newest`, `oldest`, `last-updated`, `order` |
 | `data-birkly-region` | Explicit region root (also set automatically on `<birkly-region>`) |
 | `data-birkly-processed="1"` | Set after a successful render; skip unless `force: true` |
 

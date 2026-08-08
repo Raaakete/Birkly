@@ -90,12 +90,14 @@ On a blog post detail page (`post.html?collection=blog&slug=...`):
   <button type="submit">Post comment</button>
 </form>
 
-{for each comment in 'comments' of 'blog'.current}
-  <p><strong>{ comment.author }</strong> { comment.content }</p>
+{for each entry in 'comments' of 'blog'.current ordered by newest}
+  <p><strong>{'author'}</strong> {'content'}</p>
 {endfor}
 ```
 
 Field names (`author`, `content`) must match the comments sub-collection schema from `read_collection`.
+
+**Clarify:** `{entry for 'contact'}…{endentry}` is the **valid form scaffold**. The banned phantom is `{entry 'collection'.'slug'}…{endentry}` (load-by-slug) — use `{from … get entry …}` for that.
 
 Set `auto_publish: true` on the comments sub-collection when comments should appear immediately without admin approval.
 
@@ -185,9 +187,10 @@ Do not ask non-technical users to hunt settings the tools can set.
 
 | Topic | Admin / human doc |
 |-------|-------------------|
-| Public API forms | `admin/docs/public-api-forms.php` |
+| Public forms templating | https://docs.birkly.com/03-templating/public-forms-templating.html |
+| Public API forms | https://docs.birkly.com/04-integration/public-forms.html |
 | Collection entry_method | Collection settings / AI `update_collection` |
-| Help topic | `entries` → playbook `public-forms` |
+| Help topics | `public-forms-templating`, `public-forms` → playbook `public-forms` |
 
 ## Tools
 

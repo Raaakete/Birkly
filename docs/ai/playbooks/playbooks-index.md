@@ -22,8 +22,8 @@ Read this when the user's request spans multiple areas or you are unsure which p
 | `fieldtypes` | Field `type` values, schema JSON examples, image/editor/email |
 | `site-building` | Website, portfolio, landing page, `project/` HTML/CSS |
 | `web-project-patterns` | List/detail pages, schema decisions, CMS-to-HTML wiring, common bugs |
-| `templating` | Template syntax, loops, `{from…get}`, client rendering |
-| `public-forms` | Contact forms, `{entry for}`, public_api, newsletter, visitor submissions |
+| `templating` | Template syntax, loops, `ordered by`, dates `format`, `{from…get}`, regions, phantoms |
+| `public-forms` | Contact forms, `{entry for}` (valid form scaffold), public_api, newsletter, visitor submissions |
 | `sub-collections` | Nested content: comments, reviews, line items |
 | `collection-groups` | Admin sidebar groups, reorder collections |
 | `cms-pages` | Admin-managed pages vs `project/` site |
@@ -56,10 +56,12 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 | `mcp-connections` | `mcp-setup` | `admin/docs/snapshots/mcp-connections.md` |
 | `user-plugin` | `user-management` | `admin/docs/snapshots/user-plugin.md` |
 | `plugins` / `marketplace` | `plugins-overview` | `admin/docs/snapshots/plugins.md` |
-| `public-forms` | `public-forms` | Public API forms docs |
+| `public-forms` / `public-forms-templating` | `public-forms` | Public forms docs / snapshots |
+| `templating-overview` / `canonical-syntax` / `loops-and-lists` | `templating` | Templating snapshots |
+| `detail-pages-and-url-context` | `web-project-patterns` | Detail pages snapshot |
 | `media` | `media` | `admin/docs/snapshots/media.md` |
 | `content-editor` | `content-editor` | `admin/docs/snapshots/content-editor.md` |
-| `ai` / `ai-connections` | `ai-connections` | AI admin snapshots |
+| `ai` / `ai-connections` / `mcp-connections` | `ai-connections` / `mcp-setup` | **Settings → AI** (not Agent Guide) |
 | `automation` | `automation` | `admin/docs/snapshots/automation-overview.md` |
 | `help` | `playbooks-index` | This index |
 
@@ -67,15 +69,15 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 |-------|----------|------------------------------|
 | Content model | `content-model` | https://docs.birkly.com/02-content/content-model-overview.html |
 | Field types | `fieldtypes` | https://docs.birkly.com/02-content/field-types.html |
-| Public API forms | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html |
-| Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.com/04-integration/website-integration.html , https://docs.birkly.com/04-integration/client-library.html |
-| MCP connections | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html |
+| Public API forms | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html · https://docs.birkly.com/03-templating/public-forms-templating.html |
+| Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.com/03-templating/templating-overview.html · https://docs.birkly.com/03-templating/client-setup.html |
+| MCP connections | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html (**Settings → AI**) |
 | Media | `media` | https://docs.birkly.com/01-admin/media-library.html |
 | Content editor | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
 | Marketplace | `plugins-overview` | https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
 | Commerce | `commerce`, `commerce-store-kit` | https://docs.birkly.com/06-extensibility/plugins/commerce.html |
 | User plugin | `user-management` | https://docs.birkly.com/06-extensibility/user-plugin.html |
-| Template language (full) | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
+| Template language | `templating` | Playbook + https://docs.birkly.com/03-templating/canonical-syntax.html ; full engine: `docs/TEMPLATE_LANGUAGE_SPEC.md` (`template-language-spec`) |
 | Platform overview | `admin` (context pack) | `docs/ai/birkly-context-pack.md` |
 
 ## Decision tree
@@ -102,9 +104,9 @@ Sell / automate / members?
 └─ Login & registration → user-management
 
 AI connectivity?
-├─ Chat inside admin → ai-connections
-├─ Claude/Cursor/ChatGPT → mcp-setup
-└─ Brand facts for external AI → agent-guide
+├─ Chat inside admin → ai-connections (Settings → AI)
+├─ Claude/Cursor/ChatGPT → mcp-setup (Settings → AI)
+└─ Brand facts for external AI → agent-guide (Guide · Tools · Publish only)
 ```
 
 ## Official plugins (marketplace)
@@ -137,8 +139,10 @@ Install flow: `plugins-overview` → `list_plugins` → admin Marketplace or `ac
 - Re-listing collections/files every message after first successful read
 - Using `create_page` when user wanted `project/` custom site
 - Wrong field types or names — read `fieldtypes` + `read_collection`
-- Wrong templating syntax (`{% for %}`, `{{ }}`) — use Birkly tags
-- Detail page loops entire collection — use URL slug pattern
+- Wrong templating syntax (`{% for %}`, `{{ }}`) — use Birkly tags (`templating`)
+- Detail page loops entire collection — use URL slug pattern + `of 'coll'.current` for subs
 - Template tags without `birkly-client.js`
+- Phantom `{entry 'x'.'y'}…{endentry}` — use `{from…get}`; forms use `{entry for}` (valid)
 - Form field names ≠ schema slugs — causes "Validation failed"
 - Telling non-technical users to manually fix what AI tools can do
+- Re-adding Connections to Agent Guide — Connections live under **Settings → AI** only
