@@ -17,15 +17,17 @@
 
 .notification-badge {
   position: absolute;
-  inset-block-start: -0.25rem;
-  inset-inline-end: -0.25rem;
+  /* Inset inside the icon cell — .topbar-control-group clips overflow for
+     avatar rounding, so negative offsets cut the badge in half. */
+  inset-block-start: 0.125rem;
+  inset-inline-end: 0.125rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.125rem;
-  height: 1.125rem;
+  min-width: 1rem;
+  height: 1rem;
   padding: 0 var(--space-1);
-  border: 2px solid var(--canvas);
+  border: 1.5px solid var(--surface);
   border-radius: var(--radius-pill);
   background: var(--danger-solid);
   color: var(--ink-on-danger);
@@ -33,6 +35,9 @@
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
   box-sizing: border-box;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ============================================

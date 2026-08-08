@@ -214,7 +214,6 @@
   margin-inline-start: auto;
   border-radius: 50%;
   background: var(--status-dot-ok, var(--mint-200, var(--accent)));
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--status-dot-ok, var(--accent)) 35%, transparent);
 }
 
 .nav-links a:hover {

@@ -39,23 +39,14 @@
   border-radius: var(--radius-pill);
   flex-shrink: 0;
   background: var(--status-dot-bad);
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--status-dot-bad) 40%, transparent),
-    0 0 7px color-mix(in srgb, var(--status-dot-bad-glow) 50%, transparent);
 }
 
 .ap-tab-dot[data-ok="1"] {
   background: var(--status-dot-ok);
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--status-dot-ok) 50%, transparent),
-    0 0 8px color-mix(in srgb, var(--status-dot-ok-glow) 55%, transparent);
 }
 
 .ap-tab-dot[data-ok="0"] {
   background: var(--status-dot-bad);
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--status-dot-bad) 40%, transparent),
-    0 0 7px color-mix(in srgb, var(--status-dot-bad-glow) 50%, transparent);
 }
 
 /* ============================================
