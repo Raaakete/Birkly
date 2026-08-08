@@ -555,7 +555,7 @@ if ($action === 'check_updates') {
     exit;
 }
 
-// Update plugin (marketplace-sourced one-click upgrade)
+// Update plugin (marketplace-sourced one-click update)
 if ($action === 'update') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
@@ -593,7 +593,7 @@ if ($action === 'update') {
         if (empty($entitlement['ok'])) {
             echo json_encode([
                 'status' => 'error',
-                'message' => $entitlement['message'] ?? 'Marketplace entitlement is inactive. Renew to upgrade.',
+                'message' => $entitlement['message'] ?? 'Marketplace entitlement is inactive. Renew to update.',
                 'code' => $entitlement['code'] ?? 'entitlement_inactive',
             ]);
             exit;
@@ -602,7 +602,7 @@ if ($action === 'update') {
     if (!empty($check['license_lapsed'])) {
         echo json_encode([
             'status' => 'error',
-            'message' => $check['license_warning'] ?? 'Marketplace license is inactive. Renew to upgrade.',
+            'message' => $check['license_warning'] ?? 'Marketplace license is inactive. Renew to update.',
             'code' => 'license_lapsed',
         ]);
         exit;
@@ -612,13 +612,31 @@ if ($action === 'update') {
         exit;
     }
 
+    $targetVersion = (string) ($check['latest_version'] ?? $current);
+    $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
+    $consentCheck = birkly_marketplace_require_install_consent($slug, $targetVersion, $consentAccepted);
+    if (!$consentCheck['ok']) {
+        $permPreview = birkly_marketplace_install_permissions($slug, $targetVersion);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $consentCheck['error'] ?? 'Permission consent required',
+            'code' => $consentCheck['code'] ?? 'consent_required',
+            'data' => [
+                'slug' => $slug,
+                'plugin_id' => $plugin_id,
+                'permissions_manifest' => $permPreview['permissions_manifest'] ?? [],
+                'version' => $permPreview['version'] ?? $targetVersion,
+            ],
+        ]);
+        exit;
+    }
+
     $wasActive = !empty($plugin['active']);
     if ($wasActive) {
         set_plugin_state($plugin_id, false);
     }
 
-    $targetVersion = (string) ($check['latest_version'] ?? $current);
-    $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true);
+    $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true, $consentAccepted);
 
     if (!$install['ok']) {
         if ($wasActive) {
@@ -626,7 +644,8 @@ if ($action === 'update') {
         }
         echo json_encode([
             'status' => 'error',
-            'message' => 'Upgrade failed: ' . implode('; ', $install['errors'] ?? []),
+            'message' => 'Update failed: ' . implode('; ', $install['errors'] ?? []),
+            'code' => $install['code'] ?? null,
             'errors' => $install['errors'] ?? [],
         ]);
         exit;
@@ -640,7 +659,7 @@ if ($action === 'update') {
     log_security_event('plugin_updated', ['plugin' => $plugin_id, 'version' => $targetVersion, 'user' => $_SESSION['user']['email'] ?? 'unknown']);
     echo json_encode([
         'status' => 'ok',
-        'message' => 'Plugin upgraded successfully',
+        'message' => 'Plugin updated successfully',
         'data' => ['plugin_id' => $plugin_id, 'version' => $targetVersion],
     ]);
     exit;
