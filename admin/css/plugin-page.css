@@ -123,6 +123,7 @@
 
 /* ============================================
    In-plugin documentation panel (js/plugin-docs-tab.js)
+   Uses core .side-nav.side-nav--track (Media / Agent Guide pattern).
    ============================================ */
 .plugin-docs-layout {
   display: grid;
@@ -131,60 +132,120 @@
   align-items: start;
 }
 
-.plugin-docs-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  padding-block-end: var(--space-3);
-  border-block-end: 1px solid var(--border-subtle);
+.plugin-docs-nav.side-nav {
+  position: sticky;
+  top: var(--space-4);
 }
 
-@media (min-width: 768px) {
-  .plugin-docs-layout { grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr); }
+.plugin-docs-nav .side-nav-group-title {
+  margin-block-start: var(--space-4);
+}
 
-  .plugin-docs-nav {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    padding-block-end: 0;
-    padding-inline-end: var(--space-4);
-    border-block-end: none;
-    border-inline-end: 1px solid var(--border-subtle);
+.plugin-docs-nav .side-nav-group-title:first-child {
+  margin-block-start: 0;
+}
+
+@media (min-width: 1024px) {
+  .plugin-docs-layout {
+    grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
   }
 }
 
-.plugin-docs-nav-item {
-  padding: var(--space-2) var(--space-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  text-align: start;
-  cursor: pointer;
-  transition:
-    background-color var(--motion-fast) var(--ease-out),
-    color var(--motion-fast) var(--ease-out);
-}
-
-.plugin-docs-nav-item:hover,
-.plugin-docs-nav-item.is-active {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
+@media (max-width: 1023px) {
+  .plugin-docs-nav.side-nav {
+    position: static;
+  }
 }
 
 .plugin-docs-content {
   min-width: 0;
-  max-width: var(--measure-lg);
+  max-width: 48rem;
 }
 
-/* plugin-docs-tab.js emits bare .markdown-content, not .prose — give the
-   headings the same rhythm until that renderer adopts .prose. */
-.plugin-docs-content .markdown-content > * + * { margin-block-start: var(--space-4); }
+.plugin-docs-content .markdown-content > * + * {
+  margin-block-start: var(--space-4);
+}
 
 .plugin-docs-content .markdown-content h1,
 .plugin-docs-content .markdown-content h2,
-.plugin-docs-content .markdown-content h3 {
+.plugin-docs-content .markdown-content h3,
+.plugin-docs-content .markdown-content h4 {
   margin-block-start: var(--space-6);
   margin-block-end: var(--space-2);
+  line-height: var(--leading-tight);
+}
+
+.plugin-docs-content .markdown-content h1:first-child,
+.plugin-docs-content .markdown-content h2:first-child {
+  margin-block-start: 0;
+}
+
+.plugin-docs-content .markdown-content code {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.plugin-docs-pre {
+  margin: 0;
+  padding: var(--space-4);
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+  font-size: var(--text-sm);
+}
+
+.plugin-docs-pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.plugin-docs-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.plugin-docs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.plugin-docs-table th,
+.plugin-docs-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  text-align: start;
+  vertical-align: top;
+}
+
+.plugin-docs-table th {
+  background: var(--surface-sunken);
+  font-weight: var(--weight-semibold);
+}
+
+.plugin-docs-table tr:last-child td {
+  border-bottom: none;
+}
+
+.plugin-docs-callout {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-inline-start: 3px solid var(--accent);
+  background: var(--surface-sunken);
+  color: var(--text-secondary);
+}
+
+.plugin-docs-figure {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--space-2) 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
 }

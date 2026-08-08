@@ -284,7 +284,7 @@ function birkly_build_help_manifest(): array
                 continue;
             }
             $subKeywords = is_array($sub['keywords'] ?? null) ? $sub['keywords'] : $keywords;
-            $topics[] = [
+            $topicRow = [
                 'id' => (string) $sub['id'],
                 'title' => (string) ($sub['title'] ?? $sub['id']),
                 'keywords' => $subKeywords,
@@ -296,6 +296,11 @@ function birkly_build_help_manifest(): array
                 'snapshot' => '/api/plugin_doc.php?plugin=' . rawurlencode($plugin_id) . '&doc=' . rawurlencode((string) $sub['id']),
                 'docs_path' => $publicPath,
             ];
+            $group = trim((string) ($sub['group'] ?? ''));
+            if ($group !== '') {
+                $topicRow['group'] = $group;
+            }
+            $topics[] = $topicRow;
         }
     }
 
