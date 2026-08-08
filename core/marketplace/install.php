@@ -165,6 +165,19 @@ function birkly_marketplace_ensure_plugins_root_writable(string $pluginsRoot): a
  *
  * @return array{ok:bool,plugin_id?:string,path?:string,errors:array}
  */
+/**
+ * True when a plugin directory exists but is not a loadable plugin (e.g. empty
+ * Docker placeholder dirs without plugin.php). Safe to replace on fresh install.
+ */
+function birkly_marketplace_plugin_dir_is_leftover(string $dest): bool
+{
+    if (!is_dir($dest)) {
+        return false;
+    }
+
+    return !is_file($dest . '/plugin.php');
+}
+
 function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId, bool $replaceExisting = false): array
 {
     birkly_marketplace_ensure_plugins_core();
@@ -178,11 +191,14 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
         return ['ok' => false, 'errors' => ['ZipArchive extension not available']];
     }
 
-    $pluginsRoot = dirname(__DIR__, 2) . '/plugins';
+    $pluginsRoot = function_exists('birkly_marketplace_plugins_dir')
+        ? birkly_marketplace_plugins_dir()
+        : dirname(__DIR__, 2) . '/plugins';
     $dest = $pluginsRoot . '/' . $pluginId;
 
     if (is_dir($dest)) {
-        if (!$replaceExisting) {
+        $isLeftover = birkly_marketplace_plugin_dir_is_leftover($dest);
+        if (!$replaceExisting && !$isLeftover) {
             return ['ok' => false, 'errors' => ["Plugin directory '{$pluginId}' already exists"]];
         }
         birkly_marketplace_remove_directory($dest);
