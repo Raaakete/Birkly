@@ -37,10 +37,10 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
-<!-- Hub: Guide | Tools | Connections | Publish — P60.1 Connections home.
+<!-- Hub: Guide | Tools | Publish — Connections home is Settings → AI (P62-D2).
      Status is a green/red dot on each main tab (no separate status sidebar). -->
 <div class="ap-hub">
-<!-- Hub zones — Guide | Tools | Connections | Publish -->
+<!-- Hub zones — Guide | Tools | Publish -->
 <div class="tabs u-mb-6" id="ap-hub-tablist" role="tablist" aria-label="{translate 'admin.ai_presence'}">
     <button type="button" class="tab active" role="tab" id="ap-tab-guide" data-hub-zone="guide" aria-controls="ap-panel-guide" aria-selected="true" tabindex="0">
         <span>{translate 'admin.ag_hub_tab_guide'}</span>
@@ -49,10 +49,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     <button type="button" class="tab" role="tab" id="ap-tab-tools" data-hub-zone="tools" aria-controls="ap-panel-tools" aria-selected="false" tabindex="-1">
         <span>{translate 'admin.ag_hub_tab_tools'}</span>
         <span class="ap-tab-dot" id="ap-tab-dot-tools" data-ok="0" aria-hidden="true"></span>
-    </button>
-    <button type="button" class="tab" role="tab" id="ap-tab-connections" data-hub-zone="connections" aria-controls="ap-panel-connections" aria-selected="false" tabindex="-1">
-        <span>{translate 'admin.ag_hub_tab_connections'}</span>
-        <span class="ap-tab-dot" id="ap-tab-dot-connections" data-ok="0" aria-hidden="true"></span>
     </button>
     <button type="button" class="tab" role="tab" id="ap-tab-publish" data-hub-zone="publish" aria-controls="ap-panel-publish" aria-selected="false" tabindex="-1">
         <span>{translate 'admin.ag_hub_tab_publish'}</span>
@@ -630,22 +626,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
     </div>
 </div>
 
-<!-- ===================== CONNECTIONS zone — points to Settings → AI ===================== -->
-<div class="tab-panel" id="ap-panel-connections" role="tabpanel" aria-labelledby="ap-tab-connections" tabindex="0" data-hub-panel="connections" hidden>
-    <div class="u-max-w-page u-stack-6">
-        <section class="card u-p-6 u-stack-3" id="ap-connections-about">
-            <header class="u-stack-1">
-                <h3 class="u-m-0">{translate 'admin.ag_connections_about_title'}</h3>
-                <p class="u-text-sm u-fg-secondary u-m-0">AI app connectors and the built-in assistant live under <strong>Settings → AI</strong>.</p>
-            </header>
-            <p class="u-m-0">
-                <a class="btn btn-primary" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai']), ENT_QUOTES, 'UTF-8') ?>">Open Settings → AI</a>
-            </p>
-        </section>
-        <div id="ap-connections-mount" class="u-stack-6" data-connections-root="hub" hidden></div>
-    </div>
-</div>
-
 <!-- ===================== PUBLISH zone — P60-M7 ===================== -->
 <div class="tab-panel" id="ap-panel-publish" role="tabpanel" aria-labelledby="ap-tab-publish" tabindex="0" data-hub-panel="publish" hidden>
     <div class="u-max-w-page u-stack-6">
@@ -721,7 +701,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
             <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="tools">{translate 'admin.ag_publish_webmcp_manage'}</button>
         </section>
 
-        <!-- Layer 3: AI app connections (Birkly MCP) — managed in Connections zone -->
+        <!-- Layer 3: AI app connections (Birkly MCP) — managed in Settings → AI -->
         <section class="card u-p-6 u-stack-4">
             <header class="u-stack-1">
                 <h3 class="u-m-0">{translate 'admin.ag_publish_mcp_title'}</h3>
@@ -731,7 +711,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <dt>{translate 'admin.ag_publish_mcp_url_label'}</dt>
                 <dd><code id="ap-publish-mcp-url"></code></dd>
             </dl>
-            <button type="button" class="btn btn-sm btn-secondary ap-goto-zone" data-hub-zone="connections">{translate 'admin.ag_publish_mcp_manage'}</button>
+            <a class="btn btn-sm btn-secondary" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai']), ENT_QUOTES, 'UTF-8') ?>">{translate 'admin.ag_publish_mcp_manage'}</a>
         </section>
 
         <!-- Deep guide publish controls (relocated from the old Guide → Publish tab) -->
@@ -1167,6 +1147,4 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
 
 {include_style 'components/agent-guide-wizard.css'}
 {include_script 'agent-guide-wizard.js'}
-{include_script 'ai-connections.js'}
-{include_script 'mcp-connections.js'}
 {include_script 'ai-presence.js'}
