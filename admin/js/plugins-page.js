@@ -2219,6 +2219,43 @@
         renderUpdatesPanel();
     }
 
+    async function restorePendingHubLicensesFromServer() {
+        try {
+            var result = await marketplaceApiGet('list_hub_licenses');
+            var pending = (result.data && result.data.pending) || [];
+            if (!pending.length) {
+                if (pendingHubLicenseInstall && pendingHubLicenseInstall.offer_slug
+                    && findInstalledPluginByOfferSlug(pendingHubLicenseInstall.offer_slug)) {
+                    pendingHubLicenseInstall = null;
+                }
+                return;
+            }
+            // Prefer the first pending binding; remember key for Install now / revoke.
+            var row = pending[0] || {};
+            if (!row.offer_slug) {
+                return;
+            }
+            if (row.license_key) {
+                rememberHubLicenseKey(row.license_key, row.license_ref || licenseKeySuffix(row.license_key));
+            }
+            if (!findInstalledPluginByOfferSlug(row.offer_slug)) {
+                pendingHubLicenseInstall = {
+                    offer_slug: row.offer_slug,
+                    license_key: row.license_key || '',
+                    title: row.title || row.offer_slug,
+                    version: row.version || '',
+                };
+            }
+            pending.forEach(function (item) {
+                if (item && item.license_key) {
+                    rememberHubLicenseKey(item.license_key, item.license_ref || licenseKeySuffix(item.license_key));
+                }
+            });
+        } catch (err) {
+            // Non-fatal — Licenses tab still shows installed plugin bindings.
+        }
+    }
+
     async function loadLicensesTab() {
         var grid = document.getElementById('hub-licenses-grid');
         if (grid) {
@@ -2232,6 +2269,7 @@
             }
             installedPlugins = (result.data && result.data.plugins) || [];
         }
+        await restorePendingHubLicensesFromServer();
         renderLicensesPanel();
     }
 
@@ -2255,8 +2293,8 @@
                 pendingHubLicenseInstall = {
                     offer_slug: offerSlug,
                     license_key: licenseKey,
-                    title: cachedOffer.title || offerSlug,
-                    version: cachedOffer.latest_version || '',
+                    title: data.title || cachedOffer.title || offerSlug,
+                    version: data.version || cachedOffer.latest_version || '',
                 };
                 showMessage(
                     t('hub_license_install_now', 'License activated. Install the plugin on this site to use it.'),
