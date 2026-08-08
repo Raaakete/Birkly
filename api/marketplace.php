@@ -261,6 +261,12 @@ if ($action === 'deactivate_license') {
 
     $licenseKey = trim((string) ($input['license_key'] ?? ''));
     $installationId = trim((string) ($input['installation_id'] ?? ''));
+    $pluginId = trim((string) ($input['plugin_id'] ?? ''));
+    if ($licenseKey === '') {
+        echo json_encode(['status' => 'error', 'message' => 'License key required', 'code' => 'missing_license_key']);
+        exit;
+    }
+
     $deactivation = birkly_marketplace_deactivate_license($licenseKey, $installationId !== '' ? $installationId : null);
     if (!$deactivation['ok']) {
         echo json_encode([
@@ -271,10 +277,30 @@ if ($action === 'deactivate_license') {
         exit;
     }
 
+    $licenseRef = birkly_marketplace_license_ref($licenseKey);
+    if ($pluginId === '' && $licenseRef !== '' && function_exists('get_all_plugins')) {
+        foreach (get_all_plugins() as $id => $plugin) {
+            if (!is_array($plugin)) {
+                continue;
+            }
+            if (trim((string) ($plugin['license_ref'] ?? '')) === $licenseRef) {
+                $pluginId = (string) $id;
+                break;
+            }
+        }
+    }
+    if ($pluginId !== '') {
+        birkly_marketplace_clear_plugin_entitlement($pluginId);
+    }
+
     echo json_encode([
         'status' => 'ok',
-        'message' => 'License deactivated',
-        'data' => ['code' => $deactivation['code'] ?? 'deactivated'],
+        'message' => 'License deactivated on this site',
+        'data' => [
+            'code' => $deactivation['code'] ?? 'deactivated',
+            'plugin_id' => $pluginId !== '' ? $pluginId : null,
+            'license_ref' => $licenseRef !== '' ? $licenseRef : null,
+        ],
     ]);
     exit;
 }
