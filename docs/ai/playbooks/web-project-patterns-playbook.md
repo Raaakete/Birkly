@@ -45,7 +45,7 @@ Tool paths for writes: `index.html`, `css/style.css` — never prefix `project/`
 | Pattern | When | Template approach |
 |---------|------|-------------------|
 | **List** | Many items of the same type | `{for each entry in 'collection-slug' …}{endfor}` on a list or homepage section |
-| **Detail** | One item chosen from a link | URL `?collection=<slug>&slug={slug}` + top-level `{ title }`, `{ field }` — **no loop over the whole collection** |
+| **Detail** | One item chosen from a link | URL `?collection=<slug>&slug={slug}` + top-level `{title}`, `{'field'}` — **no loop over the whole collection** |
 | **Static / singleton** | Fixed page or single CMS block | Plain HTML, `{from 'coll' get entry 'entry-slug'}…{endget}`, or `<birkly-region>` |
 
 ### Detail pages — the most common bug
@@ -56,15 +56,21 @@ Tool paths for writes: `index.html`, `css/style.css` — never prefix `project/`
 
 ```html
 <!-- On list page, inside a loop -->
-<a href="/project/detail.html?collection=YOUR-COLL&slug={slug}">{ title }</a>
+<a href="/project/detail.html?collection=YOUR-COLL&slug={slug}">{title}</a>
 
 <!-- On detail page head -->
 <meta name="birkly-collection" content="YOUR-COLL">
-<title>{ title }</title>
+<title>{title}</title>
 
 <!-- On detail page body — no collection loop -->
-<h1>{ title }</h1>
-<div>{ content }</div>
+<h1>{title}</h1>
+<div>{'content'}</div>
+
+<!-- Sub-collections for this URL entry -->
+{for each entry in 'comments' of 'YOUR-COLL'.current ordered by newest}
+  <p>{'author'}: {'content'}</p>
+{endfor}
+
 <script src="/birkly-client.js"></script>
 ```
 
@@ -171,11 +177,22 @@ If `read_project_file` shows these, rewrite the file — they have caused broken
 
 ```html
 <meta name="birkly-collection" content="blog">
-<h1>{ title }</h1>
-<div>{ content }</div>
+<h1>{title}</h1>
+<div>{'content'}</div>
 ```
 
 List page links: `detail.html?collection=blog&slug={slug}`.
+
+### Bad: phantom date / ordering / entry-load syntax
+
+```html
+<!-- WRONG -->
+{ date "F j, Y" }
+<birkly-region collection="blog" list ordered="date:desc"></birkly-region>
+{entry 'blog'.'my-post'}{title}{endentry}
+```
+
+**Fix:** `{created_at format "F j, Y"}`, `ordered="newest"`, `{from 'blog' get entry 'my-post'}…{endget}`. Forms still use `{entry for 'contact'}` (valid).
 
 ### Bad: CSS at `/css/` instead of site prefix
 
@@ -228,11 +245,12 @@ Admin entry-detail for sub-collections expects consistent markup when mixing mai
 
 | Topic | Human doc (Birkly-Docs) |
 |-------|-------------------------|
-| Website integration | https://docs.birkly.com/04-integration/website-integration.html |
-| Client library | https://docs.birkly.com/04-integration/client-library.html |
-| Site elements pattern | https://docs.birkly.com/02-content/site-elements-pattern.html |
+| Templating overview | https://docs.birkly.com/03-templating/templating-overview.html |
+| Detail pages / `.current` | https://docs.birkly.com/03-templating/detail-pages-and-url-context.html |
+| Client setup | https://docs.birkly.com/03-templating/client-setup.html |
+| Site elements pattern | https://docs.birkly.com/02-content/site-elements-pattern.html (`site_elements`) |
 | Reference projects | https://docs.birkly.com/03-templating/reference-projects.html |
-| Template spec (full) | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
+| Template playbook / spec | `templating` · `docs/TEMPLATE_LANGUAGE_SPEC.md` |
 
 ---
 

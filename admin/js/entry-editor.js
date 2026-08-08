@@ -182,9 +182,59 @@
         return true;
     }
 
+    /**
+     * Close competing fieldtype / admin overlays before showing the entry
+     * save success modal (P62-A3). Competing systems use show/active/inline
+     * display; leaving any open traps focus and makes Escape feel stuck.
+     */
+    function closeAllFieldtypeOverlays() {
+        try {
+            if (window.Birkly && window.Birkly.MediaModal) {
+                if (typeof window.Birkly.MediaModal.forceClose === 'function') {
+                    window.Birkly.MediaModal.forceClose();
+                } else if (typeof window.Birkly.MediaModal.close === 'function') {
+                    window.Birkly.MediaModal.close();
+                }
+            }
+        } catch (_e) { /* ignore */ }
+
+        const relationPicker = document.getElementById('relationPickerModal');
+        if (relationPicker) {
+            relationPicker.style.display = 'none';
+        }
+
+        document.querySelectorAll(
+            '.media-modal-overlay, .content-editor-fullscreen-overlay, ' +
+            '.content-editor-link-dialog, .content-editor-smart-paste-overlay, ' +
+            '.content-editor-table-dialog'
+        ).forEach(function (el) {
+            el.classList.remove('active', 'show');
+            if (el.parentNode && (
+                el.classList.contains('media-modal-overlay') ||
+                el.classList.contains('content-editor-smart-paste-overlay') ||
+                el.classList.contains('content-editor-fullscreen-overlay')
+            )) {
+                el.parentNode.removeChild(el);
+            } else {
+                el.style.display = 'none';
+            }
+        });
+
+        const feedbackModal = document.getElementById('feedback-submit-modal');
+        if (feedbackModal && feedbackModal.classList.contains('show')) {
+            if (typeof window.Birkly !== 'undefined' && typeof window.Birkly.closeFeedbackModal === 'function') {
+                window.Birkly.closeFeedbackModal();
+            } else {
+                feedbackModal.classList.remove('show');
+            }
+        }
+    }
+
     function openEntrySaveSuccessModal(isCreate, entryId, entryStatus) {
         const modal = document.getElementById('entry-save-success-modal');
         if (!modal) return;
+
+        closeAllFieldtypeOverlays();
 
         const titleEl = document.getElementById('entry-save-success-title');
         const messageEl = document.getElementById('entry-save-success-message');
@@ -257,9 +307,17 @@
         });
 
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modal.classList.contains('active')) {
-                closeEntrySaveSuccessModal();
+            if (e.key !== 'Escape' || !modal.classList.contains('active')) return;
+            // Prefer closing leftover fieldtype overlays first if any reappeared.
+            const leftover = document.querySelector(
+                '.media-modal-overlay, .content-editor-fullscreen-overlay.active, ' +
+                '#relationPickerModal[style*="flex"], .content-editor-link-dialog.active'
+            );
+            if (leftover) {
+                closeAllFieldtypeOverlays();
+                return;
             }
+            closeEntrySaveSuccessModal();
         });
 
         const publishBtn = document.getElementById('entry-save-publish');

@@ -6,6 +6,8 @@ Use for: publishing brand/product facts for external AI (Claude, ChatGPT, crawle
 
 **Agent Guide** (AI Presence) is structured brand context: who you are, products, supported claims with evidence URLs. Published at `/.well-known/agent-guide.json` (and brand context variant).
 
+**Hub tabs:** Guide · Tools · Publish only. **CMS AI connections** (MCP / built-in assistant keys) live under **Settings → AI** — never re-add a Connections tab to Agent Guide.
+
 External AI and MCP clients read via:
 - `get_agent_guide_context`, `get_agent_guide_product`, `get_agent_guide_claim`
 - MCP resource `birkly://brand-context`

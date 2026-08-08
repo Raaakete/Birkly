@@ -27,13 +27,6 @@
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
         if (!pane) return false;
-        // Agent Guide → Connections (P60.1 home)
-        if (document.getElementById('ap-connections-mount')) {
-            const connectionsPanel = document.getElementById('ap-panel-connections');
-            if (connectionsPanel && !connectionsPanel.hidden) {
-                return true;
-            }
-        }
         const hash = window.location.hash.replace('#', '');
         const aiHashes = [
             'ai-integrations',
@@ -1126,8 +1119,8 @@
     };
 
     // Explicit mount entry point (P60-M4). `initAiConnections` guards against
-    // double-init, so the Agent Guide → Connections zone can safely call this to
-    // render the same built-in-assistant controls on Agent Guide → Connections.
+    // double-init, so the Settings → AI zone can safely call this to
+    // render the same built-in-assistant controls on Settings → AI.
     window.AiConnections = {
         init: initAiConnections,
         editConnection: editConnection,

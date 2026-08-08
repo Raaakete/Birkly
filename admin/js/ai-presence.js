@@ -33,12 +33,11 @@
         webmcpPublicForms: [],
         webmcpSupported: null,
         webmcpLoaded: false,
-        webmcpSaving: false,
-        connectionsMounted: false
+        webmcpSaving: false
     };
 
-    // Connections tab deep-links to Settings → AI (product home for connectors).
-    var HUB_ZONES = ['guide', 'tools', 'connections', 'publish'];
+    // Agent Guide hub zones (P62-D2): Connections lives only under Settings → AI.
+    var HUB_ZONES = ['guide', 'tools', 'publish'];
 
     function settingsAiUrl() {
         if (global.Birkly && typeof global.Birkly.adminUrl === 'function') {
@@ -3146,6 +3145,11 @@
         try {
             var params = new URLSearchParams(window.location.search);
             var z = (params.get('zone') || '').toLowerCase();
+            // Legacy deep-link: Connections home is Settings → AI (P62-D2).
+            if (z === 'connections') {
+                window.location.replace(settingsAiUrl());
+                return 'guide';
+            }
             if (HUB_ZONES.indexOf(z) >= 0) return z;
         } catch (e) { /* ignore */ }
         return 'guide';
@@ -3160,6 +3164,10 @@
     }
 
     function switchZone(zone, opts) {
+        if (zone === 'connections') {
+            window.location.assign(settingsAiUrl());
+            return;
+        }
         if (HUB_ZONES.indexOf(zone) < 0) zone = 'guide';
         opts = opts || {};
         state.hubZone = zone;
@@ -3182,11 +3190,9 @@
         if (opts.updateUrl !== false) setZoneInUrl(zone);
 
         // Lazy-init heavier zones on first open.
+        // WebMCP config is also prefetched on hub init so the Tools tab dot is correct.
         if (zone === 'tools' && !state.webmcpLoaded) {
             loadWebmcpConfig();
-        }
-        if (zone === 'connections') {
-            mountConnectionsZone();
         }
         if (zone === 'publish') {
             renderPublishZone();
@@ -3202,7 +3208,13 @@
             if (zoneBtn && (zoneBtn.classList.contains('tab') ||
                 zoneBtn.classList.contains('ap-goto-zone'))) {
                 e.preventDefault();
-                switchZone(zoneBtn.getAttribute('data-hub-zone'));
+                var z = zoneBtn.getAttribute('data-hub-zone');
+                // Legacy Connections navigation → Settings → AI (P62-D2).
+                if (z === 'connections') {
+                    window.location.assign(settingsAiUrl());
+                    return;
+                }
+                switchZone(z);
             }
         });
 
@@ -3272,37 +3284,13 @@
         var toolsOk = !!(cfg && cfg.enabled);
         setTabDot('ap-tab-dot-tools', toolsOk, toolsOk ? t('ag_webmcp_on', 'On') : t('ag_webmcp_off', 'Off'));
 
-        // Connections tab: green when Birkly MCP URL is available.
-        var urls = state.publicUrls || {};
-        var connectionsOk = !!urls.mcp_url;
-        setTabDot(
-            'ap-tab-dot-connections',
-            connectionsOk,
-            connectionsOk ? t('ag_status_connected', 'Ready') : t('ag_status_not_set_up', 'Not set up')
-        );
-
         // Publish tab: green when a public site mode is configured (project/external).
+        var urls = state.publicUrls || {};
         var mode = urls.hosting_mode || 'none';
         var hostOk = mode === 'project' || mode === 'external';
         var hostLabel = mode === 'project' ? t('ag_hosted_project', 'On Birkly')
             : (mode === 'external' ? t('ag_hosted_external', 'External') : t('ag_hosted_none', 'None'));
         setTabDot('ap-tab-dot-publish', hostOk, hostLabel);
-    }
-
-    // ===================================================================
-    // Connections zone — mount shared AI connection modules (P60.1)
-    // ===================================================================
-
-    function mountConnectionsZone() {
-        // Soft redirect: Agent Guide Connections is a pointer; Settings → AI is the home.
-        if (state.connectionsMounted) return;
-        state.connectionsMounted = true;
-        try {
-            var params = new URLSearchParams(window.location.search);
-            if ((params.get('zone') || '').toLowerCase() === 'connections') {
-                window.location.replace(settingsAiUrl());
-            }
-        } catch (e) { /* keep CTA card if redirect fails */ }
     }
 
     // ===================================================================
@@ -3336,6 +3324,7 @@
             })
             .catch(function (err) {
                 toast(err.message || 'Failed to load tools config', 'error');
+                updateSpine();
             });
     }
 
@@ -3658,11 +3647,27 @@
         }).then(function () {
             return loadAiConnections();
         }).then(function () {
+            // Prefetch WebMCP so Tools tab status dot is correct without opening Tools (P62-A1).
+            if (!state.webmcpLoaded) {
+                return loadWebmcpConfig();
+            }
+        }).then(function () {
             bindActions();
             renderAssistSuggestions();
+            updateSpine();
         }).catch(function (e) {
             toast(e.message || 'Failed to load AI Presence', 'error');
-            loadAiConnections().finally(function () { bindActions(); });
+            loadAiConnections().finally(function () {
+                if (!state.webmcpLoaded) {
+                    loadWebmcpConfig().finally(function () {
+                        bindActions();
+                        updateSpine();
+                    });
+                    return;
+                }
+                bindActions();
+                updateSpine();
+            });
         });
     };
 

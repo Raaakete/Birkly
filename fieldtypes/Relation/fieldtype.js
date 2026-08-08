@@ -633,6 +633,13 @@ window.HaruFieldtypes['relation'] = {
   // Event listeners
   document.getElementById('relationPickerCancelBtn').onclick = closeRelationPicker;
   document.getElementById('relationPickerCancelBtn2').onclick = closeRelationPicker;
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var picker = document.getElementById('relationPickerModal');
+    if (picker && picker.style.display === 'flex') {
+      closeRelationPicker();
+    }
+  });
   document.getElementById('relationPickerCollection').onchange = function() {
     loadRelationPickerEntries(this.value, document.getElementById('relationPickerSearch').value.trim());
   };

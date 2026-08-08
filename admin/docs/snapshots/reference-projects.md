@@ -4,7 +4,9 @@ Six copy-paste starter sites ship with the Birkly CMS. Each demonstrates real te
 
 ## Summary
 
-**Reference projects** are ready-made HTML sites (blog, portfolio, yoga studio, coffee shop, social network, influencer hub) bundled in the Birkly repo under `reference-projects/`. Run `scripts/install-reference-project.sh <name>` from the Birkly root to copy collections into your CMS, then open the site at `/reference-projects/<name>/website/`. Every project uses the default live client script; they are the recommended starting point before you build your own templates.
+**In short:** Six starter sites (blog, portfolio, yoga, coffee, social, influencer) ship under Birkly `reference-projects/`. Install with `scripts/install-reference-project.sh <name>`, then open `/reference-projects/<name>/website/`. All use live `birkly-client.js` only — list/detail/forms match the [canonical syntax](canonical-syntax.md). Prefer these before inventing your own patterns. Step-by-step build: [Worked site walkthrough](worked-site-walkthrough.md).
+
+> **Media (M4):** Install blog starter → list/detail video — `media/03-templating/reference-projects/videos/`.
 
 ## Beginner
 
@@ -114,6 +116,9 @@ Prefer `<birkly-region collection="site_elements" entry="header">` when chrome i
 ## Related
 
 - [Templating overview](templating-overview.md)
+- [Client setup](client-setup.md)
+- [Worked site walkthrough](worked-site-walkthrough.md)
+- [Detail pages & URL context](detail-pages-and-url-context.md)
 - [Client library](../04-integration/client-library.md)
 - [Storefront and events patterns](storefront-patterns.md)
-- [Production optimization](production-optimization.md) — optional hydrate/snapshot/bake (not used in reference projects)
+- [Production optimization](production-optimization.md)

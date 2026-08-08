@@ -26,7 +26,7 @@ Need to store content?
 │      • Detail page: fetch one entry by slug
 │
 ├─ Shared site chrome (header, footer, nav, global CTAs)?
-│  └─► site-elements collection + named entries + <birkly-region>
+│  └─► site_elements collection + named entries + <birkly-region>
 │      See [Site elements pattern](site-elements-pattern.md)
 │
 ├─ Rows that belong to one parent entry (comments, reviews, lessons)?
@@ -54,9 +54,9 @@ Need to store content?
 
 **Site header / footer (site elements)**
 
-1. Collection **Site elements** (handle: `site-elements`) with Title + **Dynamic items** field for flexible blocks.
+1. Collection **Site elements** (handle: `site_elements`) with Title + **Dynamic items** field for flexible blocks.
 2. One entry per region: `header`, `footer`, `announcement-bar`.
-3. Front-end: `<birkly-region collection="site-elements" entry="header" field="blocks">` injects live content.
+3. Front-end: `<birkly-region collection="site_elements" entry="header" field="blocks">` injects live content.
 
 **Contact form submissions**
 
@@ -74,7 +74,7 @@ Need to store content?
 
 ### What we intentionally do not have
 
-Birkly does **not** ship a singleton/document content primitive. A “single about page” is **one entry** in a Pages or Site elements collection. Shared layout chrome uses **named entries** in a site-elements collection plus `<birkly-region>` on your site.
+Birkly does **not** ship a singleton/document content primitive. A “single about page” is **one entry** in a Pages or Site elements collection. Shared layout chrome uses **named entries** in a `site_elements` collection plus `<birkly-region>` on your site.
 
 ## Advanced Users
 

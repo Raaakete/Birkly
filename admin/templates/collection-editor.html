@@ -621,9 +621,9 @@ if (!$cancelUrl) {
 
                                     <div class="info-item">
                                         <label for="icon">Icon (emoji)</label>
-                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="e.g. 📝" maxlength="8" inputmode="text">
+                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="e.g. 📝" maxlength="8" inputmode="text" data-icon-picker>
                                         <small class="form-text">
-                                            Optional emoji shown on the content overview card
+                                            Optional emoji shown on the content overview card — browse or paste
                                         </small>
                                     </div>
 
@@ -1345,6 +1345,7 @@ echo htmlspecialchars($formCode);
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/collection-editor-core.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/collection-editor-core.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtype-icons.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/fieldtype-icons.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/icon-picker.js')) ?>?v=<?= htmlspecialchars(birkly_admin_asset_version('admin/js/icon-picker.js'), ENT_QUOTES, 'UTF-8') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>
 
 <script<?= $__birklyScriptNonceAttr ?? '' ?>>
 document.addEventListener('DOMContentLoaded', function() {

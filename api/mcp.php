@@ -89,7 +89,7 @@ if ($aiUser) {
     $pathAgentId = birkly_mcp_agent_id_from_path();
     if ($pathAgentId !== null && !birkly_mcp_actor_matches_path_agent($aiUser, $pathAgentId)) {
         $aiUser = null;
-        $authFailureMessage = 'Connector URL does not match this access token. Remove the connector and add it again using the Connector URL from Birkly Agent Guide → Connections.';
+        $authFailureMessage = 'Connector URL does not match this access token. Remove the connector and add it again using the Connector URL from Birkly Settings → AI.';
     }
 }
 

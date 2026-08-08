@@ -48,6 +48,20 @@ assert_true(
     'templating mentions birkly-client.js',
     is_array($templating) && str_contains((string) ($templating['text'] ?? ''), 'birkly-client.js')
 );
+assert_true(
+    'templating playbook mentions ordered by newest',
+    is_array($templating) && str_contains((string) ($templating['text'] ?? ''), 'ordered by newest')
+);
+assert_true(
+    'templating clarifies entry for forms vs phantom',
+    is_array($templating) && str_contains((string) ($templating['text'] ?? ''), '{entry for')
+);
+
+$spec = readBirklyDocsTopic('template-language-spec');
+assert_true(
+    'template-language-spec alias loads full TEMPLATE_LANGUAGE_SPEC',
+    is_array($spec) && str_contains((string) ($spec['text'] ?? ''), 'Template Language Spec')
+);
 
 $mcp = readBirklyDocsTopic('mcp');
 assert_true(
