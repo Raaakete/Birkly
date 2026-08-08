@@ -46,16 +46,16 @@ Website tools **never** touch your admin or CMS settings — they can only do wh
 
 Birkly ships a small demo page (`project/webmcp-demo.html`) with a contact form, a button, and a custom tool — it shows the on/off states and the exact tools a supporting browser would see once website tools are enabled.
 
-## Three layers, one hub
+## Three layers (Guide · Tools · Publish + Settings → AI)
 
-Agent Guide is the single admin home for "how AI works with this site," organized as four tabs. Each of the first three answers a different question and lives in a different place — they are never the same thing, even though they're all reached from Agent Guide:
+Agent Guide is the admin home for Guide · Tools · Publish. **CMS AI connections** live under **Settings → AI** — not as an Agent Guide tab. Each layer answers a different question:
 
-| Tab | Question it answers | Where it actually lives |
-|-----|---------------------|--------------------------|
-| **Guide** | "What should AI say about us?" | Public JSON on your site domain (`/.well-known/agent-guide.json`) |
-| **Tools** | "What can an AI helper *do* on our website while someone is visiting?" | **This page's** WebMCP runtime — runs in the visitor's browser |
-| **Connections** | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
-| **Publish** | "Where do all of the above actually work, given how my site is hosted?" | Mode-aware summary of the three above |
+| Surface | Question it answers | Where it actually lives |
+|---------|---------------------|--------------------------|
+| **Guide** (Agent Guide) | "What should AI say about us?" | Public JSON on your site domain (`/.well-known/agent-guide.json`) |
+| **Tools** (Agent Guide) | "What can an AI helper *do* on our website while someone is visiting?" | **This page's** WebMCP runtime — runs in the visitor's browser |
+| **Settings → AI** | "How do ChatGPT / Claude / our built-in assistant connect to *this Birkly CMS*?" | Always your Birkly address (`{your-birkly-url}/mcp`) — never your website host |
+| **Publish** (Agent Guide) | "Where do Guide and Tools actually work, given how my site is hosted?" | Mode-aware summary + hosting checklist |
 
 Plain-language versions of the first three, matching what you'll see in the product:
 
@@ -65,7 +65,7 @@ Plain-language versions of the first three, matching what you'll see in the prod
 
 > **WebMCP** lets AI helpers in the visitor's browser use clear actions on your live website (like submitting a contact form or adding to cart) instead of guessing from the page. It's off until you turn it on. Your site still works the same for everyone else.
 
-Do not confuse these: publishing your Agent Guide does not turn on website tools, and turning on website tools does not change what AI apps can do in your CMS. See [Agent Guide](../02-content/agent-guide.md) for the Guide tab and [MCP connections](../01-admin/mcp-connections.md) for Connections.
+Do not confuse these: publishing your Agent Guide does not turn on website tools, and turning on website tools does not change what AI apps can do in your CMS. See [Agent Guide](../02-content/agent-guide.md) for Guide · Tools · Publish, and [MCP connections](../01-admin/mcp-connections.md) under **Settings → AI** for Birkly MCP.
 
 ## Advanced Users
 
@@ -199,7 +199,7 @@ Website tools always run on the **page origin** — wherever your HTML is actual
 
 `birkly-client.js` must load first — it owns page context and the public API connection that `birkly-webmcp.js` then registers tools against. Both scripts silently do nothing when website tools are off or the browser doesn't support the API.
 
-This mirrors how your **Agent Guide JSON** reaches an external site: Birkly's canonical URL always works (`{cms}/api/public/ai_presence.php` / `{cms}/.well-known/agent-guide.json`); Publish additionally offers a **download** of `agent-guide.json` for your own `/.well-known/` folder, and a **reverse-proxy** snippet if you'd rather serve it from your own domain. **Birkly MCP** (Connections) never changes with hosting mode — AI apps always connect to your Birkly address, never your website host.
+This mirrors how your **Agent Guide JSON** reaches an external site: Birkly's canonical URL always works (`{cms}/api/public/ai_presence.php` / `{cms}/.well-known/agent-guide.json`); Publish additionally offers a **download** of `agent-guide.json` for your own `/.well-known/` folder, and a **reverse-proxy** snippet if you'd rather serve it from your own domain. **Birkly MCP** (Settings → AI) never changes with hosting mode — AI apps always connect to your Birkly address, never your website host.
 
 On **`external`** pages, `birkly-client.js` also quietly adds a discovery `<link rel="alternate" type="application/json" href="{cms}/.well-known/agent-guide.json">` to the page `<head>` whenever it's loaded with `data-cms-url`. This gives agents a way to find your canonical Guide on the Birkly host straight away, even before you've set up a download or reverse-proxy on your own domain. It's automatic, non-visual, and added at most once per page.
 
@@ -225,7 +225,7 @@ Lighthouse 13.3 only treats WebMCP as supported when the lab browser exposes `na
 ## Related
 
 - [Agent Guide](../02-content/agent-guide.md) — the Guide tab (public fact sheet) and the wider hub
-- [MCP connections](../01-admin/mcp-connections.md) — Connections tab / Agent Guide → Connections (Birkly MCP for AI apps)
+- [MCP connections](../01-admin/mcp-connections.md) — Settings → AI (Birkly MCP for AI apps)
 - [Public forms](public-forms.md) — how `public_api` collections and `{entry for}` work under the hood
 - [Client library](client-library.md) — `birkly-client.js`, which website tools load after
 - [Agent Guide public API](agent-guide-public-api.md) — the Guide JSON website tools never duplicate

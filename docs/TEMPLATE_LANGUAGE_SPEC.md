@@ -425,7 +425,9 @@ Allowed comparison operators:
 ### From … get … (single entry)
 
 **Canonical** single-entry access is `{from … get …}` / `{endget}`.  
-There is **no** `{entry}…{endentry}` directive — that form is a phantom and must not be used (validator rejects it).
+Do **not** use `{entry 'collection'.'slug'}…{endentry}` to load an entry — that form is a phantom (validator rejects it).
+
+**Exception — public forms:** `{entry for 'contact'}…{endentry}` is a **form scaffold** (implemented in `birkly-client.js`). It is not a single-entry load directive. See the public-forms playbook / human doc “Public forms templating”.
 
 #### Block form (multiple fields)
 
@@ -593,8 +595,13 @@ Do **not** use these — they are not in the engine (P45 validator flags phantom
 | Phantom / missing | Use instead |
 |-------------------|-------------|
 | `{entry 'blog'.'slug'}…{endentry}` | `{from 'blog' get entry 'slug'}…{endget}` |
+| `{ date "F j, Y" }` | `{created_at format "F j, Y"}` |
 | `{title truncate 80}` | Dedicated excerpt field, or shorten in CMS |
 | `{'content' strip_tags}` | Strip HTML in CMS before publish, or use a plain field |
+| `ordered="date:desc"` on regions | `ordered="newest"` / `ordered="order"` |
+| `sort=` / `limit=` on `{from … get entries}` | `{for each entry in 'blog' ordered by newest limit 5}` |
+
+**Not a phantom:** `{entry for 'contact'}…{endentry}` — public form scaffold (implemented). The banned form is `{entry 'collection'.'identifier'}…{endentry}` (load-by-slug without `for`).
 
 **Filters today:** `format` for **dates only**. Other filters are deferred (e.g. P46).
 

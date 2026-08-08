@@ -72,7 +72,7 @@ Ask for each piece of the site:
 | Question | If yes → |
 |----------|----------|
 | Many items of the same shape? | Top-level **collection** + list (and maybe detail) templates |
-| Same block on every page? | **Site elements** collection + named entries + `<birkly-region>` (see Birkly-Docs `site-elements-pattern`) |
+| Same block on every page? | **`site_elements`** collection + named entries + `<birkly-region>` (see Birkly-Docs `site-elements-pattern`) |
 | Rows that belong to one parent entry? | **Sub-collection** (see `sub-collections`) |
 | Visitors submit data? | Collection with `entry_method: public_api` (see `public-forms`) |
 | Rarely changes, no structure? | Static HTML or one `{from … get entry …}` block |

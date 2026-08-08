@@ -55,7 +55,8 @@ if (!function_exists('birkly_build_info')) {
                 </div>
                 <div class="form-group">
                     <label for="group-icon">Icon (emoji)</label>
-                    <input type="text" id="group-icon" name="icon" class="input" placeholder="e.g. 📁" maxlength="8">
+                    <input type="text" id="group-icon" name="icon" class="input" placeholder="e.g. 📁" maxlength="8" data-icon-picker>
+                    <small class="form-text">Browse or paste an emoji for this group</small>
                 </div>
             </div>
             <div class="modal-footer">
@@ -67,4 +68,5 @@ if (!function_exists('birkly_build_info')) {
 </div>
 
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/mouse-drag-drop.js')) ?>"></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/icon-picker.js')) ?>"></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/content-groups.js')) ?>"></script>

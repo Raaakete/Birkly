@@ -948,13 +948,19 @@
         if (group) {
             title.textContent = 'Edit Group';
             nameInput.value = getGroupLabel(group);
-            if (iconInput) iconInput.value = group.icon || '';
+            if (iconInput) {
+                iconInput.value = group.icon || '';
+                iconInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
             submitBtn.textContent = 'Update Group';
             form.dataset.groupId = group.id;
         } else {
             title.textContent = 'New Group';
             nameInput.value = '';
-            if (iconInput) iconInput.value = '';
+            if (iconInput) {
+                iconInput.value = '';
+                iconInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
             submitBtn.textContent = 'Create Group';
             delete form.dataset.groupId;
         }

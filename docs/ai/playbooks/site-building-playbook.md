@@ -100,9 +100,11 @@ Requires `contact` collection with matching field slugs and `entry_method: publi
 ## Anti-patterns
 
 - Templates without `birkly-client.js`
-- Detail page that loops the whole collection
+- Detail page that loops the whole collection (use URL context + `of 'blog'.current` for subs)
+- Unquoted user fields / phantom `{ date "…" }` / `ordered="date:desc"` — see `templating`
 - Hard-coded menu items when a `menu` collection exists
 - Empty schema then templates referencing custom fields
+- Replacing `{entry for}` with custom fetch JS — forms scaffold is valid (`public-forms`)
 - Re-reading project files every turn after first successful discovery
 - Fixed "portfolio" recipe regardless of user domain — adapt the model
 
@@ -123,8 +125,9 @@ Note: collections created, list vs detail filenames, preview URL. Content edits 
 ## Related
 
 - `web-project-patterns` — principles & wiring
+- `templating` — syntax, ordering, dates, phantoms
 - `fieldtypes` — schema field types
-- `public-forms` — contact/newsletter
+- `public-forms` — contact/newsletter (`{entry for}`)
 - `ai-quality-guide` — checklists & failure modes
 
 ## Admin cross-reference
@@ -132,7 +135,9 @@ Note: collections created, list vs detail filenames, preview URL. Content edits 
 | Topic | Help topic id | AI playbook |
 |-------|---------------|-------------|
 | Entries & collections | `entries` | `content-model` |
-| Public forms | `public-forms` | `public-forms` |
+| Templating overview | `templating-overview` | `templating` |
+| Detail pages | `detail-pages-and-url-context` | `web-project-patterns` |
+| Public forms | `public-forms-templating` | `public-forms` |
 | Reference projects | `reference-projects` | `web-project-patterns` |
 
 Playbook file: `docs/ai/playbooks/site-building-playbook.md`

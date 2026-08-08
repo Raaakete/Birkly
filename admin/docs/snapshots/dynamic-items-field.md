@@ -2,7 +2,7 @@
 
 ## Summary
 
-The **Dynamic items** field type (`dynamicitems`) lets editors build repeating **blocks** inside a single entry. Each block has its own field type (text, textarea, number, media, etc.). Use it for flexible page sections, FAQ lists, feature grids, and the **site-elements** pattern where one entry holds many named blocks.
+The **Dynamic items** field type (`dynamicitems`) lets editors build repeating **blocks** inside a single entry. Each block has its own field type (text, textarea, number, media, etc.). Use it for flexible page sections, FAQ lists, feature grids, and the **`site_elements`** pattern where one entry holds many named blocks.
 
 ## Beginner
 
@@ -40,7 +40,7 @@ On **multilingual** collections, add blocks separately per language tab; values 
 
 For shared header/footer content:
 
-1. Create collection **Site elements** (handle: `site-elements`).
+1. Create collection **Site elements** (handle: `site_elements`).
 2. Add fields: **Title** (text) + **Blocks** (Dynamic items).
 3. Create entries: `header`, `footer`, etc.
 4. Bind on your site with `<birkly-region>` — see [Site elements pattern](site-elements-pattern.md).
