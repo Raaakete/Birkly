@@ -271,14 +271,15 @@
                 }
                 return;
             }
-            var marketplaceInstallModal = document.getElementById('marketplace-install-modal');
-            if (marketplaceInstallModal && marketplaceInstallModal.classList.contains('active')) {
-                closeMarketplaceInstallModal();
-                return;
-            }
+            // Consent is the top step when both would be open — dismiss it first.
             var consentModal = document.getElementById('marketplace-consent-modal');
             if (consentModal && consentModal.classList.contains('active')) {
                 closeInstallConsentModal();
+                return;
+            }
+            var marketplaceInstallModal = document.getElementById('marketplace-install-modal');
+            if (marketplaceInstallModal && marketplaceInstallModal.classList.contains('active')) {
+                closeMarketplaceInstallModal();
                 return;
             }
             var settingsModal = document.getElementById('plugin-settings-modal');
@@ -420,6 +421,8 @@
     }
 
     function openInstallConsentModal(context) {
+        // Never stack on top of the license/install modal (Hub Licenses flow).
+        closeMarketplaceInstallModal();
         pendingInstallContext = context;
         var modal = document.getElementById('marketplace-consent-modal');
         var manifestEl = document.getElementById('marketplace-consent-manifest');
@@ -2325,7 +2328,7 @@
         }
     }
 
-    function startHubLicenseInstall(slug, title, version) {
+    async function startHubLicenseInstall(slug, title, version) {
         var pending = pendingHubLicenseInstall;
         if (!slug && pending) {
             slug = pending.offer_slug;
@@ -2336,6 +2339,12 @@
             return;
         }
         var licenseKey = pending && pending.offer_slug === slug && pending.license_key ? pending.license_key : '';
+        // License already on the site — skip the key modal and go straight to
+        // permissions consent / install (avoids stacked modals).
+        if (licenseKey) {
+            await runMarketplaceInstall(slug, version || '', licenseKey);
+            return;
+        }
         openMarketplaceInstall(slug, title || slug, version || '', false, licenseKey);
     }
 
