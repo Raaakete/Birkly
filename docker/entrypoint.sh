@@ -70,7 +70,10 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   for name in ai_conversations ai_approvals webhooks invitations analytics mcp_audit mcp_rate feedback activity; do
     mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
   done
-  mkdir -p "$DATA_ROOT/plugins/commerce" "$DATA_ROOT/plugins/payments" 2>/dev/null || true
+  # Only ensure the plugins root exists. Do not pre-create empty plugin dirs
+  # (e.g. commerce/) — Hub treats missing plugin.php as "not installed" but
+  # extract used to hard-fail on any existing directory.
+  mkdir -p "$DATA_ROOT/plugins" 2>/dev/null || true
   # Official plugins are Hub-installed. Do not auto-seed Automation into plugins/
   # (that made Hub show "Installed" on fresh sites). Opt-in for legacy images:
   #   BIRKLY_SEED_AUTOMATION=1
