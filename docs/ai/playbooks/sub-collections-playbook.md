@@ -64,16 +64,38 @@ content/collections/blog/entries/{entry-id}/sub_entries/comments/{sub-id}.json
 
 ## Template syntax
 
+**Prefer on detail pages** (URL already resolved the parent):
+
 ```html
-{for each entry in 'blog'}
+<meta name="birkly-collection" content="blog">
+<h1>{title}</h1>
+<div>{'content'}</div>
+
+{for each entry in 'comments' of 'blog'.current ordered by newest}
+  <p><strong>{'author'}</strong>: {'content'}</p>
+{endfor}
+```
+
+Explicit parent slug/id (not title):
+
+```html
+{for each entry in 'comments' of 'blog'.'hello-world' ordered by newest}
+  <p>{'author'}: {'content'}</p>
+{endfor}
+```
+
+Nested under a list (less common):
+
+```html
+{for each entry in 'blog' with status = published ordered by newest}
   <h2>{title}</h2>
-  {for each entry in 'comments' of 'blog'.'{slug}'}
+  {for each entry in 'comments'}
     <p>{'author'}: {'content'}</p>
   {endfor}
 {endfor}
 ```
 
-Scoped to one parent: `'comments' of 'blog'.'hello-world'`
+Visitor-submitted comments use `/api/public_sub_entry.php` — not `{entry for}` on the parent. See `public-forms`.
 
 ## Common patterns
 

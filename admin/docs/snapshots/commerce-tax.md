@@ -1,10 +1,10 @@
 # Commerce tax (providers + B2B VAT)
 
-Tax for Commerce **1.0.23+** / current **1.0.27**: selectable **tax providers** (Manual or Stripe Tax), product **tax classes**, class×country rates, optional **B2B reverse charge**, and frozen **`tax_lines`** on each paid order.
+Tax for Commerce **1.0.54+**: selectable **tax providers** (Manual or Stripe Tax), product **tax classes**, **tax included vs excluded** prices (default **included**), class×country rates, optional **B2B reverse charge**, and frozen **`tax_lines`** on each paid order.
 
 ## Summary
 
-Choose a tax provider under **Commerce → Settings → Tax**. **Manual** uses your rate table. **Stripe Tax** calls Stripe’s Tax Calculations API for quotes — orthogonal to the payment PSP (you can charge with Mollie/PayPal/etc.). Paid orders freeze `tax_cents` / `tax_lines` and never re-call the provider. Optional B2B reverse charge zeroes tax when a VAT ID and country rules match (format normalize only — no live VIES).
+Choose a tax provider under **Commerce → Settings → Tax**. **Manual** uses your rate table. **Stripe Tax** calls Stripe’s Tax Calculations API for quotes — orthogonal to the payment PSP (you can charge with Mollie/PayPal/etc.). On each Commerce field, set whether the shelf price **includes tax** (EU default) or **excludes tax** (added at checkout). Paid orders freeze `tax_cents` / `tax_lines` and never re-call the provider. Optional B2B reverse charge zeroes tax when a VAT ID and country rules match (format normalize only — no live VIES); when prices include tax, reverse charge also **strips** the embedded VAT so the buyer pays net.
 
 ## Beginner
 
@@ -22,9 +22,11 @@ Stripe Tax uses the Stripe **secret key** from **Settings → Connections** for 
 1. Set a **default rate** (%) and optional **country overrides**.
 2. Under **Tax classes**, add classes (`standard`, `reduced`, `zero`, plus custom). Leave a class default blank to inherit; use `0` for explicit zero-rated.
 3. Under **Class × country rates**, add overrides (e.g. reduced × DE = 7%).
-4. On each sellable Commerce field, set **Tax class** (default `standard`).
+4. On each sellable Commerce field, set **Tax class** (default `standard`) and **Price tax mode**:
+   - **Tax included in price** (default) — shelf `price_cents` is gross; VAT is extracted for display/invoices and **not** added again at checkout.
+   - **Tax excluded** — shelf price is net; VAT is added on top (`tax_add_cents`).
 
-**Resolution order (Manual, per line):** class×country → class default → country override → site default. Tax applies to the goods subtotal (after line discounts).
+**Resolution order (Manual, per line):** class×country → class default → country override → site default. Tax base is the post-discount line total. Inclusive: `tax = round(gross × r / (100 + r))`. Exclusive: `tax = round(net × r / 100)`.
 
 ### B2B reverse charge (VAT ID)
 
@@ -41,9 +43,13 @@ When enabled + both countries are eligible + VAT ID present (+ different-country
 
 **Interfaces:** `TaxProviderInterface` → `ManualTaxProvider` | `StripeTaxProvider` via `TaxProviderResolver`. Catalog `calculateTax` delegates to the resolved provider.
 
-**Field:** `tax_class` on the Commerce fieldtype (string; default `standard`).
+**Field:** `tax_class` (string; default `standard`) and `tax_included` (bool; default `true`) on the Commerce fieldtype.
 
-**Order snapshot:** Paid orders freeze `tax_cents` and `tax_lines[]` (`tax_class`, title, rate, `tax_cents`, `source` / `provider`). Mixed carts emit **one tax line per class**. Recalculating from current catalog settings must not mutate paid-order lines.
+**Money fields:** `tax_cents` is always the VAT amount for display. `tax_add_cents` is what to add to goods+shipping for the charge (`0` when prices include tax; may be negative under inclusive reverse charge). Cart/checkout `total_cents` uses `tax_add_cents`.
+
+**Public API:** Cart payload exposes `tax_cents`, `tax_add_cents`, `tax_lines`, `prices_include_tax`. `catalog_item` returns `tax_class`, `tax_included`, and a `tax` estimate (`net_cents` / `tax_cents` / `gross_cents`, optional `?country=`).
+
+**Order snapshot:** Paid orders freeze `tax_cents` and `tax_lines[]` (`tax_class`, `tax_included`, title, rate, `tax_cents`, `source` / `provider`). Mixed carts emit **one tax line per class×mode**. Recalculating from current catalog settings must not mutate paid-order lines.
 
 **Stripe Tax:** Uses Connections Stripe secret when present; otherwise mock / soft-fallback shaped results so checkout does not break. Reverse-charge eligibility is evaluated before (or inherited into) Stripe Tax mock paths; live Stripe Tax still accepts `vat_id` in context.
 
