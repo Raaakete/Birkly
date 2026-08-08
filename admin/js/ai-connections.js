@@ -1119,8 +1119,8 @@
     };
 
     // Explicit mount entry point (P60-M4). `initAiConnections` guards against
-    // double-init, so the Agent Guide → Connections zone can safely call this to
-    // render the same built-in-assistant controls on Agent Guide → Connections.
+    // double-init, so the Settings → AI zone can safely call this to
+    // render the same built-in-assistant controls on Settings → AI.
     window.AiConnections = {
         init: initAiConnections,
         editConnection: editConnection,
