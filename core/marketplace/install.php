@@ -470,6 +470,18 @@ function birkly_marketplace_save_plugin_source(
 
         $licenseRef = trim((string) ($birkly_plugins[$pluginId]['license_ref'] ?? ''));
         birkly_marketplace_attest_installation_offer($slug, $licenseRef !== '' ? $licenseRef : null);
+
+        if ($licenseKey !== '' && function_exists('birkly_marketplace_remember_hub_license')) {
+            birkly_marketplace_remember_hub_license(
+                $slug,
+                $licenseKey,
+                $entitlementToken,
+                $entitlement,
+                (string) ($birkly_plugins[$pluginId]['name'] ?? $slug),
+                $version,
+                $pluginId
+            );
+        }
     }
 }
 
