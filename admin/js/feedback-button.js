@@ -14,18 +14,29 @@
     }
 
     function openModal() {
+        // Do not stack over the entry save success dialog.
+        const saveModal = document.getElementById('entry-save-success-modal');
+        if (saveModal && (saveModal.classList.contains('active') || saveModal.style.display === 'flex')) {
+            return;
+        }
         const modal = document.getElementById('feedback-submit-modal');
         const err = document.getElementById('feedback-submit-error');
         const ok = document.getElementById('feedback-submit-success');
         if (err) { err.hidden = true; err.textContent = ''; }
         if (ok) ok.hidden = true;
-        if (modal) modal.classList.add('show');
+        if (modal) {
+            modal.classList.add('show');
+            modal.style.removeProperty('display');
+        }
         document.getElementById('feedback-title')?.focus();
     }
 
     function closeModal() {
         const modal = document.getElementById('feedback-submit-modal');
-        if (modal) modal.classList.remove('show');
+        if (modal) {
+            modal.classList.remove('show', 'active', 'is-open');
+            modal.style.removeProperty('display');
+        }
     }
 
     function isFeedbackModalOpen() {

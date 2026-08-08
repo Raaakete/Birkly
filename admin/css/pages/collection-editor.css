@@ -35,6 +35,17 @@
   min-width: 0;
 }
 
+/* Field cards live inside #fields-container (and sub-collection field lists),
+   not as direct children of .fields-section — gap must be on those hosts. */
+#fields-container,
+#sub-collection-fields-container,
+.sub-collection-fields-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
 /* "+ Add Field" / "+ Add Sub-Collection" are actions, not full-width bars —
    the flex column above stretches block children by default (align-items:
    stretch), so these need to opt back out to their natural button width. */

@@ -231,40 +231,47 @@ class Relation extends BaseField {
         }
         
         /* Buttons use system button classes - .btn-sm is defined in system buttons.css */
-        
-        .modal {
+
+        /* P62 follow-up: NEVER style global .modal / .card here — that forced
+           every admin modal (incl. Send feedback) to display:flex on pages that
+           load Relation (e.g. all-fieldtypes collections). Scope to the picker. */
+        #relationPickerModal.relation-picker-modal {
             position: fixed;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            background: var(--bg-overlay, rgba(0, 0, 0, 0.5));
-            display: flex;
+            background: var(--overlay, var(--bg-overlay, rgba(0, 0, 0, 0.5)));
+            display: none;
             align-items: center;
             justify-content: center;
-            z-index: var(--z-index-modal, 1000);
-        }
-        
-        .card {
-            background: var(--bg-primary, #ffffff);
-            border-radius: var(--radius-md, 0.5rem);
-            box-shadow: var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1));
-            overflow: hidden;
-        }
-        
-        .card-header {
-            background: var(--bg-secondary, #fafafa);
-            border-bottom: 1px solid var(--border-light, #f3f4f6);
-            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
-        }
-        
-        .card-body {
+            z-index: var(--z-modal, 400);
             padding: var(--space-5, 1.25rem);
         }
-        
-        .card-footer {
-            background: var(--bg-secondary, #fafafa);
-            border-top: 1px solid var(--border-light, #f3f4f6);
+
+        #relationPickerModal.relation-picker-modal.is-open {
+            display: flex;
+        }
+
+        #relationPickerModal .card {
+            background: var(--surface, var(--bg-primary, #ffffff));
+            border-radius: var(--radius-md, 0.5rem);
+            box-shadow: var(--elevation-3, var(--shadow-xl, 0 20px 25px -5px rgba(0, 0, 0, 0.1)));
+            overflow: hidden;
+        }
+
+        #relationPickerModal .card-header {
+            background: var(--surface-sunken, var(--bg-secondary, #fafafa));
+            border-bottom: 1px solid var(--border-subtle, var(--border-light, #f3f4f6));
+            padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
+        }
+
+        #relationPickerModal .card-body {
+            padding: var(--space-5, 1.25rem);
+        }
+
+        #relationPickerModal .card-footer {
+            background: var(--surface-sunken, var(--bg-secondary, #fafafa));
+            border-top: 1px solid var(--border-subtle, var(--border-light, #f3f4f6));
             padding: var(--space-4, 1rem) var(--space-5, 1.25rem);
         }
         
@@ -301,39 +308,39 @@ class Relation extends BaseField {
             color: var(--text-secondary, #72746F);
         }
         
-        .flex {
+        #relationPickerModal .flex {
             display: flex;
         }
-        
-        .justify-between {
+
+        #relationPickerModal .justify-between {
             justify-content: space-between;
         }
-        
-        .align-center {
+
+        #relationPickerModal .align-center {
             align-items: center;
         }
-        
-        .gap-2 {
+
+        #relationPickerModal .gap-2 {
             gap: var(--space-2, 0.5rem);
         }
-        
-        .gap-8 {
+
+        #relationPickerModal .gap-8 {
             gap: var(--space-2, 0.5rem);
         }
-        
-        .h3 {
+
+        #relationPickerModal .h3 {
             font-size: 1.125rem;
             font-weight: 600;
             margin: 0;
         }
-        
-        .m-0 {
+
+        #relationPickerModal .m-0 {
             margin: 0;
         }
-        
+
         /* Buttons use system button classes - no custom styles needed */
-        
-        .input {
+
+        #relationPickerModal .input {
             width: 100%;
             padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
             border: 1px solid var(--border-medium, #e5e7eb);
@@ -342,32 +349,35 @@ class Relation extends BaseField {
             background: var(--bg-primary, #ffffff);
             color: var(--text-primary, #20221D);
         }
-        
-        .input:focus {
+
+        #relationPickerModal .input:focus {
             outline: none;
             border-color: var(--primary-500, #3b82f6);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
-        
-        .text-muted {
+
+        #relationPickerModal .text-muted {
             color: var(--text-secondary, #72746F);
         }
-        
-        .text-danger {
+
+        #relationPickerModal .text-danger {
             color: var(--error-500, #ef4444);
         }
-        
+
         /* Icon styles */
-        .icon-plus::before {
+        .relation-field .icon-plus::before,
+        #relationPickerModal .icon-plus::before {
             content: "+";
             font-weight: bold;
         }
-        
-        .icon-trash::before {
+
+        .relation-field .icon-trash::before,
+        #relationPickerModal .icon-trash::before {
             content: "🗑";
         }
-        
-        .icon-close::before {
+
+        .relation-field .icon-close::before,
+        #relationPickerModal .icon-close::before {
             content: "×";
             font-weight: bold;
             font-size: 1rem;
