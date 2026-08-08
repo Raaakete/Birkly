@@ -307,7 +307,7 @@ class DynamicItems extends BaseField {
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: var(--z-index-modal, 10000);
+            z-index: var(--z-modal, 400);
             padding: var(--space-5, 1.25rem);
         }
         

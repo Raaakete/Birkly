@@ -18,6 +18,12 @@
    styling before that move.
    ============================================ */
 
+/* Guard: fieldtype CSS must never force this panel open without .show
+   (P62 follow-up — Relation previously set global .modal { display:flex }). */
+#feedback-submit-modal.feedback-modal:not(.show) {
+  display: none !important;
+}
+
 /* ---- 1. Floating feedback button (legacy fallback) ---- */
 .feedback-floating-btn {
   display: flex;

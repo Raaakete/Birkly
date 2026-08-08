@@ -184,8 +184,9 @@
 
     /**
      * Close competing fieldtype / admin overlays before showing the entry
-     * save success modal (P62-A3). Competing systems use show/active/inline
-     * display; leaving any open traps focus and makes Escape feel stuck.
+     * save success modal (P62-A3 / follow-up). Competing systems use
+     * show/active/is-open/inline display; leaving any open traps focus and
+     * makes Escape / close feel stuck — especially on all-fieldtypes entries.
      */
     function closeAllFieldtypeOverlays() {
         try {
@@ -200,19 +201,27 @@
 
         const relationPicker = document.getElementById('relationPickerModal');
         if (relationPicker) {
+            relationPicker.classList.remove('is-open', 'show', 'active');
             relationPicker.style.display = 'none';
+            relationPicker.setAttribute('aria-hidden', 'true');
         }
 
         document.querySelectorAll(
             '.media-modal-overlay, .content-editor-fullscreen-overlay, ' +
             '.content-editor-link-dialog, .content-editor-smart-paste-overlay, ' +
-            '.content-editor-table-dialog'
+            '.content-editor-table-dialog, .content-editor-dialog-overlay, ' +
+            '.link-dialog-overlay, .content-editor-image-lightbox, ' +
+            '.dynamicitems-modal-overlay'
         ).forEach(function (el) {
-            el.classList.remove('active', 'show');
+            el.classList.remove('active', 'show', 'is-open');
             if (el.parentNode && (
                 el.classList.contains('media-modal-overlay') ||
                 el.classList.contains('content-editor-smart-paste-overlay') ||
-                el.classList.contains('content-editor-fullscreen-overlay')
+                el.classList.contains('content-editor-fullscreen-overlay') ||
+                el.classList.contains('content-editor-dialog-overlay') ||
+                el.classList.contains('link-dialog-overlay') ||
+                el.classList.contains('content-editor-image-lightbox') ||
+                el.classList.contains('dynamicitems-modal-overlay')
             )) {
                 el.parentNode.removeChild(el);
             } else {
@@ -220,12 +229,26 @@
             }
         });
 
-        const feedbackModal = document.getElementById('feedback-submit-modal');
-        if (feedbackModal && feedbackModal.classList.contains('show')) {
-            if (typeof window.Birkly !== 'undefined' && typeof window.Birkly.closeFeedbackModal === 'function') {
-                window.Birkly.closeFeedbackModal();
-            } else {
-                feedbackModal.classList.remove('show');
+        // Always force-close feedback (do not require .show — Relation CSS once
+        // forced .modal { display:flex }, leaving the panel visible without .show).
+        if (typeof window.Birkly !== 'undefined' && typeof window.Birkly.closeFeedbackModal === 'function') {
+            window.Birkly.closeFeedbackModal();
+        } else {
+            const feedbackModal = document.getElementById('feedback-submit-modal');
+            if (feedbackModal) {
+                feedbackModal.classList.remove('show', 'active', 'is-open');
+            }
+        }
+
+        // Collapse assist FAB menu so its Feedback action cannot steal focus.
+        const assistWrap = document.getElementById('assist-fab-wrap');
+        if (assistWrap && assistWrap.classList.contains('fab-menu')) {
+            assistWrap.classList.remove('fab-menu');
+            assistWrap.classList.add('fab-idle');
+            const assistBtn = assistWrap.querySelector('.assist-fab-main');
+            if (assistBtn) {
+                assistBtn.setAttribute('aria-expanded', 'false');
+                assistBtn.setAttribute('aria-label', 'Open assist menu');
             }
         }
     }
@@ -311,7 +334,9 @@
             // Prefer closing leftover fieldtype overlays first if any reappeared.
             const leftover = document.querySelector(
                 '.media-modal-overlay, .content-editor-fullscreen-overlay.active, ' +
-                '#relationPickerModal[style*="flex"], .content-editor-link-dialog.active'
+                '#relationPickerModal.is-open, #relationPickerModal[style*="flex"], ' +
+                '.content-editor-link-dialog.active, .dynamicitems-modal-overlay, ' +
+                '#feedback-submit-modal.show'
             );
             if (leftover) {
                 closeAllFieldtypeOverlays();
