@@ -3164,6 +3164,10 @@
     }
 
     function switchZone(zone, opts) {
+        if (zone === 'connections') {
+            window.location.assign(settingsAiUrl());
+            return;
+        }
         if (HUB_ZONES.indexOf(zone) < 0) zone = 'guide';
         opts = opts || {};
         state.hubZone = zone;
@@ -3320,6 +3324,7 @@
             })
             .catch(function (err) {
                 toast(err.message || 'Failed to load tools config', 'error');
+                updateSpine();
             });
     }
 
