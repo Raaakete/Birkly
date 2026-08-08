@@ -288,7 +288,7 @@
         "ai_presence_tab_products": "Products & Services",
         "ai_presence_assist_title": "AI Assist",
         "ai_presence_assist_lede": "Draft Agent Guide content with AI from your declared sources, then review every suggestion before it is saved.",
-        "ai_presence_assist_connection_hint": "Uses your connected AI from Agent Guide → Connections. Leave on rules-only for basic CMS-based suggestions.",
+        "ai_presence_assist_connection_hint": "Uses your connected AI from Settings → AI. Leave on rules-only for basic CMS-based suggestions.",
         "ai_presence_assist_tab_auto": "Auto",
         "ai_presence_assist_tab_advanced": "Advanced",
         "ai_presence_assist_auto_hint": "One click: read your declared sources and propose a full Agent Guide draft.",
