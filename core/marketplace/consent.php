@@ -383,7 +383,7 @@ function birkly_marketplace_require_install_consent(
 
     return [
         'ok' => false,
-        'error' => 'Permission consent is required before installing this plugin',
+        'error' => 'Permission consent is required before installing or updating this plugin',
         'code' => 'consent_required',
     ];
 }
