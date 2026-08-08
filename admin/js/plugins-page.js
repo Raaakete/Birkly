@@ -52,6 +52,9 @@
     var marketplaceOffersCache = [];
     var reviewStatusMap = {};
     var pendingInstallContext = null;
+    var pendingHubLicenseInstall = null;
+    var hubLicenseKeyByRef = {};
+    var HUB_LICENSE_KEY_SESSION_PREFIX = 'birkly_hub_license_';
 
     function url(path) {
         return window.Birkly && typeof window.Birkly.url === 'function'
@@ -153,6 +156,14 @@
             installFromFile();
         } else if (action === 'activate-license') {
             activateHubLicense();
+        } else if (action === 'revoke-hub-license') {
+            revokeHubLicense(el.getAttribute('data-plugin-id'), el.getAttribute('data-license-ref'));
+        } else if (action === 'hub-install-pending-license') {
+            startHubLicenseInstall(
+                el.getAttribute('data-offer-slug'),
+                el.getAttribute('data-offer-title'),
+                el.getAttribute('data-offer-version')
+            );
         } else if (action === 'replace-all-pack') {
             replaceAllPackFromUi(el.getAttribute('data-pack-slug'));
         } else if (action === 'close-offer-embed') {
@@ -217,6 +228,8 @@
                     action === 'open-install-modal' ||
                     action === 'install-from-file' ||
                     action === 'activate-license' ||
+                    action === 'revoke-hub-license' ||
+                    action === 'hub-install-pending-license' ||
                     action === 'replace-all-pack' ||
                     action === 'set-offer-type' ||
                     action === 'switch-upload' ||
@@ -523,6 +536,12 @@
         }
         closeMarketplaceInstallModal();
         closeInstallConsentModal();
+        if (licenseKey) {
+            rememberHubLicenseKey(licenseKey, licenseKeySuffix(licenseKey));
+        }
+        if (pendingHubLicenseInstall && pendingHubLicenseInstall.offer_slug === slug) {
+            pendingHubLicenseInstall = null;
+        }
         var offerTypeEl = document.getElementById('marketplace-install-offer-type');
         var isPack = offerTypeEl && offerTypeEl.value === 'template_pack';
         reloadAfterPluginChange(
@@ -1406,6 +1425,53 @@
         return null;
     }
 
+    function licenseKeySuffix(licenseKey) {
+        var parts = String(licenseKey || '').trim().toUpperCase().split('-');
+        return parts.length ? parts[parts.length - 1] : '';
+    }
+
+    function rememberHubLicenseKey(licenseKey, licenseRef) {
+        if (!licenseKey) {
+            return;
+        }
+        var ref = licenseRef || licenseKeySuffix(licenseKey);
+        if (!ref) {
+            return;
+        }
+        hubLicenseKeyByRef[ref] = licenseKey;
+        try {
+            sessionStorage.setItem(HUB_LICENSE_KEY_SESSION_PREFIX + ref, licenseKey);
+        } catch (storageErr) {
+            void storageErr;
+        }
+    }
+
+    function recallHubLicenseKey(licenseRef) {
+        if (!licenseRef) {
+            return '';
+        }
+        if (hubLicenseKeyByRef[licenseRef]) {
+            return hubLicenseKeyByRef[licenseRef];
+        }
+        try {
+            return sessionStorage.getItem(HUB_LICENSE_KEY_SESSION_PREFIX + licenseRef) || '';
+        } catch (storageErr) {
+            return '';
+        }
+    }
+
+    function forgetHubLicenseKey(licenseRef) {
+        if (!licenseRef) {
+            return;
+        }
+        delete hubLicenseKeyByRef[licenseRef];
+        try {
+            sessionStorage.removeItem(HUB_LICENSE_KEY_SESSION_PREFIX + licenseRef);
+        } catch (storageErr) {
+            void storageErr;
+        }
+    }
+
     function renderPluginReviewChip(pluginId, offerSlug, reviewStatus) {
         if (!offerSlug) {
             return '';
@@ -1963,6 +2029,37 @@
         }).join('');
     }
 
+    function renderLicenseEntitlementMeta(plugin) {
+        var es = plugin.entitlement_status;
+        if (!es || !es.status) {
+            return '';
+        }
+        return '<span class="chip">' + escapeHtml(es.status) + '</span>';
+    }
+
+    function renderPendingHubLicenseInstallRow() {
+        if (!pendingHubLicenseInstall || !pendingHubLicenseInstall.offer_slug) {
+            return '';
+        }
+        var pending = pendingHubLicenseInstall;
+        return (
+            '<div class="data-list-item">' +
+            '<div class="data-list-main">' +
+            '<span class="data-list-title">' + escapeHtml(pending.title || pending.offer_slug) + '</span>' +
+            '<span class="data-list-meta">' +
+            escapeHtml(t('hub_license_install_pending', 'License activated — plugin not installed on this site yet.')) +
+            '</span>' +
+            '</div>' +
+            '<div class="data-list-actions">' +
+            '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="hub-install-pending-license" data-offer-slug="' +
+            escapeHtml(pending.offer_slug) + '" data-offer-title="' + escapeHtml(pending.title || pending.offer_slug) +
+            '" data-offer-version="' + escapeHtml(pending.version || '') + '">' +
+            escapeHtml(t('install_now', 'Install now')) + '</button>' +
+            '</div>' +
+            '</div>'
+        );
+    }
+
     function renderLicensesPanel() {
         var grid = document.getElementById('hub-licenses-grid');
         if (!grid) return;
@@ -1970,8 +2067,9 @@
         var licensed = installedPlugins.filter(function (plugin) {
             return !!(plugin.license_ref);
         });
+        var pendingRow = renderPendingHubLicenseInstallRow();
 
-        if (!licensed.length) {
+        if (!licensed.length && !pendingRow) {
             grid.innerHTML =
                 '<div class="empty-state empty-state--compact">' +
                 '<p class="empty-state-title">' + escapeHtml(t('hub_licenses_none', 'No licenses bound to this installation yet.')) + '</p>' +
@@ -1980,20 +2078,36 @@
             return;
         }
 
-        grid.innerHTML = '<div class="card card--flush"><div class="card-body"><div class="data-list">' + licensed.map(function (plugin) {
-            return (
-                '<div class="data-list-item">' +
-                '<div class="data-list-main">' +
-                '<span class="data-list-title">' + escapeHtml(plugin.name || plugin.id) + '</span>' +
-                '<span class="data-list-meta u-mono">#' + escapeHtml(plugin.license_ref) + '</span>' +
-                '</div>' +
-                '<div class="data-list-actions">' +
-                '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-                (plugin.marketplace_slug ? '<span class="tag">' + escapeHtml(plugin.marketplace_slug) + '</span>' : '') +
-                '</div>' +
-                '</div>'
-            );
-        }).join('') + '</div></div></div>';
+        var revokeHint =
+            '<p class="form-help u-m-0 u-mb-2">' +
+            escapeHtml(t('hub_revoke_license_hint', 'Revoking frees the seat on this installation so you can activate or install the same license key on another site.')) +
+            '</p>';
+
+        grid.innerHTML =
+            '<div class="card card--flush"><div class="card-body u-stack-3">' +
+            revokeHint +
+            '<div class="data-list">' +
+            pendingRow +
+            licensed.map(function (plugin) {
+                var offerSlug = resolvePluginOfferSlug(plugin);
+                return (
+                    '<div class="data-list-item">' +
+                    '<div class="data-list-main">' +
+                    '<span class="data-list-title">' + escapeHtml(plugin.name || plugin.id) + '</span>' +
+                    '<span class="data-list-meta u-mono">#' + escapeHtml(plugin.license_ref) + '</span>' +
+                    '</div>' +
+                    '<div class="data-list-actions">' +
+                    renderLicenseEntitlementMeta(plugin) +
+                    '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
+                    (offerSlug ? '<span class="tag">' + escapeHtml(offerSlug) + '</span>' : '') +
+                    '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="revoke-hub-license" data-plugin-id="' +
+                    escapeHtml(plugin.id) + '" data-license-ref="' + escapeHtml(plugin.license_ref) + '">' +
+                    escapeHtml(t('hub_revoke_license', 'Revoke on this site')) + '</button>' +
+                    '</div>' +
+                    '</div>'
+                );
+            }).join('') +
+            '</div></div></div>';
     }
 
     async function loadInstalled() {
@@ -2064,14 +2178,102 @@
         }
         try {
             var result = await marketplaceApi('activate_license', { license_key: licenseKey });
-            showMessage(result.message || t('hub_license_activated', 'License activated'), 'success');
+            var data = result.data || {};
+            var offerSlug = String(data.offer_slug || '').trim();
+            var licenseRef = licenseKeySuffix(licenseKey);
+            rememberHubLicenseKey(licenseKey, licenseRef);
+
+            var installedPlugin = offerSlug ? findInstalledPluginByOfferSlug(offerSlug) : null;
+            if (offerSlug && !installedPlugin) {
+                var cachedOffer = findCachedOffer(offerSlug) || {};
+                pendingHubLicenseInstall = {
+                    offer_slug: offerSlug,
+                    license_key: licenseKey,
+                    title: cachedOffer.title || offerSlug,
+                    version: cachedOffer.latest_version || '',
+                };
+                showMessage(
+                    t('hub_license_install_now', 'License activated. Install the plugin on this site to use it.'),
+                    'success'
+                );
+            } else {
+                pendingHubLicenseInstall = null;
+                showMessage(result.message || t('hub_license_activated', 'License activated'), 'success');
+            }
+
             if (input) {
                 input.value = '';
             }
-            await loadLicensesTab();
+            await loadInstalled();
+            renderLicensesPanel();
         } catch (err) {
             showMessage(marketplaceErrorMessage(err), 'error');
         }
+    }
+
+    async function revokeHubLicense(pluginId, licenseRef) {
+        licenseRef = String(licenseRef || '').trim();
+        pluginId = String(pluginId || '').trim();
+        var licenseKey = recallHubLicenseKey(licenseRef);
+        if (!licenseKey && BirklyFeedback && typeof BirklyFeedback.prompt === 'function') {
+            licenseKey = await BirklyFeedback.prompt('', '', {
+                title: t('hub_revoke_license', 'Revoke on this site'),
+                placeholder: t('license_key', 'License key'),
+                confirmLabel: t('hub_revoke_license', 'Revoke on this site'),
+            });
+            licenseKey = String(licenseKey || '').trim();
+        }
+        if (!licenseKey) {
+            showMessage(
+                t('enter_license_key_revoke', 'Enter the license key to revoke this seat on the marketplace.'),
+                'error'
+            );
+            return;
+        }
+        if (
+            !(await BirklyFeedback.confirm(
+                t(
+                    'hub_revoke_license_confirm',
+                    'Revoke this license on this site? The seat will be freed so you can activate the same key on another Birkly installation.'
+                )
+            ))
+        ) {
+            return;
+        }
+        try {
+            var payload = { license_key: licenseKey };
+            if (pluginId) {
+                payload.plugin_id = pluginId;
+            }
+            var result = await marketplaceApi('deactivate_license', payload);
+            forgetHubLicenseKey(licenseRef || licenseKeySuffix(licenseKey));
+            if (
+                pendingHubLicenseInstall &&
+                pendingHubLicenseInstall.offer_slug &&
+                findInstalledPluginByOfferSlug(pendingHubLicenseInstall.offer_slug)
+            ) {
+                pendingHubLicenseInstall = null;
+            }
+            showMessage(result.message || t('hub_license_revoked', 'License revoked on this site'), 'success');
+            await loadInstalled();
+            renderLicensesPanel();
+        } catch (err) {
+            showMessage(marketplaceErrorMessage(err), 'error');
+        }
+    }
+
+    function startHubLicenseInstall(slug, title, version) {
+        var pending = pendingHubLicenseInstall;
+        if (!slug && pending) {
+            slug = pending.offer_slug;
+            title = pending.title;
+            version = pending.version;
+        }
+        if (!slug) {
+            return;
+        }
+        var licenseKey = pending && pending.offer_slug === slug && pending.license_key ? pending.license_key : '';
+        openMarketplaceInstall(slug, title || slug, version || '', false, licenseKey);
     }
 
     function marketplaceErrorMessage(err) {
@@ -2741,7 +2943,7 @@
         // Upload pack is a Hub tab (P53-M11); no modal to close.
     }
 
-    function openMarketplaceInstall(slug, title, version, isFree) {
+    function openMarketplaceInstall(slug, title, version, isFree, prefillLicenseKey) {
         var free = isFree === true || isFree === 'true';
         var offer = findCachedOffer(slug) || {};
         var offerType = offer.offer_type || 'plugin';
@@ -2755,7 +2957,10 @@
             t('install_from_marketplace', 'Install from Hub') + ': ' + title;
         document.getElementById('marketplace-install-summary').textContent =
             version ? 'Latest version: v' + version : 'Latest release will be installed.';
-        document.getElementById('marketplace-license-key').value = '';
+        var licenseInput = document.getElementById('marketplace-license-key');
+        if (licenseInput) {
+            licenseInput.value = prefillLicenseKey ? String(prefillLicenseKey) : '';
+        }
 
         var licenseGroup = document.getElementById('marketplace-license-group');
         if (licenseGroup) {
