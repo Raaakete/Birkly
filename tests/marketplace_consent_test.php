@@ -110,6 +110,10 @@ assert_true(
     empty($requirePrivileged['ok']) && ($requirePrivileged['code'] ?? '') === 'consent_required',
     'install blocked when privileged manifest lacks consent'
 );
+assert_true(
+    str_contains((string) ($requirePrivileged['error'] ?? ''), 'updating'),
+    'consent error mentions updating as well as installing'
+);
 
 $requireAccepted = birkly_marketplace_require_install_consent('unknown-offer', '1.0.0', true, $emptyManifest);
 assert_true(!empty($requireAccepted['ok']), 'consent_accepted skips manifest reload');

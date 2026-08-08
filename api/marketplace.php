@@ -805,7 +805,7 @@ if ($action === 'upgrade') {
     if (!empty($check['license_lapsed'])) {
         echo json_encode([
             'status' => 'error',
-            'message' => $check['license_warning'] ?? 'Marketplace license is inactive. Renew to upgrade.',
+            'message' => $check['license_warning'] ?? 'Marketplace license is inactive. Renew to update.',
             'code' => 'license_lapsed',
         ]);
         exit;
@@ -813,11 +813,6 @@ if ($action === 'upgrade') {
     if (empty($check['update_available'])) {
         echo json_encode(['status' => 'error', 'message' => 'No update available']);
         exit;
-    }
-
-    $wasActive = !empty($plugin['active']);
-    if ($wasActive) {
-        set_plugin_state($pluginId, false);
     }
 
     $targetVersion = (string) ($check['latest_version'] ?? $current);
@@ -830,11 +825,18 @@ if ($action === 'upgrade') {
             'message' => $consentCheck['error'] ?? 'Permission consent required',
             'code' => $consentCheck['code'] ?? 'consent_required',
             'data' => [
+                'slug' => $slug,
+                'plugin_id' => $pluginId,
                 'permissions_manifest' => $permPreview['permissions_manifest'] ?? [],
                 'version' => $permPreview['version'] ?? $targetVersion,
             ],
         ]);
         exit;
+    }
+
+    $wasActive = !empty($plugin['active']);
+    if ($wasActive) {
+        set_plugin_state($pluginId, false);
     }
 
     $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true, $consentAccepted);
@@ -844,7 +846,8 @@ if ($action === 'upgrade') {
         }
         echo json_encode([
             'status' => 'error',
-            'message' => 'Upgrade failed: ' . implode('; ', $install['errors'] ?? []),
+            'message' => 'Update failed: ' . implode('; ', $install['errors'] ?? []),
+            'code' => $install['code'] ?? null,
             'errors' => $install['errors'] ?? [],
         ]);
         exit;
@@ -853,9 +856,12 @@ if ($action === 'upgrade') {
     load_plugins();
     $validationErrors = validate_plugin($plugins[$pluginId]['path'] ?? (__DIR__ . '/../plugins/' . $pluginId));
     if ($validationErrors !== []) {
+        if ($wasActive) {
+            set_plugin_state($pluginId, true);
+        }
         echo json_encode([
             'status' => 'error',
-            'message' => 'Post-upgrade validation failed: ' . implode(', ', $validationErrors),
+            'message' => 'Post-update validation failed: ' . implode(', ', $validationErrors),
         ]);
         exit;
     }
@@ -864,7 +870,7 @@ if ($action === 'upgrade') {
         set_plugin_state($pluginId, true);
     }
 
-    log_security_event('marketplace_plugin_upgraded', [
+    log_security_event('marketplace_plugin_updated', [
         'plugin' => $pluginId,
         'slug' => $slug,
         'version' => $targetVersion,
@@ -873,7 +879,7 @@ if ($action === 'upgrade') {
 
     echo json_encode([
         'status' => 'ok',
-        'message' => 'Plugin upgraded successfully',
+        'message' => 'Plugin updated successfully',
         'data' => [
             'plugin_id' => $pluginId,
             'version' => $targetVersion,

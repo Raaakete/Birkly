@@ -427,14 +427,26 @@
         var modal = document.getElementById('marketplace-consent-modal');
         var manifestEl = document.getElementById('marketplace-consent-manifest');
         var summaryEl = document.getElementById('marketplace-consent-summary');
+        var acceptBtn = document.getElementById('marketplace-consent-accept-btn');
         if (!modal || !manifestEl) {
             return;
         }
+        var isUpdate = context && (context.mode === 'update' || context.mode === 'upgrade');
         if (summaryEl) {
-            summaryEl.textContent = t(
-                'install_consent_summary',
-                'This plugin requests access to your site. Review the permissions below, then accept to install.'
-            );
+            summaryEl.textContent = isUpdate
+                ? t(
+                    'update_consent_summary',
+                    'This update requests access to your site. Review the permissions below, then accept to update.'
+                )
+                : t(
+                    'install_consent_summary',
+                    'This plugin requests access to your site. Review the permissions below, then accept to install.'
+                );
+        }
+        if (acceptBtn) {
+            acceptBtn.textContent = isUpdate
+                ? t('accept_and_update', 'Accept & update')
+                : t('accept_and_install', 'Accept & install');
         }
         manifestEl.innerHTML = renderPermissionsManifest(context.manifest || {});
         modal.classList.add('active');
@@ -450,7 +462,14 @@
 
     async function acceptInstallConsent() {
         var pending = pendingInstallContext;
-        if (!pending || !pending.slug) {
+        if (!pending) {
+            return;
+        }
+        var isUpdate = pending.mode === 'update' || pending.mode === 'upgrade';
+        if (!isUpdate && !pending.slug) {
+            return;
+        }
+        if (isUpdate && !pending.pluginId) {
             return;
         }
         var btn = document.getElementById('marketplace-consent-accept-btn');
@@ -458,9 +477,18 @@
             btn.disabled = true;
         }
         try {
+            if (isUpdate) {
+                var updateResult = await pluginsApi('update', {
+                    plugin_id: pending.pluginId,
+                    consent_accepted: 1,
+                });
+                closeInstallConsentModal();
+                reloadAfterPluginChange(updateResult.message || t('plugin_updated', 'Plugin updated successfully'));
+                return;
+            }
             await executeMarketplaceInstall(pending.slug, pending.version || '', pending.licenseKey || '', true);
         } catch (err) {
-            showMessage(marketplaceErrorMessage(err), 'error');
+            showMessage(isUpdate ? (err.message || t('update_failed', 'Update failed')) : marketplaceErrorMessage(err), 'error');
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -592,7 +620,10 @@
         });
         var result = await parsePluginsResponse(response);
         if (!response.ok || result.status === 'error') {
-            throw new Error(result.message || 'Request failed');
+            var err = new Error(result.message || 'Request failed');
+            err.code = result.code || '';
+            err.data = result.data || null;
+            throw err;
         }
         return result;
     }
@@ -1918,7 +1949,7 @@
             '<div class="u-cluster u-mt-auto u-pt-2">' +
             detailsButton +
             (hasUpdate
-                ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">Upgrade</button>'
+                ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
                 : '') +
             (options.hideManage ? '' :
                 (plugin.has_settings
@@ -2599,14 +2630,25 @@
     }
 
     async function upgradePlugin(pluginId) {
-        if (!(await BirklyFeedback.confirm('Upgrade this plugin to the latest marketplace version?'))) {
+        if (!(await BirklyFeedback.confirm(t('confirm_plugin_update', 'Update this plugin to the latest Hub version?')))) {
             return;
         }
         try {
             var result = await pluginsApi('update', { plugin_id: pluginId });
-            reloadAfterPluginChange(result.message || 'Plugin upgraded successfully');
+            reloadAfterPluginChange(result.message || t('plugin_updated', 'Plugin updated successfully'));
         } catch (err) {
-            showMessage(err.message, 'error');
+            if (err && err.code === 'consent_required') {
+                var data = err.data || {};
+                openInstallConsentModal({
+                    mode: 'update',
+                    pluginId: data.plugin_id || pluginId,
+                    slug: data.slug || '',
+                    version: data.version || '',
+                    manifest: data.permissions_manifest || {},
+                });
+                return;
+            }
+            showMessage(err.message || t('update_failed', 'Update failed'), 'error');
         }
     }
 
