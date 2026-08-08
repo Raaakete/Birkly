@@ -921,6 +921,15 @@
         "ai_presence_price_source_cms": "Aus CMS-Eintragsfeld synchronisieren",
         "ai_presence_price_source_external": "Externe Preisseite",
         "ai_presence_price_cms_field": "CMS-Feldname",
-        "ai_presence_price_external_url": "Externe Preis-URL"
+        "ai_presence_price_external_url": "Externe Preis-URL",
+        "hub_checkout_return_ready": "Checkout complete. Review and install with the returned license key.",
+        "hub_checkout_return_manual_key": "Checkout complete. Paste your activation key to finish installing.",
+        "entitlement_status_active": "Active",
+        "entitlement_status_trialing": "Trial",
+        "entitlement_status_grace": "Grace",
+        "entitlement_status_held": "On hold",
+        "entitlement_status_revoked": "Revoked",
+        "entitlement_status_expired": "Expired",
+        "entitlement_status_deactivated": "Deactivated"
     }
 }
