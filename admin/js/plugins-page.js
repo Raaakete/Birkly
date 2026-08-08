@@ -2029,12 +2029,69 @@
         }).join('');
     }
 
+    function licenseEntitlementLabel(status) {
+        var code = String(status || '').toLowerCase();
+        var map = {
+            active: t('entitlement_status_active', 'Active'),
+            trialing: t('entitlement_status_trialing', 'Trial'),
+            grace: t('entitlement_status_grace', 'Grace'),
+            held: t('entitlement_status_held', 'On hold'),
+            revoked: t('entitlement_status_revoked', 'Revoked'),
+            expired: t('entitlement_status_expired', 'Expired'),
+            deactivated: t('entitlement_status_deactivated', 'Deactivated'),
+        };
+        return map[code] || status;
+    }
+
+    function licenseEntitlementBadgeClass(status) {
+        var code = String(status || '').toLowerCase();
+        if (code === 'active' || code === 'trialing') {
+            return 'badge badge-success badge-sm';
+        }
+        if (code === 'grace') {
+            return 'badge badge-warning badge-sm';
+        }
+        if (code === 'held' || code === 'revoked' || code === 'expired') {
+            return 'badge badge-danger badge-sm';
+        }
+        return 'badge badge-sm';
+    }
+
     function renderLicenseEntitlementMeta(plugin) {
         var es = plugin.entitlement_status;
         if (!es || !es.status) {
             return '';
         }
-        return '<span class="chip">' + escapeHtml(es.status) + '</span>';
+        var label = es.message || licenseEntitlementLabel(es.status);
+        return '<span class="' + licenseEntitlementBadgeClass(es.status) + '">' + escapeHtml(label) + '</span>';
+    }
+
+    function syncLicensesActivateButtonTier() {
+        var activateBtn = document.querySelector('[data-plugin-action="activate-license"]');
+        if (!activateBtn) {
+            return;
+        }
+        var hasPending = !!(pendingHubLicenseInstall && pendingHubLicenseInstall.offer_slug);
+        activateBtn.classList.toggle('btn-primary', !hasPending);
+        activateBtn.classList.toggle('btn-secondary', hasPending);
+    }
+
+    function renderLicensesListSkeleton(count) {
+        count = count || 3;
+        var rows = '';
+        for (var i = 0; i < count; i++) {
+            rows +=
+                '<div class="data-list-item">' +
+                '<div class="data-list-main">' +
+                '<span class="skeleton skeleton-text" style="width:40%"></span>' +
+                '<span class="skeleton skeleton-text" style="width:28%"></span>' +
+                '</div>' +
+                '<div class="data-list-actions">' +
+                '<span class="skeleton skeleton-text" style="width:4rem"></span>' +
+                '</div>' +
+                '</div>';
+        }
+        return '<div class="card card--flush"><div class="data-list">' + rows + '</div></div>';
     }
 
     function renderPendingHubLicenseInstallRow() {
@@ -2068,6 +2125,7 @@
             return !!(plugin.license_ref);
         });
         var pendingRow = renderPendingHubLicenseInstallRow();
+        syncLicensesActivateButtonTier();
 
         if (!licensed.length && !pendingRow) {
             grid.innerHTML =
@@ -2079,27 +2137,32 @@
         }
 
         var revokeHint =
-            '<p class="form-help u-m-0 u-mb-2">' +
+            '<p class="form-help u-m-0">' +
             escapeHtml(t('hub_revoke_license_hint', 'Revoking frees the seat on this installation so you can activate or install the same license key on another site.')) +
             '</p>';
 
         grid.innerHTML =
-            '<div class="card card--flush"><div class="card-body u-stack-3">' +
+            '<div class="u-stack-3">' +
             revokeHint +
-            '<div class="data-list">' +
+            '<div class="card card--flush"><div class="data-list">' +
             pendingRow +
             licensed.map(function (plugin) {
                 var offerSlug = resolvePluginOfferSlug(plugin);
+                var metaParts = ['#' + String(plugin.license_ref || '')];
+                if (plugin.version) {
+                    metaParts.push('v' + plugin.version);
+                }
+                if (offerSlug) {
+                    metaParts.push(offerSlug);
+                }
                 return (
                     '<div class="data-list-item">' +
                     '<div class="data-list-main">' +
                     '<span class="data-list-title">' + escapeHtml(plugin.name || plugin.id) + '</span>' +
-                    '<span class="data-list-meta u-mono">#' + escapeHtml(plugin.license_ref) + '</span>' +
+                    '<span class="data-list-meta u-mono">' + escapeHtml(metaParts.join(' · ')) + '</span>' +
                     '</div>' +
                     '<div class="data-list-actions">' +
                     renderLicenseEntitlementMeta(plugin) +
-                    '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
-                    (offerSlug ? '<span class="tag">' + escapeHtml(offerSlug) + '</span>' : '') +
                     '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="revoke-hub-license" data-plugin-id="' +
                     escapeHtml(plugin.id) + '" data-license-ref="' + escapeHtml(plugin.license_ref) + '">' +
                     escapeHtml(t('hub_revoke_license', 'Revoke on this site')) + '</button>' +
@@ -2156,7 +2219,7 @@
     async function loadLicensesTab() {
         var grid = document.getElementById('hub-licenses-grid');
         if (grid) {
-            grid.innerHTML = renderPluginSkeletonCards(3);
+            grid.innerHTML = renderLicensesListSkeleton(3);
         }
         if (!installedPlugins.length) {
             var response = await fetch(url('/api/plugins.php?action=list'), { credentials: 'same-origin' });

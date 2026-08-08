@@ -498,6 +498,15 @@
         "hub_pack_replace_all": "Replace all",
         "hub_pack_replaced": "Site pack files replaced",
         "no_site_packs_installed": "No site packs installed yet.",
-        "no_site_packs_hint": "Install a site pack from Discover, or upload a pack ZIP."
+        "no_site_packs_hint": "Install a site pack from Discover, or upload a pack ZIP.",
+        "hub_checkout_return_ready": "Checkout complete. Review and install with the returned license key.",
+        "hub_checkout_return_manual_key": "Checkout complete. Paste your activation key to finish installing.",
+        "entitlement_status_active": "Active",
+        "entitlement_status_trialing": "Trial",
+        "entitlement_status_grace": "Grace",
+        "entitlement_status_held": "On hold",
+        "entitlement_status_revoked": "Revoked",
+        "entitlement_status_expired": "Expired",
+        "entitlement_status_deactivated": "Deactivated"
     }
 }
