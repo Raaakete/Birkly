@@ -2,7 +2,7 @@
 
 ## Summary
 
-Running Birkly on `http://localhost` works for day-to-day admin and the **built-in assistant**, but **remote AI connectors** (Claude, ChatGPT, and similar) usually **cannot** call `http://localhost/mcp` — they need a **public HTTPS** URL. For local development, use the **mcp-bridge** (stdio) or a **tunnel** (`cloudflared` / ngrok) to expose HTTPS to `/mcp`. Open **Agent Guide → Connections** for the same connector controls and local-project guidance.
+Running Birkly on `http://localhost` works for day-to-day admin and the **built-in assistant**, but **remote AI connectors** (Claude, ChatGPT, and similar) usually **cannot** call `http://localhost/mcp` — they need a **public HTTPS** URL. For local development, use the **mcp-bridge** (stdio) or a **tunnel** (`cloudflared` / ngrok) to expose HTTPS to `/mcp`. Open **Settings → AI** for the same connector controls and local-project guidance.
 
 > **Warning:** Do **not** expose your admin panel to the open internet as a “quick fix.” Prefer mcp-bridge for local tools, or a short-lived tunnel only for the MCP endpoint, with your usual auth in place.
 
@@ -17,13 +17,13 @@ Running Birkly on `http://localhost` works for day-to-day admin and the **built-
 | Local AI tools via **mcp-bridge** (stdio → local Birkly) | **Yes** | Recommended for Claude Desktop and similar local MCP hosts. |
 | **Tunnel** (`cloudflared` / ngrok) → HTTPS → `/mcp` | **Yes** | Supported pattern so remote connectors can reach your local CMS. |
 
-Where to configure connectors: **Agent Guide → Connections** (Connections is the single home for connectors). See [Connect your AI app](../01-admin/mcp-connections.md).
+Where to configure connectors: **Settings → AI** (Settings → AI is the home for connectors). See [Connect your AI app](../01-admin/mcp-connections.md).
 
 ### Option A — mcp-bridge (recommended for local tools)
 
 Use when your AI app runs on the same machine and supports **stdio** MCP servers (for example Claude Desktop).
 
-1. Open **Agent Guide → Connections**.
+1. Open **Settings → AI**.
 2. Expand **Developer / debug** (or the **Local project** card when shown).
 3. Follow the download / copy instructions for `mcp-bridge.js`.
 4. Point your AI app’s MCP config at that bridge so it talks to your local Birkly over stdio — not over a public URL.
@@ -50,7 +50,7 @@ ngrok http 8080
 ```
 
 3. Copy the HTTPS origin the tunnel prints (for example `https://abc123.trycloudflare.com`).
-4. In **Agent Guide → Connections**, use a Connector URL of the form:
+4. In **Settings → AI**, use a Connector URL of the form:
 
 ```text
 https://YOUR-TUNNEL-HOST/mcp
@@ -81,6 +81,6 @@ Keep the tunnel process running while you work. Treat the temporary URL like a s
 
 - [Connect your AI app](../01-admin/mcp-connections.md) — personal connector, service agents, OAuth
 - [Built-in assistant](../01-admin/ai-connections.md) — outbound API keys / Ollama
-- [Agent Guide](../02-content/agent-guide.md) — hub; open **Connections**
+- [Agent Guide](../02-content/agent-guide.md) — Guide · Tools · Publish (connectors under **Settings → AI**)
 - [Website tools (WebMCP)](webmcp-tools.md)
 - [Developer mode](../01-admin/developer-mode.md) — system info and MCP smoke helpers

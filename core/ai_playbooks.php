@@ -58,10 +58,10 @@ function birkly_ai_playbook_catalog(): array
             'category' => 'Core CMS',
         ],
         'templating' => [
-            'title' => 'Client templating language (full spec)',
+            'title' => 'Client templating language',
             'topic' => 'templating',
-            'summary' => 'Loops, conditionals, {from…get}, field access, forms.',
-            'triggers' => 'template syntax, {for each entry}, display collection on site',
+            'summary' => 'Loops, ordered by, dates format, {from…get}, regions, phantoms vs {entry for}.',
+            'triggers' => 'template syntax, {for each entry}, ordered by, created_at format, birkly-region, display collection on site',
             'category' => 'Core CMS',
         ],
         'public-forms' => [
@@ -209,7 +209,8 @@ function birkly_ai_core_docs_topics(): array
         'site-building' => $playbook('site-building-playbook.md', 'Website & portfolio builder (project/)'),
         'web-project-patterns' => $playbook('web-project-patterns-playbook.md', 'Web project patterns — list/detail, schemas, wiring'),
         'portfolio' => $playbook('site-building-playbook.md', 'Website & portfolio builder (project/)'),
-        'templating' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language'],
+        'templating' => $playbook('templating-playbook.md', 'Client templating language'),
+        'template-language-spec' => ['file' => 'TEMPLATE_LANGUAGE_SPEC.md', 'title' => 'Client templating language (full spec)'],
         'admin' => ['file' => 'ai/birkly-context-pack.md', 'title' => 'Admin & platform overview'],
         'plugins' => ['file' => 'client-sites/cms-vendoring.md', 'title' => 'Plugins & client embed'],
         'ai' => ['file' => 'ai/BYOAI-ARCHITECTURE.md', 'title' => 'BYOAI & MCP architecture'],
