@@ -35,6 +35,8 @@ User request
 | Comments invisible | Draft status (`auto_publish: false`) | Set `auto_publish: true` or approve in admin |
 | Unstyled site | CSS path `/css/` instead of `/project/css/` | Use `get_project_info` → `site_url_prefix` |
 | Detail page shows all entries | Loop on detail HTML | Detail = URL context only, no `{for each entry in …}` |
+| Wrong dates / ordering | Phantom helpers | `{created_at format "…"}`; `ordered by newest` / `ordered="newest"` |
+| Form vs load phantom | Confused `{entry…}` | Forms: `{entry for 'slug'}`; load entry: `{from … get entry …}` |
 | Wrong field type in schema | Guessing types | `read_birkly_docs` topic `fieldtypes` |
 
 ## Cross-reference map (where to read depth)
@@ -43,8 +45,8 @@ User request
 |------|----------------|------------------------------|
 | Content model | `content-model` | /02-content/content-model-overview.html |
 | Field types | `fieldtypes` | /02-content/field-types.html |
-| Template syntax | `templating` | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
-| Public forms | `public-forms` | /04-integration/public-forms.html |
+| Template syntax | `templating` | /03-templating/canonical-syntax.html (engine: `docs/TEMPLATE_LANGUAGE_SPEC.md`) |
+| Public forms | `public-forms` | /03-templating/public-forms-templating.html · /04-integration/public-forms.html |
 | MCP / Cursor | `mcp-setup` | /01-admin/mcp-connections.html |
 | Media | `media` | /01-admin/media-library.html |
 | Commerce | `commerce`, `commerce-store-kit` | /06-extensibility/plugins/commerce.html |

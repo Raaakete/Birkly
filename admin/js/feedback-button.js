@@ -1,10 +1,17 @@
 /**
- * Floating alpha feedback button + submit modal (P3-M10)
+ * Floating alpha feedback button + submit modal (P3-M10, P62-A3/A4)
  */
 (function () {
     'use strict';
 
     const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    function feedbackApiUrl() {
+        if (typeof Birkly !== 'undefined' && typeof Birkly.url === 'function') {
+            return Birkly.url('/api/feedback.php');
+        }
+        return '/api/feedback.php';
+    }
 
     function openModal() {
         const modal = document.getElementById('feedback-submit-modal');
@@ -19,6 +26,11 @@
     function closeModal() {
         const modal = document.getElementById('feedback-submit-modal');
         if (modal) modal.classList.remove('show');
+    }
+
+    function isFeedbackModalOpen() {
+        const modal = document.getElementById('feedback-submit-modal');
+        return !!(modal && modal.classList.contains('show'));
     }
 
     async function submitFeedback(e) {
@@ -39,9 +51,10 @@
         if (ok) ok.hidden = true;
 
         try {
-            const res = await fetch('/api/feedback.php', {
+            const res = await fetch(feedbackApiUrl(), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     action: 'submit',
                     type,
@@ -61,6 +74,7 @@
             if (ok) ok.hidden = false;
             setTimeout(closeModal, 1800);
         } catch (error) {
+            console.error('[Birkly feedback]', error);
             if (err) {
                 err.textContent = error.message;
                 err.hidden = false;
@@ -73,11 +87,19 @@
     document.addEventListener('DOMContentLoaded', () => {
         window.Birkly = window.Birkly || {};
         window.Birkly.openFeedbackModal = openModal;
+        window.Birkly.closeFeedbackModal = closeModal;
 
         document.getElementById('feedback-floating-btn')?.addEventListener('click', openModal);
         document.getElementById('feedback-submit-form')?.addEventListener('submit', submitFeedback);
         document.querySelectorAll('[data-close-feedback-submit]').forEach((el) => {
             el.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isFeedbackModalOpen()) {
+                e.preventDefault();
+                closeModal();
+            }
         });
     });
 })();

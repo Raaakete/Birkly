@@ -4,7 +4,7 @@ Birkly includes a built-in AI assistant that can help you create and edit conten
 
 ## Summary
 
-The **AI system** has two channels under **Agent Guide → Connections**: **Built-in assistant** (outbound API keys for in-admin chat) and **Connect your AI app** (inbound MCP for Claude, ChatGPT, Cursor). **Approvals** for writes apply to the built-in assistant when enabled; MCP clients approve writes in the client app. Open the floating AI button to chat; copy a connector URL for external tools. Supported outbound providers include OpenAI (default model `gpt-4o-mini`), Anthropic, Google (Gemini), OpenRouter, Ollama (local), and custom endpoints.
+The **AI system** has two channels under **Settings → AI**: **Built-in assistant** (outbound API keys for in-admin chat) and **Connect your AI app** (inbound MCP for Claude, ChatGPT, Cursor). **Approvals** for writes apply to the built-in assistant when enabled; MCP clients approve writes in the client app. Open the floating AI button to chat; copy a connector URL for external tools. Supported outbound providers include OpenAI (default model `gpt-4o-mini`), Anthropic, Google (Gemini), OpenRouter, Ollama (local), and custom endpoints.
 
 ## Beginner
 
@@ -17,7 +17,7 @@ Separately, **inbound MCP** lets tools like Claude Desktop call Birkly from outs
 **Where do I see it?**
 
 - **Floating button** — On any admin page, a button (often yellow or with an AI icon) in the corner. Click it to open the chat window.
-- **Agent Guide → Connections** — One tab with:
+- **Settings → AI** — One tab with:
   - **Approval queue** — Pending write actions from outbound chat and inbound MCP.
   - **Outbound (BYOAI)** — Provider connections for in-admin chat (API keys).
   - **Inbound (MCP)** — Endpoints for external MCP clients (API key and/or OAuth).

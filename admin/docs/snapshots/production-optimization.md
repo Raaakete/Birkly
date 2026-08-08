@@ -15,7 +15,7 @@ Most Birkly sites ship with one script tag: `birkly-client.js` fetches content a
         data-cms-url="https://cms.example.com"></script>
 ```
 
-When someone opens your page, the script asks Birkly for content and fills in placeholders like `{ title }` and `{for each entry in 'blog'}`. Your HTML files are the source of truth; you do not need a separate build or deploy bake step.
+When someone opens your page, the script asks Birkly for content and fills in placeholders like `{title}` and `{for each entry in 'blog'}`. Your HTML files are the source of truth; you do not need a separate build or deploy bake step. Start with [Client setup](client-setup.md).
 
 **When is that enough?**
 

@@ -2,7 +2,9 @@
 
 ## Summary
 
-**Site elements** is a content-model pattern for shared site chrome: headers, footers, announcement bars, and other blocks that appear on many pages. You store them as **entries** in a dedicated collection (typically handle `site-elements`) and inject them on your site with **`<birkly-region>`** — not as a separate CMS content type.
+**Site elements** is a content-model pattern for shared site chrome: headers, footers, announcement bars, and other blocks that appear on many pages. You store them as **entries** in a dedicated collection (canonical handle **`site_elements`**) and inject them on your site with **`<birkly-region>`** — not as a separate CMS content type.
+
+The client always prefetches the collection slug `site_elements` for page bundles. Prefer that handle so defaults and regions match the engine.
 
 ## Beginner
 
@@ -12,10 +14,10 @@ Birkly uses **collections + entries only**. Shared layout content is still entri
 
 ### Setup steps
 
-1. **Create collection** — Name: “Site elements”, handle: `site-elements`.
+1. **Create collection** — Name: “Site elements”, handle: **`site_elements`** (underscore).
 2. **Fields (example):**
    - **Title** (text) — admin label, e.g. “Header”.
-   - **Blocks** (Dynamic items) — logo, nav links, CTA buttons, legal links.
+   - **Blocks** (Dynamic items) — logo, nav links, CTA buttons, legal links — *or* a simple content field for HTML chrome.
 3. **Create entries** — one per region:
    - Entry slug `header` — main site header blocks.
    - Entry slug `footer` — footer columns and copyright.
@@ -23,18 +25,24 @@ Birkly uses **collections + entries only**. Shared layout content is still entri
 5. **On your site**, bind regions:
 
 ```html
-<birkly-region collection="site-elements" entry="header" field="blocks"></birkly-region>
+<birkly-region collection="site_elements" entry="header"></birkly-region>
 
 <main><!-- page-specific content --></main>
 
-<birkly-region collection="site-elements" entry="footer" field="blocks"></birkly-region>
+<birkly-region collection="site_elements" entry="footer"></birkly-region>
 ```
 
-The Birkly client fetches live content and hydrates the region. See [Web components](../04-integration/web-components.md) and [Choose your stack](../04-integration/choose-your-stack.md).
+Or with a Dynamic items field named `blocks`:
+
+```html
+<birkly-region collection="site_elements" entry="header" field="blocks"></birkly-region>
+```
+
+The Birkly client fetches live content and hydrates the region. See [Web components (templating)](../03-templating/web-components.md) and [Choose your stack](../04-integration/choose-your-stack.md).
 
 ### Multilingual sites
 
-Enable **multilanguage** on the site-elements collection. Edit **Blocks** per language tab so header/footer copy matches each locale. Regions respect the active site language when configured.
+Enable **multilanguage** on the `site_elements` collection. Edit **Blocks** (or content) per language tab so header/footer copy matches each locale. Regions respect the active site language when configured.
 
 ### When not to use site elements
 
@@ -49,8 +57,9 @@ Enable **multilanguage** on the site-elements collection. Edit **Blocks** per la
 
 **Handles in templates and API:**
 
-- Collection: `{from 'site-elements' get entries}` or Public API `GET /api/public/collections/site-elements/entries/header`
+- Prefer `{from 'site_elements' get entry 'header'}…{endget}` or Public API `GET /api/public/collections/site_elements/entries/header`
 - Prefer stable entry slugs (`header`, `footer`) — referenced in HTML and build scripts.
+- If you create a different handle (e.g. `site-elements`), templates and `<birkly-region collection="…">` must use **that** handle — engine defaults and prefetch still special-case `site_elements`.
 
 **Dynamic items inside regions:** The `field` attribute points to your Dynamic items field API name (e.g. `blocks`). Block structure is defined in [Dynamic items field](dynamic-items-field.md).
 
@@ -62,5 +71,5 @@ Enable **multilanguage** on the site-elements collection. Edit **Blocks** per la
 - [Dynamic items field](dynamic-items-field.md)
 - [Collections](collections.md)
 - [Entries](entries.md)
-- [Web components](../04-integration/web-components.md)
+- [Web components (templating)](../03-templating/web-components.md)
 - [Reference projects](../03-templating/reference-projects.md)

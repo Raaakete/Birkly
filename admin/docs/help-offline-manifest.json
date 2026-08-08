@@ -919,6 +919,274 @@
             "ai_topic": "playbooks-index"
         },
         {
+            "id": "templating-overview",
+            "title": "Templating overview",
+            "keywords": [
+                "templating",
+                "templates",
+                "birkly-client",
+                "for each",
+                "light dom",
+                "overview"
+            ],
+            "snapshot": "/admin/docs/snapshots/templating-overview.md",
+            "docs_path": "03-templating/templating-overview.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "canonical-syntax",
+            "title": "Canonical template syntax",
+            "keywords": [
+                "canonical",
+                "syntax",
+                "phantoms",
+                "template language",
+                "ordered by",
+                "format"
+            ],
+            "snapshot": "/admin/docs/snapshots/canonical-syntax.md",
+            "docs_path": "03-templating/canonical-syntax.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "client-setup",
+            "title": "Client setup",
+            "keywords": [
+                "birkly-client",
+                "data-cms-url",
+                "script",
+                "ssr",
+                "external site"
+            ],
+            "snapshot": "/admin/docs/snapshots/client-setup.md",
+            "docs_path": "03-templating/client-setup.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "variables-and-output",
+            "title": "Variables and output",
+            "keywords": [
+                "title",
+                "quoted fields",
+                "variables",
+                "output",
+                "placeholders"
+            ],
+            "snapshot": "/admin/docs/snapshots/variables-and-output.md",
+            "docs_path": "03-templating/variables-and-output.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "loops-and-lists",
+            "title": "Loops and lists",
+            "keywords": [
+                "for each",
+                "loops",
+                "ordered by",
+                "newest",
+                "with",
+                "limit"
+            ],
+            "snapshot": "/admin/docs/snapshots/loops-and-lists.md",
+            "docs_path": "03-templating/loops-and-lists.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "detail-pages-and-url-context",
+            "title": "Detail pages & URL context",
+            "keywords": [
+                "detail page",
+                "current",
+                "slug",
+                "url context",
+                "list to detail"
+            ],
+            "snapshot": "/admin/docs/snapshots/detail-pages-and-url-context.md",
+            "docs_path": "03-templating/detail-pages-and-url-context.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "web-project-patterns"
+        },
+        {
+            "id": "conditionals",
+            "title": "Conditionals",
+            "keywords": [
+                "if",
+                "endif",
+                "exist",
+                "has",
+                "conditionals"
+            ],
+            "snapshot": "/admin/docs/snapshots/conditionals.md",
+            "docs_path": "03-templating/conditionals.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "from-get-and-existence",
+            "title": "From…get and existence",
+            "keywords": [
+                "from get",
+                "endget",
+                "existence",
+                "single entry"
+            ],
+            "snapshot": "/admin/docs/snapshots/from-get-and-existence.md",
+            "docs_path": "03-templating/from-get-and-existence.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "sub-collections-in-templates",
+            "title": "Sub-collections in templates",
+            "keywords": [
+                "sub-collection",
+                "of blog.current",
+                "comments",
+                "nested"
+            ],
+            "snapshot": "/admin/docs/snapshots/sub-collections-in-templates.md",
+            "docs_path": "03-templating/sub-collections-in-templates.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "sub-collections"
+        },
+        {
+            "id": "dates-and-formatting",
+            "title": "Dates and formatting",
+            "keywords": [
+                "dates",
+                "format",
+                "created_at",
+                "format filter"
+            ],
+            "snapshot": "/admin/docs/snapshots/dates-and-formatting.md",
+            "docs_path": "03-templating/dates-and-formatting.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "media-in-templates",
+            "title": "Media in templates",
+            "keywords": [
+                "media",
+                "image",
+                "gallery",
+                "templates"
+            ],
+            "snapshot": "/admin/docs/snapshots/media-in-templates.md",
+            "docs_path": "03-templating/media-in-templates.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "media"
+        },
+        {
+            "id": "public-forms-templating",
+            "title": "Public forms templating",
+            "keywords": [
+                "entry for",
+                "public forms",
+                "contact form",
+                "public_api",
+                "endentry"
+            ],
+            "snapshot": "/admin/docs/snapshots/public-forms-templating.md",
+            "docs_path": "03-templating/public-forms-templating.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "public-forms"
+        },
+        {
+            "id": "multilingual-templating",
+            "title": "Multilingual templating",
+            "keywords": [
+                "language",
+                "multilingual",
+                "current.language",
+                "i18n"
+            ],
+            "snapshot": "/admin/docs/snapshots/multilingual-templating.md",
+            "docs_path": "03-templating/multilingual-templating.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "web-components-templating",
+            "title": "Web components (templating)",
+            "keywords": [
+                "birkly-region",
+                "ordered newest",
+                "regions",
+                "enhance-only",
+                "templating"
+            ],
+            "snapshot": "/admin/docs/snapshots/web-components-templating.md",
+            "docs_path": "03-templating/web-components.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "cheat-sheet",
+            "title": "Templating cheat sheet",
+            "keywords": [
+                "cheat sheet",
+                "quick reference",
+                "phantoms",
+                "cookbook"
+            ],
+            "snapshot": "/admin/docs/snapshots/cheat-sheet.md",
+            "docs_path": "03-templating/cheat-sheet.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "worked-site-walkthrough",
+            "title": "Worked site walkthrough",
+            "keywords": [
+                "walkthrough",
+                "tutorial",
+                "build a site",
+                "end to end"
+            ],
+            "snapshot": "/admin/docs/snapshots/worked-site-walkthrough.md",
+            "docs_path": "03-templating/worked-site-walkthrough.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "site-building"
+        },
+        {
+            "id": "public-forms",
+            "title": "Public forms",
+            "keywords": [
+                "public forms",
+                "public_api",
+                "public_submit",
+                "contact",
+                "newsletter"
+            ],
+            "snapshot": "/admin/docs/snapshots/public-forms.md",
+            "docs_path": "04-integration/public-forms.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration",
+            "ai_topic": "public-forms"
+        },
+        {
             "id": "reference-projects",
             "title": "Reference projects",
             "keywords": [
@@ -950,7 +1218,8 @@
             "snapshot": "/admin/docs/snapshots/production-optimization.md",
             "docs_path": "03-templating/production-optimization.html",
             "nav_section": "templating",
-            "nav_section_label": "Templating"
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
         },
         {
             "id": "agent-guide",
@@ -967,9 +1236,9 @@
                 "ai presence",
                 "hub",
                 "tools",
-                "connections",
                 "webmcp",
-                "website tools"
+                "website tools",
+                "settings ai"
             ],
             "snapshot": "/admin/docs/snapshots/agent-guide.md",
             "docs_path": "02-content/agent-guide.html",
@@ -1096,7 +1365,8 @@
             "snapshot": "/admin/docs/snapshots/web-components.md",
             "docs_path": "04-integration/web-components.html",
             "nav_section": "integration",
-            "nav_section_label": "Integration"
+            "nav_section_label": "Integration",
+            "ai_topic": "templating"
         },
         {
             "id": "spa-react-vue",
@@ -1133,6 +1403,6 @@
     ],
     "manifest_source": "offline",
     "offline": true,
-    "synced_at": "2026-08-07T20:32:18+00:00",
+    "synced_at": "2026-08-08T06:40:40+00:00",
     "synced_from": "/agent/repos/birkly-docs"
 }

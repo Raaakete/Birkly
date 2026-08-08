@@ -2,7 +2,7 @@
 /**
  * Shared AI connections panel (P60-M4 / P60.1).
  *
- * Mounted on Settings → AI. Agent Guide → Connections points here. Legacy note: Settings → AI was
+ * Mounted on Settings → AI — the sole Connections home (P62-D2). Legacy note: Settings → AI was
  * removed in P60.1 — this partial is the single home. The connection modules
  * (mcp-connections.js / ai-connections.js) init against these DOM ids.
  */

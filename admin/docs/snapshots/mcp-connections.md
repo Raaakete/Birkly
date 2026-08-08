@@ -2,7 +2,7 @@
 
 Let **Claude**, **ChatGPT**, or **Cursor** work with your Birkly content. Birkly provides two kinds of **AI agent**:
 
-> Open **Settings → AI** (`?page=settingsOpen **Agent Guide → Connections** (`?page=agent-guide&zone=connections`) — the home for AI app connections (Birkly MCP). The old Settings → AI tab was removed in P60.1.tab=ai`) — the home for AI app connections (Birkly MCP). Agent Guide → Connections links here. See [Agent Guide](../02-content/agent-guide.md). This is different from **website tools (WebMCP)** — Agent Guide → Tools — which controls what an AI helper can do on your *public site*, not what connects to your CMS. See [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
+> Open **Settings → AI** (`?page=settings&tab=ai`) — the home for AI app connections (Birkly MCP).  See [Agent Guide](../02-content/agent-guide.md). This is different from **website tools (WebMCP)** — Agent Guide → Tools — which controls what an AI helper can do on your *public site*, not what connects to your CMS. See [Website tools (WebMCP)](../04-integration/webmcp-tools.md).
 
 - **Personal connector** — one per site; every team member uses the same URL but signs in with their own account and gets **their** permissions.
 - **Service agent** — optional shared bots with a **fixed role** (e.g. always editor); admins control who can see and connect.
@@ -13,7 +13,7 @@ Built-in admin chat (API key) is separate — see [Built-in assistant](ai-connec
 
 ## Summary
 
-Open **Agent Guide → Connections**.
+Open **Settings → AI**.
 
 1. **Most users:** copy the **personal connector URL**, paste it in your AI app, and sign in with your Birkly account.
 2. **Admins:** you can also create **service agents** with a fixed role and choose who may use them.
@@ -21,7 +21,7 @@ Open **Agent Guide → Connections**.
 
 ## Quick start (personal connector)
 
-1. **Agent Guide → Connections**.
+1. **Settings → AI**.
 2. Under **Your personal connector**, click **Show Connector URL** and copy the URL (HTTPS, ends with `/mcp`).
 3. In your AI app:
    - **Claude:** Settings → Connectors → Add connector → paste URL only (leave OAuth fields empty)
@@ -36,7 +36,7 @@ The same URL works for everyone on your team — each person signs in separately
 
 For admins who need a shared automation identity (e.g. “content bot always acts as editor”):
 
-1. **Agent Guide → Connections** → **Add service agent**.
+1. **Settings → AI** → **Add service agent**.
 2. Name the agent, optionally add a description, choose a **fixed role**, and set **Who can use this agent** (roles and/or specific users).
 3. Copy that agent’s **Connector URL** and paste it in your AI app (same steps as above).
 4. Sign in and approve the connection. The consent screen shows the agent name and its fixed role.
@@ -133,7 +133,7 @@ php scripts/migrate-ai-agents-hybrid.php
 | **mcp-bridge** (stdio) | Yes — for local AI tools |
 | Tunnel (`cloudflared` / ngrok) → HTTPS → `/mcp` | Yes |
 
-Full recipes and security notes: [AI on localhost](../04-integration/ai-on-localhost.md). Prefer **Agent Guide → Connections** for the Local project / Developer debug card while you work on a laptop install.
+Full recipes and security notes: [AI on localhost](../04-integration/ai-on-localhost.md). Prefer **Settings → AI** for the Local project / Developer debug card while you work on a laptop install.
 
 ## Security
 
@@ -151,7 +151,7 @@ Users who cannot see a service agent in Settings cannot complete OAuth for it. A
 
 ## Developer / debug
 
-For local Claude Desktop development only, `mcp-bridge.js` is available under the collapsed **Developer / debug** (or **Local project**) section on **Agent Guide → Connections** / the AI settings tab. Normal users do not need this file. Step-by-step bridge and tunnel recipes: [AI on localhost](../04-integration/ai-on-localhost.md).
+For local Claude Desktop development only, `mcp-bridge.js` is available under the collapsed **Developer / debug** (or **Local project**) section on **Settings → AI** / the AI settings tab. Normal users do not need this file. Step-by-step bridge and tunnel recipes: [AI on localhost](../04-integration/ai-on-localhost.md).
 
 ## Troubleshooting
 
@@ -172,7 +172,7 @@ For local Claude Desktop development only, `mcp-bridge.js` is available under th
 - [AI on localhost](../04-integration/ai-on-localhost.md)
 - [AI approvals](ai-approvals.md)
 - [Roles and permissions](roles-and-permissions.md)
-- [Agent Guide](../02-content/agent-guide.md) — the hub that also mounts these Connections controls
+- [Agent Guide](../02-content/agent-guide.md) — Guide · Tools · Publish (connectors are under Settings → AI, not an Agent Guide tab)
 - [Website tools (WebMCP)](../04-integration/webmcp-tools.md) — a different layer: actions on your public site, not CMS connections
 - [Settings](settings.md)
 - [Developer mode](developer-mode.md)
