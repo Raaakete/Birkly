@@ -115,33 +115,50 @@ function feedback_json_error(int $code, string $message, array $extra = []): voi
 function feedback_relay_to_platform(array $record): void
 {
     $url = birkly_feedback_relay_url();
-    if ($url === '' || !function_exists('curl_init')) {
+    if ($url === '') {
+        // Owner installs intentionally have no default relay URL.
+        return;
+    }
+    if (!function_exists('curl_init')) {
+        error_log('feedback relay skipped: curl extension missing for install ' . birkly_platform_install_id());
         return;
     }
 
+    $installId = birkly_platform_install_id();
+
+    // Ensure per-install relay secret exists before signing (P62-A4).
+    // Force registration so we do not silently skip forever on a cold install.
     if (birkly_feedback_relay_secret() === '' && is_file(__DIR__ . '/../core/platform_ops.php')) {
         require_once __DIR__ . '/../core/platform_ops.php';
+        error_log('feedback relay: no secret yet — forcing Ops registration for install ' . $installId);
         birkly_ops_register_installation(true);
     }
 
+    $secret = birkly_feedback_relay_secret();
+    if ($secret === '') {
+        error_log(
+            'feedback relay skipped: registration did not provision a relay secret for install ' .
+            $installId . ' (will retry on next submit)'
+        );
+        return;
+    }
+
     $payload = [
-        'install_id' => birkly_platform_install_id(),
+        'install_id' => $installId,
         'feedback' => $record,
         'submitted_at' => gmdate('c'),
     ];
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($body === false) {
+        error_log('feedback relay skipped: failed to encode payload for install ' . $installId);
         return;
     }
 
-    $headers = ['Content-Type: application/json', 'Accept: application/json'];
-    $secret = birkly_feedback_relay_secret();
-    if ($secret !== '') {
-        $headers[] = 'X-Birkly-Feedback-Signature: ' . hash_hmac('sha256', $body, $secret);
-    } else {
-        error_log('feedback relay skipped: no relay secret for install ' . birkly_platform_install_id());
-        return;
-    }
+    $headers = [
+        'Content-Type: application/json',
+        'Accept: application/json',
+        'X-Birkly-Feedback-Signature: ' . hash_hmac('sha256', $body, $secret),
+    ];
 
     $ch = curl_init($url);
     curl_setopt_array($ch, [
@@ -152,12 +169,20 @@ function feedback_relay_to_platform(array $record): void
         CURLOPT_TIMEOUT => 8,
         CURLOPT_CONNECTTIMEOUT => 4,
     ]);
-    curl_exec($ch);
+    $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    if ($code < 200 || $code >= 300) {
-        error_log('feedback relay failed HTTP ' . $code . ' for install ' . birkly_platform_install_id());
-    }
+    $curlErr = curl_error($ch);
     curl_close($ch);
+
+    if ($response === false || $code < 200 || $code >= 300) {
+        $snippet = is_string($response) ? substr($response, 0, 200) : '';
+        error_log(
+            'feedback relay failed HTTP ' . $code .
+            ' for install ' . $installId .
+            ($curlErr !== '' ? (' curl=' . $curlErr) : '') .
+            ($snippet !== '' ? (' body=' . $snippet) : '')
+        );
+    }
 }
 
 // --- HTTP handlers (skip when included for tests) ---

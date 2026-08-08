@@ -106,9 +106,18 @@ function birkly_ops_register_installation(bool $force = false): void
     ]);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
     curl_close($ch);
 
     if (!is_string($response) || $code < 200 || $code >= 300) {
+        if ($force) {
+            error_log(
+                'ops register failed HTTP ' . $code .
+                ' for install ' . birkly_platform_install_id() .
+                ($curlErr !== '' ? (' curl=' . $curlErr) : '') .
+                (is_string($response) ? (' body=' . substr($response, 0, 200)) : '')
+            );
+        }
         // Avoid hammering a dead endpoint on every page load.
         if (!$force) {
             @touch($stampFile);
@@ -118,6 +127,12 @@ function birkly_ops_register_installation(bool $force = false): void
 
     $data = json_decode($response, true);
     if (!is_array($data) || empty($data['ok'])) {
+        if ($force) {
+            error_log(
+                'ops register returned non-ok payload for install ' . birkly_platform_install_id() .
+                (is_string($response) ? (' body=' . substr($response, 0, 200)) : '')
+            );
+        }
         if (!$force) {
             @touch($stampFile);
         }
@@ -130,6 +145,8 @@ function birkly_ops_register_installation(bool $force = false): void
     $relaySecret = trim((string) ($installation['feedback_relay_secret'] ?? ''));
     if ($relaySecret !== '' && birkly_feedback_relay_secret() === '') {
         birkly_platform_persist_config(['feedback_relay_secret' => $relaySecret]);
+    } elseif ($force && $relaySecret === '' && birkly_feedback_relay_secret() === '') {
+        error_log('ops register ok but no feedback_relay_secret for install ' . birkly_platform_install_id());
     }
 }
 
