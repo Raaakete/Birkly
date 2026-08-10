@@ -42,11 +42,14 @@ link_persistent_dir() {
 
 legacy_layout() {
   echo "[entrypoint] Using legacy in-container data dirs (check volume mount at /app/data)"
-  DIRS="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes"
+  DIRS="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes /app/data/plugin-data"
   for dir in $DIRS; do
     mkdir -p "$dir" 2>/dev/null || true
   done
-  chmod_dirs="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes"
+  mkdir -p /app/data/plugin-data/commerce/connections \
+           /app/data/plugin-data/commerce/activity \
+           /app/data/plugin-data/commerce/webhooks 2>/dev/null || true
+  chmod_dirs="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes /app/data/plugin-data"
 }
 
 if [ -n "$DATA_ROOT" ]; then
@@ -74,6 +77,11 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   # (e.g. commerce/) — Hub treats missing plugin.php as "not installed" but
   # extract used to hard-fail on any existing directory.
   mkdir -p "$DATA_ROOT/plugins" 2>/dev/null || true
+  # Dedicated plugin runtime trees (Commerce connections/orders) live outside
+  # the Hub install zip path. Create + chmod so PHP-FPM can write after deploy.
+  mkdir -p "$DATA_ROOT/plugin-data/commerce/connections" \
+           "$DATA_ROOT/plugin-data/commerce/activity" \
+           "$DATA_ROOT/plugin-data/commerce/webhooks" 2>/dev/null || true
   # Official plugins are Hub-installed. Do not auto-seed Automation into plugins/
   # (that made Hub show "Installed" on fresh sites). Opt-in for legacy images:
   #   BIRKLY_SEED_AUTOMATION=1
@@ -111,7 +119,7 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   ln -sfn /app/core "$DATA_ROOT/core" 2>/dev/null || true
   ln -sfn /app/fieldtypes "$DATA_ROOT/fieldtypes" 2>/dev/null || true
   ln -sfn /app/api "$DATA_ROOT/api" 2>/dev/null || true
-  chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback $DATA_ROOT/activity"
+  chmod_dirs="$DATA_ROOT/content $DATA_ROOT/media $DATA_ROOT/settings $DATA_ROOT/users $DATA_ROOT/cache $DATA_ROOT/logs $DATA_ROOT/temp $DATA_ROOT/plugins $DATA_ROOT/themes $DATA_ROOT/ai_conversations $DATA_ROOT/ai_approvals $DATA_ROOT/webhooks $DATA_ROOT/invitations $DATA_ROOT/analytics $DATA_ROOT/mcp_audit $DATA_ROOT/mcp_rate $DATA_ROOT/feedback $DATA_ROOT/activity $DATA_ROOT/plugin-data"
 else
   legacy_layout
 fi
