@@ -195,22 +195,38 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
         ? birkly_marketplace_plugins_dir()
         : dirname(__DIR__, 2) . '/plugins';
     $dest = $pluginsRoot . '/' . $pluginId;
+    $preserveBackup = null;
 
     if (is_dir($dest)) {
         $isLeftover = birkly_marketplace_plugin_dir_is_leftover($dest);
         if (!$replaceExisting && !$isLeftover) {
             return ['ok' => false, 'errors' => ["Plugin directory '{$pluginId}' already exists"]];
         }
-        birkly_marketplace_remove_directory($dest);
+        // On upgrade, keep runtime data (connections, orders, keys) that is not in the zip.
+        // Docker installs often colocate code + data under BIRKLY_DATA/plugins/{id}.
+        if ($replaceExisting && !$isLeftover) {
+            $preserveBackup = $pluginsRoot . '/.' . $pluginId . '-upgrade-' . bin2hex(random_bytes(4));
+            if (!@rename($dest, $preserveBackup)) {
+                return ['ok' => false, 'errors' => ["Failed to backup plugin directory '{$pluginId}' before upgrade"]];
+            }
+        } else {
+            birkly_marketplace_remove_directory($dest);
+        }
     }
 
     $writable = birkly_marketplace_ensure_plugins_root_writable($pluginsRoot);
     if (!$writable['ok']) {
+        if ($preserveBackup !== null && is_dir($preserveBackup) && !is_dir($dest)) {
+            @rename($preserveBackup, $dest);
+        }
         return ['ok' => false, 'errors' => [$writable['error'] ?? 'plugins directory not writable']];
     }
 
     $zip = new ZipArchive();
     if ($zip->open($zipPath) !== true) {
+        if ($preserveBackup !== null && is_dir($preserveBackup) && !is_dir($dest)) {
+            @rename($preserveBackup, $dest);
+        }
         return ['ok' => false, 'errors' => ['Cannot open zip archive']];
     }
 
@@ -228,6 +244,9 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
         if (str_contains($name, '..')) {
             $zip->close();
             birkly_marketplace_remove_directory($dest);
+            if ($preserveBackup !== null && is_dir($preserveBackup)) {
+                @rename($preserveBackup, $dest);
+            }
             return ['ok' => false, 'errors' => ['Unsafe path in zip: ' . $name]];
         }
 
@@ -260,16 +279,73 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
 
     if ($errors !== []) {
         birkly_marketplace_remove_directory($dest);
+        if ($preserveBackup !== null && is_dir($preserveBackup)) {
+            @rename($preserveBackup, $dest);
+        }
         return ['ok' => false, 'errors' => $errors];
     }
 
     $validationErrors = validate_plugin($dest);
     if ($validationErrors !== []) {
         birkly_marketplace_remove_directory($dest);
+        if ($preserveBackup !== null && is_dir($preserveBackup)) {
+            @rename($preserveBackup, $dest);
+        }
         return ['ok' => false, 'errors' => $validationErrors];
     }
 
+    if ($preserveBackup !== null && is_dir($preserveBackup)) {
+        birkly_marketplace_restore_plugin_runtime_paths($preserveBackup, $dest);
+        birkly_marketplace_remove_directory($preserveBackup);
+    }
+
     return ['ok' => true, 'plugin_id' => $pluginId, 'path' => $dest, 'errors' => []];
+}
+
+/**
+ * Copy paths from a pre-upgrade plugin tree that the new package did not ship.
+ * Preserves connections, encryption keys, orders, and other runtime data.
+ */
+function birkly_marketplace_restore_plugin_runtime_paths(string $backupDir, string $destDir): void
+{
+    if (!is_dir($backupDir) || !is_dir($destDir)) {
+        return;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($backupDir, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST
+    );
+
+    foreach ($iterator as $item) {
+        if (!$item instanceof SplFileInfo) {
+            continue;
+        }
+        $source = $item->getPathname();
+        $relative = substr($source, strlen(rtrim($backupDir, '/')) + 1);
+        if ($relative === false || $relative === '') {
+            continue;
+        }
+        // Never restore path traversal or VCS noise.
+        if (str_contains($relative, '..') || str_starts_with($relative, '.git')) {
+            continue;
+        }
+        $target = $destDir . '/' . $relative;
+        if (file_exists($target) || is_dir($target)) {
+            continue;
+        }
+        if ($item->isDir()) {
+            if (!is_dir($target)) {
+                @mkdir($target, 0775, true);
+            }
+            continue;
+        }
+        $parent = dirname($target);
+        if (!is_dir($parent) && !mkdir($parent, 0775, true) && !is_dir($parent)) {
+            continue;
+        }
+        @copy($source, $target);
+    }
 }
 
 function birkly_marketplace_should_skip_zip_entry(string $name): bool

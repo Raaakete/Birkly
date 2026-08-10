@@ -56,7 +56,44 @@ assert_true(
 $upgrade = birkly_marketplace_extract_plugin_zip($zipPath, 'commerce', true);
 assert_true((bool) ($upgrade['ok'] ?? false), 'replaceExisting=true overwrites valid plugin dir');
 
+// Runtime data colocated under the plugin dir must survive Hub upgrades.
+mkdir($pluginsDir . '/commerce/connections', 0755, true);
+file_put_contents($pluginsDir . '/commerce/connections/stripe.json', '{"provider":"stripe"}');
+file_put_contents($pluginsDir . '/commerce/encryption_key.txt', 'test-key');
+file_put_contents($pluginsDir . '/commerce/plugin.php', "<?php\n// old\n");
+
+$zip2 = $pluginsDir . '/sample2.zip';
+$zip = new ZipArchive();
+assert_true($zip->open($zip2, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true, 'create upgrade zip');
+$zip->addFromString('plugin.json', json_encode([
+    'name' => 'Commerce',
+    'version' => '1.0.1',
+    'description' => 'test',
+], JSON_THROW_ON_ERROR));
+$zip->addFromString('plugin.php', "<?php\n// new\n");
+$zip->close();
+
+$upgradePreserve = birkly_marketplace_extract_plugin_zip($zip2, 'commerce', true);
+assert_true((bool) ($upgradePreserve['ok'] ?? false), 'upgrade with runtime data succeeds');
+assert_true(
+    is_file($pluginsDir . '/commerce/connections/stripe.json'),
+    'connections survive Hub upgrade'
+);
+assert_true(
+    is_file($pluginsDir . '/commerce/encryption_key.txt'),
+    'encryption_key survives Hub upgrade'
+);
+assert_true(
+    str_contains((string) file_get_contents($pluginsDir . '/commerce/plugin.php'), 'new'),
+    'package files are replaced from zip'
+);
+assert_true(
+    !is_dir($pluginsDir . '/.commerce-upgrade-') && count(glob($pluginsDir . '/.commerce-upgrade-*') ?: []) === 0,
+    'upgrade backup dir is cleaned up'
+);
+
 @unlink($zipPath);
+@unlink($zip2);
 birkly_marketplace_remove_directory($pluginsDir);
 unset($GLOBALS['__birkly_plugins_dir']);
 
