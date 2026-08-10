@@ -117,14 +117,21 @@ foreach ($schema['fields'] as $field) {
     if ($type === 'email' && $value && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "$name must be a valid email address";
     }
-    // File/media field
-    if (($type === 'media' || $type === 'file') && isset($_FILES[$name])) {
+    // File/media/image field
+    if (($type === 'media' || $type === 'file' || $type === 'image') && isset($_FILES[$name])) {
         $fileFields[$name] = $field;
     } else if ($type === 'wysiwyg' || $type === 'media') {
         $cleanData[$name] = $value;
+    } else if ($type === 'checkbox') {
+        $cleanData[$name] = !empty($value) && $value !== '0' && $value !== 'false' && $value !== 'no';
     } else {
         $cleanData[$name] = sanitize_string($value);
     }
+}
+
+// Optional system title (not always in schema) — used for list/detail display.
+if (isset($fields['title']) && is_string($fields['title']) && trim($fields['title']) !== '') {
+    $cleanData['title'] = sanitize_string($fields['title']);
 }
 
 // -------------------------------------------------------------------------
@@ -296,10 +303,21 @@ foreach ($fileFields as $name => $field) {
     }
     $cleanData[$name] = [
         'name' => $file['name'],
-        'type' => $mimeType,
+        'type' => $detectedMimeType,
         'size' => $file['size'],
         'url' => '/media/public_submissions/' . $filename
     ];
+}
+
+// If title still empty, derive from common name fields.
+if (trim((string) ($cleanData['title'] ?? '')) === '') {
+    foreach (['display_name', 'name', 'organization'] as $candidate) {
+        $v = $cleanData[$candidate] ?? '';
+        if (is_string($v) && trim($v) !== '') {
+            $cleanData['title'] = trim($v);
+            break;
+        }
+    }
 }
 if ($errors) {
     respond(['status' => 'error', 'message' => 'File upload failed', 'errors' => $errors], 422);
@@ -356,7 +374,18 @@ if ($ok && !empty($collectionMeta['notify_email'])) {
 }
 
 if ($ok) {
-    respond(['status' => 'ok', 'message' => 'Submission received. Thank you!']);
+    respond([
+        'status' => 'ok',
+        'message' => 'Submission received. Thank you!',
+        'id' => $id,
+        'entry_id' => $id,
+        'slug' => (string) ($cleanData['slug'] ?? ''),
+        'data' => [
+            'id' => $id,
+            'slug' => (string) ($cleanData['slug'] ?? ''),
+            'status' => (string) ($cleanData['status'] ?? ''),
+        ],
+    ]);
 } else {
     respond(['status' => 'error', 'message' => 'Failed to save submission'], 500);
 } 
