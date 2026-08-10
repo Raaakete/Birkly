@@ -2623,7 +2623,17 @@
             }
             current = current[key];
         }
-        if (current == null || typeof current === 'object') return '';
+        if (current == null) return '';
+        // Media/file fields are often { url, name, type, size } — templates expect a URL string.
+        if (typeof current === 'object') {
+            if (!Array.isArray(current)) {
+                const url = current.url || current.src || '';
+                if (url != null && String(url).trim() !== '') {
+                    return String(url);
+                }
+            }
+            return '';
+        }
         return String(current);
     }
 
