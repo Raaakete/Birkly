@@ -64,9 +64,9 @@
 
       <div class="form-group">
         <label for="connection-provider">Provider</label>
-        <select id="connection-provider" name="provider" class="input" required>
-          <option value="">Select a provider…</option>
-        </select>
+        <input type="text" id="connection-provider" name="provider" class="input" required list="connection-provider-list" placeholder="e.g. smtp, resend, or a custom name">
+        <datalist id="connection-provider-list"></datalist>
+        <small class="form-help">Choose a built-in provider or type any custom identifier. Custom providers store config as free-form key/value pairs.</small>
       </div>
 
       <div class="form-group">
