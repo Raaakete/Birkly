@@ -21,6 +21,7 @@ require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/plugins.php';
+require_once __DIR__ . '/../core/mail/notify.php';
 load_plugins();
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -318,7 +319,13 @@ if ($result) {
         $message .= "Status: Draft (pending review)\n\n";
         $message .= "Review at: " . (isset($_SERVER['HTTP_HOST']) ? "http://{$_SERVER['HTTP_HOST']}" : '') . birkly_admin_url('entry-editor', ['collection' => $parent_collection, 'entry' => $parent_entry_id]);
         
-        @mail($notificationEmail, $subject, $message);
+        birkly_notify([
+            'to' => $notificationEmail,
+            'subject' => $subject,
+            'message' => $message,
+            'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
+            'metadata' => ['source' => 'public_sub_entry_submission', 'parent_collection' => $parent_collection, 'parent_entry_id' => $parent_entry_id],
+        ]);
     }
     
     http_response_code(201);
