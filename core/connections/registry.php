@@ -13,9 +13,11 @@ require_once __DIR__ . '/secret.php';
 require_once __DIR__ . '/audit.php';
 
 const BIRKLY_CONNECTION_TYPES = ['email', 'http_credential', 'channel'];
-const BIRKLY_EMAIL_PROVIDERS = ['log', 'mail', 'smtp', 'resend', 'postmark', 'ses', 'mailgun'];
-const BIRKLY_HTTP_PROVIDERS = ['basic_auth', 'bearer', 'custom_header'];
-const BIRKLY_CHANNEL_PROVIDERS = ['slack', 'discord', 'twilio_sms'];
+// Known providers are used for built-in schemas and config filtering.
+// Custom providers are allowed: their config/secrets are stored as-is.
+const BIRKLY_KNOWN_EMAIL_PROVIDERS = ['log', 'mail', 'smtp', 'resend', 'postmark', 'ses', 'mailgun'];
+const BIRKLY_KNOWN_HTTP_PROVIDERS = ['basic_auth', 'bearer', 'custom_header'];
+const BIRKLY_KNOWN_CHANNEL_PROVIDERS = ['slack', 'discord', 'twilio_sms'];
 
 function birkly_connections_storage(): StorageInterface
 {
@@ -160,12 +162,10 @@ function birkly_connection_validate(array $data, ?string $excludeId = null): arr
     }
 
     $provider = (string) ($data['provider'] ?? '');
-    if ($type === 'email' && !in_array($provider, BIRKLY_EMAIL_PROVIDERS, true)) {
-        $errors['provider'] = 'Unsupported email provider.';
-    } elseif ($type === 'http_credential' && !in_array($provider, BIRKLY_HTTP_PROVIDERS, true)) {
-        $errors['provider'] = 'Unsupported HTTP credential provider.';
-    } elseif ($type === 'channel' && !in_array($provider, BIRKLY_CHANNEL_PROVIDERS, true)) {
-        $errors['provider'] = 'Unsupported channel provider.';
+    if ($provider === '') {
+        $errors['provider'] = 'Provider is required.';
+    } elseif (!preg_match('/^[a-z0-9_.-]+$/', $provider)) {
+        $errors['provider'] = 'Provider must be lowercase letters, numbers, dots, dashes or underscores.';
     }
 
     $alias = birkly_connections_sanitize_alias((string) ($data['alias'] ?? ''));
@@ -259,7 +259,11 @@ function birkly_connection_filter_config(string $type, string $provider, array $
         ],
     ];
 
-    $keys = $allowed[$type][$provider] ?? [];
+    $keys = $allowed[$type][$provider] ?? null;
+    // Unknown providers pass config through unchanged so users can define custom fields.
+    if ($keys === null) {
+        return $config;
+    }
     $filtered = [];
     foreach ($keys as $key) {
         if (array_key_exists($key, $config) && $config[$key] !== '') {
