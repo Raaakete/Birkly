@@ -12,9 +12,10 @@ require_once __DIR__ . '/../storage/StorageFactory.php';
 require_once __DIR__ . '/secret.php';
 require_once __DIR__ . '/audit.php';
 
-const BIRKLY_CONNECTION_TYPES = ['email', 'http_credential'];
+const BIRKLY_CONNECTION_TYPES = ['email', 'http_credential', 'channel'];
 const BIRKLY_EMAIL_PROVIDERS = ['log', 'mail', 'smtp', 'resend', 'postmark', 'ses', 'mailgun'];
 const BIRKLY_HTTP_PROVIDERS = ['basic_auth', 'bearer', 'custom_header'];
+const BIRKLY_CHANNEL_PROVIDERS = ['slack', 'discord', 'twilio_sms'];
 
 function birkly_connections_storage(): StorageInterface
 {
@@ -163,6 +164,8 @@ function birkly_connection_validate(array $data, ?string $excludeId = null): arr
         $errors['provider'] = 'Unsupported email provider.';
     } elseif ($type === 'http_credential' && !in_array($provider, BIRKLY_HTTP_PROVIDERS, true)) {
         $errors['provider'] = 'Unsupported HTTP credential provider.';
+    } elseif ($type === 'channel' && !in_array($provider, BIRKLY_CHANNEL_PROVIDERS, true)) {
+        $errors['provider'] = 'Unsupported channel provider.';
     }
 
     $alias = birkly_connections_sanitize_alias((string) ($data['alias'] ?? ''));
@@ -248,6 +251,11 @@ function birkly_connection_filter_config(string $type, string $provider, array $
             'basic_auth' => ['base_url', 'timeout'],
             'bearer' => ['base_url', 'timeout'],
             'custom_header' => ['base_url', 'timeout', 'header_name'],
+        ],
+        'channel' => [
+            'slack' => ['channel'],
+            'discord' => [],
+            'twilio_sms' => ['from_number'],
         ],
     ];
 
