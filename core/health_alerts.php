@@ -58,12 +58,12 @@ function birkly_health_dispatch_alerts(array $report): array
     $results = ['dispatched' => true, 'email' => false, 'webhook' => false];
 
     if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $sendResult = birkly_notify([
+        $sendResult = birkly_notify('health_alert', [
             'to' => $email,
             'subject' => $subject,
             'message' => $body,
         ]);
-        $results['email'] = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
+        $results['email'] = birkly_notify_results_any_success($sendResult);
     }
 
     if ($webhook !== '') {

@@ -12,8 +12,9 @@ require_once __DIR__ . '/../storage/StorageFactory.php';
 require_once __DIR__ . '/secret.php';
 require_once __DIR__ . '/audit.php';
 
-const BIRKLY_CONNECTION_TYPES = ['email'];
+const BIRKLY_CONNECTION_TYPES = ['email', 'http_credential'];
 const BIRKLY_EMAIL_PROVIDERS = ['log', 'mail', 'smtp', 'resend', 'postmark', 'ses', 'mailgun'];
+const BIRKLY_HTTP_PROVIDERS = ['basic_auth', 'bearer', 'custom_header'];
 
 function birkly_connections_storage(): StorageInterface
 {
@@ -52,6 +53,10 @@ function birkly_connections_generate_id(): string
 function birkly_connections_sanitize_alias(string $alias): string
 {
     $alias = strtolower(trim($alias));
+    // Allow '*' as a reserved global/wildcard alias.
+    if ($alias === '*') {
+        return '*';
+    }
     $alias = preg_replace('/[^a-z0-9_.-]+/', '-', $alias) ?? '';
     return trim($alias, '-_.');
 }
@@ -102,6 +107,23 @@ function birkly_connection_get_by_alias(string $alias, bool $withSecrets = false
     return null;
 }
 
+function birkly_connections_match_event(string $event): array
+{
+    $event = birkly_connections_sanitize_alias($event);
+    $store = birkly_connections_load();
+    $matches = [];
+    foreach ($store['connections'] as $connection) {
+        if (($connection['enabled'] ?? true) !== true) {
+            continue;
+        }
+        $alias = birkly_connections_sanitize_alias((string) ($connection['alias'] ?? ''));
+        if ($alias === $event || $alias === '*') {
+            $matches[] = $connection;
+        }
+    }
+    return $matches;
+}
+
 function birkly_connection_get_default(string $type = 'email', bool $withSecrets = false): ?array
 {
     $store = birkly_connections_load();
@@ -139,6 +161,8 @@ function birkly_connection_validate(array $data, ?string $excludeId = null): arr
     $provider = (string) ($data['provider'] ?? '');
     if ($type === 'email' && !in_array($provider, BIRKLY_EMAIL_PROVIDERS, true)) {
         $errors['provider'] = 'Unsupported email provider.';
+    } elseif ($type === 'http_credential' && !in_array($provider, BIRKLY_HTTP_PROVIDERS, true)) {
+        $errors['provider'] = 'Unsupported HTTP credential provider.';
     }
 
     $alias = birkly_connections_sanitize_alias((string) ($data['alias'] ?? ''));
@@ -159,7 +183,7 @@ function birkly_connection_validate(array $data, ?string $excludeId = null): arr
     }
 
     $fromEmail = (string) ($data['from_email'] ?? '');
-    if ($fromEmail !== '' && !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+    if ($type === 'email' && $fromEmail !== '' && !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
         $errors['from_email'] = 'From email must be a valid email address.';
     }
 
@@ -172,7 +196,7 @@ function birkly_connection_prepare_record(array $input, ?array $existing = null)
     $type = (string) ($input['type'] ?? ($existing['type'] ?? 'email'));
 
     $config = array_merge($existing['config'] ?? [], $input['config'] ?? []);
-    $config = birkly_connection_filter_config($provider, $config);
+    $config = birkly_connection_filter_config($type, $provider, $config);
 
     $record = [
         'id' => $existing['id'] ?? birkly_connections_generate_id(),
@@ -208,19 +232,26 @@ function birkly_connection_prepare_record(array $input, ?array $existing = null)
     return $record;
 }
 
-function birkly_connection_filter_config(string $provider, array $config): array
+function birkly_connection_filter_config(string $type, string $provider, array $config): array
 {
     $allowed = [
-        'smtp' => ['host', 'port', 'encryption', 'auth'],
-        'resend' => ['region'],
-        'postmark' => [],
-        'ses' => ['region'],
-        'mailgun' => ['region', 'domain'],
-        'log' => [],
-        'mail' => [],
+        'email' => [
+            'smtp' => ['host', 'port', 'encryption', 'auth'],
+            'resend' => ['region'],
+            'postmark' => [],
+            'ses' => ['region'],
+            'mailgun' => ['region', 'domain'],
+            'log' => [],
+            'mail' => [],
+        ],
+        'http_credential' => [
+            'basic_auth' => ['base_url', 'timeout'],
+            'bearer' => ['base_url', 'timeout'],
+            'custom_header' => ['base_url', 'timeout', 'header_name'],
+        ],
     ];
 
-    $keys = $allowed[$provider] ?? [];
+    $keys = $allowed[$type][$provider] ?? [];
     $filtered = [];
     foreach ($keys as $key) {
         if (array_key_exists($key, $config) && $config[$key] !== '') {
@@ -231,6 +262,9 @@ function birkly_connection_filter_config(string $provider, array $config): array
     // Type normalization.
     if (isset($filtered['port'])) {
         $filtered['port'] = (int) $filtered['port'];
+    }
+    if (isset($filtered['timeout'])) {
+        $filtered['timeout'] = (int) $filtered['timeout'];
     }
     if (isset($filtered['encryption'])) {
         $filtered['encryption'] = strtolower((string) $filtered['encryption']);

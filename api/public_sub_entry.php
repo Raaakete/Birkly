@@ -319,7 +319,7 @@ if ($result) {
         $message .= "Status: Draft (pending review)\n\n";
         $message .= "Review at: " . (isset($_SERVER['HTTP_HOST']) ? "http://{$_SERVER['HTTP_HOST']}" : '') . birkly_admin_url('entry-editor', ['collection' => $parent_collection, 'entry' => $parent_entry_id]);
         
-        birkly_notify([
+        birkly_notify('public_sub_entry_submission', [
             'to' => $notificationEmail,
             'subject' => $subject,
             'message' => $message,
