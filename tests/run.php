@@ -17,7 +17,10 @@ if ($runAll) {
 } else {
     $files = array_merge(
         glob($dir . '/connections_*_test.php') ?: [],
-        glob($dir . '/mail_*_test.php') ?: []
+        glob($dir . '/mail_*_test.php') ?: [],
+        glob($dir . '/notify_*_test.php') ?: [],
+        glob($dir . '/http_*_test.php') ?: [],
+        glob($dir . '/webhooks_*_test.php') ?: []
     );
 }
 

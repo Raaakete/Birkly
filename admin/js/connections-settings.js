@@ -34,6 +34,7 @@
     if (!root) return;
 
     const listEl = document.getElementById('connections-list');
+    const httpListEl = document.getElementById('http-credentials-list');
     const modal = document.getElementById('connection-modal');
     const form = document.getElementById('connection-form');
     const providerSelect = document.getElementById('connection-provider');
@@ -67,25 +68,28 @@
         const result = await api('list', 'GET');
         if (result.status !== 'ok') {
             listEl.innerHTML = '<p class="message message-error">Failed to load connections.</p>';
+            if (httpListEl) httpListEl.innerHTML = '<p class="message message-error">Failed to load credentials.</p>';
             return;
         }
         connections = result.connections || [];
         renderConnections();
+        renderHttpCredentials();
     }
 
     function renderConnections() {
-        if (connections.length === 0) {
+        const emailConnections = connections.filter(function (c) { return (c.type || 'email') === 'email'; });
+        if (emailConnections.length === 0) {
             listEl.innerHTML = '<div class="empty-state"><p>No email connections yet. Add one to start sending.</p></div>';
             return;
         }
 
-        const rows = connections.map(function (c) {
+        const rows = emailConnections.map(function (c) {
             const providerLabel = (providers[c.provider] || {}).label || escapeHtml(c.provider);
             const defaultBadge = c.is_default ? '<span class="badge badge-accent">Default</span>' : '';
             const statusBadge = (c.enabled === false)
                 ? '<span class="badge badge-neutral">Disabled</span>'
                 : '<span class="badge badge-success">Enabled</span>';
-            return '<div class="card card--sunken connection-card" data-id="' + escapeHtml(c.id) + '">' +
+            return '<div class="card card--sunken connection-card" data-id="' + escapeHtml(c.id) + '" data-type="email">' +
                 '<div class="card-header">' +
                 '<div class="u-stack-1">' +
                 '<h3 class="card-title">' + escapeHtml(c.name) + ' ' + defaultBadge + '</h3>' +
@@ -104,6 +108,41 @@
         listEl.innerHTML = '<div class="u-stack-3">' + rows + '</div>';
 
         listEl.querySelectorAll('[data-action]').forEach(function (btn) {
+            btn.addEventListener('click', handleListAction);
+        });
+    }
+
+    function renderHttpCredentials() {
+        if (!httpListEl) return;
+        const httpConnections = connections.filter(function (c) { return c.type === 'http_credential'; });
+        if (httpConnections.length === 0) {
+            httpListEl.innerHTML = '<div class="empty-state"><p>No HTTP credentials yet. Add one to start calling webhooks.</p></div>';
+            return;
+        }
+
+        const rows = httpConnections.map(function (c) {
+            const providerLabel = (providers[c.provider] || {}).label || escapeHtml(c.provider);
+            const statusBadge = (c.enabled === false)
+                ? '<span class="badge badge-neutral">Disabled</span>'
+                : '<span class="badge badge-success">Enabled</span>';
+            return '<div class="card card--sunken connection-card" data-id="' + escapeHtml(c.id) + '" data-type="http_credential">' +
+                '<div class="card-header">' +
+                '<div class="u-stack-1">' +
+                '<h3 class="card-title">' + escapeHtml(c.name) + '</h3>' +
+                '<p class="card-description">' + escapeHtml(c.alias) + ' · ' + escapeHtml(providerLabel) + ' · ' + escapeHtml((c.config || {}).base_url || '') + '</p>' +
+                '</div>' +
+                '<div class="u-cluster">' + statusBadge +
+                '<button type="button" class="btn btn-secondary btn-sm" data-action="test" data-alias="' + escapeHtml(c.alias) + '">Test</button>' +
+                '<button type="button" class="btn btn-secondary btn-sm" data-action="edit">Edit</button>' +
+                '<button type="button" class="btn btn-danger btn-sm" data-action="delete">Delete</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
+        }).join('');
+
+        httpListEl.innerHTML = '<div class="u-stack-3">' + rows + '</div>';
+
+        httpListEl.querySelectorAll('[data-action]').forEach(function (btn) {
             btn.addEventListener('click', handleListAction);
         });
     }
@@ -141,9 +180,13 @@
                 showToast(result.message || 'Update failed.', 'error');
             }
         } else if (action === 'test') {
-            const testEmail = prompt('Send test email to:', '');
-            if (!testEmail) return;
-            const result = await api('test', 'POST', { alias: connection.alias, test_email: testEmail });
+            let testPayload = { alias: connection.alias };
+            if ((connection.type || 'email') === 'email') {
+                const testEmail = prompt('Send test email to:', '');
+                if (!testEmail) return;
+                testPayload.test_email = testEmail;
+            }
+            const result = await api('test', 'POST', testPayload);
             if (result.status === 'ok' && result.send_result && result.send_result.status !== 'failed') {
                 showToast('Test status: ' + result.send_result.status, 'success');
             } else {
@@ -196,22 +239,35 @@
         });
     }
 
-    function openCreateModal() {
+    function openCreateModal(type) {
         form.reset();
         document.getElementById('connection-id').value = '';
-        document.getElementById('connection-type').value = 'email';
+        document.getElementById('connection-type').value = type;
+        populateProviderSelect(type);
         providerSelect.value = '';
         providerFields.innerHTML = '';
         formError.hidden = true;
-        modalTitle.textContent = 'Add email connection';
+        modalTitle.textContent = type === 'http_credential' ? 'Add HTTP credential' : 'Add email connection';
         document.getElementById('connection-submit-btn').textContent = 'Save connection';
+        setFromEmailRequired(type === 'email');
         openModal();
     }
 
+    function populateProviderSelect(type) {
+        const options = Object.entries(providers)
+            .filter(function ([, p]) { return (p.type || 'email') === type; })
+            .map(function ([key, p]) {
+                return '<option value="' + escapeHtml(key) + '">' + escapeHtml(p.label) + '</option>';
+            }).join('');
+        providerSelect.innerHTML = '<option value="">Select a provider…</option>' + options;
+    }
+
     function openEditModal(connection) {
+        const type = connection.type || 'email';
         form.reset();
         document.getElementById('connection-id').value = connection.id;
-        document.getElementById('connection-type').value = connection.type || 'email';
+        document.getElementById('connection-type').value = type;
+        populateProviderSelect(type);
         providerSelect.value = connection.provider;
         document.getElementById('connection-alias').value = connection.alias || '';
         document.getElementById('connection-name').value = connection.name || '';
@@ -219,17 +275,29 @@
         document.getElementById('connection-from-name').value = connection.from_name || '';
         document.getElementById('connection-enabled').checked = connection.enabled !== false;
         formError.hidden = true;
-        modalTitle.textContent = 'Edit email connection';
+        modalTitle.textContent = type === 'http_credential' ? 'Edit HTTP credential' : 'Edit email connection';
         document.getElementById('connection-submit-btn').textContent = 'Update connection';
+        setFromEmailRequired(type === 'email');
+        const cfg = connection.config || {};
         renderProviderFields(connection.provider, {
-            'config[host]': (connection.config || {}).host,
-            'config[port]': (connection.config || {}).port,
-            'config[encryption]': (connection.config || {}).encryption,
-            'config[auth]': (connection.config || {}).auth,
-            'config[region]': (connection.config || {}).region,
-            'config[domain]': (connection.config || {}).domain,
+            'config[host]': cfg.host,
+            'config[port]': cfg.port,
+            'config[encryption]': cfg.encryption,
+            'config[auth]': cfg.auth,
+            'config[region]': cfg.region,
+            'config[domain]': cfg.domain,
+            'config[base_url]': cfg.base_url,
+            'config[timeout]': cfg.timeout,
+            'config[header_name]': cfg.header_name,
         });
         openModal();
+    }
+
+    function setFromEmailRequired(required) {
+        const fromEmail = document.getElementById('connection-from-email');
+        if (fromEmail) {
+            fromEmail.required = required;
+        }
     }
 
     function openModal() {
@@ -243,7 +311,8 @@
     }
 
     function formDataToObject(form) {
-        const data = { type: 'email' };
+        const typeInput = document.getElementById('connection-type');
+        const data = { type: typeInput ? typeInput.value : 'email' };
         const formData = new FormData(form);
         formData.forEach(function (value, key) {
             if (key === 'enabled') {
@@ -294,7 +363,7 @@
         if (!btn) return;
         const action = btn.dataset.connectionAction;
         if (action === 'open-create') {
-            openCreateModal();
+            openCreateModal(btn.dataset.connectionType || 'email');
         } else if (action === 'close-modal') {
             closeModal();
         }

@@ -26,6 +26,26 @@
       </div>
     </section>
   </div>
+
+  <div class="settings-pane-section" data-settings-search="connections http credential webhook basic auth bearer token header">
+    <section class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="section-title">HTTP credentials</h2>
+          <p class="settings-help">Stored credentials for outbound webhooks and API calls.</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="add-http-credential-btn" data-connection-action="open-create" data-connection-type="http_credential">
+          <?= birkly_icon('plus', ['size' => 16]) ?>
+          Add credential
+        </button>
+      </div>
+      <div class="card-body u-stack-4">
+        <div id="http-credentials-list">
+          <div class="loading-state"><p>Loading credentials…</p></div>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>
 
 <div class="modal" id="connection-modal">
