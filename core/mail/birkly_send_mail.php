@@ -9,6 +9,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../connections/registry.php';
+require_once __DIR__ . '/suppressions.php';
+require_once __DIR__ . '/queue.php';
 require_once __DIR__ . '/transports/http.php';
 require_once __DIR__ . '/transports/log.php';
 require_once __DIR__ . '/transports/mail.php';
@@ -57,6 +59,27 @@ function birkly_send_mail(array $envelope, ?string $connectionAlias = null): arr
     $subject = trim((string) ($envelope['subject'] ?? ''));
     if ($subject === '') {
         return birkly_mail_result('failed', 'mail', null, null, 'Subject is required.');
+    }
+
+    $suppressed = [];
+    $allowed = [];
+    foreach ($to as $addr) {
+        $check = birkly_mail_suppression_check($addr);
+        if ($check !== null) {
+            $suppressed[] = $addr;
+        } else {
+            $allowed[] = $addr;
+        }
+    }
+
+    if (empty($allowed)) {
+        $details = ['suppressed_recipients' => $suppressed];
+        birkly_mail_delivery_log(['status' => 'suppressed', 'to' => implode(', ', $to), 'subject' => $subject, 'details' => $details]);
+        return birkly_mail_result('suppressed', 'mail', null, null, 'All recipients are suppressed.', $details);
+    }
+
+    if (!empty($suppressed)) {
+        $to = $allowed;
     }
 
     $html = (string) ($envelope['html'] ?? '');
@@ -125,6 +148,25 @@ function birkly_send_mail(array $envelope, ?string $connectionAlias = null): arr
         'subject' => $subject,
         'error' => $result['error'] ?? null,
     ]);
+
+    birkly_mail_delivery_log([
+        'status' => $result['status'],
+        'provider' => $provider,
+        'connection_id' => $connection['id'] ?? null,
+        'connection_alias' => $connection['alias'] ?? null,
+        'to' => implode(', ', $to),
+        'subject' => $subject,
+        'error' => $result['error'] ?? null,
+        'message_id' => $result['message_id'] ?? null,
+    ]);
+
+    if (($result['status'] === 'failed') && !empty($envelope['queue_on_failure'])) {
+        $queueResult = birkly_mail_queue_push($envelope, $connectionAlias);
+        if ($queueResult['ok']) {
+            $result['queued'] = true;
+            $result['queue_id'] = $queueResult['item']['id'] ?? null;
+        }
+    }
 
     return $result;
 }
@@ -201,5 +243,14 @@ function birkly_send_mail_native(array $to, string $subject, string $html, strin
     $status = $ok ? 'accepted' : 'failed';
     $error = $ok ? null : 'PHP mail() returned false.';
 
-    return birkly_mail_result($status, 'mail', null, null, $error);
+    $result = birkly_mail_result($status, 'mail', null, null, $error);
+    birkly_mail_delivery_log([
+        'status' => $result['status'],
+        'provider' => 'mail',
+        'to' => implode(', ', $to),
+        'subject' => $subject,
+        'error' => $result['error'] ?? null,
+    ]);
+
+    return $result;
 }
