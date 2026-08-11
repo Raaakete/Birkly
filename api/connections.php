@@ -24,6 +24,7 @@ require_once '../core/csrf.php';
 require_once __DIR__ . '/../core/connections/registry.php';
 require_once __DIR__ . '/../core/connections/http.php';
 require_once __DIR__ . '/../core/mail/birkly_send_mail.php';
+require_once __DIR__ . '/../core/mail/dns_hints.php';
 
 ob_start();
 
@@ -229,6 +230,15 @@ if ($action === 'set_default') {
         connections_json_response(['status' => 'error', 'errors' => $result['errors']], 422);
     }
     connections_json_response(['status' => 'ok', 'connection' => $result['connection']]);
+}
+
+if ($action === 'dns_hints') {
+    $provider = $_GET['provider'] ?? $input['provider'] ?? '';
+    $domain = $_GET['domain'] ?? $input['domain'] ?? '';
+    if ($provider === '' || $domain === '') {
+        connections_json_response(['status' => 'error', 'message' => 'Provider and domain are required.'], 422);
+    }
+    connections_json_response(['status' => 'ok', 'hints' => birkly_mail_dns_hints($provider, $domain)]);
 }
 
 if ($action === 'test') {
