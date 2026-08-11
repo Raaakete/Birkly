@@ -107,6 +107,11 @@ function birkly_ai_action_permission_map(): array
         'list_brand_products' => ['read'],
         'get_brand_claim' => ['read'],
         'get_brand_product' => ['read'],
+
+        // Phase 65 Connections tools (approval-gated; managed by manage_settings)
+        'connections_health' => ['manage_settings'],
+        'connections_configure' => ['manage_settings'],
+        'connections_test' => ['manage_settings'],
     ];
 }
 
