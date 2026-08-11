@@ -289,7 +289,7 @@ if (!empty($notificationEmail)) {
         $body .= "$key: " . (is_array($value) ? json_encode($value) : $value) . "\n";
     }
     
-    birkly_notify([
+    birkly_notify('public_collection_submission', [
         'to' => $notificationEmail,
         'subject' => $subject,
         'message' => $body,

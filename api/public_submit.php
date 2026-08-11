@@ -369,15 +369,15 @@ if ($ok && !empty($collectionMeta['notify_email'])) {
         }
     }
     $body .= "\nSubmitted at: " . $cleanData['created_at'] . "\nIP: $ip\n";
-    $sendResult = birkly_notify([
+    $sendResult = birkly_notify('public_submit', [
         'to' => $to,
         'subject' => $subject,
         'message' => $body,
         'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
         'metadata' => ['source' => 'public_submit', 'collection' => $collectionSlug, 'id' => $id],
     ]);
-    $sent = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
-    log_security_event('public_submission_email', ['collection' => $collectionSlug, 'id' => $id, 'to' => $to, 'sent' => $sent, 'send_status' => $sendResult['status'] ?? 'unknown']);
+    $sent = birkly_notify_results_any_success($sendResult);
+    log_security_event('public_submission_email', ['collection' => $collectionSlug, 'id' => $id, 'to' => $to, 'sent' => $sent, 'send_status' => $sent ? 'success' : 'failed']);
 }
 
 if ($ok) {

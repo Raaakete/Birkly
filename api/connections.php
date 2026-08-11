@@ -22,6 +22,7 @@ require_once 'auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once __DIR__ . '/../core/connections/registry.php';
+require_once __DIR__ . '/../core/connections/http.php';
 require_once __DIR__ . '/../core/mail/birkly_send_mail.php';
 
 ob_start();
@@ -64,16 +65,19 @@ function connections_provider_schema(): array
         'log' => [
             'label' => 'Log only',
             'description' => 'Capture messages in logs/mail.jsonl without sending.',
+            'type' => 'email',
             'fields' => [],
         ],
         'mail' => [
             'label' => 'PHP mail()',
             'description' => 'Use the native PHP mail() function (development/local only).',
+            'type' => 'email',
             'fields' => [],
         ],
         'smtp' => [
             'label' => 'SMTP',
             'description' => 'Any SMTP relay (STARTTLS or SSL).',
+            'type' => 'email',
             'fields' => [
                 ['name' => 'config[host]', 'type' => 'text', 'label' => 'SMTP host', 'required' => true, 'placeholder' => 'smtp.example.com'],
                 ['name' => 'config[port]', 'type' => 'number', 'label' => 'Port', 'required' => true, 'value' => 587],
@@ -86,6 +90,7 @@ function connections_provider_schema(): array
         'resend' => [
             'label' => 'Resend',
             'description' => 'Send via Resend REST API.',
+            'type' => 'email',
             'fields' => [
                 ['name' => 'secrets[api_key]', 'type' => 'password', 'label' => 'API key', 'required' => true],
             ],
@@ -93,6 +98,7 @@ function connections_provider_schema(): array
         'postmark' => [
             'label' => 'Postmark',
             'description' => 'Send via Postmark REST API.',
+            'type' => 'email',
             'fields' => [
                 ['name' => 'secrets[api_key]', 'type' => 'password', 'label' => 'Server API token', 'required' => true],
             ],
@@ -100,6 +106,7 @@ function connections_provider_schema(): array
         'ses' => [
             'label' => 'Amazon SES (HTTPS API)',
             'description' => 'Send via AWS SES HTTPS API with Signature V4.',
+            'type' => 'email',
             'fields' => [
                 ['name' => 'config[region]', 'type' => 'text', 'label' => 'AWS region', 'required' => true, 'value' => 'us-east-1'],
                 ['name' => 'secrets[access_key]', 'type' => 'text', 'label' => 'Access key ID', 'required' => true],
@@ -109,10 +116,43 @@ function connections_provider_schema(): array
         'mailgun' => [
             'label' => 'Mailgun',
             'description' => 'Send via Mailgun REST API.',
+            'type' => 'email',
             'fields' => [
                 ['name' => 'config[domain]', 'type' => 'text', 'label' => 'Domain', 'required' => true],
                 ['name' => 'config[region]', 'type' => 'select', 'label' => 'Region', 'options' => ['us' => 'US', 'eu' => 'EU'], 'value' => 'us'],
                 ['name' => 'secrets[api_key]', 'type' => 'password', 'label' => 'API key', 'required' => true],
+            ],
+        ],
+        'basic_auth' => [
+            'label' => 'HTTP Basic Auth',
+            'description' => 'Stored username and password for outbound HTTP requests.',
+            'type' => 'http_credential',
+            'fields' => [
+                ['name' => 'config[base_url]', 'type' => 'url', 'label' => 'Base URL', 'placeholder' => 'https://api.example.com'],
+                ['name' => 'config[timeout]', 'type' => 'number', 'label' => 'Timeout (seconds)', 'value' => 30],
+                ['name' => 'secrets[username]', 'type' => 'text', 'label' => 'Username'],
+                ['name' => 'secrets[password]', 'type' => 'password', 'label' => 'Password'],
+            ],
+        ],
+        'bearer' => [
+            'label' => 'HTTP Bearer Token',
+            'description' => 'Stored bearer token for outbound HTTP requests.',
+            'type' => 'http_credential',
+            'fields' => [
+                ['name' => 'config[base_url]', 'type' => 'url', 'label' => 'Base URL', 'placeholder' => 'https://api.example.com'],
+                ['name' => 'config[timeout]', 'type' => 'number', 'label' => 'Timeout (seconds)', 'value' => 30],
+                ['name' => 'secrets[token]', 'type' => 'password', 'label' => 'Token', 'required' => true],
+            ],
+        ],
+        'custom_header' => [
+            'label' => 'HTTP Custom Header',
+            'description' => 'Stored custom header name and value for outbound HTTP requests.',
+            'type' => 'http_credential',
+            'fields' => [
+                ['name' => 'config[base_url]', 'type' => 'url', 'label' => 'Base URL', 'placeholder' => 'https://api.example.com'],
+                ['name' => 'config[timeout]', 'type' => 'number', 'label' => 'Timeout (seconds)', 'value' => 30],
+                ['name' => 'config[header_name]', 'type' => 'text', 'label' => 'Header name', 'required' => true, 'placeholder' => 'X-API-Key'],
+                ['name' => 'secrets[header_value]', 'type' => 'password', 'label' => 'Header value', 'required' => true],
             ],
         ],
     ];
@@ -200,6 +240,27 @@ if ($action === 'test') {
     if ($alias === '') {
         connections_json_response(['status' => 'error', 'message' => 'Connection alias is required.'], 422);
     }
+
+    $testConnection = birkly_connection_get_by_alias($alias, false);
+    if ($testConnection === null) {
+        connections_json_response(['status' => 'error', 'message' => 'Connection not found.'], 404);
+    }
+
+    if (($testConnection['type'] ?? 'email') === 'http_credential') {
+        $baseUrl = $testConnection['config']['base_url'] ?? '';
+        if ($baseUrl === '') {
+            connections_json_response(['status' => 'error', 'message' => 'HTTP credential has no base URL to test.'], 422);
+        }
+        $result = birkly_http_request($alias, 'GET', $baseUrl);
+        birkly_connection_audit_log('connection_tested', [
+            'alias' => $alias,
+            'type' => 'http_credential',
+            'status' => $result['status'],
+            'error' => $result['error'] ?? null,
+        ]);
+        connections_json_response(['status' => 'ok', 'send_result' => $result]);
+    }
+
     if ($testEmail === '' || !filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
         connections_json_response(['status' => 'error', 'message' => 'A valid test email address is required.'], 422);
     }

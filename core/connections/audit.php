@@ -45,7 +45,7 @@ function birkly_connection_audit_log(string $event, array $details = [], ?string
             'timestamp' => date('c'),
             'event' => $event,
             'actor' => $actor ?? birkly_connection_audit_actor(),
-            'ip' => $_SERVER['REMOTE_ADDR'] ?? 'cli',
+            'ip' => $_SERVER['REMOTE_ADDR'] ?? ($_SERVER['SERVER_ADDR'] ?? 'cli'),
             'details' => $details,
         ];
         $line = json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n";

@@ -270,7 +270,7 @@ function sendFormNotification($collection, $entryData, $collectionConfig) {
         $message .= "$key: $value\n";
     }
     
-    birkly_notify([
+    birkly_notify('secure_form_submission', [
         'to' => $to,
         'subject' => $subject,
         'message' => $message,
