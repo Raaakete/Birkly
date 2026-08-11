@@ -27,6 +27,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/ai_helpers.php';
 require_once __DIR__ . '/../core/entry_slug.php';
+require_once __DIR__ . '/../core/connections/mcp_tools.php';
 
 $storage = new Storage(__DIR__ . '/../data/ai_approvals');
 
@@ -385,7 +386,24 @@ function executeAiAction($approval) {
 
         case 'save_collection_groups':
             return executeSaveCollectionGroups($actionData, $aiUser, $originalUserId);
-            
+
+        case 'connections_health':
+            return array_merge(['success' => true], birkly_connections_mcp_health($actionData));
+
+        case 'connections_configure':
+            $result = birkly_connections_mcp_configure($actionData);
+            if (($result['status'] ?? '') !== 'ok') {
+                return ['success' => false, 'message' => json_encode($result, JSON_UNESCAPED_SLASHES)];
+            }
+            return array_merge(['success' => true], $result);
+
+        case 'connections_test':
+            $result = birkly_connections_mcp_test($actionData);
+            if (($result['status'] ?? '') !== 'ok') {
+                return ['success' => false, 'message' => json_encode($result, JSON_UNESCAPED_SLASHES)];
+            }
+            return array_merge(['success' => true], $result);
+
         default:
             return ['success' => false, 'message' => 'Unknown action type: ' . $actionType];
     }
