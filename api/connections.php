@@ -156,6 +156,33 @@ function connections_provider_schema(): array
                 ['name' => 'secrets[header_value]', 'type' => 'password', 'label' => 'Header value', 'required' => true],
             ],
         ],
+        'slack' => [
+            'label' => 'Slack webhook',
+            'description' => 'Post to a Slack incoming webhook URL.',
+            'type' => 'channel',
+            'fields' => [
+                ['name' => 'config[channel]', 'type' => 'text', 'label' => 'Channel override (optional)', 'placeholder' => '#alerts'],
+                ['name' => 'secrets[webhook_url]', 'type' => 'password', 'label' => 'Webhook URL', 'required' => true],
+            ],
+        ],
+        'discord' => [
+            'label' => 'Discord webhook',
+            'description' => 'Post to a Discord incoming webhook URL.',
+            'type' => 'channel',
+            'fields' => [
+                ['name' => 'secrets[webhook_url]', 'type' => 'password', 'label' => 'Webhook URL', 'required' => true],
+            ],
+        ],
+        'twilio_sms' => [
+            'label' => 'Twilio SMS',
+            'description' => 'Send SMS messages via Twilio.',
+            'type' => 'channel',
+            'fields' => [
+                ['name' => 'config[from_number]', 'type' => 'text', 'label' => 'From number', 'required' => true, 'placeholder' => '+15551234567'],
+                ['name' => 'secrets[account_sid]', 'type' => 'text', 'label' => 'Account SID', 'required' => true],
+                ['name' => 'secrets[auth_token]', 'type' => 'password', 'label' => 'Auth token', 'required' => true],
+            ],
+        ],
     ];
 }
 
