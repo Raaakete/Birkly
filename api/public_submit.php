@@ -7,6 +7,7 @@ require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/../core/plugins.php';
+require_once __DIR__ . '/../core/mail/notify.php';
 if (function_exists('load_plugins')) {
     load_plugins();
 }
@@ -368,9 +369,15 @@ if ($ok && !empty($collectionMeta['notify_email'])) {
         }
     }
     $body .= "\nSubmitted at: " . $cleanData['created_at'] . "\nIP: $ip\n";
-    $headers = 'From: noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local');
-    $sent = mail($to, $subject, $body, $headers);
-    log_security_event('public_submission_email', ['collection' => $collectionSlug, 'id' => $id, 'to' => $to, 'sent' => $sent]);
+    $sendResult = birkly_notify('public_submit', [
+        'to' => $to,
+        'subject' => $subject,
+        'message' => $body,
+        'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
+        'metadata' => ['source' => 'public_submit', 'collection' => $collectionSlug, 'id' => $id],
+    ]);
+    $sent = birkly_notify_results_any_success($sendResult);
+    log_security_event('public_submission_email', ['collection' => $collectionSlug, 'id' => $id, 'to' => $to, 'sent' => $sent, 'send_status' => $sent ? 'success' : 'failed']);
 }
 
 if ($ok) {

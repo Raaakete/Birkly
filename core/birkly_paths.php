@@ -104,6 +104,9 @@ function birkly_media_url(string $query = ''): string
  */
 function birkly_project_root(): string
 {
+    if (array_key_exists('__birkly_project_root', $GLOBALS)) {
+        return (string) $GLOBALS['__birkly_project_root'];
+    }
     return dirname(__DIR__);
 }
 
