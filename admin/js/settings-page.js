@@ -459,7 +459,7 @@ window.migrateStorage = migrateStorage;
     };
 
     var INDEPENDENT_SAVE_TABS = [
-        'site-delivery', 'project', 'team-access', 'ai', 'integrations'
+        'site-delivery', 'project', 'team-access', 'ai', 'connections', 'integrations'
     ];
 
     var GLOBAL_SAVE_TABS = {
