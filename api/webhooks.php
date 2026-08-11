@@ -42,6 +42,41 @@ function birkly_webhook_process_request(?string $identifier, string $method, str
     }
 
     $connection = birkly_connection_decrypt_for_use($connection);
+    $provider = (string) ($connection['provider'] ?? '');
+    $connectionType = (string) ($connection['type'] ?? '');
+
+    // ESP inbound webhooks use provider-specific signatures and parsers.
+    if ($connectionType === 'email' && in_array($provider, ['resend', 'postmark', 'ses', 'mailgun'], true)) {
+        require_once __DIR__ . '/../core/mail/esp_handlers.php';
+        $espResult = birkly_esp_webhook_handle($connection, $headers, $rawBody);
+        if (($espResult['status'] ?? '') !== 'ok') {
+            return [
+                'status' => 'error',
+                'connection_id' => $connection['id'] ?? null,
+                'alias' => $connection['alias'] ?? null,
+                'error' => $espResult['error'] ?? 'ESP webhook handler failed.',
+            ];
+        }
+
+        birkly_connection_audit_log('webhook_received', [
+            'connection_id' => $connection['id'] ?? null,
+            'alias' => $connection['alias'] ?? null,
+            'provider' => $provider,
+            'events' => count($espResult['events'] ?? []),
+        ]);
+
+        do_action('birkly_webhook_received', $espResult, $connection);
+
+        return [
+            'status' => 'ok',
+            'connection_id' => $connection['id'] ?? null,
+            'alias' => $connection['alias'] ?? null,
+            'verified' => true,
+            'events' => $espResult['events'] ?? [],
+            'error' => null,
+        ];
+    }
+
     $secrets = is_array($connection['secrets'] ?? null) ? $connection['secrets'] : [];
     $signingSecret = (string) ($secrets['signing_secret'] ?? '');
 
