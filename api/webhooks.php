@@ -1,7 +1,7 @@
 <?php
 /**
  * Webhooks API
- * Handles webhook configuration and triggering
+ * Handles webhook configuration, triggering, and inbound webhook reception.
  */
 
 require_once __DIR__ . '/session.php';
@@ -10,11 +10,151 @@ haru_secure_session_start();
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/../core/plugins.php';
+require_once __DIR__ . '/../core/connections/registry.php';
+
+/**
+ * Process an inbound webhook request.
+ *
+ * @param string|null $identifier Connection id or alias.
+ * @param string $method HTTP method (must be POST for normal operation).
+ * @param string $rawBody Raw request body.
+ * @param array $headers Header array.
+ * @return array{status: string, connection_id: string|null, alias: string|null, error: string|null}
+ */
+function birkly_webhook_process_request(?string $identifier, string $method, string $rawBody, array $headers): array
+{
+    if ($identifier === null || $identifier === '') {
+        return ['status' => 'error', 'connection_id' => null, 'alias' => null, 'error' => 'Connection id or alias is required.'];
+    }
+
+    if (strtoupper($method) !== 'POST') {
+        return ['status' => 'error', 'connection_id' => null, 'alias' => null, 'error' => 'Only POST requests are accepted.'];
+    }
+
+    $connection = birkly_connection_get($identifier, true);
+    if ($connection === null) {
+        $connection = birkly_connection_get_by_alias($identifier, true);
+    }
+
+    if ($connection === null) {
+        return ['status' => 'error', 'connection_id' => null, 'alias' => null, 'error' => 'Connection not found.'];
+    }
+
+    $connection = birkly_connection_decrypt_for_use($connection);
+    $provider = (string) ($connection['provider'] ?? '');
+    $connectionType = (string) ($connection['type'] ?? '');
+
+    // ESP inbound webhooks use provider-specific signatures and parsers.
+    if ($connectionType === 'email' && in_array($provider, ['resend', 'postmark', 'ses', 'mailgun'], true)) {
+        require_once __DIR__ . '/../core/mail/esp_handlers.php';
+        $espResult = birkly_esp_webhook_handle($connection, $headers, $rawBody);
+        if (($espResult['status'] ?? '') !== 'ok') {
+            return [
+                'status' => 'error',
+                'connection_id' => $connection['id'] ?? null,
+                'alias' => $connection['alias'] ?? null,
+                'error' => $espResult['error'] ?? 'ESP webhook handler failed.',
+            ];
+        }
+
+        birkly_connection_audit_log('webhook_received', [
+            'connection_id' => $connection['id'] ?? null,
+            'alias' => $connection['alias'] ?? null,
+            'provider' => $provider,
+            'events' => count($espResult['events'] ?? []),
+        ]);
+
+        do_action('birkly_webhook_received', $espResult, $connection);
+
+        return [
+            'status' => 'ok',
+            'connection_id' => $connection['id'] ?? null,
+            'alias' => $connection['alias'] ?? null,
+            'verified' => true,
+            'events' => $espResult['events'] ?? [],
+            'error' => null,
+        ];
+    }
+
+    $secrets = is_array($connection['secrets'] ?? null) ? $connection['secrets'] : [];
+    $signingSecret = (string) ($secrets['signing_secret'] ?? '');
+
+    if ($signingSecret !== '') {
+        $signature = null;
+        foreach ($headers as $name => $value) {
+            if (strtolower((string) $name) === 'x-birkly-signature') {
+                $signature = is_array($value) ? implode(',', $value) : (string) $value;
+                break;
+            }
+        }
+
+        if ($signature === null || $signature === '') {
+            return ['status' => 'error', 'connection_id' => $connection['id'] ?? null, 'alias' => $connection['alias'] ?? null, 'error' => 'Missing signature.'];
+        }
+
+        $expected = hash_hmac('sha256', $rawBody, $signingSecret);
+        if (!hash_equals($expected, $signature)) {
+            return ['status' => 'error', 'connection_id' => $connection['id'] ?? null, 'alias' => $connection['alias'] ?? null, 'error' => 'Invalid signature.'];
+        }
+    }
+
+    $decoded = json_decode($rawBody, true);
+    if ($rawBody !== '' && $decoded === null && json_last_error() !== JSON_ERROR_NONE) {
+        $decoded = ['raw' => $rawBody];
+    }
+    if (!is_array($decoded)) {
+        $decoded = [];
+    }
+
+    birkly_connection_audit_log('webhook_received', [
+        'connection_id' => $connection['id'] ?? null,
+        'alias' => $connection['alias'] ?? null,
+        'verified' => $signingSecret !== '',
+    ]);
+
+    do_action('birkly_webhook_received', $decoded, $connection);
+
+    return [
+        'status' => 'ok',
+        'connection_id' => $connection['id'] ?? null,
+        'alias' => $connection['alias'] ?? null,
+        'verified' => $signingSecret !== '',
+        'error' => null,
+    ];
+}
 
 // CRITICAL: Only execute switch if NOT being included by another file
 if (isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__HARU_INTERNAL_CALL'] === true) {
     // Being included - don't execute switch statement, just provide functions
 } else {
+    // Inbound webhook receiver is public and must run before admin auth.
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_GET['action']) && (isset($_GET['id']) || isset($_GET['alias']))) {
+        header('Content-Type: application/json');
+        $identifier = $_GET['id'] ?? $_GET['alias'] ?? null;
+        $rawBody = (string) file_get_contents('php://input');
+
+        $headers = [];
+        if (function_exists('getallheaders')) {
+            $headers = getallheaders();
+            if (!is_array($headers)) {
+                $headers = [];
+            }
+        } else {
+            foreach ($_SERVER as $key => $value) {
+                if (strpos($key, 'HTTP_') === 0) {
+                    $name = str_replace('_', '-', substr($key, 5));
+                    $headers[$name] = is_array($value) ? implode(',', $value) : (string) $value;
+                }
+            }
+        }
+
+        $result = birkly_webhook_process_request($identifier, $_SERVER['REQUEST_METHOD'] ?? 'GET', $rawBody, $headers);
+        http_response_code($result['status'] === 'ok' ? 200 : 400);
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        exit;
+    }
+
     // File is being called directly (not included) - handle API requests
     header('Content-Type: application/json');
 

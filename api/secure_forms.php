@@ -20,6 +20,7 @@ require_once 'storage.php';
 require_once 'validate.php';
 require_once 'rate_limit.php';
 require_once 'log.php';
+require_once __DIR__ . '/../core/mail/notify.php';
 
 // Require domain authentication with write permission for form submissions
 requireDomainAuth('write');
@@ -269,7 +270,13 @@ function sendFormNotification($collection, $entryData, $collectionConfig) {
         $message .= "$key: $value\n";
     }
     
-    mail($to, $subject, $message);
+    birkly_notify('secure_form_submission', [
+        'to' => $to,
+        'subject' => $subject,
+        'message' => $message,
+        'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
+        'metadata' => ['source' => 'secure_forms', 'collection' => $collection],
+    ]);
 }
 
 echo json_encode(['status' => 'error', 'message' => 'Invalid action']); 

@@ -19,6 +19,11 @@ function birkly_secret_storage(): Storage
 
 function birkly_secret_encryption_key(): string
 {
+    $envKey = birkly_secret_key_from_env();
+    if ($envKey !== null) {
+        return $envKey;
+    }
+
     $storage = birkly_secret_storage();
     $security = $storage->read('security.json');
     if (!is_array($security)) {
@@ -28,9 +33,42 @@ function birkly_secret_encryption_key(): string
     if (empty($security['encryption_key']) || !is_string($security['encryption_key'])) {
         $security['encryption_key'] = bin2hex(random_bytes(32));
         $storage->write('security.json', $security);
+        trigger_error(
+            'Birkly: BIRKLY_SECRETS_KEY is not set. A local encryption key was generated in settings/security.json. '
+            . 'Set BIRKLY_SECRETS_KEY in production so secrets are not tied to a single disk.',
+            E_USER_WARNING
+        );
     }
 
     return (string) $security['encryption_key'];
+}
+
+function birkly_secret_key_from_env(): ?string
+{
+    $raw = $_ENV['BIRKLY_SECRETS_KEY'] ?? $_SERVER['BIRKLY_SECRETS_KEY'] ?? getenv('BIRKLY_SECRETS_KEY') ?: null;
+    if (!is_string($raw) || $raw === '') {
+        return null;
+    }
+
+    $raw = trim($raw);
+
+    // 64-character hex string -> 32-byte raw key.
+    if (strlen($raw) === 64 && ctype_xdigit($raw)) {
+        return strtolower($raw);
+    }
+
+    // 32 raw bytes are accepted as-is (internal binary is not exposed).
+    if (strlen($raw) === 32) {
+        return bin2hex($raw);
+    }
+
+    // Base64-encoded 32-byte key.
+    $decoded = base64_decode($raw, true);
+    if ($decoded !== false && strlen($decoded) === 32) {
+        return bin2hex($decoded);
+    }
+
+    throw new RuntimeException('BIRKLY_SECRETS_KEY must be a 64-character hex string, 32 raw bytes, or base64-encoded 32-byte key');
 }
 
 function birkly_encrypt_secret(string $plaintext): string

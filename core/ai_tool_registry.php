@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/ai_permissions.php';
+require_once __DIR__ . '/connections/mcp_tools.php';
 
 /** @return array<string, array{name: string, description: string, category: string, inputSchema: array}> */
 function birkly_ai_tool_definitions(): array
@@ -71,6 +72,11 @@ function birkly_ai_tool_definitions(): array
         'list_brand_products' => ['name' => 'list_brand_products', 'description' => 'Legacy alias for list_agent_guide_products', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_brand_claim' => ['name' => 'get_brand_claim', 'description' => 'Legacy alias for get_agent_guide_claim', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
         'get_brand_product' => ['name' => 'get_brand_product', 'description' => 'Legacy alias for get_agent_guide_product', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+
+        // Phase 65 Connections tools (approval-gated; no secret echo)
+        'connections_health' => ['name' => 'connections_health', 'description' => 'Summarize Connections health: counts by type/provider, default connections, mail queue depth, and recent failures. Does not expose secrets.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['type' => ['type' => 'string', 'description' => 'Optional filter: email, http_credential, or channel']]]],
+        'connections_configure' => ['name' => 'connections_configure', 'description' => 'Create, update, or delete a Connection. Secrets are stored encrypted and are never returned.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['operation' => ['type' => 'string', 'enum' => ['create', 'update', 'delete']], 'connection' => ['type' => 'object', 'description' => 'Connection fields: type, provider, alias, name, config, secrets, from_email, etc.']], 'required' => ['operation', 'connection']]],
+        'connections_test' => ['name' => 'connections_test', 'description' => 'Test a Connection by alias. For email provide test_email; for Twilio SMS provide to_number. Does not echo secrets.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['alias' => ['type' => 'string'], 'test_email' => ['type' => 'string'], 'to_number' => ['type' => 'string']], 'required' => ['alias']]],
     ];
 }
 
@@ -389,6 +395,19 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
             . 'This is separate from Claude\'s "always allow" tool setting. '
             . 'To auto-run writes from Claude, disable "Ask before changes" on the personal connector in Settings → AI.';
         return ['content' => [['type' => 'text', 'text' => $message]]];
+    }
+
+    // Phase 65 Connections tools (handled directly; approval gate above already queued if required).
+    if (in_array($actionType, ['connections_health', 'connections_configure', 'connections_test'], true)) {
+        $result = match ($actionType) {
+            'connections_health' => birkly_connections_mcp_health($arguments),
+            'connections_configure' => birkly_connections_mcp_configure($arguments),
+            'connections_test' => birkly_connections_mcp_test($arguments),
+        };
+        if (($result['status'] ?? '') !== 'ok') {
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
+        }
+        return birkly_connections_mcp_result_to_content($result);
     }
 
     $GLOBALS['__HARU_INTERNAL_CALL'] = true;
