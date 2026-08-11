@@ -11,6 +11,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/log.php';
+require_once __DIR__ . '/../core/mail/birkly_send_mail.php';
 
 // Clear any output that might have been generated
 ob_clean();
@@ -257,31 +258,35 @@ function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
     </html>
     ";
     
-    $headers = [
-        'MIME-Version: 1.0',
-        'Content-type: text/html; charset=UTF-8',
-        'From: ' . ($_SESSION['user']['email'] ?? 'noreply@localhost'),
-        'Reply-To: ' . ($_SESSION['user']['email'] ?? 'noreply@localhost'),
-        'X-Mailer: Birkly'
-    ];
-    
-    // Try to send the email
-    $result = @mail($email, $subject, $message, implode("\r\n", $headers));
-    
+    $fromEmail = $_SESSION['user']['email'] ?? 'noreply@localhost';
+
+    $sendResult = birkly_send_mail([
+        'to' => $email,
+        'subject' => $subject,
+        'html' => $message,
+        'from' => $fromEmail,
+        'from_name' => $_SESSION['user']['name'] ?? '',
+        'reply_to' => $fromEmail,
+    ]);
+
+    $result = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
+
     // Log the attempt
     log_security_event('invitation_email_attempt', [
         'email' => $email,
         'success' => $result,
+        'send_status' => $sendResult['status'] ?? 'unknown',
+        'send_error' => $sendResult['error'] ?? null,
         'sent_by' => $_SESSION['user']['email'] ?? 'unknown',
         'invite_url' => $inviteUrl
     ]);
-    
+
     // For localhost, always return true but log the URL
     if ($_SERVER['HTTP_HOST'] === 'localhost:8001' || strpos($_SERVER['HTTP_HOST'], 'localhost') === 0) {
         error_log("LOCALHOST: Email would be sent to $email with URL: $inviteUrl");
         return true; // Always return true on localhost for testing
     }
-    
+
     return $result;
 }
 

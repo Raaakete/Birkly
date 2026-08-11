@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
+require_once __DIR__ . '/mail/notify.php';
 
 /**
  * @return array{alert_email?:string,alert_webhook_url?:string}
@@ -57,8 +58,12 @@ function birkly_health_dispatch_alerts(array $report): array
     $results = ['dispatched' => true, 'email' => false, 'webhook' => false];
 
     if ($email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $headers = "Content-Type: text/plain; charset=UTF-8\r\n";
-        $results['email'] = (bool) @mail($email, $subject, $body, $headers);
+        $sendResult = birkly_notify([
+            'to' => $email,
+            'subject' => $subject,
+            'message' => $body,
+        ]);
+        $results['email'] = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
     }
 
     if ($webhook !== '') {

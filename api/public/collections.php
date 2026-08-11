@@ -20,6 +20,7 @@ set_cors_headers('public');
 require_once __DIR__ . '/../rate_limit.php';
 require_once __DIR__ . '/../log.php';
 require_once __DIR__ . '/../validate.php';
+require_once __DIR__ . '/../../core/mail/notify.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -288,8 +289,13 @@ if (!empty($notificationEmail)) {
         $body .= "$key: " . (is_array($value) ? json_encode($value) : $value) . "\n";
     }
     
-    $headers = 'From: noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local');
-    @mail($notificationEmail, $subject, $body, $headers);
+    birkly_notify([
+        'to' => $notificationEmail,
+        'subject' => $subject,
+        'message' => $body,
+        'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
+        'metadata' => ['source' => 'public_collection_submission', 'entry_id' => $entryId],
+    ]);
 }
 
 // Return success response
