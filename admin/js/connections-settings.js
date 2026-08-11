@@ -37,7 +37,8 @@
     const httpListEl = document.getElementById('http-credentials-list');
     const modal = document.getElementById('connection-modal');
     const form = document.getElementById('connection-form');
-    const providerSelect = document.getElementById('connection-provider');
+    const providerInput = document.getElementById('connection-provider');
+    const providerDatalist = document.getElementById('connection-provider-list');
     const providerFields = document.getElementById('connection-provider-fields');
     const formError = document.getElementById('connection-form-error');
     const modalTitle = document.getElementById('connection-modal-title');
@@ -59,9 +60,16 @@
         const result = await api('providers', 'GET');
         if (result.status === 'ok') {
             providers = result.providers || {};
-            providerSelect.innerHTML = '<option value="">Select a provider…</option>' +
-                Object.entries(providers).map(([key, p]) => '<option value="' + escapeHtml(key) + '">' + escapeHtml(p.label) + '</option>').join('');
+            populateProviderDatalist();
         }
+    }
+
+    function populateProviderDatalist() {
+        if (!providerDatalist) return;
+        providerDatalist.innerHTML = Object.entries(providers)
+            .map(function ([key, p]) {
+                return '<option value="' + escapeHtml(key) + '">' + escapeHtml(p.label) + '</option>';
+            }).join('');
     }
 
     async function loadConnections() {
@@ -198,9 +206,17 @@
     function renderProviderFields(providerKey, values) {
         providerFields.innerHTML = '';
         const schema = providers[providerKey];
-        if (!schema || !schema.fields) return;
+        if (schema && schema.fields) {
+            renderSchemaFields(schema.fields, values);
+            return;
+        }
+        // Custom/unknown provider: show generic config and secrets editors.
+        renderGenericKeyValueEditor('config', values.config || {});
+        renderGenericKeyValueEditor('secrets', values.secrets || {});
+    }
 
-        schema.fields.forEach(function (field) {
+    function renderSchemaFields(fields, values) {
+        fields.forEach(function (field) {
             const value = values && values[field.name] !== undefined ? values[field.name] : (field.value || '');
             const name = field.name;
             const id = name.replace(/[\[\]]/g, '-');
@@ -239,12 +255,57 @@
         });
     }
 
+    function renderGenericKeyValueEditor(group, values) {
+        const section = document.createElement('div');
+        section.className = 'form-group';
+        section.dataset.genericGroup = group;
+
+        const label = document.createElement('label');
+        label.textContent = group === 'secrets' ? 'Secrets' : 'Configuration';
+        section.appendChild(label);
+
+        const rows = document.createElement('div');
+        rows.className = 'generic-kv-rows u-stack-2';
+        section.appendChild(rows);
+
+        const entries = Object.entries(values);
+        if (entries.length === 0) {
+            entries.push(['', '']);
+        }
+        entries.forEach(function ([key, value]) {
+            rows.appendChild(createGenericRow(group, key, value));
+        });
+
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'btn btn-secondary btn-sm';
+        addBtn.textContent = 'Add ' + (group === 'secrets' ? 'secret' : 'config') + ' field';
+        addBtn.addEventListener('click', function () {
+            rows.appendChild(createGenericRow(group, '', ''));
+        });
+        section.appendChild(addBtn);
+
+        providerFields.appendChild(section);
+    }
+
+    function createGenericRow(group, key, value) {
+        const row = document.createElement('div');
+        row.className = 'u-cluster generic-kv-row';
+        row.innerHTML = '<input type="text" class="input input--sm" name="' + escapeHtml(group) + '_key[]" placeholder="key" value="' + escapeHtml(key) + '">' +
+            '<input type="' + (group === 'secrets' ? 'password' : 'text') + '" class="input input--sm" name="' + escapeHtml(group) + '_value[]" placeholder="value" value="' + escapeHtml(value) + '">' +
+            '<button type="button" class="btn btn-danger btn-sm" data-remove-row>Remove</button>';
+        row.querySelector('[data-remove-row]').addEventListener('click', function () {
+            row.remove();
+        });
+        return row;
+    }
+
     function openCreateModal(type) {
         form.reset();
         document.getElementById('connection-id').value = '';
         document.getElementById('connection-type').value = type;
-        populateProviderSelect(type);
-        providerSelect.value = '';
+        populateProviderDatalist();
+        providerInput.value = '';
         providerFields.innerHTML = '';
         formError.hidden = true;
         modalTitle.textContent = type === 'http_credential' ? 'Add HTTP credential' : 'Add email connection';
@@ -253,22 +314,13 @@
         openModal();
     }
 
-    function populateProviderSelect(type) {
-        const options = Object.entries(providers)
-            .filter(function ([, p]) { return (p.type || 'email') === type; })
-            .map(function ([key, p]) {
-                return '<option value="' + escapeHtml(key) + '">' + escapeHtml(p.label) + '</option>';
-            }).join('');
-        providerSelect.innerHTML = '<option value="">Select a provider…</option>' + options;
-    }
-
     function openEditModal(connection) {
         const type = connection.type || 'email';
         form.reset();
         document.getElementById('connection-id').value = connection.id;
         document.getElementById('connection-type').value = type;
-        populateProviderSelect(type);
-        providerSelect.value = connection.provider;
+        populateProviderDatalist();
+        providerInput.value = connection.provider || '';
         document.getElementById('connection-alias').value = connection.alias || '';
         document.getElementById('connection-name').value = connection.name || '';
         document.getElementById('connection-from-email').value = connection.from_email || '';
@@ -278,17 +330,18 @@
         modalTitle.textContent = type === 'http_credential' ? 'Edit HTTP credential' : 'Edit email connection';
         document.getElementById('connection-submit-btn').textContent = 'Update connection';
         setFromEmailRequired(type === 'email');
-        const cfg = connection.config || {};
-        renderProviderFields(connection.provider, {
-            'config[host]': cfg.host,
-            'config[port]': cfg.port,
-            'config[encryption]': cfg.encryption,
-            'config[auth]': cfg.auth,
-            'config[region]': cfg.region,
-            'config[domain]': cfg.domain,
-            'config[base_url]': cfg.base_url,
-            'config[timeout]': cfg.timeout,
-            'config[header_name]': cfg.header_name,
+        renderProviderFields(connection.provider || '', {
+            'config[host]': (connection.config || {}).host,
+            'config[port]': (connection.config || {}).port,
+            'config[encryption]': (connection.config || {}).encryption,
+            'config[auth]': (connection.config || {}).auth,
+            'config[region]': (connection.config || {}).region,
+            'config[domain]': (connection.config || {}).domain,
+            'config[base_url]': (connection.config || {}).base_url,
+            'config[timeout]': (connection.config || {}).timeout,
+            'config[header_name]': (connection.config || {}).header_name,
+            config: connection.config || {},
+            secrets: connection.secrets || {},
         });
         openModal();
     }
@@ -314,9 +367,20 @@
         const typeInput = document.getElementById('connection-type');
         const data = { type: typeInput ? typeInput.value : 'email' };
         const formData = new FormData(form);
+        const genericKeys = { config_key: true, config_value: true, secrets_key: true, secrets_value: true };
+        const genericBuffers = {};
+
         formData.forEach(function (value, key) {
             if (key === 'enabled') {
                 data[key] = true;
+                return;
+            }
+            if (genericKeys[key]) {
+                const parts = key.split('_');
+                const group = parts[0];
+                if (!genericBuffers[group]) genericBuffers[group] = { keys: [], values: [] };
+                if (parts[1] === 'key') genericBuffers[group].keys.push(value);
+                else genericBuffers[group].values.push(value);
                 return;
             }
             if (key.indexOf('[') > 0) {
@@ -331,6 +395,16 @@
                 data[key] = value;
             }
         });
+
+        Object.entries(genericBuffers).forEach(function ([group, buffer]) {
+            data[group] = {};
+            buffer.keys.forEach(function (k, i) {
+                k = String(k).trim();
+                if (k === '') return;
+                data[group][k] = buffer.values[i] !== undefined ? buffer.values[i] : '';
+            });
+        });
+
         if (!('enabled' in data)) data.enabled = false;
         return data;
     }
@@ -354,8 +428,8 @@
         }
     });
 
-    providerSelect.addEventListener('change', function () {
-        renderProviderFields(providerSelect.value, {});
+    providerInput.addEventListener('input', function () {
+        renderProviderFields(providerInput.value, {});
     });
 
     document.addEventListener('click', function (e) {
