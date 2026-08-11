@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_send_mail.php';
 require_once __DIR__ . '/../connections/http.php';
+require_once __DIR__ . '/channels.php';
 
 /**
  * Send a notification for an event.
@@ -53,6 +54,9 @@ function birkly_notify(string $event, array $payload): array
             $results[$alias] = birkly_notify_send_email($payload, $connection);
         } elseif ($type === 'http_credential') {
             $results[$alias] = birkly_notify_send_http($payload, $connection);
+        } elseif ($type === 'channel') {
+            $channelConnection = birkly_connection_get($connection['id'] ?? '', true);
+            $results[$alias] = birkly_channel_dispatch($payload, $channelConnection ?? $connection);
         } else {
             $results[$alias] = birkly_mail_result('failed', 'notify', $connection['id'] ?? null, $alias, 'Unsupported connection type: ' . $type);
         }

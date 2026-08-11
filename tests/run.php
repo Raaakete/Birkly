@@ -21,7 +21,8 @@ if ($runAll) {
         glob($dir . '/notify_*_test.php') ?: [],
         glob($dir . '/http_*_test.php') ?: [],
         glob($dir . '/webhooks_*_test.php') ?: [],
-        glob($dir . '/esp_*_test.php') ?: []
+        glob($dir . '/esp_*_test.php') ?: [],
+        glob($dir . '/channels_*_test.php') ?: []
     );
 }
 
