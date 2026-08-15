@@ -497,9 +497,9 @@ if ($action === 'migrate_storage') {
         ),
         $input
     ));
-    $config['driver'] = StorageFactory::normalizeDriver($config['driver'] ?? 'flatfile');
+    $dbConfig = array_merge($config, ['driver' => $driver]);
 
-    $connectionTest = StorageFactory::testDatabaseConnection($config);
+    $connectionTest = StorageFactory::testDatabaseConnection($dbConfig);
     if (!$connectionTest['ok']) {
         echo json_encode(['status' => 'error', 'message' => 'Database connection failed: ' . $connectionTest['message']]);
         exit;
@@ -507,7 +507,7 @@ if ($action === 'migrate_storage') {
 
     $sourcePath = $config['base_path'] ?? StorageFactory::loadStorageConfig(true)['base_path'];
     $source = new FlatFileStorage($sourcePath);
-    $target = StorageFactory::createDriver($driver, $config);
+    $target = StorageFactory::createDriver($driver, $dbConfig);
 
     $migration = StorageMigration::migrateFlatFileToStorage($source, $target);
     if (!$migration['ok']) {
