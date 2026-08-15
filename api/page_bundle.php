@@ -91,20 +91,25 @@ if (count($requests) > 40) {
     page_bundle_respond(['status' => 'error', 'message' => 'Too many requests'], 400);
 }
 
-$storage = get_storage(__DIR__ . '/../content');
-$revision = birkly_page_bundle_compute_revision($storage, $requests, $language);
-$ifNoneMatch = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
-$ifNoneMatch = trim(str_replace('"', '', $ifNoneMatch));
+try {
+    $storage = get_storage(__DIR__ . '/../content');
+    $revision = birkly_page_bundle_compute_revision($storage, $requests, $language);
+    $ifNoneMatch = $_SERVER['HTTP_IF_NONE_MATCH'] ?? '';
+    $ifNoneMatch = trim(str_replace('"', '', $ifNoneMatch));
 
-if ($ifNoneMatch !== '' && $ifNoneMatch === $revision) {
-    if (function_exists('set_public_read_cache_headers')) {
-        set_public_read_cache_headers(120);
+    if ($ifNoneMatch !== '' && $ifNoneMatch === $revision) {
+        if (function_exists('set_public_read_cache_headers')) {
+            set_public_read_cache_headers(120);
+        }
+        header('ETag: "' . $revision . '"');
+        http_response_code(304);
+        exit;
     }
-    header('ETag: "' . $revision . '"');
-    http_response_code(304);
-    exit;
-}
 
-$result = birkly_run_page_bundle_requests($storage, $requests, $language, ['lean' => $lean]);
-$result['revision'] = $revision;
-page_bundle_respond($result, 200, $revision);
+    $result = birkly_run_page_bundle_requests($storage, $requests, $language, ['lean' => $lean]);
+    $result['revision'] = $revision;
+    page_bundle_respond($result, 200, $revision);
+} catch (Throwable $e) {
+    error_log('page_bundle fatal: ' . $e->getMessage());
+    page_bundle_respond(['status' => 'error', 'message' => 'Bundle failed'], 500);
+}
