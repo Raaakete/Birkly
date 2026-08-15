@@ -4,7 +4,7 @@ window.HaruFieldtypes['checkbox'] = {
   category: 'input',
   dynamicItemsEligible: false,
   render: function(fieldConfig, value) {
-    return `<input type="checkbox" name="${fieldConfig.name}" id="field_${fieldConfig.name}" value="1"${value ? ' checked' : ''}>`;
+    return `<div class="checkbox-field-wrapper"><label class="checkbox-label" for="field_${fieldConfig.name}"><input type="checkbox" name="${fieldConfig.name}" id="field_${fieldConfig.name}" value="1"${value ? ' checked' : ''}></label></div>`;
   },
   getValue: function(fieldName) {
     var input = document.getElementById('field_' + fieldName);
@@ -17,4 +17,4 @@ window.HaruFieldtypes['checkbox'] = {
   renderConfig: function(config, onChange) {
     return null;
   }
-}; 
+};

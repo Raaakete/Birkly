@@ -98,8 +98,13 @@ window.HaruFieldtypes['tags'] = {
       `<span class='tag-chip'>${tag}<span class='tag-remove' onclick='window.HaruFieldtypes["tags"].removeTag("${fieldConfig.name}", "${tag}")'>&times;</span></span>`
     ).join('');
     
-    return `<div class='tags-chips'>${tagsHtml}</div>
-      <input type='text' class='input' id='field_${fieldConfig.name}_input' placeholder='Add tag and press Enter'>`;
+    return `<div class="tags-field-container" id="field_${fieldConfig.name}">
+      <div class="tags-field" id="tags_field_${fieldConfig.name}">
+        <div class="tags-chips">${tagsHtml}</div>
+        <input type="text" class="tags-field-input" id="field_${fieldConfig.name}_input" placeholder="Add tag and press Enter">
+      </div>
+      <input type="hidden" name="${fieldConfig.name}" id="field_${fieldConfig.name}_value" value="">
+    </div>`;
   },
   
   getValue: function(fieldName) {
