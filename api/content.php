@@ -407,7 +407,7 @@ if ($action === 'list_entries') {
     if ($id) {
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
-            if ($m && $m['id'] === $id) {
+            if ($m && (($m['id'] ?? '') === $id || ($m['slug'] ?? '') === $id)) {
                 $dir = $d;
                 break;
             }
