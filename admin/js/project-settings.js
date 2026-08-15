@@ -8,6 +8,7 @@
         currentPath: '',
         selectedFile: null,
         visitUrl: '',
+        visitUrlFormat: 'auto',
         publicSiteUrl: '',
         hasIndex: false,
         dirty: false,
@@ -212,6 +213,7 @@
 
         state.visitUrl = data.visit_url || data.public_url || '';
         state.hasIndex = !!data.has_index;
+        state.visitUrlFormat = data.visit_url_format || 'auto';
 
         var starter = data.starter ? escapeHtml(data.starter) : 'Unknown';
         var lastChange = data.last_change && data.last_change.timestamp
@@ -225,11 +227,18 @@
             '</div></div>' +
             '<div class="kv"><div class="kv-key">Starter</div><div class="kv-value">' + starter + '</div></div>' +
             '<div class="kv"><div class="kv-key">Last change</div><div class="kv-value">' + lastChange + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Index</div><div class="kv-value">' + (data.has_index ? 'index.html present' : 'No index.html') + '</div></div>';
+            '<div class="kv"><div class="kv-key">Index</div><div class="kv-value">' + (data.has_index ? 'index.html present' : 'No index.html') + '</div></div>' +
+            (data.visit_url ? '<div class="kv"><div class="kv-key">Visit URL</div><div class="kv-value"><code>' + escapeHtml(data.visit_url) + '</code>' +
+                (data.visit_url_format_resolved ? ' <span class="u-fg-tertiary">(' + escapeHtml(data.visit_url_format || 'auto') + ' → ' + escapeHtml(data.visit_url_format_resolved) + ')</span>' : '') +
+            '</div></div>' : '');
 
         var toggle = document.getElementById('project-show-visit-button');
         if (toggle) {
             toggle.checked = !!data.show_visit_button;
+        }
+        var formatSelect = document.getElementById('project-visit-url-format');
+        if (formatSelect) {
+            formatSelect.value = data.visit_url_format || 'auto';
         }
         syncVisitProjectButton(!!data.show_visit_button);
         applyRenderSettings(data);
@@ -369,24 +378,32 @@
         });
     }
 
-    function saveVisitButtonSetting(enabled) {
+    function saveVisitButtonSetting(enabled, visitUrlFormat) {
+        var payload = {
+            action: 'save_settings',
+            show_visit_button: enabled,
+            _csrf: getCsrfToken()
+        };
+        if (visitUrlFormat !== undefined && visitUrlFormat !== null) {
+            payload.visit_url_format = visitUrlFormat;
+        }
         return fetchJson(apiUrl('/api/project_site.php?action=save_settings'), {
             method: 'POST',
             credentials: 'same-origin',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'save_settings',
-                show_visit_button: enabled,
-                _csrf: getCsrfToken()
-            })
+            body: JSON.stringify(payload)
         }).then(function (payload) {
             var data = payload.data || {};
             state.visitUrl = data.visit_url || state.visitUrl;
             state.hasIndex = !!data.has_index;
+            if (data.visit_url_format) {
+                state.visitUrlFormat = data.visit_url_format;
+            }
             syncVisitProjectButton(enabled);
             if (enabled && !state.visitUrl) {
                 throw new Error('Visit URL is not available');
             }
+            return data;
         });
     }
 
@@ -580,6 +597,27 @@
                     BirklyFeedback.toast(error.message, 'error')
                     toggle.checked = !toggle.checked;
                     syncVisitProjectButton(toggle.checked);
+                });
+            });
+        }
+
+        var visitFormat = document.getElementById('project-visit-url-format');
+        if (visitFormat && visitFormat.dataset.bound !== '1') {
+            visitFormat.dataset.bound = '1';
+            visitFormat.addEventListener('change', function () {
+                var toggleEl = document.getElementById('project-show-visit-button');
+                var enabled = toggleEl ? toggleEl.checked : true;
+                saveVisitButtonSetting(enabled, visitFormat.value).then(function (data) {
+                    if (data && data.visit_url) {
+                        var container = document.getElementById('project-overview-content');
+                        if (container) {
+                            loadOverview();
+                        }
+                    }
+                    BirklyFeedback.toast('Visit URL updated', 'success');
+                }).catch(function (error) {
+                    BirklyFeedback.toast(error.message || 'Failed to save visit URL setting', 'error');
+                    visitFormat.value = state.visitUrlFormat || 'auto';
                 });
             });
         }

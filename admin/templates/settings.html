@@ -323,7 +323,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <input type="checkbox" id="project-show-visit-button">
                 Show “Visit project” in admin header
               </label>
-              <small class="form-help">Opens <code>project/index.html</code> in a new tab when the file exists.</small>
+              <small class="form-help">Opens the project site in a new tab. Choose the URL style below if one works better on your host.</small>
+            </div>
+            <div class="form-group">
+              <label for="project-visit-url-format">Visit project URL</label>
+              <select id="project-visit-url-format" class="input">
+                <option value="auto">Auto (recommended)</option>
+                <option value="directory">Site root (no index.html)</option>
+                <option value="index">Include index.html</option>
+              </select>
+              <small class="form-help" id="project-visit-url-format-help">Auto uses site root for SSR, subdirectory installs, and clean public URLs; otherwise index.html when present. Marsk and similar templates usually need site root.</small>
             </div>
             <div class="u-cluster">
               <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
