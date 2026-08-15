@@ -18,6 +18,88 @@ function birkly_public_site_path(): string
     return birkly_project_root() . '/' . birkly_public_site_dir();
 }
 
+/**
+ * Web path prefix for project/ assets on the current CMS host.
+ * Includes the install base path when Birkly is not at the web root
+ * (e.g. "/subdir/Birkly/project" instead of "/project").
+ */
+function birkly_public_site_url_prefix(): string
+{
+    return birkly_url('/' . birkly_public_site_dir());
+}
+
+/**
+ * True when project HTML should rewrite root-absolute /project/ and /birkly-client.js paths.
+ */
+function birkly_project_needs_install_path_prefix(): bool
+{
+    return birkly_base_path() !== '';
+}
+
+/**
+ * Rewrite root-absolute project and client script paths for subdirectory installs.
+ * Starter packs (Marsk, etc.) ship href="/project/…" and src="/birkly-client.js";
+ * without this, browsers request those from the domain root and miss CSS + client JS.
+ */
+function birkly_project_rewrite_install_paths(string $html): string
+{
+    if (!birkly_project_needs_install_path_prefix()) {
+        return $html;
+    }
+
+    $projectPrefix = birkly_public_site_url_prefix();
+    $clientSrc = birkly_url('/birkly-client.js');
+    $webmcpSrc = birkly_url('/birkly-webmcp.js');
+    $hydrateSrc = birkly_url('/birkly-hydrate.js');
+
+    $replacements = [
+        'href="/project/' => 'href="' . $projectPrefix . '/',
+        "href='/project/" => "href='" . $projectPrefix . '/',
+        'src="/project/' => 'src="' . $projectPrefix . '/',
+        "src='/project/" => "src='" . $projectPrefix . '/',
+        'href="/project"' => 'href="' . $projectPrefix . '"',
+        "href='/project'" => "href='" . $projectPrefix . "'",
+        'src="/birkly-client.js"' => 'src="' . $clientSrc . '"',
+        "src='/birkly-client.js'" => "src='" . $clientSrc . "'",
+        'src="/birkly-webmcp.js"' => 'src="' . $webmcpSrc . '"',
+        "src='/birkly-webmcp.js'" => "src='" . $webmcpSrc . "'",
+        'src="/birkly-hydrate.js"' => 'src="' . $hydrateSrc . '"',
+        "src='/birkly-hydrate.js'" => "src='" . $hydrateSrc . "'",
+    ];
+
+    return str_replace(array_keys($replacements), array_values($replacements), $html);
+}
+
+/**
+ * Inject CMS base meta + rewrite install paths before serving project HTML.
+ */
+function birkly_project_prepare_html_for_serve(string $html): string
+{
+    $html = birkly_project_rewrite_install_paths($html);
+
+    if (!birkly_project_needs_install_path_prefix()) {
+        return $html;
+    }
+
+    require_once __DIR__ . '/hosting_urls.php';
+    $cmsBase = birkly_cms_web_base_url();
+    if ($cmsBase === '') {
+        return $html;
+    }
+
+    if (stripos($html, 'name="birkly-cms-base"') !== false || stripos($html, "name='birkly-cms-base'") !== false) {
+        return $html;
+    }
+
+    $meta = '<meta name="birkly-cms-base" content="' . htmlspecialchars($cmsBase, ENT_QUOTES, 'UTF-8') . '">';
+    if (preg_match('/<head[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+        $pos = $m[0][1] + strlen($m[0][0]);
+        return substr($html, 0, $pos) . "\n    " . $meta . substr($html, $pos);
+    }
+
+    return $meta . "\n" . $html;
+}
+
 function birkly_public_site_url(string $suffix = '/'): string
 {
     require_once __DIR__ . '/hosting_urls.php';
