@@ -366,17 +366,24 @@ function birkly_project_site_info(): array
     }
   }
 
+  require_once __DIR__ . '/hosting_urls.php';
+
+  $sitePrefix = birkly_public_site_url_prefix();
+  $clientScript = birkly_url('/birkly-client.js');
+
   return [
     'site_dir' => birkly_public_site_dir(),
     'site_path' => birkly_public_site_path(),
-    'site_url_prefix' => '/' . birkly_public_site_dir(),
+    'site_url_prefix' => $sitePrefix,
+    'cms_base_path' => birkly_base_path(),
+    'cms_web_base_url' => birkly_cms_web_base_url(),
     'public_url_example' => birkly_public_site_url('/index.html'),
     'allowed_extensions' => $fs->allowedExtensions(),
     'collections' => $collections,
     'templating' => [
-      'script' => '<script src="/birkly-client.js"></script>',
+      'script' => '<script src="' . $clientScript . '"></script>',
       'detail_page_meta' => '<meta name="birkly-page" content="post"><meta name="birkly-collection" content="blog">',
-      'list_loop' => "{for each entry in 'COLLECTION-SLUG' with status = published ordered by newest}\n  <a href=\"/project/detail.html?collection=COLLECTION-SLUG&slug={slug}\">{title}</a>\n{endfor}",
+      'list_loop' => "{for each entry in 'COLLECTION-SLUG' with status = published ordered by newest}\n  <a href=\"" . $sitePrefix . "/detail.html?collection=COLLECTION-SLUG&slug={slug}\">{title}</a>\n{endfor}",
       'detail_page' => "Detail: ?collection=<slug>&slug={slug} in links; body uses { title }, { fields } — no {for each} over the collection on detail HTML.",
       'loop' => "{for each entry in 'blog'}\n  <h2>{title}</h2>\n  <div>{'content'}</div>\n{endfor}",
       'single_entry' => "{from 'blog' get entry 'my-post-slug'}\n  <h1>{title}</h1>\n{endget}",
@@ -384,7 +391,7 @@ function birkly_project_site_info(): array
       'from_block' => "{from 'site_elements' get entry 'navigation'}\n  ...\n{endget}",
       'region' => '<birkly-region collection="site_elements" entry="header"></birkly-region>',
       'rules' => [
-        'ALL asset and page links MUST use site_url_prefix (e.g. /project/css/style.css not /css/style.css)',
+        'ALL asset and page links MUST use site_url_prefix from get_project_info (includes install base when not at web root)',
         'create_entry auto-generates slug from title — use post.html?collection=blog&slug={slug} in list links',
         'Prefer slug URLs over ?id= for detail pages',
         'Collection slugs use single quotes (hyphens allowed: nav-links)',
