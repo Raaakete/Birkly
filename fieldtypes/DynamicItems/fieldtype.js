@@ -620,7 +620,7 @@ window.HaruFieldtypes['dynamicitems'] = {
         }
 
         return block;
-      }.bind(this));
+      });
 
       hiddenInput.value = JSON.stringify(blocksWithValues);
     }
