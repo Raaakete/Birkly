@@ -81,20 +81,29 @@ class Cache {
         }
         
         // Check if cache is still valid (compare with last modification time)
-        $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
-        if (!is_dir($entriesDir)) {
-            return null;
-        }
-        
-        // Get most recent entry modification time
-        $mostRecentEntryTime = $this->getMostRecentEntryTime($entriesDir);
-        
-        // If cache is older than most recent entry, invalidate
-        if (isset($cacheData['cache_time']) && $mostRecentEntryTime > $cacheData['cache_time']) {
-            return null;
+        if ($this->entriesCacheUsesFlatFileMtime()) {
+            $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
+            if (!is_dir($entriesDir)) {
+                return null;
+            }
+
+            $mostRecentEntryTime = $this->getMostRecentEntryTime($entriesDir);
+            if (isset($cacheData['cache_time']) && $mostRecentEntryTime > $cacheData['cache_time']) {
+                return null;
+            }
         }
         
         return $cacheData['entries'];
+    }
+
+    private function entriesCacheUsesFlatFileMtime(): bool
+    {
+        if (!class_exists('StorageFactory')) {
+            require_once __DIR__ . '/storage/StorageFactory.php';
+        }
+
+        $config = StorageFactory::loadStorageConfig(true);
+        return ($config['driver'] ?? 'flatfile') === 'flatfile';
     }
 
     /**
@@ -118,13 +127,15 @@ class Cache {
         }
 
         $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
-        if (!is_dir($entriesDir)) {
-            return null;
-        }
+        if ($this->entriesCacheUsesFlatFileMtime()) {
+            if (!is_dir($entriesDir)) {
+                return null;
+            }
 
-        $mostRecentEntryTime = $this->getMostRecentEntryTime($entriesDir);
-        if (isset($cacheData['cache_time']) && $mostRecentEntryTime > $cacheData['cache_time']) {
-            return null;
+            $mostRecentEntryTime = $this->getMostRecentEntryTime($entriesDir);
+            if (isset($cacheData['cache_time']) && $mostRecentEntryTime > $cacheData['cache_time']) {
+                return null;
+            }
         }
 
         return $cacheData['entries'];
