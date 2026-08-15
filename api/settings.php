@@ -27,11 +27,19 @@ haru_secure_session_start();
 $storage = new Storage('../settings');
 // Handle both JSON and form-encoded data
 $rawInput = file_get_contents('php://input');
+$rawDecoded = [];
 $input = [];
 if (!empty($rawInput)) {
     $decoded = json_decode($rawInput, true);
     if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $rawDecoded = $decoded;
         $input = sanitize_input($decoded);
+        if (isset($rawDecoded['password']) && is_string($rawDecoded['password'])) {
+            $input['password'] = $rawDecoded['password'];
+        }
+        if (isset($rawDecoded['db_password']) && is_string($rawDecoded['db_password'])) {
+            $input['db_password'] = $rawDecoded['db_password'];
+        }
     }
 }
 // Get action from POST, input, or GET (in that order)
@@ -253,6 +261,10 @@ if ($action === 'save_all') {
     if (empty($settings)) {
         echo json_encode(['status' => 'error', 'message' => 'Settings required']);
         exit;
+    }
+    $rawSettings = $rawDecoded['settings'] ?? [];
+    if (array_key_exists('db_password', $rawSettings) && is_string($rawSettings['db_password'])) {
+        $settings['db_password'] = $rawSettings['db_password'];
     }
     
     // Map form field names to settings structure
@@ -478,12 +490,14 @@ if ($action === 'migrate_storage') {
         exit;
     }
 
-    $config = StorageFactory::buildStorageConfigFromInput(array_merge(
-        StorageFactory::loadStorageConfig(true),
-        ['storage_backend' => $driver],
+    $config = StorageFactory::buildStorageConfigFromInput(StorageFactory::mergeDatabaseInput(
+        array_merge(
+            StorageFactory::loadStorageConfig(true),
+            ['storage_backend' => $driver]
+        ),
         $input
     ));
-    $config['driver'] = $driver;
+    $config['driver'] = StorageFactory::normalizeDriver($config['driver'] ?? 'flatfile');
 
     $connectionTest = StorageFactory::testDatabaseConnection($config);
     if (!$connectionTest['ok']) {
@@ -505,7 +519,7 @@ if ($action === 'migrate_storage') {
         exit;
     }
 
-    StorageFactory::saveStorageConfig($config);
+    StorageFactory::saveStorageConfig(StorageFactory::activateMigratedDriver($config, $driver));
     log_security_event('storage_migrated', [
         'user' => $_SESSION['user']['email'] ?? 'unknown',
         'driver' => $driver,
