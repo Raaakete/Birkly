@@ -916,6 +916,14 @@ function birkly_admin_multilang_label_for_id(string $labelForId, string $fieldNa
 }
 
 /**
+ * Inject a language-specific value into rendered fieldtype HTML (after name/id rewrite).
+ */
+function birkly_admin_multilang_apply_field_value(string $html, string $fieldName, string $langCode, $langValue): string
+{
+    return birkly_entry_multilang_apply_field_value($html, $fieldName, $langCode, $langValue);
+}
+
+/**
  * Build per-language field payloads for the entry editor when multilanguage is enabled.
  */
 function birkly_admin_build_language_fields(array $fields, array $entry, array $collectionData, bool $includeFieldHtml): array
@@ -931,7 +939,11 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
         foreach ($fields as $f) {
             $name = $f['name'] ?? '';
             $langField = $f;
-            $langField['lang_value'] = $entry[$langCode][$name] ?? '';
+            $langValue = $entry[$langCode][$name] ?? '';
+            if ($name === 'title' && birkly_entry_title_is_placeholder((string) $langValue, $entry)) {
+                $langValue = '';
+            }
+            $langField['lang_value'] = $langValue;
             if (!empty($langField['label_for_id'])) {
                 $langField['label_for_id'] = birkly_admin_multilang_label_for_id(
                     (string) $langField['label_for_id'],
@@ -941,6 +953,12 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
             }
             if ($includeFieldHtml && !empty($f['html'])) {
                 $langField['html'] = birkly_admin_multilang_field_html($f['html'], $name, $langCode);
+                $langField['html'] = birkly_admin_multilang_apply_field_value(
+                    $langField['html'],
+                    $name,
+                    $langCode,
+                    $langValue
+                );
             }
             $langFields[] = $langField;
         }
