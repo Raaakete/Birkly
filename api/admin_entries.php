@@ -16,6 +16,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/../core/entry_validation.php';
 require_once __DIR__ . '/../core/entry_multilang.php';
+require_once __DIR__ . '/../core/entry_storage.php';
 require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugins.php';
@@ -438,38 +439,20 @@ function saveEntry() {
     }
     
     // Validate collection exists and get schema
-    $baseDir = __DIR__ . "/../content/collections";
-    $collectionDir = sanitize_path($collectionSlug, $baseDir);
-    if ($collectionDir === false || !is_dir($collectionDir)) {
-        // SECURITY FIX: Use generic error message (admin context, but still good practice)
+    if (!birkly_entry_collection_exists($collectionSlug)) {
         return ['status' => 'error', 'message' => 'Invalid collection'];
     }
-    
-    // Load schema to process fieldtypes
-    $schemaFile = sanitize_path('schema.json', $collectionDir);
-    $schema = [];
-    if ($schemaFile !== false && file_exists($schemaFile)) {
-        $schema = json_decode(file_get_contents($schemaFile), true);
-    }
-    
-    // Create entries directory if it doesn't exist
-    $entriesDir = sanitize_path('entries', $collectionDir);
-    if ($entriesDir === false) {
-        return ['status' => 'error', 'message' => 'Invalid entries directory path'];
-    }
-    if (!is_dir($entriesDir)) {
-        mkdir($entriesDir, 0755, true);
-    }
+
+    $schema = birkly_entry_read_schema($collectionSlug);
     
     // Load existing entry if updating
     $entry = null;
     if ($action === 'update' && !empty($entryId)) {
-        $entryFile = sanitize_path($entryId . '.json', $entriesDir);
-        if (file_exists($entryFile)) {
-            $entry = json_decode(file_get_contents($entryFile), true);
+        $entry = birkly_entry_read_record($collectionSlug, $entryId);
+        if ($entry !== null) {
             error_log("DEBUG REVIEWER: Loaded existing entry, reviewer=" . ($entry['reviewer'] ?? 'none') . ", entryId=" . $entryId);
         } else {
-            error_log("DEBUG REVIEWER: Entry file not found: " . $entryFile);
+            error_log("DEBUG REVIEWER: Entry not found in storage: collection=" . $collectionSlug . ", entryId=" . $entryId);
         }
     } else {
         error_log("DEBUG REVIEWER: Not loading entry - action=" . ($action ?? 'none') . ", entryId=" . ($entryId ?? 'none'));
@@ -643,11 +626,7 @@ function saveEntry() {
     }
     
     // Check if collection has multi-language enabled
-    $collectionFile = "$collectionDir/collection.json";
-    $collectionData = [];
-    if (file_exists($collectionFile)) {
-        $collectionData = json_decode(file_get_contents($collectionFile), true);
-    }
+    $collectionData = birkly_entry_read_collection_meta($collectionSlug) ?? [];
     $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
     $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
     
@@ -876,65 +855,54 @@ function saveEntry() {
         unset($entryOutput['deleted_at']);
     }
     
-    // Save entry to file
-    $entryFile = "$entriesDir/$entryId.json";
-    // Ground truth for create vs update (file may not exist even if entry_id was posted).
-    $isNewEntry = ($action === 'create') || !is_file($entryFile);
-    $jsonOutput = json_encode($entryOutput, JSON_PRETTY_PRINT);
-    if ($jsonOutput === false) {
-        error_log("JSON encode error: " . json_last_error_msg());
-        return ['status' => 'error', 'message' => 'Failed to encode entry data: ' . json_last_error_msg()];
+    // Save entry through the configured storage driver
+    $isNewEntry = ($action === 'create') || !birkly_entry_record_exists($collectionSlug, $entryId);
+    if (!birkly_entry_write_record($collectionSlug, $entryId, $entryOutput)) {
+        error_log("Failed to save entry for collection={$collectionSlug}, entryId={$entryId}");
+        return ['status' => 'error', 'message' => 'Failed to save entry'];
     }
-    if (file_put_contents($entryFile, $jsonOutput)) {
-        // Invalidate cache for this collection
-        $cache = new Cache();
-        $cache->invalidateCollection($collectionSlug);
 
-        // Invalidate SSR output cache (P51-M2)
-        require_once __DIR__ . '/../core/project_ssr.php';
-        birkly_project_ssr_invalidate_all();
-
-        // Allow plugins to react to entry save (e.g., sync status with user)
-        if (function_exists('do_action')) {
-            do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
-        }
-        
-        // Trigger automation system (when plugin active)
-        try {
-            require_once __DIR__ . '/../core/automation/bootstrap.php';
-            if (automation_bootstrap()) {
-                $oldStatus = $entry['status'] ?? '';
-                $newStatus = $entryOutput['status'] ?? '';
+    // Allow plugins to react to entry save (e.g., sync status with user)
+    if (function_exists('do_action')) {
+        do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
+    }
+    
+    // Trigger automation system (when plugin active)
+    try {
+        require_once __DIR__ . '/../core/automation/bootstrap.php';
+        if (automation_bootstrap()) {
+            $oldStatus = $entry['status'] ?? '';
+            $newStatus = $entryOutput['status'] ?? '';
+            
+            // Determine trigger type from create/update resolution (not URL action=save).
+            if ($isNewEntry) {
+                enqueue_automation('entry_created', [
+                    'entry' => $entryOutput,
+                    'collection' => $collectionSlug
+                ]);
+            } else {
+                enqueue_automation('entry_updated', [
+                    'entry' => $entryOutput,
+                    'collection' => $collectionSlug,
+                    'old_entry' => $entry
+                ]);
                 
-                // Determine trigger type from create/update resolution (not URL action=save).
-                if ($isNewEntry) {
-                    enqueue_automation('entry_created', [
-                        'entry' => $entryOutput,
-                        'collection' => $collectionSlug
-                    ]);
-                } else {
-                    enqueue_automation('entry_updated', [
+                if ($oldStatus !== $newStatus) {
+                    enqueue_automation('status_changed', [
                         'entry' => $entryOutput,
                         'collection' => $collectionSlug,
-                        'old_entry' => $entry
+                        'from_status' => $oldStatus,
+                        'to_status' => $newStatus
                     ]);
-                    
-                    if ($oldStatus !== $newStatus) {
-                        enqueue_automation('status_changed', [
-                            'entry' => $entryOutput,
-                            'collection' => $collectionSlug,
-                            'from_status' => $oldStatus,
-                            'to_status' => $newStatus
-                        ]);
-                    }
                 }
             }
-        } catch (Throwable $automationError) {
-            error_log('saveEntry: automation trigger skipped: ' . $automationError->getMessage());
         }
-        
-        // Trigger webhooks
-        if (file_exists(__DIR__ . '/webhooks.php')) {
+    } catch (Throwable $automationError) {
+        error_log('saveEntry: automation trigger skipped: ' . $automationError->getMessage());
+    }
+    
+    // Trigger webhooks
+    if (file_exists(__DIR__ . '/webhooks.php')) {
             // Set flag to prevent webhooks.php from executing its switch statement
             $GLOBALS['__HARU_INTERNAL_CALL'] = true;
             require_once __DIR__ . '/webhooks.php';
@@ -1052,11 +1020,6 @@ function saveEntry() {
                 'message' => 'Entry saved successfully'
             ]
         ];
-    } else {
-        $error = error_get_last();
-        error_log("Failed to save entry file: " . ($error['message'] ?? 'Unknown error'));
-        return ['status' => 'error', 'message' => 'Failed to save entry file: ' . ($error['message'] ?? 'Unknown error')];
-    }
 }
 
 function deleteEntry() {
@@ -1191,25 +1154,15 @@ function getCollectionPaths(string $collectionSlug): ?array {
         return null;
     }
 
-    $baseDir = __DIR__ . '/../content/collections';
-    $collectionDir = sanitize_path($collectionSlug, $baseDir);
-    if ($collectionDir === false || !is_dir($collectionDir)) {
+    if (!birkly_entry_collection_exists($collectionSlug)) {
         return null;
-    }
-
-    $entriesDir = sanitize_path('entries', $collectionDir);
-    if ($entriesDir === false) {
-        return null;
-    }
-
-    if (!is_dir($entriesDir)) {
-        mkdir($entriesDir, 0755, true);
     }
 
     return [
         'slug' => $collectionSlug,
-        'collection_dir' => $collectionDir,
-        'entries_dir' => $entriesDir,
+        'collection_dir' => birkly_project_root() . '/content/collections/' . $collectionSlug,
+        'entries_dir' => birkly_project_root() . '/content/collections/' . $collectionSlug . '/entries',
+        'storage_key' => birkly_entry_collection_storage_key($collectionSlug),
     ];
 }
 
@@ -1224,43 +1177,27 @@ function getEntryFilePath(string $collectionSlug, string $entryId): ?string {
         return null;
     }
 
-    $entryFile = sanitize_path($entryId . '.json', $paths['entries_dir']);
-    return $entryFile === false ? null : $entryFile;
+    return $paths['entries_dir'] . '/' . $entryId . '.json';
 }
 
 function loadEntryRecord(string $collectionSlug, string $entryId): ?array {
-    $entryFile = getEntryFilePath($collectionSlug, $entryId);
-    if ($entryFile === null || !is_file($entryFile)) {
+    $collectionSlug = sanitize_identifier($collectionSlug);
+    $entryId = sanitize_identifier($entryId);
+    if ($collectionSlug === false || $entryId === false || $collectionSlug === '' || $entryId === '') {
         return null;
     }
 
-    $entry = json_decode((string) file_get_contents($entryFile), true);
-    return is_array($entry) ? $entry : null;
+    return birkly_entry_read_record($collectionSlug, $entryId);
 }
 
 function persistEntryRecord(string $collectionSlug, string $entryId, array $entryData): bool {
-    $entryFile = getEntryFilePath($collectionSlug, $entryId);
-    if ($entryFile === null) {
+    $collectionSlug = sanitize_identifier($collectionSlug);
+    $entryId = sanitize_identifier($entryId);
+    if ($collectionSlug === false || $entryId === false || $collectionSlug === '' || $entryId === '') {
         return false;
     }
 
-    $encoded = json_encode($entryData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    if ($encoded === false) {
-        return false;
-    }
-
-    $written = file_put_contents($entryFile, $encoded);
-    if ($written === false) {
-        return false;
-    }
-
-    $cache = new Cache();
-    $cache->invalidateCollection($collectionSlug);
-
-    // Invalidate SSR output cache (P51-M2) — covers create/update/delete/bulk.
-    require_once __DIR__ . '/../core/project_ssr.php';
-    birkly_project_ssr_invalidate_all();
-    return true;
+    return birkly_entry_write_record($collectionSlug, $entryId, $entryData);
 }
 
 function ensureUniqueEntrySlug(string $collectionSlug, string $baseSlug, ?string $ignoreEntryId = null): string {
@@ -1277,14 +1214,9 @@ function ensureUniqueEntrySlug(string $collectionSlug, string $baseSlug, ?string
     $candidate = $baseSlug;
     $suffix = 2;
     $existingSlugs = [];
-    foreach (glob($paths['entries_dir'] . '/*.json') ?: [] as $entryFile) {
-        $entryId = basename($entryFile, '.json');
+    foreach (birkly_entry_list_records($collectionSlug) as $entry) {
+        $entryId = (string) ($entry['id'] ?? '');
         if ($ignoreEntryId !== null && $entryId === $ignoreEntryId) {
-            continue;
-        }
-
-        $entry = json_decode((string) file_get_contents($entryFile), true);
-        if (!is_array($entry)) {
             continue;
         }
 
@@ -1465,19 +1397,11 @@ function performBulkOperation() {
     
     // Validate collection exists
     error_log("performBulkOperation: Validating collection");
-    $collectionDir = __DIR__ . "/../content/collections/$collectionSlug";
-    if (!is_dir($collectionDir)) {
-        error_log("performBulkOperation: Collection directory not found: $collectionDir");
-        // SECURITY FIX: Use generic error message (admin context, but still good practice)
+    if (!birkly_entry_collection_exists($collectionSlug)) {
+        error_log("performBulkOperation: Collection not found: $collectionSlug");
         return ['status' => 'error', 'message' => 'Invalid collection'];
     }
-    
-    $entriesDir = "$collectionDir/entries";
-    if (!is_dir($entriesDir)) {
-        error_log("performBulkOperation: Entries directory not found: $entriesDir");
-        return ['status' => 'error', 'message' => 'Entries directory not found'];
-    }
-    error_log("performBulkOperation: Collection and entries directory validated");
+    error_log("performBulkOperation: Collection validated");
     
     // Initialize cache for invalidation
     error_log("performBulkOperation: Initializing cache");
@@ -1492,18 +1416,11 @@ function performBulkOperation() {
     error_log("performBulkOperation: Processing " . count($entryIds) . " entries");
     foreach ($entryIds as $entryId) {
         error_log("performBulkOperation: Processing entry $entryId");
-        $entryFile = "$entriesDir/$entryId.json";
         
-        if (!file_exists($entryFile)) {
+        $entryData = loadEntryRecord($collectionSlug, $entryId);
+        if ($entryData === null) {
             $errorCount++;
             $errors[] = "Entry $entryId not found";
-            continue;
-        }
-        
-        $entryData = json_decode(file_get_contents($entryFile), true);
-        if (!$entryData) {
-            $errorCount++;
-            $errors[] = "Entry $entryId is invalid";
             continue;
         }
         
@@ -1612,11 +1529,7 @@ function bulkFieldEdit(): array {
         return ['status' => 'error', 'message' => 'Invalid collection'];
     }
 
-    $schema = [];
-    $schemaFile = sanitize_path('schema.json', $paths['collection_dir']);
-    if ($schemaFile !== false && is_file($schemaFile)) {
-        $schema = json_decode((string) file_get_contents($schemaFile), true) ?: [];
-    }
+    $schema = birkly_entry_read_schema($collectionSlug);
 
     $fieldDefinition = null;
     foreach (($schema['fields'] ?? []) as $field) {
@@ -1713,26 +1626,19 @@ function bulkFieldEdit(): array {
  * Save version history
  */
 function saveVersionHistory($collectionSlug, $entryId, $entryData) {
-    $versionsDir = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId/versions";
-    if (!is_dir($versionsDir)) {
-        mkdir($versionsDir, 0755, true);
-    }
-    
-    $version = $entryData['version'] ?? 1;
-    $versionFile = "$versionsDir/v{$version}.json";
-    
-    // Get current user for author info
+    $version = (int) ($entryData['version'] ?? 1);
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
     $author = $_SESSION['user']['email'] ?? $_SESSION['user']['name'] ?? 'Unknown';
-    
+
     $versionData = array_merge($entryData, [
         'author' => $author,
-        'created_at' => date('Y-m-d H:i:s')
+        'created_at' => date('Y-m-d H:i:s'),
     ]);
-    
-    file_put_contents($versionFile, json_encode($versionData, JSON_PRETTY_PRINT));
+
+    birkly_entry_write_version($collectionSlug, $entryId, $version, $versionData);
 }
 
 /**
