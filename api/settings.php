@@ -12,6 +12,7 @@ if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
 require_once 'storage.php';
 require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../core/media_storage.php';
 require_once 'users.php';
 require_once 'auth.php';
 require_once 'validate.php';
@@ -192,20 +193,33 @@ if ($action === 'upload_logo') {
         exit;
     }
     
-    // Create admin/assets directory if it doesn't exist
-    $assetsDir = __DIR__ . '/../admin/assets';
-    if (!is_dir($assetsDir)) {
-        mkdir($assetsDir, 0755, true);
-    }
-    
-    // Generate unique filename
     $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-    $filename = 'project-logo-' . uniqid() . '.' . $extension;
-    $filepath = $assetsDir . '/' . $filename;
-    
-    // Move uploaded file
+    if ($extension === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid file extension.']);
+        exit;
+    }
+
+    $brandingFolder = 'branding';
+    $dirResult = birkly_ensure_media_folder($brandingFolder);
+    if (!$dirResult['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $dirResult['message'] ?? 'Media storage folder is not writable.']);
+        exit;
+    }
+
+    $mediaId = 'project-logo-' . str_replace('.', '_', uniqid('', true));
+    if (!birkly_validate_media_id($mediaId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Could not generate a valid logo filename.']);
+        exit;
+    }
+
+    $filepath = birkly_media_file_path($brandingFolder, $mediaId, $extension);
+    if ($filepath === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Media storage folder is not writable.']);
+        exit;
+    }
+
     if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        $logoPath = birkly_url('/admin/assets/' . $filename);
+        $logoPath = birkly_url(birkly_media_public_url($brandingFolder, $mediaId, $extension));
         
         // Save to branding settings
         $branding = $storage->read('branding.json') ?? [];
@@ -214,7 +228,7 @@ if ($action === 'upload_logo') {
         $branding['_updated_by'] = $_SESSION['user']['id'] ?? 'unknown';
         $storage->write('branding.json', $branding);
         
-        log_security_event('logo_uploaded', ['user' => $_SESSION['user']['email'] ?? 'unknown', 'file' => $filename]);
+        log_security_event('logo_uploaded', ['user' => $_SESSION['user']['email'] ?? 'unknown', 'file' => basename($filepath)]);
         echo json_encode([
             'status' => 'ok',
             'message' => 'Logo uploaded successfully',

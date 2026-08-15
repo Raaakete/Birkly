@@ -312,7 +312,7 @@ input[type="file"]::file-selector-button:hover {
 /* ============================================
    Checkbox and radio
    ============================================ */
-input[type="checkbox"],
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input),
 input[type="radio"] {
   appearance: none;
   -webkit-appearance: none;
@@ -330,19 +330,19 @@ input[type="radio"] {
               border-color var(--motion-fast) var(--ease-out);
 }
 
-input[type="checkbox"] { border-radius: 4px; }
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input) { border-radius: 4px; }
 input[type="radio"] { border-radius: 50%; }
 
-input[type="checkbox"]:hover:not(:disabled),
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):hover:not(:disabled),
 input[type="radio"]:hover:not(:disabled) { border-color: var(--border-control-hover); }
 
-input[type="checkbox"]:checked,
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):checked,
 input[type="radio"]:checked {
   background: var(--accent);
   border-color: var(--accent);
 }
 
-input[type="checkbox"]:checked::before {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):checked::before {
   content: "";
   width: 0.55rem;
   height: 0.3rem;
@@ -352,11 +352,11 @@ input[type="checkbox"]:checked::before {
   transform: rotate(-45deg) translateY(-1px);
 }
 
-input[type="checkbox"]:indeterminate {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):indeterminate {
   background: var(--accent);
   border-color: var(--accent);
 }
-input[type="checkbox"]:indeterminate::before {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):indeterminate::before {
   content: "";
   width: 0.55rem;
   height: 2px;
@@ -371,13 +371,13 @@ input[type="radio"]:checked::before {
   background: var(--ink-on-accent);
 }
 
-input[type="checkbox"]:focus-visible,
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):focus-visible,
 input[type="radio"]:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
 }
 
-input[type="checkbox"]:disabled,
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):disabled,
 input[type="radio"]:disabled {
   opacity: 0.5;
   cursor: not-allowed;

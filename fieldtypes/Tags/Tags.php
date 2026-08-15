@@ -42,7 +42,7 @@ class Tags extends BaseField {
         if (is_array($value)) {
             foreach ($value as $tag) {
                 $tagHtml = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
-                $existingChips .= "<div class=\"tag-chip\">{$tagHtml}<span class=\"tag-remove\" onclick=\"window.HaruFieldtypes['tags'].removeTag('{$this->name}', '{$tagHtml}')\">×</span></div>";
+                $existingChips .= "<span class=\"tag-chip\">{$tagHtml}<span class=\"tag-remove\" onclick=\"window.HaruFieldtypes['tags'].removeTag('{$this->name}', '{$tagHtml}')\">×</span></span>";
             }
         }
         
@@ -50,7 +50,7 @@ class Tags extends BaseField {
         <div class="tags-field-container" id="field_{$this->name}">
             <div class="tags-field" id="tags_field_{$this->name}">
                 <div class="tags-chips">{$existingChips}</div>
-                <input type="text" class="input" id="field_{$this->name}_input" placeholder="Add tag and press Enter">
+                <input type="text" class="tags-field-input" id="field_{$this->name}_input" placeholder="Add tag and press Enter">
             </div>
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value="{$valueJson}">
         </div>
@@ -88,11 +88,11 @@ class Tags extends BaseField {
         }
         
         .tags-field {
-            border: 1px solid var(--border-light, #f3f4f6);
+            border: 1px solid var(--border-control, var(--border-light, #e5e7eb));
             border-radius: var(--radius-md, 0.5rem);
-            padding: var(--space-2, 0.5rem);
-            background: var(--bg-primary, #ffffff);
-            min-height: 40px;
+            padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+            background: var(--surface, var(--bg-primary, #ffffff));
+            min-height: var(--control-md, 2.5rem);
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -100,15 +100,12 @@ class Tags extends BaseField {
         }
         
         .tags-field:focus-within {
-            border-color: var(--primary-500, #3b82f6);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: var(--accent, var(--primary-500, #3b82f6));
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #3b82f6) 15%, transparent);
         }
         
         .tags-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: var(--space-2, 0.5rem);
-            flex: 1;
+            display: contents;
         }
         
         .tag-chip {
@@ -140,15 +137,22 @@ class Tags extends BaseField {
             color: var(--text-inverse, #ffffff);
         }
         
+        .tags-field-input,
         .tags-field input {
             border: none;
             outline: none;
             background: transparent;
-            flex: 1;
-            min-width: 120px;
+            flex: 1 1 8rem;
+            min-width: 8rem;
+            width: auto;
+            height: auto;
+            min-height: 0;
             padding: var(--space-1, 0.25rem) 0;
+            margin: 0;
+            box-shadow: none;
             color: var(--text-primary, #20221D);
-            font-size: 1rem;
+            font-size: var(--text-base, 1rem);
+            line-height: var(--leading-snug, 1.375);
         }
         CSS;
     }
