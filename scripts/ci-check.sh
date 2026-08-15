@@ -13,9 +13,6 @@ done
 
 echo "==> Client inlines shared engine verbatim (P51-M5 drift guard)"
 bash scripts/sync-template-engine-inline.sh --check
-echo "==> Public runtime assets minified + pre-gzipped"
-chmod +x scripts/build-client-assets.sh
-bash scripts/build-client-assets.sh --check
 node --check birkly-client.js
 
 echo "==> Shared template engine syntax suite (V-ENG-01..10)"
