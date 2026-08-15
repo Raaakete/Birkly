@@ -44,6 +44,9 @@ php tests/ai_presence_test.php
 echo "==> DynamicItems multilang tests"
 php tests/dynamicitems_multilang_test.php
 
+echo "==> Multilanguage entry save tests"
+php tests/multilang_entry_save_test.php
+
 echo "==> Help snapshot normalization tests"
 php tests/help_docs_snapshot_test.php
 
