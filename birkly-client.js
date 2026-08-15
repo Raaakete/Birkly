@@ -13,8 +13,15 @@
 
     // Configuration
     const Birkly = {
-        // Prefer explicit data-cms-url (external sites) over script.src origin.
+        // Prefer explicit data-cms-url (external sites), meta tag (subdir installs), or script src path.
         cmsUrl: (function() {
+            const meta = document.querySelector('meta[name="birkly-cms-base"]');
+            if (meta) {
+                const fromMeta = (meta.getAttribute('content') || '').trim().replace(/\/$/, '');
+                if (fromMeta) {
+                    return fromMeta;
+                }
+            }
             const attrScript = document.querySelector('script[src*="birkly-client.js"][data-cms-url], script[data-cms-url]');
             if (attrScript) {
                 const fromAttr = (attrScript.getAttribute('data-cms-url') || '').trim().replace(/\/$/, '');
@@ -26,7 +33,8 @@
             for (let script of scripts) {
                 if (script.src && script.src.includes('birkly-client.js')) {
                     const url = new URL(script.src);
-                    return url.origin;
+                    const path = url.pathname.replace(/\/birkly-client\.js\/?$/, '');
+                    return url.origin + (path || '');
                 }
             }
             // Last resort: current origin
@@ -3486,7 +3494,7 @@
         if (!collection) {
             collection = detectCollectionFromTemplate();
         }
-        if (window.location.pathname.includes('/project/')) {
+        if (birklyProjectPathSuffix(window.location.pathname) !== null) {
             if (collection === 'project') collection = 'blog';
             if (!collection) collection = 'blog';
         }
@@ -3748,6 +3756,20 @@
     let urlParams = null;
     
     /**
+     * Project-site path segment (handles subdirectory installs, e.g. /subdir/Birkly/project/…).
+     */
+    function birklyProjectPathSuffix(pathname) {
+        const idx = pathname.indexOf('/project/');
+        if (idx !== -1) {
+            return pathname.substring(idx);
+        }
+        if (pathname.endsWith('/project')) {
+            return '/project';
+        }
+        return null;
+    }
+
+    /**
      * Detect collection name from template or URL
      * IMPORTANT: Ignore /project/ path - that's just the website folder, not a collection
      */
@@ -3761,7 +3783,8 @@
         
         // Try to extract from URL path (but ignore project prefix)
         const path = window.location.pathname;
-        let cleanPath = path.replace(/^\/project/, '');
+        const projectSuffix = birklyProjectPathSuffix(path);
+        let cleanPath = projectSuffix !== null ? projectSuffix.replace(/^\/project/, '') : path;
         
         const pathMatch = cleanPath.match(/\/([^\/]+)\/(?:post|entry|article)/i);
         if (pathMatch && pathMatch[1] !== 'project') {
@@ -3780,7 +3803,7 @@
         if (cleanPath.includes('/post')) return 'blog';
         
         // If we're on a project page, default to 'blog' collection
-        if (path.includes('/project/')) {
+        if (birklyProjectPathSuffix(path) !== null) {
             return 'blog';
         }
         
