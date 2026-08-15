@@ -1,7 +1,4 @@
 <?php
-/**
- * Multi-language entry save helpers.
- */
 
 declare(strict_types=1);
 
@@ -57,6 +54,25 @@ $placeholderEntry = ['id' => 'entry123', 'title' => 'entry123', 'en' => ['title'
 assert_true(
     'detects placeholder title',
     birkly_entry_title_is_placeholder('entry123', $placeholderEntry)
+);
+
+$titleHtml = '<input type="text" name="de[title]" id="field_de_title" value="entry123" class="input">';
+$localized = birkly_entry_multilang_apply_field_value($titleHtml, 'title', 'de', 'Deutscher Titel');
+assert_true(
+    'applies per-language title value to field HTML',
+    strpos($localized, 'value="Deutscher Titel"') !== false
+);
+
+$blocksHtml = '<input type="hidden" name="de[blocks]" id="field_de_blocks_value" value="[]">';
+$localizedBlocks = birkly_entry_multilang_apply_field_value(
+    $blocksHtml,
+    'blocks',
+    'de',
+    '[{"type":"text","name":"hero","value":"Hallo"}]'
+);
+assert_true(
+    'applies per-language dynamic items hidden value',
+    strpos($localizedBlocks, 'Hallo') !== false
 );
 
 exit($failures > 0 ? 1 : 0);
