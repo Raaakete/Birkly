@@ -3,6 +3,8 @@
  * Entry field validation helpers (P30).
  */
 
+require_once __DIR__ . '/entry_multilang.php';
+
 /**
  * Validate required schema fields before persisting an entry.
  *
@@ -40,7 +42,8 @@ function birkly_validate_entry_required_fields(
 
         if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
             foreach ($multilanguageLanguages as $langCode) {
-                $langValue = $entryOutput[$langCode][$fieldName] ?? $entryData[$langCode . '[' . $fieldName . ']'] ?? null;
+                $langValue = $entryOutput[$langCode][$fieldName]
+                    ?? birkly_entry_lang_field_raw($entryData, $langCode, $fieldName);
                 if ($isEmpty($langValue)) {
                     $errors[$fieldName] = $label . ' is required (' . $langCode . ')';
                     break;

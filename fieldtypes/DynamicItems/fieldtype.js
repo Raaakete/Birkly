@@ -299,6 +299,9 @@ window.HaruFieldtypes['dynamicitems'] = {
     value.push(blockData);
     this.renderBlocks(fieldName, value);
     this.updateHiddenInput(fieldName, value);
+    if (this.isMultilangOwnerField(fieldName)) {
+      this.syncMultilangBlocks(fieldName);
+    }
   },
   
   // Render all blocks
@@ -452,6 +455,9 @@ window.HaruFieldtypes['dynamicitems'] = {
     blocks.splice(idx, 1);
     this.renderBlocks(fieldName, blocks);
     this.updateHiddenInput(fieldName, blocks);
+    if (this.isMultilangOwnerField(fieldName)) {
+      this.syncMultilangBlocks(fieldName);
+    }
   },
   
   // Get value from DOM
@@ -604,6 +610,88 @@ window.HaruFieldtypes['dynamicitems'] = {
       
       hiddenInput.value = JSON.stringify(blocksWithValues);
     }
+  },
+
+  getMultilangCodes: function() {
+    return Array.from(document.querySelectorAll('.entry-language-tabs .language-tab-btn'))
+      .map(function(btn) { return btn.dataset.lang || ''; })
+      .filter(Boolean);
+  },
+
+  parseMultilangFieldName: function(fieldName) {
+    const langs = this.getMultilangCodes().slice().sort(function(a, b) { return b.length - a.length; });
+    for (let i = 0; i < langs.length; i++) {
+      const lang = langs[i];
+      const prefix = lang + '_';
+      if (fieldName.indexOf(prefix) === 0) {
+        return { lang: lang, baseName: fieldName.slice(prefix.length) };
+      }
+    }
+    return null;
+  },
+
+  isMultilangOwnerField: function(fieldName) {
+    const container = document.getElementById('field_' + fieldName);
+    return !!(container && container.getAttribute('data-dynamicitems-owner') === '1');
+  },
+
+  cloneBlockStructure: function(block) {
+    return {
+      type: block.type,
+      name: block.name,
+      label: block.label,
+      required: !!block.required,
+      settings: block.settings ? JSON.parse(JSON.stringify(block.settings)) : {},
+      value: block.value !== undefined ? block.value : null,
+    };
+  },
+
+  syncMultilangBlocks: function(sourceFieldName) {
+    const parsed = this.parseMultilangFieldName(sourceFieldName);
+    if (!parsed) {
+      return;
+    }
+
+    const sourceBlocks = this.getValue(sourceFieldName).map(this.cloneBlockStructure.bind(this));
+    const langs = this.getMultilangCodes();
+    if (langs.length < 2) {
+      return;
+    }
+
+    langs.forEach((lang) => {
+      if (lang === parsed.lang) {
+        return;
+      }
+
+      const targetFieldName = lang + '_' + parsed.baseName;
+      const targetContainer = document.getElementById('field_' + targetFieldName);
+      if (!targetContainer) {
+        return;
+      }
+
+      const existingValues = {};
+      this.getValue(targetFieldName).forEach(function(block) {
+        if (block && block.name) {
+          existingValues[block.name] = block.value;
+        }
+      });
+
+      const synced = sourceBlocks.map(function(block) {
+        const next = this.cloneBlockStructure(block);
+        if (Object.prototype.hasOwnProperty.call(existingValues, block.name)) {
+          next.value = existingValues[block.name];
+        } else {
+          next.value = null;
+        }
+        return next;
+      }.bind(this));
+
+      this.renderBlocks(targetFieldName, synced);
+      const hiddenInput = document.getElementById('field_' + targetFieldName + '_value');
+      if (hiddenInput) {
+        hiddenInput.value = JSON.stringify(synced);
+      }
+    });
   },
   
   // Get field config from DOM
