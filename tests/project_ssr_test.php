@@ -211,6 +211,12 @@ try {
     assert_true('cache_put succeeds', birkly_project_ssr_cache_put($key, '<html>cached</html>', 60, '/index.html', 'rev123') === true);
     assert_true('cache_get hit returns html', birkly_project_ssr_cache_get($key, 60) === '<html>cached</html>');
 
+    // Source mtime/size mismatch busts stale cache even when TTL + revision key match.
+    $fp = ['mtime' => 100, 'size' => 20, 'path' => '/tmp/stale.html'];
+    assert_true('cache_put stores source fingerprint', birkly_project_ssr_cache_put($key, '<html>cached</html>', 60, '/index.html', 'rev123', $fp) === true);
+    $liveFp = ['mtime' => 101, 'size' => 20, 'path' => '/tmp/stale.html'];
+    assert_true('cache_get rejects stale source mtime', birkly_project_ssr_cache_get($key, 60, $liveFp) === null);
+
     // TTL expiry: rewrite meta created_at into the past.
     $metaFile = birkly_project_ssr_cache_dir() . '/' . $key . '.meta.json';
     $meta = json_decode((string) file_get_contents($metaFile), true);

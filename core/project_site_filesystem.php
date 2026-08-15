@@ -160,6 +160,17 @@ class ProjectSiteFileSystem
     ];
   }
 
+  private function invalidateSsrForPath(string $relativePath): void
+  {
+    $ext = strtolower(pathinfo($this->normalizeRelative($relativePath), PATHINFO_EXTENSION));
+    if (!in_array($ext, ['html', 'htm'], true)) {
+      return;
+    }
+    require_once __DIR__ . '/project_ssr.php';
+    $prefix = '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
+    birkly_project_ssr_invalidate_by_prefix($prefix);
+  }
+
   public function writeFile(string $relativePath, string $content): bool
   {
     $full = $this->resolvePath($relativePath, true);
@@ -170,7 +181,11 @@ class ProjectSiteFileSystem
     if (!is_dir($parent)) {
       mkdir($parent, 0755, true);
     }
-    return file_put_contents($full, $content) !== false;
+    $ok = file_put_contents($full, $content) !== false;
+    if ($ok) {
+      $this->invalidateSsrForPath($relativePath);
+    }
+    return $ok;
   }
 
   public function createFile(string $relativePath, string $content = ''): bool
@@ -188,7 +203,11 @@ class ProjectSiteFileSystem
     if ($full === null || !is_file($full) || !$this->isAllowedPath($relativePath)) {
       return false;
     }
-    return unlink($full);
+    $ok = unlink($full);
+    if ($ok) {
+      $this->invalidateSsrForPath($relativePath);
+    }
+    return $ok;
   }
 
   /**
@@ -367,9 +386,10 @@ function birkly_project_site_info(): array
   }
 
   require_once __DIR__ . '/hosting_urls.php';
+  require_once __DIR__ . '/build_info.php';
 
   $sitePrefix = birkly_public_site_url_prefix();
-  $clientScript = birkly_url('/birkly-client.js');
+  $clientScript = birkly_public_runtime_asset_url('birkly-client.js');
 
   return [
     'site_dir' => birkly_public_site_dir(),

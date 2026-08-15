@@ -9,6 +9,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
 
+COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/nginx-site.conf /etc/nginx/conf.d/default.conf
 COPY docker/php-production.ini /usr/local/etc/php/conf.d/99-birkly-production.ini
 WORKDIR /app
@@ -22,6 +23,9 @@ COPY . /app
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
     && chmod +x /app/scripts/plugin-dev-git-sync.sh /app/scripts/plugin-dev-sync-enable.sh /app/scripts/plugin-dev-sync-start-loop.sh \
+    && chmod +x /app/scripts/sync-template-engine-inline.sh /app/scripts/build-client-assets.sh \
+    && bash /app/scripts/sync-template-engine-inline.sh \
+    && bash /app/scripts/build-client-assets.sh \
     && echo "$BIRKLY_BUILD_REVISION" > /app/BUILD_REVISION \
     && mkdir -p content media settings users data cache logs temp plugins themes
 
