@@ -318,8 +318,8 @@ if ($action === 'overview') {
         'data' => [
             'site_dir' => birkly_public_site_dir(),
             'site_path' => birkly_public_site_path(),
-            'public_url' => birkly_public_site_url('/index.html'),
-            'visit_url' => birkly_public_site_url(is_file($indexPath) ? '/index.html' : '/'),
+            'public_url' => birkly_public_site_visit_url(),
+            'visit_url' => birkly_public_site_visit_url(),
             'has_index' => is_file($indexPath),
             'starter' => birkly_project_site_starter_label(),
             'last_change' => $lastChange,
@@ -482,7 +482,7 @@ if ($action === 'save_settings') {
             'hosting_type' => (string) ($settings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($settings['ssr_cache_ttl'] ?? 300),
             'ssr_cache_invalidated' => $renderSettings['ssr_affected'],
-            'visit_url' => birkly_public_site_url(is_file($indexPath) ? '/index.html' : '/'),
+            'visit_url' => birkly_public_site_visit_url(),
             'has_index' => is_file($indexPath),
         ],
     ]);

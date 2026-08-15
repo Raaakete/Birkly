@@ -14,11 +14,7 @@ $projectTabSettings = $projectSettingsStorage->read('project.json') ?? [];
 $showVisitProjectButton = !empty($projectTabSettings['show_visit_button']);
 $visitProjectUrl = '';
 if ($showVisitProjectButton) {
-    birkly_ensure_public_site_path();
-    $indexFile = birkly_public_site_path() . '/index.html';
-    $visitProjectUrl = is_file($indexFile)
-        ? birkly_public_site_url('/index.html')
-        : birkly_public_site_url('/');
+    $visitProjectUrl = birkly_public_site_visit_url();
 }
 ?>
 <header class="admin-topbar" id="admin-topbar">

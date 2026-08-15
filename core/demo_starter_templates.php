@@ -401,9 +401,9 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
         'removed' => $removed,
         'source' => (string) ($download['source'] ?? 'ops'),
         'message' => 'Starter template installed',
-        'visit_url' => function_exists('birkly_public_site_url')
-            ? birkly_public_site_url('/index.html')
-            : '',
+        'visit_url' => function_exists('birkly_public_site_visit_url')
+            ? birkly_public_site_visit_url()
+            : (function_exists('birkly_public_site_url') ? birkly_public_site_url('/') : ''),
     ];
 }
 
