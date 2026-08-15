@@ -318,8 +318,10 @@ if ($action === 'overview') {
         'data' => [
             'site_dir' => birkly_public_site_dir(),
             'site_path' => birkly_public_site_path(),
-            'public_url' => birkly_public_site_visit_url(),
-            'visit_url' => birkly_public_site_visit_url(),
+            'public_url' => birkly_public_site_visit_url($projectSettings),
+            'visit_url' => birkly_public_site_visit_url($projectSettings),
+            'visit_url_format' => birkly_normalize_visit_url_format((string) ($projectSettings['visit_url_format'] ?? 'auto')),
+            'visit_url_format_resolved' => birkly_resolve_visit_url_format($projectSettings),
             'has_index' => is_file($indexPath),
             'starter' => birkly_project_site_starter_label(),
             'last_change' => $lastChange,
@@ -443,6 +445,10 @@ if ($action === 'save_settings') {
         $patch['show_visit_button'] = filter_var($input['show_visit_button'], FILTER_VALIDATE_BOOLEAN);
     }
 
+    if (array_key_exists('visit_url_format', $input)) {
+        $patch['visit_url_format'] = birkly_normalize_visit_url_format((string) $input['visit_url_format']);
+    }
+
     // Render / SSR controls (P51-M3): whitelist + clamp.
     $renderSettings = birkly_project_ssr_validate_render_settings($input);
     if ($renderSettings['error'] !== null) {
@@ -478,11 +484,13 @@ if ($action === 'save_settings') {
         'message' => 'Project settings saved',
         'data' => [
             'show_visit_button' => (bool) ($settings['show_visit_button'] ?? false),
+            'visit_url_format' => birkly_normalize_visit_url_format((string) ($settings['visit_url_format'] ?? 'auto')),
+            'visit_url_format_resolved' => birkly_resolve_visit_url_format($settings),
             'render_mode' => (string) ($settings['render_mode'] ?? 'server'),
             'hosting_type' => (string) ($settings['hosting_type'] ?? 'birkly'),
             'ssr_cache_ttl' => (int) ($settings['ssr_cache_ttl'] ?? 300),
             'ssr_cache_invalidated' => $renderSettings['ssr_affected'],
-            'visit_url' => birkly_public_site_visit_url(),
+            'visit_url' => birkly_public_site_visit_url($settings),
             'has_index' => is_file($indexPath),
         ],
     ]);

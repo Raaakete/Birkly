@@ -22,6 +22,8 @@ function birkly_project_settings_defaults(): array
 {
     return [
         'show_visit_button' => false,
+        // Visit project URL: auto (recommended) | directory (site root) | index (/index.html).
+        'visit_url_format' => 'auto',
         // P51: server-side render controls.
         // P52-M3: server is the default for Birkly-hosted projects (PHP-only
         // in-process engine, no Node). Applies to missing/unset keys only —

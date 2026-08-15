@@ -100,13 +100,68 @@ function birkly_project_prepare_html_for_serve(string $html): string
     return $meta . "\n" . $html;
 }
 
+/** @return list<string> */
+function birkly_visit_url_format_options(): array
+{
+    return ['auto', 'directory', 'index'];
+}
+
+function birkly_normalize_visit_url_format(string $value): string
+{
+    $value = strtolower(trim($value));
+    return in_array($value, birkly_visit_url_format_options(), true) ? $value : 'auto';
+}
+
+/**
+ * Resolve visit_url_format to directory | index (auto picks based on hosting/SSR).
+ *
+ * @param array<string,mixed>|null $settings
+ */
+function birkly_resolve_visit_url_format(?array $settings = null): string
+{
+    if ($settings === null) {
+        require_once __DIR__ . '/project_settings.php';
+        $settings = birkly_load_project_settings();
+    }
+
+    $format = birkly_normalize_visit_url_format((string) ($settings['visit_url_format'] ?? 'auto'));
+    if ($format !== 'auto') {
+        return $format;
+    }
+
+    require_once __DIR__ . '/hosting_urls.php';
+
+    // Subdirectory installs, SSR, and clean public URLs need the site root — explicit
+    // index.html is often served as a static file and skips PHP routing.
+    if (birkly_base_path() !== '') {
+        return 'directory';
+    }
+
+    require_once __DIR__ . '/project_ssr.php';
+    if (birkly_project_ssr_enabled()) {
+        return 'directory';
+    }
+
+    $hosting = birkly_hosting_load();
+    if (($hosting['public_site_mode'] ?? 'none') === 'project' && birkly_hosting_public_base_url() !== '') {
+        return 'directory';
+    }
+
+    $indexFile = birkly_public_site_path() . '/index.html';
+    return is_file($indexFile) ? 'index' : 'directory';
+}
+
 /**
  * Public URL for the project site home page (Visit project button, previews).
- * Always the site root — never /index.html.
  */
-function birkly_public_site_visit_url(): string
+function birkly_public_site_visit_url(?array $settings = null): string
 {
     birkly_ensure_public_site_path();
+
+    $format = birkly_resolve_visit_url_format($settings);
+    if ($format === 'index' && is_file(birkly_public_site_path() . '/index.html')) {
+        return birkly_public_site_url('/index.html');
+    }
 
     return birkly_public_site_url('/');
 }
@@ -118,12 +173,6 @@ function birkly_public_site_url(string $suffix = '/'): string
     $suffix = $suffix === '' ? '/' : $suffix;
     if ($suffix[0] !== '/') {
         $suffix = '/' . $suffix;
-    }
-
-    // Prefer site root over /index.html — explicit index.html is often served as a
-    // raw static file (Apache/LiteSpeed) and skips SSR + subdirectory path rewrite.
-    if ($suffix === '/index.html') {
-        $suffix = '/';
     }
 
     $config = birkly_hosting_load();

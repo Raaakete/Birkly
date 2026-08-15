@@ -94,12 +94,16 @@ with_server_env([
     assert_true('client snippet uses web base', str_contains($snippet, 'data-cms-url="http://example.test/sites/demo/Birkly"'));
     assert_true('client snippet src prefixed', str_contains($snippet, '/sites/demo/Birkly/birkly-client.js'));
     assert_true(
-        'visit url uses site root not index.html',
+        'auto visit url uses site root on subdirectory install',
         birkly_public_site_visit_url() === '/sites/demo/Birkly/project/'
     );
     assert_true(
-        'index.html suffix normalizes to site root',
-        birkly_public_site_url('/index.html') === birkly_public_site_url('/')
+        'explicit index format uses index.html',
+        birkly_public_site_visit_url(['visit_url_format' => 'index']) === '/sites/demo/Birkly/project/index.html'
+    );
+    assert_true(
+        'resolve auto picks directory for subdir',
+        birkly_resolve_visit_url_format(['visit_url_format' => 'auto']) === 'directory'
     );
 });
 
@@ -111,6 +115,16 @@ with_server_env([
 ], static function () use ($sampleHtml): void {
     assert_true('root install: no rewrite', birkly_project_rewrite_install_paths($sampleHtml) === $sampleHtml);
     assert_true('root install: prefix stays /project', birkly_public_site_url_prefix() === '/project');
+    $indexExists = is_file(birkly_public_site_path() . '/index.html');
+    $autoResolved = birkly_resolve_visit_url_format(['visit_url_format' => 'auto']);
+    assert_true(
+        'auto on root install follows index presence',
+        ($indexExists && $autoResolved === 'index') || (!$indexExists && $autoResolved === 'directory')
+    );
+    assert_true(
+        'directory format ignores index.html suffix',
+        birkly_public_site_visit_url(['visit_url_format' => 'directory']) === '/project/'
+    );
 });
 
 echo PHP_EOL . 'birkly_subdir_project_paths_test: ' . ($failures === 0 ? 'PASS' : "FAIL ($failures)") . PHP_EOL;

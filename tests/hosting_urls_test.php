@@ -52,8 +52,12 @@ try {
     assert_true('public host role', birkly_request_host_role() === 'public');
     assert_true('clean public url', birkly_public_site_url('/about.html') === 'https://birkly.cloud/about.html');
     assert_true(
-        'visit home uses public root not index.html',
-        birkly_public_site_url('/index.html') === 'https://birkly.cloud/'
+        'auto visit home uses public root on clean URL host',
+        birkly_public_site_visit_url(['visit_url_format' => 'auto']) === 'https://birkly.cloud/'
+    );
+    assert_true(
+        'explicit index visit url keeps index.html',
+        birkly_public_site_visit_url(['visit_url_format' => 'index']) === 'https://birkly.cloud/index.html'
     );
     assert_true('admin redirect on public host', birkly_hosting_should_redirect_admin() === true);
     assert_true(
