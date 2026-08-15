@@ -29,7 +29,7 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
 const enginePath = path.join(ROOT, 'birkly-template-engine.js');
 const reexportPath = path.join(ROOT, 'birkly-client-modules', 'birkly-render.js');
-const clientPath = path.join(ROOT, 'birkly-client.js');
+const clientPath = path.join(ROOT, 'birkly-client.source.js');
 
 const engine = require(enginePath);
 

@@ -48,9 +48,10 @@ function birkly_project_rewrite_install_paths(string $html): string
     }
 
     $projectPrefix = birkly_public_site_url_prefix();
-    $clientSrc = birkly_url('/birkly-client.js');
-    $webmcpSrc = birkly_url('/birkly-webmcp.js');
-    $hydrateSrc = birkly_url('/birkly-hydrate.js');
+    require_once __DIR__ . '/build_info.php';
+    $clientSrc = birkly_public_runtime_asset_url('birkly-client.js');
+    $webmcpSrc = birkly_public_runtime_asset_url('birkly-webmcp.js');
+    $hydrateSrc = birkly_public_runtime_asset_url('birkly-hydrate.js');
 
     $replacements = [
         'href="/project/' => 'href="' . $projectPrefix . '/',

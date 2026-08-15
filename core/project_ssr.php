@@ -513,9 +513,29 @@ function birkly_project_ssr_cache_key(string $relativePath, array $query, string
 }
 
 /**
- * Read cached HTML if present and within TTL.
+ * Fingerprint of a project HTML source file for SSR cache validation.
+ *
+ * @return array{mtime:int,size:int,path:string}|null
  */
-function birkly_project_ssr_cache_get(string $key, int $ttl): ?string
+function birkly_project_ssr_source_fingerprint(string $filePath): ?array
+{
+    $real = realpath($filePath);
+    if ($real === false || !is_file($real)) {
+        return null;
+    }
+    return [
+        'mtime' => (int) filemtime($real),
+        'size' => (int) filesize($real),
+        'path' => $real,
+    ];
+}
+
+/**
+ * Read cached HTML if present and within TTL.
+ *
+ * @param array{mtime:int,size:int,path:string}|null $sourceFingerprint
+ */
+function birkly_project_ssr_cache_get(string $key, int $ttl, ?array $sourceFingerprint = null): ?string
 {
     $dir = birkly_project_ssr_cache_dir();
     $metaFile = $dir . '/' . $key . '.meta.json';
@@ -534,14 +554,34 @@ function birkly_project_ssr_cache_get(string $key, int $ttl): ?string
         @unlink($htmlFile);
         return null;
     }
+    if ($sourceFingerprint !== null) {
+        $storedMtime = (int) ($meta['source_mtime'] ?? 0);
+        $storedSize = (int) ($meta['source_size'] ?? 0);
+        $liveMtime = (int) ($sourceFingerprint['mtime'] ?? 0);
+        $liveSize = (int) ($sourceFingerprint['size'] ?? 0);
+        if ($storedMtime !== $liveMtime || $storedSize !== $liveSize) {
+            @unlink($metaFile);
+            @unlink($htmlFile);
+            return null;
+        }
+    }
     $html = @file_get_contents($htmlFile);
     return $html === false ? null : $html;
 }
 
 /**
  * Persist rendered HTML + metadata.
+ *
+ * @param array{mtime:int,size:int,path:string}|null $sourceFingerprint
  */
-function birkly_project_ssr_cache_put(string $key, string $html, int $ttl, string $relativePath = '', string $revision = ''): bool
+function birkly_project_ssr_cache_put(
+    string $key,
+    string $html,
+    int $ttl,
+    string $relativePath = '',
+    string $revision = '',
+    ?array $sourceFingerprint = null
+): bool
 {
     if (!birkly_project_ssr_ensure_cache_dir()) {
         return false;
@@ -553,6 +593,11 @@ function birkly_project_ssr_cache_put(string $key, string $html, int $ttl, strin
         'path' => $relativePath,
         'revision' => $revision,
     ];
+    if ($sourceFingerprint !== null) {
+        $meta['source_mtime'] = (int) ($sourceFingerprint['mtime'] ?? 0);
+        $meta['source_size'] = (int) ($sourceFingerprint['size'] ?? 0);
+        $meta['source_path'] = (string) ($sourceFingerprint['path'] ?? '');
+    }
     $okMeta = @file_put_contents($dir . '/' . $key . '.meta.json', json_encode($meta)) !== false;
     $okHtml = @file_put_contents($dir . '/' . $key . '.html', $html) !== false;
     return $okMeta && $okHtml;
@@ -659,7 +704,8 @@ function birkly_project_ssr_inject_webmcp(string $html): string
     // register tools synchronously on boot (no async fetch race) — this is what
     // lets Lighthouse / CDP-driven agent browsers see registered tools reliably.
     if (birkly_webmcp_is_enabled() && stripos($html, 'birkly-webmcp.js') === false) {
-        $src = htmlspecialchars(birkly_url('/birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
+        require_once __DIR__ . '/build_info.php';
+        $src = htmlspecialchars(birkly_public_runtime_asset_url('birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
         $inline = birkly_webmcp_inline_config_script();
         $tag = $inline . "\n    " . '<script src="' . $src . '" defer></script>';
         if (stripos($html, '</body>') !== false) {
@@ -761,9 +807,10 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     $revision = birkly_page_bundle_compute_revision($storage, $revisionRequests, $language, [$filePath]);
 
     $cacheKey = birkly_project_ssr_cache_key($relative, $query, $language, $revision);
+    $sourceFingerprint = birkly_project_ssr_source_fingerprint($filePath);
 
     if ($ttl > 0) {
-        $cached = birkly_project_ssr_cache_get($cacheKey, $ttl);
+        $cached = birkly_project_ssr_cache_get($cacheKey, $ttl, $sourceFingerprint);
         if ($cached !== null) {
             birkly_project_ssr_send($cached, 'HIT');
             return true;
@@ -781,7 +828,14 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
 
     $cacheWrite = 'skip';
     if ($ttl > 0) {
-        $cacheWrite = birkly_project_ssr_cache_put($cacheKey, $rendered, $ttl, $relative, $revision) ? 'ok' : 'fail';
+        $cacheWrite = birkly_project_ssr_cache_put(
+            $cacheKey,
+            $rendered,
+            $ttl,
+            $relative,
+            $revision,
+            $sourceFingerprint
+        ) ? 'ok' : 'fail';
     }
 
     birkly_project_ssr_send($rendered, 'MISS', $cacheWrite);
