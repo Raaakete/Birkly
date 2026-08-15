@@ -74,3 +74,52 @@ function birkly_entry_title_is_placeholder(string $title, array $entry): bool
     $entryId = trim((string) ($entry['id'] ?? ''));
     return $entryId !== '' && $title === $entryId;
 }
+
+/**
+ * Inject a language-specific value into rendered fieldtype HTML (after name/id rewrite).
+ */
+function birkly_entry_multilang_apply_field_value(string $html, string $fieldName, string $langCode, $langValue): string
+{
+    if ($html === '' || $fieldName === '' || $langCode === '') {
+        return $html;
+    }
+
+    if ($langValue === null || $langValue === '') {
+        return $html;
+    }
+
+    if (is_array($langValue)) {
+        $encoded = htmlspecialchars(
+            json_encode($langValue, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ENT_QUOTES,
+            'UTF-8'
+        );
+    } else {
+        $stringValue = (string) $langValue;
+        if ($stringValue === '') {
+            return $html;
+        }
+        $encoded = htmlspecialchars($stringValue, ENT_QUOTES, 'UTF-8');
+    }
+
+    $langFieldId = 'field_' . $langCode . '_' . $fieldName;
+    $hiddenId = $langFieldId . '_value';
+
+    foreach ([$hiddenId, $langFieldId] as $elementId) {
+        foreach (['"', "'"] as $quote) {
+            $q = preg_quote($quote, '/');
+            $pattern = '/(\bid=' . $q . preg_quote($elementId, '/') . $q . '[^>]*\bvalue=' . $q . ')([^' . $q . ']*?)(' . $q . ')/i';
+            if (preg_match($pattern, $html)) {
+                return preg_replace($pattern, '${1}' . $encoded . '${3}', $html, 1);
+            }
+
+            $pattern = '/(\bvalue=' . $q . ')([^' . $q . ']*?)(' . $q . '[^>]*\bid=' . $q . preg_quote($elementId, '/') . $q . ')/i';
+            if (preg_match($pattern, $html)) {
+                return preg_replace($pattern, '${1}' . $encoded . '${3}', $html, 1);
+            }
+        }
+    }
+
+    return $html;
+}
+

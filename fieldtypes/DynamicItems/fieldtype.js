@@ -464,35 +464,38 @@ window.HaruFieldtypes['dynamicitems'] = {
   getValue: function(fieldName) {
     const container = document.getElementById('field_' + fieldName);
     if (!container) return [];
-    
+
+    const hiddenBlocks = this.readHiddenBlocksValue(fieldName);
+    const hiddenByName = {};
+    hiddenBlocks.forEach(function(block) {
+      if (block && block.name) {
+        hiddenByName[block.name] = block;
+      }
+    });
+
     const blocks = [];
     const blockElements = container.querySelectorAll('.block-item');
-    
+
     blockElements.forEach((blockElement) => {
-      // Use actual data attributes from the element instead of forEach index
-      // This ensures correct retrieval even if blocks were deleted or reordered
       const blockIdx = blockElement.getAttribute('data-block-idx');
       const blockName = blockElement.getAttribute('data-block-name');
       const blockData = this.getBlockDataFromDom(fieldName, blockName, blockIdx);
-      if (blockData) {
-        blocks.push(blockData);
+      if (!blockData) {
+        return;
       }
+
+      const hasDomValue = blockData.value !== null && blockData.value !== undefined && blockData.value !== '';
+      if (!hasDomValue && blockName && hiddenByName[blockName]) {
+        blockData.value = hiddenByName[blockName].value;
+      }
+
+      blocks.push(blockData);
     });
-    
-    // If no blocks in DOM, try to read from hidden input
+
     if (blocks.length === 0) {
-      const hiddenInput = document.getElementById('field_' + fieldName + '_value');
-      if (hiddenInput && hiddenInput.value) {
-        try {
-          const parsed = JSON.parse(hiddenInput.value);
-          return Array.isArray(parsed) ? parsed : [];
-        } catch (e) {
-          console.error('Failed to parse Dynamic Items value:', e);
-          return [];
-        }
-      }
+      return hiddenBlocks;
     }
-    
+
     return blocks;
   },
   
@@ -591,23 +594,34 @@ window.HaruFieldtypes['dynamicitems'] = {
   updateHiddenInput: function(fieldName, blocks) {
     const hiddenInput = document.getElementById('field_' + fieldName + '_value');
     if (hiddenInput) {
-      // Get current values from DOM before saving
+      const hiddenBlocks = this.readHiddenBlocksValue(fieldName);
+      const hiddenByName = {};
+      hiddenBlocks.forEach(function(block) {
+        if (block && block.name) {
+          hiddenByName[block.name] = block;
+        }
+      });
+
       const blocksWithValues = blocks.map((block, idx) => {
         const container = document.getElementById('field_' + fieldName);
         if (!container) return block;
-        
+
         const blockElement = container.querySelector(`[data-block-idx="${idx}"]`);
         if (!blockElement) return block;
-        
+
         const contentContainer = blockElement.querySelector('.block-item-content');
         if (contentContainer) {
-          const value = this.extractFieldtypeValue(contentContainer, block.type);
+          let value = this.extractFieldtypeValue(contentContainer, block.type);
+          const hasDomValue = value !== null && value !== undefined && value !== '';
+          if (!hasDomValue && block.name && hiddenByName[block.name]) {
+            value = hiddenByName[block.name].value;
+          }
           return { ...block, value: value };
         }
-        
+
         return block;
-      });
-      
+      }.bind(this));
+
       hiddenInput.value = JSON.stringify(blocksWithValues);
     }
   },
@@ -642,8 +656,22 @@ window.HaruFieldtypes['dynamicitems'] = {
       label: block.label,
       required: !!block.required,
       settings: block.settings ? JSON.parse(JSON.stringify(block.settings)) : {},
-      value: block.value !== undefined ? block.value : null,
     };
+  },
+
+  readHiddenBlocksValue: function(fieldName) {
+    const hiddenInput = document.getElementById('field_' + fieldName + '_value');
+    if (!hiddenInput || !hiddenInput.value) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(hiddenInput.value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Failed to parse Dynamic Items hidden value:', e);
+      return [];
+    }
   },
 
   syncMultilangBlocks: function(sourceFieldName) {
@@ -652,7 +680,7 @@ window.HaruFieldtypes['dynamicitems'] = {
       return;
     }
 
-    const sourceBlocks = this.getValue(sourceFieldName).map(this.cloneBlockStructure.bind(this));
+    const sourceBlocks = this.readHiddenBlocksValue(sourceFieldName).map(this.cloneBlockStructure.bind(this));
     const langs = this.getMultilangCodes();
     if (langs.length < 2) {
       return;
@@ -670,7 +698,7 @@ window.HaruFieldtypes['dynamicitems'] = {
       }
 
       const existingValues = {};
-      this.getValue(targetFieldName).forEach(function(block) {
+      this.readHiddenBlocksValue(targetFieldName).forEach(function(block) {
         if (block && block.name) {
           existingValues[block.name] = block.value;
         }
@@ -857,6 +885,12 @@ if (document.readyState === 'loading') {
 
 // Listen for save events
 document.addEventListener('beforeSaveEntry', function() {
+  if (window.ContentEditorSync && typeof window.ContentEditorSync.syncWrapperToHidden === 'function') {
+    document.querySelectorAll('.block-field .content-editor-wrapper').forEach(function(wrapper) {
+      window.ContentEditorSync.syncWrapperToHidden(wrapper, true);
+    });
+  }
+
   const dynamicItemsFields = document.querySelectorAll('.block-field');
   dynamicItemsFields.forEach(field => {
     const fieldName = field.id.replace('field_', '');
