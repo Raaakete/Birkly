@@ -51,6 +51,10 @@ try {
     $_SERVER['HTTP_HOST'] = 'birkly.cloud';
     assert_true('public host role', birkly_request_host_role() === 'public');
     assert_true('clean public url', birkly_public_site_url('/about.html') === 'https://birkly.cloud/about.html');
+    assert_true(
+        'visit home uses public root not index.html',
+        birkly_public_site_url('/index.html') === 'https://birkly.cloud/'
+    );
     assert_true('admin redirect on public host', birkly_hosting_should_redirect_admin() === true);
     assert_true(
         'admin canonical url',

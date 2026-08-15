@@ -100,6 +100,17 @@ function birkly_project_prepare_html_for_serve(string $html): string
     return $meta . "\n" . $html;
 }
 
+/**
+ * Public URL for the project site home page (Visit project button, previews).
+ * Always the site root — never /index.html.
+ */
+function birkly_public_site_visit_url(): string
+{
+    birkly_ensure_public_site_path();
+
+    return birkly_public_site_url('/');
+}
+
 function birkly_public_site_url(string $suffix = '/'): string
 {
     require_once __DIR__ . '/hosting_urls.php';
@@ -107,6 +118,12 @@ function birkly_public_site_url(string $suffix = '/'): string
     $suffix = $suffix === '' ? '/' : $suffix;
     if ($suffix[0] !== '/') {
         $suffix = '/' . $suffix;
+    }
+
+    // Prefer site root over /index.html — explicit index.html is often served as a
+    // raw static file (Apache/LiteSpeed) and skips SSR + subdirectory path rewrite.
+    if ($suffix === '/index.html') {
+        $suffix = '/';
     }
 
     $config = birkly_hosting_load();

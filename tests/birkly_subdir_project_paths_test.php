@@ -93,6 +93,14 @@ with_server_env([
     $snippet = birkly_hosting_client_snippet();
     assert_true('client snippet uses web base', str_contains($snippet, 'data-cms-url="http://example.test/sites/demo/Birkly"'));
     assert_true('client snippet src prefixed', str_contains($snippet, '/sites/demo/Birkly/birkly-client.js'));
+    assert_true(
+        'visit url uses site root not index.html',
+        birkly_public_site_visit_url() === '/sites/demo/Birkly/project/'
+    );
+    assert_true(
+        'index.html suffix normalizes to site root',
+        birkly_public_site_url('/index.html') === birkly_public_site_url('/')
+    );
 });
 
 with_server_env([
