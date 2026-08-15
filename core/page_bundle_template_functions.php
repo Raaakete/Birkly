@@ -24,21 +24,32 @@ function birkly_page_bundle_bootstrap_template_functions(): void {
 }
 
 function birkly_page_bundle_template_functions_meta_list(): array {
-    birkly_page_bundle_bootstrap_template_functions();
-    if (!function_exists('get_all_template_functions')) {
+    try {
+        birkly_page_bundle_bootstrap_template_functions();
+        if (!function_exists('get_all_template_functions')) {
+            return [];
+        }
+        $all = get_all_template_functions();
+        if (!is_array($all)) {
+            return [];
+        }
+        $out = [];
+        foreach ($all as $name => $meta) {
+            if (!is_string($name) || !is_array($meta)) {
+                continue;
+            }
+            $out[] = [
+                'name' => $name,
+                'description' => (string) ($meta['description'] ?? ''),
+                'arguments' => is_array($meta['arguments'] ?? null) ? $meta['arguments'] : [],
+                'plugin_id' => isset($meta['plugin_id']) ? (string) $meta['plugin_id'] : null,
+            ];
+        }
+        return $out;
+    } catch (Throwable $e) {
+        error_log('page_bundle template_functions_meta error: ' . $e->getMessage());
         return [];
     }
-    $all = get_all_template_functions();
-    $out = [];
-    foreach ($all as $name => $meta) {
-        $out[] = [
-            'name' => $name,
-            'description' => $meta['description'] ?? '',
-            'arguments' => $meta['arguments'] ?? [],
-            'plugin_id' => $meta['plugin_id'] ?? null,
-        ];
-    }
-    return $out;
 }
 
 function birkly_page_bundle_call_template_function(string $name, array $args = []) {

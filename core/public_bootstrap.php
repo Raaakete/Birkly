@@ -99,7 +99,11 @@ if (!function_exists('birkly_public_load_active_plugins')) {
             if (empty($plugin['active'])) continue;
             $file = $plugin['path'] . '/plugin.php';
             if (file_exists($file)) {
-                include_once $file;
+                try {
+                    include_once $file;
+                } catch (Throwable $e) {
+                    error_log('birkly_public_load_active_plugins: ' . $pid . ': ' . $e->getMessage());
+                }
             }
         }
     }
@@ -124,7 +128,11 @@ if (!function_exists('birkly_public_load_plugins_for_template_function')) {
             if (empty($plugin['active'])) continue;
             $file = $plugin['path'] . '/plugin.php';
             if (file_exists($file)) {
-                include_once $file;
+                try {
+                    include_once $file;
+                } catch (Throwable $e) {
+                    error_log('birkly_public_load_plugins_for_template_function: ' . $pid . ': ' . $e->getMessage());
+                }
             }
             if (function_exists('get_template_function') && get_template_function($name)) {
                 return;
