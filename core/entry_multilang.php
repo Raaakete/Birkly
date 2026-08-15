@@ -122,3 +122,4 @@ function birkly_entry_multilang_apply_field_value(string $html, string $fieldNam
 
     return $html;
 }
+

@@ -1,4 +1,7 @@
 <?php
+/**
+ * Multi-language entry save helpers.
+ */
 
 declare(strict_types=1);
 
