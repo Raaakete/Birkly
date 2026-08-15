@@ -15,6 +15,7 @@ require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/../core/entry_validation.php';
+require_once __DIR__ . '/../core/entry_multilang.php';
 require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugins.php';
@@ -479,11 +480,8 @@ function saveEntry() {
         $entryId = uniqid();
     }
     
-    // Auto-fill title with entry ID if not provided
-    $title = trim($entryData['title'] ?? '');
-    if (empty($title)) {
-        $title = $entryId;
-    }
+    // Title is resolved after language fields are processed for multilanguage entries.
+    $title = trim((string) ($entryData['title'] ?? ''));
     
     // Handle versioning for existing entries
     $currentVersion = 1;
@@ -505,7 +503,7 @@ function saveEntry() {
     
     $entryOutput = [
         'id' => $entryId,
-        'title' => $title,
+        'title' => $title !== '' ? $title : $entryId,
         'slug' => $entryData['slug'] ?? '',
         'status' => $status,
         'version' => $currentVersion,
@@ -661,50 +659,59 @@ function saveEntry() {
     
     // Handle multi-language content structure
     if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
-        // Organize language-specific fields
         foreach ($multilanguageLanguages as $langCode) {
-            $entryOutput[$langCode] = [];
-            
+            if (!isset($entryOutput[$langCode]) || !is_array($entryOutput[$langCode])) {
+                $entryOutput[$langCode] = is_array($entry[$langCode] ?? null) ? $entry[$langCode] : [];
+            }
+
             foreach ($fields as $field) {
                 $fieldName = $field['name'] ?? '';
-                if (empty($fieldName)) continue;
-                
-                // Check for language-specific field (e.g., "en[title]")
-                $langFieldKey = $langCode . '[' . $fieldName . ']';
-                $rawValue = $entryData[$langFieldKey] ?? null;
-                
-                if ($rawValue !== null) {
-                    $fieldType = $field['type'] ?? '';
-                    $value = $rawValue;
-                    
-                    // Process value through fieldtype if it exists
-                    if (!empty($fieldType)) {
-                        $className = getFieldtypeClass($fieldType);
-                        if ($className && class_exists($className)) {
-                            try {
-                                $tempErrorReporting = error_reporting(E_ALL & ~E_DEPRECATED & ~E_WARNING);
-                                $ft = new $className([
-                                    'name' => $fieldName,
-                                    'label' => $field['label'] ?? $fieldName,
-                                    'value' => $rawValue,
-                                    'required' => $field['required'] ?? false,
-                                    'options' => $field['options'] ?? []
-                                ]);
-                                error_reporting($tempErrorReporting);
-                                
-                                if (method_exists($ft, 'processValue')) {
-                                    $value = $ft->processValue($rawValue);
-                                }
-                            } catch (Exception $e) {
-                                error_log("Error processing fieldtype {$fieldType} for field {$fieldName}: " . $e->getMessage());
+                if ($fieldName === '') {
+                    continue;
+                }
+
+                $rawValue = birkly_entry_lang_field_raw($entryData, $langCode, $fieldName);
+                if ($rawValue === null) {
+                    continue;
+                }
+
+                $fieldType = $field['type'] ?? '';
+                $value = $rawValue;
+
+                if ($fieldType !== '') {
+                    $className = getFieldtypeClass($fieldType);
+                    if ($className && class_exists($className)) {
+                        try {
+                            $tempErrorReporting = error_reporting(E_ALL & ~E_DEPRECATED & ~E_WARNING);
+                            $ft = new $className([
+                                'name' => $fieldName,
+                                'label' => $field['label'] ?? $fieldName,
+                                'value' => $rawValue,
+                                'required' => $field['required'] ?? false,
+                                'options' => $field['options'] ?? [],
+                            ]);
+                            error_reporting($tempErrorReporting);
+
+                            if (method_exists($ft, 'processValue')) {
+                                $value = $ft->processValue($rawValue);
                             }
+                        } catch (Exception $e) {
+                            error_log("Error processing fieldtype {$fieldType} for field {$fieldName}: " . $e->getMessage());
                         }
                     }
-                    
-                    $entryOutput[$langCode][$fieldName] = $value;
                 }
+
+                $entryOutput[$langCode][$fieldName] = $value;
             }
         }
+
+        $entryOutput['title'] = birkly_entry_resolve_top_level_title(
+            $entryOutput,
+            $entryData,
+            $multilanguageLanguages,
+            $entryId,
+            is_array($entry) ? $entry : null
+        );
     } else {
         // Single language - process fields normally
         foreach ($fields as $field) {

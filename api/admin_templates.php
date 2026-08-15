@@ -10,6 +10,7 @@ $__is_internal_include = isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__
 
 require_once 'storage.php';
 require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../core/entry_multilang.php';
 
 // Load fieldtype base and simple autoloader so fieldtypes can be instantiated for list rendering
 $baseFieldPath = __DIR__ . '/../fieldtypes/BaseField.php';
@@ -2004,10 +2005,37 @@ function birkly_admin_extract_entry_value(array $entry, string $name, array $col
 }
 
 function birkly_admin_extract_entry_title(array $entry, array $collectionData): string {
-    $title = birkly_admin_extract_entry_value($entry, 'title', $collectionData, '');
-    $title = is_scalar($title) ? trim((string) $title) : '';
-    if ($title === '') {
+    $multilanguageEnabled = !empty($collectionData['multilanguage']['enabled']);
+    $multilanguageLanguages = $collectionData['multilanguage']['languages'] ?? [];
+    $entryId = (string) ($entry['id'] ?? '');
+
+    $title = '';
+    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
+        foreach ($multilanguageLanguages as $langCode) {
+            $candidate = trim((string) ($entry[$langCode]['title'] ?? ''));
+            if ($candidate !== '') {
+                $title = $candidate;
+                break;
+            }
+        }
+    } else {
+        $title = isset($entry['title']) ? trim((string) $entry['title']) : '';
+    }
+
+    if (birkly_entry_title_is_placeholder($title, $entry)) {
+        $title = '';
+    }
+
+    if ($title === '' && $multilanguageEnabled && !empty($multilanguageLanguages)) {
+        $title = trim((string) birkly_admin_extract_entry_value($entry, 'title', $collectionData, ''));
+    }
+
+    if ($title === '' || birkly_entry_title_is_placeholder($title, $entry)) {
         $title = (string) ($entry['key'] ?? $entry['slug'] ?? 'Untitled');
+    }
+
+    if ($entryId !== '' && $title === $entryId) {
+        $title = (string) ($entry['slug'] ?? 'Untitled');
     }
 
     return $title;
@@ -2173,7 +2201,10 @@ function processEntryForList($entry, $fields, $collectionData) {
     $cells = [];
     // Title and status are mandatory in UI
     $title = $entry['title'] ?? '';
-    if (empty($title) && $multilanguageEnabled && !empty($multilanguageLanguages)) {
+    if (birkly_entry_title_is_placeholder((string) $title, $entry)) {
+        $title = '';
+    }
+    if ($title === '' && $multilanguageEnabled && !empty($multilanguageLanguages)) {
         if (isset($entry[$defaultLanguage]['title'])) {
             $title = $entry[$defaultLanguage]['title'];
         } else {

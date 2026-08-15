@@ -381,7 +381,9 @@
     function findTitleField() {
         return document.getElementById('field-title')
             || document.getElementById('field_title')
-            || document.querySelector('input[name="title"]');
+            || document.querySelector('input[name="title"]')
+            || document.querySelector('.language-tab-content.active input[name$="[title]"]')
+            || document.querySelector('input[name$="[title]"]');
     }
 
     function getEntryIdFallback() {
@@ -1882,6 +1884,43 @@
     }
 
     /**
+     * Dynamic Items structure is shared across language tabs; only block values differ.
+     */
+    function initMultilangDynamicItems() {
+        const tabs = document.querySelectorAll('.entry-language-tabs .language-tab-content');
+        if (tabs.length < 2) {
+            return;
+        }
+
+        tabs.forEach(function(tab, index) {
+            tab.querySelectorAll('.block-field').forEach(function(field) {
+                if (index === 0) {
+                    field.setAttribute('data-dynamicitems-owner', '1');
+                    return;
+                }
+
+                field.setAttribute('data-dynamicitems-follower', '1');
+                field.querySelectorAll('.block-controls').forEach(function(el) {
+                    el.style.display = 'none';
+                });
+                field.querySelectorAll('[data-dynamicitems-action="edit-block"], [data-dynamicitems-action="remove-block"]').forEach(function(btn) {
+                    btn.style.display = 'none';
+                });
+            });
+        });
+
+        const dynamicItems = window.HaruFieldtypes && window.HaruFieldtypes.dynamicitems;
+        if (!dynamicItems || typeof dynamicItems.syncMultilangBlocks !== 'function') {
+            return;
+        }
+
+        tabs[0].querySelectorAll('.block-field[data-dynamicitems-owner="1"]').forEach(function(field) {
+            const fieldName = field.id.replace(/^field_/, '');
+            dynamicItems.syncMultilangBlocks(fieldName);
+        });
+    }
+
+    /**
      * Initialize language tabs (one entry, nested lang fields).
      */
     function initLanguageTabs() {
@@ -1913,6 +1952,7 @@
         initFormSubmission();
         initTagsEnterKeyPrevention();
         initFieldtypes();
+        initMultilangDynamicItems();
         initScheduledPublishing();
         initVersionHistory();
         initApprovalWorkflow();
