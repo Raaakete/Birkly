@@ -96,11 +96,14 @@ class StorageFactory
     public static function testDatabaseConnection(array $config): array
     {
         $driver = self::normalizeDriver($config['driver'] ?? $config['backend'] ?? '');
+        if (!in_array($driver, ['mysql', 'postgresql'], true)) {
+            $driver = self::normalizeDriver($config['configured_driver'] ?? '');
+        }
         if ($driver === 'mysql') {
-            return MySqlStorage::testConnection(self::normalizeDbConfig($config));
+            return MySqlStorage::testConnection(self::normalizeDbConfig(array_merge($config, ['driver' => $driver])));
         }
         if ($driver === 'postgresql') {
-            return PostgresStorage::testConnection(self::normalizeDbConfig($config));
+            return PostgresStorage::testConnection(self::normalizeDbConfig(array_merge($config, ['driver' => $driver])));
         }
         return ['ok' => false, 'message' => 'Unsupported database driver'];
     }
