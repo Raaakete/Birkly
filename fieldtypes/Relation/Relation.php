@@ -72,74 +72,7 @@ class Relation extends BaseField {
     public function validate($value): array { return []; }
     public function getJavaScript(): string {
         $jsPath = __DIR__ . '/fieldtype.js';
-        if (file_exists($jsPath)) {
-            $js = file_get_contents($jsPath);
-            
-            // Add initialization function and expose it globally
-            $js .= "\n\n// Auto-initialize relation fields\n";
-            $js .= "function initRelationField(fieldName) {\n";
-            $js .= "    console.log('[Relation Field] initRelationField called for:', fieldName);\n";
-            $js .= "    const field = document.getElementById('relation_field_' + fieldName);\n";
-            $js .= "    if (!field) {\n";
-            $js .= "        console.error('[Relation Field] Field not found:', 'relation_field_' + fieldName);\n";
-            $js .= "        return;\n";
-            $js .= "    }\n";
-            $js .= "    \n";
-            $js .= "    // Load available collections\n";
-            $js .= "    loadRelationCollections(fieldName);\n";
-            $js .= "    \n";
-            $js .= "    const hiddenInput = field.querySelector('input[type=\"hidden\"]');\n";
-            $js .= "    if (hiddenInput && hiddenInput.value) {\n";
-            $js .= "        console.log('[Relation Field] Hidden input value:', hiddenInput.value);\n";
-            $js .= "        try {\n";
-            $js .= "            const value = JSON.parse(hiddenInput.value);\n";
-            $js .= "            console.log('[Relation Field] Parsed value:', value);\n";
-            $js .= "            if (value && (Array.isArray(value) ? value.length > 0 : value)) {\n";
-            $js .= "                console.log('[Relation Field] Calling setValue with:', value);\n";
-            $js .= "                window.HaruFieldtypes['relation'].setValue(fieldName, value);\n";
-            $js .= "            }\n";
-            $js .= "        } catch (e) {\n";
-            $js .= "            console.error('[Relation Field] Failed to parse JSON:', e);\n";
-            $js .= "            // If not JSON, try as single value\n";
-            $js .= "            if (hiddenInput.value.trim()) {\n";
-            $js .= "                console.log('[Relation Field] Using as string value:', hiddenInput.value);\n";
-            $js .= "                window.HaruFieldtypes['relation'].setValue(fieldName, hiddenInput.value);\n";
-            $js .= "            }\n";
-            $js .= "        }\n";
-            $js .= "    } else {\n";
-            $js .= "        console.log('[Relation Field] No hidden input or no value');\n";
-            $js .= "    }\n";
-            $js .= "}\n";
-            
-            // Add collection loading function
-            $js .= "\n// Load available collections for relation field\n";
-            $js .= "async function loadRelationCollections(fieldName) {\n";
-            $js .= "    const select = document.getElementById('relation_collection_' + fieldName);\n";
-            $js .= "    if (!select) return;\n";
-            $js .= "    \n";
-            $js .= "    try {\n";
-            $js .= "        const response = await fetch('/api/content.php?action=list_collections');\n";
-            $js .= "        const data = await response.json();\n";
-            $js .= "        \n";
-            $js .= "        if (data.status === 'ok' && data.data && data.data.collections) {\n";
-            $js .= "            select.innerHTML = '<option value=\"\">Select Collection...</option>';\n";
-            $js .= "            data.data.collections.forEach(collection => {\n";
-            $js .= "                select.innerHTML += `<option value=\"\${collection.id}\">\${collection.title} (\${collection.slug})</option>`;\n";
-            $js .= "            });\n";
-            $js .= "        }\n";
-            $js .= "    } catch (error) {\n";
-            $js .= "        console.error('Failed to load collections:', error);\n";
-            $js .= "    }\n";
-            $js .= "}\n";
-            
-            // Expose the function globally
-            $js .= "\n// Expose initialization function globally\n";
-            $js .= "window.initRelationField = initRelationField;\n";
-            $js .= "console.log('[Relation Field] initRelationField exposed globally');\n";
-            
-            return $js;
-        }
-        return '';
+        return file_exists($jsPath) ? file_get_contents($jsPath) : '';
     }
     public function getCSS(): string {
         return <<<'CSS'

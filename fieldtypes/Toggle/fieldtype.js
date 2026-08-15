@@ -4,7 +4,7 @@ window.HaruFieldtypes['toggle'] = {
   category: 'input',
   dynamicItemsEligible: false,
   render: function(fieldConfig, value) {
-    return `<label class="toggle-switch"><input type="checkbox" name="${fieldConfig.name}" id="field_${fieldConfig.name}" value="1"${value ? ' checked' : ''} class="toggle-switch-input"><span class="toggle-switch-slider"></span></label>`;
+    return `<div class="toggle-field-wrapper"><label class="switch" for="field_${fieldConfig.name}"><input type="checkbox" name="${fieldConfig.name}" id="field_${fieldConfig.name}" value="1"${value ? ' checked' : ''}><span class="switch__slider"></span></label></div>`;
   },
   getValue: function(fieldName) {
     var input = document.getElementById('field_' + fieldName);
