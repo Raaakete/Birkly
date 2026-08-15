@@ -16,7 +16,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 ENGINE="$ROOT/birkly-template-engine.js"
-CLIENT="$ROOT/birkly-client.js"
+CLIENT="${BIRKLY_CLIENT_JS:-$ROOT/birkly-client.source.js}"
 BEGIN='/* BIRKLY_TEMPLATE_ENGINE_INLINE_BEGIN */'
 END='/* BIRKLY_TEMPLATE_ENGINE_INLINE_END */'
 
@@ -33,7 +33,7 @@ for f in "$ENGINE" "$CLIENT"; do
 done
 
 if ! grep -qF "$BEGIN" "$CLIENT" || ! grep -qF "$END" "$CLIENT"; then
-  echo "[sync-template-engine] markers not found in birkly-client.js" >&2
+  echo "[sync-template-engine] markers not found in $CLIENT" >&2
   echo "  expected: $BEGIN … $END" >&2
   exit 1
 fi
@@ -52,7 +52,7 @@ if [[ "$CHECK" -eq 1 ]]; then
     echo "[sync-template-engine] OK: inlined engine matches birkly-template-engine.js"
     exit 0
   fi
-  echo "[sync-template-engine] DRIFT: birkly-client.js inlined engine differs from source" >&2
+  echo "[sync-template-engine] DRIFT: inlined engine in $(basename "$CLIENT") differs from source" >&2
   echo "  run: bash scripts/sync-template-engine-inline.sh" >&2
   sed -n '1,40p' /tmp/birkly-engine-inline.diff >&2
   exit 1
@@ -85,4 +85,4 @@ if ! grep -qF "$END" "$TMP"; then
 fi
 
 mv "$TMP" "$CLIENT"
-echo "[sync-template-engine] synced birkly-template-engine.js -> birkly-client.js inlined block"
+echo "[sync-template-engine] synced birkly-template-engine.js -> $(basename "$CLIENT") inlined block"

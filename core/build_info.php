@@ -161,3 +161,24 @@ function birkly_admin_asset_url(string $relativePath): string
     $path = '/' . ltrim(str_replace('\\', '/', $relativePath), '/');
     return birkly_url($path) . '?v=' . rawurlencode(birkly_admin_asset_version(ltrim($path, '/')));
 }
+
+/**
+ * Cache-bust token for public runtime assets (birkly-client.js, etc.).
+ */
+function birkly_public_runtime_asset_version(string $basename): string
+{
+    return birkly_admin_asset_version($basename);
+}
+
+/**
+ * Public runtime asset URL with immutable cache-busting ?v= query.
+ */
+function birkly_public_runtime_asset_url(string $basename): string
+{
+    if (!function_exists('birkly_url')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    $basename = ltrim(str_replace('\\', '/', $basename), '/');
+    return birkly_url('/' . $basename) . '?v=' . rawurlencode(birkly_public_runtime_asset_version($basename));
+}

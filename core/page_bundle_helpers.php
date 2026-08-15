@@ -153,8 +153,12 @@ function birkly_page_bundle_compute_revision($storage, array $requests, string $
     }
     foreach ($extraPaths as $path) {
         $path = trim((string) $path);
-        if ($path !== '' && is_file($path)) {
-            $parts[] = 'file:' . $path . ':' . filemtime($path) . ':' . filesize($path);
+        if ($path === '') {
+            continue;
+        }
+        $real = realpath($path);
+        if ($real !== false && is_file($real)) {
+            $parts[] = 'file:' . $real . ':' . filemtime($real) . ':' . filesize($real);
         }
     }
     return substr(hash('sha256', implode('|', $parts)), 0, 16);
