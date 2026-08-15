@@ -79,7 +79,8 @@
         // Initialization flag
         initialized: false,
 
-        // Page bundle cache (M4 — batched public reads)
+        // Failed per-action API reads (avoid secure→public double round-trips).
+        apiFetchFailures: new Set(),
         pageBundle: {
             loaded: false,
             data: {},
@@ -1104,6 +1105,10 @@
         };
 
         Birkly.bundle.collectBundleRequests = function () {
+            if (typeof shouldSkipSsrClientHydration === 'function' && shouldSkipSsrClientHydration()) {
+                return [];
+            }
+
             const requests = [];
             const seen = new Set();
             const add = (req) => {
@@ -1119,7 +1124,9 @@
             Birkly.bundle.getAllTemplateCollectionSlugs(combined).forEach((collection) => {
                 add({ type: 'list_entries', into: collection, collection });
             });
-            add({ type: 'list_entries', into: 'site_elements', collection: 'site_elements' });
+            if (combined.includes('site_elements') || combined.includes("'site_elements'") || combined.includes('site-elements')) {
+                add({ type: 'list_entries', into: 'site_elements', collection: 'site_elements' });
+            }
 
             document.querySelectorAll('[data-birkly-prefetch]').forEach((el) => {
                 const type = el.getAttribute('data-birkly-prefetch');
@@ -1830,7 +1837,13 @@
     /**
      * Fetch content from CMS API
      */
-    async function fetchContent(action, params = {}) {
+    async function fetchContent(action, params = {}, options = {}) {
+        const opts = options && typeof options === 'object' ? options : {};
+        const fetchKey = action + '|' + JSON.stringify(params);
+        if (!opts.allowRetry && Birkly.apiFetchFailures.has(fetchKey)) {
+            return null;
+        }
+
         if (!Birkly.apiEndpoint) {
             await detectApiEndpoint();
         }
@@ -1890,15 +1903,20 @@
             
             return data;
         } catch (error) {
-            console.error('Birkly API Error:', error);
-            
-            // If secure API fails and not localhost, try public API as fallback
-            if (!Birkly.isLocalhost && Birkly.apiEndpoint.includes('secure_public')) {
+            if (!opts.silent) {
+                console.error('Birkly API Error:', error);
+            }
+
+            // If secure API fails and not localhost, try public API once
+            if (!opts.allowRetry && !Birkly.isLocalhost && Birkly.apiEndpoint.includes('secure_public')) {
                 Birkly.warn('Birkly: Secure API failed, trying public API...');
                 Birkly.apiEndpoint = Birkly.cmsUrl + Birkly.publicApi;
-                return fetchContent(action, params);
+                return fetchContent(action, params, { allowRetry: true, silent: opts.silent });
             }
-            
+
+            if (!opts.allowRetry) {
+                Birkly.apiFetchFailures.add(fetchKey);
+            }
             return null;
         }
     }
@@ -2002,6 +2020,9 @@
      * Get all site elements
      */
     async function getAllSiteElements() {
+        if (typeof shouldSkipSsrClientHydration === 'function' && shouldSkipSsrClientHydration()) {
+            return {};
+        }
         try {
             Birkly.log('Birkly: Fetching site elements with language:', Birkly.currentLanguage);
             const data = await fetchContent('list_entries', { 
@@ -3411,6 +3432,19 @@
     }
 
     /**
+     * SSR pages ship fully rendered HTML — skip client re-fetch unless opted in
+     * or the DOM still contains unresolved template regions.
+     */
+    function shouldSkipSsrClientHydration() {
+        if (!isPageSsrRendered()) return false;
+        try {
+            const de = document.documentElement;
+            if (de && de.getAttribute && de.getAttribute('data-birkly-rehydrate') === '1') return false;
+        } catch (e) { /* ignore */ }
+        return !pageNeedsTemplateProcessing(document, false);
+    }
+
+    /**
      * Whether Light DOM still has template regions needing client render.
      */
     function pageNeedsTemplateProcessing(doc, force) {
@@ -3433,7 +3467,7 @@
         const silent = opts.silent;
         const force = opts.force;
 
-        if (!force && !root && isPageSsrRendered() && !pageNeedsTemplateProcessing(document, force)) {
+        if (!force && !root && shouldSkipSsrClientHydration()) {
             if (!silent) {
                 console.log('[Birkly] v3: SSR page already rendered — skipping processTemplates');
             }
@@ -4192,7 +4226,7 @@
         await detectApiEndpoint();
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
 
-        const ssrSkipTemplates = isPageSsrRendered() && !pageNeedsTemplateProcessing(document, false);
+        const ssrSkipTemplates = shouldSkipSsrClientHydration();
 
         if (!ssrSkipTemplates) {
             const bundleRequests = collectBundleRequests();

@@ -7,6 +7,28 @@ require_once __DIR__ . '/storage/StorageFactory.php';
 require_once __DIR__ . '/cache.php';
 require_once __DIR__ . '/entry_slug.php';
 
+/**
+ * Match collection slug to on-disk directory (exact slug, then normalized hyphen form).
+ */
+function birkly_public_collection_slug_matches(array $meta, string $collectionSlug): bool
+{
+    $needle = birkly_normalize_slug($collectionSlug);
+    if ($needle === '') {
+        return false;
+    }
+    $candidates = [
+        (string) ($meta['slug'] ?? ''),
+        (string) ($meta['name'] ?? ''),
+        (string) ($meta['title'] ?? ''),
+    ];
+    foreach ($candidates as $candidate) {
+        if ($candidate !== '' && birkly_normalize_slug($candidate) === $needle) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function birkly_public_resolve_collection_dir($storage, $collectionSlug, $collectionId = '') {
     static $cache = [];
     $cacheKey = $collectionId !== '' ? ('id:' . $collectionId) : ('slug:' . $collectionSlug);
@@ -32,7 +54,7 @@ function birkly_public_resolve_collection_dir($storage, $collectionSlug, $collec
     }
     foreach ($collections as $d) {
         $m = $storage->read("collections/$d/collection.json");
-        if ($m && ($m['slug'] ?? '') === $collectionSlug) {
+        if ($m && birkly_public_collection_slug_matches($m, $collectionSlug)) {
             $cache[$cacheKey] = $d;
             return $d;
         }
