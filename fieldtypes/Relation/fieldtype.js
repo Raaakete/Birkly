@@ -1,6 +1,21 @@
 // Self-contained Relation Fieldtype for Birkly
 window.HaruFieldtypes = window.HaruFieldtypes || {};
 
+function relationContentApiUrl(query) {
+  const base = (window.Birkly && typeof window.Birkly.url === 'function')
+    ? window.Birkly.url('/api/content.php')
+    : '/api/content.php';
+  if (!query) {
+    return base;
+  }
+  const normalized = String(query).replace(/^\?/, '');
+  return normalized ? `${base}?${normalized}` : base;
+}
+
+function relationCollectionLabel(collection) {
+  return collection.name || collection.title || collection.slug || 'Unknown';
+}
+
 // Register Relation fieldtype configuration
 if (window.HaruFieldtypeConfig) {
     window.HaruFieldtypeConfig.register('relation', {
@@ -240,7 +255,7 @@ window.HaruFieldtypes['relation'] = {
     
     console.log('[Relation Field] Loading entries for IDs:', entryIds);
     
-    fetchFunction(`/api/content.php?action=get_entry_titles&ids=${encodeURIComponent(JSON.stringify(entryIds))}`, {
+    fetchFunction(relationContentApiUrl(`action=get_entry_titles&ids=${encodeURIComponent(JSON.stringify(entryIds))}`), {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     })
@@ -428,7 +443,7 @@ window.HaruFieldtypes['relation'] = {
     
     try {
       console.log('[Relation Picker] Fetching collections from API...');
-      const response = await fetch('/api/content.php?action=list_collections');
+      const response = await fetch(relationContentApiUrl('action=list_collections'), { credentials: 'same-origin' });
       const data = await response.json();
       
       console.log('[Relation Picker] API response:', data);
@@ -438,7 +453,7 @@ window.HaruFieldtypes['relation'] = {
         console.log('[Relation Picker] Found', relationPickerCollections.length, 'collections');
         
         data.data.collections.forEach(collection => {
-          select.innerHTML += `<option value="${collection.id}">${collection.title} (${collection.slug})</option>`;
+          select.innerHTML += `<option value="${collection.id}">${relationCollectionLabel(collection)} (${collection.slug})</option>`;
         });
         
         console.log('[Relation Picker] Collections loaded into dropdown');
@@ -516,7 +531,7 @@ window.HaruFieldtypes['relation'] = {
         params.append('limit', limit);
       }
       
-      const res = await fetchFunction(`/api/content.php?${params.toString()}`, {
+      const res = await fetchFunction(relationContentApiUrl(params.toString()), {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -603,7 +618,7 @@ window.HaruFieldtypes['relation'] = {
               relationPickerSelected.push({ 
                 id, 
                 collection: relationPickerCurrentCollection,
-                collectionName: relationPickerCollections.find(c => c.id === relationPickerCurrentCollection)?.title || 'Unknown'
+                collectionName: relationPickerCollections.find(c => c.id === relationPickerCurrentCollection) ? relationCollectionLabel(relationPickerCollections.find(c => c.id === relationPickerCurrentCollection)) : 'Unknown'
               });
               itemDiv.classList.add('selected');
               itemDiv.style.background = '#e0e7ff';
@@ -619,7 +634,7 @@ window.HaruFieldtypes['relation'] = {
             relationPickerSelected = [{ 
               id, 
               collection: relationPickerCurrentCollection,
-              collectionName: relationPickerCollections.find(c => c.id === relationPickerCurrentCollection)?.title || 'Unknown'
+              collectionName: relationPickerCollections.find(c => c.id === relationPickerCurrentCollection) ? relationCollectionLabel(relationPickerCollections.find(c => c.id === relationPickerCurrentCollection)) : 'Unknown'
             }];
             document.getElementById('relationPickerSelectBtn').disabled = false;
             document.getElementById('relationPickerSelectBtn').click();
@@ -663,8 +678,9 @@ window.HaruFieldtypes['relation'] = {
   
   // Attach event for Select Relation button
   document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('select-relation-btn')) {
-      const btn = e.target;
+    const selectBtn = e.target.closest('.select-relation-btn');
+    if (selectBtn) {
+      const btn = selectBtn;
       const fieldName = btn.getAttribute('data-field');
       let selected = [];
       const input = document.getElementById('field_' + fieldName + '_value');
@@ -686,8 +702,9 @@ window.HaruFieldtypes['relation'] = {
       });
     }
     
-    if (e.target.classList.contains('remove-all-relation-btn')) {
-      const fieldName = e.target.getAttribute('data-field');
+    const removeAllBtn = e.target.closest('.remove-all-relation-btn');
+    if (removeAllBtn) {
+      const fieldName = removeAllBtn.getAttribute('data-field');
       window.HaruFieldtypes['relation'].setValue(fieldName, []);
     }
   });
@@ -775,5 +792,9 @@ if (!window.relationObserver) {
         });
     }, { childList: true, subtree: true }, 'relation');
 
-    window.HaruFieldtypeInterface.getElements('body')[0] && window.relationObserver.observe(document.body, { childList: true, subtree: true });
-} 
+    if (document.body) {
+        window.relationObserver.observe(document.body, { childList: true, subtree: true });
+    }
+}
+
+window.initRelationField = initRelationField; 

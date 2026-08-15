@@ -624,11 +624,15 @@
             '</div>';
 
         return '<td class="cell cell-actions"><div class="cell-actions-inner">' +
+            '<div class="cell-actions-primary">' +
             '<a class="btn-icon btn-icon-sm btn-icon--edit" href="' + escapeHtml(editUrl) + '" aria-label="' + escapeHtml(t('edit_entry', 'Edit entry') + ' ' + title) + '" title="' + escapeHtml(t('edit', 'Edit')) + '">' +
                 icon('pencil-simple', { size: 16 }) +
             '</a>' +
             publishBtn +
+            '</div>' +
+            '<div class="cell-actions-more">' +
             moreMenu +
+            '</div>' +
         '</div></td>';
     }
 

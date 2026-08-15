@@ -290,9 +290,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   flex-wrap: nowrap;
   height: 100%;
+}
+
+.entries-smart-table .cell-actions-primary,
+.entries-smart-table .cell-actions-more {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: nowrap;
+}
+
+.entries-smart-table .cell-actions-more {
+  margin-inline-start: var(--space-1);
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--border-subtle);
 }
 
 /* Below --bp-md, stop forcing fixed columns and let the viewport scroll */
@@ -319,9 +333,9 @@
 
 .entries-smart-table.entries-l2-actions .head-actions,
 .entries-smart-table.entries-l2-actions .cell-actions {
-  width: 7.5rem;
-  min-width: 7.5rem;
-  max-width: 7.5rem;
+  width: 8.5rem;
+  min-width: 8.5rem;
+  max-width: 8.5rem;
 }
 
 .entries-smart-table.entries-l2-actions .cell-actions-inner {

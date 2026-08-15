@@ -94,26 +94,28 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                 </select>
             </div>
 
-            <div class="dropdown">
-                <button type="button" class="dropdown-trigger btn-icon" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
-                    <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
-                </button>
-                <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
-                    <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item">
-                        <span class="dropdown-item-label">Edit this collection</span>
-                    </a>
-                    <a href="<?= htmlspecialchars($createSubCollectionUrl) ?>" class="dropdown-item">
-                        <span class="dropdown-item-label">Create sub-collection</span>
-                    </a>
-                    <?php if ($isTrashView): ?>
-                    <a href="<?= htmlspecialchars($entriesReturnUrl) ?>" class="dropdown-item">
-                        <span class="dropdown-item-label">Back to active entries</span>
-                    </a>
-                    <?php elseif ($trashedCount > 0): ?>
-                    <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item">
-                        <span class="dropdown-item-label">View trash (<?= (int) $trashedCount ?>)</span>
-                    </a>
-                    <?php endif; ?>
+            <div class="entries-toolbar-actions">
+                <div class="dropdown">
+                    <button type="button" class="dropdown-trigger btn btn-secondary btn-icon" aria-label="Collection actions" aria-expanded="false" aria-haspopup="true">
+                        <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
+                        <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item">
+                            <span class="dropdown-item-label">Edit this collection</span>
+                        </a>
+                        <a href="<?= htmlspecialchars($createSubCollectionUrl) ?>" class="dropdown-item">
+                            <span class="dropdown-item-label">Create sub-collection</span>
+                        </a>
+                        <?php if ($isTrashView): ?>
+                        <a href="<?= htmlspecialchars($entriesReturnUrl) ?>" class="dropdown-item">
+                            <span class="dropdown-item-label">Back to active entries</span>
+                        </a>
+                        <?php elseif ($trashedCount > 0): ?>
+                        <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item">
+                            <span class="dropdown-item-label">View trash (<?= (int) $trashedCount ?>)</span>
+                        </a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>

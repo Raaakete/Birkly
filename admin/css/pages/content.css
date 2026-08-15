@@ -506,13 +506,13 @@ body.entries-filter-drawer-open { overflow: hidden; }
   .entries-filter-drawer:not([hidden]) { display: none; }
 }
 
-/* The status filter and the "…" more-actions dropdown are two independent
-   controls, not one grouped control — a divider keeps them from reading as
-   a single merged element when the borderless dropdown trigger sits flush
-   against the status select. */
-.entries-page .main-actions-right > .dropdown {
+/* Filters (search + status) and collection actions are separate control groups. */
+.entries-page .entries-toolbar-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
   margin-inline-start: var(--space-2);
-  padding-inline-start: var(--space-2);
+  padding-inline-start: var(--space-3);
   border-inline-start: 1px solid var(--border-subtle);
 }
 

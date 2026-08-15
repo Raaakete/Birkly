@@ -269,6 +269,7 @@ if (!empty($entries)): ?>
                         <td class="cell cell-actions">
                             <div class="cell-actions-inner">
                             <?php if ($entriesL2Actions): ?>
+                                <div class="cell-actions-primary">
                                 <a class="btn-icon btn-icon-sm btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit') ?>">
                                     <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                                 </a>
@@ -282,6 +283,14 @@ if (!empty($entries)): ?>
                                             <?= birkly_icon('globe', ['size' => 16]) ?>
                                         </button>
                                     <?php endif; ?>
+                                <?php else: ?>
+                                    <button type="button" class="btn-icon btn-icon-sm <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.restore') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.restore') ?>">
+                                        <?= birkly_icon('arrow-counter-clockwise', ['size' => 16]) ?>
+                                    </button>
+                                <?php endif; ?>
+                                </div>
+                                <?php if ($status !== 'trashed'): ?>
+                                    <div class="cell-actions-more">
                                     <div class="dropdown entry-row-more-menu">
                                         <button type="button" class="dropdown-trigger btn-icon btn-icon-sm" aria-label="<?= htmlspecialchars($moreLabel) ?>" title="<?= htmlspecialchars($moreLabel) ?>" aria-expanded="false" aria-haspopup="true">
                                             <?= birkly_icon('dots-three-vertical', ['size' => 16]) ?>
@@ -311,10 +320,7 @@ if (!empty($entries)): ?>
                                             </button>
                                         </div>
                                     </div>
-                                <?php else: ?>
-                                    <button type="button" class="btn-icon btn-icon-sm <?= htmlspecialchars($restoreCallback) ?>" <?= htmlspecialchars($deleteDataAttr) ?>="<?= htmlspecialchars($entryId) ?>" aria-label="<?= __('admin.restore') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.restore') ?>">
-                                        <?= birkly_icon('arrow-counter-clockwise', ['size' => 16]) ?>
-                                    </button>
+                                    </div>
                                 <?php endif; ?>
                             <?php else: ?>
                             <a class="btn-icon btn-icon-sm btn-icon--edit" href="<?= htmlspecialchars($editUrl) ?>" aria-label="<?= __('admin.edit_entry') ?> <?= htmlspecialchars($title) ?>" title="<?= __('admin.edit_entry') ?>">
