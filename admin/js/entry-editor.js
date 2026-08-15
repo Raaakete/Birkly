@@ -1914,10 +1914,13 @@
             return;
         }
 
-        tabs[0].querySelectorAll('.block-field[data-dynamicitems-owner="1"]').forEach(function(field) {
-            const fieldName = field.id.replace(/^field_/, '');
-            dynamicItems.syncMultilangBlocks(fieldName);
-        });
+        // Sync block structure after fieldtypes load values from per-language hidden inputs.
+        window.setTimeout(function() {
+            tabs[0].querySelectorAll('.block-field[data-dynamicitems-owner="1"]').forEach(function(field) {
+                const fieldName = field.id.replace(/^field_/, '');
+                dynamicItems.syncMultilangBlocks(fieldName);
+            });
+        }, 0);
     }
 
     /**
@@ -1951,8 +1954,8 @@
         initSlugGeneration();
         initFormSubmission();
         initTagsEnterKeyPrevention();
-        initFieldtypes();
         initMultilangDynamicItems();
+        initFieldtypes();
         initScheduledPublishing();
         initVersionHistory();
         initApprovalWorkflow();

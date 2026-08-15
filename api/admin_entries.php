@@ -703,6 +703,12 @@ function saveEntry() {
 
                 $entryOutput[$langCode][$fieldName] = $value;
             }
+
+            // Title is always in the editor but may be absent from collection schema.
+            $rawTitle = birkly_entry_lang_field_raw($entryData, $langCode, 'title');
+            if ($rawTitle !== null) {
+                $entryOutput[$langCode]['title'] = trim((string) $rawTitle);
+            }
         }
 
         $entryOutput['title'] = birkly_entry_resolve_top_level_title(
