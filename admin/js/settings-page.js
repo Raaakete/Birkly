@@ -2535,28 +2535,86 @@ async function migrateStorage() {
     if (!(await BirklyFeedback.confirm('Migration may take some time. Do not close this window. Continue?'))) {
         return;
     }
+
+    const migrateBtn = document.querySelector('[data-admin-action="migrateStorage"]');
+    const statusEl = document.getElementById('migration-status');
+    const defaultBtnLabel = migrateBtn ? migrateBtn.textContent : '';
+    const host = document.getElementById('db-host')?.value;
+    const port = document.getElementById('db-port')?.value;
+    const name = document.getElementById('db-name')?.value;
+    const user = document.getElementById('db-user')?.value;
+    const password = document.getElementById('db-password')?.value;
+    const prefix = document.getElementById('db-prefix')?.value;
+
+    if (!host || !name || !user) {
+        showMessage('Enter database host, name, and user before migrating', 'error');
+        return;
+    }
+
+    if (migrateBtn) {
+        migrateBtn.disabled = true;
+        migrateBtn.textContent = 'Migrating...';
+    }
+    if (statusEl) {
+        statusEl.textContent = 'Migration in progress...';
+        statusEl.style.color = 'var(--text-secondary)';
+    }
     
-    fetch(apiUrl('/api/settings.php?action=migrate_storage'), {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            backend: backend,
-            _csrf: getCsrfToken()
-        })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.status === 'ok') {
-            showMessage('Migration completed successfully!', 'success');
-        } else {
-            showMessage('Migration failed: ' + (data.message || 'Unknown error'), 'error');
+    try {
+        const response = await fetch(apiUrl('/api/settings.php?action=migrate_storage'), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                backend: backend,
+                host: host,
+                port: port,
+                name: name,
+                user: user,
+                password: password,
+                prefix: prefix,
+                _csrf: getCsrfToken()
+            })
+        });
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            throw new Error('Server returned an invalid response. Check server logs.');
         }
-    })
-    .catch(error => {
+
+        if (data.status === 'ok') {
+            const migratedCount = data.data && typeof data.data.migrated === 'number'
+                ? ' (' + data.data.migrated + ' files)'
+                : '';
+            const successMessage = 'Migration completed successfully' + migratedCount + '!';
+            showMessage(successMessage, 'success');
+            if (statusEl) {
+                statusEl.textContent = '✓ ' + successMessage;
+                statusEl.style.color = 'var(--success-600)';
+            }
+        } else {
+            const failureMessage = data.message || 'Unknown error';
+            showMessage('Migration failed: ' + failureMessage, 'error');
+            if (statusEl) {
+                statusEl.textContent = '✗ ' + failureMessage;
+                statusEl.style.color = 'var(--error-600)';
+            }
+        }
+    } catch (error) {
         showMessage('Error: ' + error.message, 'error');
-    });
+        if (statusEl) {
+            statusEl.textContent = '✗ ' + error.message;
+            statusEl.style.color = 'var(--error-600)';
+        }
+    } finally {
+        if (migrateBtn) {
+            migrateBtn.disabled = false;
+            migrateBtn.textContent = defaultBtnLabel;
+        }
+    }
 }
 
 // Load denylist when Team & security tab is shown

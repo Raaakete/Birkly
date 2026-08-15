@@ -935,7 +935,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="tab-pane" id="system">
 <?php
   $storageSettings = $settings['storage'] ?? [];
-  $storageDriver = $storageSettings['driver'] ?? $storageSettings['backend'] ?? 'flatfile';
+  $storageDriver = $storageSettings['configured_driver'] ?? $storageSettings['driver'] ?? $storageSettings['backend'] ?? 'flatfile';
   if ($storageDriver === 'postgres') {
       $storageDriver = 'postgresql';
   }
@@ -1105,6 +1105,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="form-grid">
                     <div class="form-group">
                       <button type="button" class="btn btn-secondary" data-admin-action="migrateStorage"><?= __('admin.start_migration') ?></button>
+                      <small id="migration-status" class="u-ml-4" aria-live="polite"></small>
                       <small>⚠️ <?= __('admin.backup_data_before_migrating') ?></small>
                     </div>
                   </div>
