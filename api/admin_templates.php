@@ -11,6 +11,7 @@ $__is_internal_include = isset($GLOBALS['__HARU_INTERNAL_CALL']) && $GLOBALS['__
 require_once 'storage.php';
 require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../core/entry_multilang.php';
+require_once __DIR__ . '/../core/entry_storage.php';
 
 // Load fieldtype base and simple autoloader so fieldtypes can be instantiated for list rendering
 $baseFieldPath = __DIR__ . '/../fieldtypes/BaseField.php';
@@ -1116,15 +1117,11 @@ function getEntryEditorData($includeFieldHtml = false) {
         }
     } else {
         // Get fields from parent collection schema.json
-        $schemaFile = __DIR__ . "/../content/collections/$collectionSlug/schema.json";
-        if (file_exists($schemaFile)) {
-            $schemaData = json_decode(file_get_contents($schemaFile), true);
-            if (isset($schemaData['fields'])) {
-                $fields = $schemaData['fields'];
-                // Add id to each field
-                foreach ($fields as $index => $field) {
-                    $fields[$index]['id'] = 'field-' . $index;
-                }
+        $schemaData = birkly_entry_read_schema($collectionSlug);
+        if (isset($schemaData['fields'])) {
+            $fields = $schemaData['fields'];
+            foreach ($fields as $index => $field) {
+                $fields[$index]['id'] = 'field-' . $index;
             }
         }
     }
@@ -1239,9 +1236,8 @@ function getEntryEditorData($includeFieldHtml = false) {
             $entry['_parent_entry_id'] = $entryId;
             $entry['_sub_collection'] = $subCollectionSlug;
             // Get parent entry title for breadcrumbs
-            $parentEntryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-            if (file_exists($parentEntryFile)) {
-                $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
+            $parentEntry = birkly_entry_read_record($collectionSlug, $entryId);
+            if ($parentEntry !== null) {
                 $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
             }
             // Check if this is a nested sub-entry (has parent sub-entry info)
@@ -1285,17 +1281,15 @@ function getEntryEditorData($includeFieldHtml = false) {
                 $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? 'Parent Sub-Entry';
                 $entry['_parent_sub_collection_slug'] = $parentSubCollectionSlug;
                 // Get main entry title for breadcrumbs
-                $parentEntryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-                if (file_exists($parentEntryFile)) {
-                    $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
+                $parentEntry = birkly_entry_read_record($collectionSlug, $entryId);
+                if ($parentEntry !== null) {
                     $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
                 }
             } else {
                 error_log("Failed to load parent sub-entry - falling back to main entry");
                 // Fallback to main entry
-                $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-                if (file_exists($entryFile)) {
-                    $entry = json_decode(file_get_contents($entryFile), true);
+                $entry = birkly_entry_read_record($collectionSlug, $entryId);
+                if ($entry !== null) {
                     $entry['id'] = $entryId;
                     $entry['_is_sub_entry'] = false;
                     $entry['_parent_entry_id'] = $entryId;
@@ -1304,9 +1298,8 @@ function getEntryEditorData($includeFieldHtml = false) {
             }
         } else {
             // Creating first-level sub-entry - load parent entry for context
-            $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-            if (file_exists($entryFile)) {
-                $entry = json_decode(file_get_contents($entryFile), true);
+            $entry = birkly_entry_read_record($collectionSlug, $entryId);
+            if ($entry !== null) {
                 $entry['id'] = $entryId;
                 $entry['_is_sub_entry'] = false; // This is the parent
                 $entry['_parent_entry_id'] = $entryId;
@@ -1315,9 +1308,8 @@ function getEntryEditorData($includeFieldHtml = false) {
         }
     } elseif ($entryId && !$isSubEntry) {
         // Load parent entry data (regular entry editing)
-        $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-        if (file_exists($entryFile)) {
-            $entry = json_decode(file_get_contents($entryFile), true);
+        $entry = birkly_entry_read_record($collectionSlug, $entryId);
+        if ($entry !== null) {
             $entry['id'] = $entryId;
         }
     }
@@ -1642,30 +1634,17 @@ function getEntriesData() {
         return ['error' => 'Collection parameter required'];
     }
 
-    $collectionFile = __DIR__ . "/../content/collections/$collectionSlug/collection.json";
-    if (!file_exists($collectionFile)) {
+    $collectionData = birkly_entry_read_collection_meta($collectionSlug);
+    if ($collectionData === null) {
         return ['error' => 'Collection not found'];
     }
 
-    $collectionData = json_decode(file_get_contents($collectionFile), true);
     $collectionData['slug'] = $collectionSlug;
 
     require_once __DIR__ . '/../core/collection_meta.php';
     $collectionData = array_merge($collectionData, birkly_normalize_collection_meta($collectionData, $collectionSlug));
 
-    $entries = [];
-    $entriesDir = __DIR__ . "/../content/collections/$collectionSlug/entries";
-    if (is_dir($entriesDir)) {
-        $entryFiles = glob($entriesDir . '/*.json');
-        foreach ($entryFiles as $entryFile) {
-            $entryData = json_decode(file_get_contents($entryFile), true);
-            if (!is_array($entryData)) {
-                continue;
-            }
-            $entryData['id'] = basename($entryFile, '.json');
-            $entries[] = $entryData;
-        }
-    }
+    $entries = birkly_entry_list_records($collectionSlug);
 
     $trashedCount = 0;
     foreach ($entries as $entry) {
@@ -1674,29 +1653,26 @@ function getEntriesData() {
         }
     }
 
-    $orderFile = __DIR__ . "/../content/collections/$collectionSlug/order.json";
-    if (file_exists($orderFile)) {
-        $order = json_decode(file_get_contents($orderFile), true);
-        if (is_array($order) && !empty($order)) {
-            $entryMap = [];
-            foreach ($entries as $entry) {
-                $entryMap[$entry['id']] = $entry;
-            }
-
-            $orderedEntries = [];
-            foreach ($order as $entryId) {
-                if (isset($entryMap[$entryId])) {
-                    $orderedEntries[] = $entryMap[$entryId];
-                    unset($entryMap[$entryId]);
-                }
-            }
-
-            foreach ($entryMap as $entry) {
-                $orderedEntries[] = $entry;
-            }
-
-            $entries = $orderedEntries;
+    $order = birkly_entry_read_order($collectionSlug);
+    if (!empty($order)) {
+        $entryMap = [];
+        foreach ($entries as $entry) {
+            $entryMap[$entry['id']] = $entry;
         }
+
+        $orderedEntries = [];
+        foreach ($order as $entryId) {
+            if (isset($entryMap[$entryId])) {
+                $orderedEntries[] = $entryMap[$entryId];
+                unset($entryMap[$entryId]);
+            }
+        }
+
+        foreach ($entryMap as $entry) {
+            $orderedEntries[] = $entry;
+        }
+
+        $entries = $orderedEntries;
     }
 
     $entries = array_values(array_filter($entries, static function (array $entry) use ($statusFilter): bool {
@@ -3077,9 +3053,8 @@ function getEntryDetailData() {
         }
         
         // Get parent entry for context
-        $parentEntryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-        if (file_exists($parentEntryFile)) {
-            $parentEntry = json_decode(file_get_contents($parentEntryFile), true);
+        $parentEntry = birkly_entry_read_record($collectionSlug, $entryId);
+        if ($parentEntry !== null) {
             $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
         }
 
@@ -3110,21 +3085,17 @@ function getEntryDetailData() {
         $fields = $subCollection['fields'] ?? $subCollection['schema']['fields'] ?? [];
     } else {
         // Load main entry data
-        $entryFile = __DIR__ . "/../content/collections/$collectionSlug/entries/$entryId.json";
-        if (!file_exists($entryFile)) {
+        $entry = birkly_entry_read_record($collectionSlug, $entryId);
+        if ($entry === null) {
             return ['error' => 'Entry not found'];
         }
-        $entry = json_decode(file_get_contents($entryFile), true);
         $entry['id'] = $entryId;
         
         // Get fields from schema
         $fields = [];
-        $schemaFile = __DIR__ . "/../content/collections/$collectionSlug/schema.json";
-        if (file_exists($schemaFile)) {
-            $schemaData = json_decode(file_get_contents($schemaFile), true);
-            if (isset($schemaData['fields']) && is_array($schemaData['fields'])) {
-                $fields = $schemaData['fields'];
-            }
+        $schemaData = birkly_entry_read_schema($collectionSlug);
+        if (isset($schemaData['fields']) && is_array($schemaData['fields'])) {
+            $fields = $schemaData['fields'];
         }
     }
     
