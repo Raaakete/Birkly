@@ -3440,8 +3440,8 @@
     }
 
     /**
-     * SSR pages ship fully rendered HTML — skip client re-fetch unless opted in
-     * or the DOM still contains unresolved template regions.
+     * SSR pages ship fully resolved HTML — skip the initial client template pass.
+     * Subtree/forced passes (footer, sponsors inject) use processTemplates({root, force}).
      */
     function shouldSkipSsrClientHydration() {
         if (!isPageSsrRendered()) return false;
@@ -3449,7 +3449,7 @@
             const de = document.documentElement;
             if (de && de.getAttribute && de.getAttribute('data-birkly-rehydrate') === '1') return false;
         } catch (e) { /* ignore */ }
-        return !pageNeedsTemplateProcessing(document, false);
+        return true;
     }
 
     /**
