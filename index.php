@@ -55,12 +55,10 @@ $file = realpath($root . $uri);
 if ($file && strpos($file, $root) === 0 && is_file($file)) {
     $mime = mime_content_type($file);
     header('Content-Type: ' . $mime);
-    // Public runtimes + project mirrors at web root (hosting clean URLs).
-    // Fingerprinted project assets (?v=) and hashed CMS JS can be cached.
+    // Public runtimes use versioned URLs + long cache in nginx — avoid duplicate headers here.
     $base = basename($file);
-    if (preg_match('/^birkly-(client|webmcp|components)\.js$/', $base) === 1) {
-        header('Cache-Control: public, max-age=3600');
-    } elseif (preg_match('/\.(?:js|css|svg|png|jpg|jpeg|webp|gif|ico|woff2?)$/i', $base) === 1) {
+    if (preg_match('/^birkly-(client|webmcp|components)\.js$/', $base) !== 1
+        && preg_match('/\.(?:js|css|svg|png|jpg|jpeg|webp|gif|ico|woff2?)$/i', $base) === 1) {
         header('Cache-Control: public, max-age=604800');
     }
     readfile($file);

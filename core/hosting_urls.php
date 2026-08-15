@@ -685,7 +685,8 @@ function birkly_hosting_client_snippet(bool $includeWebmcp = false): string
         return '';
     }
     $cmsAttr = htmlspecialchars($cms, ENT_QUOTES, 'UTF-8');
-    $clientSrc = htmlspecialchars(rtrim($cms, '/') . birkly_url('/birkly-client.js'), ENT_QUOTES, 'UTF-8');
+    require_once __DIR__ . '/build_info.php';
+    $clientSrc = htmlspecialchars(rtrim($cms, '/') . birkly_public_runtime_asset_url('birkly-client.js'), ENT_QUOTES, 'UTF-8');
     $snippet = '<script src="' . $clientSrc . '" data-cms-url="' . $cmsAttr . '"></script>';
 
     if ($includeWebmcp) {
