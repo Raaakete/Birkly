@@ -724,7 +724,7 @@ function birkly_project_ssr_send(string $html, string $cacheState, ?string $cach
             header('X-Birkly-SSR-Cache-Write: ' . $cacheWrite);
         }
     }
-    echo $html;
+    echo birkly_project_prepare_html_for_serve($html);
 }
 
 /**

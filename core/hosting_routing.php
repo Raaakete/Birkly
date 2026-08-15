@@ -51,6 +51,11 @@ function birkly_hosting_serve_file(string $filePath): void
         $mime = 'image/svg+xml';
     }
     header('Content-Type: ' . $mime);
+    if ($ext === 'html' || $ext === 'htm') {
+        $html = (string) file_get_contents($filePath);
+        echo birkly_project_prepare_html_for_serve($html);
+        exit;
+    }
     readfile($filePath);
     exit;
 }

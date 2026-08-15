@@ -505,6 +505,32 @@ function birkly_cms_base_url(): string
     return birkly_hosting_build_url_from_request();
 }
 
+/**
+ * Full CMS web base URL including subdirectory install path when applicable.
+ * Used by birkly-client.js (data-cms-url / meta) so API calls hit the right prefix.
+ */
+function birkly_cms_web_base_url(): string
+{
+    require_once __DIR__ . '/birkly_paths.php';
+
+    $origin = birkly_cms_base_url();
+    if ($origin === '') {
+        return birkly_base_path();
+    }
+
+    $path = parse_url($origin, PHP_URL_PATH);
+    if (is_string($path) && $path !== '' && $path !== '/') {
+        return rtrim($origin, '/');
+    }
+
+    $base = birkly_base_path();
+    if ($base === '') {
+        return rtrim($origin, '/');
+    }
+
+    return rtrim($origin, '/') . $base;
+}
+
 function birkly_hosting_public_base_url(): string
 {
     $config = birkly_hosting_load();
@@ -654,7 +680,7 @@ function birkly_hosting_clean_public_url(string $uri): string
  */
 function birkly_hosting_client_snippet(bool $includeWebmcp = false): string
 {
-    $cms = birkly_cms_base_url();
+    $cms = birkly_cms_web_base_url();
     if ($cms === '') {
         return '';
     }
