@@ -12,6 +12,10 @@ function relationContentApiUrl(query) {
   return normalized ? `${base}?${normalized}` : base;
 }
 
+function relationCollectionKey(collection) {
+  return collection.id || collection.slug || '';
+}
+
 function relationCollectionLabel(collection) {
   return collection.name || collection.title || collection.slug || 'Unknown';
 }
@@ -257,7 +261,8 @@ window.HaruFieldtypes['relation'] = {
     
     fetchFunction(relationContentApiUrl(`action=get_entry_titles&ids=${encodeURIComponent(JSON.stringify(entryIds))}`), {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin'
     })
       .then(res => res.json())
       .then(data => {
@@ -453,7 +458,11 @@ window.HaruFieldtypes['relation'] = {
         console.log('[Relation Picker] Found', relationPickerCollections.length, 'collections');
         
         data.data.collections.forEach(collection => {
-          select.innerHTML += `<option value="${collection.id}">${relationCollectionLabel(collection)} (${collection.slug})</option>`;
+          const key = relationCollectionKey(collection);
+          if (!key) {
+            return;
+          }
+          select.innerHTML += `<option value="${key}">${relationCollectionLabel(collection)} (${collection.slug})</option>`;
         });
         
         console.log('[Relation Picker] Collections loaded into dropdown');
@@ -497,11 +506,15 @@ window.HaruFieldtypes['relation'] = {
     
     try {
       const fetchFunction = window.haruFetch || fetch;
-      // Build query parameters for GET request
-      const params = new URLSearchParams({
-        action: 'list_entries',
-        id: collectionId
-      });
+      const collection = relationPickerCollections.find(c => relationCollectionKey(c) === collectionId);
+      const params = new URLSearchParams({ action: 'list_entries' });
+      if (collection && collection.id) {
+        params.append('id', collection.id);
+      } else if (collection && collection.slug) {
+        params.append('collection', collection.slug);
+      } else if (collectionId) {
+        params.append('collection', collectionId);
+      }
       if (search) {
         params.append('search', search);
       }
@@ -533,7 +546,8 @@ window.HaruFieldtypes['relation'] = {
       
       const res = await fetchFunction(relationContentApiUrl(params.toString()), {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin'
       });
       
       const data = await res.json();
@@ -546,8 +560,7 @@ window.HaruFieldtypes['relation'] = {
           return;
         }
         
-        const collection = relationPickerCollections.find(c => c.id === collectionId);
-        const collectionName = collection ? collection.title : 'Unknown';
+        const collectionName = collection ? relationCollectionLabel(collection) : 'Unknown';
         
         // Get display mode from field config
         let displayMode = 'list';
@@ -618,7 +631,10 @@ window.HaruFieldtypes['relation'] = {
               relationPickerSelected.push({ 
                 id, 
                 collection: relationPickerCurrentCollection,
-                collectionName: relationPickerCollections.find(c => c.id === relationPickerCurrentCollection) ? relationCollectionLabel(relationPickerCollections.find(c => c.id === relationPickerCurrentCollection)) : 'Unknown'
+                collectionName: (() => {
+                  const selected = relationPickerCollections.find(c => relationCollectionKey(c) === relationPickerCurrentCollection);
+                  return selected ? relationCollectionLabel(selected) : 'Unknown';
+                })()
               });
               itemDiv.classList.add('selected');
               itemDiv.style.background = '#e0e7ff';
@@ -634,7 +650,10 @@ window.HaruFieldtypes['relation'] = {
             relationPickerSelected = [{ 
               id, 
               collection: relationPickerCurrentCollection,
-              collectionName: relationPickerCollections.find(c => c.id === relationPickerCurrentCollection) ? relationCollectionLabel(relationPickerCollections.find(c => c.id === relationPickerCurrentCollection)) : 'Unknown'
+              collectionName: (() => {
+                const selected = relationPickerCollections.find(c => relationCollectionKey(c) === relationPickerCurrentCollection);
+                return selected ? relationCollectionLabel(selected) : 'Unknown';
+              })()
             }];
             document.getElementById('relationPickerSelectBtn').disabled = false;
             document.getElementById('relationPickerSelectBtn').click();
@@ -644,7 +663,9 @@ window.HaruFieldtypes['relation'] = {
         document.getElementById('relationPickerSelectBtn').disabled = relationPickerSelected.length === 0;
         document.getElementById('relationPickerSelectedCount').textContent = relationPickerSelected.length;
       } else {
-        grid.innerHTML = '<div class="text-danger">Failed to load entries</div>';
+        const message = (data && data.message) ? data.message : 'Failed to load entries';
+        console.error('[Relation Picker] Failed to load entries:', data);
+        grid.innerHTML = `<div class="text-danger">${message}</div>`;
       }
     } catch (error) {
       console.error('[DEBUG] Failed to load relation picker entries:', error);
