@@ -12,7 +12,7 @@
         
         // Create wrapper
         const wrapper = document.createElement('div');
-        wrapper.className = 'dropdown custom-select';
+        wrapper.className = 'dropdown';
         
         // Create trigger button
         const trigger = document.createElement('button');

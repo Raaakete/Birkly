@@ -104,7 +104,7 @@
   height: var(--chrome-row);
   flex-shrink: 0;
   border-radius: var(--radius-sm);
-  background: var(--surface-inverse);
+  background: transparent;
   overflow: hidden;
 }
 
