@@ -199,6 +199,8 @@ function birkly_marketplace_license_ref(string $licenseKey): string
     return (string) end($parts);
 }
 
+require_once __DIR__ . '/marketplace/http.php';
+
 /**
  * @return array{ok:bool,status:int,data:?array,error?:string}
  */
@@ -219,31 +221,23 @@ function birkly_marketplace_request(string $method, string $path, ?array $body =
         'User-Agent: Birkly-CMS/' . (function_exists('get_birkly_version') ? get_birkly_version() : '1.0.0'),
     ];
 
-    $opts = [
-        'http' => [
-            'method' => strtoupper($method),
-            'timeout' => 20,
-            'ignore_errors' => true,
-            'header' => implode("\r\n", $headers),
-        ],
-    ];
-
-    if ($body !== null) {
-        $opts['http']['header'] .= "\r\nContent-Type: application/json";
-        $opts['http']['content'] = json_encode($body);
+    $payload = $body !== null ? json_encode($body) : null;
+    if ($payload !== null) {
+        $headers[] = 'Content-Type: application/json';
     }
 
-    $context = stream_context_create($opts);
-    $raw = @file_get_contents($url, false, $context);
-    $status = 0;
-    if (isset($http_response_header[0]) && preg_match('/\d{3}/', (string) $http_response_header[0], $m)) {
-        $status = (int) $m[0];
+    $fetch = birkly_marketplace_http_fetch($url, $method, $headers, $payload, 20);
+    $status = (int) ($fetch['status'] ?? 0);
+    if (!$fetch['ok']) {
+        return [
+            'ok' => false,
+            'status' => $status,
+            'data' => null,
+            'error' => birkly_marketplace_transport_error_message('Marketplace request failed', $fetch['error'] ?? null),
+        ];
     }
 
-    if ($raw === false) {
-        return ['ok' => false, 'status' => $status ?: 0, 'data' => null, 'error' => 'Marketplace request failed'];
-    }
-
+    $raw = (string) ($fetch['body'] ?? '');
     $data = json_decode($raw, true);
     if (!is_array($data)) {
         return ['ok' => false, 'status' => $status, 'data' => null, 'error' => 'Invalid JSON from marketplace'];
