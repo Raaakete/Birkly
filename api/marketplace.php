@@ -106,7 +106,7 @@ if ($action === 'browse') {
     if (!$result['ok']) {
         echo json_encode([
             'status' => 'error',
-            'message' => $result['error'] ?? 'Failed to load marketplace catalog',
+            'message' => birkly_marketplace_user_error_message($result['error'] ?? 'Failed to load marketplace catalog'),
             'data' => ['offers' => []],
         ]);
         exit;

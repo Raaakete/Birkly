@@ -6,6 +6,8 @@
 const BIRKLY_MARKETPLACE_DEFAULT_URL = 'https://marketplace.birkly.cloud';
 const BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY = 'EUR';
 
+require_once __DIR__ . '/marketplace/http.php';
+
 /** Display-only FX rates (units per 1 EUR) for CMS marketplace price conversion. */
 const BIRKLY_MARKETPLACE_CURRENCY_RATES = [
     'EUR' => 1.0,
@@ -105,10 +107,11 @@ function birkly_marketplace_settings(): array
     }
 
     $envUrl = trim((string) (getenv('BIRKLY_MARKETPLACE_URL') ?: ''));
-    $url = $envUrl !== '' ? $envUrl : trim((string) ($stored['marketplace_url'] ?? BIRKLY_MARKETPLACE_DEFAULT_URL));
-    if ($url === '') {
-        $url = BIRKLY_MARKETPLACE_DEFAULT_URL;
+    $configuredUrl = $envUrl !== '' ? $envUrl : trim((string) ($stored['marketplace_url'] ?? BIRKLY_MARKETPLACE_DEFAULT_URL));
+    if ($configuredUrl === '') {
+        $configuredUrl = BIRKLY_MARKETPLACE_DEFAULT_URL;
     }
+    $url = birkly_marketplace_resolve_effective_url($configuredUrl);
 
     $displayCurrency = strtoupper(trim((string) ($stored['display_currency'] ?? BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY)));
     if (!array_key_exists($displayCurrency, BIRKLY_MARKETPLACE_CURRENCY_RATES)) {
@@ -160,6 +163,124 @@ function birkly_marketplace_url(): string
 }
 
 /**
+ * @return list<string>
+ */
+function birkly_marketplace_local_instance_urls(): array
+{
+    return [
+        'http://127.0.0.1:8090',
+        'http://localhost:8090',
+    ];
+}
+
+function birkly_marketplace_is_local_context(): bool
+{
+    if (PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg') {
+        return true;
+    }
+
+    if (!function_exists('birkly_is_local_dev_request')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    return birkly_is_local_dev_request();
+}
+
+function birkly_marketplace_probe_health(string $baseUrl, int $timeout = 4): bool
+{
+    $baseUrl = rtrim(trim($baseUrl), '/');
+    if ($baseUrl === '') {
+        return false;
+    }
+
+    $fetch = birkly_marketplace_http_fetch($baseUrl . '/health', 'GET', ['Accept: application/json'], null, $timeout);
+    if (!$fetch['ok']) {
+        return false;
+    }
+
+    $data = json_decode((string) ($fetch['body'] ?? ''), true);
+
+    return is_array($data) && (string) ($data['status'] ?? '') === 'ok';
+}
+
+function birkly_marketplace_should_probe_local_fallback(string $configuredUrl): bool
+{
+    if (trim((string) (getenv('BIRKLY_MARKETPLACE_URL') ?: '')) !== '') {
+        return false;
+    }
+
+    $settingsPath = birkly_marketplace_settings_dir() . '/marketplace.json';
+    if (is_file($settingsPath)) {
+        $decoded = json_decode((string) file_get_contents($settingsPath), true);
+        if (is_array($decoded) && trim((string) ($decoded['marketplace_url'] ?? '')) !== '') {
+            return false;
+        }
+    }
+
+    if (rtrim($configuredUrl, '/') !== rtrim(BIRKLY_MARKETPLACE_DEFAULT_URL, '/')) {
+        return false;
+    }
+
+    return birkly_marketplace_is_local_context();
+}
+
+function birkly_marketplace_resolve_effective_url(string $configuredUrl): string
+{
+    static $cache = [];
+
+    $configuredUrl = rtrim(trim($configuredUrl), '/');
+    if ($configuredUrl === '') {
+        $configuredUrl = BIRKLY_MARKETPLACE_DEFAULT_URL;
+    }
+
+    if (isset($cache[$configuredUrl])) {
+        return $cache[$configuredUrl];
+    }
+
+    if (!birkly_marketplace_should_probe_local_fallback($configuredUrl)) {
+        return $cache[$configuredUrl] = $configuredUrl;
+    }
+
+    if (birkly_marketplace_probe_health($configuredUrl, 5)) {
+        return $cache[$configuredUrl] = $configuredUrl;
+    }
+
+    foreach (birkly_marketplace_local_instance_urls() as $localUrl) {
+        if (birkly_marketplace_probe_health($localUrl, 2)) {
+            return $cache[$configuredUrl] = $localUrl;
+        }
+    }
+
+    return $cache[$configuredUrl] = $configuredUrl;
+}
+
+function birkly_marketplace_user_error_message(string $error): string
+{
+    $error = trim($error);
+    if ($error === '') {
+        $error = 'Marketplace request failed';
+    }
+
+    if (
+        stripos($error, 'timed out') !== false
+        || stripos($error, 'could not resolve') !== false
+        || stripos($error, 'failed to connect') !== false
+    ) {
+        $url = birkly_marketplace_url();
+        $hint = 'Verify PHP can reach ' . $url
+            . ' (terminal: curl -4 https://marketplace.birkly.cloud/health). '
+            . 'Broken HTTP_PROXY env vars and IPv6 routing often cause PHP timeouts while curl in Terminal still works.';
+        if (birkly_marketplace_is_local_context()) {
+            $hint .= ' For local-only dev, run Birkly-Marketplace on port 8090 or set BIRKLY_MARKETPLACE_URL=http://127.0.0.1:8090.';
+        }
+
+        return $error . ' ' . $hint;
+    }
+
+    return $error;
+}
+
+/**
  * Stable CMS installation identity for license activation (stored locally).
  */
 function birkly_installation_id(): string
@@ -198,8 +319,6 @@ function birkly_marketplace_license_ref(string $licenseKey): string
     $parts = explode('-', $key);
     return (string) end($parts);
 }
-
-require_once __DIR__ . '/marketplace/http.php';
 
 /**
  * @return array{ok:bool,status:int,data:?array,error?:string}
