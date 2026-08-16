@@ -3,6 +3,8 @@
  * Marketplace plugin install and upgrade from verified zip artifacts.
  */
 
+require_once dirname(__DIR__) . '/marketplace/http.php';
+
 function birkly_marketplace_ensure_plugins_core(): void
 {
     if (!function_exists('validate_plugin')) {
@@ -27,23 +29,18 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
         return ['ok' => false, 'error' => 'Failed to create temp file'];
     }
 
-    $context = stream_context_create([
-        'http' => [
-            'timeout' => 60,
-            'ignore_errors' => true,
-            'header' => "User-Agent: Birkly-CMS\r\n",
-        ],
-    ]);
-
-    $content = @file_get_contents($downloadUrl, false, $context);
-    if ($content === false) {
+    $download = birkly_marketplace_http_download_to_file(
+        $downloadUrl,
+        $tmp,
+        ['User-Agent: Birkly-CMS'],
+        120
+    );
+    if (!$download['ok']) {
         @unlink($tmp);
-        return ['ok' => false, 'error' => 'Failed to download artifact'];
-    }
-
-    if (file_put_contents($tmp, $content) === false) {
-        @unlink($tmp);
-        return ['ok' => false, 'error' => 'Failed to save artifact'];
+        return [
+            'ok' => false,
+            'error' => birkly_marketplace_transport_error_message('Failed to download artifact', $download['error'] ?? null),
+        ];
     }
 
     if ($expectedSha256 !== null && $expectedSha256 !== '') {
