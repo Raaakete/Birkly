@@ -7,6 +7,46 @@
  */
 
 /**
+ * Apply transport defaults that avoid common localhost/macOS failure modes:
+ * broken HTTP(S)_PROXY env vars and IPv6 connect timeouts.
+ *
+ * @param resource|\CurlHandle $ch
+ */
+function birkly_marketplace_curl_apply_transport_defaults($ch): void
+{
+    // Ignore HTTP_PROXY/HTTPS_PROXY — a stale local proxy causes 10s connect timeouts.
+    curl_setopt($ch, CURLOPT_PROXY, '');
+
+    if (defined('CURLOPT_IPRESOLVE') && defined('CURL_IPRESOLVE_V4')) {
+        curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+    }
+
+    if (defined('CURLOPT_HTTP_VERSION') && defined('CURL_HTTP_VERSION_1_1')) {
+        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+    }
+}
+
+function birkly_marketplace_http_is_retryable_error(string $error): bool
+{
+    $error = strtolower($error);
+    foreach ([
+        'timed out',
+        'timeout',
+        'could not resolve',
+        'connection refused',
+        'failed to connect',
+        'network is unreachable',
+        'no route to host',
+    ] as $needle) {
+        if (str_contains($error, $needle)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * @return array{ok:bool,status:int,body:string,error:?string}
  */
 function birkly_marketplace_http_fetch(
@@ -22,7 +62,13 @@ function birkly_marketplace_http_fetch(
     }
 
     if (extension_loaded('curl')) {
-        return birkly_marketplace_http_fetch_curl($url, $method, $headers, $body, $timeout, $followRedirects);
+        $result = birkly_marketplace_http_fetch_curl($url, $method, $headers, $body, $timeout, $followRedirects);
+        if ($result['ok'] || !birkly_marketplace_http_is_retryable_error((string) ($result['error'] ?? ''))) {
+            return $result;
+        }
+
+        // One quick retry — covers transient DNS / routing hiccups on dev machines.
+        return birkly_marketplace_http_fetch_curl($url, $method, $headers, $body, $timeout, $followRedirects, true);
     }
 
     return birkly_marketplace_http_fetch_streams($url, $method, $headers, $body, $timeout);
@@ -37,7 +83,8 @@ function birkly_marketplace_http_fetch_curl(
     array $headers,
     ?string $body,
     int $timeout,
-    bool $followRedirects
+    bool $followRedirects,
+    bool $isRetry = false
 ): array {
     $ch = curl_init($url);
     if ($ch === false) {
@@ -59,16 +106,19 @@ function birkly_marketplace_http_fetch_curl(
         }
     }
 
+    $connectTimeout = $isRetry ? min(8, max(3, (int) ceil($timeout / 3))) : max(5, (int) min($timeout, 10));
+
     curl_setopt_array($ch, [
         CURLOPT_CUSTOMREQUEST => $method,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => $headerLines,
         CURLOPT_TIMEOUT => max(1, $timeout),
-        CURLOPT_CONNECTTIMEOUT => max(5, (int) min($timeout, 10)),
+        CURLOPT_CONNECTTIMEOUT => $connectTimeout,
         CURLOPT_FOLLOWLOCATION => $followRedirects,
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_SSL_VERIFYHOST => 2,
     ]);
+    birkly_marketplace_curl_apply_transport_defaults($ch);
 
     if ($body !== null && $body !== '') {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
@@ -200,6 +250,7 @@ function birkly_marketplace_http_download_to_file(
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
         ]);
+        birkly_marketplace_curl_apply_transport_defaults($ch);
 
         if (defined('CURLOPT_PROTOCOLS') && defined('CURLPROTO_HTTP') && defined('CURLPROTO_HTTPS')) {
             curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
