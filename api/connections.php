@@ -40,7 +40,36 @@ if (!empty($rawInput)) {
 }
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
-requireAuth('manage_settings');
+/**
+ * Email picker is read-only metadata for Commerce, Automation, and collection forms.
+ * Shop/content admins may not have manage_settings but still need to choose a connection.
+ */
+function connections_require_action_auth(string $action): void
+{
+    if ($action === 'email_picker') {
+        requireAuth();
+        $user = $_SESSION['user'] ?? null;
+        if (!is_array($user)) {
+            http_response_code(401);
+            echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+            exit;
+        }
+        $canPick = checkPermission($user, 'manage_settings')
+            || checkPermission($user, 'manage_commerce')
+            || checkPermission($user, 'manage_payments')
+            || checkPermission($user, 'manage_content');
+        if (!$canPick) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Forbidden']);
+            exit;
+        }
+        return;
+    }
+
+    requireAuth('manage_settings');
+}
+
+connections_require_action_auth($action);
 
 function connections_json_response(array $data, int $code = 200): void
 {
