@@ -43,9 +43,25 @@ function birkly_mail_transport_mailgun(array $payload, array $connection): array
         $body['h:Reply-To'] = $payload['reply_to'];
     }
 
-    $result = birkly_mail_http_post($url, $body, [
-        'Authorization: Basic ' . base64_encode('api:' . $apiKey),
-    ], true);
+    $attachments = $payload['attachments'] ?? [];
+    if (is_array($attachments) && $attachments !== []) {
+        $files = [];
+        foreach ($attachments as $att) {
+            $files[] = [
+                'field' => 'attachment',
+                'filename' => $att['filename'],
+                'content' => $att['content'],
+                'mime_type' => $att['mime_type'],
+            ];
+        }
+        $result = birkly_mail_http_post_multipart($url, $body, $files, [
+            'Authorization: Basic ' . base64_encode('api:' . $apiKey),
+        ]);
+    } else {
+        $result = birkly_mail_http_post($url, $body, [
+            'Authorization: Basic ' . base64_encode('api:' . $apiKey),
+        ], true);
+    }
 
     return birkly_mail_map_http_status($result, 'mailgun', $connectionId, $alias);
 }

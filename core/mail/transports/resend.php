@@ -39,6 +39,16 @@ function birkly_mail_transport_resend(array $payload, array $connection): array
     if (!empty($payload['tags'])) {
         $body['tags'] = $payload['tags'];
     }
+    $attachments = $payload['attachments'] ?? [];
+    if (is_array($attachments) && $attachments !== []) {
+        $body['attachments'] = [];
+        foreach ($attachments as $att) {
+            $body['attachments'][] = [
+                'filename' => $att['filename'],
+                'content' => base64_encode($att['content']),
+            ];
+        }
+    }
 
     $url = 'https://api.resend.com/emails';
     if ($region !== '') {

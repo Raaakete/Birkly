@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../mime.php';
+
 function birkly_mail_transport_smtp(array $payload, array $connection): array
 {
     $config = is_array($connection['config'] ?? null) ? $connection['config'] : [];
@@ -89,7 +91,15 @@ function birkly_mail_transport_smtp(array $payload, array $connection): array
         $stage = 'data';
         birkly_smtp_cmd($fp, 'DATA', [354], $stage);
 
-        $message = birkly_smtp_build_message($fromName, $from, $to, $payload['subject'] ?? '', $payload['html'] ?? '', $payload['text'] ?? '');
+        $message = birkly_smtp_build_message(
+            $fromName,
+            $from,
+            $to,
+            $payload['subject'] ?? '',
+            $payload['html'] ?? '',
+            $payload['text'] ?? '',
+            $payload['attachments'] ?? []
+        );
         $written = fwrite($fp, $message);
         if ($written === false || $written < strlen($message)) {
             throw new RuntimeException('Failed to write SMTP DATA payload');
@@ -171,49 +181,11 @@ function birkly_smtp_build_message(
     array $to,
     string $subject,
     string $bodyHtml,
-    string $bodyText
+    string $bodyText,
+    array $attachments = []
 ): string {
-    $hasHtml = $bodyHtml !== '';
-    $hasText = $bodyText !== '';
-
-    if ($hasHtml && $hasText) {
-        $boundary = 'birkly_' . bin2hex(random_bytes(16));
-        $headers = [
-            'Date: ' . date('r'),
-            'From: ' . birkly_mail_encode_address($fromName, $fromEmail),
-            'To: <' . implode('>, <', $to) . '>',
-            'Subject: ' . birkly_mail_encode_header($subject),
-            'MIME-Version: 1.0',
-            'Content-Type: multipart/alternative; boundary="' . $boundary . '"',
-        ];
-
-        $parts = "--" . $boundary . "\r\n";
-        $parts .= "Content-Type: text/plain; charset=UTF-8\r\n";
-        $parts .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
-        $parts .= birkly_smtp_body_escape($bodyText) . "\r\n\r\n";
-        $parts .= "--" . $boundary . "\r\n";
-        $parts .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $parts .= "Content-Transfer-Encoding: 8bit\r\n\r\n";
-        $parts .= birkly_smtp_body_escape($bodyHtml) . "\r\n\r\n";
-        $parts .= "--" . $boundary . "--";
-
-        return implode("\r\n", $headers) . "\r\n\r\n" . $parts . "\r\n.\r\n";
-    }
-
-    $contentType = $hasHtml ? 'text/html; charset=UTF-8' : 'text/plain; charset=UTF-8';
-    $body = $hasHtml ? $bodyHtml : $bodyText;
-
-    $headers = [
-        'Date: ' . date('r'),
-        'From: ' . birkly_mail_encode_address($fromName, $fromEmail),
-        'To: <' . implode('>, <', $to) . '>',
-        'Subject: ' . birkly_mail_encode_header($subject),
-        'MIME-Version: 1.0',
-        'Content-Type: ' . $contentType,
-        'Content-Transfer-Encoding: 8bit',
-    ];
-
-    return implode("\r\n", $headers) . "\r\n\r\n" . birkly_smtp_body_escape($body) . "\r\n.\r\n";
+    $mime = birkly_mail_build_mime_message($fromName, $fromEmail, $to, $subject, $bodyHtml, $bodyText, $attachments);
+    return birkly_smtp_body_escape($mime) . "\r\n.\r\n";
 }
 
 function birkly_smtp_body_escape(string $body): string

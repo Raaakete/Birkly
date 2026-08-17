@@ -19,6 +19,7 @@ require_once __DIR__ . '/transports/resend.php';
 require_once __DIR__ . '/transports/postmark.php';
 require_once __DIR__ . '/transports/ses.php';
 require_once __DIR__ . '/transports/mailgun.php';
+require_once __DIR__ . '/attachments.php';
 
 /**
  * Send an email using a configured connection.
@@ -55,6 +56,7 @@ function birkly_send_mail($envelope, ?string $connectionAlias = null, string $le
             'headers' => is_array($opts['headers'] ?? null) ? $opts['headers'] : [],
             'tags' => is_array($opts['tags'] ?? null) ? $opts['tags'] : [],
             'metadata' => is_array($opts['metadata'] ?? null) ? $opts['metadata'] : [],
+            'attachments' => is_array($opts['attachments'] ?? null) ? $opts['attachments'] : [],
             'queue_on_failure' => !empty($opts['queue_on_failure']),
         ];
     }
@@ -140,6 +142,7 @@ function birkly_send_mail_envelope(array $envelope, ?string $connectionAlias = n
     $headers = is_array($envelope['headers'] ?? null) ? $envelope['headers'] : [];
     $tags = is_array($envelope['tags'] ?? null) ? $envelope['tags'] : [];
     $metadata = is_array($envelope['metadata'] ?? null) ? $envelope['metadata'] : [];
+    $attachments = birkly_mail_normalize_attachments($envelope['attachments'] ?? []);
 
     $payload = [
         'to' => $to,
@@ -152,6 +155,7 @@ function birkly_send_mail_envelope(array $envelope, ?string $connectionAlias = n
         'headers' => $headers,
         'tags' => $tags,
         'metadata' => $metadata,
+        'attachments' => $attachments,
     ];
 
     $result = match ($provider) {

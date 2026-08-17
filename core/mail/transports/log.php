@@ -25,6 +25,7 @@ function birkly_mail_transport_log(array $payload, array $connection): array
         'from' => $payload['from'] ?? '',
         'subject' => $payload['subject'] ?? '',
         'body_preview' => substr(strip_tags((string) ($payload['html'] ?? $payload['text'] ?? '')), 0, 240),
+        'attachments' => array_map(static fn(array $att): string => (string) ($att['filename'] ?? ''), is_array($payload['attachments'] ?? null) ? $payload['attachments'] : []),
         'tags' => $payload['tags'] ?? [],
         'metadata' => $payload['metadata'] ?? [],
     ];

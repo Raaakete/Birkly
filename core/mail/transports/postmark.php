@@ -36,6 +36,17 @@ function birkly_mail_transport_postmark(array $payload, array $connection): arra
     if (!empty($payload['tags'])) {
         $body['Tag'] = is_array($payload['tags']) ? $payload['tags'][0] : $payload['tags'];
     }
+    $attachments = $payload['attachments'] ?? [];
+    if (is_array($attachments) && $attachments !== []) {
+        $body['Attachments'] = [];
+        foreach ($attachments as $att) {
+            $body['Attachments'][] = [
+                'Name' => $att['filename'],
+                'Content' => base64_encode($att['content']),
+                'ContentType' => $att['mime_type'],
+            ];
+        }
+    }
 
     $result = birkly_mail_http_post('https://api.postmarkapp.com/email', $body, [
         'X-Postmark-Server-Token: ' . $apiKey,

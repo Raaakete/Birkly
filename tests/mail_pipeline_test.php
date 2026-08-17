@@ -17,6 +17,7 @@ putenv('BIRKLY_SECRETS_KEY=' . bin2hex(random_bytes(32)));
 
 require_once dirname(__DIR__) . '/core/connections/registry.php';
 require_once dirname(__DIR__) . '/core/mail/birkly_send_mail.php';
+require_once dirname(__DIR__) . '/core/mail/mime.php';
 
 $failures = 0;
 
@@ -120,6 +121,32 @@ $postmarkResult = birkly_send_mail([
     'html' => '<p>Postmark</p>',
 ], 'postmark-test');
 assert_true('postmark adapter reports failure honestly', $postmarkResult['status'] === 'failed');
+
+// SMTP transport builds multipart messages with attachments.
+$smtpMime = birkly_mail_build_mime_message('Shop', 'shop@example.com', ['buyer@example.com'], 'Invoice', '<p>Hi</p>', 'Hi', [
+    ['filename' => 'invoice.html', 'content' => '<h1>Invoice</h1>', 'mime_type' => 'text/html; charset=UTF-8'],
+]);
+assert_true('smtp mime includes attachment', str_contains($smtpMime, 'Content-Disposition: attachment'));
+assert_true('smtp mime includes invoice filename', str_contains($smtpMime, 'invoice.html'));
+
+// Attachment normalization rejects empty filenames.
+$normalized = birkly_mail_normalize_attachments([
+    ['filename' => 'ok.pdf', 'content' => '%PDF-1.4'],
+    ['filename' => '', 'content' => 'skip'],
+]);
+assert_true('attachment normalization keeps valid items', count($normalized) === 1);
+assert_true('attachment normalization preserves filename', $normalized[0]['filename'] === 'ok.pdf');
+
+// Log transport with attachment metadata.
+$result3 = birkly_send_mail([
+    'to' => 'attach@example.com',
+    'subject' => 'With attachment',
+    'html' => '<p>See attached</p>',
+    'attachments' => [
+        ['filename' => 'note.txt', 'content' => 'Hello attachment'],
+    ],
+], 'mail-log');
+assert_true('log transport with attachment succeeds', $result3['status'] === 'logged');
 
 // Cleanup.
 function rrmdir(string $dir): void
