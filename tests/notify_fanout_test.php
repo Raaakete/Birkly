@@ -146,6 +146,26 @@ if ($globalDispatch !== null) {
     assert_true('global webhook includes custom header', $globalHeader === 'X-Global-Key: global-value');
 }
 
+// Default email fallback when no event alias matches.
+birkly_connections_save(['connections' => []]);
+$fallbackConn = birkly_connection_create([
+    'type' => 'email',
+    'provider' => 'log',
+    'alias' => 'my-primary-email',
+    'name' => 'Primary',
+    'from_email' => 'fallback@example.com',
+    'is_default' => true,
+]);
+assert_true('fallback email connection created', $fallbackConn['ok'] === true);
+
+$fallbackResult = birkly_notify('public_submit', [
+    'to' => 'forms@example.com',
+    'subject' => 'New form submission',
+    'message' => 'Someone submitted the contact form.',
+]);
+assert_true('notify falls back to default email connection', isset($fallbackResult['my-primary-email']));
+assert_true('fallback dispatch returns logged', $fallbackResult['my-primary-email']['status'] === 'logged');
+
 unset($GLOBALS['__birkly_http_transport']);
 rrmdir($testRoot);
 
