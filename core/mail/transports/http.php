@@ -112,7 +112,7 @@ function birkly_mail_map_http_status(array $result, string $provider, ?string $c
     }
 
     if ($httpCode >= 200 && $httpCode < 300) {
-        return birkly_mail_result('queued', $provider, $connectionId, $connectionAlias, null, [
+        return birkly_mail_result('accepted', $provider, $connectionId, $connectionAlias, null, [
             'http_code' => $httpCode,
             'message_id' => $result['message_id'] ?? null,
         ]);

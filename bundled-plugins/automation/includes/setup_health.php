@@ -204,6 +204,8 @@ function automation_save_mail_settings(array $input)
  */
 function automation_setup_health(): array
 {
+    automation_ensure_mail_pipeline();
+
     $queue = get_automation_queue_status();
     $storage = automation_storage();
     $runtime = $storage->read('automation_runtime.json') ?? [];
@@ -241,7 +243,23 @@ function automation_setup_health(): array
         'why' => 'Without the runner, automations sit in a queue and never send email or call Slack.',
     ];
 
-    if ($method === 'smtp') {
+    if (function_exists('birkly_send_mail')) {
+        $coreHealthy = null;
+        if (function_exists('birkly_connection_health')) {
+            $coreHealthy = birkly_connection_health('transactional_email');
+        }
+        $healthy = is_array($coreHealthy) && !empty($coreHealthy['healthy']);
+        $checks[] = [
+            'id' => 'email_connections',
+            'label' => '2. Email transport (Settings → Connections)',
+            'status' => $healthy ? 'ok' : 'warn',
+            'detail' => $healthy
+                ? 'Transactional email connection is healthy. Automation uses the shared Connections pipeline.'
+                : 'Email delivery is now managed in Settings → Connections. Configure a transactional email connection to send real mail.',
+            'required_for' => ['email'],
+            'why' => 'Automation uses the shared Connections mail pipeline when it is available.',
+        ];
+    } elseif ($method === 'smtp') {
         $smtpReady = trim((string) ($mail['smtp_host'] ?? '')) !== '' && !empty($mail['smtp_password_set']);
         $checks[] = [
             'id' => 'email_smtp',
@@ -335,9 +353,8 @@ function automation_setup_health(): array
         }
     }
 
-    // Always warn when email actions exist and transport is plain mail().
-    if (($actionUsage['email'] ?? 0) > 0 && $method === 'mail') {
-        $warnings[] = 'Email actions are using PHP mail(). Configure SMTP (or Log) under Setup or messages will usually never arrive.';
+    if (($actionUsage['email'] ?? 0) > 0 && $method === 'mail' && !function_exists('birkly_send_mail')) {
+        $warnings[] = 'Email actions are using PHP mail(). Configure an email connection under Settings → Connections.';
     }
 
     $recentJobs = function_exists('automation_get_recent_queue_jobs')
@@ -356,6 +373,11 @@ function automation_setup_health(): array
         }
     }
 
+    if (function_exists('birkly_send_mail')) {
+        $mail['method'] = 'connections';
+        $mail['core_available'] = true;
+    }
+
     return [
         'plugin_version' => automation_plugin_version(),
         'checks' => $checks,
@@ -372,6 +394,7 @@ function automation_setup_health(): array
             'mail' => $mailFn,
             'curl' => $curl,
             'smtp' => true,
+            'core_mail' => function_exists('birkly_send_mail'),
             'host' => $host,
         ],
         'action_usage' => $actionUsage,
@@ -380,8 +403,14 @@ function automation_setup_health(): array
         'ready' => $blocking === [],
         'guide' => [
             'title' => 'What Setup is for',
-            'summary' => 'Setup configures how automations actually deliver messages. Creating a workflow is not enough — email needs a transport, Slack needs a webhook URL, and the queue must run.',
-            'steps' => [
+            'summary' => 'Setup configures how automations actually deliver messages. Creating a workflow is not enough — email needs a connection, Slack needs a webhook URL, and the queue must run.',
+            'steps' => function_exists('birkly_send_mail') ? [
+                'Configure a transactional email connection in Settings → Connections and send a test email.',
+                'If jobs are pending, click Process queue now.',
+                'Build your workflow (trigger + Send Email / Slack / webhook).',
+                'Use Test (dry run) to validate config — it never sends.',
+                'Use Confirm & Run Live, or create a real entry, to execute for real.',
+            ] : [
                 'Choose an email transport (SMTP recommended on cloud hosts) and send a test email.',
                 'If jobs are pending, click Process queue now.',
                 'Build your workflow (trigger + Send Email / Slack / webhook).',
