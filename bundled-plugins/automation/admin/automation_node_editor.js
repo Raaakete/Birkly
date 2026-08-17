@@ -659,7 +659,7 @@
         ${missing.length ? `<div class="node-inspector-alert">Required: ${escapeHtml(missing.join(', '))}</div>` : ''}
         <div class="node-inspector-fields"></div>
         <div class="node-inspector-connections-wrap">
-          <h5>Connections</h5>
+          <h5>Workflow links</h5>
           <div class="node-inspector-connections-host"></div>
         </div>
       `;
@@ -689,17 +689,21 @@
     _buildField(node, field, fs) {
       const wrap = document.createElement('div');
       wrap.className = 'form-group';
-      const label = document.createElement('label');
-      label.textContent = (fs.label || field) + (fs.required ? ' *' : '');
-      wrap.appendChild(label);
-      if (fs.description) {
+      const type = fs.type || 'string';
+      const isEmailConnection = type === 'email_connection';
+
+      if (!isEmailConnection) {
+        const label = document.createElement('label');
+        label.textContent = (fs.label || field) + (fs.required ? ' *' : '');
+        wrap.appendChild(label);
+      }
+      if (fs.description && !isEmailConnection) {
         const help = document.createElement('p');
         help.className = 'form-help';
         help.textContent = fs.description;
         wrap.appendChild(help);
       }
 
-      const type = fs.type || 'string';
       let val = (node.config || {})[field];
       if ((val == null || val === '') && fs.default != null && fs.default !== '') {
         val = fs.default;
@@ -720,6 +724,7 @@
         return wrap;
       }
       if (type === 'email_connection') {
+        wrap.classList.add('sys-conn-picker-field-wrap');
         wrap.appendChild(this._buildEmailConnectionPicker(node, field, val));
         return wrap;
       }
@@ -888,23 +893,31 @@
     _buildEmailConnectionPicker(node, field, value) {
       const wrap = document.createElement('div');
       wrap.className = 'sys-conn-picker-mount';
+      wrap.setAttribute('data-email-connection-picker', '1');
+      wrap.setAttribute('data-picker-name', field);
+      wrap.setAttribute('data-picker-value', (node.config || {})[field] || value || '');
       const mountId = 'automation-email-conn-' + node.id + '-' + field;
       wrap.id = mountId;
+      wrap.setAttribute('data-picker-id', mountId + '-select');
+      wrap.setAttribute('data-picker-help', 'Choose which email connection sends this message.');
 
       const render = async () => {
         if (!window.BirklyEmailConnectionPicker) {
-          wrap.innerHTML = '<p class="field-help">Email connection picker is unavailable. Reload the page.</p>';
+          wrap.innerHTML = '<p class="field-help message message-error">Email connection picker failed to load. Hard-refresh the page or update Automation to 1.1.11+.</p>';
           return;
         }
-        await BirklyEmailConnectionPicker.mount(wrap, {
+        const select = await BirklyEmailConnectionPicker.mount(wrap, {
           name: field,
           value: (node.config || {})[field] || value || '',
           id: mountId + '-select',
           help: 'Choose which email connection sends this message.',
-          onChange: function (alias) {
+          onChange: (alias) => {
             this._setConfig(node, field, alias);
-          }.bind(this),
+          },
         });
+        if (select && !(node.config || {})[field] && select.value) {
+          this._setConfig(node, field, select.value, false);
+        }
       };
 
       render();
