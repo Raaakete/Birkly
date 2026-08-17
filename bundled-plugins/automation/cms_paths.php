@@ -54,6 +54,7 @@ function automation_ensure_mail_pipeline(): void
     }
 }
 
+function automation_settings_dir(): string
 {
     if (function_exists('birkly_plugin_state_settings_dir')) {
         return birkly_plugin_state_settings_dir();
