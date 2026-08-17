@@ -302,76 +302,141 @@ class BirklyVersion {
     }
 
     /**
+     * Whether Ops is the configured update source (no per-site GitHub token needed).
+     */
+    private static function opsUpdatesEnabled(): bool
+    {
+        if (!is_file(__DIR__ . '/platform_ops.php')) {
+            return false;
+        }
+        require_once __DIR__ . '/platform_ops.php';
+        return birkly_ops_updates_check_url() !== '';
+    }
+
+    /**
+     * @return array{download_url:string,checksum_sha256:string}|null
+     */
+    private static function resolveOpsDownloadMeta(string $version): ?array
+    {
+        if (!self::opsUpdatesEnabled()) {
+            return null;
+        }
+
+        require_once __DIR__ . '/platform_ops.php';
+        $ops = birkly_ops_check_updates(self::getCurrentVersion());
+        if (!is_array($ops) || empty($ops['ok'])) {
+            return null;
+        }
+
+        $latest = (string) ($ops['latest_version'] ?? '');
+        if ($latest !== $version) {
+            return null;
+        }
+
+        $url = trim((string) ($ops['download_url'] ?? ''));
+        if ($url === '') {
+            return null;
+        }
+
+        return [
+            'download_url' => $url,
+            'checksum_sha256' => strtolower(trim((string) ($ops['checksum_sha256'] ?? ''))),
+        ];
+    }
+
+    private static function fetchRemoteBytes(string $url, array $extraHeaders = []): ?string
+    {
+        $headers = array_merge(['User-Agent: Birkly/' . self::getCurrentVersion()], $extraHeaders);
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 300,
+                CURLOPT_CONNECTTIMEOUT => 15,
+                CURLOPT_HTTPHEADER => $headers,
+            ]);
+            $body = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if (!is_string($body) || $code < 200 || $code >= 300) {
+                return null;
+            }
+            return $body;
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'timeout' => 300,
+                'ignore_errors' => true,
+                'header' => implode("\r\n", $headers),
+            ],
+        ]);
+        $body = @file_get_contents($url, false, $context);
+        return is_string($body) && $body !== '' ? $body : null;
+    }
+
+    /**
      * Check for available updates
      */
     public static function checkForUpdates(): array {
         $currentVersion = self::getCurrentVersion();
-        $githubInfo = self::checkGithubForUpdates($currentVersion);
 
-        $opsInfo = null;
-        if (is_file(__DIR__ . '/platform_ops.php')) {
+        if (self::opsUpdatesEnabled()) {
             require_once __DIR__ . '/platform_ops.php';
             $ops = birkly_ops_check_updates($currentVersion);
             if (is_array($ops) && !empty($ops['ok'])) {
-                $opsInfo = [
+                return [
                     'current_version' => (string) ($ops['current_version'] ?? $currentVersion),
                     'latest_version' => (string) ($ops['latest_version'] ?? $currentVersion),
                     'update_available' => !empty($ops['update_available']),
                     'release_notes' => (string) ($ops['release_notes'] ?? ''),
                     'download_url' => (string) ($ops['download_url'] ?? ''),
+                    'checksum_sha256' => (string) ($ops['checksum_sha256'] ?? ''),
                     'published_at' => '',
                     'prerelease' => birkly_ops_release_channel() !== 'stable',
                     'source' => 'ops',
                 ];
             }
+
+            return ['error' => 'Update check failed. Ops could not be reached — verify network access to your Ops platform.'];
         }
 
-        // Prefer Ops when it has a signed release package ready to install.
-        if (is_array($opsInfo) && !empty($opsInfo['update_available']) && ($opsInfo['download_url'] ?? '') !== '') {
-            return $opsInfo;
-        }
-
-        // GitHub release is newer than Ops channel metadata (common when only GitHub was published).
-        if (!isset($githubInfo['error']) && !empty($githubInfo['update_available'])) {
-            return $githubInfo;
-        }
-
-        if (is_array($opsInfo)) {
-            return $opsInfo;
-        }
-
-        return $githubInfo;
+        return self::checkGithubForUpdates($currentVersion);
     }
     
     /**
      * Download and verify update package
      */
     public static function downloadUpdate(string $version): array {
-        $downloadUrl = self::getDownloadUrl($version);
         $tempFile = sys_get_temp_dir() . '/birkly-update-' . $version . '.zip';
+        $opsMeta = self::resolveOpsDownloadMeta($version);
+        $downloadUrl = $opsMeta['download_url'] ?? self::getDownloadUrl($version);
+        $expectedChecksum = $opsMeta['checksum_sha256'] ?? '';
         
         try {
-            // Download the update
-            $headers = self::getGithubHeaders('Birkly/' . self::getCurrentVersion());
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 300,
-                    'ignore_errors' => true,
-                    'header' => implode("\r\n", $headers)
-                ]
-            ]);
-            
-            $zipContent = @file_get_contents($downloadUrl, false, $context);
-            if (!$zipContent) {
+            $extraHeaders = $opsMeta === null ? self::getGithubHeaders('Birkly/' . self::getCurrentVersion()) : [];
+            $zipContent = self::fetchRemoteBytes($downloadUrl, $extraHeaders);
+            if ($zipContent === null) {
+                if ($opsMeta !== null) {
+                    return ['error' => 'Failed to download update from Ops. Check that the release artifact is published.'];
+                }
                 return ['error' => 'Failed to download update. For private repos set BIRKLY_GITHUB_TOKEN or settings/security.json github_token.'];
             }
             
-            // Save to temporary file
             if (file_put_contents($tempFile, $zipContent) === false) {
                 return ['error' => 'Failed to save update file'];
             }
+
+            if ($expectedChecksum !== '') {
+                $actual = hash_file('sha256', $tempFile);
+                if (!is_string($actual) || !hash_equals($expectedChecksum, strtolower($actual))) {
+                    unlink($tempFile);
+                    return ['error' => 'Update checksum verification failed'];
+                }
+            }
             
-            // Verify file integrity
             if (!self::verifyUpdateIntegrity($tempFile, $version)) {
                 unlink($tempFile);
                 return ['error' => 'Update integrity verification failed'];
