@@ -251,10 +251,12 @@ function validateFieldValue($value, $type, $schema) {
 }
 
 function sendFormNotification($collection, $entryData, $collectionConfig) {
-    // Simple email notification - you can enhance this
-    $to = $collectionConfig['notification_email'] ?? '';
-    if (empty($to)) return;
-    
+    $apiSettings = is_array($collectionConfig['api_settings'] ?? null) ? $collectionConfig['api_settings'] : $collectionConfig;
+    $to = trim((string) ($apiSettings['notification_email'] ?? $collectionConfig['notification_email'] ?? ''));
+    if ($to === '') return;
+
+    require_once __DIR__ . '/../core/connections/resolve.php';
+
     $subject = "New form submission: $collection";
     $message = "A new form submission has been received:\n\n";
     $message .= "Collection: $collection\n";
@@ -262,20 +264,17 @@ function sendFormNotification($collection, $entryData, $collectionConfig) {
     $message .= "Submitted by: {$entryData['submitted_by']}\n";
     $message .= "Date: {$entryData['created_at']}\n\n";
     $message .= "Data:\n";
-    
+
     foreach ($entryData as $key => $value) {
         if (in_array($key, ['id', 'created_at', 'updated_at', 'status', 'submitted_by', 'submitted_ip', 'form_config'])) {
             continue;
         }
         $message .= "$key: $value\n";
     }
-    
-    birkly_notify('secure_form_submission', [
-        'to' => $to,
-        'subject' => $subject,
-        'message' => $message,
-        'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
-        'metadata' => ['source' => 'secure_forms', 'collection' => $collection],
+
+    birkly_send_api_notification_mail($apiSettings, $to, $subject, $message, [
+        'source' => 'secure_forms',
+        'collection' => $collection,
     ]);
 }
 

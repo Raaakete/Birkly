@@ -357,8 +357,11 @@ $ok = $storage->write($entryPath, $cleanData);
 log_security_event('public_submission', ['collection' => $collectionSlug, 'ip' => $ip, 'id' => $id, 'ok' => $ok]);
 
 // Email notification (if enabled)
-if ($ok && !empty($collectionMeta['notify_email'])) {
-    $to = $collectionMeta['notify_email'];
+$apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
+$notifyTo = trim((string) ($apiSettings['notification_email'] ?? ''));
+if ($ok && $notifyTo !== '') {
+    require_once __DIR__ . '/../core/connections/resolve.php';
+    $to = $notifyTo;
     $subject = 'New Submission: ' . ($collectionMeta['title'] ?? $collectionSlug);
     $body = "A new submission was received for collection: " . ($collectionMeta['title'] ?? $collectionSlug) . "\n\n";
     foreach ($cleanData as $k => $v) {
@@ -369,14 +372,12 @@ if ($ok && !empty($collectionMeta['notify_email'])) {
         }
     }
     $body .= "\nSubmitted at: " . $cleanData['created_at'] . "\nIP: $ip\n";
-    $sendResult = birkly_notify('public_submit', [
-        'to' => $to,
-        'subject' => $subject,
-        'message' => $body,
-        'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
-        'metadata' => ['source' => 'public_submit', 'collection' => $collectionSlug, 'id' => $id],
+    $sendResult = birkly_send_api_notification_mail($apiSettings, $to, $subject, $body, [
+        'source' => 'public_submit',
+        'collection' => $collectionSlug,
+        'id' => $id,
     ]);
-    $sent = birkly_notify_results_any_success($sendResult);
+    $sent = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
     log_security_event('public_submission_email', ['collection' => $collectionSlug, 'id' => $id, 'to' => $to, 'sent' => $sent, 'send_status' => $sent ? 'success' : 'failed']);
 }
 

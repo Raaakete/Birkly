@@ -23,22 +23,49 @@ require_once __DIR__ . '/transports/mailgun.php';
 /**
  * Send an email using a configured connection.
  *
- * @param array $envelope {
- *   string|string[] $to
- *   string $subject
- *   string $html
- *   string|null $text
- *   string|null $from
- *   string|null $from_name
- *   string|null $reply_to
- *   array $headers
- *   array $tags
- *   array $metadata
- * }
+ * @param array|string $envelope Envelope array, or legacy string $to when using the old signature.
  * @param string|null $connectionAlias Optional alias; uses default email connection when null.
  * @return array{status: string, provider: string, connection_id: string|null, connection_alias: string|null, message_id: string|null, error: string|null, details: array}
  */
-function birkly_send_mail(array $envelope, ?string $connectionAlias = null): array
+function birkly_send_mail($envelope, ?string $connectionAlias = null, string $legacyHtml = '', array $legacyOpts = []): array
+{
+    if (!is_array($envelope)) {
+        $legacyOpts = is_array($legacyHtml) ? $legacyHtml : $legacyOpts;
+        $legacyHtml = is_string($legacyHtml) && !is_array($legacyHtml) ? $legacyHtml : '';
+        if (is_array($connectionAlias)) {
+            $legacyOpts = $connectionAlias;
+            $connectionAlias = null;
+        }
+        $to = (string) $envelope;
+        $subject = is_string($connectionAlias) ? $connectionAlias : '';
+        $html = is_string($legacyHtml) ? $legacyHtml : '';
+        $opts = is_array($legacyOpts) ? $legacyOpts : [];
+        $connectionAlias = isset($opts['alias']) ? (string) $opts['alias'] : null;
+        if ($connectionAlias === '') {
+            $connectionAlias = null;
+        }
+        $envelope = [
+            'to' => $to,
+            'subject' => $subject,
+            'html' => $html,
+            'text' => (string) ($opts['text'] ?? ''),
+            'from' => $opts['from_email'] ?? $opts['from'] ?? null,
+            'from_name' => $opts['from_name'] ?? null,
+            'reply_to' => $opts['reply_to'] ?? null,
+            'headers' => is_array($opts['headers'] ?? null) ? $opts['headers'] : [],
+            'tags' => is_array($opts['tags'] ?? null) ? $opts['tags'] : [],
+            'metadata' => is_array($opts['metadata'] ?? null) ? $opts['metadata'] : [],
+            'queue_on_failure' => !empty($opts['queue_on_failure']),
+        ];
+    }
+
+    return birkly_send_mail_envelope($envelope, $connectionAlias);
+}
+
+/**
+ * @param array $envelope
+ */
+function birkly_send_mail_envelope(array $envelope, ?string $connectionAlias = null): array
 {
     $to = $envelope['to'] ?? [];
     if (is_string($to)) {

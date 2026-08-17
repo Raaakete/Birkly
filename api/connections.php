@@ -22,6 +22,7 @@ require_once 'auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
 require_once __DIR__ . '/../core/connections/registry.php';
+require_once __DIR__ . '/../core/connections/resolve.php';
 require_once __DIR__ . '/../core/connections/http.php';
 require_once __DIR__ . '/../core/mail/birkly_send_mail.php';
 require_once __DIR__ . '/../core/mail/dns_hints.php';
@@ -192,6 +193,16 @@ if ($action === 'list') {
 
 if ($action === 'providers') {
     connections_json_response(['status' => 'ok', 'providers' => connections_provider_schema()]);
+}
+
+if ($action === 'email_picker') {
+    $picker = birkly_email_connections_for_picker();
+    connections_json_response([
+        'status' => 'ok',
+        'connections' => $picker['connections'],
+        'default_alias' => $picker['default_alias'],
+        'has_connections' => $picker['has_connections'],
+    ]);
 }
 
 if ($action === 'get') {
