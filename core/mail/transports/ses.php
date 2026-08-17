@@ -7,6 +7,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../mime.php';
+
 function birkly_mail_transport_ses(array $payload, array $connection): array
 {
     $secrets = is_array($connection['secrets'] ?? null) ? $connection['secrets'] : [];
@@ -24,30 +26,50 @@ function birkly_mail_transport_ses(array $payload, array $connection): array
     $to = $payload['to'] ?? [];
     $from = (string) ($payload['from'] ?? '');
     $fromName = trim((string) ($payload['from_name'] ?? ''));
+    $attachments = is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [];
 
-    $content = [];
-    if (!empty($payload['html'])) {
-        $content['Simple'] = [
-            'Subject' => ['Data' => $payload['subject'] ?? '', 'Charset' => 'UTF-8'],
-            'Body' => ['Html' => ['Data' => $payload['html'], 'Charset' => 'UTF-8']],
+    if ($attachments !== []) {
+        $raw = birkly_mail_build_mime_message(
+            $fromName,
+            $from,
+            $to,
+            (string) ($payload['subject'] ?? ''),
+            (string) ($payload['html'] ?? ''),
+            (string) ($payload['text'] ?? ''),
+            $attachments
+        );
+        $requestBody = [
+            'Content' => [
+                'Raw' => [
+                    'Data' => base64_encode($raw),
+                ],
+            ],
         ];
-        if (!empty($payload['text'])) {
-            $content['Simple']['Body']['Text'] = ['Data' => $payload['text'], 'Charset' => 'UTF-8'];
+    } else {
+        $content = [];
+        if (!empty($payload['html'])) {
+            $content['Simple'] = [
+                'Subject' => ['Data' => $payload['subject'] ?? '', 'Charset' => 'UTF-8'],
+                'Body' => ['Html' => ['Data' => $payload['html'], 'Charset' => 'UTF-8']],
+            ];
+            if (!empty($payload['text'])) {
+                $content['Simple']['Body']['Text'] = ['Data' => $payload['text'], 'Charset' => 'UTF-8'];
+            }
+        } elseif (!empty($payload['text'])) {
+            $content['Simple'] = [
+                'Subject' => ['Data' => $payload['subject'] ?? '', 'Charset' => 'UTF-8'],
+                'Body' => ['Text' => ['Data' => $payload['text'], 'Charset' => 'UTF-8']],
+            ];
         }
-    } elseif (!empty($payload['text'])) {
-        $content['Simple'] = [
-            'Subject' => ['Data' => $payload['subject'] ?? '', 'Charset' => 'UTF-8'],
-            'Body' => ['Text' => ['Data' => $payload['text'], 'Charset' => 'UTF-8']],
-        ];
-    }
 
-    $requestBody = [
-        'FromEmailAddress' => $fromName !== '' ? birkly_mail_encode_address($fromName, $from) : $from,
-        'Destination' => ['ToAddresses' => $to],
-        'Content' => $content,
-    ];
-    if (!empty($payload['reply_to'])) {
-        $requestBody['ReplyToAddresses'] = [$payload['reply_to']];
+        $requestBody = [
+            'FromEmailAddress' => $fromName !== '' ? birkly_mail_encode_address($fromName, $from) : $from,
+            'Destination' => ['ToAddresses' => $to],
+            'Content' => $content,
+        ];
+        if (!empty($payload['reply_to'])) {
+            $requestBody['ReplyToAddresses'] = [$payload['reply_to']];
+        }
     }
 
     $host = 'email.' . $region . '.amazonaws.com';

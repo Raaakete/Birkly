@@ -65,6 +65,42 @@ function birkly_mail_http_post(string $url, $payload, array $headers, bool $form
     ];
 }
 
+/**
+ * POST multipart/form-data with optional file attachments.
+ *
+ * @param array<string, scalar> $fields
+ * @param list<array{field: string, filename: string, content: string, mime_type: string}> $files
+ */
+function birkly_mail_http_post_multipart(string $url, array $fields, array $files, array $headers = []): array
+{
+    if (!extension_loaded('curl')) {
+        return ['http_code' => 0, 'response' => '', 'error' => 'cURL extension is not available.', 'message_id' => null];
+    }
+
+    $boundary = 'birkly_mail_' . bin2hex(random_bytes(12));
+    $body = '';
+    foreach ($fields as $key => $value) {
+        $body .= '--' . $boundary . "\r\n";
+        $body .= 'Content-Disposition: form-data; name="' . str_replace('"', '', (string) $key) . '"' . "\r\n\r\n";
+        $body .= (string) $value . "\r\n";
+    }
+    foreach ($files as $file) {
+        $field = (string) ($file['field'] ?? 'attachment');
+        $filename = (string) ($file['filename'] ?? 'attachment.bin');
+        $mime = (string) ($file['mime_type'] ?? 'application/octet-stream');
+        $body .= '--' . $boundary . "\r\n";
+        $body .= 'Content-Disposition: form-data; name="' . str_replace('"', '', $field) . '"; filename="' . str_replace('"', '', $filename) . '"' . "\r\n";
+        $body .= 'Content-Type: ' . $mime . "\r\n\r\n";
+        $body .= (string) ($file['content'] ?? '') . "\r\n";
+    }
+    $body .= '--' . $boundary . '--';
+
+    $headers[] = 'Content-Type: multipart/form-data; boundary=' . $boundary;
+    $headers[] = 'Content-Length: ' . strlen($body);
+
+    return birkly_mail_http_post($url, $body, $headers, false, true);
+}
+
 function birkly_mail_map_http_status(array $result, string $provider, ?string $connectionId, ?string $connectionAlias): array
 {
     $httpCode = $result['http_code'];
