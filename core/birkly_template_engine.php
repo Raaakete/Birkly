@@ -904,13 +904,15 @@ function birkly_template_engine_escape_output(string $pathOrName, $value, array 
     if ($str === '') {
         return '';
     }
-    if (($options['escapeHtml'] ?? null) === false) {
+
+    if (!function_exists('birkly_template_engine_should_output_raw_html')) {
+        require_once __DIR__ . '/fieldtype_html.php';
+    }
+
+    if (birkly_template_engine_should_output_raw_html($pathOrName, $options)) {
         return $str;
     }
-    // Rich-content fields are treated as trusted HTML by convention.
-    if (strpos($pathOrName, 'content') !== false || strpos($pathOrName, 'html') !== false) {
-        return $str;
-    }
+
     return birkly_template_engine_escape_html($str);
 }
 
@@ -1368,6 +1370,11 @@ function birkly_template_engine_render(string $html, $data, array $options = [])
     }
 
     $ctxOptions = ['escapeHtml' => (($options['escapeHtml'] ?? null) === false) ? false : true];
+    if (isset($data['_html_fields']) && is_array($data['_html_fields'])) {
+        $ctxOptions['htmlFields'] = $data['_html_fields'];
+    } elseif (isset($options['htmlFields']) && is_array($options['htmlFields'])) {
+        $ctxOptions['htmlFields'] = $options['htmlFields'];
+    }
     // Nested render() calls (loops/from/if) must not re-extract already-tokenized
     // protected blocks from the parent pass — only the outermost call protects.
     $protect = ($options['_skipProtect'] ?? null) !== true;
