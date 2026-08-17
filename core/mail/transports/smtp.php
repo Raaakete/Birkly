@@ -109,7 +109,7 @@ function birkly_mail_transport_smtp(array $payload, array $connection): array
         birkly_smtp_expect($fp, [250], $stage);
         @fwrite($fp, "QUIT\r\n");
 
-        return birkly_mail_result('queued', 'smtp', $connectionId, $alias, null, ['stage' => 'done']);
+        return birkly_mail_result('accepted', 'smtp', $connectionId, $alias, null, ['stage' => 'done']);
     } catch (Throwable $e) {
         return birkly_mail_result('failed', 'smtp', $connectionId, $alias, $e->getMessage(), ['stage' => $stage]);
     } finally {

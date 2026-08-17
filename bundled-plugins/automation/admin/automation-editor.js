@@ -348,25 +348,25 @@
 
       const stepsHtml = steps.length
         ? steps.map((step) => `
-            <div class="dry-run-step ${escapeHtml(step.status || 'info')}">
-              <div class="dry-run-step-label">${escapeHtml(step.label || step.action_type || 'Step')}</div>
-              <div class="dry-run-step-detail">${escapeHtml(step.detail || step.status || JSON.stringify(step.result || {}))}</div>
+            <div class="automation-dry-run-step ${escapeHtml(step.status || 'info')}">
+              <div class="automation-dry-run-step-label">${escapeHtml(step.label || step.action_type || 'Step')}</div>
+              <div class="automation-dry-run-step-detail">${escapeHtml(step.detail || step.status || JSON.stringify(step.result || {}))}</div>
             </div>
           `).join('')
-        : '<p class="form-help">Dry-run completed with no step details.</p>';
+        : '<p class="field-help">Dry-run completed with no step details.</p>';
 
       content.innerHTML = `
-        <div class="dry-run-panel" style="background:none;border:none;padding:0">
+        <div class="automation-dry-run-panel" style="background:none;border:none;padding:0">
           <div style="margin-bottom:var(--space-3)">
-            <span class="dry-run-badge">Dry Run — nothing sent</span>
+            <span class="automation-dry-run-badge">Dry Run — nothing sent</span>
             <p style="font-size:0.8125rem;color:var(--text-secondary);margin:var(--space-2) 0 0 0">
               Simulation only. Emails, Slack, Teams, and webhooks were <strong>not</strong> sent.
-              Configure connections under Automations → Setup before expecting real delivery.
+              Configure email under Settings → Connections (Send using on each email action).
             </p>
             ${setupNotes ? `<ul style="margin:var(--space-2) 0 0;padding-left:1.1rem;font-size:0.8125rem;color:var(--warning-700,#b45309)">${setupNotes}</ul>` : ''}
           </div>
-          <div class="dry-run-steps">${stepsHtml}</div>
-          <div class="dry-run-confirm-bar">
+          <div class="automation-dry-run-steps">${stepsHtml}</div>
+          <div class="automation-dry-run-confirm-bar">
             <p><strong>Run for real?</strong> Executes ${actionCount} action${actionCount === 1 ? '' : 's'} with live side effects.</p>
             <button type="button" class="btn btn-sm btn-warning" id="automation-editor-run-live">Confirm &amp; Run Live</button>
           </div>
@@ -404,7 +404,7 @@
       const ok = result.data?.success !== false;
       const delivery = result.data?.delivery_note
         ? '<br>' + escapeHtml(result.data.delivery_note)
-        : '<br>If nothing arrived, open Automations → Setup and verify email/webhook readiness.';
+        : '<br>If nothing arrived, check Settings → Connections and the Send using connection on your email action.';
       content.innerHTML = `
         <div style="padding:var(--space-4)">
           <p style="color:${ok ? 'var(--success-600)' : 'var(--warning-600)'};font-weight:600;margin:0 0 var(--space-2) 0">

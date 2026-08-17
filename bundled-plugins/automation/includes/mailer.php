@@ -2,7 +2,11 @@
 require_once __DIR__ . '/../cms_paths.php';
 
 /**
- * Dependency-free mail transport for Automation (mail / SMTP / log).
+ * Automation mail adapter.
+ *
+ * When the core Connections pipeline is present, emails route through
+ * birkly_send_mail using the transactional_email alias. The legacy
+ * mail/SMTP/log implementation remains as a fallback for pre-P65 cores.
  */
 
 /**
@@ -12,6 +16,8 @@ require_once __DIR__ . '/../cms_paths.php';
  */
 function automation_send_mail(string $to, string $subject, string $bodyHtml, ?array $settings = null): array
 {
+    automation_ensure_mail_pipeline();
+
     $settings = $settings ?? automation_get_mail_settings();
     $method = (string) ($settings['method'] ?? 'mail');
     $fromEmail = (string) ($settings['from_email'] ?? '');
@@ -25,6 +31,12 @@ function automation_send_mail(string $to, string $subject, string $bodyHtml, ?ar
     }
     if ($subject === '') {
         return ['ok' => false, 'method' => $method, 'error' => 'Email subject is required'];
+    }
+
+    // Prefer the core Connections pipeline; keep the legacy Automation transport
+    // only when the core mailer is not present (e.g. fresh install or pre-P65 core).
+    if (function_exists('birkly_send_mail')) {
+        return automation_send_mail_via_core($to, $subject, $bodyHtml, $settings);
     }
 
     if ($method === 'log') {
@@ -420,4 +432,67 @@ function automation_get_sent_mail_log(int $limit = 10): array
         return [];
     }
     return array_slice(array_reverse($messages), 0, max(1, $limit));
+}
+
+/**
+ * Send via the core Connections pipeline and map the result back to the
+ * Automation-shaped response so existing callers keep working.
+ *
+ * @return array{ok: bool, method: string, error?: string, to?: string, from?: string, logged?: bool, stage?: string}
+ */
+function automation_send_mail_via_core(string $to, string $subject, string $bodyHtml, array $settings): array
+{
+    $fromEmail = (string) ($settings['from_email'] ?? '');
+    $fromName = (string) ($settings['from_name'] ?? 'Birkly');
+
+    $opts = [
+        'from_email' => $fromEmail,
+        'from_name' => $fromName,
+        'text' => automation_email_html_to_text($bodyHtml),
+        'alias' => trim((string) ($settings['connection_alias'] ?? $settings['alias'] ?? '')) ?: null,
+        'idempotency_key' => 'automation_' . md5(strtolower(trim($to)) . '|' . trim($subject) . '|' . microtime(true)),
+    ];
+
+    $coreResult = birkly_send_mail($to, $subject, $bodyHtml, $opts);
+    if (!is_array($coreResult)) {
+        return [
+            'ok' => false,
+            'method' => 'core',
+            'error' => 'Core mailer returned an invalid response',
+            'to' => $to,
+            'from' => $fromEmail,
+        ];
+    }
+
+    $result = $coreResult;
+    $status = (string) ($result['status'] ?? '');
+    if (!isset($result['method'])) {
+        $result['method'] = ($status === 'logged') ? 'log' : 'core';
+    }
+    if (!isset($result['from'])) {
+        $result['from'] = $fromEmail;
+    }
+    // Be honest about delivery: log transport is accepted but not delivered.
+    if ($status === 'logged') {
+        $result['logged'] = true;
+    }
+
+    if (!empty($result['ok'])) {
+        automation_log_sent_mail($to, $subject, $bodyHtml, $fromEmail, $fromName, $result['method']);
+    } elseif (in_array($status, ['accepted', 'queued', 'logged'], true)) {
+        $result['ok'] = true;
+        automation_log_sent_mail($to, $subject, $bodyHtml, $fromEmail, $fromName, $result['method'] ?? 'core');
+    }
+
+    return $result;
+}
+
+/**
+ * Generate a plain-text body from a simple HTML email.
+ */
+function automation_email_html_to_text(string $html): string
+{
+    $text = preg_replace('/\s+/', ' ', strip_tags($html));
+    $text = html_entity_decode((string) $text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    return trim((string) $text);
 }

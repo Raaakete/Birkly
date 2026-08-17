@@ -34,7 +34,26 @@ function automation_cms_root(): string
     return dirname(__DIR__, 2);
 }
 
-function automation_settings_dir(): string
+function automation_cms_path(string $relative): string
+{
+    return rtrim(automation_cms_root(), '/') . '/' . ltrim(str_replace('\\', '/', $relative), '/');
+}
+
+/**
+ * Load the central Birkly mail pipeline when Automation runs outside
+ * endpoints that already require core/mail (e.g. connections.php).
+ */
+function automation_ensure_mail_pipeline(): void
+{
+    if (function_exists('birkly_send_mail')) {
+        return;
+    }
+    $mailPath = automation_cms_path('core/mail/birkly_send_mail.php');
+    if (is_file($mailPath)) {
+        require_once $mailPath;
+    }
+}
+
 {
     if (function_exists('birkly_plugin_state_settings_dir')) {
         return birkly_plugin_state_settings_dir();

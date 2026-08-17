@@ -36,7 +36,7 @@ if (!is_array($input)) {
 }
 
 $cronActions = ['process_queue', 'process_scheduled'];
-$csrfActions = ['create', 'update', 'delete', 'dry_run', 'test', 'run_live', 'save_mail_settings', 'process_queue_now', 'send_test_email'];
+$csrfActions = ['create', 'update', 'delete', 'dry_run', 'test', 'run_live', 'save_mail_settings', 'process_queue_now', 'send_test_email', 'import_recipe', 'import_recipe_pack'];
 
 if (in_array($action, $cronActions, true)) {
     if (!automation_verify_cron_request()) {
@@ -146,6 +146,126 @@ if ($action === 'get') {
         http_response_code(404);
         echo json_encode(['status' => 'error', 'message' => 'Automation not found']);
     }
+    exit;
+}
+
+// List recipe packs / recipes (P54 P3-M3)
+if ($action === 'list_recipes') {
+    if (!function_exists('automation_list_recipes')) {
+        require_once __DIR__ . '/../includes/recipes.php';
+    }
+    $pack = $input['pack'] ?? $_GET['pack'] ?? null;
+    $pack = is_string($pack) && $pack !== '' ? $pack : null;
+    $recipes = automation_list_recipes($pack);
+    $packs = [];
+    foreach (automation_list_recipe_packs() as $packId) {
+        $meta = automation_read_recipe_pack($packId);
+        if (is_array($meta)) {
+            $packs[] = $meta;
+        }
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'recipes' => $recipes,
+            'packs' => $packs,
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'get_recipe') {
+    if (!function_exists('automation_get_recipe')) {
+        require_once __DIR__ . '/../includes/recipes.php';
+    }
+    $recipeId = $input['recipe_id'] ?? $_GET['recipe_id'] ?? '';
+    $recipe = automation_get_recipe((string) $recipeId);
+    if (!$recipe) {
+        http_response_code(404);
+        echo json_encode(['status' => 'error', 'message' => 'Recipe not found']);
+        exit;
+    }
+    $errors = automation_validate_recipe($recipe);
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'recipe' => $recipe,
+            'valid' => $errors === [],
+            'errors' => $errors,
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'import_recipe') {
+    if (!function_exists('automation_import_recipe')) {
+        require_once __DIR__ . '/../includes/recipes.php';
+    }
+    $recipeId = (string) ($input['recipe_id'] ?? '');
+    if ($recipeId === '') {
+        echo json_encode(['status' => 'error', 'message' => 'recipe_id required']);
+        exit;
+    }
+    $options = [];
+    if (array_key_exists('enabled', $input)) {
+        $options['enabled'] = (bool) $input['enabled'];
+    }
+    if (!empty($input['name'])) {
+        $options['name'] = (string) $input['name'];
+    }
+    if (!empty($input['to'])) {
+        $options['to'] = (string) $input['to'];
+    }
+    $result = automation_import_recipe($recipeId, $options);
+    if (empty($result['ok'])) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => implode('; ', $result['errors'] ?? ['Import failed']),
+            'errors' => $result['errors'] ?? [],
+        ]);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'automation' => $result['automation'],
+            'recipe' => $result['recipe'] ?? null,
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'import_recipe_pack') {
+    if (!function_exists('automation_import_recipe_pack')) {
+        require_once __DIR__ . '/../includes/recipes.php';
+    }
+    $pack = (string) ($input['pack'] ?? 'commerce');
+    $options = [];
+    if (array_key_exists('enabled', $input)) {
+        $options['enabled'] = (bool) $input['enabled'];
+    }
+    if (!empty($input['to'])) {
+        $options['to'] = (string) $input['to'];
+    }
+    $result = automation_import_recipe_pack($pack, $options);
+    if (empty($result['ok'])) {
+        http_response_code(400);
+        echo json_encode([
+            'status' => 'error',
+            'message' => implode('; ', $result['errors'] ?? ['Pack import failed']),
+            'errors' => $result['errors'] ?? [],
+            'imported' => $result['imported'] ?? [],
+        ]);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'imported' => $result['imported'],
+            'count' => count($result['imported']),
+        ],
+    ]);
     exit;
 }
 
@@ -719,20 +839,20 @@ if ($action === 'run_live') {
     }
     $needsMail = in_array('email', $actionTypes, true);
     $mailMethod = (string) ($health['mail']['method'] ?? 'mail');
-    if ($needsMail && $mailMethod === 'mail' && empty($health['capabilities']['mail'])) {
+    if ($needsMail && $mailMethod === 'mail' && empty($health['capabilities']['mail']) && !function_exists('birkly_send_mail')) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
-            'message' => 'Email cannot be sent: PHP mail() is unavailable. Open Automation → Setup and choose SMTP or Log.',
+            'message' => 'Email cannot be sent: PHP mail() is unavailable. Configure an email connection under Settings → Connections.',
             'data' => ['setup' => $health],
         ]);
         exit;
     }
-    if ($needsMail && $mailMethod === 'smtp' && empty($health['mail']['smtp_host'])) {
+    if ($needsMail && $mailMethod === 'smtp' && empty($health['mail']['smtp_host']) && !function_exists('birkly_send_mail')) {
         http_response_code(400);
         echo json_encode([
             'status' => 'error',
-            'message' => 'SMTP is selected but not configured. Open Automation → Setup, fill SMTP host/credentials, then Send test email.',
+            'message' => 'SMTP is selected but not configured. Use Settings → Connections for email delivery, or open Automations → Setup for legacy SMTP.',
             'data' => ['setup' => $health],
         ]);
         exit;
@@ -774,7 +894,9 @@ if ($action === 'run_live') {
 
         $deliveryNote = null;
         if ($needsMail) {
-            if ($mailMethod === 'smtp') {
+            if ($mailMethod === 'connections' || function_exists('birkly_send_mail')) {
+                $deliveryNote = 'Email transport: Settings → Connections (uses the Send using connection on each email action, or the site default).';
+            } elseif ($mailMethod === 'smtp') {
                 $deliveryNote = 'Email transport: SMTP via '
                     . ($health['mail']['smtp_host'] ?? '?')
                     . ' From ' . ($health['mail']['from_email'] ?? '')
@@ -784,7 +906,7 @@ if ($action === 'run_live') {
             } else {
                 $deliveryNote = 'Email transport: PHP mail() From '
                     . ($health['mail']['from_email'] ?? '')
-                    . '. On cloud hosts this usually never arrives — switch to SMTP in Setup.';
+                    . '. Configure Settings → Connections — PHP mail() rarely delivers on cloud hosts.';
             }
         }
 
