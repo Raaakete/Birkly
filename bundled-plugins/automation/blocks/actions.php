@@ -42,7 +42,13 @@ register_automation_block('action', 'email', [
             'default' => $automationEmailDefaults['body'],
             'rows' => 8,
             'description' => 'Supports {{entry.title}}, {{collection}}, {{trigger_summary}}, {{entry_admin_url}} (opens the entry in admin).'
-        ]
+        ],
+        'connection_alias' => [
+            'type' => 'email_connection',
+            'label' => 'Send using',
+            'required' => false,
+            'description' => 'Which email connection delivers this message. Your site default is pre-selected when empty.',
+        ],
     ],
     'handler' => function($config, $context) {
         if (!function_exists('automation_default_email_templates')) {
@@ -101,11 +107,37 @@ register_automation_block('action', 'email', [
         }
 
         $html = automation_format_email_html($body, $context);
-        $result = automation_send_mail($to, $subject, $html);
+
+        // Prefer the core Connections pipeline when available; otherwise fall back
+        // to the Automation legacy wrapper (which itself checks for birkly_send_mail).
+        if (function_exists('birkly_send_mail')) {
+            $mailSettings = automation_get_mail_settings();
+            $connectionAlias = trim((string) ($config['connection_alias'] ?? ''));
+            $result = birkly_send_mail($to, $subject, $html, [
+                'from_email' => $mailSettings['from_email'] ?? '',
+                'from_name' => $mailSettings['from_name'] ?? 'Birkly',
+                'text' => automation_email_html_to_text($html),
+                'alias' => $connectionAlias !== '' ? $connectionAlias : null,
+                'idempotency_key' => $claimKey,
+            ]);
+            if (!is_array($result)) {
+                $result = ['ok' => false, 'error' => 'Core mailer returned an invalid response'];
+            }
+            $status = (string) ($result['status'] ?? '');
+            if (!isset($result['method'])) {
+                $result['method'] = ($status === 'logged') ? 'log' : 'core';
+            }
+            if ($status === 'logged') {
+                $result['logged'] = true;
+            }
+        } else {
+            $result = automation_send_mail($to, $subject, $html);
+        }
+
         if (empty($result['ok'])) {
             throw new Exception($result['error'] ?? 'Failed to send email. Open Automation → Setup and configure SMTP or Log transport.');
         }
-        
+
         return [
             'sent' => true,
             'to' => $to,
