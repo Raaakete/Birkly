@@ -17,26 +17,140 @@ class BirklyVersion {
     }
 
     /**
-     * Fetch JSON from GitHub with auth headers when configured.
+     * Whether a GitHub token is configured for private-repo update checks.
      */
-    private static function fetchGithubJson(string $url): ?array
+    private static function hasGithubToken(): bool
+    {
+        return self::resolveGithubToken() !== '';
+    }
+
+    /**
+     * @return array{data:?array,http_code:int}
+     */
+    private static function fetchGithubJson(string $url): array
     {
         $headers = self::getGithubHeaders('Birkly/' . self::getCurrentVersion());
+        $headerLines = $headers;
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 15,
+                CURLOPT_CONNECTTIMEOUT => 8,
+                CURLOPT_HTTPHEADER => $headerLines,
+                CURLOPT_FOLLOWLOCATION => true,
+            ]);
+            $response = curl_exec($ch);
+            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if (!is_string($response) || $response === '') {
+                return ['data' => null, 'http_code' => $httpCode > 0 ? $httpCode : 0];
+            }
+
+            $data = json_decode($response, true);
+            return [
+                'data' => is_array($data) ? $data : null,
+                'http_code' => $httpCode,
+            ];
+        }
+
         $context = stream_context_create([
             'http' => [
                 'timeout' => 15,
                 'ignore_errors' => true,
-                'header' => implode("\r\n", $headers),
+                'header' => implode("\r\n", $headerLines),
             ],
         ]);
 
         $response = @file_get_contents($url, false, $context);
+        $httpCode = 0;
+        if (isset($http_response_header) && is_array($http_response_header)) {
+            foreach ($http_response_header as $line) {
+                if (preg_match('/^HTTP\/\S+\s+(\d+)/', $line, $m)) {
+                    $httpCode = (int) $m[1];
+                    break;
+                }
+            }
+        }
+
         if ($response === false) {
-            return null;
+            return ['data' => null, 'http_code' => $httpCode];
         }
 
         $data = json_decode($response, true);
-        return is_array($data) ? $data : null;
+        if (is_array($data) && $httpCode > 0 && !isset($data['status'])) {
+            $data['status'] = $httpCode;
+        }
+
+        return [
+            'data' => is_array($data) ? $data : null,
+            'http_code' => $httpCode,
+        ];
+    }
+
+    private static function isGithubApiError(?array $data): bool
+    {
+        if (!is_array($data)) {
+            return true;
+        }
+
+        if (isset($data['message']) && !isset($data['tag_name'])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function isGithubTagList(?array $data): bool
+    {
+        return is_array($data) && $data !== [] && array_is_list($data);
+    }
+
+    private static function githubStatusCode(?array $data, int $httpCode = 0): int
+    {
+        if (is_array($data) && isset($data['status']) && is_numeric($data['status'])) {
+            return (int) $data['status'];
+        }
+
+        return $httpCode;
+    }
+
+    private static function githubApiErrorMessage(?array $release, int $releaseCode, ?array $tags, int $tagsCode): string
+    {
+        $status = $releaseCode > 0 ? $releaseCode : $tagsCode;
+        if ($status === 0 && is_array($release)) {
+            $status = self::githubStatusCode($release);
+        }
+        if ($status === 0 && is_array($tags)) {
+            $status = self::githubStatusCode($tags);
+        }
+
+        if (($status === 401 || $status === 403) || ($status === 404 && !self::hasGithubToken())) {
+            return 'GitHub requires authentication for this repository. Add a personal access token in settings/security.json as {"github_token":"..."} or set env BIRKLY_GITHUB_TOKEN (repo read scope).';
+        }
+
+        if ($status === 404) {
+            return 'No published releases or tags found on GitHub. Publish a non-draft release or push a version tag (e.g. v1.0.4).';
+        }
+
+        if ($status === 403) {
+            return 'GitHub API rate limit exceeded. Add a personal access token in settings/security.json or set env BIRKLY_GITHUB_TOKEN.';
+        }
+
+        $message = '';
+        if (is_array($release) && isset($release['message'])) {
+            $message = (string) $release['message'];
+        } elseif (is_array($tags) && isset($tags['message'])) {
+            $message = (string) $tags['message'];
+        }
+
+        if ($message !== '') {
+            return 'GitHub API error: ' . $message;
+        }
+
+        return 'Unable to check for updates. Repository may be private or unreachable.';
     }
 
     /**
@@ -44,41 +158,38 @@ class BirklyVersion {
      */
     private static function fetchLatestReleaseMeta(): array
     {
-        $release = self::fetchGithubJson(self::$updateCheckUrl);
-        if ($release && isset($release['tag_name']) && !isset($release['message'])) {
+        $releaseResponse = self::fetchGithubJson(self::$updateCheckUrl);
+        $release = $releaseResponse['data'];
+        $releaseCode = $releaseResponse['http_code'];
+
+        if (is_array($release) && isset($release['tag_name']) && !self::isGithubApiError($release)) {
             return $release;
         }
 
         // Fallback: tags work without a published GitHub Release asset
-        $tags = self::fetchGithubJson('https://api.github.com/repos/' . self::$githubRepo . '/tags');
-        if (!$tags || !is_array($tags) || $tags === []) {
-            if (is_array($release) && isset($release['message'])) {
-                if (($release['status'] ?? null) == 401 || ($release['status'] ?? null) == 403) {
-                    return ['error' => 'GitHub private repo detected. Add a token in settings/security.json as {"github_token":"..."} or set env BIRKLY_GITHUB_TOKEN.'];
-                }
-                if (($release['status'] ?? null) == 404) {
-                    return ['error' => 'No releases or tags found on GitHub. Publish a release or push a version tag (e.g. v1.0.4).'];
-                }
-                return ['error' => 'GitHub API error: ' . ($release['message'] ?? 'Unknown error')];
+        $tagsResponse = self::fetchGithubJson('https://api.github.com/repos/' . self::$githubRepo . '/tags');
+        $tags = $tagsResponse['data'];
+        $tagsCode = $tagsResponse['http_code'];
+
+        if (self::isGithubTagList($tags)) {
+            usort($tags, static function ($a, $b) {
+                return version_compare(ltrim((string) ($b['name'] ?? '0'), 'v'), ltrim((string) ($a['name'] ?? '0'), 'v'));
+            });
+
+            $tagName = (string) ($tags[0]['name'] ?? '');
+            if ($tagName !== '') {
+                return [
+                    'tag_name' => $tagName,
+                    'body' => '',
+                    'zipball_url' => self::getDownloadUrl(ltrim($tagName, 'v')),
+                    'published_at' => '',
+                    'prerelease' => false,
+                ];
             }
-            return ['error' => 'Unable to check for updates. Repository may be private or unreachable.'];
-        }
-
-        usort($tags, static function ($a, $b) {
-            return version_compare(ltrim((string) ($b['name'] ?? '0'), 'v'), ltrim((string) ($a['name'] ?? '0'), 'v'));
-        });
-
-        $tagName = (string) ($tags[0]['name'] ?? '');
-        if ($tagName === '') {
-            return ['error' => 'No valid version tags found on GitHub.'];
         }
 
         return [
-            'tag_name' => $tagName,
-            'body' => '',
-            'zipball_url' => self::getDownloadUrl(ltrim($tagName, 'v')),
-            'published_at' => '',
-            'prerelease' => false,
+            'error' => self::githubApiErrorMessage($release, $releaseCode, $tags, $tagsCode),
         ];
     }
 
@@ -112,24 +223,32 @@ class BirklyVersion {
      *  - env BIRKLY_GITHUB_TOKEN
      *  - settings/security.json key "github_token"
      */
+    private static function resolveGithubToken(): string
+    {
+        $token = getenv('BIRKLY_GITHUB_TOKEN');
+        if (is_string($token) && $token !== '') {
+            return $token;
+        }
+
+        $securityFile = __DIR__ . '/../settings/security.json';
+        if (file_exists($securityFile)) {
+            $sec = json_decode(@file_get_contents($securityFile), true) ?: [];
+            if (!empty($sec['github_token']) && is_string($sec['github_token'])) {
+                return $sec['github_token'];
+            }
+        }
+
+        return '';
+    }
+
     private static function getGithubHeaders(string $userAgent): array {
         $headers = [
             'User-Agent: ' . $userAgent,
             'Accept: application/vnd.github+json'
         ];
 
-        $token = getenv('BIRKLY_GITHUB_TOKEN');
-        if (!$token) {
-            $securityFile = __DIR__ . '/../settings/security.json';
-            if (file_exists($securityFile)) {
-                $sec = json_decode(@file_get_contents($securityFile), true) ?: [];
-                if (!empty($sec['github_token']) && is_string($sec['github_token'])) {
-                    $token = $sec['github_token'];
-                }
-            }
-        }
-
-        if ($token) {
+        $token = self::resolveGithubToken();
+        if ($token !== '') {
             $headers[] = 'Authorization: Bearer ' . $token;
         }
         return $headers;
@@ -149,16 +268,52 @@ class BirklyVersion {
     }
     
     /**
+     * Check GitHub for available updates.
+     */
+    private static function checkGithubForUpdates(string $currentVersion): array
+    {
+        try {
+            $release = self::fetchLatestReleaseMeta();
+
+            if (isset($release['error'])) {
+                return ['error' => $release['error']];
+            }
+
+            $latestVersion = ltrim((string) ($release['tag_name'] ?? ''), 'v');
+            if ($latestVersion === '' || !preg_match('/^\d+\.\d+\.\d+/', $latestVersion)) {
+                return ['error' => 'Latest GitHub release has an invalid version tag.'];
+            }
+
+            $isUpdateAvailable = version_compare($latestVersion, $currentVersion, '>');
+
+            return [
+                'current_version' => $currentVersion,
+                'latest_version' => $latestVersion,
+                'update_available' => $isUpdateAvailable,
+                'release_notes' => $release['body'] ?? '',
+                'download_url' => $release['zipball_url'] ?? self::getDownloadUrl($latestVersion),
+                'published_at' => $release['published_at'] ?? '',
+                'prerelease' => $release['prerelease'] ?? false,
+                'source' => 'github',
+            ];
+        } catch (Exception $e) {
+            return ['error' => 'Update check failed: ' . $e->getMessage()];
+        }
+    }
+
+    /**
      * Check for available updates
      */
     public static function checkForUpdates(): array {
         $currentVersion = self::getCurrentVersion();
+        $githubInfo = self::checkGithubForUpdates($currentVersion);
 
+        $opsInfo = null;
         if (is_file(__DIR__ . '/platform_ops.php')) {
             require_once __DIR__ . '/platform_ops.php';
             $ops = birkly_ops_check_updates($currentVersion);
-            if (is_array($ops)) {
-                return [
+            if (is_array($ops) && !empty($ops['ok'])) {
+                $opsInfo = [
                     'current_version' => (string) ($ops['current_version'] ?? $currentVersion),
                     'latest_version' => (string) ($ops['latest_version'] ?? $currentVersion),
                     'update_available' => !empty($ops['update_available']),
@@ -170,30 +325,22 @@ class BirklyVersion {
                 ];
             }
         }
-        
-        try {
-            $release = self::fetchLatestReleaseMeta();
-            
-            if (isset($release['error'])) {
-                return ['error' => $release['error']];
-            }
-            
-            $latestVersion = ltrim($release['tag_name'], 'v');
-            $isUpdateAvailable = version_compare($latestVersion, $currentVersion, '>');
-            
-            return [
-                'current_version' => $currentVersion,
-                'latest_version' => $latestVersion,
-                'update_available' => $isUpdateAvailable,
-                'release_notes' => $release['body'] ?? '',
-                'download_url' => $release['zipball_url'] ?? '',
-                'published_at' => $release['published_at'] ?? '',
-                'prerelease' => $release['prerelease'] ?? false
-            ];
-            
-        } catch (Exception $e) {
-            return ['error' => 'Update check failed: ' . $e->getMessage()];
+
+        // Prefer Ops when it has a signed release package ready to install.
+        if (is_array($opsInfo) && !empty($opsInfo['update_available']) && ($opsInfo['download_url'] ?? '') !== '') {
+            return $opsInfo;
         }
+
+        // GitHub release is newer than Ops channel metadata (common when only GitHub was published).
+        if (!isset($githubInfo['error']) && !empty($githubInfo['update_available'])) {
+            return $githubInfo;
+        }
+
+        if (is_array($opsInfo)) {
+            return $opsInfo;
+        }
+
+        return $githubInfo;
     }
     
     /**
@@ -537,6 +684,37 @@ class BirklyVersion {
     public static function validateUpdatePackageForTest(string $filePath, string $version): bool
     {
         return self::verifyUpdateIntegrity($filePath, $version);
+    }
+
+    /**
+     * @internal Used by tests to validate GitHub API error handling.
+     */
+    public static function githubApiErrorMessageForTest(?array $release, int $releaseCode, ?array $tags, int $tagsCode, bool $hasToken): string
+    {
+        $original = getenv('BIRKLY_GITHUB_TOKEN');
+        if ($hasToken) {
+            putenv('BIRKLY_GITHUB_TOKEN=test-token');
+        } else {
+            putenv('BIRKLY_GITHUB_TOKEN');
+        }
+
+        try {
+            return self::githubApiErrorMessage($release, $releaseCode, $tags, $tagsCode);
+        } finally {
+            if ($original === false) {
+                putenv('BIRKLY_GITHUB_TOKEN');
+            } else {
+                putenv('BIRKLY_GITHUB_TOKEN=' . $original);
+            }
+        }
+    }
+
+    /**
+     * @internal Used by tests to validate GitHub tag list detection.
+     */
+    public static function isGithubTagListForTest(?array $data): bool
+    {
+        return self::isGithubTagList($data);
     }
     
     /**
