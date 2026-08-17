@@ -36,7 +36,17 @@ function birkly_ops_updates_check_url(): string
         return $fromConfig;
     }
 
-    return trim((string) (getenv('BIRKLY_OPS_UPDATES_URL') ?: ''));
+    $env = trim((string) (getenv('BIRKLY_OPS_UPDATES_URL') ?: ''));
+    if ($env !== '') {
+        return $env;
+    }
+
+    $relay = birkly_feedback_relay_url();
+    if ($relay !== '' && str_contains($relay, '/api/ops/v1/feedback')) {
+        return str_replace('/api/ops/v1/feedback', '/api/ops/v1/releases/check', $relay);
+    }
+
+    return '';
 }
 
 function birkly_ops_release_channel(): string
