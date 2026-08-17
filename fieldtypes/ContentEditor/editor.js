@@ -10,6 +10,18 @@
     }
   
   // Initialize all ContentEditor instances
+  function resolveHiddenInput(wrapper, fieldName) {
+    if (!wrapper) return null;
+    const scoped = wrapper.querySelector('input[type="hidden"]');
+    if (scoped) return scoped;
+    if (!fieldName) return null;
+    const byId = document.getElementById('field_' + fieldName);
+    if (byId && wrapper.contains(byId)) {
+      return byId;
+    }
+    return byId;
+  }
+
   function initContentEditors() {
     const wrappers = document.querySelectorAll('.content-editor-wrapper');
     wrappers.forEach(wrapper => {
@@ -25,7 +37,7 @@
       const editor = wrapper.querySelector('.content-editor-area');
       const toolbar = wrapper.querySelector('.content-editor-toolbar');
       const htmlSource = wrapper.querySelector('.content-editor-html-source');
-      const hiddenInput = document.getElementById('field_' + fieldName);
+      const hiddenInput = resolveHiddenInput(wrapper, fieldName);
       
       if (!editor || !toolbar || !hiddenInput) {
         // Log missing elements for debugging but don't break
