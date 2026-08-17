@@ -97,6 +97,11 @@ function birkly_notify_send_email(array $payload, array $connection): array
         return birkly_mail_result('failed', 'mail', $connection['id'] ?? null, $connection['alias'] ?? null, 'Notification message or html is required.');
     }
 
+    $alias = trim((string) ($payload['connection_alias'] ?? ''));
+    if ($alias === '') {
+        $alias = (string) ($connection['alias'] ?? '');
+    }
+
     return birkly_send_mail([
         'to' => $to,
         'subject' => $subject,
@@ -110,7 +115,7 @@ function birkly_notify_send_email(array $payload, array $connection): array
             ['source' => 'birkly_notify', 'event_alias' => ($connection['alias'] ?? null)],
             is_array($payload['metadata'] ?? null) ? $payload['metadata'] : []
         ),
-    ], $connection['alias'] ?? null);
+    ], $alias !== '' ? $alias : null);
 }
 
 function birkly_notify_results_any_success(array $results): bool

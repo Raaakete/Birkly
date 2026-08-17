@@ -32,6 +32,7 @@ function birkly_ai_normalize_api_settings(array $apiSettings): array
         'auto_publish' => !empty($apiSettings['auto_publish']),
         'rate_limit' => isset($apiSettings['rate_limit']) ? (int) $apiSettings['rate_limit'] : 10,
         'notification_email' => (string) ($apiSettings['notification_email'] ?? ''),
+        'email_connection_alias' => trim((string) ($apiSettings['email_connection_alias'] ?? '')),
         'captcha_provider' => (string) ($apiSettings['captcha_provider'] ?? ''),
         'captcha_site_key' => (string) ($apiSettings['captcha_site_key'] ?? ''),
         'captcha_secret_key' => (string) ($apiSettings['captcha_secret_key'] ?? ''),

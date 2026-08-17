@@ -275,6 +275,7 @@ log_security_event('public_api_submission', [
 
 // Send notification email if configured
 if (!empty($notificationEmail)) {
+    require_once __DIR__ . '/../../core/connections/resolve.php';
     $subject = 'New Submission: ' . ($collectionData['name'] ?? $collectionSlug);
     $body = "A new entry was submitted to collection: " . ($collectionData['name'] ?? $collectionSlug) . "\n\n";
     $body .= "Entry ID: $entryId\n";
@@ -288,13 +289,10 @@ if (!empty($notificationEmail)) {
         }
         $body .= "$key: " . (is_array($value) ? json_encode($value) : $value) . "\n";
     }
-    
-    birkly_notify('public_collection_submission', [
-        'to' => $notificationEmail,
-        'subject' => $subject,
-        'message' => $body,
-        'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
-        'metadata' => ['source' => 'public_collection_submission', 'entry_id' => $entryId],
+
+    birkly_send_api_notification_mail($apiSettings, $notificationEmail, $subject, $body, [
+        'source' => 'public_collection_submission',
+        'entry_id' => $entryId,
     ]);
 }
 

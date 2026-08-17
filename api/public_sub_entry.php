@@ -308,8 +308,12 @@ if ($operation === 'toggle') {
 
 if ($result) {
     // Send notification email if configured
-    $notificationEmail = $subCollectionConfig['notification_email'] ?? $collection['api_settings']['notification_email'] ?? '';
-    if (!empty($notificationEmail) && !$autoPublish) {
+    $subApiSettings = is_array($subCollectionConfig['api_settings'] ?? null)
+        ? $subCollectionConfig['api_settings']
+        : (is_array($collection['api_settings'] ?? null) ? $collection['api_settings'] : []);
+    $notificationEmail = trim((string) ($subApiSettings['notification_email'] ?? ''));
+    if ($notificationEmail !== '' && !$autoPublish) {
+        require_once __DIR__ . '/../core/connections/resolve.php';
         // Send moderation notification
         $subject = "New sub-entry submission requires moderation";
         $message = "A new sub-entry has been submitted to {$subCollectionConfig['name']}.\n\n";
@@ -318,13 +322,11 @@ if ($result) {
         $message .= "Sub-Entry ID: {$result['id']}\n";
         $message .= "Status: Draft (pending review)\n\n";
         $message .= "Review at: " . (isset($_SERVER['HTTP_HOST']) ? "http://{$_SERVER['HTTP_HOST']}" : '') . birkly_admin_url('entry-editor', ['collection' => $parent_collection, 'entry' => $parent_entry_id]);
-        
-        birkly_notify('public_sub_entry_submission', [
-            'to' => $notificationEmail,
-            'subject' => $subject,
-            'message' => $message,
-            'from' => 'noreply@' . ($_SERVER['SERVER_NAME'] ?? 'birkly.local'),
-            'metadata' => ['source' => 'public_sub_entry_submission', 'parent_collection' => $parent_collection, 'parent_entry_id' => $parent_entry_id],
+
+        birkly_send_api_notification_mail($subApiSettings, $notificationEmail, $subject, $message, [
+            'source' => 'public_sub_entry_submission',
+            'parent_collection' => $parent_collection,
+            'parent_entry_id' => $parent_entry_id,
         ]);
     }
     
