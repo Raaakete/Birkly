@@ -108,6 +108,8 @@ register_automation_block('action', 'email', [
 
         $html = automation_format_email_html($body, $context);
 
+        automation_ensure_mail_pipeline();
+
         // Prefer the core Connections pipeline when available; otherwise fall back
         // to the Automation legacy wrapper (which itself checks for birkly_send_mail).
         if (function_exists('birkly_send_mail')) {
@@ -130,12 +132,22 @@ register_automation_block('action', 'email', [
             if ($status === 'logged') {
                 $result['logged'] = true;
             }
+            if (empty($result['ok']) && in_array($status, ['accepted', 'queued', 'logged'], true)) {
+                $result['ok'] = true;
+            }
         } else {
-            $result = automation_send_mail($to, $subject, $html);
+            $mailSettings = automation_get_mail_settings();
+            $mailSettings['connection_alias'] = trim((string) ($config['connection_alias'] ?? ''));
+            $result = automation_send_mail($to, $subject, $html, $mailSettings);
         }
 
-        if (empty($result['ok'])) {
-            throw new Exception($result['error'] ?? 'Failed to send email. Open Automation → Setup and configure SMTP or Log transport.');
+        $status = (string) ($result['status'] ?? '');
+        $mailOk = !empty($result['ok']) || in_array($status, ['accepted', 'queued', 'logged'], true);
+        if (!$mailOk) {
+            $hint = function_exists('birkly_send_mail')
+                ? 'Configure an email connection under Settings → Connections.'
+                : 'Update CMS core, then configure email under Settings → Connections.';
+            throw new Exception($result['error'] ?? ('Failed to send email. ' . $hint));
         }
 
         return [
