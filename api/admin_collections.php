@@ -521,6 +521,7 @@ try {
             'auto_publish' => !empty($apiSettings['auto_publish']),
             'rate_limit' => isset($apiSettings['rate_limit']) ? (int)$apiSettings['rate_limit'] : 10,
             'notification_email' => $apiSettings['notification_email'] ?? '',
+            'email_connection_alias' => trim((string) ($apiSettings['email_connection_alias'] ?? '')),
             'captcha_provider' => $apiSettings['captcha_provider'] ?? '',
             'captcha_site_key' => $apiSettings['captcha_site_key'] ?? '',
             'captcha_secret_key' => $apiSettings['captcha_secret_key'] ?? ''
@@ -665,6 +666,19 @@ try {
                 'auto_publish' => !empty($subCollectionData['auto_publish']),
                 'fields' => $processedSubFields
             ];
+
+            if (($subCollection['entry_method'] ?? 'admin_only') === 'public_api') {
+                $subApiSettings = is_array($subCollectionData['api_settings'] ?? null) ? $subCollectionData['api_settings'] : [];
+                $subCollection['api_settings'] = [
+                    'auto_publish' => !empty($subApiSettings['auto_publish']),
+                    'rate_limit' => isset($subApiSettings['rate_limit']) ? (int) $subApiSettings['rate_limit'] : 10,
+                    'notification_email' => (string) ($subApiSettings['notification_email'] ?? ''),
+                    'email_connection_alias' => trim((string) ($subApiSettings['email_connection_alias'] ?? '')),
+                    'captcha_provider' => (string) ($subApiSettings['captcha_provider'] ?? ''),
+                    'captcha_site_key' => (string) ($subApiSettings['captcha_site_key'] ?? ''),
+                    'captcha_secret_key' => (string) ($subApiSettings['captcha_secret_key'] ?? ''),
+                ];
+            }
             
             // Auto-generate parent field reference
             $parentFieldName = $slug . '_id';
