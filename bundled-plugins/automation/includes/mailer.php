@@ -26,9 +26,6 @@ function automation_send_mail(string $to, string $subject, string $bodyHtml, ?ar
     if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
         return ['ok' => false, 'method' => $method, 'error' => 'Invalid recipient email address'];
     }
-    if ($fromEmail === '' || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
-        return ['ok' => false, 'method' => $method, 'error' => 'Configure a valid From email under Automation → Setup'];
-    }
     if ($subject === '') {
         return ['ok' => false, 'method' => $method, 'error' => 'Email subject is required'];
     }
@@ -37,6 +34,10 @@ function automation_send_mail(string $to, string $subject, string $bodyHtml, ?ar
     // only when the core mailer is not present (e.g. fresh install or pre-P65 core).
     if (function_exists('birkly_send_mail')) {
         return automation_send_mail_via_core($to, $subject, $bodyHtml, $settings);
+    }
+
+    if ($fromEmail === '' || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+        return ['ok' => false, 'method' => $method, 'error' => 'Configure a valid From email under Automation → Setup'];
     }
 
     if ($method === 'log') {
@@ -446,8 +447,6 @@ function automation_send_mail_via_core(string $to, string $subject, string $body
     $fromName = (string) ($settings['from_name'] ?? 'Birkly');
 
     $opts = [
-        'from_email' => $fromEmail,
-        'from_name' => $fromName,
         'text' => automation_email_html_to_text($bodyHtml),
         'alias' => trim((string) ($settings['connection_alias'] ?? $settings['alias'] ?? '')) ?: null,
         'idempotency_key' => 'automation_' . md5(strtolower(trim($to)) . '|' . trim($subject) . '|' . microtime(true)),
@@ -470,7 +469,7 @@ function automation_send_mail_via_core(string $to, string $subject, string $body
         $result['method'] = ($status === 'logged') ? 'log' : 'core';
     }
     if (!isset($result['from'])) {
-        $result['from'] = $fromEmail;
+        $result['from'] = trim((string) ($coreResult['from'] ?? $fromEmail));
     }
     // Be honest about delivery: log transport is accepted but not delivered.
     if ($status === 'logged') {

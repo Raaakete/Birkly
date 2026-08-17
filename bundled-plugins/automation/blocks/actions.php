@@ -113,11 +113,10 @@ register_automation_block('action', 'email', [
         // Prefer the core Connections pipeline when available; otherwise fall back
         // to the Automation legacy wrapper (which itself checks for birkly_send_mail).
         if (function_exists('birkly_send_mail')) {
-            $mailSettings = automation_get_mail_settings();
             $connectionAlias = trim((string) ($config['connection_alias'] ?? ''));
+            // Let Settings → Connections own the From envelope (legacy Automation
+            // defaults to noreply@HTTP_HOST which SMTP providers reject).
             $result = birkly_send_mail($to, $subject, $html, [
-                'from_email' => $mailSettings['from_email'] ?? '',
-                'from_name' => $mailSettings['from_name'] ?? 'Birkly',
                 'text' => automation_email_html_to_text($html),
                 'alias' => $connectionAlias !== '' ? $connectionAlias : null,
                 'idempotency_key' => $claimKey,
