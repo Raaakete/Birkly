@@ -232,6 +232,21 @@ assert_true('non-content field escaped by default', !str_contains($escapedName, 
 $rawName = birkly_template_engine_render("{for each entry in 'items'}{'name'}{endfor}", $xssData, ['escapeHtml' => false]);
 assert_true('escapeHtml:false yields raw output', str_contains($rawName, '<b>x</b>'));
 
+$editorBody = birkly_template_engine_render(
+    "{for each entry in 'items'}{'body'}{endfor}",
+    [
+        '_html_fields' => ['body'],
+        'items' => [['title' => 't', 'body' => '<p>rich <strong>html</strong></p>']],
+    ]
+);
+assert_true('_html_fields renders editor body as HTML', $editorBody === '<p>rich <strong>html</strong></p>', 'got: ' . var_export($editorBody, true));
+
+$escapedBody = birkly_template_engine_render(
+    "{for each entry in 'items'}{'body'}{endfor}",
+    ['items' => [['title' => 't', 'body' => '<p>escaped</p>']]]
+);
+assert_true('body without _html_fields is escaped', str_contains($escapedBody, '&lt;p&gt;') && !str_contains($escapedBody, '<p>escaped</p>'));
+
 // ---------------------------------------------------------------------------
 // V-PHP-10 — edge cases: missing entry, empty collection, nested loops,
 //            malformed braces, form placeholders

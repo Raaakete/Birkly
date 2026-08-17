@@ -876,6 +876,18 @@ function birkly_admin_multilang_field_html(string $html, string $fieldName, stri
     $html = preg_replace('/\bname=(["\'])' . $quoted . '\1/i', 'name=$1' . $newName . '$1', $html, 1);
     $html = preg_replace('/\bname=(["\'])' . $quoted . '\[\]/', 'name=$1' . $newName . '[]', $html);
 
+    // ContentEditor: wrapper/editor use data-field-name and prefixed element ids
+    $html = preg_replace(
+        '/\bdata-field-name=(["\'])' . $quoted . '\1/i',
+        'data-field-name=$1' . $langFieldName . '$1',
+        $html
+    );
+    $html = preg_replace('/\bid=(["\'])toolbar_' . $quoted . '\1/i', 'id=$1toolbar_' . $langFieldName . '$1', $html);
+    $html = preg_replace('/\bid=(["\'])editor_' . $quoted . '\1/i', 'id=$1editor_' . $langFieldName . '$1', $html);
+    $html = preg_replace('/\bid=(["\'])tab_visual_' . $quoted . '\1/i', 'id=$1tab_visual_' . $langFieldName . '$1', $html);
+    $html = preg_replace('/\bid=(["\'])tab_html_' . $quoted . '\1/i', 'id=$1tab_html_' . $langFieldName . '$1', $html);
+    $html = preg_replace('/\bid=(["\'])panel_html_' . $quoted . '\1/i', 'id=$1panel_html_' . $langFieldName . '$1', $html);
+
     // Hidden value ids first (field_{name}_value) then container ids (field_{name})
     $html = preg_replace('/\bid=(["\'])field_' . $quoted . '_value\1/i', 'id=$1field_' . $langFieldName . '_value$1', $html);
     $html = preg_replace('/\bid=(["\'])field_' . $quoted . '\1/i', 'id=$1field_' . $langFieldName . '$1', $html);

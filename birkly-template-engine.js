@@ -37,6 +37,40 @@
             .replace(/'/g, '&#39;');
     }
 
+    function fieldNameForEscape(pathOrName) {
+        const raw = String(pathOrName || '').trim();
+        if (!raw) return '';
+        const parts = [...raw.matchAll(/'([^']+)'|(\d+)/g)];
+        if (parts.length) {
+            const last = parts[parts.length - 1];
+            return last[1] != null && last[1] !== '' ? String(last[1]) : String(last[2] ?? '');
+        }
+        const bare = raw.match(/^([a-zA-Z_][a-zA-Z0-9_]*)/);
+        return bare ? bare[1] : raw;
+    }
+
+    function shouldOutputRawHtml(pathOrName, options) {
+        if (options && options.escapeHtml === false) {
+            return true;
+        }
+        const fieldName = fieldNameForEscape(pathOrName);
+        if (!fieldName) return false;
+        if (fieldName.toLowerCase().includes('content') || fieldName.toLowerCase().includes('html')) {
+            return true;
+        }
+        const htmlFields = options && options.htmlFields;
+        if (!htmlFields) return false;
+        if (Array.isArray(htmlFields)) {
+            return htmlFields.includes(fieldName);
+        }
+        if (Object.prototype.hasOwnProperty.call(htmlFields, fieldName)) {
+            return true;
+        }
+        return Object.values(htmlFields).some(
+            (names) => Array.isArray(names) && names.includes(fieldName)
+        );
+    }
+
     function getNestedValue(obj, path) {
         if (!obj || !path) return undefined;
         const parts = String(path).split('.');
@@ -505,11 +539,7 @@
     function escapeOutput(pathOrName, value, options) {
         const str = value == null ? '' : String(value);
         if (!str) return '';
-        if (options && options.escapeHtml === false) {
-            return str;
-        }
-        // Rich-content fields are treated as trusted HTML by convention.
-        if (String(pathOrName).includes('content') || String(pathOrName).includes('html')) {
+        if (shouldOutputRawHtml(pathOrName, options)) {
             return str;
         }
         return escapeHtml(str);
@@ -846,6 +876,11 @@
 
         const opts = (options && typeof options === 'object') ? options : {};
         const ctxOptions = { escapeHtml: opts.escapeHtml === false ? false : true };
+        if (data._html_fields && Array.isArray(data._html_fields)) {
+            ctxOptions.htmlFields = data._html_fields;
+        } else if (opts.htmlFields && Array.isArray(opts.htmlFields)) {
+            ctxOptions.htmlFields = opts.htmlFields;
+        }
         // Nested render() calls (loops/from/if) must not re-extract already-tokenized
         // protected blocks from the parent pass — only the outermost call protects.
         const protect = opts._skipProtect !== true;

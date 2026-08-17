@@ -272,7 +272,15 @@ window.ContentEditorEventManager = {
     
     // Find the hidden input
     const fieldName = wrapper.dataset.fieldName || editor.dataset.fieldName;
-    const hiddenInput = fieldName ? document.getElementById('field_' + fieldName) : null;
+    let hiddenInput = wrapper.querySelector('input[type="hidden"]');
+    if (!hiddenInput && fieldName) {
+      const byId = document.getElementById('field_' + fieldName);
+      if (byId && wrapper.contains(byId)) {
+        hiddenInput = byId;
+      } else if (byId) {
+        hiddenInput = byId;
+      }
+    }
     
     return { toolbar, editor, hiddenInput, wrapper };
   },
