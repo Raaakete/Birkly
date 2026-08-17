@@ -719,6 +719,10 @@
         wrap.appendChild(this._buildSubCollectionPicker(node, field, val));
         return wrap;
       }
+      if (type === 'email_connection') {
+        wrap.appendChild(this._buildEmailConnectionPicker(node, field, val));
+        return wrap;
+      }
       if (type === 'status_select' || (type === 'select' && field === 'status') || type === 'status') {
         const select = document.createElement('select');
         select.className = 'input';
@@ -878,6 +882,32 @@
       if (!collectionSlug) select.disabled = true;
       select.addEventListener('change', () => this._setConfig(node, field, select.value));
       wrap.appendChild(select);
+      return wrap;
+    }
+
+    _buildEmailConnectionPicker(node, field, value) {
+      const wrap = document.createElement('div');
+      wrap.className = 'sys-conn-picker-mount';
+      const mountId = 'automation-email-conn-' + node.id + '-' + field;
+      wrap.id = mountId;
+
+      const render = async () => {
+        if (!window.BirklyEmailConnectionPicker) {
+          wrap.innerHTML = '<p class="field-help">Email connection picker is unavailable. Reload the page.</p>';
+          return;
+        }
+        await BirklyEmailConnectionPicker.mount(wrap, {
+          name: field,
+          value: (node.config || {})[field] || value || '',
+          id: mountId + '-select',
+          help: 'Choose which email connection sends this message.',
+          onChange: function (alias) {
+            this._setConfig(node, field, alias);
+          }.bind(this),
+        });
+      };
+
+      render();
       return wrap;
     }
 
