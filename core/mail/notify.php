@@ -42,6 +42,18 @@ function birkly_notify(string $event, array $payload): array
 
     $connections = birkly_connections_match_event($event);
     if (empty($connections)) {
+        // Fall back to the default email connection when no alias matches — so form
+        // notifications and other events work once any email connection is configured.
+        $hasEmailPayload = trim((string) ($payload['subject'] ?? '')) !== ''
+            && (trim((string) ($payload['message'] ?? '')) !== '' || trim((string) ($payload['html'] ?? '')) !== '');
+        if ($hasEmailPayload) {
+            $defaultEmail = birkly_connection_get_default('email', false);
+            if ($defaultEmail !== null) {
+                $connections = [$defaultEmail];
+            }
+        }
+    }
+    if (empty($connections)) {
         return ['_notify' => birkly_mail_result('failed', 'notify', null, null, 'No active connections match event: ' . $event)];
     }
 
