@@ -82,12 +82,35 @@ function birkly_entry_record_exists(string $collectionSlug, string $entryId): bo
 function birkly_entry_write_record(string $collectionSlug, string $entryId, array $entryData): bool
 {
     $entryData['id'] = $entryId;
-    $ok = birkly_entry_content_storage()->write(
+    $traceId = substr($collectionSlug, 0, 24) . '/' . substr($entryId, 0, 16);
+    $started = microtime(true);
+
+    error_log('birkly_entry_write_record[' . $traceId . ']: opening content storage');
+    try {
+        $storage = birkly_entry_content_storage();
+    } catch (Throwable $e) {
+        error_log('birkly_entry_write_record[' . $traceId . ']: storage open failed after '
+            . (int) round((microtime(true) - $started) * 1000) . 'ms — ' . $e->getMessage());
+        throw $e;
+    }
+
+    $driver = method_exists($storage, 'getDriverName') ? $storage->getDriverName() : 'unknown';
+    error_log('birkly_entry_write_record[' . $traceId . ']: storage ready driver=' . $driver
+        . ' dt=' . (int) round((microtime(true) - $started) * 1000) . 'ms');
+
+    $writeStarted = microtime(true);
+    $ok = $storage->write(
         birkly_entry_record_storage_key($collectionSlug, $entryId),
         $entryData
     );
+    error_log('birkly_entry_write_record[' . $traceId . ']: write dt='
+        . (int) round((microtime(true) - $writeStarted) * 1000) . 'ms ok=' . ($ok ? '1' : '0'));
+
     if ($ok) {
+        $invalidateStarted = microtime(true);
         birkly_entry_invalidate_caches($collectionSlug);
+        error_log('birkly_entry_write_record[' . $traceId . ']: invalidate dt='
+            . (int) round((microtime(true) - $invalidateStarted) * 1000) . 'ms');
     }
 
     return $ok;

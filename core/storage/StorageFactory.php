@@ -86,7 +86,7 @@ class StorageFactory
             case 'flatfile':
             default:
                 $storagePath = $basePath ?? $config['base_path'] ?? self::defaultFlatFilePath();
-                return new FlatFileStorage($storagePath);
+                return new Storage($storagePath);
         }
     }
 

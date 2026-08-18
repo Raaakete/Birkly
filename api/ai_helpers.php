@@ -174,7 +174,7 @@ function birkly_ai_content_collections_dir(): string
 /**
  * Resolve a collection slug/dir from a normalized payload (slug, name, or aliases).
  */
-function birkly_ai_resolve_collection_slug_from_payload(array $payload, ?Storage $storage = null): string
+function birkly_ai_resolve_collection_slug_from_payload(array $payload, ?StorageInterface $storage = null): string
 {
     $payload = birkly_ai_normalize_collection_action_data($payload);
 
