@@ -44,6 +44,18 @@ assert_true(
     str_contains($entryEditorTemplate, "'entryId'"),
     'entry editor config exposes initial entry id'
 );
+assert_true(
+    str_contains($entryEditorJs, 'showPublishedReadyToClose'),
+    'entry editor shows persistent published status'
+);
+assert_true(
+    str_contains($entryEditorJs, 'setActionBarBusy'),
+    'entry editor blocks actions while saving'
+);
+assert_true(
+    str_contains($entryEditorTemplate, 'entry_publish_and_save'),
+    'entry editor exposes publish and save button label'
+);
 
 assert_true(
     birkly_entry_matches_slug(['slug' => 'hello-world'], 'hello-world'),

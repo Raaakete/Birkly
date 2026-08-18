@@ -71,9 +71,112 @@
 
     function releaseSaveLock() {
         isSubmittingEntry = false;
-        setSaveSubmitting(false);
-        if (getPublishButton()) {
-            setPublishSubmitting(false, getPublishButton().dataset.published === '1');
+        setActionBarBusy(false);
+    }
+
+    function getActionBar() {
+        return document.querySelector('.main-actions-bar--sticky');
+    }
+
+    function getActionStatusEl() {
+        return document.getElementById('entry-editor-action-status');
+    }
+
+    function getCloseButton() {
+        return document.getElementById('entry-close-btn');
+    }
+
+    function setActionBarBusy(isBusy, message) {
+        const bar = getActionBar();
+        const saveBtn = getSaveSubmitButton();
+        const publishBtn = getPublishButton();
+        const closeBtn = getCloseButton();
+        const statusEl = getActionStatusEl();
+
+        if (bar) {
+            bar.classList.toggle('main-actions-bar--busy', !!isBusy);
+            bar.classList.toggle('main-actions-bar--saving', !!isBusy);
+        }
+        if (saveBtn) {
+            saveBtn.disabled = !!isBusy;
+        }
+        if (publishBtn) {
+            publishBtn.disabled = !!isBusy;
+            publishBtn.classList.toggle('loading', !!isBusy);
+        }
+        if (closeBtn) {
+            closeBtn.classList.toggle('is-disabled', !!isBusy);
+            closeBtn.setAttribute('aria-disabled', isBusy ? 'true' : 'false');
+        }
+
+        if (!statusEl) {
+            return;
+        }
+
+        const spinner = statusEl.querySelector('.entry-editor-action-status__spinner');
+        const textEl = statusEl.querySelector('.entry-editor-action-status__text');
+        if (isBusy) {
+            statusEl.hidden = false;
+            statusEl.className = 'entry-editor-action-status is-busy';
+            if (spinner) spinner.hidden = false;
+            if (textEl) textEl.textContent = message || saveLabel('processingSave', 'Saving…');
+            return;
+        }
+
+        if (spinner) spinner.hidden = true;
+    }
+
+    function setEntryActionStatus(mode, message) {
+        const statusEl = getActionStatusEl();
+        if (!statusEl) {
+            return;
+        }
+
+        const spinner = statusEl.querySelector('.entry-editor-action-status__spinner');
+        const textEl = statusEl.querySelector('.entry-editor-action-status__text');
+        if (!textEl) {
+            return;
+        }
+
+        if (spinner) {
+            spinner.hidden = true;
+        }
+
+        if (!mode || mode === 'idle') {
+            statusEl.hidden = true;
+            statusEl.className = 'entry-editor-action-status';
+            textEl.textContent = '';
+            return;
+        }
+
+        statusEl.hidden = false;
+        statusEl.className = 'entry-editor-action-status is-' + mode;
+        textEl.textContent = message || '';
+    }
+
+    function showPublishedReadyToClose() {
+        setEntryActionStatus(
+            'published',
+            saveLabel('publishedToast', 'Published — safe to close')
+        );
+        const bar = getActionBar();
+        if (bar) {
+            bar.classList.add('main-actions-bar--published');
+        }
+    }
+
+    function showSavedDraftStatus() {
+        setEntryActionStatus(
+            'saved',
+            saveLabel('savedToast', 'Saved')
+        );
+        const bar = getActionBar();
+        if (bar) {
+            bar.classList.add('main-actions-bar--saved');
+            setTimeout(function () {
+                bar.classList.remove('main-actions-bar--saved');
+                setEntryActionStatus('idle');
+            }, 3000);
         }
     }
 
@@ -85,39 +188,8 @@
         return document.getElementById('entry-publish-btn');
     }
 
-    function isPublishedStatus(status) {
-        return status === 'published';
-    }
-
-    function updatePublishToggleButton(status) {
-        const btn = getPublishButton();
-        if (!btn) return;
-
-        const published = isPublishedStatus(status);
-        btn.dataset.published = published ? '1' : '0';
-        btn.textContent = published
-            ? saveLabel('unpublish', 'Unpublish')
-            : saveLabel('publish', 'Publish');
-        btn.classList.remove('btn-primary', 'btn-danger');
-        btn.classList.add(published ? 'btn-danger' : 'btn-primary');
-    }
-
-    function setPublishSubmitting(isSubmitting, published) {
-        const btn = getPublishButton();
-        if (!btn) return;
-
-        if (isSubmitting) {
-            if (!btn.dataset.originalLabel) {
-                btn.dataset.originalLabel = btn.textContent.trim();
-            }
-            btn.textContent = (published
-                ? saveLabel('unpublishing', 'Unpublish')
-                : saveLabel('publishing', 'Publish')) + '…';
-            btn.disabled = true;
-        } else {
-            btn.textContent = btn.dataset.originalLabel || btn.textContent;
-            btn.disabled = false;
-        }
+    function getSaveSubmitButton() {
+        return document.getElementById('entry-save-submit');
     }
 
     function getCurrentEntryId(form) {
@@ -136,38 +208,6 @@
         if (!opts.silent) {
             statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
-    }
-
-    function getSaveSubmitButton() {
-        return document.getElementById('entry-save-submit');
-    }
-
-    function setSaveSubmitting(isSubmitting) {
-        const btn = getSaveSubmitButton();
-        const bar = document.querySelector('.main-actions-bar--sticky');
-        if (!btn) return;
-
-        if (isSubmitting) {
-            if (!btn.dataset.originalLabel) {
-                btn.dataset.originalLabel = btn.textContent.trim();
-            }
-            btn.textContent = saveLabel('saving', 'Saving') + '…';
-            btn.disabled = true;
-            if (bar) bar.classList.add('main-actions-bar--saving');
-        } else {
-            btn.textContent = btn.dataset.originalLabel || btn.textContent;
-            btn.disabled = false;
-            if (bar) bar.classList.remove('main-actions-bar--saving');
-        }
-    }
-
-    function flashEntrySavedState() {
-        const bar = document.querySelector('.main-actions-bar--sticky');
-        if (!bar) return;
-        bar.classList.add('main-actions-bar--saved');
-        setTimeout(function () {
-            bar.classList.remove('main-actions-bar--saved');
-        }, 2500);
     }
 
     function hideUnsavedBadge() {
@@ -190,47 +230,6 @@
             return 'unpublished';
         }
         return value || 'unpublished';
-    }
-
-    function isUnpublishedStatus(status) {
-        return !status || status === 'unpublished' || status === 'draft';
-    }
-
-    async function unpublishCurrentEntry(form) {
-        const entryId = resolveEntryId(form);
-        if (!entryId) {
-            throw new Error('Save the entry before unpublishing.');
-        }
-
-        const csrf = form.querySelector('input[name="_csrf"]')?.value || '';
-        const collection = form.querySelector('input[name="collection"]')?.value || config.collectionSlug || '';
-        const response = await fetch('/api/admin_entries.php?action=bulk', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                action: 'unpublish',
-                collection: collection,
-                entry_ids: [entryId],
-                _csrf: csrf,
-            }),
-        });
-        const raw = await response.text();
-        let data;
-        try {
-            data = JSON.parse(raw);
-        } catch (_e) {
-            data = null;
-        }
-        if (!data || data.status !== 'ok') {
-            throw new Error((data && data.message) || raw || 'Unpublish failed');
-        }
-
-        const statusSelect = document.getElementById('status');
-        if (statusSelect) {
-            statusSelect.value = 'unpublished';
-            statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        updatePublishToggleButton('unpublished');
     }
 
     /**
@@ -1146,7 +1145,16 @@
     function initEntryActionButtons() {
         const form = document.getElementById('entry-form');
         const publishBtn = getPublishButton();
+        const closeBtn = getCloseButton();
         if (!form || !publishBtn || config.isSubEntry) return;
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                if (isSubmittingEntry) {
+                    e.preventDefault();
+                }
+            });
+        }
 
         publishBtn.addEventListener('click', async function (e) {
             e.preventDefault();
@@ -1154,17 +1162,7 @@
             if (!tryAcquireSaveLock()) {
                 return;
             }
-
-            const isPublished = publishBtn.dataset.published === '1';
             try {
-                if (isPublished) {
-                    setPublishSubmitting(true, true);
-                    await unpublishCurrentEntry(form);
-                    hideUnsavedBadge();
-                    showEntrySavedToast(saveLabel('unpublishedToast', 'Entry unpublished'), 'success');
-                    return;
-                }
-
                 await executeEntrySave(form, 'published');
             } catch (err) {
                 showEntrySavedToast(err.message || 'Publish failed', 'error');
@@ -1173,16 +1171,35 @@
             }
         });
 
-        updatePublishToggleButton(config.initialStatus || getEntryStatusFromSidebar());
+        initPublishedStatusReset(form);
+
+        if (config.initialStatus === 'published') {
+            showPublishedReadyToClose();
+        }
+    }
+
+    function initPublishedStatusReset(form) {
+        if (!form) return;
+        const resetPublishedHint = function () {
+            const bar = getActionBar();
+            if (bar) {
+                bar.classList.remove('main-actions-bar--published');
+            }
+            setEntryActionStatus('idle');
+        };
+        form.addEventListener('input', resetPublishedHint);
+        form.addEventListener('change', resetPublishedHint);
     }
 
     async function executeEntrySave(form, forceStatus) {
         clearFieldErrors();
         const publishing = forceStatus === 'published';
-        setSaveSubmitting(true);
-        if (getPublishButton()) {
-            setPublishSubmitting(true, publishing);
-        }
+        setActionBarBusy(
+            true,
+            publishing
+                ? saveLabel('publishing', 'Publish & save') + '…'
+                : saveLabel('saving', 'Saving') + '…'
+        );
 
         if (forceStatus) {
             setSidebarStatus(forceStatus, { silent: true });
@@ -1534,21 +1551,12 @@
                         }));
 
                         hideUnsavedBadge();
-                        flashEntrySavedState();
 
-                        const savedStatus = forceStatus || getEntryStatusFromSidebar();
                         if (forceStatus === 'published') {
                             setSidebarStatus('published', { silent: true });
-                        }
-                        updatePublishToggleButton(savedStatus);
-                        if (forceStatus === 'published') {
-                            showEntrySavedToast(saveLabel('publishedToast', 'Entry published'), 'success');
+                            showPublishedReadyToClose();
                         } else {
-                            showEntrySavedToast(
-                                (data.data && data.data.message) ||
-                                saveLabel('savedToast', 'Your changes were saved successfully.'),
-                                'success'
-                            );
+                            showSavedDraftStatus();
                         }
                     }
                 } else if (data && data.status === 'error') {
