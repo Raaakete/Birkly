@@ -791,7 +791,7 @@ if (!$cancelUrl) {
                                         <?php else: ?>
                                             <input type="text" name="api_settings[public_read_fields]" class="input" value="<?= htmlspecialchars($publicReadFieldsValue) ?>" placeholder="title, slug, logo">
                                         <?php endif; ?>
-                                        <small class="form-text">Comma-separated fields exposed by <code>list_entries</code>. System fields (id, slug, status, dates) are always included. Leave empty to return all fields.</small>
+                                        <small class="form-text">Comma-separated fields exposed by <code>list_entries</code>. For <code>public_api</code> collections, leaving this empty returns only <code>title</code>, <code>slug</code>, and <code>created_at</code> until configured (security default). When set, system fields (id, slug, status, dates) are also included.</small>
                                     </div>
 
                                     <div class="info-item">
