@@ -24,6 +24,58 @@
     }
 
     let isSubmittingEntry = false;
+    let knownEntryId = '';
+
+    function readEntryIdFromUrl() {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            return (params.get('entry') || '').trim();
+        } catch (_e) {
+            return '';
+        }
+    }
+
+    function syncKnownEntryId(entryId) {
+        const normalized = (entryId || '').trim();
+        if (!normalized) {
+            return;
+        }
+        knownEntryId = normalized;
+        config.entryId = normalized;
+    }
+
+    function initKnownEntryId(form) {
+        const fromForm = getCurrentEntryId(form);
+        const fromConfig = (config.entryId || '').trim();
+        const fromUrl = readEntryIdFromUrl();
+        syncKnownEntryId(fromForm || fromConfig || fromUrl);
+        if (knownEntryId && form) {
+            ensureEntryIdInput(form, knownEntryId);
+        }
+    }
+
+    function resolveEntryId(form, formData) {
+        return getCurrentEntryId(form)
+            || knownEntryId
+            || (formData && formData.get ? String(formData.get('entry_id') || '').trim() : '')
+            || readEntryIdFromUrl();
+    }
+
+    function tryAcquireSaveLock() {
+        if (isSubmittingEntry) {
+            return false;
+        }
+        isSubmittingEntry = true;
+        return true;
+    }
+
+    function releaseSaveLock() {
+        isSubmittingEntry = false;
+        setSaveSubmitting(false);
+        if (getPublishButton()) {
+            setPublishSubmitting(false, getPublishButton().dataset.published === '1');
+        }
+    }
 
     function saveLabel(key, fallback) {
         return (config.saveLabels && config.saveLabels[key]) || fallback;
@@ -70,7 +122,20 @@
 
     function getCurrentEntryId(form) {
         const input = form && form.querySelector('input[name="entry_id"]');
-        return input && input.value ? String(input.value).trim() : '';
+        const fromInput = input && input.value ? String(input.value).trim() : '';
+        return fromInput || knownEntryId || readEntryIdFromUrl();
+    }
+
+    function setSidebarStatus(status, options) {
+        const opts = options || {};
+        const statusSelect = document.getElementById('status');
+        if (!statusSelect || !status) {
+            return;
+        }
+        statusSelect.value = status;
+        if (!opts.silent) {
+            statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     function getSaveSubmitButton() {
@@ -132,7 +197,7 @@
     }
 
     async function unpublishCurrentEntry(form) {
-        const entryId = getCurrentEntryId(form);
+        const entryId = resolveEntryId(form);
         if (!entryId) {
             throw new Error('Save the entry before unpublishing.');
         }
@@ -1067,7 +1132,14 @@
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            await executeEntrySave(form, null);
+            if (!tryAcquireSaveLock()) {
+                return;
+            }
+            try {
+                await executeEntrySave(form, null);
+            } finally {
+                releaseSaveLock();
+            }
         });
     }
 
@@ -1076,41 +1148,47 @@
         const publishBtn = getPublishButton();
         if (!form || !publishBtn || config.isSubEntry) return;
 
-        publishBtn.addEventListener('click', async function () {
-            if (isSubmittingEntry) return;
-
-            const isPublished = publishBtn.dataset.published === '1';
-            if (isPublished) {
-                setPublishSubmitting(true, true);
-                try {
-                    await unpublishCurrentEntry(form);
-                    hideUnsavedBadge();
-                    showEntrySavedToast(saveLabel('unpublishedToast', 'Entry unpublished'), 'success');
-                } catch (err) {
-                    showEntrySavedToast(err.message || 'Unpublish failed', 'error');
-                } finally {
-                    setPublishSubmitting(false, true);
-                }
+        publishBtn.addEventListener('click', async function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!tryAcquireSaveLock()) {
                 return;
             }
 
-            await executeEntrySave(form, 'published');
+            const isPublished = publishBtn.dataset.published === '1';
+            try {
+                if (isPublished) {
+                    setPublishSubmitting(true, true);
+                    await unpublishCurrentEntry(form);
+                    hideUnsavedBadge();
+                    showEntrySavedToast(saveLabel('unpublishedToast', 'Entry unpublished'), 'success');
+                    return;
+                }
+
+                await executeEntrySave(form, 'published');
+            } catch (err) {
+                showEntrySavedToast(err.message || 'Publish failed', 'error');
+            } finally {
+                releaseSaveLock();
+            }
         });
 
         updatePublishToggleButton(config.initialStatus || getEntryStatusFromSidebar());
     }
 
     async function executeEntrySave(form, forceStatus) {
-        if (isSubmittingEntry) return;
         clearFieldErrors();
-        isSubmittingEntry = true;
         const publishing = forceStatus === 'published';
         setSaveSubmitting(true);
         if (getPublishButton()) {
             setPublishSubmitting(true, publishing);
         }
 
-        const hadEntryIdBeforeSave = !!getCurrentEntryId(form);
+        if (forceStatus) {
+            setSidebarStatus(forceStatus, { silent: true });
+        }
+
+        const hadEntryIdBeforeSave = !!resolveEntryId(form);
             
             // Sync all editor fields before submission
             syncContentEditorFields();
@@ -1334,9 +1412,9 @@
                 
                 // Add collection and entry_id if they exist
                 const collection = formData.get('collection');
-                const entryId = getCurrentEntryId(form) || formData.get('entry_id');
-                if (collection) finalFormData.append('collection', collection);
-                if (entryId) finalFormData.append('entry_id', entryId);
+                const entryId = resolveEntryId(form, formData);
+                if (collection) finalFormData.set('collection', collection);
+                if (entryId) finalFormData.set('entry_id', entryId);
                 
                 // Add CSRF token
                 const csrf = formData.get('_csrf');
@@ -1414,11 +1492,12 @@
                 // Check JSON body first - it's the source of truth
                 if (data && data.status === 'ok') {
                     // Success! Even if HTTP status code is 400 (server bug)
-                    const savedEntryId = data.data && data.data.id ? data.data.id : getCurrentEntryId(form);
+                    const savedEntryId = data.data && data.data.id ? data.data.id : resolveEntryId(form, formData);
                     const isNewRegularEntry = !isSubEntry && !hadEntryIdBeforeSave && !!savedEntryId;
 
                     if (savedEntryId) {
                         ensureEntryIdInput(form, savedEntryId);
+                        syncKnownEntryId(savedEntryId);
                     }
 
                     if (isSubEntry) {
@@ -1459,11 +1538,7 @@
 
                         const savedStatus = forceStatus || getEntryStatusFromSidebar();
                         if (forceStatus === 'published') {
-                            const statusSelect = document.getElementById('status');
-                            if (statusSelect) {
-                                statusSelect.value = 'published';
-                                statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                            }
+                            setSidebarStatus('published', { silent: true });
                         }
                         updatePublishToggleButton(savedStatus);
                         if (forceStatus === 'published') {
@@ -1490,12 +1565,6 @@
             } catch (error) {
                 console.error('Error saving entry:', error);
                 BirklyFeedback.toast('Error saving entry: ' + error.message, 'error')
-            } finally {
-                isSubmittingEntry = false;
-                setSaveSubmitting(false);
-                if (getPublishButton()) {
-                    setPublishSubmitting(false, getPublishButton().dataset.published === '1');
-                }
             }
     }
 
@@ -1801,6 +1870,8 @@
      * Main initialization
      */
     function init() {
+        const form = document.getElementById('entry-form');
+        initKnownEntryId(form);
         initSlugGeneration();
         initFormSubmission();
         initEntryActionButtons();
