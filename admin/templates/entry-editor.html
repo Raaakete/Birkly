@@ -97,14 +97,20 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     $entryEditorIsPublished = ($entryEditorStatus === 'published');
     $stickySaveBarForm = 'entry-form';
     $stickySaveBarSaveLabel = __('admin.save');
+    $stickySaveBarSaveClass = 'btn btn-secondary';
     $stickySaveBarSaveId = 'entry-save-submit';
     $stickySaveBarCancelLabel = __('admin.close');
+    $stickySaveBarCancelId = 'entry-close-btn';
     $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
-    $stickySaveBarStatusHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
+    $stickySaveBarStatusHtml = '<span id="entry-editor-action-status" class="entry-editor-action-status" aria-live="polite" hidden>'
+        . '<span class="entry-editor-action-status__spinner spinner" aria-hidden="true" hidden></span>'
+        . '<span class="entry-editor-action-status__text"></span>'
+        . '</span>'
+        . '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
   if (!$isSubEntry):
-    $publishBtnClass = $entryEditorIsPublished ? 'btn btn-danger' : 'btn btn-primary';
-    $publishBtnLabel = $entryEditorIsPublished ? __('admin.unpublish') : __('admin.publish');
-    $stickySaveBarAfterSaveHtml = '<button type="button" class="' . htmlspecialchars($publishBtnClass) . '" id="entry-publish-btn" data-published="' . ($entryEditorIsPublished ? '1' : '0') . '">' . htmlspecialchars($publishBtnLabel) . '</button>';
+    $stickySaveBarAfterSaveHtml = '<button type="button" class="btn btn-primary" id="entry-publish-btn">'
+        . htmlspecialchars(__('admin.entry_publish_and_save'))
+        . '</button>';
   endif;
     include __DIR__ . '/components/sticky-save-bar.php';
     ?>
@@ -753,14 +759,13 @@ echo htmlspecialchars($collectionExample);
     'initialStatus' => $entryEditorStatus ?? 'unpublished',
     'isSubEntry' => $isSubEntry,
     'saveLabels' => [
-        'savedToast' => __('admin.entry_save_update_message'),
-        'publishedToast' => __('admin.entry_save_published_toast'),
-        'unpublishedToast' => 'Entry unpublished',
-        'publish' => __('admin.publish'),
-        'unpublish' => __('admin.unpublish'),
+        'savedToast' => __('admin.entry_saved_draft'),
+        'publishedToast' => __('admin.entry_published_safe_to_close'),
+        'publishAndSave' => __('admin.entry_publish_and_save'),
         'saving' => __('admin.saving'),
-        'publishing' => __('admin.publish'),
-        'unpublishing' => __('admin.unpublish'),
+        'publishing' => __('admin.entry_publish_and_save'),
+        'processingSave' => __('admin.saving'),
+        'processingPublish' => __('admin.entry_publish_and_save'),
     ],
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>

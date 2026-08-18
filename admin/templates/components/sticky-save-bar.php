@@ -3,6 +3,7 @@ $stickySaveBarForm = $stickySaveBarForm ?? null;
 $stickySaveBarSaveLabel = $stickySaveBarSaveLabel ?? __('admin.save');
 $stickySaveBarCancelLabel = $stickySaveBarCancelLabel ?? __('admin.cancel');
 $stickySaveBarCancelUrl = $stickySaveBarCancelUrl ?? null;
+$stickySaveBarCancelId = $stickySaveBarCancelId ?? null;
 $stickySaveBarMessageId = $stickySaveBarMessageId ?? null;
 $stickySaveBarMessageClass = trim((string) ($stickySaveBarMessageClass ?? ''));
 $stickySaveBarStatusHtml = $stickySaveBarStatusHtml ?? '';
@@ -15,7 +16,7 @@ $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
 <div class="main-actions-bar main-actions-bar--sticky">
     <div class="main-actions-left">
         <?php if ($stickySaveBarCancelUrl): ?>
-            <a href="<?= htmlspecialchars($stickySaveBarCancelUrl) ?>" class="btn btn-secondary">
+            <a href="<?= htmlspecialchars($stickySaveBarCancelUrl) ?>" class="btn btn-secondary"<?php if ($stickySaveBarCancelId): ?> id="<?= htmlspecialchars($stickySaveBarCancelId) ?>"<?php endif; ?>>
                 <?= htmlspecialchars($stickySaveBarCancelLabel) ?>
             </a>
         <?php endif; ?>
