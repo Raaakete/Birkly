@@ -855,6 +855,32 @@ function saveEntry() {
         unset($entryOutput['deleted_at']);
     }
     
+    // Guard against double-submit duplicates: if create would reuse an existing slug,
+    // update that entry instead of writing a second file.
+    if ($action === 'create') {
+        $candidateSlug = trim((string) ($entryOutput['slug'] ?? ''));
+        if ($candidateSlug !== '') {
+            foreach (birkly_entry_list_records($collectionSlug) as $existingRecord) {
+                if (!is_array($existingRecord) || !birkly_entry_matches_slug($existingRecord, $candidateSlug)) {
+                    continue;
+                }
+                $existingId = trim((string) ($existingRecord['id'] ?? ''));
+                if ($existingId === '' || $existingId === $entryId) {
+                    continue;
+                }
+                $entryId = $existingId;
+                $action = 'update';
+                $entry = birkly_entry_read_record($collectionSlug, $entryId);
+                if ($entry && isset($entry['version'])) {
+                    $currentVersion = intval($entry['version']) + 1;
+                    $entryOutput['version'] = $currentVersion;
+                    saveVersionHistory($collectionSlug, $entryId, $entry);
+                }
+                break;
+            }
+        }
+    }
+    
     // Save entry through the configured storage driver
     $isNewEntry = ($action === 'create') || !birkly_entry_record_exists($collectionSlug, $entryId);
     if (!birkly_entry_write_record($collectionSlug, $entryId, $entryOutput)) {
