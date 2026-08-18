@@ -5,12 +5,13 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/storage/StorageInterface.php';
 require_once __DIR__ . '/page_bundle_helpers.php';
 
 /**
  * Resolve a collection directory name from slug, display name, or id (case-insensitive).
  */
-function birkly_content_resolve_collection_dir(Storage $storage, string $collectionRef): ?string
+function birkly_content_resolve_collection_dir(StorageInterface $storage, string $collectionRef): ?string
 {
     $collectionRef = trim($collectionRef);
     if ($collectionRef === '') {
@@ -58,7 +59,7 @@ function birkly_content_resolve_collection_dir(Storage $storage, string $collect
  * Resolve collection to on-disk directory name.
  * Preserves legacy slugs with underscores (e.g. site_elements) for AI/admin writes.
  */
-function birkly_content_resolve_collection_dir_name(Storage $storage, string $collectionRef): ?string
+function birkly_content_resolve_collection_dir_name(StorageInterface $storage, string $collectionRef): ?string
 {
     $collectionRef = trim($collectionRef);
     if ($collectionRef === '') {
