@@ -22,19 +22,29 @@ function birkly_ai_generate_public_api_key(): string
     return $apiKey;
 }
 
+/**
+ * Canonical api_settings model — keys are derived from this schema so validation cannot drift.
+ *
+ * @return array<string, callable(mixed): mixed>
+ */
+function birkly_collection_api_settings_schema(): array
+{
+    return [
+        'auto_publish' => static fn (mixed $v): bool => !empty($v),
+        'rate_limit' => static fn (mixed $v): int => isset($v) ? (int) $v : 10,
+        'notification_email' => static fn (mixed $v): string => (string) ($v ?? ''),
+        'email_connection_alias' => static fn (mixed $v): string => trim((string) ($v ?? '')),
+        'captcha_provider' => static fn (mixed $v): string => (string) ($v ?? ''),
+        'captcha_site_key' => static fn (mixed $v): string => (string) ($v ?? ''),
+        'captcha_secret_key' => static fn (mixed $v): string => (string) ($v ?? ''),
+        'allow_anonymous_read' => static fn (mixed $v): bool => !empty($v),
+    ];
+}
+
 /** @return list<string> */
 function birkly_collection_api_settings_keys(): array
 {
-    return [
-        'auto_publish',
-        'rate_limit',
-        'notification_email',
-        'email_connection_alias',
-        'captcha_provider',
-        'captcha_site_key',
-        'captcha_secret_key',
-        'allow_anonymous_read',
-    ];
+    return array_keys(birkly_collection_api_settings_schema());
 }
 
 /**
@@ -82,16 +92,75 @@ function birkly_migrate_collection_api_settings(array $apiSettings): array
 function birkly_ai_normalize_api_settings(array $apiSettings): array
 {
     $apiSettings = birkly_migrate_collection_api_settings($apiSettings);
-    return [
-        'auto_publish' => !empty($apiSettings['auto_publish']),
-        'rate_limit' => isset($apiSettings['rate_limit']) ? (int) $apiSettings['rate_limit'] : 10,
-        'notification_email' => (string) ($apiSettings['notification_email'] ?? ''),
-        'email_connection_alias' => trim((string) ($apiSettings['email_connection_alias'] ?? '')),
-        'captcha_provider' => (string) ($apiSettings['captcha_provider'] ?? ''),
-        'captcha_site_key' => (string) ($apiSettings['captcha_site_key'] ?? ''),
-        'captcha_secret_key' => (string) ($apiSettings['captcha_secret_key'] ?? ''),
-        'allow_anonymous_read' => !empty($apiSettings['allow_anonymous_read']),
-    ];
+    $schema = birkly_collection_api_settings_schema();
+    $normalized = [];
+    foreach ($schema as $key => $normalize) {
+        $normalized[$key] = array_key_exists($key, $apiSettings)
+            ? $normalize($apiSettings[$key])
+            : $normalize(null);
+    }
+
+    return $normalized;
+}
+
+/**
+ * Normalize only keys present in the input (for partial api_settings updates).
+ *
+ * @param array<string, mixed> $apiSettings
+ * @return array<string, mixed>
+ */
+function birkly_ai_normalize_api_settings_patch(array $apiSettings): array
+{
+    $apiSettings = birkly_migrate_collection_api_settings($apiSettings);
+    $schema = birkly_collection_api_settings_schema();
+    $normalized = [];
+    foreach ($schema as $key => $normalize) {
+        if (array_key_exists($key, $apiSettings)) {
+            $normalized[$key] = $normalize($apiSettings[$key]);
+        }
+    }
+
+    return $normalized;
+}
+
+/**
+ * Merge api_settings into collection metadata (works without entry_method in the payload).
+ *
+ * @param array<string, mixed> $collection
+ * @param array<string, mixed> $apiSettings
+ * @param array<string, mixed>|null $existing
+ */
+function birkly_ai_apply_api_settings_patch(array &$collection, array $apiSettings, ?array $existing = null): void
+{
+    $entryMethod = (string) ($collection['entry_method'] ?? ($existing['entry_method'] ?? 'admin_only'));
+    $normalized = birkly_ai_normalize_api_settings_patch($apiSettings);
+
+    if ($entryMethod === 'public_api') {
+        $base = [];
+        if (is_array($existing['api_settings'] ?? null)) {
+            $base = birkly_migrate_collection_api_settings($existing['api_settings']);
+        } elseif (is_array($collection['api_settings'] ?? null)) {
+            $base = birkly_migrate_collection_api_settings($collection['api_settings']);
+        }
+        $collection['api_settings'] = array_merge($base, $normalized);
+
+        return;
+    }
+
+    if (!empty($normalized['allow_anonymous_read'])) {
+        $collection['api_settings'] = ['allow_anonymous_read' => true];
+
+        return;
+    }
+
+    if (array_key_exists('allow_anonymous_read', $apiSettings) && !$normalized['allow_anonymous_read']) {
+        if (is_array($collection['api_settings'] ?? null)) {
+            unset($collection['api_settings']['allow_anonymous_read']);
+            if ($collection['api_settings'] === []) {
+                unset($collection['api_settings']);
+            }
+        }
+    }
 }
 
 /**
@@ -104,6 +173,10 @@ function birkly_ai_normalize_api_settings(array $apiSettings): array
 function birkly_ai_apply_entry_method_config(array &$collection, array $actionData, ?array $existing = null): void
 {
     if (!isset($actionData['entry_method'])) {
+        if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
+            birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
+        }
+
         return;
     }
 
@@ -114,7 +187,6 @@ function birkly_ai_apply_entry_method_config(array &$collection, array $actionDa
 
     $collection['entry_method'] = $entryMethod;
     $apiKey = (string) ($actionData['api_key'] ?? '');
-    $apiSettings = is_array($actionData['api_settings'] ?? null) ? $actionData['api_settings'] : [];
 
     if ($entryMethod === 'public_api') {
         if ($apiKey === '' && is_array($existing) && !empty($existing['api_key'])) {
@@ -124,13 +196,18 @@ function birkly_ai_apply_entry_method_config(array &$collection, array $actionDa
             $apiKey = birkly_ai_generate_public_api_key();
         }
         $collection['api_key'] = $apiKey;
-        $merged = birkly_ai_normalize_api_settings($apiSettings);
-        if (is_array($existing['api_settings'] ?? null)) {
-            $merged = array_merge($existing['api_settings'], $merged);
+        if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
+            birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
+        } elseif (!isset($collection['api_settings'])) {
+            $collection['api_settings'] = birkly_ai_normalize_api_settings([]);
         }
-        $collection['api_settings'] = $merged;
     } else {
-        unset($collection['api_key'], $collection['api_settings']);
+        unset($collection['api_key']);
+        if (!isset($actionData['api_settings'])) {
+            unset($collection['api_settings']);
+        } elseif (is_array($actionData['api_settings'])) {
+            birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
+        }
     }
 }
 
@@ -228,10 +305,24 @@ function birkly_ai_process_sub_collections(array $subCollections, string $parent
  */
 function birkly_ai_merge_collection_config(array &$collection, array $actionData, ?array $existing = null): ?string
 {
+    require_once __DIR__ . '/ai_write_validation.php';
+
+    $unknownKeys = birkly_ai_reject_unknown_keys($actionData, birkly_ai_collection_action_allowed_keys(), 'update_collection');
+    if ($unknownKeys !== null) {
+        return $unknownKeys;
+    }
+
     if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
         $apiSettingsError = birkly_validate_api_settings_keys($actionData['api_settings']);
         if ($apiSettingsError !== null) {
             return $apiSettingsError;
+        }
+    }
+
+    if (isset($actionData['fields']) && is_array($actionData['fields'])) {
+        $fieldTypeError = birkly_ai_validate_collection_field_types($actionData['fields']);
+        if ($fieldTypeError !== null) {
+            return $fieldTypeError;
         }
     }
 
@@ -243,6 +334,36 @@ function birkly_ai_merge_collection_config(array &$collection, array $actionData
     }
 
     return null;
+}
+
+/**
+ * Load persisted collection metadata + schema fields (same shape as read_collection).
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_ai_load_collection_record(string $slug): ?array
+{
+    require_once __DIR__ . '/../api/ai_helpers.php';
+
+    $collectionFile = birkly_ai_content_collections_dir() . '/' . $slug . '/collection.json';
+    if (!is_file($collectionFile)) {
+        return null;
+    }
+
+    $collection = json_decode((string) file_get_contents($collectionFile), true);
+    if (!is_array($collection)) {
+        return null;
+    }
+
+    $schemaFile = birkly_ai_content_collections_dir() . '/' . $slug . '/schema.json';
+    if (is_file($schemaFile)) {
+        $schema = json_decode((string) file_get_contents($schemaFile), true);
+        if (is_array($schema)) {
+            $collection['fields'] = $schema['fields'] ?? $collection['fields'] ?? [];
+        }
+    }
+
+    return $collection;
 }
 
 /**

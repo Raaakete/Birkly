@@ -82,7 +82,17 @@ function birkly_ai_normalize_collection_action_data($actionData): array
         if (empty($normalized['slug'])) {
             $normalized['slug'] = $normalized['collection'];
         }
-        unset($normalized['collection']);
+        $collectionCrudHints = ['fields', 'entry_method', 'api_settings', 'sub_collections', 'description', 'name'];
+        $isCollectionCrud = false;
+        foreach ($collectionCrudHints as $hint) {
+            if (array_key_exists($hint, $normalized)) {
+                $isCollectionCrud = true;
+                break;
+            }
+        }
+        if ($isCollectionCrud) {
+            unset($normalized['collection']);
+        }
     }
 
     if (isset($normalized['slug']) && is_string($normalized['slug'])) {
@@ -2104,10 +2114,26 @@ function birkly_ai_provider_supports_streaming(string $provider): bool
  * Includes collections, schemas, permissions, and curated documentation
  */
 function generateSystemContext($aiUser) {
+    require_once __DIR__ . '/../core/build_info.php';
+    require_once __DIR__ . '/../core/birkly_paths.php';
+
+    $build = birkly_build_info();
+    $deployedAt = null;
+    $revisionFile = birkly_project_root() . '/BUILD_REVISION';
+    if (is_file($revisionFile)) {
+        $deployedAt = date('c', (int) filemtime($revisionFile));
+    }
+    $deployedAtEnv = trim((string) (getenv('BIRKLY_DEPLOY_TIME') ?: ''));
+    if ($deployedAtEnv !== '') {
+        $deployedAt = $deployedAtEnv;
+    }
+
     $context = [
         'system_info' => [
             'cms_name' => 'Birkly',
-            'version' => '1.0',
+            'version' => $build['version'] ?? '1.0',
+            'git_commit' => $build['git_commit'] ?? null,
+            'deployed_at' => $deployedAt,
             'user_role' => $aiUser['role'] ?? 'viewer',
             'user_permissions' => getPermissionsForRole($aiUser['role'] ?? 'viewer')
         ],
