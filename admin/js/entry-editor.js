@@ -23,11 +23,54 @@
         }
     }
 
-    let saveModalPreviousFocus = null;
     let isSubmittingEntry = false;
 
     function saveLabel(key, fallback) {
         return (config.saveLabels && config.saveLabels[key]) || fallback;
+    }
+
+    function getPublishButton() {
+        return document.getElementById('entry-publish-btn');
+    }
+
+    function isPublishedStatus(status) {
+        return status === 'published';
+    }
+
+    function updatePublishToggleButton(status) {
+        const btn = getPublishButton();
+        if (!btn) return;
+
+        const published = isPublishedStatus(status);
+        btn.dataset.published = published ? '1' : '0';
+        btn.textContent = published
+            ? saveLabel('unpublish', 'Unpublish')
+            : saveLabel('publish', 'Publish');
+        btn.classList.remove('btn-primary', 'btn-danger');
+        btn.classList.add(published ? 'btn-danger' : 'btn-primary');
+    }
+
+    function setPublishSubmitting(isSubmitting, published) {
+        const btn = getPublishButton();
+        if (!btn) return;
+
+        if (isSubmitting) {
+            if (!btn.dataset.originalLabel) {
+                btn.dataset.originalLabel = btn.textContent.trim();
+            }
+            btn.textContent = (published
+                ? saveLabel('unpublishing', 'Unpublish')
+                : saveLabel('publishing', 'Publish')) + '…';
+            btn.disabled = true;
+        } else {
+            btn.textContent = btn.dataset.originalLabel || btn.textContent;
+            btn.disabled = false;
+        }
+    }
+
+    function getCurrentEntryId(form) {
+        const input = form && form.querySelector('input[name="entry_id"]');
+        return input && input.value ? String(input.value).trim() : '';
     }
 
     function getSaveSubmitButton() {
@@ -69,65 +112,9 @@
         }
     }
 
-    function showEntryUpdateBanner(message) {
-        const banner = document.getElementById('entry-save-success-banner');
-        const textEl = document.getElementById('entry-save-success-banner-text');
-        if (!banner || !textEl) return;
-
-        textEl.textContent = message;
-        banner.hidden = false;
-        requestAnimationFrame(function () {
-            banner.classList.add('is-visible');
-        });
-
-        clearTimeout(banner._hideTimer);
-        banner._hideTimer = setTimeout(function () {
-            banner.classList.remove('is-visible');
-            setTimeout(function () {
-                banner.hidden = true;
-            }, 350);
-        }, 6000);
-    }
-
-    function trapEntrySaveModalFocus(modal) {
-        const focusable = modal.querySelectorAll(
-            'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusable.length) return;
-
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-
-        modal._focusTrapHandler = function (e) {
-            if (e.key !== 'Tab') return;
-            if (e.shiftKey && document.activeElement === first) {
-                e.preventDefault();
-                last.focus();
-            } else if (!e.shiftKey && document.activeElement === last) {
-                e.preventDefault();
-                first.focus();
-            }
-        };
-        document.addEventListener('keydown', modal._focusTrapHandler);
-    }
-
-    function releaseEntrySaveModalFocusTrap(modal) {
-        if (modal && modal._focusTrapHandler) {
-            document.removeEventListener('keydown', modal._focusTrapHandler);
-            modal._focusTrapHandler = null;
-        }
-    }
-
-    function closeEntrySaveSuccessModal() {
-        const modal = document.getElementById('entry-save-success-modal');
-        if (!modal) return;
-        modal.classList.remove('active');
-        modal.style.display = 'none';
-        modal.setAttribute('aria-hidden', 'true');
-        releaseEntrySaveModalFocusTrap(modal);
-        if (saveModalPreviousFocus && saveModalPreviousFocus.focus) {
-            saveModalPreviousFocus.focus();
-            saveModalPreviousFocus = null;
+    function showEntrySavedToast(message, type) {
+        if (typeof BirklyFeedback !== 'undefined' && BirklyFeedback.toast) {
+            BirklyFeedback.toast(message, type || 'success');
         }
     }
 
@@ -144,22 +131,23 @@
         return !status || status === 'unpublished' || status === 'draft';
     }
 
-    async function publishSavedEntry(entryId) {
-        const form = document.getElementById('entry-form');
-        if (!form || !entryId) {
-            return false;
+    async function unpublishCurrentEntry(form) {
+        const entryId = getCurrentEntryId(form);
+        if (!entryId) {
+            throw new Error('Save the entry before unpublishing.');
         }
 
-        const publishData = new FormData(form);
-        publishData.set('entry_id', entryId);
-        publishData.set('status', 'published');
-        if (!publishData.get('collection') && config.collectionSlug) {
-            publishData.set('collection', config.collectionSlug);
-        }
-
-        const response = await fetch('/api/admin_entries.php?action=save', {
+        const csrf = form.querySelector('input[name="_csrf"]')?.value || '';
+        const collection = form.querySelector('input[name="collection"]')?.value || config.collectionSlug || '';
+        const response = await fetch('/api/admin_entries.php?action=bulk', {
             method: 'POST',
-            body: publishData,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'unpublish',
+                collection: collection,
+                entry_ids: [entryId],
+                _csrf: csrf,
+            }),
         });
         const raw = await response.text();
         let data;
@@ -168,202 +156,16 @@
         } catch (_e) {
             data = null;
         }
-
         if (!data || data.status !== 'ok') {
-            throw new Error((data && data.message) || raw || 'Publish failed');
+            throw new Error((data && data.message) || raw || 'Unpublish failed');
         }
 
         const statusSelect = document.getElementById('status');
         if (statusSelect) {
-            statusSelect.value = 'published';
+            statusSelect.value = 'unpublished';
             statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
-
-        return true;
-    }
-
-    /**
-     * Close competing fieldtype / admin overlays before showing the entry
-     * save success modal (P62-A3 / follow-up). Competing systems use
-     * show/active/is-open/inline display; leaving any open traps focus and
-     * makes Escape / close feel stuck — especially on all-fieldtypes entries.
-     */
-    function closeAllFieldtypeOverlays() {
-        try {
-            if (window.Birkly && window.Birkly.MediaModal) {
-                if (typeof window.Birkly.MediaModal.forceClose === 'function') {
-                    window.Birkly.MediaModal.forceClose();
-                } else if (typeof window.Birkly.MediaModal.close === 'function') {
-                    window.Birkly.MediaModal.close();
-                }
-            }
-        } catch (_e) { /* ignore */ }
-
-        const relationPicker = document.getElementById('relationPickerModal');
-        if (relationPicker) {
-            relationPicker.classList.remove('is-open', 'show', 'active');
-            relationPicker.style.display = 'none';
-            relationPicker.setAttribute('aria-hidden', 'true');
-        }
-
-        document.querySelectorAll(
-            '.media-modal-overlay, .content-editor-fullscreen-overlay, ' +
-            '.content-editor-link-dialog, .content-editor-smart-paste-overlay, ' +
-            '.content-editor-table-dialog, .content-editor-dialog-overlay, ' +
-            '.link-dialog-overlay, .content-editor-image-lightbox, ' +
-            '.dynamicitems-modal-overlay'
-        ).forEach(function (el) {
-            el.classList.remove('active', 'show', 'is-open');
-            if (el.parentNode && (
-                el.classList.contains('media-modal-overlay') ||
-                el.classList.contains('content-editor-smart-paste-overlay') ||
-                el.classList.contains('content-editor-fullscreen-overlay') ||
-                el.classList.contains('content-editor-dialog-overlay') ||
-                el.classList.contains('link-dialog-overlay') ||
-                el.classList.contains('content-editor-image-lightbox') ||
-                el.classList.contains('dynamicitems-modal-overlay')
-            )) {
-                el.parentNode.removeChild(el);
-            } else {
-                el.style.display = 'none';
-            }
-        });
-
-        // Always force-close feedback (do not require .show — Relation CSS once
-        // forced .modal { display:flex }, leaving the panel visible without .show).
-        if (typeof window.Birkly !== 'undefined' && typeof window.Birkly.closeFeedbackModal === 'function') {
-            window.Birkly.closeFeedbackModal();
-        } else {
-            const feedbackModal = document.getElementById('feedback-submit-modal');
-            if (feedbackModal) {
-                feedbackModal.classList.remove('show', 'active', 'is-open');
-            }
-        }
-
-        // Collapse assist FAB menu so its Feedback action cannot steal focus.
-        const assistWrap = document.getElementById('assist-fab-wrap');
-        if (assistWrap && assistWrap.classList.contains('fab-menu')) {
-            assistWrap.classList.remove('fab-menu');
-            assistWrap.classList.add('fab-idle');
-            const assistBtn = assistWrap.querySelector('.assist-fab-main');
-            if (assistBtn) {
-                assistBtn.setAttribute('aria-expanded', 'false');
-                assistBtn.setAttribute('aria-label', 'Open assist menu');
-            }
-        }
-    }
-
-    function openEntrySaveSuccessModal(isCreate, entryId, entryStatus) {
-        const modal = document.getElementById('entry-save-success-modal');
-        if (!modal) return;
-
-        closeAllFieldtypeOverlays();
-
-        const titleEl = document.getElementById('entry-save-success-title');
-        const messageEl = document.getElementById('entry-save-success-message');
-        const viewEntriesEl = document.getElementById('entry-save-view-entries');
-        const publishEl = document.getElementById('entry-save-publish');
-        const addAnotherEl = document.getElementById('entry-save-add-another');
-        const continueEl = document.getElementById('entry-save-continue');
-        const unpublished = isUnpublishedStatus(entryStatus);
-
-        if (titleEl) {
-            titleEl.textContent = isCreate
-                ? saveLabel('createTitle', 'Entry created')
-                : saveLabel('updateTitle', 'Entry saved');
-        }
-        if (messageEl) {
-            messageEl.textContent = isCreate
-                ? saveLabel('createMessage', 'Your entry was saved.')
-                : saveLabel('updateMessage', 'Your changes were saved successfully.');
-        }
-        if (viewEntriesEl) {
-            viewEntriesEl.textContent = saveLabel('viewEntries', 'View all entries');
-            viewEntriesEl.href = config.entriesListUrl || '#';
-            viewEntriesEl.hidden = !config.entriesListUrl;
-        }
-        if (publishEl) {
-            publishEl.textContent = saveLabel('publishNow', 'Publish entry');
-            publishEl.hidden = !unpublished || !entryId;
-            publishEl.dataset.entryId = entryId || '';
-        }
-        if (addAnotherEl) {
-            addAnotherEl.textContent = saveLabel('addAnother', 'Add another entry');
-            addAnotherEl.href = config.newEntryUrl || '#';
-            addAnotherEl.hidden = !isCreate || !config.newEntryUrl;
-        }
-        if (continueEl) {
-            continueEl.textContent = saveLabel('continueEditing', 'Continue editing');
-        }
-
-        saveModalPreviousFocus = document.activeElement;
-        modal.style.display = 'flex';
-        modal.setAttribute('aria-hidden', 'false');
-        requestAnimationFrame(function () {
-            modal.classList.add('active');
-            trapEntrySaveModalFocus(modal);
-            let firstFocus = continueEl;
-            if (publishEl && !publishEl.hidden) {
-                firstFocus = publishEl;
-            } else if (viewEntriesEl && !viewEntriesEl.hidden) {
-                firstFocus = viewEntriesEl;
-            } else if (addAnotherEl && !addAnotherEl.hidden) {
-                firstFocus = addAnotherEl;
-            }
-            if (firstFocus && firstFocus.focus) {
-                firstFocus.focus();
-            }
-        });
-    }
-
-    function bindEntrySaveSuccessModal() {
-        const modal = document.getElementById('entry-save-success-modal');
-        if (!modal || modal.dataset.entrySaveBound === '1') return;
-        modal.dataset.entrySaveBound = '1';
-
-        modal.addEventListener('click', function (e) {
-            const closeTarget = e.target.closest('[data-entry-modal-close]');
-            if (closeTarget || e.target.classList.contains('modal-backdrop')) {
-                e.preventDefault();
-                closeEntrySaveSuccessModal();
-            }
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key !== 'Escape' || !modal.classList.contains('active')) return;
-            // Prefer closing leftover fieldtype overlays first if any reappeared.
-            const leftover = document.querySelector(
-                '.media-modal-overlay, .content-editor-fullscreen-overlay.active, ' +
-                '#relationPickerModal.is-open, #relationPickerModal[style*="flex"], ' +
-                '.content-editor-link-dialog.active, .dynamicitems-modal-overlay, ' +
-                '#feedback-submit-modal.show'
-            );
-            if (leftover) {
-                closeAllFieldtypeOverlays();
-                return;
-            }
-            closeEntrySaveSuccessModal();
-        });
-
-        const publishBtn = document.getElementById('entry-save-publish');
-        if (publishBtn) {
-            publishBtn.addEventListener('click', async function () {
-                const entryId = publishBtn.dataset.entryId || '';
-                if (!entryId) return;
-                publishBtn.disabled = true;
-                try {
-                    await publishSavedEntry(entryId);
-                    closeEntrySaveSuccessModal();
-                    hideUnsavedBadge();
-                    flashEntrySavedState();
-                    BirklyFeedback.toast(saveLabel('publishedToast', 'Entry published'), 'success');
-                } catch (err) {
-                    BirklyFeedback.toast(err.message || 'Publish failed', 'error');
-                } finally {
-                    publishBtn.disabled = false;
-                }
-            });
-        }
+        updatePublishToggleButton('unpublished');
     }
 
     /**
@@ -1265,10 +1067,50 @@
 
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
+            await executeEntrySave(form, null);
+        });
+    }
+
+    function initEntryActionButtons() {
+        const form = document.getElementById('entry-form');
+        const publishBtn = getPublishButton();
+        if (!form || !publishBtn || config.isSubEntry) return;
+
+        publishBtn.addEventListener('click', async function () {
             if (isSubmittingEntry) return;
-            clearFieldErrors();
-            isSubmittingEntry = true;
-            setSaveSubmitting(true);
+
+            const isPublished = publishBtn.dataset.published === '1';
+            if (isPublished) {
+                setPublishSubmitting(true, true);
+                try {
+                    await unpublishCurrentEntry(form);
+                    hideUnsavedBadge();
+                    showEntrySavedToast(saveLabel('unpublishedToast', 'Entry unpublished'), 'success');
+                } catch (err) {
+                    showEntrySavedToast(err.message || 'Unpublish failed', 'error');
+                } finally {
+                    setPublishSubmitting(false, true);
+                }
+                return;
+            }
+
+            await executeEntrySave(form, 'published');
+        });
+
+        updatePublishToggleButton(config.initialStatus || getEntryStatusFromSidebar());
+    }
+
+    async function executeEntrySave(form, forceStatus) {
+        if (isSubmittingEntry) return;
+        clearFieldErrors();
+        isSubmittingEntry = true;
+        const publishing = forceStatus === 'published';
+        setSaveSubmitting(true);
+        if (getPublishButton()) {
+            setPublishSubmitting(true, publishing);
+        }
+
+        const hadEntryIdBeforeSave = !!getCurrentEntryId(form);
             
             // Sync all editor fields before submission
             syncContentEditorFields();
@@ -1492,7 +1334,7 @@
                 
                 // Add collection and entry_id if they exist
                 const collection = formData.get('collection');
-                const entryId = formData.get('entry_id');
+                const entryId = getCurrentEntryId(form) || formData.get('entry_id');
                 if (collection) finalFormData.append('collection', collection);
                 if (entryId) finalFormData.append('entry_id', entryId);
                 
@@ -1508,6 +1350,7 @@
                 const publishedAt = formData.get('published_at');
                 const expiresAt = formData.get('expires_at');
                 if (status && !fieldMap.has('status')) finalFormData.append('status', status);
+                if (forceStatus) finalFormData.set('status', forceStatus);
                 if (slug !== null && !fieldMap.has('slug')) finalFormData.append('slug', slug || '');
                 if (autoSlug !== null && !fieldMap.has('auto_slug')) finalFormData.append('auto_slug', autoSlug || '0');
                 if (publishedAt && !fieldMap.has('published_at')) finalFormData.append('published_at', publishedAt);
@@ -1561,9 +1404,9 @@
                     body: finalFormData
                 });
             }
-            
-            fetchPromise
-            .then(async (response) => {
+
+            try {
+                const response = await fetchPromise;
                 const raw = await response.text();
                 let data;
                 try { data = JSON.parse(raw); } catch(_e) { data = null; }
@@ -1571,8 +1414,7 @@
                 // Check JSON body first - it's the source of truth
                 if (data && data.status === 'ok') {
                     // Success! Even if HTTP status code is 400 (server bug)
-                    const savedEntryId = data.data && data.data.id ? data.data.id : (formData.get('entry_id') || '');
-                    const hadEntryIdBeforeSave = !!(formData.get('entry_id') || form.querySelector('input[name="entry_id"]'));
+                    const savedEntryId = data.data && data.data.id ? data.data.id : getCurrentEntryId(form);
                     const isNewRegularEntry = !isSubEntry && !hadEntryIdBeforeSave && !!savedEntryId;
 
                     if (savedEntryId) {
@@ -1615,13 +1457,22 @@
                         hideUnsavedBadge();
                         flashEntrySavedState();
 
-                        const savedStatus = getEntryStatusFromSidebar();
-                        if (isNewRegularEntry || isUnpublishedStatus(savedStatus)) {
-                            openEntrySaveSuccessModal(isNewRegularEntry, savedEntryId, savedStatus);
+                        const savedStatus = forceStatus || getEntryStatusFromSidebar();
+                        if (forceStatus === 'published') {
+                            const statusSelect = document.getElementById('status');
+                            if (statusSelect) {
+                                statusSelect.value = 'published';
+                                statusSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                        updatePublishToggleButton(savedStatus);
+                        if (forceStatus === 'published') {
+                            showEntrySavedToast(saveLabel('publishedToast', 'Entry published'), 'success');
                         } else {
-                            showEntryUpdateBanner(
+                            showEntrySavedToast(
                                 (data.data && data.data.message) ||
-                                saveLabel('updateMessage', 'Your changes were saved successfully.')
+                                saveLabel('savedToast', 'Your changes were saved successfully.'),
+                                'success'
                             );
                         }
                     }
@@ -1636,16 +1487,16 @@
                     // Unexpected response format
                     BirklyFeedback.toast('Error: Unexpected response format', 'error')
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error saving entry:', error);
                 BirklyFeedback.toast('Error saving entry: ' + error.message, 'error')
-            })
-            .finally(function () {
+            } finally {
                 isSubmittingEntry = false;
                 setSaveSubmitting(false);
-            });
-        });
+                if (getPublishButton()) {
+                    setPublishSubmitting(false, getPublishButton().dataset.published === '1');
+                }
+            }
     }
 
     /**
@@ -1950,9 +1801,9 @@
      * Main initialization
      */
     function init() {
-        bindEntrySaveSuccessModal();
         initSlugGeneration();
         initFormSubmission();
+        initEntryActionButtons();
         initTagsEnterKeyPrevention();
         initMultilangDynamicItems();
         initFieldtypes();
