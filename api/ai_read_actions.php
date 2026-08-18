@@ -16,12 +16,13 @@ function executeReadAction($actionData, $aiUser) {
         return $denied;
     }
 
+    require_once __DIR__ . '/ai_helpers.php';
     require_once __DIR__ . '/storage.php';
     
     $actionPayload = $actionData['data'] ?? [];
     $birklyRoot = dirname(__DIR__);
     
-    $contentStorage = new Storage($birklyRoot . '/content');
+    $contentStorage = birkly_ai_content_storage();
     
     if ($actionType === 'read_entry') {
         $collection = $actionPayload['collection'] ?? '';

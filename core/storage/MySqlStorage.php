@@ -22,6 +22,18 @@ class MySqlStorage extends AbstractSqlStorage
         return 'mysql';
     }
 
+    protected function pdoDriverOptions(array $config): array
+    {
+        $timeout = (int) ($config['connect_timeout'] ?? 5);
+        if ($timeout <= 0) {
+            $timeout = 5;
+        }
+
+        return defined('PDO::MYSQL_ATTR_CONNECT_TIMEOUT')
+            ? [PDO::MYSQL_ATTR_CONNECT_TIMEOUT => $timeout]
+            : [];
+    }
+
     protected function schemaSql(): string
     {
         return "CREATE TABLE IF NOT EXISTS {$this->tableName} (
