@@ -44,6 +44,15 @@
             "expected": "<div>raw</div>"
         },
         {
+            "name": "editor field from _html_fields schema metadata is trusted",
+            "html": "{for each entry in 'items'}{'body'}{endfor}",
+            "data": {
+                "_html_fields": ["body"],
+                "items": [{ "title": "t", "body": "<p>Article <em>body</em></p>" }]
+            },
+            "expected": "<p>Article <em>body</em></p>"
+        },
+        {
             "name": "quotes and ampersands escape",
             "html": "{for each entry in 'items'}{'name'}{endfor}",
             "data": {
