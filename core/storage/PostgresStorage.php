@@ -13,7 +13,7 @@ class PostgresStorage extends AbstractSqlStorage
         $port = (int) ($config['port'] ?? 5432);
         $database = (string) ($config['database'] ?? $config['name'] ?? 'birkly');
 
-        return "pgsql:host={$host};port={$port};dbname={$database}";
+        return "pgsql:host={$host};port={$port};dbname={$database};connect_timeout=5";
     }
 
     protected function driverName(): string
