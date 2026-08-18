@@ -87,6 +87,51 @@ function birkly_public_transform_entry_for_language($entry, $language, $multilan
     return $entry;
 }
 
+function birkly_public_entry_is_show_public(mixed $entry): bool
+{
+    if (!is_array($entry)) {
+        return false;
+    }
+    $v = $entry['show_public'] ?? ($entry['featured'] ?? false);
+    if (is_bool($v)) {
+        return $v;
+    }
+    $s = strtolower(trim((string) $v));
+    return in_array($s, ['1', 'true', 'yes', 'on', 'featured'], true);
+}
+
+/**
+ * @param array<string, mixed> $entry
+ * @return array<string, mixed>
+ */
+function birkly_public_sanitize_supporter_entry(array $entry): array
+{
+    $allowed = ['id', 'slug', 'title', 'display_name', 'kind', 'organization', 'amount', 'cadence', 'logo', 'show_public', 'status', 'created_at', 'updated_at', 'published_at'];
+    $out = [];
+    foreach ($allowed as $key) {
+        if (array_key_exists($key, $entry)) {
+            $out[$key] = $entry[$key];
+        }
+    }
+    return $out;
+}
+
+/**
+ * @param list<mixed> $entries
+ * @return list<array<string, mixed>>
+ */
+function birkly_public_filter_public_supporters(array $entries): array
+{
+    $out = [];
+    foreach ($entries as $entry) {
+        if (!is_array($entry) || !birkly_public_entry_is_show_public($entry)) {
+            continue;
+        }
+        $out[] = birkly_public_sanitize_supporter_entry($entry);
+    }
+    return $out;
+}
+
 function birkly_public_list_entries($storage, $collectionSlug, $language = 'en') {
     $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
     if (!$dir) {
@@ -136,6 +181,10 @@ function birkly_public_list_entries($storage, $collectionSlug, $language = 'en')
         }, $publishedEntries);
     } else {
         $publishedEntries = array_map('birkly_public_entry_with_effective_slug', $publishedEntries);
+    }
+
+    if (birkly_normalize_slug($collectionSlugResolved !== '' ? $collectionSlugResolved : $collectionSlug) === 'supporters') {
+        $publishedEntries = birkly_public_filter_public_supporters($publishedEntries);
     }
 
     return ['status' => 'ok', 'data' => ['entries' => $publishedEntries]];
