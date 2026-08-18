@@ -501,6 +501,51 @@ function birkly_template_engine_apply_loop_filters(array $items, ?string $filter
     if ($filter === null || $filter === '') {
         return $items;
     }
+    $clauses = preg_split('/\s+with\s+/i', $filter);
+    foreach ($clauses as $clause) {
+        $clause = trim((string) $clause);
+        if ($clause === '') {
+            continue;
+        }
+        $items = birkly_template_engine_apply_single_loop_filter($items, $clause);
+    }
+    return $items;
+}
+
+function birkly_template_engine_filter_literal_bool(string $value): ?bool
+{
+    $s = strtolower(trim($value));
+    if (in_array($s, ['1', 'true', 'yes', 'on'], true)) {
+        return true;
+    }
+    if (in_array($s, ['0', 'false', 'no', ''], true)) {
+        return false;
+    }
+    return null;
+}
+
+function birkly_template_engine_field_matches_filter_value(mixed $fieldValue, string $filterValue): bool
+{
+    $boolFilter = birkly_template_engine_filter_literal_bool($filterValue);
+    if ($boolFilter !== null) {
+        if (is_bool($fieldValue)) {
+            return $fieldValue === $boolFilter;
+        }
+        $fieldBool = birkly_template_engine_filter_literal_bool(birkly_template_engine_js_string($fieldValue));
+        return ($fieldBool ?? false) === $boolFilter;
+    }
+    return birkly_template_engine_js_string($fieldValue) === $filterValue;
+}
+
+/**
+ * @param list<mixed> $items
+ * @return list<mixed>
+ */
+function birkly_template_engine_apply_single_loop_filter(array $items, string $filter): array
+{
+    if ($filter === '') {
+        return $items;
+    }
     if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)$/D', $filter, $m)) {
         $field = $m[1];
         $value = $m[2];
@@ -509,10 +554,8 @@ function birkly_template_engine_apply_loop_filters(array $items, ?string $filter
             if (!birkly_template_engine_truthy($it)) {
                 continue;
             }
-            $v = (is_array($it) && array_key_exists($field, $it))
-                ? birkly_template_engine_js_string($it[$field])
-                : 'undefined';
-            if ($v === $value) {
+            $raw = (is_array($it) && array_key_exists($field, $it)) ? $it[$field] : null;
+            if (birkly_template_engine_field_matches_filter_value($raw, $value)) {
                 $out[] = $it;
             }
         }
@@ -526,10 +569,8 @@ function birkly_template_engine_apply_loop_filters(array $items, ?string $filter
             if (!birkly_template_engine_truthy($it)) {
                 continue;
             }
-            $v = (is_array($it) && array_key_exists($field, $it))
-                ? birkly_template_engine_js_string($it[$field])
-                : 'undefined';
-            if ($v === $value) {
+            $raw = (is_array($it) && array_key_exists($field, $it)) ? $it[$field] : null;
+            if (birkly_template_engine_field_matches_filter_value($raw, $value)) {
                 $out[] = $it;
             }
         }

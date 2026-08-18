@@ -770,6 +770,39 @@ if (!$cancelUrl) {
                                             If enabled, entries will be published automatically. Otherwise, they'll be saved as drafts for review.
                                         </small>
                                     </div>
+
+                                    <div class="info-item">
+                                        <label>Public read field allowlist</label>
+                                        <?php
+                                        $publicReadFieldsValue = '';
+                                        if ($isSubCollection) {
+                                            $publicReadFieldsRaw = $subCollectionData['api_settings']['public_read_fields'] ?? [];
+                                        } else {
+                                            $publicReadFieldsRaw = $collection['api_settings']['public_read_fields'] ?? [];
+                                        }
+                                        if (is_array($publicReadFieldsRaw)) {
+                                            $publicReadFieldsValue = implode(', ', $publicReadFieldsRaw);
+                                        } else {
+                                            $publicReadFieldsValue = (string) $publicReadFieldsRaw;
+                                        }
+                                        ?>
+                                        <?php if ($isSubCollection): ?>
+                                            <input type="text" name="sub_collections[0][api_settings][public_read_fields]" class="input" value="<?= htmlspecialchars($publicReadFieldsValue) ?>" placeholder="title, slug, logo">
+                                        <?php else: ?>
+                                            <input type="text" name="api_settings[public_read_fields]" class="input" value="<?= htmlspecialchars($publicReadFieldsValue) ?>" placeholder="title, slug, logo">
+                                        <?php endif; ?>
+                                        <small class="form-text">Comma-separated fields exposed by <code>list_entries</code>. System fields (id, slug, status, dates) are always included. Leave empty to return all fields.</small>
+                                    </div>
+
+                                    <div class="info-item">
+                                        <label>Public read requires field</label>
+                                        <?php if ($isSubCollection): ?>
+                                            <input type="text" name="sub_collections[0][api_settings][public_read_requires]" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['public_read_requires'] ?? '') ?>" placeholder="featured">
+                                        <?php else: ?>
+                                            <input type="text" name="api_settings[public_read_requires]" class="input" value="<?= htmlspecialchars($collection['api_settings']['public_read_requires'] ?? '') ?>" placeholder="featured">
+                                        <?php endif; ?>
+                                        <small class="form-text">Optional. Only return rows where this field is truthy (checkbox, toggle, etc.).</small>
+                                    </div>
                                     
                                     <div class="info-item">
                                         <label>Rate Limit (per hour)</label>

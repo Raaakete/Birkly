@@ -320,14 +320,17 @@ Canonical filter word: **`with`**.
 {for each entry in 'blog' with status = published}
 {for each entry in 'blog' with 'category' = 'news'}
 {for each entry in 'products' with 'price' <= 15}
+{for each entry in 'blog' with status = published with 'featured' = '1'}
 ```
 
 - `status` is a system field.
 - Quoted names like `'category'`, `'price'` are user-defined fields.
+- Multiple filters: repeat `with` before `ordered by` / `limit`. All clauses are AND-combined.
+- Checkbox / toggle fields store JSON booleans. Compare with `'1'`, `'true'`, or `'yes'` for checked rows and `'0'`, `'false'`, or `'no'` for unchecked.
 
 Status values commonly used: `published`, `unpublished`, `scheduled`, `pending`.
 
-Generic field filters: `'fieldName' = 'value'` (and numeric comparisons). Multiple `and`/`or` combinations are partially supported in conditions; full filter grammar may expand later.
+Generic field filters: `'fieldName' = 'value'` (and numeric comparisons).
 
 ---
 
