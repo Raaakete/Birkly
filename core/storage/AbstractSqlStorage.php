@@ -26,7 +26,8 @@ abstract class AbstractSqlStorage implements StorageInterface
             [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ]
+                PDO::ATTR_TIMEOUT => 5,
+            ] + $this->pdoDriverOptions($config)
         );
 
         $this->ensureSchema();
@@ -43,6 +44,16 @@ abstract class AbstractSqlStorage implements StorageInterface
     }
 
     abstract protected function schemaSql(): string;
+
+    /**
+     * Driver-specific PDO options (connect timeouts, etc.).
+     *
+     * @return array<int, mixed>
+     */
+    protected function pdoDriverOptions(array $config): array
+    {
+        return [];
+    }
 
     public static function testConnection(array $config): array
     {
