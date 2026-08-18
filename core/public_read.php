@@ -94,30 +94,67 @@ function birkly_public_system_read_fields(): array
 }
 
 /**
- * @param array<string, mixed> $collectionMeta
- * @return array{allowed:bool,reason:string,anonymous:bool}
+ * Whitelisted client origin check for public API (no cmsHost fallback).
  */
-function birkly_public_read_auth_check(array $collectionMeta, string $collectionSlug): array
+function birkly_public_api_whitelisted_client_authorized(string $operation = 'read', ?string $collection = null): bool
 {
-    require_once __DIR__ . '/ai_collection_config.php';
-    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
-
-    if (!empty($apiSettings['allow_anonymous_read'])) {
-        return ['allowed' => true, 'reason' => 'allow_anonymous_read', 'anonymous' => true];
+    require_once __DIR__ . '/site_domain.php';
+    if (birkly_request_is_same_cms_origin()) {
+        return true;
     }
 
-    $apiKey = (string) ($_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? '');
-    $expectedKey = (string) ($collectionMeta['api_key'] ?? '');
-    if ($apiKey !== '' && $expectedKey !== '' && hash_equals($expectedKey, $apiKey)) {
-        return ['allowed' => true, 'reason' => 'collection_api_key', 'anonymous' => false];
+    $clientHost = birkly_client_request_host();
+    if ($clientHost === '') {
+        return false;
     }
 
     require_once __DIR__ . '/../api/domain_auth.php';
-    if (birkly_domain_read_is_authorized('read', $collectionSlug)) {
-        return ['allowed' => true, 'reason' => 'domain_whitelist', 'anonymous' => false];
+    $domainAuth = new DomainAuth();
+    $validation = $domainAuth->validateDomain($clientHost);
+    if (!$validation['valid']) {
+        return false;
     }
 
-    return ['allowed' => false, 'reason' => 'read_auth_required', 'anonymous' => false];
+    $permissionCheck = $domainAuth->hasPermission($clientHost, $operation, $collection);
+    return !empty($permissionCheck['allowed']);
+}
+
+/**
+ * @param array<string, mixed>|null $collectionMeta
+ * @return array{allowed:bool,reason:string}
+ */
+function birkly_public_api_auth_check(?array $collectionMeta, ?string $collectionSlug, string $mode = 'read'): array
+{
+    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
+    $anonymousKey = $mode === 'write' ? 'allow_anonymous_submit' : 'allow_anonymous_read';
+
+    if (!empty($apiSettings[$anonymousKey])) {
+        return ['allowed' => true, 'reason' => $anonymousKey];
+    }
+
+    if (is_array($collectionMeta)) {
+        $apiKey = (string) ($_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? '');
+        $expectedKey = (string) ($collectionMeta['api_key'] ?? '');
+        if ($apiKey !== '' && $expectedKey !== '' && hash_equals($expectedKey, $apiKey)) {
+            return ['allowed' => true, 'reason' => 'collection_api_key'];
+        }
+    }
+
+    $domainOperation = $mode === 'write' ? 'write' : 'read';
+    if (birkly_public_api_whitelisted_client_authorized($domainOperation, $collectionSlug)) {
+        return ['allowed' => true, 'reason' => 'domain_whitelist'];
+    }
+
+    return ['allowed' => false, 'reason' => $domainOperation . '_auth_required'];
+}
+
+/**
+ * @param array<string, mixed> $collectionMeta
+ * @return array{allowed:bool,reason:string}
+ */
+function birkly_public_read_auth_check(array $collectionMeta, string $collectionSlug): array
+{
+    return birkly_public_api_auth_check($collectionMeta, $collectionSlug, 'read');
 }
 
 /**
