@@ -598,4 +598,50 @@ function requireApiKeyAuth() {
 function birkly_request_is_local_dev(): bool {
     require_once __DIR__ . '/../core/birkly_paths.php';
     return birkly_is_local_dev_request();
-} 
+}
+
+/**
+ * Non-exiting read authorization check (mirrors requireDomainAuth without terminating).
+ */
+function birkly_domain_read_is_authorized(string $operation = 'read', ?string $collection = null): bool
+{
+    require_once __DIR__ . '/../core/site_domain.php';
+
+    $domainAuth = new DomainAuth();
+
+    if (birkly_request_is_same_cms_origin()) {
+        return true;
+    }
+
+    $referer = $_SERVER['HTTP_REFERER'] ?? '';
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+
+    $domain = '';
+    if ($origin) {
+        $domain = parse_url($origin, PHP_URL_HOST);
+    } elseif ($referer) {
+        $domain = parse_url($referer, PHP_URL_HOST);
+    }
+
+    if (!$domain) {
+        $cmsHost = birkly_cms_request_host();
+        if ($cmsHost !== '') {
+            $hostValidation = $domainAuth->validateDomain($cmsHost);
+            if (!empty($hostValidation['valid'])) {
+                $domain = $cmsHost;
+            }
+        }
+    }
+
+    if (!$domain) {
+        return false;
+    }
+
+    $validation = $domainAuth->validateDomain($domain);
+    if (!$validation['valid']) {
+        return false;
+    }
+
+    $permissionCheck = $domainAuth->hasPermission($domain, $operation, $collection);
+    return !empty($permissionCheck['allowed']);
+}
