@@ -154,16 +154,14 @@
             focusPersonalConnector();
         });
 
+        bindConnectorUrlCopyHandlers(document.getElementById('add-mcp-modal'));
+        bindConnectorUrlCopyHandlers(document.getElementById('ai-integrations'));
+
         document.querySelectorAll('.mcp-preset-btn').forEach(btn => {
             btn.addEventListener('click', async function (e) {
                 e.preventDefault();
                 applyMcpPreset(btn.getAttribute('data-mcp-preset'));
             });
-        });
-
-        document.getElementById('mcp-copy-personal-url-btn')?.addEventListener('click', async function (e) {
-            e.preventDefault();
-            copySnippet('mcp-modal-personal-url', true);
         });
 
         const serviceList = document.getElementById('ai-service-agents-list');
@@ -382,6 +380,47 @@
         return serverUrl.replace(/\/mcp$/, '').replace(/\/api\/mcp_server\.php$/, '') || window.location.origin;
     }
 
+    function copyIconHtml() {
+        if (typeof Birkly !== 'undefined' && Birkly.icon) {
+            return Birkly.icon('copy', { size: 16 });
+        }
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+    }
+
+    function renderConnectorUrlRow(endpointId, url) {
+        const textId = 'mcp-connector-url-text-' + endpointId;
+        const insecureClass = connectorUrlIsUsable(url) ? '' : ' mcp-url-insecure';
+        return `
+        <div class="connector-url-row${insecureClass}">
+            <button type="button" class="connector-url-value" data-copy-source="${escapeHtml(textId)}" title="Click to copy">
+                <span id="${escapeHtml(textId)}" class="connector-url-text">${escapeHtml(url)}</span>
+            </button>
+            <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="${escapeHtml(textId)}" aria-label="Copy connector URL">
+                ${copyIconHtml()}
+            </button>
+        </div>`;
+    }
+
+    function bindConnectorUrlCopyHandlers(root) {
+        if (!root || root.dataset.connectorUrlCopyBound === '1') {
+            return;
+        }
+        root.dataset.connectorUrlCopyBound = '1';
+        root.addEventListener('click', function (e) {
+            const trigger = e.target.closest('[data-copy-source]');
+            if (!trigger || !root.contains(trigger)) {
+                return;
+            }
+            e.preventDefault();
+            const sourceId = trigger.getAttribute('data-copy-source');
+            const source = sourceId ? document.getElementById(sourceId) : null;
+            if (!source) {
+                return;
+            }
+            copyConnectorUrlText((source.textContent || '').trim(), true);
+        });
+    }
+
     function renderSetupSteps(endpointId, connectorUrlOverride, isPersonal) {
         const url = connectorUrlOverride || resolveConnectorUrl(serverUrl);
         const httpWarning = connectorUrlIsUsable(url) ? '' : `
@@ -403,11 +442,8 @@
         </ol>
         ${httpWarning}
         <div class="mcp-snippet-block">
-            <label for="mcp-connector-url-${escapeHtml(endpointId)}">Connector URL</label>
-            <div class="copy-snippet-row">
-                <input type="text" readonly value="${escapeHtml(url)}" id="mcp-connector-url-${escapeHtml(endpointId)}" class="${connectorUrlIsUsable(url) ? '' : 'mcp-url-insecure'}">
-                <button type="button" class="btn btn-sm btn-primary" onclick="mcpConnections.copySnippet('mcp-connector-url-${escapeHtml(endpointId)}', true)">Copy URL</button>
-            </div>
+            <span class="u-label u-text-sm">Connector URL</span>
+            ${renderConnectorUrlRow(endpointId, url)}
         </div>`;
     }
 
@@ -433,9 +469,13 @@
         if (nameInput) nameInput.required = !isPersonal;
         if (roleSelect) roleSelect.required = !isPersonal;
 
-        const modalUrl = document.getElementById('mcp-modal-personal-url');
+        const modalUrl = document.getElementById('mcp-modal-personal-url-text');
+        const modalRow = document.getElementById('mcp-modal-personal-url-row');
         if (modalUrl) {
-            modalUrl.value = personalAgentUrl || '';
+            modalUrl.textContent = personalAgentUrl || 'Loading...';
+        }
+        if (modalRow) {
+            modalRow.classList.toggle('mcp-url-insecure', personalAgentUrl && !connectorUrlIsUsable(personalAgentUrl));
         }
     }
 
@@ -633,9 +673,14 @@
                 if (submitBtn) submitBtn.textContent = 'Done — close when ready';
                 await loadEndpoints();
                 const successPanel = document.getElementById('mcp-create-success');
-                const urlInput = document.getElementById('mcp-new-connector-url');
-                if (successPanel && urlInput) {
-                    urlInput.value = resolveConnectorUrl(agentUrl);
+                const urlText = document.getElementById('mcp-new-connector-url-text');
+                const urlRow = document.getElementById('mcp-new-connector-url-row');
+                if (successPanel && urlText) {
+                    const resolvedUrl = resolveConnectorUrl(agentUrl);
+                    urlText.textContent = resolvedUrl;
+                    if (urlRow) {
+                        urlRow.classList.toggle('mcp-url-insecure', !connectorUrlIsUsable(resolvedUrl));
+                    }
                     successPanel.hidden = false;
                 }
                 if (agentId) {
@@ -726,25 +771,53 @@
         }
     }
 
+    function copyConnectorUrlText(text, useToast) {
+        if (!text) {
+            return;
+        }
+
+        const isHttp = text.startsWith('http://');
+        const done = () => {
+            if (!useToast) {
+                return;
+            }
+            if (isHttp) {
+                showToast('Copied. Claude requires HTTPS for remote connectors.');
+            } else {
+                showToast('Copied to clipboard!');
+            }
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopyText(text, done));
+        } else {
+            fallbackCopyText(text, done);
+        }
+    }
+
     function copySnippet(elementId, useToast) {
         const el = document.getElementById(elementId);
         if (!el) return;
 
-        const text = el.value || el.textContent;
-        if (text.startsWith('http://')) {
-            showToast('Claude requires https:// — open Birkly with HTTPS and copy again.', true);
-            return;
-        }
+        const text = (el.value || el.textContent || '').trim();
+        copyConnectorUrlText(text, useToast);
+    }
 
-        const done = () => {
-            if (useToast) showToast('Copied to clipboard!');
-        };
-
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(el, done));
-        } else {
-            fallbackCopy(el, done);
+    function fallbackCopyText(text, done) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            if (done) done();
+        } catch (err) {
+            showToast('Could not copy — please select the text manually.', true);
         }
+        document.body.removeChild(textarea);
     }
 
     function fallbackCopy(el, done) {
