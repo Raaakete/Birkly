@@ -410,8 +410,55 @@
   pointer-events: none;
 }
 
+.main-actions-bar--busy .main-actions-left .btn,
+.main-actions-bar--busy .main-actions-left a.btn {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.main-actions-bar--busy a.btn.is-disabled {
+  cursor: wait;
+}
+
 .main-actions-bar--saved .btn-primary {
   box-shadow: 0 0 0 2px var(--success-border);
+}
+
+.main-actions-bar--published {
+  border-block-end-color: var(--success-border);
+}
+
+.entry-editor-action-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.entry-editor-action-status.is-busy {
+  color: var(--text-secondary);
+}
+
+.entry-editor-action-status.is-saved {
+  color: var(--success-text, var(--text-secondary));
+  font-weight: 500;
+}
+
+.entry-editor-action-status.is-published {
+  color: var(--success-text, var(--text-primary));
+  font-weight: 600;
+}
+
+.entry-editor-action-status__spinner {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.main-actions-right .editor-unsaved-badge {
+  margin-inline-start: var(--space-2);
 }
 
 /* 8. Multilanguage field tabs — shared .tabs / .tab (components/tabs.css) */
