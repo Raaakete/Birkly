@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/api/ai_helpers.php';
 require_once dirname(__DIR__) . '/api/ai_approvals.php';
+require_once dirname(__DIR__) . '/core/content_resolve.php';
 
 $failures = 0;
 
