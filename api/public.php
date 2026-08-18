@@ -12,6 +12,7 @@ set_security_headers('api');
 
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/../core/cache.php';
+require_once __DIR__ . '/../core/public_read.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/../core/plugin_availability.php';
 
@@ -372,6 +373,9 @@ if ($action === 'list_entries') {
         }
         
         require_once __DIR__ . '/../core/entry_slug.php';
+        if (birkly_normalize_slug($collectionSlug) === 'supporters') {
+            $transformedEntries = birkly_public_filter_public_supporters(array_values($transformedEntries));
+        }
         respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($transformedEntries))]]);
     } else {
         // Apply permission filtering if user management plugin is installed and active
@@ -386,6 +390,9 @@ if ($action === 'list_entries') {
         
         // No multi-language, return entries as-is
         require_once __DIR__ . '/../core/entry_slug.php';
+        if (birkly_normalize_slug($collectionSlug) === 'supporters') {
+            $publishedEntries = birkly_public_filter_public_supporters(array_values($publishedEntries));
+        }
         respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($publishedEntries))]]);
     }
 }
