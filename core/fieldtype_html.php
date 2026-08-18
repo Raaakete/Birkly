@@ -53,7 +53,31 @@ function birkly_collection_html_field_names_from_meta(array $collectionMeta): ar
 }
 
 /**
- * Union of HTML-output field names across one or more collections.
+ * Load collection metadata merged with schema.json field definitions.
+ *
+ * @return array<string,mixed>
+ */
+function birkly_collection_meta_with_schema($storage, string $dir): array
+{
+    $meta = $storage->read('collections/' . $dir . '/collection.json');
+    if (!is_array($meta)) {
+        $meta = [];
+    }
+
+    $schema = $storage->read('collections/' . $dir . '/schema.json');
+    if (is_array($schema)) {
+        if (isset($schema['fields']) && is_array($schema['fields'])) {
+            $meta['fields'] = $schema['fields'];
+        }
+        if (isset($schema['schema']) && is_array($schema['schema'])) {
+            $meta['schema'] = $schema['schema'];
+        }
+    }
+
+    return $meta;
+}
+
+/**
  *
  * @param list<string> $collectionSlugs
  * @return list<string>
@@ -72,8 +96,8 @@ function birkly_page_bundle_html_field_names($storage, array $collectionSlugs): 
         if ($dir === null) {
             continue;
         }
-        $meta = $storage->read('collections/' . $dir . '/collection.json');
-        if (!is_array($meta)) {
+        $meta = birkly_collection_meta_with_schema($storage, $dir);
+        if ($meta === []) {
             continue;
         }
         foreach (birkly_collection_html_field_names_from_meta($meta) as $name) {

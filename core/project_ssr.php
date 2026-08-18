@@ -327,6 +327,11 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         $requests = birkly_project_ssr_collect_requests($html);
     }
 
+    $detailReq = birkly_project_ssr_detail_request($query);
+    if ($detailReq !== null) {
+        $requests[] = $detailReq;
+    }
+
     // trusted_ssr: SSR has no browser Origin / domain-auth context. Without this,
     // page_bundle denies every non-site_elements collection and loops render empty
     // (then get cached), which looks like "missing styles/content" on the public site.
@@ -350,6 +355,24 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         $data[$into] = $value;
     }
     $data['site_elements'] = birkly_project_ssr_site_elements_map($siteElementsList);
+
+    // Detail templates often use top-level field tags without a collection loop.
+    // Ensure the detail collection's editor fields are trusted even if bundle
+    // metadata was incomplete.
+    $htmlFieldNames = isset($data['_html_fields']) && is_array($data['_html_fields'])
+        ? $data['_html_fields']
+        : [];
+    $detailCollection = trim((string) ($query['collection'] ?? ''));
+    if ($detailCollection !== '') {
+        require_once __DIR__ . '/fieldtype_html.php';
+        $detailHtmlFields = birkly_page_bundle_html_field_names($storage, [$detailCollection]);
+        if ($detailHtmlFields !== []) {
+            $htmlFieldNames = array_values(array_unique(array_merge($htmlFieldNames, $detailHtmlFields)));
+        }
+    }
+    if ($htmlFieldNames !== []) {
+        $data['_html_fields'] = $htmlFieldNames;
+    }
 
     // Detail page: load the current entry (published only) and expose it at the
     // top level + `data.entry`, mirroring the client.
