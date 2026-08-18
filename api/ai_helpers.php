@@ -154,6 +154,24 @@ function birkly_ai_normalize_action_data(string $type, array $data): array
 }
 
 /**
+ * Content storage rooted at the project content dir (cwd-independent for MCP/API).
+ */
+function birkly_ai_content_storage(): StorageInterface
+{
+    require_once __DIR__ . '/../core/entry_storage.php';
+    return birkly_entry_content_storage();
+}
+
+/**
+ * Absolute path to content/collections on disk.
+ */
+function birkly_ai_content_collections_dir(): string
+{
+    require_once __DIR__ . '/../core/birkly_paths.php';
+    return birkly_project_root() . '/content/collections';
+}
+
+/**
  * Resolve a collection slug/dir from a normalized payload (slug, name, or aliases).
  */
 function birkly_ai_resolve_collection_slug_from_payload(array $payload, ?Storage $storage = null): string
@@ -2098,8 +2116,8 @@ function generateSystemContext($aiUser) {
     ];
     
     // Load collections
-    $contentStorage = new Storage('../content');
-    $collectionsDir = '../content/collections';
+    $contentStorage = birkly_ai_content_storage();
+    $collectionsDir = birkly_ai_content_collections_dir();
     if (is_dir($collectionsDir)) {
         $collections = array_filter(glob($collectionsDir . '/*'), 'is_dir');
         foreach ($collections as $collectionPath) {
