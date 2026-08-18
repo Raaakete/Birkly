@@ -61,7 +61,9 @@
 /* ============================================
    Busy veil — covers the panel while a step publishes or calls the model
    ============================================ */
-.ag-wizard-loading {
+/* Page-local CSS loads after core/overrides.css — scope display:flex to the
+   visible state so [hidden] keeps the veil off between wizard steps. */
+.ag-wizard-loading:not([hidden]) {
   position: absolute;
   inset: 0;
   z-index: var(--z-raised);
