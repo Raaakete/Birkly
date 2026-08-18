@@ -22,12 +22,66 @@ function birkly_ai_generate_public_api_key(): string
     return $apiKey;
 }
 
+/** @return list<string> */
+function birkly_collection_api_settings_keys(): array
+{
+    return [
+        'auto_publish',
+        'rate_limit',
+        'notification_email',
+        'email_connection_alias',
+        'captcha_provider',
+        'captcha_site_key',
+        'captcha_secret_key',
+        'allow_anonymous_read',
+    ];
+}
+
+/**
+ * @param array<string, mixed> $apiSettings
+ * @return list<string>
+ */
+function birkly_collection_api_settings_unknown_keys(array $apiSettings): array
+{
+    $allowed = birkly_collection_api_settings_keys();
+    $unknown = [];
+    foreach ($apiSettings as $key => $_) {
+        if (!in_array((string) $key, $allowed, true)) {
+            $unknown[] = (string) $key;
+        }
+    }
+    return $unknown;
+}
+
+/**
+ * @param array<string, mixed> $apiSettings
+ */
+function birkly_validate_api_settings_keys(array $apiSettings): ?string
+{
+    $unknown = birkly_collection_api_settings_unknown_keys($apiSettings);
+    if ($unknown !== []) {
+        return 'Unknown api_settings keys: ' . implode(', ', $unknown);
+    }
+    return null;
+}
+
+/**
+ * @param array<string, mixed> $apiSettings
+ * @return array<string, mixed>
+ */
+function birkly_migrate_collection_api_settings(array $apiSettings): array
+{
+    unset($apiSettings['public_read_fields'], $apiSettings['public_read_requires']);
+    return $apiSettings;
+}
+
 /**
  * @param array<string, mixed> $apiSettings
  * @return array<string, mixed>
  */
 function birkly_ai_normalize_api_settings(array $apiSettings): array
 {
+    $apiSettings = birkly_migrate_collection_api_settings($apiSettings);
     return [
         'auto_publish' => !empty($apiSettings['auto_publish']),
         'rate_limit' => isset($apiSettings['rate_limit']) ? (int) $apiSettings['rate_limit'] : 10,
@@ -36,6 +90,7 @@ function birkly_ai_normalize_api_settings(array $apiSettings): array
         'captcha_provider' => (string) ($apiSettings['captcha_provider'] ?? ''),
         'captcha_site_key' => (string) ($apiSettings['captcha_site_key'] ?? ''),
         'captcha_secret_key' => (string) ($apiSettings['captcha_secret_key'] ?? ''),
+        'allow_anonymous_read' => !empty($apiSettings['allow_anonymous_read']),
     ];
 }
 
@@ -171,14 +226,23 @@ function birkly_ai_process_sub_collections(array $subCollections, string $parent
  * @param array<string, mixed> $actionData
  * @param array<string, mixed>|null $existing
  */
-function birkly_ai_merge_collection_config(array &$collection, array $actionData, ?array $existing = null): void
+function birkly_ai_merge_collection_config(array &$collection, array $actionData, ?array $existing = null): ?string
 {
+    if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
+        $apiSettingsError = birkly_validate_api_settings_keys($actionData['api_settings']);
+        if ($apiSettingsError !== null) {
+            return $apiSettingsError;
+        }
+    }
+
     birkly_ai_apply_entry_method_config($collection, $actionData, $existing);
 
     if (isset($actionData['sub_collections']) && is_array($actionData['sub_collections'])) {
         $parentSlug = (string) ($collection['slug'] ?? $actionData['slug'] ?? '');
         $collection['sub_collections'] = birkly_ai_process_sub_collections($actionData['sub_collections'], $parentSlug);
     }
+
+    return null;
 }
 
 /**

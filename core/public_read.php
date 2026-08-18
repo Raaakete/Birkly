@@ -93,10 +93,54 @@ function birkly_public_system_read_fields(): array
     return ['id', 'slug', 'status', 'created_at', 'updated_at', 'published_at'];
 }
 
-/** @return list<string> */
-function birkly_public_fail_closed_read_fields(): array
+/**
+ * @param array<string, mixed> $collectionMeta
+ * @return array{allowed:bool,reason:string,anonymous:bool}
+ */
+function birkly_public_read_auth_check(array $collectionMeta, string $collectionSlug): array
 {
-    return ['title', 'slug', 'created_at'];
+    require_once __DIR__ . '/ai_collection_config.php';
+    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
+
+    if (!empty($apiSettings['allow_anonymous_read'])) {
+        return ['allowed' => true, 'reason' => 'allow_anonymous_read', 'anonymous' => true];
+    }
+
+    $apiKey = (string) ($_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? '');
+    $expectedKey = (string) ($collectionMeta['api_key'] ?? '');
+    if ($apiKey !== '' && $expectedKey !== '' && hash_equals($expectedKey, $apiKey)) {
+        return ['allowed' => true, 'reason' => 'collection_api_key', 'anonymous' => false];
+    }
+
+    require_once __DIR__ . '/../api/domain_auth.php';
+    if (birkly_domain_read_is_authorized('read', $collectionSlug)) {
+        return ['allowed' => true, 'reason' => 'domain_whitelist', 'anonymous' => false];
+    }
+
+    return ['allowed' => false, 'reason' => 'read_auth_required', 'anonymous' => false];
+}
+
+/**
+ * Drop deprecated api_settings keys from stored collection metadata (lazy persist).
+ *
+ * @param array<string, mixed> $collectionMeta
+ * @return array<string, mixed>
+ */
+function birkly_public_maybe_migrate_collection_meta($storage, string $dir, array $collectionMeta): array
+{
+    if (!isset($collectionMeta['api_settings']) || !is_array($collectionMeta['api_settings'])) {
+        return $collectionMeta;
+    }
+
+    require_once __DIR__ . '/ai_collection_config.php';
+    $migrated = birkly_migrate_collection_api_settings($collectionMeta['api_settings']);
+    if ($migrated === $collectionMeta['api_settings']) {
+        return $collectionMeta;
+    }
+
+    $collectionMeta['api_settings'] = $migrated;
+    $storage->write("collections/$dir/collection.json", $collectionMeta);
+    return $collectionMeta;
 }
 
 function birkly_public_collection_is_public_api(array $collectionMeta): bool
@@ -118,97 +162,6 @@ function birkly_public_entry_field_truthy(mixed $entry, string $field): bool
     }
     require_once __DIR__ . '/birkly_template_engine.php';
     return birkly_template_engine_filter_literal_bool(trim((string) $value)) === true;
-}
-
-/**
- * @param array<string, mixed> $entry
- * @param list<string> $allowedFields
- * @return array<string, mixed>
- */
-function birkly_public_pick_entry_fields(array $entry, array $allowedFields): array
-{
-    $out = [];
-    foreach ($allowedFields as $key) {
-        if (array_key_exists($key, $entry)) {
-            $out[$key] = $entry[$key];
-        }
-    }
-    return $out;
-}
-
-/**
- * @param array<string, mixed> $entry
- * @param list<string> $allowedFields
- * @return array<string, mixed>
- */
-function birkly_public_sanitize_entry_fields(array $entry, array $allowedFields): array
-{
-    $system = birkly_public_system_read_fields();
-    $out = [];
-    foreach (array_unique(array_merge($system, $allowedFields)) as $key) {
-        if (array_key_exists($key, $entry)) {
-            $out[$key] = $entry[$key];
-        }
-    }
-    return $out;
-}
-
-/**
- * @param list<mixed> $entries
- * @param array<string, mixed> $collectionMeta
- * @return list<array<string, mixed>>
- */
-function birkly_public_apply_collection_read_settings(array $entries, array $collectionMeta): array
-{
-    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
-    $requires = trim((string) ($apiSettings['public_read_requires'] ?? ''));
-    $isPublicApi = birkly_public_collection_is_public_api($collectionMeta);
-    $fieldsKeySet = array_key_exists('public_read_fields', $apiSettings);
-    $allowedFields = [];
-    if ($fieldsKeySet) {
-        $fields = $apiSettings['public_read_fields'];
-        if (is_string($fields)) {
-            $fields = array_values(array_filter(array_map('trim', explode(',', $fields))));
-        }
-        if (is_array($fields)) {
-            foreach ($fields as $field) {
-                if (is_string($field) && trim($field) !== '') {
-                    $allowedFields[] = trim($field);
-                }
-            }
-        }
-    }
-
-    if (!$isPublicApi && $requires === '' && !$fieldsKeySet) {
-        return $entries;
-    }
-
-    $exposeFields = null;
-    if ($fieldsKeySet && $allowedFields !== []) {
-        $exposeFields = $allowedFields;
-    } elseif ($isPublicApi || ($fieldsKeySet && $allowedFields === [])) {
-        $exposeFields = birkly_public_fail_closed_read_fields();
-    }
-
-    $out = [];
-    foreach ($entries as $entry) {
-        if (!is_array($entry)) {
-            continue;
-        }
-        if ($requires !== '' && !birkly_public_entry_field_truthy($entry, $requires)) {
-            continue;
-        }
-        if ($exposeFields !== null) {
-            if ($fieldsKeySet && $allowedFields !== []) {
-                $out[] = birkly_public_sanitize_entry_fields($entry, $exposeFields);
-            } else {
-                $out[] = birkly_public_pick_entry_fields($entry, $exposeFields);
-            }
-        } else {
-            $out[] = $entry;
-        }
-    }
-    return $out;
 }
 
 function birkly_public_list_entries($storage, $collectionSlug, $language = 'en') {
@@ -261,8 +214,6 @@ function birkly_public_list_entries($storage, $collectionSlug, $language = 'en')
     } else {
         $publishedEntries = array_map('birkly_public_entry_with_effective_slug', $publishedEntries);
     }
-
-    $publishedEntries = birkly_public_apply_collection_read_settings($publishedEntries, is_array($collectionMeta) ? $collectionMeta : []);
 
     return ['status' => 'ok', 'data' => ['entries' => $publishedEntries]];
 }
