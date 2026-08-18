@@ -273,7 +273,9 @@ function executeAiAction($approval) {
     }
     
     // Get AI user but DO NOT modify session - pass it as context instead
-    $usersStorage = new Storage('../users');
+    require_once __DIR__ . '/../core/birkly_paths.php';
+    require_once __DIR__ . '/../core/storage/FlatFileStorage.php';
+    $usersStorage = new FlatFileStorage(birkly_project_root() . '/users');
     $aiUser = $approval['ai_user'] ?? null;
     if (!is_array($aiUser)) {
         $aiUser = $usersStorage->read($approval['ai_user_id'] . '.json');
@@ -663,19 +665,23 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             'status' => 'draft',
         ], $entryData);
         
-        $writePath = 'collections/' . $collection . '/entries/' . $entryId . '.json';
-        error_log("executeCreateEntry: Attempting to write entry to: " . $writePath);
-        $result = $contentStorage->write($writePath, $entry);
+        require_once __DIR__ . '/../core/entry_storage.php';
+        error_log("executeCreateEntry: Attempting to write entry: " . $entryId);
+        $result = birkly_entry_write_record($collection, $entryId, $entry);
         
         if ($result) {
             error_log("executeCreateEntry: Successfully created entry: " . $entryId);
-            birkly_ai_after_entry_write($entry, $collection, null);
+            birkly_ai_ensure_plugins_loaded();
+            if (function_exists('do_action')) {
+                do_action('after_entry_save', $entry, $collection, null);
+            }
             return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
         } else {
-            error_log("executeCreateEntry: Failed to write entry file. Path: " . $writePath);
-            error_log("executeCreateEntry: Storage base path: " . $contentStorage->basePath);
-            error_log("executeCreateEntry: Full path would be: " . $contentStorage->basePath . '/' . $writePath);
-            return ['success' => false, 'message' => 'Failed to write entry file. Check server logs for details.'];
+            error_log("executeCreateEntry: Failed to write entry file for collection: " . $collection);
+            return [
+                'success' => false,
+                'message' => 'Failed to write entry file (storage lock timeout, I/O error, or database unreachable). Check server logs.',
+            ];
         }
     } catch (Exception $e) {
         error_log("executeCreateEntry Exception: " . $e->getMessage());
@@ -862,6 +868,15 @@ function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null)
 
 // Execute update collection
 function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = null) {
+    try {
+        return birkly_ai_execute_update_collection($actionData, $aiUser, $originalUserId);
+    } catch (Throwable $e) {
+        error_log('executeUpdateCollection: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to update collection: ' . $e->getMessage()];
+    }
+}
+
+function birkly_ai_execute_update_collection($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
     require_once __DIR__ . '/../core/content_resolve.php';
 
@@ -942,6 +957,15 @@ function birkly_ai_delete_directory(string $dir): bool
 
 // Execute delete collection
 function executeDeleteCollection($actionData, $aiUser = null, $originalUserId = null) {
+    try {
+        return birkly_ai_execute_delete_collection($actionData, $aiUser, $originalUserId);
+    } catch (Throwable $e) {
+        error_log('executeDeleteCollection: ' . $e->getMessage());
+        return ['success' => false, 'message' => 'Failed to delete collection: ' . $e->getMessage()];
+    }
+}
+
+function birkly_ai_execute_delete_collection($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
     require_once __DIR__ . '/../core/content_resolve.php';
 
