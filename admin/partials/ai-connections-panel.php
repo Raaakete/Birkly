@@ -235,10 +235,14 @@
               <div id="mcp-personal-agent-panel" class="u-stack-4 u-mt-4">
                 <p class="modal-intro-text">The personal connector is already set up for your site. Copy its URL and paste it in Claude, ChatGPT, or Cursor — each team member signs in with their own account.</p>
                 <div class="mcp-snippet-block">
-                  <label for="mcp-modal-personal-url">Personal connector URL</label>
-                  <div class="copy-snippet-row">
-                    <input type="text" id="mcp-modal-personal-url" class="input" readonly placeholder="Loading...">
-                    <button type="button" class="btn btn-sm btn-primary" id="mcp-copy-personal-url-btn" type="button">Copy URL</button>
+                  <span class="u-label u-text-sm">Personal connector URL</span>
+                  <div class="connector-url-row" id="mcp-modal-personal-url-row">
+                    <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="Click to copy">
+                      <span id="mcp-modal-personal-url-text" class="connector-url-text">Loading...</span>
+                    </button>
+                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="Copy connector URL">
+                      <?= birkly_icon('copy', ['size' => 16]) ?>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -300,10 +304,14 @@
               <div id="mcp-create-success" class="callout callout-success u-stack-3" hidden>
                 <p><strong>Service agent created!</strong> Copy the Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
                 <div class="mcp-snippet-block">
-                  <label for="mcp-new-connector-url">Connector URL</label>
-                  <div class="copy-snippet-row">
-                    <input type="text" id="mcp-new-connector-url" class="input" readonly>
-                    <button type="button" class="btn btn-sm btn-primary" data-admin-object="mcpConnections" data-admin-method="copySnippet" data-admin-args='["mcp-new-connector-url", true]'>Copy URL</button>
+                  <span class="u-label u-text-sm">Connector URL</span>
+                  <div class="connector-url-row" id="mcp-new-connector-url-row">
+                    <button type="button" class="connector-url-value" data-copy-source="mcp-new-connector-url-text" title="Click to copy">
+                      <span id="mcp-new-connector-url-text" class="connector-url-text"></span>
+                    </button>
+                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="Copy connector URL">
+                      <?= birkly_icon('copy', ['size' => 16]) ?>
+                    </button>
                   </div>
                 </div>
               </div>
