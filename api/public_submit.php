@@ -81,6 +81,22 @@ if (($collectionMeta['entry_method'] ?? 'admin_only') !== 'public_api') {
     respond(['status' => 'error', 'message' => 'Public submissions not allowed for this collection'], 403);
 }
 
+require_once __DIR__ . '/../core/public_read.php';
+require_once __DIR__ . '/domain_auth.php';
+$collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
+setDynamicCORS();
+$submitAuth = birkly_public_api_auth_check($collectionMeta, $collectionSlug, 'write');
+if (empty($submitAuth['allowed'])) {
+    log_security_event('public_submit_denied', [
+        'collection' => $collectionSlug,
+        'reason' => $submitAuth['reason'],
+        'ip' => $ip,
+        'origin' => $_SERVER['HTTP_ORIGIN'] ?? '',
+        'referer' => $_SERVER['HTTP_REFERER'] ?? '',
+    ]);
+    respond(['status' => 'error', 'message' => 'Authentication required', 'code' => 'AUTH_REQUIRED'], 403);
+}
+
 // Load schema
 $schema = $storage->read("collections/$dir/schema.json");
 if (!$schema || !isset($schema['fields'])) {

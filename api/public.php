@@ -17,30 +17,35 @@ require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugin_availability.php';
 
-function birkly_public_deny_read(string $collectionSlug, string $reason) {
-    log_security_event('public_read_denied', [
-        'collection' => $collectionSlug,
+function birkly_public_api_deny(string $reason, string $actionName, ?string $collectionSlug = null, string $logEvent = 'public_api_denied') {
+    log_security_event($logEvent, [
+        'collection' => $collectionSlug ?? '',
         'reason' => $reason,
         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
         'origin' => $_SERVER['HTTP_ORIGIN'] ?? '',
         'referer' => $_SERVER['HTTP_REFERER'] ?? '',
-        'action' => $_GET['action'] ?? $_POST['action'] ?? '',
+        'action' => $actionName,
     ]);
     http_response_code(403);
     respond([
         'status' => 'error',
         'message' => 'Authentication required',
-        'code' => 'READ_AUTH_REQUIRED',
+        'code' => 'AUTH_REQUIRED',
     ]);
 }
 
-function birkly_public_enforce_read_auth(array $collectionMeta, string $collectionSlug) {
+function birkly_public_api_enforce_auth(string $mode, ?array $collectionMeta, ?string $collectionSlug, string $actionName) {
     require_once __DIR__ . '/domain_auth.php';
     setDynamicCORS();
-    $auth = birkly_public_read_auth_check($collectionMeta, $collectionSlug);
+    $auth = birkly_public_api_auth_check($collectionMeta, $collectionSlug, $mode);
     if (empty($auth['allowed'])) {
-        birkly_public_deny_read($collectionSlug, $auth['reason']);
+        $logEvent = $mode === 'write' ? 'public_submit_denied' : 'public_read_denied';
+        birkly_public_api_deny($auth['reason'], $actionName, $collectionSlug, $logEvent);
     }
+}
+
+function birkly_public_enforce_read_auth(array $collectionMeta, string $collectionSlug) {
+    birkly_public_api_enforce_auth('read', $collectionMeta, $collectionSlug, $_GET['action'] ?? $_POST['action'] ?? 'read');
 }
 
 function birkly_public_rate_limit($bucket, $limit = 120, $window = 60) {
@@ -89,6 +94,7 @@ function respond($data) {
  * NOTE: This is required because client-side rendering cannot execute PHP callbacks.
  */
 if ($action === 'template_functions_list') {
+    birkly_public_api_enforce_auth('read', null, null, 'template_functions_list');
     birkly_public_rate_limit('template_functions_list', 20, 60);
     // Public template function discovery can be memory-heavy on the PHP built-in server
     // because the process is long-lived; give it more headroom.
@@ -163,6 +169,7 @@ if ($action === 'template_functions_list') {
 }
 
 if ($action === 'template_function_call') {
+    birkly_public_api_enforce_auth('read', null, null, 'template_function_call');
     birkly_public_rate_limit('template_function_call', 30, 60);
     // Public template function calls can be memory-heavy on the PHP built-in server
     // because the process is long-lived; give it more headroom.
@@ -238,6 +245,7 @@ if ($action === 'template_function_call') {
 }
 
 if ($action === 'list_collections') {
+    birkly_public_api_enforce_auth('read', null, null, 'list_collections');
     require_once __DIR__ . '/../core/collection_meta.php';
     $collections = $storage->list('collections');
     $result = [];
@@ -251,6 +259,7 @@ if ($action === 'list_collections') {
 }
 
 if ($action === 'list_collection_groups') {
+    birkly_public_api_enforce_auth('read', null, null, 'list_collection_groups');
     require_once __DIR__ . '/../core/collection_groups.php';
     respond(['status' => 'ok', 'data' => ['collection_groups' => birkly_load_collection_groups()]]);
 }
@@ -527,6 +536,7 @@ if ($action === 'get_entry') {
 }
 
 if ($action === 'get_site_settings') {
+    birkly_public_api_enforce_auth('read', null, null, 'get_site_settings');
     $settingsPath = __DIR__ . '/../settings/site.json';
     $siteSettings = [
         'title' => 'Birkly',
@@ -566,6 +576,9 @@ if ($action === 'get_collection_info') {
     }
     
     $collectionData = $storage->read("collections/$dir/collection.json");
+    $collectionSlug = $collectionData['slug'] ?? $collection;
+    $collectionData = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionData) ? $collectionData : []);
+    birkly_public_enforce_read_auth($collectionData, $collectionSlug);
     $schema = $storage->read("collections/$dir/schema.json");
     
     // Only return if Public API is enabled
