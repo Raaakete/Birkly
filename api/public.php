@@ -169,79 +169,12 @@ if ($action === 'template_functions_list') {
 }
 
 if ($action === 'template_function_call') {
-    birkly_public_api_enforce_auth('read', null, null, 'template_function_call');
-    birkly_public_rate_limit('template_function_call', 30, 60);
-    // Public template function calls can be memory-heavy on the PHP built-in server
-    // because the process is long-lived; give it more headroom.
-    @ini_set('memory_limit', '512M');
-    
-    try {
-        // Use SITE session so user_current / user_logged_in see the website user (e.g. demo Alice),
-        // not the admin session. Required for demo-website and any frontend using template functions.
-        require_once __DIR__ . '/session.php';
-        if (function_exists('birkly_site_session_start')) {
-            birkly_site_session_start();
-        } elseif (function_exists('haru_secure_session_start')) {
-            haru_secure_session_start();
-        } else {
-            if (session_status() === PHP_SESSION_NONE) @session_start();
-        }
-
-        require_once __DIR__ . '/../core/public_bootstrap.php';
-
-        // Support both JSON (application/json) and form-encoded (application/x-www-form-urlencoded) requests
-        $name = '';
-        $args = [];
-        
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-        if (strpos($contentType, 'application/json') !== false) {
-            // JSON request
-            $raw = file_get_contents('php://input');
-            $json = json_decode($raw, true);
-            if (is_array($json)) {
-                $name = $json['name'] ?? '';
-                $args = $json['args'] ?? [];
-            }
-        } else {
-            // Form-encoded request (from client)
-            $name = $input['name'] ?? '';
-            $argsRaw = $input['args'] ?? '[]';
-            if (is_string($argsRaw)) {
-                $decoded = json_decode($argsRaw, true);
-                if (is_array($decoded)) {
-                    $args = $decoded;
-                } else {
-                    $args = [];
-                }
-            } else if (is_array($argsRaw)) {
-                $args = $argsRaw;
-            }
-        }
-
-        if (!is_string($name) || $name === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
-            respond(['status' => 'error', 'message' => 'Invalid function name']);
-        }
-
-        // M2-T4: load only plugins that may register this template function
-        birkly_public_load_plugins_for_template_function($name);
-
-        if (!function_exists('get_template_function')) {
-            respond(['status' => 'ok', 'data' => ['result' => null]]); // Return null instead of error
-        }
-
-        $fn = get_template_function($name);
-        if (!$fn) {
-            respond(['status' => 'ok', 'data' => ['result' => null]]); // Return null instead of error
-        }
-
-        $result = call_user_func_array($fn, $args);
-        respond(['status' => 'ok', 'data' => ['result' => $result]]);
-    } catch (Throwable $e) {
-        // Log error but return null result to prevent breaking the client
-        error_log('Template function call error: ' . $e->getMessage());
-        error_log('Stack trace: ' . $e->getTraceAsString());
-        respond(['status' => 'ok', 'data' => ['result' => null]]); // Graceful degradation
-    }
+    http_response_code(403);
+    respond([
+        'status' => 'error',
+        'message' => 'Template function calls are not available on this endpoint',
+        'code' => 'TEMPLATE_FUNCTION_DISABLED',
+    ]);
 }
 
 if ($action === 'list_collections') {
