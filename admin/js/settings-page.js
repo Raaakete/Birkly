@@ -870,6 +870,47 @@ window.migrateStorage = migrateStorage;
         applySettingsSearch();
     }
 
+    var AI_CONNECTIONS_INTRO_SEEN_KEY = 'birkly_ai_connections_intro_seen';
+
+    function aiConnectionsIntroSeen() {
+        try { return localStorage.getItem(AI_CONNECTIONS_INTRO_SEEN_KEY) === '1'; } catch (e) { return false; }
+    }
+
+    function markAiConnectionsIntroSeen() {
+        try { localStorage.setItem(AI_CONNECTIONS_INTRO_SEEN_KEY, '1'); } catch (e) { /* ignore */ }
+    }
+
+    function closeAiConnectionsIntroModal() {
+        var modal = document.getElementById('ai-connections-intro-modal');
+        if (!modal) return;
+        markAiConnectionsIntroSeen();
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function maybeShowAiConnectionsIntro() {
+        if (aiConnectionsIntroSeen()) return;
+        var modal = document.getElementById('ai-connections-intro-modal');
+        if (!modal) return;
+        modal.classList.add('active');
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function initAiConnectionsIntroModal() {
+        var modal = document.getElementById('ai-connections-intro-modal');
+        if (!modal || modal.dataset.introBound === '1') return;
+        modal.dataset.introBound = '1';
+        modal.querySelectorAll('[data-ai-conn-intro-close]').forEach(function (el) {
+            el.addEventListener('click', closeAiConnectionsIntroModal);
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            if (modal.classList.contains('active')) closeAiConnectionsIntroModal();
+        });
+    }
+
     function initMergedTabFeatures(tabId, scrollTo) {
         if (tabId === 'site-delivery') {
             if (typeof window.loadDomains === 'function') {
@@ -897,6 +938,7 @@ window.migrateStorage = migrateStorage;
             if (window.AiConnections && typeof window.AiConnections.init === 'function') {
                 window.AiConnections.init();
             }
+            maybeShowAiConnectionsIntro();
         } else if (tabId === 'integrations') {
             if (typeof window.initWebhooksManager === 'function') {
                 window.initWebhooksManager(window.webhooksData || {});
@@ -1050,6 +1092,7 @@ window.migrateStorage = migrateStorage;
         captureFormSnapshots();
         bindDirtyTracking();
         initSettingsSearch();
+        initAiConnectionsIntroModal();
         updateSaveBar(currentTab);
     }
 

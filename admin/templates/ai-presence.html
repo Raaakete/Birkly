@@ -4,9 +4,6 @@
             <span class="current">{translate 'admin.ai_presence'}</span>
         </div>
     </div>
-    <div class="page-header-right">
-        <button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">{translate 'admin.ai_presence_about_link'}</button>
-    </div>
 </div>
 
 <?php
@@ -17,7 +14,8 @@ $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
     . '<button type="button" class="btn btn-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
-$stickySaveBarRightHtml = '';
+$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
+    . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
 ?>
