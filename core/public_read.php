@@ -87,28 +87,35 @@ function birkly_public_transform_entry_for_language($entry, $language, $multilan
     return $entry;
 }
 
-function birkly_public_entry_is_show_public(mixed $entry): bool
+/** @return list<string> */
+function birkly_public_system_read_fields(): array
 {
-    if (!is_array($entry)) {
+    return ['id', 'slug', 'status', 'created_at', 'updated_at', 'published_at'];
+}
+
+function birkly_public_entry_field_truthy(mixed $entry, string $field): bool
+{
+    if (!is_array($entry) || $field === '') {
         return false;
     }
-    $v = $entry['show_public'] ?? ($entry['featured'] ?? false);
-    if (is_bool($v)) {
-        return $v;
+    $value = $entry[$field] ?? null;
+    if (is_bool($value)) {
+        return $value;
     }
-    $s = strtolower(trim((string) $v));
+    $s = strtolower(trim((string) $value));
     return in_array($s, ['1', 'true', 'yes', 'on', 'featured'], true);
 }
 
 /**
  * @param array<string, mixed> $entry
+ * @param list<string> $allowedFields
  * @return array<string, mixed>
  */
-function birkly_public_sanitize_supporter_entry(array $entry): array
+function birkly_public_sanitize_entry_fields(array $entry, array $allowedFields): array
 {
-    $allowed = ['id', 'slug', 'title', 'display_name', 'kind', 'organization', 'amount', 'cadence', 'logo', 'show_public', 'status', 'created_at', 'updated_at', 'published_at'];
+    $system = birkly_public_system_read_fields();
     $out = [];
-    foreach ($allowed as $key) {
+    foreach (array_unique(array_merge($system, $allowedFields)) as $key) {
         if (array_key_exists($key, $entry)) {
             $out[$key] = $entry[$key];
         }
@@ -118,16 +125,38 @@ function birkly_public_sanitize_supporter_entry(array $entry): array
 
 /**
  * @param list<mixed> $entries
+ * @param array<string, mixed> $collectionMeta
  * @return list<array<string, mixed>>
  */
-function birkly_public_filter_public_supporters(array $entries): array
+function birkly_public_apply_collection_read_settings(array $entries, array $collectionMeta): array
 {
+    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
+    $requires = trim((string) ($apiSettings['public_read_requires'] ?? ''));
+    $fields = $apiSettings['public_read_fields'] ?? null;
+    $allowedFields = [];
+    if (is_string($fields)) {
+        $fields = array_values(array_filter(array_map('trim', explode(',', $fields))));
+    }
+    if (is_array($fields)) {
+        foreach ($fields as $field) {
+            if (is_string($field) && trim($field) !== '') {
+                $allowedFields[] = trim($field);
+            }
+        }
+    }
+    if ($requires === '' && $allowedFields === []) {
+        return $entries;
+    }
+
     $out = [];
     foreach ($entries as $entry) {
-        if (!is_array($entry) || !birkly_public_entry_is_show_public($entry)) {
+        if (!is_array($entry)) {
             continue;
         }
-        $out[] = birkly_public_sanitize_supporter_entry($entry);
+        if ($requires !== '' && !birkly_public_entry_field_truthy($entry, $requires)) {
+            continue;
+        }
+        $out[] = $allowedFields === [] ? $entry : birkly_public_sanitize_entry_fields($entry, $allowedFields);
     }
     return $out;
 }
@@ -183,9 +212,7 @@ function birkly_public_list_entries($storage, $collectionSlug, $language = 'en')
         $publishedEntries = array_map('birkly_public_entry_with_effective_slug', $publishedEntries);
     }
 
-    if (birkly_normalize_slug($collectionSlugResolved !== '' ? $collectionSlugResolved : $collectionSlug) === 'supporters') {
-        $publishedEntries = birkly_public_filter_public_supporters($publishedEntries);
-    }
+    $publishedEntries = birkly_public_apply_collection_read_settings($publishedEntries, is_array($collectionMeta) ? $collectionMeta : []);
 
     return ['status' => 'ok', 'data' => ['entries' => $publishedEntries]];
 }

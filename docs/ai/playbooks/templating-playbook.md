@@ -40,7 +40,7 @@ Optional enhance-only helpers: `birkly-components.js` — **never** wipe `innerH
 | System fields bare | `{title}`, `{slug}`, `{created_at}` |
 | User fields quoted | `{'excerpt'}`, `{'price'}`, `{'content'}` |
 | Loops | `{for each entry in 'blog'}…{endfor}` |
-| Filters | `with status = published` |
+| Filters | `with status = published` (repeat `with` to AND-combine; checkbox fields match `'1'`/`'true'`/`'yes'`) |
 | Ordering | `ordered by newest` / `oldest` / `last-updated` / `order` |
 | Limit | trailing `limit 5` (space, not `limit=`) |
 | Dates | `{created_at format "F j, Y"}` |
@@ -55,6 +55,7 @@ Optional enhance-only helpers: `birkly-components.js` — **never** wipe `innerH
 
 ```html
 {for each entry in 'blog' with status = published ordered by newest}
+{for each entry in 'blog' with status = published with 'featured' = '1' ordered by newest}
   <a href="post.html?collection=blog&slug={slug}">{title}</a>
 {endfor}
 ```

@@ -259,19 +259,36 @@
         return result;
     }
 
-    function applyLoopFilters(items, filter) {
+    function filterLiteralBool(value) {
+        const s = String(value ?? '').trim().toLowerCase();
+        if (['1', 'true', 'yes', 'on'].includes(s)) return true;
+        if (['0', 'false', 'no', ''].includes(s)) return false;
+        return null;
+    }
+
+    function fieldMatchesFilterValue(fieldValue, filterValue) {
+        const boolFilter = filterLiteralBool(filterValue);
+        if (boolFilter !== null) {
+            if (typeof fieldValue === 'boolean') return fieldValue === boolFilter;
+            const fieldBool = filterLiteralBool(fieldValue);
+            return (fieldBool ?? false) === boolFilter;
+        }
+        return String(fieldValue) === filterValue;
+    }
+
+    function applySingleLoopFilter(items, filter) {
         if (!filter) return items;
         let m = filter.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)$/);
         if (m) {
             const field = m[1];
             const value = m[2];
-            return items.filter((it) => it && String(it[field]) === value);
+            return items.filter((it) => it && fieldMatchesFilterValue(it[field], value));
         }
         m = filter.match(/^['"]([^'"]+)['"]\s*=\s*['"]([^'"]*)['"]$/);
         if (m) {
             const field = m[1];
             const value = m[2];
-            return items.filter((it) => it && String(it[field]) === value);
+            return items.filter((it) => it && fieldMatchesFilterValue(it[field], value));
         }
         m = filter.match(/^['"]([^'"]+)['"]\s*(=|<=|=<|>=|=>|<|>)\s*([0-9]+(?:\.[0-9]+)?)$/);
         if (m) {
@@ -286,6 +303,18 @@
             });
         }
         return items;
+    }
+
+    function applyLoopFilters(items, filter) {
+        if (!filter) return items;
+        const clauses = String(filter).split(/\s+with\s+/i);
+        let out = items;
+        for (const clause of clauses) {
+            const trimmed = clause.trim();
+            if (!trimmed) continue;
+            out = applySingleLoopFilter(out, trimmed);
+        }
+        return out;
     }
 
     function applyLoopOrder(items, order) {

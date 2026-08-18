@@ -524,7 +524,11 @@ try {
             'email_connection_alias' => trim((string) ($apiSettings['email_connection_alias'] ?? '')),
             'captcha_provider' => $apiSettings['captcha_provider'] ?? '',
             'captcha_site_key' => $apiSettings['captcha_site_key'] ?? '',
-            'captcha_secret_key' => $apiSettings['captcha_secret_key'] ?? ''
+            'captcha_secret_key' => $apiSettings['captcha_secret_key'] ?? '',
+            'public_read_requires' => trim((string) ($apiSettings['public_read_requires'] ?? '')),
+            'public_read_fields' => is_array($apiSettings['public_read_fields'] ?? null)
+                ? array_values(array_filter(array_map('trim', $apiSettings['public_read_fields'])))
+                : array_values(array_filter(array_map('trim', explode(',', (string) ($apiSettings['public_read_fields'] ?? ''))))),
         ];
     } else {
         // Remove API settings if switching back to Admin Only
@@ -677,6 +681,10 @@ try {
                     'captcha_provider' => (string) ($subApiSettings['captcha_provider'] ?? ''),
                     'captcha_site_key' => (string) ($subApiSettings['captcha_site_key'] ?? ''),
                     'captcha_secret_key' => (string) ($subApiSettings['captcha_secret_key'] ?? ''),
+                    'public_read_requires' => trim((string) ($subApiSettings['public_read_requires'] ?? '')),
+                    'public_read_fields' => is_array($subApiSettings['public_read_fields'] ?? null)
+                        ? array_values(array_filter(array_map('trim', $subApiSettings['public_read_fields'])))
+                        : array_values(array_filter(array_map('trim', explode(',', (string) ($subApiSettings['public_read_fields'] ?? ''))))),
                 ];
             }
             
