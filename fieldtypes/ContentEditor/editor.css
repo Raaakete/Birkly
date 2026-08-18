@@ -46,6 +46,7 @@
 .content-editor-body {
   position: relative;
   min-height: 200px;
+  z-index: 1;
 }
 
 .content-editor-area.is-mode-hidden {
@@ -252,10 +253,24 @@
   border-bottom: 1px solid var(--border-light, #f3f4f6);
   flex-wrap: nowrap;
   position: relative;
-  overflow-x: auto;
-  overflow-y: visible;
-  z-index: 10;
+  overflow: visible;
+  z-index: 30;
   scrollbar-width: thin;
+}
+
+.content-editor-toolbar-scroll {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 0.25rem);
+  flex-wrap: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.content-editor-wrapper:has(.toolbar-dropdown.active) .content-editor-toolbar {
+  z-index: 100;
 }
 
 .toolbar-group {

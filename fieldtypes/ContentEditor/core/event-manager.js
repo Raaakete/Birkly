@@ -80,11 +80,38 @@ window.ContentEditorEventManager = {
       if (dropdown === exceptDropdown) return;
       dropdown.classList.remove('active');
       dropdown._isLivePreviewActive = false;
+      this.resetToolbarDropdownMenu(dropdown);
       const menu = dropdown.querySelector('.dropdown-menu');
       if (menu) {
         menu.style.removeProperty('display');
       }
     });
+  },
+
+  positionToolbarDropdownMenu(dropdown) {
+    const menu = dropdown && dropdown.querySelector('.dropdown-menu');
+    const toggle = dropdown && dropdown.querySelector('.dropdown-toggle, .toolbar-btn');
+    if (!menu || !toggle) return;
+
+    const rect = toggle.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = Math.round(rect.bottom + 4) + 'px';
+    menu.style.left = Math.round(rect.left) + 'px';
+    menu.style.right = 'auto';
+    menu.style.zIndex = '11200';
+    dropdown._menuPositioned = true;
+  },
+
+  resetToolbarDropdownMenu(dropdown) {
+    if (!dropdown) return;
+    const menu = dropdown.querySelector('.dropdown-menu');
+    if (!menu) return;
+    menu.style.removeProperty('position');
+    menu.style.removeProperty('top');
+    menu.style.removeProperty('left');
+    menu.style.removeProperty('right');
+    menu.style.removeProperty('z-index');
+    dropdown._menuPositioned = false;
   },
 
   /**
@@ -115,6 +142,17 @@ window.ContentEditorEventManager = {
           }
         }
       }, true);
+    }
+
+    if (!window._contentEditorDropdownRepositionAttached) {
+      window._contentEditorDropdownRepositionAttached = true;
+      const repositionOpenDropdowns = () => {
+        document.querySelectorAll('.toolbar-dropdown.active').forEach((dropdown) => {
+          window.ContentEditorEventManager.positionToolbarDropdownMenu(dropdown);
+        });
+      };
+      window.addEventListener('resize', repositionOpenDropdowns);
+      window.addEventListener('scroll', repositionOpenDropdowns, true);
     }
 
     // Use event delegation at document level to handle clicks from all toolbars (inline and fullscreen)
@@ -201,6 +239,7 @@ window.ContentEditorEventManager = {
               // Close the dropdown
               activeDropdown.classList.remove('active');
               activeDropdown._isLivePreviewActive = false;
+              window.ContentEditorEventManager.resetToolbarDropdownMenu(activeDropdown);
               
               // Restore selection immediately after closing (to prevent loss)
               if (editor) {
@@ -247,6 +286,7 @@ window.ContentEditorEventManager = {
             } else {
               // Not a color picker dropdown, just close it
               activeDropdown.classList.remove('active');
+              window.ContentEditorEventManager.resetToolbarDropdownMenu(activeDropdown);
             }
           }
         }
@@ -320,7 +360,7 @@ window.ContentEditorEventManager = {
 
       if (command === 'formatBlock' && value) {
         // Format block command - ensure we have a valid value
-        window.ContentEditorCommandRegistry.execute('formatBlock', value);
+        window.ContentEditorCommandRegistry.execute('formatBlock', value, editor);
         // Small delay to ensure DOM is updated
         setTimeout(() => {
           if (window.ContentEditorToolbar) {
@@ -333,7 +373,7 @@ window.ContentEditorEventManager = {
       } else if (command && command.startsWith('justify')) {
         // Alignment commands
         this.restoreSelectionForEditor(editor, dropdown);
-        window.ContentEditorCommandRegistry.execute(command, value);
+        window.ContentEditorCommandRegistry.execute(command, value, editor);
         setTimeout(() => {
           if (window.ContentEditorToolbar) {
             window.ContentEditorToolbar.updateState(editor, toolbar);
@@ -345,10 +385,11 @@ window.ContentEditorEventManager = {
       } else if (command && (command === 'insertVideo' || command === 'insertAudio' || command === 'insertMaps' || command === 'insertLinkPreview' || command === 'insertIframe' || command === 'insertCustomEmbed')) {
         // Media embed commands
         this.restoreSelectionForEditor(editor, dropdown);
-        window.ContentEditorCommandRegistry.execute(command, value);
+        window.ContentEditorCommandRegistry.execute(command, value, editor);
         // Close dropdown after command
         if (dropdown) {
           dropdown.classList.remove('active');
+          this.resetToolbarDropdownMenu(dropdown);
         }
         return;
       }
@@ -357,6 +398,7 @@ window.ContentEditorEventManager = {
       if (dropdown) {
         dropdown.classList.remove('active');
         dropdown._isLivePreviewActive = false;
+        this.resetToolbarDropdownMenu(dropdown);
       }
       return;
     }
@@ -407,6 +449,12 @@ window.ContentEditorEventManager = {
           menu.style.removeProperty('display');
         }
 
+        if (dropdown.classList.contains('active')) {
+          this.positionToolbarDropdownMenu(dropdown);
+        } else {
+          this.resetToolbarDropdownMenu(dropdown);
+        }
+
         // Initialize color picker if it's the textColor dropdown
         if (command === 'textColor' && dropdown.querySelector('.color-wheel')) {
           // Small delay to ensure dropdown is visible before drawing canvas
@@ -423,7 +471,7 @@ window.ContentEditorEventManager = {
       }
     } else {
       // Other commands
-      window.ContentEditorCommandRegistry.execute(command, value);
+      window.ContentEditorCommandRegistry.execute(command, value, editor);
       
       // Save state to history after command
       if (window.ContentEditorHistory) {
@@ -1294,6 +1342,7 @@ window.ContentEditorEventManager = {
         // Close dropdown
         dropdown.classList.remove('active');
         dropdown._isLivePreviewActive = false;
+        window.ContentEditorEventManager.resetToolbarDropdownMenu(dropdown);
         
         // Save to history only if we actually applied something
         if (applied && window.ContentEditorHistory) {
@@ -1319,6 +1368,7 @@ window.ContentEditorEventManager = {
         // Close dropdown
         dropdown.classList.remove('active');
         dropdown._isLivePreviewActive = false;
+        window.ContentEditorEventManager.resetToolbarDropdownMenu(dropdown);
         
         // Save to history
         if (window.ContentEditorHistory) {

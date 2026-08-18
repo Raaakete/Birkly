@@ -191,6 +191,7 @@
               window.ContentEditorBlockManager.initializeEditor(editor);
             }
 
+            wrapToolbarScroll(toolbar);
             initToolbarOverflow(toolbar);
 
             // Initialize table controls for existing tables
@@ -897,6 +898,22 @@
   }
 
   // Toolbar overflow menu for viewports < 1024px (P44-M9)
+  function wrapToolbarScroll(toolbar) {
+    if (!toolbar || toolbar.querySelector('.content-editor-toolbar-scroll')) return;
+    const scroll = document.createElement('div');
+    scroll.className = 'content-editor-toolbar-scroll';
+    const overflowWrap = toolbar.querySelector('.content-editor-toolbar-overflow-wrap');
+    const movable = [];
+    Array.from(toolbar.childNodes).forEach(function (node) {
+      if (node.nodeType !== 1) return;
+      if (node.classList.contains('content-editor-toolbar-overflow-wrap')) return;
+      movable.push(node);
+    });
+    if (!movable.length) return;
+    movable.forEach(function (node) { scroll.appendChild(node); });
+    toolbar.insertBefore(scroll, overflowWrap || null);
+  }
+
   function initToolbarOverflow(toolbar) {
     if (!toolbar || toolbar.dataset.overflowReady === 'true') return;
     toolbar.dataset.overflowReady = 'true';
@@ -908,6 +925,7 @@
 
     const btn = wrap.querySelector('.content-editor-toolbar-overflow-btn');
     const menu = wrap.querySelector('.content-editor-toolbar-overflow-menu');
+    const scroll = toolbar.querySelector('.content-editor-toolbar-scroll') || toolbar;
     const movableSelector = ':scope > .toolbar-group:not(.toolbar-group-right), :scope > .toolbar-separator, :scope > .toolbar-dropdown';
 
     function restoreAll() {
@@ -928,14 +946,14 @@
       restoreAll();
       if (!window.matchMedia('(max-width: 1023px)').matches) return;
 
-      const items = Array.from(toolbar.querySelectorAll(movableSelector));
+      const items = Array.from(scroll.querySelectorAll(movableSelector));
       const reserve = 44;
       const overflowed = [];
 
       items.forEach(function (el) { el.hidden = false; });
 
       for (let i = items.length - 1; i >= 0; i--) {
-        if (toolbar.scrollWidth <= toolbar.clientWidth - reserve) break;
+        if (scroll.scrollWidth <= scroll.clientWidth - reserve) break;
         overflowed.unshift(items[i]);
         items[i].hidden = true;
       }
