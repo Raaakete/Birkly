@@ -34,6 +34,7 @@ function birkly_collection_api_settings_keys(): array
         'captcha_site_key',
         'captcha_secret_key',
         'allow_anonymous_read',
+        'allow_anonymous_submit',
     ];
 }
 
@@ -91,6 +92,7 @@ function birkly_ai_normalize_api_settings(array $apiSettings): array
         'captcha_site_key' => (string) ($apiSettings['captcha_site_key'] ?? ''),
         'captcha_secret_key' => (string) ($apiSettings['captcha_secret_key'] ?? ''),
         'allow_anonymous_read' => !empty($apiSettings['allow_anonymous_read']),
+        'allow_anonymous_submit' => !empty($apiSettings['allow_anonymous_submit']),
     ];
 }
 
