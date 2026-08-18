@@ -375,7 +375,8 @@ window.ContentEditorSync = {
 
     const fieldName = wrapper.dataset.fieldName;
     const editor = wrapper.querySelector('.content-editor-area');
-    const hiddenInput = fieldName ? document.getElementById('field_' + fieldName) : null;
+    const hiddenInput = wrapper.querySelector('input[type="hidden"]')
+      || (fieldName ? document.getElementById('field_' + fieldName) : null);
     const htmlSource = wrapper.querySelector('.content-editor-html-source');
     if (!hiddenInput) return;
 
