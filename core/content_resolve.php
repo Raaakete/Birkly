@@ -5,6 +5,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/page_bundle_helpers.php';
+
 /**
  * Resolve a collection directory name from slug, display name, or id (case-insensitive).
  */
@@ -16,6 +18,15 @@ function birkly_content_resolve_collection_dir(Storage $storage, string $collect
     }
 
     $needle = strtolower($collectionRef);
+    $base = birkly_storage_filesystem_base($storage);
+    if ($base !== null) {
+        $collectionsRoot = rtrim($base, '/') . '/collections';
+        $directDir = $collectionsRoot . '/' . $collectionRef;
+        if (is_dir($directDir) && is_file($directDir . '/collection.json')) {
+            return basename($directDir);
+        }
+    }
+
     foreach ($storage->list('collections') as $dir) {
         $meta = $storage->read('collections/' . $dir . '/collection.json');
         if (!is_array($meta)) {

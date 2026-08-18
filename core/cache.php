@@ -4,12 +4,19 @@
  * Provides file-based caching for entries, collections, and search indexes
  */
 
+require_once __DIR__ . '/birkly_data_paths.php';
+
+function birkly_cache_dir(): string
+{
+    return birkly_data_disk_path() . '/cache';
+}
+
 class Cache {
     private $cacheDir;
     private $enabled;
     
-    public function __construct($cacheDir = '../cache') {
-        $this->cacheDir = $cacheDir;
+    public function __construct($cacheDir = null) {
+        $this->cacheDir = $cacheDir ?? birkly_cache_dir();
         $this->enabled = true; // Can be configured via settings
         
         // Create cache directory if it doesn't exist

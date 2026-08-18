@@ -7,6 +7,7 @@
  */
 
 require_once __DIR__ . '/StorageInterface.php';
+require_once __DIR__ . '/file_lock.php';
 
 class FlatFileStorage implements StorageInterface {
     public $basePath;
@@ -38,21 +39,29 @@ class FlatFileStorage implements StorageInterface {
             mkdir($dir, 0755, true);
         }
         $tmpPath = $fullPath . '.tmp';
+        birkly_storage_cleanup_stale_write_tmp($tmpPath);
         $json = json_encode($data, JSON_PRETTY_PRINT);
+        if ($json === false) {
+            return false;
+        }
         $fp = fopen($tmpPath, 'c');
-        if (!$fp) return false;
-        if (flock($fp, LOCK_EX)) {
-            ftruncate($fp, 0);
-            fwrite($fp, $json);
-            fflush($fp);
-            flock($fp, LOCK_UN);
-            fclose($fp);
-            rename($tmpPath, $fullPath);
-            return true;
-        } else {
+        if (!$fp) {
+            return false;
+        }
+        if (!birkly_storage_flock_acquire_exclusive($fp, 5000)) {
             fclose($fp);
             return false;
         }
+        ftruncate($fp, 0);
+        fwrite($fp, $json);
+        fflush($fp);
+        flock($fp, LOCK_UN);
+        fclose($fp);
+        if (!rename($tmpPath, $fullPath)) {
+            @unlink($tmpPath);
+            return false;
+        }
+        return true;
     }
     
     public function delete($path) {
