@@ -14,7 +14,34 @@ require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/public_read.php';
 require_once __DIR__ . '/rate_limit.php';
+require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugin_availability.php';
+
+function birkly_public_deny_read(string $collectionSlug, string $reason) {
+    log_security_event('public_read_denied', [
+        'collection' => $collectionSlug,
+        'reason' => $reason,
+        'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+        'origin' => $_SERVER['HTTP_ORIGIN'] ?? '',
+        'referer' => $_SERVER['HTTP_REFERER'] ?? '',
+        'action' => $_GET['action'] ?? $_POST['action'] ?? '',
+    ]);
+    http_response_code(403);
+    respond([
+        'status' => 'error',
+        'message' => 'Authentication required',
+        'code' => 'READ_AUTH_REQUIRED',
+    ]);
+}
+
+function birkly_public_enforce_read_auth(array $collectionMeta, string $collectionSlug) {
+    require_once __DIR__ . '/domain_auth.php';
+    setDynamicCORS();
+    $auth = birkly_public_read_auth_check($collectionMeta, $collectionSlug);
+    if (empty($auth['allowed'])) {
+        birkly_public_deny_read($collectionSlug, $auth['reason']);
+    }
+}
 
 function birkly_public_rate_limit($bucket, $limit = 120, $window = 60) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
@@ -251,6 +278,8 @@ if ($action === 'list_entries') {
     // Get collection metadata
     $collectionMeta = $storage->read("collections/$dir/collection.json");
     $collectionSlug = $collectionMeta['slug'] ?? '';
+    $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
+    birkly_public_enforce_read_auth($collectionMeta, $collectionSlug);
     $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
     $multilanguageLanguages = $collectionMeta['multilanguage']['languages'] ?? [];
     
@@ -373,10 +402,6 @@ if ($action === 'list_entries') {
         }
         
         require_once __DIR__ . '/../core/entry_slug.php';
-        $transformedEntries = birkly_public_apply_collection_read_settings(
-            array_values($transformedEntries),
-            is_array($collectionMeta) ? $collectionMeta : []
-        );
         respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($transformedEntries))]]);
     } else {
         // Apply permission filtering if user management plugin is installed and active
@@ -391,10 +416,6 @@ if ($action === 'list_entries') {
         
         // No multi-language, return entries as-is
         require_once __DIR__ . '/../core/entry_slug.php';
-        $publishedEntries = birkly_public_apply_collection_read_settings(
-            array_values($publishedEntries),
-            is_array($collectionMeta) ? $collectionMeta : []
-        );
         respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($publishedEntries))]]);
     }
 }
@@ -428,6 +449,9 @@ if ($action === 'get_entry') {
     
     // Get collection metadata
     $collectionMeta = $storage->read("collections/$dir/collection.json");
+    $collectionSlug = $collectionMeta['slug'] ?? '';
+    $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
+    birkly_public_enforce_read_auth($collectionMeta, $collectionSlug);
     $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
     $multilanguageLanguages = $collectionMeta['multilanguage']['languages'] ?? [];
     

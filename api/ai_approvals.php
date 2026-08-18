@@ -469,7 +469,10 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
     ];
 
     require_once __DIR__ . '/../core/ai_collection_config.php';
-    birkly_ai_merge_collection_config($collectionData, $actionData, null);
+    $mergeError = birkly_ai_merge_collection_config($collectionData, $actionData, null);
+    if ($mergeError !== null) {
+        return ['success' => false, 'message' => $mergeError];
+    }
     
     // Save collection.json
     $collectionFile = $collectionDir . '/collection.json';
@@ -924,7 +927,10 @@ function birkly_ai_execute_update_collection($actionData, $aiUser = null, $origi
     }
 
     require_once __DIR__ . '/../core/ai_collection_config.php';
-    birkly_ai_merge_collection_config($collection, $actionData, $collection);
+    $mergeError = birkly_ai_merge_collection_config($collection, $actionData, $collection);
+    if ($mergeError !== null) {
+        return ['success' => false, 'message' => $mergeError];
+    }
     
     $result = file_put_contents($collectionFile, json_encode($collection, JSON_PRETTY_PRINT));
     return $result ? ['success' => true, 'data' => ['collection' => $collection]] : ['success' => false, 'message' => 'Failed to update collection'];
