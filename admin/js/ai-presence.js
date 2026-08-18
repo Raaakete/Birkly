@@ -27,6 +27,7 @@
         publishState: null,
         publishingInProgress: false,
         wizard: null,
+        pendingWizardAfterIntro: false,
         hubZone: 'guide',
         webmcpConfig: null,
         webmcpCatalog: [],
@@ -525,6 +526,12 @@
         releaseModalFocusTrap();
         if (id === ABOUT_MODAL_ID) {
             markAboutModalSeen();
+            if (state.pendingWizardAfterIntro) {
+                state.pendingWizardAfterIntro = false;
+                setTimeout(function () {
+                    openSetupWizard();
+                }, 300);
+            }
         }
         if (modalPreviousFocus && modalPreviousFocus.focus) {
             modalPreviousFocus.focus();
@@ -660,18 +667,24 @@
         var pubBtn = document.getElementById('ai-presence-publish-btn');
         var unpublishBtn = document.getElementById('ai-presence-unpublish-btn');
         if (msgEl) {
-            msgEl.style.display = 'block';
             if (ps.never_published) {
-                msgEl.textContent = t('ag_sticky_not_live', 'Not published yet — complete setup and publish when ready.');
-                msgEl.className = 'main-actions-message message message-warning';
+                msgEl.hidden = true;
+                msgEl.textContent = '';
+                msgEl.className = 'main-actions-message message';
             } else if (ps.has_unpublished_changes || state.dirty) {
+                msgEl.hidden = false;
+                msgEl.style.display = 'block';
                 msgEl.textContent = t('ag_sticky_unpublished', 'You have unpublished changes.');
                 msgEl.className = 'main-actions-message message message-warning';
             } else if (ps.is_live) {
+                msgEl.hidden = false;
+                msgEl.style.display = 'block';
                 msgEl.textContent = t('ag_sticky_published', 'Published at {time} — no unpublished changes.')
                     .replace('{time}', formatDateTime(ps.last_published_at));
                 msgEl.className = 'main-actions-message message message-success';
             } else {
+                msgEl.hidden = false;
+                msgEl.style.display = 'block';
                 msgEl.textContent = t('ag_essentials_publish_off', 'Public publishing is turned off.');
                 msgEl.className = 'main-actions-message message message-warning';
             }
@@ -1803,17 +1816,15 @@
         try { localStorage.setItem(ABOUT_MODAL_SEEN_KEY, '1'); } catch (e) { /* ignore */ }
     }
 
-    // Called after load() resolves and maybeShowSetup() has decided whether
-    // the setup wizard is about to auto-open. Exactly one first-time
-    // explanation should show — the wizard's own "Welcome" step already
-    // covers what Agent Guide is, so if the wizard is opening, this modal
-    // stays closed and is treated as seen rather than surfacing again later.
-    function maybeAutoShowAboutModal(wizardWillOpen) {
+    function shouldAutoOpenSetupWizard(data) {
+        var draft = (data && data.draft) || state.draft || {};
+        var empty = !(draft.identity && draft.identity.official_name);
+        return !draft.setup_completed_at && !draft.setup_skipped_at && empty && !!state.wizard;
+    }
+
+    // First visit: show the explainer modal; guided setup opens after it closes.
+    function maybeAutoShowAboutModal() {
         if (aboutModalSeen()) return;
-        if (wizardWillOpen) {
-            markAboutModalSeen();
-            return;
-        }
         openApModal(ABOUT_MODAL_ID);
     }
 
@@ -1823,17 +1834,14 @@
     }
 
     function maybeShowSetup(data) {
-        var draft = data.draft || {};
-        var empty = !(draft.identity && draft.identity.official_name);
-        var willOpenWizard = !draft.setup_completed_at && !draft.setup_skipped_at && empty && !!state.wizard;
-        if (willOpenWizard) {
+        state.pendingWizardAfterIntro = shouldAutoOpenSetupWizard(data);
+        maybeAutoShowAboutModal();
+        if (state.pendingWizardAfterIntro && aboutModalSeen()) {
+            state.pendingWizardAfterIntro = false;
             setTimeout(function () {
                 openSetupWizard();
             }, 400);
         }
-        // Decide the about-modal's fate in the SAME tick as the wizard
-        // decision, before either has a chance to open — never stack them.
-        maybeAutoShowAboutModal(willOpenWizard);
     }
 
     function loadCollections() {
