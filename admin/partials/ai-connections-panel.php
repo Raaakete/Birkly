@@ -317,3 +317,34 @@
           </div>
         </div></div>
         </div>
+
+<!-- First-visit explainer — connection methods on Settings → AI -->
+<div id="ai-connections-intro-modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="ai-connections-intro-title">
+  <div class="modal-backdrop" data-ai-conn-intro-close></div>
+  <div class="modal-content modal--md">
+    <div class="modal-header">
+      <h2 id="ai-connections-intro-title" class="modal-title"><?= htmlspecialchars(__('admin.ai_connections_intro_title')) ?></h2>
+      <button type="button" class="modal-close" data-ai-conn-intro-close aria-label="<?= htmlspecialchars(__('admin.close')) ?>">&times;</button>
+    </div>
+    <div class="modal-body u-stack-4">
+      <p class="u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_body')) ?></p>
+      <div class="u-stack-3">
+        <div class="card-section u-stack-1">
+          <h3 class="u-text-sm u-weight-semibold u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_personal_title')) ?></h3>
+          <p class="u-text-sm u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_personal_body')) ?></p>
+        </div>
+        <div class="card-section u-stack-1">
+          <h3 class="u-text-sm u-weight-semibold u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_service_title')) ?></h3>
+          <p class="u-text-sm u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_service_body')) ?></p>
+        </div>
+        <div class="card-section u-stack-1">
+          <h3 class="u-text-sm u-weight-semibold u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_assistant_title')) ?></h3>
+          <p class="u-text-sm u-m-0"><?= htmlspecialchars(__('admin.ai_connections_intro_assistant_body')) ?></p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" data-ai-conn-intro-close><?= htmlspecialchars(__('admin.ai_connections_intro_got_it')) ?></button>
+    </div>
+  </div>
+</div>
