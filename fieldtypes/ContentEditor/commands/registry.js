@@ -18,7 +18,8 @@ window.ContentEditorCommandRegistry = {
     const registeredCommand = this.commands.get(name);
     if (registeredCommand && typeof registeredCommand.execute === 'function') {
       if (!editor) {
-        editor = window.ContentEditorDOMUtils?.findEditorArea();
+        editor = (window.ContentEditorState && window.ContentEditorState.activeEditor) ||
+          window.ContentEditorDOMUtils?.findEditorArea();
       }
 
       if (window.ContentEditorSelection) {

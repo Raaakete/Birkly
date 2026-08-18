@@ -323,25 +323,27 @@ window.ContentEditorKeyboard = {
     
     // Regular block: split at cursor
     try {
-      const afterContent = range.extractContents();
+      const afterRange = range.cloneRange();
+      afterRange.setStart(range.startContainer, range.startOffset);
+      afterRange.setEndAfter(block);
+
+      const afterContent = afterRange.extractContents();
+
       const newP = document.createElement('p');
-      newP.innerHTML = '<br>';
-      
-      if (afterContent.childNodes.length > 0) {
-        newP.innerHTML = '';
-        while (afterContent.firstChild) {
-          newP.appendChild(afterContent.firstChild);
-        }
+      if (afterContent.textContent.trim()) {
+        newP.appendChild(afterContent);
+      } else {
+        newP.innerHTML = '<br>';
       }
-      
+
       // Insert new paragraph after current block
       block.parentNode.insertBefore(newP, block.nextSibling);
-      
+
       // Ensure current block has content
       if (!block.textContent.trim() || block.textContent.trim() === '\u200B') {
         block.innerHTML = '<br>';
       }
-      
+
       this.setCursorAt(newP, 0);
     } catch (e) {
       console.error('Error handling Enter:', e);
