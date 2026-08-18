@@ -613,11 +613,19 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
     error_log("executeCreateEntry: Extracted entryData keys: " . implode(', ', array_keys($entryData)));
     
     try {
+        $phaseStarted = microtime(true);
         require_once __DIR__ . '/storage.php';
         require_once __DIR__ . '/../core/content_resolve.php';
 
+        error_log('executeCreateEntry: opening content storage');
         $contentStorage = birkly_ai_content_storage();
+        error_log('executeCreateEntry: storage ready dt='
+            . (int) round((microtime(true) - $phaseStarted) * 1000) . 'ms');
+
+        $resolveStarted = microtime(true);
         $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
+        error_log('executeCreateEntry: resolve collection dt='
+            . (int) round((microtime(true) - $resolveStarted) * 1000) . 'ms');
         if ($collectionDir === null) {
             error_log("executeCreateEntry: Collection not found: " . $collection);
             return ['success' => false, 'message' => 'Collection not found: ' . $collection];
@@ -667,14 +675,20 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
         
         require_once __DIR__ . '/../core/entry_storage.php';
         error_log("executeCreateEntry: Attempting to write entry: " . $entryId);
+        $writeStarted = microtime(true);
         $result = birkly_entry_write_record($collection, $entryId, $entry);
+        error_log('executeCreateEntry: write_record total dt='
+            . (int) round((microtime(true) - $writeStarted) * 1000) . 'ms ok=' . ($result ? '1' : '0'));
         
         if ($result) {
             error_log("executeCreateEntry: Successfully created entry: " . $entryId);
+            $hookStarted = microtime(true);
             birkly_ai_ensure_plugins_loaded();
             if (function_exists('do_action')) {
                 do_action('after_entry_save', $entry, $collection, null);
             }
+            error_log('executeCreateEntry: plugin hooks dt='
+                . (int) round((microtime(true) - $hookStarted) * 1000) . 'ms');
             return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
         } else {
             error_log("executeCreateEntry: Failed to write entry file for collection: " . $collection);
@@ -683,14 +697,10 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
                 'message' => 'Failed to write entry file (storage lock timeout, I/O error, or database unreachable). Check server logs.',
             ];
         }
-    } catch (Exception $e) {
-        error_log("executeCreateEntry Exception: " . $e->getMessage());
+    } catch (Throwable $e) {
+        error_log("executeCreateEntry Throwable: " . $e->getMessage());
         error_log("Stack trace: " . $e->getTraceAsString());
         return ['success' => false, 'message' => 'Error creating entry: ' . $e->getMessage()];
-    } catch (Error $e) {
-        error_log("executeCreateEntry Fatal Error: " . $e->getMessage());
-        error_log("Stack trace: " . $e->getTraceAsString());
-        return ['success' => false, 'message' => 'Fatal error creating entry: ' . $e->getMessage()];
     }
 }
 
