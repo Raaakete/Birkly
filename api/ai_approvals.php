@@ -595,7 +595,7 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
     } else {
         require_once __DIR__ . '/storage.php';
         require_once __DIR__ . '/../core/content_resolve.php';
-        $contentStorage = new Storage('../content');
+        $contentStorage = birkly_ai_content_storage();
         $collection = birkly_ai_resolve_collection_slug_from_payload($actionData, $contentStorage);
         if ($collection === '') {
             error_log("executeCreateEntry: Collection not found in action data. Action data: " . json_encode($actionData));
@@ -614,7 +614,7 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
         require_once __DIR__ . '/storage.php';
         require_once __DIR__ . '/../core/content_resolve.php';
 
-        $contentStorage = new Storage('../content');
+        $contentStorage = birkly_ai_content_storage();
         $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
         if ($collectionDir === null) {
             error_log("executeCreateEntry: Collection not found: " . $collection);
@@ -624,7 +624,7 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
         
         error_log("executeCreateEntry: Resolved collection dir: " . $collection);
         
-        $collectionPath = '../content/collections/' . $collection;
+        $collectionPath = birkly_ai_content_collections_dir() . '/' . $collection;
         
         // Generate entry ID
         $entryId = bin2hex(random_bytes(8));
@@ -742,7 +742,7 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     
     // Resolve collection directory (preserve legacy slugs like site_elements)
     require_once __DIR__ . '/../core/content_resolve.php';
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
     if ($collectionDir === null) {
         return ['success' => false, 'message' => 'Collection not found: ' . $collection];
@@ -837,7 +837,7 @@ function executeDeleteEntry($actionData, $aiUser = null, $originalUserId = null)
         return ['success' => false, 'message' => 'Collection and entry ID are required'];
     }
     
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     $collectionDir = birkly_content_resolve_collection_dir_name($contentStorage, (string) $collection);
     if ($collectionDir === null) {
         return ['success' => false, 'message' => 'Collection not found: ' . $collection];
@@ -866,7 +866,7 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
     require_once __DIR__ . '/../core/content_resolve.php';
 
     $actionData = birkly_ai_normalize_collection_action_data($actionData);
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     $slugRef = birkly_ai_resolve_collection_slug_from_payload($actionData, $contentStorage);
     if ($slugRef === '') {
         return ['success' => false, 'message' => 'Collection slug is required. Action data: ' . json_encode($actionData)];
@@ -877,7 +877,7 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
         return ['success' => false, 'message' => 'Collection not found'];
     }
     
-    $collectionFile = '../content/collections/' . $slug . '/collection.json';
+    $collectionFile = birkly_ai_content_collections_dir() . '/' . $slug . '/collection.json';
     
     $collection = json_decode(file_get_contents($collectionFile), true);
     if (!$collection) {
@@ -891,7 +891,7 @@ function executeUpdateCollection($actionData, $aiUser = null, $originalUserId = 
 
     if (isset($actionData['fields']) && is_array($actionData['fields'])) {
         require_once __DIR__ . '/../core/collection_schema.php';
-        $schemaFile = '../content/collections/' . $slug . '/schema.json';
+        $schemaFile = birkly_ai_content_collections_dir() . '/' . $slug . '/schema.json';
         $schema = birkly_normalize_collection_schema($actionData);
         if (file_put_contents($schemaFile, json_encode($schema, JSON_PRETTY_PRINT)) === false) {
             return ['success' => false, 'message' => 'Failed to update collection schema'];
@@ -946,7 +946,7 @@ function executeDeleteCollection($actionData, $aiUser = null, $originalUserId = 
     require_once __DIR__ . '/../core/content_resolve.php';
 
     $actionData = birkly_ai_normalize_collection_action_data($actionData);
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     $slug = birkly_ai_resolve_collection_slug_from_payload($actionData, $contentStorage);
     if ($slug === '') {
         return ['success' => false, 'message' => 'Collection slug is required. Action data: ' . json_encode($actionData)];
@@ -954,7 +954,7 @@ function executeDeleteCollection($actionData, $aiUser = null, $originalUserId = 
 
     $slug = birkly_content_resolve_collection_dir_name($contentStorage, $slug) ?? $slug;
     
-    $collectionDir = '../content/collections/' . $slug;
+    $collectionDir = birkly_ai_content_collections_dir() . '/' . $slug;
     if (!is_dir($collectionDir)) {
         return ['success' => false, 'message' => 'Collection not found'];
     }
@@ -1172,7 +1172,7 @@ function executeUpdateSettings($actionData, $aiUser = null, $originalUserId = nu
 // Execute create page
 function executeCreatePage($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     
     $title = $actionData['title'] ?? '';
     $slug = $actionData['slug'] ?? '';
@@ -1203,7 +1203,7 @@ function executeCreatePage($actionData, $aiUser = null, $originalUserId = null) 
 // Execute update page
 function executeUpdatePage($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     
     $slug = $actionData['slug'] ?? $actionData['id'] ?? '';
     if (empty($slug)) {
@@ -1228,7 +1228,7 @@ function executeUpdatePage($actionData, $aiUser = null, $originalUserId = null) 
 // Execute delete page
 function executeDeletePage($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
-    $contentStorage = new Storage('../content');
+    $contentStorage = birkly_ai_content_storage();
     
     $slug = $actionData['slug'] ?? $actionData['id'] ?? '';
     if (empty($slug)) {
