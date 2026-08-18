@@ -28,6 +28,29 @@ assert_true('public_api sets entry_method', ($collection['entry_method'] ?? '') 
 assert_true('public_api generates api_key', str_starts_with((string) ($collection['api_key'] ?? ''), 'birkly_'));
 assert_true('public_api sets auto_publish', !empty($collection['api_settings']['auto_publish']));
 
+$existing = [
+    'slug' => 'supporters',
+    'entry_method' => 'public_api',
+    'api_key' => 'birkly_testkey',
+    'api_settings' => ['auto_publish' => true, 'rate_limit' => 20, 'allow_anonymous_read' => true],
+];
+$patchTarget = $existing;
+$mergeError = birkly_ai_merge_collection_config($patchTarget, [
+    'api_settings' => ['allow_anonymous_read' => false],
+], $existing);
+assert_true('api_settings-only patch succeeds', $mergeError === null);
+assert_true(
+    'allow_anonymous_read false persists without entry_method',
+    array_key_exists('allow_anonymous_read', $patchTarget['api_settings'] ?? [])
+        && ($patchTarget['api_settings']['allow_anonymous_read'] ?? null) === false
+);
+assert_true('rate_limit preserved on partial patch', ($patchTarget['api_settings']['rate_limit'] ?? null) === 20);
+
+$unknownError = birkly_validate_api_settings_keys(['not_a_real_key' => true]);
+assert_true('unknown api_settings key rejected', $unknownError !== null && str_contains($unknownError, 'not_a_real_key'));
+
+assert_true('keys derived from schema', in_array('allow_anonymous_read', birkly_collection_api_settings_keys(), true));
+
 $subs = birkly_ai_process_sub_collections([
     [
         'slug' => 'comments',

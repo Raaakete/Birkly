@@ -634,6 +634,16 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             return ['success' => false, 'message' => 'Collection not found: ' . $collection];
         }
         $collection = $collectionDir;
+
+        require_once __DIR__ . '/../core/ai_write_validation.php';
+        $unknownKeys = birkly_ai_reject_unknown_keys(
+            $actionData,
+            birkly_ai_entry_write_allowed_keys_for_collection($collection),
+            'create_entry'
+        );
+        if ($unknownKeys !== null) {
+            return ['success' => false, 'message' => $unknownKeys];
+        }
         
         error_log("executeCreateEntry: Resolved collection dir: " . $collection);
         
@@ -733,8 +743,8 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
         // Check if there's nested data
         if (isset($actionData['data']) && is_array($actionData['data'])) {
             $updateData = $actionData['data'];
-            $entryId = $updateData['id'] ?? '';
-            $entrySlug = $updateData['slug'] ?? '';
+            $entryId = (string) ($actionData['id'] ?? $updateData['id'] ?? '');
+            $entrySlug = (string) ($actionData['slug'] ?? $updateData['slug'] ?? '');
         } else {
             // Collection and fields are at the same level - this is the most common format
             $updateData = $actionData;
@@ -751,8 +761,8 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
         }
         $updateData = $actionData['data'];
         unset($updateData['collection']);
-        $entryId = $updateData['id'] ?? '';
-        $entrySlug = $updateData['slug'] ?? '';
+        $entryId = (string) ($actionData['id'] ?? $updateData['id'] ?? '');
+        $entrySlug = (string) ($actionData['slug'] ?? $updateData['slug'] ?? '');
         unset($updateData['id'], $updateData['slug']);
     } else {
         error_log("executeUpdateEntry: Collection not found in action data");
@@ -767,6 +777,16 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
         return ['success' => false, 'message' => 'Collection not found: ' . $collection];
     }
     $collection = $collectionDir;
+
+    require_once __DIR__ . '/../core/ai_write_validation.php';
+    $unknownKeys = birkly_ai_reject_unknown_keys(
+        $actionData,
+        birkly_ai_entry_write_allowed_keys_for_collection($collection),
+        'update_entry'
+    );
+    if ($unknownKeys !== null) {
+        return ['success' => false, 'message' => $unknownKeys];
+    }
 
     if (!empty($entrySlug)) {
         $entrySlug = birkly_normalize_slug($entrySlug);
@@ -919,6 +939,11 @@ function birkly_ai_execute_update_collection($actionData, $aiUser = null, $origi
 
     if (isset($actionData['fields']) && is_array($actionData['fields'])) {
         require_once __DIR__ . '/../core/collection_schema.php';
+        require_once __DIR__ . '/../core/ai_write_validation.php';
+        $fieldTypeError = birkly_ai_validate_collection_field_types($actionData['fields']);
+        if ($fieldTypeError !== null) {
+            return ['success' => false, 'message' => $fieldTypeError];
+        }
         $schemaFile = birkly_ai_content_collections_dir() . '/' . $slug . '/schema.json';
         $schema = birkly_normalize_collection_schema($actionData);
         if (file_put_contents($schemaFile, json_encode($schema, JSON_PRETTY_PRINT)) === false) {
@@ -933,7 +958,13 @@ function birkly_ai_execute_update_collection($actionData, $aiUser = null, $origi
     }
     
     $result = file_put_contents($collectionFile, json_encode($collection, JSON_PRETTY_PRINT));
-    return $result ? ['success' => true, 'data' => ['collection' => $collection]] : ['success' => false, 'message' => 'Failed to update collection'];
+    if (!$result) {
+        return ['success' => false, 'message' => 'Failed to update collection'];
+    }
+
+    $stored = birkly_ai_load_collection_record($slug);
+
+    return ['success' => true, 'data' => ['collection' => $stored ?? $collection]];
 }
 
 function executeSaveCollectionGroups($actionData, $aiUser = null, $originalUserId = null) {
@@ -1194,9 +1225,16 @@ function executeMoveMedia($actionData, $aiUser = null, $originalUserId = null) {
 // Execute update settings
 function executeUpdateSettings($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
+    require_once __DIR__ . '/../core/ai_write_validation.php';
+
+    $unknownKeys = birkly_ai_reject_unknown_keys($actionData, birkly_ai_update_settings_allowed_keys(), 'update_settings');
+    if ($unknownKeys !== null) {
+        return ['success' => false, 'message' => $unknownKeys];
+    }
+
     $settingsStorage = new Storage('../settings');
     $category = $actionData['category'] ?? '';
-    $settings = $actionData['settings'] ?? [];
+    $settings = $actionData['settings'] ?? $actionData['data'] ?? [];
     
     if (empty($category) || empty($settings)) {
         return ['success' => false, 'message' => 'Category and settings are required'];
@@ -1243,6 +1281,13 @@ function executeCreatePage($actionData, $aiUser = null, $originalUserId = null) 
 // Execute update page
 function executeUpdatePage($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
+    require_once __DIR__ . '/../core/ai_write_validation.php';
+
+    $unknownKeys = birkly_ai_reject_unknown_keys($actionData, birkly_ai_update_page_allowed_keys(), 'update_page');
+    if ($unknownKeys !== null) {
+        return ['success' => false, 'message' => $unknownKeys];
+    }
+
     $contentStorage = birkly_ai_content_storage();
     
     $slug = $actionData['slug'] ?? $actionData['id'] ?? '';
@@ -1282,6 +1327,13 @@ function executeDeletePage($actionData, $aiUser = null, $originalUserId = null) 
 // Execute update user
 function executeUpdateUser($actionData, $aiUser = null, $originalUserId = null) {
     require_once __DIR__ . '/storage.php';
+    require_once __DIR__ . '/../core/ai_write_validation.php';
+
+    $unknownKeys = birkly_ai_reject_unknown_keys($actionData, birkly_ai_update_user_allowed_keys(), 'update_user');
+    if ($unknownKeys !== null) {
+        return ['success' => false, 'message' => $unknownKeys];
+    }
+
     $usersStorage = new Storage('../users');
     
     $userId = $actionData['id'] ?? $actionData['email'] ?? '';
