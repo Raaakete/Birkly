@@ -8,7 +8,15 @@ require_once __DIR__ . '/birkly_paths.php';
 
 function birkly_entry_content_storage(): StorageInterface
 {
-    return get_storage(birkly_project_root() . '/content');
+    require_once __DIR__ . '/storage/StorageFactory.php';
+    $config = StorageFactory::loadStorageConfig(true);
+    $driver = StorageFactory::normalizeDriver((string) ($config['driver'] ?? 'flatfile'));
+
+    if (in_array($driver, ['mysql', 'postgresql'], true)) {
+        return StorageFactory::createDriver($driver, $config, null);
+    }
+
+    return StorageFactory::createStorage(birkly_project_root() . '/content');
 }
 
 function birkly_entry_collection_storage_key(string $collectionSlug): string
