@@ -90,11 +90,22 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
     </div>
 
     <?php
+    $entryEditorStatus = $entry['status'] ?? 'unpublished';
+    if ($entryEditorStatus === 'draft') {
+        $entryEditorStatus = 'unpublished';
+    }
+    $entryEditorIsPublished = ($entryEditorStatus === 'published');
     $stickySaveBarForm = 'entry-form';
-    $stickySaveBarSaveLabel = !empty($entry['id']) ? __('admin.update_entry') : __('admin.create_entry');
+    $stickySaveBarSaveLabel = __('admin.save');
     $stickySaveBarSaveId = 'entry-save-submit';
+    $stickySaveBarCancelLabel = __('admin.close');
     $stickySaveBarCancelUrl = !empty($cancel_url) ? $cancel_url : null;
     $stickySaveBarStatusHtml = '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
+  if (!$isSubEntry):
+    $publishBtnClass = $entryEditorIsPublished ? 'btn btn-danger' : 'btn btn-primary';
+    $publishBtnLabel = $entryEditorIsPublished ? __('admin.unpublish') : __('admin.publish');
+    $stickySaveBarAfterSaveHtml = '<button type="button" class="' . htmlspecialchars($publishBtnClass) . '" id="entry-publish-btn" data-published="' . ($entryEditorIsPublished ? '1' : '0') . '">' . htmlspecialchars($publishBtnLabel) . '</button>';
+  endif;
     include __DIR__ . '/components/sticky-save-bar.php';
     ?>
     
@@ -717,27 +728,6 @@ echo htmlspecialchars($collectionExample);
         </div>
     </form>
 
-    <div id="entry-save-success-banner" class="entry-save-success-banner" hidden role="status" aria-live="polite">
-        <span class="entry-save-success-banner__icon" aria-hidden="true">✓</span>
-        <span id="entry-save-success-banner-text" class="entry-save-success-banner__text"></span>
-    </div>
-
-    <div id="entry-save-success-modal" class="modal entry-save-success-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="entry-save-success-title" aria-describedby="entry-save-success-message">
-        <div class="modal-backdrop" data-entry-modal-close="entry-save-success-modal"></div>
-        <div class="modal-content modal--md">
-            <div class="modal-body entry-save-success-body">
-                <div class="entry-save-success-icon" aria-hidden="true">✓</div>
-                <h3 id="entry-save-success-title"><?= __('admin.entry_save_create_title') ?></h3>
-                <p id="entry-save-success-message" class="entry-save-success-meta"><?= __('admin.entry_save_create_message') ?></p>
-                <div class="entry-save-success-actions">
-                    <a class="btn btn-primary" id="entry-save-view-entries" href="#"><?= __('admin.entry_save_view_entries') ?></a>
-                    <button type="button" class="btn btn-primary" id="entry-save-publish" hidden><?= __('admin.entry_save_publish_now') ?></button>
-                    <a class="btn btn-secondary" id="entry-save-add-another" href="#"><?= __('admin.entry_save_add_another') ?></a>
-                    <button type="button" class="btn btn-secondary" id="entry-save-continue" data-entry-modal-close="entry-save-success-modal"><?= __('admin.entry_save_continue_editing') ?></button>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 
@@ -759,17 +749,17 @@ echo htmlspecialchars($collectionExample);
         ? birkly_url('/admin?page=entry-editor&collection=' . rawurlencode($collection['slug']))
         : '',
     'isNewEntry' => empty($entry['id']),
+    'initialStatus' => $entryEditorStatus ?? 'unpublished',
+    'isSubEntry' => $isSubEntry,
     'saveLabels' => [
-        'createTitle' => __('admin.entry_save_create_title'),
-        'createMessage' => __('admin.entry_save_create_message'),
-        'updateTitle' => __('admin.entry_save_update_title'),
-        'updateMessage' => __('admin.entry_save_update_message'),
-        'viewEntries' => __('admin.entry_save_view_entries'),
-        'addAnother' => __('admin.entry_save_add_another'),
-        'continueEditing' => __('admin.entry_save_continue_editing'),
-        'publishNow' => __('admin.entry_save_publish_now'),
+        'savedToast' => __('admin.entry_save_update_message'),
         'publishedToast' => __('admin.entry_save_published_toast'),
+        'unpublishedToast' => 'Entry unpublished',
+        'publish' => __('admin.publish'),
+        'unpublish' => __('admin.unpublish'),
         'saving' => __('admin.saving'),
+        'publishing' => __('admin.publish'),
+        'unpublishing' => __('admin.unpublish'),
     ],
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
 <script src="<?= birkly_url('/admin/js/sidebar-tabs.js') ?>"<?= $__birklyScriptNonceAttr ?? '' ?>></script>

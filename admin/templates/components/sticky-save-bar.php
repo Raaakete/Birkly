@@ -9,6 +9,7 @@ $stickySaveBarStatusHtml = $stickySaveBarStatusHtml ?? '';
 $stickySaveBarSaveId = $stickySaveBarSaveId ?? null;
 $stickySaveBarSaveClass = trim((string) ($stickySaveBarSaveClass ?? 'btn btn-primary'));
 $stickySaveBarExtraActionHtml = $stickySaveBarExtraActionHtml ?? '';
+$stickySaveBarAfterSaveHtml = $stickySaveBarAfterSaveHtml ?? '';
 $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
 ?>
 <div class="main-actions-bar main-actions-bar--sticky">
@@ -29,6 +30,9 @@ $stickySaveBarRightHtml = $stickySaveBarRightHtml ?? '';
         >
             <?= htmlspecialchars($stickySaveBarSaveLabel) ?>
         </button>
+        <?php if ($stickySaveBarAfterSaveHtml): ?>
+            <?= $stickySaveBarAfterSaveHtml ?>
+        <?php endif; ?>
     </div>
     <div class="main-actions-right">
         <?php if ($stickySaveBarRightHtml): ?>

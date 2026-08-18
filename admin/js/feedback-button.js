@@ -14,11 +14,6 @@
     }
 
     function openModal() {
-        // Do not stack over the entry save success dialog.
-        const saveModal = document.getElementById('entry-save-success-modal');
-        if (saveModal && (saveModal.classList.contains('active') || saveModal.style.display === 'flex')) {
-            return;
-        }
         const modal = document.getElementById('feedback-submit-modal');
         const err = document.getElementById('feedback-submit-error');
         const ok = document.getElementById('feedback-submit-success');
