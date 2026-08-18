@@ -749,6 +749,7 @@ echo htmlspecialchars($collectionExample);
         ? birkly_url('/admin?page=entry-editor&collection=' . rawurlencode($collection['slug']))
         : '',
     'isNewEntry' => empty($entry['id']),
+    'entryId' => $entry['id'] ?? '',
     'initialStatus' => $entryEditorStatus ?? 'unpublished',
     'isSubEntry' => $isSubEntry,
     'saveLabels' => [
