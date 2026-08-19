@@ -611,6 +611,9 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             unset($entryData[$reserved]);
         }
     }
+
+    require_once __DIR__ . '/../core/ai_write_validation.php';
+    $entryData = birkly_ai_merge_entry_write_meta_from_payload($actionData, $entryData);
     
     error_log("executeCreateEntry: Extracted collection: " . $collection);
     error_log("executeCreateEntry: Extracted entryData keys: " . implode(', ', array_keys($entryData)));
@@ -768,6 +771,9 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
         error_log("executeUpdateEntry: Collection not found in action data");
         return ['success' => false, 'message' => 'Collection is required'];
     }
+
+    require_once __DIR__ . '/../core/ai_write_validation.php';
+    $updateData = birkly_ai_merge_entry_write_meta_from_payload($actionData, $updateData);
     
     // Resolve collection directory (preserve legacy slugs like site_elements)
     require_once __DIR__ . '/../core/content_resolve.php';
