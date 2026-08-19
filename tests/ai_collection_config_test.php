@@ -19,10 +19,11 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 }
 
 $collection = ['slug' => 'contact', 'name' => 'Contact', 'entry_method' => 'admin_only'];
-birkly_ai_apply_entry_method_config($collection, [
+$mergeError = birkly_ai_merge_collection_config($collection, [
     'entry_method' => 'public_api',
     'api_settings' => ['auto_publish' => true, 'rate_limit' => 20],
 ], null);
+assert_true('public_api merge succeeds', $mergeError === null);
 
 assert_true('public_api sets entry_method', ($collection['entry_method'] ?? '') === 'public_api');
 assert_true('public_api generates api_key', str_starts_with((string) ($collection['api_key'] ?? ''), 'birkly_'));
