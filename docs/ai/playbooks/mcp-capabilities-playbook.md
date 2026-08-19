@@ -22,6 +22,7 @@ This playbook covers **inbound MCP** + admin chat tools.
 | Media | `list_media`, `upload_media` | `media`, `fieldtypes` |
 | Docs | `read_birkly_docs`, `birkly://docs/{topic}` | `playbooks-index` |
 | Connections | `connections_health`, `connections_configure` | `ai-connections` |
+| CMS admin | `cms_list_admin_actions`, `cms_admin_action` | this playbook |
 | Agent Guide | `get_agent_guide_context`, `birkly://brand-context` | `agent-guide` |
 
 **Rule:** Call `tools/list` (or reconnect MCP) after upgrades — clients cache schemas.
@@ -36,6 +37,21 @@ When a plugin is **installed and active**, it injects its own tools into `tools/
 | Automation | `automation_*` | `automation_list_admin_actions` + `automation_admin_action` — all workflow/recipe/setup/queue actions |
 
 Named tools (`commerce_list_orders`, `automation_dry_run`, …) cover common paths. For anything else in the admin UI, call `*_list_admin_actions` first, then `*_admin_action` with `action` + `payload` matching the plugin admin API.
+
+## Core CMS admin parity
+
+Core CMS exposes the same pattern as Commerce/Automation plugins:
+
+| Tool | Purpose |
+|------|---------|
+| `cms_list_admin_actions` | Catalog of all core admin actions (`entries.bulk`, `agent_guide.publish`, `marketplace.install`, …) |
+| `cms_admin_action` | Dispatch any action: `action` + optional `payload` |
+| `cms_bulk_entry_action` | Shortcut: bulk publish/unpublish/trash/restore |
+| `cms_list_connections` / `cms_read_connection` | Read Connections before configure |
+| `cms_create_user` | Create human user accounts |
+| `cms_admin_search` | Global admin search |
+
+Action ids use `domain.subaction` (e.g. `entries.review`, `project_git.push`, `webhooks.create`). Write actions respect the MCP endpoint role permissions.
 
 ## Collection config cheatsheet
 

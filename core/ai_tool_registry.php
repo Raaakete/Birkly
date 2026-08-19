@@ -78,6 +78,15 @@ function birkly_ai_core_tool_definitions(): array
         'connections_health' => ['name' => 'connections_health', 'description' => 'Summarize Connections health: counts by type/provider, default connections, mail queue depth, and recent failures. Does not expose secrets.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['type' => ['type' => 'string', 'description' => 'Optional filter: email, http_credential, or channel']]]],
         'connections_configure' => ['name' => 'connections_configure', 'description' => 'Create, update, or delete a Connection. Secrets are stored encrypted and are never returned.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['operation' => ['type' => 'string', 'enum' => ['create', 'update', 'delete']], 'connection' => ['type' => 'object', 'description' => 'Connection fields: type, provider, alias, name, config, secrets, from_email, etc.']], 'required' => ['operation', 'connection']]],
         'connections_test' => ['name' => 'connections_test', 'description' => 'Test a Connection by alias. For email provide test_email; for Twilio SMS provide to_number. Does not echo secrets.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['alias' => ['type' => 'string'], 'test_email' => ['type' => 'string'], 'to_number' => ['type' => 'string']], 'required' => ['alias']]],
+
+        // CMS admin parity (full core admin API via dispatch)
+        'cms_list_admin_actions' => ['name' => 'cms_list_admin_actions', 'description' => 'List all core CMS admin API actions grouped by area (entries, agent_guide, connections, marketplace, git, webhooks, etc.). Use cms_admin_action to dispatch one.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'cms_admin_action' => ['name' => 'cms_admin_action', 'description' => 'Dispatch any core CMS admin action by name (domain.subaction, e.g. entries.bulk, agent_guide.publish, marketplace.install). Prefer named cms_* tools for common tasks.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['action' => ['type' => 'string', 'description' => 'Action id from cms_list_admin_actions'], 'payload' => ['type' => 'object', 'description' => 'Action input', 'additionalProperties' => true]], 'required' => ['action']]],
+        'cms_bulk_entry_action' => ['name' => 'cms_bulk_entry_action', 'description' => 'Bulk entry action: publish, unpublish, delete (trash), or restore. Shortcut for entries.bulk.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'action' => ['type' => 'string', 'description' => 'publish, unpublish, delete, or restore'], 'entry_ids' => ['type' => 'array', 'items' => ['type' => 'string']]], 'required' => ['collection', 'action', 'entry_ids']]],
+        'cms_list_connections' => ['name' => 'cms_list_connections', 'description' => 'List Connections (read-only, secrets masked). Shortcut for connections.list.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'cms_read_connection' => ['name' => 'cms_read_connection', 'description' => 'Get one Connection by id or alias. Shortcut for connections.get.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'alias' => ['type' => 'string']]]],
+        'cms_create_user' => ['name' => 'cms_create_user', 'description' => 'Create a human user account. Shortcut for users.create.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['email' => ['type' => 'string'], 'password' => ['type' => 'string'], 'name' => ['type' => 'string'], 'role' => ['type' => 'string']], 'required' => ['email', 'password']]],
+        'cms_admin_search' => ['name' => 'cms_admin_search', 'description' => 'Admin global search across collections, entries, media, users. Shortcut for search.admin_search.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['query' => ['type' => 'string'], 'limit' => ['type' => 'number']], 'required' => ['query']]],
     ];
 }
 
@@ -309,6 +318,39 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         if ($pluginResult !== null) {
             return $pluginResult;
         }
+    }
+
+    if (in_array($actionType, [
+        'cms_list_admin_actions',
+        'cms_admin_action',
+        'cms_bulk_entry_action',
+        'cms_list_connections',
+        'cms_read_connection',
+        'cms_create_user',
+        'cms_admin_search',
+    ], true)) {
+        require_once __DIR__ . '/cms_mcp_admin.php';
+        $result = match ($actionType) {
+            'cms_list_admin_actions' => ['status' => 'ok', 'data' => ['catalog' => cms_mcp_admin_action_catalog()]],
+            'cms_admin_action' => cms_mcp_dispatch_admin(
+                trim((string) ($arguments['action'] ?? '')),
+                is_array($arguments['payload'] ?? null) ? $arguments['payload'] : [],
+                $aiUser
+            ),
+            'cms_bulk_entry_action' => cms_mcp_dispatch_admin('entries.bulk', [
+                'collection' => $arguments['collection'] ?? '',
+                'action' => $arguments['action'] ?? '',
+                'entry_ids' => $arguments['entry_ids'] ?? [],
+            ], $aiUser),
+            'cms_list_connections' => cms_mcp_dispatch_admin('connections.list', [], $aiUser),
+            'cms_read_connection' => cms_mcp_dispatch_admin('connections.get', [
+                'id' => $arguments['id'] ?? $arguments['alias'] ?? '',
+            ], $aiUser),
+            'cms_create_user' => cms_mcp_dispatch_admin('users.create', $arguments, $aiUser),
+            'cms_admin_search' => cms_mcp_dispatch_admin('search.admin_search', $arguments, $aiUser),
+            default => ['status' => 'error', 'message' => 'Unknown CMS tool'],
+        };
+        return cms_mcp_admin_result_to_mcp_content($result);
     }
 
     if ($actionType === 'get_system_context') {

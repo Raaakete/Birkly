@@ -112,6 +112,15 @@ function birkly_ai_action_permission_map(): array
         'connections_health' => ['manage_settings'],
         'connections_configure' => ['manage_settings'],
         'connections_test' => ['manage_settings'],
+
+        // CMS admin parity tools
+        'cms_list_admin_actions' => ['read', 'manage_settings', 'manage_content', 'manage_plugins', 'manage_project_site', 'manage_users'],
+        'cms_admin_action' => ['read', 'write', 'delete', 'manage_settings', 'manage_content', 'manage_plugins', 'manage_project_site', 'manage_users', 'list_users'],
+        'cms_bulk_entry_action' => ['write', 'delete', 'manage_content'],
+        'cms_list_connections' => ['manage_settings', 'read_settings', 'read'],
+        'cms_read_connection' => ['manage_settings', 'read_settings'],
+        'cms_create_user' => ['manage_users', 'list_users'],
+        'cms_admin_search' => ['read', 'manage_content'],
     ];
 }
 
