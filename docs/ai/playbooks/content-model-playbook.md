@@ -65,6 +65,16 @@ Use `read_entry` or `list_entries` first to get slug/id.
 
 Sub-collections use the same values on the sub-collection config — see `sub-collections`.
 
+## Public read (`allow_public_read`)
+
+Separate from `entry_method` (who can **write**):
+
+| Field | Meaning |
+|-------|---------|
+| `allow_public_read: true` | Entries readable on the public site / `{for each entry in 'slug'}` without auth |
+
+Set on `create_collection` / `update_collection` at the **top level** (not in `api_settings`). Verify with `read_collection`.
+
 ## Modeling content (decision guide)
 
 Ask for each piece of the site:
@@ -80,7 +90,7 @@ Ask for each piece of the site:
 **Principles:**
 
 1. Define all fields **before** first entry — empty `"fields": []` breaks templates.
-2. Match **field type to content shape** (short → `text`, teaser → `textarea`, body → `editor`, photo → `image`, sortable → `number` + `ordered by order`).
+2. Match **field type to content shape** (short → `text`, teaser → `textarea`, body → `editor`, photo → `image` or `gallery`, sortable → `number` + `ordered by order`). See `fieldtypes` — never use `url`/`text` for media-library images.
 3. **One collection per content type** — don't mix unrelated fields in one schema.
 4. **Reuse shared chrome** — don't duplicate header/footer HTML on every file.
 
