@@ -309,5 +309,5 @@ function cms_mcp_admin_result_to_mcp_content(array $result): array
     }
     $payload = $result['data'] ?? $result;
     unset($payload['status']);
-    return ['content' => [['type' => 'text', 'text' => json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]];
+    return ['content' => [['type' => 'text', 'text' => json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
 }
