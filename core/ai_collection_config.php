@@ -33,7 +33,6 @@ function birkly_collection_api_settings_keys(): array
         'captcha_provider',
         'captcha_site_key',
         'captcha_secret_key',
-        'allow_anonymous_read',
         'allow_anonymous_submit',
     ];
 }
@@ -72,7 +71,7 @@ function birkly_validate_api_settings_keys(array $apiSettings): ?string
  */
 function birkly_migrate_collection_api_settings(array $apiSettings): array
 {
-    unset($apiSettings['public_read_fields'], $apiSettings['public_read_requires']);
+    unset($apiSettings['public_read_fields'], $apiSettings['public_read_requires'], $apiSettings['allow_anonymous_read']);
     return $apiSettings;
 }
 
@@ -91,7 +90,6 @@ function birkly_ai_normalize_api_settings(array $apiSettings): array
         'captcha_provider' => (string) ($apiSettings['captcha_provider'] ?? ''),
         'captcha_site_key' => (string) ($apiSettings['captcha_site_key'] ?? ''),
         'captcha_secret_key' => (string) ($apiSettings['captcha_secret_key'] ?? ''),
-        'allow_anonymous_read' => !empty($apiSettings['allow_anonymous_read']),
         'allow_anonymous_submit' => !empty($apiSettings['allow_anonymous_submit']),
     ];
 }
