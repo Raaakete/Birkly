@@ -137,14 +137,13 @@ function birkly_ai_apply_api_settings_patch(array &$collection, array $apiSettin
         return;
     }
 
-    $normalized = birkly_ai_normalize_api_settings_patch($apiSettings);
     $base = [];
     if (is_array($existing['api_settings'] ?? null)) {
         $base = birkly_migrate_collection_api_settings($existing['api_settings']);
     } elseif (is_array($collection['api_settings'] ?? null)) {
         $base = birkly_migrate_collection_api_settings($collection['api_settings']);
     }
-    $collection['api_settings'] = array_merge($base, $normalized);
+    $collection['api_settings'] = birkly_ai_normalize_api_settings(array_merge($base, $apiSettings));
 }
 
 /**
@@ -157,10 +156,6 @@ function birkly_ai_apply_api_settings_patch(array &$collection, array $apiSettin
 function birkly_ai_apply_entry_method_config(array &$collection, array $actionData, ?array $existing = null): void
 {
     if (!isset($actionData['entry_method'])) {
-        if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
-            birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
-        }
-
         return;
     }
 
@@ -180,17 +175,13 @@ function birkly_ai_apply_entry_method_config(array &$collection, array $actionDa
             $apiKey = birkly_ai_generate_public_api_key();
         }
         $collection['api_key'] = $apiKey;
-        if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
-            birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
-        } elseif (!isset($collection['api_settings'])) {
+        if (!isset($actionData['api_settings']) && !isset($collection['api_settings'])) {
             $collection['api_settings'] = birkly_ai_normalize_api_settings([]);
         }
     } else {
         unset($collection['api_key']);
         if (!isset($actionData['api_settings'])) {
             unset($collection['api_settings']);
-        } elseif (is_array($actionData['api_settings'])) {
-            birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
         }
     }
 }
@@ -311,6 +302,14 @@ function birkly_ai_merge_collection_config(array &$collection, array $actionData
     }
 
     birkly_ai_apply_entry_method_config($collection, $actionData, $existing);
+
+    if (isset($actionData['api_settings']) && is_array($actionData['api_settings'])) {
+        birkly_ai_apply_api_settings_patch($collection, $actionData['api_settings'], $existing);
+    }
+
+    if (array_key_exists('allow_public_read', $actionData)) {
+        $collection['allow_public_read'] = !empty($actionData['allow_public_read']);
+    }
 
     if (isset($actionData['sub_collections']) && is_array($actionData['sub_collections'])) {
         $parentSlug = (string) ($collection['slug'] ?? $actionData['slug'] ?? '');
