@@ -25,12 +25,16 @@ function birkly_public_api_deny(string $reason, string $actionName, ?string $col
         'origin' => $_SERVER['HTTP_ORIGIN'] ?? '',
         'referer' => $_SERVER['HTTP_REFERER'] ?? '',
         'action' => $actionName,
+        'hint' => $reason === 'public_read_disabled'
+            ? 'Enable Allow public read access in collection settings'
+            : '',
     ]);
     http_response_code(403);
+    $code = $reason === 'public_read_disabled' ? 'PUBLIC_READ_DISABLED' : 'AUTH_REQUIRED';
     respond([
         'status' => 'error',
-        'message' => 'Authentication required',
-        'code' => 'AUTH_REQUIRED',
+        'message' => birkly_public_api_deny_message($reason, $collectionSlug),
+        'code' => $code,
     ]);
 }
 

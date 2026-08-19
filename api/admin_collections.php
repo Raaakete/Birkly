@@ -399,6 +399,7 @@ try {
     $sort = $_POST['sort'] ?? 'created_desc';
     $fields = $_POST['fields'] ?? [];
     $entryMethod = $_POST['entry_method'] ?? 'admin_only';
+    $allowPublicRead = !empty($_POST['allow_public_read']);
     $apiKey = $_POST['api_key'] ?? '';
     $apiSettings = $_POST['api_settings'] ?? [];
     $multilanguageEnabled = !empty($_POST['multilanguage_enabled']);
@@ -499,6 +500,7 @@ try {
         'template' => $template,
         'sort' => $sort,
         'entry_method' => $entryMethod,
+        'allow_public_read' => $allowPublicRead,
         'multilanguage' => [
             'enabled' => $multilanguageEnabled,
             'languages' => $multilanguageLanguages
@@ -515,7 +517,6 @@ try {
     }
     
     // Add API key and settings if Public API is enabled
-    $allowAnonymousRead = !empty($apiSettings['allow_anonymous_read']);
     if ($entryMethod === 'public_api') {
         require_once __DIR__ . '/../core/ai_collection_config.php';
         $collectionData['api_key'] = $apiKey;
@@ -529,13 +530,8 @@ try {
             : [];
         $collectionData['api_settings'] = birkly_ai_normalize_api_settings(array_merge($existingApiSettings, $rawApiSettings));
     } else {
-        // Remove API settings if switching back to Admin Only
         unset($collectionData['api_key']);
-        if ($allowAnonymousRead) {
-            $collectionData['api_settings'] = ['allow_anonymous_read' => true];
-        } else {
-            unset($collectionData['api_settings']);
-        }
+        unset($collectionData['api_settings']);
     }
     
     // Preserve existing created_at if updating
