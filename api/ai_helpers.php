@@ -2115,25 +2115,16 @@ function birkly_ai_provider_supports_streaming(string $provider): bool
  */
 function generateSystemContext($aiUser) {
     require_once __DIR__ . '/../core/build_info.php';
-    require_once __DIR__ . '/../core/birkly_paths.php';
 
     $build = birkly_build_info();
-    $deployedAt = null;
-    $revisionFile = birkly_project_root() . '/BUILD_REVISION';
-    if (is_file($revisionFile)) {
-        $deployedAt = date('c', (int) filemtime($revisionFile));
-    }
-    $deployedAtEnv = trim((string) (getenv('BIRKLY_DEPLOY_TIME') ?: ''));
-    if ($deployedAtEnv !== '') {
-        $deployedAt = $deployedAtEnv;
-    }
+    $mcpBuild = birkly_mcp_system_build_info();
 
     $context = [
         'system_info' => [
             'cms_name' => 'Birkly',
             'version' => $build['version'] ?? '1.0',
-            'git_commit' => $build['git_commit'] ?? null,
-            'deployed_at' => $deployedAt,
+            'git_commit' => $mcpBuild['git_commit'],
+            'deployed_at' => $mcpBuild['deployed_at'],
             'user_role' => $aiUser['role'] ?? 'viewer',
             'user_permissions' => getPermissionsForRole($aiUser['role'] ?? 'viewer')
         ],
