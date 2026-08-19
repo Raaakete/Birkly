@@ -16,7 +16,7 @@ function birkly_ai_tool_definitions(): array
         'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections (slug, name, entry_method, field summary)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'list_collection_groups' => ['name' => 'list_collection_groups', 'description' => 'List admin collection groups and which collection slugs belong to each (for sidebar organization)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
-        'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context including git commit and deploy timestamp (verify whether a code change is live)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context including deployed_at (verify whether a code change is live)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly playbook or doc topic. Start with playbooks-index or ai-quality-guide. Topics: ai-quality-guide, playbooks-index, content-model, fieldtypes, site-building, web-project-patterns, public-forms, sub-collections, collection-groups, templating, commerce, commerce-store-kit, automation, events, user-management, agent-guide, mcp-setup, ai-connections, plugins-overview, media, cms-pages, content-editor, settings-roles, admin, ai, mcp, plugins; active plugin slugs when installed. Playbooks auto-load for many intents — call only when not pre-loaded.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug — see playbooks-index for full list']], 'required' => ['topic']]],
         'list_media' => ['name' => 'list_media', 'description' => 'List media library files', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_media' => ['name' => 'read_media', 'description' => 'Read metadata for a media file', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
@@ -304,7 +304,7 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         require_once __DIR__ . '/build_info.php';
         $context = generateSystemContext($aiUser);
         $mcpBuild = birkly_mcp_system_build_info();
-        $context['system_info']['git_commit'] = $mcpBuild['git_commit'];
+        unset($context['system_info']['git_commit']);
         $context['system_info']['deployed_at'] = $mcpBuild['deployed_at'];
         return ['content' => [['type' => 'text', 'text' => json_encode($context, JSON_PRETTY_PRINT)]]];
     }
@@ -377,6 +377,12 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         $payload = $result['data'] ?? $result;
         if ($source === 'mcp' && $actionType === 'read_settings' && is_array($payload)) {
             $payload = birkly_ai_mcp_redact_settings_response($payload);
+        }
+        if ($source === 'mcp' && $actionType === 'read_collection' && is_array($payload)) {
+            $payload = birkly_ai_mcp_enrich_read_collection_payload($payload);
+        }
+        if ($source === 'mcp' && $actionType === 'list_collections' && is_array($payload)) {
+            $payload = birkly_ai_mcp_enrich_list_collections_payload($payload);
         }
         return ['content' => [['type' => 'text', 'text' => json_encode($payload, JSON_PRETTY_PRINT)]]];
     }
@@ -454,6 +460,10 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     unset($GLOBALS['__HARU_INTERNAL_CALL']);
     if (!($result['success'] ?? false)) {
         return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Execution failed']]];
+    }
+
+    if ($source === 'mcp' && in_array($actionType, ['update_collection', 'create_collection'], true)) {
+        $result = birkly_ai_mcp_enrich_write_collection_result($result);
     }
 
     $summary = birkly_ai_mcp_tool_success_summary($actionType, $arguments, $result);

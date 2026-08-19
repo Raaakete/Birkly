@@ -392,7 +392,8 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
         . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
         . "- Plugins: list_plugins before assuming Commerce/Events/User Management exist — install via Hub\n"
-        . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n\n";
+        . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n"
+        . "- After a Birkly upgrade, reconnect the MCP client or call tools/list again — some clients cache tool schemas from initialize\n\n";
 
     return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));
 }
