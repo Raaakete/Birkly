@@ -121,7 +121,15 @@ function birkly_ai_action_permission_map(): array
 function birkly_ai_permissions_for_action(string $actionType): ?array
 {
     $map = birkly_ai_action_permission_map();
-    return $map[$actionType] ?? null;
+    if (isset($map[$actionType])) {
+        return $map[$actionType];
+    }
+
+    if (!function_exists('birkly_plugin_mcp_permission_map')) {
+        require_once __DIR__ . '/plugins/mcp_shelf.php';
+    }
+    $pluginMap = birkly_plugin_mcp_permission_map();
+    return $pluginMap[$actionType] ?? null;
 }
 
 function birkly_ai_user_has_any_permission(array $user, array $permissions): bool
