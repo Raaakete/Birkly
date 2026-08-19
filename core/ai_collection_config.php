@@ -37,7 +37,6 @@ function birkly_collection_api_settings_schema(): array
         'captcha_provider' => static fn (mixed $v): string => (string) ($v ?? ''),
         'captcha_site_key' => static fn (mixed $v): string => (string) ($v ?? ''),
         'captcha_secret_key' => static fn (mixed $v): string => (string) ($v ?? ''),
-        'allow_anonymous_read' => static fn (mixed $v): bool => !empty($v),
         'allow_anonymous_submit' => static fn (mixed $v): bool => !empty($v),
     ];
 }
@@ -82,7 +81,7 @@ function birkly_validate_api_settings_keys(array $apiSettings): ?string
  */
 function birkly_migrate_collection_api_settings(array $apiSettings): array
 {
-    unset($apiSettings['public_read_fields'], $apiSettings['public_read_requires']);
+    unset($apiSettings['public_read_fields'], $apiSettings['public_read_requires'], $apiSettings['allow_anonymous_read']);
     return $apiSettings;
 }
 
@@ -134,34 +133,18 @@ function birkly_ai_normalize_api_settings_patch(array $apiSettings): array
 function birkly_ai_apply_api_settings_patch(array &$collection, array $apiSettings, ?array $existing = null): void
 {
     $entryMethod = (string) ($collection['entry_method'] ?? ($existing['entry_method'] ?? 'admin_only'));
+    if ($entryMethod !== 'public_api') {
+        return;
+    }
+
     $normalized = birkly_ai_normalize_api_settings_patch($apiSettings);
-
-    if ($entryMethod === 'public_api') {
-        $base = [];
-        if (is_array($existing['api_settings'] ?? null)) {
-            $base = birkly_migrate_collection_api_settings($existing['api_settings']);
-        } elseif (is_array($collection['api_settings'] ?? null)) {
-            $base = birkly_migrate_collection_api_settings($collection['api_settings']);
-        }
-        $collection['api_settings'] = array_merge($base, $normalized);
-
-        return;
+    $base = [];
+    if (is_array($existing['api_settings'] ?? null)) {
+        $base = birkly_migrate_collection_api_settings($existing['api_settings']);
+    } elseif (is_array($collection['api_settings'] ?? null)) {
+        $base = birkly_migrate_collection_api_settings($collection['api_settings']);
     }
-
-    if (!empty($normalized['allow_anonymous_read'])) {
-        $collection['api_settings'] = ['allow_anonymous_read' => true];
-
-        return;
-    }
-
-    if (array_key_exists('allow_anonymous_read', $apiSettings) && !$normalized['allow_anonymous_read']) {
-        if (is_array($collection['api_settings'] ?? null)) {
-            unset($collection['api_settings']['allow_anonymous_read']);
-            if ($collection['api_settings'] === []) {
-                unset($collection['api_settings']);
-            }
-        }
-    }
+    $collection['api_settings'] = array_merge($base, $normalized);
 }
 
 /**

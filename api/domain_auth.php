@@ -435,16 +435,6 @@ function requireDomainAuth($operation = 'read', $collection = null) {
     } elseif ($referer) {
         $domain = parse_url($referer, PHP_URL_HOST);
     }
-    
-    if (!$domain) {
-        $cmsHost = birkly_cms_request_host();
-        if ($cmsHost !== '') {
-            $hostValidation = $domainAuth->validateDomain($cmsHost);
-            if (!empty($hostValidation['valid'])) {
-                $domain = $cmsHost;
-            }
-        }
-    }
 
     if (!$domain) {
         http_response_code(403);
