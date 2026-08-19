@@ -659,11 +659,11 @@ if (!$cancelUrl) {
 
                                     <div class="info-item">
                                         <label class="checkbox-label">
-                                            <input type="checkbox" name="api_settings[allow_anonymous_read]" value="1" <?= !empty($collection['api_settings']['allow_anonymous_read']) ? 'checked' : '' ?>>
-                                            <span>Allow anonymous reads</span>
+                                            <input type="checkbox" name="allow_public_read" value="1" <?= !empty($collection['allow_public_read']) ? 'checked' : '' ?>>
+                                            <span>Allow public read access</span>
                                         </label>
                                         <small class="form-text">
-                                            Off by default. When enabled, anyone can read published entries from this collection without a domain license or API key (for public feeds and open directories).
+                                            When off, this collection can only be read by pages rendered by Birkly itself. Turn on only if an external site needs to fetch it. Anything readable this way should be treated as public.
                                         </small>
                                     </div>
                                 <?php endif; ?>
