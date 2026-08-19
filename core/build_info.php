@@ -125,7 +125,24 @@ function birkly_mcp_system_build_info(): array
     $build = birkly_build_info();
     $gitCommit = trim((string) ($build['git_commit'] ?? ''));
     if ($gitCommit === '') {
-        $gitCommit = trim((string) (birkly_deploy_revision() ?? ''));
+        $deployRev = trim((string) (birkly_deploy_revision() ?? ''));
+        if ($deployRev !== '' && $deployRev !== 'unknown') {
+            $gitCommit = substr($deployRev, 0, 40);
+        }
+    }
+    if ($gitCommit === '') {
+        $headFile = birkly_project_root() . '/.git/HEAD';
+        if (is_readable($headFile)) {
+            $head = trim((string) file_get_contents($headFile));
+            if (str_starts_with($head, 'ref:')) {
+                $refFile = birkly_project_root() . '/.git/' . trim(substr($head, 4));
+                if (is_readable($refFile)) {
+                    $gitCommit = substr(trim((string) file_get_contents($refFile)), 0, 40);
+                }
+            } elseif ($head !== '') {
+                $gitCommit = substr($head, 0, 40);
+            }
+        }
     }
 
     $deployedAt = trim((string) (getenv('BIRKLY_DEPLOY_TIME') ?: ''));
