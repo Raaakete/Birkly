@@ -16,17 +16,6 @@ require_once __DIR__ . '/../mail/queue.php';
 
 function birkly_connections_mcp_health(array $arguments): array
 {
-    if (!empty($arguments['rotate_encryption_key'])) {
-        require_once __DIR__ . '/../secret_box.php';
-        $rotation = birkly_rotate_instance_encryption_key();
-        if (empty($rotation['ok'])) {
-            return [
-                'status' => 'error',
-                'error' => $rotation['message'] ?? 'Encryption key rotation failed',
-            ];
-        }
-    }
-
     $typeFilter = (string) ($arguments['type'] ?? '');
     $connections = birkly_connections_list(false);
 
