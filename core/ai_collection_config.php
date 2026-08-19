@@ -38,6 +38,7 @@ function birkly_collection_api_settings_schema(): array
         'captcha_site_key' => static fn (mixed $v): string => (string) ($v ?? ''),
         'captcha_secret_key' => static fn (mixed $v): string => (string) ($v ?? ''),
         'allow_anonymous_read' => static fn (mixed $v): bool => !empty($v),
+        'allow_anonymous_submit' => static fn (mixed $v): bool => !empty($v),
     ];
 }
 

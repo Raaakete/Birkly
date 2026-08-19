@@ -782,6 +782,20 @@ if (!$cancelUrl) {
                                     </div>
 
                                     <div class="info-item">
+                                        <label class="checkbox-label">
+                                            <?php if ($isSubCollection): ?>
+                                                <input type="checkbox" name="sub_collections[0][api_settings][allow_anonymous_submit]" value="1" <?= !empty($subCollectionData['api_settings']['allow_anonymous_submit']) ? 'checked' : '' ?>>
+                                            <?php else: ?>
+                                                <input type="checkbox" name="api_settings[allow_anonymous_submit]" value="1" <?= !empty($collection['api_settings']['allow_anonymous_submit']) ? 'checked' : '' ?>>
+                                            <?php endif; ?>
+                                            <span>Allow anonymous submissions</span>
+                                        </label>
+                                        <small class="form-text">
+                                            Off by default. When enabled, anyone can submit to this collection without a domain license or API key.
+                                        </small>
+                                    </div>
+
+                                    <div class="info-item">
                                         <label>Rate Limit (per hour)</label>
                                         <?php if ($isSubCollection): ?>
                                             <input type="number" name="sub_collections[0][api_settings][rate_limit]" id="sub-collection-rate_limit" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
