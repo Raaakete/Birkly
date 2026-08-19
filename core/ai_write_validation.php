@@ -63,6 +63,35 @@ function birkly_ai_entry_write_allowed_keys_for_collection(string $collectionSlu
     return array_values(array_unique($allowed));
 }
 
+/**
+ * Apply top-level title, slug, and status onto entry field data (create/update with nested data).
+ *
+ * @param array<string, mixed> $payload
+ * @param array<string, mixed> $entryData
+ * @return array<string, mixed>
+ */
+function birkly_ai_merge_entry_write_meta_from_payload(array $payload, array $entryData): array
+{
+    foreach (['title', 'slug', 'status'] as $key) {
+        if (!array_key_exists($key, $payload)) {
+            continue;
+        }
+        $value = $payload[$key];
+        if ($value === null) {
+            continue;
+        }
+        if ($key !== 'status' && is_string($value) && trim($value) === '') {
+            continue;
+        }
+        $entryData[$key] = $value;
+    }
+
+    foreach (['collection', 'data', 'type', 'action', 'description', 'arguments', 'payload'] as $wrapper) {
+        unset($entryData[$wrapper]);
+    }
+
+    return $entryData;
+}
 
 /** @return list<string> */
 function birkly_ai_update_settings_allowed_keys(): array
