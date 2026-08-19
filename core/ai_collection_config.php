@@ -137,13 +137,14 @@ function birkly_ai_apply_api_settings_patch(array &$collection, array $apiSettin
         return;
     }
 
+    $normalized = birkly_ai_normalize_api_settings_patch($apiSettings);
     $base = [];
     if (is_array($existing['api_settings'] ?? null)) {
         $base = birkly_migrate_collection_api_settings($existing['api_settings']);
     } elseif (is_array($collection['api_settings'] ?? null)) {
         $base = birkly_migrate_collection_api_settings($collection['api_settings']);
     }
-    $collection['api_settings'] = birkly_ai_normalize_api_settings(array_merge($base, $apiSettings));
+    $collection['api_settings'] = array_merge($base, $normalized);
 }
 
 /**
