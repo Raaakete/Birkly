@@ -114,6 +114,75 @@ function birkly_ai_mcp_redact_settings_response(array $data): array
     return $data;
 }
 
+/**
+ * Effective allow_public_read for MCP responses (mirrors core/public_read.php).
+ *
+ * @param array<string, mixed> $collection
+ */
+function birkly_ai_mcp_effective_allow_public_read(array $collection): bool
+{
+    require_once __DIR__ . '/public_read.php';
+
+    return birkly_collection_allows_public_read($collection);
+}
+
+/**
+ * @param array<string, mixed> $collection
+ * @return array<string, mixed>
+ */
+function birkly_ai_mcp_enrich_collection_response(array $collection): array
+{
+    $collection['allow_public_read'] = birkly_ai_mcp_effective_allow_public_read($collection);
+
+    return $collection;
+}
+
+/** @param array<string, mixed> $payload */
+function birkly_ai_mcp_enrich_read_collection_payload(array $payload): array
+{
+    if (isset($payload['collection']) && is_array($payload['collection'])) {
+        $payload['collection'] = birkly_ai_mcp_enrich_collection_response($payload['collection']);
+    }
+
+    return $payload;
+}
+
+/** @param array<string, mixed> $payload */
+function birkly_ai_mcp_enrich_list_collections_payload(array $payload): array
+{
+    if (!isset($payload['collections']) || !is_array($payload['collections'])) {
+        return $payload;
+    }
+
+    require_once __DIR__ . '/ai_collection_config.php';
+    foreach ($payload['collections'] as $index => $summary) {
+        if (!is_array($summary)) {
+            continue;
+        }
+        $slug = (string) ($summary['slug'] ?? '');
+        if ($slug === '') {
+            $payload['collections'][$index]['allow_public_read'] = false;
+            continue;
+        }
+        $record = birkly_ai_load_collection_record($slug);
+        $payload['collections'][$index]['allow_public_read'] = is_array($record)
+            ? birkly_ai_mcp_effective_allow_public_read($record)
+            : false;
+    }
+
+    return $payload;
+}
+
+/** @param array<string, mixed> $result */
+function birkly_ai_mcp_enrich_write_collection_result(array $result): array
+{
+    if (isset($result['data']['collection']) && is_array($result['data']['collection'])) {
+        $result['data']['collection'] = birkly_ai_mcp_enrich_collection_response($result['data']['collection']);
+    }
+
+    return $result;
+}
+
 function birkly_ai_mcp_cleanup_stray_settings(): void
 {
     require_once __DIR__ . '/birkly_paths.php';
