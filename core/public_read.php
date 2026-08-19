@@ -119,17 +119,35 @@ function birkly_public_api_whitelisted_client_authorized(string $operation = 're
     return !empty($permissionCheck['allowed']);
 }
 
+function birkly_collection_allows_public_read(array $collectionMeta): bool
+{
+    return !empty($collectionMeta['allow_public_read']);
+}
+
+function birkly_public_api_deny_message(string $reason, ?string $collectionSlug = null): string
+{
+    if ($reason === 'public_read_disabled' && $collectionSlug !== null && $collectionSlug !== '') {
+        return 'Public read access is disabled for collection "' . $collectionSlug
+            . '". Enable "Allow public read access" in the collection settings to allow API reads.';
+    }
+    return 'Authentication required';
+}
+
 /**
  * @param array<string, mixed>|null $collectionMeta
  * @return array{allowed:bool,reason:string}
  */
 function birkly_public_api_auth_check(?array $collectionMeta, ?string $collectionSlug, string $mode = 'read'): array
 {
-    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
-    $anonymousKey = $mode === 'write' ? 'allow_anonymous_submit' : 'allow_anonymous_read';
+    if ($mode === 'read' && is_array($collectionMeta)) {
+        if (!birkly_collection_allows_public_read($collectionMeta)) {
+            return ['allowed' => false, 'reason' => 'public_read_disabled'];
+        }
+    }
 
-    if (!empty($apiSettings[$anonymousKey])) {
-        return ['allowed' => true, 'reason' => $anonymousKey];
+    $apiSettings = is_array($collectionMeta['api_settings'] ?? null) ? $collectionMeta['api_settings'] : [];
+    if ($mode === 'write' && !empty($apiSettings['allow_anonymous_submit'])) {
+        return ['allowed' => true, 'reason' => 'allow_anonymous_submit'];
     }
 
     if (is_array($collectionMeta)) {
@@ -165,18 +183,20 @@ function birkly_public_read_auth_check(array $collectionMeta, string $collection
  */
 function birkly_public_maybe_migrate_collection_meta($storage, string $dir, array $collectionMeta): array
 {
-    if (!isset($collectionMeta['api_settings']) || !is_array($collectionMeta['api_settings'])) {
-        return $collectionMeta;
-    }
-
     require_once __DIR__ . '/ai_collection_config.php';
-    $migrated = birkly_migrate_collection_api_settings($collectionMeta['api_settings']);
-    if ($migrated === $collectionMeta['api_settings']) {
-        return $collectionMeta;
+
+    if (isset($collectionMeta['api_settings']) && is_array($collectionMeta['api_settings'])) {
+        if (!array_key_exists('allow_public_read', $collectionMeta)
+            && !empty($collectionMeta['api_settings']['allow_anonymous_read'])) {
+            $collectionMeta['allow_public_read'] = true;
+        }
+        $migrated = birkly_migrate_collection_api_settings($collectionMeta['api_settings']);
+        if ($migrated !== $collectionMeta['api_settings']) {
+            $collectionMeta['api_settings'] = $migrated;
+            $storage->write("collections/$dir/collection.json", $collectionMeta);
+        }
     }
 
-    $collectionMeta['api_settings'] = $migrated;
-    $storage->write("collections/$dir/collection.json", $collectionMeta);
     return $collectionMeta;
 }
 

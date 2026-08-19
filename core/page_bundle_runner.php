@@ -13,7 +13,7 @@ require_once __DIR__ . '/fieldtype_html.php';
  * @param array<string,mixed> $options  Pass trusted_ssr=true for internal project SSR
  *                                      (published content only; skips domain API whitelist).
  */
-function birkly_page_bundle_collection_allowed(string $collectionSlug, array $options = []): bool {
+function birkly_page_bundle_collection_allowed(string $collectionSlug, array $options = [], $storage = null): bool {
     if ($collectionSlug === '' || $collectionSlug === 'site_elements') {
         return true;
     }
@@ -21,6 +21,15 @@ function birkly_page_bundle_collection_allowed(string $collectionSlug, array $op
     // via public_read helpers and must not depend on browser Origin / domain auth.
     if (!empty($options['trusted_ssr'])) {
         return true;
+    }
+    if ($storage !== null) {
+        $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+        if ($dir) {
+            $meta = $storage->read("collections/$dir/collection.json");
+            if (is_array($meta) && !birkly_collection_allows_public_read($meta)) {
+                return false;
+            }
+        }
     }
     if (function_exists('birkly_request_is_local_dev') && birkly_request_is_local_dev()) {
         return true;
@@ -60,7 +69,7 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
         try {
             if ($type === 'list_entries') {
                 $collection = $req['collection'] ?? $into;
-                if (!birkly_page_bundle_collection_allowed($collection, $options)) {
+                if (!birkly_page_bundle_collection_allowed($collection, $options, $storage)) {
                     $errors[] = "permission denied: $collection";
                     $out[$into] = [];
                     continue;
@@ -82,7 +91,7 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                 $out[$into] = birkly_page_bundle_prune_list($entries, $lean);
             } elseif ($type === 'get_entry') {
                 $collection = $req['collection'] ?? '';
-                if (!birkly_page_bundle_collection_allowed($collection, $options)) {
+                if (!birkly_page_bundle_collection_allowed($collection, $options, $storage)) {
                     $errors[] = "permission denied: $collection";
                     $out[$into] = null;
                     continue;
@@ -106,7 +115,7 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                     $out[$into] = [];
                     continue;
                 }
-                if (!birkly_page_bundle_collection_allowed($parentCollection, $options)) {
+                if (!birkly_page_bundle_collection_allowed($parentCollection, $options, $storage)) {
                     $errors[] = "permission denied: $parentCollection";
                     $out[$into] = [];
                     continue;
