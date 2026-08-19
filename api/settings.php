@@ -629,6 +629,37 @@ if ($action === 'set_language') {
     exit;
 }
 
+if ($action === 'rotate_encryption_key') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        log_security_event('permission_denied', ['action' => 'rotate_encryption_key', 'reason' => 'invalid CSRF']);
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    require_once __DIR__ . '/../core/secret_box.php';
+    $result = birkly_rotate_instance_encryption_key();
+    if (empty($result['ok'])) {
+        log_security_event('encryption_key_rotate_failed', [
+            'user' => $_SESSION['user']['email'] ?? 'unknown',
+            'message' => $result['message'] ?? 'unknown',
+        ]);
+        echo json_encode(['status' => 'error', 'message' => $result['message'] ?? 'Rotation failed']);
+        exit;
+    }
+
+    log_security_event('encryption_key_rotated', [
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+        'reencrypted' => $result['reencrypted'] ?? [],
+    ]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => $result['message'],
+        'data' => ['reencrypted' => $result['reencrypted'] ?? []],
+    ]);
+    exit;
+}
+
 if ($action === 'rebuild_system') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
