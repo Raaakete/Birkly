@@ -6,6 +6,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/build_info.php';
 require_once __DIR__ . '/ai_tool_registry.php';
 require_once __DIR__ . '/ai_playbooks.php';
 require_once __DIR__ . '/mcp_endpoints.php';
@@ -86,7 +87,7 @@ function birkly_mcp_handle_initialize(array $aiUser): array
     return [
         'protocolVersion' => BIRKLY_MCP_PROTOCOL_VERSION,
         'capabilities' => ['tools' => (object) [], 'resources' => (object) []],
-        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => '1.5.0'],
+        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => BIRKLY_MCP_SERVER_VERSION],
         'instructions' => birkly_ai_mcp_initialize_instructions(),
     ];
 }
