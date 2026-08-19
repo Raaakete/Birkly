@@ -162,13 +162,16 @@ function birkly_ai_tool_schema_sub_collection_item(): array
 /** Extra collection properties (entry_method, sub_collections, public API). */
 function birkly_ai_tool_schema_collection_config_properties(): array
 {
+    require_once __DIR__ . '/ai_collection_config.php';
+    $apiSettingsKeys = implode(', ', birkly_collection_api_settings_keys());
+
     return [
         'description' => ['type' => 'string'],
         'entry_method' => ['type' => 'string', 'description' => 'admin_only (default) or public_api for contact forms and public submission'],
         'allow_public_read' => ['type' => 'boolean', 'description' => 'When true, collection entries are readable via the public API without authentication'],
         'api_settings' => [
             'type' => 'object',
-            'description' => 'When entry_method is public_api: auto_publish, rate_limit, notification_email, captcha_*',
+            'description' => 'When entry_method is public_api: ' . $apiSettingsKeys,
             'additionalProperties' => true,
         ],
         'sub_collections' => [
@@ -298,7 +301,12 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     }
 
     if ($actionType === 'get_system_context') {
-        return ['content' => [['type' => 'text', 'text' => json_encode(generateSystemContext($aiUser), JSON_PRETTY_PRINT)]]];
+        require_once __DIR__ . '/build_info.php';
+        $context = generateSystemContext($aiUser);
+        $mcpBuild = birkly_mcp_system_build_info();
+        $context['system_info']['git_commit'] = $mcpBuild['git_commit'];
+        $context['system_info']['deployed_at'] = $mcpBuild['deployed_at'];
+        return ['content' => [['type' => 'text', 'text' => json_encode($context, JSON_PRETTY_PRINT)]]];
     }
 
     if ($actionType === 'read_birkly_docs') {
@@ -354,6 +362,10 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
     if (birkly_ai_is_read_action($actionType)) {
         require_once __DIR__ . '/../api/ai_read_actions.php';
+        require_once __DIR__ . '/ai_mcp_sanitize.php';
+        if ($source === 'mcp') {
+            birkly_ai_mcp_cleanup_stray_settings();
+        }
         if ($source === 'mcp' && in_array($actionType, ['list_entries'], true)) {
             $arguments['summary'] = true;
         }
@@ -362,7 +374,11 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         if (!($result['success'] ?? false)) {
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Action failed']]];
         }
-        return ['content' => [['type' => 'text', 'text' => json_encode($result['data'] ?? $result, JSON_PRETTY_PRINT)]]];
+        $payload = $result['data'] ?? $result;
+        if ($source === 'mcp' && $actionType === 'read_settings' && is_array($payload)) {
+            $payload = birkly_ai_mcp_redact_settings_response($payload);
+        }
+        return ['content' => [['type' => 'text', 'text' => json_encode($payload, JSON_PRETTY_PRINT)]]];
     }
 
     // Inbound MCP: the client app (Claude, ChatGPT, Cursor) handles approval UX.
@@ -413,8 +429,17 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
     $GLOBALS['__HARU_INTERNAL_CALL'] = true;
     require_once __DIR__ . '/../api/ai_approvals.php';
+    require_once __DIR__ . '/ai_mcp_sanitize.php';
 
     $arguments = is_array($arguments) ? $arguments : [];
+    if ($source === 'mcp' && $actionType === 'update_settings') {
+        birkly_ai_mcp_cleanup_stray_settings();
+        $settingsError = birkly_ai_validate_mcp_update_settings($arguments);
+        if ($settingsError !== null) {
+            unset($GLOBALS['__HARU_INTERNAL_CALL']);
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => $settingsError]]];
+        }
+    }
     if ($source === 'mcp' && $actionType === 'create_entry' && !isset($arguments['status'])) {
         $arguments['status'] = 'published';
     }
