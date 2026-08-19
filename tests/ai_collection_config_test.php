@@ -19,10 +19,11 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 }
 
 $collection = ['slug' => 'contact', 'name' => 'Contact', 'entry_method' => 'admin_only'];
-birkly_ai_apply_entry_method_config($collection, [
+$mergeError = birkly_ai_merge_collection_config($collection, [
     'entry_method' => 'public_api',
     'api_settings' => ['auto_publish' => true, 'rate_limit' => 20],
 ], null);
+assert_true('public_api merge succeeds', $mergeError === null);
 
 assert_true('public_api sets entry_method', ($collection['entry_method'] ?? '') === 'public_api');
 assert_true('public_api generates api_key', str_starts_with((string) ($collection['api_key'] ?? ''), 'birkly_'));
@@ -44,6 +45,11 @@ assert_true('auto_publish preserved on partial patch', !empty($patchTarget['api_
 
 $legacyReadError = birkly_validate_api_settings_keys(['allow_anonymous_read' => true]);
 assert_true('allow_anonymous_read rejected as api_settings key', $legacyReadError !== null && str_contains($legacyReadError, 'allow_anonymous_read'));
+
+$publicReadTarget = ['slug' => 'blog', 'entry_method' => 'admin_only'];
+$mergeError = birkly_ai_merge_collection_config($publicReadTarget, ['allow_public_read' => false], $publicReadTarget);
+assert_true('allow_public_read patch succeeds', $mergeError === null);
+assert_true('allow_public_read false persists', array_key_exists('allow_public_read', $publicReadTarget) && $publicReadTarget['allow_public_read'] === false);
 
 $unknownError = birkly_validate_api_settings_keys(['not_a_real_key' => true]);
 assert_true('unknown api_settings key rejected', $unknownError !== null && str_contains($unknownError, 'not_a_real_key'));
