@@ -32,24 +32,32 @@ $existing = [
     'slug' => 'supporters',
     'entry_method' => 'public_api',
     'api_key' => 'birkly_testkey',
-    'api_settings' => ['auto_publish' => true, 'rate_limit' => 20, 'allow_anonymous_read' => true],
+    'api_settings' => ['auto_publish' => true, 'rate_limit' => 20],
 ];
 $patchTarget = $existing;
 $mergeError = birkly_ai_merge_collection_config($patchTarget, [
-    'api_settings' => ['allow_anonymous_read' => false],
+    'api_settings' => ['rate_limit' => 30],
 ], $existing);
 assert_true('api_settings-only patch succeeds', $mergeError === null);
-assert_true(
-    'allow_anonymous_read false persists without entry_method',
-    array_key_exists('allow_anonymous_read', $patchTarget['api_settings'] ?? [])
-        && ($patchTarget['api_settings']['allow_anonymous_read'] ?? null) === false
-);
-assert_true('rate_limit preserved on partial patch', ($patchTarget['api_settings']['rate_limit'] ?? null) === 20);
+assert_true('rate_limit updated on partial patch', ($patchTarget['api_settings']['rate_limit'] ?? null) === 30);
+assert_true('auto_publish preserved on partial patch', !empty($patchTarget['api_settings']['auto_publish']));
+
+$legacyReadError = birkly_validate_api_settings_keys(['allow_anonymous_read' => true]);
+assert_true('allow_anonymous_read rejected as api_settings key', $legacyReadError !== null && str_contains($legacyReadError, 'allow_anonymous_read'));
 
 $unknownError = birkly_validate_api_settings_keys(['not_a_real_key' => true]);
 assert_true('unknown api_settings key rejected', $unknownError !== null && str_contains($unknownError, 'not_a_real_key'));
 
-assert_true('keys derived from schema', in_array('allow_anonymous_read', birkly_collection_api_settings_keys(), true));
+assert_true('keys derived from schema', in_array('allow_anonymous_submit', birkly_collection_api_settings_keys(), true));
+assert_true('allow_anonymous_read not in schema keys', !in_array('allow_anonymous_read', birkly_collection_api_settings_keys(), true));
+
+$migrated = birkly_migrate_collection_api_settings([
+    'allow_anonymous_read' => true,
+    'public_read_fields' => ['title'],
+    'rate_limit' => 5,
+]);
+assert_true('migration strips legacy read keys', !array_key_exists('allow_anonymous_read', $migrated) && !array_key_exists('public_read_fields', $migrated));
+assert_true('migration keeps valid keys', ($migrated['rate_limit'] ?? null) === 5);
 
 $subs = birkly_ai_process_sub_collections([
     [

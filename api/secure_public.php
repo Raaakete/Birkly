@@ -64,6 +64,34 @@ if ($action === 'list_entries') {
         respond(['status' => 'error', 'message' => 'Collection not found'], 404);
     }
 
+    $dir = birkly_public_resolve_collection_dir($storage, $collection);
+    if ($dir) {
+        $collectionMeta = $storage->read("collections/$dir/collection.json");
+        if (is_array($collectionMeta)) {
+            $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, $collectionMeta);
+            $auth = birkly_public_read_auth_check($collectionMeta, $collection);
+            if (empty($auth['allowed'])) {
+                log_security_event('public_read_denied', [
+                    'collection' => $collection,
+                    'reason' => $auth['reason'],
+                    'endpoint' => 'secure_public.php',
+                    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'origin' => $_SERVER['HTTP_ORIGIN'] ?? '',
+                    'referer' => $_SERVER['HTTP_REFERER'] ?? '',
+                    'hint' => $auth['reason'] === 'public_read_disabled'
+                        ? 'Enable Allow public read access in collection settings'
+                        : '',
+                ]);
+                $code = ($auth['reason'] ?? '') === 'public_read_disabled' ? 'PUBLIC_READ_DISABLED' : 'AUTH_REQUIRED';
+                respond([
+                    'status' => 'error',
+                    'message' => birkly_public_api_deny_message($auth['reason'] ?? '', $collection),
+                    'code' => $code,
+                ], 403);
+            }
+        }
+    }
+
     $language = $input['language'] ?? $_GET['language'] ?? 'en';
     $result = birkly_public_list_entries($storage, $collection, $language);
     if (($result['status'] ?? '') !== 'ok') {
@@ -88,6 +116,34 @@ if ($action === 'get_entry') {
     }
     if ($collection === '') {
         respond(['status' => 'error', 'message' => 'Collection not found'], 404);
+    }
+
+    $dir = birkly_public_resolve_collection_dir($storage, $collection);
+    if ($dir) {
+        $collectionMeta = $storage->read("collections/$dir/collection.json");
+        if (is_array($collectionMeta)) {
+            $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, $collectionMeta);
+            $auth = birkly_public_read_auth_check($collectionMeta, $collection);
+            if (empty($auth['allowed'])) {
+                log_security_event('public_read_denied', [
+                    'collection' => $collection,
+                    'reason' => $auth['reason'],
+                    'endpoint' => 'secure_public.php',
+                    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'origin' => $_SERVER['HTTP_ORIGIN'] ?? '',
+                    'referer' => $_SERVER['HTTP_REFERER'] ?? '',
+                    'hint' => $auth['reason'] === 'public_read_disabled'
+                        ? 'Enable Allow public read access in collection settings'
+                        : '',
+                ]);
+                $code = ($auth['reason'] ?? '') === 'public_read_disabled' ? 'PUBLIC_READ_DISABLED' : 'AUTH_REQUIRED';
+                respond([
+                    'status' => 'error',
+                    'message' => birkly_public_api_deny_message($auth['reason'] ?? '', $collection),
+                    'code' => $code,
+                ], 403);
+            }
+        }
     }
 
     $language = $input['language'] ?? $_GET['language'] ?? 'en';
