@@ -30,14 +30,12 @@ This playbook covers **inbound MCP** + admin chat tools.
 
 When a plugin is **installed and active**, it injects its own tools into `tools/list`. Tools live in the plugin repo and disappear when the plugin is deactivated.
 
-| Plugin | Tool prefix | Docs |
-|--------|-------------|------|
-| Commerce | `commerce_*` | `read_birkly_docs` topic `commerce`, `birkly://docs/plugin/commerce` |
-| Automation | `automation_*` | `read_birkly_docs` topic `automation`, `birkly://docs/plugin/automation` |
+| Plugin | Tool prefix | Full admin parity |
+|--------|-------------|-------------------|
+| Commerce | `commerce_*` | `commerce_list_admin_actions` + `commerce_admin_action` — 117 admin actions (emails, invoices, fulfillment, inventory, tax, shipping, discounts, import, draft orders, analytics) |
+| Automation | `automation_*` | `automation_list_admin_actions` + `automation_admin_action` — all workflow/recipe/setup/queue actions |
 
-1. `list_plugins` — confirm plugin is active before calling plugin tools.
-2. Plugin tools require plugin permissions (e.g. `manage_commerce` for Commerce writes).
-3. Prefer plugin MCP tools over guessing REST payloads or editing plugin data files directly.
+Named tools (`commerce_list_orders`, `automation_dry_run`, …) cover common paths. For anything else in the admin UI, call `*_list_admin_actions` first, then `*_admin_action` with `action` + `payload` matching the plugin admin API.
 
 ## Collection config cheatsheet
 
