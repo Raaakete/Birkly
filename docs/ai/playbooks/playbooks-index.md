@@ -31,6 +31,7 @@ Read this when the user's request spans multiple areas or you are unsure which p
 | `content-editor` | Rich text / layout HTML in Editor fields |
 | `agent-guide` | Agent Guide: sources, products, claims, publishing `/.well-known/` |
 | `mcp-setup` | Connect Claude, ChatGPT, Cursor via MCP |
+| `mcp-capabilities` | MCP tool families, plugin tools, allow_public_read, fieldtype picks |
 | `ai-connections` | Built-in admin chat assistant, API keys, approvals |
 | `plugins-overview` | Install, enable, marketplace, official plugins |
 | `commerce` | Shop, cart, checkout, variants, subscriptions (plugin) |

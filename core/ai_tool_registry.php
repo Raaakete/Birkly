@@ -5,9 +5,10 @@
 
 require_once __DIR__ . '/ai_permissions.php';
 require_once __DIR__ . '/connections/mcp_tools.php';
+require_once __DIR__ . '/plugins/mcp_shelf.php';
 
 /** @return array<string, array{name: string, description: string, category: string, inputSchema: array}> */
-function birkly_ai_tool_definitions(): array
+function birkly_ai_core_tool_definitions(): array
 {
     return [
         'read_entry' => ['name' => 'read_entry', 'description' => 'Read a specific entry by collection slug and entry slug or ID', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection']]],
@@ -17,7 +18,7 @@ function birkly_ai_tool_definitions(): array
         'list_collection_groups' => ['name' => 'list_collection_groups', 'description' => 'List admin collection groups and which collection slugs belong to each (for sidebar organization)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
         'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context including deployed_at (verify whether a code change is live)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
-        'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly playbook or doc topic. Start with playbooks-index or ai-quality-guide. Topics: ai-quality-guide, playbooks-index, content-model, fieldtypes, site-building, web-project-patterns, public-forms, sub-collections, collection-groups, templating, commerce, commerce-store-kit, automation, events, user-management, agent-guide, mcp-setup, ai-connections, plugins-overview, media, cms-pages, content-editor, settings-roles, admin, ai, mcp, plugins; active plugin slugs when installed. Playbooks auto-load for many intents — call only when not pre-loaded.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug — see playbooks-index for full list']], 'required' => ['topic']]],
+        'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly playbook or doc topic. Start with playbooks-index, mcp-capabilities, or ai-quality-guide. Topics: ai-quality-guide, playbooks-index, mcp-capabilities, content-model, fieldtypes, site-building, web-project-patterns, public-forms, sub-collections, collection-groups, templating, commerce, commerce-store-kit, automation, events, user-management, agent-guide, mcp-setup, ai-connections, plugins-overview, media, cms-pages, content-editor, settings-roles, admin, ai, mcp, plugins; active plugin slugs when installed. Active plugins also register commerce_* / automation_* MCP tools — see mcp-capabilities. Playbooks auto-load for many intents — call only when not pre-loaded.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug — see playbooks-index for full list']], 'required' => ['topic']]],
         'list_media' => ['name' => 'list_media', 'description' => 'List media library files', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_media' => ['name' => 'read_media', 'description' => 'Read metadata for a media file', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
         'list_users' => ['name' => 'list_users', 'description' => 'List human users', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
@@ -80,17 +81,20 @@ function birkly_ai_tool_definitions(): array
     ];
 }
 
+/** @return array<string, array{name: string, description: string, category: string, inputSchema: array}> */
+function birkly_ai_tool_definitions(): array
+{
+    return array_merge(birkly_ai_core_tool_definitions(), birkly_plugin_mcp_tool_definitions());
+}
+
 /** @return array<string, array> */
 function birkly_ai_tools_for_user(array $aiUser): array
 {
     $definitions = birkly_ai_tool_definitions();
     $allowed = [];
-    foreach (birkly_ai_action_permission_map() as $actionType => $_) {
-        if (!isset($definitions[$actionType])) {
-            continue;
-        }
+    foreach ($definitions as $actionType => $def) {
         if (birkly_ai_user_can_action($aiUser, $actionType)) {
-            $allowed[$actionType] = $definitions[$actionType];
+            $allowed[$actionType] = $def;
         }
     }
     return $allowed;
@@ -168,7 +172,7 @@ function birkly_ai_tool_schema_collection_config_properties(): array
     return [
         'description' => ['type' => 'string'],
         'entry_method' => ['type' => 'string', 'description' => 'admin_only (default) or public_api for contact forms and public submission'],
-        'allow_public_read' => ['type' => 'boolean', 'description' => 'When true, collection entries are readable via the public API without authentication'],
+        'allow_public_read' => ['type' => 'boolean', 'description' => 'When true, collection entries are readable via the public API without authentication. Required for {for each entry in "slug"} loops on the live site. Separate from entry_method (writes). Not stored in api_settings.'],
         'api_settings' => [
             'type' => 'object',
             'description' => 'When entry_method is public_api: ' . $apiSettingsKeys,
@@ -232,7 +236,7 @@ function birkly_ai_action_workflow_prompt_section(): string
         '1. Put slug/collection/fields on the SAME LEVEL as "type", not only inside "data". Both work:',
         '   {"type":"update_collection","slug":"gallery","fields":[...]}',
         '   {"type":"update_collection","data":{"slug":"gallery","fields":[...]}}',
-        '2. update_collection: ALWAYS include "slug". Fields in "fields". Set entry_method: "public_api" for contact/inquiry collections and public sub-collections (comments). sub_collections[] for nested schemas.',
+        '2. update_collection: ALWAYS include "slug". Fields in "fields". Set entry_method: "public_api" for contact/inquiry collections and public sub-collections (comments). Set allow_public_read: true when the public site must list/read entries without auth ({for each entry in ...} loops). sub_collections[] for nested schemas.',
         '3. create_entry: ALWAYS include "collection" as a slug string. Field values (title, text, image, …) at top level.',
         '4. save_collection_groups: pass full groups tree from list_collection_groups when reorganizing admin sidebar.',
         '5. create_page: include "title", "slug", and "content" (HTML with {for each entry in \'slug\'} loops).',
@@ -298,6 +302,13 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     $denied = birkly_ai_enforce_action_permission($aiUser, $actionType);
     if ($denied !== null) {
         return ['isError' => true, 'content' => [['type' => 'text', 'text' => $denied['message']]]];
+    }
+
+    if (birkly_plugin_mcp_tool_is_registered($actionType)) {
+        $pluginResult = birkly_plugin_mcp_dispatch($actionType, $arguments, $aiUser);
+        if ($pluginResult !== null) {
+            return $pluginResult;
+        }
     }
 
     if ($actionType === 'get_system_context') {

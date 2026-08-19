@@ -35,7 +35,7 @@ Shared bot with **fixed role** (e.g. always Editor). Admin creates under Connect
 
 ## What MCP exposes
 
-- **Tools:** Same as AI action registry — collections, entries, project files, media, docs, Agent Guide reads, etc.
+- **Tools:** Core AI action registry **plus active plugin MCP tools** (`commerce_*`, `automation_*`, …). Call `list_plugins` before assuming plugin tools exist.
 - **Resources:**
   - `birkly://documentation` — context pack
   - `birkly://project` — project site info
@@ -45,7 +45,11 @@ Shared bot with **fixed role** (e.g. always Editor). Admin creates under Connect
 
 ## Recommended first prompt in external AI
 
-> Read birkly://documentation and birkly://docs/playbooks-index. Then list my collections.
+> Read birkly://documentation and birkly://docs/mcp-capabilities. Then list my collections and plugins.
+
+## Plugin MCP tools
+
+Active plugins register their own tools (definitions + handlers live in the plugin). After install/activate, reconnect MCP or call `tools/list` again. See **`mcp-capabilities`** for tool families and fieldtype best practices.
 
 ## Playbooks via MCP
 

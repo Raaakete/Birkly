@@ -45,4 +45,7 @@ assert_true(
     isset($updateNormalized['properties']['fields']['items'])
 );
 
+$updateProps = $updateNormalized['properties'] ?? [];
+assert_true('update_collection documents allow_public_read', isset($updateProps['allow_public_read']['type']) && $updateProps['allow_public_read']['type'] === 'boolean');
+
 exit($failures > 0 ? 1 : 0);

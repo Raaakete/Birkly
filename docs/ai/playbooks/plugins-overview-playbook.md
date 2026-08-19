@@ -116,6 +116,7 @@ Scaffold: `php scripts/scaffold-plugin.php --id=my-plugin --title="My Plugin"`
 
 - Declare capabilities in `plugin.json`
 - `register_plugin_docs()` for AI shelf
+- `register_plugin_mcp_tools()` for inbound MCP tool injection (definitions + handlers in plugin, e.g. `docs/mcp_tools.php`)
 - See `admin/docs/snapshots/scaffold-plugin.md`
 
 Out of scope for casual site builds — don't scaffold unless user asks.

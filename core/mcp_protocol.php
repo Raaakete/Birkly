@@ -86,7 +86,7 @@ function birkly_mcp_handle_initialize(array $aiUser): array
     return [
         'protocolVersion' => BIRKLY_MCP_PROTOCOL_VERSION,
         'capabilities' => ['tools' => (object) [], 'resources' => (object) []],
-        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => '1.3.0'],
+        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => '1.4.0'],
         'instructions' => birkly_ai_mcp_initialize_instructions(),
     ];
 }
