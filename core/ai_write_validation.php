@@ -30,7 +30,7 @@ function birkly_ai_collection_action_allowed_keys(): array
 {
     return [
         'slug', 'collection', 'collection_slug', 'collectionSlug', 'name', 'title', 'description',
-        'fields', 'schema', 'entry_method', 'api_settings', 'api_key', 'sub_collections', 'data',
+        'fields', 'schema', 'entry_method', 'api_settings', 'api_key', 'allow_public_read', 'sub_collections', 'data',
         'dry_run',
     ];
 }

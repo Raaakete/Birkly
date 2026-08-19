@@ -109,6 +109,55 @@ function birkly_build_info(): array
 }
 
 /**
+ * Build identity for MCP get_system_context — always returns both keys.
+ *
+ * @return array{git_commit: string, deployed_at: string}
+ */
+function birkly_mcp_system_build_info(): array
+{
+    if (!function_exists('birkly_project_root')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+    if (!function_exists('birkly_deploy_revision')) {
+        require_once __DIR__ . '/birkly_data_paths.php';
+    }
+
+    $build = birkly_build_info();
+    $gitCommit = trim((string) ($build['git_commit'] ?? ''));
+    if ($gitCommit === '') {
+        $deployRev = trim((string) (birkly_deploy_revision() ?? ''));
+        if ($deployRev !== '' && $deployRev !== 'unknown') {
+            $gitCommit = substr($deployRev, 0, 40);
+        }
+    }
+    if ($gitCommit === '') {
+        $headFile = birkly_project_root() . '/.git/HEAD';
+        if (is_readable($headFile)) {
+            $head = trim((string) file_get_contents($headFile));
+            if (str_starts_with($head, 'ref:')) {
+                $refFile = birkly_project_root() . '/.git/' . trim(substr($head, 4));
+                if (is_readable($refFile)) {
+                    $gitCommit = substr(trim((string) file_get_contents($refFile)), 0, 40);
+                }
+            } elseif ($head !== '') {
+                $gitCommit = substr($head, 0, 40);
+            }
+        }
+    }
+
+    $deployedAt = trim((string) (getenv('BIRKLY_DEPLOY_TIME') ?: ''));
+    $revisionFile = birkly_project_root() . '/BUILD_REVISION';
+    if ($deployedAt === '' && is_file($revisionFile)) {
+        $deployedAt = date('c', (int) filemtime($revisionFile));
+    }
+
+    return [
+        'git_commit' => $gitCommit !== '' ? $gitCommit : 'unknown',
+        'deployed_at' => $deployedAt !== '' ? $deployedAt : 'unknown',
+    ];
+}
+
+/**
  * Release id for cache busting: git commit, Docker build revision, or null.
  */
 function birkly_release_identifier(): ?string

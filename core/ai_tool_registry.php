@@ -16,7 +16,7 @@ function birkly_ai_tool_definitions(): array
         'list_collections' => ['name' => 'list_collections', 'description' => 'List all content collections (slug, name, entry_method, field summary)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'list_collection_groups' => ['name' => 'list_collection_groups', 'description' => 'List admin collection groups and which collection slugs belong to each (for sidebar organization)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_collection' => ['name' => 'get_collection', 'description' => 'Get details of a specific collection (MCP alias)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug']]],
-        'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context including git commit and deploy timestamp (verify whether a code change is live)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
+        'get_system_context' => ['name' => 'get_system_context', 'description' => 'Get curated system context including deployed_at (verify whether a code change is live)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_birkly_docs' => ['name' => 'read_birkly_docs', 'description' => 'Read a Birkly playbook or doc topic. Start with playbooks-index or ai-quality-guide. Topics: ai-quality-guide, playbooks-index, content-model, fieldtypes, site-building, web-project-patterns, public-forms, sub-collections, collection-groups, templating, commerce, commerce-store-kit, automation, events, user-management, agent-guide, mcp-setup, ai-connections, plugins-overview, media, cms-pages, content-editor, settings-roles, admin, ai, mcp, plugins; active plugin slugs when installed. Playbooks auto-load for many intents — call only when not pre-loaded.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['topic' => ['type' => 'string', 'description' => 'Topic slug — see playbooks-index for full list']], 'required' => ['topic']]],
         'list_media' => ['name' => 'list_media', 'description' => 'List media library files', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'read_media' => ['name' => 'read_media', 'description' => 'Read metadata for a media file', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
@@ -35,7 +35,7 @@ function birkly_ai_tool_definitions(): array
         'update_sub_entry' => ['name' => 'update_sub_entry', 'description' => 'Update an existing sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
         'delete_sub_entry' => ['name' => 'delete_sub_entry', 'description' => 'Delete a sub-entry (approval-gated)', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'entry_id' => ['type' => 'string'], 'sub_collection' => ['type' => 'string'], 'sub_entry_id' => ['type' => 'string']], 'required' => ['collection', 'entry_id', 'sub_collection', 'sub_entry_id']]],
         'create_collection' => ['name' => 'create_collection', 'description' => 'Create a content collection. Optional: entry_method public_api for contact forms; sub_collections for nested content (comments). API key auto-generated when public_api is set.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['name' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema', 'items' => birkly_ai_tool_schema_field_definition_item()]], birkly_ai_tool_schema_collection_config_properties()), 'required' => ['name', 'slug']]],
-        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata, field schema, entry_method (public_api for forms), api_settings, or sub_collections. REQUIRED: slug. WARNING: passing fields REPLACES the entire schema (not a merge) — include every field you want to keep. api_settings can be updated alone (e.g. rate_limit) without resending entry_method. Public read access uses collection allow_public_read (admin UI), not api_settings. Unknown keys are rejected with an error.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema (replaces entire schema)', 'items' => birkly_ai_tool_schema_field_definition_item()]], birkly_ai_tool_schema_collection_config_properties()), 'required' => ['slug']]],
+        'update_collection' => ['name' => 'update_collection', 'description' => 'Update collection metadata, field schema, entry_method (public_api for forms), api_settings, allow_public_read, or sub_collections. REQUIRED: slug. WARNING: passing fields REPLACES the entire schema (not a merge) — include every field you want to keep. api_settings can be updated alone (e.g. rate_limit) without resending entry_method. Public read access uses allow_public_read on the collection (not api_settings). Unknown keys are rejected with an error.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['slug' => ['type' => 'string', 'description' => 'Collection slug'], 'collection' => ['type' => 'string', 'description' => 'Alias for slug'], 'name' => ['type' => 'string'], 'fields' => ['type' => 'array', 'description' => 'Field schema (replaces entire schema)', 'items' => birkly_ai_tool_schema_field_definition_item()]], birkly_ai_tool_schema_collection_config_properties()), 'required' => ['slug']]],
         'save_collection_groups' => ['name' => 'save_collection_groups', 'description' => 'Save collection sidebar groups (create groups, assign collections, reorder). Replaces entire groups tree.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['groups' => ['type' => 'array', 'description' => 'Group tree: [{id, name, collections: [slug...], icon?, children?: [...]}]', 'items' => ['type' => 'object', 'additionalProperties' => true]]], 'required' => ['groups']]],
         'delete_collection' => ['name' => 'delete_collection', 'description' => 'Delete a collection. REQUIRED: slug.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string'], 'collection' => ['type' => 'string']], 'required' => ['slug']]],
         'create_entry' => ['name' => 'create_entry', 'description' => 'Create an entry. REQUIRED: collection (slug string). Slug is auto-generated from title when omitted — use {slug} in post links (post.html?collection=blog&slug={slug}). Set status to "published" for live site content.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string', 'description' => 'Collection slug'], 'title' => ['type' => 'string'], 'slug' => ['type' => 'string', 'description' => 'Optional URL slug; auto-generated from title if omitted'], 'status' => ['type' => 'string', 'description' => 'published or draft — use published for live site content'], 'data' => ['type' => 'object']], 'required' => ['collection']]],
@@ -162,12 +162,16 @@ function birkly_ai_tool_schema_sub_collection_item(): array
 /** Extra collection properties (entry_method, sub_collections, public API). */
 function birkly_ai_tool_schema_collection_config_properties(): array
 {
+    require_once __DIR__ . '/ai_collection_config.php';
+    $apiSettingsKeys = implode(', ', birkly_collection_api_settings_keys());
+
     return [
         'description' => ['type' => 'string'],
         'entry_method' => ['type' => 'string', 'description' => 'admin_only (default) or public_api for contact forms and public submission'],
+        'allow_public_read' => ['type' => 'boolean', 'description' => 'When true, collection entries are readable via the public API without authentication'],
         'api_settings' => [
             'type' => 'object',
-            'description' => 'When entry_method is public_api: auto_publish, rate_limit, notification_email, captcha_*',
+            'description' => 'When entry_method is public_api: ' . $apiSettingsKeys,
             'additionalProperties' => true,
         ],
         'sub_collections' => [
@@ -297,7 +301,12 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     }
 
     if ($actionType === 'get_system_context') {
-        return ['content' => [['type' => 'text', 'text' => json_encode(generateSystemContext($aiUser), JSON_PRETTY_PRINT)]]];
+        require_once __DIR__ . '/build_info.php';
+        $context = generateSystemContext($aiUser);
+        $mcpBuild = birkly_mcp_system_build_info();
+        unset($context['system_info']['git_commit']);
+        $context['system_info']['deployed_at'] = $mcpBuild['deployed_at'];
+        return ['content' => [['type' => 'text', 'text' => json_encode($context, JSON_PRETTY_PRINT)]]];
     }
 
     if ($actionType === 'read_birkly_docs') {
@@ -353,6 +362,10 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
     if (birkly_ai_is_read_action($actionType)) {
         require_once __DIR__ . '/../api/ai_read_actions.php';
+        require_once __DIR__ . '/ai_mcp_sanitize.php';
+        if ($source === 'mcp') {
+            birkly_ai_mcp_cleanup_stray_settings();
+        }
         if ($source === 'mcp' && in_array($actionType, ['list_entries'], true)) {
             $arguments['summary'] = true;
         }
@@ -361,7 +374,17 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         if (!($result['success'] ?? false)) {
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Action failed']]];
         }
-        return ['content' => [['type' => 'text', 'text' => json_encode($result['data'] ?? $result, JSON_PRETTY_PRINT)]]];
+        $payload = $result['data'] ?? $result;
+        if ($source === 'mcp' && $actionType === 'read_settings' && is_array($payload)) {
+            $payload = birkly_ai_mcp_redact_settings_response($payload);
+        }
+        if ($source === 'mcp' && $actionType === 'read_collection' && is_array($payload)) {
+            $payload = birkly_ai_mcp_enrich_read_collection_payload($payload);
+        }
+        if ($source === 'mcp' && $actionType === 'list_collections' && is_array($payload)) {
+            $payload = birkly_ai_mcp_enrich_list_collections_payload($payload);
+        }
+        return ['content' => [['type' => 'text', 'text' => json_encode($payload, JSON_PRETTY_PRINT)]]];
     }
 
     // Inbound MCP: the client app (Claude, ChatGPT, Cursor) handles approval UX.
@@ -412,8 +435,17 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
 
     $GLOBALS['__HARU_INTERNAL_CALL'] = true;
     require_once __DIR__ . '/../api/ai_approvals.php';
+    require_once __DIR__ . '/ai_mcp_sanitize.php';
 
     $arguments = is_array($arguments) ? $arguments : [];
+    if ($source === 'mcp' && $actionType === 'update_settings') {
+        birkly_ai_mcp_cleanup_stray_settings();
+        $settingsError = birkly_ai_validate_mcp_update_settings($arguments);
+        if ($settingsError !== null) {
+            unset($GLOBALS['__HARU_INTERNAL_CALL']);
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => $settingsError]]];
+        }
+    }
     if ($source === 'mcp' && $actionType === 'create_entry' && !isset($arguments['status'])) {
         $arguments['status'] = 'published';
     }
@@ -428,6 +460,10 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
     unset($GLOBALS['__HARU_INTERNAL_CALL']);
     if (!($result['success'] ?? false)) {
         return ['isError' => true, 'content' => [['type' => 'text', 'text' => $result['message'] ?? 'Execution failed']]];
+    }
+
+    if ($source === 'mcp' && in_array($actionType, ['update_collection', 'create_collection'], true)) {
+        $result = birkly_ai_mcp_enrich_write_collection_result($result);
     }
 
     $summary = birkly_ai_mcp_tool_success_summary($actionType, $arguments, $result);
