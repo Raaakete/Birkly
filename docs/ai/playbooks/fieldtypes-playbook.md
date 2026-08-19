@@ -40,15 +40,19 @@ Use when defining collection schemas, fixing validation errors, or choosing the 
 
 ## Media
 
+**Prefer native media fieldtypes over URL/text for assets stored in Birkly.**
+
 | type | Use for | Entry value | Template |
 |------|---------|-------------|----------|
-| `image` | Single featured image | Media filename / ref | Fieldtype renders `<img>` in admin; in templates use field output |
-| `gallery` | Multiple images | Array of refs | Loop or gallery fieldtype output |
-| `media` | Generic file | File metadata object | PDFs, downloads |
+| `image` | Single featured/hero image | Media filename / ref | Fieldtype renders `<img>` in admin; in templates use field output |
+| `gallery` | Multiple images (portfolio, product photos) | Array of media refs | Loop or gallery fieldtype output — **not** several `url` fields |
+| `media` | Generic file (PDF, audio, download) | File metadata object | Upload via media library; **not** a bare URL string |
 
-Workflow: `list_media` → reference filename in `create_entry` → template displays field.
+**Anti-pattern:** `text` or `url` fields holding `/media/...` paths or external image URLs when the asset should live in the media library. Those bypass uploads, folders, responsive variants, and admin pickers.
 
-See **`media`** playbook for upload tools.
+**When `url` is correct:** external links (partner site, social profile) — not CMS-managed images.
+
+Workflow: `list_media` / `upload_media` → reference filename in `create_entry` → template displays field. See **`media`** playbook.
 
 ## Numbers & dates
 
@@ -119,6 +123,18 @@ On parent `blog` via `update_collection` → `sub_collections`:
   ]
 }
 ```
+
+## Composing fieldtypes
+
+| Pattern | Approach |
+|---------|----------|
+| Repeating rows (specs, FAQs, team members) | `sub_collections` with typed fields — not parallel `text` fields |
+| Tags / categories | `tags`, `multiselect`, or `select` with `options[]` |
+| Sellable product | `commerce` fieldtype on entry or variant sub-entry — see `commerce` |
+| Marketing copy + assets | `editor`/`textarea` + `image` or `gallery` — never `url` for library images |
+| Arbitrary JSON | `json` only when no built-in fieldtype fits |
+
+After schema changes: `read_collection` → match template `name="{slug}"` and `{'slug'}` exactly.
 
 ## Related
 

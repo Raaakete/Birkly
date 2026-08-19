@@ -113,6 +113,13 @@ function birkly_ai_playbook_catalog(): array
             'triggers' => 'mcp, connect claude, connect cursor, connect chatgpt, connector url',
             'category' => 'AI & integration',
         ],
+        'mcp-capabilities' => [
+            'title' => 'MCP tool capabilities & plugin tools',
+            'topic' => 'mcp-capabilities',
+            'summary' => 'What MCP can do: core tools, plugin tools, allow_public_read, fieldtype picks.',
+            'triggers' => 'mcp tools, what can you do, plugin tools, allow public read, commerce tools',
+            'category' => 'AI & integration',
+        ],
         'ai-connections' => [
             'title' => 'Built-in admin AI assistant',
             'topic' => 'ai-connections',
@@ -194,6 +201,7 @@ function birkly_ai_core_docs_topics(): array
         'sub-collections' => $playbook('sub-collections-playbook.md', 'Sub-collections playbook'),
         'agent-guide' => $playbook('agent-guide-playbook.md', 'Agent Guide playbook'),
         'mcp-setup' => $playbook('mcp-setup-playbook.md', 'MCP setup playbook'),
+        'mcp-capabilities' => $playbook('mcp-capabilities-playbook.md', 'MCP capabilities playbook'),
         'ai-connections' => $playbook('ai-connections-playbook.md', 'Built-in AI assistant playbook'),
         'plugins-overview' => $playbook('plugins-overview-playbook.md', 'Plugins & marketplace playbook'),
         'commerce' => $playbook('commerce-playbook.md', 'Commerce playbook'),
@@ -281,6 +289,7 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
         'events' => '/\b(events|rsvp|calendar|tickets)\b/i',
         'user-management' => '/\b(user registration|member registration|member login|site users|logged-in members)\b/i',
         'mcp-setup' => '/\b(mcp|connect claude|connect cursor|connect chatgpt|connector url|model context protocol)\b/i',
+        'mcp-capabilities' => '/\b(mcp tools?|what can (?:you|mcp)|plugin tools?|allow_public_read|commerce_list|automation_list)\b/i',
         'ai-connections' => '/\b(built-in assistant|ai connection|approvals tab|floating chat)\b/i',
         'plugins-overview' => '/\b(install plugin|install \w+ plugin|marketplace|activate plugin|enable commerce|enable plugin)\b/i',
         'settings-roles' => '/\b(role|permission|settings tab|security settings)\b/i',
@@ -381,9 +390,10 @@ function birkly_ai_mcp_initialize_instructions(): string
     $rules = "RULES:\n"
         . "- Start with ai-quality-guide golden rules when unsure; playbooks-index for routing\n"
         . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
-        . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, public-forms, web-project-patterns — when not pre-loaded below\n"
+        . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, mcp-capabilities, public-forms, web-project-patterns — when not pre-loaded below\n"
         . "- Admin help topics link to playbooks via ai_topic (e.g. entries→content-model, mcp-connections→mcp-setup)\n"
-        . "- List pages: loops; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
+        . "- List pages: loops need allow_public_read: true on the collection; detail pages: ?collection=<slug>&slug={slug} with NO collection loop on detail HTML\n"
+        . "- Images on the site: use image/gallery/media fieldtypes + media library — not text/url fields for CMS assets\n"
         . "- Every templated HTML page MUST include <script src=\"/birkly-client.js\"></script>\n"
         . "- Define collection fields BEFORE create_entry — never leave fields: []; read fieldtypes for type names\n"
         . "- read_collection before writing form HTML — field slugs must match name=\"{slug}\" exactly\n"
@@ -391,7 +401,7 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "- Use get_project_info site_url_prefix for asset/page URLs in HTML (e.g. /project/css/…)\n"
         . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
         . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
-        . "- Plugins: list_plugins before assuming Commerce/Events/User Management exist — install via Hub\n"
+        . "- Plugins: list_plugins before assuming Commerce/Events/User Management exist — install via Hub; active plugins add commerce_* / automation_* MCP tools\n"
         . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n"
         . "- After a Birkly upgrade, reconnect the MCP client or call tools/list again — some clients cache tool schemas from initialize\n\n";
 

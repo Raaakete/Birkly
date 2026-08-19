@@ -19,6 +19,18 @@ Runtime value is **`public_api`** (not `public_submit` — older docs may use th
 4. **Comments are sub-entries** — use `/api/public_sub_entry.php`, not `public_submit.php`.
 5. **`auto_publish`** — when off (default), submissions land as drafts/pending and may not appear on the public site until approved. Set `auto_publish: true` in `api_settings` (collection) or `auto_publish: true` on sub-collections for instant visibility.
 
+## Public read (listing entries on the live site)
+
+Separate from form submission (`entry_method: public_api`):
+
+```json
+{"type":"update_collection","slug":"blog","allow_public_read":true}
+```
+
+- `allow_public_read: true` — entries readable via public API / `{for each entry in 'blog'}` without auth
+- Lives on the **collection** object — not inside `api_settings`
+- Verify with `read_collection` — response includes effective `allow_public_read`
+
 ## Setup (AI + admin)
 
 AI connections with **manage_content** can configure public submission via tools:
@@ -27,6 +39,7 @@ AI connections with **manage_content** can configure public submission via tools
 2. API key is **auto-generated** when switching to public_api (returned in `read_collection`)
 3. Optional `api_settings`: `auto_publish`, `rate_limit`, `notification_email`, captcha fields
 4. For sub-collections: pass `sub_collections[]` with `entry_method: "public_api"` and matching field slugs
+5. For public **read** loops (`{for each entry in 'blog'}`): set `allow_public_read: true` on the collection (top-level on `create_collection` / `update_collection`, not in `api_settings`)
 
 Then `write_project_file` — HTML with `{entry for 'slug'}` or explicit sub-entry forms in `project/`.
 
