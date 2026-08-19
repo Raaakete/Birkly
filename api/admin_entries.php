@@ -9,6 +9,8 @@ if (defined('ADMIN_ENTRIES_PHP_EXECUTED')) {
 }
 define('ADMIN_ENTRIES_PHP_EXECUTED', true);
 
+$__cmsMcpFunctionsOnly = !empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
 // CRITICAL: Check authentication FIRST before any other logic
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/cache.php';
@@ -23,15 +25,17 @@ require_once __DIR__ . '/../core/plugins.php';
 if (function_exists('load_plugins')) {
     load_plugins();
 }
-haru_secure_session_start();
-if (!isset($_SESSION['user'])) {
-    while (ob_get_level() > 0) { ob_end_clean(); }
-    http_response_code(401);
-    if (!headers_sent()) {
-        header('Content-Type: application/json');
+if (!$__cmsMcpFunctionsOnly) {
+    haru_secure_session_start();
+    if (!isset($_SESSION['user'])) {
+        while (ob_get_level() > 0) { ob_end_clean(); }
+        http_response_code(401);
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+        }
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
     }
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-    exit;
 }
 
 // Only set headers if this file is being called directly (not included)
@@ -44,8 +48,13 @@ if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     set_cors_headers('admin');
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (!$__cmsMcpFunctionsOnly && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
+}
+
+if ($__cmsMcpFunctionsOnly) {
+    require_once __DIR__ . '/../core/cms_mcp_request.php';
+    goto CMS_MCP_ADMIN_ENTRIES_FUNCTIONS;
 }
 
 // Start output buffering to avoid stray output breaking JSON
@@ -396,6 +405,8 @@ switch ($action) {
         ]);
         exit;
 }
+
+CMS_MCP_ADMIN_ENTRIES_FUNCTIONS:
 
 function saveEntry() {
     $collectionSlug = $_POST['collection'] ?? '';
@@ -1156,22 +1167,17 @@ function generateSlug($title) {
 }
 
 function readJsonRequestBody(): array {
-    $rawInput = file_get_contents('php://input');
-    if (!is_string($rawInput) || trim($rawInput) === '') {
-        return [];
+    if (!function_exists('cms_mcp_read_json_body')) {
+        require_once __DIR__ . '/../core/cms_mcp_request.php';
     }
-
-    $input = json_decode($rawInput, true);
-    return is_array($input) ? $input : [];
+    return cms_mcp_read_json_body();
 }
 
 function validateStateChangeCsrfToken(string $csrf, string $actionName): bool {
-    if (validate_csrf_token($csrf)) {
-        return true;
+    if (!function_exists('cms_mcp_csrf_valid')) {
+        require_once __DIR__ . '/../core/cms_mcp_request.php';
     }
-
-    log_security_event('permission_denied', ['action' => $actionName, 'reason' => 'invalid CSRF']);
-    return false;
+    return cms_mcp_csrf_valid($csrf, $actionName);
 }
 
 function getCollectionPaths(string $collectionSlug): ?array {
@@ -1374,11 +1380,10 @@ function performBulkOperation() {
         // - delete: delete
         requireAuth('write');
 
-        $rawInput = file_get_contents('php://input');
-        $input = json_decode($rawInput, true);
+        $input = readJsonRequestBody();
         
         if (!$input) {
-            error_log("performBulkOperation: Failed to decode JSON. Raw input: " . substr($rawInput, 0, 200));
+            error_log("performBulkOperation: Failed to decode JSON input");
             return ['status' => 'error', 'message' => 'Invalid request data'];
         }
         
@@ -1941,8 +1946,7 @@ function processReviewAction() {
         return ['status' => 'error', 'message' => 'Insufficient permissions'];
     }
     
-    $rawInput = file_get_contents('php://input');
-    $input = json_decode($rawInput, true);
+    $input = readJsonRequestBody();
     
     $collectionSlug = $input['collection'] ?? '';
     $entryId = $input['entry_id'] ?? '';
