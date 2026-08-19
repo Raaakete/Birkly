@@ -359,6 +359,8 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         $mcpBuild = birkly_mcp_system_build_info();
         unset($context['system_info']['git_commit']);
         $context['system_info']['deployed_at'] = $mcpBuild['deployed_at'];
+        $context['system_info']['mcp_server_version'] = BIRKLY_MCP_SERVER_VERSION;
+        $context['system_info']['mcp_tool_count'] = count(birkly_ai_tools_for_user($aiUser));
         return ['content' => [['type' => 'text', 'text' => json_encode($context, JSON_PRETTY_PRINT)]]];
     }
 

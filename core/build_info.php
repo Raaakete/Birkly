@@ -5,6 +5,10 @@
 
 declare(strict_types=1);
 
+if (!defined('BIRKLY_MCP_SERVER_VERSION')) {
+    define('BIRKLY_MCP_SERVER_VERSION', '1.5.0');
+}
+
 /**
  * @return array<string, mixed>
  */
