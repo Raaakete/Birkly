@@ -629,6 +629,55 @@ if ($action === 'set_language') {
     exit;
 }
 
+if ($action === 'rotate_encryption_key') {
+    $rotatedBy = $_SESSION['user']['email'] ?? 'unknown';
+    $mcpActor = null;
+
+    if (!isset($_SESSION['user'])) {
+        require_once __DIR__ . '/../core/mcp_oauth.php';
+        $apiKey = $_SERVER['HTTP_X_MCP_API_KEY'] ?? ($input['api_key'] ?? '');
+        $bearerToken = birkly_mcp_oauth_extract_bearer();
+        if ($apiKey !== '' || $bearerToken !== '') {
+            $mcpActor = birkly_mcp_resolve_actor_with_auth($apiKey, $bearerToken);
+        }
+        if (!$mcpActor || !checkPermission($mcpActor, 'manage_settings')) {
+            http_response_code(401);
+            echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+            exit;
+        }
+        $rotatedBy = $mcpActor['email'] ?? ($mcpActor['id'] ?? 'mcp');
+    } else {
+        $csrf = $input['_csrf'] ?? '';
+        if (!validate_csrf_token($csrf)) {
+            log_security_event('permission_denied', ['action' => 'rotate_encryption_key', 'reason' => 'invalid CSRF']);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+            exit;
+        }
+    }
+
+    require_once __DIR__ . '/../core/secret_box.php';
+    $result = birkly_rotate_instance_encryption_key();
+    if (empty($result['ok'])) {
+        log_security_event('encryption_key_rotate_failed', [
+            'user' => $rotatedBy,
+            'message' => $result['message'] ?? 'unknown',
+        ]);
+        echo json_encode(['status' => 'error', 'message' => $result['message'] ?? 'Rotation failed']);
+        exit;
+    }
+
+    log_security_event('encryption_key_rotated', [
+        'user' => $rotatedBy,
+        'reencrypted' => $result['reencrypted'] ?? [],
+    ]);
+    echo json_encode([
+        'status' => 'ok',
+        'message' => $result['message'],
+        'data' => ['reencrypted' => $result['reencrypted'] ?? []],
+    ]);
+    exit;
+}
+
 if ($action === 'rebuild_system') {
     $csrf = $input['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
