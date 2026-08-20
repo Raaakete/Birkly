@@ -148,6 +148,20 @@ if ($action === 'set_public_primary') {
     exit;
 }
 
+if ($action === 'set_same_host_public') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $result = birkly_hosting_set_same_host_landing('public');
+    $result['delivery'] = birkly_delivery_probe(['deep' => false]);
+    $result['data'] = birkly_hosting_api_payload();
+    echo json_encode($result);
+    exit;
+}
+
 if ($action === 'repair' || $action === 'fix_project_paths') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
