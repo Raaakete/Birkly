@@ -201,8 +201,18 @@ function birkly_hosting_set_domain_delivery_role(string $host, string $role): ar
     $publicAliases = array_values(array_filter($publicAliases, static fn (string $h): bool => $h !== $host));
 
     if ($role === 'cms' && $host !== $cmsPrimary) {
+        foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
+            if ($pairHost !== $cmsPrimary) {
+                $cmsAliases[] = $pairHost;
+            }
+        }
         $cmsAliases[] = $host;
     } elseif ($role === 'public' && $host !== $publicPrimary) {
+        foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
+            if ($pairHost !== $publicPrimary) {
+                $publicAliases[] = $pairHost;
+            }
+        }
         $publicAliases[] = $host;
     }
 
@@ -495,6 +505,11 @@ function birkly_hosting_set_public_primary(string $host): array
 
     if ($currentPrimary !== '') {
         $aliases[] = $currentPrimary;
+    }
+    foreach (birkly_hosting_www_apex_pair($host) as $pairHost) {
+        if ($pairHost !== $host) {
+            $aliases[] = $pairHost;
+        }
     }
 
     $config['public_site_url'] = birkly_hosting_normalize_url($scheme . '://' . $host, true);

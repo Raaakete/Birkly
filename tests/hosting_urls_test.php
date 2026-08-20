@@ -251,6 +251,14 @@ try {
     $_SERVER['HTTP_HOST'] = 'example.com';
     assert_true('public alias host role', birkly_request_host_role() === 'public');
     assert_true('public alias match helper', birkly_hosting_host_matches_public('example.com') === true);
+    require_once dirname(__DIR__) . '/core/project_site.php';
+    $rewritten = birkly_project_rewrite_cross_host_urls(
+        '<link rel="icon" href="https://www.example.com/media/logo.png">'
+    );
+    assert_true(
+        'cross-host rewrite makes favicon relative',
+        str_contains($rewritten, 'href="/media/logo.png"')
+    );
 
     $_SERVER['HTTP_HOST'] = 'unknown.example.com';
     assert_true('unknown host role with aliases configured', birkly_request_host_role() === 'unknown');

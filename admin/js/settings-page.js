@@ -1636,7 +1636,7 @@ async function deletePlugin(pluginId) {
             '<table class="table table--hover">' +
             '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th><th>Visitor routing</th></tr></thead>' +
             '<tbody>' + body + '</tbody></table></div>' +
-            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname.</p>';
+            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.</p>';
 
         var roleSelects = container.querySelectorAll('.domain-delivery-role');
         for (var r = 0; r < roleSelects.length; r++) {
@@ -2067,7 +2067,7 @@ function openAddDomainModal() {
     }
     var helpEl = document.getElementById('domain-delivery-role-help');
     if (helpEl) {
-        helpEl.textContent = 'Choose how this hostname is used for site delivery. You can change it later on the domain card.';
+        helpEl.textContent = 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.';
     }
     bindRegisterDomainSuggestInline();
 }
