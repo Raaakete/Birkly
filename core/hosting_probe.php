@@ -303,10 +303,25 @@ function birkly_delivery_probe(array $options = []): array
             if (birkly_project_is_bundled_demo_site()) {
                 $checks[] = birkly_delivery_check(
                     'project_files',
-                    'warn',
+                    'fail',
                     'PROJECT_BUNDLED_DEMO',
-                    'project/index.html is still the default Birkly demo site. Install your site pack or replace project/ files with your site content.',
-                    ['tab' => 'project', 'hash' => 'project-files']
+                    'project/index.html is still the default Birkly demo shell (blog/content may render inside it via SSR). '
+                        . 'Run Repair delivery to remove demo files, then ensure your custom site files are in project/.',
+                    $fixRepair
+                );
+            }
+
+            require_once __DIR__ . '/hosting_redirects.php';
+            $harmfulRedirects = birkly_hosting_harmful_project_redirects();
+            if ($harmfulRedirects !== []) {
+                $sample = trim((string) (($harmfulRedirects[0]['from_path'] ?? '/project') . ' → ' . ($harmfulRedirects[0]['to_path'] ?? '')));
+                $checks[] = birkly_delivery_check(
+                    'redirects',
+                    'fail',
+                    'REDIRECT_BREAKS_PROJECT',
+                    'A redirect sends visitors away from /project to a CMS alias host (' . $sample . '). '
+                        . 'That breaks Visit project on same-host setups. Run Repair delivery to disable it.',
+                    $fixRepair
                 );
             }
 

@@ -109,9 +109,11 @@ function birkly_hosting_propose_config(): array
         if ($publicHost !== '') {
             $pair = birkly_hosting_www_apex_pair($publicHost);
             $aliases = [];
-            foreach ($pair as $host) {
-                if ($host !== $publicHost) {
-                    $aliases[] = $host;
+            if ($cmsHost === '' || $cmsHost !== $publicHost) {
+                foreach ($pair as $host) {
+                    if ($host !== $publicHost) {
+                        $aliases[] = $host;
+                    }
                 }
             }
             $proposal['public_host_aliases'] = birkly_hosting_normalize_alias_hosts(
