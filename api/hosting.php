@@ -45,6 +45,8 @@ function birkly_hosting_api_payload(): array
         'registered_public_host' => $publicHost,
         'request_host_role' => birkly_request_host_role(),
         'same_host' => birkly_hosting_same_host(),
+        'overlapping_aliases' => birkly_hosting_overlapping_delivery_aliases($config),
+        'config_warnings' => birkly_hosting_config_warnings($config),
         'client_snippet' => birkly_hosting_client_snippet(),
         'suggested_cms_url' => birkly_hosting_build_url_from_request(),
         'delivery' => $probe,
