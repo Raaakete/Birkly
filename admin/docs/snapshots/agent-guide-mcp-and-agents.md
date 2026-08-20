@@ -33,15 +33,16 @@ Primary tool. Legacy alias: **`get_brand_context`**.
 
 ```json
 {
-  "view": "summary | full | products"
+  "view": "summary | full | products | claims"
 }
 ```
 
 | view | Returns |
 |------|---------|
-| summary | Identity, positioning highlights, supported claim statements, sources_of_truth, usage_hints |
-| full | Complete enriched export |
+| summary | Identity, positioning, supported claim statements, `evidence_ids`, `sources_of_truth`, usage_hints |
+| full | Complete enriched export (includes top-level `evidence[]`) |
 | products | `products_services` array with resolved sources |
+| claims | Supported `claims[]` plus linked `evidence[]` for all supported claims |
 
 Returns error if not published or disabled.
 
@@ -59,7 +60,20 @@ Returns published `products_services[]` (public products only).
 
 Legacy alias: **`get_brand_claim`**.
 
-Returns single **supported** claim from full export (includes sources, evidence_ids).
+Returns **claim graph** (same as public API `?action=claim&id=x&graph=1`):
+
+```json
+{
+  "claim": { "id": "…", "statement": "…", "evidence_ids": ["…"], "sources": [] },
+  "evidence": [
+    { "id": "…", "type": "external_url", "url": "https://…", "verification_status": "user_verified" }
+  ],
+  "sources": [],
+  "usage_hints": { "repeat_only_with_evidence": true }
+}
+```
+
+Supported claims only. Use this tool (not summary alone) when you need proof URLs for a claim.
 
 ### get_agent_guide_product
 

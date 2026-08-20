@@ -117,6 +117,32 @@ assert_true(is_readable($schemaPath), 'schema file readable');
 $schema = json_decode((string) file_get_contents($schemaPath), true);
 assert_true(is_array($schema) && in_array(BIRKLY_AI_PRESENCE_SCHEMA_VERSION, $schema['properties']['schema_version']['enum'] ?? [], true), 'schema enum includes agent_guide.v1');
 
+require_once $root . '/core/ai_presence_pro.php';
+$draftWithClaim = $draftWithProduct;
+$draftWithClaim['claims'] = [[
+    'id' => 'claim_test',
+    'statement' => 'We ship worldwide',
+    'status' => 'supported',
+    'evidence_ids' => ['ev_test'],
+    'sources' => [],
+]];
+$draftWithClaim['evidence'] = [[
+    'id' => 'ev_test',
+    'type' => 'external_url',
+    'title' => 'Shipping policy',
+    'url' => 'https://example.com/shipping',
+    'verification_status' => 'user_verified',
+]];
+$exportWithClaim = birkly_agent_guide_enrich_export($draftWithClaim);
+$summaryView = birkly_ai_presence_public_view($exportWithClaim, 'summary');
+assert_true(is_array($summaryView['sources_of_truth'] ?? null), 'summary view includes sources_of_truth');
+assert_true(($summaryView['supported_claims'][0]['evidence_ids'][0] ?? '') === 'ev_test', 'summary claim includes evidence_ids');
+$claimsView = birkly_ai_presence_public_view($exportWithClaim, 'claims');
+assert_true(count($claimsView['evidence'] ?? []) === 1, 'claims view includes linked evidence');
+$claimGraph = birkly_ai_presence_public_claim_graph($exportWithClaim, 'claim_test');
+assert_true(is_array($claimGraph['evidence'][0] ?? null), 'claim graph resolves evidence URLs');
+assert_true(($claimGraph['evidence'][0]['url'] ?? '') === 'https://example.com/shipping', 'claim graph evidence url');
+
 birkly_ai_presence_reset_for_tests();
 
 if ($failures > 0) {
