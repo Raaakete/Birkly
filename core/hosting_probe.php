@@ -264,17 +264,16 @@ function birkly_delivery_probe(array $options = []): array
                 if ($runtimeOk) {
                     $checks[] = birkly_delivery_check(
                         'asset_paths',
-                        'warn',
-                        'PROJECT_PATH_PREFIX',
-                        'project/index.html still uses /project/ paths on disk (rewritten when served). Run Fix to update files permanently.',
-                        $fixProjectPaths
+                        'pass',
+                        'ASSET_PATHS_OK',
+                        'Homepage paths are compatible with clean public URLs.'
                     );
                 } else {
                     $checks[] = birkly_delivery_check(
                         'asset_paths',
                         'fail',
                         'PROJECT_PATH_PREFIX',
-                        'project/index.html uses /project/ paths that break the public site. Click Fix to rewrite paths and inject the client script.',
+                        'project/index.html uses /project/ paths that break the public site. Click Fix paths to rewrite and inject the client script.',
                         $fixProjectPaths
                     );
                 }
