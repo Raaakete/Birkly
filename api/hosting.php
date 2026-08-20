@@ -116,6 +116,38 @@ if ($action === 'set_domain_role') {
     exit;
 }
 
+if ($action === 'set_alias_redirect') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $enabled = array_key_exists('enabled', $input)
+        ? !empty($input['enabled'])
+        : !empty($input['alias_redirect_to_primary']);
+    $result = birkly_hosting_set_alias_redirect($enabled);
+    if (($result['status'] ?? '') === 'ok') {
+        $result['data'] = birkly_hosting_api_payload();
+    }
+    echo json_encode($result);
+    exit;
+}
+
+if ($action === 'set_public_primary') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $host = (string) ($input['host'] ?? $input['domain'] ?? '');
+    $result = birkly_hosting_set_public_primary($host);
+    if (($result['status'] ?? '') === 'ok') {
+        $result['data'] = birkly_hosting_api_payload();
+    }
+    echo json_encode($result);
+    exit;
+}
+
 if ($action === 'repair' || $action === 'fix_project_paths') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {

@@ -225,6 +225,13 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
             </div>
             <div class="card-body u-stack-4">
+              <div id="delivery-routing-options" class="u-stack-3" hidden>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="delivery-alias-redirect">
+                  Redirect alias hostnames to primary URL (301)
+                </label>
+                <p class="form-help">When enabled, visitors on aliases such as <code>birkly.io</code> are sent to the primary public URL (e.g. <code>birkly.cloud</code>). Uncheck to keep each hostname in the browser address bar.</p>
+              </div>
               <div id="delivery-matrix-content">
                 <div class="loading-state"><p>Loading delivery matrix...</p></div>
               </div>

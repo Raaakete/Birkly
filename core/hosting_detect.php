@@ -385,6 +385,7 @@ function birkly_hosting_delivery_matrix(): array
     }
 
     $rows = [];
+    $aliasRedirect = !empty($config['alias_redirect_to_primary']);
     foreach (array_keys($hosts) as $host) {
         if ($host === '') {
             continue;
@@ -392,6 +393,13 @@ function birkly_hosting_delivery_matrix(): array
         $role = birkly_hosting_domain_delivery_role($host);
         $suggest = birkly_hosting_suggest_delivery_role($host);
         $isPrimary = in_array($role, ['cms_primary', 'public_primary'], true);
+        $isAlias = in_array($role, ['cms', 'public'], true);
+        $redirectTarget = '';
+        if ($role === 'cms') {
+            $redirectTarget = $cmsPrimary;
+        } elseif ($role === 'public') {
+            $redirectTarget = $publicPrimary;
+        }
         $rows[] = [
             'host' => $host,
             'role' => $role,
@@ -400,6 +408,10 @@ function birkly_hosting_delivery_matrix(): array
             'suggest_reason' => $suggest['reason'],
             'is_primary' => $isPrimary,
             'settable_role' => $isPrimary ? null : birkly_hosting_settable_delivery_role($role),
+            'is_alias' => $isAlias,
+            'redirects_to_primary' => $isAlias && $aliasRedirect && $redirectTarget !== '',
+            'redirect_target_host' => $redirectTarget,
+            'can_make_public_primary' => $role === 'public' && $publicPrimary !== '' && $host !== $publicPrimary,
         ];
     }
 
@@ -422,6 +434,82 @@ function birkly_hosting_delivery_matrix(): array
     });
 
     return $rows;
+}
+
+/**
+ * @return array{status: string, message: string, config?: array<string, mixed>}
+ */
+function birkly_hosting_set_alias_redirect(bool $enabled): array
+{
+    if (birkly_hosting_env_overrides() !== []) {
+        return ['status' => 'error', 'message' => 'Cannot change alias redirect while environment overrides are active'];
+    }
+
+    $config = birkly_hosting_normalize_config(birkly_hosting_load());
+    $config['alias_redirect_to_primary'] = $enabled;
+
+    birkly_hosting_backup_config();
+    if (!birkly_hosting_persist($config, true)) {
+        return ['status' => 'error', 'message' => 'Failed to save alias redirect setting'];
+    }
+
+    return [
+        'status' => 'ok',
+        'message' => $enabled
+            ? 'Alias hostnames will redirect to primary URLs'
+            : 'Alias hostnames will serve content directly',
+        'config' => birkly_hosting_load(),
+    ];
+}
+
+/**
+ * Promote a public alias (or unassigned registered host) to the primary public URL.
+ *
+ * @return array{status: string, message: string, config?: array<string, mixed>}
+ */
+function birkly_hosting_set_public_primary(string $host): array
+{
+    if (birkly_hosting_env_overrides() !== []) {
+        return ['status' => 'error', 'message' => 'Cannot change primary URL while environment overrides are active'];
+    }
+
+    $host = birkly_normalize_host($host);
+    if ($host === '') {
+        return ['status' => 'error', 'message' => 'Invalid host'];
+    }
+
+    $config = birkly_hosting_normalize_config(birkly_hosting_load());
+    $mode = birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none'));
+    if ($mode === 'none') {
+        return ['status' => 'error', 'message' => 'Configure a public site before setting a primary URL'];
+    }
+
+    $currentPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    if ($currentPrimary === $host) {
+        return ['status' => 'ok', 'message' => 'Host is already the primary public URL', 'config' => $config];
+    }
+
+    $scheme = parse_url((string) $config['public_site_url'], PHP_URL_SCHEME) ?: 'https';
+    $aliases = birkly_hosting_public_alias_hosts($config);
+    $aliases = array_values(array_filter($aliases, static fn (string $h): bool => $h !== $host));
+
+    if ($currentPrimary !== '') {
+        $aliases[] = $currentPrimary;
+    }
+
+    $config['public_site_url'] = birkly_hosting_normalize_url($scheme . '://' . $host, true);
+    $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts($aliases, $host);
+
+    birkly_hosting_backup_config();
+    if (!birkly_hosting_persist($config, true)) {
+        return ['status' => 'error', 'message' => 'Failed to set primary public URL'];
+    }
+
+    return [
+        'status' => 'ok',
+        'message' => 'Primary public URL updated to ' . $host,
+        'config' => birkly_hosting_load(),
+    ];
 }
 
 /**
