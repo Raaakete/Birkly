@@ -338,6 +338,12 @@ function birkly_ai_presence_validate_draft_links(array &$draft, bool $mutate = f
         }
     };
 
+    $runCheck = static function (string $scope, string $id, string $url, ?array &$target) use ($check): void {
+        $check($scope, $id, $url, $target);
+    };
+
+    $skipTarget = null;
+
     foreach ($draft['products_services'] ?? [] as $i => $product) {
         if (!is_array($product)) {
             continue;
@@ -350,8 +356,11 @@ function birkly_ai_presence_validate_draft_links(array &$draft, bool $mutate = f
             }
             $resolved = birkly_ai_presence_resolve_source_link($link);
             $url = (string) ($resolved['url'] ?? '');
-            $target = $mutate ? $draft['products_services'][$i]['sources'][$j] : null;
-            $check('product_source', $pid . ':' . ($link['id'] ?? $j), $url, $target);
+            if ($mutate) {
+                $runCheck('product_source', $pid . ':' . ($link['id'] ?? $j), $url, $draft['products_services'][$i]['sources'][$j]);
+            } else {
+                $runCheck('product_source', $pid . ':' . ($link['id'] ?? $j), $url, $skipTarget);
+            }
         }
     }
 
@@ -360,8 +369,11 @@ function birkly_ai_presence_validate_draft_links(array &$draft, bool $mutate = f
             continue;
         }
         $url = (string) ($ev['url'] ?? '');
-        $ref = &$draft['evidence'][$i];
-        $check('evidence', (string) ($ev['id'] ?? 'ev_' . $i), $url, $mutate ? $ref : null);
+        if ($mutate) {
+            $runCheck('evidence', (string) ($ev['id'] ?? 'ev_' . $i), $url, $draft['evidence'][$i]);
+        } else {
+            $runCheck('evidence', (string) ($ev['id'] ?? 'ev_' . $i), $url, $skipTarget);
+        }
     }
 
     foreach ($draft['claims'] ?? [] as $i => $claim) {
@@ -375,15 +387,17 @@ function birkly_ai_presence_validate_draft_links(array &$draft, bool $mutate = f
             }
             $resolved = birkly_ai_presence_resolve_source_link($link);
             $url = (string) ($resolved['url'] ?? '');
-            $ref = &$draft['claims'][$i]['sources'][$j];
-            $check('claim_source', $cid . ':' . ($link['id'] ?? $j), $url, $mutate ? $ref : null);
+            if ($mutate) {
+                $runCheck('claim_source', $cid . ':' . ($link['id'] ?? $j), $url, $draft['claims'][$i]['sources'][$j]);
+            } else {
+                $runCheck('claim_source', $cid . ':' . ($link['id'] ?? $j), $url, $skipTarget);
+            }
         }
     }
 
     $website = trim((string) ($draft['identity']['website'] ?? ''));
     if ($website !== '') {
-        $dummy = null;
-        $check('identity', 'website', $website, null);
+        $runCheck('identity', 'website', $website, $skipTarget);
     }
 
     return $results;
