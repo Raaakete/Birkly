@@ -2,6 +2,8 @@
 
 Use when connected via MCP and you need to know what Birkly can do, which tool to call, or how plugin extensions expose extra tools.
 
+Playbooks suggest good workflows; **your connection's role** and **approval settings** define what you can run.
+
 ## Three AI surfaces
 
 | Surface | Who | Entry | Typical use |
@@ -88,9 +90,11 @@ Workflow for CMS images: `list_media` or `upload_media` → set field on `create
 1. `get_project_info` + `list_collections` (once per session)
 2. `read_birkly_docs` topic `playbooks-index` if task is unfamiliar
 3. `list_plugins` when user mentions shop, workflows, events, or members
-4. Execute — avoid re-asking for permission on a plan the user already approved
+4. Execute — follow the user's intent; use approval queue when the connection requires it
 
-## Anti-patterns
+## Common pitfalls (tips)
+
+These improve outcomes; they are not extra permission rules.
 
 - Using `url`/`text` for images that belong in the media library
 - Building `{for each entry}` loops without `allow_public_read: true`

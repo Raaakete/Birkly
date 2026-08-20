@@ -2,6 +2,8 @@
 
 Use for: publishing brand/product facts for external AI (Claude, ChatGPT, crawlers), `/.well-known/agent-guide.json`, grounded claims with evidence.
 
+Playbooks are guidance only — **role permissions** and **MCP approval settings** decide what your connection can do.
+
 ## What it is
 
 **Agent Guide** (AI Presence) is structured brand context: who you are, products, supported claims with evidence URLs. Published at `/.well-known/agent-guide.json` (and brand context variant).
@@ -12,24 +14,23 @@ External AI and MCP clients read via:
 - `get_agent_guide_context`, `get_agent_guide_product`, `get_agent_guide_claim`
 - MCP resource `birkly://brand-context`
 
-## Read vs write tools
+## Tools (capability map)
 
-**Published read tools** (safe for any MCP role with `read`):
+**Published read** (typical `read` permission):
 
-- `get_agent_guide_context`, `get_agent_guide_product`, `get_agent_guide_claim`
-- `list_agent_guide_products`
+- `get_agent_guide_context`, `get_agent_guide_product`, `get_agent_guide_claim`, `list_agent_guide_products`
 - MCP resource `birkly://brand-context`
 
-These expose **published** Agent Guide data only. They do not edit the draft.
+These return **published** Agent Guide data, not the editable draft.
 
-**Admin write tools** (require `manage_settings` on the MCP connection):
+**Draft / admin** (when the connection role includes the needed permissions, e.g. `manage_settings`):
 
-- `cms_admin_action` with `agent_guide.save_draft`, `agent_guide.publish`, `agent_guide.unpublish`, `agent_guide.cms_refresh`, `agent_guide.copilot`, `agent_guide.wizard_generate`, `agent_guide.validate_links`, etc.
-- See `cms_list_admin_actions` → group `agent_guide`.
+- `cms_list_admin_actions` → group `agent_guide`
+- `cms_admin_action` with `agent_guide.save_draft`, `agent_guide.publish`, `agent_guide.unpublish`, `agent_guide.cms_refresh`, `agent_guide.copilot`, `agent_guide.wizard_generate`, `agent_guide.validate_links`, …
 
-Connections scoped to read-only roles cannot call these write actions. Admin / full-permission connections can edit the **draft** via MCP — **publish still changes the live public guide** and should only run after human review.
+`agent_guide.save_draft` replaces list fields (e.g. `products_services`) entirely when you send a full array — match the shape from `agent_guide.get`.
 
-Default assistant guidance: prefer directing the site owner to **Admin → Agent Guide** for structural edits unless they explicitly authorize MCP draft saves or publish.
+Whether to use admin UI or MCP is up to the site owner and what their connection allows — not something playbooks restrict.
 
 ## Setup workflow (guide the user)
 
@@ -67,17 +68,17 @@ Publish when ready → live at `/.well-known/agent-guide.json`.
 | "What's in our Agent Guide?" | `get_agent_guide_context` |
 | "List our products for AI" | `list_agent_guide_products` or context view |
 | "Verify claim X" | `get_agent_guide_claim` |
-| "Add a new product" | Admin UI, or `cms_admin_action` `agent_guide.save_draft` when the connection has `manage_settings` and the owner authorized the edit |
+| "Add a new product" | `agent_guide.save_draft` (if permitted), or Admin → Agent Guide → Products |
 
 ## Coexistence with MCP
 
 Inbound MCP (`mcp-setup`) exposes tools + `birkly://brand-context`. Agent Guide is **outbound-facing brand truth**; MCP is **inbound CMS access**.
 
-## Anti-patterns
+## Tips (quality, not policy)
 
-- Calling `agent_guide.publish` without explicit owner approval (even when the MCP role allows it)
-- Inventing claims without evidence URLs
-- Confusing Agent Guide with generic system prompt context
+- Ground claims with evidence URLs — easier to publish and trust
+- `get_agent_guide_context` before large edits — know what's already live
+- Agent Guide is brand truth for external AI; separate from generic chat system prompts
 
 ## Related playbooks
 

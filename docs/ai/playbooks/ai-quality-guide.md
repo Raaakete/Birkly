@@ -2,11 +2,13 @@
 
 Read this when you want reliable, production-ready results — especially for casual user prompts like "build me a bakery website."
 
-## Golden rules
+**Permissions:** Role + MCP approval settings are authoritative. Everything below is **guidance** to help you build well — not a substitute for what `tools/list` allows.
+
+## Principles (tips, not policy)
 
 1. **Read before write** — One `read_collection` / `get_project_info` / playbook load beats ten guesses. Field slugs, URL prefixes, and existing files must match reality.
 2. **Schema before entries before HTML** — Never `create_entry` with empty `fields: []`. Never write templates referencing fields that do not exist.
-3. **Follow playbooks, adapt patterns** — Playbooks are principles + examples, not copy-paste recipes. Infer content model from the user's business.
+3. **Follow playbooks, adapt patterns** — Playbooks are inspiration + examples, not copy-paste recipes or extra restrictions. Infer content model from the user's business.
 4. **Execute, don't narrate** — Use tool actions. Do not claim files were written without a successful tool result.
 5. **One discovery pass per turn** — If playbooks or project discovery are pre-loaded in the system prompt, do not call `get_project_info` / `list_project_files` again unless the user changed something.
 6. **Verify wiring** — Every templated HTML page needs `<script src="/birkly-client.js"></script>`. List pages loop; detail pages use URL slug context (no collection loop on detail).
