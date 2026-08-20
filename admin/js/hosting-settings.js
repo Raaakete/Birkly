@@ -26,6 +26,12 @@
                     if (wizard) {
                         updateProjectLink(wizard.getPublicMode());
                     }
+                    if (typeof window.initDeliveryStatus === 'function') {
+                        window.initDeliveryStatus('#delivery-status-site-delivery');
+                    }
+                    if (typeof window.loadDomains === 'function') {
+                        window.loadDomains();
+                    }
                 }
             });
         }
