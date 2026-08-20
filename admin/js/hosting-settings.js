@@ -32,6 +32,9 @@
                     if (typeof window.loadDomains === 'function') {
                         window.loadDomains();
                     }
+                    if (typeof window.loadDeliveryMatrix === 'function') {
+                        window.loadDeliveryMatrix();
+                    }
                 }
             });
         }
