@@ -267,6 +267,29 @@ try {
     $probe = birkly_delivery_probe(['deep' => false]);
     assert_true('delivery probe returns overall status', in_array($probe['overall'] ?? '', ['green', 'yellow', 'red'], true));
     assert_true('delivery probe includes checks', is_array($probe['checks'] ?? null) && count($probe['checks']) > 0);
+
+    echo "\n[same-host alias overlap]\n";
+    hosting_test_write([
+        'schema_version' => 2,
+        'cms_base_url' => 'https://site.example.com',
+        'cms_host_aliases' => ['www.site.example.com'],
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://site.example.com',
+        'public_host_aliases' => ['www.site.example.com'],
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    $overlap = birkly_hosting_overlapping_delivery_aliases();
+    assert_true('detect overlapping aliases', $overlap === ['www.site.example.com']);
+    $probeOverlap = birkly_delivery_probe(['deep' => false]);
+    $overlapCodes = array_column($probeOverlap['checks'] ?? [], 'code');
+    assert_true('probe warns on alias overlap', in_array('ALIAS_ON_BOTH_ROLES', $overlapCodes, true));
+    [$deduped, $changed, $removed] = birkly_hosting_deduplicate_overlapping_aliases(birkly_hosting_load());
+    assert_true('dedupe removes overlap from public aliases', $changed === true && $removed === ['www.site.example.com']);
+    assert_true(
+        'public aliases empty after dedupe',
+        birkly_hosting_public_alias_hosts($deduped) === []
+    );
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {
