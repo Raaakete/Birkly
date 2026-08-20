@@ -1449,6 +1449,53 @@ async function deletePlugin(pluginId) {
     
     // Domains loading is handled in the main tab click handler
     
+    function deliveryRoleLabel(role) {
+        var labels = {
+            cms_primary: 'CMS (primary)',
+            cms: 'CMS alias',
+            public_primary: 'Public (primary)',
+            public: 'Public alias',
+            api_only: 'API only (CORS)',
+            unassigned: 'Unassigned'
+        };
+        return labels[role] || role || 'Unassigned';
+    }
+
+    function deliveryRoleBadgeClass(role) {
+        if (role === 'cms_primary' || role === 'cms') return 'accent';
+        if (role === 'public_primary' || role === 'public') return 'success';
+        if (role === 'api_only') return 'info';
+        return 'neutral';
+    }
+
+    async function setDomainDeliveryRole(host, role, selectEl) {
+        if (!host || !role) return;
+        if (selectEl) selectEl.disabled = true;
+        try {
+            var response = await fetch(apiUrl('/api/hosting.php?action=set_domain_role'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ host: host, role: role, _csrf: getCsrfToken() })
+            });
+            var result = await response.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to update delivery role');
+            }
+            showMessage('Delivery role updated for ' + host, 'success');
+            if (typeof window.initDeliveryStatus === 'function') {
+                window.initDeliveryStatus('#delivery-status-site-delivery');
+            }
+            if (typeof window.refreshHostingWizard === 'function') {
+                window.refreshHostingWizard();
+            }
+            loadDomains();
+        } catch (error) {
+            showMessage('Error: ' + error.message, 'error');
+            if (selectEl) selectEl.disabled = false;
+        }
+    }
+
     async function loadDomains() {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
@@ -1459,17 +1506,25 @@ async function deletePlugin(pluginId) {
         listContainer.innerHTML = '<div class="loading-state"><p>Loading domains...</p></div>';
         
         try {
-            var response = await fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
-                method: 'GET',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            var data = await response.json();
+            var responses = await Promise.all([
+                fetch(apiUrl('/api/domain_management.php?action=list_licenses'), {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }
+                }),
+                fetch(apiUrl('/api/hosting.php?action=get'), {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                })
+            ]);
+            var data = await responses[0].json();
+            var hostingPayload = await responses[1].json();
+            var domainRoles = (hostingPayload.status === 'ok' && hostingPayload.data && hostingPayload.data.domain_roles)
+                ? hostingPayload.data.domain_roles
+                : {};
             
             if (data.status === 'ok' && data.data && data.data.licenses) {
-                renderDomains(data.data.licenses);
+                renderDomains(data.data.licenses, domainRoles);
             } else {
                 listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains registered yet.</p></div>';
             }
@@ -1651,7 +1706,28 @@ async function deletePlugin(pluginId) {
         }
     }
 
-    function renderDomains(domains) {
+    function renderDomainDeliveryRole(domainName, domainRoles) {
+        var host = String(domainName || '').toLowerCase();
+        var role = (domainRoles && domainRoles[host]) ? domainRoles[host] : 'unassigned';
+        var isPrimary = role === 'cms_primary' || role === 'public_primary';
+        if (isPrimary) {
+            return '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
+        }
+        var options = [
+            { value: 'api_only', label: 'API only (CORS)' },
+            { value: 'cms', label: 'CMS alias' },
+            { value: 'public', label: 'Public alias' }
+        ];
+        var selected = (role === 'cms' || role === 'public' || role === 'api_only') ? role : 'api_only';
+        var optionHtml = options.map(function (opt) {
+            return '<option value="' + escapeHtml(opt.value) + '"' + (opt.value === selected ? ' selected' : '') + '>' +
+                escapeHtml(opt.label) + '</option>';
+        }).join('');
+        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="Delivery role for ' + escapeHtml(host) + '">' +
+            optionHtml + '</select>';
+    }
+
+    function renderDomains(domains, domainRoles) {
         var listContainer = document.getElementById('domains-list');
         if (!listContainer) {
             console.error('domains-list container not found in renderDomains');
@@ -1659,6 +1735,7 @@ async function deletePlugin(pluginId) {
         }
 
         attachDomainsCopyButtons(document.getElementById('domains'));
+        domainRoles = domainRoles || {};
 
         if (!domains.length) {
             listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains yet. Click "Add domain" to connect one.</p></div>';
@@ -1685,6 +1762,7 @@ async function deletePlugin(pluginId) {
             var readColsHtml = readCollections.length > 0 ? '<span class="kv-key">Read collections</span><span class="kv-value">' + escapeHtml(readCollections.join(', ')) + '</span>' : '';
             var writeColsHtml = writeCollections.length > 0 ? '<span class="kv-key">Write collections</span><span class="kv-value">' + escapeHtml(writeCollections.join(', ')) + '</span>' : '';
             var trackingScriptHtml = renderDomainTrackingScript(domainName, analyticsEnabled);
+            var deliveryRoleHtml = renderDomainDeliveryRole(domainName, domainRoles);
 
             return '' +
                 '<article class="domain-card card">' +
@@ -1706,6 +1784,7 @@ async function deletePlugin(pluginId) {
                 '<div class="kv">' +
                 '<span class="kv-key">Email</span><span class="kv-value">' + emailEscaped + '</span>' +
                 '<span class="kv-key">Registered</span><span class="kv-value">' + registeredDate + '</span>' +
+                '<span class="kv-key">Delivery role</span><span class="kv-value">' + deliveryRoleHtml + '</span>' +
                 '<span class="kv-key">Rate limits</span><span class="kv-value">Read ' + readLimit + '/min · Write ' + writeLimit + '/hour</span>' +
                 readColsHtml +
                 writeColsHtml +
@@ -1774,6 +1853,15 @@ async function deletePlugin(pluginId) {
                     }
                 });
             })(reportButtons[k]);
+        }
+
+        var roleSelects = listContainer.querySelectorAll('.domain-delivery-role');
+        for (var r = 0; r < roleSelects.length; r++) {
+            (function(select) {
+                select.addEventListener('change', function () {
+                    setDomainDeliveryRole(select.getAttribute('data-domain'), select.value, select);
+                });
+            })(roleSelects[r]);
         }
     }
     

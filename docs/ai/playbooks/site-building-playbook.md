@@ -17,10 +17,10 @@ Default to **project site** unless the user wants admin pages only.
 
 1. **Infer the content model** from the request — what repeats, what's shared, what's one-off (see `web-project-patterns`).
 2. **Discover once** (do not loop):
-   - `get_project_info` — URL prefix, paths, templating hints
+   - `get_project_info` — URL prefix, paths, templating hints, **`asset_url_example` / `page_url_example`** (never hardcode `/project/` on public hosts)
    - `list_project_files` — existing tree
    - `list_collections` — reuse or extend; avoid duplicate slugs
-3. **`read_birkly_docs`** — only if playbooks are not already pre-loaded this turn.
+3. **`read_birkly_docs`** — only if playbooks are not already pre-loaded this turn. Use topic **`site-delivery`** for routing/URL issues.
 
 ## Build order
 

@@ -413,7 +413,8 @@ function birkly_project_site_info(): array
       'from_block' => "{from 'site_elements' get entry 'navigation'}\n  ...\n{endget}",
       'region' => '<birkly-region collection="site_elements" entry="header"></birkly-region>',
       'rules' => [
-        'ALL asset and page links MUST use site_url_prefix from get_project_info (includes install base when not at web root)',
+        'ALL asset and page links MUST use asset_url_example / page_url_example patterns from get_project_info — never hardcode /project/ on public hosts',
+        'Prefer birkly_project_asset_url() / birkly_project_page_url() semantics: clean paths on public URL, prefixed paths only when same-host or dev',
         'create_entry auto-generates slug from title — use post.html?collection=blog&slug={slug} in list links',
         'Prefer slug URLs over ?id= for detail pages',
         'Collection slugs use single quotes (hyphens allowed: nav-links)',

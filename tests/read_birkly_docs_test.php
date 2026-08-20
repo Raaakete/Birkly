@@ -24,7 +24,7 @@ function assert_true(string $name, bool $ok, string $detail = ''): void
 
 $coreTopics = [
     'templating', 'admin', 'plugins', 'ai', 'mcp',
-    'sub-collections', 'site-building', 'web-project-patterns', 'playbooks-index',
+    'sub-collections', 'site-building', 'site-delivery', 'web-project-patterns', 'playbooks-index',
     'ai-quality-guide', 'fieldtypes', 'collection-groups',
     'content-model', 'public-forms', 'commerce', 'commerce-store-kit', 'automation',
     'agent-guide', 'webmcp-tools', 'mcp-setup', 'ai-connections', 'plugins-overview',
