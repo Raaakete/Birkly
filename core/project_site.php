@@ -408,6 +408,18 @@ function birkly_project_page_url(string $relativePath = '/'): string
     return birkly_public_site_url($relativePath);
 }
 
+function birkly_project_is_bundled_demo_site(): bool
+{
+    $index = birkly_public_site_path() . '/index.html';
+    if (!is_readable($index)) {
+        return false;
+    }
+
+    $html = (string) file_get_contents($index);
+    return str_contains($html, 'Birkly - Demo Website')
+        || str_contains($html, 'Modern Demo Website Styles');
+}
+
 function birkly_legacy_demo_website_path(): string
 {
     return birkly_project_root() . '/demo-website';
