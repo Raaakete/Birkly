@@ -96,6 +96,13 @@ try {
         birkly_hosting_domain_delivery_role('staging.example.com') === 'cms'
     );
 
+    $setPublic = birkly_hosting_set_domain_delivery_role('extra.example.com', 'public');
+    assert_true('set public alias ok', ($setPublic['status'] ?? '') === 'ok');
+    assert_true(
+        'public alias adds www pair',
+        in_array('www.extra.example.com', birkly_hosting_public_alias_hosts(birkly_hosting_load()), true)
+    );
+
     $suggestPublic = birkly_hosting_suggest_delivery_role('example.com');
     assert_true(
         'suggest apex for cms.* setup',
