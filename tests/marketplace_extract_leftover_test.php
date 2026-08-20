@@ -92,6 +92,24 @@ assert_true(
     'upgrade backup dir is cleaned up'
 );
 
+// Leftover dir (no plugin.php) with runtime JSON must not be wiped on fresh install.
+birkly_marketplace_remove_directory($pluginsDir . '/commerce');
+mkdir($pluginsDir . '/commerce/orders', 0755, true);
+file_put_contents($pluginsDir . '/commerce/orders/ord_leftover.json', '{"id":"ord_leftover"}');
+file_put_contents($pluginsDir . '/commerce/encryption_key.txt', 'leftover-key');
+
+$leftoverInstall = birkly_marketplace_extract_plugin_zip($zipPath, 'commerce', false);
+assert_true((bool) ($leftoverInstall['ok'] ?? false), 'fresh install replaces leftover dir that has runtime data');
+assert_true(is_file($pluginsDir . '/commerce/plugin.php'), 'plugin.php written after leftover replace with runtime');
+assert_true(
+    is_file($pluginsDir . '/commerce/orders/ord_leftover.json'),
+    'orders survive leftover replace when runtime data present'
+);
+assert_true(
+    is_file($pluginsDir . '/commerce/encryption_key.txt'),
+    'encryption key survives leftover replace'
+);
+
 @unlink($zipPath);
 @unlink($zip2);
 birkly_marketplace_remove_directory($pluginsDir);

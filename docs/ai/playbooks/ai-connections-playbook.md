@@ -2,6 +2,8 @@
 
 Use for: floating chat in admin, API key providers, roles, approvals, playbooks in chat.
 
+Playbooks are tips for better outcomes. **Role** and **Require approval** on the connection are what actually gate writes.
+
 ## Setup
 
 1. **Settings → AI → Built-in assistant** → Quick connect
@@ -44,12 +46,18 @@ Permission map: `core/ai_permissions.php`.
 
 AI-created slugs: lowercase, hyphens, `[a-z0-9-]`. Underscores auto-normalized.
 
-## What built-in assistant cannot do
+## Tool coverage (reference)
 
-- `create_user` — direct to Settings → Users
-- Set Public API keys — direct to collection Settings
-- Create Automation workflows — direct to Automation admin
-- Edit Agent Guide — direct to Agent Guide admin
+Some tasks are common in admin UI; many also have MCP/chat tools when the role allows:
+
+| Task | Tools (when permitted) | Admin UI |
+|------|------------------------|----------|
+| Admin users | `cms_create_user`, `users.*` | Settings → Users |
+| Public API keys | `update_collection` (`entry_method`, `api_settings`) | Collection settings |
+| Automation | `automation_*`, `automation_admin_action` | Automation admin |
+| Agent Guide | `cms_admin_action` → `agent_guide.*` | Agent Guide |
+
+If a tool is not in `tools/list` for this connection, use the admin path or ask the owner to adjust the role.
 
 ## Troubleshooting
 
@@ -57,7 +65,7 @@ AI-created slugs: lowercase, hyphens, `[a-z0-9-]`. Underscores auto-normalized.
 |-------|-------|
 | 401 Unauthorized | Session, CSRF, connection id |
 | Actions not executing | Approvals tab pending |
-| Loops on project reads | Read `site-building` anti-patterns |
+| Loops on project reads | Read `site-building` tips in playbooks-index |
 | Wrong tool for site build | Use `write_project_file` not `create_page` |
 
 ## Related
