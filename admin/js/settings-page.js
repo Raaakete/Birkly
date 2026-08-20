@@ -1500,6 +1500,87 @@ async function deletePlugin(pluginId) {
         }
     }
 
+    async function setPublicPrimary(host, buttonEl) {
+        if (!host) return;
+        if (!(await BirklyFeedback.confirm('Make ' + host + ' the primary public URL? The current primary will become an alias.'))) {
+            return;
+        }
+        if (buttonEl) buttonEl.disabled = true;
+        try {
+            var response = await fetch(apiUrl('/api/hosting.php?action=set_public_primary'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ host: host, _csrf: getCsrfToken() })
+            });
+            var result = await response.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to update primary URL');
+            }
+            showMessage(result.message || 'Primary public URL updated', 'success');
+            if (typeof window.initDeliveryStatus === 'function') {
+                window.initDeliveryStatus('#delivery-status-site-delivery');
+            }
+            if (typeof window.refreshHostingWizard === 'function') {
+                window.refreshHostingWizard();
+            }
+            loadDomains();
+            loadDeliveryMatrix();
+        } catch (error) {
+            showMessage('Error: ' + error.message, 'error');
+            if (buttonEl) buttonEl.disabled = false;
+        }
+    }
+
+    async function setAliasRedirect(enabled, checkboxEl) {
+        if (checkboxEl) checkboxEl.disabled = true;
+        try {
+            var response = await fetch(apiUrl('/api/hosting.php?action=set_alias_redirect'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: !!enabled, _csrf: getCsrfToken() })
+            });
+            var result = await response.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'Failed to update alias redirect');
+            }
+            showMessage(result.message || 'Alias redirect updated', 'success');
+            if (typeof window.initDeliveryStatus === 'function') {
+                window.initDeliveryStatus('#delivery-status-site-delivery');
+            }
+            if (typeof window.refreshHostingWizard === 'function') {
+                window.refreshHostingWizard();
+            }
+            loadDeliveryMatrix();
+        } catch (error) {
+            showMessage('Error: ' + error.message, 'error');
+            if (checkboxEl) checkboxEl.checked = !enabled;
+        } finally {
+            if (checkboxEl) checkboxEl.disabled = false;
+        }
+    }
+
+    function renderDeliveryRoutingOptions(hosting, detect) {
+        var wrap = document.getElementById('delivery-routing-options');
+        var checkbox = document.getElementById('delivery-alias-redirect');
+        if (!wrap || !checkbox) return;
+
+        var mode = (hosting && hosting.public_site_mode) ? hosting.public_site_mode : 'none';
+        var envManaged = !!(detect && detect.env_managed);
+        wrap.hidden = mode === 'none';
+        if (mode === 'none') return;
+
+        checkbox.checked = !hosting || hosting.alias_redirect_to_primary !== false;
+        checkbox.disabled = envManaged;
+        if (checkbox.dataset.bound !== '1') {
+            checkbox.dataset.bound = '1';
+            checkbox.addEventListener('change', function () {
+                setAliasRedirect(checkbox.checked, checkbox);
+            });
+        }
+    }
+
     function renderDeliveryMatrixRow(row) {
         var host = String(row.host || '');
         var role = row.role || 'unassigned';
@@ -1516,20 +1597,36 @@ async function deletePlugin(pluginId) {
         if (!row.is_primary && row.suggested_role && row.settable_role !== row.suggested_role && role === 'api_only') {
             suggestHint = '<div class="form-help">Suggested: ' + escapeHtml(row.suggested_role) + ' — ' + escapeHtml(row.suggest_reason || '') + '</div>';
         }
+        var routingCell = '—';
+        if (row.is_primary) {
+            routingCell = '<span class="badge badge-accent">Primary URL</span>';
+        } else if (row.redirects_to_primary && row.redirect_target_host) {
+            routingCell = '<span class="badge badge-info">301 → ' + escapeHtml(row.redirect_target_host) + '</span>';
+        } else if (row.is_alias) {
+            routingCell = '<span class="badge badge-success">Serves directly</span>';
+        }
+        var actions = '';
+        if (row.can_make_public_primary) {
+            actions = ' <button type="button" class="btn btn-secondary btn-sm delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
+        }
         return '<tr>' +
             '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
             '<td>' + corsBadge + '</td>' +
-            '<td>' + roleCell + '</td>' +
+            '<td>' + roleCell + actions + '</td>' +
+            '<td>' + routingCell + '</td>' +
             '</tr>';
     }
 
-    function renderDeliveryMatrix(rows) {
+    function renderDeliveryMatrix(rows, meta) {
         var container = document.getElementById('delivery-matrix-content');
         if (!container) return;
 
         rows = rows || [];
+        meta = meta || {};
+        renderDeliveryRoutingOptions(meta.hosting || {}, meta.detect || {});
+
         if (!rows.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No delivery hostnames yet. Register a domain or configure hosting URLs.</p></div>';
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.</p></div>';
             return;
         }
 
@@ -1537,9 +1634,9 @@ async function deletePlugin(pluginId) {
         container.innerHTML =
             '<div class="table-container">' +
             '<table class="table table--hover">' +
-            '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th></tr></thead>' +
+            '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th><th>Visitor routing</th></tr></thead>' +
             '<tbody>' + body + '</tbody></table></div>' +
-            '<p class="form-help">Primary CMS and public URLs are set in Hosting URLs. Assign aliases here or when registering a domain.</p>';
+            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname.</p>';
 
         var roleSelects = container.querySelectorAll('.domain-delivery-role');
         for (var r = 0; r < roleSelects.length; r++) {
@@ -1549,6 +1646,12 @@ async function deletePlugin(pluginId) {
                 });
             })(roleSelects[r]);
         }
+
+        container.querySelectorAll('.delivery-make-primary').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                setPublicPrimary(btn.getAttribute('data-host'), btn);
+            });
+        });
     }
 
     async function loadDeliveryMatrix() {
@@ -1562,10 +1665,12 @@ async function deletePlugin(pluginId) {
                 credentials: 'same-origin'
             });
             var payload = await response.json();
-            var rows = (payload.status === 'ok' && payload.data && payload.data.delivery_matrix)
-                ? payload.data.delivery_matrix
-                : [];
-            renderDeliveryMatrix(rows);
+            var data = (payload.status === 'ok' && payload.data) ? payload.data : {};
+            var rows = data.delivery_matrix || [];
+            renderDeliveryMatrix(rows, {
+                hosting: data.hosting || {},
+                detect: data.detect || {}
+            });
         } catch (error) {
             container.innerHTML = '<div class="message message-error" role="alert">Error loading delivery matrix: ' + escapeHtml(error.message) + '</div>';
         }
