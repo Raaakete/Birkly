@@ -79,8 +79,23 @@ function birkly_project_serves_clean_public_urls(): bool
     require_once __DIR__ . '/hosting_urls.php';
     $config = birkly_hosting_load();
 
-    return ($config['public_site_mode'] ?? 'none') === 'project'
-        && birkly_hosting_public_base_url() !== '';
+    if (($config['public_site_mode'] ?? 'none') !== 'project') {
+        return false;
+    }
+
+    if (birkly_hosting_public_base_url() === '') {
+        return false;
+    }
+
+    if (birkly_hosting_public_url_has_project_path((string) ($config['public_site_url'] ?? ''))) {
+        return false;
+    }
+
+    if (birkly_hosting_same_host_uses_project_url_prefix()) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -318,6 +333,16 @@ function birkly_resolve_visit_url_format(?array $settings = null): string
 function birkly_public_site_visit_url(?array $settings = null): string
 {
     birkly_ensure_public_site_path();
+
+    require_once __DIR__ . '/hosting_urls.php';
+    if (birkly_hosting_same_host_uses_project_url_prefix()) {
+        $format = birkly_resolve_visit_url_format($settings);
+        if ($format === 'index' && is_file(birkly_public_site_path() . '/index.html')) {
+            return birkly_url('/project/index.html');
+        }
+
+        return birkly_url('/project/');
+    }
 
     $format = birkly_resolve_visit_url_format($settings);
     if ($format === 'index' && is_file(birkly_public_site_path() . '/index.html')) {
