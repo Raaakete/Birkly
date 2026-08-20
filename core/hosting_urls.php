@@ -560,6 +560,17 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    $bundledDemoRepair = birkly_project_repair_bundled_demo_site($persist);
+    if ($bundledDemoRepair['changed']) {
+        $changed = true;
+    }
+
+    require_once __DIR__ . '/hosting_redirects.php';
+    $redirectRepair = birkly_hosting_repair_harmful_redirects($persist);
+    if ($redirectRepair['changed']) {
+        $changed = true;
+    }
+
     $pathRepair = birkly_project_repair_legacy_paths($persist);
     if ($pathRepair['changed']) {
         $changed = true;
@@ -583,6 +594,8 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
                 'config' => $config,
                 'path_repair' => $pathRepair,
                 'demo_repair' => $demoRepair,
+                'bundled_demo_repair' => $bundledDemoRepair,
+                'redirect_repair' => $redirectRepair,
                 'ssr_invalidated' => true,
             ];
         }
@@ -593,6 +606,8 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             'config' => $config,
             'path_repair' => $pathRepair,
             'demo_repair' => $demoRepair,
+            'bundled_demo_repair' => $bundledDemoRepair,
+            'redirect_repair' => $redirectRepair,
         ];
     }
 
@@ -619,6 +634,14 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         } else {
             $messages[] = 'Removed legacy demo-website/ folder';
         }
+    }
+    if ($bundledDemoRepair['changed']) {
+        $count = count($bundledDemoRepair['files'] ?? []);
+        $messages[] = 'Removed default Birkly demo site from project/ (' . $count . ' file' . ($count === 1 ? '' : 's') . ')';
+    }
+    if ($redirectRepair['changed']) {
+        $messages[] = 'Disabled redirect' . (count($redirectRepair['rules'] ?? []) === 1 ? '' : 's')
+            . ' that sent /project to a CMS alias host';
     }
     if ($pathRepair['changed']) {
         $count = count($pathRepair['files'] ?? []);
@@ -673,6 +696,8 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         'config' => birkly_hosting_load(),
         'path_repair' => $pathRepair,
         'demo_repair' => $demoRepair,
+        'bundled_demo_repair' => $bundledDemoRepair,
+        'redirect_repair' => $redirectRepair,
         'ssr_invalidated' => $ssrInvalidated,
     ];
 }
