@@ -132,6 +132,101 @@ function birkly_hosting_is_public_alias_host(string $host): bool
 }
 
 /**
+ * Hostnames listed as both CMS and public aliases (ambiguous routing).
+ *
+ * @return list<string>
+ */
+function birkly_hosting_overlapping_delivery_aliases(?array $config = null): array
+{
+    $config = $config ?? birkly_hosting_load();
+    if (birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none')) === 'none') {
+        return [];
+    }
+
+    $cmsAliases = birkly_hosting_cms_alias_hosts($config);
+    $publicAliases = birkly_hosting_public_alias_hosts($config);
+    $overlap = array_values(array_intersect($cmsAliases, $publicAliases));
+    sort($overlap);
+
+    return $overlap;
+}
+
+/**
+ * Remove alias overlap — CMS role wins at request time, so drop duplicates from public aliases.
+ *
+ * @param array<string, mixed> $config
+ * @return array{0: array<string, mixed>, 1: bool, 2: list<string>}
+ */
+function birkly_hosting_deduplicate_overlapping_aliases(array $config): array
+{
+    $overlap = birkly_hosting_overlapping_delivery_aliases($config);
+    if ($overlap === []) {
+        return [$config, false, []];
+    }
+
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $publicAliases = birkly_hosting_public_alias_hosts($config);
+    $publicAliases = array_values(array_filter(
+        $publicAliases,
+        static fn (string $host): bool => !in_array($host, $overlap, true)
+    ));
+    $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts($publicAliases, $publicPrimary);
+
+    return [$config, true, $overlap];
+}
+
+/**
+ * Human-readable validation warnings for the current or draft hosting config.
+ *
+ * @param array<string, mixed> $config
+ * @return list<array{code: string, message: string, severity: string}>
+ */
+function birkly_hosting_config_warnings(array $config): array
+{
+    $config = birkly_hosting_normalize_config($config);
+    $warnings = [];
+    $mode = birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none'));
+
+    if ($mode !== 'none' && birkly_hosting_same_host()) {
+        $warnings[] = [
+            'code' => 'SAME_HOST_INFO',
+            'severity' => 'info',
+            'message' => 'CMS and public use the same domain ('
+                . birkly_hosting_public_host()
+                . '). With “Root / opens admin”, visitors reach the site at /project/.',
+        ];
+    }
+
+    foreach (birkly_hosting_overlapping_delivery_aliases($config) as $host) {
+        $warnings[] = [
+            'code' => 'ALIAS_ON_BOTH_ROLES',
+            'severity' => 'warn',
+            'message' => '"' . $host . '" is listed as both a CMS and public alias. At runtime CMS wins — keep it on CMS aliases only.',
+        ];
+    }
+
+    if (birkly_hosting_cms_url_has_admin_path((string) ($config['cms_base_url'] ?? ''))
+        || !empty($config['_cms_url_admin_path_fixup_pending'])) {
+        $warnings[] = [
+            'code' => 'CMS_URL_ADMIN_PATH',
+            'severity' => 'error',
+            'message' => 'CMS URL must be the site origin only (https://example.com), not …/admin.',
+        ];
+    }
+
+    if (birkly_hosting_public_url_has_project_path((string) ($config['public_site_url'] ?? ''))
+        || !empty($config['_public_url_path_fixup_pending'])) {
+        $warnings[] = [
+            'code' => 'PUBLIC_URL_PROJECT_PATH',
+            'severity' => 'error',
+            'message' => 'Public URL must not include /project — use the hostname only.',
+        ];
+    }
+
+    return $warnings;
+}
+
+/**
  * @return list<string>
  */
 function birkly_hosting_www_apex_pair(string $host): array
@@ -363,6 +458,9 @@ function birkly_hosting_repair_noop_hint(): string
         if ($code === 'SAME_HOST_PROJECT_PREFIX') {
             return 'Hosting settings are valid. The yellow notice is optional: click Fix on that row to serve the public site at / instead of /project/.';
         }
+        if ($code === 'ALIAS_ON_BOTH_ROLES') {
+            return 'Hosting settings are otherwise valid. Run Repair delivery to remove aliases listed on both CMS and public roles (CMS wins at runtime).';
+        }
     }
 
     return '';
@@ -435,6 +533,11 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    [$config, $aliasDeduped, $removedAliases] = birkly_hosting_deduplicate_overlapping_aliases($config);
+    if ($aliasDeduped) {
+        $changed = true;
+    }
+
     $publicUrlFixed = false;
     if (!empty($config['_public_url_path_fixup_pending'])) {
         unset($config['_public_url_path_fixup_pending']);
@@ -487,6 +590,10 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
     if ($pairChanged) {
         $messages[] = 'Synced www/apex domain pairs';
     }
+    if ($aliasDeduped) {
+        $messages[] = 'Removed ambiguous alias' . (count($removedAliases) === 1 ? '' : 'es')
+            . ' from public routing (' . implode(', ', $removedAliases) . ') — CMS role takes precedence';
+    }
     if ($demoRepair['changed']) {
         if (($demoRepair['action'] ?? '') === 'migrated') {
             $messages[] = 'Migrated legacy demo-website/ into project/';
@@ -512,7 +619,7 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         ];
     }
 
-    $configNeedsPersist = $schemaChanged || $publicUrlFixed || $pairChanged || $cmsUrlFixed;
+    $configNeedsPersist = $schemaChanged || $publicUrlFixed || $pairChanged || $cmsUrlFixed || $aliasDeduped;
     if ($configNeedsPersist) {
         birkly_hosting_backup_config();
         if (!birkly_hosting_persist($config, true)) {
