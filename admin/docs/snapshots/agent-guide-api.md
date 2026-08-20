@@ -20,7 +20,9 @@ https://YOUR-PUBLIC-SITE/
 |---------|-----|--------|
 | Well-known file (default) | `GET /.well-known/agent-guide.json` | Raw JSON export |
 | Well-known file (legacy) | `GET /.well-known/brand-context.json` | Same snapshot (legacy path) |
+| llms.txt map | `GET /llms.txt` | Markdown link map (Agentic Browsing / llmstxt.org) |
 | Public API | `GET /api/public/ai_presence.php` | JSON envelope `{ status, data }` |
+| HTML discovery | `<link rel="alternate" … href="…/agent-guide.json">` on `project/` pages | Injected when guide is published |
 
 Both well-known paths and the API serve the same canonical export for `action=brand` (full view) unless a `view` filter is applied on the API.
 
@@ -192,6 +194,20 @@ GET /api/public/ai_presence.php?action=claim&id=claim_soc2&graph=1
 
 Includes `claim`, `evidence[]` (resolved items), `sources[]`, and `usage_hints.repeat_only_with_evidence`.
 
+## Example — llms.txt
+
+When publishing is enabled, Birkly serves a Markdown discovery map at the site root:
+
+```http
+GET /llms.txt
+```
+
+The body links to the well-known JSON, public API summary view, and other published endpoints. Useful for agentic browsing tools and human-readable discovery. Returns **404** when the guide is unpublished or publishing is disabled (same gate as well-known JSON).
+
+```bash
+curl -s "$BASE/llms.txt" | head
+```
+
 ## Example — well-known file
 
 ```http
@@ -284,6 +300,7 @@ Do not expose admin API to the public internet without normal Birkly auth.
 ```bash
 BASE="https://your-public-site.com"
 curl -s "$BASE/.well-known/agent-guide.json" | jq .published_version
+curl -s "$BASE/llms.txt" | head
 curl -s "$BASE/api/public/ai_presence.php?action=brand&view=summary" | jq .data.identity.official_name
 ```
 
@@ -305,10 +322,3 @@ Fetch summary on session start; cache 5 min keyed by `X-Agent-Guide-Version`. Re
 - [Getting started](../02-content/agent-guide-getting-started.md)
 - [MCP & agents](agent-guide-mcp-and-agents.md)
 - [Website integration](website-integration.md)
-
-## Further reading
-
-- [Public forms](public-forms.md)
-- [Website tools (WebMCP)](webmcp-tools.md)
-- [AI on localhost](ai-on-localhost.md)
-- [Choose your stack](choose-your-stack.md)

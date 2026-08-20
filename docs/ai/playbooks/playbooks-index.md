@@ -38,7 +38,8 @@ If a tool call is allowed by the role and passes approval settings, playbooks do
 | `cms-pages` | Admin-managed pages vs `project/` site |
 | `media` | Media library, uploads, folders, image/gallery fields |
 | `content-editor` | Rich text / layout HTML in Editor fields |
-| `agent-guide` | Agent Guide: sources, products, claims, publishing `/.well-known/` |
+| `agent-guide` | Agent Guide: sources, products, claims, publish `/.well-known/`, `/llms.txt`, unpublish |
+| `webmcp-tools` | Agent Guide Tools tab: WebMCP visitor actions, form allowlist, hosting snippets |
 | `mcp-setup` | Connect Claude, ChatGPT, Cursor via MCP |
 | `mcp-capabilities` | MCP tool families, plugin tools, allow_public_read, fieldtype picks |
 | `ai-connections` | Built-in admin chat assistant, API keys, approvals |
@@ -72,6 +73,8 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 | `media` | `media` | `admin/docs/snapshots/media.md` |
 | `content-editor` | `content-editor` | `admin/docs/snapshots/content-editor.md` |
 | `ai` / `ai-connections` / `mcp-connections` | `ai-connections` / `mcp-setup` | **Settings → AI** (not Agent Guide) |
+| `agent-guide` / `agent-guide-getting-started` / `agent-guide-claims` / `agent-guide-api` | `agent-guide` | Agent Guide snapshots |
+| `webmcp-tools` | `webmcp-tools` | `admin/docs/snapshots/webmcp-tools.md` |
 | `automation` | `automation` | `admin/docs/snapshots/automation-overview.md` |
 | `help` | `playbooks-index` | This index |
 
@@ -116,7 +119,8 @@ Sell / automate / members?
 AI connectivity?
 ├─ Chat inside admin → ai-connections (Settings → AI)
 ├─ Claude/Cursor/ChatGPT → mcp-setup (Settings → AI)
-└─ Brand facts for external AI → agent-guide (Guide · Tools · Publish only)
+├─ Brand facts for external AI → agent-guide (Guide · Tools · Publish)
+└─ Visitor actions on live site → webmcp-tools (Agent Guide → Tools tab)
 ```
 
 ## Official plugins (marketplace)
