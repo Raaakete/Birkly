@@ -300,6 +300,26 @@ function birkly_delivery_probe(array $options = []): array
                 }
             }
 
+            if (birkly_project_is_bundled_demo_site()) {
+                $checks[] = birkly_delivery_check(
+                    'project_files',
+                    'warn',
+                    'PROJECT_BUNDLED_DEMO',
+                    'project/index.html is still the default Birkly demo site. Install your site pack or replace project/ files with your site content.',
+                    ['tab' => 'project', 'hash' => 'project-files']
+                );
+            }
+
+            if (is_dir(birkly_legacy_demo_website_path())) {
+                $checks[] = birkly_delivery_check(
+                    'project_files',
+                    'warn',
+                    'LEGACY_DEMO_WEBSITE_FOLDER',
+                    'Legacy demo-website/ folder still exists on disk. Run Repair delivery to remove or migrate it.',
+                    $fixRepair
+                );
+            }
+
             if (birkly_project_raw_html_uses_legacy_paths($html)) {
                 if (birkly_hosting_same_host_uses_project_url_prefix()) {
                     $checks[] = birkly_delivery_check(
