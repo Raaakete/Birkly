@@ -136,6 +136,8 @@ class DomainAuth {
     public function registerDomain($domain, $licenseData) {
         $licenses = $this->getLicenses();
         $domain = strtolower(trim($domain));
+        require_once __DIR__ . '/../core/hosting_urls.php';
+        $allowedDomains = birkly_hosting_www_apex_pair($domain);
         
         // Set default permissions if not provided
         $defaultPermissions = [
@@ -152,7 +154,7 @@ class DomainAuth {
             'domain' => $domain,
             'registered_at' => date('c'),
             'status' => 'active',
-            'allowed_domains' => [$domain], // Initialize with primary domain
+            'allowed_domains' => $allowedDomains,
             'permissions' => $defaultPermissions
         ]);
         

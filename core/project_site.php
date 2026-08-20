@@ -144,12 +144,52 @@ function birkly_project_inject_runtime_scripts(string $html): string
 }
 
 /**
+ * Rewrite absolute asset URLs that point at configured primary hosts so aliases
+ * load icons, CSS, and media from the current public host.
+ */
+function birkly_project_rewrite_cross_host_urls(string $html): string
+{
+    require_once __DIR__ . '/hosting_urls.php';
+
+    $requestHost = birkly_cms_request_host();
+    if ($requestHost === '' || birkly_is_local_dev_host($requestHost)) {
+        return $html;
+    }
+
+    $role = birkly_request_host_role();
+    if (!in_array($role, ['public', 'local', 'cms'], true)) {
+        return $html;
+    }
+
+    $config = birkly_hosting_load();
+    $hosts = [];
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    if ($publicPrimary !== '' && $publicPrimary !== $requestHost) {
+        $hosts[] = $publicPrimary;
+    }
+    if ($cmsPrimary !== '' && $cmsPrimary !== $requestHost) {
+        $hosts[] = $cmsPrimary;
+    }
+
+    foreach (array_unique($hosts) as $host) {
+        foreach (['https', 'http'] as $scheme) {
+            $prefix = $scheme . '://' . $host;
+            $html = str_replace($prefix, '', $html);
+        }
+    }
+
+    return $html;
+}
+
+/**
  * Inject CMS base meta + rewrite paths before serving project HTML.
  */
 function birkly_project_prepare_html_for_serve(string $html): string
 {
     $html = birkly_project_rewrite_install_paths($html);
     $html = birkly_project_rewrite_clean_public_paths($html);
+    $html = birkly_project_rewrite_cross_host_urls($html);
     $html = birkly_project_inject_runtime_scripts($html);
 
     require_once __DIR__ . '/hosting_urls.php';
