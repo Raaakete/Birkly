@@ -179,8 +179,18 @@ function birkly_delivery_probe(array $options = []): array
                 'public_url',
                 'warn',
                 'SAME_HOST_PROJECT_PREFIX',
-                'CMS and public site share this host with admin at /. The bundled site is served at ' . birkly_url('/project/') . ' — use Visit project or set “Root / opens public site” for clean URLs.',
+                'Single-domain setup: admin at /, public site at ' . birkly_url('/project/')
+                    . '. CMS and public share ' . birkly_hosting_public_host()
+                    . ' — this is expected. Click Fix only if you want / to open the public site.',
                 $fixSameHostPublic
+            );
+        } elseif ($mode === 'project' && birkly_hosting_same_host()) {
+            $checks[] = birkly_delivery_check(
+                'public_url',
+                'pass',
+                'SAME_HOST_CONFIGURED',
+                'CMS and public share ' . birkly_hosting_public_host()
+                    . ' with public site at / (same-domain layout).'
             );
         } else {
             $checks[] = birkly_delivery_check(
@@ -366,6 +376,20 @@ function birkly_delivery_probe(array $options = []): array
     }
 
     if ($mode !== 'none') {
+        $overlap = birkly_hosting_overlapping_delivery_aliases($config);
+        if ($overlap !== []) {
+            $label = count($overlap) === 1 ? $overlap[0] : implode(', ', $overlap);
+            $checks[] = birkly_delivery_check(
+                'alias_overlap',
+                'warn',
+                'ALIAS_ON_BOTH_ROLES',
+                count($overlap) === 1
+                    ? 'Hostname "' . $label . '" is listed as both a CMS and public alias. Requests resolve as CMS — remove it from public aliases or run Repair delivery.'
+                    : count($overlap) . ' hostnames are listed as both CMS and public aliases (' . $label . '). CMS role wins — run Repair delivery to deduplicate.',
+                $fixRepair
+            );
+        }
+
         $apiOnlyHosts = [];
         foreach (birkly_hosting_collect_registered_domain_hosts() as $registeredHost) {
             if (birkly_hosting_domain_delivery_role($registeredHost) === 'api_only') {

@@ -104,6 +104,7 @@
             '<span>' + escapeHtml(t('hosting_wizard_alias_redirect', 'Redirect alias hostnames to primary URL (301)')) + '</span>' +
             '</label>' +
             '<small class="form-help hosting-wizard-alias-redirect-help" hidden>' + escapeHtml(t('hosting_wizard_alias_redirect_help', 'When checked, birkly.io and other aliases send visitors to the primary public URL. Uncheck to serve each hostname directly.')) + '</small>' +
+            '<div class="hosting-wizard-validation" hidden role="status"></div>' +
             '<div class="form-group hosting-wizard-aliases-field" hidden>' +
             '<label for="' + id + '-cms-aliases">' + escapeHtml(t('hosting_wizard_cms_aliases', 'CMS host aliases')) + '</label>' +
             '<input type="text" id="' + id + '-cms-aliases" class="input hosting-wizard-cms-aliases" placeholder="cms-alt.example.com, staging-cms.example.com">' +
@@ -212,6 +213,68 @@
         if (sameHostField) sameHostField.hidden = !(mode === 'project' && this.sameHost);
     };
 
+    HostingWizard.prototype.hostFromUrl = function (url) {
+        try {
+            return new URL(String(url || '').trim()).hostname.toLowerCase();
+        } catch (e) {
+            return '';
+        }
+    };
+
+    HostingWizard.prototype.updateValidationWarnings = function () {
+        var box = this.$('.hosting-wizard-validation');
+        if (!box) return;
+
+        var payload = this.getHostingPayload();
+        var messages = [];
+        var cmsHost = this.hostFromUrl(payload.cms_base_url);
+        var publicHost = this.hostFromUrl(payload.public_site_url);
+
+        if (payload.public_site_mode !== 'none' && cmsHost !== '' && publicHost !== '' && cmsHost === publicHost) {
+            messages.push({
+                severity: 'info',
+                text: 'CMS and public share ' + cmsHost + '. With “Root / opens admin”, the bundled site is served at /project/.'
+            });
+        }
+
+        if (payload.cms_base_url && /\/admin\/?$/i.test(String(payload.cms_base_url).trim())) {
+            messages.push({
+                severity: 'error',
+                text: 'CMS URL should be the site origin only (https://' + (cmsHost || 'example.com') + '), not …/admin.'
+            });
+        }
+
+        if (payload.public_site_url && /\/project(\/|$)/i.test(String(payload.public_site_url).trim())) {
+            messages.push({
+                severity: 'error',
+                text: 'Public URL must not include /project — use the hostname only.'
+            });
+        }
+
+        var cmsAliases = payload.cms_host_aliases || [];
+        var publicAliases = payload.public_host_aliases || [];
+        cmsAliases.forEach(function (alias) {
+            if (publicAliases.indexOf(alias) !== -1) {
+                messages.push({
+                    severity: 'warn',
+                    text: '"' + alias + '" is on both CMS and public alias lists. Requests resolve as CMS — remove it from public aliases.'
+                });
+            }
+        });
+
+        if (!messages.length) {
+            box.hidden = true;
+            box.innerHTML = '';
+            return;
+        }
+
+        box.hidden = false;
+        box.innerHTML = messages.map(function (item) {
+            var cls = item.severity === 'error' ? 'message-error' : (item.severity === 'warn' ? 'message-warning' : 'message-info');
+            return '<div class="message ' + cls + '" role="alert">' + escapeHtml(item.text) + '</div>';
+        }).join('');
+    };
+
     HostingWizard.prototype.buildLiveSnippet = function (cmsUrl) {
         var base = String(cmsUrl || '').trim().replace(/\/$/, '');
         if (!base) {
@@ -288,6 +351,7 @@
             snippetEl.textContent = this.snippet || liveSnippet;
         }
         this.updateExternalChecklist(payload, cmsUrl);
+        this.updateValidationWarnings();
     };
 
     HostingWizard.prototype.goToStep = function (step) {
