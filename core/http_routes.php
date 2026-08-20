@@ -36,6 +36,15 @@ if (!function_exists('load_plugins')) {
 
 function birkly_dispatch_http_route(string $uri): bool
 {
+    if ($uri === '/favicon.ico') {
+        if (!function_exists('birkly_hosting_serve_favicon_if_available')) {
+            require_once __DIR__ . '/hosting_routing.php';
+        }
+        if (birkly_hosting_serve_favicon_if_available()) {
+            return true;
+        }
+    }
+
     foreach (birkly_http_route_map() as $prefix => $handler) {
         if ($uri === $prefix || str_starts_with($uri, $prefix . '/')) {
             $full = __DIR__ . '/..' . $handler;

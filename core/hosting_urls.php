@@ -249,6 +249,55 @@ function birkly_hosting_migrate_schema_v2(array $config, bool $includeDomainSync
 }
 
 /**
+ * Ensure apex/www counterparts exist for CMS and public alias lists.
+ *
+ * @param array<string, mixed> $config
+ * @return array{0: array<string, mixed>, 1: bool}
+ */
+function birkly_hosting_expand_delivery_www_pairs(array $config): array
+{
+    $config = birkly_hosting_normalize_config($config);
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $cmsAliases = birkly_hosting_cms_alias_hosts($config);
+    $publicAliases = birkly_hosting_public_alias_hosts($config);
+    $changed = false;
+
+    $expand = static function (array $aliases, string $primary) use (&$changed): array {
+        $seeds = $aliases;
+        foreach ($aliases as $alias) {
+            foreach (birkly_hosting_www_apex_pair($alias) as $pairHost) {
+                $seeds[] = $pairHost;
+            }
+        }
+        $seeds = array_values(array_unique($seeds));
+        $expanded = [];
+        foreach ($seeds as $seed) {
+            if ($seed === '' || $seed === $primary) {
+                continue;
+            }
+            $expanded[] = $seed;
+            foreach (birkly_hosting_www_apex_pair($seed) as $pairHost) {
+                if ($pairHost !== '' && $pairHost !== $primary) {
+                    $expanded[] = $pairHost;
+                }
+            }
+        }
+        $expanded = birkly_hosting_normalize_alias_hosts($expanded, $primary);
+        if ($expanded != $aliases) {
+            $changed = true;
+        }
+
+        return $expanded;
+    };
+
+    $config['cms_host_aliases'] = $expand($cmsAliases, $cmsPrimary);
+    $config['public_host_aliases'] = $expand($publicAliases, $publicPrimary);
+
+    return [$config, $changed];
+}
+
+/**
  * @return list<string>
  */
 function birkly_hosting_collect_registered_domain_hosts(): array
@@ -304,6 +353,11 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
     [$migrated, $schemaChanged] = birkly_hosting_migrate_schema_v2($config, $syncDomains);
     $config = $migrated;
     $changed = $schemaChanged;
+
+    [$config, $pairChanged] = birkly_hosting_expand_delivery_www_pairs($config);
+    if ($pairChanged) {
+        $changed = true;
+    }
 
     require_once __DIR__ . '/project_site.php';
     $pathRepair = birkly_project_repair_legacy_paths($persist);
@@ -1015,6 +1069,31 @@ function birkly_hosting_public_project_path(string $uri): string
         return '/index.html';
     }
     return $uri;
+}
+
+/**
+ * Resolve a site favicon from project/ for public hosts (clean URL paths).
+ */
+function birkly_hosting_resolve_favicon_file(): ?string
+{
+    $candidates = [
+        '/favicon.ico',
+        '/favicon.svg',
+        '/favicon.png',
+        '/apple-touch-icon.png',
+        '/assets/favicon.ico',
+        '/assets/favicon.svg',
+        '/assets/favicon.png',
+    ];
+
+    foreach ($candidates as $path) {
+        $file = birkly_hosting_resolve_public_file($path);
+        if ($file !== null) {
+            return $file;
+        }
+    }
+
+    return null;
 }
 
 function birkly_hosting_resolve_public_file(string $uri): ?string
