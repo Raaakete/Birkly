@@ -13,7 +13,7 @@ Use for: CMS permissions, custom roles, global settings, security, storage, AI c
 |-------|----------|----------|
 | **Global settings** | Project name, branding, security, storage | `read_settings`, `update_settings` |
 | **Collections & entries** | Blog posts, products | `create_collection`, `create_entry`, … |
-| **Admin users** | Back-office accounts | **No create tool** — Settings → Users |
+| **Admin users** | Back-office accounts | `cms_create_user` / `cms_admin_action` `users.*` when role allows; else Settings → Users |
 
 Changes in Settings apply to the **whole CMS**, not one collection.
 
@@ -60,9 +60,12 @@ AI connections receive a **role** → tool allowlist via `core/ai_permissions.ph
 | `list_roles`, `read_role` | Inspect role definitions | Use before `create_role` |
 | `create_role`, `update_role` | Custom roles | Omit dangerous permissions intentionally |
 
-### No `create_user`
+### Creating admin users
 
-Admin user creation: **Settings → Users → Add User**. AI must direct users there — do not pretend users were created.
+- **MCP:** `cms_create_user` or `cms_admin_action` → `users.create` when the connection role includes `manage_users` (or equivalent).
+- **Admin UI:** Settings → Users → Add User.
+
+Use whichever path the connection allows; do not claim a user was created without a successful tool result.
 
 ---
 
@@ -72,7 +75,7 @@ Admin user creation: **Settings → Users → Add User**. AI must direct users t
 |-----|------------------|--------------|
 | **General** | Project name, URL, timezone, media defaults | `read_settings` for site URL |
 | **Branding** | Logo, favicon | Usually admin-only uploads |
-| **Users and roles** | Admin accounts, role assignment | No create_user tool |
+| **Users and roles** | Admin accounts, role assignment | `cms_create_user` when role allows |
 | **Plugins** | Installed/active plugins | `list_plugins`, `activate_plugin` |
 | **Security** | Session timeout, lockout, CSRF, password rules | Enforced at runtime |
 | **Storage** | flatfile vs MySQL/PostgreSQL | Major migration = admin-operated |

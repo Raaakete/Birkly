@@ -2,6 +2,8 @@
 
 Use for: publishing brand/product facts for external AI, `/.well-known/agent-guide.json`, `/llms.txt`, grounded claims with evidence, Agent Guide hub (Guide · Tools · Publish).
 
+Playbooks are guidance only — **role permissions** and **MCP approval settings** decide what your connection can do.
+
 ## What it is
 
 **Agent Guide** is structured brand context: sources of truth, identity, products, supported claims with evidence. Published on your **public site domain** at:
@@ -12,12 +14,28 @@ Use for: publishing brand/product facts for external AI, `/.well-known/agent-gui
 
 **Hub tabs:** Guide · Tools · Publish only. **CMS AI connections** live under **Settings → AI** — never re-add a Connections tab to Agent Guide.
 
-External AI reads via MCP:
+## Tools (capability map)
 
-- `get_agent_guide_context`, `get_agent_guide_product`, `get_agent_guide_claim`
+**Published read** (typical `read` permission):
+
+- `get_agent_guide_context`, `get_agent_guide_product`, `get_agent_guide_claim`, `list_agent_guide_products`
 - MCP resource `birkly://brand-context`
 
-Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_guide.*` (publish, unpublish, save_draft, etc.).
+These return **published** Agent Guide data, not the editable draft.
+
+**Evidence reads:**
+
+- Summary lists claim statements + `evidence_ids` only — call `get_agent_guide_claim({ id })` for resolved `evidence[]` URLs.
+- Or `get_agent_guide_context({ view: "claims" })` for all supported claims + linked `evidence[]` in one response.
+
+**Draft / admin** (when the connection role includes the needed permissions, e.g. `manage_settings`):
+
+- `cms_list_admin_actions` → group `agent_guide`
+- `cms_admin_action` with `agent_guide.save_draft`, `agent_guide.publish`, `agent_guide.unpublish`, `agent_guide.cms_refresh`, `agent_guide.copilot`, `agent_guide.wizard_generate`, `agent_guide.validate_links`, …
+
+`agent_guide.save_draft` replaces list fields (e.g. `products_services`) entirely when you send a full array — match the shape from `agent_guide.get`.
+
+Whether to use admin UI or MCP is up to the site owner and what their connection allows — not something playbooks restrict.
 
 ## Hub map
 
@@ -58,7 +76,7 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 5. Only **supported** claims export to summary/public/MCP claim tools.
 6. Run **Check all links** — fix broken/redirect evidence before publish.
 
-**Important:** Marketing claims in Agent Guide are curated truth — verify against codebase/product reality before marking supported (e.g. dependency-free core, draft/review behavior).
+**Important:** Marketing claims in Agent Guide are curated truth — verify against codebase/product reality before marking supported.
 
 ## Flow: publish and hosting (`agent-guide-publish-hosting`)
 
@@ -72,19 +90,18 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 ## Flow: MCP read (`agent-guide-mcp-read`)
 
 1. `get_agent_guide_context({ view: "summary" })` — identity, supported claims (with `evidence_ids`), `sources_of_truth`.
-2. Claim question → **`get_agent_guide_claim({ id })`** — returns **claim graph**: `{ claim, evidence[], sources[], usage_hints }` with resolved proof URLs (not just `evidence_ids`).
-3. All supported claims + evidence in one call → `get_agent_guide_context({ view: "claims" })` — includes `claims[]` and linked `evidence[]`.
+2. Claim question → **`get_agent_guide_claim({ id })`** — returns **claim graph**: `{ claim, evidence[], sources[], usage_hints }` with resolved proof URLs.
+3. All supported claims + evidence in one call → `get_agent_guide_context({ view: "claims" })`.
 4. Product question → `get_agent_guide_product({ id })` → follow `sources[].url`.
 5. Depth → read `sources_of_truth` URLs or `read_entry` for CMS refs.
 
-**Evidence rule:** Summary lists claim statements and `evidence_ids` only. Always call `get_agent_guide_claim` (or `view: "claims"`) before citing proof URLs.
+**Evidence rule:** Summary alone is not enough to cite proof URLs — use `get_agent_guide_claim` or `view: "claims"`.
 
 ## Flow: AI Assist (`agent-guide-ai-assist`)
 
 1. Requires AI connection under **Settings → AI** (BYOAI).
 2. Copilot / Fill gaps / Guide Studio suggest draft fields — **never auto-saved**.
 3. User accepts suggestions → **Save draft** → **Publish**.
-4. AI cannot skip human review for Agent Guide writes unless admin explicitly uses `agent_guide.save_draft` via MCP with approval.
 
 ## When user asks AI to "set up Agent Guide"
 
@@ -92,7 +109,6 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 2. `get_agent_guide_context` — see current published state (if any)
 3. Walk through flow **first publish** above in admin UI order
 4. Optionally `list_collections` / `list_entries` to suggest CMS sources
-5. Do **not** promise AI can publish without admin unless `manage_settings` + explicit publish action
 
 ## AI read tools (published data only)
 
@@ -102,7 +118,7 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 | "List our products for AI" | `list_agent_guide_products` or context view |
 | "Verify claim X" | `get_agent_guide_claim({ id })` — returns `evidence[]` with URLs |
 | "List all claims with proof" | `get_agent_guide_context({ view: "claims" })` |
-| "Add a new product" | Admin UI or `agent_guide.save_draft` — not a standalone MCP read tool |
+| "Add a new product" | `agent_guide.save_draft` (if permitted), or Admin → Agent Guide → Products |
 
 ## Coexistence with other AI layers
 
@@ -113,13 +129,13 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 | Visitor website actions | `webmcp-tools` |
 | Brand truth export | `agent-guide` (this file) |
 
-## Anti-patterns
+## Tips (quality, not policy)
 
-- Promising AI can publish Agent Guide without admin or `manage_settings`
-- Inventing claims without evidence URLs
-- Confusing Agent Guide with generic system prompt or CMS MCP
-- Marking claims supported without verification
-- Re-adding Connections tab to Agent Guide IA
+- Ground claims with evidence URLs — easier to publish and trust
+- `get_agent_guide_context` before large edits — know what's already live
+- Use `get_agent_guide_claim` before citing proof — summary omits evidence bodies
+- Agent Guide is brand truth for external AI; separate from generic chat system prompts
+- Re-adding Connections to Agent Guide IA is wrong — use **Settings → AI**
 
 ## Related playbooks
 
