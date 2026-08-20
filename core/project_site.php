@@ -410,14 +410,89 @@ function birkly_project_page_url(string $relativePath = '/'): string
 
 function birkly_project_is_bundled_demo_site(): bool
 {
-    $index = birkly_public_site_path() . '/index.html';
-    if (!is_readable($index)) {
+    return birkly_project_file_has_bundled_demo_markers(birkly_public_site_path() . '/index.html');
+}
+
+function birkly_project_file_has_bundled_demo_markers(string $path): bool
+{
+    if (!is_readable($path)) {
         return false;
     }
 
-    $html = (string) file_get_contents($index);
-    return str_contains($html, 'Birkly - Demo Website')
-        || str_contains($html, 'Modern Demo Website Styles');
+    $content = (string) file_get_contents($path);
+    $base = basename($path);
+    if ($base === 'styles.css') {
+        return str_contains($content, 'Modern Demo Website Styles');
+    }
+
+    return str_contains($content, 'Birkly - Demo Website')
+        || str_contains($content, 'Modern Demo Website Styles')
+        || (
+            str_contains($content, '<h1><a href="/project/index.html">Birkly</a></h1>')
+            && str_contains($content, 'data-birkly-language-select')
+        );
+}
+
+/**
+ * Remove default Birkly demo HTML/CSS from project/ during Repair delivery.
+ *
+ * @return array{changed: bool, action: string, files: list<string>}
+ */
+function birkly_project_repair_bundled_demo_site(bool $persist = true): array
+{
+    $projectRoot = birkly_public_site_path();
+    if (!is_dir($projectRoot)) {
+        return ['changed' => false, 'action' => 'none', 'files' => []];
+    }
+
+    $removed = [];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($projectRoot, FilesystemIterator::SKIP_DOTS)
+    );
+
+    foreach ($iterator as $file) {
+        if (!$file->isFile() || $file->getFilename() === '.gitkeep') {
+            continue;
+        }
+        $path = $file->getPathname();
+        if (!birkly_project_file_has_bundled_demo_markers($path)) {
+            continue;
+        }
+        if ($persist) {
+            @unlink($path);
+        }
+        $removed[] = str_replace($projectRoot . '/', '', $path);
+    }
+
+    if ($persist && $removed !== []) {
+        birkly_project_prune_empty_subdirs($projectRoot);
+    }
+
+    if ($removed === []) {
+        return ['changed' => false, 'action' => 'none', 'files' => []];
+    }
+
+    return ['changed' => true, 'action' => 'removed', 'files' => $removed];
+}
+
+function birkly_project_prune_empty_subdirs(string $root): void
+{
+    if (!is_dir($root)) {
+        return;
+    }
+
+    foreach (scandir($root) ?: [] as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $path = $root . '/' . $item;
+        if (is_dir($path)) {
+            birkly_project_prune_empty_subdirs($path);
+            if (count(scandir($path) ?: []) === 2) {
+                @rmdir($path);
+            }
+        }
+    }
 }
 
 function birkly_legacy_demo_website_path(): string
