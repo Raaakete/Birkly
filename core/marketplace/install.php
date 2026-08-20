@@ -175,6 +175,45 @@ function birkly_marketplace_plugin_dir_is_leftover(string $dest): bool
     return !is_file($dest . '/plugin.php');
 }
 
+/**
+ * True when a plugin directory holds commerce-style runtime JSON (orders, keys, etc.).
+ */
+function birkly_marketplace_plugin_dir_has_runtime_data(string $dest): bool
+{
+    if (!is_dir($dest)) {
+        return false;
+    }
+
+    foreach (['orders', 'customers', 'connections', 'subscriptions', 'quotes', 'gift_cards'] as $sub) {
+        $path = $dest . '/' . $sub;
+        if (!is_dir($path)) {
+            continue;
+        }
+        foreach (scandir($path) ?: [] as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+            if (is_file($path . '/' . $item)) {
+                return true;
+            }
+        }
+    }
+
+    foreach ([
+        'email_templates.json',
+        'invoice_templates.json',
+        'invoice_profile.json',
+        'encryption_key.txt',
+        'order_sequence.json',
+    ] as $file) {
+        if (is_file($dest . '/' . $file)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId, bool $replaceExisting = false): array
 {
     birkly_marketplace_ensure_plugins_core();
@@ -205,6 +244,13 @@ function birkly_marketplace_extract_plugin_zip(string $zipPath, string $pluginId
             $preserveBackup = $pluginsRoot . '/.' . $pluginId . '-upgrade-' . bin2hex(random_bytes(4));
             if (!@rename($dest, $preserveBackup)) {
                 return ['ok' => false, 'errors' => ["Failed to backup plugin directory '{$pluginId}' before upgrade"]];
+            }
+        } elseif ($isLeftover && birkly_marketplace_plugin_dir_has_runtime_data($dest)) {
+            // Leftover dirs without plugin.php can still hold merchant runtime JSON.
+            // Never wipe orders/connections on fresh Hub install.
+            $preserveBackup = $pluginsRoot . '/.' . $pluginId . '-leftover-' . bin2hex(random_bytes(4));
+            if (!@rename($dest, $preserveBackup)) {
+                return ['ok' => false, 'errors' => ["Failed to backup leftover runtime data for '{$pluginId}' before install"]];
             }
         } else {
             birkly_marketplace_remove_directory($dest);
