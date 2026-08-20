@@ -301,8 +301,15 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
 {
     $config = birkly_hosting_load();
     unset($config['_migration_pending']);
-    [$migrated, $changed] = birkly_hosting_migrate_schema_v2($config, $syncDomains);
+    [$migrated, $schemaChanged] = birkly_hosting_migrate_schema_v2($config, $syncDomains);
     $config = $migrated;
+    $changed = $schemaChanged;
+
+    require_once __DIR__ . '/project_site.php';
+    $pathRepair = birkly_project_repair_legacy_paths($persist);
+    if ($pathRepair['changed']) {
+        $changed = true;
+    }
 
     if (!$changed) {
         return [
@@ -310,6 +317,7 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             'message' => 'Delivery config is already up to date.',
             'changed' => false,
             'config' => $config,
+            'path_repair' => $pathRepair,
         ];
     }
 
@@ -319,34 +327,47 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             'message' => 'Repair preview ready (not saved).',
             'changed' => true,
             'config' => $config,
+            'path_repair' => $pathRepair,
         ];
     }
 
-    birkly_hosting_backup_config();
-    if (!birkly_hosting_persist($config, true)) {
-        return [
-            'status' => 'error',
-            'message' => 'Failed to save repaired delivery config.',
-            'changed' => false,
+    if ($schemaChanged) {
+        birkly_hosting_backup_config();
+        if (!birkly_hosting_persist($config, true)) {
+            return [
+                'status' => 'error',
+                'message' => 'Failed to save repaired delivery config.',
+                'changed' => false,
+            ];
+        }
+
+        $log = is_array($config['_migration_log'] ?? null) ? $config['_migration_log'] : [];
+        $log[] = [
+            'at' => gmdate('c'),
+            'from' => 1,
+            'to' => BIRKLY_HOSTING_SCHEMA_VERSION,
+            'actions' => ['repair_delivery', $syncDomains ? 'sync_domains' : 'schema_only'],
         ];
+        $saved = birkly_hosting_load();
+        $saved['_migration_log'] = $log;
+        birkly_hosting_persist($saved, true);
     }
 
-    $log = is_array($config['_migration_log'] ?? null) ? $config['_migration_log'] : [];
-    $log[] = [
-        'at' => gmdate('c'),
-        'from' => 1,
-        'to' => BIRKLY_HOSTING_SCHEMA_VERSION,
-        'actions' => ['repair_delivery', $syncDomains ? 'sync_domains' : 'schema_only'],
-    ];
-    $saved = birkly_hosting_load();
-    $saved['_migration_log'] = $log;
-    birkly_hosting_persist($saved, true);
+    $messages = [];
+    if ($schemaChanged) {
+        $messages[] = 'Delivery config upgraded';
+    }
+    if ($pathRepair['changed']) {
+        $count = count($pathRepair['files'] ?? []);
+        $messages[] = 'Updated /project/ paths in ' . $count . ' HTML file' . ($count === 1 ? '' : 's');
+    }
 
     return [
         'status' => 'ok',
-        'message' => 'Delivery config repaired and saved.',
+        'message' => implode('. ', $messages) . '.',
         'changed' => true,
         'config' => birkly_hosting_load(),
+        'path_repair' => $pathRepair,
     ];
 }
 
@@ -959,6 +980,31 @@ function birkly_hosting_root_redirect_url(): ?string
     return birkly_hosting_admin_url('dashboard');
 }
 
+/**
+ * Whether the current host role may load files from project/ (clean or /project/ paths).
+ */
+function birkly_hosting_role_can_serve_public_project(string $role, string $uri = '/'): bool
+{
+    if ($role === 'public' || $role === 'local') {
+        return true;
+    }
+
+    if ($role !== 'cms') {
+        return false;
+    }
+
+    $config = birkly_hosting_load();
+    if (($config['public_site_mode'] ?? 'none') !== 'project') {
+        return false;
+    }
+
+    if (birkly_hosting_same_host() && ($config['same_host_landing'] ?? 'admin') === 'public') {
+        return true;
+    }
+
+    return str_starts_with($uri, '/project/') || $uri === '/project';
+}
+
 function birkly_hosting_public_project_path(string $uri): string
 {
     $uri = $uri === '' ? '/' : $uri;
@@ -984,12 +1030,8 @@ function birkly_hosting_resolve_public_file(string $uri): ?string
     }
 
     $role = birkly_request_host_role();
-    if ($role !== 'public' && !($role === 'cms' && str_starts_with($uri, '/project/'))) {
-        if ($role === 'local') {
-            // Dev convenience: allow clean paths on localhost when mode=project.
-        } elseif ($role !== 'public') {
-            return null;
-        }
+    if (!birkly_hosting_role_can_serve_public_project($role, $uri)) {
+        return null;
     }
 
     $projectRoot = birkly_project_root() . '/project';
