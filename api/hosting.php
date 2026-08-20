@@ -1,6 +1,6 @@
 <?php
 /**
- * Hosting settings API (P43).
+ * Hosting settings API (P43, P66 delivery probes/repair).
  */
 
 declare(strict_types=1);
@@ -18,6 +18,7 @@ require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/hosting_urls.php';
+require_once __DIR__ . '/../core/hosting_probe.php';
 
 $rawInput = file_get_contents('php://input');
 $input = [];
@@ -30,26 +31,51 @@ if ($rawInput !== '') {
 
 $action = $_GET['action'] ?? $input['action'] ?? '';
 
-if ($action === 'get') {
+function birkly_hosting_api_payload(): array
+{
     $config = birkly_hosting_load();
     $publicHost = birkly_hosting_public_host();
+    $probe = birkly_delivery_probe(['deep' => !empty($_GET['deep'])]);
+
+    return [
+        'hosting' => $config,
+        'cms_host' => birkly_hosting_cms_host(),
+        'public_host' => $publicHost,
+        'registered_public_host' => $publicHost,
+        'request_host_role' => birkly_request_host_role(),
+        'same_host' => birkly_hosting_same_host(),
+        'client_snippet' => birkly_hosting_client_snippet(),
+        'suggested_cms_url' => birkly_hosting_build_url_from_request(),
+        'delivery' => $probe,
+    ];
+}
+
+if ($action === 'get' || $action === 'status' || $action === 'probe') {
+    $data = birkly_hosting_api_payload();
     echo json_encode([
         'status' => 'ok',
-        'data' => [
-            'hosting' => $config,
-            'cms_host' => birkly_hosting_cms_host(),
-            'public_host' => $publicHost,
-            'registered_public_host' => $publicHost,
-            'request_host_role' => birkly_request_host_role(),
-            'same_host' => birkly_hosting_same_host(),
-            'client_snippet' => birkly_hosting_client_snippet(),
-            'suggested_cms_url' => birkly_hosting_build_url_from_request(),
-        ],
+        'data' => $data,
     ]);
     exit;
 }
 
 requireAuth('manage_settings');
+
+if ($action === 'repair') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $preview = !empty($input['preview']) || !empty($_GET['preview']);
+    $syncDomains = !array_key_exists('sync_domains', $input) || !empty($input['sync_domains']);
+    $result = birkly_hosting_repair_delivery(!$preview, $syncDomains);
+    $result['delivery'] = birkly_delivery_probe(['deep' => false]);
+    $result['data'] = birkly_hosting_api_payload();
+    echo json_encode($result);
+    exit;
+}
 
 if ($action === 'save') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
@@ -64,12 +90,16 @@ if ($action === 'save') {
         exit;
     }
 
-    $config = array_merge(birkly_hosting_load(), [
-        'cms_base_url' => (string) ($hosting['cms_base_url'] ?? ''),
-        'public_site_mode' => (string) ($hosting['public_site_mode'] ?? 'none'),
-        'public_site_url' => (string) ($hosting['public_site_url'] ?? ''),
-        'same_host_landing' => (string) ($hosting['same_host_landing'] ?? 'admin'),
-        'strict_admin_host' => (bool) ($hosting['strict_admin_host'] ?? true),
+    $current = birkly_hosting_load();
+    $config = array_merge($current, [
+        'cms_base_url' => (string) ($hosting['cms_base_url'] ?? $current['cms_base_url'] ?? ''),
+        'cms_host_aliases' => $hosting['cms_host_aliases'] ?? $current['cms_host_aliases'] ?? [],
+        'public_site_mode' => (string) ($hosting['public_site_mode'] ?? $current['public_site_mode'] ?? 'none'),
+        'public_site_url' => (string) ($hosting['public_site_url'] ?? $current['public_site_url'] ?? ''),
+        'public_host_aliases' => $hosting['public_host_aliases'] ?? $current['public_host_aliases'] ?? [],
+        'same_host_landing' => (string) ($hosting['same_host_landing'] ?? $current['same_host_landing'] ?? 'admin'),
+        'strict_admin_host' => (bool) ($hosting['strict_admin_host'] ?? $current['strict_admin_host'] ?? true),
+        'alias_redirect_to_primary' => (bool) ($hosting['alias_redirect_to_primary'] ?? $current['alias_redirect_to_primary'] ?? true),
     ]);
 
     if ($config['public_site_mode'] !== 'none' && $config['public_site_url'] === '') {
@@ -77,24 +107,16 @@ if ($action === 'save') {
         exit;
     }
 
+    birkly_hosting_backup_config();
     if (!birkly_hosting_persist($config, true)) {
         echo json_encode(['status' => 'error', 'message' => 'Failed to save hosting settings']);
         exit;
     }
 
-    $saved = birkly_hosting_load();
-    $publicHost = birkly_hosting_public_host();
     echo json_encode([
         'status' => 'ok',
         'message' => 'Hosting settings saved',
-        'data' => [
-            'hosting' => $saved,
-            'client_snippet' => birkly_hosting_client_snippet(),
-            'cms_host' => birkly_hosting_cms_host(),
-            'public_host' => $publicHost,
-            'registered_public_host' => $publicHost,
-            'same_host' => birkly_hosting_same_host(),
-        ],
+        'data' => birkly_hosting_api_payload(),
     ]);
     exit;
 }

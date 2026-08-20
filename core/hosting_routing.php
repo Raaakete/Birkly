@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/hosting_urls.php';
 require_once __DIR__ . '/project_site.php';
+require_once __DIR__ . '/hosting_redirects.php';
 
 /**
  * Serve a resolved public file. For project HTML this first attempts SSR
@@ -68,6 +69,9 @@ function birkly_hosting_dispatch(string $uri): bool
 {
     birkly_ensure_public_site_path();
     $config = birkly_hosting_load();
+
+    birkly_hosting_maybe_redirect_alias_to_primary($uri);
+    birkly_hosting_apply_redirect($uri);
 
     if (preg_match('#^/admin($|/)#', $uri)) {
         if (birkly_hosting_should_redirect_admin()) {

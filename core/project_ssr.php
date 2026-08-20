@@ -131,9 +131,6 @@ function birkly_project_ssr_validate_render_settings(array $input): array
 function birkly_project_ssr_enabled(): bool
 {
     $settings = birkly_project_ssr_settings();
-    if ($settings['hosting_type'] !== 'birkly') {
-        return false;
-    }
     if (!in_array($settings['render_mode'], ['server', 'auto'], true)) {
         return false;
     }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Configurable hosting URLs — CMS vs public site (P43).
+ * Configurable hosting URLs — CMS vs public site (P43, P66 schema v2).
  */
 
 declare(strict_types=1);
@@ -8,18 +8,380 @@ declare(strict_types=1);
 require_once __DIR__ . '/birkly_paths.php';
 require_once __DIR__ . '/site_domain.php';
 
+const BIRKLY_HOSTING_SCHEMA_VERSION = 2;
+
 /**
- * @return array{cms_base_url: string, public_site_mode: string, public_site_url: string, same_host_landing: string, strict_admin_host: bool}
+ * @return array<string, mixed>
  */
 function birkly_hosting_defaults(): array
 {
     return [
+        'schema_version' => BIRKLY_HOSTING_SCHEMA_VERSION,
         'cms_base_url' => '',
+        'cms_host_aliases' => [],
         'public_site_mode' => 'none',
         'public_site_url' => '',
+        'public_host_aliases' => [],
+        'alias_redirect_to_primary' => true,
         'same_host_landing' => 'admin',
         'strict_admin_host' => true,
     ];
+}
+
+/**
+ * @param mixed $aliases
+ * @return list<string>
+ */
+function birkly_hosting_normalize_alias_hosts($aliases, string $primaryHost = ''): array
+{
+    if (!is_array($aliases)) {
+        $aliases = [];
+    }
+
+    $primaryHost = birkly_normalize_host($primaryHost);
+    $normalized = [];
+    foreach ($aliases as $alias) {
+        $host = birkly_normalize_host((string) $alias);
+        if ($host === '' || $host === $primaryHost) {
+            continue;
+        }
+        $normalized[$host] = $host;
+    }
+
+    return array_values($normalized);
+}
+
+/**
+ * @param array<string, mixed> $config
+ * @return list<string>
+ */
+function birkly_hosting_cms_alias_hosts(array $config): array
+{
+    return birkly_hosting_normalize_alias_hosts(
+        $config['cms_host_aliases'] ?? [],
+        birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''))
+    );
+}
+
+/**
+ * @param array<string, mixed> $config
+ * @return list<string>
+ */
+function birkly_hosting_public_alias_hosts(array $config): array
+{
+    if (($config['public_site_mode'] ?? 'none') === 'none') {
+        return [];
+    }
+
+    return birkly_hosting_normalize_alias_hosts(
+        $config['public_host_aliases'] ?? [],
+        birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''))
+    );
+}
+
+function birkly_hosting_host_matches_cms(string $host): bool
+{
+    $host = birkly_normalize_host($host);
+    if ($host === '') {
+        return false;
+    }
+
+    $config = birkly_hosting_load();
+    $primary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    if ($primary !== '' && $host === $primary) {
+        return true;
+    }
+
+    return in_array($host, birkly_hosting_cms_alias_hosts($config), true);
+}
+
+function birkly_hosting_host_matches_public(string $host): bool
+{
+    $host = birkly_normalize_host($host);
+    if ($host === '') {
+        return false;
+    }
+
+    $config = birkly_hosting_load();
+    if (($config['public_site_mode'] ?? 'none') === 'none') {
+        return false;
+    }
+
+    $primary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    if ($primary !== '' && $host === $primary) {
+        return true;
+    }
+
+    return in_array($host, birkly_hosting_public_alias_hosts($config), true);
+}
+
+function birkly_hosting_is_cms_alias_host(string $host): bool
+{
+    $host = birkly_normalize_host($host);
+    $primary = birkly_hosting_cms_host();
+
+    return $host !== '' && $primary !== '' && $host !== $primary && birkly_hosting_host_matches_cms($host);
+}
+
+function birkly_hosting_is_public_alias_host(string $host): bool
+{
+    $host = birkly_normalize_host($host);
+    $primary = birkly_hosting_public_host();
+
+    return $host !== '' && $primary !== '' && $host !== $primary && birkly_hosting_host_matches_public($host);
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_hosting_www_apex_pair(string $host): array
+{
+    $host = birkly_normalize_host($host);
+    if ($host === '') {
+        return [];
+    }
+
+    if (str_starts_with($host, 'www.')) {
+        $apex = substr($host, 4);
+        return $apex !== '' ? [$host, $apex] : [$host];
+    }
+
+    return [$host, 'www.' . $host];
+}
+
+/**
+ * @param array<string, mixed> $config
+ * @return array<string, mixed>
+ */
+function birkly_hosting_normalize_config(array $config): array
+{
+    $merged = array_merge(birkly_hosting_defaults(), $config);
+    $merged['schema_version'] = max(1, (int) ($merged['schema_version'] ?? 1));
+    $merged['cms_base_url'] = birkly_hosting_normalize_url((string) $merged['cms_base_url'], false);
+    $merged['public_site_url'] = birkly_hosting_normalize_url((string) $merged['public_site_url'], true);
+    $merged['public_site_mode'] = birkly_hosting_normalize_mode((string) $merged['public_site_mode']);
+    $merged['same_host_landing'] = in_array($merged['same_host_landing'], ['admin', 'public'], true)
+        ? $merged['same_host_landing']
+        : 'admin';
+    $merged['strict_admin_host'] = (bool) $merged['strict_admin_host'];
+    $merged['alias_redirect_to_primary'] = array_key_exists('alias_redirect_to_primary', $merged)
+        ? (bool) $merged['alias_redirect_to_primary']
+        : true;
+    $merged['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+        $merged['cms_host_aliases'] ?? [],
+        birkly_hosting_url_host((string) $merged['cms_base_url'])
+    );
+    $merged['public_host_aliases'] = birkly_hosting_normalize_alias_hosts(
+        $merged['public_host_aliases'] ?? [],
+        birkly_hosting_url_host((string) $merged['public_site_url'])
+    );
+
+    return $merged;
+}
+
+/**
+ * @param array<string, mixed> $config
+ * @return array{0: array<string, mixed>, 1: bool}
+ */
+function birkly_hosting_migrate_schema_v2(array $config, bool $includeDomainSync = false): array
+{
+    $changed = false;
+    $config = birkly_hosting_normalize_config($config);
+
+    if ((int) ($config['schema_version'] ?? 1) >= BIRKLY_HOSTING_SCHEMA_VERSION) {
+        return [$config, false];
+    }
+
+    $config['schema_version'] = BIRKLY_HOSTING_SCHEMA_VERSION;
+    $config['cms_host_aliases'] = $config['cms_host_aliases'] ?? [];
+    $config['public_host_aliases'] = $config['public_host_aliases'] ?? [];
+    $config['alias_redirect_to_primary'] = (bool) ($config['alias_redirect_to_primary'] ?? true);
+    $changed = true;
+
+    if ($includeDomainSync) {
+        $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+        $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+        $cmsAliases = $config['cms_host_aliases'];
+        $publicAliases = $config['public_host_aliases'];
+
+        foreach (birkly_hosting_collect_registered_domain_hosts() as $registeredHost) {
+            if ($registeredHost === $cmsPrimary || $registeredHost === $publicPrimary) {
+                continue;
+            }
+            if ($cmsPrimary !== '' && str_ends_with($registeredHost, $cmsPrimary)) {
+                $cmsAliases[] = $registeredHost;
+                $changed = true;
+                continue;
+            }
+            if ($publicPrimary !== '' && ($registeredHost === $publicPrimary || str_ends_with($registeredHost, '.' . $publicPrimary))) {
+                $publicAliases[] = $registeredHost;
+                $changed = true;
+                continue;
+            }
+            // Default: treat extra registered hosts as public aliases when a public site exists.
+            if ($publicPrimary !== '' && $registeredHost !== $cmsPrimary) {
+                $publicAliases[] = $registeredHost;
+                $changed = true;
+            } elseif ($cmsPrimary !== '') {
+                $cmsAliases[] = $registeredHost;
+                $changed = true;
+            }
+        }
+
+        foreach (birkly_hosting_www_apex_pair($publicPrimary) as $pairHost) {
+            if ($pairHost !== $publicPrimary) {
+                $publicAliases[] = $pairHost;
+                $changed = true;
+            }
+        }
+        foreach (birkly_hosting_www_apex_pair($cmsPrimary) as $pairHost) {
+            if ($pairHost !== $cmsPrimary) {
+                $cmsAliases[] = $pairHost;
+                $changed = true;
+            }
+        }
+
+        $config['cms_host_aliases'] = birkly_hosting_normalize_alias_hosts($cmsAliases, $cmsPrimary);
+        $config['public_host_aliases'] = birkly_hosting_normalize_alias_hosts($publicAliases, $publicPrimary);
+    }
+
+    return [$config, $changed];
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_hosting_collect_registered_domain_hosts(): array
+{
+    $file = birkly_project_root() . '/settings/domains.json';
+    if (!is_readable($file)) {
+        return [];
+    }
+
+    $decoded = json_decode((string) file_get_contents($file), true);
+    if (!is_array($decoded)) {
+        return [];
+    }
+
+    $hosts = [];
+    foreach ($decoded as $domain => $license) {
+        $domain = birkly_normalize_host((string) $domain);
+        if ($domain !== '') {
+            $hosts[$domain] = $domain;
+        }
+        if (!is_array($license)) {
+            continue;
+        }
+        foreach ($license['allowed_domains'] ?? [] as $allowed) {
+            $allowed = birkly_normalize_host((string) $allowed);
+            if ($allowed !== '') {
+                $hosts[$allowed] = $allowed;
+            }
+        }
+    }
+
+    return array_values($hosts);
+}
+
+function birkly_hosting_backup_config(): bool
+{
+    $path = birkly_hosting_settings_path();
+    if (!is_readable($path)) {
+        return true;
+    }
+
+    $backup = $path . '.bak.' . gmdate('YmdHis');
+    return copy($path, $backup);
+}
+
+/**
+ * @return array{status: string, message: string, changed: bool, config?: array<string, mixed>}
+ */
+function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains = true): array
+{
+    $config = birkly_hosting_load();
+    unset($config['_migration_pending']);
+    [$migrated, $changed] = birkly_hosting_migrate_schema_v2($config, $syncDomains);
+    $config = $migrated;
+
+    if (!$changed) {
+        return [
+            'status' => 'ok',
+            'message' => 'Delivery config is already up to date.',
+            'changed' => false,
+            'config' => $config,
+        ];
+    }
+
+    if (!$persist) {
+        return [
+            'status' => 'ok',
+            'message' => 'Repair preview ready (not saved).',
+            'changed' => true,
+            'config' => $config,
+        ];
+    }
+
+    birkly_hosting_backup_config();
+    if (!birkly_hosting_persist($config, true)) {
+        return [
+            'status' => 'error',
+            'message' => 'Failed to save repaired delivery config.',
+            'changed' => false,
+        ];
+    }
+
+    $log = is_array($config['_migration_log'] ?? null) ? $config['_migration_log'] : [];
+    $log[] = [
+        'at' => gmdate('c'),
+        'from' => 1,
+        'to' => BIRKLY_HOSTING_SCHEMA_VERSION,
+        'actions' => ['repair_delivery', $syncDomains ? 'sync_domains' : 'schema_only'],
+    ];
+    $saved = birkly_hosting_load();
+    $saved['_migration_log'] = $log;
+    birkly_hosting_persist($saved, true);
+
+    return [
+        'status' => 'ok',
+        'message' => 'Delivery config repaired and saved.',
+        'changed' => true,
+        'config' => birkly_hosting_load(),
+    ];
+}
+
+/**
+ * Redirect alias hostnames to primary when enabled.
+ */
+function birkly_hosting_maybe_redirect_alias_to_primary(string $uri): bool
+{
+    $config = birkly_hosting_load();
+    if (empty($config['alias_redirect_to_primary'])) {
+        return false;
+    }
+
+    $host = birkly_cms_request_host();
+    if ($host === '' || birkly_is_local_dev_host($host)) {
+        return false;
+    }
+
+    if (birkly_hosting_is_cms_alias_host($host)) {
+        $target = rtrim((string) $config['cms_base_url'], '/') . ($uri === '' ? '/' : $uri);
+        header('Location: ' . $target, true, 301);
+        exit;
+    }
+
+    if (birkly_hosting_is_public_alias_host($host)) {
+        $publicBase = birkly_hosting_public_base_url();
+        if ($publicBase === '') {
+            return false;
+        }
+        $target = rtrim($publicBase, '/') . ($uri === '' ? '/' : $uri);
+        header('Location: ' . $target, true, 301);
+        exit;
+    }
+
+    return false;
 }
 
 function birkly_hosting_settings_path(): string
@@ -104,15 +466,14 @@ function birkly_hosting_load(): array
         $config = birkly_hosting_migrate_legacy($config);
     }
 
-    $config['cms_base_url'] = birkly_hosting_normalize_url((string) $config['cms_base_url'], false);
-    $config['public_site_url'] = birkly_hosting_normalize_url((string) $config['public_site_url'], true);
-    $config['public_site_mode'] = birkly_hosting_normalize_mode((string) $config['public_site_mode']);
-    $config['same_host_landing'] = in_array($config['same_host_landing'], ['admin', 'public'], true)
-        ? $config['same_host_landing']
-        : 'admin';
-    $config['strict_admin_host'] = (bool) $config['strict_admin_host'];
+    $config = birkly_hosting_normalize_config($config);
+    [$config, $schemaChanged] = birkly_hosting_migrate_schema_v2($config, false);
+    if ($schemaChanged) {
+        $config['_migration_pending'] = true;
+    }
 
     $config = birkly_hosting_apply_env_overrides($config);
+    $config = birkly_hosting_normalize_config($config);
 
     [$config, $repairedLocal] = birkly_hosting_repair_local_dev_urls($config);
 
@@ -342,17 +703,12 @@ function birkly_hosting_migrate_legacy(array $partial = []): array
  */
 function birkly_hosting_persist(array $config, bool $registerDomains = true): bool
 {
-    $merged = array_merge(birkly_hosting_defaults(), $config);
-    $merged['cms_base_url'] = birkly_hosting_normalize_url((string) $merged['cms_base_url'], false);
-    $merged['public_site_url'] = birkly_hosting_normalize_url((string) $merged['public_site_url'], true);
-    $merged['public_site_mode'] = birkly_hosting_normalize_mode((string) $merged['public_site_mode']);
-    $merged['same_host_landing'] = in_array($merged['same_host_landing'], ['admin', 'public'], true)
-        ? $merged['same_host_landing']
-        : 'admin';
-    $merged['strict_admin_host'] = (bool) $merged['strict_admin_host'];
+    $merged = birkly_hosting_normalize_config(array_merge(birkly_hosting_defaults(), $config));
+    unset($merged['_migration_pending']);
 
     if ($merged['public_site_mode'] === 'none') {
         $merged['public_site_url'] = '';
+        $merged['public_host_aliases'] = [];
     } elseif ($merged['public_site_url'] === '') {
         return false;
     }
@@ -360,6 +716,8 @@ function birkly_hosting_persist(array $config, bool $registerDomains = true): bo
     if ($merged['cms_base_url'] === '') {
         return false;
     }
+
+    $merged['schema_version'] = BIRKLY_HOSTING_SCHEMA_VERSION;
 
     $dir = dirname(birkly_hosting_settings_path());
     if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
@@ -416,16 +774,27 @@ function birkly_hosting_register_domains(array $config): void
 {
     require_once __DIR__ . '/site_domain.php';
 
+    $hosts = [];
     $cmsHost = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
     if ($cmsHost !== '') {
-        birkly_ensure_site_domain_registered($cmsHost);
+        $hosts[$cmsHost] = true;
+    }
+    foreach (birkly_hosting_cms_alias_hosts($config) as $alias) {
+        $hosts[$alias] = true;
     }
 
     if (($config['public_site_mode'] ?? 'none') !== 'none') {
         $publicHost = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
-        if ($publicHost !== '' && $publicHost !== $cmsHost) {
-            birkly_ensure_site_domain_registered($publicHost);
+        if ($publicHost !== '') {
+            $hosts[$publicHost] = true;
         }
+        foreach (birkly_hosting_public_alias_hosts($config) as $alias) {
+            $hosts[$alias] = true;
+        }
+    }
+
+    foreach (array_keys($hosts) as $host) {
+        birkly_ensure_site_domain_registered($host);
     }
 }
 
@@ -479,13 +848,10 @@ function birkly_request_host_role(): string
         return 'local';
     }
 
-    $cmsHost = birkly_hosting_cms_host();
-    $publicHost = birkly_hosting_public_host();
-
-    if ($cmsHost !== '' && $host === $cmsHost) {
+    if (birkly_hosting_host_matches_cms($host)) {
         return 'cms';
     }
-    if ($publicHost !== '' && $host === $publicHost) {
+    if (birkly_hosting_host_matches_public($host)) {
         return 'public';
     }
 
