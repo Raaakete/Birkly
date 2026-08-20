@@ -59,10 +59,23 @@
             });
     }
 
+    function fixConfirmMessage(action) {
+        if (action === 'repair') {
+            return 'Repair delivery: remove /project from the public URL if needed, sync domain aliases, remove legacy demo-website/, and fix project HTML paths? A backup of hosting.json will be created when config changes.';
+        }
+        if (action === 'fix_project_paths') {
+            return 'Rewrite /project/ paths in project HTML and inject the client script?';
+        }
+        return 'Apply this fix?';
+    }
+
     function renderFixControl(check) {
         if (!check.fix) return '';
         if (check.fix.action === 'fix_project_paths') {
             return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="fix_project_paths">Fix paths</button>';
+        }
+        if (check.fix.action === 'repair') {
+            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="repair">Fix</button>';
         }
         return ' <a class="delivery-status-fix" href="' + escapeHtml(fixUrl(check.fix)) + '">Fix</a>';
     }
@@ -105,6 +118,15 @@
             '</section>';
     }
 
+    function refreshHostingPanels() {
+        if (typeof global.refreshHostingWizard === 'function') {
+            global.refreshHostingWizard();
+        }
+        if (typeof global.refreshProjectSettingsHosting === 'function') {
+            global.refreshProjectSettingsHosting();
+        }
+    }
+
     function mount(options) {
         var id = options.id || 'default';
         var mountEl = options.mount;
@@ -135,13 +157,16 @@
             root.querySelectorAll('.delivery-status-fix-action').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     var action = btn.getAttribute('data-fix-action') || 'fix_project_paths';
-                    if (!window.confirm('Rewrite /project/ paths in project HTML and inject the client script?')) {
+                    if (!window.confirm(fixConfirmMessage(action))) {
                         return;
                     }
                     btn.disabled = true;
-                    runHostingAction(action, function () {
+                    runHostingAction(action, function (result) {
                         load();
                         btn.disabled = false;
+                        if (action === 'repair') {
+                            refreshHostingPanels();
+                        }
                     }).catch(function () {
                         btn.disabled = false;
                     });
@@ -150,19 +175,14 @@
             var repairBtn = root.querySelector('.delivery-status-repair');
             if (repairBtn) {
                 repairBtn.addEventListener('click', function () {
-                    if (!window.confirm('Repair delivery: upgrade config if needed, sync domain aliases, and fix project HTML paths? A backup of hosting.json will be created when config changes.')) {
+                    if (!window.confirm(fixConfirmMessage('repair'))) {
                         return;
                     }
                     repairBtn.disabled = true;
                     runHostingAction('repair', function () {
                         load();
                         repairBtn.disabled = false;
-                        if (typeof global.refreshHostingWizard === 'function') {
-                            global.refreshHostingWizard();
-                        }
-                        if (typeof global.refreshProjectSettingsHosting === 'function') {
-                            global.refreshProjectSettingsHosting();
-                        }
+                        refreshHostingPanels();
                     }).catch(function () {
                         repairBtn.disabled = false;
                     });

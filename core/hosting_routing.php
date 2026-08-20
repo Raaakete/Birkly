@@ -85,6 +85,15 @@ function birkly_hosting_dispatch(string $uri): bool
     birkly_ensure_public_site_path();
     $config = birkly_hosting_load();
 
+    if (preg_match('#^/demo-website(/|$)#', $uri) === 1) {
+        $target = preg_replace('#^/demo-website#', '/project', $uri, 1);
+        if ($target === '') {
+            $target = '/project/';
+        }
+        header('Location: ' . birkly_url($target), true, 301);
+        exit;
+    }
+
     birkly_hosting_maybe_redirect_alias_to_primary($uri);
     birkly_hosting_apply_redirect($uri);
 

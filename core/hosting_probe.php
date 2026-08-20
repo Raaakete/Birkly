@@ -102,6 +102,7 @@ function birkly_delivery_probe(array $options = []): array
     $config = birkly_hosting_load();
     $checks = [];
     $fixHosting = ['tab' => 'site-delivery', 'hash' => 'hosting'];
+    $fixRepair = ['tab' => 'site-delivery', 'hash' => 'hosting', 'action' => 'repair'];
     $fixDomains = ['tab' => 'site-delivery', 'hash' => 'domains'];
 
     $requestHost = birkly_cms_request_host();
@@ -160,7 +161,7 @@ function birkly_delivery_probe(array $options = []): array
                 'fail',
                 'PUBLIC_URL_PROJECT_PATH',
                 'Public URL must not include /project — use the site hostname only (e.g. https://example.com). Run Repair delivery to update saved settings.',
-                $fixHosting
+                $fixRepair
             );
         } elseif ($mode === 'project' && birkly_hosting_same_host_uses_project_url_prefix()) {
             $checks[] = birkly_delivery_check(

@@ -109,6 +109,39 @@ try {
         'cms host serves /project/styles.css',
         birkly_hosting_resolve_public_file('/project/styles.css') !== null
     );
+
+    echo "\n[repair delivery persists public url fixup]\n";
+    birkly_hosting_reset_cache();
+    file_put_contents($hostingFile, json_encode([
+        'schema_version' => 2,
+        'cms_base_url' => 'https://site.example.com',
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://site.example.com/project',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    birkly_hosting_reset_cache();
+    assert_true(
+        'fixup pending before repair',
+        !empty(birkly_hosting_load()['_public_url_path_fixup_pending'])
+    );
+    $repairResult = birkly_hosting_repair_delivery(true, false);
+    assert_true('repair changed config', ($repairResult['changed'] ?? false) === true);
+    assert_true(
+        'repair message mentions public url',
+        str_contains((string) ($repairResult['message'] ?? ''), 'public site URL')
+    );
+    $rawSaved = json_decode((string) file_get_contents($hostingFile), true);
+    assert_true(
+        'hosting.json no longer stores /project in public url',
+        is_array($rawSaved)
+            && ($rawSaved['public_site_url'] ?? '') === 'https://site.example.com'
+            && empty($rawSaved['_public_url_path_fixup_pending'])
+    );
+    assert_true(
+        'fixup cleared after repair',
+        empty(birkly_hosting_load()['_public_url_path_fixup_pending'])
+    );
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {
