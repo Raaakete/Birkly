@@ -159,7 +159,10 @@ function birkly_hosting_normalize_config(array $config): array
     $merged['schema_version'] = max(1, (int) ($merged['schema_version'] ?? 1));
     $merged['cms_base_url'] = birkly_hosting_normalize_url((string) $merged['cms_base_url'], false);
     $merged['public_site_url'] = birkly_hosting_normalize_url((string) $merged['public_site_url'], true);
-    $merged['public_site_mode'] = birkly_hosting_normalize_mode((string) $merged['public_site_mode']);
+    $merged['public_site_mode'] = birkly_hosting_normalize_mode((string) ($merged['public_site_mode'] ?? 'none'));
+    if ($merged['public_site_mode'] === 'project') {
+        $merged['public_site_url'] = birkly_hosting_strip_project_path_from_public_url((string) $merged['public_site_url']);
+    }
     $merged['same_host_landing'] = in_array($merged['same_host_landing'], ['admin', 'public'], true)
         ? $merged['same_host_landing']
         : 'admin';
@@ -359,6 +362,11 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    if (!empty($config['_public_url_path_fixup_pending'])) {
+        unset($config['_public_url_path_fixup_pending']);
+        $changed = true;
+    }
+
     require_once __DIR__ . '/project_site.php';
     $pathRepair = birkly_project_repair_legacy_paths($persist);
     if ($pathRepair['changed']) {
@@ -527,12 +535,14 @@ function birkly_hosting_load(): array
 
     $config = birkly_hosting_defaults();
     $path = birkly_hosting_settings_path();
+    $rawPublicSiteUrl = '';
     if (is_readable($path)) {
         $raw = file_get_contents($path);
         if ($raw !== false) {
             $decoded = json_decode($raw, true);
             if (is_array($decoded)) {
                 $config = array_merge($config, $decoded);
+                $rawPublicSiteUrl = (string) ($decoded['public_site_url'] ?? '');
             }
         }
     }
@@ -542,6 +552,11 @@ function birkly_hosting_load(): array
     }
 
     $config = birkly_hosting_normalize_config($config);
+    if ($rawPublicSiteUrl !== ''
+        && ($config['public_site_mode'] ?? 'none') === 'project'
+        && birkly_hosting_public_url_has_project_path($rawPublicSiteUrl)) {
+        $config['_public_url_path_fixup_pending'] = true;
+    }
     [$config, $schemaChanged] = birkly_hosting_migrate_schema_v2($config, false);
     if ($schemaChanged) {
         $config['_migration_pending'] = true;
@@ -583,6 +598,61 @@ function birkly_hosting_load(): array
 function birkly_hosting_normalize_mode(string $mode): string
 {
     return in_array($mode, ['none', 'external', 'project'], true) ? $mode : 'none';
+}
+
+/**
+ * True when the configured public site URL incorrectly includes a /project path.
+ */
+function birkly_hosting_public_url_has_project_path(string $url): bool
+{
+    $path = (string) (parse_url($url, PHP_URL_PATH) ?? '');
+    $path = rtrim($path, '/');
+    if ($path === '') {
+        return false;
+    }
+
+    return $path === '/project' || str_starts_with($path, '/project/');
+}
+
+/**
+ * Public site URL must be the visitor-facing host (no /project — that is on-disk only).
+ */
+function birkly_hosting_strip_project_path_from_public_url(string $url): string
+{
+    if ($url === '' || !birkly_hosting_public_url_has_project_path($url)) {
+        return $url;
+    }
+
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return $url;
+    }
+
+    $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
+    $host = birkly_normalize_host((string) $parts['host']);
+    $port = isset($parts['port']) ? (int) $parts['port'] : null;
+    $normalized = $scheme . '://' . $host;
+    if ($port !== null && !in_array($port, [80, 443], true)) {
+        $normalized .= ':' . $port;
+    }
+
+    return rtrim($normalized, '/');
+}
+
+/**
+ * Same host + admin at / serves the bundled site under /project/ in the browser.
+ */
+function birkly_hosting_same_host_uses_project_url_prefix(): bool
+{
+    $config = birkly_hosting_load();
+    if (($config['public_site_mode'] ?? 'none') !== 'project') {
+        return false;
+    }
+    if (!birkly_hosting_same_host()) {
+        return false;
+    }
+
+    return ($config['same_host_landing'] ?? 'admin') === 'admin';
 }
 
 function birkly_hosting_normalize_url(string $url, bool $allowEmpty = true): string
