@@ -237,7 +237,72 @@ function birkly_ai_presence_save_draft(array $draft): bool
 function birkly_ai_presence_merge_draft(array $partial): array
 {
     $current = birkly_ai_presence_load_draft();
-    return birkly_ai_presence_normalize_draft(array_replace_recursive($current, $partial));
+    $merged = birkly_ai_presence_merge_draft_arrays($current, $partial);
+    return birkly_ai_presence_normalize_draft($merged);
+}
+
+/**
+ * Keys whose values are ordered lists — replaced entirely when present in a patch.
+ * array_replace_recursive merges numeric keys by index, which breaks save_draft
+ * semantics for products_services, claims, and other list fields.
+ *
+ * @return list<string>
+ */
+function birkly_ai_presence_draft_list_keys(): array
+{
+    return [
+        'connected_content',
+        'sources_of_truth',
+        'claims',
+        'evidence',
+        'media_context',
+        'products_services',
+        'relationships',
+        'industry',
+        'categories',
+        'locations',
+        'social_profiles',
+        'best_known_for',
+        'differentiators',
+        'best_suited_for',
+        'not_ideal_for',
+        'preferred_terms',
+        'avoided_terms',
+        'required_qualifications',
+        'tone',
+        'sources',
+        'best_for',
+        'not_for',
+        'claim_ids',
+        'redact_public_fields',
+    ];
+}
+
+function birkly_ai_presence_is_draft_list_key(string $key): bool
+{
+    return in_array($key, birkly_ai_presence_draft_list_keys(), true);
+}
+
+/**
+ * @param array<string, mixed> $base
+ * @param array<string, mixed> $patch
+ * @return array<string, mixed>
+ */
+function birkly_ai_presence_merge_draft_arrays(array $base, array $patch): array
+{
+    $result = $base;
+    foreach ($patch as $key => $value) {
+        if (birkly_ai_presence_is_draft_list_key($key)) {
+            $result[$key] = is_array($value) ? array_values($value) : [];
+            continue;
+        }
+        if (is_array($value) && isset($result[$key]) && is_array($result[$key])) {
+            $result[$key] = birkly_ai_presence_merge_draft_arrays($result[$key], $value);
+            continue;
+        }
+        $result[$key] = $value;
+    }
+    return $result;
 }
 
 function birkly_ai_presence_load_published(): ?array
