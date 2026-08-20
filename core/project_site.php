@@ -338,10 +338,10 @@ function birkly_public_site_visit_url(?array $settings = null): string
     if (birkly_hosting_same_host_uses_project_url_prefix()) {
         $format = birkly_resolve_visit_url_format($settings);
         if ($format === 'index' && is_file(birkly_public_site_path() . '/index.html')) {
-            return birkly_url('/project/index.html');
+            return birkly_hosting_absolute_app_url('/project/index.html');
         }
 
-        return birkly_url('/project/');
+        return birkly_hosting_absolute_app_url('/project/');
     }
 
     $format = birkly_resolve_visit_url_format($settings);

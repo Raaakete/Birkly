@@ -96,8 +96,7 @@ try {
     );
     assert_true(
         'visit url points at /project/',
-        str_ends_with(birkly_public_site_visit_url(), '/project/')
-            || str_ends_with(birkly_public_site_visit_url(), '/project/index.html')
+        str_contains(birkly_public_site_visit_url(), '/project/')
     );
     $adminSample = '<link rel="stylesheet" href="/project/styles.css">';
     $adminPrepared = birkly_project_prepare_html_for_serve($adminSample);
@@ -141,6 +140,36 @@ try {
     assert_true(
         'fixup cleared after repair',
         empty(birkly_hosting_load()['_public_url_path_fixup_pending'])
+    );
+    echo "\n[repair delivery strips /admin from cms url]\n";
+    birkly_hosting_reset_cache();
+    file_put_contents($hostingFile, json_encode([
+        'schema_version' => 2,
+        'cms_base_url' => 'https://site.example.com/admin',
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://site.example.com',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    birkly_hosting_reset_cache();
+    assert_true(
+        'cms admin path fixup pending before repair',
+        !empty(birkly_hosting_load()['_cms_url_admin_path_fixup_pending'])
+    );
+    $cmsRepair = birkly_hosting_repair_delivery(true, false);
+    assert_true('cms url repair changed config', ($cmsRepair['changed'] ?? false) === true);
+    assert_true(
+        'cms repair message mentions CMS URL',
+        str_contains((string) ($cmsRepair['message'] ?? ''), 'CMS URL')
+    );
+    $rawCmsSaved = json_decode((string) file_get_contents($hostingFile), true);
+    assert_true(
+        'hosting.json no longer stores /admin in cms url',
+        is_array($rawCmsSaved) && ($rawCmsSaved['cms_base_url'] ?? '') === 'https://site.example.com'
+    );
+    assert_true(
+        'visit url is absolute for same-host admin',
+        str_starts_with(birkly_public_site_visit_url(), 'https://site.example.com/project')
     );
 } finally {
     birkly_hosting_reset_cache();

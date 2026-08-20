@@ -157,7 +157,9 @@ function birkly_hosting_normalize_config(array $config): array
 {
     $merged = array_merge(birkly_hosting_defaults(), $config);
     $merged['schema_version'] = max(1, (int) ($merged['schema_version'] ?? 1));
-    $merged['cms_base_url'] = birkly_hosting_normalize_url((string) $merged['cms_base_url'], false);
+    $merged['cms_base_url'] = birkly_hosting_strip_admin_path_from_cms_url(
+        birkly_hosting_normalize_url((string) $merged['cms_base_url'], false)
+    );
     $merged['public_site_url'] = birkly_hosting_normalize_url((string) $merged['public_site_url'], true);
     $merged['public_site_mode'] = birkly_hosting_normalize_mode((string) ($merged['public_site_mode'] ?? 'none'));
     if ($merged['public_site_mode'] === 'project') {
@@ -347,6 +349,77 @@ function birkly_hosting_backup_config(): bool
 }
 
 /**
+ * Optional guidance when Repair delivery finds nothing to persist.
+ */
+function birkly_hosting_repair_noop_hint(): string
+{
+    require_once __DIR__ . '/hosting_probe.php';
+    $delivery = birkly_delivery_probe(['deep' => false]);
+    foreach ($delivery['checks'] ?? [] as $check) {
+        $code = (string) ($check['code'] ?? '');
+        if ($code === 'CMS_URL_ADMIN_PATH') {
+            return 'Delivery config is already up to date in memory, but hosting.json still stores /admin in the CMS URL — save failed or pending deploy. Re-run Repair after updating the CMS files.';
+        }
+        if ($code === 'SAME_HOST_PROJECT_PREFIX') {
+            return 'Hosting settings are valid. The yellow notice is optional: click Fix on that row to serve the public site at / instead of /project/.';
+        }
+    }
+
+    return '';
+}
+
+/**
+ * @return array{status: string, message: string, changed: bool, config?: array<string, mixed>}
+ */
+function birkly_hosting_set_same_host_landing(string $landing): array
+{
+    if (birkly_hosting_env_overrides() !== []) {
+        return ['status' => 'error', 'message' => 'Cannot change same-host landing while environment overrides are active'];
+    }
+
+    $landing = in_array($landing, ['admin', 'public'], true) ? $landing : 'admin';
+    $config = birkly_hosting_normalize_config(birkly_hosting_load());
+    if (($config['same_host_landing'] ?? 'admin') === $landing) {
+        return [
+            'status' => 'ok',
+            'message' => $landing === 'public'
+                ? 'Root / already opens the public site.'
+                : 'Root / already opens admin.',
+            'changed' => false,
+            'config' => $config,
+        ];
+    }
+
+    if (!birkly_hosting_same_host()) {
+        return ['status' => 'error', 'message' => 'Same-host landing applies only when CMS and public share one domain.'];
+    }
+
+    $config['same_host_landing'] = $landing;
+    birkly_hosting_backup_config();
+    if (!birkly_hosting_persist($config, true)) {
+        return ['status' => 'error', 'message' => 'Failed to save same-host landing setting'];
+    }
+
+    require_once __DIR__ . '/project_site.php';
+    $pathRepair = ['changed' => false, 'files' => []];
+    if ($landing === 'public' && ($config['public_site_mode'] ?? 'none') === 'project') {
+        $pathRepair = birkly_project_repair_legacy_paths(true);
+    }
+
+    $message = $landing === 'public'
+        ? 'Root / now opens the public site' . ($pathRepair['changed'] ? ' and project HTML paths were updated' : '')
+        : 'Root / now opens admin';
+
+    return [
+        'status' => 'ok',
+        'message' => $message . '.',
+        'changed' => true,
+        'config' => birkly_hosting_load(),
+        'path_repair' => $pathRepair,
+    ];
+}
+
+/**
  * @return array{status: string, message: string, changed: bool, config?: array<string, mixed>}
  */
 function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains = true): array
@@ -370,6 +443,14 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    $cmsUrlFixed = false;
+    if (!empty($config['_cms_url_admin_path_fixup_pending'])) {
+        unset($config['_cms_url_admin_path_fixup_pending']);
+        $config = birkly_hosting_normalize_config($config);
+        $cmsUrlFixed = true;
+        $changed = true;
+    }
+
     require_once __DIR__ . '/project_site.php';
     $demoRepair = birkly_project_repair_legacy_demo_website($persist);
     if ($demoRepair['changed']) {
@@ -382,9 +463,10 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
     }
 
     if (!$changed) {
+        $hint = birkly_hosting_repair_noop_hint();
         return [
             'status' => 'ok',
-            'message' => 'Delivery config is already up to date.',
+            'message' => $hint !== '' ? $hint : 'Delivery config is already up to date.',
             'changed' => false,
             'config' => $config,
             'path_repair' => $pathRepair,
@@ -395,6 +477,9 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
     $messages = [];
     if ($schemaChanged) {
         $messages[] = 'Delivery config upgraded';
+    }
+    if ($cmsUrlFixed) {
+        $messages[] = 'Removed /admin from the saved CMS URL (use the site origin only)';
     }
     if ($publicUrlFixed) {
         $messages[] = 'Removed /project from the saved public site URL';
@@ -427,7 +512,7 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         ];
     }
 
-    $configNeedsPersist = $schemaChanged || $publicUrlFixed || $pairChanged;
+    $configNeedsPersist = $schemaChanged || $publicUrlFixed || $pairChanged || $cmsUrlFixed;
     if ($configNeedsPersist) {
         birkly_hosting_backup_config();
         if (!birkly_hosting_persist($config, true)) {
@@ -565,6 +650,7 @@ function birkly_hosting_load(): array
     $config = birkly_hosting_defaults();
     $path = birkly_hosting_settings_path();
     $rawPublicSiteUrl = '';
+    $rawCmsBaseUrl = '';
     if (is_readable($path)) {
         $raw = file_get_contents($path);
         if ($raw !== false) {
@@ -572,6 +658,7 @@ function birkly_hosting_load(): array
             if (is_array($decoded)) {
                 $config = array_merge($config, $decoded);
                 $rawPublicSiteUrl = (string) ($decoded['public_site_url'] ?? '');
+                $rawCmsBaseUrl = (string) ($decoded['cms_base_url'] ?? '');
             }
         }
     }
@@ -581,6 +668,9 @@ function birkly_hosting_load(): array
     }
 
     $config = birkly_hosting_normalize_config($config);
+    if ($rawCmsBaseUrl !== '' && birkly_hosting_cms_url_has_admin_path($rawCmsBaseUrl)) {
+        $config['_cms_url_admin_path_fixup_pending'] = true;
+    }
     if ($rawPublicSiteUrl !== ''
         && ($config['public_site_mode'] ?? 'none') === 'project'
         && birkly_hosting_public_url_has_project_path($rawPublicSiteUrl)) {
@@ -627,6 +717,76 @@ function birkly_hosting_load(): array
 function birkly_hosting_normalize_mode(string $mode): string
 {
     return in_array($mode, ['none', 'external', 'project'], true) ? $mode : 'none';
+}
+
+/**
+ * True when cms_base_url incorrectly includes an /admin path segment.
+ */
+function birkly_hosting_cms_url_has_admin_path(string $url): bool
+{
+    $path = rtrim((string) (parse_url($url, PHP_URL_PATH) ?? ''), '/');
+    if ($path === '') {
+        return false;
+    }
+
+    return $path === '/admin' || str_ends_with($path, '/admin');
+}
+
+/**
+ * CMS base URL must be the site origin (admin lives at /admin on that host).
+ */
+function birkly_hosting_strip_admin_path_from_cms_url(string $url): string
+{
+    if ($url === '' || !birkly_hosting_cms_url_has_admin_path($url)) {
+        return $url;
+    }
+
+    $parts = parse_url($url);
+    if (!is_array($parts) || empty($parts['host'])) {
+        return $url;
+    }
+
+    $path = rtrim((string) ($parts['path'] ?? ''), '/');
+    if ($path === '/admin') {
+        $path = '';
+    } elseif (str_ends_with($path, '/admin')) {
+        $path = substr($path, 0, -strlen('/admin'));
+    }
+
+    $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
+    $host = birkly_normalize_host((string) $parts['host']);
+    $port = isset($parts['port']) ? (int) $parts['port'] : null;
+    $normalized = $scheme . '://' . $host;
+    if ($port !== null && !in_array($port, [80, 443], true)) {
+        $normalized .= ':' . $port;
+    }
+    if ($path !== '') {
+        $normalized .= $path;
+    }
+
+    return rtrim($normalized, '/');
+}
+
+/**
+ * Build an absolute URL for in-app paths (Visit project, redirects).
+ */
+function birkly_hosting_absolute_app_url(string $path): string
+{
+    if ($path === '' || preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    require_once __DIR__ . '/birkly_paths.php';
+    $origin = birkly_cms_web_base_url();
+    if ($origin === '' || $origin[0] === '/') {
+        return birkly_url($path);
+    }
+
+    if ($path[0] !== '/') {
+        $path = '/' . $path;
+    }
+
+    return rtrim($origin, '/') . birkly_url($path);
 }
 
 /**
@@ -878,7 +1038,7 @@ function birkly_hosting_migrate_legacy(array $partial = []): array
 function birkly_hosting_persist(array $config, bool $registerDomains = true): bool
 {
     $merged = birkly_hosting_normalize_config(array_merge(birkly_hosting_defaults(), $config));
-    unset($merged['_migration_pending']);
+    unset($merged['_migration_pending'], $merged['_cms_url_admin_path_fixup_pending'], $merged['_public_url_path_fixup_pending']);
 
     if ($merged['public_site_mode'] === 'none') {
         $merged['public_site_url'] = '';
@@ -1053,7 +1213,7 @@ function birkly_cms_web_base_url(): string
 {
     require_once __DIR__ . '/birkly_paths.php';
 
-    $origin = birkly_cms_base_url();
+    $origin = birkly_hosting_strip_admin_path_from_cms_url(birkly_cms_base_url());
     if ($origin === '') {
         return birkly_base_path();
     }
