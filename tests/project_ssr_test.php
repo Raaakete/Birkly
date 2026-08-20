@@ -77,6 +77,19 @@ function ssr_test_set_hosting_none_mode(): void
     birkly_hosting_reset_cache();
 }
 
+function ssr_test_set_hosting_external_mode(): void
+{
+    birkly_hosting_reset_cache();
+    birkly_hosting_persist([
+        'cms_base_url' => 'https://cms.ssr-test.local',
+        'public_site_mode' => 'external',
+        'public_site_url' => 'https://external.ssr-test.local',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ], false);
+    birkly_hosting_reset_cache();
+}
+
 try {
     echo "\n[V-SSR settings, V-DEF-01/02] defaults + env override\n";
 
@@ -118,7 +131,7 @@ try {
 
     echo "\n[V-SSR-10, V-DEF-05/06] gating (hosting + mode + external)\n";
 
-    // enabled requires hosting project mode + render_mode server/auto + hosting_type birkly
+    // enabled requires public_site_mode=project + render_mode server/auto (P66: hosting_type no longer gates SSR)
     ssr_test_set_hosting_project_mode();
 
     // V-DEF-05: with no project.json at all, Birkly hosting + project mode
@@ -137,12 +150,14 @@ try {
     ssr_test_write_project_settings(['render_mode' => 'auto', 'hosting_type' => 'birkly']);
     assert_true('auto mode + project hosting → SSR enabled', birkly_project_ssr_enabled() === true);
 
+    ssr_test_set_hosting_external_mode();
     ssr_test_write_project_settings(['render_mode' => 'server', 'hosting_type' => 'external']);
-    assert_true('external hosting_type → SSR disabled (V-DEF-06)', birkly_project_ssr_enabled() === false);
+    assert_true('external public_site_mode → SSR disabled (V-DEF-06)', birkly_project_ssr_enabled() === false);
 
     // V-DEF-06: external hosting cannot SSR even on pure defaults.
+    ssr_test_set_hosting_external_mode();
     ssr_test_write_project_settings(['hosting_type' => 'external']);
-    assert_true('external + default render_mode → SSR disabled (V-DEF-06)', birkly_project_ssr_enabled() === false);
+    assert_true('external mode + default render_mode → SSR disabled (V-DEF-06)', birkly_project_ssr_enabled() === false);
 
     // hosting mode none disables SSR regardless of settings
     ssr_test_set_hosting_none_mode();
