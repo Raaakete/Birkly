@@ -290,6 +290,12 @@ try {
         'public aliases empty after dedupe',
         birkly_hosting_public_alias_hosts($deduped) === []
     );
+
+    require_once dirname(__DIR__) . '/core/project_site.php';
+    assert_true(
+        'bundled demo site detected',
+        birkly_project_is_bundled_demo_site() === true
+    );
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {
