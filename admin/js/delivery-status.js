@@ -61,7 +61,10 @@
 
     function fixConfirmMessage(action) {
         if (action === 'repair') {
-            return 'Repair delivery: remove /project from the public URL if needed, sync domain aliases, remove legacy demo-website/, and fix project HTML paths? A backup of hosting.json will be created when config changes.';
+            return 'Repair delivery: fix CMS/public URLs if needed, sync domain aliases, remove legacy demo-website/, and fix project HTML paths? A backup of hosting.json will be created when config changes.';
+        }
+        if (action === 'set_same_host_public') {
+            return 'Set “Root / opens public site” on this domain? The site home page will be served at / with clean URLs and project HTML paths will be updated.';
         }
         if (action === 'fix_project_paths') {
             return 'Rewrite /project/ paths in project HTML and inject the client script?';
@@ -76,6 +79,9 @@
         }
         if (check.fix.action === 'repair') {
             return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="repair">Fix</button>';
+        }
+        if (check.fix.action === 'set_same_host_public') {
+            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="set_same_host_public">Fix</button>';
         }
         return ' <a class="delivery-status-fix" href="' + escapeHtml(fixUrl(check.fix)) + '">Fix</a>';
     }
@@ -164,7 +170,7 @@
                     runHostingAction(action, function (result) {
                         load();
                         btn.disabled = false;
-                        if (action === 'repair') {
+                        if (action === 'repair' || action === 'set_same_host_public') {
                             refreshHostingPanels();
                         }
                     }).catch(function () {

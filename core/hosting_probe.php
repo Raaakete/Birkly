@@ -103,6 +103,7 @@ function birkly_delivery_probe(array $options = []): array
     $checks = [];
     $fixHosting = ['tab' => 'site-delivery', 'hash' => 'hosting'];
     $fixRepair = ['tab' => 'site-delivery', 'hash' => 'hosting', 'action' => 'repair'];
+    $fixSameHostPublic = ['tab' => 'site-delivery', 'hash' => 'hosting', 'action' => 'set_same_host_public'];
     $fixDomains = ['tab' => 'site-delivery', 'hash' => 'domains'];
 
     $requestHost = birkly_cms_request_host();
@@ -119,12 +120,22 @@ function birkly_delivery_probe(array $options = []): array
             $fixHosting
         );
     } else {
-        $checks[] = birkly_delivery_check(
-            'cms_url',
-            'pass',
-            'CMS_URL_OK',
-            'CMS URL: ' . (string) $config['cms_base_url']
-        );
+        if (!empty($config['_cms_url_admin_path_fixup_pending'])) {
+            $checks[] = birkly_delivery_check(
+                'cms_url',
+                'fail',
+                'CMS_URL_ADMIN_PATH',
+                'CMS URL must be the site origin only (e.g. https://example.com), not …/admin. Run Repair delivery to update saved settings.',
+                $fixRepair
+            );
+        } else {
+            $checks[] = birkly_delivery_check(
+                'cms_url',
+                'pass',
+                'CMS_URL_OK',
+                'CMS URL: ' . (string) $config['cms_base_url']
+            );
+        }
     }
 
     if ($mode !== 'none' && trim((string) ($config['public_site_url'] ?? '')) === '') {
@@ -169,7 +180,7 @@ function birkly_delivery_probe(array $options = []): array
                 'warn',
                 'SAME_HOST_PROJECT_PREFIX',
                 'CMS and public site share this host with admin at /. The bundled site is served at ' . birkly_url('/project/') . ' — use Visit project or set “Root / opens public site” for clean URLs.',
-                $fixHosting
+                $fixSameHostPublic
             );
         } else {
             $checks[] = birkly_delivery_check(
