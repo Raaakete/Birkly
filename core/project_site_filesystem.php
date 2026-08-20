@@ -395,6 +395,8 @@ function birkly_project_site_info(): array
     'site_dir' => birkly_public_site_dir(),
     'site_path' => birkly_public_site_path(),
     'site_url_prefix' => $sitePrefix,
+    'asset_url_example' => birkly_project_asset_url('/css/style.css'),
+    'page_url_example' => birkly_project_page_url('/index.html'),
     'cms_base_path' => birkly_base_path(),
     'cms_web_base_url' => birkly_cms_web_base_url(),
     'public_url_example' => birkly_public_site_url('/index.html'),

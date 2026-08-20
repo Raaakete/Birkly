@@ -3,7 +3,7 @@
     <div class="section-header">
         <div>
             <h2>Redirects</h2>
-            <p class="settings-help">Manage URL redirects for your site. Rules are stored in <code>settings/redirects.json</code>.</p>
+            <p class="settings-help">Manage URL redirects for your site. Rules are enforced by the Birkly router when requests hit this installation.</p>
         </div>
     </div>
 

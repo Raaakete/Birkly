@@ -229,6 +229,36 @@ try {
     if ($adminBackup !== null) {
         file_put_contents($adminFile, $adminBackup);
     }
+
+    echo "\n[P66] multi-domain aliases\n";
+    hosting_test_write([
+        'schema_version' => 2,
+        'cms_base_url' => 'https://cms.example.com',
+        'cms_host_aliases' => ['cms-alt.example.com'],
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://www.example.com',
+        'public_host_aliases' => ['example.com'],
+        'alias_redirect_to_primary' => true,
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+
+    $_SERVER['HTTP_HOST'] = 'cms-alt.example.com';
+    assert_true('cms alias host role', birkly_request_host_role() === 'cms');
+    assert_true('cms alias match helper', birkly_hosting_host_matches_cms('cms-alt.example.com') === true);
+    assert_true('cms alias detected', birkly_hosting_is_cms_alias_host('cms-alt.example.com') === true);
+
+    $_SERVER['HTTP_HOST'] = 'example.com';
+    assert_true('public alias host role', birkly_request_host_role() === 'public');
+    assert_true('public alias match helper', birkly_hosting_host_matches_public('example.com') === true);
+
+    $_SERVER['HTTP_HOST'] = 'unknown.example.com';
+    assert_true('unknown host role with aliases configured', birkly_request_host_role() === 'unknown');
+
+    require_once dirname(__DIR__) . '/core/hosting_probe.php';
+    $probe = birkly_delivery_probe(['deep' => false]);
+    assert_true('delivery probe returns overall status', in_array($probe['overall'] ?? '', ['green', 'yellow', 'red'], true));
+    assert_true('delivery probe includes checks', is_array($probe['checks'] ?? null) && count($probe['checks']) > 0);
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {
