@@ -153,12 +153,31 @@ function birkly_delivery_probe(array $options = []): array
             );
         }
     } else {
-        $checks[] = birkly_delivery_check(
-            'public_url',
-            'pass',
-            'PUBLIC_URL_OK',
-            'Public URL: ' . (string) $config['public_site_url']
-        );
+        $publicUrl = (string) ($config['public_site_url'] ?? '');
+        if (!empty($config['_public_url_path_fixup_pending'])) {
+            $checks[] = birkly_delivery_check(
+                'public_url',
+                'fail',
+                'PUBLIC_URL_PROJECT_PATH',
+                'Public URL must not include /project — use the site hostname only (e.g. https://example.com). Run Repair delivery to update saved settings.',
+                $fixHosting
+            );
+        } elseif ($mode === 'project' && birkly_hosting_same_host_uses_project_url_prefix()) {
+            $checks[] = birkly_delivery_check(
+                'public_url',
+                'warn',
+                'SAME_HOST_PROJECT_PREFIX',
+                'CMS and public site share this host with admin at /. The bundled site is served at ' . birkly_url('/project/') . ' — use Visit project or set “Root / opens public site” for clean URLs.',
+                $fixHosting
+            );
+        } else {
+            $checks[] = birkly_delivery_check(
+                'public_url',
+                'pass',
+                'PUBLIC_URL_OK',
+                'Public URL: ' . $publicUrl
+            );
+        }
     }
 
     if ($requestHost === '') {
@@ -260,6 +279,14 @@ function birkly_delivery_probe(array $options = []): array
             }
 
             if (birkly_project_raw_html_uses_legacy_paths($html)) {
+                if (birkly_hosting_same_host_uses_project_url_prefix()) {
+                    $checks[] = birkly_delivery_check(
+                        'asset_paths',
+                        'pass',
+                        'ASSET_PATHS_PROJECT_PREFIX',
+                        'Same-host admin setup serves the site at /project/ — /project/ asset paths in HTML are correct.'
+                    );
+                } else {
                 $runtimeOk = !birkly_project_raw_html_uses_legacy_paths($prepared)
                     && str_contains($prepared, 'data-cms-url');
                 if ($runtimeOk) {
@@ -277,6 +304,7 @@ function birkly_delivery_probe(array $options = []): array
                         'project/index.html uses /project/ paths that break the public site. Click Fix paths to rewrite and inject the client script.',
                         $fixProjectPaths
                     );
+                }
                 }
             } elseif (!str_contains($prepared, 'data-cms-url') && stripos($html, 'birkly-client.js') !== false) {
                 $checks[] = birkly_delivery_check(
