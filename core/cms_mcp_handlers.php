@@ -352,7 +352,7 @@ function cms_mcp_handler_agent_guide(string $subAction, array $input, array $aiU
         case 'wizard_apply':
             $draft = birkly_ai_presence_load_draft();
             $generated = is_array($input['generated'] ?? null) ? $input['generated'] : [];
-            $merged = array_merge($draft, $generated);
+            $merged = $generated !== [] ? birkly_ai_presence_merge_draft($generated) : $draft;
             birkly_ai_presence_save_draft($merged);
             return cms_mcp_ok(['draft' => $merged]);
         case 'copilot':

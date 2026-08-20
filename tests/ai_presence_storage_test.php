@@ -51,6 +51,34 @@ assert_true(count($loaded['sources_of_truth'] ?? []) === 1, 'sources_of_truth no
 $merged = birkly_ai_presence_merge_draft(['positioning' => ['best_known_for' => ['Quality']]]);
 assert_true(in_array('Quality', $merged['positioning']['best_known_for'] ?? [], true), 'merge draft partial');
 
+$manyProducts = [];
+for ($i = 0; $i < 19; $i++) {
+    $manyProducts[] = [
+        'id' => 'prod_old_' . $i,
+        'name' => 'Old product ' . $i,
+        'type' => 'product',
+    ];
+}
+birkly_ai_presence_save_draft(array_merge(birkly_ai_presence_load_draft(), ['products_services' => $manyProducts]));
+
+$sevenProducts = [];
+for ($i = 0; $i < 7; $i++) {
+    $sevenProducts[] = [
+        'id' => 'prod_clean_' . $i,
+        'name' => 'Clean product ' . $i,
+        'type' => 'product',
+    ];
+}
+$replaced = birkly_ai_presence_merge_draft(['products_services' => $sevenProducts]);
+assert_true(count($replaced['products_services'] ?? []) === 7, 'products_services replaced entirely on save_draft merge');
+assert_true(($replaced['products_services'][0]['id'] ?? '') === 'prod_clean_0', 'products_services first item from patch');
+assert_true(($replaced['products_services'][6]['id'] ?? '') === 'prod_clean_6', 'products_services seventh item from patch');
+birkly_ai_presence_save_draft($replaced);
+$roundtrip = birkly_ai_presence_load_draft();
+assert_true(count($roundtrip['products_services'] ?? []) === 7, 'products_services save roundtrip keeps replacement count');
+
+$merged = $roundtrip;
+
 $completeness = birkly_ai_presence_completeness($merged);
 assert_true($completeness['percent'] > 0, 'completeness score > 0');
 assert_true($completeness['max'] === 100, 'completeness max 100');
