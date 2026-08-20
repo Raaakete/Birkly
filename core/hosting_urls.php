@@ -565,8 +565,27 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    $ssrInvalidated = false;
+    if ($persist) {
+        require_once __DIR__ . '/project_ssr.php';
+        birkly_project_ssr_invalidate_all();
+        $ssrInvalidated = true;
+    }
+
     if (!$changed) {
         $hint = birkly_hosting_repair_noop_hint();
+        if ($ssrInvalidated) {
+            return [
+                'status' => 'ok',
+                'message' => ($hint !== '' ? $hint . ' ' : '')
+                    . 'SSR cache cleared so project/ pages serve the current files on disk.',
+                'changed' => true,
+                'config' => $config,
+                'path_repair' => $pathRepair,
+                'demo_repair' => $demoRepair,
+                'ssr_invalidated' => true,
+            ];
+        }
         return [
             'status' => 'ok',
             'message' => $hint !== '' ? $hint : 'Delivery config is already up to date.',
@@ -604,6 +623,9 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
     if ($pathRepair['changed']) {
         $count = count($pathRepair['files'] ?? []);
         $messages[] = 'Updated /project/ paths in ' . $count . ' HTML file' . ($count === 1 ? '' : 's');
+    }
+    if ($ssrInvalidated) {
+        $messages[] = 'Cleared SSR cache';
     }
 
     $summary = $messages !== [] ? implode('. ', $messages) . '.' : 'Delivery repaired.';
@@ -651,6 +673,7 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         'config' => birkly_hosting_load(),
         'path_repair' => $pathRepair,
         'demo_repair' => $demoRepair,
+        'ssr_invalidated' => $ssrInvalidated,
     ];
 }
 
