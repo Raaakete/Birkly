@@ -1259,7 +1259,8 @@
             "snapshot": "/admin/docs/snapshots/agent-guide-getting-started.md",
             "docs_path": "02-content/agent-guide-getting-started.html",
             "nav_section": "content",
-            "nav_section_label": "Content model"
+            "nav_section_label": "Content model",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "agent-guide-claims",
@@ -1276,7 +1277,27 @@
             "snapshot": "/admin/docs/snapshots/agent-guide-claims.md",
             "docs_path": "02-content/agent-guide-claims-evidence-and-links.html",
             "nav_section": "content",
-            "nav_section_label": "Content model"
+            "nav_section_label": "Content model",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "agent-guide-workflows",
+            "title": "Agent Guide — workflows",
+            "keywords": [
+                "agent guide",
+                "workflows",
+                "tools tab",
+                "webmcp",
+                "unpublish",
+                "publish",
+                "sources",
+                "claims"
+            ],
+            "snapshot": "/admin/docs/snapshots/agent-guide-workflows.md",
+            "docs_path": "02-content/agent-guide-workflows.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "agent-guide-api",
@@ -1292,7 +1313,25 @@
             "snapshot": "/admin/docs/snapshots/agent-guide-api.md",
             "docs_path": "04-integration/agent-guide-public-api.html",
             "nav_section": "integration",
-            "nav_section_label": "Integration"
+            "nav_section_label": "Integration",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "agent-guide-mcp",
+            "title": "Agent Guide MCP & agents",
+            "keywords": [
+                "mcp",
+                "get_agent_guide_context",
+                "agent_guide.publish",
+                "agent_guide.unpublish",
+                "cms_admin_action",
+                "brand context"
+            ],
+            "snapshot": "/admin/docs/snapshots/agent-guide-mcp-and-agents.md",
+            "docs_path": "04-integration/agent-guide-mcp-and-agents.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "webmcp-tools",
@@ -1312,7 +1351,8 @@
             "snapshot": "/admin/docs/snapshots/webmcp-tools.md",
             "docs_path": "04-integration/webmcp-tools.html",
             "nav_section": "integration",
-            "nav_section_label": "Integration"
+            "nav_section_label": "Integration",
+            "ai_topic": "webmcp-tools"
         },
         {
             "id": "ai-on-localhost",

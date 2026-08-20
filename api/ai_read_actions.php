@@ -509,12 +509,11 @@ function executeReadAction($actionData, $aiUser) {
             }
             return ['success' => true, 'data' => $graph];
         }
-        foreach ($full['claims'] ?? [] as $claim) {
-            if (is_array($claim) && ($claim['id'] ?? '') === $id && ($claim['status'] ?? '') === 'supported') {
-                return ['success' => true, 'data' => ['claim' => $claim]];
-            }
+        $graph = birkly_ai_presence_public_claim_graph($full, $id);
+        if ($graph === null) {
+            return ['success' => false, 'message' => 'Claim not found'];
         }
-        return ['success' => false, 'message' => 'Claim not found'];
+        return ['success' => true, 'data' => $graph];
     }
 
     return ['success' => false, 'message' => 'Unknown read action type: ' . $actionType];
