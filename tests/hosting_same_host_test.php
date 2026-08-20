@@ -75,6 +75,40 @@ try {
 
     $repair = birkly_project_repair_legacy_paths(false);
     assert_true('path repair detects legacy html', $repair['changed'] === true);
+
+    echo "\n[same-host admin at /]\n";
+    same_host_test_write([
+        'schema_version' => 2,
+        'cms_base_url' => 'https://site.example.com',
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://site.example.com/project',
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    $loaded = birkly_hosting_load();
+    assert_true(
+        'normalize strips /project from public url',
+        ($loaded['public_site_url'] ?? '') === 'https://site.example.com'
+    );
+    assert_true(
+        'same-host admin uses project url prefix',
+        birkly_hosting_same_host_uses_project_url_prefix() === true
+    );
+    assert_true(
+        'visit url points at /project/',
+        str_ends_with(birkly_public_site_visit_url(), '/project/')
+            || str_ends_with(birkly_public_site_visit_url(), '/project/index.html')
+    );
+    $adminSample = '<link rel="stylesheet" href="/project/styles.css">';
+    $adminPrepared = birkly_project_prepare_html_for_serve($adminSample);
+    assert_true(
+        'same-host admin keeps /project/ asset paths',
+        str_contains($adminPrepared, 'href="/project/styles.css"')
+    );
+    assert_true(
+        'cms host serves /project/styles.css',
+        birkly_hosting_resolve_public_file('/project/styles.css') !== null
+    );
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {

@@ -88,7 +88,7 @@
             '<div class="form-group hosting-wizard-public-field" hidden>' +
             '<label for="' + id + '-public-url">' + escapeHtml(t('hosting_wizard_public_url', 'Public site URL')) + '</label>' +
             '<input type="url" id="' + id + '-public-url" class="input hosting-wizard-public-url" placeholder="https://www.example.com">' +
-            '<small class="form-help">' + escapeHtml(t('hosting_wizard_public_url_help', 'Visitors see this URL in the browser.')) + '</small>' +
+            '<small class="form-help">' + escapeHtml(t('hosting_wizard_public_url_help', 'Visitors see this URL in the browser.')) + ' Do not include /project — use the hostname only (e.g. https://example.com).</small>' +
             '</div>' +
             '<fieldset class="form-group hosting-wizard-same-host-field" hidden>' +
             '<legend>' + escapeHtml(t('hosting_wizard_same_host_legend', 'When CMS and public use the same domain')) + '</legend>' +
