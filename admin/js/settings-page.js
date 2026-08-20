@@ -913,6 +913,9 @@ window.migrateStorage = migrateStorage;
 
     function initMergedTabFeatures(tabId, scrollTo) {
         if (tabId === 'site-delivery') {
+            if (typeof window.initDeliveryStatus === 'function') {
+                window.initDeliveryStatus('#delivery-status-site-delivery');
+            }
             if (typeof window.loadDomains === 'function') {
                 window.loadDomains();
             }
@@ -923,6 +926,9 @@ window.migrateStorage = migrateStorage;
                 window.initRedirectsManager();
             }
         } else if (tabId === 'project') {
+            if (typeof window.initDeliveryStatus === 'function') {
+                window.initDeliveryStatus('#delivery-status-project');
+            }
             if (typeof window.initProjectSettings === 'function') {
                 window.initProjectSettings();
             }

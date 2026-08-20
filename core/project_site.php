@@ -196,6 +196,33 @@ function birkly_public_site_url(string $suffix = '/'): string
     return birkly_url('/' . birkly_public_site_dir() . $suffix);
 }
 
+/**
+ * Asset URL for project templates — clean public URL when mode=project, else CMS /project prefix.
+ */
+function birkly_project_asset_url(string $relativePath = ''): string
+{
+    $relativePath = trim($relativePath);
+    if ($relativePath !== '' && $relativePath[0] !== '/') {
+        $relativePath = '/' . $relativePath;
+    }
+
+    require_once __DIR__ . '/hosting_urls.php';
+    $config = birkly_hosting_load();
+    if ($config['public_site_mode'] === 'project' && birkly_hosting_public_base_url() !== '') {
+        return birkly_public_site_url($relativePath === '' ? '/' : $relativePath);
+    }
+
+    return birkly_public_site_url_prefix() . $relativePath;
+}
+
+/**
+ * Visitor-facing page URL (alias of public_site_url for agents/templates).
+ */
+function birkly_project_page_url(string $relativePath = '/'): string
+{
+    return birkly_public_site_url($relativePath);
+}
+
 function birkly_legacy_demo_website_path(): string
 {
     return birkly_project_root() . '/demo-website';

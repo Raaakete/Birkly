@@ -215,6 +215,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
       <div class="tab-pane" id="site-delivery">
         <div class="settings-stack">
+          <div id="delivery-status-site-delivery" class="settings-pane-section" data-delivery-status-mount data-delivery-status-id="site-delivery"></div>
           <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains dns analytics public site local development tracking">
           <div class="section-header">
             <div>
@@ -301,6 +302,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
 
       <div class="tab-pane" id="project">
         <div class="settings-stack">
+          <div id="delivery-status-project" class="settings-pane-section" data-delivery-status-mount data-delivery-status-id="project"></div>
           <div id="project-overview" class="settings-pane-section" data-settings-search="project overview path public url visit site starter last change">
           <div class="section-header">
             <div>
@@ -1548,6 +1550,7 @@ window.webhooksData = window.webhooksData || { collections: <?= $webhookCollecti
 
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/webhooks.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/redirects.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/delivery-status.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-wizard.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/hosting-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_admin_asset_url('/admin/js/project-settings.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
