@@ -223,6 +223,7 @@ function birkly_ai_core_docs_topics(): array
         'content-editor' => $playbook('content-editor-playbook.md', 'Content Editor playbook'),
         'settings-roles' => $playbook('settings-roles-playbook.md', 'Settings & roles playbook'),
         'site-building' => $playbook('site-building-playbook.md', 'Website & portfolio builder (project/)'),
+        'site-delivery' => $playbook('site-delivery-playbook.md', 'Site delivery, routing & multi-domain'),
         'web-project-patterns' => $playbook('web-project-patterns-playbook.md', 'Web project patterns — list/detail, schemas, wiring'),
         'portfolio' => $playbook('site-building-playbook.md', 'Website & portfolio builder (project/)'),
         'templating' => $playbook('templating-playbook.md', 'Client templating language'),

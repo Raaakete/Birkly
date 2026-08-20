@@ -351,6 +351,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     </script>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/onboarding.css')) ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/components/delivery-status.css')) ?>">
     <?php
     // Load settings to get logo for favicon
     require_once __DIR__ . '/../api/storage.php';
@@ -402,6 +403,8 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/i18n.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/ui-feedback.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/delivery-status.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/hosting-wizard.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/onboarding.js')) ?>"<?= $__birklyOnboardingNonceAttr ?>></script>
 </body>
 </html>

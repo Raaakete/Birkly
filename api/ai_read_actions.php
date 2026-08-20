@@ -441,12 +441,35 @@ function executeReadAction($actionData, $aiUser) {
         }
 
         return ['success' => true, 'data' => ['sub_entry' => $subEntry]];
-    } elseif (in_array($actionType, ['list_project_files', 'read_project_file', 'get_project_info'], true)) {
+    } elseif (in_array($actionType, ['list_project_files', 'read_project_file', 'get_project_info', 'get_site_delivery_status', 'run_site_delivery_probe'], true)) {
         require_once __DIR__ . '/../core/project_site_filesystem.php';
         $fs = new ProjectSiteFileSystem();
 
         if ($actionType === 'get_project_info') {
             return ['success' => true, 'data' => birkly_project_site_info()];
+        }
+
+        if ($actionType === 'get_site_delivery_status') {
+            require_once __DIR__ . '/../core/hosting_detect.php';
+            require_once __DIR__ . '/../core/hosting_probe.php';
+            return [
+                'success' => true,
+                'data' => [
+                    'hosting' => birkly_hosting_load(),
+                    'delivery' => birkly_delivery_probe(['deep' => false]),
+                    'domain_roles' => birkly_hosting_domain_roles_map(),
+                    'detect' => birkly_hosting_detect_environment(),
+                ],
+            ];
+        }
+
+        if ($actionType === 'run_site_delivery_probe') {
+            require_once __DIR__ . '/../core/hosting_probe.php';
+            $deep = !empty($actionPayload['deep']);
+            return [
+                'success' => true,
+                'data' => birkly_delivery_probe(['deep' => $deep]),
+            ];
         }
 
         if ($actionType === 'list_project_files') {

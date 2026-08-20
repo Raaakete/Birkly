@@ -94,6 +94,8 @@ function birkly_ai_action_permission_map(): array
         'list_project_files' => ['read', 'manage_project_site'],
         'read_project_file' => ['read', 'manage_project_site'],
         'get_project_info' => ['read', 'manage_project_site'],
+        'get_site_delivery_status' => ['read', 'manage_settings'],
+        'run_site_delivery_probe' => ['read', 'manage_settings'],
         'write_project_file' => ['manage_project_site'],
         'create_project_file' => ['manage_project_site'],
         'delete_project_file' => ['manage_project_site'],
