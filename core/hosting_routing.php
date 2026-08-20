@@ -38,6 +38,17 @@ function birkly_hosting_serve_public_file(string $filePath): void
     birkly_hosting_serve_file($filePath);
 }
 
+function birkly_hosting_serve_favicon_if_available(): bool
+{
+    $file = birkly_hosting_resolve_favicon_file();
+    if ($file === null) {
+        return false;
+    }
+
+    birkly_hosting_serve_file($file);
+    return true;
+}
+
 function birkly_hosting_serve_file(string $filePath): void
 {
     $mime = mime_content_type($filePath) ?: 'application/octet-stream';
@@ -50,6 +61,10 @@ function birkly_hosting_serve_file(string $filePath): void
         $mime = 'application/json; charset=UTF-8';
     } elseif ($ext === 'svg') {
         $mime = 'image/svg+xml';
+    } elseif ($ext === 'ico') {
+        $mime = 'image/x-icon';
+    } elseif ($ext === 'png') {
+        $mime = 'image/png';
     }
     header('Content-Type: ' . $mime);
     if ($ext === 'html' || $ext === 'htm') {
@@ -72,6 +87,12 @@ function birkly_hosting_dispatch(string $uri): bool
 
     birkly_hosting_maybe_redirect_alias_to_primary($uri);
     birkly_hosting_apply_redirect($uri);
+
+    if ($uri === '/favicon.ico' || $uri === '/apple-touch-icon.png') {
+        if (birkly_hosting_serve_favicon_if_available()) {
+            return true;
+        }
+    }
 
     if (preg_match('#^/admin($|/)#', $uri)) {
         if (birkly_hosting_should_redirect_admin()) {
