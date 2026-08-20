@@ -454,6 +454,54 @@ function birkly_migrate_demo_website_to_project(): bool
     return true;
 }
 
+function birkly_project_remove_tree(string $dir): bool
+{
+    if (!is_dir($dir)) {
+        return false;
+    }
+
+    foreach (scandir($dir) ?: [] as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $path = $dir . '/' . $item;
+        if (is_dir($path)) {
+            if (!birkly_project_remove_tree($path)) {
+                return false;
+            }
+            continue;
+        }
+        if (!@unlink($path)) {
+            return false;
+        }
+    }
+
+    return @rmdir($dir);
+}
+
+/**
+ * Migrate or remove legacy demo-website/ during Repair delivery.
+ *
+ * @return array{changed: bool, action: string}
+ */
+function birkly_project_repair_legacy_demo_website(bool $persist = true): array
+{
+    $legacy = birkly_legacy_demo_website_path();
+    if (!is_dir($legacy)) {
+        return ['changed' => false, 'action' => 'none'];
+    }
+
+    if (birkly_migrate_demo_website_to_project()) {
+        return ['changed' => true, 'action' => 'migrated'];
+    }
+
+    if ($persist) {
+        birkly_project_remove_tree($legacy);
+    }
+
+    return ['changed' => true, 'action' => 'removed'];
+}
+
 function birkly_ensure_public_site_path(): void
 {
     birkly_migrate_demo_website_to_project();

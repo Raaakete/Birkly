@@ -362,12 +362,20 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    $publicUrlFixed = false;
     if (!empty($config['_public_url_path_fixup_pending'])) {
         unset($config['_public_url_path_fixup_pending']);
+        $config = birkly_hosting_normalize_config($config);
+        $publicUrlFixed = true;
         $changed = true;
     }
 
     require_once __DIR__ . '/project_site.php';
+    $demoRepair = birkly_project_repair_legacy_demo_website($persist);
+    if ($demoRepair['changed']) {
+        $changed = true;
+    }
+
     $pathRepair = birkly_project_repair_legacy_paths($persist);
     if ($pathRepair['changed']) {
         $changed = true;
@@ -380,20 +388,47 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             'changed' => false,
             'config' => $config,
             'path_repair' => $pathRepair,
+            'demo_repair' => $demoRepair,
         ];
     }
+
+    $messages = [];
+    if ($schemaChanged) {
+        $messages[] = 'Delivery config upgraded';
+    }
+    if ($publicUrlFixed) {
+        $messages[] = 'Removed /project from the saved public site URL';
+    }
+    if ($pairChanged) {
+        $messages[] = 'Synced www/apex domain pairs';
+    }
+    if ($demoRepair['changed']) {
+        if (($demoRepair['action'] ?? '') === 'migrated') {
+            $messages[] = 'Migrated legacy demo-website/ into project/';
+        } else {
+            $messages[] = 'Removed legacy demo-website/ folder';
+        }
+    }
+    if ($pathRepair['changed']) {
+        $count = count($pathRepair['files'] ?? []);
+        $messages[] = 'Updated /project/ paths in ' . $count . ' HTML file' . ($count === 1 ? '' : 's');
+    }
+
+    $summary = $messages !== [] ? implode('. ', $messages) . '.' : 'Delivery repaired.';
 
     if (!$persist) {
         return [
             'status' => 'ok',
-            'message' => 'Repair preview ready (not saved).',
+            'message' => 'Repair preview ready (not saved). ' . $summary,
             'changed' => true,
             'config' => $config,
             'path_repair' => $pathRepair,
+            'demo_repair' => $demoRepair,
         ];
     }
 
-    if ($schemaChanged) {
+    $configNeedsPersist = $schemaChanged || $publicUrlFixed || $pairChanged;
+    if ($configNeedsPersist) {
         birkly_hosting_backup_config();
         if (!birkly_hosting_persist($config, true)) {
             return [
@@ -403,33 +438,27 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             ];
         }
 
-        $log = is_array($config['_migration_log'] ?? null) ? $config['_migration_log'] : [];
-        $log[] = [
-            'at' => gmdate('c'),
-            'from' => 1,
-            'to' => BIRKLY_HOSTING_SCHEMA_VERSION,
-            'actions' => ['repair_delivery', $syncDomains ? 'sync_domains' : 'schema_only'],
-        ];
-        $saved = birkly_hosting_load();
-        $saved['_migration_log'] = $log;
-        birkly_hosting_persist($saved, true);
-    }
-
-    $messages = [];
-    if ($schemaChanged) {
-        $messages[] = 'Delivery config upgraded';
-    }
-    if ($pathRepair['changed']) {
-        $count = count($pathRepair['files'] ?? []);
-        $messages[] = 'Updated /project/ paths in ' . $count . ' HTML file' . ($count === 1 ? '' : 's');
+        if ($schemaChanged) {
+            $log = is_array($config['_migration_log'] ?? null) ? $config['_migration_log'] : [];
+            $log[] = [
+                'at' => gmdate('c'),
+                'from' => 1,
+                'to' => BIRKLY_HOSTING_SCHEMA_VERSION,
+                'actions' => ['repair_delivery', $syncDomains ? 'sync_domains' : 'schema_only'],
+            ];
+            $saved = birkly_hosting_load();
+            $saved['_migration_log'] = $log;
+            birkly_hosting_persist($saved, true);
+        }
     }
 
     return [
         'status' => 'ok',
-        'message' => implode('. ', $messages) . '.',
+        'message' => $summary,
         'changed' => true,
         'config' => birkly_hosting_load(),
         'path_repair' => $pathRepair,
+        'demo_repair' => $demoRepair,
     ];
 }
 
