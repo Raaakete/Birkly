@@ -16,6 +16,7 @@ const onboarding = {
     aiProviders: null,
     resumeHandled: false,
     aiMode: 'chat',
+    hostingWizard: null,
 
     init() {
         if (!document.querySelector('.onboarding-page')) return;
@@ -282,6 +283,7 @@ const onboarding = {
         }
 
         if (step === 1) this.renderInstallContext();
+        if (step === 2) this.initDeliverySetup();
         if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
         if (step === 4) this.initAiWizard();
 
@@ -306,15 +308,37 @@ const onboarding = {
         if (this.installPath === 'local') {
             body.innerHTML = '<p><strong>You are running Birkly locally.</strong></p>'
                 + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>To start again later, run <code>./start-server.sh</code> from your Birkly folder, then open the admin URL above.</p>';
+                + '<p>To start again later, run <code>./start-server.sh</code> from your Birkly folder, then open the admin URL above.</p>'
+                + '<p class="form-help">On the next step you can confirm CMS and public site URLs before continuing.</p>';
         } else if (this.installPath === 'cloud') {
             body.innerHTML = '<p><strong>Birkly is on your web server.</strong></p>'
                 + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>Ensure <code>content/</code>, <code>media/</code>, <code>users/</code>, and <code>settings/</code> stay writable.</p>';
+                + '<p>Ensure <code>content/</code>, <code>media/</code>, <code>users/</code>, and <code>settings/</code> stay writable.</p>'
+                + '<p class="form-help">On the next step, confirm CMS and public site URLs for your domains.</p>';
         } else {
             body.innerHTML = '<p><strong>Birkly is ready.</strong></p>'
                 + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>Re-open <code>0_START-HERE.html</code> from your Birkly folder if you need local vs cloud setup notes.</p>';
+                + '<p>Re-open <code>0_START-HERE.html</code> from your Birkly folder if you need local vs cloud setup notes.</p>'
+                + '<p class="form-help">On the next step you can set up site delivery URLs.</p>';
+        }
+    },
+
+    initDeliverySetup() {
+        if (typeof window.initDeliveryStatus === 'function') {
+            window.initDeliveryStatus('#delivery-status-onboarding');
+        }
+        const mount = document.getElementById('onboarding-hosting-wizard-mount');
+        if (!mount || !window.BirklyHostingWizard) return;
+        if (!this.hostingWizard) {
+            this.hostingWizard = window.BirklyHostingWizard.create(mount, {
+                id: 'onboarding-hosting-wizard',
+                mode: 'onboarding'
+            });
+        }
+        if (this.hostingWizard && typeof this.hostingWizard.load === 'function') {
+            this.hostingWizard.load().catch(function (err) {
+                console.error(err);
+            });
         }
     },
 

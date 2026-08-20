@@ -84,6 +84,11 @@ function birkly_ops_register_installation(bool $force = false): void
     }
 
     require_once __DIR__ . '/version.php';
+    require_once __DIR__ . '/hosting_urls.php';
+    require_once __DIR__ . '/hosting_probe.php';
+
+    $hostingConfig = birkly_hosting_load();
+    $deliveryProbe = birkly_delivery_probe(['deep' => false]);
 
     $payload = [
         'installation_id' => birkly_platform_install_id(),
@@ -92,6 +97,9 @@ function birkly_ops_register_installation(bool $force = false): void
         'program_tier' => trim((string) (birkly_platform_config()['program_tier'] ?? 'closed_alpha')),
         'host' => trim((string) ($_SERVER['HTTP_HOST'] ?? '')),
         'last_seen' => gmdate('c'),
+        'cms_base_url' => (string) ($hostingConfig['cms_base_url'] ?? ''),
+        'public_site_mode' => (string) ($hostingConfig['public_site_mode'] ?? 'none'),
+        'delivery_health_summary' => (string) ($deliveryProbe['overall'] ?? 'unknown'),
     ];
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($body === false) {
