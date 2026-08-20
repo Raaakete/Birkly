@@ -60,7 +60,7 @@ function birkly_data_disk_path(): string
  */
 function birkly_data_persistent_dir_names(): array
 {
-    return ['content', 'settings', 'users', 'media', 'cache', 'logs', 'temp', 'plugins', 'themes'];
+    return ['content', 'settings', 'users', 'media', 'cache', 'logs', 'temp', 'plugins', 'themes', 'plugin-data'];
 }
 
 /**
