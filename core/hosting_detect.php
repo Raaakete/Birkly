@@ -249,6 +249,10 @@ function birkly_hosting_apply_proposal(array $proposal): array
     }
 
     require_once __DIR__ . '/hosting_probe.php';
+    require_once __DIR__ . '/project_site.php';
+    if (($merged['public_site_mode'] ?? 'none') === 'project') {
+        birkly_project_repair_legacy_paths(true);
+    }
 
     return [
         'status' => 'ok',
