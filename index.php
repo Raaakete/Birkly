@@ -51,6 +51,19 @@ if (birkly_hosting_dispatch($uri)) {
 
 $file = realpath($root . $uri);
 
+// Never serve project HTML or /project/ as raw static — requires SSR + client injection.
+if ($file && str_starts_with($uri, '/project')) {
+    require_once __DIR__ . '/core/hosting_urls.php';
+    $hosting = birkly_hosting_load();
+    if (($hosting['public_site_mode'] ?? 'none') === 'project') {
+        $resolved = birkly_hosting_resolve_public_file($uri);
+        if ($resolved !== null && preg_match('/\.html?$/i', $resolved)) {
+            birkly_hosting_serve_public_file($resolved);
+            exit;
+        }
+    }
+}
+
 // Serve static files directly (CMS host assets at web root)
 if ($file && strpos($file, $root) === 0 && is_file($file)) {
     $mime = mime_content_type($file);

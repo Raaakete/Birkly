@@ -18,6 +18,11 @@ RewriteRule ^site/([^/]+)/([^/]+)/?$ api/studio_public.php?slug=$1&page=$2 [L,QS
 RewriteRule ^site/([^/]+)/?$ api/studio_public.php?slug=$1 [L,QSA]
 RewriteRule ^site/?$ api/studio_public.php [L,QSA]
 
+# Project HTML and /project/ home must reach PHP (SSR + birkly-client injection)
+RewriteRule ^demo-website(/.*)?$ index.php [L,QSA]
+RewriteRule ^project/?$ index.php [L,QSA]
+RewriteRule ^project/.+\.html$ index.php [L,QSA]
+
 # Connector branding for MCP clients (Claude connector icon)
 RewriteRule ^favicon\.ico$ admin/assets/birkly-icon.svg [L]
 
