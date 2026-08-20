@@ -71,10 +71,13 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 
 ## Flow: MCP read (`agent-guide-mcp-read`)
 
-1. `get_agent_guide_context({ view: "summary" })` — identity + supported claims + sources_of_truth.
-2. Product question → `get_agent_guide_product({ id })` → follow `sources[].url`.
-3. Claim question → `get_agent_guide_claim({ id })` — supported only.
-4. Depth → read `sources_of_truth` URLs or `read_entry` for CMS refs.
+1. `get_agent_guide_context({ view: "summary" })` — identity, supported claims (with `evidence_ids`), `sources_of_truth`.
+2. Claim question → **`get_agent_guide_claim({ id })`** — returns **claim graph**: `{ claim, evidence[], sources[], usage_hints }` with resolved proof URLs (not just `evidence_ids`).
+3. All supported claims + evidence in one call → `get_agent_guide_context({ view: "claims" })` — includes `claims[]` and linked `evidence[]`.
+4. Product question → `get_agent_guide_product({ id })` → follow `sources[].url`.
+5. Depth → read `sources_of_truth` URLs or `read_entry` for CMS refs.
+
+**Evidence rule:** Summary lists claim statements and `evidence_ids` only. Always call `get_agent_guide_claim` (or `view: "claims"`) before citing proof URLs.
 
 ## Flow: AI Assist (`agent-guide-ai-assist`)
 
@@ -97,7 +100,8 @@ Admin agents with `manage_settings` may also use `cms_admin_action` → `agent_g
 |--------------|-----------|
 | "What's in our Agent Guide?" | `get_agent_guide_context` |
 | "List our products for AI" | `list_agent_guide_products` or context view |
-| "Verify claim X" | `get_agent_guide_claim` |
+| "Verify claim X" | `get_agent_guide_claim({ id })` — returns `evidence[]` with URLs |
+| "List all claims with proof" | `get_agent_guide_context({ view: "claims" })` |
 | "Add a new product" | Admin UI or `agent_guide.save_draft` — not a standalone MCP read tool |
 
 ## Coexistence with other AI layers

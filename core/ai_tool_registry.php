@@ -65,11 +65,11 @@ function birkly_ai_core_tool_definitions(): array
         'write_project_file' => ['name' => 'write_project_file', 'description' => 'Create or overwrite a file in project/ without warning. Paths: index.html, css/style.css, js/site.js (no project/ prefix). For large HTML pages, write in smaller steps — some AI clients block very large tool payloads before they reach Birkly.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path', 'content']]],
         'create_project_file' => ['name' => 'create_project_file', 'description' => 'Create a new file in project/ (fails if path exists). PHP and dotfiles are blocked.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string'], 'content' => ['type' => 'string']], 'required' => ['path']]],
         'delete_project_file' => ['name' => 'delete_project_file', 'description' => 'Delete a file from project/ (admin role by default). Directories are not deleted.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['path' => ['type' => 'string']], 'required' => ['path']]],
-        'get_agent_guide_context' => ['name' => 'get_agent_guide_context', 'description' => 'Get published Agent Guide context for AI systems (view: summary|full|products)', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
+        'get_agent_guide_context' => ['name' => 'get_agent_guide_context', 'description' => 'Get published Agent Guide context (view: summary|full|products|claims). Summary lists supported claims with evidence_ids; use get_agent_guide_claim for resolved evidence URLs.', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, products, or claims (claims includes evidence[] for supported claims)']]]],
         'list_agent_guide_products' => ['name' => 'list_agent_guide_products', 'description' => 'List published products and services from Agent Guide', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
-        'get_agent_guide_claim' => ['name' => 'get_agent_guide_claim', 'description' => 'Get a supported claim by id from published Agent Guide', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
+        'get_agent_guide_claim' => ['name' => 'get_agent_guide_claim', 'description' => 'Get a supported claim with resolved evidence[] (URLs, verification status) and sources — same as public API claim graph', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
         'get_agent_guide_product' => ['name' => 'get_agent_guide_product', 'description' => 'Get a published product with resolved source links, linked claims, and evidence graph', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
-        'get_brand_context' => ['name' => 'get_brand_context', 'description' => 'Legacy alias for get_agent_guide_context', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, or products']]]],
+        'get_brand_context' => ['name' => 'get_brand_context', 'description' => 'Legacy alias for get_agent_guide_context', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['view' => ['type' => 'string', 'description' => 'summary, full, products, or claims']]]],
         'list_brand_products' => ['name' => 'list_brand_products', 'description' => 'Legacy alias for list_agent_guide_products', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'get_brand_claim' => ['name' => 'get_brand_claim', 'description' => 'Legacy alias for get_agent_guide_claim', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
         'get_brand_product' => ['name' => 'get_brand_product', 'description' => 'Legacy alias for get_agent_guide_product', 'category' => 'read', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
@@ -407,12 +407,12 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         if ($full === null || $id === '') {
             return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Claim not found']]];
         }
-        foreach ($full['claims'] ?? [] as $claim) {
-            if (is_array($claim) && ($claim['id'] ?? '') === $id && ($claim['status'] ?? '') === 'supported') {
-                return ['content' => [['type' => 'text', 'text' => json_encode($claim, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
-            }
+        require_once __DIR__ . '/ai_presence_links.php';
+        $graph = birkly_ai_presence_public_claim_graph($full, $id);
+        if ($graph === null) {
+            return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Claim not found']]];
         }
-        return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Claim not found']]];
+        return ['content' => [['type' => 'text', 'text' => json_encode($graph, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
     }
 
     if (birkly_ai_is_read_action($actionType)) {
