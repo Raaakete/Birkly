@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/hosting_urls.php';
+require_once __DIR__ . '/hosting_detect.php';
 require_once __DIR__ . '/site_domain.php';
 require_once __DIR__ . '/project_site.php';
 
@@ -322,6 +323,37 @@ function birkly_delivery_probe(array $options = []): array
             'Delivery config can be upgraded to schema v2 (aliases). Run Repair delivery.',
             $fixHosting
         );
+    }
+
+    if ($mode !== 'none') {
+        $apiOnlyHosts = [];
+        foreach (birkly_hosting_collect_registered_domain_hosts() as $registeredHost) {
+            if (birkly_hosting_domain_delivery_role($registeredHost) === 'api_only') {
+                $apiOnlyHosts[] = $registeredHost;
+            }
+        }
+        if ($apiOnlyHosts !== []) {
+            sort($apiOnlyHosts);
+            $label = count($apiOnlyHosts) === 1
+                ? $apiOnlyHosts[0]
+                : implode(', ', $apiOnlyHosts);
+            $checks[] = birkly_delivery_check(
+                'domain_delivery_roles',
+                'warn',
+                'DOMAIN_API_ONLY',
+                count($apiOnlyHosts) === 1
+                    ? 'Registered host "' . $label . '" is API-only (CORS) but not assigned to public or CMS routing.'
+                    : count($apiOnlyHosts) . ' registered hosts are API-only (CORS) but not assigned to routing: ' . $label . '.',
+                $fixDomains
+            );
+        } else {
+            $checks[] = birkly_delivery_check(
+                'domain_delivery_roles',
+                'pass',
+                'DOMAIN_DELIVERY_ROLES_OK',
+                'All registered domains are assigned to CMS or public routing (or none need routing).'
+            );
+        }
     }
 
     if ($deep && $mode !== 'none' && trim((string) ($config['public_site_url'] ?? '')) !== '') {
