@@ -710,9 +710,11 @@ function birkly_ai_presence_public_view(array $export, string $view): array
                     'id' => $c['id'] ?? '',
                     'statement' => $c['statement'] ?? '',
                     'sources' => $c['sources'] ?? [],
+                    'evidence_ids' => $c['evidence_ids'] ?? [],
                 ],
                 $supported
             )),
+            'sources_of_truth' => $export['sources_of_truth'] ?? [],
             'usage_hints' => $export['usage_hints'] ?? birkly_ai_presence_build_usage_hints($export),
         ];
     }
@@ -722,12 +724,25 @@ function birkly_ai_presence_public_view(array $export, string $view): array
             $export['claims'] ?? [],
             static fn ($c) => is_array($c) && ($c['status'] ?? '') === 'supported'
         ));
+        $evidenceIds = [];
+        foreach ($claims as $claim) {
+            foreach ($claim['evidence_ids'] ?? [] as $evidenceId) {
+                if (is_string($evidenceId) && $evidenceId !== '') {
+                    $evidenceIds[$evidenceId] = true;
+                }
+            }
+        }
+        $evidence = array_values(array_filter(
+            $export['evidence'] ?? [],
+            static fn ($ev) => is_array($ev) && isset($evidenceIds[(string) ($ev['id'] ?? '')])
+        ));
         return [
             'schema_version' => $export['schema_version'] ?? BIRKLY_AI_PRESENCE_SCHEMA_VERSION,
             'published_version' => $export['published_version'] ?? 0,
             'generated_at' => $export['generated_at'] ?? date('c'),
             'view' => 'claims',
             'claims' => $claims,
+            'evidence' => $evidence,
             'usage_hints' => $export['usage_hints'] ?? [],
         ];
     }
