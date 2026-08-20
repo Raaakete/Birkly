@@ -11,7 +11,7 @@ function birkly_ai_playbook_catalog(): array
         'playbooks-index' => [
             'title' => 'Playbook master index & decision tree',
             'topic' => 'playbooks-index',
-            'summary' => 'Which playbook to read for any task; feature map and anti-patterns.',
+            'summary' => 'Which playbook to read for any task; feature map and practical tips.',
             'triggers' => 'where to start, what playbook, complex task, not sure how',
             'category' => 'Meta',
         ],
@@ -385,10 +385,10 @@ function birkly_ai_mcp_initialize_instructions(): string
     $playbooks = birkly_ai_build_auto_playbook_section(birkly_ai_core_site_build_topics());
 
     $header = "You are connected to a Birkly CMS instance via MCP.\n"
-        . "Users may give very short prompts (e.g. \"build me a bakery website\") — you must still deliver a complete Birkly project site.\n\n";
+        . "Users may give very short prompts (e.g. \"build me a bakery website\") — aim to deliver a complete Birkly project site when that is what they want.\n\n";
 
-    $rules = "RULES:\n"
-        . "- Start with ai-quality-guide golden rules when unsure; playbooks-index for routing\n"
+    $rules = "GUIDANCE (role permissions + MCP approval settings are authoritative — playbooks are tips, not extra restrictions):\n"
+        . "- playbooks-index and ai-quality-guide when unsure; adapt patterns to the project\n"
         . "- Infer content model from the user's request (what repeats, what's shared, forms, sub-collections)\n"
         . "- read_birkly_docs topics: playbooks-index, ai-quality-guide, fieldtypes, mcp-capabilities, public-forms, web-project-patterns — when not pre-loaded below\n"
         . "- Admin help topics link to playbooks via ai_topic (e.g. entries→content-model, mcp-connections→mcp-setup)\n"
@@ -402,7 +402,7 @@ function birkly_ai_mcp_initialize_instructions(): string
         . "- create_entry auto-generates slug from title — use {slug} in list→detail links\n"
         . "- Tool write paths: index.html, css/style.css — never prefix project/ on write_project_file\n"
         . "- Plugins: list_plugins before assuming Commerce/Events/User Management exist — install via Hub; active plugins add commerce_* / automation_* MCP tools\n"
-        . "- Playbooks below are pre-loaded — adapt patterns to the project, don't copy fixed recipes\n"
+        . "- Playbooks below are pre-loaded — inspiration and Birkly-specific behavior, not a permission layer\n"
         . "- After a Birkly upgrade, reconnect the MCP client or call tools/list again — some clients cache tool schemas from initialize\n\n";
 
     return trim($header . $rules . ($playbooks !== '' ? $playbooks . "\n" : ''));

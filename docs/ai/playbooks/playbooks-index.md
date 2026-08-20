@@ -4,13 +4,22 @@ Read this when the user's request spans multiple areas or you are unsure which p
 
 ## How playbooks work
 
-1. **L1 (always in system prompt):** Short catalog of playbook slugs, quality rules, tools list, templating cheat sheet, context pack summary.
+Playbooks are **inspiration and practical tips** for working well with Birkly — patterns, examples, and platform behavior. They are **not** a second permission layer.
+
+**What actually governs access:**
+
+- **Role permissions** on the AI/MCP connection (which tools run at all)
+- **MCP / built-in chat settings** (e.g. require approval before writes)
+
+If a tool call is allowed by the role and passes approval settings, playbooks do not override that. Use playbooks to work smarter; use `tools/list`, `get_system_context`, and the user's request to decide what to do.
+
+1. **L1 (always in system prompt):** Short catalog of playbook slugs, quality tips, tools list, templating cheat sheet, context pack summary.
 2. **L2 (auto-loaded):** Full playbook markdown injected server-side when intent matches (site builds, forms, commerce, MCP setup, plugins, etc.).
 3. **L3 (on demand):** `read_birkly_docs` with a topic slug, or MCP `birkly://docs/{topic}` / `resources/read` for depth.
 
-**Rule:** Read the relevant playbook **once**, then execute. Do not loop on discovery reads in the same turn.
+**Tip:** Read the relevant playbook **once**, then execute. Avoid looping on discovery reads in the same turn.
 
-**Start here for quality:** `ai-quality-guide` — golden rules, failure modes, checklists.
+**Start here for quality:** `ai-quality-guide` — principles, failure modes, checklists.
 
 ## Playbook map
 
@@ -122,20 +131,22 @@ AI connectivity?
 
 Install flow: `plugins-overview` → `list_plugins` → admin Marketplace or `activate_plugin`.
 
-## What AI can configure via tools
+## Tool coverage vs admin UI
 
-- Collection `entry_method: public_api`, sub-collection submission rights
-- Collection groups (`list_collection_groups` / `save_collection_groups`)
-- Full collection schema, entries, project files, media (with permissions)
+Many workflows exist in **both** the admin UI and MCP tools (when the connection role includes the right permissions). Examples:
 
-## What still requires admin UI
+| Workflow | MCP tools (when permitted) | Admin UI |
+|----------|---------------------------|----------|
+| Agent Guide draft / publish | `cms_admin_action` → `agent_guide.*` | Agent Guide (AI Presence) |
+| Automation workflows | `automation_admin_action`, named `automation_*` tools | Automation admin |
+| Human users | `cms_create_user`, `users.*` via `cms_admin_action` | Settings → Users |
+| Payment provider secrets | — (secrets stay in admin) | Commerce → Connections |
 
-- Agent Guide write/publish (AI Presence page)
-- Automation workflow CRUD (Automation admin)
-- Payment provider credentials (Commerce → Connections)
-- Admin user creation (Settings → Users — no `create_user` tool)
+Payment credentials and other secret boxes are typically admin-only by design — not a playbook restriction.
 
-## Anti-patterns (all playbooks)
+## Common pitfalls (tips — not policy)
+
+These help avoid broken sites and wasted turns. They do **not** block tool use when the role allows it.
 
 - Re-listing collections/files every message after first successful read
 - Using `create_page` when user wanted `project/` custom site
@@ -146,4 +157,4 @@ Install flow: `plugins-overview` → `list_plugins` → admin Marketplace or `ac
 - Phantom `{entry 'x'.'y'}…{endentry}` — use `{from…get}`; forms use `{entry for}` (valid)
 - Form field names ≠ schema slugs — causes "Validation failed"
 - Telling non-technical users to manually fix what AI tools can do
-- Re-adding Connections to Agent Guide — Connections live under **Settings → AI** only
+- Re-adding Connections to Agent Guide — Connections live under **Settings → AI** only (IA note)
