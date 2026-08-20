@@ -72,15 +72,85 @@ function birkly_project_rewrite_install_paths(string $html): string
 }
 
 /**
- * Inject CMS base meta + rewrite install paths before serving project HTML.
+ * True when visitors should see clean URLs (no /project/ prefix) on the public host.
+ */
+function birkly_project_serves_clean_public_urls(): bool
+{
+    require_once __DIR__ . '/hosting_urls.php';
+    $config = birkly_hosting_load();
+
+    return ($config['public_site_mode'] ?? 'none') === 'project'
+        && birkly_hosting_public_base_url() !== '';
+}
+
+/**
+ * Strip legacy /project/ prefixes for clean public URL hosting (P66).
+ */
+function birkly_project_rewrite_clean_public_paths(string $html): string
+{
+    if (!birkly_project_serves_clean_public_urls() || birkly_project_needs_install_path_prefix()) {
+        return $html;
+    }
+
+    $replacements = [
+        'href="/project/' => 'href="/',
+        "href='/project/" => "href='/",
+        'src="/project/' => 'src="/',
+        "src='/project/" => "src='/",
+        'href="/project"' => 'href="/"',
+        "href='/project'" => "href='/'",
+        'action="/project/' => 'action="/',
+        "action='/project/" => "action='/",
+    ];
+
+    return str_replace(array_keys($replacements), array_values($replacements), $html);
+}
+
+/**
+ * Ensure birkly-client.js uses absolute CMS URL + data-cms-url when serving project HTML.
+ */
+function birkly_project_inject_runtime_scripts(string $html): string
+{
+    require_once __DIR__ . '/hosting_urls.php';
+    $config = birkly_hosting_load();
+    if (($config['public_site_mode'] ?? 'none') !== 'project') {
+        return $html;
+    }
+
+    $cmsBase = birkly_cms_web_base_url();
+    if ($cmsBase === '') {
+        return $html;
+    }
+
+    require_once __DIR__ . '/build_info.php';
+    $clientSrc = htmlspecialchars(rtrim($cmsBase, '/') . birkly_public_runtime_asset_url('birkly-client.js'), ENT_QUOTES, 'UTF-8');
+    $cmsAttr = htmlspecialchars($cmsBase, ENT_QUOTES, 'UTF-8');
+    $clientTag = '<script src="' . $clientSrc . '" data-cms-url="' . $cmsAttr . '"></script>';
+
+    if (preg_match('#<script[^>]+src=["\'][^"\']*birkly-client\.js[^"\']*["\'][^>]*></script>#i', $html)) {
+        return preg_replace(
+            '#<script[^>]+src=["\'][^"\']*birkly-client\.js[^"\']*["\'][^>]*></script>#i',
+            $clientTag,
+            $html,
+            1
+        ) ?? $html;
+    }
+
+    if (stripos($html, 'birkly-client.js') === false && preg_match('/<\/body>/i', $html)) {
+        return preg_replace('/<\/body>/i', '    ' . $clientTag . "\n</body>", $html, 1) ?? $html;
+    }
+
+    return $html;
+}
+
+/**
+ * Inject CMS base meta + rewrite paths before serving project HTML.
  */
 function birkly_project_prepare_html_for_serve(string $html): string
 {
     $html = birkly_project_rewrite_install_paths($html);
-
-    if (!birkly_project_needs_install_path_prefix()) {
-        return $html;
-    }
+    $html = birkly_project_rewrite_clean_public_paths($html);
+    $html = birkly_project_inject_runtime_scripts($html);
 
     require_once __DIR__ . '/hosting_urls.php';
     $cmsBase = birkly_cms_web_base_url();
@@ -99,6 +169,56 @@ function birkly_project_prepare_html_for_serve(string $html): string
     }
 
     return $meta . "\n" . $html;
+}
+
+/**
+ * Detect legacy /project/ paths in raw project HTML (before serve-time rewrite).
+ */
+function birkly_project_raw_html_uses_legacy_paths(string $html): bool
+{
+    return preg_match('#(?:href|src|action)=["\']/project/#', $html) === 1
+        || preg_match("#(?:href|src|action)=['']/project/#", $html) === 1;
+}
+
+/**
+ * Persist clean-path rewrites into project HTML files (Repair delivery).
+ *
+ * @return array{changed: bool, files: list<string>}
+ */
+function birkly_project_repair_legacy_paths(bool $persist = true): array
+{
+    $projectRoot = birkly_public_site_path();
+    if (!is_dir($projectRoot)) {
+        return ['changed' => false, 'files' => []];
+    }
+
+    $changedFiles = [];
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($projectRoot, FilesystemIterator::SKIP_DOTS)
+    );
+
+    foreach ($iterator as $file) {
+        if (!$file->isFile()) {
+            continue;
+        }
+        $ext = strtolower($file->getExtension());
+        if (!in_array($ext, ['html', 'htm'], true)) {
+            continue;
+        }
+        $path = $file->getPathname();
+        $original = (string) file_get_contents($path);
+        $repaired = birkly_project_rewrite_clean_public_paths($original);
+        $repaired = birkly_project_inject_runtime_scripts($repaired);
+        if ($repaired === $original) {
+            continue;
+        }
+        if ($persist) {
+            file_put_contents($path, $repaired);
+        }
+        $changedFiles[] = str_replace($projectRoot . '/', '', $path);
+    }
+
+    return ['changed' => $changedFiles !== [], 'files' => $changedFiles];
 }
 
 /** @return list<string> */
