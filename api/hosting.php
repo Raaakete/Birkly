@@ -19,6 +19,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/hosting_urls.php';
 require_once __DIR__ . '/../core/hosting_probe.php';
+require_once __DIR__ . '/../core/hosting_detect.php';
 
 $rawInput = file_get_contents('php://input');
 $input = [];
@@ -47,6 +48,8 @@ function birkly_hosting_api_payload(): array
         'client_snippet' => birkly_hosting_client_snippet(),
         'suggested_cms_url' => birkly_hosting_build_url_from_request(),
         'delivery' => $probe,
+        'domain_roles' => birkly_hosting_domain_roles_map(),
+        'detect' => birkly_hosting_detect_environment(),
     ];
 }
 
@@ -59,7 +62,46 @@ if ($action === 'get' || $action === 'status' || $action === 'probe') {
     exit;
 }
 
+if ($action === 'detect') {
+    echo json_encode([
+        'status' => 'ok',
+        'data' => birkly_hosting_propose_config(),
+    ]);
+    exit;
+}
+
 requireAuth('manage_settings');
+
+if ($action === 'apply_proposal') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $proposal = is_array($input['proposal'] ?? null) ? $input['proposal'] : [];
+    $result = birkly_hosting_apply_proposal($proposal);
+    if (($result['status'] ?? '') === 'ok') {
+        $result['data'] = array_merge($result['data'] ?? [], birkly_hosting_api_payload());
+    }
+    echo json_encode($result);
+    exit;
+}
+
+if ($action === 'set_domain_role') {
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    $host = (string) ($input['host'] ?? $input['domain'] ?? '');
+    $role = (string) ($input['role'] ?? '');
+    $result = birkly_hosting_set_domain_delivery_role($host, $role);
+    if (($result['status'] ?? '') === 'ok') {
+        $result['data'] = birkly_hosting_api_payload();
+    }
+    echo json_encode($result);
+    exit;
+}
 
 if ($action === 'repair') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
