@@ -96,6 +96,21 @@ try {
         birkly_hosting_domain_delivery_role('staging.example.com') === 'cms'
     );
 
+    $suggestPublic = birkly_hosting_suggest_delivery_role('example.com');
+    assert_true(
+        'suggest apex for cms.* setup',
+        ($suggestPublic['role'] ?? '') === 'public'
+    );
+
+    $matrix = birkly_hosting_delivery_matrix();
+    assert_true('delivery matrix includes cms primary', count($matrix) >= 2);
+    $matrixHosts = array_column($matrix, 'host');
+    assert_true('matrix lists cms host', in_array('cms.example.com', $matrixHosts, true));
+    assert_true('matrix lists public host', in_array('www.example.com', $matrixHosts, true));
+
+    $publicHosts = birkly_hosting_public_delivery_hosts();
+    assert_true('public delivery hosts includes primary', in_array('www.example.com', $publicHosts, true));
+
     $apply = birkly_hosting_apply_proposal([
         'public_site_mode' => 'project',
         'public_site_url' => 'https://www.example.com',
