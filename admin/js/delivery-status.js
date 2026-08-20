@@ -61,7 +61,7 @@
 
     function fixConfirmMessage(action) {
         if (action === 'repair') {
-            return 'Repair delivery: fix CMS/public URLs if needed, sync domain aliases, remove legacy demo-website/, and fix project HTML paths? A backup of hosting.json will be created when config changes.';
+            return 'Repair delivery: fix CMS/public URLs if needed, sync domain aliases, remove legacy demo-website/, fix project HTML paths, and clear SSR cache? A backup of hosting.json will be created when config changes.';
         }
         if (action === 'set_same_host_public') {
             return 'Set “Root / opens public site” on this domain? The site home page will be served at / with clean URLs and project HTML paths will be updated.';
