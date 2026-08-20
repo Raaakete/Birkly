@@ -1,43 +1,57 @@
 /* Delivery status strip (P66-M1) */
 .delivery-status {
   border-left: 4px solid var(--color-border, #d0d7de);
+  padding: var(--space-6, 1.5rem);
+  gap: var(--space-4, 1rem);
+}
+
+.delivery-status.card {
+  display: flex;
+  flex-direction: column;
 }
 
 .delivery-status--green {
   border-left-color: var(--color-success, #2da44e);
+  background: color-mix(in srgb, var(--color-success, #2da44e) 6%, transparent);
 }
 
 .delivery-status--yellow {
   border-left-color: var(--color-warning, #bf8700);
+  background: color-mix(in srgb, var(--color-warning, #bf8700) 8%, transparent);
 }
 
 .delivery-status--red {
   border-left-color: var(--color-danger, #cf222e);
+  background: color-mix(in srgb, var(--color-danger, #cf222e) 6%, transparent);
 }
 
 .delivery-status-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
+  gap: var(--space-4, 1rem);
+  margin-bottom: var(--space-3, 0.75rem);
 }
 
 .delivery-status-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .delivery-status-meta {
-  margin: 0.25rem 0 0;
+  margin: var(--space-2, 0.5rem) 0 0;
   font-size: 0.875rem;
   color: var(--color-text-secondary, #57606a);
+  line-height: 1.45;
 }
 
 .delivery-status-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2, 0.5rem);
+  flex-shrink: 0;
 }
 
 .delivery-status-checks {
@@ -45,20 +59,30 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.35rem;
+  gap: var(--space-2, 0.5rem);
 }
 
 .delivery-status-check {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  align-items: flex-start;
+  gap: var(--space-2, 0.5rem);
   font-size: 0.875rem;
+  line-height: 1.45;
+  padding: var(--space-2, 0.5rem) var(--space-3, 0.75rem);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface, #fff);
 }
 
 .delivery-status-check-icon {
-  width: 1rem;
+  width: 1.125rem;
   flex-shrink: 0;
   font-weight: 700;
+  line-height: 1.45;
+}
+
+.delivery-status-check-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .delivery-status-check--pass .delivery-status-check-icon {
@@ -76,4 +100,6 @@
 .delivery-status-fix {
   margin-left: auto;
   white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
 }

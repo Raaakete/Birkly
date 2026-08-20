@@ -103,16 +103,31 @@ if ($action === 'set_domain_role') {
     exit;
 }
 
-if ($action === 'repair') {
+if ($action === 'repair' || $action === 'fix_project_paths') {
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
     if (!validate_csrf_token($csrf)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
         exit;
     }
 
-    $preview = !empty($input['preview']) || !empty($_GET['preview']);
-    $syncDomains = !array_key_exists('sync_domains', $input) || !empty($input['sync_domains']);
-    $result = birkly_hosting_repair_delivery(!$preview, $syncDomains);
+    if ($action === 'fix_project_paths') {
+        require_once __DIR__ . '/../core/project_site.php';
+        $preview = !empty($input['preview']) || !empty($_GET['preview']);
+        $pathRepair = birkly_project_repair_legacy_paths(!$preview);
+        $result = [
+            'status' => 'ok',
+            'message' => $pathRepair['changed']
+                ? 'Updated project HTML paths in ' . count($pathRepair['files']) . ' file(s).'
+                : 'Project HTML paths are already compatible.',
+            'changed' => $pathRepair['changed'],
+            'path_repair' => $pathRepair,
+        ];
+    } else {
+        $preview = !empty($input['preview']) || !empty($_GET['preview']);
+        $syncDomains = !array_key_exists('sync_domains', $input) || !empty($input['sync_domains']);
+        $result = birkly_hosting_repair_delivery(!$preview, $syncDomains);
+    }
+
     $result['delivery'] = birkly_delivery_probe(['deep' => false]);
     $result['data'] = birkly_hosting_api_payload();
     echo json_encode($result);
