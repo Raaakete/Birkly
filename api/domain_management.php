@@ -18,6 +18,7 @@ require_once 'auth.php';
 require_once 'domain_auth.php';
 require_once 'validate.php';
 require_once '../core/csrf.php';
+require_once '../core/hosting_detect.php';
 require_once 'log.php';
 
 $input = sanitize_input(json_decode(file_get_contents('php://input'), true));
@@ -132,18 +133,37 @@ if ($action === 'list_licenses' || $action === 'list_domains') {
     $result = $domainAuth->registerDomain($domain, $domainData);
     
     if ($result) {
+        $deliveryRole = strtolower(trim((string) ($input['delivery_role'] ?? '')));
+        $allowedRoles = ['cms', 'public', 'api_only'];
+        if (!in_array($deliveryRole, $allowedRoles, true)) {
+            $suggest = birkly_hosting_suggest_delivery_role($domain);
+            $deliveryRole = $suggest['role'];
+        }
+        $roleResult = null;
+        if ($deliveryRole !== 'api_only') {
+            $roleResult = birkly_hosting_set_domain_delivery_role($domain, $deliveryRole);
+        }
+
         log_security_event('domain_registered', [
             'domain' => $domain,
             'customer_email' => $customerEmail,
-            'admin' => $_SESSION['user']['email'] ?? 'admin'
+            'admin' => $_SESSION['user']['email'] ?? 'admin',
+            'delivery_role' => $deliveryRole,
         ]);
         
+        $responseData = [
+            'domain' => $domain,
+            'delivery_role' => birkly_hosting_domain_delivery_role($domain),
+            'suggested_role' => birkly_hosting_suggest_delivery_role($domain),
+        ];
+        if (is_array($roleResult) && ($roleResult['status'] ?? '') !== 'ok') {
+            $responseData['delivery_role_warning'] = $roleResult['message'] ?? 'Could not assign delivery role';
+        }
+
         echo json_encode([
             'status' => 'ok',
             'message' => 'Domain registered successfully',
-            'data' => [
-                'domain' => $domain
-            ]
+            'data' => $responseData,
         ]);
     } else {
         http_response_code(500);
