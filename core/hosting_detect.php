@@ -276,3 +276,172 @@ function birkly_hosting_domain_roles_map(): array
 
     return $map;
 }
+
+/**
+ * Map a full delivery role to the value accepted by set_domain_delivery_role().
+ *
+ * @return 'cms'|'public'|'api_only'|null null when the host is a primary URL
+ */
+function birkly_hosting_settable_delivery_role(string $fullRole): ?string
+{
+    return match ($fullRole) {
+        'cms' => 'cms',
+        'public' => 'public',
+        'api_only' => 'api_only',
+        'cms_primary', 'public_primary' => null,
+        default => 'api_only',
+    };
+}
+
+/**
+ * @return array{role: 'cms'|'public'|'api_only', reason: string}
+ */
+function birkly_hosting_suggest_delivery_role(string $host): array
+{
+    $host = birkly_normalize_host($host);
+    if ($host === '') {
+        return ['role' => 'api_only', 'reason' => 'Enter a valid hostname.'];
+    }
+
+    $config = birkly_hosting_load();
+    $current = birkly_hosting_domain_delivery_role($host);
+    if (in_array($current, ['cms_primary', 'public_primary'], true)) {
+        return [
+            'role' => $current === 'cms_primary' ? 'cms' : 'public',
+            'reason' => 'Already configured as a primary delivery URL.',
+        ];
+    }
+    if ($current === 'cms') {
+        return ['role' => 'cms', 'reason' => 'Already assigned as a CMS alias.'];
+    }
+    if ($current === 'public') {
+        return ['role' => 'public', 'reason' => 'Already assigned as a public alias.'];
+    }
+
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    $mode = birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none'));
+
+    if (str_starts_with($host, 'cms.')) {
+        return ['role' => 'cms', 'reason' => 'cms.* hostnames usually serve admin and API.'];
+    }
+
+    if ($cmsPrimary !== '' && str_starts_with($cmsPrimary, 'cms.')) {
+        $apex = substr($cmsPrimary, 4);
+        if ($host === $apex || in_array($host, birkly_hosting_www_apex_pair($apex), true)) {
+            if ($mode !== 'none') {
+                return ['role' => 'public', 'reason' => 'Apex/www pair for a cms.* CMS URL usually serves the public site.'];
+            }
+        }
+    }
+
+    if ($publicPrimary !== '' && $mode !== 'none') {
+        $publicPair = birkly_hosting_www_apex_pair($publicPrimary);
+        if (in_array($host, $publicPair, true)) {
+            return ['role' => 'public', 'reason' => 'Matches the public site hostname pattern.'];
+        }
+    }
+
+    if ($cmsPrimary !== '') {
+        $cmsPair = birkly_hosting_www_apex_pair($cmsPrimary);
+        if (in_array($host, $cmsPair, true) && $host !== $cmsPrimary) {
+            return ['role' => 'cms', 'reason' => 'Alternate hostname for the CMS URL.'];
+        }
+    }
+
+    if ($mode === 'none') {
+        return ['role' => 'api_only', 'reason' => 'No public site configured — CORS/API access only.'];
+    }
+
+    return ['role' => 'api_only', 'reason' => 'Default: allow Public API (CORS). Assign public or CMS if visitors should load this host.'];
+}
+
+/**
+ * @return list<array{host: string, role: string, cors_registered: bool, suggested_role: string, suggest_reason: string, is_primary: bool, settable_role: string|null}>
+ */
+function birkly_hosting_delivery_matrix(): array
+{
+    $config = birkly_hosting_load();
+    $registered = birkly_hosting_collect_registered_domain_hosts();
+    $registeredLookup = array_fill_keys($registered, true);
+
+    $hosts = [];
+    $cmsPrimary = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
+    $publicPrimary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    if ($cmsPrimary !== '') {
+        $hosts[$cmsPrimary] = true;
+    }
+    foreach (birkly_hosting_cms_alias_hosts($config) as $alias) {
+        $hosts[$alias] = true;
+    }
+    if ($publicPrimary !== '') {
+        $hosts[$publicPrimary] = true;
+    }
+    foreach (birkly_hosting_public_alias_hosts($config) as $alias) {
+        $hosts[$alias] = true;
+    }
+    foreach ($registered as $host) {
+        $hosts[$host] = true;
+    }
+
+    $rows = [];
+    foreach (array_keys($hosts) as $host) {
+        if ($host === '') {
+            continue;
+        }
+        $role = birkly_hosting_domain_delivery_role($host);
+        $suggest = birkly_hosting_suggest_delivery_role($host);
+        $isPrimary = in_array($role, ['cms_primary', 'public_primary'], true);
+        $rows[] = [
+            'host' => $host,
+            'role' => $role,
+            'cors_registered' => isset($registeredLookup[$host]),
+            'suggested_role' => $suggest['role'],
+            'suggest_reason' => $suggest['reason'],
+            'is_primary' => $isPrimary,
+            'settable_role' => $isPrimary ? null : birkly_hosting_settable_delivery_role($role),
+        ];
+    }
+
+    $priority = [
+        'cms_primary' => 0,
+        'public_primary' => 1,
+        'cms' => 2,
+        'public' => 3,
+        'api_only' => 4,
+        'unassigned' => 5,
+    ];
+    usort($rows, static function (array $a, array $b) use ($priority): int {
+        $pa = $priority[$a['role']] ?? 99;
+        $pb = $priority[$b['role']] ?? 99;
+        if ($pa !== $pb) {
+            return $pa <=> $pb;
+        }
+
+        return strcmp($a['host'], $b['host']);
+    });
+
+    return $rows;
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_hosting_public_delivery_hosts(): array
+{
+    $config = birkly_hosting_load();
+    if (birkly_hosting_normalize_mode((string) ($config['public_site_mode'] ?? 'none')) === 'none') {
+        return [];
+    }
+
+    $hosts = [];
+    $primary = birkly_hosting_url_host((string) ($config['public_site_url'] ?? ''));
+    if ($primary !== '') {
+        $hosts[] = $primary;
+    }
+    foreach (birkly_hosting_public_alias_hosts($config) as $alias) {
+        $hosts[] = $alias;
+    }
+
+    return array_values(array_unique($hosts));
+}

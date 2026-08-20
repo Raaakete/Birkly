@@ -916,6 +916,9 @@ window.migrateStorage = migrateStorage;
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
+            if (typeof window.loadDeliveryMatrix === 'function') {
+                window.loadDeliveryMatrix();
+            }
             if (typeof window.loadDomains === 'function') {
                 window.loadDomains();
             }
@@ -1490,9 +1493,81 @@ async function deletePlugin(pluginId) {
                 window.refreshHostingWizard();
             }
             loadDomains();
+            loadDeliveryMatrix();
         } catch (error) {
             showMessage('Error: ' + error.message, 'error');
             if (selectEl) selectEl.disabled = false;
+        }
+    }
+
+    function renderDeliveryMatrixRow(row) {
+        var host = String(row.host || '');
+        var role = row.role || 'unassigned';
+        var rolesMap = {};
+        rolesMap[host] = role;
+        var roleCell = renderDomainDeliveryRole(host, rolesMap);
+        if (row.is_primary) {
+            roleCell = '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
+        }
+        var corsBadge = row.cors_registered
+            ? '<span class="badge badge-success">Registered</span>'
+            : '<span class="badge badge-neutral">Not registered</span>';
+        var suggestHint = '';
+        if (!row.is_primary && row.suggested_role && row.settable_role !== row.suggested_role && role === 'api_only') {
+            suggestHint = '<div class="form-help">Suggested: ' + escapeHtml(row.suggested_role) + ' — ' + escapeHtml(row.suggest_reason || '') + '</div>';
+        }
+        return '<tr>' +
+            '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
+            '<td>' + corsBadge + '</td>' +
+            '<td>' + roleCell + '</td>' +
+            '</tr>';
+    }
+
+    function renderDeliveryMatrix(rows) {
+        var container = document.getElementById('delivery-matrix-content');
+        if (!container) return;
+
+        rows = rows || [];
+        if (!rows.length) {
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No delivery hostnames yet. Register a domain or configure hosting URLs.</p></div>';
+            return;
+        }
+
+        var body = rows.map(renderDeliveryMatrixRow).join('');
+        container.innerHTML =
+            '<div class="table-container">' +
+            '<table class="table table--hover">' +
+            '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th></tr></thead>' +
+            '<tbody>' + body + '</tbody></table></div>' +
+            '<p class="form-help">Primary CMS and public URLs are set in Hosting URLs. Assign aliases here or when registering a domain.</p>';
+
+        var roleSelects = container.querySelectorAll('.domain-delivery-role');
+        for (var r = 0; r < roleSelects.length; r++) {
+            (function(select) {
+                select.addEventListener('change', function () {
+                    setDomainDeliveryRole(select.getAttribute('data-domain'), select.value, select);
+                });
+            })(roleSelects[r]);
+        }
+    }
+
+    async function loadDeliveryMatrix() {
+        var container = document.getElementById('delivery-matrix-content');
+        if (!container) return;
+
+        container.innerHTML = '<div class="loading-state"><p>Loading delivery matrix...</p></div>';
+        try {
+            var response = await fetch(apiUrl('/api/hosting.php?action=get'), {
+                method: 'GET',
+                credentials: 'same-origin'
+            });
+            var payload = await response.json();
+            var rows = (payload.status === 'ok' && payload.data && payload.data.delivery_matrix)
+                ? payload.data.delivery_matrix
+                : [];
+            renderDeliveryMatrix(rows);
+        } catch (error) {
+            container.innerHTML = '<div class="message message-error" role="alert">Error loading delivery matrix: ' + escapeHtml(error.message) + '</div>';
         }
     }
 
@@ -1869,6 +1944,8 @@ async function deletePlugin(pluginId) {
     // Expose functions globally
     window.loadDomains = loadDomains;
     window.renderDomains = renderDomains;
+    window.loadDeliveryMatrix = loadDeliveryMatrix;
+    window.renderDeliveryMatrix = renderDeliveryMatrix;
 })();
 
 function openAddDomainModal() {
@@ -1883,6 +1960,41 @@ function openAddDomainModal() {
     if (form) {
         form.reset();
     }
+    var helpEl = document.getElementById('domain-delivery-role-help');
+    if (helpEl) {
+        helpEl.textContent = 'Choose how this hostname is used for site delivery. You can change it later on the domain card.';
+    }
+    bindRegisterDomainSuggestInline();
+}
+
+function bindRegisterDomainSuggestInline() {
+    var domainInput = document.getElementById('domain-name');
+    var roleSelect = document.getElementById('domain-delivery-role');
+    var helpEl = document.getElementById('domain-delivery-role-help');
+    if (!domainInput || domainInput.dataset.suggestBound === '1') return;
+    domainInput.dataset.suggestBound = '1';
+    var timer = null;
+    function suggest() {
+        var host = String(domainInput.value || '').trim().toLowerCase();
+        if (!host) return;
+        fetch(apiUrl('/api/hosting.php?action=suggest_domain_role&host=' + encodeURIComponent(host)), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (payload) {
+                if (payload.status !== 'ok' || !payload.data) return;
+                if (['cms', 'public', 'api_only'].indexOf(payload.data.role) !== -1) {
+                    roleSelect.value = payload.data.role;
+                }
+                if (helpEl && payload.data.reason) {
+                    helpEl.textContent = 'Suggested: ' + payload.data.role + ' — ' + payload.data.reason;
+                }
+            })
+            .catch(function () { /* optional */ });
+    }
+    domainInput.addEventListener('input', function () {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(suggest, 350);
+    });
+    domainInput.addEventListener('blur', suggest);
 }
 
 function closeAddDomainModal() {
@@ -1940,6 +2052,7 @@ async function registerDomain() {
         read_limit: parseInt(formData.get('read_limit')) || 100,
         write_limit: parseInt(formData.get('write_limit')) || 10,
         enable_analytics: formData.get('enable_analytics') === '1',
+        delivery_role: formData.get('delivery_role') || 'api_only',
         _csrf: getCsrfToken()
     };
     
@@ -1965,9 +2078,22 @@ async function registerDomain() {
         
         
         if (result.status === 'ok') {
-            showMessage('Domain registered successfully!', 'success');
+            var roleMsg = result.data && result.data.delivery_role
+                ? ' (delivery: ' + result.data.delivery_role + ')'
+                : '';
+            if (result.data && result.data.delivery_role_warning) {
+                showMessage('Domain registered' + roleMsg + ', but delivery role could not be applied: ' + result.data.delivery_role_warning, 'warning');
+            } else {
+                showMessage('Domain registered successfully!' + roleMsg, 'success');
+            }
             closeAddDomainModal();
             loadDomains();
+            if (typeof window.loadDeliveryMatrix === 'function') {
+                window.loadDeliveryMatrix();
+            }
+            if (typeof window.initDeliveryStatus === 'function') {
+                window.initDeliveryStatus('#delivery-status-site-delivery');
+            }
         } else {
             showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
         }
