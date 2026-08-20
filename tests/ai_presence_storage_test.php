@@ -171,6 +171,25 @@ $claimGraph = birkly_ai_presence_public_claim_graph($exportWithClaim, 'claim_tes
 assert_true(is_array($claimGraph['evidence'][0] ?? null), 'claim graph resolves evidence URLs');
 assert_true(($claimGraph['evidence'][0]['url'] ?? '') === 'https://example.com/shipping', 'claim graph evidence url');
 
+$validateDraft = $draftWithClaim;
+$validateDraft['claims'][0]['sources'] = [[
+    'id' => 'claim_src_test',
+    'type' => 'external_url',
+    'label' => 'Policy',
+    'url' => 'https://example.com/policy',
+]];
+$validateDraft['identity']['website'] = 'https://example.com';
+$validateResults = birkly_ai_presence_validate_draft_links($validateDraft, true);
+assert_true(is_array($validateResults), 'validate_draft_links mutate=true returns results');
+assert_true(count($validateResults) >= 3, 'validate_draft_links checks evidence, claim, and product sources');
+assert_true(($validateDraft['evidence'][0]['link_status'] ?? '') !== 'unknown', 'validate_draft_links mutates evidence link_status');
+assert_true(($validateDraft['evidence'][0]['last_verified_at'] ?? '') !== '', 'validate_draft_links sets evidence last_verified_at');
+assert_true(($validateDraft['claims'][0]['sources'][0]['link_status'] ?? '') !== 'unknown', 'validate_draft_links mutates claim source link_status');
+assert_true(($validateDraft['products_services'][0]['sources'][0]['link_status'] ?? '') !== 'unknown', 'validate_draft_links mutates product source link_status');
+$validateDraftDry = $validateDraft;
+$dryResults = birkly_ai_presence_validate_draft_links($validateDraftDry, false);
+assert_true(is_array($dryResults) && count($dryResults) >= 3, 'validate_draft_links mutate=false dry run');
+
 birkly_ai_presence_reset_for_tests();
 
 if ($failures > 0) {
