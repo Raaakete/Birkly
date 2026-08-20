@@ -111,6 +111,27 @@ try {
     $publicHosts = birkly_hosting_public_delivery_hosts();
     assert_true('public delivery hosts includes primary', in_array('www.example.com', $publicHosts, true));
 
+    $redirectOff = birkly_hosting_set_alias_redirect(false);
+    assert_true('disable alias redirect ok', ($redirectOff['status'] ?? '') === 'ok');
+    assert_true(
+        'alias redirect persisted off',
+        birkly_hosting_load()['alias_redirect_to_primary'] === false
+    );
+
+    $makePrimary = birkly_hosting_set_public_primary('example.com');
+    assert_true('set public primary ok', ($makePrimary['status'] ?? '') === 'ok');
+    $afterPrimary = birkly_hosting_load();
+    assert_true(
+        'example.com is public primary',
+        birkly_hosting_url_host((string) ($afterPrimary['public_site_url'] ?? '')) === 'example.com'
+    );
+    assert_true(
+        'former primary moved to aliases',
+        in_array('www.example.com', birkly_hosting_public_alias_hosts($afterPrimary), true)
+    );
+
+    birkly_hosting_set_alias_redirect(true);
+
     $apply = birkly_hosting_apply_proposal([
         'public_site_mode' => 'project',
         'public_site_url' => 'https://www.example.com',

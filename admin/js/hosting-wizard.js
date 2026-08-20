@@ -99,16 +99,17 @@
             '<input type="checkbox" class="hosting-wizard-strict-admin" checked>' +
             ' ' + escapeHtml(t('hosting_wizard_strict_admin', 'Redirect /admin on public host to CMS URL')) +
             '</label>' +
+            '<label class="checkbox-label hosting-wizard-alias-redirect-field" hidden>' +
+            '<input type="checkbox" class="hosting-wizard-alias-redirect" checked>' +
+            '<span>' + escapeHtml(t('hosting_wizard_alias_redirect', 'Redirect alias hostnames to primary URL (301)')) + '</span>' +
+            '</label>' +
+            '<small class="form-help hosting-wizard-alias-redirect-help" hidden>' + escapeHtml(t('hosting_wizard_alias_redirect_help', 'When checked, birkly.io and other aliases send visitors to the primary public URL. Uncheck to serve each hostname directly.')) + '</small>' +
             '<div class="form-group hosting-wizard-aliases-field" hidden>' +
             '<label for="' + id + '-cms-aliases">' + escapeHtml(t('hosting_wizard_cms_aliases', 'CMS host aliases')) + '</label>' +
             '<input type="text" id="' + id + '-cms-aliases" class="input hosting-wizard-cms-aliases" placeholder="cms-alt.example.com, staging-cms.example.com">' +
             '<small class="form-help">' + escapeHtml(t('hosting_wizard_aliases_help', 'Comma-separated extra hostnames that serve admin/API (optional).')) + '</small>' +
             '<label for="' + id + '-public-aliases">' + escapeHtml(t('hosting_wizard_public_aliases', 'Public site aliases')) + '</label>' +
             '<input type="text" id="' + id + '-public-aliases" class="input hosting-wizard-public-aliases" placeholder="example.com">' +
-            '<label class="checkbox-label">' +
-            '<input type="checkbox" class="hosting-wizard-alias-redirect" checked>' +
-            '<span>' + escapeHtml(t('hosting_wizard_alias_redirect', 'Redirect alias hostnames to primary URL (301)')) + '</span>' +
-            '</label>' +
             '</div>' +
             '</section>' +
             '<section class="hosting-wizard-panel" data-step-panel="3" hidden>' +
@@ -201,8 +202,12 @@
         var publicField = this.$('.hosting-wizard-public-field');
         var sameHostField = this.$('.hosting-wizard-same-host-field');
         var aliasesField = this.$('.hosting-wizard-aliases-field');
+        var aliasRedirectField = this.$('.hosting-wizard-alias-redirect-field');
+        var aliasRedirectHelp = this.$('.hosting-wizard-alias-redirect-help');
         if (publicField) publicField.hidden = !show;
         if (aliasesField) aliasesField.hidden = !show;
+        if (aliasRedirectField) aliasRedirectField.hidden = !show;
+        if (aliasRedirectHelp) aliasRedirectHelp.hidden = !show;
         // Same-host landing only applies when Birkly serves the project on a shared host
         if (sameHostField) sameHostField.hidden = !(mode === 'project' && this.sameHost);
     };
