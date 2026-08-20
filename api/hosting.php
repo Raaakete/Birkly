@@ -49,6 +49,7 @@ function birkly_hosting_api_payload(): array
         'suggested_cms_url' => birkly_hosting_build_url_from_request(),
         'delivery' => $probe,
         'domain_roles' => birkly_hosting_domain_roles_map(),
+        'delivery_matrix' => birkly_hosting_delivery_matrix(),
         'detect' => birkly_hosting_detect_environment(),
     ];
 }
@@ -66,6 +67,18 @@ if ($action === 'detect') {
     echo json_encode([
         'status' => 'ok',
         'data' => birkly_hosting_propose_config(),
+    ]);
+    exit;
+}
+
+if ($action === 'suggest_domain_role') {
+    $host = (string) ($_GET['host'] ?? $input['host'] ?? '');
+    echo json_encode([
+        'status' => 'ok',
+        'data' => array_merge(
+            ['host' => birkly_normalize_host($host)],
+            birkly_hosting_suggest_delivery_role($host)
+        ),
     ]);
     exit;
 }

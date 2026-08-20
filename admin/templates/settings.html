@@ -216,6 +216,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="tab-pane" id="site-delivery">
         <div class="settings-stack">
           <div id="delivery-status-site-delivery" class="settings-pane-section" data-delivery-status-mount data-delivery-status-id="site-delivery"></div>
+          <div id="delivery-matrix" class="settings-pane-section" data-settings-search="site delivery domains routing matrix cors aliases">
+          <section class="card">
+            <div class="card-header">
+              <div class="card-heading">
+                <h3 class="card-title">Domains &amp; delivery</h3>
+                <p class="section-description">Every hostname registered for CORS and how it is routed for visitors and admin.</p>
+              </div>
+            </div>
+            <div class="card-body u-stack-4">
+              <div id="delivery-matrix-content">
+                <div class="loading-state"><p>Loading delivery matrix...</p></div>
+              </div>
+            </div>
+          </section>
+          </div>
           <div id="domains" class="settings-pane-section" data-settings-search="site delivery domains dns analytics public site local development tracking">
           <div class="section-header">
             <div>
@@ -1178,6 +1193,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <label for="domain-name"><?= __('admin.domain_name') ?> *</label>
             <input type="text" id="domain-name" name="domain" required class="input" placeholder="example.com">
             <small class="form-help">Enter the domain name without http:// or https://</small>
+          </div>
+          <div class="form-group">
+            <label for="domain-delivery-role">Delivery role</label>
+            <select id="domain-delivery-role" name="delivery_role" class="input">
+              <option value="public">Public alias — visitors see the site on this hostname</option>
+              <option value="cms">CMS alias — admin, API, and birkly-client.js on this hostname</option>
+              <option value="api_only" selected>API only (CORS) — Public API access, no site routing</option>
+            </select>
+            <small id="domain-delivery-role-help" class="form-help">Choose how this hostname is used for site delivery. You can change it later on the domain card.</small>
           </div>
           <div class="form-group">
             <label for="domain-email"><?= __('admin.customer_email') ?> *</label>

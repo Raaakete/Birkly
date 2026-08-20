@@ -225,6 +225,11 @@
             '<div class="kv"><div class="kv-key">Public URL</div><div class="kv-value">' +
                 (data.public_url ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
             '</div></div>' +
+            (data.also_served_on && data.also_served_on.length
+                ? '<div class="kv"><div class="kv-key">Also served on</div><div class="kv-value">' +
+                    escapeHtml(data.also_served_on.join(', ')) +
+                    ' <span class="u-fg-tertiary">(read-only — edit in Settings → Site delivery)</span></div></div>'
+                : '') +
             '<div class="kv"><div class="kv-key">Starter</div><div class="kv-value">' + starter + '</div></div>' +
             '<div class="kv"><div class="kv-key">Last change</div><div class="kv-value">' + lastChange + '</div></div>' +
             '<div class="kv"><div class="kv-key">Index</div><div class="kv-value">' + (data.has_index ? 'index.html present' : 'No index.html') + '</div></div>' +
