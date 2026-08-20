@@ -306,12 +306,20 @@ function birkly_project_site_activity(int $limit = 30): array
 if ($action === 'overview') {
     requireAuth('read_settings');
     require_once __DIR__ . '/../core/project_ssr.php';
+    require_once __DIR__ . '/../core/hosting_detect.php';
 
     birkly_ensure_public_site_path();
     $fs = new ProjectSiteFileSystem();
     $projectSettings = birkly_load_project_settings();
     $lastChange = birkly_project_site_last_change();
     $indexPath = birkly_public_site_path() . '/index.html';
+    $hosting = birkly_hosting_load();
+    $publicHosts = birkly_hosting_public_delivery_hosts();
+    $publicPrimary = birkly_hosting_url_host((string) ($hosting['public_site_url'] ?? ''));
+    $publicAliases = array_values(array_filter(
+        $publicHosts,
+        static fn (string $host): bool => $host !== '' && $host !== $publicPrimary
+    ));
 
     echo json_encode([
         'status' => 'ok',
@@ -319,6 +327,11 @@ if ($action === 'overview') {
             'site_dir' => birkly_public_site_dir(),
             'site_path' => birkly_public_site_path(),
             'public_url' => birkly_public_site_visit_url($projectSettings),
+            'public_primary_host' => $publicPrimary,
+            'public_aliases' => $publicAliases,
+            'also_served_on' => $publicAliases,
+            'cms_url' => (string) ($hosting['cms_base_url'] ?? ''),
+            'public_site_mode' => (string) ($hosting['public_site_mode'] ?? 'none'),
             'visit_url' => birkly_public_site_visit_url($projectSettings),
             'visit_url_format' => birkly_normalize_visit_url_format((string) ($projectSettings['visit_url_format'] ?? 'auto')),
             'visit_url_format_resolved' => birkly_resolve_visit_url_format($projectSettings),
