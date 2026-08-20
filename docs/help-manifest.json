@@ -1036,7 +1036,8 @@
                 "sources of truth",
                 "first steps"
             ],
-            "docs_path": "02-content/agent-guide-getting-started.html"
+            "docs_path": "02-content/agent-guide-getting-started.html",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "agent-guide-claims",
@@ -1050,7 +1051,22 @@
                 "sources of truth",
                 "proof"
             ],
-            "docs_path": "02-content/agent-guide-claims-evidence-and-links.html"
+            "docs_path": "02-content/agent-guide-claims-evidence-and-links.html",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "agent-guide-workflows",
+            "title": "Agent Guide — workflows",
+            "keywords": [
+                "agent guide",
+                "workflows",
+                "tools tab",
+                "webmcp",
+                "unpublish",
+                "publish"
+            ],
+            "docs_path": "02-content/agent-guide-workflows.html",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "agent-guide-api",
@@ -1063,7 +1079,20 @@
                 "json-ld",
                 "brand-context.json"
             ],
-            "docs_path": "04-integration/agent-guide-public-api.html"
+            "docs_path": "04-integration/agent-guide-public-api.html",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "agent-guide-mcp",
+            "title": "Agent Guide MCP & agents",
+            "keywords": [
+                "mcp",
+                "get_agent_guide_context",
+                "agent_guide.publish",
+                "cms_admin_action"
+            ],
+            "docs_path": "04-integration/agent-guide-mcp-and-agents.html",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "webmcp-tools",
@@ -1080,7 +1109,8 @@
                 "confirmation",
                 "off by default"
             ],
-            "docs_path": "04-integration/webmcp-tools.html"
+            "docs_path": "04-integration/webmcp-tools.html",
+            "ai_topic": "webmcp-tools"
         },
         {
             "id": "ai-on-localhost",
