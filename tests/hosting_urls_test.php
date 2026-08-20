@@ -292,10 +292,31 @@ try {
     );
 
     require_once dirname(__DIR__) . '/core/project_site.php';
+    $demoIndex = birkly_public_site_path() . '/index.html';
+    $demoIndexExisted = is_file($demoIndex);
+    $demoIndexBackup = $demoIndexExisted ? (string) file_get_contents($demoIndex) : null;
+    file_put_contents($demoIndex, '<!doctype html><title>Birkly - Demo Website</title>');
     assert_true(
         'bundled demo site detected',
         birkly_project_is_bundled_demo_site() === true
     );
+    if ($demoIndexBackup !== null) {
+        file_put_contents($demoIndex, $demoIndexBackup);
+    } elseif (is_file($demoIndex)) {
+        unlink($demoIndex);
+    }
+
+    echo "\n[repair SSR cache]\n";
+    require_once dirname(__DIR__) . '/core/project_ssr.php';
+    $cacheDir = birkly_project_ssr_cache_dir();
+    if (!is_dir($cacheDir)) {
+        mkdir($cacheDir, 0755, true);
+    }
+    $cacheMarker = $cacheDir . '/repair-test.html';
+    file_put_contents($cacheMarker, '<html>stale</html>');
+    $repair = birkly_hosting_repair_delivery(true, false);
+    assert_true('repair clears SSR cache', !is_file($cacheMarker));
+    assert_true('repair reports SSR invalidation', ($repair['ssr_invalidated'] ?? false) === true);
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {

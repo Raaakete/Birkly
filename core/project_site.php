@@ -516,7 +516,10 @@ function birkly_project_repair_legacy_demo_website(bool $persist = true): array
 
 function birkly_ensure_public_site_path(): void
 {
-    birkly_migrate_demo_website_to_project();
+    $target = birkly_public_site_path();
+    if (!is_dir($target)) {
+        @mkdir($target, 0755, true);
+    }
 }
 
 /**
