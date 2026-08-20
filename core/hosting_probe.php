@@ -134,12 +134,23 @@ function birkly_delivery_probe(array $options = []): array
             $fixHosting
         );
     } elseif ($mode === 'none') {
-        $checks[] = birkly_delivery_check(
-            'public_url',
-            'pass',
-            'PUBLIC_MODE_NONE',
-            'No public site configured (CMS only).'
-        );
+        $index = birkly_public_site_path() . '/index.html';
+        if (is_file($index)) {
+            $checks[] = birkly_delivery_check(
+                'public_url',
+                'warn',
+                'PUBLIC_MODE_NONE_WITH_PROJECT',
+                'A project/ site exists but public mode is CMS only — visitors will not see it until you enable “In Birkly (project/)”.',
+                $fixHosting
+            );
+        } else {
+            $checks[] = birkly_delivery_check(
+                'public_url',
+                'pass',
+                'PUBLIC_MODE_NONE',
+                'No public site configured (CMS only).'
+            );
+        }
     } else {
         $checks[] = birkly_delivery_check(
             'public_url',
@@ -222,21 +233,65 @@ function birkly_delivery_probe(array $options = []): array
                 ['tab' => 'project', 'hash' => 'project-files']
             );
         } elseif (is_readable($index)) {
+            require_once __DIR__ . '/project_site.php';
             $html = (string) file_get_contents($index);
-            if (str_contains($html, 'href="/project/') || str_contains($html, "href='/project/")) {
+            $prepared = birkly_project_prepare_html_for_serve($html);
+            $fixProjectPaths = ['tab' => 'site-delivery', 'hash' => 'hosting', 'action' => 'fix_project_paths'];
+
+            if ($mode === 'project' && birkly_hosting_same_host() && ($config['same_host_landing'] ?? 'admin') === 'public') {
+                $publicFile = birkly_hosting_resolve_public_file('/');
+                if ($publicFile === null && birkly_request_host_role() === 'cms') {
+                    $checks[] = birkly_delivery_check(
+                        'same_host_root',
+                        'fail',
+                        'SAME_HOST_ROOT_BLOCKED',
+                        'Same-host public landing is set but this host cannot serve the site home page. Run Repair delivery or re-apply hosting settings.',
+                        $fixHosting
+                    );
+                } else {
+                    $checks[] = birkly_delivery_check(
+                        'same_host_root',
+                        'pass',
+                        'SAME_HOST_ROOT_OK',
+                        'Same-host public landing can serve the site home page on this host.'
+                    );
+                }
+            }
+
+            if (birkly_project_raw_html_uses_legacy_paths($html)) {
+                $runtimeOk = !birkly_project_raw_html_uses_legacy_paths($prepared)
+                    && str_contains($prepared, 'data-cms-url');
+                if ($runtimeOk) {
+                    $checks[] = birkly_delivery_check(
+                        'asset_paths',
+                        'warn',
+                        'PROJECT_PATH_PREFIX',
+                        'project/index.html still uses /project/ paths on disk (rewritten when served). Run Fix to update files permanently.',
+                        $fixProjectPaths
+                    );
+                } else {
+                    $checks[] = birkly_delivery_check(
+                        'asset_paths',
+                        'fail',
+                        'PROJECT_PATH_PREFIX',
+                        'project/index.html uses /project/ paths that break the public site. Click Fix to rewrite paths and inject the client script.',
+                        $fixProjectPaths
+                    );
+                }
+            } elseif (!str_contains($prepared, 'data-cms-url') && stripos($html, 'birkly-client.js') !== false) {
                 $checks[] = birkly_delivery_check(
-                    'asset_paths',
-                    'warn',
-                    'PROJECT_PATH_PREFIX',
-                    'project/index.html uses /project/ asset paths — use asset_url helpers for clean public URLs.',
-                    ['tab' => 'project', 'hash' => 'project-files']
+                    'client_script',
+                    'fail',
+                    'CLIENT_SCRIPT_MISSING_CMS_URL',
+                    'birkly-client.js is missing data-cms-url — CMS content will not load. Click Fix to repair.',
+                    $fixProjectPaths
                 );
             } else {
                 $checks[] = birkly_delivery_check(
                     'asset_paths',
                     'pass',
                     'ASSET_PATHS_OK',
-                    'Homepage does not use hardcoded /project/ hrefs.'
+                    'Homepage paths are compatible with clean public URLs.'
                 );
             }
         }

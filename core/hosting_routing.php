@@ -94,14 +94,14 @@ function birkly_hosting_dispatch(string $uri): bool
         }
 
         $publicFile = birkly_hosting_resolve_public_file($uri);
-        if ($publicFile !== null && ($role === 'public' || $role === 'local' || $role === 'cms')) {
+        if ($publicFile !== null && birkly_hosting_role_can_serve_public_project($role, $uri)) {
             birkly_hosting_serve_public_file($publicFile);
         }
     }
 
     if ($uri === '/') {
         $role = birkly_request_host_role();
-        if ($config['public_site_mode'] === 'project' && ($role === 'public' || $role === 'local')) {
+        if ($config['public_site_mode'] === 'project' && birkly_hosting_role_can_serve_public_project($role, '/')) {
             $publicFile = birkly_hosting_resolve_public_file('/');
             if ($publicFile !== null) {
                 birkly_hosting_serve_public_file($publicFile);
