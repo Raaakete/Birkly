@@ -592,15 +592,12 @@
     }
 
     function getPublishState(data) {
-        // publication_settings.enabled is bound to live-editable fields (the
-        // top switch + the Publish tab checkbox) and must always reflect the
-        // current draft, even when a cached publish_state snapshot from the
-        // last load() is passed in — otherwise toggling the switch would not
-        // update the sticky bar / essentials status until the next reload.
+        // publication_settings.enabled reflects the draft toggle; is_live must
+        // follow the published snapshot (what MCP + public endpoints serve).
         var enabledNow = !!(state.draft && state.draft.publication_settings && state.draft.publication_settings.enabled);
+        var snapshotEnabled = !!(state.published && state.published.publication_settings && state.published.publication_settings.enabled);
         if (data && data.publish_state) {
-            var ps = Object.assign({}, data.publish_state, { publishing_enabled: enabledNow });
-            ps.is_live = enabledNow && !ps.never_published;
+            var ps = Object.assign({}, data.publish_state, { publishing_enabled: enabledNow, snapshot_enabled: snapshotEnabled });
             if (state.dirty) {
                 ps = Object.assign(ps, { has_unpublished_changes: true });
             }
@@ -609,14 +606,16 @@
         var meta = state.meta || {};
         var version = (meta.published_version || 0);
         var neverPublished = !state.published || version < 1;
-        var isLive = !neverPublished && enabledNow;
+        var isLive = !neverPublished && snapshotEnabled;
         return {
             is_live: isLive,
             version: version,
             last_published_at: meta.last_published_at || null,
             publishing_enabled: enabledNow,
+            snapshot_enabled: snapshotEnabled,
             has_unpublished_changes: isLive && state.dirty,
-            never_published: neverPublished
+            never_published: neverPublished,
+            needs_republish: !neverPublished && enabledNow && !snapshotEnabled
         };
     }
 
@@ -634,6 +633,8 @@
             badges += '<span class="badge badge-neutral">' + escapeHtml(t('ag_badge_publishing_off', 'Publishing off')) + '</span>';
         } else if (ps.never_published) {
             badges += '<span class="badge badge-warning">' + escapeHtml(t('ag_badge_not_live', 'Not live')) + '</span>';
+        } else if (ps.needs_republish) {
+            badges += '<span class="badge badge-warning">' + escapeHtml(t('ag_badge_republish', 'Republish required')) + '</span>';
         } else {
             badges += '<span class="badge badge-success">' + escapeHtml(t('ag_badge_live', 'Live · v{version}').replace('{version}', String(ps.version))) + '</span>';
             if (ps.has_unpublished_changes || state.dirty) {

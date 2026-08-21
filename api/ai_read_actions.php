@@ -509,14 +509,14 @@ function executeReadAction($actionData, $aiUser) {
             $view = (string) ($actionPayload['view'] ?? 'summary');
             $data = birkly_ai_presence_public_agent_guide_for_tools($view);
             if ($data === null) {
-                return ['success' => false, 'message' => 'Agent Guide not published'];
+                return ['success' => false, 'message' => birkly_ai_presence_not_published_reason()];
             }
             return ['success' => true, 'data' => $data];
         }
         if (in_array($actionType, ['list_agent_guide_products', 'list_brand_products'], true)) {
             $data = birkly_ai_presence_public_agent_guide_for_tools('products');
             if ($data === null) {
-                return ['success' => false, 'message' => 'Agent Guide not published'];
+                return ['success' => false, 'message' => birkly_ai_presence_not_published_reason()];
             }
             return ['success' => true, 'data' => ['products_services' => $data['products_services'] ?? []]];
         }

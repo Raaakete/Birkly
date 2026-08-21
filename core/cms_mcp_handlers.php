@@ -304,6 +304,7 @@ function cms_mcp_handler_agent_guide(string $subAction, array $input, array $aiU
                 'draft' => $draft,
                 'published' => birkly_ai_presence_load_published(),
                 'meta' => birkly_ai_presence_load_meta(),
+                'publish_state' => birkly_ai_presence_publish_state($draft),
                 'completeness' => birkly_ai_presence_completeness($draft),
                 'public_urls' => birkly_ai_presence_public_urls(),
                 'staleness' => birkly_ai_presence_staleness($draft),
