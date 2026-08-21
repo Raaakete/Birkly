@@ -4256,13 +4256,32 @@
             if (!tag) return;
             var cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
             if (!cms) return;
-            if (document.querySelector('link[rel="alternate"][href*="agent-guide.json"]')) return;
-            var link = document.createElement('link');
-            link.rel = 'alternate';
-            link.type = 'application/json';
-            link.title = 'Agent Guide';
-            link.href = cms + '/.well-known/agent-guide.json';
-            (document.head || document.documentElement).appendChild(link);
+            var head = document.head || document.documentElement;
+            if (!document.querySelector('link[rel="alternate"][href*="agent-guide.json"]')) {
+                var guideLink = document.createElement('link');
+                guideLink.rel = 'alternate';
+                guideLink.type = 'application/json';
+                guideLink.title = 'Agent Guide';
+                guideLink.href = cms + '/.well-known/agent-guide.json';
+                head.appendChild(guideLink);
+                var guideMeta = document.createElement('meta');
+                guideMeta.name = 'agent-guide';
+                guideMeta.content = guideLink.href;
+                head.appendChild(guideMeta);
+            }
+            if (!document.querySelector('link[rel="describedby"][href*="llms.txt"]')
+                && !document.querySelector('meta[name="llms-txt"]')) {
+                var llmsLink = document.createElement('link');
+                llmsLink.rel = 'describedby';
+                llmsLink.type = 'text/markdown';
+                llmsLink.title = 'llms.txt';
+                llmsLink.href = cms + '/llms.txt';
+                head.appendChild(llmsLink);
+                var llmsMeta = document.createElement('meta');
+                llmsMeta.name = 'llms-txt';
+                llmsMeta.content = llmsLink.href;
+                head.appendChild(llmsMeta);
+            }
         } catch (e) { /* non-fatal */ }
     }
 

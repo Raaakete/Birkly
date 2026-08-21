@@ -1100,6 +1100,203 @@ function birkly_ai_presence_llms_txt_body(): ?string
 }
 
 /**
+ * Absolute URL for `/llms.txt` on the public site when Birkly serves it, else CMS host.
+ */
+function birkly_ai_presence_llms_txt_url(?array $published = null, ?array $meta = null): ?string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
+
+    $urls = birkly_ai_presence_public_urls();
+    $base = rtrim((string) ($urls['public_site_base'] ?? ''), '/');
+    if ($base === '') {
+        $base = rtrim((string) ($urls['cms_base_url'] ?? ''), '/');
+    }
+
+    return $base !== '' ? $base . '/llms.txt' : null;
+}
+
+/**
+ * JSON-LD snippet for HTML discovery (Organization + Agent Guide pointer).
+ */
+function birkly_ai_presence_discovery_json_ld(?array $published = null, ?array $meta = null): ?string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
+
+    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+    $name = trim((string) ($identity['official_name'] ?? ''));
+    if ($name === '') {
+        return null;
+    }
+
+    $data = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization',
+        'name' => $name,
+    ];
+    $short = trim((string) ($identity['short_description'] ?? ''));
+    if ($short !== '') {
+        $data['description'] = $short;
+    }
+    $website = trim((string) ($identity['website'] ?? ''));
+    if ($website !== '') {
+        $data['url'] = $website;
+    }
+
+    $urls = birkly_ai_presence_public_urls();
+    $guideUrl = (string) ($urls['well_known_url'] ?? '');
+    $llmsUrl = birkly_ai_presence_llms_txt_url($published, $meta) ?? '';
+    $seeAlso = [];
+    if ($guideUrl !== '') {
+        $seeAlso[] = $guideUrl;
+    }
+    if ($llmsUrl !== '' && !in_array($llmsUrl, $seeAlso, true)) {
+        $seeAlso[] = $llmsUrl;
+    }
+    if ($seeAlso !== []) {
+        $data['seeAlso'] = count($seeAlso) === 1 ? $seeAlso[0] : $seeAlso;
+    }
+    if ($guideUrl !== '') {
+        $data['subjectOf'] = [
+            '@type' => 'CreativeWork',
+            'name' => 'Agent Guide',
+            'url' => $guideUrl,
+            'encodingFormat' => 'application/json',
+        ];
+    }
+
+    $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    if ($json === false) {
+        return null;
+    }
+    $json = str_replace('</', '<\/', $json);
+
+    return '<script type="application/ld+json">' . $json . '</script>';
+}
+
+/**
+ * Head tags that help website-visiting agents find the published Agent Guide.
+ *
+ * Includes well-known JSON link, llms.txt (rel=describedby), meta pointers, and JSON-LD.
+ */
+function birkly_ai_presence_discovery_head_snippet(?array $published = null, ?array $meta = null): string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return '';
+    }
+
+    $urls = birkly_ai_presence_public_urls();
+    $guideUrl = (string) ($urls['well_known_url'] ?? '');
+    $llmsUrl = birkly_ai_presence_llms_txt_url($published, $meta) ?? '';
+    $parts = [];
+
+    if ($guideUrl !== '') {
+        $parts[] = '<link rel="alternate" type="application/json" title="Agent Guide" href="'
+            . htmlspecialchars($guideUrl, ENT_QUOTES, 'UTF-8') . '">';
+        $parts[] = '<meta name="agent-guide" content="'
+            . htmlspecialchars($guideUrl, ENT_QUOTES, 'UTF-8') . '">';
+    }
+    if ($llmsUrl !== '') {
+        $parts[] = '<link rel="describedby" type="text/markdown" title="llms.txt" href="'
+            . htmlspecialchars($llmsUrl, ENT_QUOTES, 'UTF-8') . '">';
+        $parts[] = '<meta name="llms-txt" content="'
+            . htmlspecialchars($llmsUrl, ENT_QUOTES, 'UTF-8') . '">';
+    }
+
+    $jsonLd = birkly_ai_presence_discovery_json_ld($published, $meta);
+    if ($jsonLd !== null) {
+        $parts[] = $jsonLd;
+    }
+
+    return $parts !== [] ? "\n    " . implode("\n    ", $parts) : '';
+}
+
+/**
+ * Inject Agent Guide discovery tags into HTML `<head>` when the guide is live.
+ */
+function birkly_ai_presence_inject_discovery_into_html(string $html): string
+{
+    $snippet = birkly_ai_presence_discovery_head_snippet();
+    if ($snippet === '') {
+        return $html;
+    }
+
+    $additions = '';
+    if (stripos($html, 'agent-guide.json') === false && stripos($html, 'name="agent-guide"') === false) {
+        $urls = birkly_ai_presence_public_urls();
+        $guideUrl = (string) ($urls['well_known_url'] ?? '');
+        if ($guideUrl !== '') {
+            $additions .= "\n    " . '<link rel="alternate" type="application/json" title="Agent Guide" href="'
+                . htmlspecialchars($guideUrl, ENT_QUOTES, 'UTF-8') . '">';
+            $additions .= "\n    " . '<meta name="agent-guide" content="'
+                . htmlspecialchars($guideUrl, ENT_QUOTES, 'UTF-8') . '">';
+        }
+    }
+    if (stripos($html, 'llms.txt') === false && stripos($html, 'name="llms-txt"') === false) {
+        $llmsUrl = birkly_ai_presence_llms_txt_url() ?? '';
+        if ($llmsUrl !== '') {
+            $additions .= "\n    " . '<link rel="describedby" type="text/markdown" title="llms.txt" href="'
+                . htmlspecialchars($llmsUrl, ENT_QUOTES, 'UTF-8') . '">';
+            $additions .= "\n    " . '<meta name="llms-txt" content="'
+                . htmlspecialchars($llmsUrl, ENT_QUOTES, 'UTF-8') . '">';
+        }
+    }
+    if (stripos($html, 'application/ld+json') === false || stripos($html, '"Agent Guide"') === false) {
+        $jsonLd = birkly_ai_presence_discovery_json_ld();
+        if ($jsonLd !== null) {
+            $additions .= "\n    " . $jsonLd;
+        }
+    }
+
+    if ($additions === '') {
+        return $html;
+    }
+
+    if (preg_match('/<head[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+        $pos = $m[0][1] + strlen($m[0][0]);
+        return substr($html, 0, $pos) . $additions . substr($html, $pos);
+    }
+
+    return $html;
+}
+
+/**
+ * Append LLMS robots.txt directive when Agent Guide is published (proposed convention).
+ */
+function birkly_ai_presence_robots_txt_augment(string $body): string
+{
+    if (!birkly_ai_presence_is_publicly_live()) {
+        return $body;
+    }
+    if (stripos($body, 'LLMS:') !== false) {
+        return $body;
+    }
+
+    $llmsUrl = birkly_ai_presence_llms_txt_url();
+    if ($llmsUrl === null) {
+        return $body;
+    }
+
+    $guideUrl = (string) (birkly_ai_presence_public_urls()['well_known_url'] ?? '');
+    $append = "\n\n# Agent Guide — AI discovery (appended when Agent Guide is published)\n";
+    $append .= 'LLMS: ' . $llmsUrl . '; type=summary' . "\n";
+    if ($guideUrl !== '') {
+        $append .= '# Agent Guide JSON: ' . $guideUrl . "\n";
+    }
+
+    return rtrim($body) . $append;
+}
+
+/**
  * @return list<array<string, mixed>>
  */
 function birkly_ai_presence_staleness(?array $draft = null): array
