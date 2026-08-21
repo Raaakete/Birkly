@@ -292,10 +292,73 @@ try {
     );
 
     require_once dirname(__DIR__) . '/core/project_site.php';
+    $demoIndex = birkly_public_site_path() . '/index.html';
+    $demoIndexExisted = is_file($demoIndex);
+    $demoIndexBackup = $demoIndexExisted ? (string) file_get_contents($demoIndex) : null;
+    file_put_contents($demoIndex, '<!doctype html><title>Birkly - Demo Website</title>');
     assert_true(
         'bundled demo site detected',
         birkly_project_is_bundled_demo_site() === true
     );
+    if ($demoIndexBackup !== null) {
+        file_put_contents($demoIndex, $demoIndexBackup);
+    } elseif (is_file($demoIndex)) {
+        unlink($demoIndex);
+    }
+
+    echo "\n[repair bundled demo + redirects]\n";
+    $demoIndex = birkly_public_site_path() . '/index.html';
+    $demoStyles = birkly_public_site_path() . '/styles.css';
+    @mkdir(dirname($demoIndex), 0755, true);
+    file_put_contents($demoIndex, '<!doctype html><title>Birkly - Demo Website</title>');
+    file_put_contents($demoStyles, '/* Modern Demo Website Styles */');
+    $bundledRepair = birkly_project_repair_bundled_demo_site(true);
+    assert_true('repair removes bundled demo html', !is_file($demoIndex));
+    assert_true('repair removes bundled demo css', !is_file($demoStyles));
+    assert_true('repair reports bundled demo files', ($bundledRepair['changed'] ?? false) === true);
+
+    $redirectsFile = birkly_redirects_settings_path();
+    $redirectsBackup = is_readable($redirectsFile) ? file_get_contents($redirectsFile) : null;
+    hosting_test_write([
+        'schema_version' => 2,
+        'cms_base_url' => 'https://site.example.com',
+        'cms_host_aliases' => ['www.site.example.com'],
+        'public_site_mode' => 'project',
+        'public_site_url' => 'https://site.example.com',
+        'public_host_aliases' => [],
+        'same_host_landing' => 'admin',
+        'strict_admin_host' => true,
+    ]);
+    file_put_contents($redirectsFile, json_encode([[
+        'id' => 'bad-project-redirect',
+        'from_path' => '/project',
+        'to_path' => 'https://www.site.example.com/project',
+        'type' => 301,
+        'enabled' => true,
+    ]], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    require_once dirname(__DIR__) . '/core/hosting_redirects.php';
+    assert_true('detect harmful /project redirect', count(birkly_hosting_harmful_project_redirects()) === 1);
+    $redirectRepair = birkly_hosting_repair_harmful_redirects(true);
+    assert_true('repair disables harmful redirect', ($redirectRepair['changed'] ?? false) === true);
+    $redirectRules = birkly_load_redirects();
+    assert_true('redirect rule disabled', ($redirectRules[0]['enabled'] ?? true) === false);
+    if ($redirectsBackup !== null) {
+        file_put_contents($redirectsFile, $redirectsBackup);
+    } elseif (is_file($redirectsFile)) {
+        unlink($redirectsFile);
+    }
+
+    echo "\n[repair SSR cache]\n";
+    require_once dirname(__DIR__) . '/core/project_ssr.php';
+    $cacheDir = birkly_project_ssr_cache_dir();
+    if (!is_dir($cacheDir)) {
+        mkdir($cacheDir, 0755, true);
+    }
+    $cacheMarker = $cacheDir . '/repair-test.html';
+    file_put_contents($cacheMarker, '<html>stale</html>');
+    $repair = birkly_hosting_repair_delivery(true, false);
+    assert_true('repair clears SSR cache', !is_file($cacheMarker));
+    assert_true('repair reports SSR invalidation', ($repair['ssr_invalidated'] ?? false) === true);
 } finally {
     birkly_hosting_reset_cache();
     if ($backup !== null) {

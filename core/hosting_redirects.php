@@ -74,6 +74,81 @@ function birkly_hosting_match_redirect(string $uri): ?array
 }
 
 /**
+ * Redirect rules that send /project visitors to a CMS alias host break same-host delivery.
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_hosting_harmful_project_redirects(): array
+{
+    require_once __DIR__ . '/hosting_urls.php';
+    $config = birkly_hosting_load();
+    $cmsAliases = birkly_hosting_cms_alias_hosts($config);
+    if ($cmsAliases === []) {
+        return [];
+    }
+
+    $bad = [];
+    foreach (birkly_load_redirects() as $rule) {
+        if (empty($rule['enabled'])) {
+            continue;
+        }
+        $from = birkly_normalize_redirect_path((string) ($rule['from_path'] ?? ''));
+        if ($from !== '/project' && $from !== '/project/') {
+            continue;
+        }
+        $to = trim((string) ($rule['to_path'] ?? ''));
+        if (!preg_match('#^https?://#i', $to)) {
+            continue;
+        }
+        $host = birkly_normalize_host((string) parse_url($to, PHP_URL_HOST));
+        if ($host !== '' && in_array($host, $cmsAliases, true)) {
+            $bad[] = $rule;
+        }
+    }
+
+    return $bad;
+}
+
+/**
+ * Disable redirects that send /project to a CMS-only alias (e.g. www → admin host).
+ *
+ * @return array{changed: bool, rules: list<string>}
+ */
+function birkly_hosting_repair_harmful_redirects(bool $persist = true): array
+{
+    $harmful = birkly_hosting_harmful_project_redirects();
+    if ($harmful === []) {
+        return ['changed' => false, 'rules' => []];
+    }
+
+    $disabled = [];
+    $redirects = birkly_load_redirects();
+    foreach ($redirects as $index => $rule) {
+        foreach ($harmful as $badRule) {
+            if (($rule['id'] ?? null) !== ($badRule['id'] ?? null)) {
+                continue;
+            }
+            if ($persist) {
+                $redirects[$index]['enabled'] = false;
+            }
+            $disabled[] = birkly_normalize_redirect_path((string) ($rule['from_path'] ?? ''))
+                . ' → ' . trim((string) ($rule['to_path'] ?? ''));
+            break;
+        }
+    }
+
+    if ($persist && $disabled !== []) {
+        $path = birkly_redirects_settings_path();
+        file_put_contents(
+            $path,
+            json_encode(array_values($redirects), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n"
+        );
+    }
+
+    return ['changed' => $disabled !== [], 'rules' => $disabled];
+}
+
+/**
  * Apply redirect rule when matched. Returns true when handled.
  */
 function birkly_hosting_apply_redirect(string $uri): bool
