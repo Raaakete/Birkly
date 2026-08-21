@@ -777,6 +777,8 @@ function birkly_ai_presence_publish(): array
 
     birkly_ai_presence_write_public_exports($snapshot, $version, $now);
 
+    birkly_ai_presence_invalidate_project_ssr_cache();
+
     return ['ok' => true, 'version' => $version];
 }
 
@@ -806,7 +808,24 @@ function birkly_ai_presence_unpublish(): array
 
     birkly_ai_presence_remove_public_exports();
 
+    birkly_ai_presence_invalidate_project_ssr_cache();
+
     return ['ok' => true];
+}
+
+/**
+ * Bust SSR HTML cache when Agent Guide publish state affects page injections.
+ */
+function birkly_ai_presence_invalidate_project_ssr_cache(): void
+{
+    $ssr = __DIR__ . '/project_ssr.php';
+    if (!is_file($ssr)) {
+        return;
+    }
+    require_once $ssr;
+    if (function_exists('birkly_project_ssr_invalidate_all')) {
+        birkly_project_ssr_invalidate_all();
+    }
 }
 
 function birkly_ai_presence_remove_public_exports(): void
