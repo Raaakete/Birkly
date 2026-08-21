@@ -2,9 +2,9 @@
    Birkly Admin — Auth shell (login + 2FA verify) — P56
    ============================================
 
-   Serves admin/login.php and admin/verify-2fa.php. Both pages bypass
-   layout_head.php, so they link style.css directly and get this file
-   through the Pages import block.
+   Serves admin/login.php, admin/verify-2fa.php, and invite.php. Login and
+   verify bypass layout_head.php; invite.php links style.css directly and uses
+   the same auth shell.
 
      <body class="auth-page">
        <main class="auth-shell u-stack-4">
@@ -100,4 +100,34 @@ body.auth-page {
 .auth-footer a:hover {
   color: var(--text-link-hover);
   text-decoration: underline;
+}
+
+.auth-invite-meta {
+  margin: 0;
+}
+
+.auth-invite-details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.auth-invite-detail {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.auth-invite-detail dt {
+  margin: 0;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.auth-invite-detail dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
 }
