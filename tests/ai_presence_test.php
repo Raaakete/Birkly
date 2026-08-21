@@ -52,7 +52,9 @@ $routes = birkly_http_route_map();
 assert_true(isset($routes['/.well-known/brand-context.json']), 'legacy well-known route registered');
 assert_true(isset($routes['/.well-known/agent-guide.json']), 'agent guide well-known route registered');
 assert_true(isset($routes['/llms.txt']), 'llms.txt route registered');
+assert_true(isset($routes['/for-agents']), 'for-agents route registered');
 assert_true(is_readable($root . '/api/llms_txt.php'), 'llms.txt handler exists');
+assert_true(is_readable($root . '/api/for_agents.php'), 'for-agents handler exists');
 
 echo "==> Admin template\n";
 assert_true(is_readable($root . '/admin/templates/ai-presence.html'), 'admin template exists');
@@ -78,6 +80,7 @@ $htmlSample = "<!DOCTYPE html><html><head></head><body><p>hi</p></body></html>";
 $guideHtml = birkly_project_ssr_inject_webmcp($htmlSample);
 assert_true(stripos($guideHtml, 'agent-guide.json') !== false, 'SSR injects agent guide discovery when live');
 assert_true(stripos($guideHtml, 'llms.txt') !== false, 'SSR injects llms.txt discovery when live');
+assert_true(stripos($guideHtml, 'Published Agent Guide') !== false, 'SSR injects visible Agent Guide body block');
 birkly_ai_presence_unpublish();
 $offGuideHtml = birkly_project_ssr_inject_webmcp($htmlSample);
 assert_true(stripos($offGuideHtml, 'llms.txt') === false, 'SSR skips discovery when guide unpublished');
@@ -103,6 +106,10 @@ assert_true(stripos($withDiscovery, 'agent-guide.json') !== false, 'discovery in
 assert_true(stripos($withDiscovery, 'llms.txt') !== false, 'discovery injects llms.txt link');
 assert_true(stripos($withDiscovery, 'rel="describedby"') !== false, 'discovery injects describedby link');
 assert_true(stripos($withDiscovery, 'application/ld+json') !== false, 'discovery injects JSON-LD');
+assert_true(stripos($withDiscovery, 'data-birkly-agent-guide="published"') !== false, 'discovery injects visible body block');
+assert_true(stripos($withDiscovery, 'Supported claims') !== false, 'body block lists supported claims');
+$forAgentsHtml = birkly_ai_presence_for_agents_html();
+assert_true(is_string($forAgentsHtml) && stripos($forAgentsHtml, 'birkly-agent-guide-public') !== false, 'for-agents HTML page renders');
 $llmsUrl = birkly_ai_presence_llms_txt_url();
 assert_true(is_string($llmsUrl) && str_ends_with($llmsUrl, '/llms.txt'), 'llms.txt URL resolves');
 $robots = birkly_ai_presence_robots_txt_augment("User-agent: *\nAllow: /\n");

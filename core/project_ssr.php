@@ -755,7 +755,8 @@ function birkly_project_ssr_inject_signature(): string
     $meta = birkly_ai_presence_load_meta();
     $wm = birkly_webmcp_is_enabled() ? '1' : '0';
     $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
-    return 'wm' . $wm . 'g' . $guide;
+    $ver = (int) ($meta['published_version'] ?? 0);
+    return 'wm' . $wm . 'g' . $guide . 'v' . $ver;
 }
 
 /**
