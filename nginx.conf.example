@@ -15,6 +15,19 @@ server {
         try_files $uri $uri/ /index.php?$query_string;
     }
 
+    # Same-host project sites: route /project/ and project HTML through PHP (SSR + client).
+    location = /project/ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+    }
+
+    location ~ ^/project/.+\.html$ {
+        include fastcgi_params;
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $document_root/index.php;
+    }
+
     location ~ ^/(api|admin|media)/ {
         try_files $uri =404;
     }
