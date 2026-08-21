@@ -13,16 +13,18 @@ foreach (($onboardingData['checklist'] ?? []) as $checklistItem) {
 $showOnboarding = $wizardDone && !$fullyComplete && empty($onboardingData['skipped']) && $hasIncompleteChecklist && empty($onboardingData['checklist_hidden']);
 $isFirstTime = !empty($onboardingData['is_first_time']) && !$fullyComplete;
 $isLocalDev = !empty($is_local_dev);
+$showWelcomeModal = !empty($onboardingData['show_welcome_modal']);
+$isInvitedUser = !empty($onboardingData['invited_user']);
 ?>
-<div class="modal" id="onboarding-complete-modal">
+<div class="modal" id="onboarding-complete-modal" data-show-welcome="<?= $showWelcomeModal ? '1' : '0' ?>">
     <div class="modal-backdrop"></div>
     <div class="modal-content modal--lg">
         <div class="modal-header">
-            <h2 class="modal-title"><?= __('admin.you_are_all_set') ?></h2>
+            <h2 class="modal-title"><?= $isInvitedUser ? __('admin.welcome_to_birkly_exclamation') : __('admin.you_are_all_set') ?></h2>
             <button class="modal-close" id="onboarding-complete-close" aria-label="<?= __('admin.close') ?>">×</button>
         </div>
         <div class="modal-body">
-            <p class="modal-intro-text"><?= __('admin.birkly_ready_message') ?></p>
+            <p class="modal-intro-text"><?= $isInvitedUser ? __('admin.welcome_invited_message') : __('admin.birkly_ready_message') ?></p>
             <div class="u-grid-2">
                 <div class="card card--sunken">
                     <div class="card-body u-stack-2">
@@ -31,11 +33,12 @@ $isLocalDev = !empty($is_local_dev);
                         <a href="<?= admin_url('content') ?>" class="btn btn-primary btn-sm u-self-start u-mt-auto"><?= __('admin.go_to_content') ?></a>
                     </div>
                 </div>
-                <div class="card card--sunken" id="onboarding-complete-ai-card">
+                <div class="card card--sunken onboarding-welcome-ai-highlight" id="onboarding-complete-ai-card">
                     <div class="card-body u-stack-2">
+                        <span class="badge badge-info onboarding-welcome-ai-badge"><?= __('admin.recommended') ?></span>
                         <h3><?= __('admin.connect_ai_assistant') ?></h3>
                         <p class="u-text-sm u-fg-secondary" id="onboarding-complete-ai-copy"><?= $isLocalDev ? __('admin.ai_connect_after_deploy_hint') : __('admin.ai_connect_modal_hint') ?></p>
-                        <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm u-self-start u-mt-auto"><?= __('admin.ai_settings') ?></a>
+                        <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-primary btn-sm u-self-start u-mt-auto"><?= __('admin.ai_settings') ?></a>
                     </div>
                 </div>
                 <div class="card card--sunken" id="onboarding-complete-demo-card" hidden>

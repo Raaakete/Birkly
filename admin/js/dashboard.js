@@ -850,14 +850,25 @@
 
     function setupOnboardingHandlers() {
         const modal = document.getElementById('onboarding-complete-modal');
-        // layout_footer.php also opens/closes this modal via inline display, so
-        // the inline style stays authoritative here.
-        const close = () => { if (modal) modal.style.display = 'none'; };
+        const close = async () => {
+            if (modal) modal.style.display = 'none';
+            if (modal?.dataset?.showWelcome === '1') {
+                await postOnboardingAction('dismiss_welcome_modal', {});
+                modal.dataset.showWelcome = '0';
+            }
+            const url = new URL(window.location.href);
+            url.searchParams.delete('demo_website_url');
+            url.searchParams.delete('starter_template');
+            url.searchParams.delete('onboarding_complete');
+            window.history.replaceState({}, '', url);
+        };
         document.getElementById('onboarding-complete-close')?.addEventListener('click', close);
         document.getElementById('onboarding-complete-close-btn')?.addEventListener('click', close);
 
         const params = new URLSearchParams(window.location.search);
-        if (params.get('onboarding_complete') === 'true' && modal) {
+        const shouldShowWelcome = modal?.dataset?.showWelcome === '1'
+            || params.get('onboarding_complete') === 'true';
+        if (shouldShowWelcome && modal) {
             modal.style.display = 'flex';
             const demoUrl = params.get('demo_website_url');
             const demoCard = document.getElementById('onboarding-complete-demo-card');
