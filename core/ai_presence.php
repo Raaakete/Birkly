@@ -730,14 +730,21 @@ function birkly_ai_presence_publish(): array
     if (!isset($draft['publication_settings']) || !is_array($draft['publication_settings'])) {
         $draft['publication_settings'] = [];
     }
+    $enabledChanged = false;
     if (empty($draft['publication_settings']['enabled'])) {
         $draft['publication_settings']['enabled'] = true;
-        birkly_ai_presence_save_draft($draft);
+        $enabledChanged = true;
     }
 
     $errors = birkly_ai_presence_validate($draft);
     if ($errors !== []) {
         return ['ok' => false, 'errors' => $errors];
+    }
+
+    if ($enabledChanged) {
+        if (!birkly_ai_presence_save_draft($draft)) {
+            return ['ok' => false, 'errors' => ['Failed to save draft before publish']];
+        }
     }
 
     birkly_ai_presence_ensure_dir();
