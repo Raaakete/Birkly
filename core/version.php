@@ -533,7 +533,7 @@ class BirklyVersion {
                 return ['error' => 'CMS files not found in update package'];
             }
             
-            // Move files to CMS root (excluding sensitive files)
+            // Move files to CMS root (excluding user/site data — same policy as release manifest)
             $excludeFiles = [
                 'users/',
                 'content/',
@@ -541,6 +541,7 @@ class BirklyVersion {
                 'logs/',
                 'settings/',
                 'backups/',
+                'project/',
                 '.env',
                 'config.php'
             ];

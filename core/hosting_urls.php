@@ -560,13 +560,45 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         $changed = true;
     }
 
+    $bundledDemoRepair = birkly_project_repair_bundled_demo_site($persist);
+    if ($bundledDemoRepair['changed']) {
+        $changed = true;
+    }
+
+    require_once __DIR__ . '/hosting_redirects.php';
+    $redirectRepair = birkly_hosting_repair_harmful_redirects($persist);
+    if ($redirectRepair['changed']) {
+        $changed = true;
+    }
+
     $pathRepair = birkly_project_repair_legacy_paths($persist);
     if ($pathRepair['changed']) {
         $changed = true;
     }
 
+    $ssrInvalidated = false;
+    if ($persist) {
+        require_once __DIR__ . '/project_ssr.php';
+        birkly_project_ssr_invalidate_all();
+        $ssrInvalidated = true;
+    }
+
     if (!$changed) {
         $hint = birkly_hosting_repair_noop_hint();
+        if ($ssrInvalidated) {
+            return [
+                'status' => 'ok',
+                'message' => ($hint !== '' ? $hint . ' ' : '')
+                    . 'SSR cache cleared so project/ pages serve the current files on disk.',
+                'changed' => true,
+                'config' => $config,
+                'path_repair' => $pathRepair,
+                'demo_repair' => $demoRepair,
+                'bundled_demo_repair' => $bundledDemoRepair,
+                'redirect_repair' => $redirectRepair,
+                'ssr_invalidated' => true,
+            ];
+        }
         return [
             'status' => 'ok',
             'message' => $hint !== '' ? $hint : 'Delivery config is already up to date.',
@@ -574,6 +606,8 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             'config' => $config,
             'path_repair' => $pathRepair,
             'demo_repair' => $demoRepair,
+            'bundled_demo_repair' => $bundledDemoRepair,
+            'redirect_repair' => $redirectRepair,
         ];
     }
 
@@ -601,9 +635,20 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
             $messages[] = 'Removed legacy demo-website/ folder';
         }
     }
+    if ($bundledDemoRepair['changed']) {
+        $count = count($bundledDemoRepair['files'] ?? []);
+        $messages[] = 'Removed default Birkly demo site from project/ (' . $count . ' file' . ($count === 1 ? '' : 's') . ')';
+    }
+    if ($redirectRepair['changed']) {
+        $messages[] = 'Disabled redirect' . (count($redirectRepair['rules'] ?? []) === 1 ? '' : 's')
+            . ' that sent /project to a CMS alias host';
+    }
     if ($pathRepair['changed']) {
         $count = count($pathRepair['files'] ?? []);
         $messages[] = 'Updated /project/ paths in ' . $count . ' HTML file' . ($count === 1 ? '' : 's');
+    }
+    if ($ssrInvalidated) {
+        $messages[] = 'Cleared SSR cache';
     }
 
     $summary = $messages !== [] ? implode('. ', $messages) . '.' : 'Delivery repaired.';
@@ -651,6 +696,9 @@ function birkly_hosting_repair_delivery(bool $persist = true, bool $syncDomains 
         'config' => birkly_hosting_load(),
         'path_repair' => $pathRepair,
         'demo_repair' => $demoRepair,
+        'bundled_demo_repair' => $bundledDemoRepair,
+        'redirect_repair' => $redirectRepair,
+        'ssr_invalidated' => $ssrInvalidated,
     ];
 }
 
