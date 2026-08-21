@@ -142,6 +142,8 @@ assert_true(strpos($client, 'llms.txt') !== false, 'client references llms.txt i
 assert_true(strpos($client, 'enhanceAgentGuideFromCms') !== false, 'client fetches Agent Guide summary from CMS');
 assert_true(strpos($client, 'for-agents') !== false, 'client links for-agents sidecar');
 assert_true(strpos($client, 'injectAgentGuidePageHint') === false, 'client does not inject page body Agent Guide hint');
+assert_true(strpos($client, 'injectAgentGuideFooterLink') !== false, 'client injects Agent Guide footer link');
+assert_true(strpos($client, 'data-birkly-agent-guide="footer-link"') !== false, 'client footer link marker');
 
 echo "==> Runtime stamps allowlisted forms + listens for late footer forms\n";
 assert_true(strpos($js, 'stampAllowlistedForms') !== false, 'runtime stamps toolname/tooldescription on allowlisted forms');

@@ -187,7 +187,7 @@
         "ag_tools_verify_step1": "Use Chrome 146+ and open chrome://flags/#enable-webmcp-testing to enable WebMCP testing.",
         "ag_tools_verify_step2": "Open a page on your site that has tools turned on. Confirm forms show toolname/tooldescription in Inspect.",
         "ag_tools_verify_step3": "In DevTools → Lighthouse, run Agentic Browsing (or check the model-context inspector) to see the registered tools.",
-        "ag_publish_guide_project_note": "Published automatically on your public site — /.well-known/agent-guide.json, /llms.txt, and /for-agents. No download or upload needed.",
+        "ag_publish_guide_project_note": "Published automatically on your public site — /.well-known/agent-guide.json, /llms.txt, /for-agents, plus a For agents link in your page footer. No download or upload needed.",
         "ag_publish_guide_none_note": "No site delivery is set up yet. Choose how your site is delivered in Settings → Site delivery, then come back to publish.",
         "ag_publish_option1_title": "1. Birkly client snippet (recommended)",
         "ag_publish_option1_help": "Paste the snippet on every page. It loads templates and automatically publishes Agent Guide discovery for chat/search AIs at your Birkly URL — /.well-known/agent-guide.json, /llms.txt, and /for-agents.",
