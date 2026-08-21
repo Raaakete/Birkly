@@ -12,6 +12,31 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 header('Content-Type: application/json');
 
+/**
+ * @param array<string, mixed> $payload
+ */
+function birkly_ai_presence_api_json_response(array $payload, int $code = 200): void
+{
+    if ($code !== 200) {
+        http_response_code($code);
+    }
+    $flags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+    if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+        $flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+    }
+    $json = json_encode($payload, $flags);
+    if ($json === false) {
+        error_log('ai_presence API json_encode failed: ' . json_last_error_msg());
+        http_response_code(500);
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Server failed to encode response. Check Agent Guide content for invalid data.',
+        ]);
+        exit;
+    }
+    echo $json;
+}
+
 require_once 'session.php';
 haru_secure_session_start();
 
@@ -156,8 +181,11 @@ if ($action === 'save_draft') {
         $partial = $input['draft'] ?? $input;
         unset($partial['action'], $partial['_csrf']);
         $merged = birkly_ai_presence_merge_draft(is_array($partial) ? $partial : []);
-        birkly_ai_presence_save_draft($merged);
-        echo json_encode([
+        if (!birkly_ai_presence_save_draft($merged)) {
+            birkly_ai_presence_api_json_response(['status' => 'error', 'message' => 'Failed to write draft file']);
+            exit;
+        }
+        birkly_ai_presence_api_json_response([
             'status' => 'ok',
             'data' => [
                 'draft' => $merged,
@@ -165,25 +193,38 @@ if ($action === 'save_draft') {
             ],
         ]);
     } catch (InvalidArgumentException $e) {
-        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        birkly_ai_presence_api_json_response(['status' => 'error', 'message' => $e->getMessage()]);
+    } catch (Throwable $e) {
+        error_log('ai_presence save_draft failed: ' . $e->getMessage());
+        birkly_ai_presence_api_json_response(['status' => 'error', 'message' => 'Save failed: ' . $e->getMessage()], 500);
     }
     exit;
 }
 
 if ($action === 'publish') {
-    $result = birkly_ai_presence_publish();
-    if (!$result['ok']) {
-        echo json_encode(['status' => 'error', 'message' => implode('; ', $result['errors'] ?? ['Publish failed'])]);
-        exit;
+    @set_time_limit(120);
+    try {
+        $result = birkly_ai_presence_publish();
+        if (!$result['ok']) {
+            birkly_ai_presence_api_json_response([
+                'status' => 'error',
+                'message' => implode('; ', $result['errors'] ?? ['Publish failed']),
+            ]);
+            exit;
+        }
+        birkly_ai_presence_api_json_response([
+            'status' => 'ok',
+            'data' => [
+                'version' => $result['version'],
+                'meta' => birkly_ai_presence_load_meta(),
+                'public_urls' => birkly_ai_presence_public_urls(),
+                'publish_state' => birkly_ai_presence_publish_state(),
+            ],
+        ]);
+    } catch (Throwable $e) {
+        error_log('ai_presence publish failed: ' . $e->getMessage());
+        birkly_ai_presence_api_json_response(['status' => 'error', 'message' => 'Publish failed: ' . $e->getMessage()], 500);
     }
-    echo json_encode([
-        'status' => 'ok',
-        'data' => [
-            'version' => $result['version'],
-            'meta' => birkly_ai_presence_load_meta(),
-            'public_urls' => birkly_ai_presence_public_urls(),
-        ],
-    ]);
     exit;
 }
 
