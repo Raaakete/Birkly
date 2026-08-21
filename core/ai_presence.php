@@ -1024,6 +1024,10 @@ function birkly_ai_presence_llms_txt_body(): ?string
     if ($guideUrl !== '') {
         $lines[] = '- [Agent Guide (JSON)](' . $guideUrl . ')';
     }
+    $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta);
+    if ($forAgentsUrl !== null && $forAgentsUrl !== '') {
+        $lines[] = '- [Agent Guide (HTML for visiting AIs)](' . $forAgentsUrl . ')';
+    }
     if ($cmsBase !== '' && $cmsBase !== $siteUrl) {
         $lines[] = '- [Birkly CMS](' . $cmsBase . ')';
     }
@@ -1223,7 +1227,7 @@ function birkly_ai_presence_discovery_head_snippet(?array $published = null, ?ar
 /**
  * Inject Agent Guide discovery tags into HTML `<head>` when the guide is live.
  */
-function birkly_ai_presence_inject_discovery_into_html(string $html): string
+function birkly_ai_presence_inject_discovery_head_into_html(string $html): string
 {
     $snippet = birkly_ai_presence_discovery_head_snippet();
     if ($snippet === '') {
@@ -1270,6 +1274,15 @@ function birkly_ai_presence_inject_discovery_into_html(string $html): string
 }
 
 /**
+ * Inject head + visible body Agent Guide discovery when the guide is live.
+ */
+function birkly_ai_presence_inject_discovery_into_html(string $html): string
+{
+    $html = birkly_ai_presence_inject_discovery_head_into_html($html);
+    return birkly_ai_presence_inject_discovery_body_into_html($html);
+}
+
+/**
  * Append LLMS robots.txt directive when Agent Guide is published (proposed convention).
  */
 function birkly_ai_presence_robots_txt_augment(string $body): string
@@ -1292,8 +1305,198 @@ function birkly_ai_presence_robots_txt_augment(string $body): string
     if ($guideUrl !== '') {
         $append .= '# Agent Guide JSON: ' . $guideUrl . "\n";
     }
+    $forAgentsUrl = birkly_ai_presence_for_agents_url();
+    if ($forAgentsUrl !== null) {
+        $append .= '# Agent Guide HTML: ' . $forAgentsUrl . "\n";
+    }
 
     return rtrim($body) . $append;
+}
+
+/**
+ * Visible HTML block with published Agent Guide facts for website-visiting agents.
+ */
+function birkly_ai_presence_discovery_body_snippet(?array $published = null, ?array $meta = null): string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return '';
+    }
+
+    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+    $name = trim((string) ($identity['official_name'] ?? ''));
+    if ($name === '') {
+        $name = 'This site';
+    }
+    $short = trim((string) ($identity['short_description'] ?? ''));
+    $full = trim((string) ($identity['full_description'] ?? $identity['what_we_do'] ?? ''));
+
+    $urls = birkly_ai_presence_public_urls();
+    $guideUrl = (string) ($urls['well_known_url'] ?? '');
+    $llmsUrl = birkly_ai_presence_llms_txt_url($published, $meta) ?? '';
+    $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta) ?? '';
+    $version = (int) ($meta['published_version'] ?? 0);
+
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    $lines = [];
+    $lines[] = '<section id="birkly-agent-guide-public" data-birkly-agent-guide="published" data-agent-guide-version="'
+        . $version . '" aria-label="Published Agent Guide for AI systems" class="birkly-agent-guide-public"';
+    $lines[] = ' style="margin:2rem auto 0;max-width:min(1720px,94vw);padding:1.25rem 1.5rem;border-top:1px solid #dde1da;font-size:14px;line-height:1.55;color:#5f6577;box-sizing:border-box;">';
+    $lines[] = '<h2 style="font-size:1rem;font-weight:600;color:#2aa69f;margin:0 0 0.75rem;">Published Agent Guide (for AI systems)</h2>';
+    $lines[] = '<p style="margin:0 0 0.75rem;">This public website publishes a Birkly <strong>Agent Guide</strong> with authoritative brand facts for AI assistants. Prefer the supported claims below and the linked JSON over guessing from marketing copy alone.</p>';
+
+    if ($short !== '') {
+        $lines[] = '<p style="margin:0 0 0.5rem;"><strong>' . $esc($name) . ':</strong> ' . $esc($short) . '</p>';
+    }
+    if ($full !== '' && $full !== $short) {
+        $lines[] = '<p style="margin:0 0 0.75rem;">' . $esc($full) . '</p>';
+    }
+
+    $claims = is_array($published['claims'] ?? null) ? $published['claims'] : [];
+    $claimLines = [];
+    foreach ($claims as $claim) {
+        if (!is_array($claim) || ($claim['status'] ?? '') !== 'supported') {
+            continue;
+        }
+        $statement = trim((string) ($claim['statement'] ?? ''));
+        if ($statement === '') {
+            continue;
+        }
+        $claimLines[] = '<li>' . $esc($statement) . '</li>';
+        if (count($claimLines) >= 8) {
+            break;
+        }
+    }
+    if ($claimLines !== []) {
+        $lines[] = '<h3 style="font-size:0.92rem;font-weight:600;margin:0.75rem 0 0.35rem;color:#3d4250;">Supported claims</h3>';
+        $lines[] = '<ul style="margin:0 0 0.75rem;padding-left:1.25rem;">' . implode('', $claimLines) . '</ul>';
+    }
+
+    $products = is_array($published['products_services'] ?? null) ? $published['products_services'] : [];
+    $productNames = [];
+    foreach ($products as $product) {
+        if (!is_array($product)) {
+            continue;
+        }
+        $title = trim((string) ($product['name'] ?? $product['title'] ?? ''));
+        if ($title !== '') {
+            $productNames[] = $esc($title);
+        }
+        if (count($productNames) >= 8) {
+            break;
+        }
+    }
+    if ($productNames !== []) {
+        $lines[] = '<h3 style="font-size:0.92rem;font-weight:600;margin:0.75rem 0 0.35rem;color:#3d4250;">Products and services</h3>';
+        $lines[] = '<p style="margin:0 0 0.75rem;">' . implode(' · ', $productNames) . '</p>';
+    }
+
+    $linkParts = [];
+    if ($guideUrl !== '') {
+        $linkParts[] = '<a href="' . $esc($guideUrl) . '">Agent Guide JSON</a>';
+    }
+    if ($llmsUrl !== '') {
+        $linkParts[] = '<a href="' . $esc($llmsUrl) . '">llms.txt</a>';
+    }
+    if ($forAgentsUrl !== '') {
+        $linkParts[] = '<a href="' . $esc($forAgentsUrl) . '">For agents (HTML)</a>';
+    }
+    if ($linkParts !== []) {
+        $lines[] = '<p style="margin:0;font-family:monospace;font-size:13px;">Machine-readable: ' . implode(' · ', $linkParts) . '</p>';
+    }
+
+    $lines[] = '</section>';
+
+    return "\n" . implode("\n", $lines) . "\n";
+}
+
+function birkly_ai_presence_for_agents_url(?array $published = null, ?array $meta = null): ?string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
+
+    $urls = birkly_ai_presence_public_urls();
+    $base = rtrim((string) ($urls['public_site_base'] ?? ''), '/');
+    if ($base === '') {
+        $base = rtrim((string) ($urls['cms_base_url'] ?? ''), '/');
+    }
+
+    return $base !== '' ? $base . '/for-agents' : null;
+}
+
+function birkly_ai_presence_for_agents_html(): ?string
+{
+    $meta = birkly_ai_presence_load_meta();
+    $published = birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
+
+    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+    $name = trim((string) ($identity['official_name'] ?? 'Site'));
+    $bodyBlock = birkly_ai_presence_discovery_body_snippet($published, $meta);
+    if ($bodyBlock === '') {
+        return null;
+    }
+
+    $urls = birkly_ai_presence_public_urls();
+    $guideUrl = (string) ($urls['well_known_url'] ?? '');
+    $llmsUrl = birkly_ai_presence_llms_txt_url($published, $meta) ?? '';
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    $title = $esc($name) . ' — Agent Guide (public)';
+    $desc = trim((string) ($identity['short_description'] ?? ''));
+    if ($desc === '') {
+        $desc = 'Published Agent Guide for AI systems.';
+    }
+
+    $head = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        . '<title>' . $title . '</title>'
+        . '<meta name="description" content="' . $esc($desc) . '">'
+        . '<meta name="robots" content="index, follow">';
+    if ($guideUrl !== '') {
+        $head .= '<link rel="alternate" type="application/json" title="Agent Guide" href="' . $esc($guideUrl) . '">';
+        $head .= '<meta name="agent-guide" content="' . $esc($guideUrl) . '">';
+    }
+    if ($llmsUrl !== '') {
+        $head .= '<link rel="describedby" type="text/markdown" title="llms.txt" href="' . $esc($llmsUrl) . '">';
+        $head .= '<meta name="llms-txt" content="' . $esc($llmsUrl) . '">';
+    }
+    $jsonLd = birkly_ai_presence_discovery_json_ld($published, $meta);
+    if ($jsonLd !== null) {
+        $head .= $jsonLd;
+    }
+    $head .= '</head><body style="font-family:system-ui,sans-serif;margin:0;padding:2rem;background:#f8f9f7;color:#3d4250;">'
+        . '<main style="max-width:720px;margin:0 auto;">'
+        . '<p style="font-size:14px;color:#5f6577;margin:0 0 1rem;">Public Agent Guide summary for AI assistants visiting '
+        . $esc($name) . ' (published version ' . (int) ($meta['published_version'] ?? 0) . ').</p>';
+
+    return $head . $bodyBlock . '</main></body></html>';
+}
+
+function birkly_ai_presence_inject_discovery_body_into_html(string $html): string
+{
+    if (stripos($html, 'data-birkly-agent-guide="published"') !== false
+        || stripos($html, 'id="birkly-agent-guide-public"') !== false) {
+        return $html;
+    }
+
+    $snippet = birkly_ai_presence_discovery_body_snippet();
+    if ($snippet === '') {
+        return $html;
+    }
+
+    if (stripos($html, '</body>') !== false) {
+        return preg_replace('/<\/body>/i', $snippet . '</body>', $html, 1) ?? $html;
+    }
+
+    return $html . $snippet;
 }
 
 /**
