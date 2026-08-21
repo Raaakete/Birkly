@@ -4249,6 +4249,21 @@
         document.body.appendChild(selector);
     }
     
+    function resolveAgentGuidePublicUrls(cms) {
+        var cmsBase = (cms || '').replace(/\/$/, '');
+        var publicBase = (window.location.origin || '').replace(/\/$/, '');
+        var onProjectSite = !!document.querySelector('meta[name="birkly-ssr"]')
+            || !!document.querySelector('birkly-footer')
+            || !!document.querySelector('birkly-header');
+        var base = onProjectSite ? publicBase : cmsBase;
+        return {
+            guide: base + '/.well-known/agent-guide.json',
+            llms: base + '/llms.txt',
+            for_agents: base + '/for-agents',
+            api: cmsBase + '/api/public/ai_presence.php?action=guide&view=summary'
+        };
+    }
+
     function emitGuideDiscovery() {
         try {
             // Only for external embeds (explicit data-cms-url on the client tag).
@@ -4256,10 +4271,11 @@
             if (!tag) return;
             var cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
             if (!cms) return;
+            var urls = resolveAgentGuidePublicUrls(cms);
             var head = document.head || document.documentElement;
-            var guideUrl = cms + '/.well-known/agent-guide.json';
-            var llmsUrl = cms + '/llms.txt';
-            var forAgentsUrl = cms + '/for-agents';
+            var guideUrl = urls.guide;
+            var llmsUrl = urls.llms;
+            var forAgentsUrl = urls.for_agents;
             if (!document.querySelector('link[rel="alternate"][href*="agent-guide.json"]')) {
                 var guideLink = document.createElement('link');
                 guideLink.rel = 'alternate';
@@ -4304,12 +4320,15 @@
 
         emitGuideDiscovery();
 
-        var guideUrl = cms + '/.well-known/agent-guide.json';
-        var llmsUrl = cms + '/llms.txt';
-        var forAgentsUrl = cms + '/for-agents';
+        var urls = resolveAgentGuidePublicUrls(cms);
+        var guideUrl = urls.guide;
+        var llmsUrl = urls.llms;
+        var forAgentsUrl = urls.for_agents;
+
+        injectAgentGuideFooterLink(forAgentsUrl);
 
         try {
-            var res = await fetch(cms + '/api/public/ai_presence.php?action=guide&view=summary', {
+            var res = await fetch(urls.api, {
                 credentials: 'omit',
                 headers: { Accept: 'application/json' }
             });
@@ -4350,29 +4369,54 @@
                     guide: guideUrl,
                     llms: llmsUrl,
                     for_agents: forAgentsUrl,
-                    api: cms + '/api/public/ai_presence.php?action=guide&view=summary'
+                    api: urls.api
                 }
             };
-
-            injectAgentGuideFooterLink(forAgentsUrl);
         } catch (e) { /* non-fatal */ }
     }
 
     function injectAgentGuideFooterLink(forAgentsUrl) {
-        try {
-            if (!forAgentsUrl || document.querySelector('[data-birkly-agent-guide="footer-link"]')) return;
-            var footer = document.querySelector('footer')
-                || (document.querySelector('birkly-footer') && document.querySelector('birkly-footer footer'))
-                || document.querySelector('birkly-footer');
-            if (!footer) return;
-            var link = document.createElement('a');
-            link.href = forAgentsUrl;
-            link.rel = 'help';
-            link.setAttribute('data-birkly-agent-guide', 'footer-link');
-            link.title = 'Agent Guide for AI systems';
-            link.textContent = 'For agents';
-            footer.appendChild(link);
-        } catch (e) { /* non-fatal */ }
+        if (!forAgentsUrl) return;
+
+        function tryInject() {
+            try {
+                if (document.querySelector('[data-birkly-agent-guide="footer-link"]')) return true;
+                var footer = document.querySelector('footer');
+                if (!footer) return false;
+
+                var nav = footer.querySelector('nav[aria-label="Footer navigation"]');
+                var target = nav && nav.lastElementChild ? nav.lastElementChild : footer;
+                var sample = target.querySelector('a[href]') || footer.querySelector('a[href]');
+
+                var link = document.createElement('a');
+                link.href = forAgentsUrl;
+                link.rel = 'help';
+                link.setAttribute('data-birkly-agent-guide', 'footer-link');
+                link.title = 'Agent Guide for AI systems';
+                link.textContent = 'For agents';
+                if (sample && sample.getAttribute('style')) {
+                    link.setAttribute('style', sample.getAttribute('style'));
+                }
+
+                target.appendChild(link);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        if (tryInject()) return;
+
+        function schedule() { tryInject(); }
+
+        document.addEventListener('birkly:footer-forms-ready', schedule);
+        document.addEventListener('birkly:region-processed', schedule);
+        document.addEventListener('birkly:templates-processed', schedule);
+
+        var tries = 0;
+        var timer = setInterval(function () {
+            if (tryInject() || ++tries > 120) clearInterval(timer);
+        }, 100);
     }
 
     async function init() {
@@ -4385,6 +4429,10 @@
 
         // External sites: auto-deliver Agent Guide discovery + summary from CMS (no upload/proxy).
         enhanceAgentGuideFromCms();
+
+        if (document.querySelector('meta[name="birkly-ssr"]')) {
+            injectAgentGuideFooterLink((window.location.origin || '').replace(/\/$/, '') + '/for-agents');
+        }
 
         // Create language selector
         createLanguageSelector();
