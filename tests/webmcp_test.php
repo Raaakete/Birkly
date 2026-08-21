@@ -137,6 +137,8 @@ assert_true(strpos($client, 'birklyFormToolAttrs') !== false, 'client defines bi
 assert_true(strpos($client, 'toolname="') !== false, 'client emits declarative toolname attribute');
 assert_true(strpos($client, 'tooldescription="') !== false, 'client emits declarative tooldescription attribute');
 assert_true(strpos($client, "'birkly_form_'") !== false, 'client tool name matches runtime derived name');
+assert_true(strpos($client, 'describedby') !== false, 'client emits llms.txt describedby discovery');
+assert_true(strpos($client, 'llms.txt') !== false, 'client references llms.txt in discovery');
 
 echo "==> Runtime stamps allowlisted forms + listens for late footer forms\n";
 assert_true(strpos($js, 'stampAllowlistedForms') !== false, 'runtime stamps toolname/tooldescription on allowlisted forms');
