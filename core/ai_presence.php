@@ -1673,8 +1673,10 @@ function birkly_ai_presence_has_unpublished_changes(?array $draft = null): bool
  *   version: int,
  *   last_published_at: ?string,
  *   publishing_enabled: bool,
+ *   snapshot_enabled: bool,
  *   has_unpublished_changes: bool,
- *   never_published: bool
+ *   never_published: bool,
+ *   needs_republish: bool
  * }
  */
 function birkly_ai_presence_publish_state(?array $draft = null): array
