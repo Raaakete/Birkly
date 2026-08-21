@@ -1309,14 +1309,70 @@ function birkly_ai_presence_inject_discovery_head_into_html(string $html): strin
 }
 
 /**
- * Inject head Agent Guide discovery only — no body injection on marketing pages.
+ * Single footer link to /for-agents — indexable body text without a content dump.
+ */
+function birkly_ai_presence_discovery_footer_link_snippet(?array $published = null, ?array $meta = null): string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return '';
+    }
+
+    $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta) ?? '';
+    if ($forAgentsUrl === '') {
+        return '';
+    }
+
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    return '<a href="' . $esc($forAgentsUrl) . '" rel="help" data-birkly-agent-guide="footer-link" '
+        . 'title="Agent Guide for AI systems">For agents</a>';
+}
+
+/**
+ * Append the Agent Guide footer link inside the page footer when present.
+ */
+function birkly_ai_presence_inject_discovery_footer_link_into_html(string $html): string
+{
+    if (stripos($html, 'data-birkly-agent-guide="footer-link"') !== false) {
+        return $html;
+    }
+
+    $link = birkly_ai_presence_discovery_footer_link_snippet();
+    if ($link === '') {
+        return $html;
+    }
+
+    $insert = "\n" . $link . "\n";
+
+    if (preg_match_all('/<\/footer>/i', $html, $matches, PREG_OFFSET_CAPTURE)) {
+        $last = end($matches[0]);
+        $pos = (int) $last[1];
+
+        return substr($html, 0, $pos) . $insert . substr($html, $pos);
+    }
+
+    if (preg_match('/<\/birkly-footer>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
+        $pos = (int) $match[0][1];
+
+        return substr($html, 0, $pos) . $insert . substr($html, $pos);
+    }
+
+    return $html;
+}
+
+/**
+ * Inject head discovery plus a single footer link — no guide content dump on pages.
  *
- * Full guide content lives on sidecar endpoints (/for-agents, /.well-known/, /llms.txt).
- * External sites: birkly-client.js adds head discovery from the CMS automatically.
+ * Full guide content lives on /for-agents and other sidecar endpoints.
+ * External sites: birkly-client.js adds head discovery and the footer link automatically.
  */
 function birkly_ai_presence_inject_discovery_into_html(string $html): string
 {
-    return birkly_ai_presence_inject_discovery_head_into_html($html);
+    $html = birkly_ai_presence_inject_discovery_head_into_html($html);
+
+    return birkly_ai_presence_inject_discovery_footer_link_into_html($html);
 }
 
 /**
