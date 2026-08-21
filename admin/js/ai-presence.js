@@ -924,7 +924,10 @@
         return fetch(apiUrl('/api/ai_presence.php'), fetchOpts).then(function (r) {
             return r.text().then(function (text) {
                 if (!text || !String(text).trim()) {
-                    throw new Error('Empty server response. The AI request may have timed out — try again.');
+                    var hint = r.status >= 500
+                        ? 'Server error (' + r.status + '). Check PHP error logs or try again.'
+                        : (r.status === 504 ? 'Request timed out (504). Try again.' : 'Empty server response (HTTP ' + r.status + ').');
+                    throw new Error(hint);
                 }
                 try {
                     return JSON.parse(text);
@@ -1915,14 +1918,21 @@
             });
     }
 
-    function saveDraft() {
+    function saveDraft(options) {
+        options = options || {};
         return postJson({ action: 'save_draft', draft: state.draft }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
             state.draft = res.data.draft;
             state.dirty = false;
-            toast('Draft saved', 'success');
+            if (!options.silent) {
+                toast('Draft saved', 'success');
+            }
+            if (options.skipReload) {
+                return res;
+            }
             return load().then(function () {
                 updateStickyBar({ meta: state.meta, publish_state: state.publishState });
+                return res;
             });
         });
     }
@@ -1932,7 +1942,10 @@
         state.publishingInProgress = true;
         var wasNeverPublished = getPublishState({ publish_state: state.publishState, meta: state.meta }).never_published;
         updateStickyBar({ meta: state.meta, publish_state: state.publishState });
-        return saveDraft().then(function () {
+        var savePromise = state.dirty
+            ? saveDraft({ silent: true, skipReload: true })
+            : Promise.resolve();
+        return savePromise.then(function () {
             return postJson({ action: 'publish' }).then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message || 'Publish failed');
                 return load().then(function () {
