@@ -171,10 +171,11 @@ function birkly_mcp_handle_resource_read(array $params, array $aiUser): array
     }
 
     if ($uri === 'birkly://brand-context') {
+        require_once __DIR__ . '/ai_presence.php';
         require_once __DIR__ . '/ai_presence_pro.php';
         $data = birkly_ai_presence_public_brand_for_tools('summary');
         if ($data === null) {
-            return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => 'Brand context not published']]];
+            return ['contents' => [['uri' => $uri, 'mimeType' => 'text/plain', 'text' => birkly_ai_presence_not_published_reason()]]];
         }
         return ['contents' => [[
             'uri' => $uri,

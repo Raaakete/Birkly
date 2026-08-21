@@ -308,11 +308,71 @@ function birkly_ai_presence_merge_draft_arrays(array $base, array $patch): array
 function birkly_ai_presence_load_published(): ?array
 {
     $path = birkly_ai_presence_dir() . '/published.json';
-    $data = birkly_ai_presence_read_json($path);
-    if ($data === null) {
+    $raw = birkly_ai_presence_read_json($path);
+    if ($raw === null) {
         return null;
     }
-    return birkly_ai_presence_normalize_draft($data);
+    $rawPub = is_array($raw['publication_settings'] ?? null) ? $raw['publication_settings'] : [];
+    $hadExplicitEnabled = array_key_exists('enabled', $rawPub);
+    $data = birkly_ai_presence_normalize_draft($raw);
+    if (!$hadExplicitEnabled) {
+        $meta = birkly_ai_presence_load_meta();
+        if ((int) ($meta['published_version'] ?? 0) >= 1) {
+            $data['publication_settings']['enabled'] = true;
+        }
+    }
+    return $data;
+}
+
+/**
+ * Whether the published snapshot is enabled for public/MCP reads.
+ * Uses the snapshot flag (not the editable draft toggle).
+ */
+function birkly_ai_presence_published_snapshot_enabled(?array $published, ?array $meta = null): bool
+{
+    if ($published === null) {
+        return false;
+    }
+    $pub = is_array($published['publication_settings'] ?? null) ? $published['publication_settings'] : [];
+    if (array_key_exists('enabled', $pub)) {
+        return !empty($pub['enabled']);
+    }
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    return (int) ($meta['published_version'] ?? 0) >= 1;
+}
+
+/**
+ * Whether external AI and public endpoints should serve the Agent Guide.
+ */
+function birkly_ai_presence_is_publicly_live(?array $published = null, ?array $meta = null): bool
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    $version = (int) ($meta['published_version'] ?? 0);
+    if ($published === null || $version < 1) {
+        return false;
+    }
+    return birkly_ai_presence_published_snapshot_enabled($published, $meta);
+}
+
+/**
+ * Human-readable reason when public/MCP reads are unavailable.
+ */
+function birkly_ai_presence_not_published_reason(?array $published = null, ?array $meta = null): string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    $version = (int) ($meta['published_version'] ?? 0);
+    if ($published === null) {
+        return 'Agent Guide not published (no published snapshot — click Publish in Agent Guide)';
+    }
+    if ($version < 1) {
+        return 'Agent Guide not published (never published — click Publish in Agent Guide)';
+    }
+    if (!birkly_ai_presence_published_snapshot_enabled($published, $meta)) {
+        return 'Agent Guide not published (publishing is off on the live snapshot — click Publish again in Agent Guide)';
+    }
+    return 'Agent Guide not published';
 }
 
 function birkly_ai_presence_load_meta(): array
@@ -889,14 +949,11 @@ function birkly_ai_presence_export_json_ld(array $doc): array
 
 function birkly_ai_presence_get_public_export_body(): ?string
 {
-    $published = birkly_ai_presence_load_published();
-    if ($published === null) {
-        return null;
-    }
-    if (empty($published['publication_settings']['enabled'])) {
-        return null;
-    }
     $meta = birkly_ai_presence_load_meta();
+    $published = birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
     $version = (int) ($meta['published_version'] ?? 0);
     $at = (string) ($meta['last_published_at'] ?? date('c'));
     $export = birkly_ai_presence_build_public_export($published, $version, $at);
@@ -916,11 +973,9 @@ function birkly_ai_presence_get_public_export_body(): ?string
  */
 function birkly_ai_presence_llms_txt_body(): ?string
 {
+    $meta = birkly_ai_presence_load_meta();
     $published = birkly_ai_presence_load_published();
-    if ($published === null) {
-        return null;
-    }
-    if (empty($published['publication_settings']['enabled'])) {
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
         return null;
     }
 
@@ -1152,10 +1207,11 @@ function birkly_ai_presence_staleness(?array $draft = null): array
  */
 function birkly_ai_presence_preview_query(string $question): array
 {
+    $meta = birkly_ai_presence_load_meta();
     $published = birkly_ai_presence_load_published();
-    if ($published === null || empty($published['publication_settings']['enabled'])) {
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
         return [
-            'answer' => 'No published Agent Guide is available yet. Publish your guide first.',
+            'answer' => birkly_ai_presence_not_published_reason($published, $meta),
             'sources' => [],
         ];
     }
@@ -1627,17 +1683,20 @@ function birkly_ai_presence_publish_state(?array $draft = null): array
     $published = birkly_ai_presence_load_published();
     $draft = $draft ?? birkly_ai_presence_load_draft();
     $version = (int) ($meta['published_version'] ?? 0);
-    $enabled = !empty($draft['publication_settings']['enabled']);
+    $draftEnabled = !empty($draft['publication_settings']['enabled']);
+    $snapshotEnabled = birkly_ai_presence_published_snapshot_enabled($published, $meta);
     $neverPublished = $published === null || $version < 1;
-    $isLive = !$neverPublished && $enabled;
+    $isLive = birkly_ai_presence_is_publicly_live($published, $meta);
 
     return [
         'is_live' => $isLive,
         'version' => $version,
         'last_published_at' => $meta['last_published_at'] ?? null,
-        'publishing_enabled' => $enabled,
+        'publishing_enabled' => $draftEnabled,
+        'snapshot_enabled' => $snapshotEnabled,
         'has_unpublished_changes' => $isLive && birkly_ai_presence_has_unpublished_changes($draft),
         'never_published' => $neverPublished,
+        'needs_republish' => !$neverPublished && $draftEnabled && !$snapshotEnabled,
     ];
 }
 

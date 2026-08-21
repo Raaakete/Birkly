@@ -872,11 +872,11 @@ function birkly_ai_presence_public_brand_for_tools(string $view = 'summary'): ?a
  */
 function birkly_ai_presence_public_agent_guide_for_tools(string $view = 'summary'): ?array
 {
+    $meta = birkly_ai_presence_load_meta();
     $published = birkly_ai_presence_load_published();
-    if ($published === null || empty($published['publication_settings']['enabled'])) {
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
         return null;
     }
-    $meta = birkly_ai_presence_load_meta();
     $export = birkly_ai_presence_build_public_export($published, (int) ($meta['published_version'] ?? 0), (string) ($meta['last_published_at'] ?? date('c')));
     return birkly_ai_presence_public_view($export, $view);
 }
