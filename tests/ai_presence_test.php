@@ -96,6 +96,31 @@ assert_true($ps4['publishing_enabled'] === false, 'publishing disabled after unp
 assert_true($ps4['is_live'] === false, 'not live after unpublish');
 assert_true(birkly_ai_presence_llms_txt_body() === null, 'llms.txt null after unpublish');
 
+$draftReenable = birkly_ai_presence_load_draft();
+$draftReenable['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($draftReenable);
+$ps5 = birkly_ai_presence_publish_state($draftReenable);
+assert_true($ps5['is_live'] === false, 'not live when draft re-enabled without republish');
+assert_true($ps5['needs_republish'] === true, 'needs_republish when snapshot still disabled');
+require_once $root . '/core/ai_presence_pro.php';
+assert_true(birkly_ai_presence_public_agent_guide_for_tools('summary') === null, 'MCP read blocked until republish');
+
+echo "==> Legacy published snapshot without enabled flag\n";
+birkly_ai_presence_reset_for_tests();
+$legacyDraft = birkly_ai_presence_default_draft();
+$legacyDraft['identity']['official_name'] = 'Legacy Co';
+$legacyDraft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($legacyDraft);
+assert_true(($result = birkly_ai_presence_publish())['ok'] ?? false, 'legacy test publish ok');
+$legacyPath = birkly_ai_presence_dir() . '/published.json';
+$legacyRaw = json_decode((string) file_get_contents($legacyPath), true);
+unset($legacyRaw['publication_settings']['enabled']);
+file_put_contents($legacyPath, json_encode($legacyRaw, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+$legacyLoaded = birkly_ai_presence_load_published();
+assert_true(!empty($legacyLoaded['publication_settings']['enabled']), 'legacy published infers enabled from version');
+assert_true(birkly_ai_presence_is_publicly_live(), 'legacy published snapshot is publicly live');
+assert_true(birkly_ai_presence_public_agent_guide_for_tools('summary') !== null, 'legacy published readable via MCP');
+
 echo "==> i18n keys\n";
 $en = json_decode((string) file_get_contents($root . '/lang/en.json'), true);
 assert_true(($en['admin']['ai_presence'] ?? '') === 'Agent Guide', 'en ai_presence label');
