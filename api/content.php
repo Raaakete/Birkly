@@ -189,6 +189,8 @@ if ($action === 'create_collection') {
     $storage->write("collections/$dir/collection.json", $meta);
     $schema = birkly_normalize_collection_schema($input);
     $storage->write("collections/$dir/schema.json", $schema);
+    require_once __DIR__ . '/../core/page_bundle_helpers.php';
+    birkly_public_invalidate_collection_cache($slug);
     log_security_event('create_collection', ['id' => $id, 'title' => $title, 'slug' => $slug]);
     echo json_encode([
         'status' => 'ok',
@@ -248,9 +250,19 @@ if ($action === 'update_collection') {
         exit;
     }
     // Update metadata and schema
+    $previousSlug = '';
+    $existingMeta = $storage->read("collections/$dir/collection.json");
+    if (is_array($existingMeta) && !empty($existingMeta['slug'])) {
+        $previousSlug = (string) $existingMeta['slug'];
+    }
     $meta = [ 'id' => $id, 'title' => $title, 'slug' => $slug ];
     $storage->write("collections/$dir/collection.json", $meta);
     $storage->write("collections/$dir/schema.json", $schema);
+    require_once __DIR__ . '/../core/page_bundle_helpers.php';
+    birkly_public_invalidate_collection_cache($slug);
+    if ($previousSlug !== '' && $previousSlug !== $slug) {
+        birkly_public_invalidate_collection_cache($previousSlug);
+    }
     log_security_event('update_collection', ['id' => $id, 'title' => $title, 'slug' => $slug]);
     echo json_encode([
         'status' => 'ok',
@@ -291,6 +303,13 @@ if ($action === 'delete_collection') {
         echo json_encode(['status' => 'error', 'message' => 'Collection not found']);
         exit;
     }
+    $deletedSlug = '';
+    $deletedMeta = $storage->read("collections/$dir/collection.json");
+    if (is_array($deletedMeta) && !empty($deletedMeta['slug'])) {
+        $deletedSlug = (string) $deletedMeta['slug'];
+    } elseif ($deletedSlug === '') {
+        $deletedSlug = $dir;
+    }
     // Delete all entries and schema/meta
     $entries = $storage->list("collections/$dir/entries");
     foreach ($entries as $entry) {
@@ -301,6 +320,8 @@ if ($action === 'delete_collection') {
     // Remove the collection directory if empty
     @rmdir("../content/collections/$dir/entries");
     @rmdir("../content/collections/$dir");
+    require_once __DIR__ . '/../core/page_bundle_helpers.php';
+    birkly_public_invalidate_collection_cache($deletedSlug);
     log_security_event('delete_collection', ['id' => $id]);
     echo json_encode([
         'status' => 'ok',

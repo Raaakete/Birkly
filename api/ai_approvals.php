@@ -499,6 +499,9 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
         'ai_user_id' => $aiUser['id'] ?? null,
         'original_user_id' => $originalUserId
     ]);
+
+    require_once __DIR__ . '/../core/page_bundle_helpers.php';
+    birkly_public_invalidate_collection_cache($slug);
     
     return ['success' => true, 'data' => ['collection_slug' => $slug, 'collection_name' => $name]];
 }
@@ -970,6 +973,12 @@ function birkly_ai_execute_update_collection($actionData, $aiUser = null, $origi
 
     $stored = birkly_ai_load_collection_record($slug);
 
+    require_once __DIR__ . '/../core/page_bundle_helpers.php';
+    birkly_public_invalidate_collection_cache((string) ($collection['slug'] ?? $slug));
+    if ($slugRef !== '' && birkly_normalize_slug($slugRef) !== birkly_normalize_slug((string) ($collection['slug'] ?? $slug))) {
+        birkly_public_invalidate_collection_cache($slugRef);
+    }
+
     return ['success' => true, 'data' => ['collection' => $stored ?? $collection]];
 }
 
@@ -1037,6 +1046,10 @@ function birkly_ai_execute_delete_collection($actionData, $aiUser = null, $origi
     }
     
     $result = birkly_ai_delete_directory($collectionDir);
+    if ($result) {
+        require_once __DIR__ . '/../core/page_bundle_helpers.php';
+        birkly_public_invalidate_collection_cache($slug);
+    }
     return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete collection'];
 }
 
