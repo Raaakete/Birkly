@@ -61,6 +61,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'data' => birkly_invitation_mail_status(),
             ]);
             break;
+        case 'list_invitations':
+            echo json_encode([
+                'status' => 'ok',
+                'data' => [
+                    'invitations' => birkly_invitations_for_admin(),
+                ],
+            ]);
+            break;
         default:
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Invalid action: ' . $action]);
@@ -123,6 +131,11 @@ function createInvitation($data) {
     ];
 
     if (!$sendEmail) {
+        birkly_invitation_update($token, [
+            'delivery' => 'link_only',
+            'email_sent' => false,
+        ]);
+
         log_security_event('invitation_created', [
             'invited_email' => $email,
             'role' => $role,
@@ -156,6 +169,13 @@ function createInvitation($data) {
     $emailResult = sendInvitationEmail($email, $inviteUrl, $role, $expiresDays);
     
     if ($emailResult['ok']) {
+        birkly_invitation_update($token, [
+            'delivery' => 'email',
+            'email_sent' => true,
+            'email_error' => null,
+            'email_sent_at' => date('c'),
+        ]);
+
         log_security_event('invitation_created', [
             'invited_email' => $email,
             'role' => $role,
@@ -179,6 +199,13 @@ function createInvitation($data) {
         echo json_encode($response);
         return;
     }
+
+    birkly_invitation_update($token, [
+        'delivery' => 'email_failed',
+        'email_sent' => false,
+        'email_error' => $emailResult['send_error'] ?? $emailResult['message'],
+        'email_attempt_at' => date('c'),
+    ]);
 
     echo json_encode([
         'status' => 'error',
@@ -224,6 +251,13 @@ function resendInvitation($data) {
     $emailResult = sendInvitationEmail($invitation['email'], $inviteUrl, $invitation['role'], $expiresDays);
     
     if ($emailResult['ok']) {
+        birkly_invitation_update($token, [
+            'delivery' => 'email',
+            'email_sent' => true,
+            'email_error' => null,
+            'email_sent_at' => date('c'),
+        ]);
+
         log_security_event('invitation_resent', [
             'invited_email' => $invitation['email'],
             'created_by' => $_SESSION['user']['email']
@@ -394,24 +428,101 @@ function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
 }
 
 // Helper function to get invitation data for display
-function getInvitations() {
-    $invitationsStorage = new Storage(__DIR__ . '/../data/invitations');
-    $invitations = [];
-    
-    $files = glob($invitationsStorage->getPath() . '/*.json');
-    foreach ($files as $file) {
-        $invitation = json_decode(file_get_contents($file), true);
-        if ($invitation) {
-            $invitations[] = $invitation;
+function birkly_invitations_storage(): Storage
+{
+    return new Storage(__DIR__ . '/../data/invitations');
+}
+
+function birkly_invitation_update(string $token, array $patch): bool
+{
+    if ($token === '') {
+        return false;
+    }
+    $storage = birkly_invitations_storage();
+    $file = $token . '.json';
+    $existing = $storage->read($file);
+    if (!is_array($existing)) {
+        return false;
+    }
+    return (bool) $storage->write($file, array_merge($existing, $patch));
+}
+
+function birkly_invitation_effective_status(array $invitation): string
+{
+    $status = (string) ($invitation['status'] ?? 'pending');
+    if ($status === 'pending') {
+        $expiresAt = $invitation['expires_at'] ?? null;
+        if ($expiresAt && strtotime((string) $expiresAt) < time()) {
+            return 'expired';
         }
     }
-    
-    // Sort by creation date (newest first)
-    usort($invitations, function($a, $b) {
-        return strtotime($b['created_at']) - strtotime($a['created_at']);
+    return $status;
+}
+
+function birkly_invitation_delivery_label(array $invitation): string
+{
+    $delivery = (string) ($invitation['delivery'] ?? '');
+    return match ($delivery) {
+        'email' => 'Email sent',
+        'link_only' => 'Link only',
+        'email_failed' => 'Email failed',
+        default => 'Unknown',
+    };
+}
+
+function getInvitations() {
+    $invitationsStorage = birkly_invitations_storage();
+    $invitations = [];
+
+    $files = $invitationsStorage->list('');
+    foreach ($files as $file) {
+        if (!str_ends_with($file, '.json')) {
+            continue;
+        }
+        $invitation = $invitationsStorage->read($file);
+        if (!is_array($invitation)) {
+            continue;
+        }
+        if (empty($invitation['token'])) {
+            $invitation['token'] = pathinfo($file, PATHINFO_FILENAME);
+        }
+        $invitations[] = $invitation;
+    }
+
+    usort($invitations, function ($a, $b) {
+        return strtotime($b['created_at'] ?? '') <=> strtotime($a['created_at'] ?? '');
     });
-    
+
     return $invitations;
+}
+
+function birkly_invitations_for_admin(): array
+{
+    $rows = [];
+    foreach (getInvitations() as $invitation) {
+        $token = (string) ($invitation['token'] ?? '');
+        $status = birkly_invitation_effective_status($invitation);
+        $rows[] = [
+            'token' => $token,
+            'email' => $invitation['email'] ?? '',
+            'role' => $invitation['role'] ?? 'viewer',
+            'status' => $status,
+            'raw_status' => $invitation['status'] ?? 'pending',
+            'delivery' => $invitation['delivery'] ?? null,
+            'delivery_label' => birkly_invitation_delivery_label($invitation),
+            'email_sent' => !empty($invitation['email_sent']),
+            'email_error' => $invitation['email_error'] ?? null,
+            'created_at' => $invitation['created_at'] ?? null,
+            'expires_at' => $invitation['expires_at'] ?? null,
+            'accepted_at' => $invitation['accepted_at'] ?? null,
+            'cancelled_at' => $invitation['cancelled_at'] ?? null,
+            'invite_url' => $token !== '' ? getInviteUrl($token) : null,
+            'can_resend' => $status === 'pending',
+            'can_copy_link' => $status === 'pending',
+            'can_cancel' => in_array($status, ['pending', 'expired'], true),
+        ];
+    }
+    return $rows;
 }
 
 // Ensure clean JSON output - don't clear output, just end buffering
