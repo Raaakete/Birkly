@@ -391,6 +391,8 @@ window.deleteRole = deleteRole;
 window.openInviteUserModal = openInviteUserModal;
 window.closeInviteUserModal = closeInviteUserModal;
 window.sendInvitation = sendInvitation;
+window.createInvitationLink = createInvitationLink;
+window.copyInviteLink = copyInviteLink;
 window.openAddUserModal = openAddUserModal;
 window.closeAddUserModal = closeAddUserModal;
 window.openEditUserModal = openEditUserModal;
@@ -1143,52 +1145,168 @@ window.migrateStorage = migrateStorage;
 
 
 // Invitation functions
-function openInviteUserModal() {
+let inviteMailStatus = null;
+
+async function loadInviteMailStatus() {
+    try {
+        const response = await fetch(apiUrl('/api/invitations.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'mail_status' })
+        });
+        const result = await response.json();
+        inviteMailStatus = result.status === 'ok' ? (result.data || null) : null;
+    } catch (error) {
+        inviteMailStatus = null;
+    }
+    renderInviteMailNotice();
+}
+
+function renderInviteMailNotice() {
+    const notice = document.getElementById('invite-email-connection-notice');
+    const copy = document.getElementById('invite-email-connection-copy');
+    const link = document.getElementById('invite-email-connection-link');
+    const sendBtn = document.getElementById('invite-send-email-btn');
+    const linkBtn = document.getElementById('invite-create-link-btn');
+    if (!notice) return;
+
+    notice.hidden = false;
+    notice.classList.remove('callout-info', 'callout-warning');
+
+    if (inviteMailStatus?.has_connection) {
+        notice.classList.add('callout-info');
+        const name = inviteMailStatus.connection_name || inviteMailStatus.provider || 'Email connection';
+        const from = inviteMailStatus.from_email ? ` (${inviteMailStatus.from_email})` : '';
+        if (copy) {
+            copy.textContent = `Invitations are sent through your configured email connection: ${name}${from}. You can also create a link and share it manually.`;
+        }
+        if (sendBtn) sendBtn.disabled = false;
+    } else {
+        notice.classList.add('callout-warning');
+        if (copy) {
+            copy.textContent = 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use “Create invite link” and share the URL yourself.';
+        }
+        if (sendBtn) sendBtn.disabled = true;
+    }
+
+    if (link && inviteMailStatus?.settings_url) {
+        link.href = inviteMailStatus.settings_url;
+    }
+    if (linkBtn) linkBtn.disabled = false;
+}
+
+function resetInviteLinkResult() {
+    const result = document.getElementById('invite-link-result');
+    const field = document.getElementById('invite-link-copy-field');
+    if (result) result.hidden = true;
+    if (field) field.value = '';
+}
+
+function showInviteLinkResult(url) {
+    const result = document.getElementById('invite-link-result');
+    const field = document.getElementById('invite-link-copy-field');
+    if (field) field.value = url || '';
+    if (result) result.hidden = !url;
+}
+
+async function openInviteUserModal() {
     document.getElementById('invite-user-modal').classList.add('active');
     document.getElementById('invite-user-form').reset();
+    resetInviteLinkResult();
+    await loadInviteMailStatus();
 }
 
 function closeInviteUserModal() {
     document.getElementById('invite-user-modal').classList.remove('active');
+    resetInviteLinkResult();
 }
 
-async function sendInvitation() {
+function getInviteFormData() {
     const form = document.getElementById('invite-user-form');
     const formData = new FormData(form);
-    
-    const invitationData = {
+    return {
         action: 'create_invitation',
         email: formData.get('email'),
         role: formData.get('role'),
-        expires_days: parseInt(formData.get('expires_days')),
+        expires_days: parseInt(formData.get('expires_days'), 10),
         _csrf: getCsrfToken()
     };
-    
+}
+
+async function submitInvitation(sendEmail) {
+    const invitationData = {
+        ...getInviteFormData(),
+        send_email: sendEmail
+    };
+
     try {
         const response = await fetch(apiUrl('/api/invitations.php'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            credentials: 'same-origin', // Include cookies/session
+            credentials: 'same-origin',
             body: JSON.stringify(invitationData)
         });
-        
+
         const result = await response.json();
-        
+        const inviteUrl = result.data?.invite_url || '';
+
         if (result.status === 'ok') {
-            let message = 'Invitation sent successfully!';
-            if (result.data && result.data.localhost_note) {
+            if (inviteUrl) {
+                showInviteLinkResult(inviteUrl);
+            }
+            let message = sendEmail ? 'Invitation email sent successfully!' : 'Invitation link created.';
+            if (result.data?.localhost_note) {
                 message = result.message + '\n\n' + result.data.localhost_note;
             }
             showMessage(message, 'success');
-            closeInviteUserModal();
-        } else {
-            showMessage('Error: ' + result.message, 'error');
+            if (!inviteUrl) {
+                closeInviteUserModal();
+            }
+            return;
         }
+
+        if (inviteUrl) {
+            showInviteLinkResult(inviteUrl);
+            showMessage(
+                (result.message || 'Could not send invitation email.') +
+                ' The invite link was saved — copy it below and share it manually.',
+                'warning'
+            );
+            return;
+        }
+
+        showMessage('Error: ' + (result.message || 'Invitation failed'), 'error');
     } catch (error) {
         showMessage('Error sending invitation: ' + error.message, 'error');
     }
+}
+
+async function sendInvitation() {
+    await submitInvitation(true);
+}
+
+async function createInvitationLink() {
+    await submitInvitation(false);
+}
+
+function copyInviteLink() {
+    const field = document.getElementById('invite-link-copy-field');
+    const url = field?.value || '';
+    if (!url) return;
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            showMessage('Invite link copied to clipboard.', 'success');
+        }).catch(() => {
+            field.select();
+            showMessage('Select the link field and copy it manually.', 'warning');
+        });
+        return;
+    }
+    field.select();
+    showMessage('Select the link field and copy it manually.', 'warning');
 }
 
 // User management functions

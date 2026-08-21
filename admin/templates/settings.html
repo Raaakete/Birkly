@@ -1385,6 +1385,23 @@ include __DIR__ . '/components/sticky-save-bar.php';
         <button class="modal-close-btn" data-admin-action="closeInviteUserModal">&times;</button>
       </div>
       <div class="modal-body">
+        <div id="invite-email-connection-notice" class="callout callout-info u-stack-2" hidden>
+          <div class="callout-body u-stack-1">
+            <p class="callout-title"><?= __('admin.invite_email_connection_title') ?></p>
+            <p id="invite-email-connection-copy"><?= __('admin.invite_email_connection_help') ?></p>
+            <p class="u-text-sm"><a id="invite-email-connection-link" href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'connections', 'section' => 'email'])) ?>"><?= __('admin.open_email_connections') ?></a></p>
+          </div>
+        </div>
+        <div id="invite-link-result" class="callout callout-success u-stack-2" hidden>
+          <div class="callout-body u-stack-2">
+            <p class="callout-title"><?= __('admin.invite_link_ready') ?></p>
+            <p class="u-text-sm u-fg-secondary"><?= __('admin.invite_link_share_help') ?></p>
+            <div class="u-cluster">
+              <input type="text" id="invite-link-copy-field" class="input" readonly>
+              <button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyInviteLink"><?= __('admin.copy_link') ?></button>
+            </div>
+          </div>
+        </div>
         <form id="invite-user-form">
           <div class="form-group">
             <label for="invite-email"><?= __('admin.email_address') ?></label>
@@ -1410,7 +1427,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-admin-action="closeInviteUserModal">Cancel</button>
-        <button type="button" class="btn btn-primary" data-admin-action="sendInvitation">Send Invitation</button>
+        <button type="button" class="btn btn-ghost" id="invite-create-link-btn" data-admin-action="createInvitationLink"><?= __('admin.create_invite_link') ?></button>
+        <button type="button" class="btn btn-primary" id="invite-send-email-btn" data-admin-action="sendInvitation"><?= __('admin.send_invitation_email') ?></button>
       </div>
     </div>
   </div>
