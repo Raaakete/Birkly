@@ -20,6 +20,7 @@ function birkly_http_route_map(): array
         '/.well-known/brand-context.json' => '/api/well_known_brand_context.php',
         '/.well-known/agent-guide.json' => '/api/well_known_agent_guide.php',
         '/llms.txt' => '/api/llms_txt.php',
+        '/for-agents' => '/api/for_agents.php',
         '/authorize' => '/api/oauth_authorize.php',
         '/oauth/authorize' => '/api/oauth_authorize.php',
         '/oauth/token' => '/api/oauth_token.php',
