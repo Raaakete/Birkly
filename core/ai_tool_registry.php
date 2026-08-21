@@ -381,14 +381,14 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
             $view = (string) ($arguments['view'] ?? 'summary');
             $data = birkly_ai_presence_public_agent_guide_for_tools($view);
             if ($data === null) {
-                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Agent Guide not published']]];
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => birkly_ai_presence_not_published_reason()]]];
             }
             return ['content' => [['type' => 'text', 'text' => json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
         }
         if (in_array($actionType, ['list_agent_guide_products', 'list_brand_products'], true)) {
             $data = birkly_ai_presence_public_agent_guide_for_tools('products');
             if ($data === null) {
-                return ['isError' => true, 'content' => [['type' => 'text', 'text' => 'Agent Guide not published']]];
+                return ['isError' => true, 'content' => [['type' => 'text', 'text' => birkly_ai_presence_not_published_reason()]]];
             }
             return ['content' => [['type' => 'text', 'text' => json_encode($data['products_services'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)]]];
         }

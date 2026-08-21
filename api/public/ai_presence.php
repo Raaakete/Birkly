@@ -24,14 +24,14 @@ $action = $_GET['action'] ?? 'brand';
 $view = trim((string) ($_GET['view'] ?? 'full'));
 $graph = !empty($_GET['graph']);
 
+$meta = birkly_ai_presence_load_meta();
 $published = birkly_ai_presence_load_published();
-if ($published === null || empty($published['publication_settings']['enabled'])) {
+if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
     http_response_code(404);
-    echo json_encode(['status' => 'error', 'message' => 'Agent Guide not published or disabled']);
+    echo json_encode(['status' => 'error', 'message' => birkly_ai_presence_not_published_reason($published, $meta)]);
     exit;
 }
 
-$meta = birkly_ai_presence_load_meta();
 $version = (int) ($meta['published_version'] ?? 0);
 $at = (string) ($meta['last_published_at'] ?? date('c'));
 $export = birkly_ai_presence_build_public_export($published, $version, $at);
