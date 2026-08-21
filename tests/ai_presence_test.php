@@ -73,6 +73,19 @@ $result = birkly_ai_presence_publish();
 assert_true(($result['ok'] ?? false) === true, 'test publish ok');
 $ps2 = birkly_ai_presence_publish_state();
 assert_true($ps2['is_live'] === true, 'live after publish');
+require_once $root . '/core/project_ssr.php';
+$htmlSample = "<!DOCTYPE html><html><head></head><body><p>hi</p></body></html>";
+$guideHtml = birkly_project_ssr_inject_webmcp($htmlSample);
+assert_true(stripos($guideHtml, 'agent-guide.json') !== false, 'SSR injects agent guide discovery when live');
+assert_true(stripos($guideHtml, 'llms.txt') !== false, 'SSR injects llms.txt discovery when live');
+birkly_ai_presence_unpublish();
+$offGuideHtml = birkly_project_ssr_inject_webmcp($htmlSample);
+assert_true(stripos($offGuideHtml, 'llms.txt') === false, 'SSR skips discovery when guide unpublished');
+// Republish for remaining tests
+$repubDraft = birkly_ai_presence_load_draft();
+$repubDraft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($repubDraft);
+birkly_ai_presence_publish();
 assert_true($ps2['version'] === 1, 'version 1 after first publish');
 assert_true($ps2['has_unpublished_changes'] === false, 'no unpublished changes when draft matches');
 
@@ -82,6 +95,19 @@ assert_true(is_string($llms) && $llms !== '', 'llms.txt body when published');
 assert_true(preg_match('/^#\s+.+/m', (string) $llms) === 1, 'llms.txt has H1');
 assert_true(preg_match('/\[.+\]\(.+\)/', (string) $llms) === 1, 'llms.txt has a Markdown link');
 assert_true(strlen((string) $llms) >= 50, 'llms.txt length meets Lighthouse minimum');
+
+echo "==> HTML discovery injection\n";
+$htmlSample = '<!DOCTYPE html><html><head></head><body></body></html>';
+$withDiscovery = birkly_ai_presence_inject_discovery_into_html($htmlSample);
+assert_true(stripos($withDiscovery, 'agent-guide.json') !== false, 'discovery injects agent-guide link');
+assert_true(stripos($withDiscovery, 'llms.txt') !== false, 'discovery injects llms.txt link');
+assert_true(stripos($withDiscovery, 'rel="describedby"') !== false, 'discovery injects describedby link');
+assert_true(stripos($withDiscovery, 'application/ld+json') !== false, 'discovery injects JSON-LD');
+$llmsUrl = birkly_ai_presence_llms_txt_url();
+assert_true(is_string($llmsUrl) && str_ends_with($llmsUrl, '/llms.txt'), 'llms.txt URL resolves');
+$robots = birkly_ai_presence_robots_txt_augment("User-agent: *\nAllow: /\n");
+assert_true(stripos($robots, 'LLMS:') !== false, 'robots.txt augmented with LLMS directive');
+assert_true(stripos($robots, '/llms.txt') !== false, 'robots LLMS points at llms.txt');
 
 $draft2 = birkly_ai_presence_load_draft();
 $draft2['identity']['short_description'] = 'Changed';
