@@ -12,6 +12,8 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/mail/birkly_send_mail.php';
+require_once __DIR__ . '/../core/connections/registry.php';
+require_once __DIR__ . '/../core/birkly_paths.php';
 
 // Clear any output that might have been generated
 ob_clean();
@@ -53,6 +55,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         case 'cancel_invitation':
             cancelInvitation($input);
             break;
+        case 'mail_status':
+            echo json_encode([
+                'status' => 'ok',
+                'data' => birkly_invitation_mail_status(),
+            ]);
+            break;
         default:
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Invalid action: ' . $action]);
@@ -66,6 +74,7 @@ function createInvitation($data) {
     $email = trim($data['email'] ?? '');
     $role = $data['role'] ?? 'viewer';
     $expiresDays = $data['expires_days'] ?? 7;
+    $sendEmail = !array_key_exists('send_email', $data) || !empty($data['send_email']);
     
     // Validate input
     if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -106,46 +115,80 @@ function createInvitation($data) {
         return;
     }
     
-    // Send invitation email
     $inviteUrl = getInviteUrl($token);
-    $emailSent = sendInvitationEmail($email, $inviteUrl, $role, $expiresDays);
-    
-    if ($emailSent) {
+    $responseData = [
+        'token' => $token,
+        'expires_at' => $expiresAt,
+        'invite_url' => $inviteUrl,
+    ];
+
+    if (!$sendEmail) {
         log_security_event('invitation_created', [
             'invited_email' => $email,
             'role' => $role,
-            'created_by' => $_SESSION['user']['email']
+            'created_by' => $_SESSION['user']['email'],
+            'delivery' => 'link_only',
+        ]);
+
+        echo json_encode([
+            'status' => 'ok',
+            'message' => 'Invitation link created. Copy the link and share it with the user.',
+            'data' => array_merge($responseData, [
+                'delivery' => 'link_only',
+            ]),
+        ]);
+        return;
+    }
+
+    $mailStatus = birkly_invitation_mail_status();
+    if (!$mailStatus['has_connection'] && !birkly_invitation_is_local_dev()) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'No email connection is configured. Set one up under Settings → Connections, or create an invite link instead.',
+            'data' => array_merge($responseData, [
+                'invitation_saved' => true,
+                'requires_email_connection' => true,
+            ]),
+        ]);
+        return;
+    }
+
+    $emailResult = sendInvitationEmail($email, $inviteUrl, $role, $expiresDays);
+    
+    if ($emailResult['ok']) {
+        log_security_event('invitation_created', [
+            'invited_email' => $email,
+            'role' => $role,
+            'created_by' => $_SESSION['user']['email'],
+            'delivery' => 'email',
         ]);
         
         $response = [
             'status' => 'ok',
             'message' => 'Invitation sent successfully',
-            'data' => [
-                'token' => $token,
-                'expires_at' => $expiresAt,
-                'invite_url' => $inviteUrl
-            ]
+            'data' => array_merge($responseData, [
+                'delivery' => 'email',
+            ]),
         ];
         
-        // On localhost, include the invitation URL in the message
-        if ($_SERVER['HTTP_HOST'] === 'localhost:8001' || strpos($_SERVER['HTTP_HOST'], 'localhost') === 0) {
-            $response['message'] = 'Invitation created! (Localhost: Email not sent, but invitation link is ready)';
-            $response['data']['localhost_note'] = 'Click this link to test: ' . $inviteUrl;
+        if (birkly_invitation_is_local_dev()) {
+            $response['message'] = 'Invitation created! (Localhost: email logged, not delivered.)';
+            $response['data']['localhost_note'] = 'Share this link to test: ' . $inviteUrl;
         }
         
         echo json_encode($response);
-    } else {
-        // Remove invitation if email failed
-        $invitationsStorage->delete($token . '.json');
-        echo json_encode([
-            'status' => 'error', 
-            'message' => 'Failed to send invitation email. Please check your server mail configuration.',
-            'debug' => [
-                'email' => $email,
-                'invite_url' => $inviteUrl
-            ]
-        ]);
+        return;
     }
+
+    echo json_encode([
+        'status' => 'error',
+        'message' => $emailResult['message'],
+        'data' => array_merge($responseData, [
+            'invitation_saved' => true,
+            'send_status' => $emailResult['send_status'] ?? null,
+            'send_error' => $emailResult['send_error'] ?? null,
+        ]),
+    ]);
 }
 
 function resendInvitation($data) {
@@ -178,9 +221,9 @@ function resendInvitation($data) {
     // Resend email
     $inviteUrl = getInviteUrl($token);
     $expiresDays = ceil((strtotime($invitation['expires_at']) - time()) / 86400);
-    $emailSent = sendInvitationEmail($invitation['email'], $inviteUrl, $invitation['role'], $expiresDays);
+    $emailResult = sendInvitationEmail($invitation['email'], $inviteUrl, $invitation['role'], $expiresDays);
     
-    if ($emailSent) {
+    if ($emailResult['ok']) {
         log_security_event('invitation_resent', [
             'invited_email' => $invitation['email'],
             'created_by' => $_SESSION['user']['email']
@@ -188,7 +231,13 @@ function resendInvitation($data) {
         
         echo json_encode(['status' => 'ok', 'message' => 'Invitation resent successfully']);
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Failed to resend invitation email']);
+        echo json_encode([
+            'status' => 'error',
+            'message' => $emailResult['message'],
+            'data' => [
+                'invite_url' => $inviteUrl,
+            ],
+        ]);
     }
 }
 
@@ -233,6 +282,35 @@ function getInviteUrl($token) {
     return "$protocol://$host/invite.php?token=$token";
 }
 
+function birkly_invitation_is_local_dev(): bool
+{
+    return function_exists('birkly_is_local_dev_request') && birkly_is_local_dev_request();
+}
+
+function birkly_invitation_mail_status(): array
+{
+    $connection = birkly_connection_get_default('email', false);
+    if ($connection === null) {
+        return [
+            'has_connection' => false,
+            'can_send_email' => birkly_invitation_is_local_dev(),
+            'provider' => null,
+            'connection_name' => null,
+            'from_email' => null,
+            'settings_url' => birkly_admin_url('settings', ['tab' => 'connections', 'section' => 'email']),
+        ];
+    }
+
+    return [
+        'has_connection' => true,
+        'can_send_email' => true,
+        'provider' => $connection['provider'] ?? null,
+        'connection_name' => $connection['name'] ?? ($connection['alias'] ?? null),
+        'from_email' => $connection['from_email'] ?? null,
+        'settings_url' => birkly_admin_url('settings', ['tab' => 'connections', 'section' => 'email']),
+    ];
+}
+
 function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
     $siteName = 'Birkly'; // Could be loaded from settings
     
@@ -258,36 +336,61 @@ function sendInvitationEmail($email, $inviteUrl, $role, $expiresDays) {
     </html>
     ";
     
-    $fromEmail = $_SESSION['user']['email'] ?? 'noreply@localhost';
+    $inviterEmail = trim((string) ($_SESSION['user']['email'] ?? ''));
+    $inviterName = trim((string) ($_SESSION['user']['name'] ?? ''));
 
+    // Use the configured email connection From address — not the inviter's mailbox.
+    // Many SMTP/ESP providers reject messages when From does not match the verified sender.
     $sendResult = birkly_send_mail([
         'to' => $email,
         'subject' => $subject,
         'html' => $message,
-        'from' => $fromEmail,
-        'from_name' => $_SESSION['user']['name'] ?? '',
-        'reply_to' => $fromEmail,
+        'from_name' => $inviterName !== '' ? ($inviterName . ' via Birkly') : birkly_mail_default_from_name(),
+        'reply_to' => $inviterEmail !== '' ? $inviterEmail : null,
     ]);
 
-    $result = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
+    $ok = in_array($sendResult['status'] ?? '', ['queued', 'accepted', 'logged'], true);
+    $error = trim((string) ($sendResult['error'] ?? ''));
 
     // Log the attempt
     log_security_event('invitation_email_attempt', [
         'email' => $email,
-        'success' => $result,
+        'success' => $ok,
         'send_status' => $sendResult['status'] ?? 'unknown',
-        'send_error' => $sendResult['error'] ?? null,
-        'sent_by' => $_SESSION['user']['email'] ?? 'unknown',
+        'send_error' => $error !== '' ? $error : null,
+        'sent_by' => $inviterEmail !== '' ? $inviterEmail : 'unknown',
         'invite_url' => $inviteUrl
     ]);
 
-    // For localhost, always return true but log the URL
-    if ($_SERVER['HTTP_HOST'] === 'localhost:8001' || strpos($_SERVER['HTTP_HOST'], 'localhost') === 0) {
-        error_log("LOCALHOST: Email would be sent to $email with URL: $inviteUrl");
-        return true; // Always return true on localhost for testing
+    if (birkly_invitation_is_local_dev()) {
+        error_log("LOCALHOST: Invitation email logged for $email with URL: $inviteUrl");
+        return [
+            'ok' => true,
+            'message' => 'Invitation email logged on localhost.',
+            'send_status' => $sendResult['status'] ?? 'logged',
+            'send_error' => null,
+        ];
     }
 
-    return $result;
+    if ($ok) {
+        return [
+            'ok' => true,
+            'message' => 'Invitation email sent.',
+            'send_status' => $sendResult['status'] ?? 'accepted',
+            'send_error' => null,
+        ];
+    }
+
+    $message = $error !== ''
+        ? 'Failed to send invitation email: ' . $error
+        : 'Failed to send invitation email. Check Settings → Connections and send a test email from your email connection.';
+
+    return [
+        'ok' => false,
+        'message' => $message,
+        'send_status' => $sendResult['status'] ?? 'failed',
+        'send_error' => $error !== '' ? $error : null,
+    ];
 }
 
 // Helper function to get invitation data for display
