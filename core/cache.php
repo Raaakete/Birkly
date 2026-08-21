@@ -11,6 +11,46 @@ function birkly_cache_dir(): string
     return birkly_data_disk_path() . '/cache';
 }
 
+/**
+ * Resolve on-disk entries directory for cache mtime validation (flat-file storage only).
+ * Uses collection meta slug for cache key but physical directory name from storage.
+ */
+function birkly_cache_collection_entries_dir(string $collectionSlug): ?string
+{
+    if ($collectionSlug === '') {
+        return null;
+    }
+
+    if (!class_exists('StorageFactory')) {
+        require_once __DIR__ . '/storage/StorageFactory.php';
+    }
+    require_once __DIR__ . '/public_read.php';
+
+    $config = StorageFactory::loadStorageConfig(true);
+    $driver = StorageFactory::normalizeDriver((string) ($config['driver'] ?? 'flatfile'));
+    if ($driver !== 'flatfile') {
+        return null;
+    }
+
+    $base = (string) ($config['base_path'] ?? dirname(__DIR__, 2) . '/content');
+    $storage = StorageFactory::createStorage($base);
+    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    if ($dir === null) {
+        return null;
+    }
+
+    $basePath = null;
+    if (is_object($storage) && property_exists($storage, 'basePath')) {
+        $basePath = rtrim((string) $storage->basePath, '/');
+    }
+    if ($basePath === null) {
+        return null;
+    }
+
+    $entriesDir = $basePath . '/collections/' . $dir . '/entries';
+    return is_dir($entriesDir) ? $entriesDir : null;
+}
+
 class Cache {
     private $cacheDir;
     private $enabled;
@@ -89,8 +129,8 @@ class Cache {
         
         // Check if cache is still valid (compare with last modification time)
         if ($this->entriesCacheUsesFlatFileMtime()) {
-            $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
-            if (!is_dir($entriesDir)) {
+            $entriesDir = birkly_cache_collection_entries_dir($collectionSlug);
+            if ($entriesDir === null) {
                 return null;
             }
 
@@ -133,9 +173,9 @@ class Cache {
             return null;
         }
 
-        $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
         if ($this->entriesCacheUsesFlatFileMtime()) {
-            if (!is_dir($entriesDir)) {
+            $entriesDir = birkly_cache_collection_entries_dir($collectionSlug);
+            if ($entriesDir === null) {
                 return null;
             }
 
@@ -207,11 +247,11 @@ class Cache {
         }
         
         // Check if index is still valid
-        $entriesDir = __DIR__ . '/../content/collections/' . $collectionSlug . '/entries';
-        if (!is_dir($entriesDir)) {
+        $entriesDir = birkly_cache_collection_entries_dir($collectionSlug);
+        if ($entriesDir === null) {
             return null;
         }
-        
+
         $mostRecentEntryTime = $this->getMostRecentEntryTime($entriesDir);
         
         if (isset($indexData['index_time']) && $mostRecentEntryTime > $indexData['index_time']) {
