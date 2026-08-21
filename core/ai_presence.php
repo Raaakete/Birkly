@@ -1346,17 +1346,19 @@ function birkly_ai_presence_inject_discovery_footer_link_into_html(string $html)
 
     $insert = "\n" . $link . "\n";
 
-    if (preg_match_all('/<\/footer>/i', $html, $matches, PREG_OFFSET_CAPTURE)) {
+    if (preg_match('/<footer[\s>]/i', $html) && preg_match_all('/<\/footer>/i', $html, $matches, PREG_OFFSET_CAPTURE)) {
         $last = end($matches[0]);
         $pos = (int) $last[1];
 
         return substr($html, 0, $pos) . $insert . substr($html, $pos);
     }
 
-    if (preg_match('/<\/birkly-footer>/i', $html, $match, PREG_OFFSET_CAPTURE)) {
-        $pos = (int) $match[0][1];
+    // Custom footer components (e.g. <birkly-footer>) rebuild via innerHTML — inject a
+    // noscript sibling for crawlers; visible link is added client-side after the build.
+    if (preg_match('/<birkly-footer[\s>]/i', $html) && stripos($html, 'birkly-agent-guide-noscript') === false) {
+        $noscript = '<noscript class="birkly-agent-guide-noscript">' . $link . '</noscript>' . "\n";
 
-        return substr($html, 0, $pos) . $insert . substr($html, $pos);
+        return preg_replace('/(<birkly-footer[\s>])/i', $noscript . '$1', $html, 1) ?? $html;
     }
 
     return $html;

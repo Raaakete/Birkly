@@ -756,8 +756,8 @@ function birkly_project_ssr_inject_signature(): string
     $wm = birkly_webmcp_is_enabled() ? '1' : '0';
     $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
     $ver = (int) ($meta['published_version'] ?? 0);
-    // dsc4 = head discovery + footer link (no guide content dump); busts SSR cache.
-    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . 'dsc4';
+    // dsc5 = footer link survives custom footer components; busts SSR cache.
+    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . 'dsc5';
 }
 
 /**
