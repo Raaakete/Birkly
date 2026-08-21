@@ -63,6 +63,37 @@ function birkly_public_content_revision_bump(): void
 }
 
 /**
+ * Invalidate public entry cache + bump content revision for one collection slug.
+ * Call after create/update/delete collection metadata so page_bundle revision keys stay fresh.
+ */
+function birkly_public_invalidate_collection_cache(string $collectionSlug): void
+{
+    $collectionSlug = trim($collectionSlug);
+    if ($collectionSlug === '') {
+        return;
+    }
+
+    require_once __DIR__ . '/cache.php';
+    (new Cache())->invalidateCollection($collectionSlug);
+    birkly_public_content_revision_bump();
+}
+
+/**
+ * Rebuild public caches (entry cache + SSR/page_bundle revision). Used by admin/MCP rebuild actions.
+ */
+function birkly_rebuild_system_cache(): void
+{
+    require_once __DIR__ . '/cache.php';
+    (new Cache())->invalidateAll();
+    birkly_public_content_revision_bump();
+
+    require_once __DIR__ . '/project_ssr.php';
+    if (function_exists('birkly_project_ssr_invalidate_all')) {
+        birkly_project_ssr_invalidate_all();
+    }
+}
+
+/**
  * @return string|null Absolute filesystem base for flat-file storage drivers.
  */
 function birkly_storage_filesystem_base($storage): ?string
