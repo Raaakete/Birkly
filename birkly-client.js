@@ -4353,69 +4353,6 @@
                     api: cms + '/api/public/ai_presence.php?action=guide&view=summary'
                 }
             };
-
-            injectAgentGuidePageHint(data, {
-                guide: guideUrl,
-                llms: llmsUrl,
-                for_agents: forAgentsUrl
-            });
-        } catch (e) { /* non-fatal */ }
-    }
-
-    function injectAgentGuidePageHint(data, urls) {
-        try {
-            if (document.getElementById('birkly-agent-guide-hint')
-                || document.getElementById('birkly-agent-guide-public')) return;
-            var identity = (data && data.identity) || {};
-            var name = identity.official_name || 'This site';
-            var short = identity.short_description || '';
-            var claims = (data && data.claims) || [];
-            var claimParts = [];
-            for (var i = 0; i < claims.length && claimParts.length < 4; i++) {
-                var c = claims[i];
-                if (c && c.status === 'supported' && c.statement) claimParts.push(String(c.statement));
-            }
-            var aside = document.createElement('aside');
-            aside.id = 'birkly-agent-guide-hint';
-            aside.setAttribute('data-birkly-agent-guide', 'hint');
-            aside.setAttribute('aria-label', 'Agent Guide for AI systems');
-            aside.className = 'birkly-agent-guide-hint';
-            aside.style.cssText = 'margin:1.5rem auto 0;max-width:min(1720px,94vw);padding:0.75rem 1rem;border-top:1px solid #e7eae4;font-size:12px;line-height:1.5;color:#8b909a;box-sizing:border-box;';
-            var p1 = document.createElement('p');
-            p1.style.margin = '0';
-            var intro = document.createTextNode(name + ' publishes a ');
-            p1.appendChild(intro);
-            if (urls.for_agents) {
-                var fa = document.createElement('a');
-                fa.href = urls.for_agents;
-                fa.style.color = 'inherit';
-                fa.textContent = 'published Agent Guide for AI systems';
-                p1.appendChild(fa);
-            } else {
-                p1.appendChild(document.createTextNode('published Agent Guide for AI systems'));
-            }
-            p1.appendChild(document.createTextNode(' on this site — authoritative brand facts for chat and search assistants.'));
-            if (short) p1.appendChild(document.createTextNode(' ' + short));
-            p1.appendChild(document.createTextNode(' Full guide:'));
-            ['guide', 'llms', 'for_agents'].forEach(function (key, idx) {
-                var href = urls[key];
-                if (!href) return;
-                if (idx > 0 && p1.lastChild) p1.appendChild(document.createTextNode(idx === 1 ? ' ' : ', '));
-                var a = document.createElement('a');
-                a.href = href;
-                a.style.color = 'inherit';
-                a.textContent = key === 'guide' ? 'agent-guide.json' : key === 'llms' ? 'llms.txt' : 'for-agents';
-                p1.appendChild(a);
-            });
-            p1.appendChild(document.createTextNode('.'));
-            aside.appendChild(p1);
-            if (claimParts.length) {
-                var p2 = document.createElement('p');
-                p2.style.margin = '0.5rem 0 0';
-                p2.textContent = 'Supported claims: ' + claimParts.join(' · ');
-                aside.appendChild(p2);
-            }
-            (document.body || document.documentElement).appendChild(aside);
         } catch (e) { /* non-fatal */ }
     }
 
