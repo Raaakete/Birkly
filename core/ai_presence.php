@@ -1164,6 +1164,10 @@ function birkly_ai_presence_discovery_json_ld(?array $published = null, ?array $
     if ($llmsUrl !== '' && !in_array($llmsUrl, $seeAlso, true)) {
         $seeAlso[] = $llmsUrl;
     }
+    $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta) ?? '';
+    if ($forAgentsUrl !== '' && !in_array($forAgentsUrl, $seeAlso, true)) {
+        $seeAlso[] = $forAgentsUrl;
+    }
     if ($seeAlso !== []) {
         $data['seeAlso'] = count($seeAlso) === 1 ? $seeAlso[0] : $seeAlso;
     }
@@ -1215,6 +1219,11 @@ function birkly_ai_presence_discovery_head_snippet(?array $published = null, ?ar
         $parts[] = '<meta name="llms-txt" content="'
             . htmlspecialchars($llmsUrl, ENT_QUOTES, 'UTF-8') . '">';
     }
+    $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta) ?? '';
+    if ($forAgentsUrl !== '') {
+        $parts[] = '<link rel="help" type="text/html" title="Agent Guide for AI systems" href="'
+            . htmlspecialchars($forAgentsUrl, ENT_QUOTES, 'UTF-8') . '">';
+    }
 
     $jsonLd = birkly_ai_presence_discovery_json_ld($published, $meta);
     if ($jsonLd !== null) {
@@ -1254,6 +1263,13 @@ function birkly_ai_presence_inject_discovery_head_into_html(string $html): strin
                 . htmlspecialchars($llmsUrl, ENT_QUOTES, 'UTF-8') . '">';
         }
     }
+    if (stripos($html, '/for-agents') === false && stripos($html, 'Agent Guide for AI systems') === false) {
+        $forAgentsUrl = birkly_ai_presence_for_agents_url() ?? '';
+        if ($forAgentsUrl !== '') {
+            $additions .= "\n    " . '<link rel="help" type="text/html" title="Agent Guide for AI systems" href="'
+                . htmlspecialchars($forAgentsUrl, ENT_QUOTES, 'UTF-8') . '">';
+        }
+    }
     if (stripos($html, 'application/ld+json') === false || stripos($html, '"Agent Guide"') === false) {
         $jsonLd = birkly_ai_presence_discovery_json_ld();
         if ($jsonLd !== null) {
@@ -1274,12 +1290,14 @@ function birkly_ai_presence_inject_discovery_head_into_html(string $html): strin
 }
 
 /**
- * Inject head + visible body Agent Guide discovery when the guide is live.
+ * Inject head Agent Guide discovery when the guide is live.
+ *
+ * Full guide content lives on sidecar endpoints (/for-agents, /.well-known/, /llms.txt).
+ * External sites load birkly-client.js which adds the same discovery automatically.
  */
 function birkly_ai_presence_inject_discovery_into_html(string $html): string
 {
-    $html = birkly_ai_presence_inject_discovery_head_into_html($html);
-    return birkly_ai_presence_inject_discovery_body_into_html($html);
+    return birkly_ai_presence_inject_discovery_head_into_html($html);
 }
 
 /**
@@ -1478,25 +1496,6 @@ function birkly_ai_presence_for_agents_html(): ?string
         . $esc($name) . ' (published version ' . (int) ($meta['published_version'] ?? 0) . ').</p>';
 
     return $head . $bodyBlock . '</main></body></html>';
-}
-
-function birkly_ai_presence_inject_discovery_body_into_html(string $html): string
-{
-    if (stripos($html, 'data-birkly-agent-guide="published"') !== false
-        || stripos($html, 'id="birkly-agent-guide-public"') !== false) {
-        return $html;
-    }
-
-    $snippet = birkly_ai_presence_discovery_body_snippet();
-    if ($snippet === '') {
-        return $html;
-    }
-
-    if (stripos($html, '</body>') !== false) {
-        return preg_replace('/<\/body>/i', $snippet . '</body>', $html, 1) ?? $html;
-    }
-
-    return $html . $snippet;
 }
 
 /**
