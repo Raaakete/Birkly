@@ -21,10 +21,6 @@ $defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 require_once $root . '/core/demo_starter_templates.php';
-require_once $root . '/core/birkly_paths.php';
-// Do not block first paint on outbound starter catalog. JS refreshes availability
-// from /api/onboarding.php?action=status (catalog is cached server-side).
-$showAiOnboardingStep = !birkly_is_local_dev_request();
 $starterCards = [
     'marsk' => ['label' => 'Marsk', 'hint' => 'Slow living journal + demo site'],
     'blank' => ['label' => 'Start blank', 'hint' => 'No demo content'],
@@ -32,7 +28,7 @@ $starterCards = [
 $localCatalog = birkly_demo_starter_catalog();
 ?>
 
-<div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>" data-ai-step="<?= $showAiOnboardingStep ? '1' : '0' ?>">
+<div class="onboarding-page" data-install-path="<?= htmlspecialchars($installPath) ?>">
     <div class="onboarding-container u-stack-6">
         <div class="onboarding-header u-row">
             <img src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?>" class="onboarding-logo">
@@ -47,9 +43,6 @@ $localCatalog = birkly_demo_starter_catalog();
                 <li class="progress-step" data-step="1"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.welcome') ?></span></li>
                 <li class="progress-step" data-step="2"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.project_info') ?></span></li>
                 <li class="progress-step" data-step="3"><span class="progress-step-dot"></span><span class="progress-step-label">Starters</span></li>
-                <?php if ($showAiOnboardingStep): ?>
-                <li class="progress-step" data-step="4"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.connect_ai') ?></span></li>
-                <?php endif; ?>
             </ol>
         </div>
 
@@ -169,74 +162,5 @@ $localCatalog = birkly_demo_starter_catalog();
                 </div>
             </div>
         </div>
-
-        <!-- Step 4: Connect AI (optional, web server only) -->
-        <?php if ($showAiOnboardingStep): ?>
-        <div class="onboarding-step" id="step-connect-ai" data-step="4" hidden>
-            <div class="onboarding-content">
-                <div class="step-header step-header--optional">
-                    <div class="step-optional-badge"><?= __('admin.optional') ?></div>
-                    <h2 class="step-title"><?= __('admin.connect_ai_assistant') ?></h2>
-                    <p class="step-subtitle">Connect AI for the admin chat, or set up external MCP access for outside tools.</p>
-                </div>
-
-                <div class="ai-mode-tabs" role="tablist">
-                    <button type="button" class="ai-mode-tab active" data-ai-mode="chat" role="tab" aria-selected="true">Admin chat AI</button>
-                    <button type="button" class="ai-mode-tab" data-ai-mode="external" role="tab" aria-selected="false">External / MCP access</button>
-                </div>
-
-                <div id="ai-panel-chat" class="ai-mode-panel">
-                    <div class="ai-wizard u-stack-5" id="onboarding-ai-wizard">
-                        <div class="ai-wizard-step u-stack-3 u-align-start">
-                            <label for="onboarding-ai-provider"><?= __('admin.ai_provider') ?></label>
-                            <select id="onboarding-ai-provider" class="input"><option value="">Loading providers…</option></select>
-                        </div>
-                        <div class="ai-wizard-step u-stack-3 u-align-start">
-                            <div class="field u-w-full" id="onboarding-api-url-group" hidden>
-                                <label class="field-label" for="onboarding-ai-api-url">API URL</label>
-                                <input type="url" id="onboarding-ai-api-url" class="input" placeholder="http://localhost:11434">
-                            </div>
-                            <div class="field u-w-full" id="onboarding-api-key-group">
-                                <label class="field-label" for="onboarding-ai-api-key"><?= __('admin.api_key') ?></label>
-                                <input type="password" id="onboarding-ai-api-key" class="input" autocomplete="off">
-                            </div>
-                            <div id="onboarding-ollama-hint" class="ollama-hint-box u-w-full" hidden>
-                                <strong>Ollama runs locally</strong>
-                                <p>No API key needed.</p>
-                            </div>
-                            <div class="u-cluster">
-                                <button type="button" class="btn btn-secondary btn-sm" id="onboarding-test-ai-btn">Test connection</button>
-                                <span class="u-text-sm u-fg-secondary" id="onboarding-test-ai-status"></span>
-                            </div>
-                        </div>
-                        <div class="ai-wizard-step u-stack-3 u-align-start">
-                            <label for="onboarding-ai-role"><?= __('admin.role') ?></label>
-                            <select id="onboarding-ai-role" class="input"><option value="author">Author</option></select>
-                            <label class="check">
-                                <input type="checkbox" id="onboarding-ai-require-approval" checked>
-                                <span>Require approval for AI actions</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="ai-panel-external" class="ai-mode-panel" hidden>
-                    <div class="install-context-card u-stack-3">
-                        <p><strong>Let outside AI tools access your CMS</strong></p>
-                        <p>Use <strong>Settings → AI</strong> to create inbound endpoints for Claude Desktop, Cursor, or custom agents. Each endpoint gets its own URL and API key.</p>
-                        <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm u-self-start" target="_blank">Open AI connections</a>
-                    </div>
-                </div>
-
-                <div class="onboarding-actions onboarding-actions--split onboarding-actions--ai">
-                    <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
-                    <div class="onboarding-actions-right">
-                        <button type="button" class="btn btn-ghost ai-skip-btn" data-onboarding-action="skip-ai"><?= __('admin.skip_for_now') ?></button>
-                        <button type="button" class="btn btn-primary" id="onboarding-save-ai-btn" data-onboarding-action="save-ai"><?= __('admin.connect_ai') ?></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
     </div>
 </div>

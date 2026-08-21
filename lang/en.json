@@ -552,6 +552,8 @@
         "role_management": "Role Management",
         "group_name": "Group Name",
         "birkly_ready_message": "Your Birkly site is ready. Here are a few ways to get going.",
+        "welcome_invited_message": "Your account is ready. Connect AI in Settings when you want admin chat or MCP access, or start exploring the admin.",
+        "recommended": "Recommended",
         "birkly_running_version": "Birkly Running Version",
         "help": "Help",
         "image_quality_percent": "Image Quality Percent",
