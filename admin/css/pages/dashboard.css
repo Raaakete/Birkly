@@ -244,3 +244,13 @@ a.data-list-item:focus-visible .dash-row-arrow {
   margin: 0;
   font-size: var(--text-sm);
 }
+
+/* First-visit welcome modal — highlight AI setup card */
+.onboarding-welcome-ai-highlight {
+  border: 2px solid var(--accent-primary, var(--color-primary));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-primary, var(--color-primary)) 25%, transparent);
+}
+
+.onboarding-welcome-ai-badge {
+  align-self: flex-start;
+}

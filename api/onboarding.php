@@ -152,6 +152,9 @@ function getOnboardingStatus($userId = null, ?bool $includeStarterAvailability =
         'install_path' => $siteOnboarding['install_path'] ?? null,
         'checklist_dismissed' => $userOnboarding['checklist_dismissed'] ?? [],
         'checklist_hidden' => $userOnboarding['checklist_hidden'] ?? false,
+        'welcome_modal_seen' => !empty($userOnboarding['welcome_modal_seen']),
+        'invited_user' => !empty($userOnboarding['invited_user']),
+        'show_welcome_modal' => !empty($userOnboarding['setup_wizard_completed']) && empty($userOnboarding['welcome_modal_seen']),
         'started_at' => $userOnboarding['started_at'] ?? null,
         'completed_at' => $userOnboarding['completed_at'] ?? null,
         'is_local_dev' => birkly_is_local_dev_request(),
@@ -180,6 +183,21 @@ function saveOnboardingProgress($userId, $data) {
     }
     
     return $userStorage->write($userOnboardingFile, $updated);
+}
+
+/**
+ * Skip the install wizard for users added after initial setup (admin create / invite).
+ * They still see the first-visit welcome modal on the dashboard.
+ */
+function birkly_init_invited_user_onboarding($userId): void
+{
+    saveOnboardingProgress($userId, [
+        'setup_wizard_completed' => true,
+        'completed' => true,
+        'invited_user' => true,
+        'welcome_modal_seen' => false,
+        'completed_at' => date('c'),
+    ]);
 }
 
 // Only execute API logic if this file is called directly (not included)
@@ -579,6 +597,12 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     case 'hide_checklist':
         $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
         saveOnboardingProgress($userId, ['checklist_hidden' => true]);
+        echo json_encode(['status' => 'ok', 'data' => getOnboardingStatus($userId)]);
+        exit;
+
+    case 'dismiss_welcome_modal':
+        $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
+        saveOnboardingProgress($userId, ['welcome_modal_seen' => true]);
         echo json_encode(['status' => 'ok', 'data' => getOnboardingStatus($userId)]);
         exit;
 

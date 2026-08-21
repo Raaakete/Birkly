@@ -70,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $invitation && !$error) {
                     'email' => $invitation['email'],
                     'role' => $invitation['role']
                 ]);
+
+                $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+                require_once __DIR__ . '/api/onboarding.php';
+                birkly_init_invited_user_onboarding($invitation['email']);
                 
                 $success = 'Account created successfully! You can now login to the admin panel.';
                 
