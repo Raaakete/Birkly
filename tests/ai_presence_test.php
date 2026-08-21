@@ -73,6 +73,8 @@ assert_true($ps['never_published'] === true, 'never_published before first publi
 assert_true($ps['is_live'] === false, 'not live before first publish');
 $result = birkly_ai_presence_publish();
 assert_true(($result['ok'] ?? false) === true, 'test publish ok');
+require_once $root . '/core/project_ssr.php';
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc1'), 'SSR inject signature includes discovery format');
 $ps2 = birkly_ai_presence_publish_state();
 assert_true($ps2['is_live'] === true, 'live after publish');
 require_once $root . '/core/project_ssr.php';
