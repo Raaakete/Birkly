@@ -953,6 +953,15 @@ try {
     if (!is_dir($entriesDir)) {
         mkdir($entriesDir, 0755, true);
     }
+
+    require_once __DIR__ . '/../core/page_bundle_helpers.php';
+    birkly_public_invalidate_collection_cache($slug);
+    if (is_array($existingCollection) && !empty($existingCollection['slug'])) {
+        $previousSlug = (string) $existingCollection['slug'];
+        if ($previousSlug !== '' && $previousSlug !== $slug) {
+            birkly_public_invalidate_collection_cache($previousSlug);
+        }
+    }
     
     ob_clean();
     echo json_encode([
