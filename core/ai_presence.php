@@ -1309,14 +1309,111 @@ function birkly_ai_presence_inject_discovery_head_into_html(string $html): strin
 }
 
 /**
- * Inject head Agent Guide discovery when the guide is live.
- *
- * Full guide content lives on sidecar endpoints (/for-agents, /.well-known/, /llms.txt).
- * External sites load birkly-client.js which adds the same discovery automatically.
+ * Inject head + compact body hint for chat/search AIs (reads page text, not head links).
  */
 function birkly_ai_presence_inject_discovery_into_html(string $html): string
 {
-    return birkly_ai_presence_inject_discovery_head_into_html($html);
+    $html = birkly_ai_presence_inject_discovery_head_into_html($html);
+    return birkly_ai_presence_inject_discovery_hint_into_html($html);
+}
+
+/**
+ * Compact visible hint — searchable body text without the full sidecar dump.
+ */
+function birkly_ai_presence_discovery_page_hint_snippet(?array $published = null, ?array $meta = null): string
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return '';
+    }
+
+    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+    $name = trim((string) ($identity['official_name'] ?? ''));
+    if ($name === '') {
+        $name = 'This site';
+    }
+    $short = trim((string) ($identity['short_description'] ?? ''));
+
+    $urls = birkly_ai_presence_public_urls();
+    $guideUrl = (string) ($urls['well_known_url'] ?? '');
+    $llmsUrl = birkly_ai_presence_llms_txt_url($published, $meta) ?? '';
+    $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta) ?? '';
+    $version = (int) ($meta['published_version'] ?? 0);
+
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    $claimTexts = [];
+    foreach (is_array($published['claims'] ?? null) ? $published['claims'] : [] as $claim) {
+        if (!is_array($claim) || ($claim['status'] ?? '') !== 'supported') {
+            continue;
+        }
+        $statement = trim((string) ($claim['statement'] ?? ''));
+        if ($statement !== '') {
+            $claimTexts[] = $esc($statement);
+        }
+        if (count($claimTexts) >= 4) {
+            break;
+        }
+    }
+
+    $style = 'margin:1.5rem auto 0;max-width:min(1720px,94vw);padding:0.75rem 1rem;'
+        . 'border-top:1px solid #e7eae4;font-size:12px;line-height:1.5;color:#8b909a;box-sizing:border-box;';
+
+    $html = '<aside id="birkly-agent-guide-hint" data-birkly-agent-guide="hint" data-agent-guide-version="'
+        . $version . '" aria-label="Agent Guide for AI systems" class="birkly-agent-guide-hint" style="' . $style . '">';
+    $html .= '<p style="margin:0;">';
+    $html .= '<strong>' . $esc($name) . '</strong> publishes a ';
+    if ($forAgentsUrl !== '') {
+        $html .= '<a href="' . $esc($forAgentsUrl) . '" style="color:inherit;">published Agent Guide for AI systems</a>';
+    } else {
+        $html .= 'published Agent Guide for AI systems';
+    }
+    $html .= ' on this site — authoritative brand facts for chat and search assistants.';
+    if ($short !== '') {
+        $html .= ' ' . $esc($short);
+    }
+    $html .= ' Full guide:';
+    $linkParts = [];
+    if ($guideUrl !== '') {
+        $linkParts[] = '<a href="' . $esc($guideUrl) . '" style="color:inherit;">agent-guide.json</a>';
+    }
+    if ($llmsUrl !== '') {
+        $linkParts[] = '<a href="' . $esc($llmsUrl) . '" style="color:inherit;">llms.txt</a>';
+    }
+    if ($forAgentsUrl !== '') {
+        $linkParts[] = '<a href="' . $esc($forAgentsUrl) . '" style="color:inherit;">for-agents</a>';
+    }
+    if ($linkParts !== []) {
+        $html .= ' ' . implode(', ', $linkParts) . '.';
+    }
+    $html .= '</p>';
+    if ($claimTexts !== []) {
+        $html .= '<p style="margin:0.5rem 0 0;">Supported claims: ' . implode(' · ', $claimTexts) . '</p>';
+    }
+    $html .= '</aside>';
+
+    return "\n" . $html . "\n";
+}
+
+function birkly_ai_presence_inject_discovery_hint_into_html(string $html): string
+{
+    if (stripos($html, 'data-birkly-agent-guide="hint"') !== false
+        || stripos($html, 'id="birkly-agent-guide-hint"') !== false
+        || stripos($html, 'id="birkly-agent-guide-public"') !== false) {
+        return $html;
+    }
+
+    $snippet = birkly_ai_presence_discovery_page_hint_snippet();
+    if ($snippet === '') {
+        return $html;
+    }
+
+    if (stripos($html, '</body>') !== false) {
+        return preg_replace('/<\/body>/i', $snippet . '</body>', $html, 1) ?? $html;
+    }
+
+    return $html . $snippet;
 }
 
 /**
