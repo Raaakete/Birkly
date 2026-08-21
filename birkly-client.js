@@ -4257,16 +4257,19 @@
             var cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
             if (!cms) return;
             var head = document.head || document.documentElement;
+            var guideUrl = cms + '/.well-known/agent-guide.json';
+            var llmsUrl = cms + '/llms.txt';
+            var forAgentsUrl = cms + '/for-agents';
             if (!document.querySelector('link[rel="alternate"][href*="agent-guide.json"]')) {
                 var guideLink = document.createElement('link');
                 guideLink.rel = 'alternate';
                 guideLink.type = 'application/json';
                 guideLink.title = 'Agent Guide';
-                guideLink.href = cms + '/.well-known/agent-guide.json';
+                guideLink.href = guideUrl;
                 head.appendChild(guideLink);
                 var guideMeta = document.createElement('meta');
                 guideMeta.name = 'agent-guide';
-                guideMeta.content = guideLink.href;
+                guideMeta.content = guideUrl;
                 head.appendChild(guideMeta);
             }
             if (!document.querySelector('link[rel="describedby"][href*="llms.txt"]')
@@ -4275,13 +4278,81 @@
                 llmsLink.rel = 'describedby';
                 llmsLink.type = 'text/markdown';
                 llmsLink.title = 'llms.txt';
-                llmsLink.href = cms + '/llms.txt';
+                llmsLink.href = llmsUrl;
                 head.appendChild(llmsLink);
                 var llmsMeta = document.createElement('meta');
                 llmsMeta.name = 'llms-txt';
-                llmsMeta.content = llmsLink.href;
+                llmsMeta.content = llmsUrl;
                 head.appendChild(llmsMeta);
             }
+            if (!document.querySelector('link[rel="help"][href*="for-agents"]')) {
+                var helpLink = document.createElement('link');
+                helpLink.rel = 'help';
+                helpLink.type = 'text/html';
+                helpLink.title = 'Agent Guide for AI systems';
+                helpLink.href = forAgentsUrl;
+                head.appendChild(helpLink);
+            }
+        } catch (e) { /* non-fatal */ }
+    }
+
+    async function enhanceAgentGuideFromCms() {
+        var tag = document.querySelector('script[data-cms-url]');
+        if (!tag) return;
+        var cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
+        if (!cms) return;
+
+        emitGuideDiscovery();
+
+        var guideUrl = cms + '/.well-known/agent-guide.json';
+        var llmsUrl = cms + '/llms.txt';
+        var forAgentsUrl = cms + '/for-agents';
+
+        try {
+            var res = await fetch(cms + '/api/public/ai_presence.php?action=guide&view=summary', {
+                credentials: 'omit',
+                headers: { Accept: 'application/json' }
+            });
+            if (!res.ok) return;
+            var payload = await res.json();
+            if (!payload || payload.status !== 'ok' || !payload.data) return;
+
+            var data = payload.data;
+            var identity = data.identity || {};
+            var head = document.head || document.documentElement;
+
+            if (!document.querySelector('script[data-birkly-agent-guide-ld]')) {
+                var ld = {
+                    '@context': 'https://schema.org',
+                    '@type': 'Organization',
+                    name: identity.official_name || '',
+                    seeAlso: [guideUrl, llmsUrl, forAgentsUrl],
+                    subjectOf: {
+                        '@type': 'CreativeWork',
+                        name: 'Agent Guide',
+                        url: guideUrl,
+                        encodingFormat: 'application/json'
+                    }
+                };
+                if (identity.short_description) ld.description = identity.short_description;
+                if (identity.website) ld.url = identity.website;
+                var ldScript = document.createElement('script');
+                ldScript.type = 'application/ld+json';
+                ldScript.setAttribute('data-birkly-agent-guide-ld', '1');
+                ldScript.textContent = JSON.stringify(ld);
+                head.appendChild(ldScript);
+            }
+
+            Birkly.agentGuide = {
+                version: res.headers.get('X-Agent-Guide-Version') || null,
+                summary: data,
+                urls: {
+                    guide: guideUrl,
+                    llms: llmsUrl,
+                    for_agents: forAgentsUrl,
+                    api: cms + '/api/public/ai_presence.php?action=guide&view=summary'
+                }
+            };
         } catch (e) { /* non-fatal */ }
     }
 
@@ -4293,10 +4364,8 @@
         try {
         Birkly.log('Birkly: Initializing...');
 
-        // Emit Agent Guide discovery <link> on external sites (P60-M7). When the
-        // client is loaded with data-cms-url, agents can find the canonical
-        // brand truth on the CMS host even before a reverse-proxy exists.
-        emitGuideDiscovery();
+        // External sites: auto-deliver Agent Guide discovery + summary from CMS (no upload/proxy).
+        enhanceAgentGuideFromCms();
 
         // Create language selector
         createLanguageSelector();
