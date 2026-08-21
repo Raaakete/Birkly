@@ -72,6 +72,12 @@ function birkly_hosting_serve_file(string $filePath): void
         echo birkly_project_prepare_html_for_serve($html);
         exit;
     }
+    if ($ext === 'txt' && basename($filePath) === 'robots.txt') {
+        require_once __DIR__ . '/ai_presence.php';
+        $body = (string) file_get_contents($filePath);
+        echo birkly_ai_presence_robots_txt_augment($body);
+        exit;
+    }
     readfile($filePath);
     exit;
 }

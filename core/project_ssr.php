@@ -699,25 +699,8 @@ function birkly_project_ssr_inject_webmcp(string $html): string
     require_once __DIR__ . '/webmcp.php';
     require_once __DIR__ . '/ai_presence.php';
 
-    $additions = '';
-
-    // Guide discovery link (published guide only) — helps agents find the
-    // canonical brand truth even before any proxy exists.
-    $meta = birkly_ai_presence_load_meta();
-    $guidePublished = (int) ($meta['published_version'] ?? 0) > 0;
-    if ($guidePublished) {
-        $urls = birkly_ai_presence_public_urls();
-        $guideUrl = (string) ($urls['cms_canonical_url'] ?? '');
-        if ($guideUrl !== '' && stripos($html, 'agent-guide.json') === false) {
-            $additions .= "\n    " . '<link rel="alternate" type="application/json" title="Agent Guide" href="'
-                . htmlspecialchars($guideUrl, ENT_QUOTES, 'UTF-8') . '">';
-        }
-    }
-
-    if ($additions !== '' && preg_match('/<head[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
-        $pos = $m[0][1] + strlen($m[0][0]);
-        $html = substr($html, 0, $pos) . $additions . substr($html, $pos);
-    }
+    // Agent Guide discovery (well-known, llms.txt, JSON-LD) for website-visiting agents.
+    $html = birkly_ai_presence_inject_discovery_into_html($html);
 
     // WebMCP runtime — only when enabled; loads after birkly-client.js.
     // The public config is inlined *before* the runtime script so the runtime can
@@ -771,7 +754,7 @@ function birkly_project_ssr_inject_signature(): string
     require_once __DIR__ . '/ai_presence.php';
     $meta = birkly_ai_presence_load_meta();
     $wm = birkly_webmcp_is_enabled() ? '1' : '0';
-    $guide = (int) ($meta['published_version'] ?? 0) > 0 ? '1' : '0';
+    $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
     return 'wm' . $wm . 'g' . $guide;
 }
 
