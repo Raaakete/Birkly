@@ -1,21 +1,17 @@
 /**
  * Onboarding wizard v3
  * Flow: (0 first-user?) → 1 welcome+install info → 2 site info →
- *       3 starter templates → 4 connect AI (optional) → complete
+ *       3 starter templates → complete
  */
 
 const onboarding = {
     currentStep: 0,
-    maxSteps: 4,
-    showAiStep: true,
+    maxSteps: 3,
     needsFirstUser: false,
     starterTemplate: null,
     demoWebsiteUrl: null,
     installPath: null,
-    aiTestPassed: false,
-    aiProviders: null,
     resumeHandled: false,
-    aiMode: 'chat',
     hostingWizard: null,
 
     init() {
@@ -23,35 +19,13 @@ const onboarding = {
 
         const pageEl = document.querySelector('.onboarding-page');
         const dataInstall = pageEl?.dataset?.installPath || '';
-        this.showAiStep = pageEl?.dataset?.aiStep !== '0';
-        this.maxSteps = this.showAiStep ? 4 : 3;
         const urlInstall = new URLSearchParams(window.location.search).get('install');
         this.installPath = ['local', 'cloud'].includes(urlInstall) ? urlInstall
             : (['local', 'cloud'].includes(dataInstall) ? dataInstall : null);
 
         this.setupForms();
         this.bindStepActions();
-        this.bindAiModeTabs();
         this.checkFirstUser();
-    },
-
-    bindAiModeTabs() {
-        document.querySelectorAll('.ai-mode-tab').forEach(tab => {
-            tab.addEventListener('click', async () => {
-                this.aiMode = tab.dataset.aiMode || 'chat';
-                document.querySelectorAll('.ai-mode-tab').forEach(t => {
-                    const active = t === tab;
-                    t.classList.toggle('active', active);
-                    t.setAttribute('aria-selected', active ? 'true' : 'false');
-                });
-                const chatPanel = document.getElementById('ai-panel-chat');
-                const extPanel = document.getElementById('ai-panel-external');
-                const saveBtn = document.getElementById('onboarding-save-ai-btn');
-                if (chatPanel) chatPanel.hidden = this.aiMode !== 'chat';
-                if (extPanel) extPanel.hidden = this.aiMode !== 'external';
-                if (saveBtn) saveBtn.hidden = this.aiMode !== 'chat';
-            });
-        });
     },
 
     bindStepActions() {
@@ -83,12 +57,6 @@ const onboarding = {
                     break;
                 case 'apply-starter':
                     this.applyStarterTemplate();
-                    break;
-                case 'skip-ai':
-                    this.skipAI();
-                    break;
-                case 'save-ai':
-                    this.saveAIConnection();
                     break;
                 default:
                     break;
@@ -181,10 +149,6 @@ const onboarding = {
                 if (data.data.install_path) {
                     this.installPath = data.data.install_path;
                 }
-                if (typeof data.data.is_local_dev === 'boolean') {
-                    this.showAiStep = !data.data.is_local_dev;
-                    this.maxSteps = this.showAiStep ? 4 : 3;
-                }
                 if (data.data.starter_availability) {
                     this.applyStarterAvailability(data.data.starter_availability);
                 }
@@ -198,12 +162,6 @@ const onboarding = {
                     this.resumeHandled = true;
                     this.starterTemplate = data.data.starter_template || data.data.use_case || null;
                     this.showStep(resume);
-                    return;
-                }
-                if (!this.resumeHandled && resume === 4 && !this.showAiStep) {
-                    this.resumeHandled = true;
-                    await this.updateProgressAPI('ai_skipped_local', true);
-                    await this.complete();
                     return;
                 }
             }
@@ -225,11 +183,6 @@ const onboarding = {
             e.preventDefault();
             this.saveSiteInfo();
         });
-        document.getElementById('onboarding-ai-provider')?.addEventListener('change', () => {
-            this.updateAiProviderFields();
-            this.aiTestPassed = false;
-        });
-        document.getElementById('onboarding-test-ai-btn')?.addEventListener('click', async () => this.testAIConnection());
     },
 
     async createFirstUser() {
@@ -285,7 +238,6 @@ const onboarding = {
         if (step === 1) this.renderInstallContext();
         if (step === 2) this.initDeliverySetup();
         if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
-        if (step === 4) this.initAiWizard();
 
         this.updateProgress();
     },
@@ -296,7 +248,6 @@ const onboarding = {
             1: 'welcome',
             2: 'site-info',
             3: 'starter-templates',
-            4: 'connect-ai',
         };
         return steps[step] || 'welcome';
     },
@@ -361,19 +312,10 @@ const onboarding = {
     },
 
     nextStep() {
-        if (this.currentStep === 3 && !this.showAiStep) {
-            this.finishWithoutAiStep();
-            return;
-        }
         if (this.currentStep < this.maxSteps) {
             this.showStep(this.currentStep + 1);
             this.updateProgressAPI();
         }
-    },
-
-    async finishWithoutAiStep() {
-        await this.updateProgressAPI('ai_skipped_local', true);
-        await this.complete();
     },
 
     previousStep() {
@@ -434,7 +376,7 @@ const onboarding = {
                 if (skipConfirm) {
                     await this.updateProgressAPI('starter_skipped', true);
                 }
-                this.nextStep();
+                await this.complete();
             } else {
                 let message = data.message || 'Failed to install starter template';
                 const collectionsError = data.diagnostics?.collections_dir?.error;
@@ -450,25 +392,12 @@ const onboarding = {
                 BirklyFeedback.toast(message, 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to install starter template.', 'error')
+            BirklyFeedback.toast('Failed to install starter template.', 'error');
         }
         if (btn) {
             btn.disabled = false;
             btn.textContent = 'Continue';
         }
-    },
-
-    async getCSRFToken() {
-        try {
-            const response = await fetch(Birkly.url('/api/csrf.php'));
-            const data = await response.json();
-            if (data.status === 'ok' && data.data?.csrf_token) {
-                return data.data.csrf_token;
-            }
-        } catch (error) {
-            console.error('Error fetching CSRF token:', error);
-        }
-        return null;
     },
 
     async saveSiteInfo() {
@@ -500,7 +429,7 @@ const onboarding = {
                 BirklyFeedback.toast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to save project information.', 'error')
+            BirklyFeedback.toast('Failed to save project information.', 'error');
         }
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -521,143 +450,6 @@ const onboarding = {
         } catch (error) {
             console.error('Error updating progress:', error);
         }
-    },
-
-    async initAiWizard() {
-        if (this.aiProviders) return;
-        try {
-            const [provRes, rolesRes] = await Promise.all([
-                fetch(Birkly.url('/api/ai_connections.php?action=providers')),
-                fetch(Birkly.url('/api/roles.php?action=list_roles'))
-            ]);
-            const provData = await provRes.json();
-            const rolesData = await rolesRes.json();
-
-            this.aiProviders = provData.data?.providers || {};
-            const select = document.getElementById('onboarding-ai-provider');
-            if (select) {
-                select.innerHTML = '<option value="">Select provider…</option>';
-                Object.entries(this.aiProviders).forEach(([id, p]) => {
-                    if (id === 'mcp') return;
-                    const opt = document.createElement('option');
-                    opt.value = id;
-                    opt.textContent = p.name || id;
-                    select.appendChild(opt);
-                });
-            }
-
-            const roleSelect = document.getElementById('onboarding-ai-role');
-            const roles = (rolesData.status === 'ok' && Array.isArray(rolesData.roles))
-                ? rolesData.roles
-                : [{ id: 'author', name: 'Author' }, { id: 'editor', name: 'Editor' }, { id: 'admin', name: 'Admin' }];
-            if (roleSelect) {
-                roleSelect.innerHTML = '';
-                roles.forEach(role => {
-                    const opt = document.createElement('option');
-                    opt.value = role.id || role.name;
-                    opt.textContent = role.name || role.id;
-                    roleSelect.appendChild(opt);
-                });
-            }
-        } catch (error) {
-            console.error('AI wizard init failed:', error);
-        }
-    },
-
-    updateAiProviderFields() {
-        const provider = document.getElementById('onboarding-ai-provider')?.value;
-        const keyGroup = document.getElementById('onboarding-api-key-group');
-        const urlGroup = document.getElementById('onboarding-api-url-group');
-        const ollamaHint = document.getElementById('onboarding-ollama-hint');
-        const isOllama = provider === 'ollama';
-        const isCustom = provider === 'custom';
-        if (keyGroup) keyGroup.hidden = isOllama;
-        if (urlGroup) urlGroup.hidden = !(isOllama || isCustom);
-        if (ollamaHint) ollamaHint.hidden = !isOllama;
-    },
-
-    async testAIConnection() {
-        const provider = document.getElementById('onboarding-ai-provider')?.value;
-        const apiKey = document.getElementById('onboarding-ai-api-key')?.value || '';
-        const apiUrl = document.getElementById('onboarding-ai-api-url')?.value || '';
-        const statusEl = document.getElementById('onboarding-test-ai-status');
-        const csrf = await this.getCSRFToken();
-        if (!provider || !csrf) return;
-
-        if (statusEl) statusEl.textContent = 'Testing…';
-        try {
-            const response = await fetch(Birkly.url('/api/ai_connections.php?action=test'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ provider, api_key: apiKey, api_url: apiUrl, _csrf: csrf })
-            });
-            const data = await response.json();
-            this.aiTestPassed = data.status === 'ok';
-            if (statusEl) {
-                statusEl.textContent = this.aiTestPassed ? '✓ Connection OK' : ('✗ ' + (data.message || 'Failed'));
-                statusEl.className = this.aiTestPassed ? 'test-ok' : 'test-error';
-            }
-        } catch (error) {
-            this.aiTestPassed = false;
-            if (statusEl) statusEl.textContent = '✗ Test failed';
-        }
-    },
-
-    async saveAIConnection() {
-        if (this.aiMode !== 'chat') {
-            await this.complete();
-            return;
-        }
-        const provider = document.getElementById('onboarding-ai-provider')?.value;
-        const apiKey = document.getElementById('onboarding-ai-api-key')?.value || '';
-        const apiUrl = document.getElementById('onboarding-ai-api-url')?.value || '';
-        const role = document.getElementById('onboarding-ai-role')?.value || 'author';
-        const requireApproval = document.getElementById('onboarding-ai-require-approval')?.checked ?? true;
-        const csrf = await this.getCSRFToken();
-
-        if (!provider || !csrf) {
-            BirklyFeedback.toast('Select a provider first.', 'warning')
-            return;
-        }
-        if (provider !== 'ollama' && !apiKey) {
-            BirklyFeedback.toast('API key is required.', 'error')
-            return;
-        }
-
-        const btn = document.getElementById('onboarding-save-ai-btn');
-        if (btn) btn.disabled = true;
-
-        try {
-            const response = await fetch(Birkly.url('/api/ai_connections.php?action=create'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    provider,
-                    api_key: apiKey,
-                    api_url: apiUrl,
-                    role,
-                    require_approval: requireApproval,
-                    shared_type: 'none',
-                    _csrf: csrf
-                })
-            });
-            const data = await response.json();
-            if (data.status === 'ok') {
-                await this.updateProgressAPI('ai_connected', true);
-                await this.complete();
-            } else {
-                BirklyFeedback.toast(data.message || 'Failed to create AI connection', 'error')
-                if (btn) btn.disabled = false;
-            }
-        } catch (error) {
-            BirklyFeedback.toast('Failed to save AI connection.', 'error')
-            if (btn) btn.disabled = false;
-        }
-    },
-
-    async skipAI() {
-        await this.updateProgressAPI('ai_skipped', true);
-        await this.complete();
     },
 
     async complete() {
@@ -682,10 +474,10 @@ const onboarding = {
         const data = await response.json();
         if (data.status === 'ok') {
             const params = new URLSearchParams();
-            params.set('onboarding_complete', 'true');
+            params.set('page', 'dashboard');
             if (this.demoWebsiteUrl) params.set('demo_website_url', this.demoWebsiteUrl);
             if (this.starterTemplate) params.set('starter_template', this.starterTemplate);
-            window.location.href = Birkly.url('/admin/index.php?page=dashboard') + '&' + params.toString();
+            window.location.href = Birkly.url('/admin/index.php?' + params.toString());
         } else {
             BirklyFeedback.toast('Failed to complete onboarding: ' + (data.message || 'Unknown error'), 'error');
         }
