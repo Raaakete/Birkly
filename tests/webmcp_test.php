@@ -141,7 +141,7 @@ assert_true(strpos($client, 'describedby') !== false, 'client emits llms.txt des
 assert_true(strpos($client, 'llms.txt') !== false, 'client references llms.txt in discovery');
 assert_true(strpos($client, 'enhanceAgentGuideFromCms') !== false, 'client fetches Agent Guide summary from CMS');
 assert_true(strpos($client, 'for-agents') !== false, 'client links for-agents sidecar');
-assert_true(strpos($client, 'injectAgentGuidePageHint') !== false, 'client injects compact Agent Guide hint');
+assert_true(strpos($client, 'injectAgentGuidePageHint') === false, 'client does not inject page body Agent Guide hint');
 
 echo "==> Runtime stamps allowlisted forms + listens for late footer forms\n";
 assert_true(strpos($js, 'stampAllowlistedForms') !== false, 'runtime stamps toolname/tooldescription on allowlisted forms');
