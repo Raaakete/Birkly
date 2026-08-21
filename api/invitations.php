@@ -462,6 +462,9 @@ function birkly_invitation_effective_status(array $invitation): string
 function birkly_invitation_delivery_label(array $invitation): string
 {
     $delivery = (string) ($invitation['delivery'] ?? '');
+    if ($delivery === '') {
+        return !empty($invitation['email_sent']) ? 'Email sent' : 'Link only';
+    }
     return match ($delivery) {
         'email' => 'Email sent',
         'link_only' => 'Link only',
