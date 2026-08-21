@@ -4353,6 +4353,25 @@
                     api: cms + '/api/public/ai_presence.php?action=guide&view=summary'
                 }
             };
+
+            injectAgentGuideFooterLink(forAgentsUrl);
+        } catch (e) { /* non-fatal */ }
+    }
+
+    function injectAgentGuideFooterLink(forAgentsUrl) {
+        try {
+            if (!forAgentsUrl || document.querySelector('[data-birkly-agent-guide="footer-link"]')) return;
+            var footer = document.querySelector('footer')
+                || (document.querySelector('birkly-footer') && document.querySelector('birkly-footer footer'))
+                || document.querySelector('birkly-footer');
+            if (!footer) return;
+            var link = document.createElement('a');
+            link.href = forAgentsUrl;
+            link.rel = 'help';
+            link.setAttribute('data-birkly-agent-guide', 'footer-link');
+            link.title = 'Agent Guide for AI systems';
+            link.textContent = 'For agents';
+            footer.appendChild(link);
         } catch (e) { /* non-fatal */ }
     }
 
