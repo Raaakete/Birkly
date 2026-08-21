@@ -235,6 +235,10 @@ if ($action === 'create_user') {
         
         // Remove password from response
         unset($user['password']);
+
+        $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+        require_once __DIR__ . '/onboarding.php';
+        birkly_init_invited_user_onboarding($email);
         
         echo json_encode([
             'status' => 'ok',
