@@ -207,6 +207,9 @@ function birkly_project_prepare_html_for_serve(string $html): string
     $html = birkly_project_rewrite_cross_host_urls($html);
     $html = birkly_project_inject_runtime_scripts($html);
 
+    require_once __DIR__ . '/ai_presence.php';
+    $html = birkly_ai_presence_inject_discovery_into_html($html);
+
     require_once __DIR__ . '/hosting_urls.php';
     $cmsBase = birkly_cms_web_base_url();
     if ($cmsBase === '') {
