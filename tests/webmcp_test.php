@@ -139,6 +139,9 @@ assert_true(strpos($client, 'tooldescription="') !== false, 'client emits declar
 assert_true(strpos($client, "'birkly_form_'") !== false, 'client tool name matches runtime derived name');
 assert_true(strpos($client, 'describedby') !== false, 'client emits llms.txt describedby discovery');
 assert_true(strpos($client, 'llms.txt') !== false, 'client references llms.txt in discovery');
+assert_true(strpos($client, 'enhanceAgentGuideFromCms') !== false, 'client fetches Agent Guide summary from CMS');
+assert_true(strpos($client, 'for-agents') !== false, 'client links for-agents sidecar');
+assert_true(strpos($client, 'data-birkly-agent-guide-ld') !== false, 'client injects Agent Guide JSON-LD');
 
 echo "==> Runtime stamps allowlisted forms + listens for late footer forms\n";
 assert_true(strpos($js, 'stampAllowlistedForms') !== false, 'runtime stamps toolname/tooldescription on allowlisted forms');
