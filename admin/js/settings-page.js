@@ -393,6 +393,10 @@ window.closeInviteUserModal = closeInviteUserModal;
 window.sendInvitation = sendInvitation;
 window.createInvitationLink = createInvitationLink;
 window.copyInviteLink = copyInviteLink;
+window.loadTeamInvitations = loadTeamInvitations;
+window.copyTeamInvitationLink = copyTeamInvitationLink;
+window.resendTeamInvitation = resendTeamInvitation;
+window.cancelTeamInvitation = cancelTeamInvitation;
 window.openAddUserModal = openAddUserModal;
 window.closeAddUserModal = closeAddUserModal;
 window.openEditUserModal = openEditUserModal;
@@ -1262,6 +1266,7 @@ async function submitInvitation(sendEmail) {
                 message = result.message + '\n\n' + result.data.localhost_note;
             }
             showMessage(message, 'success');
+            await loadTeamInvitations();
             if (!inviteUrl) {
                 closeInviteUserModal();
             }
@@ -1270,6 +1275,7 @@ async function submitInvitation(sendEmail) {
 
         if (inviteUrl) {
             showInviteLinkResult(inviteUrl);
+            await loadTeamInvitations();
             showMessage(
                 (result.message || 'Could not send invitation email.') +
                 ' The invite link was saved — copy it below and share it manually.',
@@ -1307,6 +1313,175 @@ function copyInviteLink() {
     }
     field.select();
     showMessage('Select the link field and copy it manually.', 'warning');
+}
+
+function invitationStatusBadge(status) {
+    const map = {
+        pending: { className: 'badge-warning', label: 'Pending' },
+        expired: { className: 'badge-neutral', label: 'Expired' },
+        accepted: { className: 'badge-success', label: 'Accepted' },
+        cancelled: { className: 'badge-neutral', label: 'Cancelled' },
+    };
+    return map[status] || { className: 'badge-neutral', label: status || 'Unknown' };
+}
+
+function formatInvitationDate(value) {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '—';
+    return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+    });
+}
+
+async function loadTeamInvitations() {
+    const listEl = document.getElementById('team-invitations-list');
+    const emptyEl = document.getElementById('team-invitations-empty');
+    const loadingEl = document.getElementById('team-invitations-loading');
+    if (!listEl || !emptyEl || !loadingEl) return;
+
+    loadingEl.hidden = false;
+    emptyEl.hidden = true;
+    listEl.hidden = true;
+    listEl.innerHTML = '';
+
+    try {
+        const response = await fetch(apiUrl('/api/invitations.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ action: 'list_invitations' }),
+        });
+        const result = await response.json();
+        const invitations = result.status === 'ok' ? (result.data?.invitations || []) : [];
+
+        if (!invitations.length) {
+            emptyEl.hidden = false;
+            return;
+        }
+
+        listEl.innerHTML = invitations.map(function (invite) {
+            const badge = invitationStatusBadge(invite.status);
+            const delivery = invite.delivery_label || '—';
+            const emailError = invite.email_error
+                ? '<span class="data-list-meta u-fg-danger">' + escapeHtml(invite.email_error) + '</span>'
+                : '';
+            const actions = [];
+
+            if (invite.can_copy_link && invite.invite_url) {
+                actions.push('<button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>Copy link</button>');
+            }
+            if (invite.can_resend) {
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>Resend email</button>');
+            }
+            if (invite.can_cancel) {
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>Cancel</button>');
+            }
+
+            return '<div class="data-list-item">' +
+                '<div class="data-list-main">' +
+                    '<span class="data-list-title">' + escapeHtml(invite.email || '') + '</span>' +
+                    '<span class="data-list-meta">' +
+                        escapeHtml((invite.role || 'viewer')) + ' · ' + escapeHtml(delivery) +
+                        ' · Created ' + escapeHtml(formatInvitationDate(invite.created_at)) +
+                        ' · Expires ' + escapeHtml(formatInvitationDate(invite.expires_at)) +
+                    '</span>' +
+                    emailError +
+                '</div>' +
+                '<div class="data-list-actions u-cluster-2">' +
+                    '<span class="badge ' + badge.className + '">' + escapeHtml(badge.label) + '</span>' +
+                    actions.join('') +
+                '</div>' +
+            '</div>';
+        }).join('');
+        listEl.hidden = false;
+    } catch (error) {
+        emptyEl.hidden = false;
+        emptyEl.querySelector('.empty-state__description').textContent = 'Could not load invitations.';
+    } finally {
+        loadingEl.hidden = true;
+    }
+}
+
+function copyTeamInvitationLink(url) {
+    if (!url) return;
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(url).then(function () {
+            showMessage('Invite link copied to clipboard.', 'success');
+        }).catch(function () {
+            showMessage(url, 'info');
+        });
+        return;
+    }
+    showMessage(url, 'info');
+}
+
+async function resendTeamInvitation(token) {
+    if (!token) return;
+    try {
+        const response = await fetch(apiUrl('/api/invitations.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'resend_invitation',
+                token: token,
+                _csrf: getCsrfToken(),
+            }),
+        });
+        const result = await response.json();
+        if (result.status === 'ok') {
+            showMessage(result.message || 'Invitation resent.', 'success');
+            await loadTeamInvitations();
+            return;
+        }
+        if (result.data?.invite_url) {
+            showMessage((result.message || 'Could not resend email.') + ' Copy the link from the list instead.', 'warning');
+            await loadTeamInvitations();
+            return;
+        }
+        showMessage(result.message || 'Could not resend invitation.', 'error');
+    } catch (error) {
+        showMessage('Error resending invitation: ' + error.message, 'error');
+    }
+}
+
+async function cancelTeamInvitation(token, email) {
+    if (!token) return;
+    const label = email ? 'Cancel invitation for ' + email + '?' : 'Cancel this invitation?';
+    let confirmed = true;
+    if (window.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
+        confirmed = await BirklyFeedback.confirm(label);
+    } else {
+        confirmed = window.confirm(label);
+    }
+    if (!confirmed) return;
+
+    try {
+        const response = await fetch(apiUrl('/api/invitations.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                action: 'cancel_invitation',
+                token: token,
+                _csrf: getCsrfToken(),
+            }),
+        });
+        const result = await response.json();
+        if (result.status === 'ok') {
+            showMessage(result.message || 'Invitation cancelled.', 'success');
+            await loadTeamInvitations();
+            return;
+        }
+        showMessage(result.message || 'Could not cancel invitation.', 'error');
+    } catch (error) {
+        showMessage('Error cancelling invitation: ' + error.message, 'error');
+    }
 }
 
 // User management functions
@@ -3120,6 +3295,18 @@ document.addEventListener('DOMContentLoaded', function() {
     if (tab === 'users-roles') tab = 'team-access';
     if (tab === 'security' || window.location.hash === '#security' || securityPane) {
         loadDenylist();
+    }
+
+    const teamAccessTab = document.querySelector('[data-tab="team-access"]');
+    if (teamAccessTab) {
+        teamAccessTab.addEventListener('click', function () {
+            setTimeout(loadTeamInvitations, 100);
+        });
+    }
+
+    var teamPane = document.querySelector('.tab-pane#team-access.active');
+    if (tab === 'team-access' || window.location.hash === '#team-access' || teamPane) {
+        loadTeamInvitations();
     }
 });
 

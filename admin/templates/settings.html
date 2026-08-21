@@ -666,6 +666,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
     </div>
   </section></div>
+          <div class="settings-pane-section" data-settings-search="team access invitations pending invite links email"><section class="card" id="team-invitations-section">
+          <div class="card-header">
+            <h2><?= __('admin.team_invitations_title') ?></h2>
+          </div>
+          <div class="card-body u-stack-4">
+            <p class="settings-help"><?= __('admin.team_invitations_help') ?></p>
+            <div id="team-invitations-loading" class="loading-state empty-state--compact" hidden>
+              <p class="empty-state-text"><?= __('admin.loading') ?></p>
+            </div>
+            <div id="team-invitations-empty" class="empty-state empty-state--compact" hidden>
+              <p class="empty-state__description"><?= __('admin.no_invitations_yet') ?></p>
+            </div>
+            <div id="team-invitations-list" class="data-list" hidden></div>
+          </div>
+          </section></div>
           <div class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
           <div class="card-header">
             <h2>Role Management</h2>
