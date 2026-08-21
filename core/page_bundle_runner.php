@@ -148,12 +148,25 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
         }
     }
 
-    $revision = birkly_page_bundle_compute_revision($storage, $requests, $language);
+    $revision = '';
+    try {
+        if (!empty($options['revision']) && is_string($options['revision'])) {
+            $revision = $options['revision'];
+        } else {
+            $revision = birkly_page_bundle_compute_revision($storage, $requests, $language);
+        }
 
-    $htmlFieldNames = birkly_page_bundle_html_field_names(
-        $storage,
-        birkly_page_bundle_collect_collections($requests)
-    );
+        $htmlFieldNames = birkly_page_bundle_html_field_names(
+            $storage,
+            birkly_page_bundle_collect_collections($requests)
+        );
+    } catch (Throwable $e) {
+        error_log('page_bundle finalize error: ' . $e->getMessage());
+        if ($revision === '') {
+            $revision = substr(hash('sha256', 'page_bundle:' . time()), 0, 16);
+        }
+        $htmlFieldNames = [];
+    }
     if ($htmlFieldNames !== []) {
         $out['_html_fields'] = $htmlFieldNames;
     }

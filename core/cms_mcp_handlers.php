@@ -831,9 +831,8 @@ function cms_mcp_handler_settings(string $subAction, array $input, array $aiUser
 
     switch ($subAction) {
         case 'rebuild_system':
-            if (function_exists('birkly_rebuild_system_cache')) {
-                birkly_rebuild_system_cache();
-            }
+            require_once dirname(__DIR__) . '/core/page_bundle_helpers.php';
+            birkly_rebuild_system_cache();
             return cms_mcp_ok(['rebuilt' => true]);
         case 'migrate_storage':
             return cms_mcp_error('migrate_storage requires admin UI confirmation');

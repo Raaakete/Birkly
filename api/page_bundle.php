@@ -45,7 +45,18 @@ function page_bundle_respond($data, $code = 200, $etag = null) {
         header('ETag: "' . $etag . '"');
     }
     http_response_code($code);
-    echo json_encode($data);
+    $flags = JSON_UNESCAPED_UNICODE;
+    if (defined('JSON_INVALID_UTF8_SUBSTITUTE')) {
+        $flags |= JSON_INVALID_UTF8_SUBSTITUTE;
+    }
+    $json = json_encode($data, $flags);
+    if ($json === false) {
+        error_log('page_bundle json_encode failed: ' . json_last_error_msg());
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Bundle encoding failed']);
+        exit;
+    }
+    echo $json;
     exit;
 }
 
@@ -106,7 +117,10 @@ try {
         exit;
     }
 
-    $result = birkly_run_page_bundle_requests($storage, $requests, $language, ['lean' => $lean]);
+    $result = birkly_run_page_bundle_requests($storage, $requests, $language, [
+        'lean' => $lean,
+        'revision' => $revision,
+    ]);
     $result['revision'] = $revision;
     page_bundle_respond($result, 200, $revision);
 } catch (Throwable $e) {
