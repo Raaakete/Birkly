@@ -46,6 +46,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/ai_presence.php';
 require_once __DIR__ . '/../core/ai_presence_pro.php';
 require_once __DIR__ . '/../core/ai_presence_links.php';
+require_once __DIR__ . '/../core/ai_presence_discovery.php';
 
 if (!isset($_SESSION['user'])) {
     http_response_code(401);
@@ -72,11 +73,12 @@ if (!birkly_ai_presence_can_view($currentUser)) {
 $readActions = [
     'get', 'completeness', 'staleness', 'preview_query', 'setup_prefill', 'public_urls',
     'list_connections', 'list_versions', 'cms_diff', 'list_collections', 'list_collection_entries',
+    'discovery_status',
 ];
 $writeActions = [
     'save_draft', 'publish', 'unpublish', 'fetch_url_meta', 'suggest', 'accept_suggestion', 'accept_suggestions',
     'setup_complete', 'setup_skip', 'setup_start', 'copilot', 'field_ai', 'wizard_generate', 'wizard_apply', 'cms_refresh',
-    'validate_links', 'suggest_links',
+    'validate_links', 'suggest_links', 'discovery_indexnow_ping',
 ];
 
 if (in_array($action, $writeActions, true) && !birkly_ai_presence_can_edit($currentUser)) {
@@ -150,6 +152,16 @@ if ($action === 'staleness') {
 
 if ($action === 'public_urls') {
     echo json_encode(['status' => 'ok', 'data' => birkly_ai_presence_public_urls()]);
+    exit;
+}
+
+if ($action === 'discovery_status') {
+    echo json_encode(['status' => 'ok', 'data' => birkly_ai_presence_discovery_status()]);
+    exit;
+}
+
+if ($action === 'discovery_indexnow_ping') {
+    echo json_encode(['status' => 'ok', 'data' => birkly_ai_presence_discovery_indexnow_ping()]);
     exit;
 }
 
