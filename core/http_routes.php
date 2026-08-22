@@ -20,6 +20,7 @@ function birkly_http_route_map(): array
         '/.well-known/brand-context.json' => '/api/well_known_brand_context.php',
         '/.well-known/agent-guide.json' => '/api/well_known_agent_guide.php',
         '/llms.txt' => '/api/llms_txt.php',
+        '/sitemap.xml' => '/api/sitemap_xml.php',
         '/for-agents' => '/api/for_agents.php',
         '/authorize' => '/api/oauth_authorize.php',
         '/oauth/authorize' => '/api/oauth_authorize.php',
@@ -37,6 +38,11 @@ if (!function_exists('load_plugins')) {
 
 function birkly_dispatch_http_route(string $uri): bool
 {
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    if (birkly_ai_presence_discovery_try_serve_indexnow_key($uri)) {
+        return true;
+    }
+
     if ($uri === '/favicon.ico') {
         if (!function_exists('birkly_hosting_serve_favicon_if_available')) {
             require_once __DIR__ . '/hosting_routing.php';

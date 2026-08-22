@@ -27,6 +27,12 @@ if ($code !== 0) {
     $failures++;
 }
 
+echo "==> Discovery tests\n";
+passthru('php ' . escapeshellarg($root . '/tests/ai_presence_discovery_test.php'), $discCode);
+if ($discCode !== 0) {
+    $failures++;
+}
+
 birkly_ai_presence_reset_for_tests();
 
 echo "==> Schema file\n";
@@ -35,6 +41,7 @@ assert_true(is_readable($root . '/schema/ai_presence.schema.json'), 'schema exis
 echo "==> Core PHP files syntax\n";
 foreach ([
     'core/ai_presence.php',
+    'core/ai_presence_discovery.php',
     'core/ai_presence_pro.php',
     'core/agent_guide_sources.php',
     'api/ai_presence.php',
@@ -53,8 +60,10 @@ assert_true(isset($routes['/.well-known/brand-context.json']), 'legacy well-know
 assert_true(isset($routes['/.well-known/agent-guide.json']), 'agent guide well-known route registered');
 assert_true(isset($routes['/llms.txt']), 'llms.txt route registered');
 assert_true(isset($routes['/for-agents']), 'for-agents route registered');
+assert_true(isset($routes['/sitemap.xml']), 'sitemap.xml route registered');
 assert_true(is_readable($root . '/api/llms_txt.php'), 'llms.txt handler exists');
 assert_true(is_readable($root . '/api/for_agents.php'), 'for-agents handler exists');
+assert_true(is_readable($root . '/api/sitemap_xml.php'), 'sitemap handler exists');
 
 echo "==> Admin template\n";
 assert_true(is_readable($root . '/admin/templates/ai-presence.html'), 'admin template exists');
@@ -74,7 +83,7 @@ assert_true($ps['is_live'] === false, 'not live before first publish');
 $result = birkly_ai_presence_publish();
 assert_true(($result['ok'] ?? false) === true, 'test publish ok');
 require_once $root . '/core/project_ssr.php';
-assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc5'), 'SSR inject signature includes discovery format');
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc6'), 'SSR inject signature includes discovery format');
 $ps2 = birkly_ai_presence_publish_state();
 assert_true($ps2['is_live'] === true, 'live after publish');
 require_once $root . '/core/project_ssr.php';

@@ -129,6 +129,12 @@ function birkly_ai_presence_default_draft(): array
             'include_json_ld' => true,
             'redact_public_fields' => [],
             'public_views_enabled' => true,
+            'footer_discovery_link' => true,
+            'footer_discovery_line' => false,
+            'footer_discovery_line_text' => '',
+            'discovery_sitemap' => true,
+            'discovery_indexnow' => true,
+            'discovery_ai_crawlers' => true,
         ],
     ];
 }
@@ -779,6 +785,9 @@ function birkly_ai_presence_publish(): array
 
     birkly_ai_presence_invalidate_project_ssr_cache();
 
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    birkly_ai_presence_discovery_on_publish();
+
     return ['ok' => true, 'version' => $version];
 }
 
@@ -1319,6 +1328,12 @@ function birkly_ai_presence_discovery_footer_link_snippet(?array $published = nu
         return '';
     }
 
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $settings = birkly_ai_presence_discovery_publication_settings($published);
+    if (!$settings['footer_discovery_link']) {
+        return '';
+    }
+
     $forAgentsUrl = birkly_ai_presence_for_agents_url($published, $meta) ?? '';
     if ($forAgentsUrl === '') {
         return '';
@@ -1365,6 +1380,39 @@ function birkly_ai_presence_inject_discovery_footer_link_into_html(string $html)
 }
 
 /**
+ * Append optional footer one-liner for crawlable AI discovery text.
+ */
+function birkly_ai_presence_inject_discovery_footer_line_into_html(string $html): string
+{
+    if (stripos($html, 'data-birkly-agent-guide="footer-line"') !== false) {
+        return $html;
+    }
+
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $line = birkly_ai_presence_discovery_footer_line_snippet();
+    if ($line === '') {
+        return $html;
+    }
+
+    $insert = "\n" . $line . "\n";
+
+    if (preg_match('/<footer[\s>]/i', $html) && preg_match_all('/<\/footer>/i', $html, $matches, PREG_OFFSET_CAPTURE)) {
+        $last = end($matches[0]);
+        $pos = (int) $last[1];
+
+        return substr($html, 0, $pos) . $insert . substr($html, $pos);
+    }
+
+    if (preg_match('/<birkly-footer[\s>]/i', $html) && stripos($html, 'birkly-agent-guide-line-noscript') === false) {
+        $noscript = '<noscript class="birkly-agent-guide-line-noscript">' . $line . '</noscript>' . "\n";
+
+        return preg_replace('/(<birkly-footer[\s>])/i', $noscript . '$1', $html, 1) ?? $html;
+    }
+
+    return $html;
+}
+
+/**
  * Inject head discovery plus a single footer link — no guide content dump on pages.
  *
  * Full guide content lives on /for-agents and other sidecar endpoints.
@@ -1373,8 +1421,9 @@ function birkly_ai_presence_inject_discovery_footer_link_into_html(string $html)
 function birkly_ai_presence_inject_discovery_into_html(string $html): string
 {
     $html = birkly_ai_presence_inject_discovery_head_into_html($html);
+    $html = birkly_ai_presence_inject_discovery_footer_link_into_html($html);
 
-    return birkly_ai_presence_inject_discovery_footer_link_into_html($html);
+    return birkly_ai_presence_inject_discovery_footer_line_into_html($html);
 }
 
 /**
@@ -1382,30 +1431,9 @@ function birkly_ai_presence_inject_discovery_into_html(string $html): string
  */
 function birkly_ai_presence_robots_txt_augment(string $body): string
 {
-    if (!birkly_ai_presence_is_publicly_live()) {
-        return $body;
-    }
-    if (stripos($body, 'LLMS:') !== false) {
-        return $body;
-    }
+    require_once __DIR__ . '/ai_presence_discovery.php';
 
-    $llmsUrl = birkly_ai_presence_llms_txt_url();
-    if ($llmsUrl === null) {
-        return $body;
-    }
-
-    $guideUrl = (string) (birkly_ai_presence_public_urls()['well_known_url'] ?? '');
-    $append = "\n\n# Agent Guide — AI discovery (appended when Agent Guide is published)\n";
-    $append .= 'LLMS: ' . $llmsUrl . '; type=summary' . "\n";
-    if ($guideUrl !== '') {
-        $append .= '# Agent Guide JSON: ' . $guideUrl . "\n";
-    }
-    $forAgentsUrl = birkly_ai_presence_for_agents_url();
-    if ($forAgentsUrl !== null) {
-        $append .= '# Agent Guide HTML: ' . $forAgentsUrl . "\n";
-    }
-
-    return rtrim($body) . $append;
+    return birkly_ai_presence_discovery_robots_augment($body);
 }
 
 /**

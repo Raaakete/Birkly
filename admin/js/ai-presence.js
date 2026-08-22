@@ -3605,6 +3605,56 @@
         // Birkly MCP URL (always CMS)
         var mcpEl = document.getElementById('ap-publish-mcp-url');
         if (mcpEl) mcpEl.textContent = urls.mcp_url || '—';
+
+        loadDiscoveryStatus();
+    }
+
+    function discoveryStatusLabel(status) {
+        if (status === 'pass') return t('ag_discovery_status_pass', 'OK');
+        if (status === 'warn') return t('ag_discovery_status_warn', 'Review');
+        if (status === 'fail') return t('ag_discovery_status_fail', 'Action needed');
+        return t('ag_discovery_status_neutral', 'Optional');
+    }
+
+    function discoveryStatusBadgeKind(status) {
+        if (status === 'pass') return 'success';
+        if (status === 'warn') return 'warning';
+        if (status === 'fail') return 'danger';
+        return 'neutral';
+    }
+
+    function renderDiscoveryChecks(data) {
+        var list = document.getElementById('ap-discovery-checks');
+        if (!list || !data) return;
+        var checks = data.checks || [];
+        var html = '';
+        checks.forEach(function (check) {
+            var kind = discoveryStatusBadgeKind(check.status);
+            var label = discoveryStatusLabel(check.status);
+            var detail = check.detail || '';
+            if (check.url) {
+                detail = '<a href="' + escapeHtml(check.url) + '" target="_blank" rel="noopener">' + escapeHtml(check.url) + '</a>';
+            } else {
+                detail = escapeHtml(detail);
+            }
+            html += '<li class="u-split u-align-start u-gap-3 u-py-2">' +
+                '<div class="u-stack-1"><strong>' + escapeHtml(check.label || '') + '</strong>' +
+                '<p class="form-help u-m-0">' + detail + '</p></div>' +
+                '<span class="badge badge-' + kind + '">' + escapeHtml(label) + '</span></li>';
+        });
+        list.innerHTML = html;
+        var example = document.getElementById('ap-discovery-template-example');
+        if (example && data.template_example) example.textContent = data.template_example;
+    }
+
+    function loadDiscoveryStatus() {
+        var panel = document.getElementById('ap-discovery-panel');
+        if (!panel) return;
+        postJson('discovery_status', {}).then(function (res) {
+            if (res && res.status === 'ok' && res.data) {
+                renderDiscoveryChecks(res.data);
+            }
+        }).catch(function () { /* non-fatal */ });
     }
 
     function setSnippet(id, value) {
@@ -3613,6 +3663,9 @@
     }
 
     function initPublishZone() {
+        bindEl('ap-discovery-refresh', 'click', function () {
+            loadDiscoveryStatus();
+        });
         document.addEventListener('click', function (e) {
             var copyBtn = e.target.closest('.ap-copy-btn');
             if (!copyBtn) return;
