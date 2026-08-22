@@ -2811,6 +2811,32 @@
         });
     }
 
+    function processFromGetSummaryBlocks(html, data, render) {
+        const pattern = /\{from\s+['"]agent-guide['"]\s+get\s+summary\}/i;
+        let guard = 0;
+        while (guard++ < 500) {
+            const m = html.match(pattern);
+            if (!m) break;
+            const start = m.index;
+            const openLen = m[0].length;
+            const contentStart = start + openLen;
+            const [closePos, closeLen] = findClosingTag(html, contentStart, ['{endget}', '{end}']);
+            if (closePos === null) {
+                html = html.substring(0, start) + html.substring(contentStart);
+                continue;
+            }
+            const block = html.substring(contentStart, closePos);
+            const summary = data.agent_guide;
+            let replacement = '';
+            if (summary && typeof summary === 'object') {
+                const blockData = Object.assign({}, data, { entry: summary }, summary);
+                replacement = render(block, blockData);
+            }
+            html = html.substring(0, start) + replacement + html.substring(closePos + closeLen);
+        }
+        return html;
+    }
+
     function processFromGetBlocks(html, data, render) {
         const pattern = /\{from\s+['"]([^'"]+)['"]\s+get\s+entry\s+['"]([^'"]+)['"]\}/i;
         let guard = 0;
@@ -3025,6 +3051,7 @@
 
         let out = processEntryForBlocks(source);
         out = processPublicFormBlocks(out);
+        out = processFromGetSummaryBlocks(out, data, renderFn);
         out = processFromGetBlocks(out, data, renderFn);
         out = processInlineFromGet(out, data, ctxOptions);
         out = processForLoops(out, data, renderFn);
@@ -3580,6 +3607,11 @@
         };
         mergePageBundleIntoData(data);
         normalizeRenderData(data);
+
+        if (/\{from\s+['"]agent-guide['"]\s+get\s+summary\}/i.test(combinedHtml)) {
+            const summary = await resolveAgentGuideSummaryForTemplates();
+            if (summary) data.agent_guide = summary;
+        }
 
         if (slug && collection) {
             try {
@@ -4310,6 +4342,51 @@
                 head.appendChild(helpLink);
             }
         } catch (e) { /* non-fatal */ }
+    }
+
+    async function resolveAgentGuideSummaryForTemplates() {
+        try {
+            if (Birkly.agentGuide && Birkly.agentGuide.summary) {
+                const identity = Birkly.agentGuide.summary.identity || {};
+                const cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
+                const forAgentsUrl = cms ? cms + '/for-agents' : '';
+                const name = identity.official_name || 'This site';
+                const short = identity.short_description || '';
+                const line = name + ' publishes an official Agent Guide for AI systems at ' + forAgentsUrl + '.'
+                    + (short ? ' ' + short : '');
+                return {
+                    official_name: name,
+                    short_description: short,
+                    for_agents_url: forAgentsUrl,
+                    summary_line: line,
+                    line: line
+                };
+            }
+            const cms = (Birkly.cmsUrl || '').replace(/\/$/, '');
+            if (!cms) return null;
+            const res = await fetch(cms + '/api/public/ai_presence.php?view=summary', {
+                credentials: 'omit',
+                headers: { Accept: 'application/json' }
+            });
+            if (!res.ok) return null;
+            const payload = await res.json();
+            if (!payload || payload.status !== 'ok' || !payload.data) return null;
+            const identity = payload.data.identity || {};
+            const forAgentsUrl = cms + '/for-agents';
+            const name = identity.official_name || 'This site';
+            const short = identity.short_description || '';
+            const line = name + ' publishes an official Agent Guide for AI systems at ' + forAgentsUrl + '.'
+                + (short ? ' ' + short : '');
+            return {
+                official_name: name,
+                short_description: short,
+                for_agents_url: forAgentsUrl,
+                summary_line: line,
+                line: line
+            };
+        } catch (e) {
+            return null;
+        }
     }
 
     async function enhanceAgentGuideFromCms() {

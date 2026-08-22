@@ -1,0 +1,84 @@
+<?php
+/**
+ * Agent Guide discovery tests (P66).
+ */
+
+declare(strict_types=1);
+
+$root = dirname(__DIR__);
+require_once $root . '/core/ai_presence.php';
+require_once $root . '/core/ai_presence_discovery.php';
+
+$failures = 0;
+
+function assert_true(bool $cond, string $label): void
+{
+    global $failures;
+    if ($cond) {
+        echo "OK  $label\n";
+        return;
+    }
+    echo "FAIL $label\n";
+    $failures++;
+}
+
+birkly_ai_presence_reset_for_tests();
+
+echo "==> Publication settings defaults\n";
+$draft = birkly_ai_presence_default_draft();
+$settings = birkly_ai_presence_discovery_publication_settings($draft);
+assert_true($settings['footer_discovery_link'] === true, 'footer link default on');
+assert_true($settings['footer_discovery_line'] === false, 'footer line default off');
+assert_true($settings['discovery_sitemap'] === true, 'sitemap default on');
+assert_true($settings['discovery_indexnow'] === true, 'indexnow default on');
+assert_true($settings['discovery_ai_crawlers'] === true, 'ai crawlers default on');
+
+echo "==> Publish + robots augment\n";
+$draft['identity']['official_name'] = 'Discovery Test Co';
+$draft['identity']['short_description'] = 'We test AI discovery.';
+$draft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($draft);
+$result = birkly_ai_presence_publish();
+assert_true(($result['ok'] ?? false) === true, 'publish ok for discovery tests');
+
+$robots = birkly_ai_presence_robots_txt_augment("User-agent: *\nAllow: /\n");
+assert_true(stripos($robots, 'Sitemap:') !== false, 'robots includes Sitemap directive');
+assert_true(stripos($robots, 'GPTBot') !== false, 'robots includes GPTBot allow');
+assert_true(stripos($robots, 'LLMS:') !== false, 'robots includes LLMS directive');
+
+echo "==> Sitemap XML\n";
+$xml = birkly_ai_presence_discovery_sitemap_xml();
+assert_true(str_contains($xml, '<urlset'), 'sitemap is valid xml urlset');
+assert_true(stripos($xml, '/for-agents') !== false, 'sitemap lists for-agents');
+
+echo "==> Template summary\n";
+$summary = birkly_ai_presence_discovery_template_summary();
+assert_true(is_array($summary), 'template summary is array when live');
+assert_true($summary !== null && ($summary['official_name'] ?? '') === 'Discovery Test Co', 'summary has official name');
+assert_true($summary !== null && str_contains((string) ($summary['summary_line'] ?? ''), 'Agent Guide'), 'summary line mentions guide');
+
+echo "==> Discovery status API shape\n";
+$status = birkly_ai_presence_discovery_status();
+assert_true($status['live'] === true, 'status reports live');
+assert_true(is_array($status['checks'] ?? null) && count($status['checks']) >= 5, 'status has checklist rows');
+
+echo "==> IndexNow key\n";
+$key = birkly_ai_presence_discovery_indexnow_key();
+assert_true(preg_match('/^[a-f0-9]{32}$/', $key) === 1, 'indexnow key is 32 hex chars');
+
+$meta = birkly_ai_presence_load_meta();
+assert_true(($meta['discovery_indexnow_key'] ?? '') === $key, 'indexnow key stored in meta');
+
+echo "==> HTTP routes\n";
+require_once $root . '/core/http_routes.php';
+$routes = birkly_http_route_map();
+assert_true(isset($routes['/sitemap.xml']), 'sitemap.xml route registered');
+assert_true(is_readable($root . '/api/sitemap_xml.php'), 'sitemap handler exists');
+
+echo "==> SSR signature\n";
+require_once $root . '/core/project_ssr.php';
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc6'), 'SSR inject signature bumped to dsc6');
+
+birkly_ai_presence_reset_for_tests();
+
+exit($failures > 0 ? 1 : 0);

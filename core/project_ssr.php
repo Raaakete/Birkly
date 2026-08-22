@@ -245,6 +245,10 @@ function birkly_project_ssr_collect_requests(string $html): array
         $add(['type' => 'list_entries', 'into' => 'site_elements', 'collection' => 'site_elements']);
     }
 
+    if (preg_match('/\{from\s+[\'"]agent-guide[\'"]\s+get\s+summary\}/i', $text)) {
+        $add(['type' => 'agent_guide_summary', 'into' => 'agent_guide']);
+    }
+
     // {for each entry in 'sub' of 'parent'.current ...}
     if (preg_match_all('/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*(current|[^\'\s{}]+)/i', $text, $m, PREG_SET_ORDER)) {
         foreach ($m as $match) {
@@ -369,6 +373,14 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
     }
     if ($htmlFieldNames !== []) {
         $data['_html_fields'] = $htmlFieldNames;
+    }
+
+    if (stripos($html, "agent-guide") !== false && stripos($html, 'get summary') !== false) {
+        require_once __DIR__ . '/ai_presence_discovery.php';
+        $summary = birkly_ai_presence_discovery_template_summary();
+        if ($summary !== null) {
+            $data['agent_guide'] = $summary;
+        }
     }
 
     // Detail page: load the current entry (published only) and expose it at the
@@ -756,8 +768,8 @@ function birkly_project_ssr_inject_signature(): string
     $wm = birkly_webmcp_is_enabled() ? '1' : '0';
     $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
     $ver = (int) ($meta['published_version'] ?? 0);
-    // dsc5 = footer link survives custom footer components; busts SSR cache.
-    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . 'dsc5';
+    // dsc6 = P66 discovery settings (footer line, sitemap, template tag) bust SSR cache.
+    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . 'dsc6';
 }
 
 /**
