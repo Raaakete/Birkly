@@ -1158,6 +1158,40 @@ function birkly_template_engine_process_inline_from_get(string $html, array $dat
 }
 
 /** @param callable(string,array):string $render */
+function birkly_template_engine_process_from_get_summary_blocks(string $html, array $data, callable $render): string
+{
+    $pattern = '/\{from\s+[\'"]agent-guide[\'"]\s+get\s+summary\}/i';
+    $guard = 0;
+    while ($guard++ < 500) {
+        if (!preg_match($pattern, $html, $m, PREG_OFFSET_CAPTURE)) {
+            break;
+        }
+        $start = $m[0][1];
+        $openLen = strlen($m[0][0]);
+        $contentStart = $start + $openLen;
+        [$closePos, $closeLen] = birkly_template_engine_find_closing_tag($html, $contentStart, ['{endget}', '{end}']);
+        if ($closePos === null) {
+            $html = substr($html, 0, $start) . substr($html, $contentStart);
+            continue;
+        }
+        $block = substr($html, $contentStart, $closePos - $contentStart);
+        $summary = $data['agent_guide'] ?? null;
+        $replacement = '';
+        if (is_array($summary) && $summary !== []) {
+            $blockData = $data;
+            $blockData['entry'] = $summary;
+            foreach ($summary as $k => $v) {
+                $blockData[$k] = $v;
+            }
+            $replacement = $render($block, $blockData);
+        }
+        $html = substr($html, 0, $start) . $replacement . substr($html, $closePos + $closeLen);
+    }
+
+    return $html;
+}
+
+/** @param callable(string,array):string $render */
 function birkly_template_engine_process_from_get_blocks(string $html, array $data, callable $render): string
 {
     $pattern = '/\{from\s+[\'"]([^\'"]+)[\'"]\s+get\s+entry\s+[\'"]([^\'"]+)[\'"]\}/i';
@@ -1433,6 +1467,7 @@ function birkly_template_engine_render(string $html, $data, array $options = [])
 
     $out = birkly_template_engine_process_entry_for_blocks($source);
     $out = birkly_template_engine_process_public_form_blocks($out);
+    $out = birkly_template_engine_process_from_get_summary_blocks($out, $data, $renderFn);
     $out = birkly_template_engine_process_from_get_blocks($out, $data, $renderFn);
     $out = birkly_template_engine_process_inline_from_get($out, $data, $ctxOptions);
     $out = birkly_template_engine_process_for_loops($out, $data, $renderFn);
