@@ -173,6 +173,73 @@ function birkly_ai_extract_action_payload(array $action): array
 }
 
 /**
+ * Apply MCP/AI field payload onto an existing entry (flat or multilanguage collections).
+ *
+ * @param array<string, mixed> $entry Existing entry record
+ * @param array<string, mixed> $updateData Field payload (no collection/id wrappers)
+ * @return array<string, mixed>
+ */
+function birkly_ai_apply_entry_field_updates(
+    array $entry,
+    array $updateData,
+    string $collectionSlug,
+    string $entryId
+): array {
+    require_once __DIR__ . '/../core/entry_multilang.php';
+    require_once __DIR__ . '/../core/entry_storage.php';
+    require_once __DIR__ . '/../core/entry_slug.php';
+
+    $multilanguageLanguages = birkly_entry_collection_multilanguage_languages($collectionSlug);
+    $entryOutput = $entry;
+
+    if ($multilanguageLanguages !== []) {
+        $schema = birkly_entry_read_schema($collectionSlug);
+        $fields = is_array($schema['fields'] ?? null) ? $schema['fields'] : [];
+        $entryOutput = birkly_entry_apply_multilang_fields(
+            $entryOutput,
+            $updateData,
+            $fields,
+            $multilanguageLanguages,
+            $entry,
+            $entryId
+        );
+    } else {
+        foreach ($updateData as $key => $value) {
+            if (in_array($key, ['collection', 'data', 'type', 'action', 'arguments', 'payload', 'id'], true)) {
+                continue;
+            }
+            if ($key === 'slug' && is_string($value)) {
+                $entryOutput[$key] = birkly_normalize_slug($value);
+            } else {
+                $entryOutput[$key] = $value;
+            }
+        }
+
+        if (empty(trim((string) ($entryOutput['title'] ?? '')))) {
+            $entryOutput['title'] = $entryId;
+        }
+    }
+
+    if (array_key_exists('status', $updateData)) {
+        $entryOutput['status'] = $updateData['status'];
+    }
+
+    if (array_key_exists('slug', $updateData) && is_string($updateData['slug']) && trim($updateData['slug']) !== '') {
+        $entryOutput['slug'] = birkly_normalize_slug($updateData['slug']);
+    } else {
+        $entryOutput['slug'] = birkly_resolve_entry_slug(
+            'update',
+            $updateData,
+            $entry,
+            (string) ($entryOutput['title'] ?? ''),
+            $entryId
+        );
+    }
+
+    return $entryOutput;
+}
+
+/**
  * Normalize action payloads before execution (project paths, collection slugs, etc.).
  *
  * @return array<string, mixed>

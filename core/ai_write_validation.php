@@ -52,10 +52,21 @@ function birkly_ai_entry_write_allowed_keys_for_collection(string $collectionSlu
     $allowed = birkly_ai_entry_write_meta_keys();
     require_once __DIR__ . '/ai_collection_config.php';
     $record = birkly_ai_load_collection_record($collectionSlug);
-    if (is_array($record) && !empty($record['fields']) && is_array($record['fields'])) {
-        foreach ($record['fields'] as $field) {
-            if (is_array($field) && !empty($field['name'])) {
-                $allowed[] = (string) $field['name'];
+    if (is_array($record)) {
+        if (!empty($record['fields']) && is_array($record['fields'])) {
+            foreach ($record['fields'] as $field) {
+                if (is_array($field) && !empty($field['name'])) {
+                    $allowed[] = (string) $field['name'];
+                }
+            }
+        }
+
+        if (!empty($record['multilanguage']['enabled']) && !empty($record['multilanguage']['languages'])
+            && is_array($record['multilanguage']['languages'])) {
+            foreach ($record['multilanguage']['languages'] as $langCode) {
+                if (is_string($langCode) && $langCode !== '') {
+                    $allowed[] = $langCode;
+                }
             }
         }
     }
