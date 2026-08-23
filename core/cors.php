@@ -7,6 +7,16 @@
  */
 
 /**
+ * Request headers allowed on cross-origin API calls (preflight Access-Control-Allow-Headers).
+ *
+ * @return string Comma-separated header names
+ */
+function birkly_cors_allowed_request_headers(): string
+{
+    return 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, If-None-Match, If-Modified-Since';
+}
+
+/**
  * Set CORS headers with origin whitelist
  * 
  * @param string $type Type of endpoint: 'public', 'admin', or 'domain'
@@ -83,7 +93,7 @@ function set_cors_headers($type = 'public', $allowedOrigins = []) {
     // Set other CORS headers
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+        header('Access-Control-Allow-Headers: ' . birkly_cors_allowed_request_headers());
         header('Access-Control-Max-Age: 86400'); // 24 hours
         http_response_code(200);
         exit;
@@ -223,7 +233,7 @@ function set_dynamic_cors() {
     // Handle OPTIONS preflight
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
         header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+        header('Access-Control-Allow-Headers: ' . birkly_cors_allowed_request_headers());
         header('Access-Control-Max-Age: 86400');
         http_response_code(200);
         exit;
