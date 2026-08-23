@@ -47,6 +47,12 @@ php tests/dynamicitems_multilang_test.php
 echo "==> Multilanguage entry save tests"
 php tests/multilang_entry_save_test.php
 
+echo "==> MCP update_collection multilanguage tests"
+php tests/ai_update_collection_multilang_test.php
+
+echo "==> MCP multilanguage end-to-end tests"
+php tests/ai_multilang_mcp_e2e_test.php
+
 echo "==> MCP update_entry multilang tests"
 php tests/ai_update_entry_multilang_test.php
 

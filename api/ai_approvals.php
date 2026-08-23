@@ -435,7 +435,8 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
         return ['success' => false, 'message' => 'Invalid slug format'];
     }
     
-    $collectionsPath = __DIR__ . '/../content/collections';
+    require_once __DIR__ . '/ai_helpers.php';
+    $collectionsPath = birkly_ai_content_collections_dir();
     $collectionDir = $collectionsPath . '/' . $slug;
     
     // Check if collection already exists
