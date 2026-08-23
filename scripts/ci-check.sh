@@ -47,6 +47,12 @@ php tests/dynamicitems_multilang_test.php
 echo "==> Multilanguage entry save tests"
 php tests/multilang_entry_save_test.php
 
+echo "==> MCP update_entry multilang tests"
+php tests/ai_update_entry_multilang_test.php
+
+echo "==> MCP update_entry normalization tests"
+php tests/ai_update_entry_normalization_test.php
+
 echo "==> Help snapshot normalization tests"
 php tests/help_docs_snapshot_test.php
 
