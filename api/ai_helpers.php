@@ -117,6 +117,38 @@ function birkly_ai_normalize_collection_action_data($actionData): array
 }
 
 /**
+ * Normalize entry create/update/delete payloads without collection-CRUD heuristics.
+ *
+ * Collection normalization copies collection slug into slug and treats description/name
+ * as collection metadata — both break entry writes when those are field names or slug is omitted.
+ *
+ * @param array<string, mixed>|mixed $actionData
+ * @return array<string, mixed>
+ */
+function birkly_ai_normalize_entry_action_data($actionData): array
+{
+    if (!is_array($actionData)) {
+        return [];
+    }
+
+    $normalized = $actionData;
+
+    if (isset($actionData['data']) && is_array($actionData['data'])) {
+        $normalized = array_merge($actionData, $actionData['data']);
+    }
+
+    if (isset($normalized['collection']) && is_array($normalized['collection'])) {
+        $coll = $normalized['collection'];
+        unset($normalized['collection']);
+        if (!array_key_exists('collection', $normalized)) {
+            $normalized['collection'] = (string) ($coll['slug'] ?? $coll['name'] ?? '');
+        }
+    }
+
+    return $normalized;
+}
+
+/**
  * Pull action payload fields from data/arguments and sibling keys on the action object.
  * The model often emits { type, slug, fields } without a data wrapper.
  */
@@ -156,8 +188,10 @@ function birkly_ai_normalize_action_data(string $type, array $data): array
         $data['path'] = birkly_ai_normalize_project_file_path_for_delete($data['path']);
     }
 
-    if (in_array($type, ['update_collection', 'create_collection', 'create_entry', 'update_entry'], true)) {
+    if (in_array($type, ['update_collection', 'create_collection'], true)) {
         $data = birkly_ai_normalize_collection_action_data($data);
+    } elseif (in_array($type, ['create_entry', 'update_entry', 'delete_entry'], true)) {
+        $data = birkly_ai_normalize_entry_action_data($data);
     }
 
     return $data;
