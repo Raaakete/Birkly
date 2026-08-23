@@ -273,6 +273,54 @@ function birkly_ai_process_sub_collections(array $subCollections, string $parent
 }
 
 /**
+ * Validate and normalize multilanguage config (same shape as admin collection editor).
+ *
+ * @param mixed $multilanguage
+ * @return array{enabled: bool, languages: list<string>}|string
+ */
+function birkly_ai_normalize_multilanguage_config(mixed $multilanguage): array|string
+{
+    if (!is_array($multilanguage)) {
+        return 'multilanguage must be an object with enabled and languages';
+    }
+
+    require_once __DIR__ . '/ai_write_validation.php';
+    $unknownKeys = birkly_ai_reject_unknown_keys($multilanguage, ['enabled', 'languages'], 'multilanguage');
+    if ($unknownKeys !== null) {
+        return $unknownKeys;
+    }
+
+    $enabled = !empty($multilanguage['enabled']);
+    $languagesRaw = $multilanguage['languages'] ?? [];
+    if (!is_array($languagesRaw)) {
+        return 'multilanguage.languages must be an array';
+    }
+
+    $languages = [];
+    foreach ($languagesRaw as $lang) {
+        if (!is_string($lang) && !is_numeric($lang)) {
+            continue;
+        }
+        $code = strtolower(trim((string) $lang));
+        if ($code === '') {
+            continue;
+        }
+        if (!in_array($code, $languages, true)) {
+            $languages[] = $code;
+        }
+    }
+
+    if ($enabled && $languages === []) {
+        return 'multilanguage.languages must include at least one language when enabled is true';
+    }
+
+    return [
+        'enabled' => $enabled,
+        'languages' => $languages,
+    ];
+}
+
+/**
  * Merge collection action payload into collection.json structure.
  *
  * @param array<string, mixed> $collection
@@ -315,6 +363,14 @@ function birkly_ai_merge_collection_config(array &$collection, array $actionData
     if (isset($actionData['sub_collections']) && is_array($actionData['sub_collections'])) {
         $parentSlug = (string) ($collection['slug'] ?? $actionData['slug'] ?? '');
         $collection['sub_collections'] = birkly_ai_process_sub_collections($actionData['sub_collections'], $parentSlug);
+    }
+
+    if (array_key_exists('multilanguage', $actionData)) {
+        $normalized = birkly_ai_normalize_multilanguage_config($actionData['multilanguage']);
+        if (is_string($normalized)) {
+            return $normalized;
+        }
+        $collection['multilanguage'] = $normalized;
     }
 
     return null;
