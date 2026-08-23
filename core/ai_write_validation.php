@@ -86,7 +86,7 @@ function birkly_ai_merge_entry_write_meta_from_payload(array $payload, array $en
         $entryData[$key] = $value;
     }
 
-    foreach (['collection', 'data', 'type', 'action', 'description', 'arguments', 'payload'] as $wrapper) {
+    foreach (['collection', 'data', 'type', 'action', 'arguments', 'payload'] as $wrapper) {
         unset($entryData[$wrapper]);
     }
 
