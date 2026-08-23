@@ -691,6 +691,22 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             'created_by' => $createdBy,
             'status' => 'draft',
         ], $entryData);
+
+        require_once __DIR__ . '/../core/entry_multilang.php';
+        $multilanguageLanguages = birkly_entry_collection_multilanguage_languages($collection);
+        if ($multilanguageLanguages !== []) {
+            require_once __DIR__ . '/../core/entry_storage.php';
+            $schema = birkly_entry_read_schema($collection);
+            $fields = is_array($schema['fields'] ?? null) ? $schema['fields'] : [];
+            $entry = birkly_entry_apply_multilang_fields(
+                $entry,
+                $entryData,
+                $fields,
+                $multilanguageLanguages,
+                null,
+                $entryId
+            );
+        }
         
         require_once __DIR__ . '/../core/entry_storage.php';
         error_log("executeCreateEntry: Attempting to write entry: " . $entryId);
@@ -837,21 +853,9 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     // Use AI user ID or original user ID for attribution
     $updatedBy = $aiUser['id'] ?? $originalUserId ?? 'ai';
     $oldEntry = $entry;
-    
-    // Merge updates (only update fields that are provided)
-    foreach ($updateData as $key => $value) {
-        if ($key === 'slug' && is_string($value)) {
-            $entry[$key] = birkly_normalize_slug($value);
-        } else {
-            $entry[$key] = $value;
-        }
-    }
-    
-    // Auto-fill title with entry ID if not provided or empty
-    if (empty(trim($entry['title'] ?? ''))) {
-        $entry['title'] = $entryId;
-    }
-    
+
+    require_once __DIR__ . '/ai_helpers.php';
+    $entry = birkly_ai_apply_entry_field_updates($entry, $updateData, $collection, $entryId);
     $entry['updated_at'] = date('c');
     $entry['updated_by'] = $updatedBy;
     
