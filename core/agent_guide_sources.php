@@ -363,6 +363,13 @@ function birkly_agent_guide_enrich_export(array $export): array
     require_once __DIR__ . '/ai_presence_links.php';
     $export = birkly_ai_presence_enrich_public_export($export);
 
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $map = birkly_ai_presence_discovery_url_map();
+    $discoveryUrls = array_filter($map, static fn (?string $url): bool => $url !== null && $url !== '');
+    if ($discoveryUrls !== []) {
+        $export['discovery_urls'] = $discoveryUrls;
+    }
+
     $resolved = [];
     foreach ($export['sources_of_truth'] ?? [] as $source) {
         if (is_array($source)) {

@@ -54,6 +54,47 @@ function birkly_ai_presence_discovery_public_base(): string
     return $base;
 }
 
+/**
+ * Canonical discovery endpoint URLs for cross-linking (llms.txt, robots, sitemap, etc.).
+ *
+ * @return array{
+ *   for_agents:?string,
+ *   agent_guide_json:?string,
+ *   llms_txt:?string,
+ *   sitemap:?string,
+ *   robots:?string
+ * }
+ */
+function birkly_ai_presence_discovery_url_map(?array $published = null, ?array $meta = null): array
+{
+    $meta = $meta ?? birkly_ai_presence_load_meta();
+    $published = $published ?? birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return [
+            'for_agents' => null,
+            'agent_guide_json' => null,
+            'llms_txt' => null,
+            'sitemap' => null,
+            'robots' => null,
+        ];
+    }
+
+    $base = birkly_ai_presence_discovery_public_base();
+    $urls = birkly_ai_presence_public_urls();
+    $guideJson = trim((string) ($urls['well_known_url'] ?? ''));
+    if ($guideJson === '' && $base !== '') {
+        $guideJson = $base . '/.well-known/agent-guide.json';
+    }
+
+    return [
+        'for_agents' => birkly_ai_presence_for_agents_url($published, $meta),
+        'agent_guide_json' => $guideJson !== '' ? $guideJson : null,
+        'llms_txt' => birkly_ai_presence_llms_txt_url($published, $meta),
+        'sitemap' => birkly_ai_presence_discovery_sitemap_url(),
+        'robots' => $base !== '' ? $base . '/robots.txt' : null,
+    ];
+}
+
 function birkly_ai_presence_discovery_indexnow_key(): string
 {
     $meta = birkly_ai_presence_load_meta();
@@ -120,16 +161,23 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
     }
 
     if ($guideLive) {
-        $forAgents = birkly_ai_presence_for_agents_url() ?? ($base . '/for-agents');
+        $map = birkly_ai_presence_discovery_url_map();
+        $forAgents = $map['for_agents'] ?? ($base . '/for-agents');
         $entries[] = [
             'loc' => $forAgents,
             'lastmod' => $lastmod !== '' ? $lastmod : null,
             'priority' => '0.9',
         ];
         if ($settings['discovery_sitemap']) {
-            $llms = birkly_ai_presence_llms_txt_url();
-            if ($llms !== null) {
-                $entries[] = ['loc' => $llms, 'lastmod' => $lastmod !== '' ? $lastmod : null, 'priority' => '0.7'];
+            foreach (['llms_txt', 'agent_guide_json'] as $key) {
+                $url = $map[$key] ?? null;
+                if ($url !== null && $url !== '') {
+                    $entries[] = [
+                        'loc' => $url,
+                        'lastmod' => $lastmod !== '' ? $lastmod : null,
+                        'priority' => $key === 'agent_guide_json' ? '0.85' : '0.7',
+                    ];
+                }
             }
         }
     }
@@ -189,15 +237,28 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
 
     $settings = birkly_ai_presence_discovery_publication_settings();
     $base = birkly_ai_presence_discovery_public_base();
+    $map = birkly_ai_presence_discovery_url_map();
     $append = '';
 
-    $sitemapUrl = birkly_ai_presence_discovery_sitemap_url();
+    $sitemapUrl = $map['sitemap'] ?? birkly_ai_presence_discovery_sitemap_url();
     if ($settings['discovery_sitemap'] && $sitemapUrl !== null && stripos($body, 'Sitemap:') === false) {
         $append .= "\nSitemap: " . $sitemapUrl . "\n";
     }
 
     if ($settings['discovery_ai_crawlers'] && $base !== '') {
-        $paths = ['/for-agents', '/llms.txt', '/.well-known/agent-guide.json', '/sitemap.xml'];
+        $paths = [];
+        foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $key) {
+            $url = $map[$key] ?? null;
+            if ($url !== null && $url !== '') {
+                $path = parse_url($url, PHP_URL_PATH);
+                if (is_string($path) && $path !== '') {
+                    $paths[] = $path;
+                }
+            }
+        }
+        if ($paths === []) {
+            $paths = ['/for-agents', '/llms.txt', '/.well-known/agent-guide.json', '/sitemap.xml'];
+        }
         foreach (birkly_ai_presence_discovery_ai_crawler_agents() as $agent) {
             if (stripos($body, 'User-agent: ' . $agent) !== false) {
                 continue;
@@ -210,17 +271,19 @@ function birkly_ai_presence_discovery_robots_augment(string $body): string
     }
 
     if (stripos($body, 'LLMS:') === false) {
-        $llmsUrl = birkly_ai_presence_llms_txt_url();
+        $llmsUrl = $map['llms_txt'] ?? birkly_ai_presence_llms_txt_url();
         if ($llmsUrl !== null) {
-            $append .= "\n# Agent Guide — AI discovery (appended when Agent Guide is published)\n";
+            $append .= "\n# Agent Guide — AI discovery (cross-linked endpoints)\n";
             $append .= 'LLMS: ' . $llmsUrl . '; type=summary' . "\n";
-            $guideUrl = (string) (birkly_ai_presence_public_urls()['well_known_url'] ?? '');
-            if ($guideUrl !== '') {
-                $append .= '# Agent Guide JSON: ' . $guideUrl . "\n";
-            }
-            $forAgentsUrl = birkly_ai_presence_for_agents_url();
-            if ($forAgentsUrl !== null) {
-                $append .= '# Agent Guide HTML: ' . $forAgentsUrl . "\n";
+            foreach ([
+                'agent_guide_json' => 'Agent Guide JSON',
+                'for_agents' => 'Agent Guide HTML',
+                'sitemap' => 'Sitemap',
+            ] as $key => $label) {
+                $url = $map[$key] ?? null;
+                if ($url !== null && $url !== '') {
+                    $append .= '# ' . $label . ': ' . $url . "\n";
+                }
             }
         }
     }
@@ -258,21 +321,12 @@ function birkly_ai_presence_discovery_indexnow_ping(): array
     }
 
     $urlList = [];
-    $forAgents = birkly_ai_presence_for_agents_url();
-    if ($forAgents !== null) {
-        $urlList[] = $forAgents;
-    }
-    $llms = birkly_ai_presence_llms_txt_url();
-    if ($llms !== null) {
-        $urlList[] = $llms;
-    }
-    $guideUrl = (string) (birkly_ai_presence_public_urls()['well_known_url'] ?? '');
-    if ($guideUrl !== '') {
-        $urlList[] = $guideUrl;
-    }
-    $sitemap = birkly_ai_presence_discovery_sitemap_url();
-    if ($sitemap !== null) {
-        $urlList[] = $sitemap;
+    $map = birkly_ai_presence_discovery_url_map();
+    foreach (['for_agents', 'llms_txt', 'agent_guide_json', 'sitemap'] as $key) {
+        $url = $map[$key] ?? null;
+        if ($url !== null && $url !== '') {
+            $urlList[] = $url;
+        }
     }
 
     $urlList = array_values(array_unique($urlList));
@@ -460,6 +514,25 @@ function birkly_ai_presence_discovery_status(): array
             'detail' => "Add {from 'agent-guide' get summary}…{endget} in project HTML where you want crawlable text.",
         ],
     ];
+
+    if ($live) {
+        $map = birkly_ai_presence_discovery_url_map();
+        $meshKeys = ['for_agents', 'agent_guide_json', 'llms_txt', 'sitemap'];
+        $meshPresent = 0;
+        foreach ($meshKeys as $key) {
+            if (!empty($map[$key])) {
+                $meshPresent++;
+            }
+        }
+        $checks[] = [
+            'id' => 'discovery_mesh',
+            'label' => 'Discovery cross-links',
+            'status' => $meshPresent >= 3 ? 'pass' : ($meshPresent >= 1 ? 'warn' : 'fail'),
+            'detail' => $meshPresent >= 3
+                ? 'llms.txt, robots.txt, sitemap, /for-agents, and agent-guide.json reference each other.'
+                : 'Some discovery endpoints are missing — check hosting URLs and publication settings.',
+        ];
+    }
 
     return [
         'live' => $live,
