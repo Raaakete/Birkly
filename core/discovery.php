@@ -250,6 +250,11 @@ function birkly_discovery_verify_checks(): array
         $checks[] = $check;
     }
 
+    require_once __DIR__ . '/site_seo_url_map.php';
+    foreach (birkly_seo_health_checks() as $check) {
+        $checks[] = $check;
+    }
+
     if (birkly_site_seo_is_published()) {
         $checks[] = [
             'id' => 'seo_meta_inject',
