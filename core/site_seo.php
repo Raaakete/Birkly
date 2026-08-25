@@ -26,17 +26,26 @@ function birkly_site_seo_defaults(): array
                 'open_graph' => true,
                 'json_ld_website' => true,
                 'json_ld_article' => false,
+                'json_ld_organization' => true,
+                'twitter_cards' => true,
                 'sitemap' => true,
                 'robots_sitemap_line' => true,
                 'indexnow' => true,
             ],
         ],
         'defaults' => [
+            'site_title' => '',
             'title_suffix' => '',
             'description' => '',
             'og_image' => '',
+            'twitter_card' => 'summary_large_image',
         ],
-        '_schema_version' => 1,
+        'advanced' => [
+            'robots' => 'index,follow',
+            'google_site_verification' => '',
+            'bing_site_verification' => '',
+        ],
+        '_schema_version' => 2,
     ];
 }
 
@@ -93,6 +102,16 @@ function birkly_site_seo_normalize(array $input): array
 
     foreach ($defaults['delivery']['surfaces'] as $key => $_) {
         $out['delivery']['surfaces'][$key] = !empty($out['delivery']['surfaces'][$key]);
+    }
+
+    $twitterCard = (string) ($out['defaults']['twitter_card'] ?? 'summary_large_image');
+    if (!in_array($twitterCard, ['summary', 'summary_large_image'], true)) {
+        $out['defaults']['twitter_card'] = 'summary_large_image';
+    }
+
+    $robots = (string) ($out['advanced']['robots'] ?? 'index,follow');
+    if (!in_array($robots, ['index,follow', 'index,nofollow', 'noindex,follow', 'noindex,nofollow'], true)) {
+        $out['advanced']['robots'] = 'index,follow';
     }
 
     return $out;
@@ -207,6 +226,9 @@ function birkly_site_seo_resolve_meta(array $context = []): array
     if ($title === '' && !empty($entryMeta['meta_title'])) {
         $title = trim((string) $entryMeta['meta_title']);
     }
+    if ($title === '') {
+        $title = trim((string) ($seo['defaults']['site_title'] ?? ''));
+    }
     if ($description === '' && !empty($entryMeta['meta_description'])) {
         $description = trim((string) $entryMeta['meta_description']);
     }
@@ -295,7 +317,38 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
         }
     }
 
-    if (!empty($surfaces['json_ld_website']) && stripos($html, 'application/ld+json') === false) {
+    if (!empty($surfaces['twitter_cards'])) {
+        $card = (string) (birkly_site_seo_load()['defaults']['twitter_card'] ?? 'summary_large_image');
+        if (stripos($html, 'name="twitter:card"') === false) {
+            $parts[] = '<meta name="twitter:card" content="' . $esc($card) . '">';
+        }
+        if ($meta['title'] !== '' && stripos($html, 'name="twitter:title"') === false) {
+            $parts[] = '<meta name="twitter:title" content="' . $esc($meta['title']) . '">';
+        }
+        if ($meta['description'] !== '' && stripos($html, 'name="twitter:description"') === false) {
+            $parts[] = '<meta name="twitter:description" content="' . $esc($meta['description']) . '">';
+        }
+        if ($meta['og_image'] !== '' && stripos($html, 'name="twitter:image"') === false) {
+            $parts[] = '<meta name="twitter:image" content="' . $esc($meta['og_image']) . '">';
+        }
+    }
+
+    $advanced = birkly_site_seo_load()['advanced'] ?? [];
+    $robots = trim((string) ($advanced['robots'] ?? 'index,follow'));
+    if ($robots !== '' && $robots !== 'index,follow' && stripos($html, 'name="robots"') === false) {
+        $parts[] = '<meta name="robots" content="' . $esc($robots) . '">';
+    }
+    $googleVerify = trim((string) ($advanced['google_site_verification'] ?? ''));
+    if ($googleVerify !== '' && stripos($html, 'google-site-verification') === false) {
+        $parts[] = '<meta name="google-site-verification" content="' . $esc($googleVerify) . '">';
+    }
+    $bingVerify = trim((string) ($advanced['bing_site_verification'] ?? ''));
+    if ($bingVerify !== '' && stripos($html, 'msvalidate.01') === false) {
+        $parts[] = '<meta name="msvalidate.01" content="' . $esc($bingVerify) . '">';
+    }
+
+    if (!empty($surfaces['json_ld_website']) && stripos($html, '"@type":"WebSite"') === false
+        && stripos($html, '"@type": "WebSite"') === false) {
         $ld = [
             '@context' => 'https://schema.org',
             '@type' => 'WebSite',
@@ -313,6 +366,33 @@ function birkly_site_seo_inject_head(string $html, array $context = []): string
         if ($json !== false) {
             $json = str_replace('</', '<\/', $json);
             $parts[] = '<script type="application/ld+json">' . $json . '</script>';
+        }
+    }
+
+    if (!empty($surfaces['json_ld_organization']) && stripos($html, '"@type":"Organization"') === false
+        && stripos($html, '"@type": "Organization"') === false) {
+        $org = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+        ];
+        if ($meta['site_name'] !== '') {
+            $org['name'] = $meta['site_name'];
+        }
+        if ($meta['description'] !== '') {
+            $org['description'] = $meta['description'];
+        }
+        if ($meta['canonical'] !== '') {
+            $org['url'] = $meta['canonical'];
+        }
+        if ($meta['og_image'] !== '') {
+            $org['logo'] = $meta['og_image'];
+        }
+        if (count($org) > 2) {
+            $json = json_encode($org, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($json !== false) {
+                $json = str_replace('</', '<\/', $json);
+                $parts[] = '<script type="application/ld+json">' . $json . '</script>';
+            }
         }
     }
 
@@ -371,7 +451,7 @@ function birkly_site_seo_signature_part(): string
     }
     $surfaces = birkly_site_seo_load()['delivery']['surfaces'] ?? [];
     $bits = '';
-    foreach (['meta_tags', 'canonical', 'open_graph', 'json_ld_website', 'json_ld_article'] as $key) {
+    foreach (['meta_tags', 'canonical', 'open_graph', 'twitter_cards', 'json_ld_website', 'json_ld_organization', 'json_ld_article'] as $key) {
         $bits .= !empty($surfaces[$key]) ? '1' : '0';
     }
     return 'seo' . $bits;
