@@ -148,6 +148,20 @@ if ($page === 'redirects') {
     header('Location: ' . birkly_admin_url('settings') . '#redirects', true, 302);
     exit;
 }
+if ($page === 'agent-guide' || $page === 'ai-presence') {
+    $params = $_GET;
+    unset($params['page']);
+    $params['tab'] = 'agent-guide';
+    if (isset($params['zone'])) {
+        $zone = (string) $params['zone'];
+        if ($zone === 'tools') {
+            $params['tab'] = 'webmcp';
+        }
+        unset($params['zone']);
+    }
+    header('Location: ' . birkly_admin_url('discovery', $params), true, 302);
+    exit;
+}
 if ($page !== 'onboarding' && isset($_SESSION['user'])) {
     $userId = $_SESSION['user']['email'] ?? $_SESSION['user']['id'] ?? 'unknown';
     if (shouldRedirectToOnboarding($userId)) {

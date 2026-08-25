@@ -352,6 +352,13 @@ function birkly_ai_presence_published_snapshot_enabled(?array $published, ?array
  */
 function birkly_ai_presence_is_publicly_live(?array $published = null, ?array $meta = null): bool
 {
+    if (!function_exists('birkly_discovery_pack_enabled')) {
+        require_once __DIR__ . '/discovery.php';
+    }
+    if (!birkly_discovery_pack_enabled('agent_guide')) {
+        return false;
+    }
+
     $meta = $meta ?? birkly_ai_presence_load_meta();
     $published = $published ?? birkly_ai_presence_load_published();
     $version = (int) ($meta['published_version'] ?? 0);
@@ -787,6 +794,9 @@ function birkly_ai_presence_publish(): array
 
     require_once __DIR__ . '/ai_presence_discovery.php';
     birkly_ai_presence_discovery_on_publish();
+
+    require_once __DIR__ . '/discovery.php';
+    birkly_discovery_save_pack('agent_guide', ['enabled' => true]);
 
     return ['ok' => true, 'version' => $version];
 }
@@ -1660,6 +1670,70 @@ function birkly_ai_presence_for_agents_html(): ?string
         . $esc($name) . ' (published version ' . (int) ($meta['published_version'] ?? 0) . ').</p>';
 
     return $head . $bodyBlock . '</main></body></html>';
+}
+
+/**
+ * Markdown export for /for-agents.md (duck.ai predictable URL alias).
+ */
+function birkly_ai_presence_for_agents_markdown(): ?string
+{
+    $meta = birkly_ai_presence_load_meta();
+    $published = birkly_ai_presence_load_published();
+    if (!birkly_ai_presence_is_publicly_live($published, $meta)) {
+        return null;
+    }
+
+    $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+    $name = trim((string) ($identity['official_name'] ?? 'Site'));
+    $short = trim((string) ($identity['short_description'] ?? ''));
+    $full = trim((string) ($identity['full_description'] ?? $identity['what_we_do'] ?? ''));
+
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $map = birkly_ai_presence_discovery_url_map($published, $meta);
+
+    $lines = ['# ' . $name];
+    if ($short !== '') {
+        $lines[] = '';
+        $lines[] = '> ' . $short;
+    }
+    if ($full !== '' && $full !== $short) {
+        $lines[] = '';
+        $lines[] = $full;
+    }
+
+    $lines[] = '';
+    $lines[] = '## Discovery';
+    foreach (['for_agents', 'agent_guide_json', 'llms_txt', 'sitemap', 'robots'] as $key) {
+        $url = $map[$key] ?? null;
+        if ($url !== null && $url !== '') {
+            $label = str_replace('_', ' ', $key);
+            $lines[] = '- [' . $label . '](' . $url . ')';
+        }
+    }
+
+    $claims = is_array($published['claims'] ?? null) ? $published['claims'] : [];
+    $supported = [];
+    foreach ($claims as $claim) {
+        if (!is_array($claim) || ($claim['status'] ?? '') !== 'supported') {
+            continue;
+        }
+        $text = trim((string) ($claim['text'] ?? $claim['claim'] ?? ''));
+        if ($text !== '') {
+            $supported[] = $text;
+        }
+    }
+    if ($supported !== []) {
+        $lines[] = '';
+        $lines[] = '## Supported claims';
+        foreach (array_slice($supported, 0, 12) as $claim) {
+            $lines[] = '- ' . $claim;
+        }
+    }
+
+    $lines[] = '';
+    $lines[] = '_Published Agent Guide v' . (int) ($meta['published_version'] ?? 0) . '_';
+
+    return implode("\n", $lines) . "\n";
 }
 
 /**

@@ -37,8 +37,8 @@
         webmcpSaving: false
     };
 
-    // Agent Guide hub zones (P62-D2): Connections lives only under Settings → AI.
-    var HUB_ZONES = ['guide', 'tools', 'publish'];
+      var HUB_ZONES = ['guide', 'tools', 'publish'];
+    var discoveryEmbed = false;
 
     function settingsAiUrl() {
         if (global.Birkly && typeof global.Birkly.adminUrl === 'function') {
@@ -3178,6 +3178,7 @@
     }
 
     function setZoneInUrl(zone) {
+        if (discoveryEmbed) return;
         try {
             var url = new URL(window.location.href);
             url.searchParams.set('zone', zone);
@@ -3224,6 +3225,12 @@
     function initHubZones() {
         var hub = document.querySelector('.ap-hub');
         if (!hub) return;
+
+        if (discoveryEmbed) {
+            var tablist = document.getElementById('ap-hub-tablist');
+            if (tablist) tablist.hidden = true;
+            hub.classList.add('ap-hub--discovery-embed');
+        }
 
         document.addEventListener('click', function (e) {
             var zoneBtn = e.target.closest('[data-hub-zone]');
@@ -3700,6 +3707,8 @@
     }
 
     global.initAiPresence = function (config) {
+        config = config || {};
+        discoveryEmbed = !!config.discoveryEmbed;
         if (!isAiPresencePage()) return;
         state.csrfToken = getCsrfToken() || (config && config.csrfToken) || '';
         state.canEdit = !config || config.canEdit !== false;
@@ -3746,11 +3755,15 @@
         });
     };
 
+    global.switchApZone = switchZone;
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () {
-            global.initAiPresence({});
+            if (!document.getElementById('disc-ap-embed')) {
+                global.initAiPresence({});
+            }
         });
-    } else if (isAiPresencePage()) {
+    } else if (isAiPresencePage() && !document.getElementById('disc-ap-embed')) {
         global.initAiPresence({});
     }
 })(window);
