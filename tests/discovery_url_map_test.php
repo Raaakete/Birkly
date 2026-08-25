@@ -118,6 +118,24 @@ assert_true($setup['ok'] ?? false, 'automated setup succeeds');
 assert_true(is_array($setup['summary'] ?? null), 'automated setup returns summary');
 assert_true(($setup['summary']['pages'] ?? 0) >= 2, 'automated setup summary includes pages');
 
+echo "==> Repair corrupt template path\n";
+$config = birkly_site_seo_load();
+$config['detail_bindings'] = [[
+    'id' => 'bind_test',
+    'collection' => 'blog',
+    'template_path' => 'ml',
+    'excerpt_field' => 'excerpt',
+]];
+$config = birkly_seo_url_map_scan_project($config);
+$repairedBinding = null;
+foreach ($config['detail_bindings'] as $binding) {
+    if (is_array($binding) && ($binding['collection'] ?? '') === 'blog') {
+        $repairedBinding = $binding;
+        break;
+    }
+}
+assert_true(($repairedBinding['template_path'] ?? '') === 'post.html', 'corrupt ml repaired to post.html');
+
 echo "==> Rescan materializes detail URLs\n";
 $scanSave = birkly_seo_scan_and_save();
 assert_true($scanSave['ok'] ?? false, 'scan and save returns ok');
