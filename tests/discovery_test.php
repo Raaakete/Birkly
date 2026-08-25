@@ -81,6 +81,20 @@ assert_true(count($verify['checks']) >= 3, 'verify has checks');
 $map = birkly_discovery_url_map();
 assert_true(isset($map['for_agents_md']), 'url map has for_agents_md key');
 
+echo "==> Migration does not recurse into pack gate\n";
+require_once $root . '/core/ai_presence.php';
+@unlink(birkly_discovery_settings_path());
+birkly_discovery_reset_cache();
+birkly_ai_presence_reset_for_tests();
+$draft = birkly_ai_presence_default_draft();
+$draft['identity']['official_name'] = 'Recursion Test';
+$draft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($draft);
+birkly_ai_presence_publish();
+$enabled = birkly_discovery_pack_enabled('agent_guide');
+assert_true($enabled === true, 'migrate enables agent_guide without stack overflow');
+assert_true(birkly_ai_presence_is_publicly_live() === true, 'publicly live after migrate');
+
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);
 assert_true($code === 0, 'discovery.php syntax');
