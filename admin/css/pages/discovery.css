@@ -4,6 +4,15 @@
     display: none !important;
 }
 
+.disc-pack-intro {
+    margin-bottom: 1.5rem;
+}
+
+#disc-agent-guide-status,
+#disc-webmcp-config > .form-help {
+    margin-bottom: 1rem;
+}
+
 .disc-ap-embed {
     margin-top: 1rem;
 }

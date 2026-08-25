@@ -36,7 +36,11 @@
     }
 
     function csrfToken() {
-        return (global.Birkly && global.Birkly.csrf) || '';
+        if (global.Birkly && global.Birkly.csrf) {
+            return global.Birkly.csrf;
+        }
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') || '' : '';
     }
 
     function postJson(body) {
@@ -298,7 +302,9 @@
     }
 
     function bindPackToggles() {
-        document.querySelectorAll('[data-pack]').forEach(function (input) {
+        document.querySelectorAll('.disc-hub input[type="checkbox"][data-pack]').forEach(function (input) {
+            if (input.dataset.discBound === '1') return;
+            input.dataset.discBound = '1';
             input.addEventListener('change', function () {
                 var pack = input.getAttribute('data-pack');
                 savePack(pack, { enabled: input.checked }).catch(function (e) {
