@@ -462,7 +462,9 @@
         } else {
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
-                tr.innerHTML = '<td><code class="u-text-sm">' + escapeHtml(row.url || '') + '</code></td>'
+                var composition = (row.composition_sources && row.composition_sources.length)
+                    ? '<div class="u-text-xs u-fg-secondary">Sources: ' + escapeHtml(row.composition_sources.join(', ')) + '</div>' : '';
+                tr.innerHTML = '<td><code class="u-text-sm">' + escapeHtml(row.url || '') + '</code>' + composition + '</td>'
                     + '<td>' + escapeHtml(row.label || '') + '</td>'
                     + '<td><span class="badge">' + escapeHtml(row.type || '') + '</span></td>'
                     + '<td>' + escapeHtml(row.title || '—') + '</td>'
@@ -529,9 +531,12 @@
             var row = document.createElement('div');
             row.className = 'u-split u-align-center u-gap-2';
             var excerpt = binding.excerpt_field || 'excerpt';
+            var pattern = binding.url_pattern ? ' · <span class="u-fg-secondary">' + escapeHtml(binding.url_pattern) + '</span>' : '';
             row.innerHTML = '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
                 + ' · <code>' + escapeHtml(binding.template_path || '') + '</code>'
-                + ' <span class="u-fg-secondary u-text-sm">excerpt: ' + escapeHtml(excerpt) + '</span></div>';
+                + pattern
+                + ' <span class="u-fg-secondary u-text-sm">excerpt: ' + escapeHtml(excerpt) + '</span></div>'
+                + '<button type="button" class="btn btn-ghost btn-sm" data-binding-delete="' + escapeHtml(binding.id || '') + '">Remove</button>';
             list.appendChild(row);
         });
     }
@@ -590,6 +595,77 @@
                     state.urlMapRows = res.data.rows || buildUrlMapRowsFromSeo(state.seo);
                     renderUrlMap(state.seo);
                     showMessage('URL override saved');
+                }).catch(function (err) { showMessage(err.message, true); });
+            });
+        }
+
+        var propose = $('#disc-seo-propose');
+        if (propose) {
+            propose.addEventListener('click', function () {
+                postJson({ action: 'seo_propose_all' }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    return postJson({ action: 'seo_apply_proposals', proposed: res.data.proposed });
+                }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.seo = res.data.seo;
+                    state.urlMapRows = res.data.rows || [];
+                    renderUrlMap(state.seo);
+                    var warns = (res.data.warnings || []).join('; ');
+                    showMessage(warns ? 'Proposals applied — ' + warns : 'Proposals applied — review and publish');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+
+        var addRedirect = $('#disc-seo-add-redirect');
+        if (addRedirect) {
+            addRedirect.addEventListener('click', function () {
+                var from = window.prompt('Redirect from path (e.g. /old-page)');
+                if (!from) return;
+                var to = window.prompt('Redirect to path or URL');
+                if (!to) return;
+                var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
+                redirects.push({ from: from, to: to, status: 301 });
+                postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.seo = res.data.seo;
+                    state.urlMapRows = res.data.rows || [];
+                    renderUrlMap(state.seo);
+                    showMessage('Redirect saved');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+
+        var bindingSave = $('#disc-binding-save');
+        if (bindingSave) {
+            bindingSave.addEventListener('click', function () {
+                var binding = {
+                    collection: ($('#disc-binding-collection') || {}).value || '',
+                    template_path: ($('#disc-binding-template') || {}).value || '',
+                    excerpt_field: ($('#disc-binding-excerpt') || {}).value || '',
+                    url_pattern: ($('#disc-binding-pattern') || {}).value || null,
+                };
+                postJson({ action: 'save_detail_binding', binding: binding }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.seo = res.data.seo;
+                    renderDetailBindings(state.seo);
+                    showMessage('Detail binding saved');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+
+        var bindingsList = $('#disc-seo-bindings-list');
+        if (bindingsList) {
+            bindingsList.addEventListener('click', function (e) {
+                var btn = e.target.closest('[data-binding-delete]');
+                if (!btn) return;
+                var id = btn.getAttribute('data-binding-delete');
+                postJson({ action: 'delete_detail_binding', binding_id: id }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.seo = res.data.seo;
+                    state.urlMapRows = res.data.rows || [];
+                    renderDetailBindings(state.seo);
+                    renderUrlMap(state.seo);
+                    showMessage('Binding removed');
                 }).catch(function (err) { showMessage(err.message, true); });
             });
         }

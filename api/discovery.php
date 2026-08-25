@@ -232,4 +232,60 @@ if ($action === 'save_detail_binding') {
     exit;
 }
 
+if ($action === 'delete_detail_binding') {
+    $bindingId = trim((string) ($input['binding_id'] ?? $input['id'] ?? ''));
+    if ($bindingId === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Missing binding id']);
+        exit;
+    }
+    $result = birkly_seo_delete_detail_binding($bindingId);
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Could not delete binding']);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'seo' => $result['config'],
+            'rows' => birkly_seo_url_map_admin_rows($result['config'] ?? []),
+            'status' => birkly_discovery_status(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'seo_propose_all') {
+    $proposed = birkly_seo_propose_overrides();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'proposed' => $proposed,
+            'message' => 'Review proposed overrides — nothing is saved until you apply rows.',
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'seo_apply_proposals') {
+    $proposed = $input['proposed'] ?? [];
+    if (!is_array($proposed)) {
+        $proposed = [];
+    }
+    $result = birkly_seo_save_url_map($proposed);
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Could not apply']);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'seo' => $result['config'],
+            'rows' => birkly_seo_url_map_admin_rows($result['config'] ?? []),
+            'warnings' => $result['warnings'] ?? [],
+            'status' => birkly_discovery_status(),
+        ],
+    ]);
+    exit;
+}
+
 echo json_encode(['status' => 'error', 'message' => 'Unknown action']);

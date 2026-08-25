@@ -223,10 +223,13 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
                 'source' => 'scan',
                 'file' => $rel,
                 'overrides' => [],
+                'composition_sources' => [],
             ], $existing, [
                 'source' => 'scan',
                 'file' => $rel,
                 'overrides' => $overrides,
+                'composition_sources' => is_string($content)
+                    ? birkly_seo_parse_composition_hints($content) : ($existing['composition_sources'] ?? []),
             ]);
         }
     }
@@ -581,8 +584,13 @@ function birkly_seo_save_url_map(array $urlMapPatch): array
             $current['details'][$key] = array_merge($existing, $row);
         }
     }
+    $warnings = birkly_seo_detect_redirect_loops($current['redirects']);
     $config['url_map'] = $current;
-    return birkly_site_seo_save($config);
+    $save = birkly_site_seo_save($config);
+    if ($save['ok']) {
+        $save['warnings'] = $warnings;
+    }
+    return $save;
 }
 
 /**
@@ -626,6 +634,8 @@ function birkly_seo_url_map_admin_rows(array $config): array
             'description' => (string) ($overrides['description'] ?? ''),
             'source' => (string) ($page['source'] ?? 'scan'),
             'file' => (string) ($page['file'] ?? ''),
+            'composition_sources' => is_array($page['composition_sources'] ?? null)
+                ? $page['composition_sources'] : [],
         ];
     }
     foreach ($config['url_map']['details'] as $key => $detail) {
@@ -657,4 +667,531 @@ function birkly_seo_url_map_admin_rows(array $config): array
         ];
     }
     return $rows;
+}
+
+/**
+ * Normalize redirect path (shared with hosting redirects).
+ */
+function birkly_seo_normalize_path(string $path): string
+{
+    require_once __DIR__ . '/hosting_redirects.php';
+    return birkly_normalize_redirect_path($path);
+}
+
+/**
+ * @return array{to_path:string,type:int}|null
+ */
+function birkly_seo_match_redirect(string $uri): ?array
+{
+    if (!birkly_site_seo_is_published()) {
+        return null;
+    }
+    $path = birkly_seo_normalize_path(parse_url($uri, PHP_URL_PATH) ?: $uri);
+    if ($path === '') {
+        return null;
+    }
+    $config = birkly_site_seo_normalize_url_map_sections(birkly_site_seo_load());
+    foreach ($config['url_map']['redirects'] as $rule) {
+        if (!is_array($rule)) {
+            continue;
+        }
+        $from = birkly_seo_normalize_path((string) ($rule['from'] ?? ''));
+        if ($from === '' || $from !== $path) {
+            continue;
+        }
+        $to = trim((string) ($rule['to'] ?? ''));
+        if ($to === '') {
+            continue;
+        }
+        $type = (int) ($rule['status'] ?? 301);
+        if (!in_array($type, [301, 302], true)) {
+            $type = 301;
+        }
+        return ['to_path' => $to, 'type' => $type];
+    }
+    return null;
+}
+
+/**
+ * @param list<array<string,mixed>> $redirects
+ * @return list<string> human-readable loop warnings
+ */
+function birkly_seo_detect_redirect_loops(array $redirects): array
+{
+    $map = [];
+    foreach ($redirects as $rule) {
+        if (!is_array($rule)) {
+            continue;
+        }
+        $from = birkly_seo_normalize_path((string) ($rule['from'] ?? ''));
+        $to = trim((string) ($rule['to'] ?? ''));
+        if ($from === '' || $to === '') {
+            continue;
+        }
+        if (!preg_match('#^https?://#i', $to)) {
+            $to = birkly_seo_normalize_path($to);
+        }
+        $map[$from] = $to;
+    }
+    $warnings = [];
+    foreach (array_keys($map) as $start) {
+        $seen = [];
+        $current = $start;
+        while (isset($map[$current])) {
+            if (isset($seen[$current])) {
+                $warnings[] = 'Redirect loop involving ' . $start;
+                break;
+            }
+            $seen[$current] = true;
+            $next = $map[$current];
+            if (preg_match('#^https?://#i', $next)) {
+                break;
+            }
+            $current = $next;
+        }
+    }
+    return $warnings;
+}
+
+/**
+ * Resolve pretty URL pattern to detail template + query (P68-M8).
+ *
+ * @return array{template_path:string,collection:string,slug:string}|null
+ */
+function birkly_seo_resolve_pretty_url(string $uri): ?array
+{
+    if (!birkly_site_seo_is_published()) {
+        return null;
+    }
+    $path = birkly_seo_normalize_path(parse_url($uri, PHP_URL_PATH) ?: $uri);
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+    foreach ($config['detail_bindings'] as $binding) {
+        if (!is_array($binding)) {
+            continue;
+        }
+        $pattern = trim((string) ($binding['url_pattern'] ?? ''));
+        if ($pattern === '' || !str_contains($pattern, '{slug}')) {
+            continue;
+        }
+        $regex = '#^' . str_replace('\{slug\}', '([^/]+)', preg_quote($pattern, '#')) . '$#';
+        if (preg_match($regex, $path, $m) !== 1) {
+            continue;
+        }
+        return [
+            'template_path' => (string) ($binding['template_path'] ?? ''),
+            'collection' => (string) ($binding['collection'] ?? ''),
+            'slug' => rawurldecode($m[1]),
+        ];
+    }
+    return null;
+}
+
+/**
+ * Serve a detail page via pretty URL pattern. Returns true when handled (exits).
+ */
+function birkly_seo_try_pretty_url_route(string $uri): bool
+{
+    $resolved = birkly_seo_resolve_pretty_url($uri);
+    if ($resolved === null) {
+        return false;
+    }
+    $template = ltrim(str_replace('\\', '/', $resolved['template_path']), '/');
+    if ($template === '') {
+        return false;
+    }
+    $file = birkly_project_root() . '/project/' . $template;
+    if (!is_readable($file)) {
+        return false;
+    }
+    $_GET['collection'] = $resolved['collection'];
+    $_GET['slug'] = $resolved['slug'];
+    birkly_hosting_serve_public_file($file);
+    return true;
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_seo_parse_composition_hints(string $html): array
+{
+    $hints = [];
+    if (preg_match_all("/\{for each entry in '([^']+)'/i", $html, $m)) {
+        foreach ($m[1] as $slug) {
+            $hints[] = (string) $slug;
+        }
+    }
+    if (preg_match_all('/<birkly-region\s+collection=["\']([^"\']+)["\']/i', $html, $m2)) {
+        foreach ($m2[1] as $slug) {
+            $hints[] = (string) $slug;
+        }
+    }
+    return array_values(array_unique(array_filter($hints)));
+}
+
+/**
+ * @return list<array{loc:string,lastmod?:string,priority?:string}>
+ */
+function birkly_seo_sitemap_entries(): array
+{
+    if (!birkly_site_seo_is_published() || !birkly_site_seo_surface_enabled('sitemap')) {
+        return [];
+    }
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $entries = [];
+    $detailTemplates = [];
+    foreach ($config['detail_bindings'] as $binding) {
+        if (is_array($binding) && !empty($binding['template_path'])) {
+            $detailTemplates[] = ltrim((string) $binding['template_path'], '/');
+        }
+    }
+
+    foreach ($config['url_map']['pages'] as $path => $page) {
+        if (!is_array($page)) {
+            continue;
+        }
+        $file = ltrim((string) ($page['file'] ?? ''), '/');
+        if ($file !== '' && in_array($file, $detailTemplates, true)) {
+            continue;
+        }
+        $loc = birkly_seo_canonical_url((string) $path, []);
+        if ($loc === '' || $loc[0] === '/') {
+            continue;
+        }
+        $entries[] = [
+            'loc' => $loc,
+            'priority' => $path === '/' ? '1.0' : '0.8',
+        ];
+    }
+
+    foreach ($config['url_map']['details'] as $detail) {
+        if (!is_array($detail)) {
+            continue;
+        }
+        $collection = (string) ($detail['collection'] ?? '');
+        $slug = (string) ($detail['slug'] ?? '');
+        $template = (string) ($detail['template_path'] ?? '');
+        if ($collection === '' || $slug === '' || $template === '') {
+            continue;
+        }
+        $binding = null;
+        foreach ($config['detail_bindings'] as $b) {
+            if (is_array($b) && ($b['collection'] ?? '') === $collection
+                && ($b['template_path'] ?? '') === $template) {
+                $binding = $b;
+                break;
+            }
+        }
+        $pattern = is_array($binding) ? trim((string) ($binding['url_pattern'] ?? '')) : '';
+        if ($pattern !== '' && str_contains($pattern, '{slug}')) {
+            $loc = birkly_seo_canonical_url(str_replace('{slug}', $slug, $pattern), []);
+        } else {
+            $loc = birkly_seo_canonical_url(
+                birkly_seo_public_path_from_file($template),
+                ['collection' => $collection, 'slug' => $slug]
+            );
+        }
+        if ($loc === '' || $loc[0] === '/') {
+            continue;
+        }
+        $entry = ['loc' => $loc, 'priority' => '0.6'];
+        if (!empty($detail['updated_at'])) {
+            $entry['lastmod'] = (string) $detail['updated_at'];
+        }
+        $entries[] = $entry;
+    }
+
+    foreach ($config['url_map']['custom'] as $custom) {
+        if (!is_array($custom)) {
+            continue;
+        }
+        if (!empty($custom['noindex']) || empty($custom['include_sitemap'])) {
+            continue;
+        }
+        $url = trim((string) ($custom['url'] ?? ''));
+        if ($url === '') {
+            continue;
+        }
+        $entries[] = ['loc' => $url, 'priority' => '0.5'];
+    }
+
+    return $entries;
+}
+
+/**
+ * @return list<array{id:string,pack:string,label:string,status:string,detail:string}>
+ */
+function birkly_seo_health_checks(): array
+{
+    if (!birkly_site_seo_is_published()) {
+        return [];
+    }
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $checks = [];
+    $titles = [];
+    $rows = birkly_seo_url_map_admin_rows($config);
+
+    foreach ($rows as $row) {
+        if (($row['type'] ?? '') === 'redirect') {
+            continue;
+        }
+        $title = trim((string) ($row['title'] ?? ''));
+        if ($title === '' && ($row['type'] ?? '') === 'page') {
+            $checks[] = [
+                'id' => 'seo_missing_title_' . md5((string) ($row['key'] ?? '')),
+                'pack' => 'seo',
+                'label' => 'Missing title: ' . ($row['url'] ?? ''),
+                'status' => 'warn',
+                'detail' => 'Add a title override or ensure the page template has a title.',
+            ];
+        }
+        if ($title !== '') {
+            $titles[$title][] = (string) ($row['url'] ?? '');
+        }
+    }
+
+    foreach ($titles as $title => $urls) {
+        if (count($urls) > 1) {
+            $checks[] = [
+                'id' => 'seo_dup_title_' . md5($title),
+                'pack' => 'seo',
+                'label' => 'Duplicate title: ' . $title,
+                'status' => 'warn',
+                'detail' => 'Used on: ' . implode(', ', $urls),
+            ];
+        }
+    }
+
+    $loops = birkly_seo_detect_redirect_loops($config['url_map']['redirects']);
+    foreach ($loops as $loop) {
+        $checks[] = [
+            'id' => 'seo_redirect_loop_' . md5($loop),
+            'pack' => 'seo',
+            'label' => 'Redirect loop',
+            'status' => 'fail',
+            'detail' => $loop,
+        ];
+    }
+
+    foreach ($config['url_map']['redirects'] as $i => $rule) {
+        if (!is_array($rule)) {
+            continue;
+        }
+        $to = trim((string) ($rule['to'] ?? ''));
+        if ($to === '' || preg_match('#^https?://#i', $to)) {
+            continue;
+        }
+        $toPath = birkly_seo_normalize_path($to);
+        $found = isset($config['url_map']['pages'][$toPath])
+            || $toPath === '/'
+            || is_readable(birkly_project_root() . '/project' . ($toPath === '/' ? '/index.html' : $toPath));
+        if (!$found) {
+            $checks[] = [
+                'id' => 'seo_broken_redirect_' . $i,
+                'pack' => 'seo',
+                'label' => 'Broken redirect target',
+                'status' => 'warn',
+                'detail' => (string) ($rule['from'] ?? '') . ' → ' . $to,
+            ];
+        }
+    }
+
+    return $checks;
+}
+
+/**
+ * One-time import of legacy entry meta_* into detail URL overrides (P68-M10).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_seo_import_legacy_entry_meta(array $config): array
+{
+    require_once __DIR__ . '/entry_storage.php';
+    $config = birkly_seo_normalize_url_map_sections($config);
+    foreach ($config['detail_bindings'] as $binding) {
+        if (!is_array($binding)) {
+            continue;
+        }
+        $collection = (string) ($binding['collection'] ?? '');
+        $template = (string) ($binding['template_path'] ?? '');
+        if ($collection === '' || !birkly_entry_collection_exists($collection)) {
+            continue;
+        }
+        foreach (birkly_entry_list_records($collection) as $record) {
+            if (!is_array($record) || ($record['status'] ?? '') !== 'published') {
+                continue;
+            }
+            $slug = trim((string) ($record['slug'] ?? $record['id'] ?? ''));
+            if ($slug === '') {
+                continue;
+            }
+            $metaTitle = trim((string) ($record['meta_title'] ?? ''));
+            $metaDesc = trim((string) ($record['meta_description'] ?? ''));
+            if ($metaTitle === '' && $metaDesc === '') {
+                continue;
+            }
+            $key = birkly_seo_detail_key($template, $collection, $slug);
+            $existing = is_array($config['url_map']['details'][$key] ?? null)
+                ? $config['url_map']['details'][$key] : [];
+            $overrides = is_array($existing['overrides'] ?? null) ? $existing['overrides'] : [];
+            if ($metaTitle !== '' && empty($overrides['title'])) {
+                $overrides['title'] = $metaTitle;
+            }
+            if ($metaDesc !== '' && empty($overrides['description'])) {
+                $overrides['description'] = $metaDesc;
+            }
+            $config['url_map']['details'][$key] = array_merge($existing, [
+                'type' => 'detail',
+                'collection' => $collection,
+                'slug' => $slug,
+                'template_path' => $template,
+                'overrides' => $overrides,
+            ]);
+        }
+    }
+    return $config;
+}
+
+/**
+ * @return array{pages:array<string,array<string,mixed>>,details:array<string,array<string,mixed>>}
+ */
+function birkly_seo_propose_overrides(): array
+{
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $siteTitle = trim((string) ($config['defaults']['site_title'] ?? ''));
+    $suffix = trim((string) ($config['defaults']['title_suffix'] ?? ''));
+    $proposed = ['pages' => [], 'details' => []];
+
+    foreach ($config['url_map']['pages'] as $path => $page) {
+        if (!is_array($page)) {
+            continue;
+        }
+        $overrides = is_array($page['overrides'] ?? null) ? $page['overrides'] : [];
+        if (!empty($overrides['title'])) {
+            continue;
+        }
+        $label = trim((string) ($page['label'] ?? birkly_seo_label_from_path((string) $path)));
+        $title = $label;
+        if ($suffix !== '' && $title !== '' && !str_contains($title, $suffix)) {
+            $title .= $suffix;
+        } elseif ($siteTitle !== '' && $path === '/' && $title === 'Home') {
+            $title = $siteTitle;
+        }
+        $proposed['pages'][$path] = [
+            'overrides' => [
+                'title' => $title,
+                'description' => trim((string) ($config['defaults']['description'] ?? '')),
+            ],
+        ];
+    }
+
+    require_once __DIR__ . '/entry_storage.php';
+    foreach ($config['detail_bindings'] as $binding) {
+        if (!is_array($binding)) {
+            continue;
+        }
+        $collection = (string) ($binding['collection'] ?? '');
+        $template = (string) ($binding['template_path'] ?? '');
+        $excerptField = (string) ($binding['excerpt_field'] ?? 'excerpt');
+        if ($collection === '' || !birkly_entry_collection_exists($collection)) {
+            continue;
+        }
+        foreach (birkly_entry_list_records($collection) as $record) {
+            if (!is_array($record) || ($record['status'] ?? '') !== 'published') {
+                continue;
+            }
+            $slug = trim((string) ($record['slug'] ?? $record['id'] ?? ''));
+            if ($slug === '') {
+                continue;
+            }
+            $key = birkly_seo_detail_key($template, $collection, $slug);
+            $detail = is_array($config['url_map']['details'][$key] ?? null)
+                ? $config['url_map']['details'][$key] : [];
+            $overrides = is_array($detail['overrides'] ?? null) ? $detail['overrides'] : [];
+            if (!empty($overrides['title'])) {
+                continue;
+            }
+            $proposed['details'][$key] = [
+                'overrides' => [
+                    'title' => birkly_seo_entry_field($record, 'title'),
+                    'description' => birkly_seo_entry_field($record, $excerptField),
+                ],
+            ];
+        }
+    }
+
+    return $proposed;
+}
+
+/**
+ * Public SEO head payload for CSR boot (P68-M7).
+ *
+ * @param array<string, mixed> $query
+ * @return array<string, mixed>
+ */
+function birkly_seo_public_context(string $path, array $query = [], string $renderedHtml = ''): array
+{
+    $relative = ltrim($path, '/');
+    if ($relative === '' || $relative === '/') {
+        $relative = 'index.html';
+    } elseif (!str_contains($relative, '.')) {
+        $relative .= '.html';
+    }
+    $context = birkly_seo_build_context('/' . $relative, $query, [], $renderedHtml);
+    $meta = birkly_site_seo_resolve_meta($context);
+    return [
+        'title' => $meta['title'],
+        'description' => $meta['description'],
+        'canonical' => $meta['canonical'],
+        'og_image' => $meta['og_image'],
+        'site_name' => $meta['site_name'],
+        'twitter_card' => (string) (birkly_site_seo_load()['defaults']['twitter_card'] ?? 'summary_large_image'),
+        'robots' => (string) (birkly_site_seo_load()['advanced']['robots'] ?? 'index,follow'),
+        'published_at' => birkly_site_seo_load()['published_at'] ?? null,
+    ];
+}
+
+/**
+ * Admin deep-link for entry editor when collection has a detail binding.
+ */
+function birkly_seo_entry_discovery_link(string $collection, string $slug): ?string
+{
+    if ($collection === '' || $slug === '') {
+        return null;
+    }
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
+    foreach ($config['detail_bindings'] as $binding) {
+        if (!is_array($binding)) {
+            continue;
+        }
+        if ((string) ($binding['collection'] ?? '') !== $collection) {
+            continue;
+        }
+        require_once __DIR__ . '/hosting_urls.php';
+        return birkly_hosting_admin_url('discovery', [
+            'tab' => 'seo',
+            'filter' => 'detail',
+            'entry' => $collection . '/' . $slug,
+        ]);
+    }
+    return null;
+}
+
+/**
+ * @return array{ok:bool,config?:array<string,mixed>,error?:string,warnings?:list<string>}
+ */
+function birkly_seo_delete_detail_binding(string $bindingId): array
+{
+    $config = birkly_site_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $bindings = [];
+    foreach ($config['detail_bindings'] as $binding) {
+        if (!is_array($binding)) {
+            continue;
+        }
+        if ((string) ($binding['id'] ?? '') === $bindingId) {
+            continue;
+        }
+        $bindings[] = $binding;
+    }
+    $config['detail_bindings'] = $bindings;
+    return birkly_site_seo_save($config);
 }
