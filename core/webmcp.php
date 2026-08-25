@@ -21,38 +21,194 @@ declare(strict_types=1);
 require_once __DIR__ . '/birkly_paths.php';
 
 /**
- * Canonical catalog of built-in + plugin-pack tools.
+ * Ensure active plugins are loaded so they can register WebMCP tools via filter.
+ */
+function birkly_webmcp_ensure_plugins_loaded(): void
+{
+    if (!function_exists('load_plugins')) {
+        $pluginsPath = __DIR__ . '/plugins.php';
+        if (is_readable($pluginsPath)) {
+            require_once $pluginsPath;
+        }
+    }
+    if (function_exists('load_plugins')) {
+        load_plugins();
+    }
+}
+
+/**
+ * Core WebMCP tools shipped with Birkly (always available when WebMCP is on).
+ *
+ * Plugin packs register additional tools via `birkly_webmcp_register_tools()` or
+ * the `webmcp_tool_catalog` filter from their `plugin.php` when active.
+ *
+ * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string}>
+ */
+function birkly_webmcp_core_tool_catalog(): array
+{
+    return [
+        ['id' => 'birkly_get_page_context',        'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
+        ['id' => 'birkly_list_published_entries',  'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
+        ['id' => 'birkly_get_published_entry',     'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
+        ['id' => 'birkly_describe_form',           'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
+        ['id' => 'birkly_submit_public_form',      'pack' => 'core', 'kind' => 'write', 'mutating' => true,  'consent' => 'confirm', 'default' => true],
+        ['id' => 'birkly_set_language',            'pack' => 'core', 'kind' => 'write', 'mutating' => true,  'consent' => 'none',    'default' => true],
+    ];
+}
+
+/**
+ * Normalize one catalog entry from core or a plugin registration.
+ *
+ * @param array<string, mixed> $tool
+ * @return array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string}|null
+ */
+function birkly_webmcp_normalize_tool_entry(array $tool): ?array
+{
+    $id = trim((string) ($tool['id'] ?? ''));
+    if ($id === '' || !preg_match('/^[a-z][a-z0-9_]*$/', $id)) {
+        return null;
+    }
+
+    $pack = trim((string) ($tool['pack'] ?? ''));
+    if ($pack === '') {
+        $pack = trim((string) ($tool['plugin_id'] ?? 'plugin'));
+    }
+
+    $kind = (string) ($tool['kind'] ?? 'read');
+    if (!in_array($kind, ['read', 'write'], true)) {
+        $kind = 'read';
+    }
+
+    $consent = (string) ($tool['consent'] ?? 'none');
+    if (!in_array($consent, ['none', 'confirm', 'pay', 'login'], true)) {
+        $consent = $kind === 'write' ? 'confirm' : 'none';
+    }
+
+    $normalized = [
+        'id' => $id,
+        'pack' => $pack,
+        'kind' => $kind,
+        'mutating' => (bool) ($tool['mutating'] ?? ($kind === 'write')),
+        'consent' => $consent,
+        'default' => (bool) ($tool['default'] ?? false),
+    ];
+
+    $pluginId = trim((string) ($tool['plugin_id'] ?? ''));
+    if ($pluginId !== '' && $pack !== 'core') {
+        $normalized['plugin_id'] = $pluginId;
+    }
+
+    $label = trim((string) ($tool['label'] ?? ''));
+    if ($label !== '') {
+        $normalized['label'] = $label;
+    }
+
+    return $normalized;
+}
+
+/**
+ * Register WebMCP tools from an active plugin.
+ *
+ * Call from `plugin.php` on load. Tools from inactive or uninstalled plugins are
+ * never included in the catalog and are pruned from saved config on normalize.
+ *
+ * @param string $pluginId Plugin folder id (e.g. `commerce`).
+ * @param list<array<string, mixed>> $tools Tool definitions (id, kind, mutating, consent, default; pack optional).
+ */
+function birkly_webmcp_register_tools(string $pluginId, array $tools): void
+{
+    if ($pluginId === '' || $pluginId === 'core') {
+        return;
+    }
+
+    if (!function_exists('add_filter')) {
+        birkly_webmcp_ensure_plugins_loaded();
+    }
+    if (!function_exists('add_filter')) {
+        return;
+    }
+
+    add_filter('webmcp_tool_catalog', static function (array $catalog) use ($pluginId, $tools): array {
+        foreach ($tools as $tool) {
+            if (!is_array($tool)) {
+                continue;
+            }
+            $tool['plugin_id'] = $pluginId;
+            if (!isset($tool['pack']) || trim((string) $tool['pack']) === '') {
+                $tool['pack'] = $pluginId;
+            }
+            $entry = birkly_webmcp_normalize_tool_entry($tool);
+            if ($entry !== null) {
+                $catalog[] = $entry;
+            }
+        }
+
+        return $catalog;
+    });
+}
+
+/**
+ * Canonical catalog of core + active-plugin WebMCP tools.
  *
  * `default` is the value used when the master switch is on and the tool has no
  * explicit entry in the saved config: core tools default on, plugin packs
  * default off until the owner enables them.
  *
- * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool}>
+ * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string}>
  */
 function birkly_webmcp_tool_catalog(): array
 {
-    return [
-        // Core tools (available when enabled + browser supports the API).
-        ['id' => 'birkly_get_page_context',        'pack' => 'core',     'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_list_published_entries',  'pack' => 'core',     'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_get_published_entry',     'pack' => 'core',     'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_describe_form',           'pack' => 'core',     'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_submit_public_form',      'pack' => 'core',     'kind' => 'write',  'mutating' => true,  'consent' => 'confirm', 'default' => true],
-        ['id' => 'birkly_set_language',            'pack' => 'core',     'kind' => 'write',  'mutating' => true,  'consent' => 'none',    'default' => true],
+    if (!empty($GLOBALS['__birkly_webmcp_catalog_reset'])) {
+        unset($GLOBALS['__birkly_webmcp_catalog_cache']);
+        unset($GLOBALS['__birkly_webmcp_catalog_reset']);
+    }
 
-        // Commerce pack (registers only when the storefront is present).
-        ['id' => 'birkly_commerce_get_cart',       'pack' => 'commerce', 'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => false],
-        ['id' => 'birkly_commerce_add_to_cart',    'pack' => 'commerce', 'kind' => 'write',  'mutating' => true,  'consent' => 'confirm', 'default' => false],
-        ['id' => 'birkly_commerce_checkout',       'pack' => 'commerce', 'kind' => 'write',  'mutating' => true,  'consent' => 'pay',     'default' => false],
+    if (isset($GLOBALS['__birkly_webmcp_catalog_cache']) && is_array($GLOBALS['__birkly_webmcp_catalog_cache'])) {
+        return $GLOBALS['__birkly_webmcp_catalog_cache'];
+    }
 
-        // Events pack.
-        ['id' => 'birkly_events_list',             'pack' => 'events',   'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => false],
-        ['id' => 'birkly_events_rsvp',             'pack' => 'events',   'kind' => 'write',  'mutating' => true,  'consent' => 'confirm', 'default' => false],
+    birkly_webmcp_ensure_plugins_loaded();
 
-        // User pack.
-        ['id' => 'birkly_user_session',            'pack' => 'user',     'kind' => 'read',   'mutating' => false, 'consent' => 'none',    'default' => false],
-        ['id' => 'birkly_user_login',              'pack' => 'user',     'kind' => 'write',  'mutating' => true,  'consent' => 'login',   'default' => false],
-    ];
+    $merged = [];
+    $seen = [];
+    foreach (birkly_webmcp_core_tool_catalog() as $tool) {
+        $entry = birkly_webmcp_normalize_tool_entry($tool);
+        if ($entry === null || isset($seen[$entry['id']])) {
+            continue;
+        }
+        $seen[$entry['id']] = true;
+        $merged[] = $entry;
+    }
+
+    $pluginTools = function_exists('apply_filters')
+        ? apply_filters('webmcp_tool_catalog', [])
+        : [];
+
+    if (is_array($pluginTools)) {
+        foreach ($pluginTools as $tool) {
+            if (!is_array($tool)) {
+                continue;
+            }
+            $entry = birkly_webmcp_normalize_tool_entry($tool);
+            if ($entry === null || isset($seen[$entry['id']])) {
+                continue;
+            }
+            $seen[$entry['id']] = true;
+            $merged[] = $entry;
+        }
+    }
+
+    $GLOBALS['__birkly_webmcp_catalog_cache'] = $merged;
+    return $merged;
+}
+
+/**
+ * Reset the in-request tool catalog cache (tests only).
+ */
+function birkly_webmcp_reset_catalog_cache(): void
+{
+    $GLOBALS['__birkly_webmcp_catalog_reset'] = true;
+    unset($GLOBALS['__birkly_webmcp_catalog_cache']);
 }
 
 /**

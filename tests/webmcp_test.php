@@ -45,8 +45,13 @@ $defaults = birkly_webmcp_load();
 assert_true($defaults['enabled'] === false, 'default enabled = false');
 assert_true(isset($defaults['tools']['birkly_get_page_context']), 'core tool present in defaults');
 assert_true($defaults['tools']['birkly_get_page_context'] === true, 'core tool default on');
-assert_true($defaults['tools']['birkly_commerce_add_to_cart'] === false, 'plugin tool default off');
+assert_true(!array_key_exists('birkly_commerce_add_to_cart', $defaults['tools']), 'plugin tools absent without installed plugin');
 assert_true($defaults['form_allowlist'] === [], 'default allowlist empty');
+
+echo "==> Core catalog only (no hardcoded plugin packs)\n";
+$coreIds = array_map(static fn (array $t): string => $t['id'], birkly_webmcp_core_tool_catalog());
+$catalogIds = array_map(static fn (array $t): string => $t['id'], birkly_webmcp_tool_catalog());
+assert_true($catalogIds === $coreIds, 'catalog matches core when no plugins register tools');
 
 echo "==> Public config off = {enabled:false} only\n";
 $pub = birkly_webmcp_public_config();
@@ -70,24 +75,82 @@ assert_true($norm['form_allowlist'] === ['contact', 'events'], 'normalize saniti
 echo "==> Save + reload roundtrip\n";
 $save = birkly_webmcp_save([
     'enabled' => true,
-    'tools' => ['birkly_commerce_get_cart' => true],
+    'tools' => ['birkly_get_page_context' => false],
     'form_allowlist' => ['contact'],
 ]);
 assert_true($save['ok'] === true, 'save ok');
 birkly_webmcp_reset_cache();
 $loaded = birkly_webmcp_load();
 assert_true($loaded['enabled'] === true, 'reload enabled');
-assert_true($loaded['tools']['birkly_commerce_get_cart'] === true, 'reload plugin tool on');
-assert_true($loaded['tools']['birkly_get_page_context'] === true, 'reload core tool default on');
+assert_true($loaded['tools']['birkly_get_page_context'] === false, 'reload core tool override');
+assert_true($loaded['form_allowlist'] === ['contact'], 'reload allowlist');
+
+echo "==> Plugin tool registration via birkly_webmcp_register_tools\n";
+require_once $root . '/core/plugins.php';
+birkly_webmcp_register_tools('test_plugin', [
+    [
+        'id' => 'birkly_test_plugin_action',
+        'kind' => 'write',
+        'mutating' => true,
+        'consent' => 'confirm',
+        'default' => false,
+        'label' => 'Test action',
+    ],
+]);
+birkly_webmcp_reset_catalog_cache();
+$withPlugin = birkly_webmcp_tool_catalog();
+assert_true(
+    in_array('birkly_test_plugin_action', array_map(static fn (array $t): string => $t['id'], $withPlugin), true),
+    'registered plugin tool appears in catalog'
+);
+$pluginEntry = null;
+foreach ($withPlugin as $tool) {
+    if ($tool['id'] === 'birkly_test_plugin_action') {
+        $pluginEntry = $tool;
+        break;
+    }
+}
+assert_true($pluginEntry !== null && ($pluginEntry['plugin_id'] ?? '') === 'test_plugin', 'plugin tool has plugin_id');
+assert_true($pluginEntry !== null && ($pluginEntry['pack'] ?? '') === 'test_plugin', 'plugin tool pack matches plugin id');
+
+$normPlugin = birkly_webmcp_normalize([
+    'enabled' => true,
+    'tools' => ['birkly_test_plugin_action' => true, 'orphan_old_plugin_tool' => true],
+    'form_allowlist' => [],
+]);
+assert_true(
+    array_key_exists('birkly_test_plugin_action', $normPlugin['tools']),
+    'normalize keeps registered plugin tool'
+);
+assert_true(
+    !array_key_exists('orphan_old_plugin_tool', $normPlugin['tools']),
+    'normalize prunes orphan tool ids from uninstalled plugins'
+);
+birkly_webmcp_reset_catalog_cache();
 
 echo "==> Public config on = tools + allowlist, no secrets\n";
+birkly_webmcp_save([
+    'enabled' => true,
+    'tools' => ['birkly_test_plugin_action' => true],
+    'form_allowlist' => ['contact'],
+]);
+birkly_webmcp_register_tools('test_plugin', [
+    [
+        'id' => 'birkly_test_plugin_action',
+        'kind' => 'write',
+        'mutating' => true,
+        'consent' => 'confirm',
+        'default' => false,
+    ],
+]);
+birkly_webmcp_reset_catalog_cache();
 $pubOn = birkly_webmcp_public_config();
 assert_true($pubOn['enabled'] === true, 'public on enabled');
-assert_true(in_array('birkly_get_page_context', $pubOn['tools'], true), 'public on includes core tool');
-assert_true(in_array('birkly_commerce_get_cart', $pubOn['tools'], true), 'public on includes enabled plugin tool');
-assert_true(!in_array('birkly_commerce_checkout', $pubOn['tools'], true), 'public on excludes disabled plugin tool');
+assert_true(in_array('birkly_get_page_context', $pubOn['tools'], true), 'public on includes core tool default');
+assert_true(in_array('birkly_test_plugin_action', $pubOn['tools'], true), 'public on includes enabled plugin tool');
 assert_true($pubOn['form_allowlist'] === ['contact'], 'public on allowlist');
 assert_true(!isset($pubOn['_updated_at']), 'public config has no metadata');
+birkly_webmcp_reset_catalog_cache();
 
 echo "==> Runtime file present + safe markers\n";
 $js = (string) file_get_contents($root . '/birkly-webmcp.js');
