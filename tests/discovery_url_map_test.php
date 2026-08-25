@@ -80,6 +80,43 @@ assert_true(count($scanned['detail_bindings']) >= 1, 'scan auto-suggests detail 
 $binding = $scanned['detail_bindings'][0];
 assert_true(($binding['collection'] ?? '') === 'blog', 'binding collection from meta');
 assert_true(($binding['template_path'] ?? '') === 'post.html', 'binding template path');
+$homePage = $scanned['url_map']['pages']['/'] ?? [];
+assert_true(($homePage['file'] ?? '') === 'index.html', 'page row stores project file');
+
+echo "==> Docs mirror exclusion\n";
+@mkdir($projectRoot . '/project/01-admin', 0755, true);
+file_put_contents(
+    $projectRoot . '/project/01-admin/dashboard.html',
+    "<!DOCTYPE html><html><head><title>Admin docs</title></head><body></body></html>\n"
+);
+$withDocs = birkly_seo_url_map_scan_project();
+assert_true(!isset($withDocs['url_map']['pages']['/01-admin/dashboard.html']), 'docs mirror path excluded');
+assert_true(
+    (int) (($withDocs['scan']['stats']['excluded'] ?? 0)) >= 1,
+    'scan stats count excluded docs files'
+);
+@unlink($projectRoot . '/project/01-admin/dashboard.html');
+@rmdir($projectRoot . '/project/01-admin');
+
+echo "==> Rescan prunes stale scan rows\n";
+$configWithStale = birkly_site_seo_load();
+$configWithStale['url_map']['pages']['/stale-page.html'] = [
+    'label' => 'Stale',
+    'source' => 'scan',
+    'file' => 'stale-page.html',
+    'overrides' => [],
+];
+birkly_site_seo_save($configWithStale);
+$rescanned = birkly_seo_url_map_scan_project();
+assert_true(!isset($rescanned['url_map']['pages']['/stale-page.html']), 'stale scan row removed on rescan');
+
+echo "==> Automated setup\n";
+@unlink($seoPath);
+birkly_site_seo_reset_cache();
+$setup = birkly_seo_automated_setup();
+assert_true($setup['ok'] ?? false, 'automated setup succeeds');
+assert_true(is_array($setup['summary'] ?? null), 'automated setup returns summary');
+assert_true(($setup['summary']['pages'] ?? 0) >= 2, 'automated setup summary includes pages');
 
 echo "==> Excerpt field guess\n";
 assert_true(birkly_seo_excerpt_field_guess('blog') === 'excerpt', 'excerpt field guessed');
