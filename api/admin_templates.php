@@ -212,6 +212,8 @@ function getPageData($page) {
         case 'ai-presence':
         case 'agent-guide':
             return getAiPresenceData();
+        case 'discovery':
+            return getAiPresenceData();
         default:
             return ['error' => 'Page not found'];
     }
