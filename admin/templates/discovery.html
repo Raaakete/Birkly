@@ -146,6 +146,8 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <p class="form-help u-m-0">Every page and detail URL on your site — the only place to override search titles and descriptions.</p>
                     </div>
                     <button type="button" class="btn btn-secondary btn-sm" id="disc-seo-rescan">Rescan project</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="disc-seo-propose">Propose all</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="disc-seo-add-redirect">Add redirect</button>
                 </div>
                 <div class="u-split u-gap-2 u-mb-3" id="disc-seo-url-filters">
                     <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">All</button>
@@ -176,6 +178,25 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <h3 class="u-m-0">Detail bindings</h3>
                 <p class="form-help">Link a collection to its detail template. Published entries appear in the URL map above.</p>
                 <div id="disc-seo-bindings-list" class="u-stack-2"></div>
+                <div class="u-stack-2 u-mt-3 u-pt-3 u-border-top" id="disc-seo-binding-form">
+                    <div class="form-group">
+                        <label for="disc-binding-collection">Collection slug</label>
+                        <input type="text" id="disc-binding-collection" class="input" placeholder="blog">
+                    </div>
+                    <div class="form-group">
+                        <label for="disc-binding-template">Template file</label>
+                        <input type="text" id="disc-binding-template" class="input" placeholder="post.html">
+                    </div>
+                    <div class="form-group">
+                        <label for="disc-binding-excerpt">Excerpt field</label>
+                        <input type="text" id="disc-binding-excerpt" class="input" placeholder="excerpt">
+                    </div>
+                    <div class="form-group">
+                        <label for="disc-binding-pattern">Pretty URL pattern (optional)</label>
+                        <input type="text" id="disc-binding-pattern" class="input" placeholder="/blog/{slug}">
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="disc-binding-save">Save binding</button>
+                </div>
             </section>
         </div>
     </div>

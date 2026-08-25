@@ -193,6 +193,18 @@ function birkly_ai_presence_discovery_sitemap_entries(): array
         $unique[] = $entry;
     }
 
+    if (function_exists('birkly_site_seo_is_published') && birkly_site_seo_is_published()) {
+        require_once __DIR__ . '/site_seo_url_map.php';
+        foreach (birkly_seo_sitemap_entries() as $seoEntry) {
+            $loc = $seoEntry['loc'];
+            if (isset($seen[$loc])) {
+                continue;
+            }
+            $seen[$loc] = true;
+            $unique[] = $seoEntry;
+        }
+    }
+
     return $unique;
 }
 

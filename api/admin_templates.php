@@ -639,12 +639,21 @@ function birkly_admin_entry_sidebar_context(array $collection, ?string $entryId 
         }
     }
 
+    $discoverySeoUrl = null;
+    $collectionSlug = (string) ($collection['slug'] ?? '');
+    if ($collectionSlug !== '' && $entryId !== null && $entryId !== '') {
+        require_once __DIR__ . '/../core/site_seo.php';
+        require_once __DIR__ . '/../core/site_seo_url_map.php';
+        $discoverySeoUrl = birkly_seo_entry_discovery_link($collectionSlug, (string) $entryId);
+    }
+
     return [
         'site_url' => $siteUrl,
-        'collection_slug' => (string) ($collection['slug'] ?? ''),
+        'collection_slug' => $collectionSlug,
         'collection_template' => (string) ($collection['template'] ?? ''),
         'entry_id' => (string) ($entryId ?? ''),
         'is_sub_entry' => $isSubEntry,
+        'discovery_seo_url' => $discoverySeoUrl,
     ];
 }
 
@@ -1613,7 +1622,7 @@ function getEntryEditorData($includeFieldHtml = false) {
     $payload['autoSlugChecked'] = birkly_admin_entry_slug_sidebar_state($payload['entry']);
     $payload['sidebar'] = birkly_admin_entry_sidebar_context(
         $payload['collection'] ?? [],
-        $payload['entry']['id'] ?? $entryId,
+        (string) ($payload['entry']['slug'] ?? $payload['entry']['id'] ?? $entryId ?? ''),
         !empty($subCollectionSlug)
     );
     $payload['can_review_entry'] = !$isSubEntry
