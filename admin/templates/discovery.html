@@ -43,7 +43,7 @@
 
     <!-- SEO pack -->
     <div class="tab-panel active" id="disc-panel-seo" role="tabpanel" aria-labelledby="disc-tab-seo" data-disc-panel="seo">
-        <section class="card u-p-6 u-stack-4">
+        <section class="card u-p-6 u-stack-4 disc-pack-intro">
             <div class="u-split u-align-start u-gap-4">
                 <div class="u-stack-2 u-fill">
                     <h2 class="u-m-0">{translate 'admin.discovery_tab_seo'}</h2>
@@ -101,7 +101,7 @@
 
     <!-- Agent Guide pack -->
     <div class="tab-panel" id="disc-panel-agent-guide" role="tabpanel" aria-labelledby="disc-tab-agent-guide" hidden data-disc-panel="agent-guide">
-        <section class="card u-p-6 u-stack-4">
+        <section class="card u-p-6 u-stack-4 disc-pack-intro">
             <div class="u-split u-align-start u-gap-4">
                 <div class="u-stack-2 u-fill">
                     <h2 class="u-m-0">{translate 'admin.discovery_tab_agent_guide'}</h2>
@@ -120,7 +120,7 @@
 
     <!-- WebMCP pack -->
     <div class="tab-panel" id="disc-panel-webmcp" role="tabpanel" aria-labelledby="disc-tab-webmcp" hidden data-disc-panel="webmcp">
-        <section class="card u-p-6 u-stack-4">
+        <section class="card u-p-6 u-stack-4 disc-pack-intro">
             <div class="u-split u-align-start u-gap-4">
                 <div class="u-stack-2 u-fill">
                     <h2 class="u-m-0">{translate 'admin.discovery_tab_webmcp'}</h2>
@@ -152,7 +152,10 @@ $stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id
     . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
-include dirname($stickyTplDir) . '/partials/ap-hub-body.php';
+if (!function_exists('render_template_file')) {
+    require_once dirname($stickyTplDir) . '/template_parser.php';
+}
+echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', []);
 ?>
 </div>
 
