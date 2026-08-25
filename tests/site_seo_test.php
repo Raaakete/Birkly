@@ -44,6 +44,7 @@ assert_true(stripos($injected, '<title>Hello</title>') !== false, 'injects title
 assert_true(stripos($injected, 'name="description"') !== false, 'injects description');
 assert_true(stripos($injected, 'rel="canonical"') !== false, 'injects canonical');
 assert_true(stripos($injected, 'og:title') !== false, 'injects open graph');
+assert_true(stripos($injected, 'name="twitter:card"') !== false, 'injects twitter card');
 assert_true(stripos($injected, 'application/ld+json') !== false, 'injects JSON-LD');
 
 echo "==> Conflict detection\n";
