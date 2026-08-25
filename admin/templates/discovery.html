@@ -1,0 +1,150 @@
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumbs">
+            <span class="current">{translate 'admin.discovery'}</span>
+        </div>
+        <p class="page-subtitle u-text-sm u-fg-secondary u-m-0">{translate 'admin.discovery_subtitle'}</p>
+    </div>
+</div>
+
+<!-- Global status strip -->
+<section class="card u-p-4 u-mb-4" id="disc-status-strip" aria-live="polite">
+    <div class="u-split u-align-center u-gap-4 u-flex-wrap">
+        <div class="u-cluster u-gap-3" id="disc-pack-dots">
+            <span class="disc-pack-badge" data-pack="seo"><strong>SEO</strong> <span class="disc-pack-label">…</span></span>
+            <span class="disc-pack-badge" data-pack="agent_guide"><strong>Agent Guide</strong> <span class="disc-pack-label">…</span></span>
+            <span class="disc-pack-badge" data-pack="webmcp"><strong>WebMCP</strong> <span class="disc-pack-label">…</span></span>
+        </div>
+        <div class="u-cluster u-gap-2">
+            <span class="badge badge-secondary" id="disc-hosting-badge">…</span>
+            <a href="{admin_url 'settings'}" class="btn btn-sm btn-ghost">{translate 'admin.discovery_site_delivery'}</a>
+        </div>
+    </div>
+</section>
+
+<div class="disc-hub">
+    <div class="tabs u-mb-6" id="disc-hub-tablist" role="tablist" aria-label="{translate 'admin.discovery'}">
+        <button type="button" class="tab active" role="tab" id="disc-tab-seo" data-disc-zone="seo" aria-controls="disc-panel-seo" aria-selected="true" tabindex="0">
+            <span>{translate 'admin.discovery_tab_seo'}</span>
+            <span class="ap-tab-dot" id="disc-tab-dot-seo" data-ok="0" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="tab" role="tab" id="disc-tab-agent-guide" data-disc-zone="agent-guide" aria-controls="disc-panel-agent-guide" aria-selected="false" tabindex="-1">
+            <span>{translate 'admin.discovery_tab_agent_guide'}</span>
+            <span class="ap-tab-dot" id="disc-tab-dot-agent-guide" data-ok="0" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="tab" role="tab" id="disc-tab-webmcp" data-disc-zone="webmcp" aria-controls="disc-panel-webmcp" aria-selected="false" tabindex="-1">
+            <span>{translate 'admin.discovery_tab_webmcp'}</span>
+            <span class="ap-tab-dot" id="disc-tab-dot-webmcp" data-ok="0" aria-hidden="true"></span>
+        </button>
+    </div>
+
+    <!-- SEO pack -->
+    <div class="tab-panel active" id="disc-panel-seo" role="tabpanel" aria-labelledby="disc-tab-seo" data-disc-panel="seo">
+        <section class="card u-p-6 u-stack-4">
+            <div class="u-split u-align-start u-gap-4">
+                <div class="u-stack-2 u-fill">
+                    <h2 class="u-m-0">{translate 'admin.discovery_tab_seo'}</h2>
+                    <p class="form-help u-m-0">{translate 'admin.discovery_seo_intro'}</p>
+                </div>
+                <label class="switch switch--lg" title="{translate 'admin.discovery_pack_enable'}">
+                    <input type="checkbox" id="disc-seo-enabled" data-pack="seo">
+                    <span class="switch__slider"></span>
+                </label>
+            </div>
+        </section>
+        <div id="disc-seo-config" class="u-stack-6" hidden>
+            <section class="card u-p-6 u-stack-4">
+                <h3 class="u-m-0">{translate 'admin.discovery_seo_defaults'}</h3>
+                <p class="form-help">{translate 'admin.discovery_seo_defaults_help'}</p>
+                <div class="form-group">
+                    <label for="disc-seo-description">{translate 'admin.discovery_seo_description'}</label>
+                    <textarea id="disc-seo-description" class="input" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="disc-seo-title-suffix">{translate 'admin.discovery_seo_title_suffix'}</label>
+                    <input type="text" id="disc-seo-title-suffix" class="input" placeholder=" · {site name}">
+                </div>
+            </section>
+            <section class="card u-p-6 u-stack-4">
+                <div class="u-split u-align-center">
+                    <div>
+                        <h3 class="u-m-0">{translate 'admin.discovery_publish_seo'}</h3>
+                        <p class="form-help u-m-0" id="disc-seo-publish-status"></p>
+                    </div>
+                    <div class="u-cluster">
+                        <button type="button" class="btn btn-primary" id="disc-seo-publish">{translate 'admin.discovery_publish'}</button>
+                        <button type="button" class="btn btn-secondary" id="disc-seo-unpublish" hidden>{translate 'admin.discovery_unpublish'}</button>
+                    </div>
+                </div>
+            </section>
+            <p class="form-help">{translate 'admin.discovery_seo_coming'}</p>
+        </div>
+    </div>
+
+    <!-- Agent Guide pack -->
+    <div class="tab-panel" id="disc-panel-agent-guide" role="tabpanel" aria-labelledby="disc-tab-agent-guide" hidden data-disc-panel="agent-guide">
+        <section class="card u-p-6 u-stack-4">
+            <div class="u-split u-align-start u-gap-4">
+                <div class="u-stack-2 u-fill">
+                    <h2 class="u-m-0">{translate 'admin.discovery_tab_agent_guide'}</h2>
+                    <p class="form-help u-m-0">{translate 'admin.discovery_agent_guide_intro'}</p>
+                </div>
+                <label class="switch switch--lg">
+                    <input type="checkbox" id="disc-agent-guide-enabled" data-pack="agent_guide">
+                    <span class="switch__slider"></span>
+                </label>
+            </div>
+        </section>
+        <div id="disc-agent-guide-config" class="u-stack-6" hidden>
+            <section class="card u-p-6 u-stack-4 callout callout-info">
+                <p class="u-m-0" id="disc-agent-guide-status"></p>
+                <div class="u-mt-4 u-cluster">
+                    <a href="{admin_url 'agent-guide'}" class="btn btn-primary">{translate 'admin.discovery_open_editor'}</a>
+                    <a href="{admin_url 'agent-guide'}" class="btn btn-secondary" data-zone-link="publish">{translate 'admin.discovery_open_publish'}</a>
+                </div>
+                <p class="form-help u-mt-3 u-mb-0">{translate 'admin.discovery_agent_guide_m3'}</p>
+            </section>
+        </div>
+    </div>
+
+    <!-- WebMCP pack -->
+    <div class="tab-panel" id="disc-panel-webmcp" role="tabpanel" aria-labelledby="disc-tab-webmcp" hidden data-disc-panel="webmcp">
+        <section class="card u-p-6 u-stack-4">
+            <div class="u-split u-align-start u-gap-4">
+                <div class="u-stack-2 u-fill">
+                    <h2 class="u-m-0">{translate 'admin.discovery_tab_webmcp'}</h2>
+                    <p class="form-help u-m-0">{translate 'admin.discovery_webmcp_intro'}</p>
+                </div>
+                <label class="switch switch--lg">
+                    <input type="checkbox" id="disc-webmcp-enabled" data-pack="webmcp">
+                    <span class="switch__slider"></span>
+                </label>
+            </div>
+        </section>
+        <div id="disc-webmcp-config" class="u-stack-6" hidden>
+            <section class="card u-p-6 u-stack-4">
+                <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
+                <div class="u-mt-4">
+                    <a href="{admin_url 'agent-guide'}" class="btn btn-secondary" data-zone-link="tools">{translate 'admin.discovery_open_webmcp_tools'}</a>
+                </div>
+            </section>
+            <p class="form-help">{translate 'admin.discovery_webmcp_m9'}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Global verify -->
+<details class="card u-p-6 u-mt-6" id="disc-verify-panel">
+    <summary class="u-text-base u-weight-semibold u-cursor-pointer">{translate 'admin.discovery_verify_title'}</summary>
+    <p class="form-help">{translate 'admin.discovery_verify_help'}</p>
+    <div class="u-split u-mb-3">
+        <span class="u-text-sm u-fg-secondary">{translate 'admin.ag_discovery_refresh'}</span>
+        <button type="button" class="btn btn-sm btn-secondary" id="disc-verify-refresh">{translate 'admin.ag_discovery_refresh'}</button>
+    </div>
+    <ul class="ai-presence-item-list" id="disc-verify-checks" aria-live="polite"></ul>
+</details>
+
+<div id="disc-message" class="message" hidden role="status"></div>
+
+{include_style 'pages/discovery.css'}
+{include_script 'discovery.js'}
