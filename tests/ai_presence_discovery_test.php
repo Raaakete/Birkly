@@ -105,11 +105,12 @@ echo "==> HTTP routes\n";
 require_once $root . '/core/http_routes.php';
 $routes = birkly_http_route_map();
 assert_true(isset($routes['/sitemap.xml']), 'sitemap.xml route registered');
-assert_true(is_readable($root . '/api/sitemap_xml.php'), 'sitemap handler exists');
+assert_true(isset($routes['/for-agents.md']), 'for-agents.md route registered');
+assert_true(isset($routes['/for-agents.json']), 'for-agents.json route registered');
 
 echo "==> SSR signature\n";
 require_once $root . '/core/project_ssr.php';
-assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc6'), 'SSR inject signature bumped to dsc6');
+assert_true(str_contains(birkly_project_ssr_inject_signature(), 'dsc7'), 'SSR inject signature bumped to dsc7');
 
 birkly_ai_presence_reset_for_tests();
 

@@ -1,16 +1,27 @@
 /**
- * Discovery admin shell (P67-M2) — SEO · Agent Guide · WebMCP packs.
+ * Discovery admin (P67) — SEO · Agent Guide · WebMCP packs.
  */
 (function (global) {
     'use strict';
 
     var DISC_ZONES = ['seo', 'agent-guide', 'webmcp'];
     var LEGACY_ZONE_MAP = { tools: 'webmcp', publish: 'agent-guide', guide: 'agent-guide' };
+    var SEO_SURFACES = [
+        { key: 'meta_tags', label: 'Meta tags (title, description)' },
+        { key: 'canonical', label: 'Canonical URLs' },
+        { key: 'open_graph', label: 'Open Graph / social cards' },
+        { key: 'json_ld_website', label: 'JSON-LD WebSite schema' },
+        { key: 'json_ld_article', label: 'JSON-LD Article on detail pages' },
+        { key: 'sitemap', label: 'Dynamic sitemap.xml' },
+        { key: 'robots_sitemap_line', label: 'robots.txt Sitemap: line' },
+        { key: 'indexnow', label: 'IndexNow ping on publish' },
+    ];
 
     var state = {
         status: null,
         seo: null,
-        dirty: false,
+        activeZone: 'seo',
+        apReady: false,
     };
 
     function $(sel, root) {
@@ -65,8 +76,48 @@
         window.history.replaceState({}, '', url.toString());
     }
 
+    function mapDiscZoneToAp(zone) {
+        if (zone === 'webmcp') return 'tools';
+        if (zone === 'agent-guide') return 'guide';
+        return null;
+    }
+
+    function syncApEmbed(zone) {
+        var embed = $('#disc-ap-embed');
+        var sticky = document.querySelector('.sticky-save-bar');
+        if (!embed) return;
+
+        var agOn = state.status && state.status.packs && state.status.packs.agent_guide && state.status.packs.agent_guide.enabled;
+        var wmOn = state.status && state.status.packs && state.status.packs.webmcp && state.status.packs.webmcp.enabled;
+        var showEmbed = (zone === 'agent-guide' && agOn) || (zone === 'webmcp' && wmOn);
+
+        embed.hidden = !showEmbed;
+        if (sticky) sticky.hidden = !showEmbed || zone !== 'agent-guide';
+
+        if (!showEmbed || !state.apReady) return;
+
+        var apZone = mapDiscZoneToAp(zone);
+        if (apZone && typeof global.switchApZone === 'function') {
+            global.switchApZone(apZone, { updateUrl: false });
+        }
+
+        var guidePanel = $('#ap-panel-guide');
+        var toolsPanel = $('#ap-panel-tools');
+        var publishPanel = $('#ap-panel-publish');
+        if (zone === 'agent-guide') {
+            if (guidePanel) guidePanel.hidden = false;
+            if (publishPanel) publishPanel.hidden = false;
+            if (toolsPanel) toolsPanel.hidden = true;
+        } else if (zone === 'webmcp') {
+            if (toolsPanel) toolsPanel.hidden = false;
+            if (guidePanel) guidePanel.hidden = true;
+            if (publishPanel) publishPanel.hidden = true;
+        }
+    }
+
     function switchZone(zone) {
         if (DISC_ZONES.indexOf(zone) < 0) zone = 'seo';
+        state.activeZone = zone;
         DISC_ZONES.forEach(function (z) {
             var tab = document.querySelector('[data-disc-zone="' + z + '"]');
             var panel = document.querySelector('[data-disc-panel="' + z + '"]');
@@ -82,6 +133,7 @@
             }
         });
         setZoneInUrl(zone);
+        syncApEmbed(zone);
     }
 
     function initHubZones() {
@@ -116,6 +168,46 @@
             badge.textContent = mode === 'project' ? 'Birkly-hosted site' :
                 (mode === 'external' ? 'External site' : 'No public site');
         }
+    }
+
+    function renderSeoSurfaces(seo) {
+        var box = $('#disc-seo-surfaces');
+        if (!box) return;
+        var surfaces = (seo && seo.delivery && seo.delivery.surfaces) || {};
+        box.innerHTML = '';
+        SEO_SURFACES.forEach(function (item) {
+            var label = document.createElement('label');
+            label.className = 'checkbox-label u-block u-mb-2';
+            var checked = surfaces[item.key] !== false;
+            label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + item.label;
+            box.appendChild(label);
+        });
+    }
+
+    function collectSeoPayload() {
+        var seo = Object.assign({}, state.seo || {});
+        seo.defaults = seo.defaults || {};
+        seo.defaults.description = ($('#disc-seo-description') || {}).value || '';
+        seo.defaults.title_suffix = ($('#disc-seo-title-suffix') || {}).value || '';
+        seo.delivery = seo.delivery || { mode: 'auto_inject', surfaces: {} };
+        seo.delivery.mode = ($('#disc-seo-delivery-mode') || {}).value || 'auto_inject';
+        seo.delivery.surfaces = seo.delivery.surfaces || {};
+        document.querySelectorAll('[data-seo-surface]').forEach(function (input) {
+            seo.delivery.surfaces[input.getAttribute('data-seo-surface')] = input.checked;
+        });
+        return seo;
+    }
+
+    function renderSeoForm(data) {
+        var seo = data.seo || {};
+        state.seo = seo;
+        var desc = $('#disc-seo-description');
+        var suffix = $('#disc-seo-title-suffix');
+        var mode = $('#disc-seo-delivery-mode');
+        if (desc) desc.value = (seo.defaults && seo.defaults.description) || '';
+        if (suffix) suffix.value = (seo.defaults && seo.defaults.title_suffix) || '';
+        if (mode) mode.value = (seo.delivery && seo.delivery.mode) || 'auto_inject';
+        renderSeoSurfaces(seo);
     }
 
     function renderPackToggles(data) {
@@ -155,9 +247,12 @@
             if (seoPubBtn) seoPubBtn.hidden = !!data.packs.seo.live;
             if (seoUnpubBtn) seoUnpubBtn.hidden = !data.packs.seo.live;
         }
+
+        renderSeoForm(data);
+        syncApEmbed(state.activeZone);
     }
 
-    function renderVerifyChecks(checks) {
+    function renderVerifyChecks(checks, lastRun) {
         var list = $('#disc-verify-checks');
         if (!list) return;
         list.innerHTML = '';
@@ -169,6 +264,15 @@
                 + pack + '<strong>' + (check.label || '') + '</strong> — ' + (check.detail || '');
             list.appendChild(li);
         });
+        var lr = $('#disc-verify-last-run');
+        if (lr) {
+            if (lastRun) {
+                lr.textContent = 'Last run: ' + lastRun;
+                lr.hidden = false;
+            } else {
+                lr.hidden = true;
+            }
+        }
     }
 
     function load() {
@@ -177,7 +281,7 @@
             state.status = res.data;
             renderStatusStrip(res.data);
             renderPackToggles(res.data);
-            renderVerifyChecks(res.data.verify_checks);
+            renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
             return res.data;
         });
     }
@@ -206,11 +310,40 @@
     }
 
     function bindSeoActions() {
+        var save = $('#disc-seo-save');
+        if (save) {
+            save.addEventListener('click', function () {
+                postJson({ action: 'save_seo', config: collectSeoPayload() }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.status = res.data.status || state.status;
+                    state.seo = res.data.seo;
+                    renderPackToggles(state.status);
+                    showMessage('SEO settings saved');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+
+        var gen = $('#disc-seo-generate');
+        if (gen) {
+            gen.addEventListener('click', function () {
+                postJson({ action: 'seo_generate_defaults' }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    var proposal = res.data && res.data.seo && res.data.seo.defaults;
+                    if (!proposal) return;
+                    if ($('#disc-seo-description')) $('#disc-seo-description').value = proposal.description || '';
+                    if ($('#disc-seo-title-suffix')) $('#disc-seo-title-suffix').value = proposal.title_suffix || '';
+                    showMessage('Proposed defaults — review and save');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+
         var pub = $('#disc-seo-publish');
         var unpub = $('#disc-seo-unpublish');
         if (pub) {
             pub.addEventListener('click', function () {
-                postJson({ action: 'publish_seo' }).then(function (res) {
+                postJson({ action: 'save_seo', config: collectSeoPayload() }).then(function () {
+                    return postJson({ action: 'publish_seo' });
+                }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
                     state.status = res.data;
                     renderStatusStrip(res.data);
@@ -232,16 +365,40 @@
         }
     }
 
-    function bindZoneLinks() {
-        document.querySelectorAll('[data-zone-link]').forEach(function (a) {
-            var zone = a.getAttribute('data-zone-link');
-            if (!zone) return;
-            try {
-                var url = new URL(a.href, window.location.origin);
-                url.searchParams.set('zone', zone);
-                a.href = url.pathname + url.search;
-            } catch (e) { /* keep */ }
-        });
+    function bindVerify() {
+        var refresh = $('#disc-verify-refresh');
+        if (refresh) {
+            refresh.addEventListener('click', function () {
+                postJson({ action: 'verify' }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.status = res.data;
+                    renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
+                    showMessage('Verify checklist updated');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+    }
+
+    function bindSetup() {
+        var btn = $('#disc-setup-btn');
+        if (btn) {
+            btn.addEventListener('click', function () {
+                postJson({ action: 'discovery_setup' }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    showMessage('Setup flow ready — enable packs and run verify');
+                    switchZone('seo');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+    }
+
+    function initApEmbed() {
+        if (!document.getElementById('disc-ap-embed')) return;
+        if (typeof global.initAiPresence === 'function') {
+            global.initAiPresence({ discoveryEmbed: true });
+            state.apReady = true;
+            syncApEmbed(state.activeZone);
+        }
     }
 
     function init() {
@@ -249,10 +406,14 @@
         initHubZones();
         bindPackToggles();
         bindSeoActions();
-        bindZoneLinks();
-        var refresh = $('#disc-verify-refresh');
-        if (refresh) refresh.addEventListener('click', function () { load().catch(function () {}); });
-        load().catch(function (e) { showMessage(e.message || 'Could not load Discovery', true); });
+        bindVerify();
+        bindSetup();
+        load().then(function () {
+            initApEmbed();
+        }).catch(function (e) {
+            showMessage(e.message || 'Could not load Discovery', true);
+            initApEmbed();
+        });
     }
 
     if (document.readyState === 'loading') {
