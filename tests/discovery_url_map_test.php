@@ -115,6 +115,47 @@ echo "==> URL map admin rows\n";
 $rows = birkly_seo_url_map_admin_rows($config);
 assert_true(count($rows) >= 3, 'admin rows include pages and details');
 
+echo "==> SEO redirect match\n";
+$config['url_map']['redirects'] = [['from' => '/old-about', 'to' => '/about.html', 'status' => 301]];
+birkly_site_seo_save($config);
+birkly_discovery_save_pack('seo', ['enabled' => true]);
+birkly_site_seo_publish();
+$match = birkly_seo_match_redirect('/old-about');
+assert_true($match !== null && ($match['to_path'] ?? '') === '/about.html', 'seo redirect matches');
+
+echo "==> Redirect loop detection\n";
+$loops = birkly_seo_detect_redirect_loops([
+    ['from' => '/a', 'to' => '/b'],
+    ['from' => '/b', 'to' => '/a'],
+]);
+assert_true(count($loops) >= 1, 'detects redirect loop');
+
+echo "==> Health checks\n";
+$health = birkly_seo_health_checks();
+assert_true(is_array($health), 'health checks array');
+
+echo "==> Public SEO context\n";
+$pub = birkly_seo_public_context('/about.html', [], '<html><head><title>About</title></head></html>');
+assert_true(($pub['title'] ?? '') !== '', 'public context has title');
+
+echo "==> Legacy meta import\n";
+file_put_contents($projectRoot . '/content/collections/blog/entries/legacy.json', json_encode([
+    'id' => 'legacy',
+    'slug' => 'legacy',
+    'title' => 'Legacy post',
+    'excerpt' => 'Legacy excerpt',
+    'meta_title' => 'Imported title',
+    'meta_description' => 'Imported description',
+    'status' => 'published',
+]) . "\n");
+$config = birkly_site_seo_load();
+$config = birkly_seo_import_legacy_entry_meta($config);
+$key = birkly_seo_detail_key('post.html', 'blog', 'legacy');
+$imported = $config['url_map']['details'][$key]['overrides']['title'] ?? '';
+assert_true($imported === 'Imported title', 'legacy meta_title imported');
+
+@unlink($projectRoot . '/content/collections/blog/entries/legacy.json');
+
 @unlink($seoPath);
 array_map('unlink', glob($projectRoot . '/content/collections/blog/entries/*.json') ?: []);
 @rmdir($projectRoot . '/content/collections/blog/entries');

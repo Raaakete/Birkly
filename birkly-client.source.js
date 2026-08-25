@@ -4496,6 +4496,54 @@
         }, 100);
     }
 
+    async function applySeoContextFromApi() {
+        if (document.querySelector('meta[name="birkly-ssr"]')) {
+            return;
+        }
+        try {
+            var path = window.location.pathname || '/';
+            var query = window.location.search ? window.location.search.replace(/^\?/, '') : '';
+            var url = Birkly.cmsUrl.replace(/\/$/, '') + '/api/public/seo-context.php?path='
+                + encodeURIComponent(path) + (query ? '&' + query : '');
+            var res = await fetch(url, { credentials: 'include' });
+            if (!res.ok) return;
+            var body = await res.json();
+            if (!body || body.status !== 'ok' || !body.data || !body.data.enabled) return;
+            var data = body.data;
+            if (data.title && !document.querySelector('title')) {
+                document.title = data.title;
+            } else if (data.title) {
+                var titleEl = document.querySelector('title');
+                if (titleEl) titleEl.textContent = data.title;
+            }
+            function ensureMeta(name, content, property) {
+                if (!content) return;
+                var sel = property
+                    ? 'meta[property="' + property + '"]'
+                    : 'meta[name="' + name + '"]';
+                if (document.querySelector(sel)) return;
+                var meta = document.createElement('meta');
+                if (property) meta.setAttribute('property', property);
+                else meta.setAttribute('name', name);
+                meta.setAttribute('content', content);
+                (document.head || document.documentElement).appendChild(meta);
+            }
+            ensureMeta('description', data.description);
+            ensureMeta(null, data.title, 'og:title');
+            ensureMeta(null, data.description, 'og:description');
+            ensureMeta(null, data.og_image, 'og:image');
+            ensureMeta(null, data.canonical, 'og:url');
+            if (data.canonical && !document.querySelector('link[rel="canonical"]')) {
+                var link = document.createElement('link');
+                link.rel = 'canonical';
+                link.href = data.canonical;
+                (document.head || document.documentElement).appendChild(link);
+            }
+        } catch (e) {
+            Birkly.log('SEO context fetch skipped', e);
+        }
+    }
+
     async function init() {
         if (Birkly.initialized) return;
         
@@ -4503,6 +4551,8 @@
         
         try {
         Birkly.log('Birkly: Initializing...');
+
+        await applySeoContextFromApi();
 
         // External sites: auto-deliver Agent Guide discovery + summary from CMS (no upload/proxy).
         enhanceAgentGuideFromCms();
