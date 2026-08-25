@@ -51,6 +51,13 @@ assert_true(count($loaded['sources_of_truth'] ?? []) === 1, 'sources_of_truth no
 $merged = birkly_ai_presence_merge_draft(['positioning' => ['best_known_for' => ['Quality']]]);
 assert_true(in_array('Quality', $merged['positioning']['best_known_for'] ?? [], true), 'merge draft partial');
 
+$nestedListMerge = birkly_ai_presence_merge_draft_arrays(
+    ['best_known_for' => ['Quality']],
+    ['best_known_for' => ['Quality', 'Service']]
+);
+assert_true(count($nestedListMerge['best_known_for'] ?? []) === 2, 'nested list merge with int keys');
+assert_true(($nestedListMerge['best_known_for'][1] ?? '') === 'Service', 'nested list merge second item');
+
 $manyProducts = [];
 for ($i = 0; $i < 19; $i++) {
     $manyProducts[] = [
