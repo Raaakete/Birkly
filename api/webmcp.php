@@ -49,7 +49,7 @@ function birkly_webmcp_api_catalog(array $config): array
     $out = [];
     foreach (birkly_webmcp_tool_catalog() as $tool) {
         $id = $tool['id'];
-        $out[] = [
+        $entry = [
             'id' => $id,
             'pack' => $tool['pack'],
             'kind' => $tool['kind'],
@@ -58,6 +58,13 @@ function birkly_webmcp_api_catalog(array $config): array
             'default' => $tool['default'],
             'enabled' => (bool) ($config['tools'][$id] ?? $tool['default']),
         ];
+        if (!empty($tool['plugin_id'])) {
+            $entry['plugin_id'] = $tool['plugin_id'];
+        }
+        if (!empty($tool['label'])) {
+            $entry['label'] = $tool['label'];
+        }
+        $out[] = $entry;
     }
     return $out;
 }

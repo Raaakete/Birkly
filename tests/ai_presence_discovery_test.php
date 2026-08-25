@@ -50,6 +50,30 @@ echo "==> Sitemap XML\n";
 $xml = birkly_ai_presence_discovery_sitemap_xml();
 assert_true(str_contains($xml, '<urlset'), 'sitemap is valid xml urlset');
 assert_true(stripos($xml, '/for-agents') !== false, 'sitemap lists for-agents');
+assert_true(stripos($xml, 'agent-guide.json') !== false, 'sitemap lists agent-guide.json');
+assert_true(stripos($xml, 'llms.txt') !== false, 'sitemap lists llms.txt');
+
+echo "==> Discovery URL map + cross-links\n";
+$map = birkly_ai_presence_discovery_url_map();
+assert_true(!empty($map['for_agents']), 'url map has for_agents');
+assert_true(!empty($map['agent_guide_json']), 'url map has agent_guide_json');
+assert_true(!empty($map['llms_txt']), 'url map has llms_txt');
+assert_true(!empty($map['sitemap']), 'url map has sitemap');
+assert_true(!empty($map['robots']), 'url map has robots');
+
+$llmsBody = birkly_ai_presence_llms_txt_body();
+assert_true($llmsBody !== null, 'llms.txt body when live');
+assert_true(stripos($llmsBody, '## For AI systems') !== false, 'llms.txt has For AI systems section');
+assert_true(stripos($llmsBody, 'sitemap') !== false, 'llms.txt links to sitemap');
+assert_true(stripos($llmsBody, 'robots.txt') !== false, 'llms.txt links to robots.txt');
+assert_true(stripos($robots, 'Sitemap:') !== false && stripos($robots, 'agent-guide') !== false, 'robots cross-links guide endpoints');
+
+$exportBody = birkly_ai_presence_get_public_export_body();
+assert_true($exportBody !== null && stripos($exportBody, 'discovery_urls') !== false, 'agent-guide.json includes discovery_urls');
+
+$forAgentsHtml = birkly_ai_presence_for_agents_html();
+assert_true($forAgentsHtml !== null && stripos($forAgentsHtml, 'sitemap') !== false, 'for-agents HTML links sitemap');
+assert_true($forAgentsHtml !== null && stripos($forAgentsHtml, 'llms.txt') !== false, 'for-agents HTML links llms.txt');
 
 echo "==> Template summary\n";
 $summary = birkly_ai_presence_discovery_template_summary();
@@ -61,6 +85,14 @@ echo "==> Discovery status API shape\n";
 $status = birkly_ai_presence_discovery_status();
 assert_true($status['live'] === true, 'status reports live');
 assert_true(is_array($status['checks'] ?? null) && count($status['checks']) >= 5, 'status has checklist rows');
+$meshCheck = null;
+foreach ($status['checks'] as $check) {
+    if (($check['id'] ?? '') === 'discovery_mesh') {
+        $meshCheck = $check;
+        break;
+    }
+}
+assert_true($meshCheck !== null && ($meshCheck['status'] ?? '') === 'pass', 'discovery mesh check passes');
 
 echo "==> IndexNow key\n";
 $key = birkly_ai_presence_discovery_indexnow_key();
