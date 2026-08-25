@@ -183,6 +183,7 @@ if ($action === 'scan_urls') {
             'seo' => $result['config'],
             'rows' => $result['rows'] ?? [],
             'stats' => $result['stats'] ?? [],
+            'summary' => $result['summary'] ?? [],
             'status' => birkly_discovery_status(),
         ],
     ]);

@@ -119,25 +119,25 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     </div>
                 </div>
                 <div class="u-split u-gap-2 u-mb-3" id="disc-seo-url-filters">
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">All</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="page">Pages</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">Detail items</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">Redirects</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">{translate 'admin.discovery_seo_url_map_filter_all'}</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="page">{translate 'admin.discovery_seo_url_map_filter_pages'}</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">{translate 'admin.discovery_seo_url_map_filter_posts'}</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">{translate 'admin.discovery_seo_url_map_filter_redirects'}</button>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table--compact" id="disc-seo-url-table">
+                <p class="form-help u-m-0 u-mb-3" id="disc-seo-url-empty-help" hidden>{translate 'admin.discovery_seo_url_map_empty_pages'} <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">{translate 'admin.discovery_seo_url_map_project_link'}</a></p>
+                <div class="table-responsive disc-url-table-wrap">
+                    <table class="table table--compact disc-url-table" id="disc-seo-url-table">
                         <thead>
                             <tr>
                                 <th>{translate 'admin.discovery_seo_url_map_col_file'}</th>
-                                <th>{translate 'admin.discovery_seo_url_map_col_url'}</th>
-                                <th>Label</th>
-                                <th>Type</th>
-                                <th>Title override</th>
+                                <th>{translate 'admin.discovery_seo_url_map_col_listing'}</th>
+                                <th>{translate 'admin.discovery_seo_url_map_col_type'}</th>
+                                <th>{translate 'admin.discovery_seo_url_map_col_google_title'}</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody id="disc-seo-url-tbody">
-                            <tr><td colspan="6" class="u-fg-secondary">Use “Set up with AI” or “Rescan project” to discover pages from project/.</td></tr>
+                            <tr><td colspan="5" class="u-fg-secondary">{translate 'admin.discovery_seo_url_map_empty'}</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -149,26 +149,28 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <p class="form-help">{translate 'admin.discovery_seo_bindings_intro'}</p>
                 <p class="form-help u-text-sm u-fg-secondary">{translate 'admin.discovery_seo_bindings_example'}</p>
                 <div id="disc-seo-bindings-list" class="u-stack-2"></div>
-                <details class="u-mt-3">
-                    <summary class="u-cursor-pointer u-weight-semibold">Add or edit binding</summary>
+                <details class="u-mt-3" id="disc-seo-binding-details">
+                    <summary class="u-cursor-pointer u-weight-semibold">{translate 'admin.discovery_seo_bindings_form_title'}</summary>
                     <div class="u-stack-2 u-mt-3 u-pt-3" id="disc-seo-binding-form">
+                        <input type="hidden" id="disc-binding-id" value="">
                         <div class="form-group">
-                            <label for="disc-binding-collection">Collection slug</label>
+                            <label for="disc-binding-collection">{translate 'admin.discovery_seo_bindings_collection'}</label>
                             <input type="text" id="disc-binding-collection" class="input" placeholder="blog">
                         </div>
                         <div class="form-group">
-                            <label for="disc-binding-template">Template file in project/</label>
+                            <label for="disc-binding-template">{translate 'admin.discovery_seo_bindings_template'}</label>
                             <input type="text" id="disc-binding-template" class="input" placeholder="post.html">
                         </div>
                         <div class="form-group">
-                            <label for="disc-binding-excerpt">Excerpt field</label>
+                            <label for="disc-binding-excerpt">{translate 'admin.discovery_seo_bindings_excerpt'}</label>
                             <input type="text" id="disc-binding-excerpt" class="input" placeholder="excerpt">
                         </div>
                         <div class="form-group">
-                            <label for="disc-binding-pattern">Pretty URL pattern (optional)</label>
+                            <label for="disc-binding-pattern">{translate 'admin.discovery_seo_bindings_pattern'}</label>
                             <input type="text" id="disc-binding-pattern" class="input" placeholder="/blog/{slug}">
+                            <p class="form-help u-m-0">{translate 'admin.discovery_seo_bindings_pattern_help'}</p>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-sm" id="disc-binding-save">Save binding</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="disc-binding-save">{translate 'admin.discovery_seo_bindings_save'}</button>
                     </div>
                 </details>
             </section>

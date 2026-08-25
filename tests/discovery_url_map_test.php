@@ -118,6 +118,22 @@ assert_true($setup['ok'] ?? false, 'automated setup succeeds');
 assert_true(is_array($setup['summary'] ?? null), 'automated setup returns summary');
 assert_true(($setup['summary']['pages'] ?? 0) >= 2, 'automated setup summary includes pages');
 
+echo "==> Rescan materializes detail URLs\n";
+$scanSave = birkly_seo_scan_and_save();
+assert_true($scanSave['ok'] ?? false, 'scan and save returns ok');
+assert_true(($scanSave['summary']['detail_urls'] ?? 0) >= 1, 'rescan materializes detail urls');
+$adminRows = $scanSave['rows'] ?? [];
+$detailRow = null;
+foreach ($adminRows as $row) {
+    if (($row['type'] ?? '') === 'detail') {
+        $detailRow = $row;
+        break;
+    }
+}
+assert_true($detailRow !== null, 'admin rows include detail');
+assert_true(($detailRow['project_file'] ?? '') === 'post.html', 'detail row shows template file');
+assert_true(($detailRow['listing_subtitle'] ?? '') !== '', 'detail row has readable subtitle');
+
 echo "==> Excerpt field guess\n";
 assert_true(birkly_seo_excerpt_field_guess('blog') === 'excerpt', 'excerpt field guessed');
 
