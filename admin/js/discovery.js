@@ -484,6 +484,26 @@
         help.hidden = !(pages === 0 && details > 0);
     }
 
+    function formatScanDiagnostics(seo, summary) {
+        var stats = (summary && typeof summary === 'object') ? summary
+            : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : {};
+        var pageFiles = stats.page_files || [];
+        var templateFiles = stats.template_files || [];
+        var parts = [];
+        if (pageFiles.length) {
+            parts.push(t('discovery_seo_url_map_scan_pages', 'Main page files in project/')
+                + ': ' + pageFiles.join(', '));
+        } else if ((stats.pages || 0) === 0) {
+            parts.push(t('discovery_seo_url_map_scan_no_pages',
+                'No main page HTML files in project/ — only repeating templates or internal/doc files were seen.'));
+        }
+        if (templateFiles.length) {
+            parts.push(t('discovery_seo_url_map_scan_templates', 'Repeating page templates')
+                + ': ' + templateFiles.join(', '));
+        }
+        return parts.join(' · ');
+    }
+
     function formatScanMeta(seo, summary) {
         var parts = [];
         if (seo && seo.scan && seo.scan.last_at) {
@@ -521,6 +541,7 @@
     function renderUrlMap(seo, summary) {
         var tbody = $('#disc-seo-url-tbody');
         var meta = $('#disc-seo-scan-meta');
+        var diagnostics = $('#disc-seo-scan-diagnostics');
         if (!tbody) return;
         var rows = state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(seo);
         var filter = state.urlMapFilter || 'all';
@@ -536,7 +557,7 @@
                 var tr = document.createElement('tr');
                 var projectFile = row.project_file || row.file || '';
                 var fileCell = projectFile
-                    ? '<code class="u-text-sm disc-url-path">' + escapeHtml(projectFile) + '</code>'
+                    ? '<span class="disc-site-file" title="' + escapeHtml(projectFile) + '">' + escapeHtml(projectFile) + '</span>'
                     : '<span class="u-fg-secondary">—</span>';
                 var listingTitle = row.listing_title || row.label || row.url || '';
                 var listingSub = row.listing_subtitle || row.url || '';
@@ -558,6 +579,15 @@
             });
         }
         updateEmptyPagesHelp(seo, summary);
+        if (diagnostics) {
+            var diagText = formatScanDiagnostics(seo, summary);
+            if (diagText) {
+                diagnostics.textContent = diagText;
+                diagnostics.hidden = false;
+            } else {
+                diagnostics.hidden = true;
+            }
+        }
         if (meta) {
             var metaText = formatScanMeta(seo, summary);
             if (metaText) {
@@ -670,7 +700,8 @@
                 : '';
             card.innerHTML = '<button type="button" class="disc-binding-card__main" data-binding-edit="' + escapeHtml(binding.id || '') + '">'
                 + '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
-                + ' <span class="u-fg-secondary">opens in</span> <code>' + escapeHtml(template) + '</code></div>'
+                + ' <span class="u-fg-secondary">opens in</span> <span class="disc-site-file" title="' + escapeHtml(template) + '">'
+                + escapeHtml(template) + '</span></div>'
                 + '<div class="u-text-sm u-fg-secondary u-mt-1">Summary field: ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
                 + pattern
                 + '</button>'
