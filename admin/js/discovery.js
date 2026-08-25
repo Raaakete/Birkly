@@ -447,7 +447,32 @@
         });
     }
 
-    function renderUrlMap(seo) {
+    function formatScanMeta(seo, summary) {
+        var parts = [];
+        if (seo && seo.scan && seo.scan.last_at) {
+            parts.push('Last scan: ' + seo.scan.last_at);
+            if (seo.scan.project_revision) {
+                parts.push('rev ' + seo.scan.project_revision);
+            }
+        }
+        var stats = (summary && typeof summary === 'object') ? summary
+            : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
+        if (stats) {
+            var statBits = [];
+            if (stats.pages != null) statBits.push(stats.pages + ' pages');
+            if (stats.templates != null) statBits.push(stats.templates + ' detail templates');
+            if (stats.excluded != null && stats.excluded > 0) {
+                statBits.push(stats.excluded + ' docs/internal files skipped');
+            }
+            if (summary && summary.detail_urls != null) {
+                statBits.push(summary.detail_urls + ' entry URLs');
+            }
+            if (statBits.length) parts.push(statBits.join(' · '));
+        }
+        return parts.join(' — ');
+    }
+
+    function renderUrlMap(seo, summary) {
         var tbody = $('#disc-seo-url-tbody');
         var meta = $('#disc-seo-scan-meta');
         if (!tbody) return;
@@ -458,13 +483,18 @@
         });
         tbody.innerHTML = '';
         if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="5" class="u-fg-secondary">No URLs yet — rescan project to discover pages.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="u-fg-secondary">No URLs yet — use “Set up with AI” or “Rescan project” to discover pages from project/.</td></tr>';
         } else {
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
                 var composition = (row.composition_sources && row.composition_sources.length)
                     ? '<div class="u-text-xs u-fg-secondary">Sources: ' + escapeHtml(row.composition_sources.join(', ')) + '</div>' : '';
-                tr.innerHTML = '<td><code class="u-text-sm">' + escapeHtml(row.url || '') + '</code>' + composition + '</td>'
+                var projectFile = row.project_file || row.file || '';
+                var fileCell = projectFile
+                    ? '<code class="u-text-sm">' + escapeHtml(projectFile) + '</code>'
+                    : '<span class="u-fg-secondary">—</span>';
+                tr.innerHTML = '<td>' + fileCell + '</td>'
+                    + '<td><code class="u-text-sm">' + escapeHtml(row.url || '') + '</code>' + composition + '</td>'
                     + '<td>' + escapeHtml(row.label || '') + '</td>'
                     + '<td><span class="badge">' + escapeHtml(row.type || '') + '</span></td>'
                     + '<td>' + escapeHtml(row.title || '—') + '</td>'
@@ -472,10 +502,14 @@
                 tbody.appendChild(tr);
             });
         }
-        if (meta && seo && seo.scan && seo.scan.last_at) {
-            meta.textContent = 'Last scan: ' + seo.scan.last_at
-                + (seo.scan.project_revision ? ' · rev ' + seo.scan.project_revision : '');
-            meta.hidden = false;
+        if (meta) {
+            var metaText = formatScanMeta(seo, summary);
+            if (metaText) {
+                meta.textContent = metaText;
+                meta.hidden = false;
+            } else {
+                meta.hidden = true;
+            }
         }
     }
 
@@ -490,8 +524,10 @@
                 key: path,
                 type: 'page',
                 url: path,
+                project_file: page.file || '',
                 label: page.label || path,
                 title: overrides.title || '',
+                composition_sources: page.composition_sources || [],
             });
         });
         var details = seo.url_map.details || {};
@@ -545,18 +581,34 @@
         return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function applyUrlMapResponse(res, message) {
+        state.seo = res.data.seo;
+        state.urlMapRows = res.data.rows || [];
+        state.status = res.data.status || state.status;
+        renderUrlMap(state.seo, res.data.summary || null);
+        renderDetailBindings(state.seo);
+        if (message) showMessage(message);
+    }
+
     function bindUrlMapActions() {
+        var setupAi = $('#disc-seo-setup-ai');
+        if (setupAi) {
+            setupAi.addEventListener('click', function () {
+                setupAi.disabled = true;
+                postJson({ action: 'seo_url_map_setup' }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    applyUrlMapResponse(res, 'SEO URL map set up — review overrides, then publish');
+                }).catch(function (e) { showMessage(e.message, true); })
+                    .finally(function () { setupAi.disabled = false; });
+            });
+        }
+
         var rescan = $('#disc-seo-rescan');
         if (rescan) {
             rescan.addEventListener('click', function () {
                 postJson({ action: 'scan_urls' }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
-                    state.seo = res.data.seo;
-                    state.urlMapRows = res.data.rows || [];
-                    state.status = res.data.status || state.status;
-                    renderUrlMap(state.seo);
-                    renderDetailBindings(state.seo);
-                    showMessage('Project scanned — ' + state.urlMapRows.length + ' URLs');
+                    applyUrlMapResponse(res, 'Project scanned — ' + (res.data.rows || []).length + ' URLs');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -646,9 +698,7 @@
                 };
                 postJson({ action: 'save_detail_binding', binding: binding }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
-                    state.seo = res.data.seo;
-                    renderDetailBindings(state.seo);
-                    showMessage('Detail binding saved');
+                    applyUrlMapResponse(res, 'Detail binding saved — entry URLs added to the map');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }

@@ -100,10 +100,77 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     </select>
                 </div>
             </section>
-            <section class="card u-p-6 u-stack-4">
-                <h3 class="u-m-0">{translate 'admin.discovery_seo_per_page_title'}</h3>
-                <p class="form-help">{translate 'admin.discovery_seo_per_page_help'}</p>
-                <a href="{admin_url 'content'}" class="btn btn-sm btn-secondary">{translate 'admin.discovery_seo_per_page_link'}</a>
+            <section class="card u-p-6 u-stack-4" id="disc-seo-url-map-section">
+                <div class="u-split u-align-start u-gap-4 u-mb-4">
+                    <div class="u-stack-2 u-fill">
+                        <h3 class="u-m-0">{translate 'admin.discovery_seo_url_map_title'}</h3>
+                        <p class="form-help u-m-0">{translate 'admin.discovery_seo_url_map_intro'}</p>
+                        <ol class="form-help u-m-0 u-pl-4 u-stack-1">
+                            <li>{translate 'admin.discovery_seo_url_map_step1'}</li>
+                            <li>{translate 'admin.discovery_seo_url_map_step2'}</li>
+                            <li>{translate 'admin.discovery_seo_url_map_step3'}</li>
+                        </ol>
+                    </div>
+                    <div class="u-stack-2 disc-url-map-actions">
+                        <button type="button" class="btn btn-sm btn-primary" id="disc-seo-setup-ai">{translate 'admin.discovery_seo_url_map_setup_ai'}</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-rescan">{translate 'admin.discovery_seo_url_map_rescan'}</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-propose">{translate 'admin.discovery_seo_url_map_propose'}</button>
+                        <button type="button" class="btn btn-sm btn-ghost" id="disc-seo-add-redirect">{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
+                    </div>
+                </div>
+                <div class="u-split u-gap-2 u-mb-3" id="disc-seo-url-filters">
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">All</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="page">Pages</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">Detail items</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">Redirects</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table--compact" id="disc-seo-url-table">
+                        <thead>
+                            <tr>
+                                <th>{translate 'admin.discovery_seo_url_map_col_file'}</th>
+                                <th>{translate 'admin.discovery_seo_url_map_col_url'}</th>
+                                <th>Label</th>
+                                <th>Type</th>
+                                <th>Title override</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="disc-seo-url-tbody">
+                            <tr><td colspan="6" class="u-fg-secondary">Use “Set up with AI” or “Rescan project” to discover pages from project/.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="form-help u-m-0" id="disc-seo-scan-meta" hidden></p>
+            </section>
+
+            <section class="card u-p-6 u-stack-4" id="disc-seo-bindings-section">
+                <h3 class="u-m-0">{translate 'admin.discovery_seo_bindings_title'}</h3>
+                <p class="form-help">{translate 'admin.discovery_seo_bindings_intro'}</p>
+                <p class="form-help u-text-sm u-fg-secondary">{translate 'admin.discovery_seo_bindings_example'}</p>
+                <div id="disc-seo-bindings-list" class="u-stack-2"></div>
+                <details class="u-mt-3">
+                    <summary class="u-cursor-pointer u-weight-semibold">Add or edit binding</summary>
+                    <div class="u-stack-2 u-mt-3 u-pt-3" id="disc-seo-binding-form">
+                        <div class="form-group">
+                            <label for="disc-binding-collection">Collection slug</label>
+                            <input type="text" id="disc-binding-collection" class="input" placeholder="blog">
+                        </div>
+                        <div class="form-group">
+                            <label for="disc-binding-template">Template file in project/</label>
+                            <input type="text" id="disc-binding-template" class="input" placeholder="post.html">
+                        </div>
+                        <div class="form-group">
+                            <label for="disc-binding-excerpt">Excerpt field</label>
+                            <input type="text" id="disc-binding-excerpt" class="input" placeholder="excerpt">
+                        </div>
+                        <div class="form-group">
+                            <label for="disc-binding-pattern">Pretty URL pattern (optional)</label>
+                            <input type="text" id="disc-binding-pattern" class="input" placeholder="/blog/{slug}">
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" id="disc-binding-save">Save binding</button>
+                    </div>
+                </details>
             </section>
             <section class="card u-p-6 u-stack-4">
                 <h3 class="u-m-0">{translate 'admin.discovery_seo_technical_title'}</h3>
@@ -137,66 +204,6 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     </select>
                 </div>
                 <div class="disc-surfaces" id="disc-seo-surfaces"></div>
-            </section>
-
-            <section class="card u-p-6 u-stack-4" id="disc-seo-url-map-section">
-                <div class="u-split u-align-center u-mb-3">
-                    <div>
-                        <h3 class="u-m-0">Site URL Map</h3>
-                        <p class="form-help u-m-0">Every page and detail URL on your site — the only place to override search titles and descriptions.</p>
-                    </div>
-                    <button type="button" class="btn btn-secondary btn-sm" id="disc-seo-rescan">Rescan project</button>
-                    <button type="button" class="btn btn-ghost btn-sm" id="disc-seo-propose">Propose all</button>
-                    <button type="button" class="btn btn-ghost btn-sm" id="disc-seo-add-redirect">Add redirect</button>
-                </div>
-                <div class="u-split u-gap-2 u-mb-3" id="disc-seo-url-filters">
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">All</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="page">Pages</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">Detail items</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">Redirects</button>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table--compact" id="disc-seo-url-table">
-                        <thead>
-                            <tr>
-                                <th>URL</th>
-                                <th>Label</th>
-                                <th>Type</th>
-                                <th>Title override</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="disc-seo-url-tbody">
-                            <tr><td colspan="5" class="u-fg-secondary">Rescan project to discover pages.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <p class="form-help u-m-0" id="disc-seo-scan-meta" hidden></p>
-            </section>
-
-            <section class="card u-p-6 u-stack-4" id="disc-seo-bindings-section">
-                <h3 class="u-m-0">Detail bindings</h3>
-                <p class="form-help">Link a collection to its detail template. Published entries appear in the URL map above.</p>
-                <div id="disc-seo-bindings-list" class="u-stack-2"></div>
-                <div class="u-stack-2 u-mt-3 u-pt-3 u-border-top" id="disc-seo-binding-form">
-                    <div class="form-group">
-                        <label for="disc-binding-collection">Collection slug</label>
-                        <input type="text" id="disc-binding-collection" class="input" placeholder="blog">
-                    </div>
-                    <div class="form-group">
-                        <label for="disc-binding-template">Template file</label>
-                        <input type="text" id="disc-binding-template" class="input" placeholder="post.html">
-                    </div>
-                    <div class="form-group">
-                        <label for="disc-binding-excerpt">Excerpt field</label>
-                        <input type="text" id="disc-binding-excerpt" class="input" placeholder="excerpt">
-                    </div>
-                    <div class="form-group">
-                        <label for="disc-binding-pattern">Pretty URL pattern (optional)</label>
-                        <input type="text" id="disc-binding-pattern" class="input" placeholder="/blog/{slug}">
-                    </div>
-                    <button type="button" class="btn btn-secondary btn-sm" id="disc-binding-save">Save binding</button>
-                </div>
             </section>
         </div>
     </div>
