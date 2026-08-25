@@ -695,29 +695,18 @@ function birkly_project_ssr_inject_marker(string $html): string
 }
 
 /**
- * Inject the WebMCP runtime + Agent Guide discovery into a rendered project page
- * (P60-M7). Project mode is Birkly-hosted, so both assets live at the CMS root:
- *
- *   - `birkly-webmcp.js` is injected **only when WebMCP is enabled** (default
- *     off → no script, per M0 §C3: the cheapest, safest off is no script).
- *   - A guide discovery `<link rel="alternate">` points agents at the CMS
- *     well-known route when the Agent Guide is published.
- *
- * The runtime self-guards: even if the script loads it registers nothing unless
- * the browser supports WebMCP and the public config says enabled.
+ * Inject Discovery packs into a rendered project page (P67).
+ * Order: SEO head → Agent Guide discovery → WebMCP runtime.
  */
-function birkly_project_ssr_inject_webmcp(string $html): string
+function birkly_project_ssr_inject_discovery_packs(string $html, array $context = []): string
 {
+    require_once __DIR__ . '/site_seo.php';
     require_once __DIR__ . '/webmcp.php';
     require_once __DIR__ . '/ai_presence.php';
 
-    // Agent Guide discovery (well-known, llms.txt, JSON-LD) for website-visiting agents.
+    $html = birkly_site_seo_inject_head($html, $context);
     $html = birkly_ai_presence_inject_discovery_into_html($html);
 
-    // WebMCP runtime — only when enabled; loads after birkly-client.js.
-    // The public config is inlined *before* the runtime script so the runtime can
-    // register tools synchronously on boot (no async fetch race) — this is what
-    // lets Lighthouse / CDP-driven agent browsers see registered tools reliably.
     if (birkly_webmcp_is_enabled() && stripos($html, 'birkly-webmcp.js') === false) {
         require_once __DIR__ . '/build_info.php';
         $src = htmlspecialchars(birkly_public_runtime_asset_url('birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
@@ -731,6 +720,14 @@ function birkly_project_ssr_inject_webmcp(string $html): string
     }
 
     return $html;
+}
+
+/**
+ * @deprecated Use birkly_project_ssr_inject_discovery_packs()
+ */
+function birkly_project_ssr_inject_webmcp(string $html): string
+{
+    return birkly_project_ssr_inject_discovery_packs($html);
 }
 
 /**
@@ -764,12 +761,14 @@ function birkly_project_ssr_inject_signature(): string
 {
     require_once __DIR__ . '/webmcp.php';
     require_once __DIR__ . '/ai_presence.php';
+    require_once __DIR__ . '/site_seo.php';
     $meta = birkly_ai_presence_load_meta();
     $wm = birkly_webmcp_is_enabled() ? '1' : '0';
     $guide = birkly_ai_presence_is_publicly_live(null, $meta) ? '1' : '0';
     $ver = (int) ($meta['published_version'] ?? 0);
-    // dsc6 = P66 discovery settings (footer line, sitemap, template tag) bust SSR cache.
-    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . 'dsc6';
+    $seo = birkly_site_seo_signature_part();
+    // dsc7 = P67 Discovery packs (SEO inject + pack masters).
+    return 'wm' . $wm . 'g' . $guide . 'v' . $ver . $seo . 'dsc7';
 }
 
 /**
@@ -841,7 +840,7 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     }
 
     $rendered = birkly_project_ssr_inject_marker($rendered);
-    $rendered = birkly_project_ssr_inject_webmcp($rendered);
+    $rendered = birkly_project_ssr_inject_discovery_packs($rendered);
 
     $cacheWrite = 'skip';
     if ($ttl > 0) {

@@ -68,6 +68,19 @@ assert_true(isset($status['packs']['agent_guide']), 'status has agent_guide pack
 assert_true(isset($status['packs']['webmcp']), 'status has webmcp pack');
 assert_true(isset($status['hosting']['public_site_mode']), 'status has hosting mode');
 
+echo "==> Discovery verify + url map\n";
+require_once $root . '/core/ai_presence.php';
+$draft = birkly_ai_presence_default_draft();
+$draft['identity']['official_name'] = 'Verify Co';
+$draft['publication_settings']['enabled'] = true;
+birkly_ai_presence_save_draft($draft);
+birkly_ai_presence_publish();
+$verify = birkly_discovery_run_verify();
+assert_true($verify['ok'] === true, 'verify runs');
+assert_true(count($verify['checks']) >= 3, 'verify has checks');
+$map = birkly_discovery_url_map();
+assert_true(isset($map['for_agents_md']), 'url map has for_agents_md key');
+
 echo "==> API syntax\n";
 exec('php -l ' . escapeshellarg($root . '/api/discovery.php') . ' 2>&1', $out, $code);
 assert_true($code === 0, 'discovery.php syntax');

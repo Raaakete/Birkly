@@ -231,6 +231,9 @@ function birkly_ai_presence_discovery_sitemap_url(): ?string
  */
 function birkly_ai_presence_discovery_robots_augment(string $body): string
 {
+    require_once __DIR__ . '/site_seo.php';
+    $body = birkly_site_seo_robots_augment($body);
+
     if (!birkly_ai_presence_is_publicly_live()) {
         return $body;
     }

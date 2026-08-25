@@ -374,6 +374,13 @@ function birkly_webmcp_enabled_tool_ids(): array
 
 function birkly_webmcp_is_enabled(): bool
 {
+    if (!function_exists('birkly_discovery_pack_enabled')) {
+        require_once __DIR__ . '/discovery.php';
+    }
+    if (!birkly_discovery_pack_enabled('webmcp')) {
+        return false;
+    }
+
     return birkly_webmcp_load()['enabled'] === true;
 }
 

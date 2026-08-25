@@ -22,6 +22,8 @@ function birkly_http_route_map(): array
         '/llms.txt' => '/api/llms_txt.php',
         '/sitemap.xml' => '/api/sitemap_xml.php',
         '/for-agents' => '/api/for_agents.php',
+        '/for-agents.md' => '/api/for_agents_md.php',
+        '/for-agents.json' => '/api/for_agents_json.php',
         '/authorize' => '/api/oauth_authorize.php',
         '/oauth/authorize' => '/api/oauth_authorize.php',
         '/oauth/token' => '/api/oauth_token.php',

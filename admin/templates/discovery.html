@@ -5,6 +5,9 @@
         </div>
         <p class="page-subtitle u-text-sm u-fg-secondary u-m-0">{translate 'admin.discovery_subtitle'}</p>
     </div>
+    <div class="page-header-right u-cluster u-gap-2">
+        <button type="button" class="btn btn-secondary btn-sm" id="disc-setup-btn">{translate 'admin.discovery_setup'}</button>
+    </div>
 </div>
 
 <!-- Global status strip -->
@@ -54,7 +57,10 @@
         </section>
         <div id="disc-seo-config" class="u-stack-6" hidden>
             <section class="card u-p-6 u-stack-4">
-                <h3 class="u-m-0">{translate 'admin.discovery_seo_defaults'}</h3>
+                <div class="u-split u-align-center u-gap-3 u-mb-3">
+                    <h3 class="u-m-0">{translate 'admin.discovery_seo_defaults'}</h3>
+                    <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-generate">{translate 'admin.discovery_generate_ai'}</button>
+                </div>
                 <p class="form-help">{translate 'admin.discovery_seo_defaults_help'}</p>
                 <div class="form-group">
                     <label for="disc-seo-description">{translate 'admin.discovery_seo_description'}</label>
@@ -64,6 +70,19 @@
                     <label for="disc-seo-title-suffix">{translate 'admin.discovery_seo_title_suffix'}</label>
                     <input type="text" id="disc-seo-title-suffix" class="input" placeholder=" · {site name}">
                 </div>
+                <button type="button" class="btn btn-secondary" id="disc-seo-save">{translate 'admin.save_draft'}</button>
+            </section>
+            <section class="card u-p-6 u-stack-4">
+                <h3 class="u-m-0">{translate 'admin.discovery_delivery'}</h3>
+                <p class="form-help">{translate 'admin.discovery_delivery_help'}</p>
+                <div class="form-group">
+                    <label for="disc-seo-delivery-mode">{translate 'admin.discovery_delivery_mode'}</label>
+                    <select id="disc-seo-delivery-mode" class="input">
+                        <option value="auto_inject">{translate 'admin.discovery_delivery_auto'}</option>
+                        <option value="manual">{translate 'admin.discovery_delivery_manual'}</option>
+                    </select>
+                </div>
+                <div class="disc-surfaces" id="disc-seo-surfaces"></div>
             </section>
             <section class="card u-p-6 u-stack-4">
                 <div class="u-split u-align-center">
@@ -77,7 +96,6 @@
                     </div>
                 </div>
             </section>
-            <p class="form-help">{translate 'admin.discovery_seo_coming'}</p>
         </div>
     </div>
 
@@ -96,14 +114,7 @@
             </div>
         </section>
         <div id="disc-agent-guide-config" class="u-stack-6" hidden>
-            <section class="card u-p-6 u-stack-4 callout callout-info">
-                <p class="u-m-0" id="disc-agent-guide-status"></p>
-                <div class="u-mt-4 u-cluster">
-                    <a href="{admin_url 'agent-guide'}" class="btn btn-primary">{translate 'admin.discovery_open_editor'}</a>
-                    <a href="{admin_url 'agent-guide'}" class="btn btn-secondary" data-zone-link="publish">{translate 'admin.discovery_open_publish'}</a>
-                </div>
-                <p class="form-help u-mt-3 u-mb-0">{translate 'admin.discovery_agent_guide_m3'}</p>
-            </section>
+            <p class="form-help u-m-0" id="disc-agent-guide-status"></p>
         </div>
     </div>
 
@@ -122,21 +133,34 @@
             </div>
         </section>
         <div id="disc-webmcp-config" class="u-stack-6" hidden>
-            <section class="card u-p-6 u-stack-4">
-                <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
-                <div class="u-mt-4">
-                    <a href="{admin_url 'agent-guide'}" class="btn btn-secondary" data-zone-link="tools">{translate 'admin.discovery_open_webmcp_tools'}</a>
-                </div>
-            </section>
-            <p class="form-help">{translate 'admin.discovery_webmcp_m9'}</p>
+            <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
         </div>
     </div>
+</div>
+
+<!-- Shared Agent Guide / WebMCP editor (embed) -->
+<div id="disc-ap-embed" class="disc-ap-embed ap-hub--discovery-embed" hidden>
+<?php
+$stickySaveBarSaveId = 'ai-presence-publish-btn';
+$stickySaveBarSaveLabel = __('admin.publish_ai_presence');
+$stickySaveBarMessageId = 'ai-presence-message';
+$stickySaveBarMessageClass = 'message';
+$stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="btn btn-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
+$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
+    . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
+$stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
+include $stickyTplDir . '/components/sticky-save-bar.php';
+include __DIR__ . '/../partials/ap-hub-body.php';
+?>
 </div>
 
 <!-- Global verify -->
 <details class="card u-p-6 u-mt-6" id="disc-verify-panel">
     <summary class="u-text-base u-weight-semibold u-cursor-pointer">{translate 'admin.discovery_verify_title'}</summary>
     <p class="form-help">{translate 'admin.discovery_verify_help'}</p>
+    <p class="u-text-sm u-fg-secondary u-m-0" id="disc-verify-last-run" hidden></p>
     <div class="u-split u-mb-3">
         <span class="u-text-sm u-fg-secondary">{translate 'admin.ag_discovery_refresh'}</span>
         <button type="button" class="btn btn-sm btn-secondary" id="disc-verify-refresh">{translate 'admin.ag_discovery_refresh'}</button>
@@ -147,4 +171,7 @@
 <div id="disc-message" class="message" hidden role="status"></div>
 
 {include_style 'pages/discovery.css'}
+{include_style 'components/agent-guide-wizard.css'}
+{include_script 'agent-guide-wizard.js'}
+{include_script 'ai-presence.js'}
 {include_script 'discovery.js'}
