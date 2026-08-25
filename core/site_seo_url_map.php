@@ -161,12 +161,123 @@ function birkly_seo_is_docs_mirror_path(string $relativePath): bool
 function birkly_seo_project_relative_path(string $projectDir, string $fullPath): ?array
 {
     $rootReal = rtrim(str_replace('\\', '/', realpath($projectDir) ?: $projectDir), '/');
-    $fullNorm = str_replace('\\', '/', $fullPath);
-    if (!str_starts_with($fullNorm, $rootReal . '/') && $fullNorm !== $rootReal) {
+    $fullReal = str_replace('\\', '/', realpath($fullPath) ?: $fullPath);
+    if ($rootReal === '' || $fullReal === '') {
         return null;
     }
-    $rel = ltrim(substr($fullNorm, strlen($rootReal)), '/');
+    if (!str_starts_with($fullReal, $rootReal . '/') && $fullReal !== $rootReal) {
+        return null;
+    }
+    $rel = ltrim(substr($fullReal, strlen($rootReal)), '/');
     return ['relative' => $rel, 'root' => $rootReal];
+}
+
+function birkly_seo_template_file_exists(string $templatePath): bool
+{
+    require_once __DIR__ . '/project_site.php';
+    $rel = str_replace('\\', '/', ltrim($templatePath, '/'));
+    if ($rel === '') {
+        return false;
+    }
+    $candidates = [$rel];
+    if (!str_ends_with(strtolower($rel), '.html') && !str_ends_with(strtolower($rel), '.htm')) {
+        $candidates[] = $rel . '.html';
+        $candidates[] = $rel . '.htm';
+    }
+    $root = birkly_public_site_path();
+    foreach ($candidates as $candidate) {
+        if (is_readable($root . '/' . $candidate)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Find a detail template HTML file for a collection via birkly-collection meta.
+ */
+function birkly_seo_find_template_for_collection(string $projectDir, string $collection): ?string
+{
+    $collection = trim($collection);
+    if ($collection === '' || !is_dir($projectDir)) {
+        return null;
+    }
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($projectDir, FilesystemIterator::SKIP_DOTS)
+    );
+    foreach ($iterator as $file) {
+        if (!$file->isFile()) {
+            continue;
+        }
+        $ext = strtolower($file->getExtension());
+        if ($ext !== 'html' && $ext !== 'htm') {
+            continue;
+        }
+        $resolved = birkly_seo_project_relative_path($projectDir, $file->getPathname());
+        if ($resolved === null) {
+            continue;
+        }
+        $content = @file_get_contents($file->getPathname());
+        if (!is_string($content)) {
+            continue;
+        }
+        if (preg_match(
+            '/<meta\s+name=["\']birkly-collection["\']\s+content=["\']([^"\']+)["\']/i',
+            $content,
+            $m
+        ) && trim($m[1]) === $collection) {
+            return $resolved['relative'];
+        }
+    }
+    return null;
+}
+
+/**
+ * Fix bindings whose template_path does not exist on disk (e.g. truncated "ml" from bad scan).
+ *
+ * @param array<string, mixed> $config
+ * @return array<string, mixed>
+ */
+function birkly_seo_repair_detail_bindings(array $config): array
+{
+    require_once __DIR__ . '/project_site.php';
+    $config = birkly_seo_normalize_url_map_sections($config);
+    $projectDir = birkly_public_site_path();
+    $detected = is_array($config['scan']['detected_templates'] ?? null)
+        ? $config['scan']['detected_templates'] : [];
+    $byCollection = [];
+    foreach ($detected as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $collection = trim((string) ($row['collection'] ?? ''));
+        $template = trim((string) ($row['template_path'] ?? ''));
+        if ($collection !== '' && $template !== '') {
+            $byCollection[$collection] = $template;
+        }
+    }
+
+    $bindings = $config['detail_bindings'];
+    foreach ($bindings as $i => $binding) {
+        if (!is_array($binding)) {
+            continue;
+        }
+        $collection = trim((string) ($binding['collection'] ?? ''));
+        $template = trim((string) ($binding['template_path'] ?? ''));
+        if ($collection === '') {
+            continue;
+        }
+        if ($template !== '' && birkly_seo_template_file_exists($template)) {
+            continue;
+        }
+        $fixed = $byCollection[$collection] ?? birkly_seo_find_template_for_collection($projectDir, $collection);
+        if ($fixed !== null && $fixed !== '') {
+            $bindings[$i]['template_path'] = $fixed;
+            $bindings[$i]['auto_detected'] = true;
+        }
+    }
+    $config['detail_bindings'] = $bindings;
+    return $config;
 }
 
 function birkly_seo_project_revision_hash(string $projectDir): string
@@ -186,8 +297,11 @@ function birkly_seo_project_revision_hash(string $projectDir): string
         if ($ext !== 'html' && $ext !== 'htm') {
             continue;
         }
-        $rel = str_replace('\\', '/', substr($file->getPathname(), strlen(realpath($projectDir) ?: $projectDir)));
-        $rel = ltrim($rel, '/');
+        $resolved = birkly_seo_project_relative_path($projectDir, $file->getPathname());
+        if ($resolved === null) {
+            continue;
+        }
+        $rel = $resolved['relative'];
         $files[$rel] = (int) $file->getMTime();
     }
     ksort($files);
@@ -210,7 +324,7 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
     $excludes = $config['url_map']['excludes'];
     $detectedTemplates = [];
     $freshPages = [];
-    $scanStats = ['files_seen' => 0, 'excluded' => 0, 'pages' => 0, 'templates' => 0];
+    $scanStats = ['files_seen' => 0, 'excluded' => 0, 'pages' => 0, 'templates' => 0, 'page_files' => [], 'template_files' => []];
 
     // Keep manual/custom page rows; replace all scan-sourced pages on each rescan.
     $manualPages = [];
@@ -236,7 +350,7 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
                 continue;
             }
             $scanStats['files_seen']++;
-            $resolved = birkly_seo_project_relative_path($projectDir, $file->getPathname());
+            $resolved = birkly_seo_project_relative_path($projectDir, $file->getRealPath() ?: $file->getPathname());
             if ($resolved === null) {
                 continue;
             }
@@ -264,6 +378,7 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
                     'auto_detected' => true,
                 ];
                 $scanStats['templates']++;
+                $scanStats['template_files'][] = $rel;
                 continue;
             }
 
@@ -280,6 +395,7 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
                     ? birkly_seo_parse_composition_hints($content) : [],
             ];
             $scanStats['pages']++;
+            $scanStats['page_files'][] = $rel;
         }
     }
 
@@ -287,6 +403,8 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
     $config['scan']['last_at'] = date('c');
     $config['scan']['project_revision'] = birkly_seo_project_revision_hash($projectDir);
     $config['scan']['detected_templates'] = $detectedTemplates;
+    $scanStats['page_files'] = array_values(array_unique($scanStats['page_files']));
+    $scanStats['template_files'] = array_values(array_unique($scanStats['template_files']));
 
     $bindings = $config['detail_bindings'];
     $knownTemplates = array_map(
@@ -295,10 +413,34 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
     );
     foreach ($detectedTemplates as $dt) {
         $templatePath = (string) ($dt['template_path'] ?? '');
-        if ($templatePath === '' || in_array($templatePath, $knownTemplates, true)) {
+        $collection = (string) ($dt['collection'] ?? '');
+        if ($templatePath === '' || $collection === '') {
             continue;
         }
-        $collection = (string) ($dt['collection'] ?? '');
+        $matched = false;
+        foreach ($bindings as $i => $binding) {
+            if (!is_array($binding)) {
+                continue;
+            }
+            if ((string) ($binding['collection'] ?? '') !== $collection) {
+                continue;
+            }
+            $current = (string) ($binding['template_path'] ?? '');
+            if ($current === $templatePath) {
+                $matched = true;
+                break;
+            }
+            if (!birkly_seo_template_file_exists($current)) {
+                $bindings[$i]['template_path'] = $templatePath;
+                $bindings[$i]['auto_detected'] = true;
+                $knownTemplates[$i] = $templatePath;
+                $matched = true;
+                break;
+            }
+        }
+        if ($matched || in_array($templatePath, $knownTemplates, true)) {
+            continue;
+        }
         $bindings[] = [
             'id' => birkly_seo_binding_id(),
             'collection' => $collection,
@@ -311,6 +453,7 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
         $knownTemplates[] = $templatePath;
     }
     $config['detail_bindings'] = $bindings;
+    $config = birkly_seo_repair_detail_bindings($config);
     $config['scan']['stats'] = $scanStats;
 
     return $config;
@@ -656,6 +799,8 @@ function birkly_seo_url_map_summary(array $config): array
         'bindings' => count($config['detail_bindings'] ?? []),
         'detail_urls' => count($config['url_map']['details'] ?? []),
         'excluded' => (int) ($stats['excluded'] ?? 0),
+        'page_files' => is_array($stats['page_files'] ?? null) ? $stats['page_files'] : [],
+        'template_files' => is_array($stats['template_files'] ?? null) ? $stats['template_files'] : [],
     ];
 }
 
