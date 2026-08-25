@@ -8,6 +8,10 @@ function is_nav_active(string $page_name): string {
     if ($page_name === 'ai-presence' && $page === 'agent-guide') {
         return 'active';
     }
+    if (in_array($page_name, ['discovery', 'agent-guide', 'ai-presence'], true)
+        && in_array($page, ['discovery', 'agent-guide', 'ai-presence'], true)) {
+        return 'active';
+    }
     return ($page === $page_name) ? 'active' : '';
 }
 
@@ -137,9 +141,9 @@ if (empty($userAvatar)) {
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('agent-guide')) ?>" class="nav-link <?= is_nav_active('agent-guide') ?>" title="<?= htmlspecialchars(__('admin.ai_presence')) ?>">
+                        <a href="<?= htmlspecialchars(admin_url('discovery')) ?>" class="nav-link <?= is_nav_active('discovery') ?>" title="<?= htmlspecialchars(__('admin.discovery')) ?>">
                             <?= birkly_icon('sparkle', ['class' => 'nav-icon']) ?>
-                            <span class="nav-label"><?= __('admin.ai_presence') ?></span>
+                            <span class="nav-label"><?= __('admin.discovery') ?></span>
                         </a>
                     </li>
                 </ul>

@@ -1,0 +1,37 @@
+/* Discovery admin (P67-M2) — reuses ai-presence hub patterns */
+
+.disc-hub .tab-panel[hidden] {
+    display: none !important;
+}
+
+.disc-pack-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-md, 6px);
+    background: var(--surface-secondary, #f4f5f2);
+    font-size: 13px;
+}
+
+.disc-pack-badge .disc-pack-label {
+    color: var(--fg-secondary, #5f6577);
+    font-weight: 500;
+}
+
+.disc-verify-status {
+    display: inline-block;
+    min-width: 4.5rem;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.disc-verify-pass { color: var(--color-success, #2aa69f); }
+.disc-verify-warn { color: var(--color-warning, #c9a227); }
+.disc-verify-fail { color: var(--color-danger, #d64545); }
+.disc-verify-neutral { color: var(--fg-tertiary, #a2a7b5); }
+
+.page-subtitle {
+    margin-top: 0.25rem;
+}

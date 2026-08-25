@@ -64,6 +64,7 @@ $pageViewPermissions = [
     'media' => 'read_media',
     'ai-presence' => 'read',
     'agent-guide' => 'read',
+    'discovery' => 'read',
 
     // Settings & admin management
     'settings' => 'read_settings',
@@ -161,6 +162,7 @@ if ($page !== 'onboarding' && isset($_SESSION['user'])) {
             'media' => 'media.html',
             'ai-presence' => 'ai-presence.html',
             'agent-guide' => 'ai-presence.html',
+            'discovery' => 'discovery.html',
             'settings' => 'settings.html',
             'redirects' => 'redirects.html',
             'account' => 'account.html',
@@ -551,7 +553,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
             } elseif (in_array($page, [
                 'settings', 'redirects',
                 'users', 'roles', 'plugins', 'webhooks', 'help', 'feedback', 'audit-log', 'activity', 'updates',
-                'ai-presence', 'agent-guide',
+                'ai-presence', 'agent-guide', 'discovery',
             ], true)) {
                 // Settings, Entries, Entry Editor, Collection Editor, Users, Roles, Plugins, etc.
                 try {
