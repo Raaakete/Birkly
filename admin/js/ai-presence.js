@@ -110,6 +110,12 @@
         }
     }
 
+    function notifyDiscoveryRefresh() {
+        try {
+            window.dispatchEvent(new CustomEvent('birkly:discovery-refresh'));
+        } catch (e) { /* ignore */ }
+    }
+
     function confirmAsync(message, options) {
         if (global.BirklyFeedback && global.BirklyFeedback.confirm) {
             return global.BirklyFeedback.confirm(message, options);
@@ -1956,6 +1962,7 @@
                             publish_state: state.publishState
                         }, wasNeverPublished);
                     }
+                    notifyDiscoveryRefresh();
                     return res;
                 });
             });
@@ -1992,6 +1999,7 @@
                 publish_state: state.publishState
             });
             toast(t('ag_unpublish_toast', 'Agent Guide unpublished'), 'success');
+            notifyDiscoveryRefresh();
             return res;
         }).finally(function () {
             state.publishingInProgress = false;
@@ -3368,6 +3376,7 @@
                 renderTools();
                 updateSpine();
                 renderPublishZone();
+                notifyDiscoveryRefresh();
                 toast(t('ag_tools_saved', 'Website tools updated'), 'success');
             })
             .catch(function (err) {

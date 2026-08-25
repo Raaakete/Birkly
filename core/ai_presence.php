@@ -296,9 +296,13 @@ function birkly_ai_presence_is_draft_list_key(string $key): bool
  */
 function birkly_ai_presence_merge_draft_arrays(array $base, array $patch): array
 {
+    if ($patch !== [] && array_is_list($patch)) {
+        return array_values($patch);
+    }
+
     $result = $base;
     foreach ($patch as $key => $value) {
-        if (birkly_ai_presence_is_draft_list_key($key)) {
+        if (is_string($key) && birkly_ai_presence_is_draft_list_key($key)) {
             $result[$key] = is_array($value) ? array_values($value) : [];
             continue;
         }

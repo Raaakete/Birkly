@@ -20,9 +20,20 @@
     var state = {
         status: null,
         seo: null,
+        seoBaseline: null,
         activeZone: 'seo',
         apReady: false,
     };
+
+    function toast(msg, type) {
+        if (global.BirklyFeedback && global.BirklyFeedback.toast) {
+            global.BirklyFeedback.toast(msg, type || 'info');
+        }
+    }
+
+    function showMessage(text, isError) {
+        toast(text, isError ? 'error' : 'success');
+    }
 
     function $(sel, root) {
         return (root || document).querySelector(sel);
@@ -57,15 +68,6 @@
             .then(function (r) { return r.json(); });
     }
 
-    function showMessage(text, isError) {
-        var el = $('#disc-message');
-        if (!el) return;
-        el.textContent = text;
-        el.className = 'message' + (isError ? ' message-error' : ' message-success');
-        el.hidden = false;
-        setTimeout(function () { el.hidden = true; }, 4000);
-    }
-
     function getInitialZone() {
         var params = new URLSearchParams(window.location.search);
         var zone = params.get('tab') || params.get('zone') || 'seo';
@@ -88,7 +90,7 @@
 
     function syncApEmbed(zone) {
         var embed = $('#disc-ap-embed');
-        var sticky = document.querySelector('.sticky-save-bar');
+        var sticky = document.querySelector('#disc-ap-embed .main-actions-bar--sticky');
         if (!embed) return;
 
         var agOn = state.status && state.status.packs && state.status.packs.agent_guide && state.status.packs.agent_guide.enabled;
@@ -96,6 +98,7 @@
         var showEmbed = (zone === 'agent-guide' && agOn) || (zone === 'webmcp' && wmOn);
 
         embed.hidden = !showEmbed;
+        // Agent Guide publish bar only on the Agent Guide tab — WebMCP saves inline via its own API.
         if (sticky) sticky.hidden = !showEmbed || zone !== 'agent-guide';
 
         if (!showEmbed || !state.apReady) return;
@@ -110,7 +113,7 @@
         var publishPanel = $('#ap-panel-publish');
         if (zone === 'agent-guide') {
             if (guidePanel) guidePanel.hidden = false;
-            if (publishPanel) publishPanel.hidden = false;
+            if (publishPanel) publishPanel.hidden = true;
             if (toolsPanel) toolsPanel.hidden = true;
         } else if (zone === 'webmcp') {
             if (toolsPanel) toolsPanel.hidden = false;
@@ -202,6 +205,37 @@
         return seo;
     }
 
+    function seoFormFingerprint() {
+        return JSON.stringify(collectSeoPayload());
+    }
+
+    function markSeoBaseline() {
+        state.seoBaseline = seoFormFingerprint();
+        updateSeoActionButtons();
+    }
+
+    function isSeoDirty() {
+        if (state.seoBaseline === null) return false;
+        return seoFormFingerprint() !== state.seoBaseline;
+    }
+
+    function updateSeoActionButtons() {
+        var live = !!(state.status && state.status.packs && state.status.packs.seo && state.status.packs.seo.live);
+        var dirty = isSeoDirty();
+        var pubBtn = $('#disc-seo-publish');
+        var pubUpdatesBtn = $('#disc-seo-publish-updates');
+        var unpubBtn = $('#disc-seo-unpublish');
+        var saveBtn = $('#disc-seo-save');
+
+        if (pubBtn) pubBtn.hidden = live;
+        if (unpubBtn) unpubBtn.hidden = !live;
+        if (pubUpdatesBtn) {
+            pubUpdatesBtn.hidden = !live;
+            pubUpdatesBtn.disabled = !dirty;
+        }
+        if (saveBtn) saveBtn.disabled = live && !dirty;
+    }
+
     function renderSeoForm(data) {
         var seo = data.seo || {};
         state.seo = seo;
@@ -212,6 +246,7 @@
         if (suffix) suffix.value = (seo.defaults && seo.defaults.title_suffix) || '';
         if (mode) mode.value = (seo.delivery && seo.delivery.mode) || 'auto_inject';
         renderSeoSurfaces(seo);
+        markSeoBaseline();
     }
 
     function renderPackToggles(data) {
@@ -241,18 +276,16 @@
             agStatus.textContent = data.packs.agent_guide.status_detail || '';
         }
 
+        renderSeoForm(data);
+
         var seoPub = $('#disc-seo-publish-status');
-        var seoPubBtn = $('#disc-seo-publish');
-        var seoUnpubBtn = $('#disc-seo-unpublish');
         if (seoPub && data.packs.seo) {
             seoPub.textContent = data.packs.seo.live
                 ? 'SEO is live on your public site.'
                 : 'Publish to activate meta tags, sitemap, and robots directives.';
-            if (seoPubBtn) seoPubBtn.hidden = !!data.packs.seo.live;
-            if (seoUnpubBtn) seoUnpubBtn.hidden = !data.packs.seo.live;
         }
+        updateSeoActionButtons();
 
-        renderSeoForm(data);
         syncApEmbed(state.activeZone);
     }
 
@@ -324,6 +357,7 @@
                     state.status = res.data.status || state.status;
                     state.seo = res.data.seo;
                     renderPackToggles(state.status);
+                    markSeoBaseline();
                     showMessage('SEO settings saved');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
@@ -338,24 +372,36 @@
                     if (!proposal) return;
                     if ($('#disc-seo-description')) $('#disc-seo-description').value = proposal.description || '';
                     if ($('#disc-seo-title-suffix')) $('#disc-seo-title-suffix').value = proposal.title_suffix || '';
+                    updateSeoActionButtons();
                     showMessage('Proposed defaults — review and save');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
 
+        function publishSeoFlow(successMsg) {
+            return postJson({ action: 'save_seo', config: collectSeoPayload() }).then(function () {
+                return postJson({ action: 'publish_seo' });
+            }).then(function (res) {
+                if (res.status !== 'ok') throw new Error(res.message);
+                state.status = res.data;
+                renderStatusStrip(res.data);
+                renderPackToggles(res.data);
+                markSeoBaseline();
+                showMessage(successMsg);
+            });
+        }
+
         var pub = $('#disc-seo-publish');
+        var pubUpdates = $('#disc-seo-publish-updates');
         var unpub = $('#disc-seo-unpublish');
         if (pub) {
             pub.addEventListener('click', function () {
-                postJson({ action: 'save_seo', config: collectSeoPayload() }).then(function () {
-                    return postJson({ action: 'publish_seo' });
-                }).then(function (res) {
-                    if (res.status !== 'ok') throw new Error(res.message);
-                    state.status = res.data;
-                    renderStatusStrip(res.data);
-                    renderPackToggles(res.data);
-                    showMessage('SEO published');
-                }).catch(function (e) { showMessage(e.message, true); });
+                publishSeoFlow('SEO published').catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+        if (pubUpdates) {
+            pubUpdates.addEventListener('click', function () {
+                publishSeoFlow('SEO updates published').catch(function (e) { showMessage(e.message, true); });
             });
         }
         if (unpub) {
@@ -367,6 +413,20 @@
                     renderPackToggles(res.data);
                     showMessage('SEO unpublished');
                 }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+
+        var seoConfig = $('#disc-seo-config');
+        if (seoConfig) {
+            seoConfig.addEventListener('input', function (e) {
+                if (e.target.matches('#disc-seo-description, #disc-seo-title-suffix, #disc-seo-delivery-mode, [data-seo-surface]')) {
+                    updateSeoActionButtons();
+                }
+            });
+            seoConfig.addEventListener('change', function (e) {
+                if (e.target.matches('#disc-seo-delivery-mode, [data-seo-surface]')) {
+                    updateSeoActionButtons();
+                }
             });
         }
     }
@@ -414,6 +474,9 @@
         bindSeoActions();
         bindVerify();
         bindSetup();
+        window.addEventListener('birkly:discovery-refresh', function () {
+            load().catch(function () { /* ignore */ });
+        });
         load().then(function () {
             initApEmbed();
         }).catch(function (e) {
