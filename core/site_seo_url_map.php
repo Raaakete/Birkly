@@ -647,19 +647,67 @@ function birkly_seo_save_url_map(array $urlMapPatch): array
 /**
  * @return array{ok:bool,config?:array<string,mixed>,rows?:list<array<string,mixed>>,error?:string}
  */
+function birkly_seo_url_map_summary(array $config): array
+{
+    $stats = is_array($config['scan']['stats'] ?? null) ? $config['scan']['stats'] : [];
+    return [
+        'pages' => (int) ($stats['pages'] ?? 0),
+        'templates' => (int) ($stats['templates'] ?? 0),
+        'bindings' => count($config['detail_bindings'] ?? []),
+        'detail_urls' => count($config['url_map']['details'] ?? []),
+        'excluded' => (int) ($stats['excluded'] ?? 0),
+    ];
+}
+
+/**
+ * @param array<string, mixed> $query
+ */
+function birkly_seo_admin_live_url(string $pathKey, array $query = []): string
+{
+    require_once __DIR__ . '/hosting_urls.php';
+    require_once __DIR__ . '/project_site.php';
+    $hosting = birkly_hosting_load();
+    $base = rtrim((string) ($hosting['public_site_url'] ?? ''), '/');
+    if ($base === '') {
+        $base = rtrim(birkly_hosting_public_base_url(), '/');
+    }
+    if ($base === '') {
+        return '';
+    }
+    $mode = (string) ($hosting['public_site_mode'] ?? 'none');
+    $rel = $pathKey === '/' ? '/index.html' : '/' . ltrim($pathKey, '/');
+    if ($mode === 'project') {
+        $rel = rtrim(birkly_public_site_url_prefix(), '/') . $rel;
+    }
+    $url = $base . $rel;
+    $collection = trim((string) ($query['collection'] ?? ''));
+    $slug = trim((string) ($query['slug'] ?? ''));
+    if ($collection !== '' && $slug !== '') {
+        $url .= (str_contains($url, '?') ? '&' : '?')
+            . 'collection=' . rawurlencode($collection)
+            . '&slug=' . rawurlencode($slug);
+    }
+    return $url;
+}
+
+/**
+ * @return array{ok:bool,config?:array<string,mixed>,rows?:list<array<string,mixed>>,error?:string,stats?:array<string,int>,summary?:array<string,int>}
+ */
 function birkly_seo_scan_and_save(): array
 {
     $config = birkly_seo_url_map_scan_project();
+    $config = birkly_seo_materialize_detail_urls($config);
     $save = birkly_site_seo_save($config);
     if (!$save['ok']) {
         return $save;
     }
+    $saved = $save['config'] ?? $config;
     return [
         'ok' => true,
-        'config' => $save['config'],
-        'rows' => birkly_seo_url_map_admin_rows($save['config'] ?? $config),
-        'stats' => is_array(($save['config'] ?? $config)['scan']['stats'] ?? null)
-            ? ($save['config'] ?? $config)['scan']['stats'] : [],
+        'config' => $saved,
+        'rows' => birkly_seo_url_map_admin_rows($saved),
+        'stats' => is_array($saved['scan']['stats'] ?? null) ? $saved['scan']['stats'] : [],
+        'summary' => birkly_seo_url_map_summary($saved),
     ];
 }
 
@@ -695,18 +743,11 @@ function birkly_seo_automated_setup(): array
         return $save;
     }
     $saved = $save['config'] ?? $config;
-    $stats = is_array($saved['scan']['stats'] ?? null) ? $saved['scan']['stats'] : [];
     return [
         'ok' => true,
         'config' => $saved,
         'rows' => birkly_seo_url_map_admin_rows($saved),
-        'summary' => [
-            'pages' => (int) ($stats['pages'] ?? 0),
-            'templates' => (int) ($stats['templates'] ?? 0),
-            'bindings' => count($saved['detail_bindings'] ?? []),
-            'detail_urls' => count($saved['url_map']['details'] ?? []),
-            'excluded' => (int) ($stats['excluded'] ?? 0),
-        ],
+        'summary' => birkly_seo_url_map_summary($saved),
     ];
 }
 
@@ -722,16 +763,21 @@ function birkly_seo_url_map_admin_rows(array $config): array
             continue;
         }
         $overrides = is_array($page['overrides'] ?? null) ? $page['overrides'] : [];
+        $label = (string) ($page['label'] ?? birkly_seo_label_from_path((string) $path));
+        $file = (string) ($page['file'] ?? '');
         $rows[] = [
             'key' => (string) $path,
             'type' => 'page',
             'url' => (string) $path,
-            'project_file' => (string) ($page['file'] ?? ''),
-            'label' => (string) ($page['label'] ?? birkly_seo_label_from_path((string) $path)),
+            'project_file' => $file,
+            'label' => $label,
+            'listing_title' => $label,
+            'listing_subtitle' => (string) $path,
             'title' => (string) ($overrides['title'] ?? ''),
             'description' => (string) ($overrides['description'] ?? ''),
             'source' => (string) ($page['source'] ?? 'scan'),
-            'file' => (string) ($page['file'] ?? ''),
+            'file' => $file,
+            'live_url' => birkly_seo_admin_live_url((string) $path),
             'composition_sources' => is_array($page['composition_sources'] ?? null)
                 ? $page['composition_sources'] : [],
         ];
@@ -741,15 +787,31 @@ function birkly_seo_url_map_admin_rows(array $config): array
             continue;
         }
         $overrides = is_array($detail['overrides'] ?? null) ? $detail['overrides'] : [];
+        $collection = (string) ($detail['collection'] ?? '');
+        $slug = (string) ($detail['slug'] ?? '');
+        $template = (string) ($detail['template_path'] ?? '');
+        $label = (string) ($detail['label'] ?? '');
         $rows[] = [
             'key' => (string) $key,
             'type' => 'detail',
             'url' => (string) $key,
-            'label' => (string) ($detail['label'] ?? ''),
+            'project_file' => $template,
+            'label' => $label,
+            'listing_title' => $label,
+            'listing_subtitle' => $template !== '' && $collection !== '' && $slug !== ''
+                ? $template . ' → ' . $collection . ' / ' . $slug
+                : (string) $key,
             'title' => (string) ($overrides['title'] ?? ''),
             'description' => (string) ($overrides['description'] ?? ''),
-            'collection' => (string) ($detail['collection'] ?? ''),
-            'slug' => (string) ($detail['slug'] ?? ''),
+            'collection' => $collection,
+            'slug' => $slug,
+            'template_path' => $template,
+            'live_url' => $template !== ''
+                ? birkly_seo_admin_live_url(
+                    birkly_seo_public_path_from_file($template),
+                    ['collection' => $collection, 'slug' => $slug]
+                )
+                : '',
         ];
     }
     foreach ($config['url_map']['redirects'] as $i => $redirect) {

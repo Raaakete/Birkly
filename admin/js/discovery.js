@@ -43,6 +43,7 @@
         seoBaseline: null,
         urlMapRows: [],
         urlMapFilter: 'all',
+        activeBindingId: null,
         activeZone: 'seo',
         apReady: false,
     };
@@ -447,6 +448,42 @@
         });
     }
 
+    function countRowsByType(rows, type) {
+        return (rows || []).filter(function (row) { return row.type === type; }).length;
+    }
+
+    function formatScanSummaryMessage(summary, rows) {
+        var pages = summary && summary.pages != null ? summary.pages : countRowsByType(rows, 'page');
+        var details = summary && summary.detail_urls != null ? summary.detail_urls : countRowsByType(rows, 'detail');
+        var templates = summary && summary.templates != null ? summary.templates : 0;
+        var parts = ['Found ' + pages + ' main page' + (pages === 1 ? '' : 's')];
+        if (details > 0) {
+            parts.push(details + ' post' + (details === 1 ? '' : 's') + ' from collections');
+        }
+        if (templates > 0) {
+            parts.push(templates + ' repeating template' + (templates === 1 ? '' : 's') + ' detected');
+        }
+        return parts.join(' · ');
+    }
+
+    function rowTypeLabel(type) {
+        if (type === 'page') return t('discovery_seo_type_page', 'Main page');
+        if (type === 'detail') return t('discovery_seo_type_detail', 'Post or item');
+        if (type === 'redirect') return t('discovery_seo_type_redirect', 'Redirect');
+        return type || '';
+    }
+
+    function updateEmptyPagesHelp(seo, summary) {
+        var help = $('#disc-seo-url-empty-help');
+        if (!help) return;
+        var stats = (summary && typeof summary === 'object') ? summary
+            : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
+        var pages = stats ? (stats.pages || 0) : countRowsByType(state.urlMapRows, 'page');
+        var details = stats ? (stats.detail_urls || countRowsByType(state.urlMapRows, 'detail'))
+            : countRowsByType(state.urlMapRows, 'detail');
+        help.hidden = !(pages === 0 && details > 0);
+    }
+
     function formatScanMeta(seo, summary) {
         var parts = [];
         if (seo && seo.scan && seo.scan.last_at) {
@@ -459,13 +496,22 @@
             : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
         if (stats) {
             var statBits = [];
-            if (stats.pages != null) statBits.push(stats.pages + ' pages');
-            if (stats.templates != null) statBits.push(stats.templates + ' detail templates');
-            if (stats.excluded != null && stats.excluded > 0) {
-                statBits.push(stats.excluded + ' docs/internal files skipped');
+            if (stats.pages != null) statBits.push(stats.pages + ' main pages');
+            if (stats.templates != null && stats.templates > 0) {
+                statBits.push(stats.templates + ' repeating templates');
             }
             if (summary && summary.detail_urls != null) {
-                statBits.push(summary.detail_urls + ' entry URLs');
+                statBits.push(summary.detail_urls + ' posts & items');
+            } else if (stats.detail_urls != null) {
+                statBits.push(stats.detail_urls + ' posts & items');
+            } else if (state.urlMapRows.length) {
+                var detailCount = countRowsByType(state.urlMapRows, 'detail');
+                if (detailCount > 0) {
+                    statBits.push(detailCount + ' posts & items');
+                }
+            }
+            if (stats.excluded != null && stats.excluded > 0) {
+                statBits.push(stats.excluded + ' internal files skipped');
             }
             if (statBits.length) parts.push(statBits.join(' · '));
         }
@@ -483,25 +529,35 @@
         });
         tbody.innerHTML = '';
         if (!filtered.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="u-fg-secondary">No URLs yet — use “Set up with AI” or “Rescan project” to discover pages from project/.</td></tr>';
+            var emptyMsg = t('discovery_seo_url_map_empty', 'Nothing listed yet — use “Set up with AI” or “Refresh from site files”.');
+            tbody.innerHTML = '<tr><td colspan="5" class="u-fg-secondary">' + escapeHtml(emptyMsg) + '</td></tr>';
         } else {
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
-                var composition = (row.composition_sources && row.composition_sources.length)
-                    ? '<div class="u-text-xs u-fg-secondary">Sources: ' + escapeHtml(row.composition_sources.join(', ')) + '</div>' : '';
                 var projectFile = row.project_file || row.file || '';
                 var fileCell = projectFile
-                    ? '<code class="u-text-sm">' + escapeHtml(projectFile) + '</code>'
+                    ? '<code class="u-text-sm disc-url-path">' + escapeHtml(projectFile) + '</code>'
                     : '<span class="u-fg-secondary">—</span>';
+                var listingTitle = row.listing_title || row.label || row.url || '';
+                var listingSub = row.listing_subtitle || row.url || '';
+                var listingCell = '<div class="disc-url-listing-title">' + escapeHtml(listingTitle) + '</div>'
+                    + '<div class="disc-url-listing-sub"><code>' + escapeHtml(listingSub) + '</code></div>';
+                var googleTitle = row.title || '—';
+                var actions = '<button type="button" class="btn btn-ghost btn-sm" data-url-edit="' + escapeHtml(row.key || '') + '">'
+                    + escapeHtml(t('discovery_seo_edit_title', 'Edit')) + '</button>';
+                if (row.live_url) {
+                    actions += ' <a class="btn btn-ghost btn-sm" href="' + escapeHtml(row.live_url) + '" target="_blank" rel="noopener">'
+                        + escapeHtml(t('discovery_seo_open_live', 'Open page')) + '</a>';
+                }
                 tr.innerHTML = '<td>' + fileCell + '</td>'
-                    + '<td><code class="u-text-sm">' + escapeHtml(row.url || '') + '</code>' + composition + '</td>'
-                    + '<td>' + escapeHtml(row.label || '') + '</td>'
-                    + '<td><span class="badge">' + escapeHtml(row.type || '') + '</span></td>'
-                    + '<td>' + escapeHtml(row.title || '—') + '</td>'
-                    + '<td><button type="button" class="btn btn-ghost btn-sm" data-url-edit="' + escapeHtml(row.key || '') + '">Edit</button></td>';
+                    + '<td>' + listingCell + '</td>'
+                    + '<td><span class="badge">' + escapeHtml(rowTypeLabel(row.type)) + '</span></td>'
+                    + '<td>' + escapeHtml(googleTitle) + '</td>'
+                    + '<td class="cell-actions">' + actions + '</td>';
                 tbody.appendChild(tr);
             });
         }
+        updateEmptyPagesHelp(seo, summary);
         if (meta) {
             var metaText = formatScanMeta(seo, summary);
             if (metaText) {
@@ -526,6 +582,8 @@
                 url: path,
                 project_file: page.file || '',
                 label: page.label || path,
+                listing_title: page.label || path,
+                listing_subtitle: path,
                 title: overrides.title || '',
                 composition_sources: page.composition_sources || [],
             });
@@ -534,12 +592,24 @@
         Object.keys(details).forEach(function (key) {
             var detail = details[key] || {};
             var overrides = detail.overrides || {};
+            var template = detail.template_path || '';
+            var collection = detail.collection || '';
+            var slug = detail.slug || '';
+            var label = detail.label || key;
             rows.push({
                 key: key,
                 type: 'detail',
                 url: key,
-                label: detail.label || key,
+                project_file: template,
+                label: label,
+                listing_title: label,
+                listing_subtitle: template && collection && slug
+                    ? template + ' → ' + collection + ' / ' + slug
+                    : key,
                 title: overrides.title || '',
+                collection: collection,
+                slug: slug,
+                template_path: template,
             });
         });
         (seo.url_map.redirects || []).forEach(function (redirect, i) {
@@ -554,26 +624,59 @@
         return rows;
     }
 
+    function fillBindingForm(binding) {
+        var idEl = $('#disc-binding-id');
+        if (idEl) idEl.value = (binding && binding.id) || '';
+        var collectionEl = $('#disc-binding-collection');
+        if (collectionEl) collectionEl.value = (binding && binding.collection) || '';
+        var templateEl = $('#disc-binding-template');
+        if (templateEl) templateEl.value = (binding && binding.template_path) || '';
+        var excerptEl = $('#disc-binding-excerpt');
+        if (excerptEl) excerptEl.value = (binding && binding.excerpt_field) || 'excerpt';
+        var patternEl = $('#disc-binding-pattern');
+        if (patternEl) patternEl.value = (binding && binding.url_pattern) || '';
+    }
+
+    function bindingEntryCount(seo, collection) {
+        if (!seo || !seo.url_map || !seo.url_map.details || !collection) return 0;
+        return Object.keys(seo.url_map.details).filter(function (key) {
+            var row = seo.url_map.details[key] || {};
+            return (row.collection || '') === collection;
+        }).length;
+    }
+
     function renderDetailBindings(seo) {
         var list = $('#disc-seo-bindings-list');
         if (!list) return;
         list.innerHTML = '';
         var bindings = (seo && seo.detail_bindings) || [];
         if (!bindings.length) {
-            list.innerHTML = '<p class="form-help u-m-0">No bindings yet. Templates with &lt;meta name="birkly-collection"&gt; are auto-detected on rescan.</p>';
+            list.innerHTML = '<p class="form-help u-m-0">' + escapeHtml(
+                'No repeating pages yet. Templates with <meta name="birkly-collection"> are detected when you refresh from site files.'
+            ) + '</p>';
             return;
         }
         bindings.forEach(function (binding) {
-            var row = document.createElement('div');
-            row.className = 'u-split u-align-center u-gap-2';
+            var card = document.createElement('div');
+            card.className = 'disc-binding-card' + (state.activeBindingId === binding.id ? ' is-active' : '');
             var excerpt = binding.excerpt_field || 'excerpt';
-            var pattern = binding.url_pattern ? ' · <span class="u-fg-secondary">' + escapeHtml(binding.url_pattern) + '</span>' : '';
-            row.innerHTML = '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
-                + ' · <code>' + escapeHtml(binding.template_path || '') + '</code>'
+            var template = binding.template_path || '';
+            var count = bindingEntryCount(seo, binding.collection || '');
+            var countLabel = count > 0
+                ? count + ' published ' + (count === 1 ? 'entry' : 'entries') + ' in search listings'
+                : 'No published entries yet';
+            var pattern = binding.url_pattern
+                ? '<div class="u-text-xs u-fg-secondary u-mt-1">Shorter links: <code>' + escapeHtml(binding.url_pattern) + '</code></div>'
+                : '';
+            card.innerHTML = '<button type="button" class="disc-binding-card__main" data-binding-edit="' + escapeHtml(binding.id || '') + '">'
+                + '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
+                + ' <span class="u-fg-secondary">opens in</span> <code>' + escapeHtml(template) + '</code></div>'
+                + '<div class="u-text-sm u-fg-secondary u-mt-1">Summary field: ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
                 + pattern
-                + ' <span class="u-fg-secondary u-text-sm">excerpt: ' + escapeHtml(excerpt) + '</span></div>'
-                + '<button type="button" class="btn btn-ghost btn-sm" data-binding-delete="' + escapeHtml(binding.id || '') + '">Remove</button>';
-            list.appendChild(row);
+                + '</button>'
+                + '<button type="button" class="btn btn-ghost btn-sm disc-binding-card__remove" data-binding-delete="'
+                + escapeHtml(binding.id || '') + '">Remove</button>';
+            list.appendChild(card);
         });
     }
 
@@ -597,7 +700,7 @@
                 setupAi.disabled = true;
                 postJson({ action: 'seo_url_map_setup' }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
-                    applyUrlMapResponse(res, 'SEO URL map set up — review overrides, then publish');
+                    applyUrlMapResponse(res, formatScanSummaryMessage(res.data.summary, res.data.rows));
                 }).catch(function (e) { showMessage(e.message, true); })
                     .finally(function () { setupAi.disabled = false; });
             });
@@ -608,7 +711,7 @@
             rescan.addEventListener('click', function () {
                 postJson({ action: 'scan_urls' }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
-                    applyUrlMapResponse(res, 'Project scanned — ' + (res.data.rows || []).length + ' URLs');
+                    applyUrlMapResponse(res, formatScanSummaryMessage(res.data.summary, res.data.rows));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -631,7 +734,7 @@
                 var row = (state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(state.seo))
                     .find(function (r) { return r.key === key; });
                 if (!row) return;
-                var title = window.prompt('Title override (leave blank for auto)', row.title || '');
+                var title = window.prompt(t('discovery_seo_edit_title', 'Google title') + ' (leave blank for auto)', row.title || '');
                 if (title === null) return;
                 var patch = { pages: {}, details: {} };
                 if (row.type === 'page') {
@@ -691,6 +794,7 @@
         if (bindingSave) {
             bindingSave.addEventListener('click', function () {
                 var binding = {
+                    id: ($('#disc-binding-id') || {}).value || '',
                     collection: ($('#disc-binding-collection') || {}).value || '',
                     template_path: ($('#disc-binding-template') || {}).value || '',
                     excerpt_field: ($('#disc-binding-excerpt') || {}).value || '',
@@ -698,7 +802,14 @@
                 };
                 postJson({ action: 'save_detail_binding', binding: binding }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
-                    applyUrlMapResponse(res, 'Detail binding saved — entry URLs added to the map');
+                    var savedBindings = (res.data.seo && res.data.seo.detail_bindings) || [];
+                    var saved = savedBindings.find(function (b) {
+                        return (b.collection || '') === binding.collection
+                            && (b.template_path || '') === binding.template_path;
+                    });
+                    state.activeBindingId = saved ? (saved.id || null) : null;
+                    if (saved) fillBindingForm(saved);
+                    applyUrlMapResponse(res, 'Connection saved — posts added to search listings');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -706,16 +817,29 @@
         var bindingsList = $('#disc-seo-bindings-list');
         if (bindingsList) {
             bindingsList.addEventListener('click', function (e) {
+                var editBtn = e.target.closest('[data-binding-edit]');
+                if (editBtn) {
+                    var editId = editBtn.getAttribute('data-binding-edit');
+                    var bindings = (state.seo && state.seo.detail_bindings) || [];
+                    var binding = bindings.find(function (b) { return (b.id || '') === editId; });
+                    if (!binding) return;
+                    state.activeBindingId = binding.id || null;
+                    fillBindingForm(binding);
+                    renderDetailBindings(state.seo);
+                    var details = $('#disc-seo-binding-details');
+                    if (details) details.open = true;
+                    return;
+                }
                 var btn = e.target.closest('[data-binding-delete]');
                 if (!btn) return;
                 var id = btn.getAttribute('data-binding-delete');
                 postJson({ action: 'delete_detail_binding', binding_id: id }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
-                    state.seo = res.data.seo;
-                    state.urlMapRows = res.data.rows || [];
-                    renderDetailBindings(state.seo);
-                    renderUrlMap(state.seo);
-                    showMessage('Binding removed');
+                    if (state.activeBindingId === id) {
+                        state.activeBindingId = null;
+                        fillBindingForm(null);
+                    }
+                    applyUrlMapResponse(res, 'Connection removed');
                 }).catch(function (err) { showMessage(err.message, true); });
             });
         }

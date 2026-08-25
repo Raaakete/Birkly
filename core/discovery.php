@@ -359,6 +359,7 @@ function birkly_discovery_status(): array
     require_once __DIR__ . '/webmcp.php';
     require_once __DIR__ . '/site_seo.php';
     require_once __DIR__ . '/hosting_urls.php';
+    require_once __DIR__ . '/project_site.php';
 
     $discovery = birkly_discovery_load();
     $hosting = birkly_hosting_load();
@@ -414,6 +415,9 @@ function birkly_discovery_status(): array
             'public_site_mode' => $mode,
             'public_site_url' => (string) ($hosting['public_site_url'] ?? ''),
             'cms_base_url' => (string) ($hosting['cms_base_url'] ?? ''),
+            'project_url_prefix' => function_exists('birkly_public_site_url_prefix')
+                ? birkly_public_site_url_prefix()
+                : '/project',
         ],
         'discovery' => $discovery,
         'seo' => $seoConfig,

@@ -151,3 +151,65 @@
 .disc-url-filter.is-active {
     font-weight: 600;
 }
+
+.disc-url-table code,
+.disc-binding-card code {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.disc-url-table tbody td {
+    vertical-align: top;
+}
+
+.table--compact.disc-url-table tbody td {
+    height: auto;
+    min-height: 2rem;
+    padding-block: var(--space-2);
+}
+
+.disc-url-listing-title {
+    font-weight: 600;
+}
+
+.disc-url-listing-sub {
+    margin-top: 0.15rem;
+    font-size: var(--text-xs, 12px);
+    color: var(--fg-secondary, #5f6577);
+    overflow-wrap: anywhere;
+}
+
+.disc-binding-card {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-2);
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--surface-sunken, #f8f9fa);
+}
+
+.disc-binding-card.is-active {
+    border-color: var(--color-primary, #2aa69f);
+    box-shadow: 0 0 0 1px var(--color-primary, #2aa69f);
+}
+
+.disc-binding-card__main {
+    flex: 1;
+    display: block;
+    width: 100%;
+    padding: var(--space-3);
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.disc-binding-card__main:hover {
+    background: var(--surface-hover, #f0f1f3);
+}
+
+.disc-binding-card__remove {
+    align-self: center;
+    margin-right: var(--space-2);
+}
