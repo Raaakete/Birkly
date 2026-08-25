@@ -182,6 +182,25 @@ if ($action === 'scan_urls') {
         'data' => [
             'seo' => $result['config'],
             'rows' => $result['rows'] ?? [],
+            'stats' => $result['stats'] ?? [],
+            'status' => birkly_discovery_status(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'seo_url_map_setup') {
+    $result = birkly_seo_automated_setup();
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Setup failed']);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'seo' => $result['config'],
+            'rows' => $result['rows'] ?? [],
+            'summary' => $result['summary'] ?? [],
             'status' => birkly_discovery_status(),
         ],
     ]);
@@ -226,6 +245,7 @@ if ($action === 'save_detail_binding') {
         'status' => 'ok',
         'data' => [
             'seo' => $result['config'],
+            'rows' => birkly_seo_url_map_admin_rows($result['config'] ?? []),
             'status' => birkly_discovery_status(),
         ],
     ]);

@@ -114,10 +114,14 @@ function birkly_seo_label_from_path(string $pathKey): string
  */
 function birkly_seo_scan_should_exclude(string $relativePath, array $excludes): bool
 {
-    $rel = str_replace('\\', '/', $relativePath);
+    $rel = str_replace('\\', '/', ltrim($relativePath, '/'));
     $lower = strtolower($rel);
+    if (birkly_seo_is_docs_mirror_path($rel)) {
+        return true;
+    }
     foreach (['/vendor/', '/node_modules/', '/partials/'] as $segment) {
-        if (str_contains($lower, $segment)) {
+        if (str_contains($lower, '/' . trim($segment, '/') . '/')
+            || str_starts_with($lower, trim($segment, '/') . '/')) {
             return true;
         }
     }
@@ -132,6 +136,37 @@ function birkly_seo_scan_should_exclude(string $relativePath, array $excludes): 
         }
     }
     return false;
+}
+
+/**
+ * Docs/help HTML mirrored under project/ (e.g. 01-admin/dashboard.html) are not public site pages.
+ */
+function birkly_seo_is_docs_mirror_path(string $relativePath): bool
+{
+    $rel = str_replace('\\', '/', ltrim($relativePath, '/'));
+    if (preg_match('#^\d{2}-[^/]+/#', $rel) === 1) {
+        return true;
+    }
+    foreach (['meta/', 'content/', 'docs/', 'admin/', 'snapshots/', 'help/'] as $prefix) {
+        if (str_starts_with($rel, $prefix)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * @return array{relative:string,root:string}|null
+ */
+function birkly_seo_project_relative_path(string $projectDir, string $fullPath): ?array
+{
+    $rootReal = rtrim(str_replace('\\', '/', realpath($projectDir) ?: $projectDir), '/');
+    $fullNorm = str_replace('\\', '/', $fullPath);
+    if (!str_starts_with($fullNorm, $rootReal . '/') && $fullNorm !== $rootReal) {
+        return null;
+    }
+    $rel = ltrim(substr($fullNorm, strlen($rootReal)), '/');
+    return ['relative' => $rel, 'root' => $rootReal];
 }
 
 function birkly_seo_project_revision_hash(string $projectDir): string
@@ -167,16 +202,28 @@ function birkly_seo_project_revision_hash(string $projectDir): string
  */
 function birkly_seo_url_map_scan_project(?array $config = null): array
 {
+    require_once __DIR__ . '/project_site.php';
     $config = $config ?? birkly_site_seo_load();
     $config = birkly_seo_normalize_url_map_sections($config);
 
-    $projectDir = birkly_project_root() . '/project';
-    $pages = $config['url_map']['pages'];
+    $projectDir = birkly_project_root() . '/' . birkly_public_site_dir();
     $excludes = $config['url_map']['excludes'];
     $detectedTemplates = [];
+    $freshPages = [];
+    $scanStats = ['files_seen' => 0, 'excluded' => 0, 'pages' => 0, 'templates' => 0];
+
+    // Keep manual/custom page rows; replace all scan-sourced pages on each rescan.
+    $manualPages = [];
+    foreach ($config['url_map']['pages'] as $pathKey => $page) {
+        if (!is_array($page)) {
+            continue;
+        }
+        if (($page['source'] ?? 'scan') !== 'scan') {
+            $manualPages[$pathKey] = $page;
+        }
+    }
 
     if (is_dir($projectDir)) {
-        $rootReal = realpath($projectDir) ?: $projectDir;
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($projectDir, FilesystemIterator::SKIP_DOTS)
         );
@@ -188,14 +235,18 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
             if ($ext !== 'html' && $ext !== 'htm') {
                 continue;
             }
-            $full = $file->getPathname();
-            $rel = str_replace('\\', '/', substr($full, strlen($rootReal)));
-            $rel = ltrim($rel, '/');
+            $scanStats['files_seen']++;
+            $resolved = birkly_seo_project_relative_path($projectDir, $file->getPathname());
+            if ($resolved === null) {
+                continue;
+            }
+            $rel = $resolved['relative'];
             if (birkly_seo_scan_should_exclude($rel, $excludes)) {
+                $scanStats['excluded']++;
                 continue;
             }
 
-            $content = @file_get_contents($full);
+            $content = @file_get_contents($file->getPathname());
             $collectionMeta = null;
             if (is_string($content)
                 && preg_match(
@@ -212,29 +263,27 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
                     'collection' => $collectionMeta,
                     'auto_detected' => true,
                 ];
+                $scanStats['templates']++;
                 continue;
             }
 
             $pathKey = birkly_seo_public_path_from_file($rel);
-            $existing = is_array($pages[$pathKey] ?? null) ? $pages[$pathKey] : [];
+            $existing = is_array($manualPages[$pathKey] ?? null) ? $manualPages[$pathKey]
+                : (is_array($config['url_map']['pages'][$pathKey] ?? null) ? $config['url_map']['pages'][$pathKey] : []);
             $overrides = is_array($existing['overrides'] ?? null) ? $existing['overrides'] : [];
-            $pages[$pathKey] = array_merge([
+            $freshPages[$pathKey] = [
                 'label' => birkly_seo_label_from_path($pathKey),
-                'source' => 'scan',
-                'file' => $rel,
-                'overrides' => [],
-                'composition_sources' => [],
-            ], $existing, [
                 'source' => 'scan',
                 'file' => $rel,
                 'overrides' => $overrides,
                 'composition_sources' => is_string($content)
-                    ? birkly_seo_parse_composition_hints($content) : ($existing['composition_sources'] ?? []),
-            ]);
+                    ? birkly_seo_parse_composition_hints($content) : [],
+            ];
+            $scanStats['pages']++;
         }
     }
 
-    $config['url_map']['pages'] = $pages;
+    $config['url_map']['pages'] = array_merge($manualPages, $freshPages);
     $config['scan']['last_at'] = date('c');
     $config['scan']['project_revision'] = birkly_seo_project_revision_hash($projectDir);
     $config['scan']['detected_templates'] = $detectedTemplates;
@@ -262,6 +311,7 @@ function birkly_seo_url_map_scan_project(?array $config = null): array
         $knownTemplates[] = $templatePath;
     }
     $config['detail_bindings'] = $bindings;
+    $config['scan']['stats'] = $scanStats;
 
     return $config;
 }
@@ -549,6 +599,7 @@ function birkly_seo_save_detail_binding(array $binding): array
     }
     $config['detail_bindings'] = $bindings;
     $config = birkly_seo_normalize_url_map_sections($config);
+    $config = birkly_seo_materialize_detail_urls($config);
     return birkly_site_seo_save($config);
 }
 
@@ -607,13 +658,59 @@ function birkly_seo_scan_and_save(): array
         'ok' => true,
         'config' => $save['config'],
         'rows' => birkly_seo_url_map_admin_rows($save['config'] ?? $config),
+        'stats' => is_array(($save['config'] ?? $config)['scan']['stats'] ?? null)
+            ? ($save['config'] ?? $config)['scan']['stats'] : [],
     ];
 }
 
 /**
- * Flatten url_map for admin table display.
+ * One-click SEO URL map setup: scan, bindings, propose overrides, import legacy meta (P68).
  *
- * @param array<string, mixed> $config
+ * @return array{ok:bool,config?:array<string,mixed>,rows?:list<array<string,mixed>>,summary?:array<string,mixed>,error?:string}
+ */
+function birkly_seo_automated_setup(): array
+{
+    $config = birkly_seo_url_map_scan_project();
+    $config = birkly_seo_import_legacy_entry_meta($config);
+    $proposed = birkly_seo_propose_overrides();
+    foreach ($proposed['pages'] as $path => $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $existing = is_array($config['url_map']['pages'][$path] ?? null)
+            ? $config['url_map']['pages'][$path] : [];
+        $config['url_map']['pages'][$path] = array_merge($existing, $row);
+    }
+    foreach ($proposed['details'] as $key => $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $existing = is_array($config['url_map']['details'][$key] ?? null)
+            ? $config['url_map']['details'][$key] : [];
+        $config['url_map']['details'][$key] = array_merge($existing, $row);
+    }
+    $config = birkly_seo_materialize_detail_urls($config);
+    $save = birkly_site_seo_save($config);
+    if (!$save['ok']) {
+        return $save;
+    }
+    $saved = $save['config'] ?? $config;
+    $stats = is_array($saved['scan']['stats'] ?? null) ? $saved['scan']['stats'] : [];
+    return [
+        'ok' => true,
+        'config' => $saved,
+        'rows' => birkly_seo_url_map_admin_rows($saved),
+        'summary' => [
+            'pages' => (int) ($stats['pages'] ?? 0),
+            'templates' => (int) ($stats['templates'] ?? 0),
+            'bindings' => count($saved['detail_bindings'] ?? []),
+            'detail_urls' => count($saved['url_map']['details'] ?? []),
+            'excluded' => (int) ($stats['excluded'] ?? 0),
+        ],
+    ];
+}
+
+/**
  * @return list<array<string, mixed>>
  */
 function birkly_seo_url_map_admin_rows(array $config): array
@@ -629,6 +726,7 @@ function birkly_seo_url_map_admin_rows(array $config): array
             'key' => (string) $path,
             'type' => 'page',
             'url' => (string) $path,
+            'project_file' => (string) ($page['file'] ?? ''),
             'label' => (string) ($page['label'] ?? birkly_seo_label_from_path((string) $path)),
             'title' => (string) ($overrides['title'] ?? ''),
             'description' => (string) ($overrides['description'] ?? ''),
@@ -1193,5 +1291,6 @@ function birkly_seo_delete_detail_binding(string $bindingId): array
         $bindings[] = $binding;
     }
     $config['detail_bindings'] = $bindings;
+    $config = birkly_seo_materialize_detail_urls($config);
     return birkly_site_seo_save($config);
 }
