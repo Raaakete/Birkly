@@ -138,6 +138,45 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
                 <div class="disc-surfaces" id="disc-seo-surfaces"></div>
             </section>
+
+            <section class="card u-p-6 u-stack-4" id="disc-seo-url-map-section">
+                <div class="u-split u-align-center u-mb-3">
+                    <div>
+                        <h3 class="u-m-0">Site URL Map</h3>
+                        <p class="form-help u-m-0">Every page and detail URL on your site — the only place to override search titles and descriptions.</p>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="disc-seo-rescan">Rescan project</button>
+                </div>
+                <div class="u-split u-gap-2 u-mb-3" id="disc-seo-url-filters">
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">All</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="page">Pages</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">Detail items</button>
+                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">Redirects</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table--compact" id="disc-seo-url-table">
+                        <thead>
+                            <tr>
+                                <th>URL</th>
+                                <th>Label</th>
+                                <th>Type</th>
+                                <th>Title override</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="disc-seo-url-tbody">
+                            <tr><td colspan="5" class="u-fg-secondary">Rescan project to discover pages.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="form-help u-m-0" id="disc-seo-scan-meta" hidden></p>
+            </section>
+
+            <section class="card u-p-6 u-stack-4" id="disc-seo-bindings-section">
+                <h3 class="u-m-0">Detail bindings</h3>
+                <p class="form-help">Link a collection to its detail template. Published entries appear in the URL map above.</p>
+                <div id="disc-seo-bindings-list" class="u-stack-2"></div>
+            </section>
         </div>
     </div>
 
