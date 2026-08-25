@@ -5,25 +5,7 @@
         </div>
         <p class="page-subtitle u-text-sm u-fg-secondary u-m-0">{translate 'admin.discovery_subtitle'}</p>
     </div>
-    <div class="page-header-right u-cluster u-gap-2">
-        <button type="button" class="btn btn-secondary btn-sm" id="disc-setup-btn">{translate 'admin.discovery_setup'}</button>
-    </div>
 </div>
-
-<!-- Global status strip -->
-<section class="card u-p-4 u-mb-4" id="disc-status-strip" aria-live="polite">
-    <div class="u-split u-align-center u-gap-4 u-flex-wrap">
-        <div class="u-cluster u-gap-3" id="disc-pack-dots">
-            <span class="disc-pack-badge" data-pack="seo"><strong>SEO</strong> <span class="disc-pack-label">…</span></span>
-            <span class="disc-pack-badge" data-pack="agent_guide"><strong>Agent Guide</strong> <span class="disc-pack-label">…</span></span>
-            <span class="disc-pack-badge" data-pack="webmcp"><strong>WebMCP</strong> <span class="disc-pack-label">…</span></span>
-        </div>
-        <div class="u-cluster u-gap-2">
-            <span class="badge badge-secondary" id="disc-hosting-badge">…</span>
-            <a href="{admin_url 'settings'}" class="btn btn-sm btn-ghost">{translate 'admin.discovery_site_delivery'}</a>
-        </div>
-    </div>
-</section>
 
 <div class="disc-hub">
     <div class="tabs u-mb-6" id="disc-hub-tablist" role="tablist" aria-label="{translate 'admin.discovery'}">
@@ -56,17 +38,17 @@
             </div>
         </section>
         <div id="disc-seo-config" class="u-stack-6" hidden>
-            <section class="card u-p-4 disc-seo-actions" id="disc-seo-actions">
-                <div class="u-split u-align-center u-gap-3 u-flex-wrap">
-                    <p class="form-help u-m-0" id="disc-seo-publish-status"></p>
-                    <div class="u-cluster u-gap-2">
-                        <button type="button" class="btn btn-secondary" id="disc-seo-save">{translate 'admin.save_draft'}</button>
-                        <button type="button" class="btn btn-primary" id="disc-seo-publish">{translate 'admin.discovery_publish'}</button>
-                        <button type="button" class="btn btn-primary" id="disc-seo-publish-updates" hidden>{translate 'admin.discovery_publish_updates'}</button>
-                        <button type="button" class="btn btn-secondary" id="disc-seo-unpublish" hidden>{translate 'admin.discovery_unpublish'}</button>
-                    </div>
-                </div>
-            </section>
+<?php
+$stickySaveBarSaveId = 'disc-seo-publish-btn';
+$stickySaveBarSaveLabel = __('admin.discovery_publish');
+$stickySaveBarMessageId = 'disc-seo-publish-status';
+$stickySaveBarMessageClass = 'message';
+$stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="disc-seo-save">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="btn btn-danger" id="disc-seo-unpublish" hidden>' . htmlspecialchars(__('admin.discovery_unpublish')) . '</button>';
+$stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
+include $stickyTplDir . '/components/sticky-save-bar.php';
+?>
             <section class="card u-p-6 u-stack-4">
                 <div class="u-split u-align-center u-gap-3 u-mb-3">
                     <h3 class="u-m-0">{translate 'admin.discovery_seo_defaults'}</h3>

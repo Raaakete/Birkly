@@ -159,22 +159,13 @@
         if (dot) dot.setAttribute('data-ok', ok ? '1' : '0');
     }
 
-    function renderStatusStrip(data) {
+    function updatePackTabDots(data) {
         if (!data || !data.packs) return;
         Object.keys(data.packs).forEach(function (packId) {
             var pack = data.packs[packId];
-            var badge = document.querySelector('.disc-pack-badge[data-pack="' + packId + '"] .disc-pack-label');
-            if (badge) badge.textContent = pack.status_label || 'off';
             var dotId = packId === 'agent_guide' ? 'agent-guide' : packId;
             setTabDot(dotId, !!pack.live);
         });
-        var hosting = data.hosting || {};
-        var badge = $('#disc-hosting-badge');
-        if (badge) {
-            var mode = hosting.public_site_mode || 'none';
-            badge.textContent = mode === 'project' ? 'Birkly-hosted site' :
-                (mode === 'external' ? 'External site' : 'No public site');
-        }
     }
 
     function renderSeoSurfaces(seo) {
@@ -211,7 +202,7 @@
 
     function markSeoBaseline() {
         state.seoBaseline = seoFormFingerprint();
-        updateSeoActionButtons();
+        updateSeoStickyBar();
     }
 
     function isSeoDirty() {
@@ -219,21 +210,36 @@
         return seoFormFingerprint() !== state.seoBaseline;
     }
 
-    function updateSeoActionButtons() {
+    function updateSeoStickyBar() {
         var live = !!(state.status && state.status.packs && state.status.packs.seo && state.status.packs.seo.live);
         var dirty = isSeoDirty();
-        var pubBtn = $('#disc-seo-publish');
-        var pubUpdatesBtn = $('#disc-seo-publish-updates');
+        var pubBtn = $('#disc-seo-publish-btn');
         var unpubBtn = $('#disc-seo-unpublish');
         var saveBtn = $('#disc-seo-save');
+        var msgEl = $('#disc-seo-publish-status');
 
-        if (pubBtn) pubBtn.hidden = live;
-        if (unpubBtn) unpubBtn.hidden = !live;
-        if (pubUpdatesBtn) {
-            pubUpdatesBtn.hidden = !live;
-            pubUpdatesBtn.disabled = !dirty;
+        if (pubBtn) {
+            pubBtn.textContent = live ? 'Publish updates' : 'Publish';
+            pubBtn.disabled = live && !dirty;
         }
+        if (unpubBtn) unpubBtn.hidden = !live;
         if (saveBtn) saveBtn.disabled = live && !dirty;
+
+        if (msgEl) {
+            if (live && dirty) {
+                msgEl.textContent = 'You have unpublished changes.';
+                msgEl.className = 'main-actions-message message message-warning';
+                msgEl.hidden = false;
+            } else if (live) {
+                msgEl.textContent = 'SEO is live on your public site.';
+                msgEl.className = 'main-actions-message message message-success';
+                msgEl.hidden = false;
+            } else {
+                msgEl.textContent = 'Publish to activate meta tags, sitemap, and robots directives.';
+                msgEl.className = 'main-actions-message message';
+                msgEl.hidden = false;
+            }
+        }
     }
 
     function renderSeoForm(data) {
@@ -277,14 +283,7 @@
         }
 
         renderSeoForm(data);
-
-        var seoPub = $('#disc-seo-publish-status');
-        if (seoPub && data.packs.seo) {
-            seoPub.textContent = data.packs.seo.live
-                ? 'SEO is live on your public site.'
-                : 'Publish to activate meta tags, sitemap, and robots directives.';
-        }
-        updateSeoActionButtons();
+        updateSeoStickyBar();
 
         syncApEmbed(state.activeZone);
     }
@@ -316,7 +315,7 @@
         return getJson().then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message || 'Load failed');
             state.status = res.data;
-            renderStatusStrip(res.data);
+            updatePackTabDots(res.data);
             renderPackToggles(res.data);
             renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
             return res.data;
@@ -327,7 +326,7 @@
         return postJson({ action: 'save_pack', pack: packId, patch: patch }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
             state.status = res.data;
-            renderStatusStrip(res.data);
+            updatePackTabDots(res.data);
             renderPackToggles(res.data);
             showMessage('Saved');
             return res.data;
@@ -372,7 +371,7 @@
                     if (!proposal) return;
                     if ($('#disc-seo-description')) $('#disc-seo-description').value = proposal.description || '';
                     if ($('#disc-seo-title-suffix')) $('#disc-seo-title-suffix').value = proposal.title_suffix || '';
-                    updateSeoActionButtons();
+                    updateSeoStickyBar();
                     showMessage('Proposed defaults — review and save');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
@@ -384,24 +383,20 @@
             }).then(function (res) {
                 if (res.status !== 'ok') throw new Error(res.message);
                 state.status = res.data;
-                renderStatusStrip(res.data);
+                updatePackTabDots(res.data);
                 renderPackToggles(res.data);
                 markSeoBaseline();
                 showMessage(successMsg);
             });
         }
 
-        var pub = $('#disc-seo-publish');
-        var pubUpdates = $('#disc-seo-publish-updates');
+        var pub = $('#disc-seo-publish-btn');
         var unpub = $('#disc-seo-unpublish');
         if (pub) {
             pub.addEventListener('click', function () {
-                publishSeoFlow('SEO published').catch(function (e) { showMessage(e.message, true); });
-            });
-        }
-        if (pubUpdates) {
-            pubUpdates.addEventListener('click', function () {
-                publishSeoFlow('SEO updates published').catch(function (e) { showMessage(e.message, true); });
+                var live = !!(state.status && state.status.packs && state.status.packs.seo && state.status.packs.seo.live);
+                publishSeoFlow(live ? 'SEO updates published' : 'SEO published')
+                    .catch(function (e) { showMessage(e.message, true); });
             });
         }
         if (unpub) {
@@ -409,7 +404,7 @@
                 postJson({ action: 'unpublish_seo' }).then(function (res) {
                     if (res.status !== 'ok') throw new Error(res.message);
                     state.status = res.data;
-                    renderStatusStrip(res.data);
+                    updatePackTabDots(res.data);
                     renderPackToggles(res.data);
                     showMessage('SEO unpublished');
                 }).catch(function (e) { showMessage(e.message, true); });
@@ -420,12 +415,12 @@
         if (seoConfig) {
             seoConfig.addEventListener('input', function (e) {
                 if (e.target.matches('#disc-seo-description, #disc-seo-title-suffix, #disc-seo-delivery-mode, [data-seo-surface]')) {
-                    updateSeoActionButtons();
+                    updateSeoStickyBar();
                 }
             });
             seoConfig.addEventListener('change', function (e) {
                 if (e.target.matches('#disc-seo-delivery-mode, [data-seo-surface]')) {
-                    updateSeoActionButtons();
+                    updateSeoStickyBar();
                 }
             });
         }
@@ -440,19 +435,6 @@
                     state.status = res.data;
                     renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
                     showMessage('Verify checklist updated');
-                }).catch(function (e) { showMessage(e.message, true); });
-            });
-        }
-    }
-
-    function bindSetup() {
-        var btn = $('#disc-setup-btn');
-        if (btn) {
-            btn.addEventListener('click', function () {
-                postJson({ action: 'discovery_setup' }).then(function (res) {
-                    if (res.status !== 'ok') throw new Error(res.message);
-                    showMessage('Setup flow ready — enable packs and run verify');
-                    switchZone('seo');
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -473,7 +455,6 @@
         bindPackToggles();
         bindSeoActions();
         bindVerify();
-        bindSetup();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });
         });
