@@ -162,6 +162,7 @@ if ($action === 'discovery_setup' || $action === 'seo_generate_defaults') {
         $proposal['seo']['defaults']['description'] = trim((string) ($identity['short_description'] ?? ''));
         $name = trim((string) ($identity['official_name'] ?? ''));
         if ($name !== '') {
+            $proposal['seo']['defaults']['site_title'] = $name;
             $proposal['seo']['defaults']['title_suffix'] = ' · ' . $name;
         }
     }

@@ -55,6 +55,30 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-generate">{translate 'admin.discovery_generate_ai'}</button>
                 </div>
                 <p class="form-help">{translate 'admin.discovery_seo_defaults_help'}</p>
+                <div class="disc-seo-previews u-stack-3 u-mb-4">
+                    <div class="meta-preview-card">
+                        <h5>{translate 'admin.discovery_seo_preview_title'}</h5>
+                        <div class="serp-preview-title" id="disc-seo-serp-title">Site title</div>
+                        <div class="serp-preview-url" id="disc-seo-serp-url">yoursite.com</div>
+                        <div class="serp-preview-desc" id="disc-seo-serp-desc">Meta description preview</div>
+                    </div>
+                    <div class="meta-preview-card">
+                        <h5>Social preview</h5>
+                        <div class="social-preview">
+                            <div class="social-preview-image" id="disc-seo-social-image" hidden></div>
+                            <div class="social-preview-body">
+                                <div class="social-preview-site" id="disc-seo-social-site">yoursite.com</div>
+                                <div class="social-preview-title" id="disc-seo-social-title">Site title</div>
+                                <div class="social-preview-desc" id="disc-seo-social-desc">Description for social sharing</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="disc-seo-site-title">{translate 'admin.discovery_seo_site_title'}</label>
+                    <input type="text" id="disc-seo-site-title" class="input" placeholder="Your business name">
+                    <p class="form-help u-m-0">{translate 'admin.discovery_seo_site_title_help'}</p>
+                </div>
                 <div class="form-group">
                     <label for="disc-seo-description">{translate 'admin.discovery_seo_description'}</label>
                     <textarea id="disc-seo-description" class="input" rows="2"></textarea>
@@ -62,6 +86,44 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 <div class="form-group">
                     <label for="disc-seo-title-suffix">{translate 'admin.discovery_seo_title_suffix'}</label>
                     <input type="text" id="disc-seo-title-suffix" class="input" placeholder=" · {site name}">
+                </div>
+                <div class="form-group">
+                    <label for="disc-seo-og-image">{translate 'admin.discovery_seo_og_image'}</label>
+                    <input type="url" id="disc-seo-og-image" class="input" placeholder="https://…/share-image.jpg">
+                    <p class="form-help u-m-0">{translate 'admin.discovery_seo_og_image_help'}</p>
+                </div>
+                <div class="form-group">
+                    <label for="disc-seo-twitter-card">{translate 'admin.discovery_seo_twitter_card'}</label>
+                    <select id="disc-seo-twitter-card" class="input">
+                        <option value="summary_large_image">{translate 'admin.discovery_seo_twitter_large'}</option>
+                        <option value="summary">{translate 'admin.discovery_seo_twitter_summary'}</option>
+                    </select>
+                </div>
+            </section>
+            <section class="card u-p-6 u-stack-4">
+                <h3 class="u-m-0">{translate 'admin.discovery_seo_per_page_title'}</h3>
+                <p class="form-help">{translate 'admin.discovery_seo_per_page_help'}</p>
+                <a href="{admin_url 'content'}" class="btn btn-sm btn-secondary">{translate 'admin.discovery_seo_per_page_link'}</a>
+            </section>
+            <section class="card u-p-6 u-stack-4">
+                <h3 class="u-m-0">{translate 'admin.discovery_seo_technical_title'}</h3>
+                <p class="form-help">{translate 'admin.discovery_seo_technical_help'}</p>
+                <div class="form-group">
+                    <label for="disc-seo-robots">{translate 'admin.discovery_seo_robots'}</label>
+                    <select id="disc-seo-robots" class="input">
+                        <option value="index,follow">index, follow (recommended)</option>
+                        <option value="index,nofollow">index, nofollow</option>
+                        <option value="noindex,follow">noindex, follow</option>
+                        <option value="noindex,nofollow">noindex, nofollow</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="disc-seo-google-verify">{translate 'admin.discovery_seo_google_verify'}</label>
+                    <input type="text" id="disc-seo-google-verify" class="input" placeholder="google-site-verification content value">
+                </div>
+                <div class="form-group">
+                    <label for="disc-seo-bing-verify">{translate 'admin.discovery_seo_bing_verify'}</label>
+                    <input type="text" id="disc-seo-bing-verify" class="input" placeholder="msvalidate.01 content value">
                 </div>
             </section>
             <section class="card u-p-6 u-stack-4">

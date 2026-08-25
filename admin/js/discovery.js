@@ -6,15 +6,35 @@
 
     var DISC_ZONES = ['seo', 'agent-guide', 'webmcp'];
     var LEGACY_ZONE_MAP = { tools: 'webmcp', publish: 'agent-guide', guide: 'agent-guide' };
-    var SEO_SURFACES = [
-        { key: 'meta_tags', label: 'Meta tags (title, description)' },
-        { key: 'canonical', label: 'Canonical URLs' },
-        { key: 'open_graph', label: 'Open Graph / social cards' },
-        { key: 'json_ld_website', label: 'JSON-LD WebSite schema' },
-        { key: 'json_ld_article', label: 'JSON-LD Article on detail pages' },
-        { key: 'sitemap', label: 'Dynamic sitemap.xml' },
-        { key: 'robots_sitemap_line', label: 'robots.txt Sitemap: line' },
-        { key: 'indexnow', label: 'IndexNow ping on publish' },
+    var SEO_SURFACE_GROUPS = [
+        {
+            labelKey: 'discovery_seo_surfaces_onpage',
+            label: 'On-page tags',
+            items: [
+                { key: 'meta_tags', label: 'Meta tags (title, description)' },
+                { key: 'canonical', label: 'Canonical URLs' },
+                { key: 'open_graph', label: 'Open Graph / social cards' },
+                { key: 'twitter_cards', label: 'Twitter / X cards' },
+            ],
+        },
+        {
+            labelKey: 'discovery_seo_surfaces_structured',
+            label: 'Structured data (JSON-LD)',
+            items: [
+                { key: 'json_ld_website', label: 'WebSite schema' },
+                { key: 'json_ld_organization', label: 'Organization schema' },
+                { key: 'json_ld_article', label: 'Article on detail pages' },
+            ],
+        },
+        {
+            labelKey: 'discovery_seo_surfaces_crawl',
+            label: 'Crawling & discovery',
+            items: [
+                { key: 'sitemap', label: 'Dynamic sitemap.xml' },
+                { key: 'robots_sitemap_line', label: 'robots.txt Sitemap: line' },
+                { key: 'indexnow', label: 'IndexNow ping on publish' },
+            ],
+        },
     ];
 
     var state = {
@@ -24,6 +44,22 @@
         activeZone: 'seo',
         apReady: false,
     };
+
+    function t(key, fallback) {
+        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
+            return global.Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback || key;
+    }
+
+    function formatDateTime(iso) {
+        if (!iso) return '—';
+        try {
+            return new Date(iso).toLocaleString();
+        } catch (e) {
+            return iso;
+        }
+    }
 
     function toast(msg, type) {
         if (global.BirklyFeedback && global.BirklyFeedback.toast) {
@@ -173,20 +209,79 @@
         if (!box) return;
         var surfaces = (seo && seo.delivery && seo.delivery.surfaces) || {};
         box.innerHTML = '';
-        SEO_SURFACES.forEach(function (item) {
-            var label = document.createElement('label');
-            label.className = 'checkbox-label u-block u-mb-2';
-            var checked = surfaces[item.key] !== false;
-            label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + item.label;
-            box.appendChild(label);
+        SEO_SURFACE_GROUPS.forEach(function (group) {
+            var heading = document.createElement('h4');
+            heading.className = 'disc-surfaces-group-title u-m-0 u-mb-2 u-text-sm u-weight-semibold';
+            heading.textContent = t(group.labelKey, group.label);
+            box.appendChild(heading);
+            group.items.forEach(function (item) {
+                var label = document.createElement('label');
+                label.className = 'checkbox-label u-block u-mb-2';
+                var checked = surfaces[item.key] !== false;
+                label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + item.label;
+                box.appendChild(label);
+            });
         });
+    }
+
+    function buildSeoPreviewTitle() {
+        var siteTitle = ($('#disc-seo-site-title') || {}).value || '';
+        var suffix = ($('#disc-seo-title-suffix') || {}).value || '';
+        var title = siteTitle.trim() || 'Site title';
+        if (suffix && title.indexOf(suffix) < 0) {
+            title += suffix;
+        }
+        return title;
+    }
+
+    function renderSeoPreviews() {
+        var title = buildSeoPreviewTitle();
+        var desc = (($('#disc-seo-description') || {}).value || '').trim() || 'Meta description preview';
+        var image = (($('#disc-seo-og-image') || {}).value || '').trim();
+        var siteHost = 'yoursite.com';
+        if (state.status && state.status.hosting && state.status.hosting.public_site_url) {
+            try {
+                siteHost = new URL(state.status.hosting.public_site_url).host || siteHost;
+            } catch (e) { /* ignore */ }
+        }
+
+        var serpTitle = $('#disc-seo-serp-title');
+        var serpUrl = $('#disc-seo-serp-url');
+        var serpDesc = $('#disc-seo-serp-desc');
+        if (serpTitle) serpTitle.textContent = title;
+        if (serpUrl) serpUrl.textContent = siteHost;
+        if (serpDesc) serpDesc.textContent = desc;
+
+        var socialSite = $('#disc-seo-social-site');
+        var socialTitle = $('#disc-seo-social-title');
+        var socialDesc = $('#disc-seo-social-desc');
+        var socialImage = $('#disc-seo-social-image');
+        if (socialSite) socialSite.textContent = siteHost;
+        if (socialTitle) socialTitle.textContent = title;
+        if (socialDesc) socialDesc.textContent = desc;
+        if (socialImage) {
+            if (image) {
+                socialImage.hidden = false;
+                socialImage.style.backgroundImage = 'url("' + image.replace(/"/g, '\\"') + '")';
+            } else {
+                socialImage.hidden = true;
+                socialImage.style.backgroundImage = '';
+            }
+        }
     }
 
     function collectSeoPayload() {
         var seo = Object.assign({}, state.seo || {});
         seo.defaults = seo.defaults || {};
+        seo.defaults.site_title = ($('#disc-seo-site-title') || {}).value || '';
         seo.defaults.description = ($('#disc-seo-description') || {}).value || '';
         seo.defaults.title_suffix = ($('#disc-seo-title-suffix') || {}).value || '';
+        seo.defaults.og_image = ($('#disc-seo-og-image') || {}).value || '';
+        seo.defaults.twitter_card = ($('#disc-seo-twitter-card') || {}).value || 'summary_large_image';
+        seo.advanced = seo.advanced || {};
+        seo.advanced.robots = ($('#disc-seo-robots') || {}).value || 'index,follow';
+        seo.advanced.google_site_verification = ($('#disc-seo-google-verify') || {}).value || '';
+        seo.advanced.bing_site_verification = ($('#disc-seo-bing-verify') || {}).value || '';
         seo.delivery = seo.delivery || { mode: 'auto_inject', surfaces: {} };
         seo.delivery.mode = ($('#disc-seo-delivery-mode') || {}).value || 'auto_inject';
         seo.delivery.surfaces = seo.delivery.surfaces || {};
@@ -215,29 +310,31 @@
         var dirty = isSeoDirty();
         var pubBtn = $('#disc-seo-publish-btn');
         var unpubBtn = $('#disc-seo-unpublish');
-        var saveBtn = $('#disc-seo-save');
         var msgEl = $('#disc-seo-publish-status');
+        var publishedAt = state.seo && state.seo.published_at;
 
         if (pubBtn) {
-            pubBtn.textContent = live ? 'Publish updates' : 'Publish';
             pubBtn.disabled = live && !dirty;
+            pubBtn.textContent = live && dirty
+                ? t('discovery_publish_updates', 'Publish updates')
+                : t('discovery_publish', 'Publish');
         }
         if (unpubBtn) unpubBtn.hidden = !live;
-        if (saveBtn) saveBtn.disabled = live && !dirty;
 
         if (msgEl) {
-            if (live && dirty) {
-                msgEl.textContent = 'You have unpublished changes.';
-                msgEl.className = 'main-actions-message message message-warning';
-                msgEl.hidden = false;
-            } else if (live) {
-                msgEl.textContent = 'SEO is live on your public site.';
-                msgEl.className = 'main-actions-message message message-success';
-                msgEl.hidden = false;
-            } else {
-                msgEl.textContent = 'Publish to activate meta tags, sitemap, and robots directives.';
+            if (!live) {
+                msgEl.hidden = true;
+                msgEl.textContent = '';
                 msgEl.className = 'main-actions-message message';
+            } else if (dirty) {
                 msgEl.hidden = false;
+                msgEl.textContent = t('ag_sticky_unpublished', 'You have unpublished changes.');
+                msgEl.className = 'main-actions-message message message-warning';
+            } else {
+                msgEl.hidden = false;
+                msgEl.textContent = t('ag_sticky_published', 'Published at {time} — no unpublished changes.')
+                    .replace('{time}', formatDateTime(publishedAt));
+                msgEl.className = 'main-actions-message message message-success';
             }
         }
     }
@@ -245,13 +342,26 @@
     function renderSeoForm(data) {
         var seo = data.seo || {};
         state.seo = seo;
+        var siteTitle = $('#disc-seo-site-title');
         var desc = $('#disc-seo-description');
         var suffix = $('#disc-seo-title-suffix');
+        var ogImage = $('#disc-seo-og-image');
+        var twitterCard = $('#disc-seo-twitter-card');
+        var robots = $('#disc-seo-robots');
+        var googleVerify = $('#disc-seo-google-verify');
+        var bingVerify = $('#disc-seo-bing-verify');
         var mode = $('#disc-seo-delivery-mode');
+        if (siteTitle) siteTitle.value = (seo.defaults && seo.defaults.site_title) || '';
         if (desc) desc.value = (seo.defaults && seo.defaults.description) || '';
         if (suffix) suffix.value = (seo.defaults && seo.defaults.title_suffix) || '';
+        if (ogImage) ogImage.value = (seo.defaults && seo.defaults.og_image) || '';
+        if (twitterCard) twitterCard.value = (seo.defaults && seo.defaults.twitter_card) || 'summary_large_image';
+        if (robots) robots.value = (seo.advanced && seo.advanced.robots) || 'index,follow';
+        if (googleVerify) googleVerify.value = (seo.advanced && seo.advanced.google_site_verification) || '';
+        if (bingVerify) bingVerify.value = (seo.advanced && seo.advanced.bing_site_verification) || '';
         if (mode) mode.value = (seo.delivery && seo.delivery.mode) || 'auto_inject';
         renderSeoSurfaces(seo);
+        renderSeoPreviews();
         markSeoBaseline();
     }
 
@@ -369,8 +479,10 @@
                     if (res.status !== 'ok') throw new Error(res.message);
                     var proposal = res.data && res.data.seo && res.data.seo.defaults;
                     if (!proposal) return;
+                    if ($('#disc-seo-site-title')) $('#disc-seo-site-title').value = proposal.site_title || '';
                     if ($('#disc-seo-description')) $('#disc-seo-description').value = proposal.description || '';
                     if ($('#disc-seo-title-suffix')) $('#disc-seo-title-suffix').value = proposal.title_suffix || '';
+                    renderSeoPreviews();
                     updateSeoStickyBar();
                     showMessage('Proposed defaults — review and save');
                 }).catch(function (e) { showMessage(e.message, true); });
@@ -412,14 +524,17 @@
         }
 
         var seoConfig = $('#disc-seo-config');
+        var seoFields = '#disc-seo-site-title, #disc-seo-description, #disc-seo-title-suffix, #disc-seo-og-image, #disc-seo-twitter-card, #disc-seo-robots, #disc-seo-google-verify, #disc-seo-bing-verify, #disc-seo-delivery-mode, [data-seo-surface]';
         if (seoConfig) {
             seoConfig.addEventListener('input', function (e) {
-                if (e.target.matches('#disc-seo-description, #disc-seo-title-suffix, #disc-seo-delivery-mode, [data-seo-surface]')) {
+                if (e.target.matches(seoFields)) {
+                    renderSeoPreviews();
                     updateSeoStickyBar();
                 }
             });
             seoConfig.addEventListener('change', function (e) {
-                if (e.target.matches('#disc-seo-delivery-mode, [data-seo-surface]')) {
+                if (e.target.matches(seoFields)) {
+                    renderSeoPreviews();
                     updateSeoStickyBar();
                 }
             });
