@@ -56,6 +56,19 @@ echo "==> Robots augment\n";
 $robots = birkly_site_seo_robots_augment("User-agent: *\nAllow: /\n");
 assert_true(stripos($robots, 'Sitemap:') !== false, 'robots gets Sitemap line');
 
+echo "==> SSR context inject\n";
+birkly_discovery_save_pack('seo', ['enabled' => true]);
+$config = birkly_site_seo_load();
+$config['url_map']['pages']['/about.html'] = [
+    'label' => 'About',
+    'overrides' => ['title' => 'Custom About Title', 'description' => 'Custom about desc'],
+];
+birkly_site_seo_save($config);
+birkly_site_seo_publish();
+$ctx = birkly_seo_build_context('/about.html', [], [], '<html><head><title>About</title></head></html>');
+$injectedPage = birkly_site_seo_inject_head($html, $ctx);
+assert_true(stripos($injectedPage, '<title>Custom About Title</title>') !== false, 'page override title injected');
+
 echo "==> Signature part\n";
 assert_true(str_starts_with(birkly_site_seo_signature_part(), 'seo'), 'signature part prefix');
 
