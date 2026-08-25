@@ -159,6 +159,54 @@
     white-space: normal;
 }
 
+.disc-url-table .col-site-file {
+    min-width: 8.5rem;
+    width: 14%;
+}
+
+.disc-url-table .col-listing {
+    min-width: 16rem;
+    width: 38%;
+}
+
+.disc-url-table .col-kind {
+    min-width: 6.5rem;
+    white-space: nowrap;
+}
+
+.disc-url-table .col-google-title {
+    min-width: 10rem;
+}
+
+.disc-url-table .col-actions {
+    min-width: 9rem;
+    white-space: nowrap;
+}
+
+.disc-site-file {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    white-space: normal;
+}
+
+.disc-url-table .disc-url-listing-sub code {
+    display: inline;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+}
+
+.disc-binding-card .disc-site-file {
+    display: inline;
+    font-weight: 600;
+}
+
 .disc-url-table tbody td {
     vertical-align: top;
 }

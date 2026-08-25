@@ -124,16 +124,17 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                     <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">{translate 'admin.discovery_seo_url_map_filter_posts'}</button>
                     <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">{translate 'admin.discovery_seo_url_map_filter_redirects'}</button>
                 </div>
+                <p class="form-help u-m-0 u-mb-3" id="disc-seo-scan-diagnostics" hidden></p>
                 <p class="form-help u-m-0 u-mb-3" id="disc-seo-url-empty-help" hidden>{translate 'admin.discovery_seo_url_map_empty_pages'} <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">{translate 'admin.discovery_seo_url_map_project_link'}</a></p>
                 <div class="table-responsive disc-url-table-wrap">
                     <table class="table table--compact disc-url-table" id="disc-seo-url-table">
                         <thead>
                             <tr>
-                                <th>{translate 'admin.discovery_seo_url_map_col_file'}</th>
-                                <th>{translate 'admin.discovery_seo_url_map_col_listing'}</th>
-                                <th>{translate 'admin.discovery_seo_url_map_col_type'}</th>
-                                <th>{translate 'admin.discovery_seo_url_map_col_google_title'}</th>
-                                <th></th>
+                                <th class="col-site-file">{translate 'admin.discovery_seo_url_map_col_file'}</th>
+                                <th class="col-listing">{translate 'admin.discovery_seo_url_map_col_listing'}</th>
+                                <th class="col-kind">{translate 'admin.discovery_seo_url_map_col_type'}</th>
+                                <th class="col-google-title">{translate 'admin.discovery_seo_url_map_col_google_title'}</th>
+                                <th class="col-actions"></th>
                             </tr>
                         </thead>
                         <tbody id="disc-seo-url-tbody">
