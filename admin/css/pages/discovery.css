@@ -8,13 +8,6 @@
     margin-bottom: 1.5rem;
 }
 
-.disc-seo-actions {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: var(--surface-primary, #fff);
-}
-
 #disc-agent-guide-status,
 #disc-webmcp-config > .form-help {
     margin-bottom: 1rem;
@@ -39,21 +32,6 @@
 
 .disc-surfaces .checkbox-label {
     font-size: 14px;
-}
-
-.disc-pack-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.25rem 0.65rem;
-    border-radius: var(--radius-md, 6px);
-    background: var(--surface-secondary, #f4f5f2);
-    font-size: 13px;
-}
-
-.disc-pack-badge .disc-pack-label {
-    color: var(--fg-secondary, #5f6577);
-    font-weight: 500;
 }
 
 .disc-verify-status {
