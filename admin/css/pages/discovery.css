@@ -4,6 +4,27 @@
     display: none !important;
 }
 
+.disc-ap-embed {
+    margin-top: 1rem;
+}
+
+.ap-hub--discovery-embed #ap-hub-tablist {
+    display: none !important;
+}
+
+.ap-hub--discovery-embed .ap-guide-nav .side-nav-group-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--fg-tertiary, #a2a7b5);
+    margin: 0.75rem 0 0.35rem 0.75rem;
+    font-weight: 600;
+}
+
+.disc-surfaces .checkbox-label {
+    font-size: 14px;
+}
+
 .disc-pack-badge {
     display: inline-flex;
     align-items: center;

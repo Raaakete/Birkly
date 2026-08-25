@@ -1,6 +1,6 @@
 <?php
 /**
- * SEO pack configuration (P67-M1 / M4 foundation).
+ * SEO pack configuration and SSR injection (P67-M4/M5/M8).
  *
  * Storage: settings/seo.json — site-owned, merge-on-upgrade.
  */
@@ -130,13 +130,32 @@ function birkly_site_seo_save(array $input): array
 
 function birkly_site_seo_is_published(): bool
 {
+    if (!function_exists('birkly_discovery_pack_enabled')) {
+        require_once __DIR__ . '/discovery.php';
+    }
+    if (!birkly_discovery_pack_enabled('seo')) {
+        return false;
+    }
     $config = birkly_site_seo_load();
     return $config['enabled'] && $config['published'];
 }
 
+function birkly_site_seo_should_auto_inject(): bool
+{
+    if (!birkly_site_seo_is_published()) {
+        return false;
+    }
+    $config = birkly_site_seo_load();
+    return ($config['delivery']['mode'] ?? 'auto_inject') === 'auto_inject';
+}
+
+function birkly_site_seo_surface_enabled(string $surface): bool
+{
+    $config = birkly_site_seo_load();
+    return !empty($config['delivery']['surfaces'][$surface]);
+}
+
 /**
- * Publish SEO pack (independent of Agent Guide).
- *
  * @return array{ok:bool,config?:array<string,mixed>,error?:string}
  */
 function birkly_site_seo_publish(): array
@@ -145,19 +164,215 @@ function birkly_site_seo_publish(): array
     $config['enabled'] = true;
     $config['published'] = true;
     $config['published_at'] = date('c');
-
-    return birkly_site_seo_save($config);
+    $result = birkly_site_seo_save($config);
+    if ($result['ok']) {
+        require_once __DIR__ . '/discovery.php';
+        $discovery = birkly_discovery_load();
+        $discovery['packs']['seo']['enabled'] = true;
+        birkly_discovery_save($discovery);
+        if (function_exists('birkly_ai_presence_discovery_indexnow_ping')
+            && birkly_site_seo_surface_enabled('indexnow')) {
+            require_once __DIR__ . '/ai_presence_discovery.php';
+            birkly_ai_presence_discovery_indexnow_ping();
+        }
+    }
+    return $result;
 }
 
 /**
- * Unpublish SEO pack — retains config data.
- *
  * @return array{ok:bool,config?:array<string,mixed>,error?:string}
  */
 function birkly_site_seo_unpublish(): array
 {
     $config = birkly_site_seo_load();
     $config['published'] = false;
-
     return birkly_site_seo_save($config);
+}
+
+/**
+ * Resolve SEO meta from site defaults + optional Agent Guide identity + entry context.
+ *
+ * @param array<string, mixed> $context page_title, entry_meta, collection, slug
+ * @return array{title:string,description:string,canonical:string,og_image:string,site_name:string}
+ */
+function birkly_site_seo_resolve_meta(array $context = []): array
+{
+    $seo = birkly_site_seo_load();
+    $title = trim((string) ($context['page_title'] ?? ''));
+    $description = trim((string) ($context['meta_description'] ?? ''));
+    $canonical = trim((string) ($context['canonical'] ?? ''));
+    $ogImage = trim((string) ($context['og_image'] ?? ''));
+
+    $entryMeta = is_array($context['entry_meta'] ?? null) ? $context['entry_meta'] : [];
+    if ($title === '' && !empty($entryMeta['meta_title'])) {
+        $title = trim((string) $entryMeta['meta_title']);
+    }
+    if ($description === '' && !empty($entryMeta['meta_description'])) {
+        $description = trim((string) $entryMeta['meta_description']);
+    }
+    if ($ogImage === '' && !empty($entryMeta['og_image'])) {
+        $ogImage = trim((string) $entryMeta['og_image']);
+    }
+
+    if ($description === '') {
+        $description = trim((string) ($seo['defaults']['description'] ?? ''));
+    }
+    if ($ogImage === '') {
+        $ogImage = trim((string) ($seo['defaults']['og_image'] ?? ''));
+    }
+
+    $siteName = '';
+    if (function_exists('birkly_ai_presence_load_published')) {
+        require_once __DIR__ . '/ai_presence.php';
+        $published = birkly_ai_presence_load_published();
+        if (is_array($published)) {
+            $identity = is_array($published['identity'] ?? null) ? $published['identity'] : [];
+            $siteName = trim((string) ($identity['official_name'] ?? ''));
+            if ($description === '') {
+                $description = trim((string) ($identity['short_description'] ?? ''));
+            }
+        }
+    }
+
+    $suffix = trim((string) ($seo['defaults']['title_suffix'] ?? ''));
+    if ($suffix !== '' && $title !== '' && !str_contains($title, $suffix)) {
+        $title .= $suffix;
+    }
+
+    return [
+        'title' => $title,
+        'description' => $description,
+        'canonical' => $canonical,
+        'og_image' => $ogImage,
+        'site_name' => $siteName,
+    ];
+}
+
+/**
+ * Inject SEO meta tags into HTML head when published and auto-inject is on.
+ *
+ * @param array<string, mixed> $context
+ */
+function birkly_site_seo_inject_head(string $html, array $context = []): string
+{
+    if (!birkly_site_seo_should_auto_inject()) {
+        return $html;
+    }
+
+    $surfaces = birkly_site_seo_load()['delivery']['surfaces'] ?? [];
+    $meta = birkly_site_seo_resolve_meta($context);
+    $parts = [];
+    $esc = static fn (string $s): string => htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+
+    if (!empty($surfaces['meta_tags'])) {
+        if ($meta['title'] !== '' && stripos($html, '<title>') === false) {
+            $parts[] = '<title>' . $esc($meta['title']) . '</title>';
+        }
+        if ($meta['description'] !== '' && stripos($html, 'name="description"') === false) {
+            $parts[] = '<meta name="description" content="' . $esc($meta['description']) . '">';
+        }
+    }
+
+    if (!empty($surfaces['canonical']) && $meta['canonical'] !== '' && stripos($html, 'rel="canonical"') === false) {
+        $parts[] = '<link rel="canonical" href="' . $esc($meta['canonical']) . '">';
+    }
+
+    if (!empty($surfaces['open_graph'])) {
+        if ($meta['title'] !== '' && stripos($html, 'property="og:title"') === false) {
+            $parts[] = '<meta property="og:title" content="' . $esc($meta['title']) . '">';
+        }
+        if ($meta['description'] !== '' && stripos($html, 'property="og:description"') === false) {
+            $parts[] = '<meta property="og:description" content="' . $esc($meta['description']) . '">';
+        }
+        if ($meta['og_image'] !== '' && stripos($html, 'property="og:image"') === false) {
+            $parts[] = '<meta property="og:image" content="' . $esc($meta['og_image']) . '">';
+        }
+        if ($meta['canonical'] !== '' && stripos($html, 'property="og:url"') === false) {
+            $parts[] = '<meta property="og:url" content="' . $esc($meta['canonical']) . '">';
+        }
+        if (stripos($html, 'property="og:type"') === false) {
+            $parts[] = '<meta property="og:type" content="website">';
+        }
+    }
+
+    if (!empty($surfaces['json_ld_website']) && stripos($html, 'application/ld+json') === false) {
+        $ld = [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+        ];
+        if ($meta['site_name'] !== '') {
+            $ld['name'] = $meta['site_name'];
+        }
+        if ($meta['description'] !== '') {
+            $ld['description'] = $meta['description'];
+        }
+        if ($meta['canonical'] !== '') {
+            $ld['url'] = $meta['canonical'];
+        }
+        $json = json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json !== false) {
+            $json = str_replace('</', '<\/', $json);
+            $parts[] = '<script type="application/ld+json">' . $json . '</script>';
+        }
+    }
+
+    if (!empty($surfaces['json_ld_article']) && !empty($context['entry_title'])) {
+        $article = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => (string) $context['entry_title'],
+        ];
+        if ($meta['description'] !== '') {
+            $article['description'] = $meta['description'];
+        }
+        if ($meta['canonical'] !== '') {
+            $article['url'] = $meta['canonical'];
+        }
+        $json = json_encode($article, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json !== false && stripos($html, '"@type":"Article"') === false && stripos($html, '"@type": "Article"') === false) {
+            $json = str_replace('</', '<\/', $json);
+            $parts[] = '<script type="application/ld+json">' . $json . '</script>';
+        }
+    }
+
+    if ($parts === []) {
+        return $html;
+    }
+
+    $snippet = "\n    " . implode("\n    ", $parts);
+    if (preg_match('/<head[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+        $pos = $m[0][1] + strlen($m[0][0]);
+        return substr($html, 0, $pos) . $snippet . substr($html, $pos);
+    }
+
+    return $snippet . "\n" . $html;
+}
+
+/**
+ * Append Sitemap line to robots when SEO sitemap surface is on.
+ */
+function birkly_site_seo_robots_augment(string $body): string
+{
+    if (!birkly_site_seo_is_published() || !birkly_site_seo_surface_enabled('robots_sitemap_line')) {
+        return $body;
+    }
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    $sitemap = birkly_ai_presence_discovery_sitemap_url();
+    if ($sitemap === null || stripos($body, 'Sitemap:') !== false) {
+        return $body;
+    }
+    return rtrim($body) . "\nSitemap: " . $sitemap . "\n";
+}
+
+function birkly_site_seo_signature_part(): string
+{
+    if (!birkly_site_seo_is_published()) {
+        return 'seo0';
+    }
+    $surfaces = birkly_site_seo_load()['delivery']['surfaces'] ?? [];
+    $bits = '';
+    foreach (['meta_tags', 'canonical', 'open_graph', 'json_ld_website', 'json_ld_article'] as $key) {
+        $bits .= !empty($surfaces[$key]) ? '1' : '0';
+    }
+    return 'seo' . $bits;
 }

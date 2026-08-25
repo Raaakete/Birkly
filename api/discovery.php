@@ -132,4 +132,41 @@ if ($action === 'unpublish_seo') {
     exit;
 }
 
+if ($action === 'verify') {
+    $result = birkly_discovery_run_verify();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => array_merge(birkly_discovery_status(), [
+            'verify_checks' => $result['checks'],
+            'verify_last_run' => $result['ran_at'],
+        ]),
+    ]);
+    exit;
+}
+
+if ($action === 'discovery_setup' || $action === 'seo_generate_defaults') {
+    $status = birkly_discovery_status();
+    $proposal = [
+        'seo' => [
+            'defaults' => [
+                'description' => '',
+                'title_suffix' => '',
+            ],
+        ],
+        'message' => 'Review proposed defaults before applying.',
+    ];
+    if ($action === 'seo_generate_defaults') {
+        require_once __DIR__ . '/../core/ai_presence.php';
+        $draft = birkly_ai_presence_load_draft();
+        $identity = is_array($draft['identity'] ?? null) ? $draft['identity'] : [];
+        $proposal['seo']['defaults']['description'] = trim((string) ($identity['short_description'] ?? ''));
+        $name = trim((string) ($identity['official_name'] ?? ''));
+        if ($name !== '') {
+            $proposal['seo']['defaults']['title_suffix'] = ' · ' . $name;
+        }
+    }
+    echo json_encode(['status' => 'ok', 'data' => $proposal, 'status_snapshot' => $status]);
+    exit;
+}
+
 echo json_encode(['status' => 'error', 'message' => 'Unknown action']);
