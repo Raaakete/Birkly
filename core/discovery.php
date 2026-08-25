@@ -186,6 +186,131 @@ function birkly_discovery_pack_enabled(string $packId): bool
 }
 
 /**
+ * Canonical discovery endpoint URLs (wraps Agent Guide map + SEO additions).
+ *
+ * @return array<string, ?string>
+ */
+function birkly_discovery_url_map(): array
+{
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    require_once __DIR__ . '/hosting_urls.php';
+
+    $map = birkly_ai_presence_discovery_url_map();
+    $base = birkly_ai_presence_discovery_public_base();
+    if ($base === '') {
+        $hosting = birkly_hosting_load();
+        $base = rtrim((string) ($hosting['public_site_url'] ?? $hosting['cms_base_url'] ?? ''), '/');
+    }
+
+    $map['homepage'] = $base !== '' ? $base . '/' : null;
+    $map['for_agents_md'] = ($map['for_agents'] ?? null) !== null ? ($map['for_agents'] . '.md') : null;
+    $map['for_agents_json'] = $map['agent_guide_json'] ?? null;
+    $map['sitemap_xml'] = $map['sitemap'] ?? null;
+    $map['robots_txt'] = $map['robots'] ?? null;
+
+    return $map;
+}
+
+function birkly_discovery_sitemap_is_live(): bool
+{
+    require_once __DIR__ . '/site_seo.php';
+    require_once __DIR__ . '/ai_presence_discovery.php';
+
+    if (birkly_site_seo_is_published() && birkly_site_seo_surface_enabled('sitemap')) {
+        return true;
+    }
+
+    $settings = birkly_ai_presence_discovery_publication_settings();
+
+    return birkly_ai_presence_is_publicly_live() && !empty($settings['discovery_sitemap']);
+}
+
+/**
+ * @return list<array{id:string,pack:string,label:string,status:string,detail:string}>
+ */
+function birkly_discovery_verify_checks(): array
+{
+    require_once __DIR__ . '/ai_presence_discovery.php';
+    require_once __DIR__ . '/site_seo.php';
+
+    $checks = [];
+    $agDiscovery = birkly_ai_presence_discovery_status();
+    foreach ($agDiscovery['checks'] ?? [] as $check) {
+        if (!is_array($check)) {
+            continue;
+        }
+        $check['pack'] = 'agent_guide';
+        $checks[] = $check;
+    }
+
+    if (birkly_site_seo_is_published()) {
+        $checks[] = [
+            'id' => 'seo_meta_inject',
+            'pack' => 'seo',
+            'label' => 'SEO meta injection enabled',
+            'status' => birkly_site_seo_surface_enabled('meta_tags') ? 'pass' : 'warn',
+            'detail' => birkly_site_seo_surface_enabled('meta_tags')
+                ? 'Title and description tags inject on project pages when missing.'
+                : 'Meta tag injection is off in SEO delivery surfaces.',
+        ];
+        $checks[] = [
+            'id' => 'seo_sitemap',
+            'pack' => 'seo',
+            'label' => 'Sitemap published',
+            'status' => birkly_discovery_sitemap_is_live() ? 'pass' : 'fail',
+            'detail' => birkly_discovery_sitemap_is_live()
+                ? '/sitemap.xml is live when SEO or Agent Guide sitemap is on.'
+                : 'Enable sitemap in SEO or Agent Guide delivery settings.',
+        ];
+    } else {
+        $checks[] = [
+            'id' => 'seo_published',
+            'pack' => 'seo',
+            'label' => 'SEO pack published',
+            'status' => 'neutral',
+            'detail' => 'Publish the SEO pack to activate meta tags and sitemap.',
+        ];
+    }
+
+    if (birkly_discovery_pack_enabled('webmcp')) {
+        require_once __DIR__ . '/webmcp.php';
+        $checks[] = [
+            'id' => 'webmcp_enabled',
+            'pack' => 'webmcp',
+            'label' => 'WebMCP active',
+            'status' => birkly_webmcp_is_enabled() ? 'pass' : 'warn',
+            'detail' => birkly_webmcp_is_enabled()
+                ? 'WebMCP runtime injects on Birkly-hosted project pages when auto-inject is on.'
+                : 'WebMCP pack is on — enable at least one tool to go live.',
+        ];
+    } else {
+        $checks[] = [
+            'id' => 'webmcp_enabled',
+            'pack' => 'webmcp',
+            'label' => 'WebMCP',
+            'status' => 'neutral',
+            'detail' => 'Enable the WebMCP pack and turn on tools to expose visitor browser actions.',
+        ];
+    }
+
+    return $checks;
+}
+
+/**
+ * @return array{ok:bool,checks:list<array<string,mixed>>,ran_at:string}
+ */
+function birkly_discovery_run_verify(): array
+{
+    $checks = birkly_discovery_verify_checks();
+    $ranAt = date('c');
+    $config = birkly_discovery_load();
+    $config['verify_last_run'] = $ranAt;
+    birkly_discovery_save($config);
+
+    return ['ok' => true, 'checks' => $checks, 'ran_at' => $ranAt];
+}
+
+/**
  * @param array<string, mixed> $patch Partial pack update: enabled, delivery.mode, …
  * @return array{ok:bool,config?:array<string,mixed>,error?:string}
  */
@@ -267,18 +392,9 @@ function birkly_discovery_status(): array
         ];
     }
 
-    $verify = [];
-    if (function_exists('birkly_ai_presence_discovery_status')) {
-        require_once __DIR__ . '/ai_presence_discovery.php';
-        $agDiscovery = birkly_ai_presence_discovery_status();
-        foreach ($agDiscovery['checks'] ?? [] as $check) {
-            if (!is_array($check)) {
-                continue;
-            }
-            $check['pack'] = 'agent_guide';
-            $verify[] = $check;
-        }
-    }
+    $verify = birkly_discovery_verify_checks();
+
+    $seoConfig = birkly_site_seo_load();
 
     return [
         'packs' => $packs,
@@ -288,6 +404,8 @@ function birkly_discovery_status(): array
             'cms_base_url' => (string) ($hosting['cms_base_url'] ?? ''),
         ],
         'discovery' => $discovery,
+        'seo' => $seoConfig,
         'verify_checks' => $verify,
+        'verify_last_run' => $discovery['verify_last_run'] ?? null,
     ];
 }
