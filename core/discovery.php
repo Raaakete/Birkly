@@ -58,6 +58,11 @@ function birkly_discovery_load(): array
         return $GLOBALS['__birkly_discovery_config'];
     }
 
+    static $migrating = false;
+    if ($migrating) {
+        return birkly_discovery_defaults();
+    }
+
     $config = birkly_discovery_defaults();
     $path = birkly_discovery_settings_path();
     if (is_readable($path)) {
@@ -69,7 +74,9 @@ function birkly_discovery_load(): array
             }
         }
     } else {
+        $migrating = true;
         $config = birkly_discovery_migrate_from_legacy($config);
+        $migrating = false;
     }
 
     $GLOBALS['__birkly_discovery_config'] = $config;
@@ -90,7 +97,7 @@ function birkly_discovery_migrate_from_legacy(array $config): array
     $published = birkly_ai_presence_load_published();
     $version = (int) ($meta['published_version'] ?? 0);
 
-    if ($version >= 1 && birkly_ai_presence_is_publicly_live($published, $meta)) {
+    if ($version >= 1 && birkly_ai_presence_published_snapshot_enabled($published, $meta)) {
         $config['packs']['agent_guide']['enabled'] = true;
     } elseif ($published !== null && !empty($published['publication_settings']['enabled'])) {
         $config['packs']['agent_guide']['enabled'] = true;
