@@ -243,7 +243,6 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                 <div class="sidebar-tabs tabs-v2-root">
                     <div class="tabs tab-nav">
                         <button type="button" class="tab tab-btn active" data-tab="general">General</button>
-                        <button type="button" class="tab tab-btn" data-tab="metadata">Meta Data</button>
                         <button type="button" class="tab tab-btn" data-tab="templating">Templating</button>
                     </div>
                     
@@ -273,6 +272,12 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <small class="form-text">Set your site URL in <a href="<?= admin_url('settings') ?>">Settings</a> for a full preview.</small>
                                     <?php endif; ?>
                                 </div>
+                                <?php if (!empty($sidebar['discovery_seo_url'])): ?>
+                                    <div class="form-group u-pt-2">
+                                        <a href="<?= htmlspecialchars($sidebar['discovery_seo_url']) ?>" class="btn btn-ghost btn-sm">Search listing in Discovery</a>
+                                        <small class="form-text">Edit how this entry appears in Google and social networks.</small>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             
                             <div class="info-item u-pt-4 u-border-top">
@@ -470,109 +475,6 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 </div>
                             <?php endif; ?>
                             <div id="sidebar-validation" class="sidebar-validation" hidden aria-live="polite"></div>
-                        </div>
-                        
-                        <!-- Meta Data Tab -->
-                        <div class="tab-pane" id="metadata-tab">
-                            <div class="meta-preview-card">
-                                <h5>Search preview</h5>
-                                <div class="serp-preview-title" id="serp-preview-title">Page title</div>
-                                <div class="serp-preview-url" id="serp-preview-url">/collection/slug</div>
-                                <div class="serp-preview-desc" id="serp-preview-desc">Meta description preview</div>
-                            </div>
-                            <div class="meta-preview-card">
-                                <h5>Social preview</h5>
-                                <div class="social-preview">
-                                    <div class="social-preview-image" id="social-preview-image" hidden></div>
-                                    <div class="social-preview-body">
-                                        <div class="social-preview-site"><?= htmlspecialchars(parse_url($sidebar['site_url'] ?? '', PHP_URL_HOST) ?: 'yoursite.com') ?></div>
-                                        <div class="social-preview-title" id="social-preview-title">Page title</div>
-                                        <div class="social-preview-desc" id="social-preview-desc">Description for social sharing</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="meta_title">Meta Title</label>
-                                <input type="text" name="meta_title" id="meta_title" class="input" value="<?= htmlspecialchars($entry['meta_title'] ?? '') ?>" placeholder="Page title for search engines">
-                                <div class="char-counter" id="meta-title-counter"></div>
-                                <small class="field-fallback-hint">Falls back to entry title when empty</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="meta_description">Meta Description</label>
-                                <textarea name="meta_description" id="meta_description" class="input" rows="3" placeholder="Brief description for search engines"><?= htmlspecialchars($entry['meta_description'] ?? '') ?></textarea>
-                                <div class="char-counter" id="meta-description-counter"></div>
-                                <small class="field-fallback-hint">Used by search engines and AI crawlers to summarize this page</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="meta_keywords">Meta Keywords</label>
-                                <input type="text" name="meta_keywords" id="meta_keywords" class="input" value="<?= htmlspecialchars($entry['meta_keywords'] ?? '') ?>" placeholder="keyword1, keyword2, keyword3">
-                                <small class="form-text">
-                                    Optional — less important for modern SEO, but can help topical clarity
-                                </small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="og_title">Open Graph Title</label>
-                                <input type="text" name="og_title" id="og_title" class="input" value="<?= htmlspecialchars($entry['og_title'] ?? '') ?>" placeholder="Title for social media sharing">
-                                <small class="field-fallback-hint">Defaults to meta title, then entry title</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="og_description">Open Graph Description</label>
-                                <textarea name="og_description" id="og_description" class="input" rows="3" placeholder="Description for social media sharing"><?= htmlspecialchars($entry['og_description'] ?? '') ?></textarea>
-                                <small class="field-fallback-hint">Defaults to meta description when empty</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="og_image">Open Graph Image</label>
-                                <div class="og-image-row">
-                                    <input type="text" name="og_image" id="og_image" class="input" value="<?= htmlspecialchars($entry['og_image'] ?? '') ?>" placeholder="URL to image for social media sharing">
-                                    <button type="button" class="btn btn-secondary btn-sm" id="og-image-pick-btn">Choose</button>
-                                </div>
-                                <small class="form-text">
-                                    Recommended: 1200×630px — shown when shared on social networks
-                                </small>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="canonical_url">Canonical URL</label>
-                                <input type="url" name="canonical_url" id="canonical_url" class="input" value="<?= htmlspecialchars($entry['canonical_url'] ?? '') ?>" placeholder="https://example.com/preferred-url">
-                                <small class="form-text">
-                                    Optional — tell search engines the preferred URL if duplicates exist
-                                </small>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" name="robots_noindex" id="robots_noindex" value="1" <?= !empty($entry['robots_noindex']) ? 'checked' : '' ?>>
-                                    <span>Hide from search engines (noindex)</span>
-                                </label>
-                            </div>
-
-                            <div class="ai-seo-panel">
-                                <h4>SEO &amp; AI discoverability</h4>
-                                <ul class="ai-seo-tips">
-                                    <li>Write a clear, specific title — AI systems use it as the primary label for this page.</li>
-                                    <li>Meta description should answer “what is this page about?” in plain language.</li>
-                                    <li>Add structured data so machines understand content type, author, and dates.</li>
-                                    <li>Your site template must output these fields — Birkly stores them; your HTML renders them.</li>
-                                </ul>
-                                <div class="form-group">
-                                    <label for="ai_summary">AI summary <span class="u-fg-secondary u-weight-regular">(optional)</span></label>
-                                    <textarea name="ai_summary" id="ai_summary" class="input" rows="2" placeholder="One or two sentences in plain language for AI assistants and crawlers"><?= htmlspecialchars($entry['ai_summary'] ?? '') ?></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="structured_data_json">Structured data (JSON-LD)</label>
-                                    <textarea name="structured_data_json" id="structured_data_json" class="input" rows="6" placeholder='{"@context":"https://schema.org",...}'><?= htmlspecialchars($entry['structured_data_json'] ?? '') ?></textarea>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="generate-structured-data-btn">Generate Article schema</button>
-                                    <small class="form-text">
-                                        Paste into your template's <code>&lt;head&gt;</code> as <code>&lt;script type="application/ld+json"&gt;</code>
-                                    </small>
-                                </div>
-                            </div>
                         </div>
                         
                         <!-- Templating Tab -->

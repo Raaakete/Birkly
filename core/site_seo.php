@@ -198,6 +198,7 @@ function birkly_site_seo_surface_enabled(string $surface): bool
 function birkly_site_seo_publish(): array
 {
     $config = birkly_site_seo_load();
+    $config = birkly_seo_import_legacy_entry_meta($config);
     $config = birkly_seo_materialize_detail_urls($config);
     $config['enabled'] = true;
     $config['published'] = true;
