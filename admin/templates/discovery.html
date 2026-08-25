@@ -56,6 +56,17 @@
             </div>
         </section>
         <div id="disc-seo-config" class="u-stack-6" hidden>
+            <section class="card u-p-4 disc-seo-actions" id="disc-seo-actions">
+                <div class="u-split u-align-center u-gap-3 u-flex-wrap">
+                    <p class="form-help u-m-0" id="disc-seo-publish-status"></p>
+                    <div class="u-cluster u-gap-2">
+                        <button type="button" class="btn btn-secondary" id="disc-seo-save">{translate 'admin.save_draft'}</button>
+                        <button type="button" class="btn btn-primary" id="disc-seo-publish">{translate 'admin.discovery_publish'}</button>
+                        <button type="button" class="btn btn-primary" id="disc-seo-publish-updates" hidden>{translate 'admin.discovery_publish_updates'}</button>
+                        <button type="button" class="btn btn-secondary" id="disc-seo-unpublish" hidden>{translate 'admin.discovery_unpublish'}</button>
+                    </div>
+                </div>
+            </section>
             <section class="card u-p-6 u-stack-4">
                 <div class="u-split u-align-center u-gap-3 u-mb-3">
                     <h3 class="u-m-0">{translate 'admin.discovery_seo_defaults'}</h3>
@@ -70,7 +81,6 @@
                     <label for="disc-seo-title-suffix">{translate 'admin.discovery_seo_title_suffix'}</label>
                     <input type="text" id="disc-seo-title-suffix" class="input" placeholder=" · {site name}">
                 </div>
-                <button type="button" class="btn btn-secondary" id="disc-seo-save">{translate 'admin.save_draft'}</button>
             </section>
             <section class="card u-p-6 u-stack-4">
                 <h3 class="u-m-0">{translate 'admin.discovery_delivery'}</h3>
@@ -83,18 +93,6 @@
                     </select>
                 </div>
                 <div class="disc-surfaces" id="disc-seo-surfaces"></div>
-            </section>
-            <section class="card u-p-6 u-stack-4">
-                <div class="u-split u-align-center">
-                    <div>
-                        <h3 class="u-m-0">{translate 'admin.discovery_publish_seo'}</h3>
-                        <p class="form-help u-m-0" id="disc-seo-publish-status"></p>
-                    </div>
-                    <div class="u-cluster">
-                        <button type="button" class="btn btn-primary" id="disc-seo-publish">{translate 'admin.discovery_publish'}</button>
-                        <button type="button" class="btn btn-secondary" id="disc-seo-unpublish" hidden>{translate 'admin.discovery_unpublish'}</button>
-                    </div>
-                </div>
             </section>
         </div>
     </div>
@@ -170,8 +168,6 @@ echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', 
     </div>
     <ul class="ai-presence-item-list" id="disc-verify-checks" aria-live="polite"></ul>
 </details>
-
-<div id="disc-message" class="message" hidden role="status"></div>
 
 {include_style 'pages/discovery.css'}
 {include_style 'components/agent-guide-wizard.css'}
