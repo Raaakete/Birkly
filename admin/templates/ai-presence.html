@@ -18,7 +18,10 @@ $stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id
     . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
-include dirname($stickyTplDir) . '/partials/ap-hub-body.php';
+if (!function_exists('render_template_file')) {
+    require_once dirname($stickyTplDir) . '/template_parser.php';
+}
+echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', []);
 
 {include_style 'components/agent-guide-wizard.css'}
 {include_script 'agent-guide-wizard.js'}
