@@ -45,7 +45,20 @@ function birkly_site_seo_defaults(): array
             'google_site_verification' => '',
             'bing_site_verification' => '',
         ],
-        '_schema_version' => 2,
+        'detail_bindings' => [],
+        'url_map' => [
+            'pages' => [],
+            'details' => [],
+            'redirects' => [],
+            'custom' => [],
+            'excludes' => [],
+        ],
+        'scan' => [
+            'last_at' => null,
+            'project_revision' => '',
+            'detected_templates' => [],
+        ],
+        '_schema_version' => 3,
     ];
 }
 
@@ -114,7 +127,12 @@ function birkly_site_seo_normalize(array $input): array
         $out['advanced']['robots'] = 'index,follow';
     }
 
-    return $out;
+    $version = (int) ($out['_schema_version'] ?? 2);
+    if ($version < 3) {
+        $out['_schema_version'] = 3;
+    }
+
+    return birkly_seo_normalize_url_map_sections($out);
 }
 
 /**
@@ -180,6 +198,7 @@ function birkly_site_seo_surface_enabled(string $surface): bool
 function birkly_site_seo_publish(): array
 {
     $config = birkly_site_seo_load();
+    $config = birkly_seo_materialize_detail_urls($config);
     $config['enabled'] = true;
     $config['published'] = true;
     $config['published_at'] = date('c');
@@ -454,5 +473,13 @@ function birkly_site_seo_signature_part(): string
     foreach (['meta_tags', 'canonical', 'open_graph', 'twitter_cards', 'json_ld_website', 'json_ld_organization', 'json_ld_article'] as $key) {
         $bits .= !empty($surfaces[$key]) ? '1' : '0';
     }
-    return 'seo' . $bits;
+    $map = birkly_site_seo_load();
+    $revision = substr(hash('sha256', json_encode([
+        $map['url_map']['pages'] ?? [],
+        $map['url_map']['details'] ?? [],
+        $map['detail_bindings'] ?? [],
+    ]) ?: ''), 0, 6);
+    return 'seo' . $bits . 'm' . $revision;
 }
+
+require_once __DIR__ . '/site_seo_url_map.php';

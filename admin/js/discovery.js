@@ -41,6 +41,8 @@
         status: null,
         seo: null,
         seoBaseline: null,
+        urlMapRows: [],
+        urlMapFilter: 'all',
         activeZone: 'seo',
         apReady: false,
     };
@@ -394,6 +396,8 @@
 
         renderSeoForm(data);
         updateSeoStickyBar();
+        renderUrlMap(data.seo || state.seo);
+        renderDetailBindings(data.seo || state.seo);
 
         syncApEmbed(state.activeZone);
     }
@@ -441,6 +445,154 @@
             showMessage('Saved');
             return res.data;
         });
+    }
+
+    function renderUrlMap(seo) {
+        var tbody = $('#disc-seo-url-tbody');
+        var meta = $('#disc-seo-scan-meta');
+        if (!tbody) return;
+        var rows = state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(seo);
+        var filter = state.urlMapFilter || 'all';
+        var filtered = rows.filter(function (row) {
+            return filter === 'all' || row.type === filter;
+        });
+        tbody.innerHTML = '';
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr><td colspan="5" class="u-fg-secondary">No URLs yet — rescan project to discover pages.</td></tr>';
+        } else {
+            filtered.forEach(function (row) {
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td><code class="u-text-sm">' + escapeHtml(row.url || '') + '</code></td>'
+                    + '<td>' + escapeHtml(row.label || '') + '</td>'
+                    + '<td><span class="badge">' + escapeHtml(row.type || '') + '</span></td>'
+                    + '<td>' + escapeHtml(row.title || '—') + '</td>'
+                    + '<td><button type="button" class="btn btn-ghost btn-sm" data-url-edit="' + escapeHtml(row.key || '') + '">Edit</button></td>';
+                tbody.appendChild(tr);
+            });
+        }
+        if (meta && seo && seo.scan && seo.scan.last_at) {
+            meta.textContent = 'Last scan: ' + seo.scan.last_at
+                + (seo.scan.project_revision ? ' · rev ' + seo.scan.project_revision : '');
+            meta.hidden = false;
+        }
+    }
+
+    function buildUrlMapRowsFromSeo(seo) {
+        if (!seo || !seo.url_map) return [];
+        var rows = [];
+        var pages = seo.url_map.pages || {};
+        Object.keys(pages).forEach(function (path) {
+            var page = pages[path] || {};
+            var overrides = page.overrides || {};
+            rows.push({
+                key: path,
+                type: 'page',
+                url: path,
+                label: page.label || path,
+                title: overrides.title || '',
+            });
+        });
+        var details = seo.url_map.details || {};
+        Object.keys(details).forEach(function (key) {
+            var detail = details[key] || {};
+            var overrides = detail.overrides || {};
+            rows.push({
+                key: key,
+                type: 'detail',
+                url: key,
+                label: detail.label || key,
+                title: overrides.title || '',
+            });
+        });
+        (seo.url_map.redirects || []).forEach(function (redirect, i) {
+            rows.push({
+                key: 'redirect:' + i,
+                type: 'redirect',
+                url: redirect.from || '',
+                label: '→ ' + (redirect.to || ''),
+                title: String(redirect.status || 301),
+            });
+        });
+        return rows;
+    }
+
+    function renderDetailBindings(seo) {
+        var list = $('#disc-seo-bindings-list');
+        if (!list) return;
+        list.innerHTML = '';
+        var bindings = (seo && seo.detail_bindings) || [];
+        if (!bindings.length) {
+            list.innerHTML = '<p class="form-help u-m-0">No bindings yet. Templates with &lt;meta name="birkly-collection"&gt; are auto-detected on rescan.</p>';
+            return;
+        }
+        bindings.forEach(function (binding) {
+            var row = document.createElement('div');
+            row.className = 'u-split u-align-center u-gap-2';
+            var excerpt = binding.excerpt_field || 'excerpt';
+            row.innerHTML = '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
+                + ' · <code>' + escapeHtml(binding.template_path || '') + '</code>'
+                + ' <span class="u-fg-secondary u-text-sm">excerpt: ' + escapeHtml(excerpt) + '</span></div>';
+            list.appendChild(row);
+        });
+    }
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function bindUrlMapActions() {
+        var rescan = $('#disc-seo-rescan');
+        if (rescan) {
+            rescan.addEventListener('click', function () {
+                postJson({ action: 'scan_urls' }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.seo = res.data.seo;
+                    state.urlMapRows = res.data.rows || [];
+                    state.status = res.data.status || state.status;
+                    renderUrlMap(state.seo);
+                    renderDetailBindings(state.seo);
+                    showMessage('Project scanned — ' + state.urlMapRows.length + ' URLs');
+                }).catch(function (e) { showMessage(e.message, true); });
+            });
+        }
+        document.querySelectorAll('.disc-url-filter').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.disc-url-filter').forEach(function (b) {
+                    b.classList.remove('is-active');
+                });
+                btn.classList.add('is-active');
+                state.urlMapFilter = btn.getAttribute('data-filter') || 'all';
+                renderUrlMap(state.seo);
+            });
+        });
+        var tbody = $('#disc-seo-url-tbody');
+        if (tbody) {
+            tbody.addEventListener('click', function (e) {
+                var btn = e.target.closest('[data-url-edit]');
+                if (!btn) return;
+                var key = btn.getAttribute('data-url-edit');
+                var row = (state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(state.seo))
+                    .find(function (r) { return r.key === key; });
+                if (!row) return;
+                var title = window.prompt('Title override (leave blank for auto)', row.title || '');
+                if (title === null) return;
+                var patch = { pages: {}, details: {} };
+                if (row.type === 'page') {
+                    patch.pages[row.key] = { overrides: { title: title } };
+                } else if (row.type === 'detail') {
+                    patch.details[row.key] = { overrides: { title: title } };
+                } else {
+                    return;
+                }
+                postJson({ action: 'save_url_map', url_map: patch }).then(function (res) {
+                    if (res.status !== 'ok') throw new Error(res.message);
+                    state.seo = res.data.seo;
+                    state.urlMapRows = res.data.rows || buildUrlMapRowsFromSeo(state.seo);
+                    renderUrlMap(state.seo);
+                    showMessage('URL override saved');
+                }).catch(function (err) { showMessage(err.message, true); });
+            });
+        }
     }
 
     function bindPackToggles() {
@@ -569,6 +721,7 @@
         initHubZones();
         bindPackToggles();
         bindSeoActions();
+        bindUrlMapActions();
         bindVerify();
         window.addEventListener('birkly:discovery-refresh', function () {
             load().catch(function () { /* ignore */ });

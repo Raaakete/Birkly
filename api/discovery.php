@@ -22,6 +22,7 @@ require_once 'validate.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/discovery.php';
 require_once __DIR__ . '/../core/site_seo.php';
+require_once __DIR__ . '/../core/site_seo_url_map.php';
 
 if (!isset($_SESSION['user'])) {
     http_response_code(401);
@@ -167,6 +168,67 @@ if ($action === 'discovery_setup' || $action === 'seo_generate_defaults') {
         }
     }
     echo json_encode(['status' => 'ok', 'data' => $proposal, 'status_snapshot' => $status]);
+    exit;
+}
+
+if ($action === 'scan_urls') {
+    $result = birkly_seo_scan_and_save();
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Scan failed']);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'seo' => $result['config'],
+            'rows' => $result['rows'] ?? [],
+            'status' => birkly_discovery_status(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'save_url_map') {
+    $patch = $input['url_map'] ?? $input;
+    if (!is_array($patch)) {
+        $patch = [];
+    }
+    unset($patch['action'], $patch['_csrf']);
+    $result = birkly_seo_save_url_map($patch);
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Could not save']);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'seo' => $result['config'],
+            'rows' => birkly_seo_url_map_admin_rows($result['config'] ?? []),
+            'status' => birkly_discovery_status(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'save_detail_binding') {
+    $binding = $input['binding'] ?? $input;
+    if (!is_array($binding)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid binding']);
+        exit;
+    }
+    unset($binding['action'], $binding['_csrf']);
+    $result = birkly_seo_save_detail_binding($binding);
+    if (!$result['ok']) {
+        echo json_encode(['status' => 'error', 'message' => $result['error'] ?? 'Could not save binding']);
+        exit;
+    }
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'seo' => $result['config'],
+            'status' => birkly_discovery_status(),
+        ],
+    ]);
     exit;
 }
 
