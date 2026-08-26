@@ -468,8 +468,8 @@
     }
 
     function rowTypeLabel(type) {
-        if (type === 'page') return t('discovery_seo_type_page', 'Main page');
-        if (type === 'detail') return t('discovery_seo_type_detail', 'Post or item');
+        if (type === 'page') return t('discovery_seo_type_page', 'Page');
+        if (type === 'detail') return t('discovery_seo_type_detail', 'Collection entry');
         if (type === 'redirect') return t('discovery_seo_type_redirect', 'Redirect');
         return type || '';
     }
@@ -524,11 +524,11 @@
         }
         var counts = getUrlMapCounts(seo, summary);
         var statBits = [];
-        if (counts.pageCount > 0) statBits.push(counts.pageCount + ' main pages');
+        if (counts.pageCount > 0) statBits.push(counts.pageCount + ' page' + (counts.pageCount === 1 ? '' : 's'));
         if (counts.templateFiles.length) {
             statBits.push(counts.templateFiles.length + ' repeating template' + (counts.templateFiles.length === 1 ? '' : 's'));
         }
-        if (counts.detailCount > 0) statBits.push(counts.detailCount + ' posts & items');
+        if (counts.detailCount > 0) statBits.push(counts.detailCount + ' collection entr' + (counts.detailCount === 1 ? 'y' : 'ies'));
         if (counts.redirectCount > 0) statBits.push(counts.redirectCount + ' redirect' + (counts.redirectCount === 1 ? '' : 's'));
         var stats = (summary && typeof summary === 'object') ? summary
             : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
@@ -870,7 +870,7 @@
                 var row = (state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(state.seo))
                     .find(function (r) { return r.key === key; });
                 if (!row) return;
-                var title = window.prompt(t('discovery_seo_edit_title', 'Google title') + ' (leave blank for auto)', row.title || '');
+                var title = window.prompt(t('discovery_seo_edit_title_prompt', 'Search title (leave blank for site default)'), row.title || '');
                 if (title === null) return;
                 var patch = { pages: {}, details: {} };
                 if (row.type === 'page') {
