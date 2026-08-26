@@ -985,11 +985,22 @@ function birkly_seo_url_map_admin_rows(array $config): array
 
 /**
  * Normalize redirect path (shared with hosting redirects).
+ *
+ * Inlined here on purpose — hosting_redirects.php must not be required from
+ * this file because apply_redirect() loads site SEO while already inside the
+ * hosting redirect stack.
  */
 function birkly_seo_normalize_path(string $path): string
 {
-    require_once __DIR__ . '/hosting_redirects.php';
-    return birkly_normalize_redirect_path($path);
+    $path = trim($path);
+    if ($path === '') {
+        return '';
+    }
+    if ($path[0] !== '/') {
+        $path = '/' . $path;
+    }
+
+    return preg_replace('#/+#', '/', $path) ?: $path;
 }
 
 /**
@@ -1004,7 +1015,7 @@ function birkly_seo_match_redirect(string $uri): ?array
     if ($path === '') {
         return null;
     }
-    $config = birkly_site_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
     foreach ($config['url_map']['redirects'] as $rule) {
         if (!is_array($rule)) {
             continue;
@@ -1495,7 +1506,7 @@ function birkly_seo_entry_discovery_link(string $collection, string $slug): ?str
  */
 function birkly_seo_delete_detail_binding(string $bindingId): array
 {
-    $config = birkly_site_seo_normalize_url_map_sections(birkly_site_seo_load());
+    $config = birkly_seo_normalize_url_map_sections(birkly_site_seo_load());
     $bindings = [];
     foreach ($config['detail_bindings'] as $binding) {
         if (!is_array($binding)) {
