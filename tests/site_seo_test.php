@@ -22,6 +22,10 @@ function assert_true(bool $cond, string $label): void
     $failures++;
 }
 
+echo "==> site_seo.php loads url_map helpers\n";
+$loaded = birkly_site_seo_load();
+assert_true(isset($loaded['url_map']['pages']) && is_array($loaded['url_map']['pages']), 'site_seo_load includes url_map');
+
 $seoPath = birkly_site_seo_settings_path();
 $discoveryPath = birkly_discovery_settings_path();
 $seoBackup = is_file($seoPath) ? file_get_contents($seoPath) : null;
