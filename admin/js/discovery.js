@@ -514,26 +514,6 @@
         help.hidden = !(counts.pageCount === 0 && counts.detailCount > 0);
     }
 
-    function formatScanDiagnostics(seo, summary) {
-        var counts = getUrlMapCounts(seo, summary);
-        var parts = [];
-        if (counts.pageCount > 0) {
-            parts.push(counts.pageCount + ' main page' + (counts.pageCount === 1 ? '' : 's')
-                + (counts.pageFiles.length ? ' (' + counts.pageFiles.join(', ') + ')' : ''));
-        } else {
-            parts.push(t('discovery_seo_url_map_scan_no_pages',
-                'No main page HTML files in project/ — only repeating templates or internal/doc files were seen.'));
-        }
-        if (counts.templateFiles.length) {
-            parts.push(t('discovery_seo_url_map_scan_templates', 'Repeating page templates')
-                + ': ' + counts.templateFiles.join(', '));
-        }
-        if (counts.detailCount > 0) {
-            parts.push(counts.detailCount + ' post' + (counts.detailCount === 1 ? '' : 's') + ' from collections');
-        }
-        return parts.join(' · ');
-    }
-
     function formatScanMeta(seo, summary) {
         var parts = [];
         if (seo && seo.scan && seo.scan.last_at) {
@@ -560,14 +540,14 @@
     }
 
     function updateUrlMapToolbar() {
-        var actions = $('#disc-url-list-actions');
         var filter = state.urlMapFilter || 'all';
         var select = $('#disc-seo-url-filter');
         if (select && select.value !== filter) {
             select.value = filter;
         }
-        if (actions) {
-            actions.hidden = filter !== 'redirect';
+        var addRedirect = $('#disc-seo-add-redirect');
+        if (addRedirect) {
+            addRedirect.hidden = filter !== 'redirect';
         }
     }
 
