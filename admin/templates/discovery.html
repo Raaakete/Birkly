@@ -115,14 +115,21 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <button type="button" class="btn btn-sm btn-primary" id="disc-seo-setup-ai">{translate 'admin.discovery_seo_url_map_setup_ai'}</button>
                         <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-rescan">{translate 'admin.discovery_seo_url_map_rescan'}</button>
                         <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-propose">{translate 'admin.discovery_seo_url_map_propose'}</button>
-                        <button type="button" class="btn btn-sm btn-ghost" id="disc-seo-add-redirect">{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
                     </div>
                 </div>
-                <div class="u-split u-gap-2 u-mb-3" id="disc-seo-url-filters">
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter is-active" data-filter="all">{translate 'admin.discovery_seo_url_map_filter_all'}</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="page">{translate 'admin.discovery_seo_url_map_filter_pages'}</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="detail">{translate 'admin.discovery_seo_url_map_filter_posts'}</button>
-                    <button type="button" class="btn btn-ghost btn-sm disc-url-filter" data-filter="redirect">{translate 'admin.discovery_seo_url_map_filter_redirects'}</button>
+                <div class="disc-url-list-toolbar u-split u-align-center u-gap-3 u-mb-3">
+                    <div class="disc-url-list-toolbar__filters u-split u-align-center u-gap-2">
+                        <label for="disc-seo-url-filter" class="collection-filter-label">{translate 'admin.discovery_seo_url_map_show'}</label>
+                        <select id="disc-seo-url-filter" class="collection-filter-select">
+                            <option value="all">{translate 'admin.discovery_seo_url_map_filter_all'}</option>
+                            <option value="page">{translate 'admin.discovery_seo_url_map_filter_pages'}</option>
+                            <option value="detail">{translate 'admin.discovery_seo_url_map_filter_posts'}</option>
+                            <option value="redirect">{translate 'admin.discovery_seo_url_map_filter_redirects'}</option>
+                        </select>
+                    </div>
+                    <div class="disc-url-list-toolbar__actions" id="disc-url-list-actions" hidden>
+                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-add-redirect">{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
+                    </div>
                 </div>
                 <p class="form-help u-m-0 u-mb-3" id="disc-seo-scan-diagnostics" hidden></p>
                 <p class="form-help u-m-0 u-mb-3" id="disc-seo-url-empty-help" hidden>{translate 'admin.discovery_seo_url_map_empty_pages'} <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">{translate 'admin.discovery_seo_url_map_project_link'}</a></p>
@@ -144,6 +151,41 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
                 <p class="form-help u-m-0" id="disc-seo-scan-meta" hidden></p>
             </section>
+
+            <div id="disc-seo-redirect-modal" class="modal" style="display: none;" aria-hidden="true">
+                <div class="modal-backdrop" data-modal-dismiss="self"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>{translate 'admin.discovery_seo_redirect_modal_title'}</h3>
+                        <button class="modal-close" type="button" data-modal-dismiss="self">&times;</button>
+                    </div>
+                    <form id="disc-seo-redirect-form">
+                        <div class="modal-body u-stack-4">
+                            <input type="hidden" id="disc-redirect-index" value="">
+                            <div class="form-group">
+                                <label for="disc-redirect-from">{translate 'admin.discovery_seo_redirect_from'}</label>
+                                <input type="text" id="disc-redirect-from" class="input" placeholder="/old-page" required>
+                                <p class="form-help u-m-0">{translate 'admin.discovery_seo_redirect_from_help'}</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="disc-redirect-to">{translate 'admin.discovery_seo_redirect_to'}</label>
+                                <input type="text" id="disc-redirect-to" class="input" placeholder="/new-page or https://example.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="disc-redirect-status">{translate 'admin.discovery_seo_redirect_type'}</label>
+                                <select id="disc-redirect-status" class="input collection-filter-select">
+                                    <option value="301">{translate 'admin.discovery_seo_redirect_301'}</option>
+                                    <option value="302">{translate 'admin.discovery_seo_redirect_302'}</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-modal-dismiss="self">{translate 'admin.cancel'}</button>
+                            <button type="submit" class="btn btn-primary">{translate 'admin.discovery_seo_redirect_save'}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             <section class="card u-p-6 u-stack-4" id="disc-seo-bindings-section">
                 <h3 class="u-m-0">{translate 'admin.discovery_seo_bindings_title'}</h3>

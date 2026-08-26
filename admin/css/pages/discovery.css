@@ -152,6 +152,24 @@
     font-weight: 600;
 }
 
+.disc-url-list-toolbar {
+    flex-wrap: wrap;
+}
+
+.disc-url-list-toolbar__filters {
+    flex: 1 1 auto;
+    min-width: 12rem;
+}
+
+.disc-url-list-toolbar__filters .collection-filter-select,
+.disc-url-list-toolbar__filters .custom-select {
+    min-width: 11rem;
+}
+
+.disc-url-list-toolbar__actions {
+    flex-shrink: 0;
+}
+
 .disc-url-table code,
 .disc-binding-card code {
     overflow-wrap: anywhere;
