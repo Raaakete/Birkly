@@ -399,6 +399,7 @@
         updateSeoStickyBar();
         renderUrlMap(data.seo || state.seo);
         renderDetailBindings(data.seo || state.seo);
+        updateUrlMapToolbar();
 
         syncApEmbed(state.activeZone);
     }
@@ -473,33 +474,62 @@
         return type || '';
     }
 
+    function getUrlMapRows(seo) {
+        return state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(seo);
+    }
+
+    function getUrlMapCounts(seo, summary) {
+        var rows = getUrlMapRows(seo);
+        var stats = (summary && typeof summary === 'object') ? summary
+            : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : {};
+        var pageCount = Math.max(stats.pages || 0, countRowsByType(rows, 'page'));
+        var detailCount = Math.max(stats.detail_urls || 0, countRowsByType(rows, 'detail'));
+        var redirectCount = countRowsByType(rows, 'redirect');
+        var pageFiles = (stats.page_files && stats.page_files.length)
+            ? stats.page_files.slice()
+            : rows.filter(function (row) { return row.type === 'page'; })
+                .map(function (row) { return row.project_file || row.file || ''; })
+                .filter(Boolean);
+        pageFiles = pageFiles.filter(function (file, index, list) { return list.indexOf(file) === index; });
+        var templateFiles = (stats.template_files && stats.template_files.length)
+            ? stats.template_files
+            : rows.filter(function (row) { return row.type === 'detail'; })
+                .map(function (row) { return row.project_file || row.template_path || ''; })
+                .filter(Boolean)
+                .filter(function (file, index, list) { return list.indexOf(file) === index; });
+        return {
+            rows: rows,
+            pageCount: pageCount,
+            detailCount: detailCount,
+            redirectCount: redirectCount,
+            pageFiles: pageFiles,
+            templateFiles: templateFiles,
+        };
+    }
+
     function updateEmptyPagesHelp(seo, summary) {
         var help = $('#disc-seo-url-empty-help');
         if (!help) return;
-        var stats = (summary && typeof summary === 'object') ? summary
-            : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
-        var pages = stats ? (stats.pages || 0) : countRowsByType(state.urlMapRows, 'page');
-        var details = stats ? (stats.detail_urls || countRowsByType(state.urlMapRows, 'detail'))
-            : countRowsByType(state.urlMapRows, 'detail');
-        help.hidden = !(pages === 0 && details > 0);
+        var counts = getUrlMapCounts(seo, summary);
+        help.hidden = !(counts.pageCount === 0 && counts.detailCount > 0);
     }
 
     function formatScanDiagnostics(seo, summary) {
-        var stats = (summary && typeof summary === 'object') ? summary
-            : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : {};
-        var pageFiles = stats.page_files || [];
-        var templateFiles = stats.template_files || [];
+        var counts = getUrlMapCounts(seo, summary);
         var parts = [];
-        if (pageFiles.length) {
-            parts.push(t('discovery_seo_url_map_scan_pages', 'Main page files in project/')
-                + ': ' + pageFiles.join(', '));
-        } else if ((stats.pages || 0) === 0) {
+        if (counts.pageCount > 0) {
+            parts.push(counts.pageCount + ' main page' + (counts.pageCount === 1 ? '' : 's')
+                + (counts.pageFiles.length ? ' (' + counts.pageFiles.join(', ') + ')' : ''));
+        } else {
             parts.push(t('discovery_seo_url_map_scan_no_pages',
                 'No main page HTML files in project/ — only repeating templates or internal/doc files were seen.'));
         }
-        if (templateFiles.length) {
+        if (counts.templateFiles.length) {
             parts.push(t('discovery_seo_url_map_scan_templates', 'Repeating page templates')
-                + ': ' + templateFiles.join(', '));
+                + ': ' + counts.templateFiles.join(', '));
+        }
+        if (counts.detailCount > 0) {
+            parts.push(counts.detailCount + ' post' + (counts.detailCount === 1 ? '' : 's') + ' from collections');
         }
         return parts.join(' · ');
     }
@@ -512,30 +542,103 @@
                 parts.push('rev ' + seo.scan.project_revision);
             }
         }
+        var counts = getUrlMapCounts(seo, summary);
+        var statBits = [];
+        if (counts.pageCount > 0) statBits.push(counts.pageCount + ' main pages');
+        if (counts.templateFiles.length) {
+            statBits.push(counts.templateFiles.length + ' repeating template' + (counts.templateFiles.length === 1 ? '' : 's'));
+        }
+        if (counts.detailCount > 0) statBits.push(counts.detailCount + ' posts & items');
+        if (counts.redirectCount > 0) statBits.push(counts.redirectCount + ' redirect' + (counts.redirectCount === 1 ? '' : 's'));
         var stats = (summary && typeof summary === 'object') ? summary
             : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
-        if (stats) {
-            var statBits = [];
-            if (stats.pages != null) statBits.push(stats.pages + ' main pages');
-            if (stats.templates != null && stats.templates > 0) {
-                statBits.push(stats.templates + ' repeating templates');
-            }
-            if (summary && summary.detail_urls != null) {
-                statBits.push(summary.detail_urls + ' posts & items');
-            } else if (stats.detail_urls != null) {
-                statBits.push(stats.detail_urls + ' posts & items');
-            } else if (state.urlMapRows.length) {
-                var detailCount = countRowsByType(state.urlMapRows, 'detail');
-                if (detailCount > 0) {
-                    statBits.push(detailCount + ' posts & items');
-                }
-            }
-            if (stats.excluded != null && stats.excluded > 0) {
-                statBits.push(stats.excluded + ' internal files skipped');
-            }
-            if (statBits.length) parts.push(statBits.join(' · '));
+        if (stats && stats.excluded > 0) {
+            statBits.push(stats.excluded + ' internal files skipped');
         }
+        if (statBits.length) parts.push(statBits.join(' · '));
         return parts.join(' — ');
+    }
+
+    function updateUrlMapToolbar() {
+        var actions = $('#disc-url-list-actions');
+        var filter = state.urlMapFilter || 'all';
+        var select = $('#disc-seo-url-filter');
+        if (select && select.value !== filter) {
+            select.value = filter;
+        }
+        if (actions) {
+            actions.hidden = filter !== 'redirect';
+        }
+    }
+
+    function openRedirectModal(editIndex) {
+        var modal = $('#disc-seo-redirect-modal');
+        if (!modal) return;
+        var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
+        var isEdit = typeof editIndex === 'number' && editIndex >= 0 && redirects[editIndex];
+        var titleEl = modal.querySelector('.modal-header h3');
+        if (titleEl) {
+            titleEl.textContent = isEdit
+                ? t('discovery_seo_redirect_modal_edit_title', 'Edit redirect')
+                : t('discovery_seo_redirect_modal_title', 'Add redirect');
+        }
+        ($('#disc-redirect-index') || {}).value = isEdit ? String(editIndex) : '';
+        ($('#disc-redirect-from') || {}).value = isEdit ? (redirects[editIndex].from || '') : '';
+        ($('#disc-redirect-to') || {}).value = isEdit ? (redirects[editIndex].to || '') : '';
+        ($('#disc-redirect-status') || {}).value = String(isEdit ? (redirects[editIndex].status || 301) : 301);
+        modal.style.display = 'flex';
+        modal.setAttribute('aria-hidden', 'false');
+        requestAnimationFrame(function () {
+            modal.classList.add('active');
+            var first = $('#disc-redirect-from');
+            if (first && first.focus) first.focus();
+        });
+    }
+
+    function closeRedirectModal() {
+        var modal = $('#disc-seo-redirect-modal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function saveRedirectFromModal(e) {
+        if (e) e.preventDefault();
+        var from = (($('#disc-redirect-from') || {}).value || '').trim();
+        var to = (($('#disc-redirect-to') || {}).value || '').trim();
+        var status = parseInt(($('#disc-redirect-status') || {}).value || '301', 10) || 301;
+        if (!from || !to) {
+            showMessage('From and to paths are required', true);
+            return;
+        }
+        var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
+        var indexRaw = ($('#disc-redirect-index') || {}).value;
+        var index = indexRaw === '' ? -1 : parseInt(indexRaw, 10);
+        var row = { from: from, to: to, status: status };
+        if (index >= 0 && index < redirects.length) {
+            redirects[index] = row;
+        } else {
+            redirects.push(row);
+        }
+        postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message);
+            closeRedirectModal();
+            applyUrlMapResponse(res, 'Redirect saved');
+            state.urlMapFilter = 'redirect';
+            updateUrlMapToolbar();
+            renderUrlMap(state.seo);
+        }).catch(function (err) { showMessage(err.message, true); });
+    }
+
+    function deleteRedirectAt(index) {
+        var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
+        if (index < 0 || index >= redirects.length) return;
+        redirects.splice(index, 1);
+        postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
+            if (res.status !== 'ok') throw new Error(res.message);
+            applyUrlMapResponse(res, 'Redirect removed');
+        }).catch(function (err) { showMessage(err.message, true); });
     }
 
     function renderUrlMap(seo, summary) {
@@ -543,7 +646,7 @@
         var meta = $('#disc-seo-scan-meta');
         var diagnostics = $('#disc-seo-scan-diagnostics');
         if (!tbody) return;
-        var rows = state.urlMapRows.length ? state.urlMapRows : buildUrlMapRowsFromSeo(seo);
+        var rows = getUrlMapRows(seo);
         var filter = state.urlMapFilter || 'all';
         var filtered = rows.filter(function (row) {
             return filter === 'all' || row.type === filter;
@@ -551,24 +654,41 @@
         tbody.innerHTML = '';
         if (!filtered.length) {
             var emptyMsg = t('discovery_seo_url_map_empty', 'Nothing listed yet — use “Set up with AI” or “Refresh from site files”.');
+            if (filter === 'redirect') {
+                emptyMsg = t('discovery_seo_url_map_empty_redirects', 'No redirects yet.');
+            }
             tbody.innerHTML = '<tr><td colspan="5" class="u-fg-secondary">' + escapeHtml(emptyMsg) + '</td></tr>';
         } else {
             filtered.forEach(function (row) {
                 var tr = document.createElement('tr');
                 var projectFile = row.project_file || row.file || '';
-                var fileCell = projectFile
-                    ? '<span class="disc-site-file" title="' + escapeHtml(projectFile) + '">' + escapeHtml(projectFile) + '</span>'
-                    : '<span class="u-fg-secondary">—</span>';
+                var fileCell = row.type === 'redirect'
+                    ? '<span class="u-fg-secondary">—</span>'
+                    : (projectFile
+                        ? '<span class="disc-site-file" title="' + escapeHtml(projectFile) + '">' + escapeHtml(projectFile) + '</span>'
+                        : '<span class="u-fg-secondary">—</span>');
                 var listingTitle = row.listing_title || row.label || row.url || '';
                 var listingSub = row.listing_subtitle || row.url || '';
                 var listingCell = '<div class="disc-url-listing-title">' + escapeHtml(listingTitle) + '</div>'
                     + '<div class="disc-url-listing-sub"><code>' + escapeHtml(listingSub) + '</code></div>';
-                var googleTitle = row.title || '—';
-                var actions = '<button type="button" class="btn btn-ghost btn-sm" data-url-edit="' + escapeHtml(row.key || '') + '">'
-                    + escapeHtml(t('discovery_seo_edit_title', 'Edit')) + '</button>';
-                if (row.live_url) {
-                    actions += ' <a class="btn btn-ghost btn-sm" href="' + escapeHtml(row.live_url) + '" target="_blank" rel="noopener">'
-                        + escapeHtml(t('discovery_seo_open_live', 'Open page')) + '</a>';
+                var googleTitle = row.type === 'redirect'
+                    ? (row.redirect_status || row.title || '301')
+                    : (row.title || '—');
+                var actions = '';
+                if (row.type === 'redirect') {
+                    actions = '<button type="button" class="btn btn-ghost btn-sm" data-redirect-edit="'
+                        + escapeHtml(String(row.redirect_index)) + '">'
+                        + escapeHtml(t('discovery_seo_edit_title', 'Edit')) + '</button>'
+                        + ' <button type="button" class="btn btn-ghost btn-sm" data-redirect-delete="'
+                        + escapeHtml(String(row.redirect_index)) + '">'
+                        + escapeHtml(t('discovery_seo_redirect_remove', 'Remove')) + '</button>';
+                } else {
+                    actions = '<button type="button" class="btn btn-ghost btn-sm" data-url-edit="' + escapeHtml(row.key || '') + '">'
+                        + escapeHtml(t('discovery_seo_edit_title', 'Edit')) + '</button>';
+                    if (row.live_url) {
+                        actions += ' <a class="btn btn-ghost btn-sm" href="' + escapeHtml(row.live_url) + '" target="_blank" rel="noopener">'
+                            + escapeHtml(t('discovery_seo_open_live', 'Open page')) + '</a>';
+                    }
                 }
                 tr.innerHTML = '<td>' + fileCell + '</td>'
                     + '<td>' + listingCell + '</td>'
@@ -579,6 +699,7 @@
             });
         }
         updateEmptyPagesHelp(seo, summary);
+        updateUrlMapToolbar();
         if (diagnostics) {
             var diagText = formatScanDiagnostics(seo, summary);
             if (diagText) {
@@ -646,9 +767,15 @@
             rows.push({
                 key: 'redirect:' + i,
                 type: 'redirect',
+                redirect_index: i,
                 url: redirect.from || '',
-                label: '→ ' + (redirect.to || ''),
+                project_file: '',
+                label: redirect.to || '',
+                listing_title: redirect.from || '',
+                listing_subtitle: '→ ' + (redirect.to || ''),
                 title: String(redirect.status || 301),
+                redirect_to: redirect.to || '',
+                redirect_status: redirect.status || 301,
             });
         });
         return rows;
@@ -746,19 +873,27 @@
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
-        document.querySelectorAll('.disc-url-filter').forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                document.querySelectorAll('.disc-url-filter').forEach(function (b) {
-                    b.classList.remove('is-active');
-                });
-                btn.classList.add('is-active');
-                state.urlMapFilter = btn.getAttribute('data-filter') || 'all';
+        var filterSelect = $('#disc-seo-url-filter');
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function () {
+                state.urlMapFilter = filterSelect.value || 'all';
+                updateUrlMapToolbar();
                 renderUrlMap(state.seo);
             });
-        });
+        }
         var tbody = $('#disc-seo-url-tbody');
         if (tbody) {
             tbody.addEventListener('click', function (e) {
+                var redirectEdit = e.target.closest('[data-redirect-edit]');
+                if (redirectEdit) {
+                    openRedirectModal(parseInt(redirectEdit.getAttribute('data-redirect-edit'), 10));
+                    return;
+                }
+                var redirectDelete = e.target.closest('[data-redirect-delete]');
+                if (redirectDelete) {
+                    deleteRedirectAt(parseInt(redirectDelete.getAttribute('data-redirect-delete'), 10));
+                    return;
+                }
                 var btn = e.target.closest('[data-url-edit]');
                 if (!btn) return;
                 var key = btn.getAttribute('data-url-edit');
@@ -805,20 +940,12 @@
         var addRedirect = $('#disc-seo-add-redirect');
         if (addRedirect) {
             addRedirect.addEventListener('click', function () {
-                var from = window.prompt('Redirect from path (e.g. /old-page)');
-                if (!from) return;
-                var to = window.prompt('Redirect to path or URL');
-                if (!to) return;
-                var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
-                redirects.push({ from: from, to: to, status: 301 });
-                postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
-                    if (res.status !== 'ok') throw new Error(res.message);
-                    state.seo = res.data.seo;
-                    state.urlMapRows = res.data.rows || [];
-                    renderUrlMap(state.seo);
-                    showMessage('Redirect saved');
-                }).catch(function (e) { showMessage(e.message, true); });
+                openRedirectModal(-1);
             });
+        }
+        var redirectForm = $('#disc-seo-redirect-form');
+        if (redirectForm) {
+            redirectForm.addEventListener('submit', saveRedirectFromModal);
         }
 
         var bindingSave = $('#disc-binding-save');
