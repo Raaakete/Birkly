@@ -95,6 +95,7 @@ birkly_webmcp_register_tools('test_plugin', [
         'consent' => 'confirm',
         'default' => false,
         'label' => 'Test action',
+        'description' => 'A plugin-registered visitor tool.',
     ],
 ]);
 birkly_webmcp_reset_catalog_cache();
@@ -112,6 +113,8 @@ foreach ($withPlugin as $tool) {
 }
 assert_true($pluginEntry !== null && ($pluginEntry['plugin_id'] ?? '') === 'test_plugin', 'plugin tool has plugin_id');
 assert_true($pluginEntry !== null && ($pluginEntry['pack'] ?? '') === 'test_plugin', 'plugin tool pack matches plugin id');
+assert_true($pluginEntry !== null && ($pluginEntry['label'] ?? '') === 'Test action', 'plugin tool keeps label');
+assert_true($pluginEntry !== null && ($pluginEntry['description'] ?? '') === 'A plugin-registered visitor tool.', 'plugin tool keeps description');
 
 $normPlugin = birkly_webmcp_normalize([
     'enabled' => true,
@@ -167,6 +170,14 @@ if ($jsCode === 0) {
     echo "SKIP birkly-webmcp.js node --check (node unavailable)\n";
 }
 assert_true(strpos($js, "typeof document !== 'undefined'") !== false, 'runtime guards document for Node require');
+
+echo "==> Admin catalog groups packs dynamically\n";
+$adminJs = (string) file_get_contents($root . '/admin/js/ai-presence.js');
+assert_true(strpos($adminJs, "['core', 'commerce', 'events', 'user'].forEach") === false, 'admin no longer hardcodes a fixed pack list');
+assert_true(strpos($adminJs, 'packOrder') !== false, 'admin iterates catalog packs dynamically');
+assert_true(strpos($adminJs, 'user_management') !== false, 'admin has a label for the user_management pack');
+assert_true(strpos($adminJs, 'tool.label ||') !== false, 'admin prefers catalog label over hardcoded copy');
+assert_true(strpos($adminJs, 'tool.description ||') !== false, 'admin prefers catalog description over hardcoded copy');
 
 echo "==> SSR inject respects enable flag\n";
 require_once $root . '/core/project_ssr.php';
