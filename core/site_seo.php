@@ -8,6 +8,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
+require_once __DIR__ . '/site_seo_url_map.php';
 
 /**
  * @return array<string, mixed>
@@ -173,8 +174,21 @@ function birkly_site_seo_is_published(): bool
     if (!birkly_discovery_pack_enabled('seo')) {
         return false;
     }
-    $config = birkly_site_seo_load();
-    return $config['enabled'] && $config['published'];
+
+    $path = birkly_site_seo_settings_path();
+    if (!is_readable($path)) {
+        return false;
+    }
+    $raw = file_get_contents($path);
+    if ($raw === false) {
+        return false;
+    }
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return false;
+    }
+
+    return !empty($decoded['enabled']) && !empty($decoded['published']);
 }
 
 function birkly_site_seo_should_auto_inject(): bool
