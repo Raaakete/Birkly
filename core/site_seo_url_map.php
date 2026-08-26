@@ -963,12 +963,21 @@ function birkly_seo_url_map_admin_rows(array $config): array
         if (!is_array($redirect)) {
             continue;
         }
+        $from = (string) ($redirect['from'] ?? '');
+        $to = (string) ($redirect['to'] ?? '');
+        $status = (int) ($redirect['status'] ?? 301);
         $rows[] = [
             'key' => 'redirect:' . $i,
             'type' => 'redirect',
-            'url' => (string) ($redirect['from'] ?? ''),
-            'label' => 'Redirect → ' . (string) ($redirect['to'] ?? ''),
-            'status' => (int) ($redirect['status'] ?? 301),
+            'redirect_index' => $i,
+            'url' => $from,
+            'label' => $to,
+            'listing_title' => $from,
+            'listing_subtitle' => '→ ' . $to,
+            'title' => (string) $status,
+            'redirect_to' => $to,
+            'redirect_status' => $status,
+            'status' => $status,
         ];
     }
     return $rows;
