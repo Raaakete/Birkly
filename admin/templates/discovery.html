@@ -101,23 +101,22 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
             </section>
             <section class="card u-p-6 u-stack-4" id="disc-seo-url-map-section">
-                <div class="u-split u-align-start u-gap-4 u-mb-4">
-                    <div class="u-stack-2 u-fill">
-                        <h3 class="u-m-0">{translate 'admin.discovery_seo_url_map_title'}</h3>
-                        <p class="form-help u-m-0">{translate 'admin.discovery_seo_url_map_intro'}</p>
-                        <ol class="form-help u-m-0 u-pl-4 u-stack-1">
-                            <li>{translate 'admin.discovery_seo_url_map_step1'}</li>
-                            <li>{translate 'admin.discovery_seo_url_map_step2'}</li>
-                            <li>{translate 'admin.discovery_seo_url_map_step3'}</li>
-                        </ol>
-                    </div>
-                    <div class="u-stack-2 disc-url-map-actions">
+                <div class="u-stack-2 u-mb-4">
+                    <h3 class="u-m-0">{translate 'admin.discovery_seo_url_map_title'}</h3>
+                    <p class="form-help u-m-0">{translate 'admin.discovery_seo_url_map_intro'}</p>
+                    <ol class="form-help u-m-0 u-pl-4 u-stack-1">
+                        <li>{translate 'admin.discovery_seo_url_map_step1'}</li>
+                        <li>{translate 'admin.discovery_seo_url_map_step2'}</li>
+                        <li>{translate 'admin.discovery_seo_url_map_step3'}</li>
+                    </ol>
+                </div>
+                <div class="disc-url-list-toolbar u-split u-align-center u-gap-3 u-mb-3">
+                    <div class="disc-url-list-toolbar__actions">
                         <button type="button" class="btn btn-sm btn-primary" id="disc-seo-setup-ai">{translate 'admin.discovery_seo_url_map_setup_ai'}</button>
                         <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-rescan">{translate 'admin.discovery_seo_url_map_rescan'}</button>
                         <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-propose">{translate 'admin.discovery_seo_url_map_propose'}</button>
+                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-add-redirect" hidden>{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
                     </div>
-                </div>
-                <div class="disc-url-list-toolbar u-split u-align-center u-gap-3 u-mb-3">
                     <div class="disc-url-list-toolbar__filters u-split u-align-center u-gap-2">
                         <label for="disc-seo-url-filter" class="collection-filter-label">{translate 'admin.discovery_seo_url_map_show'}</label>
                         <select id="disc-seo-url-filter" class="collection-filter-select">
@@ -127,11 +126,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             <option value="redirect">{translate 'admin.discovery_seo_url_map_filter_redirects'}</option>
                         </select>
                     </div>
-                    <div class="disc-url-list-toolbar__actions" id="disc-url-list-actions" hidden>
-                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-add-redirect">{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
-                    </div>
                 </div>
-                <p class="form-help u-m-0 u-mb-3" id="disc-seo-scan-diagnostics" hidden></p>
                 <p class="form-help u-m-0 u-mb-3" id="disc-seo-url-empty-help" hidden>{translate 'admin.discovery_seo_url_map_empty_pages'} <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">{translate 'admin.discovery_seo_url_map_project_link'}</a></p>
                 <div class="table-responsive disc-url-table-wrap">
                     <table class="table table--compact disc-url-table" id="disc-seo-url-table">
