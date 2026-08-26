@@ -64,6 +64,9 @@ function birkly_webmcp_api_catalog(array $config): array
         if (!empty($tool['label'])) {
             $entry['label'] = $tool['label'];
         }
+        if (!empty($tool['description'])) {
+            $entry['description'] = $tool['description'];
+        }
         $out[] = $entry;
     }
     return $out;

@@ -67,10 +67,11 @@
     };
 
     var WEBMCP_PACK_META = {
-        core:     { label: 'Core actions',  note: '' },
-        commerce: { label: 'Shop (Commerce)', note: 'Appears on pages where your shop is active.' },
-        events:   { label: 'Events',        note: 'Appears on pages where events are shown.' },
-        user:     { label: 'Accounts',      note: 'Appears on pages with sign-in.' }
+        core:             { label: 'Core actions',    note: '' },
+        commerce:         { label: 'Shop (Commerce)', note: 'Appears on pages where your shop is active.' },
+        events:           { label: 'Events',          note: 'Appears on pages where events are shown.' },
+        user:             { label: 'Accounts',        note: 'Appears on pages with sign-in.' },
+        user_management:  { label: 'Accounts',        note: 'Appears on pages with sign-in.' }
     };
 
     function webmcpConsentNote(tool) {
@@ -3411,13 +3412,27 @@
         host.innerHTML = '';
         var cfg = state.webmcpConfig || { tools: {} };
         var byPack = {};
+        var packOrder = [];
         (state.webmcpCatalog || []).forEach(function (tool) {
-            (byPack[tool.pack] = byPack[tool.pack] || []).push(tool);
+            var pack = tool.pack || tool.plugin_id || 'plugin';
+            if (!byPack[pack]) {
+                byPack[pack] = [];
+                packOrder.push(pack);
+            }
+            byPack[pack].push(tool);
         });
-        ['core', 'commerce', 'events', 'user'].forEach(function (pack) {
+        packOrder.sort(function (a, b) {
+            if (a === 'core') return -1;
+            if (b === 'core') return 1;
+            return String(a).localeCompare(String(b));
+        });
+        packOrder.forEach(function (pack) {
             var tools = byPack[pack];
             if (!tools || !tools.length) return;
-            var packMeta = WEBMCP_PACK_META[pack] || { label: pack, note: '' };
+            var packMeta = WEBMCP_PACK_META[pack] || {
+                label: pack.replace(/_/g, ' ').replace(/\b\w/g, function (ch) { return ch.toUpperCase(); }),
+                note: ''
+            };
             var group = document.createElement('div');
             group.className = 'card-section u-stack-2';
             var head = '<div class="u-split u-align-baseline"><h4 class="u-text-sm u-weight-semibold u-m-0">' +
@@ -3429,14 +3444,16 @@
             var list = document.createElement('ul');
             list.className = 'data-list';
             tools.forEach(function (tool) {
-                var meta = WEBMCP_TOOL_META[tool.id] || { label: tool.id, desc: '' };
+                var meta = WEBMCP_TOOL_META[tool.id] || {};
+                var label = tool.label || meta.label || tool.id;
+                var desc = tool.description || meta.desc || '';
                 var li = document.createElement('li');
                 li.className = 'data-list-item u-split u-align-start u-gap-3';
                 var consent = webmcpConsentNote(tool);
                 li.innerHTML =
                     '<div class="u-stack-1 u-fill">' +
-                    '<strong class="u-text-sm">' + escapeHtml(meta.label) + '</strong>' +
-                    '<span class="u-text-xs u-fg-secondary">' + escapeHtml(meta.desc) + '</span>' +
+                    '<strong class="u-text-sm">' + escapeHtml(label) + '</strong>' +
+                    (desc ? '<span class="u-text-xs u-fg-secondary">' + escapeHtml(desc) + '</span>' : '') +
                     (consent ? '<span class="u-text-xs u-fg-tertiary">' + escapeHtml(consent) + '</span>' : '') +
                     '</div>' +
                     '<label class="switch"><input type="checkbox" class="ap-webmcp-tool" data-tool-id="' +
