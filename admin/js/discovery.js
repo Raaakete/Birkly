@@ -624,7 +624,6 @@
     function renderUrlMap(seo, summary) {
         var tbody = $('#disc-seo-url-tbody');
         var meta = $('#disc-seo-scan-meta');
-        var diagnostics = $('#disc-seo-scan-diagnostics');
         if (!tbody) return;
         var rows = getUrlMapRows(seo);
         var filter = state.urlMapFilter || 'all';
@@ -680,15 +679,6 @@
         }
         updateEmptyPagesHelp(seo, summary);
         updateUrlMapToolbar();
-        if (diagnostics) {
-            var diagText = formatScanDiagnostics(seo, summary);
-            if (diagText) {
-                diagnostics.textContent = diagText;
-                diagnostics.hidden = false;
-            } else {
-                diagnostics.hidden = true;
-            }
-        }
         if (meta) {
             var metaText = formatScanMeta(seo, summary);
             if (metaText) {
