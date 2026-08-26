@@ -181,13 +181,21 @@ assert_true(strpos($adminJs, 'tool.description ||') !== false, 'admin prefers ca
 
 echo "==> SSR inject respects enable flag\n";
 require_once $root . '/core/project_ssr.php';
+require_once $root . '/core/discovery.php';
+$discoveryPath = birkly_discovery_settings_path();
+$discoveryBackup = is_file($discoveryPath) ? file_get_contents($discoveryPath) : null;
 $html = "<!DOCTYPE html><html><head></head><body><p>hi</p></body></html>";
 birkly_webmcp_save(['enabled' => false, 'tools' => [], 'form_allowlist' => []]);
+birkly_discovery_save_pack('webmcp', ['enabled' => false]);
 $offHtml = birkly_project_ssr_inject_webmcp($html);
 assert_true(stripos($offHtml, 'birkly-webmcp.js') === false, 'SSR does not inject when WebMCP off');
 birkly_webmcp_save(['enabled' => true, 'tools' => [], 'form_allowlist' => []]);
+birkly_discovery_save_pack('webmcp', ['enabled' => false]);
+$packOffHtml = birkly_project_ssr_inject_webmcp($html);
+assert_true(stripos($packOffHtml, 'birkly-webmcp.js') === false, 'SSR does not inject when Discovery pack is off');
+birkly_discovery_save_pack('webmcp', ['enabled' => true]);
 $onHtml = birkly_project_ssr_inject_webmcp($html);
-assert_true(stripos($onHtml, 'birkly-webmcp.js') !== false, 'SSR injects when WebMCP on');
+assert_true(stripos($onHtml, 'birkly-webmcp.js') !== false, 'SSR injects when WebMCP and Discovery pack are on');
 
 echo "==> SSR inlines the public config before the runtime (Lighthouse-friendly)\n";
 assert_true(strpos($onHtml, 'window.BIRKLY_WEBMCP_CONFIG') !== false, 'SSR inlines BIRKLY_WEBMCP_CONFIG when on');
@@ -207,10 +215,10 @@ birkly_webmcp_save(['enabled' => true, 'tools' => [], 'form_allowlist' => []]);
 
 echo "==> Declarative form attributes for Lighthouse (birkly-client.js)\n";
 $client = (string) file_get_contents($root . '/birkly-client.js');
-assert_true(strpos($client, 'birklyFormToolAttrs') !== false, 'client defines birklyFormToolAttrs helper');
-assert_true(strpos($client, 'toolname="') !== false, 'client emits declarative toolname attribute');
-assert_true(strpos($client, 'tooldescription="') !== false, 'client emits declarative tooldescription attribute');
-assert_true(strpos($client, "'birkly_form_'") !== false, 'client tool name matches runtime derived name');
+assert_true(strpos($client, 'birklyFormToolAttrs') !== false, 'client calls birklyFormToolAttrs helper');
+assert_true(strpos($js, 'toolname') !== false, 'runtime stamps toolname on allowlisted forms');
+assert_true(strpos($js, 'tooldescription') !== false, 'runtime stamps tooldescription on allowlisted forms');
+assert_true(strpos($js, 'birkly_form_') !== false, 'runtime form tool name uses birkly_form_ prefix');
 assert_true(strpos($client, 'describedby') !== false, 'client emits llms.txt describedby discovery');
 assert_true(strpos($client, 'llms.txt') !== false, 'client references llms.txt in discovery');
 assert_true(strpos($client, 'enhanceAgentGuideFromCms') !== false, 'client fetches Agent Guide summary from CMS');
@@ -253,6 +261,12 @@ if ($hostingBackup !== null) {
 } elseif (is_file($root . '/settings/hosting.json')) {
     @unlink($root . '/settings/hosting.json');
 }
+if ($discoveryBackup !== null) {
+    file_put_contents($discoveryPath, $discoveryBackup);
+} elseif (is_file($discoveryPath)) {
+    @unlink($discoveryPath);
+}
+birkly_discovery_reset_cache();
 
 // Restore original settings state.
 if ($backup !== null) {
