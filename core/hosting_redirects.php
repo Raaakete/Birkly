@@ -153,29 +153,37 @@ function birkly_hosting_repair_harmful_redirects(bool $persist = true): array
  */
 function birkly_hosting_apply_redirect(string $uri): bool
 {
-    require_once __DIR__ . '/site_seo.php';
-    require_once __DIR__ . '/site_seo_url_map.php';
-    if (function_exists('birkly_seo_match_redirect')) {
-        $seoMatch = birkly_seo_match_redirect($uri);
-        if ($seoMatch !== null) {
-            $target = (string) $seoMatch['to_path'];
-            if (!preg_match('#^https?://#i', $target)) {
-                require_once __DIR__ . '/hosting_urls.php';
-                $role = birkly_request_host_role();
-                if ($role === 'public' || $role === 'local') {
-                    $base = birkly_hosting_public_base_url();
-                    if ($base !== '') {
-                        $target = rtrim($base, '/') . ($target[0] === '/' ? $target : '/' . $target);
+    try {
+        if (!function_exists('birkly_discovery_pack_enabled')) {
+            require_once __DIR__ . '/discovery.php';
+        }
+        if (birkly_discovery_pack_enabled('seo')) {
+            require_once __DIR__ . '/site_seo.php';
+            if (function_exists('birkly_seo_match_redirect')) {
+                $seoMatch = birkly_seo_match_redirect($uri);
+                if ($seoMatch !== null) {
+                    $target = (string) $seoMatch['to_path'];
+                    if (!preg_match('#^https?://#i', $target)) {
+                        require_once __DIR__ . '/hosting_urls.php';
+                        $role = birkly_request_host_role();
+                        if ($role === 'public' || $role === 'local') {
+                            $base = birkly_hosting_public_base_url();
+                            if ($base !== '') {
+                                $target = rtrim($base, '/') . ($target[0] === '/' ? $target : '/' . $target);
+                            }
+                        } elseif ($target[0] === '/') {
+                            $target = rtrim(birkly_cms_base_url(), '/') . birkly_url($target);
+                        }
                     }
-                } elseif ($target[0] === '/') {
-                    $target = rtrim(birkly_cms_base_url(), '/') . birkly_url($target);
+                    if (!headers_sent()) {
+                        header('Location: ' . $target, true, (int) $seoMatch['type']);
+                    }
+                    exit;
                 }
             }
-            if (!headers_sent()) {
-                header('Location: ' . $target, true, (int) $seoMatch['type']);
-            }
-            exit;
         }
+    } catch (Throwable $e) {
+        error_log('birkly_hosting_apply_redirect seo: ' . $e->getMessage());
     }
 
     $match = birkly_hosting_match_redirect($uri);
