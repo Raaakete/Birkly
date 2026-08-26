@@ -842,7 +842,11 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     $rendered = birkly_project_ssr_inject_marker($rendered);
     require_once __DIR__ . '/site_seo_url_map.php';
     $seoContext = birkly_seo_build_context($relative, $query, $data, $rendered);
-    $rendered = birkly_project_ssr_inject_discovery_packs($rendered, $seoContext);
+    try {
+        $rendered = birkly_project_ssr_inject_discovery_packs($rendered, $seoContext);
+    } catch (Throwable $e) {
+        error_log('birkly_project_ssr_inject_discovery_packs: ' . $e->getMessage());
+    }
 
     $cacheWrite = 'skip';
     if ($ttl > 0) {

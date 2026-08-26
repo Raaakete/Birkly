@@ -208,7 +208,11 @@ function birkly_project_prepare_html_for_serve(string $html): string
     $html = birkly_project_inject_runtime_scripts($html);
 
     require_once __DIR__ . '/project_ssr.php';
-    $html = birkly_project_ssr_inject_discovery_packs($html);
+    try {
+        $html = birkly_project_ssr_inject_discovery_packs($html);
+    } catch (Throwable $e) {
+        error_log('birkly_project_prepare_html_for_serve: ' . $e->getMessage());
+    }
 
     require_once __DIR__ . '/hosting_urls.php';
     $cmsBase = birkly_cms_web_base_url();
