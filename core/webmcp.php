@@ -42,7 +42,7 @@ function birkly_webmcp_ensure_plugins_loaded(): void
  * Plugin packs register additional tools via `birkly_webmcp_register_tools()` or
  * the `webmcp_tool_catalog` filter from their `plugin.php` when active.
  *
- * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string}>
+ * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string,description?:string}>
  */
 function birkly_webmcp_core_tool_catalog(): array
 {
@@ -60,7 +60,7 @@ function birkly_webmcp_core_tool_catalog(): array
  * Normalize one catalog entry from core or a plugin registration.
  *
  * @param array<string, mixed> $tool
- * @return array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string}|null
+ * @return array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string,description?:string}|null
  */
 function birkly_webmcp_normalize_tool_entry(array $tool): ?array
 {
@@ -101,6 +101,11 @@ function birkly_webmcp_normalize_tool_entry(array $tool): ?array
     $label = trim((string) ($tool['label'] ?? ''));
     if ($label !== '') {
         $normalized['label'] = $label;
+    }
+
+    $description = trim((string) ($tool['description'] ?? ''));
+    if ($description !== '') {
+        $normalized['description'] = $description;
     }
 
     return $normalized;
@@ -154,7 +159,7 @@ function birkly_webmcp_register_tools(string $pluginId, array $tools): void
  * explicit entry in the saved config: core tools default on, plugin packs
  * default off until the owner enables them.
  *
- * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string}>
+ * @return array<int, array{id:string,pack:string,kind:string,mutating:bool,consent:string,default:bool,plugin_id?:string,label?:string,description?:string}>
  */
 function birkly_webmcp_tool_catalog(): array
 {
