@@ -186,6 +186,13 @@ echo "==> URL map admin rows\n";
 $rows = birkly_seo_url_map_admin_rows($config);
 assert_true(count($rows) >= 3, 'admin rows include pages and details');
 
+echo "==> SEO redirect path normalize\n";
+require_once $root . '/core/hosting_redirects.php';
+assert_true(
+    birkly_seo_normalize_path('//about') === birkly_normalize_redirect_path('//about'),
+    'seo normalize path matches hosting redirects'
+);
+
 echo "==> SEO redirect match\n";
 $config['url_map']['redirects'] = [['from' => '/old-about', 'to' => '/about.html', 'status' => 301]];
 birkly_site_seo_save($config);

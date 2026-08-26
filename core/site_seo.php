@@ -496,5 +496,3 @@ function birkly_site_seo_signature_part(): string
     ]) ?: ''), 0, 6);
     return 'seo' . $bits . 'm' . $revision;
 }
-
-require_once __DIR__ . '/site_seo_url_map.php';
