@@ -286,6 +286,8 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     (function() {
         let notifications = [];
         let unreadCount = 0;
+        let pendingCount = 0;
+        let badgeState = 'none';
         let isDropdownOpen = false;
         
         const notificationsBtn = document.getElementById('notifications-btn');
@@ -310,8 +312,11 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                     if (data.status === 'ok') {
                         notifications = data.notifications || [];
                         unreadCount = data.unread_count || 0;
+                        pendingCount = data.pending_count || 0;
+                        badgeState = data.badge_state || (pendingCount > 0 ? 'unread' : 'none');
                         updateBadge();
                         renderNotifications();
+                        markVisibleNotificationsSeen();
                     } else {
                         console.error('Failed to load notifications:', data.message);
                         showError('Failed to load notifications: ' + (data.message || 'Unknown error'));
@@ -323,18 +328,54 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 });
         }
         
-        // Update badge
         function updateBadge() {
-            // Re-find badge in case it was recreated
             const badge = document.getElementById('notification-badge');
-            if (badge) {
-                if (unreadCount > 0) {
-                    badge.textContent = unreadCount > 99 ? '99+' : unreadCount.toString();
-                    badge.style.display = 'flex';
-                } else {
-                    badge.style.display = 'none';
-                }
+            if (!badge) {
+                return;
             }
+            badge.classList.remove('notification-badge--seen', 'notification-badge--unread');
+            if (badgeState === 'none' || pendingCount <= 0) {
+                badge.style.display = 'none';
+                return;
+            }
+            badge.textContent = pendingCount > 99 ? '99+' : pendingCount.toString();
+            badge.style.display = 'flex';
+            badge.classList.add(badgeState === 'unread' ? 'notification-badge--unread' : 'notification-badge--seen');
+        }
+
+        function markVisibleNotificationsSeen() {
+            const unseenIds = notifications
+                .filter(function (n) { return !n.read && !n.seen; })
+                .map(function (n) { return n.id; })
+                .filter(Boolean);
+            if (!unseenIds.length) {
+                if (pendingCount > 0 && badgeState === 'unread') {
+                    badgeState = 'seen';
+                    updateBadge();
+                }
+                return;
+            }
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!csrf) {
+                return;
+            }
+            fetch(Birkly.url('/api/notifications.php'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'mark_seen', ids: unseenIds, _csrf: csrf })
+            }).then(function (response) { return response.json(); }).then(function (data) {
+                if (data.status !== 'ok') {
+                    return;
+                }
+                notifications.forEach(function (n) {
+                    if (unseenIds.indexOf(n.id) !== -1) {
+                        n.seen = true;
+                    }
+                });
+                badgeState = pendingCount > 0 ? 'seen' : 'none';
+                unreadCount = 0;
+                updateBadge();
+            }).catch(function () { /* non-critical */ });
         }
         
         // The API tags each notification with a colour word; map it onto the
@@ -484,7 +525,10 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                     const notif = notifications.find(n => n.id === notificationId);
                     if (notif) {
                         notif.read = true;
-                        unreadCount = Math.max(0, unreadCount - 1);
+                        notif.seen = true;
+                        pendingCount = Math.max(0, pendingCount - 1);
+                        unreadCount = 0;
+                        badgeState = pendingCount > 0 ? 'seen' : 'none';
                         updateBadge();
                         renderNotifications();
                     }
@@ -522,8 +566,13 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'ok') {
-                        notifications.forEach(n => n.read = true);
+                        notifications.forEach(function (n) {
+                            n.read = true;
+                            n.seen = true;
+                        });
                         unreadCount = 0;
+                        pendingCount = 0;
+                        badgeState = 'none';
                         updateBadge();
                         renderNotifications();
                     }
@@ -701,11 +750,13 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
         
         // Load unread count on page load
         function loadUnreadCount() {
-            fetch(Birkly.url('/api/notifications.php?action=unread_count'))
+            fetch(Birkly.url('/api/notifications.php?action=list_recent&limit=20'))
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'ok') {
                         unreadCount = data.unread_count || 0;
+                        pendingCount = data.pending_count || 0;
+                        badgeState = data.badge_state || (pendingCount > 0 ? 'unread' : 'none');
                         updateBadge();
                     }
                 })
@@ -717,7 +768,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
         // P61 — live sidebar mint dots (SSR seeds; poll keeps them fresh without reload)
         function applyNavAttention(counts) {
             counts = counts && typeof counts === 'object' ? counts : {};
-            document.querySelectorAll('#links-plugins [data-plugin-id]').forEach(function (item) {
+            document.querySelectorAll('#links-plugins [data-plugin-id], #links-plugins-flyout [data-plugin-id]').forEach(function (item) {
                 var pluginId = item.getAttribute('data-plugin-id') || '';
                 var has = pluginId !== '' && Number(counts[pluginId] || 0) > 0;
                 item.classList.toggle('has-attention', has);
@@ -738,6 +789,11 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                     dot.hidden = !has;
                 }
             });
+            var flyoutDot = document.getElementById('nav-plugins-flyout-dot');
+            if (flyoutDot) {
+                var any = Object.keys(counts).some(function (id) { return Number(counts[id] || 0) > 0; });
+                flyoutDot.hidden = !any;
+            }
         }
 
         function loadNavAttention() {

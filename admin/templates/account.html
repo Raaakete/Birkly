@@ -104,6 +104,29 @@
 
   <section class="card">
     <div class="card-header">
+      <h2 class="card-title">Display &amp; spacing</h2>
+      <p class="card-description">Adjust text size and spacing across the admin interface.</p>
+    </div>
+    <form id="account-density-form" class="settings-form card-body u-stack-4">
+      <div class="form-group u-stack-3">
+        <label class="radio-card">
+          <input type="radio" name="ui_density" value="compact">
+          <span><strong>Compact</strong> — smaller text and tighter spacing</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="ui_density" value="default" checked>
+          <span><strong>Default</strong> — standard admin layout</span>
+        </label>
+        <label class="radio-card">
+          <input type="radio" name="ui_density" value="large">
+          <span><strong>Large</strong> — larger text and more breathing room</span>
+        </label>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
       <div class="card-heading">
         <h2 class="card-title">{translate 'admin.birkly_cloud_account'}</h2>
         <p class="card-description">{translate 'admin.cloud_account_description'}</p>

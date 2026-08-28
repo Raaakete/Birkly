@@ -97,6 +97,22 @@ if (array_key_exists($requestedPage, $pageViewPermissions)) {
     if (is_string($pluginPerm) && $pluginPerm !== '') {
         requireAdminPermission($pluginPerm);
     }
+    if (function_exists('birkly_plugin_id_for_admin_page')) {
+        require_once __DIR__ . '/../core/roles.php';
+        $pluginPageId = birkly_plugin_id_for_admin_page($requestedPage);
+        if ($pluginPageId !== null && isset($_SESSION['user'])
+            && !birkly_user_plugin_allowed($_SESSION['user'], $pluginPageId)) {
+            $redirect = birkly_admin_url('dashboard', [
+                'permission_denied' => '1',
+                'from' => $requestedPage,
+                'reason' => 'plugin_access',
+            ]);
+            if (!headers_sent()) {
+                header('Location: ' . $redirect);
+                exit;
+            }
+        }
+    }
 }
 
 // Include CSRF helper
