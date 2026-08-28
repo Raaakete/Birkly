@@ -35,4 +35,34 @@ ac_assert('enabled list contains example.com', in_array('example.com', $ids, tru
 birkly_analytics_set_domain_tracking('example.com', false);
 @unlink(dirname(__DIR__) . '/data/analytics/tracking_ids.json');
 
+// Public-site alias → canonical host (when hosting config is present).
+$hostingConfigPath = dirname(__DIR__) . '/data/hosting.json';
+$hostingBackup = is_file($hostingConfigPath) ? (string) file_get_contents($hostingConfigPath) : null;
+$hostingFixture = json_encode([
+    'public_site_mode' => 'project',
+    'public_site_url' => 'https://birkly.cloud',
+    'public_host_aliases' => ['birkly.io'],
+    'cms_base_url' => 'https://cms.birkly.cloud',
+], JSON_PRETTY_PRINT);
+if ($hostingFixture !== false) {
+    file_put_contents($hostingConfigPath, $hostingFixture);
+    if (function_exists('birkly_hosting_reset_cache')) {
+        birkly_hosting_reset_cache();
+    }
+    birkly_analytics_set_domain_tracking('birkly.cloud', true);
+    ac_assert(
+        'resolve public alias to canonical host',
+        birkly_analytics_resolve_tracking_id('birkly.io') === 'birkly.cloud'
+    );
+    birkly_analytics_set_domain_tracking('birkly.cloud', false);
+    if ($hostingBackup !== null) {
+        file_put_contents($hostingConfigPath, $hostingBackup);
+    } else {
+        @unlink($hostingConfigPath);
+    }
+    if (function_exists('birkly_hosting_reset_cache')) {
+        birkly_hosting_reset_cache();
+    }
+}
+
 exit($failures > 0 ? 1 : 0);
