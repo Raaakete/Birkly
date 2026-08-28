@@ -393,20 +393,12 @@ body.sidebar-open { overflow: hidden; }
   body.sidebar-collapsed .sidebar-collapse-toggle .sidebar-collapse-label { display: none; }
   body.sidebar-collapsed .sidebar-collapse-toggle { padding-inline: 0; }
 
-  /* P69 — collapsed rail: plugin flyout instead of long icon list */
-  body:not(.sidebar-collapsed) #links-plugins-rail {
+  /* P69 — collapsed rail: icon-only plugin list (flyout rail hidden; tooltips via JS) */
+  #links-plugins-rail {
     display: none;
   }
 
   body.sidebar-collapsed #nav-plugins-section > #links-plugins {
-    display: none;
-  }
-
-  body.sidebar-collapsed #links-plugins-rail {
-    display: block;
-  }
-
-  body.sidebar-collapsed .nav-plugins-flyout-wrap {
     display: block;
   }
 
@@ -468,25 +460,23 @@ body.sidebar-open { overflow: hidden; }
     display: inline;
   }
 
-  /* Collapsed rail tooltips */
-  body.sidebar-collapsed .nav-links a[title]:hover::after,
-  body.sidebar-collapsed .nav-plugins-flyout-trigger[title]:hover::after {
-    content: attr(title);
-    position: absolute;
-    left: calc(100% + var(--space-2));
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: var(--z-popover);
-    padding: var(--space-1) var(--space-2);
-    border-radius: var(--radius-sm);
-    background: var(--surface-raised);
-    border: 1px solid var(--border-subtle);
-    box-shadow: var(--elevation-2);
-    color: var(--text-primary);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-    pointer-events: none;
-  }
+}
+
+/* Collapsed rail tooltips — fixed layer (not clipped by .nav-links overflow) */
+.sidebar-rail-tooltip {
+  position: fixed;
+  z-index: var(--z-popover);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--elevation-2);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
 }
 
 /* Drawer mode below --bp-xl */

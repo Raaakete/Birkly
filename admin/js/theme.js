@@ -250,6 +250,56 @@ Birkly.Theme = {
         });
 
         this.initPluginsFlyout();
+        this.initSidebarRailTooltips();
+    },
+
+    initSidebarRailTooltips() {
+        const DESKTOP_QUERY = '(min-width: 1280px)';
+        let tooltipEl = document.getElementById('sidebar-rail-tooltip');
+        if (!tooltipEl) {
+            tooltipEl = document.createElement('div');
+            tooltipEl.id = 'sidebar-rail-tooltip';
+            tooltipEl.className = 'sidebar-rail-tooltip';
+            tooltipEl.hidden = true;
+            document.body.appendChild(tooltipEl);
+        }
+
+        const show = (target) => {
+            if (!document.body.classList.contains('sidebar-collapsed')
+                || !window.matchMedia(DESKTOP_QUERY).matches) {
+                return;
+            }
+            const text = target.getAttribute('data-sidebar-tooltip') || target.getAttribute('title');
+            if (!text) {
+                return;
+            }
+            tooltipEl.textContent = text;
+            tooltipEl.hidden = false;
+            const rect = target.getBoundingClientRect();
+            tooltipEl.style.top = `${rect.top + rect.height / 2}px`;
+            tooltipEl.style.left = `${rect.right + 8}px`;
+        };
+
+        const hide = () => {
+            tooltipEl.hidden = true;
+        };
+
+        const bind = (el) => {
+            if (!el || el.dataset.sidebarTooltipBound === '1') {
+                return;
+            }
+            el.dataset.sidebarTooltipBound = '1';
+            el.addEventListener('mouseenter', () => show(el));
+            el.addEventListener('mouseleave', hide);
+            el.addEventListener('focus', () => show(el));
+            el.addEventListener('blur', hide);
+        };
+
+        document.querySelectorAll(
+            '#admin-sidebar .nav-links a[title], #admin-sidebar .sidebar-collapse-toggle[title]'
+        ).forEach(bind);
+
+        document.addEventListener('birkly:layout-change', hide);
     },
 
     initPluginsFlyout() {
