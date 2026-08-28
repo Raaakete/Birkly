@@ -188,6 +188,10 @@ try {
     assert_true('client snippet non-empty', $snippet !== '');
     assert_true('client snippet has data-cms-url', str_contains($snippet, 'data-cms-url="https://cms.example.test"'));
     assert_true(
+        'client snippet has data-tracking-id for public host',
+        str_contains($snippet, 'data-tracking-id="www.example.test"')
+    );
+    assert_true(
         'client snippet absolute script src',
         str_contains($snippet, 'https://cms.example.test') && str_contains($snippet, 'birkly-client.js')
     );

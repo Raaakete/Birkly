@@ -129,6 +129,10 @@
 
         let trackingId = null;
         let sameOriginClient = false;
+        const cmsUrlAttr = clientScript
+            ? (clientScript.getAttribute('data-cms-url') || clientScript.getAttribute('data-cms_url') || '').trim()
+            : '';
+        const externalEmbed = cmsUrlAttr !== '' && !isLocalhost;
 
         if (clientScript) {
             const explicitId = clientScript.getAttribute('data-tracking-id');
@@ -146,8 +150,8 @@
 
         if (!trackingId && isLocalhost) {
             trackingId = 'localhost';
-        } else if (!trackingId && sameOriginClient) {
-            // Bundled project/ on the CMS host (e.g. test.birkly.cloud/project/index.html)
+        } else if (!trackingId && (sameOriginClient || externalEmbed)) {
+            // Same-origin project/ on CMS host, or external site with data-cms-url.
             trackingId = hostname;
         }
 
@@ -160,8 +164,7 @@
                 enableAnalytics = true;
             } else if (clientScript.hasAttribute('data-tracking-id')) {
                 enableAnalytics = true;
-            } else if (trackingId && sameOriginClient) {
-                // Same-origin project preview (including localhost) follows site-wide preset.
+            } else if (trackingId && (sameOriginClient || externalEmbed)) {
                 enableAnalytics = true;
             } else if (trackingId === 'localhost') {
                 enableAnalytics = true;
@@ -500,7 +503,11 @@
                         window.BirklyAnalyticsPublicConfig = publicConfig;
                     }
                 })
-                .catch(function () { /* keep defaults */ })
+                .catch(function (err) {
+                    if (Birkly.debug) {
+                        console.warn('[Birkly] Analytics public_config failed — check CMS CORS and domain registration.', err);
+                    }
+                })
                 .then(startTracking);
         }
     }
