@@ -9,7 +9,9 @@
         presets: [],
         settings: null,
         active: null,
-        trackingId: null,
+        trackingId: 'all',
+        trackingDomains: [],
+        health: null,
         initialized: false,
         lastReport: null
     };
@@ -54,11 +56,17 @@
         }
     }
 
+    function selectedScope() {
+        var select = document.getElementById('analytics-domain-scope');
+        return select ? (select.value || 'all') : (state.trackingId || 'all');
+    }
+
     function updateExportVisibility() {
         var exportBtn = document.getElementById('analytics-csv-export');
         if (!exportBtn) return;
         var preset = selectedPreset();
-        exportBtn.hidden = preset === 'off' || !state.trackingId;
+        var scope = selectedScope();
+        exportBtn.hidden = preset === 'off' || !scope || scope === 'all';
     }
 
     function updateConsentFieldsVisibility() {
@@ -68,6 +76,61 @@
         var active = state.presets.find(function (p) { return p.id === preset; });
         var needsConsent = !!(active && active.consent_required) || preset === 'standard' || preset === 'advanced';
         wrap.hidden = !needsConsent;
+    }
+
+    function renderDomainScopeOptions() {
+        var select = document.getElementById('analytics-domain-scope');
+        if (!select) return;
+
+        var current = selectedScope();
+        var options = ['<option value="all">All enabled domains</option>'];
+        state.trackingDomains.forEach(function (domain) {
+            options.push('<option value="' + escapeHtml(domain) + '">' + escapeHtml(domain) + '</option>');
+        });
+        select.innerHTML = options.join('');
+        if (current === 'all' || state.trackingDomains.indexOf(current) !== -1) {
+            select.value = current;
+        } else {
+            select.value = 'all';
+        }
+        state.trackingId = select.value;
+        updateExportVisibility();
+    }
+
+    function renderHealthBanner() {
+        var banner = document.getElementById('analytics-health-banner');
+        if (!banner) return;
+
+        var health = state.health;
+        if (!health || !health.collecting) {
+            banner.hidden = true;
+            banner.innerHTML = '';
+            return;
+        }
+
+        var messages = [];
+        if (health.consent_required) {
+            messages.push('Standard/Advanced requires visitor consent — visits are only counted after the banner is accepted.');
+        }
+        if (Array.isArray(health.capped_domains) && health.capped_domains.length) {
+            messages.push('Daily event cap reached for ' + health.capped_domains.length + ' domain/day pair(s). Older events may have been trimmed.');
+        }
+        if (!health.last_event_at) {
+            messages.push('No events recorded yet. Visit your public site to start collecting.');
+        } else {
+            messages.push('Last event: ' + health.last_event_at + ' · ' + (health.enabled_domain_count || 0) + ' enabled domain(s).');
+        }
+
+        if (!messages.length) {
+            banner.hidden = true;
+            banner.innerHTML = '';
+            return;
+        }
+
+        banner.hidden = false;
+        banner.className = 'card-body';
+        banner.innerHTML = '<div class="message message-info" role="status"><p class="u-m-0">' +
+            messages.map(function (msg) { return escapeHtml(msg); }).join(' ') + '</p></div>';
     }
 
     function renderPresets() {
@@ -188,7 +251,7 @@
             var viewsPct = Math.max(6, Math.round((views / max) * 100));
             var visitorsPct = Math.max(4, Math.round((visitors / max) * 100));
             return '<li class="analytics-trend-col" title="' + escapeHtml(String(row.date || '')) +
-                ': ' + views + ' views, ' + visitors + ' visitors">' +
+                ': ' + views + ' page views, ' + visitors + ' visitors">' +
                 '<span class="analytics-trend-col__stack" aria-hidden="true">' +
                 '<span class="analytics-trend-col__bar analytics-trend-col__bar--views" style="height:' + viewsPct + '%"></span>' +
                 (isAdvanced()
@@ -200,13 +263,13 @@
         }).join('');
         var legend = isAdvanced()
             ? '<div class="analytics-trend-legend" aria-hidden="true">' +
-                '<span><i class="analytics-swatch analytics-swatch--views"></i> Views</span>' +
+                '<span><i class="analytics-swatch analytics-swatch--views"></i> Page views</span>' +
                 '<span><i class="analytics-swatch analytics-swatch--visitors"></i> Visitors</span>' +
                 '</div>'
             : '';
         return '<section class="analytics-panel analytics-panel--wide analytics-panel--chart">' +
             '<div class="u-cluster u-justify-between u-gap-3">' +
-            '<h4 class="analytics-panel__title">Daily trend (last ' + windowDays + ' days)</h4>' +
+            '<h4 class="analytics-panel__title">Daily page views (last ' + windowDays + ' days)</h4>' +
             legend +
             '</div>' +
             '<ul class="analytics-trend-cols">' + bars + '</ul></section>';
@@ -215,19 +278,21 @@
     function renderReport(report) {
         report = report || {};
         var preset = selectedPreset();
+        var scope = selectedScope();
+        var scopeLabel = scope === 'all' ? 'All enabled domains' : scope;
         var help = document.getElementById('analytics-report-help');
         if (help) {
             help.textContent = isAdvanced()
-                ? 'Advanced report — sessions, bounce, funnels, forms, outbound clicks, OS, and plugin events.'
-                : 'Site-wide snapshot from enabled tracking. Depth follows your preset.';
+                ? 'Advanced report for ' + scopeLabel + ' — sessions, bounce, funnels, forms, outbound clicks, OS, and plugin events.'
+                : 'Combined snapshot for ' + scopeLabel + '. Depth follows your preset.';
         }
 
         var html = '<div class="analytics-report' + (isAdvanced() ? ' analytics-report--advanced' : '') + '">';
 
-        html += sectionHeading('Overview', 'Last 30 days') +
+        html += sectionHeading('Overview', 'Last 30 days · ' + scopeLabel) +
             '<div class="analytics-kpi-grid">' +
-            kpi(report.page_views || 0, 'Page views', 'All page loads') +
-            kpi(report.unique_visitors || 0, 'Visitors', 'Unique visitors');
+            kpi(report.page_views || 0, 'Page views', 'Page loads only') +
+            kpi(report.unique_visitors || 0, 'Visitors', preset === 'minimal' ? 'Daily privacy-safe estimate' : 'Unique visitors');
 
         if (preset !== 'minimal' && preset !== 'off') {
             html += kpi(report.sessions || 0, 'Sessions', 'With session id') +
@@ -272,49 +337,27 @@
         return html;
     }
 
-    function resolveTrackingId() {
-        return fetch(apiUrl('/api/domain_management.php?action=list_licenses'), { credentials: 'same-origin' })
-            .then(function (r) { return r.json(); })
-            .then(function (payload) {
-                var domains = [];
-                if (payload && payload.status === 'ok' && payload.data) {
-                    if (Array.isArray(payload.data.licenses)) {
-                        domains = payload.data.licenses;
-                    } else if (Array.isArray(payload.data)) {
-                        domains = payload.data;
-                    }
-                } else if (payload && Array.isArray(payload.licenses)) {
-                    domains = payload.licenses;
-                }
-                var enabled = domains.filter(function (d) { return !!d.analytics_enabled; });
-                if (enabled.length) {
-                    state.trackingId = enabled[0].domain || enabled[0].id || null;
-                    return state.trackingId;
-                }
-                return fetch(apiUrl('/api/analytics.php?action=list'), { credentials: 'same-origin' })
-                    .then(function (r) { return r.json(); })
-                    .then(function (listPayload) {
-                        var ids = [];
-                        if (listPayload.status === 'ok' && listPayload.data) {
-                            if (Array.isArray(listPayload.data)) {
-                                ids = listPayload.data.map(function (x) { return x.id || x.domain; });
-                            } else if (typeof listPayload.data === 'object') {
-                                ids = Object.keys(listPayload.data).filter(function (id) {
-                                    var row = listPayload.data[id];
-                                    return !row || row.enabled !== false;
-                                });
-                            }
-                        }
-                        // Prefer non-localhost when both exist.
-                        var preferred = ids.find(function (id) { return id && id !== 'localhost'; });
-                        state.trackingId = preferred || ids[0] || 'localhost';
-                        return state.trackingId;
-                    });
-            })
-            .catch(function () {
-                state.trackingId = 'localhost';
-                return state.trackingId;
-            });
+    function loadDomainsAndHealth() {
+        return Promise.all([
+            fetch(apiUrl('/api/analytics.php?action=domains'), { credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+            fetch(apiUrl('/api/analytics.php?action=health'), { credentials: 'same-origin' }).then(function (r) { return r.json(); })
+        ]).then(function (results) {
+            var domainsPayload = results[0];
+            var healthPayload = results[1];
+            if (domainsPayload.status === 'ok' && domainsPayload.data && Array.isArray(domainsPayload.data.domains)) {
+                state.trackingDomains = domainsPayload.data.domains;
+            } else {
+                state.trackingDomains = [];
+            }
+            if (healthPayload.status === 'ok') {
+                state.health = healthPayload.data || null;
+            }
+            renderDomainScopeOptions();
+            renderHealthBanner();
+        }).catch(function () {
+            state.trackingDomains = [];
+            renderDomainScopeOptions();
+        });
     }
 
     function loadReport() {
@@ -330,30 +373,31 @@
         }
 
         panel.innerHTML = '<div class="loading-state"><p>Loading report…</p></div>';
-        return resolveTrackingId().then(function (trackingId) {
-            updateExportVisibility();
-            if (!trackingId) {
-                panel.innerHTML = '<div class="empty-state"><p class="empty-state__title">No tracking domain yet</p>' +
-                    '<p class="empty-state__description">Save Settings with Minimal+ to enable localhost/site tracking.</p></div>';
-                return;
-            }
-            var end = new Date();
-            var start = new Date(end.getTime() - 30 * 86400000);
-            var qs = 'action=data&tracking_id=' + encodeURIComponent(trackingId) +
-                '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
-                '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10));
-            return fetch(apiUrl('/api/analytics.php?' + qs), { credentials: 'same-origin' })
-                .then(function (r) { return r.json(); })
-                .then(function (payload) {
-                    if (payload.status !== 'ok') {
-                        throw new Error(payload.message || 'Report failed');
-                    }
-                    state.lastReport = payload.data || {};
-                    panel.innerHTML = renderReport(state.lastReport);
-                });
-        }).catch(function (err) {
-            panel.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(err.message) + '</div>';
-        });
+        var trackingId = selectedScope() || 'all';
+        state.trackingId = trackingId;
+        updateExportVisibility();
+
+        var end = new Date();
+        var start = new Date(end.getTime() - 30 * 86400000);
+        var qs = 'action=data&tracking_id=' + encodeURIComponent(trackingId) +
+            '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
+            '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10));
+        return fetch(apiUrl('/api/analytics.php?' + qs), { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (payload) {
+                if (payload.status !== 'ok') {
+                    throw new Error(payload.message || 'Report failed');
+                }
+                if (payload.meta && payload.meta.health) {
+                    state.health = payload.meta.health;
+                    renderHealthBanner();
+                }
+                state.lastReport = payload.data || {};
+                panel.innerHTML = renderReport(state.lastReport);
+            })
+            .catch(function (err) {
+                panel.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(err.message) + '</div>';
+            });
     }
 
     function load() {
@@ -366,6 +410,7 @@
                 state.presets = (payload.data && payload.data.presets) || [];
                 state.settings = (payload.data && payload.data.settings) || {};
                 state.active = (payload.data && payload.data.active) || null;
+                state.health = (payload.data && payload.data.health) || state.health;
 
                 var consent = document.getElementById('analytics-consent-text');
                 var retention = document.getElementById('analytics-retention-days');
@@ -374,17 +419,17 @@
                     retention.value = state.settings.retention_days != null ? state.settings.retention_days : '';
                 }
                 renderPresets();
+                renderHealthBanner();
                 if (typeof window.markSettingsClean === 'function') {
                     window.markSettingsClean('analytics');
                 } else if (typeof window.checkSettingsDirtyState === 'function') {
-                    // Snapshot after first paint of radios
                     setTimeout(function () {
                         if (typeof window.captureSettingsSnapshot === 'function') {
                             window.captureSettingsSnapshot('analytics');
                         }
                     }, 0);
                 }
-                return loadReport();
+                return loadDomainsAndHealth().then(loadReport);
             })
             .catch(function (err) {
                 var mount = document.getElementById('analytics-preset-cards');
@@ -420,22 +465,25 @@
                 }
                 state.settings = payload.data.settings;
                 state.active = payload.data.active;
+                state.health = payload.data.health || state.health;
                 renderPresets();
+                renderHealthBanner();
                 if (typeof window.markSettingsClean === 'function') {
                     window.markSettingsClean('analytics');
                 }
-                return loadReport();
+                return loadDomainsAndHealth().then(loadReport);
             });
     }
 
     function exportCsv() {
-        if (!state.trackingId || selectedPreset() === 'off') {
-            toast('Enable analytics and a domain first', 'error');
+        var scope = selectedScope();
+        if (!scope || scope === 'all' || selectedPreset() === 'off') {
+            toast('Choose a single domain to export CSV', 'error');
             return;
         }
         var end = new Date();
         var start = new Date(end.getTime() - 30 * 86400000);
-        var qs = 'action=export_csv&tracking_id=' + encodeURIComponent(state.trackingId) +
+        var qs = 'action=export_csv&tracking_id=' + encodeURIComponent(scope) +
             '&start_date=' + encodeURIComponent(start.toISOString().slice(0, 10)) +
             '&end_date=' + encodeURIComponent(end.toISOString().slice(0, 10));
         window.location.href = apiUrl('/api/analytics.php?' + qs);
@@ -447,6 +495,14 @@
             state.initialized = true;
             var exportBtn = document.getElementById('analytics-csv-export');
             if (exportBtn) exportBtn.addEventListener('click', exportCsv);
+            var scopeSelect = document.getElementById('analytics-domain-scope');
+            if (scopeSelect) {
+                scopeSelect.addEventListener('change', function () {
+                    state.trackingId = scopeSelect.value || 'all';
+                    updateExportVisibility();
+                    loadReport();
+                });
+            }
             var form = document.getElementById('analytics-settings-form');
             if (form) {
                 form.addEventListener('submit', function (e) { e.preventDefault(); });

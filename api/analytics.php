@@ -23,11 +23,12 @@ set_cors_headers('public');
     require_once 'log.php';
     require_once __DIR__ . '/../core/analytics_enrich.php';
     require_once __DIR__ . '/../core/analytics_presets.php';
+    require_once __DIR__ . '/../core/analytics_config.php';
 
 $action = $_GET['action'] ?? '';
 
 // Admin: get/save analytics preset settings (P61)
-if ($action === 'get_settings' || $action === 'save_settings' || $action === 'presets') {
+if ($action === 'get_settings' || $action === 'save_settings' || $action === 'presets' || $action === 'health' || $action === 'domains') {
     require_once 'auth.php';
     requireAuth('manage_settings');
     if ($action === 'presets') {
@@ -37,6 +38,22 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
                 'presets' => array_values(birkly_analytics_preset_definitions()),
                 'settings' => birkly_analytics_load_settings(),
                 'active' => birkly_analytics_active_preset(),
+            ],
+        ]);
+        exit;
+    }
+    if ($action === 'health') {
+        echo json_encode([
+            'status' => 'ok',
+            'data' => birkly_analytics_collection_health(),
+        ]);
+        exit;
+    }
+    if ($action === 'domains') {
+        echo json_encode([
+            'status' => 'ok',
+            'data' => [
+                'domains' => birkly_analytics_list_enabled_tracking_ids(),
             ],
         ]);
         exit;
@@ -58,6 +75,7 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
                 'active' => birkly_analytics_active_preset(),
                 'presets' => array_values(birkly_analytics_preset_definitions()),
                 'tracking_enabled' => $enabledTargets,
+                'health' => birkly_analytics_collection_health(),
             ],
         ]);
         exit;
@@ -89,6 +107,7 @@ if ($action === 'get_settings' || $action === 'save_settings' || $action === 'pr
                 'settings' => birkly_analytics_load_settings(),
                 'active' => birkly_analytics_active_preset(),
                 'tracking_enabled' => $enabledTargets,
+                'health' => birkly_analytics_collection_health(),
             ],
         ]);
         exit;
@@ -135,8 +154,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
         }
     }
     
-    $trackingId = $input['tracking_id'] ?? '';
-    $domain = $input['domain'] ?? '';
+    $trackingId = birkly_analytics_normalize_domain((string) ($input['tracking_id'] ?? ''));
+    $domain = birkly_analytics_normalize_domain((string) ($input['domain'] ?? ''));
+    if ($trackingId === '' && $domain !== '') {
+        $trackingId = $domain;
+    }
     $path = $input['path'] ?? '/';
     $referrer = $input['referrer'] ?? '';
     $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
@@ -147,11 +169,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     $timestamp = time();
     
     // Validate tracking ID
-    if (empty($trackingId)) {
+    if ($trackingId === '') {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'Tracking ID required']);
         exit;
     }
+
+    $resolvedTrackingId = birkly_analytics_resolve_tracking_id($trackingId);
+    if ($resolvedTrackingId === null) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Analytics not enabled for this domain']);
+        exit;
+    }
+    $trackingId = $resolvedTrackingId;
+    birkly_analytics_sync_domain_aliases($trackingId);
     
     // Rate limiting per IP (max 100 requests per minute)
     $rateLimiter = new RateLimiter('analytics_track_' . $ip, 100, 60);
@@ -162,49 +193,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     }
     
     // Verify tracking ID (domain) exists and analytics is enabled
-    // Check both tracking_ids.json (legacy) and license system
     $analyticsDir = __DIR__ . '/../data/analytics';
     if (!is_dir($analyticsDir)) {
         mkdir($analyticsDir, 0755, true);
-    }
-    
-    $trackingConfigFile = $analyticsDir . '/tracking_ids.json';
-    $trackingIds = [];
-    if (file_exists($trackingConfigFile)) {
-        $trackingIds = json_decode(file_get_contents($trackingConfigFile), true) ?: [];
-    }
-    
-    // Also check license system for domain-based analytics
-    require_once __DIR__ . '/domain_auth.php';
-    $domainAuth = new DomainAuth();
-    $licenses = $domainAuth->getAllLicenses();
-    $license = $licenses[$trackingId] ?? null;
-    
-    $analyticsEnabled = false;
-    if ($license && !empty($license['analytics_enabled'])) {
-        $analyticsEnabled = true;
-        // Ensure tracking config exists
-        if (!isset($trackingIds[$trackingId])) {
-            $trackingIds[$trackingId] = [
-                'id' => $trackingId,
-                'name' => $trackingId,
-                'domain' => $trackingId,
-                'enabled' => true,
-                'created_at' => date('c'),
-                'updated_at' => date('c')
-            ];
-            file_put_contents($trackingConfigFile, json_encode($trackingIds, JSON_PRETTY_PRINT), LOCK_EX);
-        }
-    } elseif (isset($trackingIds[$trackingId])) {
-        // Legacy support - check old tracking_ids.json
-        $config = $trackingIds[$trackingId];
-        $analyticsEnabled = $config['enabled'] ?? false;
-    }
-    
-    if (!$analyticsEnabled) {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'message' => 'Analytics not enabled for this domain']);
-        exit;
     }
     
     // Store the tracking event
@@ -221,6 +212,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     }
     
     // Create event and filter by active preset (P61)
+    $input['tracking_id'] = $trackingId;
     $event = birkly_analytics_build_event($input, $ip, $userAgent, $timestamp);
     $event = birkly_analytics_apply_preset_to_event($event);
     if ($event === null) {
@@ -230,12 +222,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     
     $events[] = $event;
     
-    // Keep only last 1000 events per day (to prevent file bloat)
-    if (count($events) > 1000) {
-        $events = array_slice($events, -1000);
+    $dailyCap = birkly_analytics_daily_event_cap();
+    $capped = false;
+    if (count($events) > $dailyCap) {
+        $events = array_slice($events, -$dailyCap);
+        $capped = true;
     }
     
     file_put_contents($eventFile, json_encode($events, JSON_PRETTY_PRINT), LOCK_EX);
+    birkly_analytics_mark_event_meta($trackingId, $timestamp, $capped);
+    birkly_analytics_purge_expired();
     
     // Return 1x1 transparent pixel (for image-based tracking)
     if ($_GET['format'] === 'image') {
@@ -261,21 +257,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'data') {
     // Check authentication
     requireAuth('view_dashboard');
     
-    $trackingId = $_GET['tracking_id'] ?? '';
+    $trackingId = trim((string) ($_GET['tracking_id'] ?? 'all'));
     $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $endDate = $_GET['end_date'] ?? date('Y-m-d');
     
-    if (empty($trackingId)) {
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Tracking ID required']);
-        exit;
+    if ($trackingId === '') {
+        $trackingId = 'all';
     }
+
+    birkly_analytics_purge_expired();
     
     $analytics = getAnalyticsData($trackingId, $startDate, $endDate);
     
     echo json_encode([
         'status' => 'ok',
-        'data' => $analytics
+        'data' => $analytics,
+        'meta' => [
+            'tracking_id' => $trackingId,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'health' => birkly_analytics_collection_health(),
+        ],
     ]);
     exit;
 }

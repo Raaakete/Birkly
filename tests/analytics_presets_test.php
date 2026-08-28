@@ -36,17 +36,19 @@ try {
         'browser' => 'Chrome',
         'referrer' => 'https://google.com/search?q=x',
         'ip' => '1.2.3.4',
+        'visitor_day_key' => 'vd_test_key',
     ]);
     ap_assert('minimal keeps path', is_array($minimal) && ($minimal['path'] ?? '') === '/about');
     ap_assert('minimal strips session', is_array($minimal) && !isset($minimal['session_id']));
     ap_assert('minimal strips browser', is_array($minimal) && !isset($minimal['browser']));
+    ap_assert('minimal keeps visitor_day_key', is_array($minimal) && isset($minimal['visitor_day_key']));
     ap_assert('minimal coarse referrer', is_array($minimal) && ($minimal['referrer'] ?? '') === 'google.com');
     ap_assert('minimal no form events', birkly_analytics_allows_event('form_submit') === false);
     ap_assert('minimal consent not required', birkly_analytics_consent_required() === false);
 
     ap_assert('save standard', birkly_analytics_save_settings(['preset' => 'standard']));
     ap_assert('standard consent required', birkly_analytics_consent_required() === true);
-    ap_assert('standard allows page_view', birkly_analytics_allows_event('page_view') === true);
+    ap_assert('standard allows page_exit', birkly_analytics_allows_event('page_exit') === true);
     ap_assert('standard blocks outbound', birkly_analytics_allows_event('outbound_click') === false);
 
     ap_assert('save advanced', birkly_analytics_save_settings(['preset' => 'advanced']));
