@@ -116,7 +116,7 @@
             // Minimal / Off server-side; omit consent field
         }
 
-        const url = cmsUrl + '/api/analytics.php?action=track';
+        const url = cmsUrl + '/api/insights.php?action=track';
         if (navigator.sendBeacon) {
             const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
             navigator.sendBeacon(url, blob);
@@ -245,7 +245,7 @@
             startTracking();
             return;
         }
-        fetch(cmsUrl + '/api/analytics.php?action=public_config', {
+        fetch(cmsUrl + '/api/insights.php?action=public_config', {
             credentials: 'omit',
             cache: 'no-store'
         }).then(function (r) { return r.json(); })

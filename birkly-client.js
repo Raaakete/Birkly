@@ -177,6 +177,21 @@
         Birkly.enableAnalytics = enableAnalytics;
     })();
 
+    function birklyCollectApiPath(action) {
+        return '/api/insights.php?action=' + encodeURIComponent(action || 'track');
+    }
+
+    function birklyDefaultPublicAnalyticsConfig() {
+        return {
+            collecting: true,
+            consent_required: true,
+            anonymous_counts: true,
+            events: false,
+            preset: 'standard',
+            consent_text: 'We use privacy-friendly analytics to understand how the site is used. Basic page views are counted even if you decline; detailed metrics need your consent.'
+        };
+    }
+
     /**
      * Initialize analytics tracking (idempotent — safe to call early and after init).
      */
@@ -371,7 +386,7 @@
             }
             const anonymous = consentRequired() && !consentGranted() && allowsAnonymousPageView(payloadData);
             const payload = anonymous ? buildAnonymousTrackPayload(payloadData) : buildTrackPayload(payloadData);
-            const url = cmsUrl + '/api/analytics.php?action=track';
+            const url = cmsUrl + birklyCollectApiPath('track');
             const body = JSON.stringify(payload);
 
             if (preferBeacon && navigator.sendBeacon) {
@@ -493,7 +508,7 @@
         if (publicConfig) {
             startTracking();
         } else {
-            fetch(cmsUrl + '/api/analytics.php?action=public_config', {
+            fetch(cmsUrl + birklyCollectApiPath('public_config'), {
                 credentials: 'omit',
                 cache: 'no-store'
             }).then(function (r) { return r.json(); })
@@ -501,11 +516,16 @@
                     if (payload && payload.status === 'ok' && payload.data) {
                         publicConfig = payload.data;
                         window.BirklyAnalyticsPublicConfig = publicConfig;
+                    } else {
+                        publicConfig = birklyDefaultPublicAnalyticsConfig();
+                        window.BirklyAnalyticsPublicConfig = publicConfig;
                     }
                 })
                 .catch(function (err) {
+                    publicConfig = birklyDefaultPublicAnalyticsConfig();
+                    window.BirklyAnalyticsPublicConfig = publicConfig;
                     if (Birkly.debug) {
-                        console.warn('[Birkly] Analytics public_config failed — check CMS CORS and domain registration.', err);
+                        console.warn('[Birkly] Analytics public_config failed — using safe defaults.', err);
                     }
                 })
                 .then(startTracking);
