@@ -255,7 +255,15 @@
             return false;
         }
 
-        function canTrack() {
+        function allowsAnonymousPageView(extra) {
+            if (!publicConfig || publicConfig.anonymous_counts !== true) {
+                return false;
+            }
+            const eventType = String((extra && extra.event_type) || 'page_view').toLowerCase();
+            return eventType === 'page_view' || eventType === 'pageview' || eventType === '';
+        }
+
+        function canTrack(extra) {
             // Wait for public_config — do not track when preset/consent state is unknown.
             if (!publicConfig) {
                 return false;
@@ -264,7 +272,7 @@
                 return false;
             }
             if (consentRequired() && !consentGranted()) {
-                return false;
+                return allowsAnonymousPageView(extra);
             }
             return true;
         }
@@ -316,6 +324,16 @@
             (document.body || document.documentElement).appendChild(wrap);
         }
 
+        function buildAnonymousTrackPayload(extra) {
+            return Object.assign({
+                tracking_id: trackingId,
+                event_type: 'pageview',
+                domain: window.location.hostname,
+                path: window.location.pathname + window.location.search,
+                consent: 'anonymous'
+            }, extra || {});
+        }
+
         function buildTrackPayload(extra) {
             const utm = getUtmParams();
             const payload = Object.assign({
@@ -343,12 +361,15 @@
             return payload;
         }
 
-        function sendTrackPayload(data, preferBeacon) {
-            if (!canTrack()) {
+        function sendTrackPayload(payloadExtra, preferBeacon) {
+            const payloadData = payloadExtra || {};
+            if (!canTrack(payloadData)) {
                 return;
             }
+            const anonymous = consentRequired() && !consentGranted() && allowsAnonymousPageView(payloadData);
+            const payload = anonymous ? buildAnonymousTrackPayload(payloadData) : buildTrackPayload(payloadData);
             const url = cmsUrl + '/api/analytics.php?action=track';
-            const body = JSON.stringify(data);
+            const body = JSON.stringify(payload);
 
             if (preferBeacon && navigator.sendBeacon) {
                 navigator.sendBeacon(url, new Blob([body], { type: 'application/json' }));

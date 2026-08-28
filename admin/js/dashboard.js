@@ -191,7 +191,7 @@
             var visitors = Number(data.total_visitors || 0);
             if (pageViews === 0 && visitors === 0) {
                 var waitMsg = data.analytics_consent_required
-                    ? 'Preset is on. Visit your public site and accept the consent banner to start collecting.'
+                    ? 'Anonymous page views are counted without consent. Accept the banner for detailed metrics.'
                     : 'Preset is on. Visit your public site (or localhost preview) to record the first page views.';
                 setContent(element, callout('0', 'Waiting for traffic', waitMsg, analyticsSettingsUrl, 'View Analytics →', 'muted'));
                 return;
@@ -265,7 +265,7 @@
             if (Array.isArray(health.capped_domains) && health.capped_domains.length) {
                 healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Daily cap reached for some domains — counts may be understated.</p>';
             } else if (health.consent_required) {
-                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Consent required — only accepted visits are counted.</p>';
+                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Anonymous visits count without consent; detailed metrics need banner acceptance.</p>';
             }
             if ((data.tracking_count || 0) > 1) {
                 healthNote += '<p class="u-text-sm u-fg-secondary u-m-0">Combined across ' + Number(data.tracking_count).toLocaleString() + ' enabled domains.</p>';
