@@ -14,6 +14,13 @@
         return window.BirklyActivityRows;
     }
 
+    function apiUrl(path) {
+        if (typeof window.Birkly !== 'undefined' && typeof window.Birkly.url === 'function') {
+            return window.Birkly.url(path.startsWith('/') ? path : '/' + path);
+        }
+        return path;
+    }
+
     function renderFeed() {
         const feed = document.getElementById('activity-feed');
         if (!feed) return;
@@ -69,11 +76,16 @@
 
         const category = document.getElementById('category-filter')?.value || 'all';
         const severity = document.getElementById('severity-filter')?.value || 'all';
-        const url = '/api/activity.php?action=list&limit=200&filter=' + encodeURIComponent(category)
-            + '&severity=' + encodeURIComponent(severity);
+        const url = apiUrl('/api/activity.php?action=list&limit=200&filter=' + encodeURIComponent(category)
+            + '&severity=' + encodeURIComponent(severity));
 
         fetch(url, { credentials: 'same-origin' })
-            .then(function (response) { return response.json(); })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('HTTP ' + response.status);
+                }
+                return response.json();
+            })
             .then(function (data) {
                 if (data.status === 'ok' && Array.isArray(data.activity)) {
                     allActivity = data.activity;

@@ -165,7 +165,7 @@ function birkly_activity_project_group(string $event): string
     if (birkly_activity_str_starts_with($event, 'project_git_')) {
         return 'git';
     }
-    if (birkly_activity_birkly_activity_str_contains($event, 'file')
+    if (birkly_activity_str_contains($event, 'file')
         || in_array($event, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
         return 'files';
     }
