@@ -48,8 +48,21 @@ try {
 
     ap_assert('save standard', birkly_analytics_save_settings(['preset' => 'standard']));
     ap_assert('standard consent required', birkly_analytics_consent_required() === true);
+    ap_assert('standard anonymous counts', birkly_analytics_anonymous_counts_enabled() === true);
     ap_assert('standard allows page_exit', birkly_analytics_allows_event('page_exit') === true);
     ap_assert('standard blocks outbound', birkly_analytics_allows_event('outbound_click') === false);
+
+    $anonymous = birkly_analytics_apply_anonymous_page_view_filter([
+        'path' => '/pricing',
+        'domain' => 'example.com',
+        'referrer' => 'https://google.com',
+        'session_id' => 'sess_x',
+        'browser' => 'Chrome',
+    ], 'example.com', '203.0.113.4', time());
+    ap_assert('anonymous keeps path', is_array($anonymous) && ($anonymous['path'] ?? '') === '/pricing');
+    ap_assert('anonymous strips session', is_array($anonymous) && !isset($anonymous['session_id']));
+    ap_assert('anonymous strips referrer', is_array($anonymous) && !isset($anonymous['referrer']));
+    ap_assert('anonymous keeps visitor_day_key', is_array($anonymous) && isset($anonymous['visitor_day_key']));
 
     ap_assert('save advanced', birkly_analytics_save_settings(['preset' => 'advanced']));
     ap_assert('advanced allows outbound', birkly_analytics_allows_event('outbound_click') === true);

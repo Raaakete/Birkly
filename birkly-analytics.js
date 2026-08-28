@@ -67,12 +67,20 @@
         return !!(config.enableEvents);
     }
 
-    function canTrack() {
+    function allowsAnonymousPageView(payload) {
+        if (!publicConfig || publicConfig.anonymous_counts !== true) {
+            return false;
+        }
+        const eventType = String((payload && payload.event_type) || 'page_view').toLowerCase();
+        return eventType === 'page_view' || eventType === 'pageview' || eventType === '';
+    }
+
+    function canTrack(payload) {
         if (publicConfig && publicConfig.collecting === false) {
             return false;
         }
         if (consentRequired() && !consentGranted()) {
-            return false;
+            return allowsAnonymousPageView(payload);
         }
         return true;
     }
@@ -89,11 +97,20 @@
     }
 
     function sendTrack(payload) {
-        if (!canTrack()) {
+        if (!canTrack(payload)) {
             return;
         }
         const consent = readConsentCookie();
-        if (consent) {
+        const anonymous = consentRequired() && !consentGranted() && allowsAnonymousPageView(payload);
+        if (anonymous) {
+            payload = {
+                tracking_id: trackingId,
+                domain: window.location.hostname,
+                path: window.location.pathname + window.location.search,
+                event_type: 'page_view',
+                consent: 'anonymous'
+            };
+        } else if (consent) {
             payload.consent = consent;
         } else if (!consentRequired()) {
             // Minimal / Off server-side; omit consent field

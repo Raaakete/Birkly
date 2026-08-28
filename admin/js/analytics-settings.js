@@ -110,7 +110,7 @@
 
         var messages = [];
         if (health.consent_required) {
-            messages.push('Standard/Advanced requires visitor consent — visits are only counted after the banner is accepted.');
+            messages.push('Without consent, only anonymous page views are counted (path + daily visitor estimate). Detailed metrics require accepting the banner.');
         }
         if (Array.isArray(health.capped_domains) && health.capped_domains.length) {
             messages.push('Daily event cap reached for ' + health.capped_domains.length + ' domain/day pair(s). Older events may have been trimmed.');
