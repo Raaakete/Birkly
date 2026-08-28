@@ -23,13 +23,27 @@ p69_assert('density normalize invalid', birkly_ui_density_normalize('huge') === 
 p69_assert('ai tools mode normalize', birkly_ai_tools_mode_normalize('read_only_chat') === 'read_only_chat');
 p69_assert('ai tools restricted when not normal', birkly_ai_tools_mode_normalize('disabled') === 'disabled');
 
-$role = [
-    'id' => 'editor',
-    'plugin_access' => ['mode' => 'all_except', 'deny' => ['commerce']],
-];
+$tmpRoot = sys_get_temp_dir() . '/birkly-p69-' . bin2hex(random_bytes(4));
+mkdir($tmpRoot . '/settings', 0755, true);
+file_put_contents(
+    $tmpRoot . '/settings/roles.json',
+    json_encode([
+        [
+            'id' => 'editor',
+            'name' => 'Editor',
+            'plugin_access' => ['mode' => 'all_except', 'deny' => ['commerce']],
+        ],
+        [
+            'id' => 'admin',
+            'name' => 'Admin',
+        ],
+    ], JSON_THROW_ON_ERROR)
+);
+$GLOBALS['__birkly_project_root'] = $tmpRoot;
+
 p69_assert('plugin denied', !birkly_role_plugin_allowed('editor', 'commerce'));
 p69_assert('plugin allowed', birkly_role_plugin_allowed('editor', 'automation'));
-p69_assert('plugin all mode', birkly_role_plugin_allowed('editor', 'commerce'));
+p69_assert('plugin all mode', birkly_role_plugin_allowed('admin', 'commerce'));
 
 $GLOBALS['__birkly_security_settings_cache'] = ['ai_tools_mode' => 'read_only_chat'];
 p69_assert('tools empty when restricted', birkly_ai_tools_for_user(['role' => 'admin']) === []);

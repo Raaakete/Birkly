@@ -16,6 +16,7 @@ require_once __DIR__ . '/../core/project_site.php';
 require_once __DIR__ . '/../core/project_site_filesystem.php';
 require_once __DIR__ . '/../core/project_settings.php';
 require_once __DIR__ . '/../core/project_ssr.php';
+require_once __DIR__ . '/../core/activity_format.php';
 
 set_cors_headers('admin');
 haru_secure_session_start();
@@ -138,25 +139,19 @@ function birkly_project_site_activity_from_approvals(int $limit): array
         $reviewedBy = (string) ($approval['reviewed_by'] ?? '');
         $aiUserId = (string) ($approval['ai_user_id'] ?? '');
 
-        $items[] = [
-            'event' => $actionType,
-            'user' => $reviewedBy !== '' ? $reviewedBy : $aiUserId,
-            'message' => birkly_project_site_activity_message($actionType, [
-                'path' => $path,
-                'source' => 'ai',
-                'ai_user_id' => $aiUserId,
-            ]),
-            'icon' => birkly_project_site_activity_icon($actionType),
-            'color' => '#17a2b8',
-            'timestamp' => $timestamp,
-            'details' => [
-                'path' => $path,
-                'source' => 'ai',
-                'ai_user_id' => $aiUserId,
-                'reviewed_by' => $reviewedBy,
-            ],
-            'category' => 'content',
+        $details = [
+            'path' => $path,
+            'source' => 'ai',
+            'ai_user_id' => $aiUserId,
+            'reviewed_by' => $reviewedBy,
         ];
+        $items[] = birkly_activity_format_item(
+            $actionType,
+            $reviewedBy !== '' ? $reviewedBy : $aiUserId,
+            $details,
+            $timestamp,
+            'approval_store'
+        );
     }
 
     usort($items, static function (array $a, array $b): int {
@@ -260,21 +255,14 @@ function birkly_project_site_activity(int $limit = 30): array
 
             $user = (string) ($entry['user'] ?? 'Unknown');
             $timestamp = (string) ($entry['timestamp'] ?? '');
-            $items[] = [
-                'event' => $event,
-                'user' => $user,
-                'message' => birkly_project_site_activity_message(
-                    $event === 'ai_approval_approved' || $event === 'ai_approval_created' ? $actionType : $event,
-                    $details
-                ),
-                'icon' => birkly_project_site_activity_icon(
-                    $event === 'ai_approval_approved' || $event === 'ai_approval_created' ? $actionType : $event
-                ),
-                'color' => '#6c757d',
-                'timestamp' => $timestamp,
-                'details' => $details,
-                'category' => 'content',
-            ];
+            $formatEvent = $event;
+            if ($event === 'ai_approval_approved' || $event === 'ai_approval_created') {
+                $formatEvent = $actionType;
+            }
+            $formatted = birkly_activity_format_item($formatEvent, $user, $details, $timestamp, 'security_log');
+            if ($formatted !== []) {
+                $items[] = $formatted;
+            }
         }
     }
 

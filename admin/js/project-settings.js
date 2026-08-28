@@ -567,27 +567,70 @@
         });
     }
 
+    var projectActivityFilter = 'all';
+    var projectActivityCache = [];
+
+    function filterProjectActivity(items) {
+        if (projectActivityFilter === 'all') {
+            return items;
+        }
+        return items.filter(function (item) {
+            return (item.project_group || 'other') === projectActivityFilter;
+        });
+    }
+
+    function bindProjectActivityFilters() {
+        var group = document.getElementById('project-activity-filters');
+        if (!group || group.dataset.bound === '1') {
+            return;
+        }
+        group.dataset.bound = '1';
+        group.addEventListener('click', function (e) {
+            var btn = e.target.closest('[data-project-activity-filter]');
+            if (!btn) return;
+            projectActivityFilter = btn.getAttribute('data-project-activity-filter') || 'all';
+            group.querySelectorAll('[data-project-activity-filter]').forEach(function (el) {
+                el.classList.toggle('is-active', el === btn);
+            });
+            renderProjectActivity(projectActivityCache);
+        });
+    }
+
+    function renderProjectActivity(items) {
+        var container = document.getElementById('project-activity-list');
+        if (!container) return;
+
+        var filtered = filterProjectActivity(items);
+        var api = window.BirklyActivityRows;
+
+        if (!filtered.length) {
+            container.innerHTML = '<div class="empty-state"><p>No project activity yet.</p></div>';
+            return;
+        }
+
+        if (api) {
+            container.innerHTML = api.renderList(filtered, { compact: true, expandable: true });
+            api.bindToggle(container);
+            return;
+        }
+
+        container.innerHTML = '<ul class="project-activity-items">' + filtered.map(function (item) {
+            return '<li class="project-activity-item">' +
+                '<span class="project-activity-icon">' + escapeHtml(item.icon || '📌') + '</span>' +
+                '<div class="project-activity-body">' +
+                    '<div class="project-activity-message">' + escapeHtml(item.message || item.event) + '</div>' +
+                    '<div class="project-activity-meta">' + escapeHtml(formatActor(item)) + ' · ' + escapeHtml(formatDate(item.timestamp)) + '</div>' +
+                '</div>' +
+            '</li>';
+        }).join('') + '</ul>';
+    }
+
     function loadActivity() {
         setLoading('project-activity-list');
+        bindProjectActivityFilters();
         return fetchJson(apiUrl('/api/project_site.php?action=activity&limit=20')).then(function (payload) {
-            var container = document.getElementById('project-activity-list');
-            if (!container) return;
-
-            var items = (payload.data && payload.data.activity) || [];
-            if (!items.length) {
-                container.innerHTML = '<div class="empty-state"><p>No project activity yet.</p></div>';
-                return;
-            }
-
-            container.innerHTML = '<ul class="project-activity-items">' + items.map(function (item) {
-                return '<li class="project-activity-item">' +
-                    '<span class="project-activity-icon">' + escapeHtml(item.icon || '📌') + '</span>' +
-                    '<div class="project-activity-body">' +
-                        '<div class="project-activity-message">' + escapeHtml(item.message || item.event) + '</div>' +
-                        '<div class="project-activity-meta">' + escapeHtml(formatActor(item)) + ' · ' + escapeHtml(formatDate(item.timestamp)) + '</div>' +
-                    '</div>' +
-                '</li>';
-            }).join('') + '</ul>';
+            projectActivityCache = (payload.data && payload.data.activity) || [];
+            renderProjectActivity(projectActivityCache);
         }).catch(function (error) {
             setError('project-activity-list', error.message || 'Failed to load activity');
         });
