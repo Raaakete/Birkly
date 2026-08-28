@@ -21,6 +21,10 @@ Your **account** is your own user profile in the Birkly admin: display name, ema
 
 - **Language** — If the admin supports multiple languages, you may be able to choose your preferred language here (e.g. English, German). The interface labels then appear in that language.
 
+**Display & spacing (P69)**
+
+Account includes a **Display & spacing** card with three presets: **Compact**, **Default**, and **Large**. This adjusts admin shell typography and spacing only (not your public site). The choice is stored per user in `ui_preferences.density` and applied via `data-density` on the admin `body`. It persists across sessions and devices for your account.
+
 **Two-factor authentication (2FA)**
 
 If your Birkly installation has 2FA, you can turn it on so that after entering your password you must also enter a **one-time code** from an app on your phone (e.g. Google Authenticator or Authy). That way, even if someone gets your password, they can’t log in without your phone.

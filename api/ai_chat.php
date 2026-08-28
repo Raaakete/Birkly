@@ -1515,7 +1515,20 @@ function ai_chat_nudge_for_actions(
 // Execute action directly (when approval not required)
 function executeActionDirectly($actionData, $aiUser) {
     require_once __DIR__ . '/ai_approvals.php';
-    
+    require_once __DIR__ . '/../core/security_policy.php';
+
+    if (birkly_ai_tools_site_restricted()) {
+        log_security_event('ai_tools_blocked', [
+            'action' => $actionData['type'] ?? 'unknown',
+            'mode' => birkly_ai_tools_mode(),
+            'ai_user_id' => $aiUser['id'] ?? null,
+        ]);
+        return [
+            'success' => false,
+            'message' => 'AI tools are disabled by site security policy',
+        ];
+    }
+
     // The actionData structure from extractActionsFromResponse is:
     // {type: "create_entry", data: {collection: "slug", title: "...", ...}, description: "..."}
     
