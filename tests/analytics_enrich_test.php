@@ -104,4 +104,29 @@ assert_true(!empty($advanced['forms']), 'forms ranking present');
 assert_true(!empty($advanced['outbound_targets']), 'outbound ranking present');
 assert_true(!empty($advanced['plugin_events']), 'plugin events ranking present');
 
+$minimalEvent = [
+    'event_type' => 'page_view',
+    'path' => '/',
+    'visitor_day_key' => 'visitor-day-a',
+    'timestamp' => time(),
+];
+$minimalReport = birkly_analytics_aggregate_events([
+    $minimalEvent,
+    array_merge($minimalEvent, ['path' => '/about', 'timestamp' => time() + 5]),
+    array_merge($minimalEvent, ['visitor_day_key' => 'visitor-day-b', 'timestamp' => time() + 10]),
+]);
+assert_true($minimalReport['page_views'] === 3, 'minimal page views counted');
+assert_true($minimalReport['unique_visitors'] === 2, 'minimal visitors use visitor_day_key');
+
+$pageOnlyTrend = birkly_analytics_aggregate_events([
+    array_merge($event, ['event_type' => 'page_view']),
+    [
+        'event_type' => 'form_submit',
+        'path' => '/contact',
+        'ip_hash' => $event['ip_hash'],
+        'timestamp' => time() + 30,
+    ],
+]);
+assert_true(($pageOnlyTrend['daily_stats'][0]['views'] ?? 0) === 1, 'daily trend counts page views only');
+
 echo "analytics_enrich_test: OK\n";

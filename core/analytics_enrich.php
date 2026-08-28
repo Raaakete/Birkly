@@ -222,6 +222,7 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
     }
 
     $ipHash = hash('sha256', $ip . $trackingId);
+    $visitorDayKey = hash('sha256', 'vd:' . $trackingId . ':' . date('Y-m-d', $timestamp) . ':' . $ip);
 
     return [
         'timestamp' => $timestamp,
@@ -238,6 +239,7 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         // Privacy-safe visitor key (never raw IP). Presets keep ip_hash when hash_ip is on.
         'ip_hash' => $ipHash,
         'ip' => $ipHash,
+        'visitor_day_key' => $visitorDayKey,
         'screen_width' => (int) ($input['screen_width'] ?? 0),
         'screen_height' => (int) ($input['screen_height'] ?? 0),
         'viewport_width' => (int) ($input['viewport_width'] ?? 0),
@@ -254,6 +256,16 @@ function birkly_analytics_build_event(array $input, string $ip, string $userAgen
         'event_name' => (string) ($input['event_name'] ?? ''),
         'event_data' => is_array($input['event_data'] ?? null) ? $input['event_data'] : [],
     ];
+}
+
+function birkly_analytics_visitor_key(array $event): string
+{
+    $ipHash = (string) ($event['ip_hash'] ?? $event['ip'] ?? '');
+    if ($ipHash !== '') {
+        return $ipHash;
+    }
+
+    return (string) ($event['visitor_day_key'] ?? '');
 }
 
 /**
@@ -307,13 +319,15 @@ function birkly_analytics_aggregate_events(array $events): array
             continue;
         }
 
-        $ipHash = (string) ($event['ip_hash'] ?? $event['ip'] ?? '');
-        if ($ipHash !== '') {
-            $uniqueVisitors[$ipHash] = true;
+        $visitorKey = birkly_analytics_visitor_key($event);
+        $isPageView = $eventType === 'page_view';
+
+        if ($visitorKey !== '' && $isPageView) {
+            $uniqueVisitors[$visitorKey] = true;
         }
 
         $path = (string) ($event['path'] ?? '/');
-        if ($eventType === 'page_view') {
+        if ($isPageView) {
             $pageViews++;
             $pageCounts[$path] = ($pageCounts[$path] ?? 0) + 1;
         } elseif ($eventType === 'outbound_click') {
@@ -339,6 +353,10 @@ function birkly_analytics_aggregate_events(array $events): array
         } elseif ($eventType === 'plugin_event') {
             $name = (string) ($event['event_name'] ?? 'plugin_event');
             $pluginEvents[$name] = ($pluginEvents[$name] ?? 0) + 1;
+        }
+
+        if (!$isPageView) {
+            continue;
         }
 
         $referrerHost = (string) ($event['referrer_host'] ?? '');
@@ -404,8 +422,8 @@ function birkly_analytics_aggregate_events(array $events): array
             $dailyStats[$date] = ['views' => 0, 'visitors' => []];
         }
         $dailyStats[$date]['views']++;
-        if ($ipHash !== '') {
-            $dailyStats[$date]['visitors'][$ipHash] = true;
+        if ($visitorKey !== '') {
+            $dailyStats[$date]['visitors'][$visitorKey] = true;
         }
     }
 
@@ -477,13 +495,244 @@ function birkly_analytics_rank_counts(array $counts, string $labelKey, string $v
 }
 
 /**
+ * Load raw events for a tracking id and date range.
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_analytics_load_events(string $trackingId, string $startDate, string $endDate): array
+{
+    $analyticsDir = dirname(__DIR__) . '/data/analytics';
+    $dataDir = $analyticsDir . '/data/' . $trackingId;
+    if (!is_dir($dataDir)) {
+        return [];
+    }
+
+    $start = strtotime($startDate);
+    $end = strtotime($endDate . ' 23:59:59');
+    if ($start === false || $end === false) {
+        return [];
+    }
+
+    $allEvents = [];
+    $current = $start;
+    while ($current <= $end) {
+        $date = date('Y-m-d', $current);
+        $eventFile = $dataDir . '/' . $date . '.json';
+        if (is_file($eventFile)) {
+            $events = json_decode((string) file_get_contents($eventFile), true);
+            if (is_array($events)) {
+                $allEvents = array_merge($allEvents, $events);
+            }
+        }
+        $current = strtotime('+1 day', $current);
+    }
+
+    return $allEvents;
+}
+
+/**
+ * Combined report across all enabled tracking ids (deduped visitors).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_analytics_get_combined_report(string $startDate, string $endDate): array
+{
+    require_once __DIR__ . '/analytics_config.php';
+
+    $trackingIds = birkly_analytics_list_enabled_tracking_ids();
+    $allEvents = [];
+    $domains = [];
+
+    foreach ($trackingIds as $trackingId) {
+        $events = birkly_analytics_load_events($trackingId, $startDate, $endDate);
+        $domains[] = [
+            'id' => $trackingId,
+            'domain' => $trackingId,
+            'report' => birkly_analytics_aggregate_events($events),
+        ];
+        $allEvents = array_merge($allEvents, $events);
+    }
+
+    $combined = birkly_analytics_aggregate_events($allEvents);
+    $combined['tracking_ids'] = $trackingIds;
+    $combined['domains'] = $domains;
+
+    return $combined;
+}
+
+function birkly_analytics_effective_retention_days(): int
+{
+    if (!function_exists('birkly_analytics_active_preset')) {
+        require_once __DIR__ . '/analytics_presets.php';
+    }
+
+    $preset = birkly_analytics_active_preset();
+    $settings = birkly_analytics_load_settings();
+    $days = $settings['retention_days'] ?? $preset['retention_days'] ?? 90;
+
+    return max(0, (int) $days);
+}
+
+/**
+ * Delete event files older than the configured retention window.
+ */
+function birkly_analytics_purge_expired(?int $retentionDays = null): int
+{
+    if (!function_exists('birkly_analytics_collecting')) {
+        require_once __DIR__ . '/analytics_presets.php';
+    }
+    if (!birkly_analytics_collecting()) {
+        return 0;
+    }
+
+    $retentionDays = $retentionDays ?? birkly_analytics_effective_retention_days();
+    if ($retentionDays <= 0) {
+        return 0;
+    }
+
+    require_once __DIR__ . '/analytics_config.php';
+
+    $cutoffTs = strtotime('-' . $retentionDays . ' days');
+    if ($cutoffTs === false) {
+        return 0;
+    }
+
+    $deleted = 0;
+    $dataRoot = dirname(__DIR__) . '/data/analytics/data';
+    if (!is_dir($dataRoot)) {
+        return 0;
+    }
+
+    foreach (scandir($dataRoot) ?: [] as $trackingId) {
+        if ($trackingId === '.' || $trackingId === '..') {
+            continue;
+        }
+        $dir = $dataRoot . '/' . $trackingId;
+        if (!is_dir($dir)) {
+            continue;
+        }
+        foreach (scandir($dir) ?: [] as $file) {
+            if (!preg_match('/^(\d{4}-\d{2}-\d{2})\.json$/', $file, $matches)) {
+                continue;
+            }
+            $fileTs = strtotime($matches[1] . ' 00:00:00');
+            if ($fileTs !== false && $fileTs < $cutoffTs) {
+                if (@unlink($dir . '/' . $file)) {
+                    $deleted++;
+                }
+            }
+        }
+    }
+
+    return $deleted;
+}
+
+/**
+ * Collection health metadata for admin surfaces.
+ *
+ * @return array<string, mixed>
+ */
+function birkly_analytics_collection_health(): array
+{
+    require_once __DIR__ . '/analytics_config.php';
+    if (!function_exists('birkly_analytics_active_preset')) {
+        require_once __DIR__ . '/analytics_presets.php';
+    }
+
+    $trackingIds = birkly_analytics_list_enabled_tracking_ids();
+    $dataRoot = dirname(__DIR__) . '/data/analytics/data';
+    $lastEventAt = 0;
+    $cappedDomains = [];
+    $eventFiles = 0;
+
+    foreach ($trackingIds as $trackingId) {
+        $dir = $dataRoot . '/' . $trackingId;
+        if (!is_dir($dir)) {
+            continue;
+        }
+        $metaFile = $dir . '/_meta.json';
+        if (is_file($metaFile)) {
+            $meta = json_decode((string) file_get_contents($metaFile), true);
+            if (is_array($meta)) {
+                if (!empty($meta['capped_dates']) && is_array($meta['capped_dates'])) {
+                    foreach (array_keys($meta['capped_dates']) as $date) {
+                        $cappedDomains[] = ['domain' => $trackingId, 'date' => (string) $date];
+                    }
+                }
+                $lastEventAt = max($lastEventAt, (int) ($meta['last_event_at'] ?? 0));
+            }
+        }
+        foreach (scandir($dir) ?: [] as $file) {
+            if (!preg_match('/^\d{4}-\d{2}-\d{2}\.json$/', $file)) {
+                continue;
+            }
+            $eventFiles++;
+            $events = json_decode((string) file_get_contents($dir . '/' . $file), true);
+            if (!is_array($events)) {
+                continue;
+            }
+            foreach ($events as $event) {
+                if (!is_array($event)) {
+                    continue;
+                }
+                $lastEventAt = max($lastEventAt, (int) ($event['timestamp'] ?? 0));
+            }
+        }
+    }
+
+    $preset = birkly_analytics_active_preset();
+
+    return [
+        'collecting' => birkly_analytics_collecting(),
+        'preset' => (string) ($preset['id'] ?? 'off'),
+        'consent_required' => birkly_analytics_consent_required(),
+        'retention_days' => birkly_analytics_effective_retention_days(),
+        'enabled_domains' => $trackingIds,
+        'enabled_domain_count' => count($trackingIds),
+        'event_files' => $eventFiles,
+        'last_event_at' => $lastEventAt > 0 ? date('c', $lastEventAt) : null,
+        'capped_domains' => $cappedDomains,
+        'daily_event_cap' => birkly_analytics_daily_event_cap(),
+    ];
+}
+
+function birkly_analytics_daily_event_cap(): int
+{
+    return 5000;
+}
+
+function birkly_analytics_mark_event_meta(string $trackingId, int $timestamp, bool $capped = false): void
+{
+    $dir = dirname(__DIR__) . '/data/analytics/data/' . $trackingId;
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) {
+        return;
+    }
+
+    $metaFile = $dir . '/_meta.json';
+    $meta = [];
+    if (is_file($metaFile)) {
+        $decoded = json_decode((string) file_get_contents($metaFile), true);
+        if (is_array($decoded)) {
+            $meta = $decoded;
+        }
+    }
+
+    $meta['last_event_at'] = max((int) ($meta['last_event_at'] ?? 0), $timestamp);
+    if ($capped) {
+        if (!isset($meta['capped_dates']) || !is_array($meta['capped_dates'])) {
+            $meta['capped_dates'] = [];
+        }
+        $meta['capped_dates'][date('Y-m-d', $timestamp)] = true;
+    }
+
+    file_put_contents($metaFile, json_encode($meta, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
+}
+
+/**
  * Load and aggregate analytics for a tracking ID and date range.
  */
 function birkly_analytics_get_report(string $trackingId, string $startDate, string $endDate): array
 {
-    $analyticsDir = dirname(__DIR__) . '/data/analytics';
-    $dataDir = $analyticsDir . '/data/' . $trackingId;
-
     $empty = [
         'page_views' => 0,
         'unique_visitors' => 0,
@@ -513,29 +762,14 @@ function birkly_analytics_get_report(string $trackingId, string $startDate, stri
         'daily_stats' => [],
     ];
 
-    if (!is_dir($dataDir)) {
-        return $empty;
+    if ($trackingId === '' || $trackingId === 'all' || $trackingId === '*') {
+        $combined = birkly_analytics_get_combined_report($startDate, $endDate);
+        unset($combined['tracking_ids'], $combined['domains']);
+
+        return array_merge($empty, $combined);
     }
 
-    $start = strtotime($startDate);
-    $end = strtotime($endDate . ' 23:59:59');
-    if ($start === false || $end === false) {
-        return $empty;
-    }
-
-    $allEvents = [];
-    $current = $start;
-    while ($current <= $end) {
-        $date = date('Y-m-d', $current);
-        $eventFile = $dataDir . '/' . $date . '.json';
-        if (is_file($eventFile)) {
-            $events = json_decode((string) file_get_contents($eventFile), true);
-            if (is_array($events)) {
-                $allEvents = array_merge($allEvents, $events);
-            }
-        }
-        $current = strtotime('+1 day', $current);
-    }
-
-    return birkly_analytics_aggregate_events($allEvents);
+    return array_merge($empty, birkly_analytics_aggregate_events(
+        birkly_analytics_load_events($trackingId, $startDate, $endDate)
+    ));
 }
