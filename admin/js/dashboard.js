@@ -260,6 +260,16 @@
 
             var insights = data.insights || {};
             var viewsPerVisitor = visitors > 0 ? (pageViews / visitors).toFixed(1) : '—';
+            var health = data.collection_health || {};
+            var healthNote = '';
+            if (Array.isArray(health.capped_domains) && health.capped_domains.length) {
+                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Daily cap reached for some domains — counts may be understated.</p>';
+            } else if (health.consent_required) {
+                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Consent required — only accepted visits are counted.</p>';
+            }
+            if ((data.tracking_count || 0) > 1) {
+                healthNote += '<p class="u-text-sm u-fg-secondary u-m-0">Combined across ' + Number(data.tracking_count).toLocaleString() + ' enabled domains.</p>';
+            }
 
             function kpi(value, label, hint) {
                 return '<div class="stat">' +
@@ -282,10 +292,11 @@
             setContent(element,
                 '<div class="card-section">' +
                 '<div class="u-grid-3">' +
-                kpi(pageViews.toLocaleString(), 'Page views', 'Last 30 days') +
-                kpi(visitors.toLocaleString(), 'Visitors', 'Last 30 days') +
+                kpi(pageViews.toLocaleString(), 'Page views', 'Last 30 days · all domains') +
+                kpi(visitors.toLocaleString(), 'Visitors', 'Deduped across domains') +
                 kpi(String(viewsPerVisitor), 'Pages / visitor', 'Engagement') +
                 '</div>' +
+                (healthNote ? '<div class="u-stack-2">' + healthNote + '</div>' : '') +
                 '</div>' +
                 '<div class="card-section">' +
                 '<div class="u-grid-2">' +

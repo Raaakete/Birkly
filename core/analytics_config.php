@@ -43,9 +43,139 @@ function birkly_analytics_save_tracking_ids(array $trackingIds): bool
 /**
  * Enable or disable self-hosted analytics for a registered domain (tracking id = domain slug).
  */
-function birkly_analytics_set_domain_tracking(string $domain, bool $enabled): bool
+function birkly_analytics_normalize_domain(string $domain): string
 {
     $domain = strtolower(trim($domain));
+    if ($domain === '') {
+        return '';
+    }
+
+    return (string) (preg_replace('/:\d+$/', '', $domain) ?: $domain);
+}
+
+/**
+ * Hostname variants that should share one analytics bucket (www ↔ apex).
+ *
+ * @return list<string>
+ */
+function birkly_analytics_domain_aliases(string $domain): array
+{
+    $domain = birkly_analytics_normalize_domain($domain);
+    if ($domain === '') {
+        return [];
+    }
+
+    $aliases = [$domain];
+    if (str_starts_with($domain, 'www.')) {
+        $base = substr($domain, 4);
+        if ($base !== '') {
+            $aliases[] = $base;
+        }
+    } elseif (!in_array($domain, ['localhost', '127.0.0.1', '::1'], true) && str_contains($domain, '.')) {
+        $aliases[] = 'www.' . $domain;
+    }
+
+    return array_values(array_unique($aliases));
+}
+
+/**
+ * Resolve a client tracking id to a licensed/enabled canonical id.
+ */
+function birkly_analytics_resolve_tracking_id(string $requestedId): ?string
+{
+    $requestedId = birkly_analytics_normalize_domain($requestedId);
+    if ($requestedId === '') {
+        return null;
+    }
+
+    $candidates = birkly_analytics_domain_aliases($requestedId);
+    $trackingIds = birkly_analytics_load_tracking_ids();
+
+    $licenseEnabled = [];
+    if (class_exists('DomainAuth', false) || is_file(__DIR__ . '/../api/domain_auth.php')) {
+        if (!class_exists('DomainAuth', false)) {
+            require_once __DIR__ . '/../api/domain_auth.php';
+        }
+        try {
+            $domainAuth = new DomainAuth();
+            foreach ($domainAuth->getAllLicenses() as $domain => $license) {
+                if (!empty($license['analytics_enabled'])) {
+                    $licenseEnabled[birkly_analytics_normalize_domain((string) $domain)] = true;
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('birkly_analytics_resolve_tracking_id licenses: ' . $e->getMessage());
+        }
+    }
+
+    foreach ($candidates as $candidate) {
+        if (!empty($licenseEnabled[$candidate])) {
+            return $candidate;
+        }
+        if (isset($trackingIds[$candidate]) && !empty($trackingIds[$candidate]['enabled'])) {
+            return $candidate;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Keep www and apex hostnames enabled together when one is turned on.
+ */
+function birkly_analytics_sync_domain_aliases(string $domain): void
+{
+    $domain = birkly_analytics_normalize_domain($domain);
+    if ($domain === '') {
+        return;
+    }
+
+    foreach (birkly_analytics_domain_aliases($domain) as $alias) {
+        birkly_analytics_set_domain_tracking($alias, true);
+    }
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_analytics_list_enabled_tracking_ids(): array
+{
+    $enabled = [];
+
+    if (class_exists('DomainAuth', false) || is_file(__DIR__ . '/../api/domain_auth.php')) {
+        if (!class_exists('DomainAuth', false)) {
+            require_once __DIR__ . '/../api/domain_auth.php';
+        }
+        try {
+            $domainAuth = new DomainAuth();
+            foreach ($domainAuth->getAllLicenses() as $domain => $license) {
+                if (!empty($license['analytics_enabled'])) {
+                    $id = birkly_analytics_normalize_domain((string) $domain);
+                    if ($id !== '') {
+                        $enabled[$id] = true;
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('birkly_analytics_list_enabled_tracking_ids licenses: ' . $e->getMessage());
+        }
+    }
+
+    foreach (birkly_analytics_load_tracking_ids() as $id => $cfg) {
+        if (is_array($cfg) && !empty($cfg['enabled'])) {
+            $enabled[birkly_analytics_normalize_domain((string) $id)] = true;
+        }
+    }
+
+    $ids = array_keys($enabled);
+    sort($ids, SORT_STRING);
+
+    return $ids;
+}
+
+function birkly_analytics_set_domain_tracking(string $domain, bool $enabled): bool
+{
+    $domain = birkly_analytics_normalize_domain($domain);
     if ($domain === '') {
         return false;
     }

@@ -61,7 +61,7 @@ function birkly_analytics_preset_definitions(): array
             'downside' => 'Usually needs a consent banner in the EU and similar regions. You remain responsible for compliance.',
             'consent_required' => true,
             'retention_days' => 90,
-            'collect' => ['page_view'],
+            'collect' => ['page_view', 'page_exit'],
             'store_ip' => false,
             'hash_ip' => true,
             'sessions' => true,
@@ -76,7 +76,7 @@ function birkly_analytics_preset_definitions(): array
             'downside' => 'Strongest consent and disclosure duty. Highest detail and retention.',
             'consent_required' => true,
             'retention_days' => 180,
-            'collect' => ['page_view', 'form_submit', 'outbound_click', 'plugin_event'],
+            'collect' => ['page_view', 'page_exit', 'form_submit', 'outbound_click', 'plugin_event'],
             'store_ip' => false,
             'hash_ip' => true,
             'sessions' => true,
@@ -247,7 +247,7 @@ function birkly_analytics_apply_preset_to_event(array $event): ?array
         $event['ip_hash'] = $event['ip'];
     }
 
-    // Minimal: strip device/browser/geo enrichment
+    // Minimal: strip device/browser/geo enrichment but keep daily visitor key.
     if (($preset['id'] ?? '') === 'minimal') {
         unset(
             $event['device_type'],
@@ -257,7 +257,8 @@ function birkly_analytics_apply_preset_to_event(array $event): ?array
             $event['screen_width'],
             $event['screen_height'],
             $event['language'],
-            $event['timezone']
+            $event['timezone'],
+            $event['session_id']
         );
         // Keep path + coarse referrer host only
         if (isset($event['referrer']) && is_string($event['referrer']) && $event['referrer'] !== '') {

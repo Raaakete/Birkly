@@ -960,9 +960,16 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="card-header">
                 <div>
                   <h2 class="section-title">Report</h2>
-                  <p class="settings-help" id="analytics-report-help">Site-wide snapshot from enabled tracking. Depth follows your preset.</p>
+                  <p class="settings-help" id="analytics-report-help">Combined snapshot across all enabled domains. Depth follows your preset.</p>
+                </div>
+                <div class="u-cluster u-gap-2">
+                  <label class="u-sr-only" for="analytics-domain-scope">Report scope</label>
+                  <select id="analytics-domain-scope" class="input input-sm" aria-label="Report scope">
+                    <option value="all">All enabled domains</option>
+                  </select>
                 </div>
               </div>
+              <div id="analytics-health-banner" class="card-body" hidden></div>
               <div class="card-body u-stack-5" id="analytics-report-panel">
                 <div class="empty-state"><p>Select a preset above and save, then visit your site to see reports.</p></div>
               </div>
