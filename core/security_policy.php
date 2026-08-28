@@ -30,6 +30,7 @@ function birkly_security_settings(): array
         'enable_csrf' => true,
         'require_2fa' => false,
         'require_2fa_grace_days' => 30,
+        'ai_tools_mode' => 'normal',
     ], $file);
 
     $GLOBALS['__birkly_security_settings_cache'] = $settings;
@@ -39,6 +40,29 @@ function birkly_security_settings(): array
 function birkly_security_policy_reset_cache(): void
 {
     unset($GLOBALS['__birkly_security_settings_cache']);
+}
+
+/** @return list<string> */
+function birkly_ai_tools_mode_options(): array
+{
+    return ['normal', 'read_only_chat', 'disabled'];
+}
+
+function birkly_ai_tools_mode_normalize(?string $mode): string
+{
+    $mode = strtolower(trim((string) $mode));
+    return in_array($mode, birkly_ai_tools_mode_options(), true) ? $mode : 'normal';
+}
+
+function birkly_ai_tools_mode(): string
+{
+    $settings = birkly_security_settings();
+    return birkly_ai_tools_mode_normalize($settings['ai_tools_mode'] ?? 'normal');
+}
+
+function birkly_ai_tools_site_restricted(): bool
+{
+    return birkly_ai_tools_mode() !== 'normal';
 }
 
 function birkly_require_2fa_enabled(): bool

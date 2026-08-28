@@ -157,6 +157,36 @@ if (empty($userAvatar)) {
                 
                 <!-- Second Section: Plugins — Hub + installed plugin pages -->
                 <div class="nav-section" id="nav-plugins-section">
+                    <div class="nav-plugins-flyout-wrap" id="nav-plugins-flyout-wrap">
+                        <button type="button" class="nav-link nav-plugins-flyout-trigger" id="nav-plugins-flyout-trigger" aria-expanded="false" aria-controls="nav-plugins-flyout" title="<?= htmlspecialchars(__('admin.plugins')) ?>">
+                            <?= birkly_icon('stack', ['class' => 'nav-icon']) ?>
+                            <span class="nav-label"><?= __('admin.plugins') ?></span>
+                            <span class="nav-attention-dot nav-plugins-flyout-dot" id="nav-plugins-flyout-dot" aria-hidden="true" hidden></span>
+                        </button>
+                        <div class="nav-plugins-flyout" id="nav-plugins-flyout" hidden>
+                            <ul class="nav-links nav-plugins-flyout-list" id="links-plugins-flyout">
+                                <li class="nav-item">
+                                    <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'discover'])) ?>" class="nav-link <?= is_plugins_tab_active('discover') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">
+                                        <?= birkly_icon('shopping-bag', ['class' => 'nav-icon']) ?>
+                                        <span class="nav-label"><?= __('admin.marketplace') ?></span>
+                                    </a>
+                                </li>
+                                <?php foreach ($activePluginNavigation as $plugin): ?>
+                                <?php
+                                    $pluginAttention = !empty($plugin['attention']);
+                                    $pluginTitle = $plugin['name'] . ($pluginAttention ? ' (new activity)' : '');
+                                ?>
+                                <li class="nav-item<?= $pluginAttention ? ' has-attention' : '' ?>" data-plugin-id="<?= htmlspecialchars((string) ($plugin['id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                    <a href="<?= htmlspecialchars(admin_url($plugin['page'])) ?>" class="nav-link <?= is_nav_active($plugin['page']) ?>" title="<?= htmlspecialchars($pluginTitle) ?>"<?= $pluginAttention ? ' aria-label="' . htmlspecialchars($pluginTitle, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
+                                        <?= $plugin['icon'] ?>
+                                        <span class="nav-label"><?= htmlspecialchars($plugin['name']) ?></span>
+                                        <span class="nav-attention-dot" aria-hidden="true"<?= $pluginAttention ? '' : ' hidden' ?>></span>
+                                    </a>
+                                </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    </div>
                     <ul class="nav-links" id="links-plugins">
                         <li class="nav-item">
                             <a href="<?= htmlspecialchars(admin_url('plugins', ['tab' => 'discover'])) ?>" class="nav-link <?= is_plugins_tab_active('discover') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.marketplace')) ?>">

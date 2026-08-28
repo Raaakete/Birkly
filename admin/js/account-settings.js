@@ -77,6 +77,20 @@ document.addEventListener('DOMContentLoaded', function() {
         loadAccount2FAStatus();
     }
 
+    (function initDensityRadios() {
+        var density = document.body.dataset.density || 'default';
+        try {
+            var stored = localStorage.getItem('birkly_ui_density');
+            if (stored) {
+                density = stored;
+            }
+        } catch (_) { /* ignore */ }
+        var input = document.querySelector('#account-density-form input[name="ui_density"][value="' + density + '"]');
+        if (input) {
+            input.checked = true;
+        }
+    })();
+
     // 2FA buttons are rendered dynamically; use event delegation for reliability
     document.addEventListener('click', async function (e) {
         const target = e.target;
@@ -706,6 +720,30 @@ async function handleUnifiedAccountSave() {
                 throw new Error(languageResult.message || 'Error saving language preference');
             }
             reloadAfterLanguage = true;
+        }
+
+        const densityInput = document.querySelector('#account-density-form input[name="ui_density"]:checked');
+        if (densityInput) {
+            const densityResponse = await fetch(Birkly.url('/api/users.php'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    action: 'update_profile',
+                    ui_preferences: { density: densityInput.value },
+                    _csrf: getCsrfToken(),
+                }),
+            });
+            const densityResult = await densityResponse.json();
+            if (densityResult.status !== 'ok') {
+                throw new Error(densityResult.message || 'Error saving display preference');
+            }
+            document.body.dataset.density = densityInput.value;
+            try {
+                localStorage.setItem('birkly_ui_density', densityInput.value);
+            } catch (_) { /* ignore */ }
         }
 
         const notificationsForm = document.getElementById('account-notifications-form');

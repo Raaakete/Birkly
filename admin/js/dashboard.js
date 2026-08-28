@@ -428,30 +428,38 @@
 
         dashboard.registerMount('recentActivity', function (element, widget, data) {
             const activity = data && Array.isArray(data.activity) ? data.activity : [];
+            const api = window.BirklyActivityRows;
             const items = activity
                 .filter(item => !['update_check', 'system_update_check'].includes(item.event))
-                .slice(0, 8)
-                .map(function (item) {
-                    const when = formatTimeAgo(item.timestamp);
-                    const metaParts = [];
-                    const actor = String(item.user || '').trim();
-                    if (actor && actor.toLowerCase() !== 'unknown') {
-                        metaParts.push(escapeHtml(actor));
-                    }
-                    if (when) metaParts.push(escapeHtml(when));
-                    const category = String(item.category || '').trim();
-                    const aside = category && category !== 'other'
-                        ? '<span class="badge badge-neutral">' + escapeHtml(category) + '</span>'
-                        : '';
-                    return feedItem({
-                        title: item.message || item.event || 'Activity',
-                        href: adminUrl('activity'),
-                        meta: metaParts.join(' · '),
-                        aside: aside,
-                    });
+                .slice(0, 8);
+
+            if (api && items.length) {
+                setContent(element, api.renderList(items, { compact: true, expandable: false, timeStyle: 'ago' }));
+                return;
+            }
+
+            const legacyItems = items.map(function (item) {
+                const when = formatTimeAgo(item.timestamp);
+                const metaParts = [];
+                const actor = String(item.user || '').trim();
+                if (actor && actor.toLowerCase() !== 'unknown') {
+                    metaParts.push(escapeHtml(actor));
+                }
+                if (when) metaParts.push(escapeHtml(when));
+                const category = String(item.category || '').trim();
+                const aside = category && category !== 'other'
+                    ? '<span class="badge badge-neutral">' + escapeHtml(category) + '</span>'
+                    : '';
+                const rowHref = item.href ? (api ? api.resolveHref(item) : adminUrl('activity')) : adminUrl('activity');
+                return feedItem({
+                    title: item.message || item.event || 'Activity',
+                    href: rowHref,
+                    meta: metaParts.join(' · '),
+                    aside: aside,
                 });
-            setContent(element, items.length
-                ? feedList(items)
+            });
+            setContent(element, legacyItems.length
+                ? feedList(legacyItems)
                 : empty('No recent activity.'));
         });
 

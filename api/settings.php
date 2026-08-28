@@ -337,6 +337,10 @@ if ($action === 'save_all') {
     if (isset($settings['securityRequire2faGraceDays'])) {
         $securitySettings['require_2fa_grace_days'] = max(0, intval($settings['securityRequire2faGraceDays']));
     }
+    if (isset($settings['securityAiToolsMode'])) {
+        require_once __DIR__ . '/../core/security_policy.php';
+        $securitySettings['ai_tools_mode'] = birkly_ai_tools_mode_normalize((string) $settings['securityAiToolsMode']);
+    }
 
     // Monitoring settings (P13-M4)
     $monitoringSettings = [];
