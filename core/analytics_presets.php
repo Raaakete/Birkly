@@ -101,7 +101,7 @@ function birkly_analytics_settings_defaults(): array
     return [
         'preset' => 'off',
         'retention_days' => null,
-        'consent_text' => 'We use privacy-friendly analytics to understand how the site is used. You can accept or decline.',
+        'consent_text' => 'We use privacy-friendly analytics to understand how the site is used. Basic page views are counted even if you decline; detailed metrics need your consent.',
     ];
 }
 
