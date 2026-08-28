@@ -7,6 +7,22 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
 
+function birkly_activity_str_starts_with(string $haystack, string $needle): bool
+{
+    if ($needle === '') {
+        return true;
+    }
+    return strncmp($haystack, $needle, strlen($needle)) === 0;
+}
+
+function birkly_activity_str_contains(string $haystack, string $needle): bool
+{
+    if ($needle === '') {
+        return true;
+    }
+    return strpos($haystack, $needle) !== false;
+}
+
 /**
  * @return list<string>
  */
@@ -146,10 +162,10 @@ function birkly_activity_event_icon(string $event): string
 
 function birkly_activity_project_group(string $event): string
 {
-    if (str_starts_with($event, 'project_git_')) {
+    if (birkly_activity_str_starts_with($event, 'project_git_')) {
         return 'git';
     }
-    if (str_contains($event, 'file')
+    if (birkly_activity_birkly_activity_str_contains($event, 'file')
         || in_array($event, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
         return 'files';
     }
@@ -168,12 +184,16 @@ function birkly_activity_project_group(string $event): string
 function birkly_activity_event_color(string $event): string
 {
     $severity = birkly_activity_event_severity($event);
-    return match ($severity) {
-        'danger' => '#dc3545',
-        'warning' => '#ffc107',
-        'success' => '#28a745',
-        default => '#6c757d',
-    };
+    switch ($severity) {
+        case 'danger':
+            return '#dc3545';
+        case 'warning':
+            return '#ffc107';
+        case 'success':
+            return '#28a745';
+        default:
+            return '#6c757d';
+    }
 }
 
 /**
@@ -259,15 +279,18 @@ function birkly_activity_event_message(string $event, array $details): string
         case 'upload_media':
             return 'Uploaded media: ' . (string) ($details['name'] ?? $details['filename'] ?? 'file');
 
-        case 'project_file_written', 'write_project_file':
+        case 'project_file_written':
+        case 'write_project_file':
             $path = (string) ($details['path'] ?? 'file');
             return 'Wrote project file ' . $path;
 
-        case 'project_file_created', 'create_project_file':
+        case 'project_file_created':
+        case 'create_project_file':
             $path = (string) ($details['path'] ?? 'file');
             return 'Created project file ' . $path;
 
-        case 'project_file_deleted', 'delete_project_file':
+        case 'project_file_deleted':
+        case 'delete_project_file':
             $path = (string) ($details['path'] ?? 'file');
             return 'Deleted project file ' . $path;
 
@@ -340,7 +363,7 @@ function birkly_activity_event_message(string $event, array $details): string
             return 'Permission denied: ' . (string) ($details['action'] ?? 'action');
 
         default:
-            if (str_starts_with($event, 'commerce_') || str_starts_with($event, 'automation_')) {
+            if (birkly_activity_str_starts_with($event, 'commerce_') || birkly_activity_str_starts_with($event, 'automation_')) {
                 return ucfirst(str_replace('_', ' ', $event));
             }
             return ucfirst(str_replace('_', ' ', $event));
@@ -363,7 +386,7 @@ function birkly_activity_build_target(string $event, array $details): array
         && $collection !== '') {
         return [
             'type' => 'entry',
-            'label' => (string) ($details['title'] ?? $entryId ?: $collection),
+            'label' => (string) (($details['title'] ?? '') !== '' ? $details['title'] : ($entryId !== '' ? $entryId : $collection)),
             'collection' => $collection,
             'id' => $entryId,
         ];
@@ -377,7 +400,7 @@ function birkly_activity_build_target(string $event, array $details): array
         ];
     }
 
-    if (str_contains($event, 'project_file') || str_contains($event, 'project_file')
+    if (birkly_activity_str_contains($event, 'project_file') || birkly_activity_str_contains($event, 'project_file')
         || in_array($event, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
         return [
             'type' => 'file',
@@ -386,7 +409,7 @@ function birkly_activity_build_target(string $event, array $details): array
         ];
     }
 
-    if (str_starts_with($event, 'project_git_')) {
+    if (birkly_activity_str_starts_with($event, 'project_git_')) {
         return [
             'type' => 'git',
             'label' => (string) ($details['branch'] ?? $details['remote'] ?? 'git'),
@@ -397,7 +420,7 @@ function birkly_activity_build_target(string $event, array $details): array
         return ['type' => 'settings', 'label' => 'Project settings'];
     }
 
-    if (str_starts_with($event, 'plugin_') && $plugin !== '') {
+    if (birkly_activity_str_starts_with($event, 'plugin_') && $plugin !== '') {
         return ['type' => 'plugin', 'label' => $plugin, 'id' => $plugin];
     }
 
@@ -405,7 +428,7 @@ function birkly_activity_build_target(string $event, array $details): array
         return ['type' => 'user', 'label' => $email !== '' ? $email : (string) ($details['id'] ?? 'user')];
     }
 
-    if (str_starts_with($event, 'role_')) {
+    if (birkly_activity_str_starts_with($event, 'role_')) {
         return [
             'type' => 'role',
             'label' => (string) ($details['role_id'] ?? $details['id'] ?? 'role'),
@@ -436,7 +459,7 @@ function birkly_activity_build_href(string $event, array $details, array $target
     }
 
     if ($type === 'file' || $type === 'git' || $type === 'settings'
-        || str_starts_with($event, 'project_')
+        || birkly_activity_str_starts_with($event, 'project_')
         || in_array($event, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
         return birkly_admin_url('settings', ['section' => 'project']);
     }
@@ -453,7 +476,7 @@ function birkly_activity_build_href(string $event, array $details, array $target
         return birkly_admin_url('settings', ['section' => 'roles']);
     }
 
-    if (str_starts_with($event, 'webhook_')) {
+    if (birkly_activity_str_starts_with($event, 'webhook_')) {
         return birkly_admin_url('webhooks');
     }
 
@@ -525,7 +548,7 @@ function birkly_activity_format_item(
         'correlation_id' => (string) ($details['correlation_id'] ?? ''),
     ];
 
-    if (str_starts_with($event, 'project_')
+    if (birkly_activity_str_starts_with($event, 'project_')
         || in_array($event, ['write_project_file', 'create_project_file', 'delete_project_file'], true)) {
         $item['project_group'] = birkly_activity_project_group($event);
     }

@@ -851,12 +851,21 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
                     Add collection
                   </button>
+                  <div class="form-group u-fill">
+                    <label for="denylist-plugin-select">Deny plugin admin space</label>
+                    <select id="denylist-plugin-select" class="input">
+                      <option value="">Loading plugins…</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-secondary" id="denylist-add-plugin-btn" disabled>
+                    Add plugin
+                  </button>
                   <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
                     <?= birkly_icon('plus', ['size' => 16]) ?>
                     Add custom pattern
                   </button>
                 </div>
-                <p class="settings-help">Spaces denylist is reserved for a future release (stub).</p>
+                <p class="settings-help">Deny plugin admin spaces (e.g. commerce, automation) to block sidebar injection and space-scoped hooks for that plugin.</p>
                 <div id="denylist-management">
                   <div class="loading-state"><p>Loading denylist...</p></div>
                 </div>
