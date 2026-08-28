@@ -56,10 +56,11 @@ function birkly_analytics_preset_definitions(): array
         'standard' => [
             'id' => 'standard',
             'label' => 'Standard',
-            'summary' => 'Useful site insights with consent when required.',
-            'upside' => 'Sessions, devices, UTM, entry/exit, and coarse geography.',
-            'downside' => 'Usually needs a consent banner in the EU and similar regions. You remain responsible for compliance.',
+            'summary' => 'Useful site insights with consent for detailed data.',
+            'upside' => 'Anonymous page-view totals always; sessions, devices, UTM, and geography after consent.',
+            'downside' => 'Consent banner required for detailed tracking. Anonymous counts are path + daily visitor estimate only.',
             'consent_required' => true,
+            'anonymous_counts' => true,
             'retention_days' => 90,
             'collect' => ['page_view', 'page_exit'],
             'store_ip' => false,
@@ -75,6 +76,7 @@ function birkly_analytics_preset_definitions(): array
             'upside' => 'Form submits, outbound clicks, plugin funnel hooks, CSV export.',
             'downside' => 'Strongest consent and disclosure duty. Highest detail and retention.',
             'consent_required' => true,
+            'anonymous_counts' => true,
             'retention_days' => 180,
             'collect' => ['page_view', 'page_exit', 'form_submit', 'outbound_click', 'plugin_event'],
             'store_ip' => false,
@@ -189,6 +191,48 @@ function birkly_analytics_collecting(): bool
 function birkly_analytics_consent_required(): bool
 {
     return !empty(birkly_analytics_active_preset()['consent_required']);
+}
+
+/**
+ * Standard/Advanced: count page views without consent (path + daily visitor estimate only).
+ */
+function birkly_analytics_anonymous_counts_enabled(): bool
+{
+    if (!birkly_analytics_consent_required()) {
+        return false;
+    }
+
+    return !empty(birkly_analytics_active_preset()['anonymous_counts']);
+}
+
+function birkly_analytics_visitor_has_consent(mixed $consent): bool
+{
+    return $consent === true || $consent === 1 || $consent === '1' || $consent === 'granted';
+}
+
+/**
+ * @param array<string, mixed> $event
+ * @return array<string, mixed>
+ */
+function birkly_analytics_apply_anonymous_page_view_filter(
+    array $event,
+    string $trackingId,
+    string $ip,
+    int $timestamp
+): array {
+    $path = trim((string) ($event['path'] ?? '/'));
+    if ($path === '') {
+        $path = '/';
+    }
+
+    return [
+        'timestamp' => $timestamp,
+        'event_type' => 'page_view',
+        'path' => $path,
+        'domain' => trim((string) ($event['domain'] ?? '')),
+        'visitor_day_key' => hash('sha256', 'vd:' . $trackingId . ':' . date('Y-m-d', $timestamp) . ':' . $ip),
+        'consent_state' => 'anonymous',
+    ];
 }
 
 /**
