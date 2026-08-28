@@ -124,6 +124,7 @@ if ($action === 'public_config') {
             'preset' => (string) ($active['id'] ?? 'off'),
             'collecting' => birkly_analytics_collecting(),
             'consent_required' => birkly_analytics_consent_required(),
+            'anonymous_counts' => birkly_analytics_anonymous_counts_enabled(),
             'consent_text' => (string) ($active['consent_text'] ?? ''),
             'events' => !empty($active['events']),
             'collect' => is_array($active['collect'] ?? null) ? array_values($active['collect']) : [],
@@ -145,10 +146,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
         exit;
     }
 
-    // Standard+ requires visitor consent cookie/flag when provided by client
-    if (birkly_analytics_consent_required()) {
-        $consent = $input['consent'] ?? $_COOKIE['birkly_analytics_consent'] ?? null;
-        if ($consent !== true && $consent !== 1 && $consent !== '1' && $consent !== 'granted') {
+    // Standard+ blocks detailed tracking without consent, but may still count anonymous page views.
+    $consentValue = $input['consent'] ?? $_COOKIE['birkly_analytics_consent'] ?? null;
+    $consentGranted = birkly_analytics_visitor_has_consent($consentValue);
+    $anonymousOnly = birkly_analytics_consent_required() && !$consentGranted;
+
+    if ($anonymousOnly && !birkly_analytics_anonymous_counts_enabled()) {
+        echo json_encode(['status' => 'ok', 'tracked' => false, 'reason' => 'consent_required']);
+        exit;
+    }
+
+    if ($anonymousOnly) {
+        $requestedType = strtolower(trim((string) ($input['event_type'] ?? 'page_view')));
+        if ($requestedType === 'pageview' || $requestedType === '') {
+            $requestedType = 'page_view';
+        }
+        if ($requestedType !== 'page_view') {
             echo json_encode(['status' => 'ok', 'tracked' => false, 'reason' => 'consent_required']);
             exit;
         }
@@ -214,7 +227,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     // Create event and filter by active preset (P61)
     $input['tracking_id'] = $trackingId;
     $event = birkly_analytics_build_event($input, $ip, $userAgent, $timestamp);
-    $event = birkly_analytics_apply_preset_to_event($event);
+    if ($anonymousOnly) {
+        $event = birkly_analytics_apply_anonymous_page_view_filter($event, $trackingId, $ip, $timestamp);
+    } else {
+        $event = birkly_analytics_apply_preset_to_event($event);
+    }
     if ($event === null) {
         echo json_encode(['status' => 'ok', 'tracked' => false, 'reason' => 'preset_filtered']);
         exit;
@@ -244,7 +261,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'track') {
     // Return JSON response
     echo json_encode([
         'status' => 'ok',
-        'tracked' => true
+        'tracked' => true,
+        'mode' => $anonymousOnly ? 'anonymous' : 'full',
     ]);
     exit;
 }
