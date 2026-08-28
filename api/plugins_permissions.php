@@ -141,6 +141,16 @@ if ($action === 'revoke_capability') {
 // Get denylist
 if ($action === 'get_denylist') {
     $meta = get_plugin_denylist_meta();
+    $availablePlugins = [];
+    foreach (get_all_plugins() as $id => $plugin) {
+        if (empty($plugin['active'])) {
+            continue;
+        }
+        $availablePlugins[] = [
+            'id' => (string) $id,
+            'name' => (string) ($plugin['name'] ?? $id),
+        ];
+    }
 
     echo json_encode([
         'status' => 'ok',
@@ -148,6 +158,7 @@ if ($action === 'get_denylist') {
             'resources' => $meta['resources'],
             'deny_collections' => $meta['deny_collections'],
             'deny_spaces' => $meta['deny_spaces'],
+            'available_plugins' => $availablePlugins,
         ]
     ]);
     exit;
@@ -188,13 +199,21 @@ if ($action === 'add_to_denylist') {
     
     $resource = $input['resource'] ?? '';
     $asCollection = !empty($input['as_collection']);
+    $asSpace = !empty($input['as_space']);
     
     if (empty($resource)) {
         echo json_encode(['status' => 'error', 'message' => 'Resource required']);
         exit;
     }
     
-    $result = add_to_denylist($resource, $asCollection ? ['as_collection' => true] : []);
+    $options = [];
+    if ($asCollection) {
+        $options['as_collection'] = true;
+    }
+    if ($asSpace) {
+        $options['as_space'] = true;
+    }
+    $result = add_to_denylist($resource, $options);
     
     if ($result) {
         echo json_encode(['status' => 'ok', 'message' => 'Resource added to denylist']);

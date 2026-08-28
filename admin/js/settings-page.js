@@ -166,12 +166,10 @@ let activePluginsForRoles = [];
 
 async function loadActivePluginsForRoles() {
     try {
-        const response = await fetch(apiUrl('/api/plugins.php?action=list'));
+        const response = await fetch(apiUrl('/api/roles.php?action=list_role_plugins'));
         const result = await response.json();
         if (result.status === 'ok' && Array.isArray(result.plugins)) {
-            activePluginsForRoles = result.plugins.filter(function (plugin) {
-                return plugin.active;
-            });
+            activePluginsForRoles = result.plugins;
         }
     } catch (error) {
         console.error('Failed to load plugins for role editor:', error);
@@ -231,7 +229,9 @@ function openAddRoleModal() {
     const form = document.getElementById('add-role-form');
     if (form) form.reset();
     createPermissionsGrid('add-permissions-grid');
-    populatePluginAccessGrid('add-plugin-access-grid', null);
+    loadActivePluginsForRoles().then(function () {
+        populatePluginAccessGrid('add-plugin-access-grid', null);
+    });
 }
 
 function closeAddRoleModal() {
@@ -269,6 +269,7 @@ async function editRole(roleId) {
             
             // Create permissions grid with existing permissions
             createPermissionsGrid('edit-permissions-grid', role.permissions || {});
+            await loadActivePluginsForRoles();
             populatePluginAccessGrid('edit-plugin-access-grid', role);
             
         } else {
@@ -3035,6 +3036,7 @@ async function loadDenylist() {
         if (result.status === 'ok') {
             const data = result.data || {};
             renderDenylist(data.resources || [], data.deny_collections || [], data.deny_spaces || []);
+            populateDenylistPluginSelect(data.available_plugins || []);
         } else {
             container.innerHTML = `<div class="message message-error" role="alert">Error loading denylist: ${escapeHtml(result.message || '')}</div>`;
         }
@@ -3043,6 +3045,22 @@ async function loadDenylist() {
     }
 }
 window.loadDenylist = loadDenylist;
+
+function populateDenylistPluginSelect(plugins) {
+    const select = document.getElementById('denylist-plugin-select');
+    const addBtn = document.getElementById('denylist-add-plugin-btn');
+    if (!select) return;
+    select.innerHTML = '<option value="">Select a plugin…</option>';
+    plugins.forEach(function (plugin) {
+        const id = plugin.id || '';
+        if (!id) return;
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = plugin.name || id;
+        select.appendChild(opt);
+    });
+    if (addBtn) addBtn.disabled = plugins.length === 0;
+}
 
 function renderDenylistItem(resource, type) {
     const label = type === 'collection' ? 'collection' : (type === 'space' ? 'space' : 'pattern');
@@ -3098,6 +3116,37 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     container.innerHTML = html;
+}
+
+async function addDenylistPlugin() {
+    const select = document.getElementById('denylist-plugin-select');
+    const pluginId = select?.value || '';
+    if (!pluginId) {
+        showMessage('Select a plugin first', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(apiUrl('/api/plugins_permissions.php'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'add_to_denylist',
+                resource: pluginId,
+                as_space: true,
+                _csrf: getCsrfToken()
+            })
+        });
+        const result = await response.json();
+        if (result.status === 'ok') {
+            showMessage('Plugin added to denylist', 'success');
+            loadDenylist();
+        } else {
+            showMessage(result.message || 'Failed to add plugin', 'error');
+        }
+    } catch (error) {
+        showMessage(error.message || 'Failed to add plugin', 'error');
+    }
 }
 
 async function addDenylistCollection() {
@@ -3354,6 +3403,7 @@ async function migrateStorage() {
 // Load denylist when Team & security tab is shown
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('denylist-add-collection-btn')?.addEventListener('click', addDenylistCollection);
+    document.getElementById('denylist-add-plugin-btn')?.addEventListener('click', addDenylistPlugin);
 
     const securityTab = document.querySelector('[data-tab="security"]');
     if (securityTab) {
