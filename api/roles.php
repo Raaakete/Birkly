@@ -27,6 +27,25 @@ if ($action === 'list_roles') {
     exit;
 }
 
+if ($action === 'list_role_plugins') {
+    requireAuthRole('manage_users');
+    if (!function_exists('get_all_plugins')) {
+        require_once __DIR__ . '/../core/plugins.php';
+    }
+    $plugins = [];
+    foreach (get_all_plugins() as $id => $plugin) {
+        if (empty($plugin['active'])) {
+            continue;
+        }
+        $plugins[] = [
+            'id' => (string) $id,
+            'name' => (string) ($plugin['name'] ?? $id),
+        ];
+    }
+    echo json_encode(['status' => 'ok', 'plugins' => $plugins]);
+    exit;
+}
+
 if ($action === 'get_role') {
     requireAuthRole('manage_users');
     $id = $_REQUEST['id'] ?? '';

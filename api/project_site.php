@@ -163,20 +163,36 @@ function birkly_project_site_activity_from_approvals(int $limit): array
 
 function birkly_project_site_activity_icon(string $event): string
 {
-    return match ($event) {
-        'write_project_file', 'project_file_written' => '📝',
-        'create_project_file', 'project_file_created' => '📄',
-        'delete_project_file', 'project_file_deleted' => '🗑️',
-        'project_settings_updated' => '⚙️',
-        'project_folder_created' => '📁',
-        'project_downloaded' => '⬇️',
-        'project_deleted' => '🗑️',
-        'project_git_connected', 'project_git_disconnected' => '🔗',
-        'project_git_pushed' => '⬆️',
-        'project_git_pulled' => '⬇️',
-        'project_git_conflict_resolved' => '🔀',
-        default => '📌',
-    };
+    switch ($event) {
+        case 'write_project_file':
+        case 'project_file_written':
+            return '📝';
+        case 'create_project_file':
+        case 'project_file_created':
+            return '📄';
+        case 'delete_project_file':
+        case 'project_file_deleted':
+            return '🗑️';
+        case 'project_settings_updated':
+            return '⚙️';
+        case 'project_folder_created':
+            return '📁';
+        case 'project_downloaded':
+            return '⬇️';
+        case 'project_deleted':
+            return '🗑️';
+        case 'project_git_connected':
+        case 'project_git_disconnected':
+            return '🔗';
+        case 'project_git_pushed':
+            return '⬆️';
+        case 'project_git_pulled':
+            return '⬇️';
+        case 'project_git_conflict_resolved':
+            return '🔀';
+        default:
+            return '📌';
+    }
 }
 
 /**
@@ -187,23 +203,41 @@ function birkly_project_site_activity_message(string $event, array $details): st
     $path = (string) ($details['path'] ?? '');
     $pathSuffix = $path !== '' ? ' ' . $path : '';
 
-    return match ($event) {
-        'write_project_file', 'project_file_written' => 'Wrote project file' . $pathSuffix,
-        'create_project_file', 'project_file_created' => 'Created project file' . $pathSuffix,
-        'delete_project_file', 'project_file_deleted' => 'Deleted project file' . $pathSuffix,
-        'project_settings_updated' => 'Updated project settings',
-        'project_folder_created' => 'Created project folder' . $pathSuffix,
-        'project_downloaded' => 'Downloaded the project as a ZIP',
-        'project_deleted' => 'Deleted all project files',
-        'project_git_connected' => 'Connected git remote ' . (string) ($details['remote'] ?? ''),
-        'project_git_disconnected' => 'Disconnected the git remote',
-        'project_git_pushed' => 'Pushed project files to ' . (string) ($details['branch'] ?? 'the remote'),
-        'project_git_pulled' => 'Pulled project files from ' . (string) ($details['branch'] ?? 'the remote'),
-        'project_git_conflict_resolved' => 'Resolved a git conflict (' . (string) ($details['strategy'] ?? 'unknown') . ')',
-        'ai_approval_created' => 'Requested approval: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix,
-        'ai_approval_approved' => 'Approved: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix,
-        default => ucfirst(str_replace('_', ' ', $event)) . $pathSuffix,
-    };
+    switch ($event) {
+        case 'write_project_file':
+        case 'project_file_written':
+            return 'Wrote project file' . $pathSuffix;
+        case 'create_project_file':
+        case 'project_file_created':
+            return 'Created project file' . $pathSuffix;
+        case 'delete_project_file':
+        case 'project_file_deleted':
+            return 'Deleted project file' . $pathSuffix;
+        case 'project_settings_updated':
+            return 'Updated project settings';
+        case 'project_folder_created':
+            return 'Created project folder' . $pathSuffix;
+        case 'project_downloaded':
+            return 'Downloaded the project as a ZIP';
+        case 'project_deleted':
+            return 'Deleted all project files';
+        case 'project_git_connected':
+            return 'Connected git remote ' . (string) ($details['remote'] ?? '');
+        case 'project_git_disconnected':
+            return 'Disconnected the git remote';
+        case 'project_git_pushed':
+            return 'Pushed project files to ' . (string) ($details['branch'] ?? 'the remote');
+        case 'project_git_pulled':
+            return 'Pulled project files from ' . (string) ($details['branch'] ?? 'the remote');
+        case 'project_git_conflict_resolved':
+            return 'Resolved a git conflict (' . (string) ($details['strategy'] ?? 'unknown') . ')';
+        case 'ai_approval_created':
+            return 'Requested approval: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix;
+        case 'ai_approval_approved':
+            return 'Approved: ' . str_replace('_', ' ', (string) ($details['action_type'] ?? 'project file action')) . $pathSuffix;
+        default:
+            return ucfirst(str_replace('_', ' ', $event)) . $pathSuffix;
+    }
 }
 
 /**
