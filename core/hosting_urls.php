@@ -1588,7 +1588,15 @@ function birkly_hosting_client_snippet(bool $includeWebmcp = false): string
     $cmsAttr = htmlspecialchars($cms, ENT_QUOTES, 'UTF-8');
     require_once __DIR__ . '/build_info.php';
     $clientSrc = htmlspecialchars(rtrim($cms, '/') . birkly_public_runtime_asset_url('birkly-client.js'), ENT_QUOTES, 'UTF-8');
-    $snippet = '<script src="' . $clientSrc . '" data-cms-url="' . $cmsAttr . '"></script>';
+    $trackingHost = birkly_hosting_public_host();
+    if ($trackingHost === '') {
+        $trackingHost = birkly_hosting_cms_host();
+    }
+    $attrs = ' data-cms-url="' . $cmsAttr . '"';
+    if ($trackingHost !== '') {
+        $attrs .= ' data-tracking-id="' . htmlspecialchars($trackingHost, ENT_QUOTES, 'UTF-8') . '"';
+    }
+    $snippet = '<script src="' . $clientSrc . '"' . $attrs . '></script>';
 
     if ($includeWebmcp) {
         $webmcp = birkly_hosting_webmcp_snippet();
