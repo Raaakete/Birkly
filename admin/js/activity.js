@@ -10,15 +10,8 @@
     let allActivity = [];
     let filteredActivity = [];
 
-    function getCsrfToken() {
-        return document.querySelector('meta[name="csrf-token"]')?.content || '';
-    }
-
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    function rowsApi() {
+        return window.BirklyActivityRows;
     }
 
     function renderFeed() {
@@ -26,6 +19,7 @@
         if (!feed) return;
 
         const loadMoreBtn = document.getElementById('load-more');
+        const api = rowsApi();
 
         if (filteredActivity.length === 0) {
             feed.innerHTML = '<div class="empty-state empty-state--compact">'
@@ -35,21 +29,14 @@
         }
 
         const items = filteredActivity.slice(0, currentOffset + pageSize);
-        let html = '';
-        items.forEach(function (item) {
-            const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleString() : '';
-            const message = item.message || item.event || 'Activity';
-            const user = item.user || 'Unknown';
-            const category = item.category || 'other';
-            html += '<div class="activity-item">'
-                + '<div class="activity-content u-stack-1">'
-                + '<div class="u-split"><span class="activity-message">' + escapeHtml(message) + '</span>'
-                + '<span class="u-text-xs u-fg-secondary">' + escapeHtml(timestamp) + '</span></div>'
-                + '<div class="activity-meta"><span>' + escapeHtml(user) + '</span><span>'
-                + escapeHtml(category) + '</span></div>'
-                + '</div></div>';
-        });
-        feed.innerHTML = html;
+        if (api) {
+            feed.innerHTML = api.renderList(items, { expandable: true });
+            api.bindToggle(feed);
+        } else {
+            feed.innerHTML = items.map(function (item) {
+                return '<div class="activity-item"><span>' + (item.message || '') + '</span></div>';
+            }).join('');
+        }
 
         if (loadMoreBtn) {
             loadMoreBtn.hidden = items.length >= filteredActivity.length;
@@ -57,14 +44,19 @@
     }
 
     function applyFilter() {
-        const filter = document.getElementById('category-filter')?.value || 'all';
-        if (filter === 'all') {
-            filteredActivity = allActivity.slice();
-        } else {
-            filteredActivity = allActivity.filter(function (item) {
-                return (item.category || 'other') === filter;
-            });
-        }
+        const category = document.getElementById('category-filter')?.value || 'all';
+        const severity = document.getElementById('severity-filter')?.value || 'all';
+
+        filteredActivity = allActivity.filter(function (item) {
+            if (category !== 'all' && (item.category || 'other') !== category) {
+                return false;
+            }
+            if (severity !== 'all' && (item.severity || 'info') !== severity) {
+                return false;
+            }
+            return true;
+        });
+
         currentOffset = 0;
         renderFeed();
     }
@@ -75,8 +67,10 @@
             feed.innerHTML = '<div class="loading-state"><p>Loading...</p></div>';
         }
 
-        const filter = document.getElementById('category-filter')?.value || 'all';
-        const url = '/api/activity.php?action=list&limit=200&filter=' + encodeURIComponent(filter);
+        const category = document.getElementById('category-filter')?.value || 'all';
+        const severity = document.getElementById('severity-filter')?.value || 'all';
+        const url = '/api/activity.php?action=list&limit=200&filter=' + encodeURIComponent(category)
+            + '&severity=' + encodeURIComponent(severity);
 
         fetch(url, { credentials: 'same-origin' })
             .then(function (response) { return response.json(); })
@@ -106,6 +100,11 @@
         const categoryFilter = document.getElementById('category-filter');
         if (categoryFilter) {
             categoryFilter.addEventListener('change', loadActivity);
+        }
+
+        const severityFilter = document.getElementById('severity-filter');
+        if (severityFilter) {
+            severityFilter.addEventListener('change', applyFilter);
         }
 
         const loadMoreBtn = document.getElementById('load-more');

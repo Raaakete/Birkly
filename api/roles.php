@@ -4,6 +4,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/roles.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/log.php';
 
 // Only set headers if this file is being called directly (not included)
 // When included via admin/index.php, headers are already sent, so skip
@@ -51,6 +52,11 @@ if ($action === 'create_role') {
     $roles = $storage->read($rolesFile) ?: [];
     $roles[] = $input['role'];
     $storage->write($rolesFile, $roles);
+    $roleId = (string) ($input['role']['id'] ?? '');
+    log_security_event('role_created', [
+        'role_id' => $roleId,
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+    ]);
     echo json_encode(['status' => 'ok']);
     exit;
 }
@@ -70,7 +76,12 @@ if ($action === 'update_role') {
             break;
         }
     }
+    unset($role);
     $storage->write($rolesFile, $roles);
+    log_security_event('role_updated', [
+        'role_id' => (string) ($input['role']['id'] ?? ''),
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+    ]);
     echo json_encode(['status' => 'ok']);
     exit;
 }
@@ -88,6 +99,10 @@ if ($action === 'delete_role') {
         return $role['id'] !== $input['id'];
     });
     $storage->write($rolesFile, array_values($roles));
+    log_security_event('role_deleted', [
+        'role_id' => (string) ($input['id'] ?? ''),
+        'user' => $_SESSION['user']['email'] ?? 'unknown',
+    ]);
     echo json_encode(['status' => 'ok']);
     exit;
 }

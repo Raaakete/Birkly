@@ -14,6 +14,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
 
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/icon.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/utils.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<script src="<?= htmlspecialchars(birkly_url('/admin/js/activity-rows.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/i18n.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/ui-feedback.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/delegated-actions.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
