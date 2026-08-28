@@ -124,6 +124,18 @@ function get_plugin_admin_meta_for_page(string $page_slug): ?array
     return null;
 }
 
+function birkly_plugin_id_for_admin_page(string $page_slug): ?string
+{
+    foreach (get_active_plugin_admin_meta() as $plugin_id => $meta) {
+        $slugs = $meta['page_slugs'] ?? [];
+        $root = (string) ($meta['root_page'] ?? $meta['page'] ?? '');
+        if (in_array($page_slug, $slugs, true) || $page_slug === $root) {
+            return (string) $plugin_id;
+        }
+    }
+    return null;
+}
+
 /** @return list<array{label: string, url: string|null}> */
 function birkly_plugin_admin_breadcrumb_trail(array $meta, string $current_page): array
 {
@@ -210,7 +222,12 @@ function birkly_plugin_admin_sidebar_navigation(): array
     }
 
     $nav = [];
+    $sessionUser = $_SESSION['user'] ?? null;
     foreach (get_active_plugin_admin_meta() as $plugin_id => $meta) {
+        if (is_array($sessionUser) && function_exists('birkly_user_plugin_allowed')
+            && !birkly_user_plugin_allowed($sessionUser, (string) $plugin_id)) {
+            continue;
+        }
         $sidebar = $meta['sidebar'] ?? [];
         if ($sidebar !== [] && array_key_exists('show', $sidebar) && $sidebar['show'] === false) {
             continue;

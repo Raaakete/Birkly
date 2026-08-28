@@ -219,6 +219,9 @@ Birkly.Theme = {
                 label.textContent = collapsed ? 'Expand' : 'Collapse';
             }
             document.dispatchEvent(new CustomEvent('birkly:layout-change'));
+            if (!collapsed && typeof window.closePluginsFlyout === 'function') {
+                window.closePluginsFlyout();
+            }
         };
 
         const saved = localStorage.getItem(STORAGE_KEY) === '1';
@@ -244,6 +247,52 @@ Birkly.Theme = {
                 applyCollapsed(localStorage.getItem(STORAGE_KEY) === '1');
             }
             updateCollapseHint();
+        });
+
+        this.initPluginsFlyout();
+    },
+
+    initPluginsFlyout() {
+        const trigger = document.getElementById('nav-plugins-flyout-trigger');
+        const panel = document.getElementById('nav-plugins-flyout');
+        if (!trigger || !panel) {
+            return;
+        }
+
+        const close = () => {
+            panel.hidden = true;
+            trigger.setAttribute('aria-expanded', 'false');
+        };
+
+        window.closePluginsFlyout = close;
+
+        trigger.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (panel.hidden) {
+                const rect = trigger.getBoundingClientRect();
+                panel.hidden = false;
+                panel.style.top = `${rect.top}px`;
+                panel.style.left = `${rect.right + 8}px`;
+                trigger.setAttribute('aria-expanded', 'true');
+            } else {
+                close();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            if (panel.hidden) {
+                return;
+            }
+            if (!panel.contains(event.target) && !trigger.contains(event.target)) {
+                close();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                close();
+            }
         });
     }
 };

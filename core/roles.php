@@ -103,3 +103,65 @@ function birkly_list_role_ids(): array
 
     return $ids;
 }
+
+/**
+ * @return array<string, mixed>|null
+ */
+function birkly_role_find(string $idOrName): ?array
+{
+    $roles = birkly_ensure_default_roles();
+    $needle = strtolower(trim($idOrName));
+    foreach ($roles as $role) {
+        $id = strtolower((string) ($role['id'] ?? ''));
+        $name = strtolower((string) ($role['name'] ?? ''));
+        if ($id === $needle || $name === $needle) {
+            return $role;
+        }
+    }
+    return null;
+}
+
+/**
+ * Whether a CMS role may access a plugin admin surface (P69).
+ */
+function birkly_role_plugin_allowed(string $roleIdOrName, string $pluginId): bool
+{
+    $pluginId = trim($pluginId);
+    if ($pluginId === '') {
+        return true;
+    }
+
+    $role = birkly_role_find($roleIdOrName);
+    if ($role === null) {
+        return true;
+    }
+
+    $access = $role['plugin_access'] ?? null;
+    if (!is_array($access)) {
+        return true;
+    }
+
+    $mode = (string) ($access['mode'] ?? 'all');
+    $deny = array_map('strval', is_array($access['deny'] ?? null) ? $access['deny'] : []);
+    $allow = array_map('strval', is_array($access['allow'] ?? null) ? $access['allow'] : []);
+
+    if ($mode === 'only') {
+        return in_array($pluginId, $allow, true);
+    }
+
+    if ($mode === 'all' || $mode === '') {
+        return true;
+    }
+
+    if ($mode === 'all_except' || $deny !== []) {
+        return !in_array($pluginId, $deny, true);
+    }
+
+    return true;
+}
+
+function birkly_user_plugin_allowed(array $user, string $pluginId): bool
+{
+    $role = (string) ($user['role'] ?? 'viewer');
+    return birkly_role_plugin_allowed($role, $pluginId);
+}
