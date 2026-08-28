@@ -510,6 +510,12 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h3 class="card-title">Recent activity</h3>
             </div>
             <div class="card-body u-stack-4">
+            <div class="project-activity-filters" id="project-activity-filters" role="group" aria-label="Filter project activity">
+              <button type="button" class="btn btn-secondary btn-sm is-active" data-project-activity-filter="all">All</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="files">Files</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="git">Git</button>
+              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="settings">Settings</button>
+            </div>
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"></div>
             </div>
@@ -793,6 +799,37 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
                   <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
                 </div>
+                </div>
+              </section>
+            </div>
+
+            <div class="settings-pane-section" data-settings-search="security ai mcp tools read only chat disabled">
+              <section class="card">
+                <div class="card-header">
+                  <h2>AI &amp; MCP tools</h2>
+                </div>
+                <div class="card-body u-stack-4">
+                  <p class="settings-help">Site-wide hard limit on AI tool access. Overrides per-connection approval settings — tools are removed from MCP and admin AI chat when restricted.</p>
+                  <?php
+                  $aiToolsMode = (string) ($settings['security']['ai_tools_mode'] ?? 'normal');
+                  if (!in_array($aiToolsMode, ['normal', 'read_only_chat', 'disabled'], true)) {
+                      $aiToolsMode = 'normal';
+                  }
+                  ?>
+                  <div class="form-group u-stack-3">
+                    <label class="radio-card">
+                      <input type="radio" name="securityAiToolsMode" value="normal" <?= $aiToolsMode === 'normal' ? 'checked' : '' ?>>
+                      <span><strong>Normal</strong> — tools follow role permissions (default)</span>
+                    </label>
+                    <label class="radio-card">
+                      <input type="radio" name="securityAiToolsMode" value="read_only_chat" <?= $aiToolsMode === 'read_only_chat' ? 'checked' : '' ?>>
+                      <span><strong>Read-only chat</strong> — built-in AI chat works; no MCP/tools exposed or executed</span>
+                    </label>
+                    <label class="radio-card">
+                      <input type="radio" name="securityAiToolsMode" value="disabled" <?= $aiToolsMode === 'disabled' ? 'checked' : '' ?>>
+                      <span><strong>Disabled</strong> — block all tool execution; MCP <code>tools/list</code> is empty</span>
+                    </label>
+                  </div>
                 </div>
               </section>
             </div>
@@ -1354,6 +1391,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <!-- Permissions will be populated by JavaScript -->
             </div>
           </div>
+          <div class="form-group">
+            <label>Plugin access</label>
+            <p class="settings-help">Unchecked plugins are hidden from this role in the sidebar and blocked from plugin admin pages.</p>
+            <div class="permissions-grid" id="add-plugin-access-grid"></div>
+          </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -1386,6 +1428,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="permissions-grid" id="edit-permissions-grid">
               <!-- Permissions will be populated by JavaScript -->
             </div>
+          </div>
+          <div class="form-group">
+            <label>Plugin access</label>
+            <p class="settings-help">Unchecked plugins are hidden from this role in the sidebar and blocked from plugin admin pages.</p>
+            <div class="permissions-grid" id="edit-plugin-access-grid"></div>
           </div>
         </form>
       </div>

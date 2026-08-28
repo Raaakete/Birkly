@@ -56,49 +56,123 @@ function getDefaultPreferences() {
     ];
 }
 
-// Get read notification IDs for user
-function getReadNotifications($userId) {
+// Get read / seen notification IDs for user (P69)
+function getNotificationUserState($userId): array
+{
     $readFile = __DIR__ . '/../users/' . $userId . '/notifications_read.json';
-    if (file_exists($readFile)) {
-        $data = json_decode(file_get_contents($readFile), true);
-        return $data['read_ids'] ?? [];
+    if (!file_exists($readFile)) {
+        return ['read_ids' => [], 'seen_ids' => []];
     }
-    return [];
+    $data = json_decode((string) file_get_contents($readFile), true);
+    if (!is_array($data)) {
+        return ['read_ids' => [], 'seen_ids' => []];
+    }
+    $readIds = is_array($data['read_ids'] ?? null) ? $data['read_ids'] : [];
+    $seenIds = is_array($data['seen_ids'] ?? null) ? $data['seen_ids'] : [];
+    return ['read_ids' => $readIds, 'seen_ids' => $seenIds];
+}
+
+function getReadNotifications($userId) {
+    return getNotificationUserState($userId)['read_ids'];
+}
+
+function getSeenNotifications($userId): array
+{
+    return getNotificationUserState($userId)['seen_ids'];
+}
+
+function writeNotificationUserState($userId, array $readIds, array $seenIds): void
+{
+    $readDir = __DIR__ . '/../users/' . $userId;
+    if (!is_dir($readDir)) {
+        mkdir($readDir, 0755, true);
+    }
+    $readFile = $readDir . '/notifications_read.json';
+    file_put_contents($readFile, json_encode([
+        'read_ids' => array_values(array_unique($readIds)),
+        'seen_ids' => array_values(array_unique($seenIds)),
+    ], JSON_PRETTY_PRINT));
+}
+
+/**
+ * @param list<array<string, mixed>> $notifications
+ * @return array{badge_state: string, pending_count: int, unread_count: int}
+ */
+function birkly_notifications_badge_metrics(array $notifications, array $readIds, array $seenIds): array
+{
+    $pending = 0;
+    $fresh = 0;
+    foreach ($notifications as $notification) {
+        $id = (string) ($notification['id'] ?? '');
+        $read = !empty($notification['read']) || ($id !== '' && in_array($id, $readIds, true));
+        if ($read) {
+            continue;
+        }
+        $pending++;
+        $seen = $id !== '' && in_array($id, $seenIds, true);
+        if (!$seen) {
+            $fresh++;
+        }
+    }
+    if ($pending === 0) {
+        return ['badge_state' => 'none', 'pending_count' => 0, 'unread_count' => 0];
+    }
+    if ($fresh > 0) {
+        return ['badge_state' => 'unread', 'pending_count' => $pending, 'unread_count' => $fresh];
+    }
+    return ['badge_state' => 'seen', 'pending_count' => $pending, 'unread_count' => 0];
 }
 
 // Mark notification as read
 function markNotificationRead($userId, $notificationId) {
-    $readDir = __DIR__ . '/../users/' . $userId;
-    if (!is_dir($readDir)) {
-        mkdir($readDir, 0755, true);
-    }
+    $state = getNotificationUserState($userId);
+    $readIds = $state['read_ids'];
+    $seenIds = $state['seen_ids'];
     
-    $readFile = $readDir . '/notifications_read.json';
-    $readIds = getReadNotifications($userId);
-    
-    if (!in_array($notificationId, $readIds)) {
+    if (!in_array($notificationId, $readIds, true)) {
         $readIds[] = $notificationId;
-        file_put_contents($readFile, json_encode(['read_ids' => $readIds], JSON_PRETTY_PRINT));
     }
+    if (!in_array($notificationId, $seenIds, true)) {
+        $seenIds[] = $notificationId;
+    }
+    writeNotificationUserState($userId, $readIds, $seenIds);
+}
+
+function markNotificationsSeen($userId, array $notificationIds): void
+{
+    $state = getNotificationUserState($userId);
+    $readIds = $state['read_ids'];
+    $seenIds = $state['seen_ids'];
+    foreach ($notificationIds as $id) {
+        $id = (string) $id;
+        if ($id === '' || in_array($id, $seenIds, true)) {
+            continue;
+        }
+        $seenIds[] = $id;
+    }
+    writeNotificationUserState($userId, $readIds, $seenIds);
 }
 
 // Mark all notifications as read
 function markAllNotificationsRead($userId, $notificationIds) {
-    $readDir = __DIR__ . '/../users/' . $userId;
-    if (!is_dir($readDir)) {
-        mkdir($readDir, 0755, true);
-    }
-    
-    $readFile = $readDir . '/notifications_read.json';
-    $readIds = getReadNotifications($userId);
+    $state = getNotificationUserState($userId);
+    $readIds = $state['read_ids'];
+    $seenIds = $state['seen_ids'];
     
     foreach ($notificationIds as $id) {
-        if (!in_array($id, $readIds)) {
+        $id = (string) $id;
+        if ($id === '') {
+            continue;
+        }
+        if (!in_array($id, $readIds, true)) {
             $readIds[] = $id;
+        }
+        if (!in_array($id, $seenIds, true)) {
+            $seenIds[] = $id;
         }
     }
     
-    file_put_contents($readFile, json_encode(['read_ids' => $readIds], JSON_PRETTY_PRINT));
+    writeNotificationUserState($userId, $readIds, $seenIds);
 }
 
 // Map event to notification preference key
@@ -424,7 +498,7 @@ if ($action === 'list_recent') {
         $userEmail = $_SESSION['user']['email'] ?? '';
         $preferences = getUserNotificationPreferences($userId);
         $readIds = getReadNotifications($userId);
-        
+        $seenIds = getSeenNotifications($userId);
         $notifications = [];
         $logFile = __DIR__ . '/../logs/security.log';
         
@@ -556,16 +630,23 @@ if ($action === 'list_recent') {
             });
             $notifications = array_slice($notifications, 0, $limit);
         }
-        
-        $unreadCount = count(array_filter($notifications, function($n) {
-            return !$n['read'];
-        }));
+
+        foreach ($notifications as &$notificationRow) {
+            $nid = (string) ($notificationRow['id'] ?? '');
+            $isRead = !empty($notificationRow['read']);
+            $notificationRow['seen'] = $isRead || ($nid !== '' && in_array($nid, $seenIds, true));
+        }
+        unset($notificationRow);
+
+        $badgeMetrics = birkly_notifications_badge_metrics($notifications, $readIds, $seenIds);
         
         ob_end_clean();
         echo json_encode([
             'status' => 'ok',
             'notifications' => $notifications,
-            'unread_count' => $unreadCount
+            'unread_count' => $badgeMetrics['unread_count'],
+            'pending_count' => $badgeMetrics['pending_count'],
+            'badge_state' => $badgeMetrics['badge_state'],
         ]);
         exit;
         
@@ -691,6 +772,27 @@ if ($action === 'unread_count') {
         ]);
         exit;
     }
+}
+
+// Mark notifications as seen (dropdown opened — P69)
+if ($action === 'mark_seen') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        ob_end_clean();
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $userId = $_SESSION['user']['id'];
+    $ids = $input['ids'] ?? [];
+    if (!is_array($ids)) {
+        $ids = [];
+    }
+    markNotificationsSeen($userId, $ids);
+
+    ob_end_clean();
+    echo json_encode(['status' => 'ok']);
+    exit;
 }
 
 // Mark notification as read

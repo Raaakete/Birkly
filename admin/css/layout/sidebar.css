@@ -392,6 +392,59 @@ body.sidebar-open { overflow: hidden; }
 
   body.sidebar-collapsed .sidebar-collapse-toggle .sidebar-collapse-label { display: none; }
   body.sidebar-collapsed .sidebar-collapse-toggle { padding-inline: 0; }
+
+  /* P69 — collapsed rail: plugin flyout instead of long icon list */
+  body:not(.sidebar-collapsed) #nav-plugins-flyout-wrap {
+    display: none;
+  }
+
+  body.sidebar-collapsed #nav-plugins-section > #links-plugins {
+    display: none;
+  }
+
+  body.sidebar-collapsed .nav-plugins-flyout-wrap {
+    display: block;
+  }
+
+  body.sidebar-collapsed .nav-plugins-flyout-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+  }
+
+  body.sidebar-collapsed .nav-plugins-flyout-trigger .nav-label {
+    display: none;
+  }
+
+  .nav-plugins-flyout {
+    position: fixed;
+    z-index: var(--z-popover);
+    min-width: 12rem;
+    max-width: 16rem;
+    padding: var(--space-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    box-shadow: var(--elevation-3);
+  }
+
+  .nav-plugins-flyout-list .nav-link {
+    justify-content: flex-start;
+    gap: var(--space-3);
+    padding-inline: var(--space-3);
+  }
+
+  .nav-plugins-flyout-list .nav-label {
+    display: inline;
+  }
 }
 
 /* Drawer mode below --bp-xl */

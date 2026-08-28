@@ -117,7 +117,9 @@ Shown in the UI as **coming soon** and is not selectable. Use flat file or MySQL
 - Client: `admin/js/settings-page.js` — collects all tab form fields, POSTs to `Birkly.url('/api/settings.php?action=save_all')` with CSRF.
 - Server: `api/settings.php` — maps camelCase form keys to snake_case JSON, writes each category, persists storage via `StorageFactory::saveStorageConfig()`.
 
-**Security:** Values in `security.json` are read by `api/auth.php` (session timeout), `api/users.php` (lockout), `api/validate.php` (password rules), and `core/csrf.php` (`enable_csrf` flag).
+**Security:** Values in `security.json` are read by `api/auth.php` (session timeout), `api/users.php` (lockout), `api/validate.php` (password rules), and `core/csrf.php` (`enable_csrf` flag). **AI & MCP tools (P69):** `ai_tools_mode` — `normal` (default), `read_only_chat` (built-in chat only; zero MCP/tools), or `disabled` (same tool block). Enforced site-wide in `birkly_ai_tools_for_user()` and MCP `tools/list`; cannot be overridden per connection.
+
+**Activity (P69):** Dashboard recent activity, Settings → Project recent activity, and the Activity page share the activity v2 row shape (`severity`, `actor`, `target`, `href`, expandable `detail`). Project activity supports filter chips for files, git, and settings events.
 
 **Storage factory:** `core/storage/StorageFactory.php` — unified config path `settings/storage.json`, drivers `flatfile`, `mysql`, `postgresql`. `MySqlStorage` and `PostgresStorage` implement `StorageInterface`; flat file uses `FlatFileStorage`.
 

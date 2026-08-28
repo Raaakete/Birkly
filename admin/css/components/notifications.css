@@ -40,6 +40,17 @@
   z-index: 1;
 }
 
+.notification-badge--unread {
+  background: var(--danger-solid);
+  color: var(--ink-on-danger);
+}
+
+.notification-badge--seen {
+  background: var(--neutral-surface);
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+}
+
 /* ============================================
    Panel — sizing only; the surface is .dropdown-menu
    ============================================ */
