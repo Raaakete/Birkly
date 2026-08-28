@@ -89,6 +89,20 @@ function birkly_analytics_resolve_tracking_id(string $requestedId): ?string
     }
 
     $candidates = birkly_analytics_domain_aliases($requestedId);
+
+    // Unify configured public-site hostnames (e.g. birkly.io alias → birkly.cloud primary).
+    $hostingFile = __DIR__ . '/hosting_urls.php';
+    if (is_file($hostingFile)) {
+        require_once $hostingFile;
+        if (function_exists('birkly_hosting_host_matches_public')
+            && birkly_hosting_host_matches_public($requestedId)) {
+            $canonical = birkly_hosting_public_host();
+            if ($canonical !== '' && !in_array($canonical, $candidates, true)) {
+                array_unshift($candidates, $canonical);
+            }
+        }
+    }
+
     $trackingIds = birkly_analytics_load_tracking_ids();
 
     $licenseEnabled = [];
