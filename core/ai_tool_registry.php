@@ -3,9 +3,11 @@
  * P3-M4: Role-scoped AI tool definitions derived from core/ai_permissions.php.
  */
 
+require_once __DIR__ . '/roles.php';
 require_once __DIR__ . '/ai_permissions.php';
 require_once __DIR__ . '/connections/mcp_tools.php';
 require_once __DIR__ . '/plugins/mcp_shelf.php';
+require_once __DIR__ . '/security_policy.php';
 
 /** @return array<string, array{name: string, description: string, category: string, inputSchema: array}> */
 function birkly_ai_core_tool_definitions(): array
@@ -101,14 +103,34 @@ function birkly_ai_tool_definitions(): array
 /** @return array<string, array> */
 function birkly_ai_tools_for_user(array $aiUser): array
 {
+    if (birkly_ai_tools_site_restricted()) {
+        return [];
+    }
     $definitions = birkly_ai_tool_definitions();
     $allowed = [];
+    $role = (string) ($aiUser['role'] ?? '');
     foreach ($definitions as $actionType => $def) {
-        if (birkly_ai_user_can_action($aiUser, $actionType)) {
-            $allowed[$actionType] = $def;
+        if (!birkly_ai_user_can_action($aiUser, $actionType)) {
+            continue;
         }
+        $pluginId = birkly_ai_tool_plugin_id($actionType);
+        if ($pluginId !== '' && $role !== '' && !birkly_role_plugin_allowed($role, $pluginId)) {
+            continue;
+        }
+        $allowed[$actionType] = $def;
     }
     return $allowed;
+}
+
+/**
+ * Infer owning plugin id from MCP tool name (commerce_*, automation_*, etc.).
+ */
+function birkly_ai_tool_plugin_id(string $actionType): string
+{
+    if (preg_match('/^(commerce|automation|events|user_management|payments)_/i', $actionType, $m)) {
+        return strtolower($m[1]);
+    }
+    return '';
 }
 
 function birkly_ai_is_read_action(string $actionType): bool

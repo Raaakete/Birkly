@@ -15,12 +15,19 @@
         <div class="main-actions-left">
             <button class="btn btn-secondary" id="refresh-activity">{translate 'admin.refresh'}</button>
         </div>
-        <div class="main-actions-right u-nowrap-flex">
+        <div class="main-actions-right u-nowrap-flex activity-page-filters">
             <select id="category-filter" class="input u-w-auto">
                 <option value="all">{translate 'admin.all_activity'}</option>
                 <option value="content">{translate 'admin.content'}</option>
                 <option value="users">{translate 'admin.users'}</option>
                 <option value="system">{translate 'admin.system'}</option>
+            </select>
+            <select id="severity-filter" class="input u-w-auto" aria-label="Severity">
+                <option value="all">All severity</option>
+                <option value="info">Info</option>
+                <option value="success">Success</option>
+                <option value="warning">Warning</option>
+                <option value="danger">Danger</option>
             </select>
         </div>
     </div>

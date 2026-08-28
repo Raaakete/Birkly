@@ -81,7 +81,13 @@ if (!function_exists('birkly_developer_mode_enabled')) {
 if (function_exists('birkly_developer_mode_enabled')) {
     $__birklyDeveloperModeOn = birkly_developer_mode_enabled();
 }
+$__birklyUiDensity = 'default';
+if (isset($_SESSION['user'])) {
+    require_once __DIR__ . '/../../core/ui_density.php';
+    $__birklyUiDensity = birkly_user_ui_density($_SESSION['user']);
+}
+$__birklyBodyClass = trim(($__birklyDeveloperModeOn ? 'developer-mode-on' : '') . ' density-' . $__birklyUiDensity);
 ?>
-<body<?= $__birklyDeveloperModeOn ? ' class="developer-mode-on"' : '' ?>>
+<body<?= $__birklyBodyClass !== '' ? ' class="' . htmlspecialchars($__birklyBodyClass, ENT_QUOTES, 'UTF-8') . '"' : '' ?> data-density="<?= htmlspecialchars($__birklyUiDensity, ENT_QUOTES, 'UTF-8') ?>">
     <div class="admin-layout">
 

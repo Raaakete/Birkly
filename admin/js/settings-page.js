@@ -162,6 +162,63 @@ function collectPermissions(form) {
     return permissions;
 }
 
+let activePluginsForRoles = [];
+
+async function loadActivePluginsForRoles() {
+    try {
+        const response = await fetch(apiUrl('/api/plugins.php?action=list'));
+        const result = await response.json();
+        if (result.status === 'ok' && Array.isArray(result.plugins)) {
+            activePluginsForRoles = result.plugins.filter(function (plugin) {
+                return plugin.active;
+            });
+        }
+    } catch (error) {
+        console.error('Failed to load plugins for role editor:', error);
+    }
+}
+
+function populatePluginAccessGrid(gridId, role) {
+    const grid = document.getElementById(gridId);
+    if (!grid) {
+        return;
+    }
+    const denyList = role && role.plugin_access && Array.isArray(role.plugin_access.deny)
+        ? role.plugin_access.deny
+        : [];
+    if (!activePluginsForRoles.length) {
+        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">No active plugins</p>';
+        return;
+    }
+    grid.innerHTML = activePluginsForRoles.map(function (plugin) {
+        const id = plugin.id || '';
+        const name = plugin.name || id;
+        const allowed = denyList.indexOf(id) === -1;
+        return '<label class="check"><input type="checkbox" name="plugin_access_allow" value="'
+            + escapeHtml(id) + '"' + (allowed ? ' checked' : '') + '> '
+            + escapeHtml(name) + '</label>';
+    }).join('');
+}
+
+function collectPluginAccess(form) {
+    if (!form || !activePluginsForRoles.length) {
+        return null;
+    }
+    const allowed = Array.from(form.querySelectorAll('input[name="plugin_access_allow"]:checked'))
+        .map(function (input) { return input.value; });
+    const deny = activePluginsForRoles
+        .map(function (plugin) { return plugin.id; })
+        .filter(function (id) { return id && allowed.indexOf(id) === -1; });
+    if (!deny.length) {
+        return null;
+    }
+    return { mode: 'all_except', deny: deny };
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    loadActivePluginsForRoles();
+});
+
 function openAddRoleModal() {
     const modal = document.getElementById('add-role-modal');
     if (!modal) {
@@ -174,6 +231,7 @@ function openAddRoleModal() {
     const form = document.getElementById('add-role-form');
     if (form) form.reset();
     createPermissionsGrid('add-permissions-grid');
+    populatePluginAccessGrid('add-plugin-access-grid', null);
 }
 
 function closeAddRoleModal() {
@@ -211,6 +269,7 @@ async function editRole(roleId) {
             
             // Create permissions grid with existing permissions
             createPermissionsGrid('edit-permissions-grid', role.permissions || {});
+            populatePluginAccessGrid('edit-plugin-access-grid', role);
             
         } else {
             showMessage('Error loading role: ' + (result.message || 'Unknown error'), 'error');
@@ -254,14 +313,22 @@ async function updateRole() {
     
     // Collect permissions
     const permissions = collectPermissions(form);
+    const pluginAccess = collectPluginAccess(form);
     
+    const rolePayload = {
+        id: roleId,
+        name: roleName,
+        description: roleDescription,
+        permissions: permissions,
+    };
+    if (pluginAccess) {
+        rolePayload.plugin_access = pluginAccess;
+    } else {
+        rolePayload.plugin_access = { mode: 'all' };
+    }
+
     const roleData = {
-        role: {
-            id: roleId,
-            name: roleName,
-            description: roleDescription,
-            permissions: permissions
-        },
+        role: rolePayload,
         _csrf: getCsrfToken()
     };
     
@@ -311,15 +378,21 @@ async function createRole() {
     
     // Collect permissions
     const permissions = collectPermissions(form);
-    
+    const pluginAccess = collectPluginAccess(form);
+
+    const rolePayload = {
+        id: roleName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+        name: roleName,
+        description: roleDescription,
+        permissions: permissions,
+    };
+    if (pluginAccess) {
+        rolePayload.plugin_access = pluginAccess;
+    }
+
     const roleData = {
         action: 'create_role',
-        role: {
-            id: roleName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-            name: roleName,
-            description: roleDescription,
-            permissions: permissions
-        },
+        role: rolePayload,
         _csrf: getCsrfToken()
     };
     

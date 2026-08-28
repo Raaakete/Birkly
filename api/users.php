@@ -520,6 +520,14 @@ if ($action === 'update_profile') {
         if (isset($input['name'])) {
             $user['name'] = $input['name'];
         }
+        if (isset($input['ui_preferences']) && is_array($input['ui_preferences'])) {
+            require_once __DIR__ . '/../core/ui_density.php';
+            $prefs = is_array($user['ui_preferences'] ?? null) ? $user['ui_preferences'] : [];
+            if (isset($input['ui_preferences']['density'])) {
+                $prefs['density'] = birkly_ui_density_normalize((string) $input['ui_preferences']['density']);
+            }
+            $user['ui_preferences'] = $prefs;
+        }
         if (array_key_exists('avatar', $rawBody)) {
             $avatar = trim((string) $rawBody['avatar']);
             if ($avatar !== ($user['avatar'] ?? '')) {
@@ -535,7 +543,8 @@ if ($action === 'update_profile') {
     // Update session
     $_SESSION['user'] = array_merge($_SESSION['user'], [
         'name' => $user['name'] ?? $_SESSION['user']['email'],
-        'avatar' => $user['avatar'] ?? ''
+        'avatar' => $user['avatar'] ?? '',
+        'ui_preferences' => $user['ui_preferences'] ?? ($_SESSION['user']['ui_preferences'] ?? []),
     ]);
     
     echo json_encode([
