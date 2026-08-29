@@ -49,4 +49,27 @@ $plugin = birkly_activity_format_plugin_item([
 af_assert('plugin bus source', ($plugin['source'] ?? '') === 'plugin_bus');
 af_assert('plugin title message', ($plugin['message'] ?? '') === 'Order paid');
 
+$publicDenied = birkly_activity_format_item(
+    'public_read_denied',
+    'guest',
+    [
+        'collection' => 'blog',
+        'reason' => 'public_read_disabled',
+        'action' => 'get_entry',
+        'ip' => '10.0.1.6',
+        'origin' => 'https://birkly.io',
+        'referer' => 'https://birkly.io/',
+        'hint' => 'Enable Allow public read access in collection settings',
+    ],
+    '2026-08-29T15:52:23+00:00'
+);
+af_assert('public read denied category', ($publicDenied['category'] ?? '') === 'system');
+af_assert('public read denied severity', ($publicDenied['severity'] ?? '') === 'warning');
+af_assert('public read denied actor visitor', ($publicDenied['actor']['type'] ?? '') === 'visitor');
+af_assert('public read denied actor label', str_contains((string) ($publicDenied['actor']['label'] ?? ''), 'birkly.io'));
+af_assert('public read denied message', str_contains((string) ($publicDenied['message'] ?? ''), 'blog'));
+af_assert('public read denied summary', str_contains((string) ($publicDenied['detail_summary'] ?? ''), 'Allow public read'));
+
+af_assert('domain auth success hidden from feed', birkly_activity_is_routine_public_noise('domain_auth_success'));
+
 echo "Activity format tests passed.\n";
