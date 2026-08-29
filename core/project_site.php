@@ -140,7 +140,15 @@ function birkly_project_inject_runtime_scripts(string $html): string
     require_once __DIR__ . '/build_info.php';
     $clientSrc = htmlspecialchars(rtrim($cmsBase, '/') . birkly_public_runtime_asset_url('birkly-client.js'), ENT_QUOTES, 'UTF-8');
     $cmsAttr = htmlspecialchars($cmsBase, ENT_QUOTES, 'UTF-8');
-    $clientTag = '<script src="' . $clientSrc . '" data-cms-url="' . $cmsAttr . '"></script>';
+    $trackingHost = birkly_hosting_public_host();
+    if ($trackingHost === '') {
+        $trackingHost = birkly_cms_request_host();
+    }
+    $attrs = ' data-cms-url="' . $cmsAttr . '"';
+    if ($trackingHost !== '') {
+        $attrs .= ' data-tracking-id="' . htmlspecialchars($trackingHost, ENT_QUOTES, 'UTF-8') . '"';
+    }
+    $clientTag = '<script src="' . $clientSrc . '"' . $attrs . '></script>';
 
     if (preg_match('#<script[^>]+src=["\'][^"\']*birkly-client\.js[^"\']*["\'][^>]*></script>#i', $html)) {
         return preg_replace(
