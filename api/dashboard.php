@@ -327,78 +327,19 @@ if ($action === 'stats') {
 
 if ($action === 'activity') {
     try {
-        // Get real activity feed - use activity.php functions
         $limit = intval($_GET['limit'] ?? 20);
         $filter = $_GET['filter'] ?? 'all';
-        
-        // Include activity.php to get helper functions
-        if (file_exists(__DIR__ . '/activity.php')) {
-            @require_once __DIR__ . '/activity.php';
-        }
-        
-        $activity = [];
-        $logFile = __DIR__ . '/../logs/security.log';
-        
-        if (file_exists($logFile)) {
-            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            if ($lines !== false) {
-                $lines = array_reverse($lines); // Newest first
-                
-                $processed = 0;
-                foreach ($lines as $line) {
-                    if ($processed >= $limit) break;
-                    
-                    $entry = json_decode($line, true);
-                    if (!$entry || !is_array($entry)) {
-                        continue;
-                    }
-                    
-                    $event = $entry['event'] ?? '';
-                    $timestamp = $entry['timestamp'] ?? '';
-                    $user = $entry['user'] ?? 'Unknown';
-                    $details = $entry['details'] ?? [];
-                    
-                    // Apply filter
-                    if ($filter && $filter !== 'all') {
-                        if (function_exists('getEventCategory')) {
-                            $category = getEventCategory($event);
-                            if ($category !== $filter) {
-                                continue;
-                            }
-                        }
-                    }
-                    
-                    if (function_exists('formatActivityItem')) {
-                        $activityItem = formatActivityItem($event, $user, $details, $timestamp);
-                        if ($activityItem) {
-                            $activity[] = $activityItem;
-                            $processed++;
-                        }
-                    } else {
-                        // Fallback if formatActivityItem doesn't exist
-                        $activity[] = [
-                            'event' => $event,
-                            'user' => $user,
-                            'message' => ucfirst(str_replace('_', ' ', $event)),
-                            'icon' => '📌',
-                            'timestamp' => $timestamp,
-                            'details' => $details,
-                            'category' => 'other'
-                        ];
-                        $processed++;
-                    }
-                }
-            }
-        }
-        
-        // Clear any output before JSON
+
+        require_once __DIR__ . '/../core/activity_format.php';
+        $activity = birkly_activity_read_security_log($limit, 0, $filter, 'all');
+
         ob_clean();
         echo json_encode([
             'status' => 'ok',
             'data' => [
                 'activity' => $activity,
-                'total' => count($activity)
-            ]
+                'total' => count($activity),
+            ],
         ]);
         ob_end_flush();
         exit;
