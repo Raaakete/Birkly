@@ -92,7 +92,8 @@
         const target = targetLabel(item);
         const href = resolveHref(item);
         const detailText = detailJson(item);
-        const expandable = opts.expandable !== false && detailText !== '';
+        const detailSummary = item.detail_summary ? String(item.detail_summary) : '';
+        const expandable = opts.expandable !== false && detailText !== '' && !detailSummary;
         const rowClass = 'activity-row' + (opts.compact ? ' activity-row--compact' : '');
         const linkBtn = href
             ? '<a class="btn btn-ghost btn-sm activity-row__link" href="' + escapeHtml(href) + '">Open</a>'
@@ -117,6 +118,9 @@
             '<span>·</span><span>' + escapeHtml(category) + '</span>' +
             '<span>·</span><span class="activity-row__time">' + escapeHtml(when) + '</span>' +
             '</div>' +
+            (detailSummary
+                ? '<p class="activity-row__summary">' + escapeHtml(detailSummary) + '</p>'
+                : '') +
             (expandable
                 ? '<pre class="activity-row__detail" id="activity-detail-' + id + '" hidden>' + escapeHtml(detailText) + '</pre>'
                 : '') +

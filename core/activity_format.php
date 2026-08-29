@@ -24,6 +24,72 @@ function birkly_activity_str_contains(string $haystack, string $needle): bool
 }
 
 /**
+ * Routine public API successes are audit noise — keep in security.log, hide from Activity feed.
+ */
+function birkly_activity_is_routine_public_noise(string $event): bool
+{
+    return in_array($event, ['domain_auth_success', 'api_key_auth_success'], true);
+}
+
+function birkly_activity_details_domain(array $details): string
+{
+    $domain = trim((string) ($details['domain'] ?? ''));
+    if ($domain !== '') {
+        return $domain;
+    }
+    $origin = trim((string) ($details['origin'] ?? ''));
+    if ($origin !== '') {
+        $host = parse_url($origin, PHP_URL_HOST);
+        if (is_string($host) && $host !== '') {
+            return $host;
+        }
+    }
+    $referer = trim((string) ($details['referer'] ?? ''));
+    if ($referer !== '') {
+        $host = parse_url($referer, PHP_URL_HOST);
+        if (is_string($host) && $host !== '') {
+            return $host;
+        }
+    }
+
+    return '';
+}
+
+function birkly_activity_referer_page_label(string $referer): string
+{
+    $referer = trim($referer);
+    if ($referer === '') {
+        return '';
+    }
+    $path = parse_url($referer, PHP_URL_PATH);
+    if (!is_string($path) || $path === '') {
+        return '';
+    }
+    if ($path === '/') {
+        return 'homepage';
+    }
+
+    return ltrim($path, '/');
+}
+
+function birkly_activity_visitor_label(array $details, string $fallbackUser = 'guest'): string
+{
+    $domain = birkly_activity_details_domain($details);
+    if ($domain !== '') {
+        return 'Visitor on ' . $domain;
+    }
+    $ip = trim((string) ($details['ip'] ?? ''));
+    if ($ip !== '' && $ip !== 'unknown') {
+        return 'Visitor (' . $ip . ')';
+    }
+    if ($fallbackUser !== '' && strtolower($fallbackUser) !== 'guest' && strtolower($fallbackUser) !== 'unknown') {
+        return $fallbackUser;
+    }
+
+    return 'Public visitor';
+}
+
+/**
  * @return list<string>
  */
 function birkly_activity_severity_options(): array
@@ -57,6 +123,9 @@ function birkly_activity_event_category(string $event): string
         'plugin_activated', 'plugin_deactivated', 'plugin_deleted',
         'webhook_created', 'webhook_updated', 'webhook_deleted', 'webhook_triggered',
         'mcp_endpoint_created', 'mcp_endpoint_rotated', 'ai_tools_blocked',
+        'public_read_denied', 'public_submit_denied', 'public_submission', 'public_submission_spam',
+        'domain_auth_failed', 'domain_permission_denied', 'domain_registered', 'domain_updated',
+        'domain_deleted', 'api_key_auth_failed',
     ];
 
     if (in_array($event, $contentEvents, true)) {
@@ -83,6 +152,8 @@ function birkly_activity_event_severity(string $event): string
     $warning = [
         'review_action', 'unpublish_entry', 'ai_approval_created', 'plugin_deactivated',
         'update_check_failed', 'project_git_conflict_resolved',
+        'public_read_denied', 'public_submit_denied', 'domain_auth_failed', 'domain_permission_denied',
+        'api_key_auth_failed',
     ];
     $success = [
         'publish_entry', 'scheduled_publish', 'login_success', 'invitation_accepted',
@@ -155,6 +226,11 @@ function birkly_activity_event_icon(string $event): string
         'settings_save_all' => '⚙️',
         'settings_update' => '⚙️',
         'ai_tools_blocked' => '🚫',
+        'public_read_denied' => '🔒',
+        'public_submit_denied' => '🔒',
+        'public_submission' => '📨',
+        'domain_auth_failed' => '🌐',
+        'domain_permission_denied' => '🌐',
     ];
 
     return $icons[$event] ?? '📌';
@@ -362,6 +438,64 @@ function birkly_activity_event_message(string $event, array $details): string
         case 'permission_denied':
             return 'Permission denied: ' . (string) ($details['action'] ?? 'action');
 
+        case 'public_read_denied':
+            $collection = (string) ($details['collection'] ?? 'collection');
+            $reason = (string) ($details['reason'] ?? '');
+            $action = (string) ($details['action'] ?? '');
+            $page = birkly_activity_referer_page_label((string) ($details['referer'] ?? ''));
+            $message = 'Live site blocked from reading "' . $collection . '"';
+            if ($reason === 'public_read_disabled') {
+                $message .= ' — public read is disabled on this collection';
+            } elseif ($reason !== '') {
+                $message .= ' (' . str_replace('_', ' ', $reason) . ')';
+            }
+            if ($action !== '') {
+                $message .= ' via ' . str_replace('_', ' ', $action);
+            }
+            if ($page !== '') {
+                $message .= ' while loading ' . $page;
+            }
+            return $message;
+
+        case 'public_submit_denied':
+            $collection = (string) ($details['collection'] ?? 'form');
+            $reason = (string) ($details['reason'] ?? '');
+            $message = 'Live site blocked from submitting to "' . $collection . '"';
+            if ($reason !== '') {
+                $message .= ' (' . str_replace('_', ' ', $reason) . ')';
+            }
+            return $message;
+
+        case 'public_submission':
+            $collection = (string) ($details['collection'] ?? 'form');
+            return 'Visitor submitted "' . $collection . '" via public form';
+
+        case 'domain_auth_failed':
+            $domain = birkly_activity_details_domain($details);
+            $reason = (string) ($details['reason'] ?? 'not authorized');
+            return 'Domain not authorized: ' . ($domain !== '' ? $domain : 'unknown') . ' (' . str_replace('_', ' ', $reason) . ')';
+
+        case 'domain_permission_denied':
+            $domain = birkly_activity_details_domain($details);
+            $operation = (string) ($details['operation'] ?? 'access');
+            $collection = (string) ($details['collection'] ?? '');
+            $message = 'Domain blocked from ' . $operation . ': ' . ($domain !== '' ? $domain : 'unknown');
+            if ($collection !== '') {
+                $message .= ' on "' . $collection . '"';
+            }
+            return $message;
+
+        case 'domain_auth_success':
+            $domain = birkly_activity_details_domain($details);
+            $operation = (string) ($details['operation'] ?? 'read');
+            return 'Public API check passed for ' . ($domain !== '' ? $domain : 'domain') . ' (' . $operation . ')';
+
+        case 'api_key_auth_failed':
+            return 'API key rejected for public access';
+
+        case 'api_key_auth_success':
+            return 'API key accepted for public access';
+
         default:
             if (birkly_activity_str_starts_with($event, 'commerce_') || birkly_activity_str_starts_with($event, 'automation_')) {
                 return ucfirst(str_replace('_', ' ', $event));
@@ -435,6 +569,21 @@ function birkly_activity_build_target(string $event, array $details): array
         ];
     }
 
+    if (in_array($event, ['public_read_denied', 'public_submit_denied', 'public_submission'], true)
+        && $collection !== '') {
+        return [
+            'type' => 'collection',
+            'label' => $collection,
+            'id' => $collection,
+        ];
+    }
+
+    $domain = birkly_activity_details_domain($details);
+    if (in_array($event, ['domain_auth_failed', 'domain_permission_denied', 'domain_registered', 'domain_updated', 'domain_deleted'], true)
+        && $domain !== '') {
+        return ['type' => 'domain', 'label' => $domain];
+    }
+
     return ['type' => 'none', 'label' => ''];
 }
 
@@ -480,7 +629,66 @@ function birkly_activity_build_href(string $event, array $details, array $target
         return birkly_admin_url('webhooks');
     }
 
+    if (in_array($event, ['domain_auth_failed', 'domain_permission_denied', 'domain_registered', 'domain_updated', 'domain_deleted'], true)) {
+        return birkly_admin_url('settings', ['tab' => 'site-delivery']) . '#domains';
+    }
+
     return null;
+}
+
+/**
+ * @param array<string, mixed> $details
+ */
+function birkly_activity_build_detail_summary(string $event, array $details): string
+{
+    $domain = birkly_activity_details_domain($details);
+    $ip = trim((string) ($details['ip'] ?? ''));
+    $referer = trim((string) ($details['referer'] ?? ''));
+    $hint = trim((string) ($details['hint'] ?? ''));
+    $parts = [];
+
+    if ($event === 'public_read_denied') {
+        if ($domain !== '') {
+            $parts[] = 'Site: ' . $domain;
+        }
+        if ($referer !== '') {
+            $parts[] = 'Page: ' . $referer;
+        }
+        if ($ip !== '' && $ip !== 'unknown') {
+            $parts[] = 'IP: ' . $ip;
+        }
+        if ($hint !== '') {
+            $parts[] = $hint;
+        } elseif (($details['reason'] ?? '') === 'public_read_disabled') {
+            $parts[] = 'Fix: open the collection and enable Allow public read access, or remove the template loop from the live site.';
+        }
+        return implode(' · ', $parts);
+    }
+
+    if (in_array($event, ['domain_auth_failed', 'domain_permission_denied'], true)) {
+        if ($domain !== '') {
+            $parts[] = 'Domain: ' . $domain;
+        }
+        if (($details['operation'] ?? '') !== '') {
+            $parts[] = 'Operation: ' . (string) $details['operation'];
+        }
+        if ($ip !== '' && $ip !== 'unknown') {
+            $parts[] = 'IP: ' . $ip;
+        }
+        return implode(' · ', $parts);
+    }
+
+    if ($event === 'public_submit_denied') {
+        if ($domain !== '') {
+            $parts[] = 'Site: ' . $domain;
+        }
+        if ($referer !== '') {
+            $parts[] = 'Page: ' . $referer;
+        }
+        return implode(' · ', $parts);
+    }
+
+    return '';
 }
 
 /**
@@ -519,11 +727,23 @@ function birkly_activity_format_item(
     $target = birkly_activity_build_target($event, $details);
     $href = birkly_activity_build_href($event, $details, $target);
     $actorType = (($details['source'] ?? '') === 'ai' || !empty($details['ai_user_id'])) ? 'ai' : 'user';
-    if ($user === 'guest' || $user === 'system') {
+    $publicVisitorEvents = [
+        'public_read_denied', 'public_submit_denied', 'public_submission', 'public_submission_spam',
+        'domain_auth_failed', 'domain_permission_denied',
+    ];
+    if (in_array($event, $publicVisitorEvents, true) || ($user === 'guest' && birkly_activity_str_starts_with($event, 'public_'))) {
+        $actorType = 'visitor';
+    } elseif ($user === 'guest' || $user === 'system') {
         $actorType = 'system';
     }
 
+    $actorLabel = $user !== '' ? $user : 'Unknown';
+    if ($actorType === 'visitor') {
+        $actorLabel = birkly_activity_visitor_label($details, $user);
+    }
+
     $id = birkly_activity_stable_id($event, $user, $timestamp, $details, $source);
+    $detailSummary = birkly_activity_build_detail_summary($event, $details);
 
     $item = [
         'id' => $id,
@@ -531,6 +751,7 @@ function birkly_activity_format_item(
         'user' => $user,
         'message' => $message,
         'summary' => $message,
+        'detail_summary' => $detailSummary,
         'icon' => birkly_activity_event_icon($event),
         'color' => birkly_activity_event_color($event),
         'timestamp' => $timestamp,
@@ -540,7 +761,7 @@ function birkly_activity_format_item(
         'severity' => $severity,
         'actor' => [
             'type' => $actorType,
-            'label' => $user !== '' ? $user : 'Unknown',
+            'label' => $actorLabel,
         ],
         'target' => $target,
         'href' => $href,
@@ -641,6 +862,10 @@ function birkly_activity_read_security_log(int $limit, int $offset = 0, string $
         $timestamp = (string) ($entry['timestamp'] ?? '');
         $user = (string) ($entry['user'] ?? 'Unknown');
         $details = is_array($entry['details'] ?? null) ? $entry['details'] : [];
+
+        if (birkly_activity_is_routine_public_noise($event)) {
+            continue;
+        }
 
         if ($filter !== '' && $filter !== 'all' && birkly_activity_event_category($event) !== $filter) {
             continue;
