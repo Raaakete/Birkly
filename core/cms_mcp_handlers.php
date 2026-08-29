@@ -798,7 +798,10 @@ function cms_mcp_handler_analytics(string $subAction, array $input, array $aiUse
             if (!function_exists('getAnalyticsData')) {
                 return cms_mcp_error('Analytics data unavailable');
             }
-            return cms_mcp_ok(getAnalyticsData($input));
+            $trackingId = (string) ($input['tracking_id'] ?? 'all');
+            $startDate = (string) ($input['start_date'] ?? date('Y-m-d', strtotime('-30 days')));
+            $endDate = (string) ($input['end_date'] ?? date('Y-m-d'));
+            return cms_mcp_ok(getAnalyticsData($trackingId, $startDate, $endDate));
         default:
             return cms_mcp_error('Unknown analytics action: ' . $subAction);
     }

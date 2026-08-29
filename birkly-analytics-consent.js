@@ -145,7 +145,7 @@
             return;
         }
 
-        fetch(cmsUrl + '/api/analytics.php?action=public_config', {
+        fetch(cmsUrl + '/api/insights.php?action=public_config', {
             credentials: 'omit',
             cache: 'no-store'
         }).then(function (r) { return r.json(); })
@@ -154,14 +154,22 @@
                     applyConfig(payload.data);
                     return;
                 }
-                applyConfig({ collecting: true, consent_required: true, consent_text: '', events: false });
+                applyConfig({
+                    collecting: true,
+                    consent_required: true,
+                    anonymous_counts: true,
+                    consent_text: 'We use privacy-friendly analytics to understand how the site is used. Basic page views are counted even if you decline; detailed metrics need your consent.',
+                    events: false
+                });
             })
             .catch(function () {
-                // Fail closed for Standard+: show banner when config cannot be loaded
-                // only if an explicit data-force-banner attribute is set.
-                if (script && script.hasAttribute('data-force-banner')) {
-                    applyConfig({ collecting: true, consent_required: true, consent_text: '', events: false });
-                }
+                applyConfig({
+                    collecting: true,
+                    consent_required: true,
+                    anonymous_counts: true,
+                    consent_text: 'We use privacy-friendly analytics to understand how the site is used. Basic page views are counted even if you decline; detailed metrics need your consent.',
+                    events: false
+                });
             });
     }
 
