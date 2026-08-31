@@ -23,6 +23,7 @@ assert_true('catalog has groups', count($catalog) >= 10);
 
 $meta = cms_mcp_admin_action_meta();
 assert_true('entries.bulk in meta', isset($meta['entries.bulk']));
+assert_true('media.list in meta', isset($meta['media.list']));
 assert_true('agent_guide.publish in meta', isset($meta['agent_guide.publish']));
 assert_true('entries.bulk is write', ($meta['entries.bulk']['write'] ?? false) === true);
 

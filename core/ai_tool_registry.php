@@ -46,7 +46,7 @@ function birkly_ai_core_tool_definitions(): array
         'delete_entry' => ['name' => 'delete_entry', 'description' => 'Delete an entry', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['collection' => ['type' => 'string'], 'id' => ['type' => 'string']], 'required' => ['collection', 'id']]],
         'upload_media' => ['name' => 'upload_media', 'description' => 'Upload a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => []]],
         'delete_media' => ['name' => 'delete_media', 'description' => 'Delete a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string']], 'required' => ['id']]],
-        'update_media' => ['name' => 'update_media', 'description' => 'Update media metadata', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'data' => ['type' => 'object']], 'required' => ['id']]],
+        'update_media' => ['name' => 'update_media', 'description' => 'Update media metadata (title, alt_text, focal point). Prefer media.update via cms_admin_action for full parity. Accepts id plus title/alt_text/focal_x/focal_y at top level or inside data.', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'title' => ['type' => 'string'], 'alt_text' => ['type' => 'string'], 'name' => ['type' => 'string', 'description' => 'Alias for title'], 'alt' => ['type' => 'string', 'description' => 'Alias for alt_text'], 'focal_x' => ['type' => 'number'], 'focal_y' => ['type' => 'number'], 'data' => ['type' => 'object']], 'required' => ['id']]],
         'create_media_folder' => ['name' => 'create_media_folder', 'description' => 'Create a media folder', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']]],
         'delete_media_folder' => ['name' => 'delete_media_folder', 'description' => 'Delete a media folder', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']]],
         'move_media' => ['name' => 'move_media', 'description' => 'Move a media file', 'category' => 'write', 'inputSchema' => ['type' => 'object', 'properties' => ['id' => ['type' => 'string'], 'folder' => ['type' => 'string']], 'required' => ['id']]],
@@ -505,8 +505,8 @@ function birkly_ai_dispatch_tool_call(string $toolName, array $arguments, array 
         ]);
         $message = 'Write action queued in Birkly (approval ID: ' . $approvalId . '). '
             . 'Open your Birkly admin panel → floating AI button → Approvals tab to approve. '
-            . 'This is separate from Claude\'s "always allow" tool setting. '
-            . 'To auto-run writes from Claude, disable "Ask before changes" on the personal connector in Settings → AI.';
+            . 'This applies to the built-in assistant only — not external MCP connectors (Claude, Cursor). '
+            . 'For MCP, configure tool auto-approve in your AI app settings.';
         return ['content' => [['type' => 'text', 'text' => $message]]];
     }
 

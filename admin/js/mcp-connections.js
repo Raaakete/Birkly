@@ -280,6 +280,7 @@
                     <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Disabled'}</span>
                 </div>
                 <p class="settings-help">${escapeHtml(agent.description || 'Connect Claude or ChatGPT with your own Birkly permissions. Every team member uses this same URL but signs in with their own account.')}</p>
+                <p class="settings-help mcp-approval-note"><strong>Write approvals:</strong> MCP write confirmations happen in your AI app (Cursor, Claude) — not in the Birkly Approvals tab. The built-in assistant uses a separate approval flow under Settings → Built-in assistant.</p>
                 <div class="ai-connection-entry-meta">
                     <span class="connection-role">Your role when you connect</span>
                 </div>

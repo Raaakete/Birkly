@@ -12,6 +12,7 @@ require_once __DIR__ . '/ai_playbooks.php';
 require_once __DIR__ . '/mcp_endpoints.php';
 
 define('BIRKLY_MCP_PROTOCOL_VERSION', '2025-03-26');
+define('BIRKLY_MCP_CAPABILITIES_VERSION', '2026.08.31');
 
 function birkly_mcp_connector_path(): string
 {
@@ -87,7 +88,11 @@ function birkly_mcp_handle_initialize(array $aiUser): array
     return [
         'protocolVersion' => BIRKLY_MCP_PROTOCOL_VERSION,
         'capabilities' => ['tools' => (object) [], 'resources' => (object) []],
-        'serverInfo' => ['name' => 'Birkly MCP Server', 'version' => BIRKLY_MCP_SERVER_VERSION],
+        'serverInfo' => [
+            'name' => 'Birkly MCP Server',
+            'version' => BIRKLY_MCP_SERVER_VERSION,
+            'capabilitiesVersion' => BIRKLY_MCP_CAPABILITIES_VERSION,
+        ],
         'instructions' => birkly_ai_mcp_initialize_instructions(),
     ];
 }
