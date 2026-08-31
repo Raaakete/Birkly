@@ -379,6 +379,9 @@ function cms_mcp_handler_agent_guide(string $subAction, array $input, array $aiU
             return cms_mcp_ok(birkly_ai_presence_public_urls());
         case 'setup_prefill':
             return cms_mcp_ok(birkly_ai_presence_setup_prefill());
+        case 'discovery_status':
+            require_once __DIR__ . '/ai_presence_discovery.php';
+            return cms_mcp_ok(birkly_ai_presence_discovery_status());
         default:
             return cms_mcp_error('Unknown agent_guide action: ' . $subAction);
     }
@@ -689,6 +692,78 @@ function cms_mcp_handler_marketplace(string $subAction, array $input, array $aiU
             $plugins = function_exists('get_all_plugins') ? get_all_plugins() : [];
             $current = (string) ($plugins[$slug]['version'] ?? '0.0.0');
             return cms_mcp_ok(birkly_marketplace_check_plugin_update($slug, $current));
+        case 'upgrade':
+            if (!function_exists('get_all_plugins')) {
+                require_once dirname(__DIR__) . '/core/plugins.php';
+            }
+            require_once __DIR__ . '/marketplace/consent.php';
+            $pluginId = trim((string) ($input['plugin_id'] ?? $input['id'] ?? ''));
+            if ($pluginId === '') {
+                return cms_mcp_error('plugin_id required');
+            }
+            $plugins = get_all_plugins();
+            if (!isset($plugins[$pluginId])) {
+                return cms_mcp_error('Plugin not found');
+            }
+            $plugin = $plugins[$pluginId];
+            $slug = (string) ($plugin['marketplace_slug'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('Plugin was not installed from marketplace');
+            }
+            $current = (string) ($plugin['version'] ?? '0.0.0');
+            $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
+            $check = birkly_marketplace_check_plugin_update($slug, $current, $licenseRef !== '' ? $licenseRef : null);
+            if (!empty($check['license_lapsed'])) {
+                return cms_mcp_error($check['license_warning'] ?? 'Marketplace license is inactive');
+            }
+            if (empty($check['update_available'])) {
+                return cms_mcp_error('No update available');
+            }
+            $targetVersion = (string) ($check['latest_version'] ?? $current);
+            $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
+            $consentCheck = birkly_marketplace_require_install_consent($slug, $targetVersion, $consentAccepted);
+            if (!$consentCheck['ok']) {
+                return cms_mcp_error($consentCheck['error'] ?? 'Permission consent required');
+            }
+            $wasActive = !empty($plugin['active']);
+            if ($wasActive) {
+                set_plugin_state($pluginId, false);
+            }
+            $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true, $consentAccepted);
+            if (!$install['ok']) {
+                if ($wasActive) {
+                    set_plugin_state($pluginId, true);
+                }
+                return cms_mcp_error('Update failed: ' . implode('; ', $install['errors'] ?? []));
+            }
+            if ($wasActive) {
+                set_plugin_state($pluginId, true);
+            }
+            return cms_mcp_ok($install);
+        case 'list_installed_template_packs':
+            require_once __DIR__ . '/marketplace/template_pack.php';
+            return cms_mcp_ok(['packs' => birkly_marketplace_get_installed_template_packs()]);
+        case 'preflight_template_pack':
+            require_once __DIR__ . '/marketplace/template_pack.php';
+            $slug = trim((string) ($input['slug'] ?? ''));
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            $resolved = birkly_marketplace_resolve_template_pack_zip_for_slug($slug, $input);
+            if (!($resolved['ok'] ?? false) || empty($resolved['path'])) {
+                return cms_mcp_error($resolved['error'] ?? 'Could not resolve template pack');
+            }
+            $preflight = birkly_marketplace_preflight_template_pack((string) $resolved['path'], $input);
+            return (!empty($preflight['ok']) || !empty($preflight['requires_plugin_confirmation']))
+                ? cms_mcp_ok($preflight)
+                : cms_mcp_error(implode('; ', $preflight['errors'] ?? ['Preflight failed']));
+        case 'template_pack_status':
+            require_once __DIR__ . '/marketplace/template_pack.php';
+            $slug = trim((string) ($input['slug'] ?? ''));
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            return cms_mcp_ok(birkly_marketplace_template_pack_update_status($slug));
         default:
             return cms_mcp_error('Unknown marketplace action: ' . $subAction);
     }
@@ -1163,17 +1238,130 @@ function cms_mcp_handler_components(string $subAction, array $input, array $aiUs
 }
 
 /** @return array<string, mixed> */
+function cms_mcp_handler_notifications(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    cms_mcp_ensure_notifications_helpers_loaded();
+
+    $userId = (string) ($_SESSION['user']['id'] ?? '');
+
+    switch ($subAction) {
+        case 'list_recent':
+            $limit = max(1, min(100, (int) ($input['limit'] ?? 20)));
+            return cms_mcp_ok(birkly_notifications_list_recent($limit));
+        case 'unread_count':
+            return cms_mcp_ok(birkly_notifications_unread_count_data());
+        case 'mark_seen':
+            $ids = is_array($input['ids'] ?? null) ? $input['ids'] : [];
+            markNotificationsSeen($userId, $ids);
+            return cms_mcp_ok(['seen' => true]);
+        case 'mark_read':
+            $notificationId = (string) ($input['id'] ?? '');
+            if ($notificationId === '') {
+                return cms_mcp_error('Notification id required');
+            }
+            markNotificationRead($userId, $notificationId);
+            birkly_notifications_load_plugin_activity();
+            if (function_exists('birkly_plugin_activity_mark_read')) {
+                birkly_plugin_activity_mark_read([$notificationId]);
+            }
+            return cms_mcp_ok(['read' => true]);
+        case 'mark_all_read':
+            $recent = birkly_notifications_list_recent(500);
+            $notificationIds = array_values(array_filter(array_map(
+                static fn (array $row): string => (string) ($row['id'] ?? ''),
+                $recent['notifications'] ?? []
+            )));
+            birkly_notifications_load_plugin_activity();
+            if (function_exists('birkly_plugin_activity_notify_ids')) {
+                $notificationIds = array_values(array_unique(array_merge(
+                    $notificationIds,
+                    birkly_plugin_activity_notify_ids(false)
+                )));
+                if (function_exists('birkly_plugin_activity_mark_read')) {
+                    birkly_plugin_activity_mark_read($notificationIds);
+                }
+            }
+            markAllNotificationsRead($userId, $notificationIds);
+            return cms_mcp_ok(['marked' => count($notificationIds)]);
+        default:
+            return cms_mcp_error('Unknown notifications action: ' . $subAction);
+    }
+}
+
+function cms_mcp_ensure_notifications_helpers_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/notifications.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
+}
+
+/** @return array<string, mixed> */
 function cms_mcp_handler_dashboard(string $subAction, array $input, array $aiUser): array
 {
     cms_mcp_bootstrap_session($aiUser);
     switch ($subAction) {
         case 'stats':
-            $collectionsDir = dirname(__DIR__) . '/content/collections';
-            $collectionCount = is_dir($collectionsDir) ? count(array_filter(glob($collectionsDir . '/*'), 'is_dir')) : 0;
-            return cms_mcp_ok(['collections' => $collectionCount]);
+            require_once dirname(__DIR__) . '/core/storage/StorageFactory.php';
+            if (!function_exists('get_active_plugins')) {
+                require_once dirname(__DIR__) . '/core/plugins.php';
+            }
+            $storage = get_storage();
+            $collections = $storage->list('collections');
+            $collectionCount = count($collections);
+            $totalEntries = 0;
+            $published = 0;
+            $drafts = 0;
+            foreach ($collections as $collectionDir) {
+                $entries = $storage->list("collections/$collectionDir/entries");
+                foreach ($entries as $entryFile) {
+                    $entry = $storage->read("collections/$collectionDir/entries/$entryFile");
+                    if (!$entry) {
+                        continue;
+                    }
+                    $totalEntries++;
+                    $status = $entry['status'] ?? 'draft';
+                    if ($status === 'published') {
+                        $published++;
+                    } else {
+                        $drafts++;
+                    }
+                }
+            }
+            $stats = [
+                'collections' => $collectionCount,
+                'total_entries' => $totalEntries,
+                'published' => $published,
+                'drafts' => $drafts,
+            ];
+            foreach (get_active_plugins() as $plugin) {
+                if (!isset($plugin['dashboard_stats_callback'])) {
+                    continue;
+                }
+                $pluginStats = call_user_func($plugin['dashboard_stats_callback']);
+                if (is_array($pluginStats)) {
+                    $stats = array_merge($stats, $pluginStats);
+                }
+            }
+            return cms_mcp_ok(['stats' => $stats]);
         case 'pending_review':
-            cms_mcp_ensure_admin_entries_loaded();
-            return cms_mcp_ok(['note' => 'Use entries.list with status filter or admin_search']);
+            require_once dirname(__DIR__) . '/core/dashboard_widgets.php';
+            $limit = max(1, min(50, (int) ($input['limit'] ?? 12)));
+            $assignedTo = trim((string) ($input['assigned_to'] ?? 'all'));
+            $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+            $entries = birkly_collect_pending_review_entries($limit, $assignedTo, $currentUserId);
+            return cms_mcp_ok(['entries' => $entries, 'total' => count($entries)]);
+        case 'activity':
+            require_once dirname(__DIR__) . '/core/activity_format.php';
+            $limit = max(1, min(100, (int) ($input['limit'] ?? 20)));
+            $filter = (string) ($input['filter'] ?? 'all');
+            $activity = birkly_activity_read_security_log($limit, 0, $filter, 'all');
+            return cms_mcp_ok(['activity' => $activity, 'total' => count($activity)]);
         default:
             return cms_mcp_error('Unknown dashboard action: ' . $subAction);
     }
@@ -1305,6 +1493,7 @@ function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input
         'webmcp' => cms_mcp_handler_webmcp($subAction, $input, $aiUser),
         'settings' => cms_mcp_handler_settings($subAction, $input, $aiUser),
         'invitations' => cms_mcp_handler_invitations($subAction, $input, $aiUser),
+        'notifications' => cms_mcp_handler_notifications($subAction, $input, $aiUser),
         'components' => cms_mcp_handler_components($subAction, $input, $aiUser),
         'dashboard' => cms_mcp_handler_dashboard($subAction, $input, $aiUser),
         'media' => cms_mcp_handler_media($subAction, $input, $aiUser),

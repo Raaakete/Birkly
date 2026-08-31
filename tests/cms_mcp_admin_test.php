@@ -55,6 +55,26 @@ $invitationsList = cms_mcp_dispatch_admin('invitations.list', [], $aiUser);
 assert_true('invitations.list ok', ($invitationsList['status'] ?? '') === 'ok');
 assert_true('invitations.list has invitations array', is_array($invitationsList['data']['invitations'] ?? null));
 
+assert_true('notifications.list_recent in meta', isset($meta['notifications.list_recent']));
+assert_true('notifications.mark_seen in meta', isset($meta['notifications.mark_seen']));
+assert_true('agent_guide.discovery_status in meta', isset($meta['agent_guide.discovery_status']));
+assert_true('agent_guide.wizard_apply in meta', isset($meta['agent_guide.wizard_apply']));
+assert_true('dashboard.pending_review in meta', isset($meta['dashboard.pending_review']));
+assert_true('dashboard.activity in meta', isset($meta['dashboard.activity']));
+assert_true('marketplace.upgrade in meta', isset($meta['marketplace.upgrade']));
+
+$notificationsList = cms_mcp_dispatch_admin('notifications.list_recent', ['limit' => 5], $aiUser);
+assert_true('notifications.list_recent ok', ($notificationsList['status'] ?? '') === 'ok');
+
+$unread = cms_mcp_dispatch_admin('notifications.unread_count', [], $aiUser);
+assert_true('notifications.unread_count ok', ($unread['status'] ?? '') === 'ok');
+
+$discovery = cms_mcp_dispatch_admin('agent_guide.discovery_status', [], $aiUser);
+assert_true('agent_guide.discovery_status ok or forbidden', in_array($discovery['status'] ?? '', ['ok', 'error'], true));
+
+$dashboardActivity = cms_mcp_dispatch_admin('dashboard.activity', ['limit' => 5], $aiUser);
+assert_true('dashboard.activity ok', ($dashboardActivity['status'] ?? '') === 'ok');
+
 $listResult = cms_mcp_dispatch_admin('connections.list', [], $aiUser);
 assert_true('connections.list ok or graceful', in_array($listResult['status'] ?? '', ['ok', 'error'], true));
 
