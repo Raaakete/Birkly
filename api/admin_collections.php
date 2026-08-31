@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // SECURITY FIX: Require CSRF protection for all POST requests
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/auth.php';
 haru_secure_session_start();
@@ -115,6 +116,12 @@ try {
         
         if (empty($collectionSlug)) {
             throw new Exception('Collection slug is required');
+        }
+        if (!birkly_validate_content_slug($collectionSlug)) {
+            throw new Exception('Invalid collection slug');
+        }
+        if ($parentSubCollectionSlug !== null && $parentSubCollectionSlug !== '' && !birkly_validate_content_slug($parentSubCollectionSlug)) {
+            throw new Exception('Invalid parent sub-collection slug');
         }
         
         // Load existing collection
@@ -252,6 +259,15 @@ try {
         
         if (empty($collectionSlug) || empty($subCollectionSlug)) {
             throw new Exception('Collection slug and sub-collection slug are required');
+        }
+        if (!birkly_validate_content_slug($collectionSlug)) {
+            throw new Exception('Invalid collection slug');
+        }
+        if (!birkly_validate_content_slug($subCollectionSlug)) {
+            throw new Exception('Invalid sub-collection slug');
+        }
+        if ($parentSubCollectionSlug !== null && $parentSubCollectionSlug !== '' && !birkly_validate_content_slug($parentSubCollectionSlug)) {
+            throw new Exception('Invalid parent sub-collection slug');
         }
         
         // Load existing collection
