@@ -4,7 +4,11 @@
  * Provides notification data from security.log filtered by user preferences
  */
 
-ob_start();
+$__cmsMcpNotificationsFunctionsOnly = !empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
+if (!$__cmsMcpNotificationsFunctionsOnly) {
+    ob_start();
+}
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
@@ -14,7 +18,7 @@ require_once 'session.php';
 require_once __DIR__ . '/../core/birkly_paths.php';
 haru_secure_session_start();
 
-if (!headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
+if (!$__cmsMcpNotificationsFunctionsOnly && !headers_sent() && !isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     header('Content-Type: application/json');
 }
 
@@ -23,16 +27,18 @@ require_once 'storage.php';
 require_once '../core/csrf.php';
 require_once __DIR__ . '/../core/notification_broadcast.php';
 
-// Check authentication
-if (!isset($_SESSION['user'])) {
-    http_response_code(401);
-    echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
-    exit;
-}
+if (!$__cmsMcpNotificationsFunctionsOnly) {
+    // Check authentication
+    if (!isset($_SESSION['user'])) {
+        http_response_code(401);
+        echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+        exit;
+    }
 
-// Get action from GET, POST, or input
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-$action = $_GET['action'] ?? $_POST['action'] ?? $input['action'] ?? 'list_recent';
+    // Get action from GET, POST, or input
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $action = $_GET['action'] ?? $_POST['action'] ?? $input['action'] ?? 'list_recent';
+}
 
 // Get user notification preferences
 function getUserNotificationPreferences($userId) {
@@ -379,6 +385,233 @@ function formatNotification($entry, $currentUserEmail) {
     return $notification;
 }
 
+/**
+ * @return array{notifications: list<array<string, mixed>>, unread_count: int, pending_count: int, badge_state: string}
+ */
+function birkly_notifications_list_recent(int $limit = 20): array
+{
+    $userId = (string) ($_SESSION['user']['id'] ?? '');
+    $userEmail = (string) ($_SESSION['user']['email'] ?? '');
+    $preferences = getUserNotificationPreferences($userId);
+    $readIds = getReadNotifications($userId);
+    $seenIds = getSeenNotifications($userId);
+    $notifications = [];
+    $logFile = __DIR__ . '/../logs/security.log';
+
+    if (file_exists($logFile)) {
+        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = array_reverse($lines);
+        $cutoffTime = strtotime('-7 days');
+
+        foreach ($lines as $line) {
+            $entry = json_decode($line, true);
+            if (!$entry || !is_array($entry)) {
+                continue;
+            }
+
+            $timestamp = $entry['timestamp'] ?? '';
+            $entryTime = strtotime($timestamp);
+            if ($entryTime < $cutoffTime) {
+                continue;
+            }
+
+            $event = $entry['event'] ?? '';
+            $details = $entry['details'] ?? [];
+            $entryUser = $entry['user'] ?? '';
+
+            if (birkly_notifications_skip_security_log_for_bus($event)) {
+                continue;
+            }
+
+            $isTestNotification = isset($details['test']) && $details['test'] === true;
+            $isReviewAction = ($event === 'review_action');
+            $normalizedUserEmail = strtolower(trim($userEmail));
+            $normalizedEntryUser = strtolower(trim($entryUser));
+
+            if ($isReviewAction && !$isTestNotification) {
+                $reviewerEmail = strtolower(trim($details['reviewer'] ?? $entryUser));
+                if ($reviewerEmail !== $normalizedUserEmail && $normalizedEntryUser !== $normalizedUserEmail) {
+                    continue;
+                }
+            } elseif (
+                !$isTestNotification
+                && $normalizedEntryUser !== $normalizedUserEmail
+                && !isBroadcastNotificationActor($entryUser, $event)
+            ) {
+                continue;
+            }
+
+            if (!$isTestNotification && !shouldShowNotification($event, $preferences)) {
+                continue;
+            }
+
+            if ($isTestNotification) {
+                $notificationId = md5($event . $timestamp . $userEmail . json_encode($details));
+                $notification = [
+                    'id' => $notificationId,
+                    'event' => $event,
+                    'timestamp' => $timestamp,
+                    'user' => $entry['user'] ?? $userEmail,
+                    'details' => $details,
+                    'message' => sprintf(
+                        'Test: Entry "%s" was published in %s',
+                        $details['title'] ?? 'Untitled',
+                        $details['collection'] ?? 'collection'
+                    ),
+                    'icon' => '📝',
+                    'color' => 'blue',
+                    'category' => 'content',
+                    'read' => in_array($notificationId, $readIds, true),
+                ];
+            } else {
+                $notification = formatNotification($entry, $userEmail);
+                if (!$notification) {
+                    continue;
+                }
+                $notificationId = $notification['id'];
+                $notification['read'] = in_array($notificationId, $readIds, true);
+            }
+
+            $notifications[] = $notification;
+            if (count($notifications) >= $limit) {
+                break;
+            }
+        }
+    }
+
+    birkly_notifications_load_plugin_activity();
+    if (function_exists('birkly_plugin_activity_list')) {
+        foreach (birkly_plugin_activity_list(50) as $item) {
+            if (empty($item['notify'])) {
+                continue;
+            }
+            $id = (string) ($item['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+            $notifications[] = [
+                'id' => $id,
+                'event' => 'plugin_activity',
+                'timestamp' => $item['created_at'] ?? date('c'),
+                'user' => (string) ($item['plugin'] ?? 'plugin'),
+                'details' => $item['meta'] ?? [],
+                'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
+                'icon' => '🔔',
+                'color' => 'mint',
+                'category' => 'plugin',
+                'link' => $item['link'] ?? '',
+                'plugin' => $item['plugin'] ?? '',
+                'read' => !empty($item['read_at']) || in_array($id, $readIds, true),
+            ];
+        }
+        usort($notifications, static function ($a, $b) {
+            return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
+        });
+        $notifications = array_slice($notifications, 0, $limit);
+    }
+
+    foreach ($notifications as &$notificationRow) {
+        $nid = (string) ($notificationRow['id'] ?? '');
+        $isRead = !empty($notificationRow['read']);
+        $notificationRow['seen'] = $isRead || ($nid !== '' && in_array($nid, $seenIds, true));
+    }
+    unset($notificationRow);
+
+    $badgeMetrics = birkly_notifications_badge_metrics($notifications, $readIds, $seenIds);
+
+    return [
+        'notifications' => $notifications,
+        'unread_count' => (int) ($badgeMetrics['unread_count'] ?? 0),
+        'pending_count' => (int) ($badgeMetrics['pending_count'] ?? 0),
+        'badge_state' => (string) ($badgeMetrics['badge_state'] ?? 'none'),
+    ];
+}
+
+/** @return array{unread_count: int} */
+function birkly_notifications_unread_count_data(): array
+{
+    $userId = (string) ($_SESSION['user']['id'] ?? '');
+    $userEmail = (string) ($_SESSION['user']['email'] ?? '');
+    $preferences = getUserNotificationPreferences($userId);
+    $readIds = getReadNotifications($userId);
+    $unreadCount = 0;
+    $logFile = __DIR__ . '/../logs/security.log';
+
+    if (file_exists($logFile)) {
+        $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = array_reverse($lines);
+        $cutoffTime = strtotime('-7 days');
+        $seenIds = [];
+
+        foreach ($lines as $line) {
+            $entry = json_decode($line, true);
+            if (!$entry || !is_array($entry)) {
+                continue;
+            }
+
+            $timestamp = $entry['timestamp'] ?? '';
+            $entryTime = strtotime($timestamp);
+            if ($entryTime < $cutoffTime) {
+                continue;
+            }
+
+            $event = $entry['event'] ?? '';
+            $details = $entry['details'] ?? [];
+            $entryUser = $entry['user'] ?? '';
+
+            if (birkly_notifications_skip_security_log_for_bus($event)) {
+                continue;
+            }
+
+            $isTestNotification = isset($details['test']) && $details['test'] === true;
+            $isReviewAction = ($event === 'review_action');
+            $normalizedUserEmail = strtolower(trim($userEmail));
+            $normalizedEntryUser = strtolower(trim($entryUser));
+
+            if ($isReviewAction && !$isTestNotification) {
+                $reviewerEmail = strtolower(trim($details['reviewer'] ?? $entryUser));
+                if ($reviewerEmail !== $normalizedUserEmail && $normalizedEntryUser !== $normalizedUserEmail) {
+                    continue;
+                }
+            } elseif (
+                !$isTestNotification
+                && $normalizedEntryUser !== $normalizedUserEmail
+                && !isBroadcastNotificationActor($entryUser, $event)
+            ) {
+                continue;
+            }
+
+            if (!$isTestNotification && !shouldShowNotification($event, $preferences)) {
+                continue;
+            }
+
+            $notification = formatNotification($entry, $userEmail);
+            if (!$notification) {
+                continue;
+            }
+
+            $notificationId = $notification['id'];
+            if (in_array($notificationId, $seenIds, true)) {
+                continue;
+            }
+            $seenIds[] = $notificationId;
+
+            if (!in_array($notificationId, $readIds, true)) {
+                $unreadCount++;
+            }
+        }
+    }
+
+    birkly_notifications_load_plugin_activity();
+    if (function_exists('birkly_plugin_activity_unread_notify_count')) {
+        $unreadCount += birkly_plugin_activity_unread_notify_count($readIds);
+    }
+
+    return ['unread_count' => $unreadCount];
+}
+
+if (!$__cmsMcpNotificationsFunctionsOnly) {
+
 // Create test notification (for testing purposes) - MUST be checked BEFORE list_recent
 if ($action === 'create_test_notification') {
     // Log that we're in the create_test_notification handler
@@ -494,162 +727,12 @@ if ($action === 'create_test_notification') {
 if ($action === 'list_recent') {
     try {
         $limit = intval($_GET['limit'] ?? 20);
-        $userId = $_SESSION['user']['id'];
-        $userEmail = $_SESSION['user']['email'] ?? '';
-        $preferences = getUserNotificationPreferences($userId);
-        $readIds = getReadNotifications($userId);
-        $seenIds = getSeenNotifications($userId);
-        $notifications = [];
-        $logFile = __DIR__ . '/../logs/security.log';
-        
-        if (file_exists($logFile)) {
-            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $lines = array_reverse($lines); // Most recent first
-            
-            $cutoffTime = strtotime('-7 days'); // Only show last 7 days
-            
-            foreach ($lines as $line) {
-                $entry = json_decode($line, true);
-                if (!$entry || !is_array($entry)) {
-                    continue;
-                }
-                
-                $timestamp = $entry['timestamp'] ?? '';
-                $entryTime = strtotime($timestamp);
-                if ($entryTime < $cutoffTime) {
-                    continue; // Too old
-                }
-                
-                $event = $entry['event'] ?? '';
-                $details = $entry['details'] ?? [];
-                $entryUser = $entry['user'] ?? '';
+        $data = birkly_notifications_list_recent($limit);
 
-                if (birkly_notifications_skip_security_log_for_bus($event)) {
-                    continue;
-                }
-                
-                // Filter: Only show notifications where the log entry's user matches current user
-                // OR it's a review_action event (which should show to the reviewer)
-                // OR it's a test notification
-                $isTestNotification = isset($details['test']) && $details['test'] === true;
-                $isReviewAction = ($event === 'review_action');
-                
-                // For review_action, check if current user is the reviewer
-                // Use case-insensitive comparison for emails
-                $normalizedUserEmail = strtolower(trim($userEmail));
-                $normalizedEntryUser = strtolower(trim($entryUser));
-                
-                if ($isReviewAction && !$isTestNotification) {
-                    $reviewerEmail = strtolower(trim($details['reviewer'] ?? $entryUser));
-                    error_log("DEBUG NOTIFICATION: review_action found - reviewer=" . $reviewerEmail . ", currentUser=" . $normalizedUserEmail . ", entryUser=" . $normalizedEntryUser);
-                    if ($reviewerEmail !== $normalizedUserEmail && $normalizedEntryUser !== $normalizedUserEmail) {
-                        error_log("DEBUG NOTIFICATION: Skipping - not for this user");
-                        continue; // Not for this user
-                    }
-                    error_log("DEBUG NOTIFICATION: Matched - showing notification");
-                } elseif (
-                    !$isTestNotification
-                    && $normalizedEntryUser !== $normalizedUserEmail
-                    && !isBroadcastNotificationActor($entryUser, $event)
-                ) {
-                    // For other events, only show if user matches (plugin broadcasts excepted)
-                    continue; // Not for this user
-                }
-                
-                // Test notifications always show (bypass preference check)
-                if (!$isTestNotification && !shouldShowNotification($event, $preferences)) {
-                    continue; // Filtered by preferences
-                }
-                
-                // For test notifications, create notification directly
-                if ($isTestNotification) {
-                    $notificationId = md5($event . $timestamp . $userEmail . json_encode($details));
-                    $notification = [
-                        'id' => $notificationId,
-                        'event' => $event,
-                        'timestamp' => $timestamp,
-                        'user' => $entry['user'] ?? $userEmail,
-                        'details' => $details,
-                        'message' => sprintf(
-                            'Test: Entry "%s" was published in %s',
-                            $details['title'] ?? 'Untitled',
-                            $details['collection'] ?? 'collection'
-                        ),
-                        'icon' => '📝',
-                        'color' => 'blue',
-                        'category' => 'content',
-                        'read' => in_array($notificationId, $readIds)
-                    ];
-                } else {
-                    $notification = formatNotification($entry, $userEmail);
-                    if (!$notification) {
-                        continue; // Filtered out
-                    }
-                    
-                    // Set read status based on readIds
-                    $notificationId = $notification['id'];
-                    $notification['read'] = in_array($notificationId, $readIds);
-                }
-                
-                $notifications[] = $notification;
-                
-                if (count($notifications) >= $limit) {
-                    break;
-                }
-            }
-        }
-
-        // P61: merge plugin activity bus items marked notify=true
-        birkly_notifications_load_plugin_activity();
-        if (function_exists('birkly_plugin_activity_list')) {
-            foreach (birkly_plugin_activity_list(50) as $item) {
-                if (empty($item['notify'])) {
-                    continue;
-                }
-                $id = (string) ($item['id'] ?? '');
-                if ($id === '') {
-                    continue;
-                }
-                $notifications[] = [
-                    'id' => $id,
-                    'event' => 'plugin_activity',
-                    'timestamp' => $item['created_at'] ?? date('c'),
-                    'user' => (string) ($item['plugin'] ?? 'plugin'),
-                    'details' => $item['meta'] ?? [],
-                    'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
-                    'icon' => '🔔',
-                    'color' => 'mint',
-                    'category' => 'plugin',
-                    'link' => $item['link'] ?? '',
-                    'plugin' => $item['plugin'] ?? '',
-                    'read' => !empty($item['read_at']) || in_array($id, $readIds, true),
-                ];
-            }
-            usort($notifications, static function ($a, $b) {
-                return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));
-            });
-            $notifications = array_slice($notifications, 0, $limit);
-        }
-
-        foreach ($notifications as &$notificationRow) {
-            $nid = (string) ($notificationRow['id'] ?? '');
-            $isRead = !empty($notificationRow['read']);
-            $notificationRow['seen'] = $isRead || ($nid !== '' && in_array($nid, $seenIds, true));
-        }
-        unset($notificationRow);
-
-        $badgeMetrics = birkly_notifications_badge_metrics($notifications, $readIds, $seenIds);
-        
         ob_end_clean();
-        echo json_encode([
-            'status' => 'ok',
-            'notifications' => $notifications,
-            'unread_count' => $badgeMetrics['unread_count'],
-            'pending_count' => $badgeMetrics['pending_count'],
-            'badge_state' => $badgeMetrics['badge_state'],
-        ]);
+        echo json_encode(array_merge(['status' => 'ok'], $data));
         exit;
-        
+
     } catch (Exception $e) {
         ob_end_clean();
         error_log('Notifications API error: ' . $e->getMessage());
@@ -665,103 +748,12 @@ if ($action === 'list_recent') {
 // Get unread count only
 if ($action === 'unread_count') {
     try {
-        $userId = $_SESSION['user']['id'];
-        $userEmail = $_SESSION['user']['email'] ?? '';
-        $preferences = getUserNotificationPreferences($userId);
-        $readIds = getReadNotifications($userId);
-        
-        $unreadCount = 0;
-        $logFile = __DIR__ . '/../logs/security.log';
-        
-        if (file_exists($logFile)) {
-            $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-            $lines = array_reverse($lines);
-            
-            $cutoffTime = strtotime('-7 days');
-            $seenIds = [];
-            
-            foreach ($lines as $line) {
-                $entry = json_decode($line, true);
-                if (!$entry || !is_array($entry)) {
-                    continue;
-                }
-                
-                $timestamp = $entry['timestamp'] ?? '';
-                $entryTime = strtotime($timestamp);
-                if ($entryTime < $cutoffTime) {
-                    continue;
-                }
-                
-                $event = $entry['event'] ?? '';
-                $details = $entry['details'] ?? [];
-                $entryUser = $entry['user'] ?? '';
+        $data = birkly_notifications_unread_count_data();
 
-                if (birkly_notifications_skip_security_log_for_bus($event)) {
-                    continue;
-                }
-                
-                // Filter: Only show notifications where the log entry's user matches current user
-                // OR it's a review_action event (which should show to the reviewer)
-                // OR it's a test notification
-                $isTestNotification = isset($details['test']) && $details['test'] === true;
-                $isReviewAction = ($event === 'review_action');
-                
-                // For review_action, check if current user is the reviewer
-                // Use case-insensitive comparison for emails
-                $normalizedUserEmail = strtolower(trim($userEmail));
-                $normalizedEntryUser = strtolower(trim($entryUser));
-                
-                if ($isReviewAction && !$isTestNotification) {
-                    $reviewerEmail = strtolower(trim($details['reviewer'] ?? $entryUser));
-                    if ($reviewerEmail !== $normalizedUserEmail && $normalizedEntryUser !== $normalizedUserEmail) {
-                        continue; // Not for this user
-                    }
-                } elseif (
-                    !$isTestNotification
-                    && $normalizedEntryUser !== $normalizedUserEmail
-                    && !isBroadcastNotificationActor($entryUser, $event)
-                ) {
-                    // For other events, only show if user matches (plugin broadcasts excepted)
-                    continue; // Not for this user
-                }
-                
-                // Test notifications always show (bypass preference check)
-                // Note: $isTestNotification already set above
-                
-                if (!$isTestNotification && !shouldShowNotification($event, $preferences)) {
-                    continue;
-                }
-                
-                $notification = formatNotification($entry, $userEmail);
-                if (!$notification) {
-                    continue;
-                }
-                
-                $notificationId = $notification['id'];
-                if (in_array($notificationId, $seenIds)) {
-                    continue; // Deduplicate
-                }
-                $seenIds[] = $notificationId;
-                
-                if (!in_array($notificationId, $readIds)) {
-                    $unreadCount++;
-                }
-            }
-        }
-
-        // P61: badge must include plugin activity bus (list_recent already merges these)
-        birkly_notifications_load_plugin_activity();
-        if (function_exists('birkly_plugin_activity_unread_notify_count')) {
-            $unreadCount += birkly_plugin_activity_unread_notify_count($readIds);
-        }
-        
         ob_end_clean();
-        echo json_encode([
-            'status' => 'ok',
-            'unread_count' => $unreadCount
-        ]);
+        echo json_encode(array_merge(['status' => 'ok'], $data));
         exit;
-        
+
     } catch (Exception $e) {
         ob_end_clean();
         error_log('Notifications API error: ' . $e->getMessage());
@@ -897,3 +889,4 @@ ob_end_clean();
 echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
 exit;
 
+}
