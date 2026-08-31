@@ -21,7 +21,7 @@ This playbook covers **inbound MCP** + admin chat tools.
 | Collections & entries | `list_collections`, `create_collection`, `update_collection`, `create_entry` | `content-model`, `fieldtypes` |
 | Public site | `write_project_file`, `get_project_info`, `list_project_files` | `site-building`, `web-project-patterns` |
 | Public read/write | `allow_public_read`, `entry_method: public_api` | `public-forms`, `content-model` |
-| Media | `list_media`, `upload_media` | `media`, `fieldtypes` |
+| Media | `list_media`, `upload_media`, `media.*` via `cms_admin_action` | `media`, `fieldtypes` |
 | Docs | `read_birkly_docs`, `birkly://docs/{topic}` | `playbooks-index` |
 | Connections | `connections_health`, `connections_configure` | `ai-connections` |
 | CMS admin | `cms_list_admin_actions`, `cms_admin_action` | this playbook |
@@ -54,6 +54,40 @@ Core CMS exposes the same pattern as Commerce/Automation plugins:
 | `cms_admin_search` | Global admin search |
 
 Action ids use `domain.subaction` (e.g. `entries.review`, `project_git.push`, `webhooks.create`). Write actions respect the MCP endpoint role permissions.
+
+### Catalog groups (`cms_list_admin_actions`)
+
+| Group | Example actions | Notes |
+|-------|-----------------|-------|
+| `entries` | `entries.save`, `entries.bulk`, `entries.review` | Prefer `entries.save` for full editor path |
+| `content` | `content.duplicate_collection`, `content.set_entry_order` | Collection-level ops |
+| `sub_entries` | `sub_entries.set_order`, `sub_entries.bulk` | Nested rows |
+| `connections` | `connections.list`, `connections.test` | No secrets in list/get |
+| `agent_guide` | `agent_guide.publish`, `agent_guide.discovery_status` | AI presence / Guide |
+| `mcp_endpoints` | `mcp_endpoints.list`, `mcp_endpoints.rotate` | No `get_key` via MCP |
+| `ai_agents` | `ai_agents.list`, `ai_agents.update` | Service agents |
+| `users` | `users.list`, `users.revoke_mcp_sessions` | Human accounts |
+| `roles` | `roles.list`, `roles.update` | Includes `plugin_access` (P69) |
+| `invitations` | `invitations.list`, `invitations.resend` | |
+| `marketplace` | `marketplace.install`, `marketplace.upgrade` | Hub + template packs |
+| `project_git` | `project_git.push`, `project_git.pull_apply` | `project/` only |
+| `project_site` | `project_site.overview`, `project_site.save_settings` | |
+| `webhooks` | `webhooks.create`, `webhooks.test` | Outbound |
+| `redirects` | `redirects.list`, `redirects.save` | |
+| `plugins` | `plugins.save_settings`, `plugins.update` | Per-plugin settings |
+| `plugins_permissions` | `plugins_permissions.grant_capability` | |
+| `search` | `search.admin_search` | Global admin search |
+| `analytics` | `analytics.data`, `analytics.save_settings` | |
+| `webmcp` | `webmcp.get`, `webmcp.save` | Visitor site tools config |
+| `components` | `components.find_entries`, `components.update_entries` | Content editor blocks |
+| `settings` | `settings.get`, `settings.save` | No raw secrets |
+| `notifications` | `notifications.list_recent`, `notifications.mark_read` | Inbox (P69 seen) |
+| `dashboard` | `dashboard.stats`, `dashboard.pending_review` | Read-only widgets |
+| `hosting` | `hosting.get`, `hosting.probe`, `hosting.set_domain_role` | Delivery / domains |
+| `discovery` | `discovery.get`, `discovery.save_seo` | SEO packs (no `scan_urls` yet) |
+| `media` | `media.list`, `media.update`, `media.move` | Prefer over legacy `list_media` |
+
+Legacy named tools (`list_media`, `create_entry`, …) remain; `media.*` and `cms_admin_action` are the SSOT for admin parity.
 
 ## Collection config cheatsheet
 
@@ -104,6 +138,7 @@ These improve outcomes; they are not extra permission rules.
 ## Related
 
 - `mcp-setup` — connector OAuth setup
+- `mcp-troubleshooting` — OAuth, stale tools, two approval channels
 - `fieldtypes` — full type reference
 - `public-forms` — forms + public_api
 - `plugins-overview` — install/activate plugins
