@@ -11,6 +11,8 @@ Thank you for your interest in Birkly. This repository is the **public open-sour
 
 Open a GitHub issue with steps to reproduce, expected behavior, and your PHP version.
 
+**Security vulnerabilities:** see [SECURITY.md](SECURITY.md) — please report privately, not via public issues.
+
 ## Development setup
 
 1. Clone this repo and run the local server:
@@ -49,4 +51,4 @@ Contact the Birkly team if you need maintainer access.
 
 ## Code of conduct
 
-Be respectful and constructive. Security issues: report privately to the maintainers.
+Be respectful and constructive. Security issues: see [SECURITY.md](SECURITY.md).

@@ -15,6 +15,29 @@
         return div.innerHTML;
     }
 
+    function isSafeNavigationUrl(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+        const trimmed = url.trim();
+        if (!trimmed) {
+            return false;
+        }
+        if (trimmed.indexOf('javascript:') === 0 || trimmed.indexOf('data:') === 0) {
+            return false;
+        }
+        if (trimmed.charAt(0) === '/' && trimmed.charAt(1) !== '/') {
+            return true;
+        }
+        try {
+            const parsed = new URL(trimmed, window.location.origin);
+            return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+                && parsed.origin === window.location.origin;
+        } catch (e) {
+            return false;
+        }
+    }
+
     function overlay() {
         return document.getElementById('search-overlay');
     }
@@ -109,7 +132,7 @@
 
     function selectResult(index) {
         const result = currentResults[index];
-        if (result && result.url) {
+        if (result && result.url && isSafeNavigationUrl(result.url)) {
             window.location.href = result.url;
         }
     }

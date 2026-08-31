@@ -27,7 +27,8 @@ RUN chmod +x /entrypoint.sh \
     && bash /app/scripts/sync-template-engine-inline.sh \
     && bash /app/scripts/build-client-assets.sh \
     && echo "$BIRKLY_BUILD_REVISION" > /app/BUILD_REVISION \
-    && mkdir -p content media settings users data cache logs temp plugins themes
+    && mkdir -p content media settings users data cache logs temp plugins themes \
+    && chown -R www-data:www-data content media settings users data cache logs temp plugins themes
 
 EXPOSE 80
 

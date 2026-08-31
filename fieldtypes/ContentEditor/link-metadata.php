@@ -4,7 +4,14 @@
  * Fetches the remote URL and extracts Open Graph / basic meta tags.
  */
 
+declare(strict_types=1);
+
+require_once __DIR__ . '/../../api/auth.php';
+require_once __DIR__ . '/../../core/ai_presence.php';
+
 header('Content-Type: application/json; charset=utf-8');
+
+requireAuth('read');
 
 $url = $_GET['url'] ?? '';
 $url = trim($url);
@@ -25,6 +32,12 @@ if (!filter_var($url, FILTER_VALIDATE_URL)) {
     exit;
 }
 
+if (!birkly_ai_presence_is_safe_external_url($url)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'URL is not allowed']);
+    exit;
+}
+
 // Fetch remote HTML
 $ch = curl_init($url);
 curl_setopt_array($ch, [
@@ -33,9 +46,10 @@ curl_setopt_array($ch, [
     CURLOPT_MAXREDIRS => 5,
     CURLOPT_TIMEOUT => 10,
     CURLOPT_CONNECTTIMEOUT => 5,
-    CURLOPT_USERAGENT => 'Birkly-ContentEditor/1.0 (+https://github.com/)',
-    CURLOPT_SSL_VERIFYPEER => false,
-    CURLOPT_SSL_VERIFYHOST => false,
+    CURLOPT_USERAGENT => 'Birkly-ContentEditor/1.0 (+https://github.com/Raaakete/Birkly)',
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2,
+    CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 ]);
 
 $html = curl_exec($ch);
@@ -202,4 +216,3 @@ echo json_encode([
     'success' => true,
     'data' => $metadata,
 ]);
-
