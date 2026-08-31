@@ -266,6 +266,21 @@ function cms_mcp_admin_action_catalog(): array
             ],
         ],
         [
+            'group' => 'hosting',
+            'actions' => [
+                ['action' => 'hosting.get', 'description' => 'Hosting config, domain roles, and delivery summary', 'permission' => 'read'],
+                ['action' => 'hosting.probe', 'description' => 'Run delivery probe (optional deep checks)', 'permission' => 'read'],
+                ['action' => 'hosting.set_domain_role', 'description' => 'Assign host to cms, public, or api_only delivery role', 'write' => true, 'permission' => 'manage_settings'],
+            ],
+        ],
+        [
+            'group' => 'discovery',
+            'actions' => [
+                ['action' => 'discovery.get', 'description' => 'Discovery packs status (SEO, Agent Guide, WebMCP)', 'permission' => 'read'],
+                ['action' => 'discovery.save_seo', 'description' => 'Save site SEO config (subset — no URL map scan)', 'write' => true, 'permission' => 'manage_settings'],
+            ],
+        ],
+        [
             'group' => 'media',
             'actions' => [
                 ['action' => 'media.list', 'description' => 'List media with folder/search/type/sort filters', 'permission' => 'read_media'],

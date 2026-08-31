@@ -21,6 +21,7 @@ require_once __DIR__ . '/../core/hosting_urls.php';
 require_once __DIR__ . '/../core/hosting_probe.php';
 require_once __DIR__ . '/../core/hosting_detect.php';
 
+if (!isset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'])) {
 $rawInput = file_get_contents('php://input');
 $input = [];
 if ($rawInput !== '') {
@@ -240,3 +241,4 @@ if ($action === 'save') {
 }
 
 echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+}
