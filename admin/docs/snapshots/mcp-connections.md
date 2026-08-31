@@ -157,11 +157,14 @@ For local Claude Desktop development only, `mcp-bridge.js` is available under th
 
 | Issue | Check |
 |-------|-------|
-| Connector won't connect | Site is public HTTPS; URL copied exactly; ends with `/mcp` |
+| Connector won't connect | Site is public HTTPS; URL copied exactly; ends with `/mcp/agents/…` for personal connector |
 | OAuth fails | You are assigned to the service agent (or use the personal connector); retry sign-in; leave Client ID/Secret empty |
 | OAuth denied for service agent | Admin must add your role or user under **Who can use this agent** |
 | No tools after connect | Your role (personal) or the agent’s fixed role (service); restart your AI app |
-| Writes blocked | Tool permission in your AI app; check role (personal) or agent fixed role (service) |
+| Stale tools after upgrade | Reconnect MCP; `initialize` returns `capabilities_version` — refresh when it changes |
+| Writes blocked | Tool permission in your AI app (not Birkly Approvals for MCP); check role |
+| Prompts despite admin role | **Two channels:** MCP writes confirm in Cursor/Claude; Approvals tab is built-in assistant only |
+| Wrong URL / 401 | Token is per-agent — use URL from Settings → AI, not an old `/mcp` bookmark |
 | Personal connector missing/disabled | Admins can re-enable it in Settings; disabled connectors are hidden from non-admins |
 | Old agents not visible to team | After upgrade, service agents are admin-only until visibility is reassigned |
 
