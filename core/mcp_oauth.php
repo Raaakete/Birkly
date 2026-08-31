@@ -520,6 +520,8 @@ function birkly_mcp_oauth_handle_authorize(): void
         exit;
     }
 
+    unset($_SESSION['mcp_oauth_pending']);
+
     $user = $_SESSION['user'];
 
     if ($agent !== null && !birkly_ai_user_can_see_agent($agent, $user)) {

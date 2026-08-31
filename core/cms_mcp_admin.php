@@ -26,6 +26,7 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'entries.diff', 'description' => 'Diff entry versions', 'permission' => 'read'],
                 ['action' => 'entries.bulk_field_edit', 'description' => 'Bulk edit a field across entries', 'write' => true, 'permission' => 'write'],
                 ['action' => 'entries.list', 'description' => 'List entries (admin view)', 'permission' => 'read'],
+                ['action' => 'entries.save', 'description' => 'Save entry via admin editor path (reviewer, SEO meta, notifications)', 'write' => true, 'permission' => 'write'],
             ],
         ],
         [
@@ -67,9 +68,22 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'agent_guide.publish', 'description' => 'Publish Agent Guide', 'write' => true, 'permission' => 'manage_settings'],
                 ['action' => 'agent_guide.unpublish', 'description' => 'Unpublish Agent Guide', 'write' => true, 'permission' => 'manage_settings'],
                 ['action' => 'agent_guide.cms_refresh', 'description' => 'Sync CMS content into Agent Guide draft', 'write' => true, 'permission' => 'manage_settings'],
+                ['action' => 'agent_guide.cms_diff', 'description' => 'Diff Agent Guide draft vs CMS sources', 'permission' => 'read'],
+                ['action' => 'agent_guide.completeness', 'description' => 'Agent Guide completeness score', 'permission' => 'read'],
+                ['action' => 'agent_guide.staleness', 'description' => 'Agent Guide staleness vs CMS', 'permission' => 'read'],
+                ['action' => 'agent_guide.discovery_status', 'description' => 'AI discovery / sitemap / IndexNow status', 'permission' => 'read'],
+                ['action' => 'agent_guide.list_versions', 'description' => 'List published Agent Guide versions', 'permission' => 'read'],
+                ['action' => 'agent_guide.list_collections', 'description' => 'Collections for Agent Guide wizard', 'permission' => 'read'],
+                ['action' => 'agent_guide.list_collection_entries', 'description' => 'Entries in a collection for wizard', 'permission' => 'read'],
                 ['action' => 'agent_guide.copilot', 'description' => 'AI copilot suggestions for Agent Guide', 'write' => true, 'permission' => 'manage_settings'],
                 ['action' => 'agent_guide.wizard_generate', 'description' => 'Generate Agent Guide from collections', 'write' => true, 'permission' => 'manage_settings'],
+                ['action' => 'agent_guide.wizard_apply', 'description' => 'Apply wizard output to draft', 'write' => true, 'permission' => 'manage_settings'],
                 ['action' => 'agent_guide.validate_links', 'description' => 'Validate links in draft', 'write' => true, 'permission' => 'manage_settings'],
+                ['action' => 'agent_guide.accept_suggestion', 'description' => 'Apply one copilot suggestion to draft', 'write' => true, 'permission' => 'manage_settings'],
+                ['action' => 'agent_guide.preview_query', 'description' => 'Preview Agent Guide Q&A', 'permission' => 'read'],
+                ['action' => 'agent_guide.public_urls', 'description' => 'Public Agent Guide URLs', 'permission' => 'read'],
+                ['action' => 'agent_guide.setup_prefill', 'description' => 'Setup wizard prefill from site', 'permission' => 'read'],
+                ['action' => 'agent_guide.fetch_url_meta', 'description' => 'Fetch Open Graph metadata for URL', 'permission' => 'read'],
             ],
         ],
         [
@@ -94,14 +108,31 @@ function cms_mcp_admin_action_catalog(): array
         [
             'group' => 'users',
             'actions' => [
+                ['action' => 'users.list', 'description' => 'List human user accounts', 'permission' => 'manage_users'],
                 ['action' => 'users.create', 'description' => 'Create human user account', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'users.update', 'description' => 'Update user role, email, or 2FA grace', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'users.delete', 'description' => 'Delete human user account', 'write' => true, 'permission' => 'delete_user'],
                 ['action' => 'users.revoke_mcp_sessions', 'description' => 'Revoke OAuth MCP sessions for user', 'write' => true, 'permission' => 'manage_users'],
+            ],
+        ],
+        [
+            'group' => 'roles',
+            'actions' => [
+                ['action' => 'roles.list', 'description' => 'List all roles including plugin_access', 'permission' => 'manage_users'],
+                ['action' => 'roles.list_plugins', 'description' => 'List active plugins for role matrix', 'permission' => 'manage_users'],
+                ['action' => 'roles.get', 'description' => 'Get one role by id', 'permission' => 'manage_users'],
+                ['action' => 'roles.create', 'description' => 'Create role', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'roles.update', 'description' => 'Update role (permissions, plugin_access)', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'roles.delete', 'description' => 'Delete role', 'write' => true, 'permission' => 'manage_users'],
             ],
         ],
         [
             'group' => 'invitations',
             'actions' => [
+                ['action' => 'invitations.list', 'description' => 'List pending invitations', 'permission' => 'manage_users'],
                 ['action' => 'invitations.create', 'description' => 'Send user invitation email', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'invitations.resend', 'description' => 'Resend invitation email', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'invitations.cancel', 'description' => 'Cancel pending invitation', 'write' => true, 'permission' => 'manage_users'],
             ],
         ],
         [
@@ -112,6 +143,12 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'marketplace.install', 'description' => 'Install offer from Hub', 'write' => true, 'permission' => 'manage_plugins'],
                 ['action' => 'marketplace.list_hub_licenses', 'description' => 'List Hub licenses', 'permission' => 'manage_plugins'],
                 ['action' => 'marketplace.activate_license', 'description' => 'Activate license key', 'write' => true, 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.deactivate_license', 'description' => 'Deactivate Hub license', 'write' => true, 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.check_updates', 'description' => 'Check Hub update for installed plugin', 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.upgrade', 'description' => 'Upgrade installed plugin from Hub', 'write' => true, 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.list_installed_template_packs', 'description' => 'List installed template packs', 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.preflight_template_pack', 'description' => 'Preflight template pack install by slug', 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.template_pack_status', 'description' => 'Template pack update / touched-file status', 'permission' => 'manage_plugins'],
             ],
         ],
         [
@@ -194,20 +231,68 @@ function cms_mcp_admin_action_catalog(): array
             'group' => 'components',
             'actions' => [
                 ['action' => 'components.list', 'description' => 'List content editor components', 'permission' => 'manage_content'],
+                ['action' => 'components.get', 'description' => 'Get component by slug', 'permission' => 'manage_content'],
                 ['action' => 'components.save', 'description' => 'Save component', 'write' => true, 'permission' => 'manage_content'],
                 ['action' => 'components.delete', 'description' => 'Delete component', 'write' => true, 'permission' => 'manage_content'],
+                ['action' => 'components.render', 'description' => 'Preview component with entry data', 'permission' => 'manage_content'],
+                ['action' => 'components.find_entries', 'description' => 'Find entries using a component', 'permission' => 'manage_content'],
+                ['action' => 'components.update_entries', 'description' => 'Propagate component changes to all entries', 'write' => true, 'permission' => 'manage_content'],
             ],
         ],
         [
             'group' => 'settings',
             'actions' => [
+                ['action' => 'settings.get', 'description' => 'Read settings by category (site, admin, media, security, branding, all)', 'permission' => 'manage_settings'],
+                ['action' => 'settings.save', 'description' => 'Merge settings into a category file', 'write' => true, 'permission' => 'manage_settings'],
                 ['action' => 'settings.rebuild_system', 'description' => 'Rebuild system cache', 'write' => true, 'permission' => 'manage_settings'],
+            ],
+        ],
+        [
+            'group' => 'notifications',
+            'actions' => [
+                ['action' => 'notifications.list_recent', 'description' => 'List recent inbox notifications', 'permission' => 'read'],
+                ['action' => 'notifications.unread_count', 'description' => 'Unread notification badge count', 'permission' => 'read'],
+                ['action' => 'notifications.mark_seen', 'description' => 'Mark notifications seen (dropdown opened)', 'write' => true, 'permission' => 'read'],
+                ['action' => 'notifications.mark_read', 'description' => 'Mark one notification read', 'write' => true, 'permission' => 'read'],
+                ['action' => 'notifications.mark_all_read', 'description' => 'Mark all notifications read', 'write' => true, 'permission' => 'read'],
             ],
         ],
         [
             'group' => 'dashboard',
             'actions' => [
                 ['action' => 'dashboard.stats', 'description' => 'Dashboard stats summary', 'permission' => 'read'],
+                ['action' => 'dashboard.pending_review', 'description' => 'Entries pending review', 'permission' => 'read'],
+                ['action' => 'dashboard.activity', 'description' => 'Recent admin activity feed', 'permission' => 'read'],
+            ],
+        ],
+        [
+            'group' => 'hosting',
+            'actions' => [
+                ['action' => 'hosting.get', 'description' => 'Hosting config, domain roles, and delivery summary', 'permission' => 'read'],
+                ['action' => 'hosting.probe', 'description' => 'Run delivery probe (optional deep checks)', 'permission' => 'read'],
+                ['action' => 'hosting.set_domain_role', 'description' => 'Assign host to cms, public, or api_only delivery role', 'write' => true, 'permission' => 'manage_settings'],
+            ],
+        ],
+        [
+            'group' => 'discovery',
+            'actions' => [
+                ['action' => 'discovery.get', 'description' => 'Discovery packs status (SEO, Agent Guide, WebMCP)', 'permission' => 'read'],
+                ['action' => 'discovery.save_seo', 'description' => 'Save site SEO config (subset — no URL map scan)', 'write' => true, 'permission' => 'manage_settings'],
+            ],
+        ],
+        [
+            'group' => 'media',
+            'actions' => [
+                ['action' => 'media.list', 'description' => 'List media with folder/search/type/sort filters', 'permission' => 'read_media'],
+                ['action' => 'media.get', 'description' => 'Get one media item with full metadata', 'permission' => 'read_media'],
+                ['action' => 'media.folders', 'description' => 'List media folder tree with counts', 'permission' => 'read_media'],
+                ['action' => 'media.upload', 'description' => 'Upload media (multipart file in MCP payload not supported — use upload_media for url/base64)', 'write' => true, 'permission' => 'upload'],
+                ['action' => 'media.update', 'description' => 'Update title, alt_text, focal point', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.delete', 'description' => 'Delete a media file', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.create_folder', 'description' => 'Create media folder', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.rename_folder', 'description' => 'Rename media folder and update metadata refs', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.delete_folder', 'description' => 'Delete folder; handle_files: move (default) or delete', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.move', 'description' => 'Move media file to folder (updates url)', 'write' => true, 'permission' => 'manage_media'],
             ],
         ],
     ];
@@ -256,8 +341,17 @@ function cms_mcp_permissions_for_action(string $action): ?array
     if ($perm === 'manage_project_site') {
         return ['manage_project_site', 'read'];
     }
+    if ($perm === 'read_media') {
+        return ['read_media', 'read', 'manage_media'];
+    }
+    if ($perm === 'manage_media') {
+        return ['manage_media', 'upload', 'delete'];
+    }
+    if ($perm === 'upload') {
+        return ['upload', 'manage_media'];
+    }
     if ($perm === 'delete') {
-        return ['delete', 'manage_content'];
+        return ['delete', 'manage_content', 'delete_user'];
     }
     return ['read', 'write', $perm];
 }

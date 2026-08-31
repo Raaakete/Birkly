@@ -3,7 +3,11 @@
  * Components API — delegates storage to ContentEditor ComponentRegistry.
  */
 
-header('Content-Type: application/json');
+$__cmsMcpComponentsFunctionsOnly = !empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
+if (!$__cmsMcpComponentsFunctionsOnly) {
+    header('Content-Type: application/json');
+}
 error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
 ini_set('display_errors', 0);
 
@@ -163,6 +167,10 @@ function updateComponentInHTML($html, $componentSlug, $newComponent) {
     }
 
     return $html;
+}
+
+if ($__cmsMcpComponentsFunctionsOnly) {
+    return;
 }
 
 try {

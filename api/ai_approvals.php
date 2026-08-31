@@ -1148,102 +1148,126 @@ function executeDeleteMedia($actionData, $aiUser = null, $originalUserId = null)
 
 // Execute update media
 function executeUpdateMedia($actionData, $aiUser = null, $originalUserId = null) {
-    $mediaId = $actionData['id'] ?? '';
-    if (empty($mediaId)) {
+    $mediaId = (string) ($actionData['id'] ?? '');
+    if ($mediaId === '') {
         return ['success' => false, 'message' => 'Media ID is required'];
     }
-    
-    $metadataFile = __DIR__ . '/../media/.metadata.json';
-    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
-    
-    if (!isset($metadata[$mediaId])) {
-        return ['success' => false, 'message' => 'Media not found'];
+
+    $payload = is_array($actionData['data'] ?? null) ? array_merge($actionData, $actionData['data']) : $actionData;
+
+    require_once __DIR__ . '/../core/cms_mcp_request.php';
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once __DIR__ . '/admin_media.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
+    $post = ['id' => $mediaId];
+    if (isset($payload['title'])) {
+        $post['title'] = $payload['title'];
+    } elseif (isset($payload['name'])) {
+        $post['title'] = $payload['name'];
     }
-    
-    if (isset($actionData['name'])) $metadata[$mediaId]['name'] = $actionData['name'];
-    if (isset($actionData['alt'])) $metadata[$mediaId]['alt'] = $actionData['alt'];
-    
-    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
-    return ['success' => true, 'data' => ['media' => $metadata[$mediaId]]];
+    if (array_key_exists('alt_text', $payload)) {
+        $post['alt_text'] = $payload['alt_text'];
+    } elseif (array_key_exists('alt', $payload)) {
+        $post['alt_text'] = $payload['alt'];
+    }
+    if (isset($payload['focal_x']) || isset($payload['focal_y'])) {
+        $post['focal_x'] = $payload['focal_x'] ?? null;
+        $post['focal_y'] = $payload['focal_y'] ?? null;
+    } elseif (isset($payload['focal_point']) && is_array($payload['focal_point'])) {
+        $post['focal_x'] = $payload['focal_point']['x'] ?? null;
+        $post['focal_y'] = $payload['focal_point']['y'] ?? null;
+    }
+
+    $GLOBALS['__CMS_MCP_DISPATCH'] = true;
+    $_POST = $post;
+    $result = updateMedia();
+    unset($GLOBALS['__CMS_MCP_DISPATCH']);
+
+    if (($result['status'] ?? '') === 'ok') {
+        return ['success' => true, 'data' => $result['data'] ?? ['media' => $result['data']['media'] ?? []]];
+    }
+
+    return ['success' => false, 'message' => $result['message'] ?? $result['error'] ?? 'Failed to update media'];
 }
 
 // Execute create media folder
 function executeCreateMediaFolder($actionData, $aiUser = null, $originalUserId = null) {
     $folderName = $actionData['name'] ?? '';
-    if (empty($folderName)) {
+    if ($folderName === '') {
         return ['success' => false, 'message' => 'Folder name is required'];
     }
-    
-    $folderPath = __DIR__ . '/../media/' . $folderName;
-    if (is_dir($folderPath)) {
-        return ['success' => false, 'message' => 'Folder already exists'];
+
+    require_once __DIR__ . '/../core/cms_mcp_request.php';
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once __DIR__ . '/admin_media.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
+    $GLOBALS['__CMS_MCP_DISPATCH'] = true;
+    $_POST = ['name' => $folderName];
+    $result = createFolder();
+    unset($GLOBALS['__CMS_MCP_DISPATCH']);
+
+    if (($result['status'] ?? '') === 'ok' || isset($result['data'])) {
+        return ['success' => true, 'data' => ['folder' => $folderName]];
     }
-    
-    $result = mkdir($folderPath, 0755, true);
-    return $result ? ['success' => true, 'data' => ['folder' => $folderName]] : ['success' => false, 'message' => 'Failed to create folder'];
+
+    return ['success' => false, 'message' => $result['message'] ?? $result['error'] ?? 'Failed to create folder'];
 }
 
 // Execute delete media folder
 function executeDeleteMediaFolder($actionData, $aiUser = null, $originalUserId = null) {
-    $folderName = $actionData['name'] ?? '';
-    if (empty($folderName)) {
+    $folderName = (string) ($actionData['name'] ?? '');
+    if ($folderName === '') {
         return ['success' => false, 'message' => 'Folder name is required'];
     }
-    
-    $folderPath = __DIR__ . '/../media/' . $folderName;
-    if (!is_dir($folderPath)) {
-        return ['success' => false, 'message' => 'Folder not found'];
+
+    require_once __DIR__ . '/../core/cms_mcp_request.php';
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once __DIR__ . '/admin_media.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
+    $handle = (string) ($actionData['handle_files'] ?? 'move');
+    if ($handle !== 'delete') {
+        $handle = 'move';
     }
-    
-    function deleteMediaFolder($dir) {
-        if (!is_dir($dir)) return false;
-        $files = array_diff(scandir($dir), ['.', '..']);
-        foreach ($files as $file) {
-            $path = $dir . '/' . $file;
-            is_dir($path) ? deleteMediaFolder($path) : unlink($path);
-        }
-        return rmdir($dir);
+
+    $GLOBALS['__CMS_MCP_DISPATCH'] = true;
+    $_POST = ['name' => $folderName, 'handle_files' => $handle];
+    $result = deleteFolder();
+    unset($GLOBALS['__CMS_MCP_DISPATCH']);
+
+    if (($result['status'] ?? '') === 'ok') {
+        return ['success' => true, 'data' => $result['data'] ?? []];
     }
-    
-    $result = deleteMediaFolder($folderPath);
-    return $result ? ['success' => true, 'data' => []] : ['success' => false, 'message' => 'Failed to delete folder'];
+
+    return ['success' => false, 'message' => $result['message'] ?? $result['error'] ?? 'Failed to delete folder'];
 }
 
 // Execute move media
 function executeMoveMedia($actionData, $aiUser = null, $originalUserId = null) {
-    $mediaId = $actionData['id'] ?? '';
-    $folder = $actionData['folder'] ?? '';
-    
-    if (empty($mediaId)) {
+    $mediaId = (string) ($actionData['id'] ?? '');
+    $folder = (string) ($actionData['folder'] ?? '');
+
+    if ($mediaId === '') {
         return ['success' => false, 'message' => 'Media ID is required'];
     }
-    
-    $metadataFile = __DIR__ . '/../media/.metadata.json';
-    $metadata = file_exists($metadataFile) ? json_decode(file_get_contents($metadataFile), true) : [];
-    
-    if (!isset($metadata[$mediaId])) {
-        return ['success' => false, 'message' => 'Media not found'];
+
+    require_once __DIR__ . '/../core/cms_mcp_request.php';
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once __DIR__ . '/admin_media.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
+    $GLOBALS['__CMS_MCP_DISPATCH'] = true;
+    $_POST = ['id' => $mediaId, 'folder' => $folder];
+    $result = moveToFolder();
+    unset($GLOBALS['__CMS_MCP_DISPATCH']);
+
+    if (($result['status'] ?? '') === 'ok') {
+        return ['success' => true, 'data' => ['media' => $result['data']['media'] ?? []]];
     }
-    
-    $media = $metadata[$mediaId];
-    $oldFolder = $media['folder'] ?? '';
-    $ext = $media['ext'] ?? '';
-    
-    $oldPath = __DIR__ . '/../media/' . ($oldFolder ? $oldFolder . '/' : '') . $mediaId . '.' . $ext;
-    $newPath = __DIR__ . '/../media/' . ($folder ? $folder . '/' : '') . $mediaId . '.' . $ext;
-    
-    if ($folder && !is_dir(dirname($newPath))) {
-        mkdir(dirname($newPath), 0755, true);
-    }
-    
-    if (file_exists($oldPath)) {
-        rename($oldPath, $newPath);
-    }
-    
-    $metadata[$mediaId]['folder'] = $folder;
-    file_put_contents($metadataFile, json_encode($metadata, JSON_PRETTY_PRINT));
-    
-    return ['success' => true, 'data' => ['media' => $metadata[$mediaId]]];
+
+    return ['success' => false, 'message' => $result['message'] ?? $result['error'] ?? 'Failed to move media'];
 }
 
 // Execute update settings
