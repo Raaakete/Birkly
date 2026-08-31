@@ -2,7 +2,10 @@
 
 # User data directories (should not be committed)
 users/
+# Local content overrides — demo seed under content/collections/ is tracked for OSS.
 content/
+!content/collections/
+!content/collections/**
 media/
 logs/
 settings/*
@@ -38,10 +41,17 @@ database/*.db
 data/plugins/
 
 # AI runtime data (conversations, approvals)
-data/ai_*
+data/ai_conversations/*
+!data/ai_conversations/.gitkeep
+data/ai_approvals/*
+!data/ai_approvals/.gitkeep
 data/feedback/
 data/mcp_audit/
 data/mcp_rate/
+data/demo_social/*
+!data/demo_social/.gitkeep
+data/analytics/*
+!data/analytics/.gitkeep
 
 # PHP dependencies
 vendor/
