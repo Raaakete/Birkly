@@ -273,3 +273,21 @@ function birkly_resolve_collection_slug(
 
     return '';
 }
+
+/**
+ * Validate a collection or sub-collection slug before filesystem paths are built.
+ */
+function birkly_validate_content_slug(string $slug): bool
+{
+    if ($slug === '') {
+        return false;
+    }
+
+    if (strpos($slug, '..') !== false
+        || strpos($slug, '/') !== false
+        || strpos($slug, '\\') !== false) {
+        return false;
+    }
+
+    return preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/', $slug) === 1;
+}
