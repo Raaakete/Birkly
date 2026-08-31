@@ -86,6 +86,8 @@ function cms_mcp_handler_entries(string $subAction, array $input, array $aiUser)
                 return bulkFieldEdit();
             case 'list':
                 return listEntries();
+            case 'save':
+                return saveEntry();
             default:
                 return cms_mcp_error('Unknown entries action: ' . $subAction);
         }
@@ -377,6 +379,9 @@ function cms_mcp_handler_agent_guide(string $subAction, array $input, array $aiU
             return cms_mcp_ok(birkly_ai_presence_public_urls());
         case 'setup_prefill':
             return cms_mcp_ok(birkly_ai_presence_setup_prefill());
+        case 'discovery_status':
+            require_once __DIR__ . '/ai_presence_discovery.php';
+            return cms_mcp_ok(birkly_ai_presence_discovery_status());
         default:
             return cms_mcp_error('Unknown agent_guide action: ' . $subAction);
     }
@@ -467,24 +472,28 @@ function cms_mcp_handler_users(string $subAction, array $input, array $aiUser): 
             if (!($strength['valid'] ?? false)) {
                 return cms_mcp_error($strength['message'] ?? 'Weak password');
             }
-            $existing = birkly_load_user_account($email);
-            if ($existing !== null) {
+            $userId = md5($email);
+            if (!birkly_is_human_user_id($userId)) {
+                return cms_mcp_error('Invalid email for user id');
+            }
+            $storage = new Storage(birkly_users_write_dir());
+            if ($storage->read($userId . '.json')) {
                 return cms_mcp_error('User already exists');
             }
-            $userId = bin2hex(random_bytes(8));
             $record = [
                 'id' => $userId,
                 'email' => $email,
                 'name' => $name !== '' ? $name : explode('@', $email)[0],
                 'role' => $role,
-                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'password' => password_hash($password, PASSWORD_DEFAULT),
                 'created_at' => date('c'),
                 'created_by' => (string) ($aiUser['id'] ?? 'mcp'),
             ];
-            if (!birkly_save_user_with_2fa_policy($record)) {
+            $record = birkly_save_user_with_2fa_policy($record);
+            if (!$storage->write($userId . '.json', $record)) {
                 return cms_mcp_error('Failed to create user');
             }
-            unset($record['password_hash']);
+            unset($record['password']);
             return cms_mcp_ok(['user' => $record]);
 
         case 'revoke_mcp_sessions':
@@ -493,8 +502,146 @@ function cms_mcp_handler_users(string $subAction, array $input, array $aiUser): 
             $count = birkly_mcp_oauth_revoke_user_sessions($userId);
             return cms_mcp_ok(['revoked' => $count]);
 
+        case 'list':
+            return cms_mcp_ok(['users' => birkly_list_human_user_records(true)]);
+
+        case 'update':
+            $userId = (string) ($input['id'] ?? '');
+            $updates = is_array($input['updates'] ?? null) ? $input['updates'] : $input;
+            unset($updates['id'], $updates['action']);
+            if ($userId === '' || $updates === [] || !birkly_is_human_user_id($userId)) {
+                return cms_mcp_error('User id and updates required');
+            }
+            $storage = new Storage(birkly_users_write_dir());
+            $user = $storage->read($userId . '.json');
+            if (!is_array($user)) {
+                return cms_mcp_error('User not found');
+            }
+            foreach (['role', 'email', '2fa_grace_until'] as $field) {
+                if (array_key_exists($field, $updates)) {
+                    $user[$field] = $updates[$field];
+                }
+            }
+            if (!empty($updates['password'])) {
+                $strength = validate_password_strength((string) $updates['password']);
+                if (!($strength['valid'] ?? false)) {
+                    return cms_mcp_error($strength['message'] ?? 'Weak password');
+                }
+                $user['password'] = password_hash((string) $updates['password'], PASSWORD_DEFAULT);
+            }
+            $user = birkly_save_user_with_2fa_policy($user);
+            $user['updated_at'] = date('c');
+            $user['updated_by'] = (string) ($aiUser['id'] ?? 'mcp');
+            if (!$storage->write($userId . '.json', $user)) {
+                return cms_mcp_error('Failed to update user');
+            }
+            unset($user['password'], $user['password_hash']);
+            return cms_mcp_ok(['user' => $user]);
+
+        case 'delete':
+            $userId = (string) ($input['id'] ?? '');
+            if ($userId === '' || !birkly_is_human_user_id($userId)) {
+                return cms_mcp_error('User id required');
+            }
+            if ($userId === (string) ($aiUser['id'] ?? '')) {
+                return cms_mcp_error('Cannot delete your own account');
+            }
+            $storage = new Storage(birkly_users_write_dir());
+            if (!$storage->delete($userId . '.json')) {
+                return cms_mcp_error('Failed to delete user');
+            }
+            return cms_mcp_ok(['deleted' => true]);
+
         default:
             return cms_mcp_error('Unknown users action: ' . $subAction);
+    }
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_roles(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    require_once dirname(__DIR__) . '/core/roles.php';
+    require_once dirname(__DIR__) . '/api/storage.php';
+
+    $storage = new Storage(dirname(__DIR__) . '/settings');
+    $rolesFile = 'roles.json';
+
+    switch ($subAction) {
+        case 'list':
+            return cms_mcp_ok(['roles' => birkly_ensure_default_roles()]);
+        case 'list_plugins':
+            if (!function_exists('get_all_plugins')) {
+                require_once dirname(__DIR__) . '/core/plugins.php';
+            }
+            $plugins = [];
+            foreach (get_all_plugins() as $id => $plugin) {
+                if (empty($plugin['active'])) {
+                    continue;
+                }
+                $plugins[] = [
+                    'id' => (string) $id,
+                    'name' => (string) ($plugin['name'] ?? $id),
+                ];
+            }
+            return cms_mcp_ok(['plugins' => $plugins]);
+        case 'get':
+            $id = (string) ($input['id'] ?? '');
+            foreach (birkly_ensure_default_roles() as $role) {
+                if (($role['id'] ?? '') === $id) {
+                    return cms_mcp_ok(['role' => $role]);
+                }
+            }
+            return cms_mcp_error('Role not found');
+        case 'create':
+            $role = is_array($input['role'] ?? null) ? $input['role'] : $input;
+            if (empty($role['id'])) {
+                return cms_mcp_error('role.id required');
+            }
+            $roles = $storage->read($rolesFile);
+            if (!is_array($roles) || $roles === []) {
+                $roles = birkly_ensure_default_roles();
+            }
+            $roles[] = $role;
+            $storage->write($rolesFile, $roles);
+            return cms_mcp_ok(['role' => $role]);
+        case 'update':
+            $role = is_array($input['role'] ?? null) ? $input['role'] : $input;
+            $roleId = (string) ($role['id'] ?? '');
+            if ($roleId === '') {
+                return cms_mcp_error('role.id required');
+            }
+            $roles = $storage->read($rolesFile);
+            if (!is_array($roles) || $roles === []) {
+                $roles = birkly_ensure_default_roles();
+            }
+            $found = false;
+            foreach ($roles as &$existing) {
+                if (($existing['id'] ?? '') === $roleId) {
+                    $existing = $role;
+                    $found = true;
+                    break;
+                }
+            }
+            unset($existing);
+            if (!$found) {
+                return cms_mcp_error('Role not found');
+            }
+            $storage->write($rolesFile, $roles);
+            return cms_mcp_ok(['role' => $role]);
+        case 'delete':
+            $roleId = (string) ($input['id'] ?? '');
+            if ($roleId === '') {
+                return cms_mcp_error('id required');
+            }
+            $roles = array_values(array_filter(
+                $storage->read($rolesFile) ?: [],
+                static fn (array $role): bool => ($role['id'] ?? '') !== $roleId
+            ));
+            $storage->write($rolesFile, $roles);
+            return cms_mcp_ok(['deleted' => true]);
+        default:
+            return cms_mcp_error('Unknown roles action: ' . $subAction);
     }
 }
 
@@ -545,6 +692,78 @@ function cms_mcp_handler_marketplace(string $subAction, array $input, array $aiU
             $plugins = function_exists('get_all_plugins') ? get_all_plugins() : [];
             $current = (string) ($plugins[$slug]['version'] ?? '0.0.0');
             return cms_mcp_ok(birkly_marketplace_check_plugin_update($slug, $current));
+        case 'upgrade':
+            if (!function_exists('get_all_plugins')) {
+                require_once dirname(__DIR__) . '/core/plugins.php';
+            }
+            require_once __DIR__ . '/marketplace/consent.php';
+            $pluginId = trim((string) ($input['plugin_id'] ?? $input['id'] ?? ''));
+            if ($pluginId === '') {
+                return cms_mcp_error('plugin_id required');
+            }
+            $plugins = get_all_plugins();
+            if (!isset($plugins[$pluginId])) {
+                return cms_mcp_error('Plugin not found');
+            }
+            $plugin = $plugins[$pluginId];
+            $slug = (string) ($plugin['marketplace_slug'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('Plugin was not installed from marketplace');
+            }
+            $current = (string) ($plugin['version'] ?? '0.0.0');
+            $licenseRef = trim((string) ($plugin['license_ref'] ?? ''));
+            $check = birkly_marketplace_check_plugin_update($slug, $current, $licenseRef !== '' ? $licenseRef : null);
+            if (!empty($check['license_lapsed'])) {
+                return cms_mcp_error($check['license_warning'] ?? 'Marketplace license is inactive');
+            }
+            if (empty($check['update_available'])) {
+                return cms_mcp_error('No update available');
+            }
+            $targetVersion = (string) ($check['latest_version'] ?? $current);
+            $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
+            $consentCheck = birkly_marketplace_require_install_consent($slug, $targetVersion, $consentAccepted);
+            if (!$consentCheck['ok']) {
+                return cms_mcp_error($consentCheck['error'] ?? 'Permission consent required');
+            }
+            $wasActive = !empty($plugin['active']);
+            if ($wasActive) {
+                set_plugin_state($pluginId, false);
+            }
+            $install = birkly_marketplace_install_plugin($slug, $targetVersion, '', true, $consentAccepted);
+            if (!$install['ok']) {
+                if ($wasActive) {
+                    set_plugin_state($pluginId, true);
+                }
+                return cms_mcp_error('Update failed: ' . implode('; ', $install['errors'] ?? []));
+            }
+            if ($wasActive) {
+                set_plugin_state($pluginId, true);
+            }
+            return cms_mcp_ok($install);
+        case 'list_installed_template_packs':
+            require_once __DIR__ . '/marketplace/template_pack.php';
+            return cms_mcp_ok(['packs' => birkly_marketplace_get_installed_template_packs()]);
+        case 'preflight_template_pack':
+            require_once __DIR__ . '/marketplace/template_pack.php';
+            $slug = trim((string) ($input['slug'] ?? ''));
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            $resolved = birkly_marketplace_resolve_template_pack_zip_for_slug($slug, $input);
+            if (!($resolved['ok'] ?? false) || empty($resolved['path'])) {
+                return cms_mcp_error($resolved['error'] ?? 'Could not resolve template pack');
+            }
+            $preflight = birkly_marketplace_preflight_template_pack((string) $resolved['path'], $input);
+            return (!empty($preflight['ok']) || !empty($preflight['requires_plugin_confirmation']))
+                ? cms_mcp_ok($preflight)
+                : cms_mcp_error(implode('; ', $preflight['errors'] ?? ['Preflight failed']));
+        case 'template_pack_status':
+            require_once __DIR__ . '/marketplace/template_pack.php';
+            $slug = trim((string) ($input['slug'] ?? ''));
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            return cms_mcp_ok(birkly_marketplace_template_pack_update_status($slug));
         default:
             return cms_mcp_error('Unknown marketplace action: ' . $subAction);
     }
@@ -830,10 +1049,58 @@ function cms_mcp_handler_webmcp(string $subAction, array $input, array $aiUser):
 /** @return array<string, mixed> */
 function cms_mcp_handler_settings(string $subAction, array $input, array $aiUser): array
 {
+    cms_mcp_bootstrap_session($aiUser);
     require_once dirname(__DIR__) . '/api/storage.php';
     $settingsStorage = new Storage(dirname(__DIR__) . '/settings');
 
+    $readCategory = static function (string $category) use ($settingsStorage): array {
+        $data = $settingsStorage->read($category . '.json') ?? [];
+        if ($category === 'security' && is_array($data)) {
+            unset($data['db_password']);
+        }
+        return is_array($data) ? $data : [];
+    };
+
     switch ($subAction) {
+        case 'get':
+            $category = (string) ($input['category'] ?? 'all');
+            $allowed = ['site', 'admin', 'media', 'security', 'branding', 'monitoring', 'all'];
+            if (!in_array($category, $allowed, true)) {
+                return cms_mcp_error('Invalid category');
+            }
+            if ($category === 'all') {
+                $settings = [];
+                foreach (['site', 'admin', 'media', 'security', 'branding', 'monitoring'] as $cat) {
+                    $settings[$cat] = $readCategory($cat);
+                }
+                return cms_mcp_ok(['settings' => $settings]);
+            }
+            return cms_mcp_ok(['category' => $category, 'settings' => $readCategory($category)]);
+        case 'save':
+            $category = (string) ($input['category'] ?? '');
+            $settings = is_array($input['settings'] ?? null) ? $input['settings'] : [];
+            $blocked = ['reset', 'db_password'];
+            foreach ($blocked as $key) {
+                unset($settings[$key]);
+            }
+            if ($category === '' || $settings === []) {
+                return cms_mcp_error('category and settings required');
+            }
+            $allowedCats = ['site', 'admin', 'media', 'security', 'branding', 'monitoring'];
+            if (!in_array($category, $allowedCats, true)) {
+                return cms_mcp_error('Invalid category');
+            }
+            $existing = $settingsStorage->read("$category.json") ?? [];
+            if (!is_array($existing)) {
+                $existing = [];
+            }
+            $updated = array_merge($existing, $settings);
+            $updated['_updated_at'] = date('c');
+            $updated['_updated_by'] = (string) ($aiUser['id'] ?? 'mcp');
+            if (!$settingsStorage->write("$category.json", $updated)) {
+                return cms_mcp_error('Failed to save settings');
+            }
+            return cms_mcp_ok(['category' => $category, 'settings' => $updated]);
         case 'rebuild_system':
             require_once dirname(__DIR__) . '/core/page_bundle_helpers.php';
             birkly_rebuild_system_cache();
@@ -847,18 +1114,66 @@ function cms_mcp_handler_settings(string $subAction, array $input, array $aiUser
     }
 }
 
+function cms_mcp_ensure_invitations_helpers_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/invitations.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
+}
+
 /** @return array<string, mixed> */
 function cms_mcp_handler_invitations(string $subAction, array $input, array $aiUser): array
 {
     cms_mcp_bootstrap_session($aiUser);
-    $GLOBALS['__CMS_MCP_JSON_INPUT'] = json_encode(array_merge($input, ['action' => $subAction === 'create' ? 'create_invitation' : $subAction . '_invitation']));
-    ob_start();
-    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
-    require_once dirname(__DIR__) . '/api/invitations.php';
-    unset($GLOBALS['__HARU_INTERNAL_CALL'], $GLOBALS['__CMS_MCP_JSON_INPUT']);
-    $out = ob_get_clean();
-    $decoded = json_decode($out, true);
-    return is_array($decoded) ? $decoded : cms_mcp_error('Invitation action failed');
+    cms_mcp_ensure_invitations_helpers_loaded();
+
+    switch ($subAction) {
+        case 'list':
+            return cms_mcp_ok(['invitations' => birkly_invitations_for_admin()]);
+        case 'create':
+            ob_start();
+            createInvitation($input);
+            $out = ob_get_clean();
+            break;
+        case 'resend':
+            ob_start();
+            resendInvitation($input);
+            $out = ob_get_clean();
+            break;
+        case 'cancel':
+            ob_start();
+            cancelInvitation($input);
+            $out = ob_get_clean();
+            break;
+        default:
+            return cms_mcp_error('Unknown invitations action: ' . $subAction);
+    }
+
+    $decoded = json_decode($out ?? '', true);
+    if (!is_array($decoded)) {
+        return cms_mcp_error('Invitation action failed');
+    }
+    if (($decoded['status'] ?? '') !== 'ok') {
+        return cms_mcp_error((string) ($decoded['message'] ?? 'Invitation action failed'));
+    }
+    return cms_mcp_ok(is_array($decoded['data'] ?? null) ? $decoded['data'] : []);
+}
+
+function cms_mcp_ensure_components_helpers_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/components.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
 }
 
 /** @return array<string, mixed> */
@@ -871,18 +1186,119 @@ function cms_mcp_handler_components(string $subAction, array $input, array $aiUs
         case 'list':
             return cms_mcp_ok(['components' => $registry->listAll()]);
         case 'get':
-            $id = (string) ($input['id'] ?? '');
-            $component = $registry->get($id);
+            $slug = (string) ($input['slug'] ?? $input['id'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            $component = $registry->get($slug);
             return $component ? cms_mcp_ok(['component' => $component]) : cms_mcp_error('Not found');
         case 'save':
             $registry->save($input);
             return cms_mcp_ok(['saved' => true]);
         case 'delete':
-            $registry->delete((string) ($input['id'] ?? ''));
+            $slug = (string) ($input['slug'] ?? $input['id'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            $registry->delete($slug);
             return cms_mcp_ok(['deleted' => true]);
+        case 'render':
+            $slug = (string) ($input['slug'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            $component = $registry->get($slug);
+            if (!$component) {
+                return cms_mcp_error('Component not found');
+            }
+            $entryData = is_array($input['entry_data'] ?? null) ? $input['entry_data'] : [];
+            return cms_mcp_ok(['component' => $component, 'entry_data' => $entryData]);
+        case 'find_entries':
+            cms_mcp_ensure_components_helpers_loaded();
+            $slug = (string) ($input['slug'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            return cms_mcp_ok(['entries' => findEntriesUsingComponent($slug)]);
+        case 'update_entries':
+            cms_mcp_ensure_components_helpers_loaded();
+            $slug = (string) ($input['slug'] ?? '');
+            if ($slug === '') {
+                return cms_mcp_error('slug required');
+            }
+            $component = $registry->get($slug);
+            if (!$component) {
+                return cms_mcp_error('Component not found');
+            }
+            $result = updateComponentInEntries($slug, $component);
+            return ($result['success'] ?? false) ? cms_mcp_ok($result) : cms_mcp_error($result['error'] ?? 'Update failed');
         default:
             return cms_mcp_error('Unknown components action: ' . $subAction);
     }
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_notifications(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    cms_mcp_ensure_notifications_helpers_loaded();
+
+    $userId = (string) ($_SESSION['user']['id'] ?? '');
+
+    switch ($subAction) {
+        case 'list_recent':
+            $limit = max(1, min(100, (int) ($input['limit'] ?? 20)));
+            return cms_mcp_ok(birkly_notifications_list_recent($limit));
+        case 'unread_count':
+            return cms_mcp_ok(birkly_notifications_unread_count_data());
+        case 'mark_seen':
+            $ids = is_array($input['ids'] ?? null) ? $input['ids'] : [];
+            markNotificationsSeen($userId, $ids);
+            return cms_mcp_ok(['seen' => true]);
+        case 'mark_read':
+            $notificationId = (string) ($input['id'] ?? '');
+            if ($notificationId === '') {
+                return cms_mcp_error('Notification id required');
+            }
+            markNotificationRead($userId, $notificationId);
+            birkly_notifications_load_plugin_activity();
+            if (function_exists('birkly_plugin_activity_mark_read')) {
+                birkly_plugin_activity_mark_read([$notificationId]);
+            }
+            return cms_mcp_ok(['read' => true]);
+        case 'mark_all_read':
+            $recent = birkly_notifications_list_recent(500);
+            $notificationIds = array_values(array_filter(array_map(
+                static fn (array $row): string => (string) ($row['id'] ?? ''),
+                $recent['notifications'] ?? []
+            )));
+            birkly_notifications_load_plugin_activity();
+            if (function_exists('birkly_plugin_activity_notify_ids')) {
+                $notificationIds = array_values(array_unique(array_merge(
+                    $notificationIds,
+                    birkly_plugin_activity_notify_ids(false)
+                )));
+                if (function_exists('birkly_plugin_activity_mark_read')) {
+                    birkly_plugin_activity_mark_read($notificationIds);
+                }
+            }
+            markAllNotificationsRead($userId, $notificationIds);
+            return cms_mcp_ok(['marked' => count($notificationIds)]);
+        default:
+            return cms_mcp_error('Unknown notifications action: ' . $subAction);
+    }
+}
+
+function cms_mcp_ensure_notifications_helpers_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/notifications.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
 }
 
 /** @return array<string, mixed> */
@@ -891,14 +1307,237 @@ function cms_mcp_handler_dashboard(string $subAction, array $input, array $aiUse
     cms_mcp_bootstrap_session($aiUser);
     switch ($subAction) {
         case 'stats':
-            $collectionsDir = dirname(__DIR__) . '/content/collections';
-            $collectionCount = is_dir($collectionsDir) ? count(array_filter(glob($collectionsDir . '/*'), 'is_dir')) : 0;
-            return cms_mcp_ok(['collections' => $collectionCount]);
+            require_once dirname(__DIR__) . '/core/storage/StorageFactory.php';
+            if (!function_exists('get_active_plugins')) {
+                require_once dirname(__DIR__) . '/core/plugins.php';
+            }
+            $storage = get_storage();
+            $collections = $storage->list('collections');
+            $collectionCount = count($collections);
+            $totalEntries = 0;
+            $published = 0;
+            $drafts = 0;
+            foreach ($collections as $collectionDir) {
+                $entries = $storage->list("collections/$collectionDir/entries");
+                foreach ($entries as $entryFile) {
+                    $entry = $storage->read("collections/$collectionDir/entries/$entryFile");
+                    if (!$entry) {
+                        continue;
+                    }
+                    $totalEntries++;
+                    $status = $entry['status'] ?? 'draft';
+                    if ($status === 'published') {
+                        $published++;
+                    } else {
+                        $drafts++;
+                    }
+                }
+            }
+            $stats = [
+                'collections' => $collectionCount,
+                'total_entries' => $totalEntries,
+                'published' => $published,
+                'drafts' => $drafts,
+            ];
+            foreach (get_active_plugins() as $plugin) {
+                if (!isset($plugin['dashboard_stats_callback'])) {
+                    continue;
+                }
+                $pluginStats = call_user_func($plugin['dashboard_stats_callback']);
+                if (is_array($pluginStats)) {
+                    $stats = array_merge($stats, $pluginStats);
+                }
+            }
+            return cms_mcp_ok(['stats' => $stats]);
         case 'pending_review':
-            cms_mcp_ensure_admin_entries_loaded();
-            return cms_mcp_ok(['note' => 'Use entries.list with status filter or admin_search']);
+            require_once dirname(__DIR__) . '/core/dashboard_widgets.php';
+            $limit = max(1, min(50, (int) ($input['limit'] ?? 12)));
+            $assignedTo = trim((string) ($input['assigned_to'] ?? 'all'));
+            $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
+            $entries = birkly_collect_pending_review_entries($limit, $assignedTo, $currentUserId);
+            return cms_mcp_ok(['entries' => $entries, 'total' => count($entries)]);
+        case 'activity':
+            require_once dirname(__DIR__) . '/core/activity_format.php';
+            $limit = max(1, min(100, (int) ($input['limit'] ?? 20)));
+            $filter = (string) ($input['filter'] ?? 'all');
+            $activity = birkly_activity_read_security_log($limit, 0, $filter, 'all');
+            return cms_mcp_ok(['activity' => $activity, 'total' => count($activity)]);
         default:
             return cms_mcp_error('Unknown dashboard action: ' . $subAction);
+    }
+}
+
+function cms_mcp_ensure_admin_media_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/admin_media.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
+}
+
+/** @param array<string, mixed> $input */
+function cms_mcp_media_apply_query(array $input): void
+{
+    $_GET['folder'] = (string) ($input['folder'] ?? '');
+    $_GET['search'] = (string) ($input['search'] ?? '');
+    $_GET['type'] = (string) ($input['type'] ?? '');
+    $_GET['sort'] = (string) ($input['sort'] ?? 'date');
+    $_GET['order'] = (string) ($input['order'] ?? 'desc');
+    if (isset($input['id'])) {
+        $_GET['id'] = (string) $input['id'];
+    }
+}
+
+/** @param array<string, mixed> $input */
+function cms_mcp_media_apply_post(array $input): void
+{
+    $_POST = $input;
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    cms_mcp_ensure_admin_media_loaded();
+
+    return cms_mcp_with_json_input($input, static function () use ($subAction, $input): array {
+        $prevGet = $_GET;
+        $prevPost = $_POST;
+        try {
+            switch ($subAction) {
+                case 'list':
+                    cms_mcp_media_apply_query($input);
+                    return listMedia();
+                case 'get':
+                    cms_mcp_media_apply_query($input);
+                    return getMediaItem();
+                case 'folders':
+                    return listFolders();
+                case 'upload':
+                    return ['status' => 'error', 'message' => 'Use upload_media tool for url/base64 uploads'];
+                case 'update':
+                    cms_mcp_media_apply_post([
+                        'id' => (string) ($input['id'] ?? ''),
+                        'title' => (string) ($input['title'] ?? $input['name'] ?? ''),
+                        'alt_text' => array_key_exists('alt_text', $input)
+                            ? (string) $input['alt_text']
+                            : (array_key_exists('alt', $input) ? (string) $input['alt'] : null),
+                        'focal_x' => $input['focal_x'] ?? ($input['focal_point']['x'] ?? null),
+                        'focal_y' => $input['focal_y'] ?? ($input['focal_point']['y'] ?? null),
+                    ]);
+                    return updateMedia();
+                case 'delete':
+                    cms_mcp_media_apply_post(['id' => (string) ($input['id'] ?? '')]);
+                    return deleteMedia();
+                case 'create_folder':
+                    cms_mcp_media_apply_post(['name' => (string) ($input['name'] ?? '')]);
+                    return createFolder();
+                case 'rename_folder':
+                    cms_mcp_media_apply_post([
+                        'old_name' => (string) ($input['old_name'] ?? $input['name'] ?? ''),
+                        'new_name' => (string) ($input['new_name'] ?? $input['to'] ?? ''),
+                    ]);
+                    return renameFolder();
+                case 'delete_folder':
+                    $handle = (string) ($input['handle_files'] ?? 'move');
+                    if ($handle !== 'delete') {
+                        $handle = 'move';
+                    }
+                    cms_mcp_media_apply_post([
+                        'name' => (string) ($input['name'] ?? ''),
+                        'handle_files' => $handle,
+                    ]);
+                    return deleteFolder();
+                case 'move':
+                    cms_mcp_media_apply_post([
+                        'id' => (string) ($input['id'] ?? ''),
+                        'folder' => (string) ($input['folder'] ?? ''),
+                    ]);
+                    return moveToFolder();
+                default:
+                    return cms_mcp_error('Unknown media action: ' . $subAction);
+            }
+        } finally {
+            $_GET = $prevGet;
+            $_POST = $prevPost;
+        }
+    });
+}
+
+function cms_mcp_ensure_hosting_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/hosting.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_hosting(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    cms_mcp_ensure_hosting_loaded();
+
+    switch ($subAction) {
+        case 'get':
+            return cms_mcp_ok(birkly_hosting_api_payload());
+        case 'probe':
+            require_once dirname(__DIR__) . '/core/hosting_probe.php';
+            $deep = !empty($input['deep']);
+            return cms_mcp_ok(['delivery' => birkly_delivery_probe(['deep' => $deep])]);
+        case 'set_domain_role':
+            $host = trim((string) ($input['host'] ?? $input['domain'] ?? ''));
+            $role = trim((string) ($input['role'] ?? ''));
+            if ($host === '' || $role === '') {
+                return cms_mcp_error('host and role are required');
+            }
+            $result = birkly_hosting_set_domain_delivery_role($host, $role);
+            if (($result['status'] ?? '') !== 'ok') {
+                return cms_mcp_error((string) ($result['message'] ?? 'Could not set domain role'));
+            }
+            return cms_mcp_ok(array_merge(
+                ['message' => (string) ($result['message'] ?? 'Domain role updated')],
+                birkly_hosting_api_payload()
+            ));
+        default:
+            return cms_mcp_error('Unknown hosting action: ' . $subAction);
+    }
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_discovery(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    require_once dirname(__DIR__) . '/core/discovery.php';
+
+    switch ($subAction) {
+        case 'get':
+            return cms_mcp_ok(birkly_discovery_status());
+        case 'save_seo':
+            require_once dirname(__DIR__) . '/core/site_seo.php';
+            $payload = $input['config'] ?? $input;
+            if (!is_array($payload)) {
+                return cms_mcp_error('config object is required');
+            }
+            unset($payload['action'], $payload['_csrf']);
+            $result = birkly_site_seo_save($payload);
+            if (empty($result['ok'])) {
+                return cms_mcp_error((string) ($result['error'] ?? 'Could not save SEO config'));
+            }
+            return cms_mcp_ok([
+                'seo' => $result['config'] ?? [],
+                'status' => birkly_discovery_status(),
+            ]);
+        default:
+            return cms_mcp_error('Unknown discovery action: ' . $subAction);
     }
 }
 
@@ -914,6 +1553,7 @@ function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input
         'mcp_endpoints' => cms_mcp_handler_mcp_endpoints($subAction, $input, $aiUser),
         'ai_agents' => cms_mcp_handler_ai_agents($subAction, $input, $aiUser),
         'users' => cms_mcp_handler_users($subAction, $input, $aiUser),
+        'roles' => cms_mcp_handler_roles($subAction, $input, $aiUser),
         'marketplace' => cms_mcp_handler_marketplace($subAction, $input, $aiUser),
         'project_git' => cms_mcp_handler_project_git($subAction, $input, $aiUser),
         'project_site' => cms_mcp_handler_project_site($subAction, $input, $aiUser),
@@ -926,8 +1566,12 @@ function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input
         'webmcp' => cms_mcp_handler_webmcp($subAction, $input, $aiUser),
         'settings' => cms_mcp_handler_settings($subAction, $input, $aiUser),
         'invitations' => cms_mcp_handler_invitations($subAction, $input, $aiUser),
+        'notifications' => cms_mcp_handler_notifications($subAction, $input, $aiUser),
         'components' => cms_mcp_handler_components($subAction, $input, $aiUser),
         'dashboard' => cms_mcp_handler_dashboard($subAction, $input, $aiUser),
+        'hosting' => cms_mcp_handler_hosting($subAction, $input, $aiUser),
+        'discovery' => cms_mcp_handler_discovery($subAction, $input, $aiUser),
+        'media' => cms_mcp_handler_media($subAction, $input, $aiUser),
         default => cms_mcp_error('Unknown domain: ' . $domain),
     };
 }

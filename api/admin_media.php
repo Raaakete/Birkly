@@ -1,67 +1,86 @@
 <?php
-header('Content-Type: application/json');
 
-// SECURITY FIX: Replace wildcard CORS with origin whitelist
-require_once __DIR__ . '/../core/cors.php';
-set_cors_headers('admin');
+$__cmsMcpFunctionsOnly = !empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
 
-// SECURITY FIX: Require CSRF protection for state-changing operations
 require_once __DIR__ . '/../core/csrf.php';
-require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/auth.php';
-haru_secure_session_start();
 
-$action = $_GET['action'] ?? 'list';
+if (!$__cmsMcpFunctionsOnly) {
+    header('Content-Type: application/json');
 
-// SECURITY: enforce permissions by media action
-// - list/folders: read_media (viewer allowed)
-// - upload: upload
-// - all other actions mutate media/folders: manage_media
-if ($action === 'list' || $action === 'folders' || $action === 'get') {
-    requireAuth('read_media');
-} elseif ($action === 'upload') {
-    requireAuth('upload');
-} else {
-    requireAuth('manage_media');
+    // SECURITY FIX: Replace wildcard CORS with origin whitelist
+    require_once __DIR__ . '/../core/cors.php';
+    set_cors_headers('admin');
+
+    require_once __DIR__ . '/session.php';
+    haru_secure_session_start();
+
+    $action = $_GET['action'] ?? 'list';
+
+    // SECURITY: enforce permissions by media action
+    // - list/folders: read_media (viewer allowed)
+    // - upload: upload
+    // - all other actions mutate media/folders: manage_media
+    if ($action === 'list' || $action === 'folders' || $action === 'get') {
+        requireAuth('read_media');
+    } elseif ($action === 'upload') {
+        requireAuth('upload');
+    } else {
+        requireAuth('manage_media');
+    }
+
+    switch ($action) {
+        case 'list':
+            echo json_encode(listMedia());
+            break;
+        case 'get':
+            echo json_encode(getMediaItem());
+            break;
+        case 'upload':
+            echo json_encode(uploadMedia());
+            break;
+        case 'delete':
+            echo json_encode(deleteMedia());
+            break;
+        case 'folders':
+            echo json_encode(listFolders());
+            break;
+        case 'create_folder':
+            echo json_encode(createFolder());
+            break;
+        case 'move':
+            echo json_encode(moveMedia());
+            break;
+        case 'update':
+            echo json_encode(updateMedia());
+            break;
+        case 'rename_folder':
+            echo json_encode(renameFolder());
+            break;
+        case 'delete_folder':
+            echo json_encode(deleteFolder());
+            break;
+        case 'move_to_folder':
+            echo json_encode(moveToFolder());
+            break;
+        default:
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+    }
+    return;
 }
 
-switch ($action) {
-    case 'list':
-        echo json_encode(listMedia());
-        break;
-    case 'get':
-        echo json_encode(getMediaItem());
-        break;
-    case 'upload':
-        echo json_encode(uploadMedia());
-        break;
-    case 'delete':
-        echo json_encode(deleteMedia());
-        break;
-    case 'folders':
-        echo json_encode(listFolders());
-        break;
-    case 'create_folder':
-        echo json_encode(createFolder());
-        break;
-    case 'move':
-        echo json_encode(moveMedia());
-        break;
-    case 'update':
-        echo json_encode(updateMedia());
-        break;
-    case 'rename_folder':
-        echo json_encode(renameFolder());
-        break;
-    case 'delete_folder':
-        echo json_encode(deleteFolder());
-        break;
-    case 'move_to_folder':
-        echo json_encode(moveToFolder());
-        break;
-    default:
-        http_response_code(400);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+if ($__cmsMcpFunctionsOnly) {
+    require_once __DIR__ . '/../core/cms_mcp_request.php';
+}
+
+function admin_media_csrf_valid(): bool
+{
+    if (!empty($GLOBALS['__CMS_MCP_DISPATCH'])) {
+        return true;
+    }
+
+    return validate_csrf_token((string) ($_POST['_csrf'] ?? ''));
 }
 
 function listMedia() {
@@ -247,8 +266,7 @@ function scanFoldersRecursively($baseDir, $relativePath) {
 
 function createFolder() {
     // SECURITY FIX: Require CSRF token
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['error' => 'Invalid CSRF token'];
     }
     
@@ -308,9 +326,7 @@ function isRasterImageMime(string $mimeType): bool
 }
 
 function uploadMedia() {
-    // SECURITY FIX: Require CSRF token for file uploads
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return [
             'status'  => 'error',
             'message' => 'Invalid CSRF token'
@@ -555,8 +571,7 @@ function getMediaItem() {
 
 function deleteMedia() {
     // SECURITY FIX: Require CSRF token for deletions
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['error' => 'Invalid CSRF token'];
     }
 
@@ -600,8 +615,7 @@ function deleteMedia() {
 
 function moveMedia() {
     // SECURITY FIX: Require CSRF token
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['error' => 'Invalid CSRF token'];
     }
     
@@ -654,9 +668,7 @@ function moveMedia() {
 }
 
 function updateMedia() {
-    // SECURITY FIX: Require CSRF token
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['status' => 'error', 'message' => 'Invalid CSRF token'];
     }
     
@@ -791,8 +803,7 @@ function saveMetadata($metadata) {
 
 function renameFolder() {
     // SECURITY FIX: Require CSRF token
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['error' => 'Invalid CSRF token'];
     }
     
@@ -834,8 +845,7 @@ function renameFolder() {
 
 function deleteFolder() {
     // SECURITY FIX: Require CSRF token
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['error' => 'Invalid CSRF token'];
     }
     
@@ -933,8 +943,7 @@ function deleteFolder() {
 
 function moveToFolder() {
     // SECURITY FIX: Require CSRF token
-    $csrf = $_POST['_csrf'] ?? '';
-    if (!validate_csrf_token($csrf)) {
+    if (!admin_media_csrf_valid()) {
         return ['error' => 'Invalid CSRF token'];
     }
     

@@ -42,6 +42,7 @@ If a tool call is allowed by the role and passes approval settings, playbooks do
 | `webmcp-tools` | Agent Guide Tools tab: WebMCP visitor actions, form allowlist, hosting snippets |
 | `mcp-setup` | Connect Claude, ChatGPT, Cursor via MCP |
 | `mcp-capabilities` | MCP tool families, plugin tools, allow_public_read, fieldtype picks |
+| `mcp-troubleshooting` | OAuth failures, stale tools/list, two approval channels, reconnect |
 | `ai-connections` | Built-in admin chat assistant, API keys, approvals |
 | `plugins-overview` | Install, enable, marketplace, official plugins |
 | `commerce` | Shop, cart, checkout, variants, subscriptions (plugin) |
@@ -85,6 +86,7 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 | Public API forms | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html · https://docs.birkly.com/03-templating/public-forms-templating.html |
 | Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.com/03-templating/templating-overview.html · https://docs.birkly.com/03-templating/client-setup.html |
 | MCP connections | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html (**Settings → AI**) |
+| MCP troubleshooting | `mcp-troubleshooting` | Same admin snapshot troubleshooting table |
 | Media | `media` | https://docs.birkly.com/01-admin/media-library.html |
 | Content editor | `content-editor` | https://docs.birkly.com/02-content/content-editor.html |
 | Marketplace | `plugins-overview` | https://docs.birkly.com/06-extensibility/marketplace-go-live.html |
