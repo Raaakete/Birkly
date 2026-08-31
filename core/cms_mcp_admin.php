@@ -26,6 +26,7 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'entries.diff', 'description' => 'Diff entry versions', 'permission' => 'read'],
                 ['action' => 'entries.bulk_field_edit', 'description' => 'Bulk edit a field across entries', 'write' => true, 'permission' => 'write'],
                 ['action' => 'entries.list', 'description' => 'List entries (admin view)', 'permission' => 'read'],
+                ['action' => 'entries.save', 'description' => 'Save entry via admin editor path (reviewer, SEO meta, notifications)', 'write' => true, 'permission' => 'write'],
             ],
         ],
         [
@@ -94,14 +95,31 @@ function cms_mcp_admin_action_catalog(): array
         [
             'group' => 'users',
             'actions' => [
+                ['action' => 'users.list', 'description' => 'List human user accounts', 'permission' => 'manage_users'],
                 ['action' => 'users.create', 'description' => 'Create human user account', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'users.update', 'description' => 'Update user role, email, or 2FA grace', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'users.delete', 'description' => 'Delete human user account', 'write' => true, 'permission' => 'delete_user'],
                 ['action' => 'users.revoke_mcp_sessions', 'description' => 'Revoke OAuth MCP sessions for user', 'write' => true, 'permission' => 'manage_users'],
+            ],
+        ],
+        [
+            'group' => 'roles',
+            'actions' => [
+                ['action' => 'roles.list', 'description' => 'List all roles including plugin_access', 'permission' => 'manage_users'],
+                ['action' => 'roles.list_plugins', 'description' => 'List active plugins for role matrix', 'permission' => 'manage_users'],
+                ['action' => 'roles.get', 'description' => 'Get one role by id', 'permission' => 'manage_users'],
+                ['action' => 'roles.create', 'description' => 'Create role', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'roles.update', 'description' => 'Update role (permissions, plugin_access)', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'roles.delete', 'description' => 'Delete role', 'write' => true, 'permission' => 'manage_users'],
             ],
         ],
         [
             'group' => 'invitations',
             'actions' => [
+                ['action' => 'invitations.list', 'description' => 'List pending invitations', 'permission' => 'manage_users'],
                 ['action' => 'invitations.create', 'description' => 'Send user invitation email', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'invitations.resend', 'description' => 'Resend invitation email', 'write' => true, 'permission' => 'manage_users'],
+                ['action' => 'invitations.cancel', 'description' => 'Cancel pending invitation', 'write' => true, 'permission' => 'manage_users'],
             ],
         ],
         [
@@ -112,6 +130,8 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'marketplace.install', 'description' => 'Install offer from Hub', 'write' => true, 'permission' => 'manage_plugins'],
                 ['action' => 'marketplace.list_hub_licenses', 'description' => 'List Hub licenses', 'permission' => 'manage_plugins'],
                 ['action' => 'marketplace.activate_license', 'description' => 'Activate license key', 'write' => true, 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.deactivate_license', 'description' => 'Deactivate Hub license', 'write' => true, 'permission' => 'manage_plugins'],
+                ['action' => 'marketplace.check_updates', 'description' => 'Check Hub update for installed plugin', 'permission' => 'manage_plugins'],
             ],
         ],
         [
@@ -194,13 +214,19 @@ function cms_mcp_admin_action_catalog(): array
             'group' => 'components',
             'actions' => [
                 ['action' => 'components.list', 'description' => 'List content editor components', 'permission' => 'manage_content'],
+                ['action' => 'components.get', 'description' => 'Get component by slug', 'permission' => 'manage_content'],
                 ['action' => 'components.save', 'description' => 'Save component', 'write' => true, 'permission' => 'manage_content'],
                 ['action' => 'components.delete', 'description' => 'Delete component', 'write' => true, 'permission' => 'manage_content'],
+                ['action' => 'components.render', 'description' => 'Preview component with entry data', 'permission' => 'manage_content'],
+                ['action' => 'components.find_entries', 'description' => 'Find entries using a component', 'permission' => 'manage_content'],
+                ['action' => 'components.update_entries', 'description' => 'Propagate component changes to all entries', 'write' => true, 'permission' => 'manage_content'],
             ],
         ],
         [
             'group' => 'settings',
             'actions' => [
+                ['action' => 'settings.get', 'description' => 'Read settings by category (site, admin, media, security, branding, all)', 'permission' => 'manage_settings'],
+                ['action' => 'settings.save', 'description' => 'Merge settings into a category file', 'write' => true, 'permission' => 'manage_settings'],
                 ['action' => 'settings.rebuild_system', 'description' => 'Rebuild system cache', 'write' => true, 'permission' => 'manage_settings'],
             ],
         ],
@@ -281,7 +307,7 @@ function cms_mcp_permissions_for_action(string $action): ?array
         return ['upload', 'manage_media'];
     }
     if ($perm === 'delete') {
-        return ['delete', 'manage_content'];
+        return ['delete', 'manage_content', 'delete_user'];
     }
     return ['read', 'write', $perm];
 }

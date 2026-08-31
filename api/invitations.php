@@ -1,8 +1,12 @@
 <?php
 // api/invitations.php - Handle user invitations
 
+$__cmsMcpInvitationsFunctionsOnly = !empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+
 // Start output buffering to prevent any output before JSON
-ob_start();
+if (!$__cmsMcpInvitationsFunctionsOnly) {
+    ob_start();
+}
 
 require_once __DIR__ . '/session.php';
 haru_secure_session_start();
@@ -16,10 +20,12 @@ require_once __DIR__ . '/../core/connections/registry.php';
 require_once __DIR__ . '/../core/birkly_paths.php';
 
 // Clear any output that might have been generated
-ob_clean();
+if (!$__cmsMcpInvitationsFunctionsOnly) {
+    ob_clean();
+    header('Content-Type: application/json');
+}
 
-header('Content-Type: application/json');
-
+if (!$__cmsMcpInvitationsFunctionsOnly) {
 // Ensure we're authenticated for invitation management
 if (!isset($_SESSION['user'])) {
     http_response_code(401);
@@ -76,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 } else {
     http_response_code(405);
     echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+}
 }
 
 function createInvitation($data) {
@@ -529,5 +536,7 @@ function birkly_invitations_for_admin(): array
 }
 
 // Ensure clean JSON output - don't clear output, just end buffering
-ob_end_flush();
+if (!$__cmsMcpInvitationsFunctionsOnly) {
+    ob_end_flush();
+}
 ?>
