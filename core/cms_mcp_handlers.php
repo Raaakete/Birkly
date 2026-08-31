@@ -1468,6 +1468,79 @@ function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): 
     });
 }
 
+function cms_mcp_ensure_hosting_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/hosting.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_hosting(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    cms_mcp_ensure_hosting_loaded();
+
+    switch ($subAction) {
+        case 'get':
+            return cms_mcp_ok(birkly_hosting_api_payload());
+        case 'probe':
+            require_once dirname(__DIR__) . '/core/hosting_probe.php';
+            $deep = !empty($input['deep']);
+            return cms_mcp_ok(['delivery' => birkly_delivery_probe(['deep' => $deep])]);
+        case 'set_domain_role':
+            $host = trim((string) ($input['host'] ?? $input['domain'] ?? ''));
+            $role = trim((string) ($input['role'] ?? ''));
+            if ($host === '' || $role === '') {
+                return cms_mcp_error('host and role are required');
+            }
+            $result = birkly_hosting_set_domain_delivery_role($host, $role);
+            if (($result['status'] ?? '') !== 'ok') {
+                return cms_mcp_error((string) ($result['message'] ?? 'Could not set domain role'));
+            }
+            return cms_mcp_ok(array_merge(
+                ['message' => (string) ($result['message'] ?? 'Domain role updated')],
+                birkly_hosting_api_payload()
+            ));
+        default:
+            return cms_mcp_error('Unknown hosting action: ' . $subAction);
+    }
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_discovery(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    require_once dirname(__DIR__) . '/core/discovery.php';
+
+    switch ($subAction) {
+        case 'get':
+            return cms_mcp_ok(birkly_discovery_status());
+        case 'save_seo':
+            require_once dirname(__DIR__) . '/core/site_seo.php';
+            $payload = $input['config'] ?? $input;
+            if (!is_array($payload)) {
+                return cms_mcp_error('config object is required');
+            }
+            unset($payload['action'], $payload['_csrf']);
+            $result = birkly_site_seo_save($payload);
+            if (empty($result['ok'])) {
+                return cms_mcp_error((string) ($result['error'] ?? 'Could not save SEO config'));
+            }
+            return cms_mcp_ok([
+                'seo' => $result['config'] ?? [],
+                'status' => birkly_discovery_status(),
+            ]);
+        default:
+            return cms_mcp_error('Unknown discovery action: ' . $subAction);
+    }
+}
+
 /** @return array<string, mixed> */
 function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input, array $aiUser): array
 {
@@ -1496,6 +1569,8 @@ function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input
         'notifications' => cms_mcp_handler_notifications($subAction, $input, $aiUser),
         'components' => cms_mcp_handler_components($subAction, $input, $aiUser),
         'dashboard' => cms_mcp_handler_dashboard($subAction, $input, $aiUser),
+        'hosting' => cms_mcp_handler_hosting($subAction, $input, $aiUser),
+        'discovery' => cms_mcp_handler_discovery($subAction, $input, $aiUser),
         'media' => cms_mcp_handler_media($subAction, $input, $aiUser),
         default => cms_mcp_error('Unknown domain: ' . $domain),
     };

@@ -75,6 +75,24 @@ assert_true('agent_guide.discovery_status ok or forbidden', in_array($discovery[
 $dashboardActivity = cms_mcp_dispatch_admin('dashboard.activity', ['limit' => 5], $aiUser);
 assert_true('dashboard.activity ok', ($dashboardActivity['status'] ?? '') === 'ok');
 
+assert_true('hosting.get in meta', isset($meta['hosting.get']));
+assert_true('hosting.probe in meta', isset($meta['hosting.probe']));
+assert_true('hosting.set_domain_role in meta', isset($meta['hosting.set_domain_role']));
+assert_true('discovery.get in meta', isset($meta['discovery.get']));
+assert_true('discovery.save_seo in meta', isset($meta['discovery.save_seo']));
+assert_true('hosting.set_domain_role is write', ($meta['hosting.set_domain_role']['write'] ?? false) === true);
+
+$hostingGet = cms_mcp_dispatch_admin('hosting.get', [], $aiUser);
+assert_true('hosting.get ok', ($hostingGet['status'] ?? '') === 'ok');
+assert_true('hosting.get has hosting key', is_array($hostingGet['data']['hosting'] ?? null));
+
+$hostingProbe = cms_mcp_dispatch_admin('hosting.probe', [], $aiUser);
+assert_true('hosting.probe ok', ($hostingProbe['status'] ?? '') === 'ok');
+assert_true('hosting.probe has delivery', is_array($hostingProbe['data']['delivery'] ?? null));
+
+$discoveryGet = cms_mcp_dispatch_admin('discovery.get', [], $aiUser);
+assert_true('discovery.get ok', ($discoveryGet['status'] ?? '') === 'ok');
+
 $listResult = cms_mcp_dispatch_admin('connections.list', [], $aiUser);
 assert_true('connections.list ok or graceful', in_array($listResult['status'] ?? '', ['ok', 'error'], true));
 
