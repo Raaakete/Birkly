@@ -902,6 +902,107 @@ function cms_mcp_handler_dashboard(string $subAction, array $input, array $aiUse
     }
 }
 
+function cms_mcp_ensure_admin_media_loaded(): void
+{
+    static $loaded = false;
+    if ($loaded) {
+        return;
+    }
+    $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    require_once dirname(__DIR__) . '/api/admin_media.php';
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    $loaded = true;
+}
+
+/** @param array<string, mixed> $input */
+function cms_mcp_media_apply_query(array $input): void
+{
+    $_GET['folder'] = (string) ($input['folder'] ?? '');
+    $_GET['search'] = (string) ($input['search'] ?? '');
+    $_GET['type'] = (string) ($input['type'] ?? '');
+    $_GET['sort'] = (string) ($input['sort'] ?? 'date');
+    $_GET['order'] = (string) ($input['order'] ?? 'desc');
+    if (isset($input['id'])) {
+        $_GET['id'] = (string) $input['id'];
+    }
+}
+
+/** @param array<string, mixed> $input */
+function cms_mcp_media_apply_post(array $input): void
+{
+    $_POST = $input;
+}
+
+/** @return array<string, mixed> */
+function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): array
+{
+    cms_mcp_bootstrap_session($aiUser);
+    cms_mcp_ensure_admin_media_loaded();
+
+    return cms_mcp_with_json_input($input, static function () use ($subAction, $input): array {
+        $prevGet = $_GET;
+        $prevPost = $_POST;
+        try {
+            switch ($subAction) {
+                case 'list':
+                    cms_mcp_media_apply_query($input);
+                    return listMedia();
+                case 'get':
+                    cms_mcp_media_apply_query($input);
+                    return getMediaItem();
+                case 'folders':
+                    return listFolders();
+                case 'upload':
+                    return ['status' => 'error', 'message' => 'Use upload_media tool for url/base64 uploads'];
+                case 'update':
+                    cms_mcp_media_apply_post([
+                        'id' => (string) ($input['id'] ?? ''),
+                        'title' => (string) ($input['title'] ?? $input['name'] ?? ''),
+                        'alt_text' => array_key_exists('alt_text', $input)
+                            ? (string) $input['alt_text']
+                            : (array_key_exists('alt', $input) ? (string) $input['alt'] : null),
+                        'focal_x' => $input['focal_x'] ?? ($input['focal_point']['x'] ?? null),
+                        'focal_y' => $input['focal_y'] ?? ($input['focal_point']['y'] ?? null),
+                    ]);
+                    return updateMedia();
+                case 'delete':
+                    cms_mcp_media_apply_post(['id' => (string) ($input['id'] ?? '')]);
+                    return deleteMedia();
+                case 'create_folder':
+                    cms_mcp_media_apply_post(['name' => (string) ($input['name'] ?? '')]);
+                    return createFolder();
+                case 'rename_folder':
+                    cms_mcp_media_apply_post([
+                        'old_name' => (string) ($input['old_name'] ?? $input['name'] ?? ''),
+                        'new_name' => (string) ($input['new_name'] ?? $input['to'] ?? ''),
+                    ]);
+                    return renameFolder();
+                case 'delete_folder':
+                    $handle = (string) ($input['handle_files'] ?? 'move');
+                    if ($handle !== 'delete') {
+                        $handle = 'move';
+                    }
+                    cms_mcp_media_apply_post([
+                        'name' => (string) ($input['name'] ?? ''),
+                        'handle_files' => $handle,
+                    ]);
+                    return deleteFolder();
+                case 'move':
+                    cms_mcp_media_apply_post([
+                        'id' => (string) ($input['id'] ?? ''),
+                        'folder' => (string) ($input['folder'] ?? ''),
+                    ]);
+                    return moveToFolder();
+                default:
+                    return cms_mcp_error('Unknown media action: ' . $subAction);
+            }
+        } finally {
+            $_GET = $prevGet;
+            $_POST = $prevPost;
+        }
+    });
+}
+
 /** @return array<string, mixed> */
 function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input, array $aiUser): array
 {
@@ -928,6 +1029,7 @@ function cms_mcp_dispatch_domain(string $domain, string $subAction, array $input
         'invitations' => cms_mcp_handler_invitations($subAction, $input, $aiUser),
         'components' => cms_mcp_handler_components($subAction, $input, $aiUser),
         'dashboard' => cms_mcp_handler_dashboard($subAction, $input, $aiUser),
+        'media' => cms_mcp_handler_media($subAction, $input, $aiUser),
         default => cms_mcp_error('Unknown domain: ' . $domain),
     };
 }

@@ -210,6 +210,21 @@ function cms_mcp_admin_action_catalog(): array
                 ['action' => 'dashboard.stats', 'description' => 'Dashboard stats summary', 'permission' => 'read'],
             ],
         ],
+        [
+            'group' => 'media',
+            'actions' => [
+                ['action' => 'media.list', 'description' => 'List media with folder/search/type/sort filters', 'permission' => 'read_media'],
+                ['action' => 'media.get', 'description' => 'Get one media item with full metadata', 'permission' => 'read_media'],
+                ['action' => 'media.folders', 'description' => 'List media folder tree with counts', 'permission' => 'read_media'],
+                ['action' => 'media.upload', 'description' => 'Upload media (multipart file in MCP payload not supported — use upload_media for url/base64)', 'write' => true, 'permission' => 'upload'],
+                ['action' => 'media.update', 'description' => 'Update title, alt_text, focal point', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.delete', 'description' => 'Delete a media file', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.create_folder', 'description' => 'Create media folder', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.rename_folder', 'description' => 'Rename media folder and update metadata refs', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.delete_folder', 'description' => 'Delete folder; handle_files: move (default) or delete', 'write' => true, 'permission' => 'manage_media'],
+                ['action' => 'media.move', 'description' => 'Move media file to folder (updates url)', 'write' => true, 'permission' => 'manage_media'],
+            ],
+        ],
     ];
 }
 
@@ -255,6 +270,15 @@ function cms_mcp_permissions_for_action(string $action): ?array
     }
     if ($perm === 'manage_project_site') {
         return ['manage_project_site', 'read'];
+    }
+    if ($perm === 'read_media') {
+        return ['read_media', 'read', 'manage_media'];
+    }
+    if ($perm === 'manage_media') {
+        return ['manage_media', 'upload', 'delete'];
+    }
+    if ($perm === 'upload') {
+        return ['upload', 'manage_media'];
     }
     if ($perm === 'delete') {
         return ['delete', 'manage_content'];
