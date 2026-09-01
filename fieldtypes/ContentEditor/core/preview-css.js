@@ -15,10 +15,34 @@ window.ContentEditorPreview = {
   resolveFetchUrl(cssUrl) {
     const trimmed = (cssUrl || '').trim();
     if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+
+    const basePath = (window.Birkly && window.Birkly.basePath) || '';
+    if (basePath && trimmed.startsWith(basePath + '/')) {
+      return trimmed;
+    }
+
+    // /api/* is prefixed once by admin/js/birkly-paths.js fetch wrapper.
+    if (trimmed.startsWith('/api/')) {
+      return trimmed;
+    }
+
     if (window.Birkly && typeof window.Birkly.url === 'function') {
       return window.Birkly.url(trimmed);
     }
     return this.resolveUrl(trimmed);
+  },
+
+  findExistingStyle(resolvedKey) {
+    const styles = document.querySelectorAll('style[data-content-editor-css]');
+    for (const style of styles) {
+      if (style.getAttribute('data-css-url') === resolvedKey) {
+        return style;
+      }
+    }
+    return null;
   },
 
   setStatus(wrapper, state, detail) {
@@ -167,7 +191,7 @@ window.ContentEditorPreview = {
     }
 
     const resolvedKey = fetchUrl;
-    const existingStyle = document.querySelector(`style[data-content-editor-css][data-css-url="${resolvedKey}"]`);
+    const existingStyle = this.findExistingStyle(resolvedKey);
     if (existingStyle) {
       editor.classList.add('post-content');
       this.setStatus(wrapper, 'active', this.labelFromUrl(storedUrl || fetchUrl));
@@ -184,7 +208,20 @@ window.ContentEditorPreview = {
         return response.text();
       })
       .then(cssText => {
-        let scopedCSS = this.scopeCSS(cssText, '.content-editor-area');
+        if (!cssText || cssText.trim() === '') {
+          throw new Error('Empty stylesheet response');
+        }
+        if (cssText.trimStart().startsWith('{') || cssText.includes('"status":"error"')) {
+          throw new Error('Preview endpoint returned an error response');
+        }
+
+        let scopedCSS;
+        try {
+          scopedCSS = this.scopeCSS(cssText, '.content-editor-area');
+        } catch (scopeError) {
+          console.warn('ContentEditor: Failed to scope preview CSS:', scopeError);
+          throw new Error('Could not scope project stylesheet for preview');
+        }
         scopedCSS = scopedCSS.replace(/(font-size\s*:\s*[^;!}]+)(;|})/g, (match, declaration, ending) => {
           if (!declaration.includes('!important')) {
             return declaration + ' !important' + ending;
@@ -204,7 +241,8 @@ window.ContentEditorPreview = {
       })
       .catch(error => {
         console.warn('ContentEditor: Failed to load preview CSS from:', fetchUrl, error);
-        this.setStatus(wrapper, 'error', String(error.message || error));
+        const detail = [String(error.message || error), fetchUrl].filter(Boolean).join(' — ');
+        this.setStatus(wrapper, 'error', detail);
       });
   },
 

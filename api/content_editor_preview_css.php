@@ -6,6 +6,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../core/cors.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/project_site_filesystem.php';
 require_once __DIR__ . '/../fieldtypes/BaseField.php';
@@ -13,6 +14,8 @@ require_once __DIR__ . '/../fieldtypes/ContentEditor/ContentEditor.php';
 
 use Birkly\FieldTypes\ContentEditor\ContentEditor;
 
+set_cors_headers('admin');
+haru_secure_session_start();
 requireAuth('read');
 
 $path = trim((string) ($_GET['path'] ?? ''));
