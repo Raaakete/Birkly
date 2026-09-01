@@ -7,7 +7,70 @@ class ContentEditor extends BaseField {
     /** Default bundled preview stylesheet (overridden per field via css_url). */
     public const DEFAULT_PREVIEW_CSS = '/fieldtypes/ContentEditor/preview/demo-preview.css';
 
+    private const PREVIEW_CSS_PROXY = '/fieldtypes/ContentEditor/preview-css.php';
+
     protected $config;
+
+    /**
+     * Normalize css_url to a project-relative path (e.g. css/style.css), or null when not project-local.
+     */
+    public static function normalizeProjectCssPath(string $cssUrl): ?string
+    {
+        $trimmed = trim($cssUrl);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $trimmed)) {
+            return null;
+        }
+
+        if (str_starts_with($trimmed, '/fieldtypes/')) {
+            return null;
+        }
+
+        if (str_starts_with($trimmed, '/project/')) {
+            $relative = ltrim(substr($trimmed, strlen('/project/')), '/');
+            return $relative !== '' ? $relative : null;
+        }
+
+        if ($trimmed === '/project') {
+            return null;
+        }
+
+        if (str_starts_with($trimmed, '/')) {
+            return ltrim($trimmed, '/');
+        }
+
+        if (str_starts_with($trimmed, 'project/')) {
+            $relative = substr($trimmed, strlen('project/'));
+            return $relative !== '' ? $relative : null;
+        }
+
+        return $trimmed;
+    }
+
+    /**
+     * URL the editor should fetch for preview CSS (proxy for project files, direct for bundled/external).
+     */
+    public static function resolvePreviewCssFetchUrl(string $cssUrl): string
+    {
+        $trimmed = trim($cssUrl);
+        if ($trimmed === '') {
+            return '';
+        }
+
+        $projectPath = self::normalizeProjectCssPath($trimmed);
+        if ($projectPath !== null) {
+            if (!function_exists('birkly_url')) {
+                require_once __DIR__ . '/../../core/birkly_paths.php';
+            }
+
+            return birkly_url(self::PREVIEW_CSS_PROXY . '?path=' . rawurlencode($projectPath));
+        }
+
+        return $trimmed;
+    }
     
     public function __construct(array $config) {
         parent::__construct($config);
@@ -28,8 +91,11 @@ class ContentEditor extends BaseField {
         $rawValue = $this->value ?? '';
         $valueAttr = htmlspecialchars($rawValue, ENT_QUOTES, 'UTF-8');
         $fieldId = 'field_' . $this->name;
-        $cssUrl = htmlspecialchars($this->config['css_url'] ?? '', ENT_QUOTES, 'UTF-8');
+        $rawCssUrl = $this->config['css_url'] ?? '';
+        $cssUrl = htmlspecialchars($rawCssUrl, ENT_QUOTES, 'UTF-8');
+        $cssFetchUrl = htmlspecialchars(self::resolvePreviewCssFetchUrl($rawCssUrl), ENT_QUOTES, 'UTF-8');
         $cssUrlAttr = $cssUrl ? ' data-css-url="' . $cssUrl . '"' : '';
+        $cssFetchAttr = $cssFetchUrl ? ' data-css-fetch-url="' . $cssFetchUrl . '"' : '';
         $metadataEndpoint = htmlspecialchars('/fieldtypes/ContentEditor/link-metadata.php', ENT_QUOTES, 'UTF-8');
         $metadataAttr = ' data-link-metadata="' . $metadataEndpoint . '"';
         $tabVisualId = 'tab_visual_' . $this->name;
@@ -37,7 +103,7 @@ class ContentEditor extends BaseField {
         $panelHtmlId = 'panel_html_' . $this->name;
         
         return <<<HTML
-        <div class="content-editor-wrapper" data-field-name="{$this->name}"{$cssUrlAttr}{$metadataAttr}>
+        <div class="content-editor-wrapper" data-field-name="{$this->name}"{$cssUrlAttr}{$cssFetchAttr}{$metadataAttr}>
             <div class="content-editor-mode-tabs" role="tablist" aria-label="Editor mode for {$this->label}">
                 <button type="button" class="content-editor-mode-tab is-active" id="{$tabVisualId}" data-mode="visual" role="tab" aria-selected="true" aria-controls="editor_{$this->name}" tabindex="0">Visual</button>
                 <button type="button" class="content-editor-mode-tab" id="{$tabHtmlId}" data-mode="html" role="tab" aria-selected="false" aria-controls="{$panelHtmlId}" tabindex="-1">HTML</button>
@@ -527,8 +593,8 @@ class ContentEditor extends BaseField {
         return <<<HTML
             <div class="field-config-section">
                 <label>CSS Preview URL</label>
-                <input type="url" name="fields[{$fieldIndex}][css_url]" class="input" value="{$cssUrl}" placeholder="{$defaultCss}">
-                <small class="form-text">Link an external CSS file to preview how content will look on your website. This CSS will be applied to this ContentEditor field in the entry editor. Example: <code>/project/styles.css</code> or bundled <code>{$defaultCss}</code>.</small>
+                <input type="text" name="fields[{$fieldIndex}][css_url]" class="input" value="{$cssUrl}" placeholder="{$defaultCss}" autocomplete="off" spellcheck="false">
+                <small class="form-text">Preview stylesheet for this field in the entry editor (not saved in entry HTML). Use a project path such as <code>/project/css/style.css</code> or <code>css/style.css</code>, the bundled <code>{$defaultCss}</code>, or a full <code>https://…</code> URL for external sites.</small>
             </div>
         HTML;
     }
