@@ -2291,6 +2291,9 @@
     }
 
     function formatDate(value, format) {
+        if (Birkly.dateFormatter && typeof Birkly.dateFormatter.formatDate === 'function') {
+            return Birkly.dateFormatter.formatDate(value, format || 'Y-m-d', Birkly.currentLanguage);
+        }
         if (!value) return '';
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return String(value);
