@@ -1824,11 +1824,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Load fieldtype-specific configuration UI
+    function getCollectionMultilanguageLanguages() {
+        var inputs = document.querySelectorAll('[name="multilanguage_languages[]"], [name="sub_collections[0][multilanguage_languages][]"]');
+        return Array.from(inputs).map(function (input) { return input.value; }).filter(Boolean);
+    }
+    window.getCollectionMultilanguageLanguages = getCollectionMultilanguageLanguages;
+
     function loadFieldtypeConfig(fieldIndex, fieldtype, fieldElement, existingData = {}) {
         const configContainer = fieldElement.querySelector('.fieldtype-config');
         if (!configContainer || !fieldtype) {
             return;
         }
+
+        existingData = existingData || {};
+        existingData._multilanguage_languages = getCollectionMultilanguageLanguages();
         
         // Load configuration UI from the fieldtype itself via API
         // Use POST instead of GET to avoid URL length limits for complex existingData

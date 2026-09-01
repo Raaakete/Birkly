@@ -12,6 +12,7 @@ require_once 'storage.php';
 require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../core/entry_multilang.php';
 require_once __DIR__ . '/../core/entry_storage.php';
+require_once __DIR__ . '/../core/entry_slug.php';
 
 // Load fieldtype base and simple autoloader so fieldtypes can be instantiated for list rendering
 $baseFieldPath = __DIR__ . '/../fieldtypes/BaseField.php';
@@ -847,6 +848,92 @@ function birkly_admin_multilang_apply_field_value(string $html, string $fieldNam
 /**
  * Build per-language field payloads for the entry editor when multilanguage is enabled.
  */
+function birkly_admin_prepare_fieldtype_config(array $field, $value, ?string $langCode, array $entry = []): array
+{
+    require_once __DIR__ . '/../core/content_locale.php';
+
+    $name = (string) ($field['name'] ?? '');
+    $type = (string) ($field['type'] ?? '');
+
+    $fieldConfig = [
+        'name' => $name,
+        'label' => $field['label'] ?? $name,
+        'value' => $value,
+        'required' => $field['required'] ?? false,
+        'help' => $field['help_text'] ?? '',
+        'group' => $field['group'] ?? 'Content',
+        'options' => $field['options'] ?? [],
+        'field_type' => $type,
+        'language' => $langCode,
+    ];
+
+    foreach ($field as $key => $val) {
+        if (in_array($key, ['name', 'label', 'type', 'required', 'help_text', 'group', 'options', 'id', 'html', 'label_for_id', 'lang_value'], true)) {
+            continue;
+        }
+        $fieldConfig[$key] = $val;
+    }
+
+    if (in_array($type, ['date', 'datetime', 'time'], true)) {
+        $fieldConfig['display_format'] = birkly_locale_field_display_format($field, $langCode, $type);
+    }
+
+    if (isset($entry['id'])) {
+        $fieldConfig['entry_id'] = $entry['id'];
+        $fieldConfig['user_id'] = $entry['user_id'] ?? '';
+    }
+
+    return $fieldConfig;
+}
+
+/**
+ * Render fieldtype HTML for a specific entry language tab.
+ */
+function birkly_admin_render_field_html_for_language(array $field, $value, string $langCode, array $entry): string
+{
+    $type = (string) ($field['type'] ?? '');
+    $name = (string) ($field['name'] ?? '');
+    if ($type === '' || $name === '') {
+        return '';
+    }
+
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once __DIR__ . '/admin_fieldtypes.php';
+
+    $className = getFieldtypeClass($type);
+    if (!$className || !class_exists($className)) {
+        return '<div class="field-error">Fieldtype "' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . '" not found</div>';
+    }
+
+    try {
+        $fieldConfig = birkly_admin_prepare_fieldtype_config($field, $value, $langCode, $entry);
+        $ft = new $className($fieldConfig);
+        if (!method_exists($ft, 'render')) {
+            return '<div class="field-error">Fieldtype "' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . '" missing render() method</div>';
+        }
+
+        $renderedHtml = $ft->render();
+        $renderedHtml = preg_replace_callback(
+            '/<(input|textarea|select|div|span)([^>]*)>/i',
+            static function ($matches) use ($type) {
+                $tag = $matches[1];
+                $attrs = $matches[2];
+                if (strpos($attrs, 'data-fieldtype') === false) {
+                    $attrs .= ' data-fieldtype="' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . '"';
+                }
+                return '<' . $tag . $attrs . '>';
+            },
+            $renderedHtml,
+            1
+        );
+
+        return $renderedHtml;
+    } catch (\Throwable $e) {
+        error_log('Per-language field render error for ' . $type . ': ' . $e->getMessage());
+        return '<div class="field-error">Fieldtype "' . htmlspecialchars($type, ENT_QUOTES, 'UTF-8') . '" failed: ' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</div>';
+    }
+}
+
 function birkly_admin_build_language_fields(array $fields, array $entry, array $collectionData, bool $includeFieldHtml): array
 {
     $languages = $collectionData['multilanguage']['languages'] ?? [];
@@ -872,14 +959,25 @@ function birkly_admin_build_language_fields(array $fields, array $entry, array $
                     $langCode
                 );
             }
-            if ($includeFieldHtml && !empty($f['html'])) {
-                $langField['html'] = birkly_admin_multilang_field_html($f['html'], $name, $langCode);
-                $langField['html'] = birkly_admin_multilang_apply_field_value(
-                    $langField['html'],
-                    $name,
-                    $langCode,
-                    $langValue
-                );
+            if ($includeFieldHtml) {
+                if (birkly_admin_field_needs_per_language_render((string) ($f['type'] ?? ''))) {
+                    $langField['html'] = birkly_admin_render_field_html_for_language($f, $langValue, $langCode, $entry);
+                    $langField['html'] = birkly_admin_multilang_field_html($langField['html'], $name, $langCode);
+                    $langField['html'] = birkly_admin_multilang_apply_field_value(
+                        $langField['html'],
+                        $name,
+                        $langCode,
+                        $langValue
+                    );
+                } elseif (!empty($f['html'])) {
+                    $langField['html'] = birkly_admin_multilang_field_html($f['html'], $name, $langCode);
+                    $langField['html'] = birkly_admin_multilang_apply_field_value(
+                        $langField['html'],
+                        $name,
+                        $langCode,
+                        $langValue
+                    );
+                }
             }
             $langFields[] = $langField;
         }
@@ -1386,29 +1484,12 @@ function getEntryEditorData($includeFieldHtml = false) {
                     }
                     
                     // Build config array with all field settings
-                    $fieldConfig = [
-                        'name' => $name,
-                        'label' => $f['label'] ?? $name,
-                        'value' => $value,
-                        'required' => $f['required'] ?? false,
-                        'help' => $f['help_text'] ?? '',
-                        'group' => $f['group'] ?? 'Content',
-                        'options' => $f['options'] ?? [],
-                        'field_type' => $type,
-                    ];
-                    
-                    // Add all other field settings to config (format, css_url, etc.)
-                    foreach ($f as $key => $val) {
-                        if (!in_array($key, ['name', 'label', 'type', 'required', 'help_text', 'group', 'options', 'id'])) {
-                            $fieldConfig[$key] = $val;
-                        }
-                    }
-                    
-                    // Add entry context for fieldtypes that need it (e.g., password fieldtype needs user_id)
-                    if (isset($payload['entry'])) {
-                        $fieldConfig['entry_id'] = $payload['entry']['id'] ?? '';
-                        $fieldConfig['user_id'] = $payload['entry']['user_id'] ?? '';
-                    }
+                    $fieldConfig = birkly_admin_prepare_fieldtype_config(
+                        $f,
+                        $value,
+                        $multilanguageEnabled ? $defaultLang : null,
+                        $payload['entry'] ?? []
+                    );
                     
                     $ft = new $className($fieldConfig);
                     
@@ -1708,6 +1789,11 @@ function getEntriesData() {
         $preferredWidth = $fields[0]['width'] ?? '240px';
     }
 
+    $listDisplayLanguage = 'en';
+    if (!empty($collectionData['multilanguage']['enabled']) && !empty($collectionData['multilanguage']['languages'])) {
+        $listDisplayLanguage = $collectionData['multilanguage']['languages'][0];
+    }
+
     foreach ($entries as $entry) {
         $cells = [];
         $title = birkly_admin_extract_entry_title($entry, $collectionData);
@@ -1756,7 +1842,11 @@ function getEntriesData() {
 
                     $ft = new $fieldtypeClass($ftConfig);
                     if (method_exists($ft, 'renderListCell')) {
-                        $rendered = $ft->renderListCell($value, ['entry' => $entry, 'field' => $field]);
+                        $rendered = $ft->renderListCell($value, [
+                            'entry' => $entry,
+                            'field' => $field,
+                            'language' => $listDisplayLanguage,
+                        ]);
                     }
                 }
             } catch (\Throwable $e) {
@@ -2199,7 +2289,11 @@ function processEntryForList($entry, $fields, $collectionData) {
                 
                 $ft = new $fieldtypeClass($ftConfig);
                 if (method_exists($ft, 'renderListCell')) {
-                    $rendered = $ft->renderListCell($value, ['entry' => $entry, 'field' => $field]);
+                    $rendered = $ft->renderListCell($value, [
+                        'entry' => $entry,
+                        'field' => $field,
+                        'language' => $defaultLanguage,
+                    ]);
                 }
             }
         } catch (\Throwable $e) {

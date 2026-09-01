@@ -310,6 +310,28 @@
         window.history.replaceState(window.history.state, '', url.toString());
     }
 
+    function titleHasAsciiSlugChars(value) {
+        return (value || '').replace(/[^a-z0-9\s-]/gi, '').trim() !== '';
+    }
+
+    function updateSlugUnicodeHint() {
+        const hint = document.getElementById('slug-unicode-hint');
+        const slugField = document.getElementById('slug');
+        const autoSlugCheckbox = document.getElementById('auto_slug_checkbox');
+        const titleField = findTitleField();
+        if (!hint || !slugField) return;
+
+        const title = titleField ? (titleField.value || '').trim() : '';
+        const slug = (slugField.value || '').trim();
+        const entryId = getEntryIdFallback();
+        const autoOn = autoSlugCheckbox ? autoSlugCheckbox.checked : true;
+        const lacksAscii = title !== '' && !titleHasAsciiSlugChars(title);
+        const slugIsId = entryId && slug === entryId;
+        const slugEmpty = slug === '';
+
+        hint.hidden = !(lacksAscii && autoOn && (slugEmpty || slugIsId));
+    }
+
     function initSlugGeneration() {
         const titleField = findTitleField();
         const slugField = document.getElementById('slug');
@@ -325,10 +347,14 @@
         }
 
         function regenerateSlug() {
-            if (autoSlugCheckbox && !autoSlugCheckbox.checked) return;
+            if (autoSlugCheckbox && !autoSlugCheckbox.checked) {
+                updateSlugUnicodeHint();
+                return;
+            }
             const title = titleField ? (titleField.value || '').trim() : '';
             const fallbackId = getEntryIdFallback();
             slugField.value = title ? normalizeSlug(title) : normalizeSlug(fallbackId);
+            updateSlugUnicodeHint();
         }
 
         if (autoSlugCheckbox) {
@@ -348,7 +374,10 @@
                 autoSlugCheckbox.checked = false;
                 syncAutoSlugHidden();
             }
+            updateSlugUnicodeHint();
         });
+
+        updateSlugUnicodeHint();
     }
 
     /**

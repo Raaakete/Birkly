@@ -761,15 +761,30 @@ try {
                 if (isset($fieldData['option-label']) && isset($fieldData['option-value'])) {
                     $labels = is_array($fieldData['option-label']) ? $fieldData['option-label'] : [$fieldData['option-label']];
                     $values = is_array($fieldData['option-value']) ? $fieldData['option-value'] : [$fieldData['option-value']];
+                    $optionLabelsByLang = is_array($fieldData['option-labels'] ?? null) ? $fieldData['option-labels'] : [];
                     
                     for ($i = 0; $i < count($labels); $i++) {
                         $label = trim($labels[$i] ?? '');
                         $value = trim($values[$i] ?? '');
                         if (!empty($label)) {
-                            $options[] = [
+                            $optionRow = [
                                 'label' => $label,
-                                'value' => !empty($value) ? $value : strtolower(preg_replace('/[^a-z0-9]+/', '_', $label))
+                                'value' => !empty($value) ? $value : strtolower(preg_replace('/[^a-z0-9]+/', '_', $label)),
                             ];
+                            if (isset($optionLabelsByLang[$i]) && is_array($optionLabelsByLang[$i])) {
+                                $translated = [];
+                                foreach ($optionLabelsByLang[$i] as $langCode => $transLabel) {
+                                    $langCode = strtolower(str_replace('_', '-', trim((string) $langCode)));
+                                    $transLabel = trim((string) $transLabel);
+                                    if ($langCode !== '' && $transLabel !== '') {
+                                        $translated[$langCode] = $transLabel;
+                                    }
+                                }
+                                if ($translated !== []) {
+                                    $optionRow['labels'] = $translated;
+                                }
+                            }
+                            $options[] = $optionRow;
                         }
                     }
                 }

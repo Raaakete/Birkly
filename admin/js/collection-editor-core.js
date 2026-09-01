@@ -530,7 +530,7 @@
                 var fieldIndex = String(optionsList.id || '').replace('options_list_', '');
                 if (!fieldIndex) return;
 
-                optionsList.querySelectorAll('.option-item').forEach(function (item) {
+                optionsList.querySelectorAll('.option-item').forEach(function (item, optionIndex) {
                     var labelInput = item.querySelector('.option-label');
                     var valueInput = item.querySelector('.option-value');
                     if (!labelInput || !valueInput) return;
@@ -549,6 +549,17 @@
 
                     form.appendChild(labelHidden);
                     form.appendChild(valueHidden);
+
+                    item.querySelectorAll('.option-label-lang').forEach(function (langInput) {
+                        var langCode = langInput.dataset.lang || '';
+                        if (!langCode) return;
+                        var langHidden = document.createElement('input');
+                        langHidden.type = 'hidden';
+                        langHidden.name = 'fields[' + fieldIndex + '][option-labels][' + optionIndex + '][' + langCode + ']';
+                        langHidden.value = langInput.value;
+                        langHidden.dataset.collectionEditorGenerated = 'true';
+                        form.appendChild(langHidden);
+                    });
                 });
             });
         }
