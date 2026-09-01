@@ -465,10 +465,14 @@
 .entry-language-tabs .language-tabs-nav { margin-block-end: var(--space-4); }
 
 .entry-editor-page .language-tab-content {
-  display: flex;
+  display: none;
   flex-direction: column;
   gap: var(--chrome-content-gap);
   min-width: 0;
+}
+
+.entry-editor-page .language-tab-content.active {
+  display: flex;
 }
 
 /* ============================================

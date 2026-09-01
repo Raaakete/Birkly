@@ -183,7 +183,6 @@
 }
 
 .entry-editor-page .editor-content,
-.entry-editor-page .language-tab-content,
 .collection-editor-page .editor-content {
   gap: var(--chrome-content-gap);
 }
