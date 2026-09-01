@@ -33,13 +33,6 @@ if (strpos($html, 'data-css-url="/project/styles.css"') === false) {
     echo "PASS: render exposes data-css-url\n";
 }
 
-if (strpos($html, 'data-css-fetch-url=') === false || strpos($html, 'preview-css.php?path=styles.css') === false) {
-    echo "FAIL: render exposes project CSS proxy fetch URL\n";
-    $failures++;
-} else {
-    echo "PASS: render exposes project CSS proxy fetch URL\n";
-}
-
 if (ContentEditor::normalizeProjectCssPath('/project/css/style.css') !== 'css/style.css') {
     echo "FAIL: normalizeProjectCssPath strips /project/\n";
     $failures++;
@@ -62,7 +55,7 @@ if (ContentEditor::normalizeProjectCssPath('https://example.com/site.css') !== n
 }
 
 $proxyUrl = ContentEditor::resolvePreviewCssFetchUrl('/project/css/style.css');
-if ($proxyUrl === '' || !str_contains($proxyUrl, 'preview-css.php?path=css%2Fstyle.css')) {
+if ($proxyUrl === '' || !str_contains($proxyUrl, 'content_editor_preview_css.php?path=css%2Fstyle.css')) {
     echo "FAIL: resolvePreviewCssFetchUrl uses proxy for project path\n";
     $failures++;
 } else {
@@ -70,11 +63,11 @@ if ($proxyUrl === '' || !str_contains($proxyUrl, 'preview-css.php?path=css%2Fsty
 }
 
 $bundledUrl = ContentEditor::resolvePreviewCssFetchUrl(ContentEditor::DEFAULT_PREVIEW_CSS);
-if ($bundledUrl !== ContentEditor::DEFAULT_PREVIEW_CSS) {
-    echo "FAIL: resolvePreviewCssFetchUrl keeps bundled path direct\n";
+if ($bundledUrl === '' || !str_contains($bundledUrl, '/fieldtypes/ContentEditor/preview/demo-preview.css')) {
+    echo "FAIL: resolvePreviewCssFetchUrl resolves bundled preview CSS path\n";
     $failures++;
 } else {
-    echo "PASS: resolvePreviewCssFetchUrl keeps bundled path direct\n";
+    echo "PASS: resolvePreviewCssFetchUrl resolves bundled preview CSS path\n";
 }
 
 $externalUrl = ContentEditor::resolvePreviewCssFetchUrl('https://cdn.example.com/theme.css');
@@ -85,12 +78,27 @@ if ($externalUrl !== 'https://cdn.example.com/theme.css') {
     echo "PASS: resolvePreviewCssFetchUrl keeps external URL direct\n";
 }
 
-$proxyPhp = __DIR__ . '/../preview-css.php';
+$proxyPhp = __DIR__ . '/../../../api/content_editor_preview_css.php';
 if (!is_file($proxyPhp)) {
-    echo "FAIL: preview-css.php proxy endpoint missing\n";
+    echo "FAIL: content_editor_preview_css.php API endpoint missing\n";
     $failures++;
 } else {
-    echo "PASS: preview-css.php proxy endpoint exists\n";
+    echo "PASS: content_editor_preview_css.php API endpoint exists\n";
+}
+
+$legacyProxyPhp = __DIR__ . '/../preview-css.php';
+if (!is_file($legacyProxyPhp) || strpos(file_get_contents($legacyProxyPhp), 'content_editor_preview_css.php') === false) {
+    echo "FAIL: legacy preview-css.php shim\n";
+    $failures++;
+} else {
+    echo "PASS: legacy preview-css.php shim\n";
+}
+
+if (strpos($html, 'content_editor_preview_css.php?path=styles.css') === false) {
+    echo "FAIL: render exposes project CSS proxy fetch URL\n";
+    $failures++;
+} else {
+    echo "PASS: render exposes project CSS proxy fetch URL\n";
 }
 
 if (strpos($html, 'content-editor-preview-badge') === false) {
@@ -116,7 +124,8 @@ if (ContentEditor::DEFAULT_PREVIEW_CSS !== '/fieldtypes/ContentEditor/preview/de
 }
 
 $previewJs = __DIR__ . '/../core/preview-css.js';
-if (!is_file($previewJs) || strpos(file_get_contents($previewJs), 'cssFetchUrl') === false) {
+$previewJsContent = is_file($previewJs) ? file_get_contents($previewJs) : '';
+if ($previewJsContent === '' || strpos($previewJsContent, 'resolveFetchUrl') === false) {
     echo "FAIL: preview-css.js module\n";
     $failures++;
 } else {

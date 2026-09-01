@@ -12,6 +12,15 @@ window.ContentEditorPreview = {
     }
   },
 
+  resolveFetchUrl(cssUrl) {
+    const trimmed = (cssUrl || '').trim();
+    if (!trimmed) return '';
+    if (window.Birkly && typeof window.Birkly.url === 'function') {
+      return window.Birkly.url(trimmed);
+    }
+    return this.resolveUrl(trimmed);
+  },
+
   setStatus(wrapper, state, detail) {
     if (!wrapper) return;
     const badge = wrapper.querySelector('.content-editor-preview-badge');
@@ -151,7 +160,7 @@ window.ContentEditorPreview = {
     if (!wrapper) return;
 
     const storedUrl = (wrapper.dataset.cssUrl || '').trim();
-    const fetchUrl = (wrapper.dataset.cssFetchUrl || '').trim() || this.resolveUrl(storedUrl);
+    const fetchUrl = this.resolveFetchUrl(wrapper.dataset.cssFetchUrl || '') || this.resolveFetchUrl(storedUrl);
     if (!fetchUrl) {
       this.setStatus(wrapper, 'idle');
       return;
@@ -167,7 +176,7 @@ window.ContentEditorPreview = {
 
     this.setStatus(wrapper, 'loading', storedUrl || fetchUrl);
 
-    fetch(fetchUrl)
+    fetch(fetchUrl, { credentials: 'same-origin' })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
