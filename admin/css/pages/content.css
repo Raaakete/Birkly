@@ -178,8 +178,19 @@
 .editor-content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--chrome-content-gap);
   min-width: 0;
+}
+
+.entry-editor-page .editor-content,
+.entry-editor-page .language-tab-content,
+.collection-editor-page .editor-content {
+  gap: var(--chrome-content-gap);
+}
+
+.entry-editor-page .field-block,
+.collection-editor-page .field-block {
+  gap: var(--space-3);
 }
 
 .field-header {

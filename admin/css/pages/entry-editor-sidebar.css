@@ -464,6 +464,13 @@
 /* 8. Multilanguage field tabs — shared .tabs / .tab (components/tabs.css) */
 .entry-language-tabs .language-tabs-nav { margin-block-end: var(--space-4); }
 
+.entry-editor-page .language-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chrome-content-gap);
+  min-width: 0;
+}
+
 /* ============================================
    9. Checkbox rows
    .checkbox-label has no component owner yet, so it is scoped to this page.
