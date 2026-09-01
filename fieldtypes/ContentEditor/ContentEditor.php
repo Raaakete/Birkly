@@ -7,7 +7,7 @@ class ContentEditor extends BaseField {
     /** Default bundled preview stylesheet (overridden per field via css_url). */
     public const DEFAULT_PREVIEW_CSS = '/fieldtypes/ContentEditor/preview/demo-preview.css';
 
-    private const PREVIEW_CSS_PROXY = '/fieldtypes/ContentEditor/preview-css.php';
+    private const PREVIEW_CSS_PROXY = '/api/content_editor_preview_css.php';
 
     protected $config;
 
@@ -69,7 +69,33 @@ class ContentEditor extends BaseField {
             return birkly_url(self::PREVIEW_CSS_PROXY . '?path=' . rawurlencode($projectPath));
         }
 
-        return $trimmed;
+        if (!function_exists('birkly_url')) {
+            require_once __DIR__ . '/../../core/birkly_paths.php';
+        }
+
+        return birkly_url($trimmed);
+    }
+
+    /**
+     * Read a project CSS file, trying common path variants when the exact path is missing.
+     *
+     * @return array{path:string,content:string,size:int}|null
+     */
+    public static function readProjectPreviewCssFile(ProjectSiteFileSystem $fs, string $path): ?array
+    {
+        $candidates = [$path];
+        if (!str_contains($path, '/')) {
+            $candidates[] = 'css/' . $path;
+        }
+
+        foreach ($candidates as $candidate) {
+            $file = $fs->readFile($candidate);
+            if ($file !== null) {
+                return $file;
+            }
+        }
+
+        return null;
     }
     
     public function __construct(array $config) {
