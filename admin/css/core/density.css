@@ -35,9 +35,21 @@ body[data-density="compact"] .settings-form .form-group {
   gap: var(--space-2);
 }
 
+body[data-density="compact"] .entry-editor-page .editor-content,
+body[data-density="compact"] .entry-editor-page .language-tab-content,
+body[data-density="compact"] .collection-editor-page .editor-content {
+  gap: var(--space-5);
+}
+
 body[data-density="large"] .card-body,
 body[data-density="large"] .settings-form .form-group {
   gap: var(--space-5);
+}
+
+body[data-density="large"] .entry-editor-page .editor-content,
+body[data-density="large"] .entry-editor-page .language-tab-content,
+body[data-density="large"] .collection-editor-page .editor-content {
+  gap: var(--space-8);
 }
 
 /* Selectable density / security option cards (Account, Settings → Security) */
