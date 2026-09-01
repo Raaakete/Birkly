@@ -33,6 +33,66 @@ if (strpos($html, 'data-css-url="/project/styles.css"') === false) {
     echo "PASS: render exposes data-css-url\n";
 }
 
+if (strpos($html, 'data-css-fetch-url=') === false || strpos($html, 'preview-css.php?path=styles.css') === false) {
+    echo "FAIL: render exposes project CSS proxy fetch URL\n";
+    $failures++;
+} else {
+    echo "PASS: render exposes project CSS proxy fetch URL\n";
+}
+
+if (ContentEditor::normalizeProjectCssPath('/project/css/style.css') !== 'css/style.css') {
+    echo "FAIL: normalizeProjectCssPath strips /project/\n";
+    $failures++;
+} else {
+    echo "PASS: normalizeProjectCssPath strips /project/\n";
+}
+
+if (ContentEditor::normalizeProjectCssPath('css/style.css') !== 'css/style.css') {
+    echo "FAIL: normalizeProjectCssPath accepts relative path\n";
+    $failures++;
+} else {
+    echo "PASS: normalizeProjectCssPath accepts relative path\n";
+}
+
+if (ContentEditor::normalizeProjectCssPath('https://example.com/site.css') !== null) {
+    echo "FAIL: normalizeProjectCssPath rejects external URL\n";
+    $failures++;
+} else {
+    echo "PASS: normalizeProjectCssPath rejects external URL\n";
+}
+
+$proxyUrl = ContentEditor::resolvePreviewCssFetchUrl('/project/css/style.css');
+if ($proxyUrl === '' || !str_contains($proxyUrl, 'preview-css.php?path=css%2Fstyle.css')) {
+    echo "FAIL: resolvePreviewCssFetchUrl uses proxy for project path\n";
+    $failures++;
+} else {
+    echo "PASS: resolvePreviewCssFetchUrl uses proxy for project path\n";
+}
+
+$bundledUrl = ContentEditor::resolvePreviewCssFetchUrl(ContentEditor::DEFAULT_PREVIEW_CSS);
+if ($bundledUrl !== ContentEditor::DEFAULT_PREVIEW_CSS) {
+    echo "FAIL: resolvePreviewCssFetchUrl keeps bundled path direct\n";
+    $failures++;
+} else {
+    echo "PASS: resolvePreviewCssFetchUrl keeps bundled path direct\n";
+}
+
+$externalUrl = ContentEditor::resolvePreviewCssFetchUrl('https://cdn.example.com/theme.css');
+if ($externalUrl !== 'https://cdn.example.com/theme.css') {
+    echo "FAIL: resolvePreviewCssFetchUrl keeps external URL direct\n";
+    $failures++;
+} else {
+    echo "PASS: resolvePreviewCssFetchUrl keeps external URL direct\n";
+}
+
+$proxyPhp = __DIR__ . '/../preview-css.php';
+if (!is_file($proxyPhp)) {
+    echo "FAIL: preview-css.php proxy endpoint missing\n";
+    $failures++;
+} else {
+    echo "PASS: preview-css.php proxy endpoint exists\n";
+}
+
 if (strpos($html, 'content-editor-preview-badge') === false) {
     echo "FAIL: preview badge in toolbar\n";
     $failures++;
@@ -56,7 +116,7 @@ if (ContentEditor::DEFAULT_PREVIEW_CSS !== '/fieldtypes/ContentEditor/preview/de
 }
 
 $previewJs = __DIR__ . '/../core/preview-css.js';
-if (!is_file($previewJs) || strpos(file_get_contents($previewJs), 'ContentEditorPreview') === false) {
+if (!is_file($previewJs) || strpos(file_get_contents($previewJs), 'cssFetchUrl') === false) {
     echo "FAIL: preview-css.js module\n";
     $failures++;
 } else {
