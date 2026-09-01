@@ -13,19 +13,72 @@
     }
     
     /**
+     * Map Birkly language codes to BCP 47 locales.
+     */
+    function localeToBcp47(code) {
+        var normalized = String(code || 'en').toLowerCase().replace(/_/g, '-');
+        var map = {
+            'en': 'en-US',
+            'de': 'de-DE',
+            'fr': 'fr-FR',
+            'es': 'es-ES',
+            'it': 'it-IT',
+            'pt': 'pt-BR',
+            'nl': 'nl-NL',
+            'ja': 'ja-JP',
+            'zh': 'zh-CN',
+            'zh-tw': 'zh-TW',
+            'ko': 'ko-KR',
+            'ar': 'ar-SA',
+            'ru': 'ru-RU',
+            'pl': 'pl-PL',
+            'sv': 'sv-SE',
+            'da': 'da-DK',
+            'fi': 'fi-FI',
+            'no': 'nb-NO'
+        };
+        return map[normalized] || normalized.replace(/-/g, '_');
+    }
+
+    /**
+     * Default display format for a language when template omits explicit format.
+     */
+    function defaultFormatForLanguage(langCode, includeTime) {
+        var lang = String(langCode || 'en').toLowerCase().replace(/_/g, '-');
+        if (includeTime) {
+            if (lang === 'en') return 'm/d/Y g:i A';
+            if (lang === 'de') return 'd.m.Y H:i';
+            if (lang === 'ja' || lang === 'zh' || lang === 'zh-tw') return 'Y/m/d H:i';
+            if (lang === 'ko') return 'Y.m.d H:i';
+            return 'Y-m-d H:i';
+        }
+        if (lang === 'en') return 'm/d/Y';
+        if (lang === 'de') return 'd.m.Y';
+        if (lang === 'ja' || lang === 'zh' || lang === 'zh-tw') return 'Y/m/d';
+        if (lang === 'ko') return 'Y.m.d';
+        return 'Y-m-d';
+    }
+
+    /**
      * Date formatting namespace
      */
     Birkly.dateFormatter = {
+        localeToBcp47: localeToBcp47,
+        defaultFormatForLanguage: defaultFormatForLanguage,
+
         /**
          * Format date string using PHP-style format codes
          * @param {string} dateString - Date string to format
          * @param {string} format - Format string (e.g., "Y-m-d H:i")
+         * @param {string} [localeCode] - Birkly language code for month names
          * @returns {string} Formatted date string
          */
-        formatDate: function(dateString, format) {
+        formatDate: function(dateString, format, localeCode) {
             if (!dateString) return '';
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return dateString;
+
+            var bcp47 = localeToBcp47(localeCode || (Birkly.currentLanguage || 'en'));
             
             // Date and time formatting (PHP-style format codes)
             const map = {
@@ -36,8 +89,8 @@
                 'n': date.getMonth() + 1,
                 'd': String(date.getDate()).padStart(2, '0'),
                 'j': date.getDate(),
-                'F': date.toLocaleString('en-US', { month: 'long' }),
-                'M': date.toLocaleString('en-US', { month: 'short' }),
+                'F': date.toLocaleString(bcp47, { month: 'long' }),
+                'M': date.toLocaleString(bcp47, { month: 'short' }),
                 // Time
                 'H': String(date.getHours()).padStart(2, '0'),
                 'h': String(date.getHours() % 12 || 12).padStart(2, '0'),
@@ -70,7 +123,7 @@
         
         /**
          * Format a value for output, applying date formatting if it's a date field
-         * Defaults to YYYY-MM-DD for date fields without explicit format
+         * Defaults to locale-aware format for date fields without explicit format
          * @param {*} value - Value to format
          * @param {string} fieldName - Field name (for date detection)
          * @returns {string} Formatted and escaped value
@@ -85,21 +138,20 @@
             
             if (isDateField) {
                 const valueStr = String(value);
-                // If it's already in YYYY-MM-DD format, return as-is
+                const lang = Birkly.currentLanguage || 'en';
+                const defaultFormat = defaultFormatForLanguage(lang, valueStr.indexOf('T') !== -1);
+                // If it's already in YYYY-MM-DD format, apply locale display
                 if (valueStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    return Birkly.utils.escapeHtml(valueStr);
+                    return Birkly.utils.escapeHtml(this.formatDate(valueStr, defaultFormat, lang));
                 }
-                // If it's an ISO datetime string, extract date part
+                // If it's an ISO datetime string, format with locale
                 if (valueStr.match(/^\d{4}-\d{2}-\d{2}T/)) {
-                    return Birkly.utils.escapeHtml(valueStr.substring(0, 10));
+                    return Birkly.utils.escapeHtml(this.formatDate(valueStr, defaultFormat, lang));
                 }
                 // Try to parse and format as date
                 const date = new Date(valueStr);
                 if (!isNaN(date.getTime())) {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return Birkly.utils.escapeHtml(`${year}-${month}-${day}`);
+                    return Birkly.utils.escapeHtml(this.formatDate(valueStr, defaultFormat, lang));
                 }
             }
             

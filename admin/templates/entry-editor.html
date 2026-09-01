@@ -258,8 +258,11 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     Auto-generate slug from title
                                 </label>
                                 <small class="form-text">
-                                    URL-friendly identifier for this entry
+                                    URL-friendly identifier (ASCII letters, numbers, and hyphens). Titles support any language; non-Latin titles need a manual slug for readable URLs.
                                 </small>
+                                <div id="slug-unicode-hint" class="form-text slug-unicode-hint" hidden>
+                                    This title cannot produce an ASCII slug. Enter a manual slug (e.g. romanized text or <code>post-2026</code>) or the entry ID will be used.
+                                </div>
                                 <div class="permalink-preview" id="permalink-preview">
                                     <div class="permalink-preview-label">Permalink preview</div>
                                     <div class="permalink-preview-url">

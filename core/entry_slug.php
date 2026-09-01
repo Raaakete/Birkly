@@ -291,3 +291,40 @@ function birkly_validate_content_slug(string $slug): bool
 
     return preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/', $slug) === 1;
 }
+
+/**
+ * Whether a fieldtype needs per-language HTML render (not just name/id rewrite).
+ */
+function birkly_admin_field_needs_per_language_render(string $fieldType): bool
+{
+    return in_array($fieldType, ['select', 'radio', 'multiselect'], true);
+}
+
+/**
+ * Whether the title has no characters that produce an ASCII slug.
+ */
+function birkly_slug_title_lacks_ascii_slug_chars(string $title): bool
+{
+    $title = trim($title);
+    if ($title === '') {
+        return false;
+    }
+
+    return preg_replace('/[^a-z0-9\s-]/i', '', $title) === '';
+}
+
+/**
+ * Whether slug matches entry id fallback for a title without ASCII slug characters.
+ */
+function birkly_slug_is_id_fallback_for_unicode_title(string $title, string $slug, ?string $entryId): bool
+{
+    if ($entryId === null || trim($entryId) === '') {
+        return false;
+    }
+
+    if (!birkly_slug_title_lacks_ascii_slug_chars($title)) {
+        return false;
+    }
+
+    return birkly_normalize_slug($slug) === birkly_normalize_slug($entryId);
+}
