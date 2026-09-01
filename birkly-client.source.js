@@ -637,10 +637,42 @@
     // MODULE: Date Formatter (birkly-date.js)
     // =====================================================================
     (function() {
-        Birkly.dateFormatter.formatDate = function(dateString, format) {
+        function localeToBcp47(code) {
+            var normalized = String(code || 'en').toLowerCase().replace(/_/g, '-');
+            var map = {
+                'en': 'en-US', 'de': 'de-DE', 'fr': 'fr-FR', 'es': 'es-ES', 'it': 'it-IT',
+                'pt': 'pt-BR', 'nl': 'nl-NL', 'ja': 'ja-JP', 'zh': 'zh-CN', 'zh-tw': 'zh-TW',
+                'ko': 'ko-KR', 'ar': 'ar-SA', 'ru': 'ru-RU', 'pl': 'pl-PL', 'sv': 'sv-SE',
+                'da': 'da-DK', 'fi': 'fi-FI', 'no': 'nb-NO'
+            };
+            return map[normalized] || normalized.replace(/-/g, '_');
+        }
+
+        function defaultFormatForLanguage(langCode, includeTime) {
+            var lang = String(langCode || 'en').toLowerCase().replace(/_/g, '-');
+            if (includeTime) {
+                if (lang === 'en') return 'm/d/Y g:i A';
+                if (lang === 'de') return 'd.m.Y H:i';
+                if (lang === 'ja' || lang === 'zh' || lang === 'zh-tw') return 'Y/m/d H:i';
+                if (lang === 'ko') return 'Y.m.d H:i';
+                return 'Y-m-d H:i';
+            }
+            if (lang === 'en') return 'm/d/Y';
+            if (lang === 'de') return 'd.m.Y';
+            if (lang === 'ja' || lang === 'zh' || lang === 'zh-tw') return 'Y/m/d';
+            if (lang === 'ko') return 'Y.m.d';
+            return 'Y-m-d';
+        }
+
+        Birkly.dateFormatter.localeToBcp47 = localeToBcp47;
+        Birkly.dateFormatter.defaultFormatForLanguage = defaultFormatForLanguage;
+
+        Birkly.dateFormatter.formatDate = function(dateString, format, localeCode) {
             if (!dateString) return '';
             const date = new Date(dateString);
             if (isNaN(date.getTime())) return dateString;
+
+            var bcp47 = localeToBcp47(localeCode || (Birkly.currentLanguage || 'en'));
             
             const map = {
                 'Y': date.getFullYear(),
@@ -649,8 +681,8 @@
                 'n': date.getMonth() + 1,
                 'd': String(date.getDate()).padStart(2, '0'),
                 'j': date.getDate(),
-                'F': date.toLocaleString('en-US', { month: 'long' }),
-                'M': date.toLocaleString('en-US', { month: 'short' }),
+                'F': date.toLocaleString(bcp47, { month: 'long' }),
+                'M': date.toLocaleString(bcp47, { month: 'short' }),
                 'H': String(date.getHours()).padStart(2, '0'),
                 'h': String(date.getHours() % 12 || 12).padStart(2, '0'),
                 'G': date.getHours(),
@@ -684,18 +716,17 @@
             
             if (isDateField) {
                 const valueStr = String(value);
+                const lang = Birkly.currentLanguage || 'en';
+                const defaultFormat = defaultFormatForLanguage(lang, valueStr.indexOf('T') !== -1);
                 if (valueStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                    return Birkly.utils.escapeHtml(valueStr);
+                    return Birkly.utils.escapeHtml(Birkly.dateFormatter.formatDate(valueStr, defaultFormat, lang));
                 }
                 if (valueStr.match(/^\d{4}-\d{2}-\d{2}T/)) {
-                    return Birkly.utils.escapeHtml(valueStr.substring(0, 10));
+                    return Birkly.utils.escapeHtml(Birkly.dateFormatter.formatDate(valueStr, defaultFormat, lang));
                 }
                 const date = new Date(valueStr);
                 if (!isNaN(date.getTime())) {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    return Birkly.utils.escapeHtml(`${year}-${month}-${day}`);
+                    return Birkly.utils.escapeHtml(Birkly.dateFormatter.formatDate(valueStr, defaultFormat, lang));
                 }
             }
             

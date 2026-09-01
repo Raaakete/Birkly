@@ -3,7 +3,15 @@ namespace Birkly\FieldTypes\Date;
 
 use Birkly\FieldTypes\BaseField;
 
+require_once dirname(__DIR__, 2) . '/core/content_locale.php';
+
 class Date extends BaseField {
+    protected $displayFormat;
+
+    public function __construct(array $config) {
+        parent::__construct($config);
+        $this->displayFormat = (string) ($config['display_format'] ?? 'Y-m-d');
+    }
     public function getType(): string {
         return 'date';
     }
@@ -83,21 +91,18 @@ class Date extends BaseField {
         if (empty($value)) {
             return '<span class="ft-list-empty">–</span>';
         }
-        
-        // Format date for display
-        $date = $value;
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-            // Already in YYYY-MM-DD format, use as-is
-            return '<span class="ft-list-text">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '</span>';
+
+        $field = is_array($context['field'] ?? null) ? $context['field'] : [];
+        $lang = isset($context['language']) ? (string) $context['language'] : null;
+        $format = birkly_locale_field_display_format($field, $lang, 'date');
+        if (isset($context['display_format'])) {
+            $format = (string) $context['display_format'];
+        } elseif ($this->displayFormat !== '' && $this->displayFormat !== 'Y-m-d') {
+            $format = $this->displayFormat;
         }
-        
-        // Try to parse and format
-        try {
-            $dateObj = new \DateTime($date);
-            return '<span class="ft-list-text">' . htmlspecialchars($dateObj->format('Y-m-d'), ENT_QUOTES, 'UTF-8') . '</span>';
-        } catch (\Exception $e) {
-            return '<span class="ft-list-text">' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '</span>';
-        }
+
+        $formatted = birkly_locale_format_stored_date((string) $value, $format);
+        return '<span class="ft-list-text">' . htmlspecialchars($formatted, ENT_QUOTES, 'UTF-8') . '</span>';
     }
 
     public function getTableMinWidth(): string {
@@ -105,8 +110,10 @@ class Date extends BaseField {
     }
 
     public function getConfigUI($fieldIndex, $existingData = []): string {
-        $format = $existingData['format'] ?? 'Y-m-d';
+        $format = $existingData['format'] ?? '';
         $formatSelected = [
+            '' => $format === '' ? 'selected' : '',
+            'locale' => $format === 'locale' ? 'selected' : '',
             'Y-m-d' => $format === 'Y-m-d' ? 'selected' : '',
             'd/m/Y' => $format === 'd/m/Y' ? 'selected' : '',
             'm/d/Y' => $format === 'm/d/Y' ? 'selected' : '',
@@ -118,14 +125,16 @@ class Date extends BaseField {
             <div class="field-config-section">
                 <label>Date Format</label>
                 <select name="fields[{$fieldIndex}][format]" class="input">
+                    <option value="" {$formatSelected['']}>Auto (locale — recommended)</option>
+                    <option value="locale" {$formatSelected['locale']}>Auto (locale)</option>
                     <option value="Y-m-d" {$formatSelected['Y-m-d']}>YYYY-MM-DD (ISO)</option>
                     <option value="d/m/Y" {$formatSelected['d/m/Y']}>DD/MM/YYYY</option>
                     <option value="m/d/Y" {$formatSelected['m/d/Y']}>MM/DD/YYYY</option>
                     <option value="d.m.Y" {$formatSelected['d.m.Y']}>DD.MM.YYYY</option>
                     <option value="Y/m/d" {$formatSelected['Y/m/d']}>YYYY/MM/DD</option>
                 </select>
-                <small class="form-text">Display format for the date field</small>
+                <small class="form-text">Auto uses the active language (e.g. US vs DE vs JA). Storage stays ISO YYYY-MM-DD.</small>
             </div>
         HTML;
     }
-} 
+}
