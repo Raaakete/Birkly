@@ -8,11 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../core/cors.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../core/project_site_filesystem.php';
-require_once __DIR__ . '/../fieldtypes/BaseField.php';
-require_once __DIR__ . '/../fieldtypes/ContentEditor/ContentEditor.php';
-
-use Birkly\FieldTypes\ContentEditor\ContentEditor;
+require_once __DIR__ . '/../core/content_editor_preview_css.php';
 
 set_cors_headers('admin');
 haru_secure_session_start();
@@ -20,7 +16,7 @@ requireAuth('read');
 
 $path = trim((string) ($_GET['path'] ?? ''));
 if ($path === '' && isset($_GET['url'])) {
-    $path = ContentEditor::normalizeProjectCssPath((string) $_GET['url']) ?? '';
+    $path = birkly_content_editor_normalize_preview_css_path((string) $_GET['url']) ?? '';
 }
 
 if ($path === '') {
@@ -38,8 +34,17 @@ if ($ext !== 'css') {
     exit;
 }
 
-$fs = new ProjectSiteFileSystem();
-$file = ContentEditor::readProjectPreviewCssFile($fs, $path);
+try {
+    $fs = new ProjectSiteFileSystem();
+    $file = birkly_content_editor_read_preview_css_file($fs, $path);
+} catch (Throwable $e) {
+    error_log('content_editor_preview_css: ' . $e->getMessage());
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'Could not read project stylesheet';
+    exit;
+}
+
 if ($file === null) {
     http_response_code(404);
     header('Content-Type: text/plain; charset=utf-8');

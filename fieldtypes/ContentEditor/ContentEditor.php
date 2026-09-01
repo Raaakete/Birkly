@@ -7,8 +7,6 @@ class ContentEditor extends BaseField {
     /** Default bundled preview stylesheet (overridden per field via css_url). */
     public const DEFAULT_PREVIEW_CSS = '/fieldtypes/ContentEditor/preview/demo-preview.css';
 
-    private const PREVIEW_CSS_PROXY = '/api/content_editor_preview_css.php';
-
     protected $config;
 
     /**
@@ -16,38 +14,8 @@ class ContentEditor extends BaseField {
      */
     public static function normalizeProjectCssPath(string $cssUrl): ?string
     {
-        $trimmed = trim($cssUrl);
-        if ($trimmed === '') {
-            return null;
-        }
-
-        if (preg_match('#^https?://#i', $trimmed)) {
-            return null;
-        }
-
-        if (str_starts_with($trimmed, '/fieldtypes/')) {
-            return null;
-        }
-
-        if (str_starts_with($trimmed, '/project/')) {
-            $relative = ltrim(substr($trimmed, strlen('/project/')), '/');
-            return $relative !== '' ? $relative : null;
-        }
-
-        if ($trimmed === '/project') {
-            return null;
-        }
-
-        if (str_starts_with($trimmed, '/')) {
-            return ltrim($trimmed, '/');
-        }
-
-        if (str_starts_with($trimmed, 'project/')) {
-            $relative = substr($trimmed, strlen('project/'));
-            return $relative !== '' ? $relative : null;
-        }
-
-        return $trimmed;
+        require_once __DIR__ . '/../../core/content_editor_preview_css.php';
+        return birkly_content_editor_normalize_preview_css_path($cssUrl);
     }
 
     /**
@@ -62,7 +30,8 @@ class ContentEditor extends BaseField {
 
         $projectPath = self::normalizeProjectCssPath($trimmed);
         if ($projectPath !== null) {
-            return self::PREVIEW_CSS_PROXY . '?path=' . rawurlencode($projectPath);
+            require_once __DIR__ . '/../../core/content_editor_preview_css.php';
+            return birkly_content_editor_preview_css_proxy_path($projectPath);
         }
 
         return $trimmed;
@@ -73,21 +42,10 @@ class ContentEditor extends BaseField {
      *
      * @return array{path:string,content:string,size:int}|null
      */
-    public static function readProjectPreviewCssFile(ProjectSiteFileSystem $fs, string $path): ?array
+    public static function readProjectPreviewCssFile(\ProjectSiteFileSystem $fs, string $path): ?array
     {
-        $candidates = [$path];
-        if (!str_contains($path, '/')) {
-            $candidates[] = 'css/' . $path;
-        }
-
-        foreach ($candidates as $candidate) {
-            $file = $fs->readFile($candidate);
-            if ($file !== null) {
-                return $file;
-            }
-        }
-
-        return null;
+        require_once __DIR__ . '/../../core/content_editor_preview_css.php';
+        return birkly_content_editor_read_preview_css_file($fs, $path);
     }
     
     public function __construct(array $config) {
