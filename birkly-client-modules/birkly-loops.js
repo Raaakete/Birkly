@@ -305,7 +305,7 @@
                     if (formatFilter) {
                         const isDateField = Birkly.dateFormatter.isDateField(rawPath);
                         if (isDateField) {
-                            return escapeHtml(formatDate(String(value), formatFilter));
+                            return escapeHtml(formatDate(String(value), formatFilter, Birkly.currentLanguage));
                         }
                     }
                     

@@ -3,13 +3,16 @@ namespace Birkly\FieldTypes\Radio;
 
 use Birkly\FieldTypes\BaseField;
 
+require_once dirname(__DIR__, 2) . '/core/content_locale.php';
+
 class Radio extends BaseField {
     protected $options;
     protected $layout; // 'vertical' or 'horizontal'
 
     public function __construct(array $config) {
         parent::__construct($config);
-        $this->options = $config['options'] ?? [];
+        $lang = isset($config['language']) ? (string) $config['language'] : null;
+        $this->options = birkly_selection_resolve_options($config['options'] ?? [], $lang);
         $this->layout = $config['layout'] ?? 'vertical';
     }
 
@@ -157,8 +160,13 @@ class Radio extends BaseField {
         }
         
         // Find the label for this value
+        $lang = isset($context['language']) ? (string) $context['language'] : null;
+        $rawOptions = is_array($context['field']['options'] ?? null)
+            ? $context['field']['options']
+            : $this->options;
+        $options = birkly_selection_resolve_options($rawOptions, $lang);
         $label = $value;
-        foreach ($this->options as $opt) {
+        foreach ($options as $opt) {
             if (($opt['value'] ?? '') === $value) {
                 $label = $opt['label'] ?? $value;
                 break;
@@ -174,26 +182,12 @@ class Radio extends BaseField {
 
     public function getConfigUI($fieldIndex, $existingData = []): string {
         $options = $existingData['options'] ?? [];
-        $layout = $existingData['layout'] ?? 'vertical';
-        $optionsHtml = '';
-        
-        foreach ($options as $idx => $opt) {
-            $label = htmlspecialchars($opt['label'] ?? $opt['value'] ?? '');
-            $value = htmlspecialchars($opt['value'] ?? $opt['label'] ?? '');
-            $optionsHtml .= <<<HTML
-                <div class="option-item" data-option-index="{$idx}">
-                    <input type="text" class="input option-label" placeholder="Label" value="{$label}" data-field="{$fieldIndex}" data-option="{$idx}">
-                    <input type="text" class="input option-value" placeholder="Value" value="{$value}" data-field="{$fieldIndex}" data-option="{$idx}">
-                    <button type="button" class="btn-icon remove-option-btn" data-field="{$fieldIndex}" data-option="{$idx}" title="Remove option">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-            HTML;
+        $languages = $existingData['_multilanguage_languages'] ?? [];
+        if (!is_array($languages)) {
+            $languages = [];
         }
-        
+        $optionsHtml = birkly_selection_options_config_rows($fieldIndex, $options, $languages);
+        $layout = $existingData['layout'] ?? 'vertical';
         $layoutVertical = $layout === 'vertical' ? 'selected' : '';
         $layoutHorizontal = $layout === 'horizontal' ? 'selected' : '';
         
@@ -208,7 +202,7 @@ class Radio extends BaseField {
                     <input type="text" class="input new-option-value" placeholder="Option value (optional)" id="new_option_value_{$fieldIndex}">
                     <button type="button" class="btn btn-secondary add-option-btn" data-field="{$fieldIndex}">Add Option</button>
                 </div>
-                <small class="form-text">Add options for this radio field</small>
+                <small class="form-text">Default label is fallback. Add translated labels per language when multilanguage is enabled.</small>
             </div>
             <div class="field-config-section">
                 <label>Layout</label>
