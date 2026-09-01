@@ -22,11 +22,11 @@ $editor = new ContentEditor([
     'name' => 'content',
     'label' => 'Content',
     'value' => '<p>Hi</p>',
-    'css_url' => '/project/styles.css',
+    'css_url' => '/project/birkly-subpage.css',
 ]);
 
 $html = $editor->render();
-if (strpos($html, 'data-css-url="/project/styles.css"') === false) {
+if (strpos($html, 'data-css-url="/project/birkly-subpage.css"') === false) {
     echo "FAIL: render exposes data-css-url\n";
     $failures++;
 } else {
@@ -55,15 +55,23 @@ if (ContentEditor::normalizeProjectCssPath('https://example.com/site.css') !== n
 }
 
 $proxyUrl = ContentEditor::resolvePreviewCssFetchUrl('/project/css/style.css');
-if ($proxyUrl === '' || !str_contains($proxyUrl, 'content_editor_preview_css.php?path=css%2Fstyle.css')) {
-    echo "FAIL: resolvePreviewCssFetchUrl uses proxy for project path\n";
+if ($proxyUrl === '' || !str_contains($proxyUrl, '/api/content_editor_preview_css.php?path=css%2Fstyle.css')) {
+    echo "FAIL: resolvePreviewCssFetchUrl uses API proxy for project path\n";
     $failures++;
 } else {
-    echo "PASS: resolvePreviewCssFetchUrl uses proxy for project path\n";
+    echo "PASS: resolvePreviewCssFetchUrl uses API proxy for project path\n";
+}
+
+$subpageUrl = ContentEditor::resolvePreviewCssFetchUrl('/project/birkly-subpage.css');
+if ($subpageUrl !== '/api/content_editor_preview_css.php?path=birkly-subpage.css') {
+    echo "FAIL: resolvePreviewCssFetchUrl maps /project/birkly-subpage.css\n";
+    $failures++;
+} else {
+    echo "PASS: resolvePreviewCssFetchUrl maps /project/birkly-subpage.css\n";
 }
 
 $bundledUrl = ContentEditor::resolvePreviewCssFetchUrl(ContentEditor::DEFAULT_PREVIEW_CSS);
-if ($bundledUrl === '' || !str_contains($bundledUrl, '/fieldtypes/ContentEditor/preview/demo-preview.css')) {
+if ($bundledUrl !== ContentEditor::DEFAULT_PREVIEW_CSS) {
     echo "FAIL: resolvePreviewCssFetchUrl resolves bundled preview CSS path\n";
     $failures++;
 } else {
@@ -94,7 +102,7 @@ if (!is_file($legacyProxyPhp) || strpos(file_get_contents($legacyProxyPhp), 'con
     echo "PASS: legacy preview-css.php shim\n";
 }
 
-if (strpos($html, 'content_editor_preview_css.php?path=styles.css') === false) {
+if (strpos($html, '/api/content_editor_preview_css.php?path=birkly-subpage.css') === false) {
     echo "FAIL: render exposes project CSS proxy fetch URL\n";
     $failures++;
 } else {
@@ -109,7 +117,7 @@ if (strpos($html, 'content-editor-preview-badge') === false) {
 }
 
 $config = $editor->getAdminConfig();
-if (($config['css_url'] ?? '') !== '/project/styles.css') {
+if (($config['css_url'] ?? '') !== '/project/birkly-subpage.css') {
     echo "FAIL: getAdminConfig includes css_url\n";
     $failures++;
 } else {
