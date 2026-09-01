@@ -150,23 +150,24 @@ window.ContentEditorPreview = {
     const wrapper = editor.closest('.content-editor-wrapper');
     if (!wrapper) return;
 
-    const cssUrl = this.resolveUrl(wrapper.dataset.cssUrl || '');
-    if (!cssUrl) {
+    const storedUrl = (wrapper.dataset.cssUrl || '').trim();
+    const fetchUrl = (wrapper.dataset.cssFetchUrl || '').trim() || this.resolveUrl(storedUrl);
+    if (!fetchUrl) {
       this.setStatus(wrapper, 'idle');
       return;
     }
 
-    const resolvedKey = cssUrl;
+    const resolvedKey = fetchUrl;
     const existingStyle = document.querySelector(`style[data-content-editor-css][data-css-url="${resolvedKey}"]`);
     if (existingStyle) {
       editor.classList.add('post-content');
-      this.setStatus(wrapper, 'active', this.labelFromUrl(cssUrl));
+      this.setStatus(wrapper, 'active', this.labelFromUrl(storedUrl || fetchUrl));
       return;
     }
 
-    this.setStatus(wrapper, 'loading', cssUrl);
+    this.setStatus(wrapper, 'loading', storedUrl || fetchUrl);
 
-    fetch(cssUrl)
+    fetch(fetchUrl)
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
@@ -190,10 +191,10 @@ window.ContentEditorPreview = {
 
         editor.classList.add('post-content');
         editor.offsetHeight;
-        this.setStatus(wrapper, 'active', this.labelFromUrl(cssUrl));
+        this.setStatus(wrapper, 'active', this.labelFromUrl(storedUrl || fetchUrl));
       })
       .catch(error => {
-        console.warn('ContentEditor: Failed to load preview CSS from:', cssUrl, error);
+        console.warn('ContentEditor: Failed to load preview CSS from:', fetchUrl, error);
         this.setStatus(wrapper, 'error', String(error.message || error));
       });
   },
