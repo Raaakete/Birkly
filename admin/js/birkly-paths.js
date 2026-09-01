@@ -37,7 +37,7 @@
 
     const nativeFetch = window.fetch.bind(window);
     window.fetch = function (input, init) {
-        if (typeof input === 'string' && (input.startsWith('/api/') || input.startsWith('/admin/') || input.startsWith('/docs/'))) {
+        if (typeof input === 'string' && (input.startsWith('/api/') || input.startsWith('/admin/') || input.startsWith('/docs/') || input.startsWith('/fieldtypes/'))) {
             input = url(input);
         }
         return nativeFetch(input, init);

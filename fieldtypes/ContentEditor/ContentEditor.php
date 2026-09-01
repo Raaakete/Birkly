@@ -62,18 +62,10 @@ class ContentEditor extends BaseField {
 
         $projectPath = self::normalizeProjectCssPath($trimmed);
         if ($projectPath !== null) {
-            if (!function_exists('birkly_url')) {
-                require_once __DIR__ . '/../../core/birkly_paths.php';
-            }
-
-            return birkly_url(self::PREVIEW_CSS_PROXY . '?path=' . rawurlencode($projectPath));
+            return self::PREVIEW_CSS_PROXY . '?path=' . rawurlencode($projectPath);
         }
 
-        if (!function_exists('birkly_url')) {
-            require_once __DIR__ . '/../../core/birkly_paths.php';
-        }
-
-        return birkly_url($trimmed);
+        return $trimmed;
     }
 
     /**
