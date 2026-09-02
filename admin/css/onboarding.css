@@ -16,8 +16,6 @@
    core/overrides.css makes it win over component display rules.
    ============================================ */
 
-@import url('../components/hosting-wizard.css');
-
 /* ---- Page shell ---- */
 .onboarding-body {
   margin: 0;
@@ -196,8 +194,7 @@
   color: var(--text-primary);
 }
 
-.step-subtitle,
-.onboarding-hosting-defer {
+.step-subtitle {
   margin: 0;
   max-width: var(--measure-md);
   font-size: var(--text-sm);

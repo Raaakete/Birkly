@@ -2,7 +2,7 @@
    Birkly Admin — Hosting wizard (P44-M5, retokenized P56-M11)
    ============================================
 
-   Built by admin/js/hosting-wizard.js for Settings and onboarding. Every
+   Built by admin/js/hosting-wizard.js for Settings → Site delivery.
    `.hosting-wizard-*` class here is a JS hook, so the names stay; the values
    are now tokens. Panels, buttons, inputs and the preview card come from the
    shared components (.card--padded, .btn, .input, .checkbox-label).

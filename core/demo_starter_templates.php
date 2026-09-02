@@ -429,13 +429,23 @@ function birkly_demo_enable_visit_project_after_install(string $projectRoot): vo
     birkly_hosting_reset_cache();
     $config = birkly_hosting_load();
     $config['public_site_mode'] = 'project';
-    $config['public_site_url'] = $origin;
-    $config['same_host_landing'] = 'admin';
 
     $cmsHost = birkly_hosting_url_host((string) ($config['cms_base_url'] ?? ''));
     if ($config['cms_base_url'] === '' || birkly_is_local_dev_host($cmsHost)) {
         $config['cms_base_url'] = $origin;
     }
 
-    birkly_hosting_persist($config, false);
+    $cmsHost = birkly_hosting_url_host((string) $config['cms_base_url']);
+    if (str_starts_with($cmsHost, 'cms.') && strlen($cmsHost) > 4) {
+        $apex = substr($cmsHost, 4);
+        $scheme = parse_url((string) $config['cms_base_url'], PHP_URL_SCHEME) ?: 'https';
+        $config['public_site_url'] = birkly_hosting_normalize_url($scheme . '://' . $apex, true);
+        $config['same_host_landing'] = 'admin';
+    } else {
+        $config['public_site_url'] = (string) $config['cms_base_url'];
+        $config['same_host_landing'] = 'public';
+    }
+
+    birkly_hosting_persist($config, true);
+    birkly_hosting_repair_delivery(true, true);
 }
