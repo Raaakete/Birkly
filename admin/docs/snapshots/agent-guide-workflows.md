@@ -342,7 +342,7 @@ Never rely on auto-save for AI suggestions — accept explicitly in AI Assist fi
 
 ## Further reading
 
-- [Content model overview](content-model-overview.md)
-- [Collections](collections.md)
-- [Entries & collections](entries.md)
+- [Agent Guide](agent-guide.md)
+- [Agent Guide — claims & cross-links](agent-guide-claims.md)
+- [Agent Guide — getting started](agent-guide-getting-started.md)
 - [Collection groups](collection-groups.md)

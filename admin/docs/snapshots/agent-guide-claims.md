@@ -208,7 +208,7 @@ See [Public API](../04-integration/agent-guide-public-api.md).
 
 ## Further reading
 
-- [Content model overview](content-model-overview.md)
-- [Collections](collections.md)
-- [Entries & collections](entries.md)
+- [Agent Guide](agent-guide.md)
+- [Agent Guide — getting started](agent-guide-getting-started.md)
+- [Agent Guide — workflows](agent-guide-workflows.md)
 - [Collection groups](collection-groups.md)

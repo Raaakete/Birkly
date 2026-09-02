@@ -3,84 +3,6 @@
     "docs_base_url": "https://docs.birkly.com",
     "topics": [
         {
-            "id": "getting-started",
-            "title": "Getting started",
-            "keywords": [
-                "start",
-                "setup",
-                "onboarding",
-                "first steps",
-                "welcome"
-            ],
-            "snapshot": "/admin/docs/snapshots/getting-started.md",
-            "docs_path": "00-overview/getting-started.html",
-            "nav_section": "overview",
-            "nav_section_label": "Overview",
-            "ai_topic": "playbooks-index"
-        },
-        {
-            "id": "closed-alpha",
-            "title": "Closed alpha guide",
-            "keywords": [
-                "alpha",
-                "beta",
-                "tester",
-                "feedback",
-                "invite",
-                "waitlist"
-            ],
-            "snapshot": "/admin/docs/snapshots/closed-alpha.md",
-            "docs_path": "00-overview/closed-alpha-guide.html",
-            "nav_section": "overview",
-            "nav_section_label": "Overview"
-        },
-        {
-            "id": "alpha-legal",
-            "title": "Closed alpha — legal and feedback",
-            "keywords": [
-                "legal",
-                "terms",
-                "privacy",
-                "feedback",
-                "alpha"
-            ],
-            "snapshot": "/admin/docs/snapshots/alpha-legal.md",
-            "docs_path": "00-overview/alpha-legal.html",
-            "nav_section": "overview",
-            "nav_section_label": "Overview"
-        },
-        {
-            "id": "dashboard",
-            "title": "Dashboard",
-            "keywords": [
-                "dashboard",
-                "overview",
-                "home",
-                "stats",
-                "activity"
-            ],
-            "snapshot": "/admin/docs/snapshots/dashboard.md",
-            "docs_path": "01-admin/dashboard.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
-        },
-        {
-            "id": "responsive-dashboard",
-            "title": "Responsive dashboard and widgets",
-            "keywords": [
-                "dashboard",
-                "widget",
-                "quick actions",
-                "responsive",
-                "commerce",
-                "analytics"
-            ],
-            "snapshot": "/admin/docs/snapshots/responsive-dashboard.md",
-            "docs_path": "01-admin/admin-responsive-dashboard.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
-        },
-        {
             "id": "account",
             "title": "Account",
             "keywords": [
@@ -94,6 +16,22 @@
             ],
             "snapshot": "/admin/docs/snapshots/account.md",
             "docs_path": "01-admin/account.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "activity",
+            "title": "Activity feed",
+            "keywords": [
+                "activity",
+                "audit",
+                "log",
+                "security",
+                "timeline",
+                "events"
+            ],
+            "snapshot": "/admin/docs/snapshots/activity.md",
+            "docs_path": "01-admin/activity.html",
             "nav_section": "admin",
             "nav_section_label": "Admin"
         },
@@ -132,220 +70,111 @@
             "nav_section_label": "Admin"
         },
         {
-            "id": "plugin-admin-styling",
-            "title": "Plugin admin styling",
+            "id": "agent-guide",
+            "title": "Agent Guide",
             "keywords": [
-                "plugin",
-                "styling",
-                "css",
-                "design language",
-                "tokens",
-                "fieldtype",
-                "admin page"
-            ],
-            "snapshot": "/admin/docs/snapshots/plugin-admin-styling.md",
-            "docs_path": "06-plugin-economy/plugin-admin-styling.html",
-            "nav_section": "plugin-economy",
-            "nav_section_label": "Plugin economy"
-        },
-        {
-            "id": "content-model-overview",
-            "title": "Content model overview",
-            "keywords": [
-                "content model",
-                "collections",
-                "entries",
-                "schema",
-                "decision tree",
-                "site elements",
-                "structure",
-                "overview"
-            ],
-            "snapshot": "/admin/docs/snapshots/content-model-overview.md",
-            "docs_path": "02-content/content-model-overview.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "content-model"
-        },
-        {
-            "id": "collections",
-            "title": "Collections",
-            "keywords": [
-                "collection",
-                "collections",
-                "content type",
-                "schema",
-                "fields",
-                "handle",
-                "create collection"
-            ],
-            "snapshot": "/admin/docs/snapshots/collections.md",
-            "docs_path": "02-content/collections.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "content-model"
-        },
-        {
-            "id": "entries",
-            "title": "Entries & collections",
-            "keywords": [
-                "entries",
-                "collections",
-                "content",
-                "create",
-                "edit",
-                "slug"
-            ],
-            "snapshot": "/admin/docs/snapshots/entries.md",
-            "docs_path": "02-content/entries.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "content-model"
-        },
-        {
-            "id": "collection-groups",
-            "title": "Collection groups",
-            "keywords": [
-                "groups",
-                "collection groups",
-                "groups.json",
-                "nested",
-                "navigation",
-                "content overview",
-                "collection_groups"
-            ],
-            "snapshot": "/admin/docs/snapshots/collection-groups.md",
-            "docs_path": "02-content/collection-groups.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "collection-groups"
-        },
-        {
-            "id": "entry-editor",
-            "title": "Entry editor",
-            "keywords": [
-                "entry editor",
-                "write",
+                "agent guide",
+                "sources of truth",
+                "claims",
+                "evidence",
+                "well-known",
+                "agent-guide.json",
+                "cross-links",
                 "publish",
-                "draft",
-                "fields",
-                "save"
+                "ai presence",
+                "hub",
+                "tools",
+                "webmcp",
+                "website tools",
+                "settings ai"
             ],
-            "snapshot": "/admin/docs/snapshots/entry-editor.md",
-            "docs_path": "01-admin/entry-editor.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "content-model"
-        },
-        {
-            "id": "dynamic-items-field",
-            "title": "Dynamic items field",
-            "keywords": [
-                "dynamic items",
-                "dynamicitems",
-                "add block",
-                "blocks",
-                "repeating",
-                "fieldtype"
-            ],
-            "snapshot": "/admin/docs/snapshots/dynamic-items-field.md",
-            "docs_path": "02-content/dynamic-items-field.html",
+            "snapshot": "/admin/docs/snapshots/agent-guide.md",
+            "docs_path": "02-content/agent-guide.html",
             "nav_section": "content",
             "nav_section_label": "Content model",
-            "ai_topic": "content-model"
+            "ai_topic": "agent-guide"
         },
         {
-            "id": "site-elements-pattern",
-            "title": "Site elements pattern",
+            "id": "agent-guide-api",
+            "title": "Agent Guide public API",
             "keywords": [
-                "site elements",
-                "header",
-                "footer",
-                "birkly-region",
-                "chrome",
-                "layout",
-                "global"
+                "agent-guide.json",
+                "well-known",
+                "public api",
+                "graph",
+                "json-ld",
+                "brand-context.json"
             ],
-            "snapshot": "/admin/docs/snapshots/site-elements-pattern.md",
-            "docs_path": "02-content/site-elements-pattern.html",
+            "snapshot": "/admin/docs/snapshots/agent-guide-api.md",
+            "docs_path": "04-integration/agent-guide-public-api.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "agent-guide-claims",
+            "title": "Agent Guide — claims & cross-links",
+            "keywords": [
+                "claims",
+                "evidence",
+                "amazon",
+                "reviews",
+                "marketplace",
+                "sources of truth",
+                "proof"
+            ],
+            "snapshot": "/admin/docs/snapshots/agent-guide-claims.md",
+            "docs_path": "02-content/agent-guide-claims-evidence-and-links.html",
             "nav_section": "content",
             "nav_section_label": "Content model",
-            "ai_topic": "web-project-patterns"
+            "ai_topic": "agent-guide"
         },
         {
-            "id": "settings",
-            "title": "Settings",
+            "id": "agent-guide-getting-started",
+            "title": "Agent Guide — getting started",
             "keywords": [
-                "settings",
-                "general",
-                "branding",
-                "security",
-                "monitoring",
-                "api",
-                "domains",
-                "analytics",
-                "developer mode"
+                "agent guide",
+                "tutorial",
+                "publish",
+                "sources of truth",
+                "first steps"
             ],
-            "snapshot": "/admin/docs/snapshots/settings.md",
-            "docs_path": "01-admin/settings.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "settings-roles"
+            "snapshot": "/admin/docs/snapshots/agent-guide-getting-started.md",
+            "docs_path": "02-content/agent-guide-getting-started.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "agent-guide"
         },
         {
-            "id": "analytics-presets",
-            "title": "Analytics presets",
+            "id": "agent-guide-mcp",
+            "title": "Agent Guide MCP & agents",
             "keywords": [
-                "analytics",
-                "presets",
-                "off",
-                "minimal",
-                "standard",
-                "advanced",
-                "consent",
-                "privacy",
-                "gdpr",
-                "tracking",
-                "visitor"
+                "mcp",
+                "get_agent_guide_context",
+                "agent_guide.publish",
+                "cms_admin_action"
             ],
-            "snapshot": "/admin/docs/snapshots/analytics-presets.md",
-            "docs_path": "01-admin/analytics-presets.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
+            "snapshot": "/admin/docs/snapshots/agent-guide-mcp.md",
+            "docs_path": "04-integration/agent-guide-mcp-and-agents.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration",
+            "ai_topic": "agent-guide"
         },
         {
-            "id": "developer-mode",
-            "title": "Developer mode",
+            "id": "agent-guide-workflows",
+            "title": "Agent Guide — workflows",
             "keywords": [
-                "developer mode",
-                "dx",
-                "export",
-                "template pack",
-                "site pack",
-                "system info",
-                "debug",
-                "mcp smoke"
+                "agent guide",
+                "workflows",
+                "tools tab",
+                "webmcp",
+                "unpublish"
             ],
-            "snapshot": "/admin/docs/snapshots/developer-mode.md",
-            "docs_path": "01-admin/developer-mode.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
-        },
-        {
-            "id": "monitoring-alerts",
-            "title": "Monitoring and health alerts",
-            "keywords": [
-                "monitoring",
-                "health",
-                "alert",
-                "webhook",
-                "email",
-                "ops"
-            ],
-            "snapshot": "/admin/docs/snapshots/monitoring-alerts.md",
-            "docs_path": "07-operations/monitoring-alerts.html",
-            "nav_section": "operations",
-            "nav_section_label": "Operations"
+            "snapshot": "/admin/docs/snapshots/agent-guide-workflows.md",
+            "docs_path": "02-content/agent-guide-workflows.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "agent-guide"
         },
         {
             "id": "ai",
@@ -384,23 +213,60 @@
             "ai_topic": "ai-connections"
         },
         {
-            "id": "mcp-connections",
-            "title": "MCP connections (inbound)",
+            "id": "ai-on-localhost",
+            "title": "AI on localhost",
             "keywords": [
-                "mcp",
-                "claude desktop",
-                "model context protocol",
-                "inbound",
-                "endpoint",
                 "localhost",
                 "mcp-bridge",
-                "tunnel"
+                "tunnel",
+                "cloudflared",
+                "ngrok",
+                "ollama",
+                "local development",
+                "connector",
+                "https"
             ],
-            "snapshot": "/admin/docs/snapshots/mcp-connections.md",
-            "docs_path": "01-admin/mcp-connections.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
+            "snapshot": "/admin/docs/snapshots/ai-on-localhost.md",
+            "docs_path": "04-integration/ai-on-localhost.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration",
             "ai_topic": "mcp-setup"
+        },
+        {
+            "id": "alpha-legal",
+            "title": "Closed alpha — legal and feedback",
+            "keywords": [
+                "legal",
+                "terms",
+                "privacy",
+                "feedback",
+                "alpha"
+            ],
+            "snapshot": "/admin/docs/snapshots/alpha-legal.md",
+            "docs_path": "00-overview/alpha-legal.html",
+            "nav_section": "overview",
+            "nav_section_label": "Overview"
+        },
+        {
+            "id": "analytics-presets",
+            "title": "Analytics presets",
+            "keywords": [
+                "analytics",
+                "presets",
+                "off",
+                "minimal",
+                "standard",
+                "advanced",
+                "consent",
+                "privacy",
+                "gdpr",
+                "tracking",
+                "visitor"
+            ],
+            "snapshot": "/admin/docs/snapshots/analytics-presets.md",
+            "docs_path": "01-admin/analytics-presets.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
         },
         {
             "id": "automation",
@@ -420,6 +286,277 @@
             "ai_topic": "automation"
         },
         {
+            "id": "canonical-syntax",
+            "title": "Canonical template syntax",
+            "keywords": [
+                "canonical",
+                "syntax",
+                "phantoms",
+                "template language",
+                "ordered by",
+                "format"
+            ],
+            "snapshot": "/admin/docs/snapshots/canonical-syntax.md",
+            "docs_path": "03-templating/canonical-syntax.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "cheat-sheet",
+            "title": "Templating cheat sheet",
+            "keywords": [
+                "cheat sheet",
+                "quick reference",
+                "phantoms",
+                "cookbook"
+            ],
+            "snapshot": "/admin/docs/snapshots/cheat-sheet.md",
+            "docs_path": "03-templating/cheat-sheet.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "choose-your-stack",
+            "title": "Choose your stack",
+            "keywords": [
+                "stack",
+                "integration",
+                "html",
+                "spa",
+                "ssr",
+                "web components",
+                "react",
+                "vue"
+            ],
+            "snapshot": "/admin/docs/snapshots/choose-your-stack.md",
+            "docs_path": "04-integration/choose-your-stack.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration"
+        },
+        {
+            "id": "client-setup",
+            "title": "Client setup",
+            "keywords": [
+                "birkly-client",
+                "data-cms-url",
+                "script",
+                "ssr",
+                "external site"
+            ],
+            "snapshot": "/admin/docs/snapshots/client-setup.md",
+            "docs_path": "03-templating/client-setup.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "closed-alpha",
+            "title": "Closed alpha guide",
+            "keywords": [
+                "alpha",
+                "beta",
+                "tester",
+                "feedback",
+                "invite",
+                "waitlist"
+            ],
+            "snapshot": "/admin/docs/snapshots/closed-alpha.md",
+            "docs_path": "00-overview/closed-alpha-guide.html",
+            "nav_section": "overview",
+            "nav_section_label": "Overview"
+        },
+        {
+            "id": "collection-groups",
+            "title": "Collection groups",
+            "keywords": [
+                "groups",
+                "collection groups",
+                "groups.json",
+                "nested",
+                "navigation",
+                "content overview",
+                "collection_groups"
+            ],
+            "snapshot": "/admin/docs/snapshots/collection-groups.md",
+            "docs_path": "02-content/collection-groups.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "collection-groups"
+        },
+        {
+            "id": "collections",
+            "title": "Collections",
+            "keywords": [
+                "collection",
+                "collections",
+                "content type",
+                "schema",
+                "fields",
+                "handle",
+                "create collection"
+            ],
+            "snapshot": "/admin/docs/snapshots/collections.md",
+            "docs_path": "02-content/collections.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "commerce",
+            "title": "Commerce plugin",
+            "keywords": [
+                "commerce",
+                "cart",
+                "checkout",
+                "hybrid cart",
+                "orders",
+                "payments",
+                "customers",
+                "promotions",
+                "gift cards",
+                "tax",
+                "fulfillment",
+                "store kit",
+                "ops intelligence"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce.md",
+            "docs_path": "06-extensibility/plugins/commerce.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility",
+            "ai_topic": "commerce"
+        },
+        {
+            "id": "commerce-customers",
+            "title": "Commerce customers",
+            "keywords": [
+                "customers",
+                "commerce",
+                "csv",
+                "email",
+                "timeline",
+                "user management"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-customers.md",
+            "docs_path": "06-extensibility/commerce-customers.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-fulfillment",
+            "title": "Commerce fulfillment",
+            "keywords": [
+                "fulfillment",
+                "shipment",
+                "packing slip",
+                "partial ship",
+                "tracking",
+                "easypost",
+                "commerce_tracking_updated"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-fulfillment.md",
+            "docs_path": "06-extensibility/commerce-fulfillment.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-gift-cards-quotes",
+            "title": "Commerce gift cards and quotes",
+            "keywords": [
+                "gift card",
+                "store credit",
+                "quotes",
+                "draft orders",
+                "commerce_gift_card_issued"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-gift-cards-quotes.md",
+            "docs_path": "06-extensibility/commerce-gift-cards-quotes.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-hybrid-cart",
+            "title": "Commerce hybrid cart",
+            "keywords": [
+                "hybrid cart",
+                "split checkout",
+                "ship",
+                "deliver",
+                "register",
+                "subscribe",
+                "help-hybrid-cart",
+                "commerce-storefront"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-hybrid-cart.md",
+            "docs_path": "06-extensibility/commerce-hybrid-cart.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-inventory-webhooks",
+            "title": "Commerce inventory webhooks",
+            "keywords": [
+                "webhook",
+                "inventory",
+                "stock",
+                "shopify",
+                "woocommerce",
+                "hmac"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-inventory-webhooks.md",
+            "docs_path": "06-extensibility/commerce-inventory-webhooks.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-live-import",
+            "title": "Commerce live import",
+            "keywords": [
+                "import",
+                "shopify",
+                "woocommerce",
+                "etsy",
+                "square",
+                "sync"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-live-import.md",
+            "docs_path": "06-extensibility/commerce-live-import.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-multi-currency",
+            "title": "Commerce multi-currency",
+            "keywords": [
+                "commerce",
+                "currency",
+                "eur",
+                "usd",
+                "checkout"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-multi-currency.md",
+            "docs_path": "06-extensibility/commerce-multi-currency.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-promotions",
+            "title": "Commerce promotions",
+            "keywords": [
+                "discounts",
+                "promotions",
+                "coupon",
+                "free shipping",
+                "stacking",
+                "usage limit"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-promotions.md",
+            "docs_path": "06-extensibility/commerce-promotions.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
             "id": "commerce-recipes",
             "title": "Automation Commerce recipe pack",
             "keywords": [
@@ -437,20 +574,199 @@
             "nav_section_label": "Automation"
         },
         {
-            "id": "user-plugin",
-            "title": "User management plugin",
+            "id": "commerce-shipping",
+            "title": "Commerce shipping rates",
             "keywords": [
-                "user plugin",
-                "registration",
-                "login",
-                "members",
-                "permissions"
+                "shipping",
+                "easypost",
+                "shipping zones",
+                "live rates",
+                "weight_grams",
+                "commerce"
             ],
-            "snapshot": "/admin/docs/snapshots/user-plugin.md",
-            "docs_path": "06-extensibility/user-plugin.html",
+            "snapshot": "/admin/docs/snapshots/commerce-shipping.md",
+            "docs_path": "06-extensibility/commerce-shipping.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-shopify-cutover",
+            "title": "Shopify cutover playbook",
+            "keywords": [
+                "shopify",
+                "cutover",
+                "migration",
+                "import",
+                "customers",
+                "archived orders",
+                "dry-run",
+                "rollback"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-shopify-cutover.md",
+            "docs_path": "06-extensibility/commerce-shopify-cutover.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-store-kit",
+            "title": "Commerce store kit",
+            "keywords": [
+                "store kit",
+                "seed store",
+                "demo shop",
+                "starter shop",
+                "mcp",
+                "agent",
+                "commerce-store-kit"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-store-kit.md",
+            "docs_path": "06-extensibility/commerce-store-kit.html",
             "nav_section": "extensibility",
             "nav_section_label": "Extensibility",
-            "ai_topic": "user-management"
+            "ai_topic": "commerce-store-kit"
+        },
+        {
+            "id": "commerce-tax",
+            "title": "Commerce tax",
+            "keywords": [
+                "tax",
+                "tax class",
+                "vat",
+                "vat_id",
+                "reverse charge",
+                "stripe tax",
+                "tax_lines",
+                "commerce"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-tax.md",
+            "docs_path": "06-extensibility/commerce-tax.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "commerce-warehouse-stock",
+            "title": "Commerce warehouse stock",
+            "keywords": [
+                "warehouse",
+                "stock",
+                "sku",
+                "quantity",
+                "inventory"
+            ],
+            "snapshot": "/admin/docs/snapshots/commerce-warehouse-stock.md",
+            "docs_path": "06-extensibility/commerce-warehouse-stock.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "conditionals",
+            "title": "Conditionals",
+            "keywords": [
+                "if",
+                "endif",
+                "exist",
+                "has",
+                "conditionals"
+            ],
+            "snapshot": "/admin/docs/snapshots/conditionals.md",
+            "docs_path": "03-templating/conditionals.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "connections",
+            "title": "Connections",
+            "keywords": [
+                "connections",
+                "email",
+                "smtp",
+                "resend",
+                "postmark",
+                "ses",
+                "mailgun",
+                "settings",
+                "alias",
+                "health",
+                "delivery log"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections.md",
+            "docs_path": "01-admin/connections.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "settings-roles"
+        },
+        {
+            "id": "connections-api-reference",
+            "title": "Connections API reference",
+            "keywords": [
+                "connections",
+                "api",
+                "birkly_send_mail",
+                "birkly_notify",
+                "webhook",
+                "credential",
+                "developer"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-api-reference.md",
+            "docs_path": "04-integration/connections-api-reference.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration"
+        },
+        {
+            "id": "connections-mcp-rules",
+            "title": "Connections MCP rules",
+            "keywords": [
+                "connections",
+                "mcp",
+                "agent",
+                "approval",
+                "secrets",
+                "redaction",
+                "health"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-mcp-rules.md",
+            "docs_path": "01-admin/connections-mcp-rules.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "connections-migration",
+            "title": "Migrate from Automation Setup email",
+            "keywords": [
+                "connections",
+                "migration",
+                "automation",
+                "setup",
+                "automation_mail",
+                "smtp",
+                "legacy"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-migration.md",
+            "docs_path": "01-admin/connections-migration.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "connections-provider-recipes",
+            "title": "Connections provider recipes",
+            "keywords": [
+                "connections",
+                "smtp",
+                "resend",
+                "postmark",
+                "ses",
+                "mailgun",
+                "email setup",
+                "dns",
+                "dkim",
+                "spf",
+                "dmarc"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-provider-recipes.md",
+            "docs_path": "01-admin/connections-provider-recipes.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
         },
         {
             "id": "content-editor",
@@ -469,19 +785,222 @@
             "ai_topic": "content-editor"
         },
         {
-            "id": "plugins",
-            "title": "Plugins",
+            "id": "content-model-overview",
+            "title": "Content model overview",
             "keywords": [
-                "plugins",
-                "extensions",
-                "install",
-                "enable"
+                "content model",
+                "collections",
+                "entries",
+                "schema",
+                "decision tree",
+                "site elements",
+                "structure",
+                "overview"
             ],
-            "snapshot": "/admin/docs/snapshots/plugins.md",
-            "docs_path": "06-extensibility/plugins.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility",
-            "ai_topic": "plugins-overview"
+            "snapshot": "/admin/docs/snapshots/content-model-overview.md",
+            "docs_path": "02-content/content-model-overview.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "dashboard",
+            "title": "Dashboard",
+            "keywords": [
+                "dashboard",
+                "overview",
+                "home",
+                "stats",
+                "activity"
+            ],
+            "snapshot": "/admin/docs/snapshots/dashboard.md",
+            "docs_path": "01-admin/dashboard.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "dates-and-formatting",
+            "title": "Dates and formatting",
+            "keywords": [
+                "dates",
+                "format",
+                "created_at",
+                "format filter"
+            ],
+            "snapshot": "/admin/docs/snapshots/dates-and-formatting.md",
+            "docs_path": "03-templating/dates-and-formatting.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "detail-pages-and-url-context",
+            "title": "Detail pages & URL context",
+            "keywords": [
+                "detail page",
+                "current",
+                "slug",
+                "url context",
+                "list to detail"
+            ],
+            "snapshot": "/admin/docs/snapshots/detail-pages-and-url-context.md",
+            "docs_path": "03-templating/detail-pages-and-url-context.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "web-project-patterns"
+        },
+        {
+            "id": "developer-mode",
+            "title": "Developer mode",
+            "keywords": [
+                "developer mode",
+                "dx",
+                "export",
+                "template pack",
+                "site pack",
+                "system info",
+                "debug",
+                "mcp smoke"
+            ],
+            "snapshot": "/admin/docs/snapshots/developer-mode.md",
+            "docs_path": "01-admin/developer-mode.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "discovery",
+            "title": "Discovery",
+            "keywords": [
+                "discovery",
+                "seo",
+                "agent guide",
+                "webmcp",
+                "llms.txt",
+                "sitemap",
+                "robots",
+                "search",
+                "ai presence"
+            ],
+            "snapshot": "/admin/docs/snapshots/discovery.md",
+            "docs_path": "01-admin/discovery.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "dynamic-items-field",
+            "title": "Dynamic items field",
+            "keywords": [
+                "dynamic items",
+                "dynamicitems",
+                "add block",
+                "blocks",
+                "repeating",
+                "fieldtype"
+            ],
+            "snapshot": "/admin/docs/snapshots/dynamic-items-field.md",
+            "docs_path": "02-content/dynamic-items-field.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "entries",
+            "title": "Entries & collections",
+            "keywords": [
+                "entries",
+                "collections",
+                "content",
+                "create",
+                "edit",
+                "slug"
+            ],
+            "snapshot": "/admin/docs/snapshots/entries.md",
+            "docs_path": "02-content/entries.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "entry-editor",
+            "title": "Entry editor",
+            "keywords": [
+                "entry editor",
+                "write",
+                "publish",
+                "draft",
+                "fields",
+                "save"
+            ],
+            "snapshot": "/admin/docs/snapshots/entry-editor.md",
+            "docs_path": "01-admin/entry-editor.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "content-model"
+        },
+        {
+            "id": "from-get-and-existence",
+            "title": "From…get and existence",
+            "keywords": [
+                "from get",
+                "endget",
+                "existence",
+                "single entry"
+            ],
+            "snapshot": "/admin/docs/snapshots/from-get-and-existence.md",
+            "docs_path": "03-templating/from-get-and-existence.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "getting-started",
+            "title": "Getting started",
+            "keywords": [
+                "start",
+                "setup",
+                "onboarding",
+                "first steps",
+                "welcome"
+            ],
+            "snapshot": "/admin/docs/snapshots/getting-started.md",
+            "docs_path": "00-overview/getting-started.html",
+            "nav_section": "overview",
+            "nav_section_label": "Overview",
+            "ai_topic": "playbooks-index"
+        },
+        {
+            "id": "help",
+            "title": "Help & documentation",
+            "keywords": [
+                "help",
+                "docs",
+                "documentation",
+                "search",
+                "birkly-docs"
+            ],
+            "snapshot": "/admin/docs/snapshots/help.md",
+            "docs_path": "01-admin/help-and-onboarding.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "playbooks-index"
+        },
+        {
+            "id": "loops-and-lists",
+            "title": "Loops and lists",
+            "keywords": [
+                "for each",
+                "loops",
+                "ordered by",
+                "newest",
+                "with",
+                "limit"
+            ],
+            "snapshot": "/admin/docs/snapshots/loops-and-lists.md",
+            "docs_path": "03-templating/loops-and-lists.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
         },
         {
             "id": "marketplace",
@@ -517,6 +1036,135 @@
             "ai_topic": "plugins-overview"
         },
         {
+            "id": "mcp-connections",
+            "title": "MCP connections (inbound)",
+            "keywords": [
+                "mcp",
+                "claude desktop",
+                "model context protocol",
+                "inbound",
+                "endpoint",
+                "localhost",
+                "mcp-bridge",
+                "tunnel"
+            ],
+            "snapshot": "/admin/docs/snapshots/mcp-connections.md",
+            "docs_path": "01-admin/mcp-connections.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "mcp-setup"
+        },
+        {
+            "id": "media",
+            "title": "Media library",
+            "keywords": [
+                "media",
+                "images",
+                "upload",
+                "files",
+                "library"
+            ],
+            "snapshot": "/admin/docs/snapshots/media.md",
+            "docs_path": "01-admin/media-library.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "media"
+        },
+        {
+            "id": "media-in-templates",
+            "title": "Media in templates",
+            "keywords": [
+                "media",
+                "image",
+                "gallery",
+                "templates"
+            ],
+            "snapshot": "/admin/docs/snapshots/media-in-templates.md",
+            "docs_path": "03-templating/media-in-templates.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "media"
+        },
+        {
+            "id": "monitoring-alerts",
+            "title": "Monitoring and health alerts",
+            "keywords": [
+                "monitoring",
+                "health",
+                "alert",
+                "webhook",
+                "email",
+                "ops"
+            ],
+            "snapshot": "/admin/docs/snapshots/monitoring-alerts.md",
+            "docs_path": "07-operations/monitoring-alerts.html",
+            "nav_section": "operations",
+            "nav_section_label": "Operations"
+        },
+        {
+            "id": "multilingual-templating",
+            "title": "Multilingual templating",
+            "keywords": [
+                "language",
+                "multilingual",
+                "current.language",
+                "i18n"
+            ],
+            "snapshot": "/admin/docs/snapshots/multilingual-templating.md",
+            "docs_path": "03-templating/multilingual-templating.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "notifications",
+            "title": "Admin notifications",
+            "keywords": [
+                "notifications",
+                "bell",
+                "unread",
+                "seen",
+                "read",
+                "alerts"
+            ],
+            "snapshot": "/admin/docs/snapshots/notifications.md",
+            "docs_path": "01-admin/notifications.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "plugin-admin-styling",
+            "title": "Plugin admin styling",
+            "keywords": [
+                "plugin",
+                "styling",
+                "css",
+                "design language",
+                "tokens",
+                "fieldtype",
+                "admin page"
+            ],
+            "snapshot": "/admin/docs/snapshots/plugin-admin-styling.md",
+            "docs_path": "06-plugin-economy/plugin-admin-styling.html",
+            "nav_section": "plugin-economy",
+            "nav_section_label": "Plugin economy"
+        },
+        {
+            "id": "plugin-denylist",
+            "title": "Plugin security denylist",
+            "keywords": [
+                "denylist",
+                "security",
+                "capabilities",
+                "spaces",
+                "collections"
+            ],
+            "snapshot": "/admin/docs/snapshots/plugin-denylist.md",
+            "docs_path": "06-extensibility/plugin-security-denylist.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
+        },
+        {
             "id": "plugin-economy",
             "title": "Plugin economy overview",
             "keywords": [
@@ -550,6 +1198,22 @@
             "ai_topic": "plugins-overview"
         },
         {
+            "id": "plugin-economy-official",
+            "title": "Official vs third-party plugins",
+            "keywords": [
+                "official",
+                "third-party",
+                "commerce",
+                "events",
+                "automation",
+                "free"
+            ],
+            "snapshot": "/admin/docs/snapshots/plugin-economy-official.md",
+            "docs_path": "06-plugin-economy/official-plugins.html",
+            "nav_section": "plugin-economy",
+            "nav_section_label": "Plugin economy"
+        },
+        {
             "id": "plugin-economy-providers",
             "title": "Marketplace providers",
             "keywords": [
@@ -566,18 +1230,18 @@
             "nav_section_label": "Plugin economy"
         },
         {
-            "id": "plugin-economy-official",
-            "title": "Official vs third-party plugins",
+            "id": "plugin-economy-security",
+            "title": "Plugin security and consent",
             "keywords": [
-                "official",
-                "third-party",
-                "commerce",
-                "events",
-                "automation",
-                "free"
+                "security",
+                "consent",
+                "permissions",
+                "qc",
+                "review",
+                "denylist"
             ],
-            "snapshot": "/admin/docs/snapshots/plugin-economy-official.md",
-            "docs_path": "06-plugin-economy/official-plugins.html",
+            "snapshot": "/admin/docs/snapshots/plugin-economy-security.md",
+            "docs_path": "06-plugin-economy/security-and-review.html",
             "nav_section": "plugin-economy",
             "nav_section_label": "Plugin economy"
         },
@@ -603,572 +1267,36 @@
             "nav_section_label": "Plugin economy"
         },
         {
-            "id": "plugin-economy-security",
-            "title": "Plugin security and consent",
+            "id": "plugins",
+            "title": "Plugins",
             "keywords": [
-                "security",
-                "consent",
-                "permissions",
-                "qc",
-                "review",
-                "denylist"
+                "plugins",
+                "extensions",
+                "install",
+                "enable"
             ],
-            "snapshot": "/admin/docs/snapshots/plugin-economy-security.md",
-            "docs_path": "06-plugin-economy/security-and-review.html",
-            "nav_section": "plugin-economy",
-            "nav_section_label": "Plugin economy"
-        },
-        {
-            "id": "commerce",
-            "title": "Commerce plugin",
-            "keywords": [
-                "commerce",
-                "cart",
-                "checkout",
-                "hybrid cart",
-                "orders",
-                "payments",
-                "customers",
-                "promotions",
-                "gift cards",
-                "tax",
-                "fulfillment",
-                "store kit",
-                "ops intelligence"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce.md",
-            "docs_path": "06-extensibility/plugins/commerce.html",
+            "snapshot": "/admin/docs/snapshots/plugins.md",
+            "docs_path": "06-extensibility/plugins.html",
             "nav_section": "extensibility",
             "nav_section_label": "Extensibility",
-            "ai_topic": "commerce"
+            "ai_topic": "plugins-overview"
         },
         {
-            "id": "commerce-hybrid-cart",
-            "title": "Commerce hybrid cart",
+            "id": "production-optimization",
+            "title": "Production optimization",
             "keywords": [
-                "hybrid cart",
-                "split checkout",
-                "ship",
-                "deliver",
-                "register",
-                "subscribe",
-                "help-hybrid-cart",
-                "commerce-storefront"
+                "hydrate",
+                "snapshot",
+                "bake",
+                "performance",
+                "seo",
+                "birkly-client"
             ],
-            "snapshot": "/admin/docs/snapshots/commerce-hybrid-cart.md",
-            "docs_path": "06-extensibility/commerce-hybrid-cart.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-store-kit",
-            "title": "Commerce store kit",
-            "keywords": [
-                "store kit",
-                "seed store",
-                "demo shop",
-                "starter shop",
-                "mcp",
-                "agent",
-                "commerce-store-kit"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-store-kit.md",
-            "docs_path": "06-extensibility/commerce-store-kit.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility",
-            "ai_topic": "commerce-store-kit"
-        },
-        {
-            "id": "commerce-customers",
-            "title": "Commerce customers",
-            "keywords": [
-                "customers",
-                "commerce",
-                "csv",
-                "email",
-                "timeline",
-                "user management"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-customers.md",
-            "docs_path": "06-extensibility/commerce-customers.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-promotions",
-            "title": "Commerce promotions",
-            "keywords": [
-                "discounts",
-                "promotions",
-                "coupon",
-                "free shipping",
-                "stacking",
-                "usage limit"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-promotions.md",
-            "docs_path": "06-extensibility/commerce-promotions.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-gift-cards-quotes",
-            "title": "Commerce gift cards and quotes",
-            "keywords": [
-                "gift card",
-                "store credit",
-                "quotes",
-                "draft orders",
-                "commerce_gift_card_issued"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-gift-cards-quotes.md",
-            "docs_path": "06-extensibility/commerce-gift-cards-quotes.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-tax",
-            "title": "Commerce tax",
-            "keywords": [
-                "tax",
-                "tax class",
-                "vat",
-                "vat_id",
-                "reverse charge",
-                "stripe tax",
-                "tax_lines",
-                "commerce"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-tax.md",
-            "docs_path": "06-extensibility/commerce-tax.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-shipping",
-            "title": "Commerce shipping rates",
-            "keywords": [
-                "shipping",
-                "easypost",
-                "shipping zones",
-                "live rates",
-                "weight_grams",
-                "commerce"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-shipping.md",
-            "docs_path": "06-extensibility/commerce-shipping.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-fulfillment",
-            "title": "Commerce fulfillment",
-            "keywords": [
-                "fulfillment",
-                "shipment",
-                "packing slip",
-                "partial ship",
-                "tracking",
-                "easypost",
-                "commerce_tracking_updated"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-fulfillment.md",
-            "docs_path": "06-extensibility/commerce-fulfillment.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-multi-currency",
-            "title": "Commerce multi-currency",
-            "keywords": [
-                "commerce",
-                "currency",
-                "eur",
-                "usd",
-                "checkout"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-multi-currency.md",
-            "docs_path": "06-extensibility/commerce-multi-currency.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-shopify-cutover",
-            "title": "Shopify cutover playbook",
-            "keywords": [
-                "shopify",
-                "cutover",
-                "migration",
-                "import",
-                "customers",
-                "archived orders",
-                "dry-run",
-                "rollback"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-shopify-cutover.md",
-            "docs_path": "06-extensibility/commerce-shopify-cutover.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-live-import",
-            "title": "Commerce live import",
-            "keywords": [
-                "import",
-                "shopify",
-                "woocommerce",
-                "etsy",
-                "square",
-                "sync"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-live-import.md",
-            "docs_path": "06-extensibility/commerce-live-import.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-inventory-webhooks",
-            "title": "Commerce inventory webhooks",
-            "keywords": [
-                "webhook",
-                "inventory",
-                "stock",
-                "shopify",
-                "woocommerce",
-                "hmac"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-inventory-webhooks.md",
-            "docs_path": "06-extensibility/commerce-inventory-webhooks.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "commerce-warehouse-stock",
-            "title": "Commerce warehouse stock",
-            "keywords": [
-                "warehouse",
-                "stock",
-                "sku",
-                "quantity",
-                "inventory"
-            ],
-            "snapshot": "/admin/docs/snapshots/commerce-warehouse-stock.md",
-            "docs_path": "06-extensibility/commerce-warehouse-stock.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "plugin-denylist",
-            "title": "Plugin security denylist",
-            "keywords": [
-                "denylist",
-                "security",
-                "capabilities",
-                "spaces",
-                "collections"
-            ],
-            "snapshot": "/admin/docs/snapshots/plugin-denylist.md",
-            "docs_path": "06-extensibility/plugin-security-denylist.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "scaffold-plugin",
-            "title": "Plugin scaffolding CLI",
-            "keywords": [
-                "scaffold",
-                "plugin",
-                "cli",
-                "developer",
-                "create"
-            ],
-            "snapshot": "/admin/docs/snapshots/scaffold-plugin.md",
-            "docs_path": "06-extensibility/scaffold-plugin-cli.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility"
-        },
-        {
-            "id": "media",
-            "title": "Media library",
-            "keywords": [
-                "media",
-                "images",
-                "upload",
-                "files",
-                "library"
-            ],
-            "snapshot": "/admin/docs/snapshots/media.md",
-            "docs_path": "01-admin/media-library.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "media"
-        },
-        {
-            "id": "help",
-            "title": "Help & documentation",
-            "keywords": [
-                "help",
-                "docs",
-                "documentation",
-                "search",
-                "birkly-docs"
-            ],
-            "snapshot": "/admin/docs/snapshots/help.md",
-            "docs_path": "01-admin/help-and-onboarding.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "playbooks-index"
-        },
-        {
-            "id": "templating-overview",
-            "title": "Templating overview",
-            "keywords": [
-                "templating",
-                "templates",
-                "birkly-client",
-                "for each",
-                "light dom",
-                "overview"
-            ],
-            "snapshot": "/admin/docs/snapshots/templating-overview.md",
-            "docs_path": "03-templating/templating-overview.html",
+            "snapshot": "/admin/docs/snapshots/production-optimization.md",
+            "docs_path": "03-templating/production-optimization.html",
             "nav_section": "templating",
             "nav_section_label": "Templating",
             "ai_topic": "templating"
-        },
-        {
-            "id": "canonical-syntax",
-            "title": "Canonical template syntax",
-            "keywords": [
-                "canonical",
-                "syntax",
-                "phantoms",
-                "template language",
-                "ordered by",
-                "format"
-            ],
-            "snapshot": "/admin/docs/snapshots/canonical-syntax.md",
-            "docs_path": "03-templating/canonical-syntax.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "client-setup",
-            "title": "Client setup",
-            "keywords": [
-                "birkly-client",
-                "data-cms-url",
-                "script",
-                "ssr",
-                "external site"
-            ],
-            "snapshot": "/admin/docs/snapshots/client-setup.md",
-            "docs_path": "03-templating/client-setup.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "variables-and-output",
-            "title": "Variables and output",
-            "keywords": [
-                "title",
-                "quoted fields",
-                "variables",
-                "output",
-                "placeholders"
-            ],
-            "snapshot": "/admin/docs/snapshots/variables-and-output.md",
-            "docs_path": "03-templating/variables-and-output.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "loops-and-lists",
-            "title": "Loops and lists",
-            "keywords": [
-                "for each",
-                "loops",
-                "ordered by",
-                "newest",
-                "with",
-                "limit"
-            ],
-            "snapshot": "/admin/docs/snapshots/loops-and-lists.md",
-            "docs_path": "03-templating/loops-and-lists.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "detail-pages-and-url-context",
-            "title": "Detail pages & URL context",
-            "keywords": [
-                "detail page",
-                "current",
-                "slug",
-                "url context",
-                "list to detail"
-            ],
-            "snapshot": "/admin/docs/snapshots/detail-pages-and-url-context.md",
-            "docs_path": "03-templating/detail-pages-and-url-context.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "web-project-patterns"
-        },
-        {
-            "id": "conditionals",
-            "title": "Conditionals",
-            "keywords": [
-                "if",
-                "endif",
-                "exist",
-                "has",
-                "conditionals"
-            ],
-            "snapshot": "/admin/docs/snapshots/conditionals.md",
-            "docs_path": "03-templating/conditionals.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "from-get-and-existence",
-            "title": "From…get and existence",
-            "keywords": [
-                "from get",
-                "endget",
-                "existence",
-                "single entry"
-            ],
-            "snapshot": "/admin/docs/snapshots/from-get-and-existence.md",
-            "docs_path": "03-templating/from-get-and-existence.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "sub-collections-in-templates",
-            "title": "Sub-collections in templates",
-            "keywords": [
-                "sub-collection",
-                "of blog.current",
-                "comments",
-                "nested"
-            ],
-            "snapshot": "/admin/docs/snapshots/sub-collections-in-templates.md",
-            "docs_path": "03-templating/sub-collections-in-templates.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "sub-collections"
-        },
-        {
-            "id": "dates-and-formatting",
-            "title": "Dates and formatting",
-            "keywords": [
-                "dates",
-                "format",
-                "created_at",
-                "format filter"
-            ],
-            "snapshot": "/admin/docs/snapshots/dates-and-formatting.md",
-            "docs_path": "03-templating/dates-and-formatting.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "media-in-templates",
-            "title": "Media in templates",
-            "keywords": [
-                "media",
-                "image",
-                "gallery",
-                "templates"
-            ],
-            "snapshot": "/admin/docs/snapshots/media-in-templates.md",
-            "docs_path": "03-templating/media-in-templates.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "media"
-        },
-        {
-            "id": "public-forms-templating",
-            "title": "Public forms templating",
-            "keywords": [
-                "entry for",
-                "public forms",
-                "contact form",
-                "public_api",
-                "endentry"
-            ],
-            "snapshot": "/admin/docs/snapshots/public-forms-templating.md",
-            "docs_path": "03-templating/public-forms-templating.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "public-forms"
-        },
-        {
-            "id": "multilingual-templating",
-            "title": "Multilingual templating",
-            "keywords": [
-                "language",
-                "multilingual",
-                "current.language",
-                "i18n"
-            ],
-            "snapshot": "/admin/docs/snapshots/multilingual-templating.md",
-            "docs_path": "03-templating/multilingual-templating.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "web-components-templating",
-            "title": "Web components (templating)",
-            "keywords": [
-                "birkly-region",
-                "ordered newest",
-                "regions",
-                "enhance-only",
-                "templating"
-            ],
-            "snapshot": "/admin/docs/snapshots/web-components-templating.md",
-            "docs_path": "03-templating/web-components.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "cheat-sheet",
-            "title": "Templating cheat sheet",
-            "keywords": [
-                "cheat sheet",
-                "quick reference",
-                "phantoms",
-                "cookbook"
-            ],
-            "snapshot": "/admin/docs/snapshots/cheat-sheet.md",
-            "docs_path": "03-templating/cheat-sheet.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
-        },
-        {
-            "id": "worked-site-walkthrough",
-            "title": "Worked site walkthrough",
-            "keywords": [
-                "walkthrough",
-                "tutorial",
-                "build a site",
-                "end to end"
-            ],
-            "snapshot": "/admin/docs/snapshots/worked-site-walkthrough.md",
-            "docs_path": "03-templating/worked-site-walkthrough.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "site-building"
         },
         {
             "id": "public-forms",
@@ -1184,6 +1312,22 @@
             "docs_path": "04-integration/public-forms.html",
             "nav_section": "integration",
             "nav_section_label": "Integration",
+            "ai_topic": "public-forms"
+        },
+        {
+            "id": "public-forms-templating",
+            "title": "Public forms templating",
+            "keywords": [
+                "entry for",
+                "public forms",
+                "contact form",
+                "public_api",
+                "endentry"
+            ],
+            "snapshot": "/admin/docs/snapshots/public-forms-templating.md",
+            "docs_path": "03-templating/public-forms-templating.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
             "ai_topic": "public-forms"
         },
         {
@@ -1205,203 +1349,108 @@
             "ai_topic": "web-project-patterns"
         },
         {
-            "id": "production-optimization",
-            "title": "Production optimization",
+            "id": "responsive-dashboard",
+            "title": "Responsive dashboard and widgets",
             "keywords": [
-                "hydrate",
-                "snapshot",
-                "bake",
-                "performance",
-                "seo",
-                "birkly-client"
+                "dashboard",
+                "widget",
+                "quick actions",
+                "responsive",
+                "commerce",
+                "analytics"
             ],
-            "snapshot": "/admin/docs/snapshots/production-optimization.md",
-            "docs_path": "03-templating/production-optimization.html",
-            "nav_section": "templating",
-            "nav_section_label": "Templating",
-            "ai_topic": "templating"
+            "snapshot": "/admin/docs/snapshots/responsive-dashboard.md",
+            "docs_path": "01-admin/admin-responsive-dashboard.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
         },
         {
-            "id": "agent-guide",
-            "title": "Agent Guide",
+            "id": "roles-and-permissions",
+            "title": "Roles and permissions",
             "keywords": [
-                "agent guide",
-                "sources of truth",
-                "claims",
-                "evidence",
-                "well-known",
-                "agent-guide.json",
-                "cross-links",
-                "publish",
-                "ai presence",
-                "hub",
-                "tools",
-                "webmcp",
-                "website tools",
-                "settings ai"
+                "roles",
+                "permissions",
+                "access",
+                "rbac",
+                "admin",
+                "user"
             ],
-            "snapshot": "/admin/docs/snapshots/agent-guide.md",
-            "docs_path": "02-content/agent-guide.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "agent-guide"
+            "snapshot": "/admin/docs/snapshots/roles-and-permissions.md",
+            "docs_path": "01-admin/roles-and-permissions.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "settings-roles"
         },
         {
-            "id": "agent-guide-getting-started",
-            "title": "Agent Guide — getting started",
+            "id": "scaffold-plugin",
+            "title": "Plugin scaffolding CLI",
             "keywords": [
-                "agent guide",
-                "tutorial",
-                "publish",
-                "sources of truth",
-                "first steps"
+                "scaffold",
+                "plugin",
+                "cli",
+                "developer",
+                "create"
             ],
-            "snapshot": "/admin/docs/snapshots/agent-guide-getting-started.md",
-            "docs_path": "02-content/agent-guide-getting-started.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "agent-guide"
+            "snapshot": "/admin/docs/snapshots/scaffold-plugin.md",
+            "docs_path": "06-extensibility/scaffold-plugin-cli.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility"
         },
         {
-            "id": "agent-guide-claims",
-            "title": "Agent Guide — claims & cross-links",
+            "id": "settings",
+            "title": "Settings",
             "keywords": [
-                "claims",
-                "evidence",
-                "amazon",
-                "reviews",
-                "marketplace",
-                "sources of truth",
-                "proof"
+                "settings",
+                "general",
+                "branding",
+                "security",
+                "monitoring",
+                "api",
+                "domains",
+                "analytics",
+                "developer mode"
             ],
-            "snapshot": "/admin/docs/snapshots/agent-guide-claims.md",
-            "docs_path": "02-content/agent-guide-claims-evidence-and-links.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "agent-guide"
+            "snapshot": "/admin/docs/snapshots/settings.md",
+            "docs_path": "01-admin/settings.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "settings-roles"
         },
         {
-            "id": "agent-guide-workflows",
-            "title": "Agent Guide — workflows",
+            "id": "site-elements-pattern",
+            "title": "Site elements pattern",
             "keywords": [
-                "agent guide",
-                "workflows",
-                "tools tab",
-                "webmcp",
-                "unpublish"
-            ],
-            "snapshot": "/admin/docs/snapshots/agent-guide-workflows.md",
-            "docs_path": "02-content/agent-guide-workflows.html",
-            "nav_section": "content",
-            "nav_section_label": "Content model",
-            "ai_topic": "agent-guide"
-        },
-        {
-            "id": "agent-guide-api",
-            "title": "Agent Guide public API",
-            "keywords": [
-                "agent-guide.json",
-                "well-known",
-                "public api",
-                "graph",
-                "json-ld",
-                "brand-context.json"
-            ],
-            "snapshot": "/admin/docs/snapshots/agent-guide-api.md",
-            "docs_path": "04-integration/agent-guide-public-api.html",
-            "nav_section": "integration",
-            "nav_section_label": "Integration",
-            "ai_topic": "agent-guide"
-        },
-        {
-            "id": "agent-guide-mcp",
-            "title": "Agent Guide MCP & agents",
-            "keywords": [
-                "mcp",
-                "get_agent_guide_context",
-                "agent_guide.publish",
-                "cms_admin_action"
-            ],
-            "snapshot": "/admin/docs/snapshots/agent-guide-mcp.md",
-            "docs_path": "04-integration/agent-guide-mcp-and-agents.html",
-            "nav_section": "integration",
-            "nav_section_label": "Integration",
-            "ai_topic": "agent-guide"
-        },
-        {
-            "id": "webmcp-tools",
-            "title": "Website tools (WebMCP)",
-            "keywords": [
-                "webmcp",
-                "website tools",
-                "model context protocol",
-                "browser agent",
-                "tool catalog",
-                "agent guide tools",
-                "modelcontext",
-                "registertool",
-                "confirmation",
-                "off by default"
-            ],
-            "snapshot": "/admin/docs/snapshots/webmcp-tools.md",
-            "docs_path": "04-integration/webmcp-tools.html",
-            "nav_section": "integration",
-            "nav_section_label": "Integration",
-            "ai_topic": "webmcp-tools"
-        },
-        {
-            "id": "ai-on-localhost",
-            "title": "AI on localhost",
-            "keywords": [
-                "localhost",
-                "mcp-bridge",
-                "tunnel",
-                "cloudflared",
-                "ngrok",
-                "ollama",
-                "local development",
-                "connector",
-                "https"
-            ],
-            "snapshot": "/admin/docs/snapshots/ai-on-localhost.md",
-            "docs_path": "04-integration/ai-on-localhost.html",
-            "nav_section": "integration",
-            "nav_section_label": "Integration",
-            "ai_topic": "mcp-setup"
-        },
-        {
-            "id": "choose-your-stack",
-            "title": "Choose your stack",
-            "keywords": [
-                "stack",
-                "integration",
-                "html",
-                "spa",
-                "ssr",
-                "web components",
-                "react",
-                "vue"
-            ],
-            "snapshot": "/admin/docs/snapshots/choose-your-stack.md",
-            "docs_path": "04-integration/choose-your-stack.html",
-            "nav_section": "integration",
-            "nav_section_label": "Integration"
-        },
-        {
-            "id": "web-components",
-            "title": "Web components",
-            "keywords": [
+                "site elements",
+                "header",
+                "footer",
                 "birkly-region",
-                "data-birkly-region",
-                "custom element",
-                "enhance",
-                "shadow"
+                "chrome",
+                "layout",
+                "global"
             ],
-            "snapshot": "/admin/docs/snapshots/web-components.md",
-            "docs_path": "04-integration/web-components.html",
-            "nav_section": "integration",
-            "nav_section_label": "Integration",
-            "ai_topic": "templating"
+            "snapshot": "/admin/docs/snapshots/site-elements-pattern.md",
+            "docs_path": "02-content/site-elements-pattern.html",
+            "nav_section": "content",
+            "nav_section_label": "Content model",
+            "ai_topic": "web-project-patterns"
+        },
+        {
+            "id": "site-url-map",
+            "title": "Site URL Map",
+            "keywords": [
+                "site url map",
+                "seo",
+                "meta",
+                "og",
+                "sitemap",
+                "redirect",
+                "detail binding",
+                "discovery"
+            ],
+            "snapshot": "/admin/docs/snapshots/site-url-map.md",
+            "docs_path": "01-admin/site-url-map.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
         },
         {
             "id": "spa-react-vue",
@@ -1436,189 +1485,140 @@
             "nav_section_label": "Integration"
         },
         {
-            "id": "connections",
-            "title": "Connections",
+            "id": "sub-collections-in-templates",
+            "title": "Sub-collections in templates",
             "keywords": [
-                "connections",
-                "email",
-                "smtp",
-                "resend",
-                "postmark",
-                "ses",
-                "mailgun",
-                "settings",
-                "alias",
-                "health",
-                "delivery log"
+                "sub-collection",
+                "of blog.current",
+                "comments",
+                "nested"
             ],
-            "snapshot": "/admin/docs/snapshots/connections.md",
-            "docs_path": "01-admin/connections.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "settings-roles"
+            "snapshot": "/admin/docs/snapshots/sub-collections-in-templates.md",
+            "docs_path": "03-templating/sub-collections-in-templates.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "sub-collections"
         },
         {
-            "id": "connections-provider-recipes",
-            "title": "Connections provider recipes",
+            "id": "templating-overview",
+            "title": "Templating overview",
             "keywords": [
-                "connections",
-                "smtp",
-                "resend",
-                "postmark",
-                "ses",
-                "mailgun",
-                "email setup",
-                "dns",
-                "dkim",
-                "spf",
-                "dmarc"
+                "templating",
+                "templates",
+                "birkly-client",
+                "for each",
+                "light dom",
+                "overview"
             ],
-            "snapshot": "/admin/docs/snapshots/connections-provider-recipes.md",
-            "docs_path": "01-admin/connections-provider-recipes.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
+            "snapshot": "/admin/docs/snapshots/templating-overview.md",
+            "docs_path": "03-templating/templating-overview.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
         },
         {
-            "id": "connections-migration",
-            "title": "Migrate from Automation Setup email",
+            "id": "user-plugin",
+            "title": "User management plugin",
             "keywords": [
-                "connections",
-                "migration",
-                "automation",
-                "setup",
-                "automation_mail",
-                "smtp",
-                "legacy"
+                "user plugin",
+                "registration",
+                "login",
+                "members",
+                "permissions"
             ],
-            "snapshot": "/admin/docs/snapshots/connections-migration.md",
-            "docs_path": "01-admin/connections-migration.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
+            "snapshot": "/admin/docs/snapshots/user-plugin.md",
+            "docs_path": "06-extensibility/user-plugin.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility",
+            "ai_topic": "user-management"
         },
         {
-            "id": "connections-mcp-rules",
-            "title": "Connections MCP rules",
+            "id": "variables-and-output",
+            "title": "Variables and output",
             "keywords": [
-                "connections",
-                "mcp",
-                "agent",
-                "approval",
-                "secrets",
-                "redaction",
-                "health"
+                "title",
+                "quoted fields",
+                "variables",
+                "output",
+                "placeholders"
             ],
-            "snapshot": "/admin/docs/snapshots/connections-mcp-rules.md",
-            "docs_path": "01-admin/connections-mcp-rules.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
+            "snapshot": "/admin/docs/snapshots/variables-and-output.md",
+            "docs_path": "03-templating/variables-and-output.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
         },
         {
-            "id": "connections-api-reference",
-            "title": "Connections API reference",
+            "id": "web-components",
+            "title": "Web components",
             "keywords": [
-                "connections",
-                "api",
-                "birkly_send_mail",
-                "birkly_notify",
-                "webhook",
-                "credential",
-                "developer"
+                "birkly-region",
+                "data-birkly-region",
+                "custom element",
+                "enhance",
+                "shadow"
             ],
-            "snapshot": "/admin/docs/snapshots/connections-api-reference.md",
-            "docs_path": "04-integration/connections-api-reference.html",
+            "snapshot": "/admin/docs/snapshots/web-components.md",
+            "docs_path": "04-integration/web-components.html",
             "nav_section": "integration",
-            "nav_section_label": "Integration"
+            "nav_section_label": "Integration",
+            "ai_topic": "templating"
         },
         {
-            "id": "discovery",
-            "title": "Discovery",
+            "id": "web-components-templating",
+            "title": "Web components (templating)",
             "keywords": [
-                "discovery",
-                "seo",
-                "agent guide",
+                "birkly-region",
+                "ordered newest",
+                "regions",
+                "enhance-only",
+                "templating"
+            ],
+            "snapshot": "/admin/docs/snapshots/web-components-templating.md",
+            "docs_path": "03-templating/web-components.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
+            "id": "webmcp-tools",
+            "title": "Website tools (WebMCP)",
+            "keywords": [
                 "webmcp",
-                "llms.txt",
-                "sitemap",
-                "robots",
-                "search",
-                "ai presence"
+                "website tools",
+                "model context protocol",
+                "browser agent",
+                "tool catalog",
+                "agent guide tools",
+                "modelcontext",
+                "registertool",
+                "confirmation",
+                "off by default"
             ],
-            "snapshot": "/admin/docs/snapshots/discovery.md",
-            "docs_path": "01-admin/discovery.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "agent-guide"
+            "snapshot": "/admin/docs/snapshots/webmcp-tools.md",
+            "docs_path": "04-integration/webmcp-tools.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration",
+            "ai_topic": "webmcp-tools"
         },
         {
-            "id": "site-url-map",
-            "title": "Site URL Map",
+            "id": "worked-site-walkthrough",
+            "title": "Worked site walkthrough",
             "keywords": [
-                "site url map",
-                "seo",
-                "meta",
-                "og",
-                "sitemap",
-                "redirect",
-                "detail binding",
-                "discovery"
+                "walkthrough",
+                "tutorial",
+                "build a site",
+                "end to end"
             ],
-            "snapshot": "/admin/docs/snapshots/site-url-map.md",
-            "docs_path": "01-admin/site-url-map.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
-        },
-        {
-            "id": "roles-and-permissions",
-            "title": "Roles and permissions",
-            "keywords": [
-                "roles",
-                "permissions",
-                "access",
-                "rbac",
-                "admin",
-                "user"
-            ],
-            "snapshot": "/admin/docs/snapshots/roles-and-permissions.md",
-            "docs_path": "01-admin/roles-and-permissions.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "settings-roles"
-        },
-        {
-            "id": "activity",
-            "title": "Activity feed",
-            "keywords": [
-                "activity",
-                "audit",
-                "log",
-                "security",
-                "timeline",
-                "events"
-            ],
-            "snapshot": "/admin/docs/snapshots/activity.md",
-            "docs_path": "01-admin/activity.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
-        },
-        {
-            "id": "notifications",
-            "title": "Admin notifications",
-            "keywords": [
-                "notifications",
-                "bell",
-                "unread",
-                "seen",
-                "read",
-                "alerts"
-            ],
-            "snapshot": "/admin/docs/snapshots/notifications.md",
-            "docs_path": "01-admin/notifications.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin"
+            "snapshot": "/admin/docs/snapshots/worked-site-walkthrough.md",
+            "docs_path": "03-templating/worked-site-walkthrough.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "site-building"
         }
     ],
     "manifest_source": "offline",
     "offline": true,
-    "synced_at": "2026-09-02T08:23:27+00:00",
+    "synced_at": "2026-09-02T08:32:46+00:00",
     "synced_from": "/agent/repos/birkly-docs"
 }
