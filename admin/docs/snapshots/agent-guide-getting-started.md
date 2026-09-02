@@ -206,7 +206,7 @@ Without an AI connection, preview uses keyword matching on published fields. Wit
 
 ## Further reading
 
-- [Content model overview](content-model-overview.md)
-- [Collections](collections.md)
-- [Entries & collections](entries.md)
+- [Agent Guide](agent-guide.md)
+- [Agent Guide — claims & cross-links](agent-guide-claims.md)
+- [Agent Guide — workflows](agent-guide-workflows.md)
 - [Collection groups](collection-groups.md)

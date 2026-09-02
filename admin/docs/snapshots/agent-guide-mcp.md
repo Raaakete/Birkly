@@ -232,7 +232,7 @@ After republish, agents may need session refresh to pick up new version.
 
 ## Further reading
 
-- [Public forms](public-forms.md)
 - [Agent Guide public API](agent-guide-api.md)
-- [Website tools (WebMCP)](webmcp-tools.md)
 - [AI on localhost](ai-on-localhost.md)
+- [Choose your stack](choose-your-stack.md)
+- [Connections API reference](connections-api-reference.md)
