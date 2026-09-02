@@ -211,7 +211,7 @@ No. Publishing the Guide only makes your fact-sheet JSON public. **Website tools
 
 ## Further reading
 
-- [Content model overview](content-model-overview.md)
-- [Collections](collections.md)
-- [Entries & collections](entries.md)
+- [Agent Guide — claims & cross-links](agent-guide-claims.md)
+- [Agent Guide — getting started](agent-guide-getting-started.md)
+- [Agent Guide — workflows](agent-guide-workflows.md)
 - [Collection groups](collection-groups.md)
