@@ -293,7 +293,16 @@ function birkly_validate_content_slug(string $slug): bool
 }
 
 /**
-<<<<<<< HEAD
+ * @throws InvalidArgumentException when slug is not safe for filesystem paths
+ */
+function birkly_require_valid_content_slug(string $slug): void
+{
+    if (!birkly_validate_content_slug($slug)) {
+        throw new InvalidArgumentException('Invalid content slug');
+    }
+}
+
+/**
  * Whether a fieldtype needs per-language HTML render (not just name/id rewrite).
  */
 function birkly_admin_field_needs_per_language_render(string $fieldType): bool
@@ -328,13 +337,4 @@ function birkly_slug_is_id_fallback_for_unicode_title(string $title, string $slu
     }
 
     return birkly_normalize_slug($slug) === birkly_normalize_slug($entryId);
-=======
- * @throws InvalidArgumentException when slug is not safe for filesystem paths
- */
-function birkly_require_valid_content_slug(string $slug): void
-{
-    if (!birkly_validate_content_slug($slug)) {
-        throw new InvalidArgumentException('Invalid content slug');
-    }
->>>>>>> 1a7e683f (OSS M2 round 2: invitations runtime guard and path validation)
 }
