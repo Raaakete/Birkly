@@ -29,6 +29,19 @@ assert_true(!birkly_validate_content_slug('../etc'), 'rejects path traversal');
 assert_true(!birkly_validate_content_slug('foo/bar'), 'rejects slash');
 assert_true(!birkly_validate_content_slug(''), 'rejects empty slug');
 
+try {
+    birkly_require_valid_content_slug('blog');
+    assert_true(true, 'require accepts valid slug');
+} catch (Throwable $e) {
+    assert_true(false, 'require accepts valid slug');
+}
+try {
+    birkly_require_valid_content_slug('../etc');
+    assert_true(false, 'require rejects path traversal');
+} catch (Throwable $e) {
+    assert_true(true, 'require rejects path traversal');
+}
+
 assert_true(!birkly_ai_presence_is_safe_external_url('http://127.0.0.1/secret'), 'blocks localhost URL');
 assert_true(!birkly_ai_presence_is_safe_external_url('ftp://example.com'), 'blocks non-http URL');
 assert_true(birkly_ai_presence_is_safe_external_url('https://example.com'), 'allows public https URL');

@@ -15,6 +15,7 @@ require_once '../core/csrf.php';
 require_once '../core/collection_schema.php';
 require_once '../core/entry_counts.php';
 require_once '../core/collection_groups.php';
+require_once '../core/entry_slug.php';
 require_once 'log.php';
 
 // Use admin session for content API (must be before auth check)
@@ -214,6 +215,10 @@ if ($action === 'update_collection') {
     $schema = $input['schema'] ?? [];
     if (empty($id) || empty($title) || empty($slug) || empty($schema)) {
         echo json_encode(['status' => 'error', 'message' => 'ID, title, slug, and schema required']);
+        exit;
+    }
+    if (!birkly_validate_content_slug($slug)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid collection slug']);
         exit;
     }
     // Find collection dir by id
@@ -434,6 +439,10 @@ if ($action === 'list_entries') {
             }
         }
     } elseif ($collection) {
+        if (!birkly_validate_content_slug($collection)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid collection slug']);
+            exit;
+        }
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
             if ($m && $m['slug'] === $collection) {
@@ -899,6 +908,10 @@ if ($action === 'get_schema') {
             }
         }
     } elseif ($collection) {
+        if (!birkly_validate_content_slug($collection)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid collection slug']);
+            exit;
+        }
         foreach ($collections as $d) {
             $m = $storage->read("collections/$d/collection.json");
             if ($m && $m['slug'] === $collection) {

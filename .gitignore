@@ -52,6 +52,8 @@ data/demo_social/*
 !data/demo_social/.gitkeep
 data/analytics/*
 !data/analytics/.gitkeep
+data/invitations/*
+!data/invitations/.gitkeep
 
 # PHP dependencies
 vendor/
