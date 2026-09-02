@@ -15,6 +15,8 @@ Built-in admin chat (API key) is separate — see [Built-in assistant](ai-connec
 
 Open **Settings → AI**.
 
+![Settings → AI — connector home (not an Agent Guide tab)](../media/01-admin/mcp-connections/screenshots/settings-ai-connections.png)
+
 1. **Most users:** copy the **personal connector URL**, paste it in your AI app, and sign in with your Birkly account.
 2. **Admins:** you can also create **service agents** with a fixed role and choose who may use them.
 3. **Write actions** are approved **in your AI app** — not in the Birkly Approvals tab (that tab is for the built-in assistant only).
@@ -122,7 +124,7 @@ php scripts/migrate-ai-agents-hybrid.php
 
 ## Requirements
 
-- Your Birkly site must use a **public HTTPS** address for external AI apps. Local or HTTP-only installs show a warning in Settings / Connections and will not work with remote connectors that call `http://localhost/mcp`.
+- Your Birkly site must use a **public HTTPS** address for external AI apps. Local or HTTP-only installs show a warning under **Settings → AI** and will not work with remote connectors that call `http://localhost/mcp`.
 
 ### Localhost and local development
 
@@ -157,14 +159,11 @@ For local Claude Desktop development only, `mcp-bridge.js` is available under th
 
 | Issue | Check |
 |-------|-------|
-| Connector won't connect | Site is public HTTPS; URL copied exactly; ends with `/mcp/agents/…` for personal connector |
+| Connector won't connect | Site is public HTTPS; URL copied exactly; ends with `/mcp` |
 | OAuth fails | You are assigned to the service agent (or use the personal connector); retry sign-in; leave Client ID/Secret empty |
 | OAuth denied for service agent | Admin must add your role or user under **Who can use this agent** |
 | No tools after connect | Your role (personal) or the agent’s fixed role (service); restart your AI app |
-| Stale tools after upgrade | Reconnect MCP; `initialize` returns `capabilities_version` — refresh when it changes |
-| Writes blocked | Tool permission in your AI app (not Birkly Approvals for MCP); check role |
-| Prompts despite admin role | **Two channels:** MCP writes confirm in Cursor/Claude; Approvals tab is built-in assistant only |
-| Wrong URL / 401 | Token is per-agent — use URL from Settings → AI, not an old `/mcp` bookmark |
+| Writes blocked | Tool permission in your AI app; check role (personal) or agent fixed role (service) |
 | Personal connector missing/disabled | Admins can re-enable it in Settings; disabled connectors are hidden from non-admins |
 | Old agents not visible to team | After upgrade, service agents are admin-only until visibility is reassigned |
 

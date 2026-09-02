@@ -2,7 +2,7 @@
 
 ## Summary
 
-The **Activity** page and dashboard **Recent activity** widget show an auditable timeline of CMS events — content changes, users, security, project files, git sync, and plugin bus events (P61).
+The **Activity** page and dashboard **Recent activity** widget show an auditable timeline of CMS events — content changes, users, security, project files, git sync, and plugin bus events.
 
 ## Beginner
 
@@ -21,3 +21,4 @@ Open **Activity** from the admin sidebar. Use category and severity filters to n
 - [Dashboard](dashboard.md)
 - [Settings](settings.md)
 - [Project Git sync](project-git-sync.md)
+- [Notifications](notifications.md)

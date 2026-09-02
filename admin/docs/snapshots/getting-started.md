@@ -2,7 +2,11 @@
 
 ## Summary
 
-Get started with Birkly in six steps: (0) Extract the release zip and open **START_HERE.html** before admin login. (1) Log in to the admin. (2) Complete the first-time wizard (project name, use case, optional AI). (3) Create a collection (e.g. “Blog posts”) and add fields (title, content, date, image). (4) Add one or more entries and set status to Published. (5) Add the Birkly client script to your website so it can load and display the content. No coding is required for basic content creation; connecting the site is one script tag plus simple placeholders in your HTML.
+Get started with Birkly in six steps: (0) Install via **release zip** or **Docker**, then open **START_HERE.html** before admin login. (1) Log in to the admin. (2) Complete the first-time wizard (project name, use case, optional AI). (3) Create a collection (e.g. “Blog posts”) and add fields (title, content, date, image). (4) Add one or more entries and set status to Published. (5) Add the Birkly client script to your website so it can load and display the content. No coding is required for basic content creation; connecting the site is one script tag plus simple placeholders in your HTML.
+
+Supported install channels are **zip** and **Docker** only — Composer, npm, and cPanel installers are not documented product paths. See [Deployment](../07-operations/deployment.md) and [Hosting on Dokploy](../07-operations/dokploy-hosting.md).
+
+![Install Birkly via release zip or Docker](../media/00-overview/getting-started/screenshots/install-zip-docker.svg)
 
 ## Beginner
 
@@ -41,7 +45,7 @@ The first time you (or anyone) use the installation, you may see the **onboardin
 - **Project name** — For the admin panel only (sidebar label, browser tab). It does **not** set your website’s public title or URL.
 - **Use case** *(optional)* — Blog, business site, shop, docs, or developer project; may include demo content you can keep or remove.
 - **Hub** *(optional)* — A pointer to install official plugins (Commerce, Events, etc.) from **Plugins → Hub**.
-- **Connect AI** *(optional)* — A short BYOAI flow; you can always skip and return later under Settings.
+- **Connect AI** *(optional)* — A short BYOAI flow; you can always skip and return later under **Settings → AI**.
 
 You can skip any step. After that, the Dashboard and sidebar are your starting point. A short **setup checklist** on the Dashboard shows essential next steps (collection, entry, marketplace plugin; Connect AI only if you skipped it in the wizard).
 

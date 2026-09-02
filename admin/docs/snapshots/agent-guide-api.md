@@ -322,3 +322,10 @@ Fetch summary on session start; cache 5 min keyed by `X-Agent-Guide-Version`. Re
 - [Getting started](../02-content/agent-guide-getting-started.md)
 - [MCP & agents](agent-guide-mcp-and-agents.md)
 - [Website integration](website-integration.md)
+
+## Further reading
+
+- [Public forms](public-forms.md)
+- [Agent Guide MCP & agents](agent-guide-mcp.md)
+- [Website tools (WebMCP)](webmcp-tools.md)
+- [AI on localhost](ai-on-localhost.md)

@@ -425,9 +425,16 @@
             }
 
             const sectionLabel = navSectionLabel(navSectionForTopic(topic));
+            const docsBase = String(manifest.docs_base_url || 'https://docs.birkly.com').replace(/\/$/, '');
+            const fullDocPath = String(topic.docs_path || '').replace(/^\//, '');
+            const fullDocUrl = fullDocPath ? docsBase + '/' + fullDocPath : '';
+            const fullDocLink = fullDocUrl
+                ? '<p class="u-mt-4"><a class="btn btn-secondary btn-sm" href="' + escapeHtml(fullDocUrl) + '" target="_blank" rel="noopener noreferrer">Read full doc on docs.birkly.com</a></p>'
+                : '';
             content.innerHTML = banner +
                 '<div class="u-mb-4"><span class="badge badge-accent">' + escapeHtml(sectionLabel) + '</span></div>' +
-                '<article class="prose markdown-content">' + renderMarkdown(md) + '</article>';
+                '<article class="prose markdown-content">' + renderMarkdown(md) + '</article>' +
+                fullDocLink;
 
             bindTopicLinks(content);
         } catch (err) {

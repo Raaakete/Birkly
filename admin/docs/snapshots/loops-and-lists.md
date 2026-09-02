@@ -8,7 +8,10 @@ Loops repeat a block of HTML for each entry in a collection (or each item in an 
 
 ![Loop with `with status = published` and `ordered by newest`](../media/03-templating/loops-and-lists/screenshots/ordered-by-with-status.svg)
 
-> **Video (follow-along):** add ordering/filter → refresh — `media/03-templating/loops-and-lists/videos/`
+![Live blog list from a published collection loop](../media/03-templating/loops-and-lists/screenshots/blog-list-live.png)
+
+<video controls width="720" src="../media/03-templating/loops-and-lists/videos/published-list.mp4">Published list</video>
+
 
 ## Beginner
 

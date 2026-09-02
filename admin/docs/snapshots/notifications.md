@@ -2,7 +2,7 @@
 
 ## Summary
 
-The topbar **notification bell** shows platform events: content publishes, plugin activity (P61 bus), security events, and more. **P69** adds a **seen** state distinct from **read**.
+The topbar **notification bell** shows platform events: content publishes, plugin activity, security events, and more. Notifications have three states: **unread**, **seen**, and **read**.
 
 ## Beginner
 
@@ -18,7 +18,7 @@ Seen state is per user and stored alongside read IDs in the notifications store.
 
 **API:** `POST /api/notifications.php` with `action=mark_seen` and visible notification IDs when the dropdown opens. Responses include `badge_state`: `unread`, `seen`, or `none`, and `pending_count` for accent display.
 
-**Plugin activity:** Commerce and other plugins can emit to the P61 plugin activity bus; those items appear in the bell when `activity_notify` is enabled for the plugin.
+**Plugin activity:** Commerce and other plugins can emit to the plugin activity bus; those items appear in the bell when `activity_notify` is enabled for the plugin.
 
 ## Related
 

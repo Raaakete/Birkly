@@ -6,7 +6,7 @@ Show language-specific content and let visitors switch language with a simple `<
 
 **In short:** The client resolves `{current.language}` from `?lang=`, then `localStorage` (`birkly_language`), then default `en`. Add `data-birkly-language-select` on a `<select>` to switch language (updates the query string, reloads, and remembers the choice). Use `{if current.language = 'de'}…{else}…{endif}` for small copy branches; store translated entry fields in the CMS for real content.
 
-> **Media (M4):** Language select → `?lang=` reload video — `media/03-templating/multilingual-templating/videos/`.
+> **Video (follow-along):** coming — multi-step recording (language select → `?lang=` reload)
 
 ## Beginner
 

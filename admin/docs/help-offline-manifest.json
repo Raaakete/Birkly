@@ -1288,10 +1288,7 @@
                 "workflows",
                 "tools tab",
                 "webmcp",
-                "unpublish",
-                "publish",
-                "sources",
-                "claims"
+                "unpublish"
             ],
             "snapshot": "/admin/docs/snapshots/agent-guide-workflows.md",
             "docs_path": "02-content/agent-guide-workflows.html",
@@ -1323,11 +1320,9 @@
                 "mcp",
                 "get_agent_guide_context",
                 "agent_guide.publish",
-                "agent_guide.unpublish",
-                "cms_admin_action",
-                "brand context"
+                "cms_admin_action"
             ],
-            "snapshot": "/admin/docs/snapshots/agent-guide-mcp-and-agents.md",
+            "snapshot": "/admin/docs/snapshots/agent-guide-mcp.md",
             "docs_path": "04-integration/agent-guide-mcp-and-agents.html",
             "nav_section": "integration",
             "nav_section_label": "Integration",
@@ -1439,10 +1434,191 @@
             "docs_path": "04-integration/ssr-and-build-time.html",
             "nav_section": "integration",
             "nav_section_label": "Integration"
+        },
+        {
+            "id": "connections",
+            "title": "Connections",
+            "keywords": [
+                "connections",
+                "email",
+                "smtp",
+                "resend",
+                "postmark",
+                "ses",
+                "mailgun",
+                "settings",
+                "alias",
+                "health",
+                "delivery log"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections.md",
+            "docs_path": "01-admin/connections.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "settings-roles"
+        },
+        {
+            "id": "connections-provider-recipes",
+            "title": "Connections provider recipes",
+            "keywords": [
+                "connections",
+                "smtp",
+                "resend",
+                "postmark",
+                "ses",
+                "mailgun",
+                "email setup",
+                "dns",
+                "dkim",
+                "spf",
+                "dmarc"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-provider-recipes.md",
+            "docs_path": "01-admin/connections-provider-recipes.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "connections-migration",
+            "title": "Migrate from Automation Setup email",
+            "keywords": [
+                "connections",
+                "migration",
+                "automation",
+                "setup",
+                "automation_mail",
+                "smtp",
+                "legacy"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-migration.md",
+            "docs_path": "01-admin/connections-migration.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "connections-mcp-rules",
+            "title": "Connections MCP rules",
+            "keywords": [
+                "connections",
+                "mcp",
+                "agent",
+                "approval",
+                "secrets",
+                "redaction",
+                "health"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-mcp-rules.md",
+            "docs_path": "01-admin/connections-mcp-rules.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "connections-api-reference",
+            "title": "Connections API reference",
+            "keywords": [
+                "connections",
+                "api",
+                "birkly_send_mail",
+                "birkly_notify",
+                "webhook",
+                "credential",
+                "developer"
+            ],
+            "snapshot": "/admin/docs/snapshots/connections-api-reference.md",
+            "docs_path": "04-integration/connections-api-reference.html",
+            "nav_section": "integration",
+            "nav_section_label": "Integration"
+        },
+        {
+            "id": "discovery",
+            "title": "Discovery",
+            "keywords": [
+                "discovery",
+                "seo",
+                "agent guide",
+                "webmcp",
+                "llms.txt",
+                "sitemap",
+                "robots",
+                "search",
+                "ai presence"
+            ],
+            "snapshot": "/admin/docs/snapshots/discovery.md",
+            "docs_path": "01-admin/discovery.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "site-url-map",
+            "title": "Site URL Map",
+            "keywords": [
+                "site url map",
+                "seo",
+                "meta",
+                "og",
+                "sitemap",
+                "redirect",
+                "detail binding",
+                "discovery"
+            ],
+            "snapshot": "/admin/docs/snapshots/site-url-map.md",
+            "docs_path": "01-admin/site-url-map.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "roles-and-permissions",
+            "title": "Roles and permissions",
+            "keywords": [
+                "roles",
+                "permissions",
+                "access",
+                "rbac",
+                "admin",
+                "user"
+            ],
+            "snapshot": "/admin/docs/snapshots/roles-and-permissions.md",
+            "docs_path": "01-admin/roles-and-permissions.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "settings-roles"
+        },
+        {
+            "id": "activity",
+            "title": "Activity feed",
+            "keywords": [
+                "activity",
+                "audit",
+                "log",
+                "security",
+                "timeline",
+                "events"
+            ],
+            "snapshot": "/admin/docs/snapshots/activity.md",
+            "docs_path": "01-admin/activity.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "notifications",
+            "title": "Admin notifications",
+            "keywords": [
+                "notifications",
+                "bell",
+                "unread",
+                "seen",
+                "read",
+                "alerts"
+            ],
+            "snapshot": "/admin/docs/snapshots/notifications.md",
+            "docs_path": "01-admin/notifications.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
         }
     ],
     "manifest_source": "offline",
     "offline": true,
-    "synced_at": "2026-08-08T06:40:40+00:00",
+    "synced_at": "2026-09-02T08:23:27+00:00",
     "synced_from": "/agent/repos/birkly-docs"
 }

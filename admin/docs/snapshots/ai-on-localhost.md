@@ -65,7 +65,7 @@ Keep the tunnel process running while you work. Treat the temporary URL like a s
 - Prefer **mcp-bridge** for purely local workflows — no public URL.
 - Tunnels are for development; shut them down when finished.
 - Never set Birkly to “open admin with no auth” to make AI connect.
-- Production sites should already be on public HTTPS — use the normal Connector URL from Connections; no tunnel needed.
+- Production sites should already be on public HTTPS — use the normal Connector URL from **Settings → AI**; no tunnel needed.
 
 ## Advanced Users
 

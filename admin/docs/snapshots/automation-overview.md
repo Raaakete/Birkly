@@ -77,7 +77,7 @@ In the admin sidebar, open **Automation** (or **Workflows**). Create a new workf
 |-------|------|
 | **Trigger** | When the workflow runs: Scheduled (cron-like), Webhook (HTTP request), Entry created/updated/deleted (CMS event). |
 | **Conditions** | Optional filters: payload field equals X, time in range, entry collection/sub-collection, etc. AND/OR logic. |
-| **Actions** | Steps executed in order: Slack, HTTP request, Email, internal (e.g. update entry, log). |
+| **Actions** | Steps executed in order: Slack, HTTP request, Email, internal (e.g. update entry, log). Email actions send via **Settings → Connections**; the old Automation → Setup SMTP UI redirects there. |
 | **Dry-run / test** | Executes condition + action logic against real or simulated payload; logs what would happen; **no side effects** unless the user confirms real execution. |
 | **Queue / rate limit** | System may queue or throttle to avoid overloading external services. |
 

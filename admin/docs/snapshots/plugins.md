@@ -70,6 +70,7 @@ Browse official and community extensions at [marketplace.birkly.cloud](https://m
 - **Hooks / events** — Run code on content save, user login, automation run, etc. Event names and payloads are defined in core/plugins/events.php or equivalent.
 - **Templating** — Expose template functions or variables.
 - **Automation** — Register triggers or actions. Exact API depends on core/automation and plugin_integration.
+- **Website tools (WebMCP)** — Register visitor actions with `birkly_webmcp_register_tools()` so they appear in Discovery → WebMCP. Separate from inbound Birkly MCP (`register_plugin_mcp_tools()`). See [Website tools (WebMCP)](../04-integration/webmcp-tools.md#plugin-authors-register-a-webmcp-catalog).
 
 **Structure (developer)**
 
