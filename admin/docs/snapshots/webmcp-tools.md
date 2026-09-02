@@ -1,10 +1,10 @@
 # Website tools (WebMCP)
 
-**Website tools** (built on the emerging browser standard **WebMCP**) let an AI helper running in a *visitor's* browser use clear, safe actions on your live public site — submit a contact form, add a product to the cart, RSVP to an event — instead of guessing from the page's HTML. They are **off by default**. Turn them on in **Agent Guide → Tools**.
+**Website tools** (built on the emerging browser standard **WebMCP**) let an AI helper running in a *visitor's* browser use clear, safe actions on your live public site — submit a contact form, add a product to the cart, RSVP to an event — instead of guessing from the page's HTML. They are **off by default**. Turn them on in **Discovery → WebMCP** (aliases: Agent Guide → Tools).
 
 ## Summary
 
-Open **Agent Guide → Tools** and switch on **Website tools**. Choose which built-in actions to allow (page info, listing content, submitting a form, plus shop/event actions if you use those plugins), and which public forms may be submitted. Any action that changes something — submitting a form, adding to cart, checking out, signing in — always asks the **visitor** to confirm first. Nothing is exposed until you enable it; on a browser that doesn't support the feature yet, or when it's off, your site behaves exactly as it does today.
+Open **Discovery → WebMCP** and switch on **Website tools**. Choose which built-in actions to allow (page info, listing content, submitting a form, plus shop/event/account actions **if those plugins are installed and active**), and which public forms may be submitted. Plugin tools do not appear in the catalog until the matching plugin is active. Any action that changes something — submitting a form, adding to cart, checking out, signing in — always asks the **visitor** to confirm first. Nothing is exposed until you enable it; on a browser that doesn't support the feature yet, or when it's off, your site behaves exactly as it does today.
 
 This is different from **Agent Guide** (the public fact sheet AI reads about your business) and from **Birkly MCP** (how AI apps like Claude or Cursor connect to your Birkly admin to help you manage content). See [Three layers, one hub](#three-layers-one-hub) below.
 
@@ -20,8 +20,8 @@ Because it lets an AI helper **do things** on your live site. Birkly ships it of
 
 **How do I turn it on?**
 
-1. Open **Agent Guide** in the admin sidebar.
-2. Go to the **Tools** tab.
+1. Open **Discovery** in the admin sidebar.
+2. Go to the **WebMCP** tab (or Agent Guide → Tools).
 3. Switch on **Website tools**.
 4. Leave the built-in read-only actions on (page info, listing published content) — they're safe by default.
 5. Turn on **form submitting** when you're ready, and pick which forms (from your Public API collections, e.g. "contact") may be used.
@@ -151,6 +151,48 @@ if (window.Birkly && window.Birkly.webmcp) {
 ```
 
 `Birkly.webmcp.register()` is a thin, safe wrapper: it inherits Birkly's lifecycle handling and only actually registers once website tools are enabled and the browser supports the API. Mutating author tools should follow the same confirm-before-acting pattern as the built-in tools.
+
+### Plugin authors: register a WebMCP catalog
+
+Official plugins (Commerce, Events, User Management) register visitor tools from `plugin.php` when they are **active**. Third-party plugins use the same hook. This is **not** inbound Birkly MCP.
+
+| Layer | Hook | Who uses it |
+|-------|------|-------------|
+| **WebMCP** (this page) | `birkly_webmcp_register_tools($pluginId, $tools)` | AI helpers in the visitor's browser on the live public site |
+| **Birkly MCP** | `register_plugin_mcp_tools($pluginId, $tools)` | AI apps connected to your Birkly **admin** (Cursor, Claude, …) |
+
+Do not copy an inbound MCP registry (`docs/mcp_tools.php`) into WebMCP. Commerce keeps both: admin MCP in `docs/mcp_tools.php`, visitor WebMCP in `includes/webmcp_tools.php`.
+
+```php
+if (function_exists('birkly_webmcp_register_tools') && commerce_plugin_active()) {
+    require_once __DIR__ . '/includes/webmcp_tools.php';
+    birkly_webmcp_register_tools('commerce', commerce_webmcp_tool_catalog());
+}
+```
+
+Each catalog entry:
+
+```php
+[
+    'id'          => 'birkly_myplugin_do_thing', // ^[a-z][a-z0-9_]*$
+    'kind'        => 'read',                     // read | write
+    'mutating'    => false,
+    'consent'     => 'none',                     // none | confirm | pay | login
+    'default'     => false,                      // plugin tools default OFF
+    'label'       => 'Do the thing',             // shown in Discovery → WebMCP
+    'description' => 'Lets an AI helper …',
+]
+```
+
+Rules:
+
+- Namespace ids as `birkly_{plugin}_*`. Changing an id breaks saved `settings/webmcp.json`.
+- Plugin tools **default off**. Core tools still default on once the master switch is on.
+- Register only when the plugin is active. Uninstall/disable prunes those ids from the catalog automatically.
+- WebMCP is public-site actuation only — no admin writes, no drafts, no secrets in the public config.
+- Runtime handlers in `birkly-webmcp.js` register a tool only when it is enabled **and** the plugin surface is on the page (`window.BirklyCommerce`, `window.BirklyEvents`, `window.BirklyUser`, or the matching `data-birkly-*` markup).
+
+Ship a small storefront script if the page has no markup the runtime can detect. Events ships `events-storefront.js`; User Management ships `user-storefront.js`; Commerce already exposes `BirklyCommerce` via `commerce-storefront.js`.
 
 Useful checks in your own scripts:
 

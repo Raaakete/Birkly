@@ -6,7 +6,7 @@ Load one named entry with `{from … get …}`, and guard optional chrome with `
 
 **In short:** Use `{from 'site_elements' get entry 'header'}…{endget}` for a single known entry (header, footer, one-off page block). If that entry is missing, the whole block disappears. Use `{if 'site_elements'.'hero' exist}` when you need an explicit branch. This is **not** the same as `{entry for}` (forms) or the phantom `{entry 'x'.'y'}…{endentry}`.
 
-> **Media (M4):** Before/after missing entry block — `media/03-templating/from-get-and-existence/screenshots/`.
+> **Media (P2):** screenshot deferred — before/after missing `{from … get …}` block.
 
 ## Beginner
 

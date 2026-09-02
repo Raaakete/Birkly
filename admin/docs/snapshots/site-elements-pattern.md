@@ -2,9 +2,9 @@
 
 ## Summary
 
-**Site elements** is a content-model pattern for shared site chrome: headers, footers, announcement bars, and other blocks that appear on many pages. You store them as **entries** in a dedicated collection (canonical handle **`site_elements`**) and inject them on your site with **`<birkly-region>`** — not as a separate CMS content type.
+**Site elements** is a content-model pattern for shared site chrome: headers, footers, announcement bars, and other blocks that appear on many pages. You store them as **entries** in a dedicated collection and inject them on your site with **`<birkly-region>`** — not as a separate CMS content type.
 
-The client always prefetches the collection slug `site_elements` for page bundles. Prefer that handle so defaults and regions match the engine.
+The client prefetches a **`site_elements`** bundle key for page loads. The CMS slugifies collection handles to **lowercase hyphen** form (e.g. name “Site Elements” → slug **`site-elements`**). Public read and `page_bundle` treat **`site_elements` and `site-elements` as the same collection** via slug normalization — templates may keep the underscore alias.
 
 ## Beginner
 
@@ -14,7 +14,7 @@ Birkly uses **collections + entries only**. Shared layout content is still entri
 
 ### Setup steps
 
-1. **Create collection** — Name: “Site elements”, handle: **`site_elements`** (underscore).
+1. **Create collection** — Name: “Site elements”. Either set slug explicitly to **`site-elements`**, or accept the auto slug from the title (also `site-elements`). Do not rely on a literal underscore slug from the name alone — `create_collection` normalizes underscores to hyphens.
 2. **Fields (example):**
    - **Title** (text) — admin label, e.g. “Header”.
    - **Blocks** (Dynamic items) — logo, nav links, CTA buttons, legal links — *or* a simple content field for HTML chrome.
@@ -57,9 +57,9 @@ Enable **multilanguage** on the `site_elements` collection. Edit **Blocks** (or 
 
 **Handles in templates and API:**
 
-- Prefer `{from 'site_elements' get entry 'header'}…{endget}` or Public API `GET /api/public/collections/site_elements/entries/header`
-- Prefer stable entry slugs (`header`, `footer`) — referenced in HTML and build scripts.
-- If you create a different handle (e.g. `site-elements`), templates and `<birkly-region collection="…">` must use **that** handle — engine defaults and prefetch still special-case `site_elements`.
+- Prefer `{from 'site_elements' get entry 'header'}…{endget}` (underscore alias) or `{from 'site-elements' get entry 'header'}…{endget}` — both resolve to the same collection when slugified handles match.
+- `<birkly-region collection="site-elements" …>` should use the **stored collection slug** from admin/API. The client bundle still requests the `site_elements` alias; public read maps it to your on-disk collection.
+- If you use a completely different handle, templates and regions must use **that** slug consistently; engine defaults and prefetch still special-case the `site_elements` alias.
 
 **Dynamic items inside regions:** The `field` attribute points to your Dynamic items field API name (e.g. `blocks`). Block structure is defined in [Dynamic items field](dynamic-items-field.md).
 

@@ -6,7 +6,7 @@ Quick reference for Birkly’s public template language, plus phantoms to avoid.
 
 **In short:** Single braces. Quote collections and user fields. Loop with `with` / `ordered by` / optional `limit N`. Dates use `format`. Detail pages use URL context. Forms use `{entry for}`. Print this page when building sites or reviewing AI output.
 
-> **Media (M4):** One-page printable syntax + phantoms screenshot — `media/03-templating/cheat-sheet/screenshots/`.
+![Printable Birkly template syntax sheet with phantoms to avoid](../media/03-templating/cheat-sheet/screenshots/syntax-sheet.svg)
 
 ## Beginner
 

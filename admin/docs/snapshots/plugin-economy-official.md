@@ -78,6 +78,8 @@ Plugin source of truth lives under the **Birkly-Other-Things** GitHub org — no
 
 `Raaakete/Birkly` is the runtime host only. Install plugins under `plugins/{id}/` (marketplace zip or copy); do not symlink SoT checkouts into `plugins/`.
 
+**Never edit the Ops mirror** (`Birkly-Marketplace/internal/cms/packages/official-plugins/`) — it is frozen for deletion (P71). All maintainer work happens in the SoT repos above.
+
 **Marketplace v1 readiness (Wave 3)**
 
 As of Wave 3 release-readiness work, the five official plugins above are **hardening toward Marketplace v1**, not declared fully production-released end-to-end. In-repo P0 hardening, packaging scripts, and local test gates have advanced; residual items remain — for example clean marketplace install/update smoke, recorded visual walkthroughs, and **CMS host hooks** that some plugin features still depend on (such as a shared public-read filter contract for User Management list/detail visibility). Treat SoT `docs/WAVE3-RELEASE-EVIDENCE.md` (and related readiness docs in each plugin repo) as the current status notes for maintainers.
