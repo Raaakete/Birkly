@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Build a marketplace-ready zip from plugins/{plugin_id}/ (plugin.json at archive root).
+# Build a marketplace-ready zip from an official plugin SoT repo or installed copy.
 #
 # Usage:
 #   ./scripts/build-plugin-zip.sh <plugin_id> [version]
+#
+# Source resolution (P71 — no Ops mirror fallback):
+#   1. BIRKLY_PLUGIN_SOT_ROOT — repo root for this plugin (must contain plugin.json)
+#   2. Sibling clone ../Birkly-Plugin-{Name} or ../birkly-plugin-{name}
+#   3. Installed copy plugins/{plugin_id}/ (local dev only)
 #
 # Version defaults to plugin.json "version". Output:
 #   dist/plugins/{marketplace_slug}-{version}.zip
@@ -19,21 +24,62 @@ if [[ -z "$PLUGIN_ID" ]]; then
 fi
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-OPS_ROOT="${BIRKLY_OPS_ROOT:-$(dirname "$ROOT")/Birkly-Marketplace}"
-PLUGIN_SRC="${OFFICIAL_PLUGINS_SRC:-$OPS_ROOT/internal/cms/packages/official-plugins}"
-PLUGIN_DIR="$PLUGIN_SRC/$PLUGIN_ID"
-# Installed copy for local dev (optional)
 PLUGIN_INSTALL="$ROOT/plugins/$PLUGIN_ID"
 MANIFEST="$ROOT/scripts/cms-release-manifest.json"
 
-if [[ ! -d "$PLUGIN_DIR" ]]; then
-  if [[ -d "$PLUGIN_INSTALL" ]]; then
-    PLUGIN_DIR="$PLUGIN_INSTALL"
-  else
-    echo "Plugin directory not found: $PLUGIN_SRC/$PLUGIN_ID (set OFFICIAL_PLUGINS_SRC)" >&2
-    exit 1
+declare -A SOT_REPO_CANONICAL=(
+  [commerce]=Birkly-Plugin-Commerce
+  [automation]=Birkly-Plugin-Automation
+  [events]=Birkly-Plugin-Events
+  [user_management]=Birkly-Plugin-User
+  [studio]=Birkly-Plugin-Studio
+)
+
+declare -A SOT_REPO_LOCAL=(
+  [commerce]=birkly-plugin-commerce
+  [automation]=birkly-plugin-automation
+  [events]=birkly-plugin-events
+  [user_management]=birkly-plugin-user
+  [studio]=birkly-plugin-studio
+)
+
+resolve_plugin_dir() {
+  local plugin_id="$1"
+  local candidate=""
+
+  if [[ -n "${BIRKLY_PLUGIN_SOT_ROOT:-}" ]]; then
+    if [[ -f "${BIRKLY_PLUGIN_SOT_ROOT}/plugin.json" ]]; then
+      echo "$BIRKLY_PLUGIN_SOT_ROOT"
+      return 0
+    fi
+    if [[ -d "${BIRKLY_PLUGIN_SOT_ROOT}/${plugin_id}" && -f "${BIRKLY_PLUGIN_SOT_ROOT}/${plugin_id}/plugin.json" ]]; then
+      echo "${BIRKLY_PLUGIN_SOT_ROOT}/${plugin_id}"
+      return 0
+    fi
   fi
-fi
+
+  local parent
+  parent="$(dirname "$ROOT")"
+  for name in "${SOT_REPO_CANONICAL[$plugin_id]:-}" "${SOT_REPO_LOCAL[$plugin_id]:-}"; do
+    [[ -z "$name" ]] && continue
+    candidate="$parent/$name"
+    if [[ -f "$candidate/plugin.json" ]]; then
+      echo "$candidate"
+      return 0
+    fi
+  done
+
+  if [[ -d "$PLUGIN_INSTALL" && -f "$PLUGIN_INSTALL/plugin.json" ]]; then
+    echo "$PLUGIN_INSTALL"
+    return 0
+  fi
+
+  echo "Plugin source not found for: $plugin_id" >&2
+  echo "Set BIRKLY_PLUGIN_SOT_ROOT to the SoT repo root, or clone Birkly-Plugin-* as a sibling of Birkly." >&2
+  return 1
+}
+
+PLUGIN_DIR="$(resolve_plugin_dir "$PLUGIN_ID")"
 
 if [[ ! -f "$PLUGIN_DIR/plugin.json" ]]; then
   echo "Missing plugin.json in $PLUGIN_DIR" >&2

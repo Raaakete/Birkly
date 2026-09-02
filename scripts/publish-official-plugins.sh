@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# P11-M6b — Build official plugin zips and publish to the Birkly Marketplace registry API.
+# P11-M6b — DEPRECATED (P71): use SoT repo GitHub Release workflows instead.
+# Build official plugin zips and publish to the Birkly Marketplace registry API.
 #
 # Usage:
 #   ./scripts/publish-official-plugins.sh [version]
