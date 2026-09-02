@@ -79,7 +79,7 @@ resolve_plugin_dir() {
   return 1
 }
 
-PLUGIN_DIR="$(resolve_plugin_dir "$PLUGIN_ID")"
+PLUGIN_DIR="$(resolve_plugin_dir "$PLUGIN_ID")" || exit 1
 
 if [[ ! -f "$PLUGIN_DIR/plugin.json" ]]; then
   echo "Missing plugin.json in $PLUGIN_DIR" >&2
