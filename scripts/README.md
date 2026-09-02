@@ -8,7 +8,7 @@
 | `build-all-official-plugin-zips.sh` | Build all IDs in `cms-release-manifest.json` → `official_plugin_ids` |
 | `install-dev-plugins.sh` | Install official plugins from registry or Marketplace catalog seeds |
 
-**Source of truth:** `Birkly-Other-Things/Birkly-Plugin-*` repos. The Ops mirror at `internal/cms/packages/official-plugins/` is deprecated (P71).
+**Source of truth:** `Birkly-Other-Things/Birkly-Plugin-*` repos. The Ops mirror at `internal/cms/packages/official-plugins/` was **deleted** in P71 (2026-09-02).
 
 `publish-official-plugins.sh` is **deprecated** — publish from each SoT repo's GitHub Release workflow instead.
 
