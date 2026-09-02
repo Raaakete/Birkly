@@ -46,9 +46,6 @@ legacy_layout() {
   for dir in $DIRS; do
     mkdir -p "$dir" 2>/dev/null || true
   done
-  mkdir -p /app/data/plugin-data/commerce/connections \
-           /app/data/plugin-data/commerce/activity \
-           /app/data/plugin-data/commerce/webhooks 2>/dev/null || true
   chmod_dirs="/app/content /app/media /app/settings /app/users /app/data /app/cache /app/logs /app/temp /app/plugins /app/themes /app/data/plugin-data"
 }
 
@@ -73,48 +70,10 @@ if [ "$USE_DATA_ROOT" -eq 1 ]; then
   for name in ai_conversations ai_approvals webhooks invitations analytics mcp_audit mcp_rate feedback activity; do
     mkdir -p "$DATA_ROOT/$name" 2>/dev/null || true
   done
-  # Only ensure the plugins root exists. Do not pre-create empty plugin dirs
-  # (e.g. commerce/) — Hub treats missing plugin.php as "not installed" but
-  # extract used to hard-fail on any existing directory.
-  mkdir -p "$DATA_ROOT/plugins" 2>/dev/null || true
-  # Dedicated plugin runtime trees (Commerce connections/orders) live outside
-  # the Hub install zip path. Create + chmod so PHP-FPM can write after deploy.
-  mkdir -p "$DATA_ROOT/plugin-data/commerce/connections" \
-           "$DATA_ROOT/plugin-data/commerce/activity" \
-           "$DATA_ROOT/plugin-data/commerce/webhooks" 2>/dev/null || true
-  # Official plugins are Hub-installed. Do not auto-seed Automation into plugins/
-  # (that made Hub show "Installed" on fresh sites). Opt-in for legacy images:
-  #   BIRKLY_SEED_AUTOMATION=1
-  if [ "${BIRKLY_SEED_AUTOMATION:-0}" = "1" ] && [ -d /app/bundled-plugins/automation ]; then
-    auto_dir="$DATA_ROOT/plugins/automation"
-    plugin_json_version() {
-      # Prefer php (always in image); fall back to sed.
-      f="$1"
-      [ -f "$f" ] || { echo ""; return 0; }
-      if command -v php >/dev/null 2>&1; then
-        php -r '$j=@json_decode(@file_get_contents($argv[1]), true); echo is_array($j)&&isset($j["version"])?(string)$j["version"]:"";' "$f" 2>/dev/null || true
-      else
-        sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$f" 2>/dev/null | head -1
-      fi
-    }
-    bundled_ver="$(plugin_json_version /app/bundled-plugins/automation/plugin.json)"
-    installed_ver="$(plugin_json_version "$auto_dir/plugin.json")"
-    if [ -f "$auto_dir/plugin.php" ] && [ -d "$auto_dir/.git" ]; then
-      echo "[entrypoint] automation is a git dev clone — skip bundled copy (installed=${installed_ver:-unknown})"
-    elif [ ! -f "$auto_dir/plugin.php" ]; then
-      echo "[entrypoint] Seeding bundled automation plugin to data volume (BIRKLY_SEED_AUTOMATION=1)..."
-      mkdir -p "$auto_dir" 2>/dev/null || true
-      cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
-    elif [ -n "$bundled_ver" ] && [ "$bundled_ver" != "$installed_ver" ]; then
-      echo "[entrypoint] Refreshing automation plugin from bundle (${installed_ver:-none} -> ${bundled_ver})..."
-      mkdir -p "$auto_dir" 2>/dev/null || true
-      cp -a /app/bundled-plugins/automation/. "$auto_dir/" 2>/dev/null || true
-    else
-      echo "[entrypoint] automation plugin already present (version ${installed_ver:-unknown})"
-    fi
-  elif [ -d /app/bundled-plugins/automation ]; then
-    echo "[entrypoint] Skipping automation auto-seed (install from Hub; set BIRKLY_SEED_AUTOMATION=1 to restore)"
-  fi
+  # Only ensure the plugins root exists. Plugin-specific runtime dirs (e.g.
+  # plugin-data/commerce/*) are created by each plugin on activate.
+  mkdir -p "$DATA_ROOT/plugins" "$DATA_ROOT/plugin-data" 2>/dev/null || true
+  # Official plugins are Hub-installed. No bundled plugin auto-seed (P71).
   # Git-cloned plugins under /app/data/plugins need CMS paths via ../.. from realpath.
   ln -sfn /app/core "$DATA_ROOT/core" 2>/dev/null || true
   ln -sfn /app/fieldtypes "$DATA_ROOT/fieldtypes" 2>/dev/null || true
