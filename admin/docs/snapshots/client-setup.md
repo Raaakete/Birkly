@@ -8,7 +8,9 @@ How to load `birkly-client.js` so template tags render — same host as the CMS,
 
 ![HTML → birkly-client.js → CMS → rendered page](../media/03-templating/client-setup/screenshots/client-pipeline.svg)
 
-> **Video (follow-along):** add script → content appears — `media/03-templating/client-setup/videos/`
+![Live project homepage after client render](../media/03-templating/client-setup/screenshots/project-index-live.png)
+
+<video controls width="720" src="../media/03-templating/client-setup/videos/client-renders-content.mp4">Client renders content</video>
 
 ## Beginner
 

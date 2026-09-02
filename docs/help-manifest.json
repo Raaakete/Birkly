@@ -1062,8 +1062,7 @@
                 "workflows",
                 "tools tab",
                 "webmcp",
-                "unpublish",
-                "publish"
+                "unpublish"
             ],
             "docs_path": "02-content/agent-guide-workflows.html",
             "ai_topic": "agent-guide"
@@ -1182,6 +1181,157 @@
                 "static"
             ],
             "docs_path": "04-integration/ssr-and-build-time.html"
+        },
+        {
+            "id": "connections",
+            "title": "Connections",
+            "keywords": [
+                "connections",
+                "email",
+                "smtp",
+                "resend",
+                "postmark",
+                "ses",
+                "mailgun",
+                "settings",
+                "alias",
+                "health",
+                "delivery log"
+            ],
+            "docs_path": "01-admin/connections.html",
+            "ai_topic": "settings-roles"
+        },
+        {
+            "id": "connections-provider-recipes",
+            "title": "Connections provider recipes",
+            "keywords": [
+                "connections",
+                "smtp",
+                "resend",
+                "postmark",
+                "ses",
+                "mailgun",
+                "email setup",
+                "dns",
+                "dkim",
+                "spf",
+                "dmarc"
+            ],
+            "docs_path": "01-admin/connections-provider-recipes.html"
+        },
+        {
+            "id": "connections-migration",
+            "title": "Migrate from Automation Setup email",
+            "keywords": [
+                "connections",
+                "migration",
+                "automation",
+                "setup",
+                "automation_mail",
+                "smtp",
+                "legacy"
+            ],
+            "docs_path": "01-admin/connections-migration.html"
+        },
+        {
+            "id": "connections-mcp-rules",
+            "title": "Connections MCP rules",
+            "keywords": [
+                "connections",
+                "mcp",
+                "agent",
+                "approval",
+                "secrets",
+                "redaction",
+                "health"
+            ],
+            "docs_path": "01-admin/connections-mcp-rules.html"
+        },
+        {
+            "id": "connections-api-reference",
+            "title": "Connections API reference",
+            "keywords": [
+                "connections",
+                "api",
+                "birkly_send_mail",
+                "birkly_notify",
+                "webhook",
+                "credential",
+                "developer"
+            ],
+            "docs_path": "04-integration/connections-api-reference.html"
+        },
+        {
+            "id": "discovery",
+            "title": "Discovery",
+            "keywords": [
+                "discovery",
+                "seo",
+                "agent guide",
+                "webmcp",
+                "llms.txt",
+                "sitemap",
+                "robots",
+                "search",
+                "ai presence"
+            ],
+            "docs_path": "01-admin/discovery.html",
+            "ai_topic": "agent-guide"
+        },
+        {
+            "id": "site-url-map",
+            "title": "Site URL Map",
+            "keywords": [
+                "site url map",
+                "seo",
+                "meta",
+                "og",
+                "sitemap",
+                "redirect",
+                "detail binding",
+                "discovery"
+            ],
+            "docs_path": "01-admin/site-url-map.html"
+        },
+        {
+            "id": "roles-and-permissions",
+            "title": "Roles and permissions",
+            "keywords": [
+                "roles",
+                "permissions",
+                "access",
+                "rbac",
+                "admin",
+                "user"
+            ],
+            "docs_path": "01-admin/roles-and-permissions.html",
+            "ai_topic": "settings-roles"
+        },
+        {
+            "id": "activity",
+            "title": "Activity feed",
+            "keywords": [
+                "activity",
+                "audit",
+                "log",
+                "security",
+                "timeline",
+                "events"
+            ],
+            "docs_path": "01-admin/activity.html"
+        },
+        {
+            "id": "notifications",
+            "title": "Admin notifications",
+            "keywords": [
+                "notifications",
+                "bell",
+                "unread",
+                "seen",
+                "read",
+                "alerts"
+            ],
+            "docs_path": "01-admin/notifications.html"
         }
     ]
 }

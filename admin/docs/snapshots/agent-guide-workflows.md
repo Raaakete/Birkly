@@ -339,3 +339,10 @@ Never rely on auto-save for AI suggestions — accept explicitly in AI Assist fi
 - [AI Assist](agent-guide-ai-assist.md)
 - [Best practices](agent-guide-best-practices.md)
 - [Website tools (WebMCP)](../04-integration/webmcp-tools.md)
+
+## Further reading
+
+- [Content model overview](content-model-overview.md)
+- [Collections](collections.md)
+- [Entries & collections](entries.md)
+- [Collection groups](collection-groups.md)

@@ -6,7 +6,7 @@ Six copy-paste starter sites ship with the Birkly CMS. Each demonstrates real te
 
 **In short:** Six starter sites (blog, portfolio, yoga, coffee, social, influencer) ship under Birkly `reference-projects/`. Install with `scripts/install-reference-project.sh <name>`, then open `/reference-projects/<name>/website/`. All use live `birkly-client.js` only — list/detail/forms match the [canonical syntax](canonical-syntax.md). Prefer these before inventing your own patterns. Step-by-step build: [Worked site walkthrough](worked-site-walkthrough.md).
 
-> **Media (M4):** Install blog starter → list/detail video — `media/03-templating/reference-projects/videos/`.
+> **Video (follow-along):** coming — multi-step recording (install blog starter → list/detail)
 
 ## Beginner
 

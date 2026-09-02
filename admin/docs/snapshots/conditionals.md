@@ -6,7 +6,7 @@ Conditionals show or hide parts of the page: existence of an entry, presence of 
 
 **In short:** Wrap optional UI in `{if}…{endif}`. Check that an entry exists with `{if 'site_elements'.'hero' exist}`. Check a field with `{if entry has 'excerpt'}`. Compare values with `=`, `!=`, `<`, `>`, `<=`, `>=`. Use `{else}` for fallbacks (placeholder image, empty-state copy).
 
-> **Media (M4):** Empty-field branch vs placeholder screenshot — `media/03-templating/conditionals/screenshots/`.
+> **Media (P2):** screenshot deferred — empty-field branch vs placeholder.
 
 ## Beginner
 
