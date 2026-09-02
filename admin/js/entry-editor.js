@@ -26,6 +26,28 @@
     let isSubmittingEntry = false;
     let knownEntryId = '';
 
+    function isSafeAdminRedirectUrl(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+        const trimmed = url.trim();
+        if (!trimmed) {
+            return false;
+        }
+        if (trimmed.indexOf('javascript:') === 0 || trimmed.indexOf('data:') === 0) {
+            return false;
+        }
+        if (trimmed.charAt(0) === '/' && trimmed.charAt(1) !== '/') {
+            return true;
+        }
+        try {
+            const parsed = new URL(trimmed, window.location.origin);
+            return parsed.origin === window.location.origin;
+        } catch (e) {
+            return false;
+        }
+    }
+
     function readEntryIdFromUrl() {
         try {
             const params = new URLSearchParams(window.location.search);
@@ -1564,7 +1586,9 @@
                         }
                         let redirectUrl = Birkly.adminUrl('entry-detail', detailParams);
                         redirectUrl += `&_t=${Date.now()}`;
-                        window.location.href = redirectUrl;
+                        if (isSafeAdminRedirectUrl(redirectUrl)) {
+                            window.location.href = redirectUrl;
+                        }
                     } else {
                         if (isNewRegularEntry) {
                             updateEntryEditorUrl(savedEntryId);

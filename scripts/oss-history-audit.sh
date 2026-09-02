@@ -29,6 +29,7 @@ check_empty "data/ai_approvals" data/ai_approvals
 check_empty "api/update.php" api/update.php
 check_empty "docs/reviews" docs/reviews
 check_empty "docs/roadmap" docs/roadmap
+check_empty "data/invitations" data/invitations
 
 if git log --all -S 'sk_live_' --oneline 2>/dev/null | grep -q .; then
   echo "WARN: sk_live_ string found in history (review manually — may be test fixtures)"

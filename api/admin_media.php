@@ -4,6 +4,7 @@ $__cmsMcpFunctionsOnly = !empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
 
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../core/media_storage.php';
 
 if (!$__cmsMcpFunctionsOnly) {
     header('Content-Type: application/json');
@@ -94,6 +95,9 @@ function listMedia() {
     
     // Get folder filter
     $folder = $_GET['folder'] ?? '';
+    if (!birkly_validate_media_folder($folder)) {
+        return ['error' => 'Invalid folder name'];
+    }
     $search = $_GET['search'] ?? '';
     $type = $_GET['type'] ?? '';
     $sort = $_GET['sort'] ?? 'date';
@@ -473,29 +477,11 @@ function uploadMedia() {
 }
 
 function validateMediaId($mediaId) {
-    if (empty($mediaId) || !is_string($mediaId)) {
-        return false;
-    }
-    if (!preg_match('/^[a-zA-Z0-9_-]+$/', $mediaId)) {
-        return false;
-    }
-    if (strpos($mediaId, '..') !== false || strpos($mediaId, '/') !== false || strpos($mediaId, '\\') !== false) {
-        return false;
-    }
-    return true;
+    return birkly_validate_media_id((string) $mediaId);
 }
 
 function validateMediaFolder($folder) {
-    if ($folder === '' || $folder === 'all') {
-        return true;
-    }
-    if (!is_string($folder)) {
-        return false;
-    }
-    if (strpos($folder, '..') !== false || strpos($folder, '\\') !== false) {
-        return false;
-    }
-    return preg_match('/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*$/', $folder) === 1;
+    return birkly_validate_media_folder((string) $folder);
 }
 
 function getMediaItem() {

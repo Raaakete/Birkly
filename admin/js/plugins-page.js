@@ -2437,6 +2437,18 @@
         return (err && err.message) || t('marketplace_request_failed', 'Hub request failed.');
     }
 
+    function isSafeCheckoutRedirectUrl(url) {
+        if (!url || typeof url !== 'string') {
+            return false;
+        }
+        try {
+            var parsed = new URL(url.trim());
+            return parsed.protocol === 'https:';
+        } catch (e) {
+            return false;
+        }
+    }
+
     async function startMarketplaceCheckout(slug, options) {
         if (!slug) {
             return;
@@ -2453,8 +2465,12 @@
             var result = await marketplaceApi('checkout', payload);
             var data = result.data || {};
             var checkoutUrl = data.checkout_url || (data.psp && (data.psp.checkout_url || data.psp.url)) || '';
-            if (checkoutUrl) {
+            if (checkoutUrl && isSafeCheckoutRedirectUrl(checkoutUrl)) {
                 window.location.href = checkoutUrl;
+                return;
+            }
+            if (checkoutUrl) {
+                showMessage(t('marketplace_request_failed', 'Hub request failed.'), 'error');
                 return;
             }
             window.location.href = marketplacePurchaseUrl(slug, {
