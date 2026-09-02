@@ -325,7 +325,7 @@ Fetch summary on session start; cache 5 min keyed by `X-Agent-Guide-Version`. Re
 
 ## Further reading
 
-- [Public forms](public-forms.md)
 - [Agent Guide MCP & agents](agent-guide-mcp.md)
-- [Website tools (WebMCP)](webmcp-tools.md)
 - [AI on localhost](ai-on-localhost.md)
+- [Choose your stack](choose-your-stack.md)
+- [Connections API reference](connections-api-reference.md)
