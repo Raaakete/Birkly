@@ -35,6 +35,7 @@ find_marketplace_zip() {
   local id="$1"
   local slug="${SLUGS[$id]:-$id}"
   local candidate=""
+  local -a candidates=()
 
   if [[ ! -d "$PKG_DIR" ]]; then
     return 1
@@ -43,12 +44,17 @@ find_marketplace_zip() {
   for pattern in "${slug}-"*.zip "birkly-${id}-"*.zip "${id}-"*.zip; do
     for candidate in "$PKG_DIR"/$pattern; do
       if [[ -f "$candidate" ]]; then
-        echo "$candidate"
-        return 0
+        candidates+=("$candidate")
       fi
     done
   done
-  return 1
+
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    return 1
+  fi
+
+  # Prefer highest semver in filename (catalog may retain multiple versions).
+  printf '%s\n' "${candidates[@]}" | sort -V | tail -1
 }
 
 fetch_registry_release() {
