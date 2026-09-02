@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once 'domain_auth.php';
 require_once 'storage.php';
 require_once 'validate.php';
+require_once __DIR__ . '/../core/entry_slug.php';
 require_once 'rate_limit.php';
 require_once 'log.php';
 require_once __DIR__ . '/../core/mail/notify.php';
@@ -40,6 +41,11 @@ if ($action === 'submit_form') {
     
     if (empty($collection)) {
         echo json_encode(['status' => 'error', 'message' => 'Collection is required']);
+        exit;
+    }
+
+    if (!birkly_validate_content_slug($collection)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid collection']);
         exit;
     }
     
