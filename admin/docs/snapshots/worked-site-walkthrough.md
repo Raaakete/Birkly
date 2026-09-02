@@ -6,7 +6,7 @@ End-to-end tutorial: content model → list page → detail page → contact for
 
 **In short:** Infer what repeats (collections), what is shared (site elements), and what visitors submit (public API collection). Define fields, publish sample entries, wire HTML with `birkly-client.js`, then verify list → detail → form. For a ready-made kit, install a [reference project](reference-projects.md) first.
 
-> **Media (M4):** Follow-along video — `media/03-templating/worked-site-walkthrough/videos/` (also pairs with reference-projects media).
+> **Video (follow-along):** coming — multi-step recording (build walkthrough; pairs with reference-projects)
 
 ## Beginner
 

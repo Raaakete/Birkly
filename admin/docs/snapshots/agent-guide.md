@@ -208,3 +208,10 @@ No. Publishing the Guide only makes your fact-sheet JSON public. **Website tools
 
 **Legacy paths and tools?**  
 `/.well-known/brand-context.json`, MCP `get_brand_context`, and admin `?page=ai-presence` remain supported as aliases.
+
+## Further reading
+
+- [Content model overview](content-model-overview.md)
+- [Collections](collections.md)
+- [Entries & collections](entries.md)
+- [Collection groups](collection-groups.md)

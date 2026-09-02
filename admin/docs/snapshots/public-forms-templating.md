@@ -8,7 +8,10 @@ Build contact, newsletter, and feedback forms with `{entry for 'collection'}…{
 
 ![`{entry for}` contact form pattern vs custom fetch](../media/03-templating/public-forms-templating/screenshots/entry-for-form.svg)
 
-> **Video (follow-along):** submit form → entry in admin — `media/03-templating/public-forms-templating/videos/`
+![Live contact form page](../media/03-templating/public-forms-templating/screenshots/contact-form-live.png)
+
+<video controls width="720" src="../media/03-templating/public-forms-templating/videos/contact-form.mp4">Contact form page</video>
+
 
 ## Beginner
 

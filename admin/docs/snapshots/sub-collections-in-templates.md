@@ -6,7 +6,7 @@ Loop child entries (comments, variants, line items) that belong to a parent entr
 
 **In short:** Sub-collections are configured on the parent collection in admin. On a detail page, list children with `{for each entry in 'comments' of 'blog'.current ordered by newest}`. Do not invent `sub_entries` helpers. Content model guide: [Sub-Collections](../02-content/sub-collections.md).
 
-> **Media (M4):** Optional comments-on-detail video — `media/03-templating/sub-collections-in-templates/videos/`.
+> **Video (follow-along):** optional — comments loop on detail (`of 'blog'.current`)
 
 ## Beginner
 

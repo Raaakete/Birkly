@@ -6,7 +6,7 @@ Show images and files by outputting the **field value** (filename or URL) into n
 
 **In short:** Store a filename or media ref on an `image` / `media` / `gallery` field, then print it with `{'featured_image'}` (quoted user field). Put that value in `<img src="…">` or `<a href="…">`. Always guard empty fields with `{if entry has 'featured_image'}`. Build public URLs from your CMS media path (often `/media/…` — confirm with the Media library).
 
-> **Media (M4):** Media pick + `<img>` in template screenshot — `media/03-templating/media-in-templates/screenshots/`.
+> **Media (P2):** screenshot deferred — media pick + `<img>` in template.
 
 ## Beginner
 
