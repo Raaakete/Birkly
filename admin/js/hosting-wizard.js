@@ -1,5 +1,5 @@
 /**
- * Hosting wizard — shared between Settings hosting tab and onboarding (P44-M5).
+ * Hosting wizard — Settings → Site delivery (P44-M5, P66-M2a).
  * Wires to api/hosting.php (same patterns as hosting-settings.js).
  */
 (function (global) {
