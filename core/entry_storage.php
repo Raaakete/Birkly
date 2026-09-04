@@ -135,19 +135,13 @@ function birkly_entry_list_record_ids(string $collectionSlug): array
     $ids = [];
 
     foreach ($items as $item) {
-        if (!is_string($item) || $item === '') {
+        if (!is_string($item) || $item === '' || !str_ends_with($item, '.json')) {
             continue;
         }
-        if (str_ends_with($item, '.json')) {
-            $ids[] = basename($item, '.json');
-            continue;
-        }
-        if (strpos($item, '.') === false) {
-            $ids[] = $item;
-        }
+        $ids[] = basename($item, '.json');
     }
 
-    return $ids;
+    return array_values(array_unique($ids));
 }
 
 function birkly_entry_list_records(string $collectionSlug): array

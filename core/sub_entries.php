@@ -586,12 +586,13 @@ function createSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
         
         // Trigger automation (if automation system is available)
         if (function_exists('enqueue_automation')) {
-            enqueue_automation('entry_created', [
+            enqueue_automation('sub_entry_created', [
                 'entry' => $data,
-                'collection' => $sub_collection,
+                'collection' => $parent_collection,
+                'sub_collection' => $sub_collection,
                 'parent_collection' => $parent_collection,
                 'parent_entry_id' => $parent_entry_id,
-                'is_sub_entry' => true
+                'is_sub_entry' => true,
             ]);
         }
         
@@ -688,13 +689,14 @@ function updateSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
             $oldStatus = $existing['status'] ?? '';
             $newStatus = $updated['status'] ?? '';
             
-            enqueue_automation('entry_updated', [
+            enqueue_automation('sub_entry_updated', [
                 'entry' => $updated,
-                'collection' => $sub_collection,
+                'collection' => $parent_collection,
+                'sub_collection' => $sub_collection,
                 'old_entry' => $existing,
                 'parent_collection' => $parent_collection,
                 'parent_entry_id' => $parent_entry_id,
-                'is_sub_entry' => true
+                'is_sub_entry' => true,
             ]);
             
             // Status changed trigger
@@ -795,12 +797,13 @@ function deleteSubEntry($parent_collection, $parent_entry_id, $sub_collection, $
         
         // Trigger automation (if automation system is available)
         if (function_exists('enqueue_automation')) {
-            enqueue_automation('entry_deleted', [
+            enqueue_automation('sub_entry_deleted', [
                 'entry' => $entry,
-                'collection' => $sub_collection,
+                'collection' => $parent_collection,
+                'sub_collection' => $sub_collection,
                 'parent_collection' => $parent_collection,
                 'parent_entry_id' => $parent_entry_id,
-                'is_sub_entry' => true
+                'is_sub_entry' => true,
             ]);
         }
     }
