@@ -47,7 +47,7 @@ if ($action === 'list_collections') {
         }
         $birkly_collections[$meta['slug']] = [
             'path' => realpath("../content/collections/$dir"),
-            'options' => []
+            'options' => is_array($meta['options'] ?? null) ? $meta['options'] : [],
         ];
     }
     // Now build result from all registered collections (core + plugins)
@@ -59,6 +59,9 @@ if ($action === 'list_collections') {
         if (file_exists($metaFile)) {
             $meta = json_decode(file_get_contents($metaFile), true);
             if ($meta) {
+                if (!empty($meta['options']['hidden'])) {
+                    continue;
+                }
                 // Add entries_count including sub-entries
                 $entriesDir = rtrim($path, '/') . '/entries';
                 $entriesCount = birkly_count_entry_files($entriesDir);
