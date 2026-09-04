@@ -43,6 +43,53 @@ function birkly_get_owner_field_config($schema): ?array
 }
 
 /**
+ * Whether a field type is a P77 site-user account field (user_account*).
+ */
+function birkly_is_user_account_field_type(string $type): bool
+{
+    return $type === 'user_account' || str_starts_with($type, 'user_account_');
+}
+
+/**
+ * Find the site-user account field on a schema (P78 — replaces owner on profile collections).
+ *
+ * @param array<string, mixed>|list<array<string, mixed>> $schema
+ * @return array<string, mixed>|null
+ */
+function birkly_get_account_field_config($schema): ?array
+{
+    foreach (birkly_schema_fields_list($schema) as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        if (birkly_is_user_account_field_type((string) ($field['type'] ?? ''))) {
+            return $field;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Resolve legacy site user id from a user_account* field value.
+ *
+ * @param mixed $value
+ */
+function birkly_resolve_account_legacy_user_id($value): string
+{
+    if (!is_array($value)) {
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            $value = is_array($decoded) ? $decoded : [];
+        } else {
+            return '';
+        }
+    }
+
+    return trim((string) ($value['legacy_user_id'] ?? ''));
+}
+
+/**
  * Resolve the owner user id for an entry (schema field first, then legacy keys).
  *
  * @param array<string, mixed> $entry
@@ -74,6 +121,25 @@ function birkly_get_entry_owner_id(array $entry, $schema = null): string
         $value = trim((string) $value);
         if ($value !== '') {
             return $value;
+        }
+    }
+
+    $accountField = $schema !== null ? birkly_get_account_field_config($schema) : null;
+    if ($accountField !== null) {
+        $fieldName = (string) ($accountField['name'] ?? 'account');
+        $legacyId = birkly_resolve_account_legacy_user_id($entry[$fieldName] ?? null);
+        if ($legacyId !== '') {
+            return $legacyId;
+        }
+    }
+
+    foreach ($entry as $key => $value) {
+        if (!is_array($value)) {
+            continue;
+        }
+        $legacyId = birkly_resolve_account_legacy_user_id($value);
+        if ($legacyId !== '') {
+            return $legacyId;
         }
     }
 
@@ -171,7 +237,8 @@ function birkly_validate_schema_ownership_fields($schema): array
 function birkly_validate_collection_relationship_fields(array $fields): ?string
 {
     $relationshipCount = 0;
-    $hasOwner = birkly_get_owner_field_config(['fields' => $fields]) !== null;
+    $hasOwner = birkly_get_owner_field_config(['fields' => $fields]) !== null
+        || birkly_get_account_field_config(['fields' => $fields]) !== null;
 
     foreach (birkly_schema_fields_list(['fields' => $fields]) as $field) {
         if (!is_array($field) || ($field['type'] ?? '') !== 'user_relationship') {
@@ -190,7 +257,7 @@ function birkly_validate_collection_relationship_fields(array $fields): ?string
         return 'At most one user_relationship field is allowed per schema';
     }
     if ($relationshipCount > 0 && !$hasOwner) {
-        return 'user_relationship requires an owner field (type user, ownership true)';
+        return 'user_relationship requires an owner field (type user, ownership true) or a site user account field (user_account*)';
     }
 
     return null;
@@ -265,7 +332,12 @@ function birkly_filter_public_submit_fields(array $fields, $schema): array
             unset($fields[$name]);
             continue;
         }
-        $isOwnership = ($field['type'] ?? '') === 'user' && !empty($field['ownership']);
+        $type = (string) ($field['type'] ?? '');
+        if (birkly_is_user_account_field_type($type)) {
+            unset($fields[$name]);
+            continue;
+        }
+        $isOwnership = $type === 'user' && !empty($field['ownership']);
         $publicVisible = array_key_exists('public_visible', $field)
             ? !empty($field['public_visible'])
             : !$isOwnership;

@@ -65,5 +65,22 @@ $filtered = birkly_filter_public_submit_fields($publicFields, [
 assert_true('public submit strips hidden owner field', !array_key_exists('owner', $filtered));
 assert_true('public submit keeps visible fields', ($filtered['title'] ?? '') === 'Hello');
 
+$accountSchema = [
+    'fields' => [
+        ['name' => 'account', 'type' => 'user_account_club', 'label' => 'Site user account'],
+        ['name' => 'relationships', 'type' => 'user_relationship', 'label' => 'Relationships'],
+    ],
+];
+$accountCollectionError = birkly_validate_collection_ownership_schemas($accountSchema['fields']);
+assert_true('user_account field satisfies user_relationship requirement', $accountCollectionError === null);
+
+$accountEntry = [
+    'account' => ['legacy_user_id' => 'user_abc', 'member_id' => 'm_abc'],
+];
+assert_true(
+    'owner resolves from account legacy_user_id',
+    birkly_get_entry_owner_id($accountEntry, $accountSchema) === 'user_abc'
+);
+
 echo "\nentry_ownership_schema_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");
 exit($failures === 0 ? 0 : 1);
