@@ -326,5 +326,6 @@ function birkly_process_avatar_upload_from_request(array $sessionUser): array
     return [
         'ok' => true,
         'path' => birkly_avatar_public_url($mediaId),
+        'media_id' => $mediaId,
     ];
 }
