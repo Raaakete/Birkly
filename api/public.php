@@ -352,7 +352,12 @@ if ($action === 'list_entries') {
         }
         
         require_once __DIR__ . '/../core/entry_slug.php';
-        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($transformedEntries))]]);
+        $transformedEntries = birkly_public_filter_entries(
+            array_values($transformedEntries),
+            $collectionSlug,
+            'list'
+        );
+        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', $transformedEntries)]]);
     } else {
         // Apply permission filtering if user management plugin is installed and active
         if (function_exists('get_plugin_state') && get_plugin_state('user_management')
@@ -366,7 +371,12 @@ if ($action === 'list_entries') {
         
         // No multi-language, return entries as-is
         require_once __DIR__ . '/../core/entry_slug.php';
-        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', array_values($publishedEntries))]]);
+        $publishedEntries = birkly_public_filter_entries(
+            array_values($publishedEntries),
+            $collectionSlug,
+            'list'
+        );
+        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', $publishedEntries)]]);
     }
 }
 
@@ -474,6 +484,12 @@ if ($action === 'get_entry') {
             $data = $transformed;
         }
     }
+
+    $filteredEntry = birkly_public_filter_entry($data, $collectionSlug, 'get');
+    if ($filteredEntry === null) {
+        respond(['status'=>'error','message'=>'Entry not found or not published']);
+    }
+    $data = $filteredEntry;
     
     respond(['status'=>'ok','data'=>['entry'=>$data]]);
 }
@@ -549,6 +565,7 @@ if ($action === 'delete_entry') {
     require_once __DIR__ . '/session.php';
     birkly_site_session_start();
     require_once __DIR__ . '/../core/public_bootstrap.php';
+    require_once __DIR__ . '/../core/entry_ownership.php';
     birkly_public_load_active_plugins();
     
     $collection = $input['collection'] ?? '';
@@ -599,10 +616,11 @@ if ($action === 'delete_entry') {
         http_response_code(401);
         respond(['status'=>'error','message'=>'Authentication required']);
     }
+
+    $schema = $storage->read("collections/$dir/schema.json");
+    $entryAuthorId = birkly_get_entry_owner_id(is_array($entry) ? $entry : [], is_array($schema) ? $schema : null);
     
-    $entryAuthorId = $entry['author_user_id'] ?? $entry['author_id'] ?? '';
-    
-    if ($entryAuthorId !== $currentUserId) {
+    if ($entryAuthorId === '' || $entryAuthorId !== $currentUserId) {
         http_response_code(403);
         respond(['status'=>'error','message'=>'You can only delete your own entries']);
     }

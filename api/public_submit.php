@@ -82,6 +82,7 @@ if (($collectionMeta['entry_method'] ?? 'admin_only') !== 'public_api') {
 }
 
 require_once __DIR__ . '/../core/public_read.php';
+require_once __DIR__ . '/../core/entry_ownership.php';
 require_once __DIR__ . '/domain_auth.php';
 $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
 setDynamicCORS();
@@ -113,6 +114,8 @@ $deferredRequired = [];
 // Resolve current site user from session snapshot (set by user_management plugin login)
 $currentUserId = $_SESSION['user']['id'] ?? null;
 $currentUserName = $_SESSION['user']['name'] ?? ($_SESSION['user']['username'] ?? null);
+$ownerFieldConfig = birkly_get_owner_field_config($schema);
+$ownerFieldName = is_array($ownerFieldConfig) ? (string) ($ownerFieldConfig['name'] ?? '') : '';
 
 foreach ($schema['fields'] as $field) {
     $name = $field['name'];
@@ -122,6 +125,9 @@ foreach ($schema['fields'] as $field) {
     if ($required && trim($value) === '' && !isset($_FILES[$name])) {
         // Allow slug to be auto-generated later
         if ($name === 'slug') {
+            $deferredRequired[] = $name;
+        } else if ($ownerFieldName !== '' && $name === $ownerFieldName && $currentUserId) {
+            // Allow schema owner field to be auto-populated from session
             $deferredRequired[] = $name;
         } else if (in_array($name, ['author_user_id', 'author_id', 'author_name'], true) && $currentUserId) {
             // Allow ownership fields to be auto-populated from session
@@ -155,8 +161,19 @@ if (isset($fields['title']) && is_string($fields['title']) && trim($fields['titl
 // Generic ownership + visibility defaults (system-wide, not project-specific)
 // -------------------------------------------------------------------------
 
-// If schema expects author fields, enforce them from the current session
-// (prevents spoofing and enforces ownership)
+// Schema-driven owner field (type=user, ownership=true)
+try {
+    $cleanData = birkly_stamp_entry_owner(
+        $cleanData,
+        $schema,
+        $currentUserId ? (string) $currentUserId : null,
+        false
+    );
+} catch (RuntimeException $e) {
+    respond(['status' => 'error', 'message' => $e->getMessage()], 401);
+}
+
+// Legacy author fields — keep for backward compatibility until migration completes
 foreach (['author_user_id', 'author_id'] as $authorField) {
     foreach ($schema['fields'] as $f) {
         if (($f['name'] ?? '') !== $authorField) continue;

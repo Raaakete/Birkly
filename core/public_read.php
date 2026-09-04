@@ -325,3 +325,53 @@ function birkly_public_list_sub_entries($parentCollection, $parentEntryId, $subC
     $entries = getSubEntries($parentCollection, $parentEntryId, $subCollection);
     return ['status' => 'ok', 'data' => ['entries' => array_values($entries)]];
 }
+
+/**
+ * Apply public-read filters to a list of entries (plugins may remove items).
+ *
+ * @param list<array<string, mixed>> $entries
+ * @param string $collectionSlug
+ * @param string $context
+ * @return list<array<string, mixed>>
+ */
+function birkly_public_filter_entries(array $entries, string $collectionSlug, string $context = 'list'): array
+{
+    if (!function_exists('apply_filters')) {
+        require_once __DIR__ . '/plugins.php';
+    }
+
+    $filtered = apply_filters('birkly_public_entries_filter', $entries, $collectionSlug, $context);
+    if (!is_array($filtered)) {
+        return [];
+    }
+
+    return array_values(array_filter($filtered, static function ($entry) {
+        return is_array($entry);
+    }));
+}
+
+/**
+ * Apply public-read filter to a single entry. Returns null when filtered out.
+ *
+ * @param array<string, mixed>|null $entry
+ * @param string $collectionSlug
+ * @param string $context
+ * @return array<string, mixed>|null
+ */
+function birkly_public_filter_entry($entry, string $collectionSlug, string $context = 'get'): ?array
+{
+    if (!is_array($entry)) {
+        return null;
+    }
+
+    if (!function_exists('apply_filters')) {
+        require_once __DIR__ . '/plugins.php';
+    }
+
+    $filtered = apply_filters('birkly_public_entry_filter', $entry, $collectionSlug, $context);
+    if ($filtered === false || $filtered === null || !is_array($filtered)) {
+        return null;
+    }
+
+    return $filtered;
+}

@@ -17,6 +17,7 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../core/sub_entries.php';
+require_once __DIR__ . '/../core/entry_ownership.php';
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/../core/csrf.php';
@@ -153,7 +154,7 @@ require_once __DIR__ . '/../core/birkly_paths.php';
         exit;
     }
     
-    $subEntryUserId = $subEntry['user_id'] ?? $subEntry['author_user_id'] ?? '';
+    $subEntryUserId = birkly_get_entry_owner_id($subEntry, $subCollectionConfig);
     
     if (empty($subEntryUserId) || $subEntryUserId !== $currentUserId) {
         http_response_code(403);
@@ -240,8 +241,29 @@ foreach ($submissionData as $key => $value) {
     }
 }
 
-// Validate required fields from sub-collection schema
+require_once __DIR__ . '/session.php';
+birkly_site_session_start();
+$currentUserId = $_SESSION['user']['id'] ?? null;
+
 $schemaFields = $subCollectionConfig['fields'] ?? $subCollectionConfig['schema']['fields'] ?? [];
+$subSchema = ['fields' => $schemaFields];
+try {
+    $sanitizedData = birkly_stamp_entry_owner(
+        $sanitizedData,
+        $subSchema,
+        $currentUserId ? (string) $currentUserId : null,
+        false
+    );
+} catch (RuntimeException $e) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+    exit;
+}
+
+$ownerFieldConfig = birkly_get_owner_field_config($subSchema);
+$ownerFieldName = is_array($ownerFieldConfig) ? (string) ($ownerFieldConfig['name'] ?? '') : '';
+
+// Validate required fields from sub-collection schema
 $validationErrors = [];
 foreach ($schemaFields as $field) {
     if (!is_array($field)) {
@@ -249,6 +271,9 @@ foreach ($schemaFields as $field) {
     }
     $fieldName = (string) ($field['name'] ?? '');
     if ($fieldName === '' || empty($field['required'])) {
+        continue;
+    }
+    if ($ownerFieldName !== '' && $fieldName === $ownerFieldName && $currentUserId) {
         continue;
     }
     $value = $sanitizedData[$fieldName] ?? '';
