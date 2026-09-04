@@ -104,6 +104,8 @@ if (!$schema || !isset($schema['fields'])) {
     respond(['status' => 'error', 'message' => 'Invalid collection schema'], 400);
 }
 
+$fields = birkly_filter_public_submit_fields($fields, $schema);
+
 // Validate and sanitize input
 $cleanData = [];
 $errors = [];

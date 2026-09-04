@@ -200,3 +200,32 @@ function birkly_validate_collection_ownership_schemas(array $fields, array $subC
 
     return null;
 }
+
+/**
+ * Remove client-supplied values for schema fields hidden from public forms.
+ *
+ * @param array<string, mixed> $fields
+ * @param array<string, mixed>|list<array<string, mixed>> $schema
+ * @return array<string, mixed>
+ */
+function birkly_filter_public_submit_fields(array $fields, $schema): array
+{
+    foreach (birkly_schema_fields_list($schema) as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $name = (string) ($field['name'] ?? '');
+        if ($name === '') {
+            continue;
+        }
+        $isOwnership = ($field['type'] ?? '') === 'user' && !empty($field['ownership']);
+        $publicVisible = array_key_exists('public_visible', $field)
+            ? !empty($field['public_visible'])
+            : !$isOwnership;
+        if (!$publicVisible) {
+            unset($fields[$name]);
+        }
+    }
+
+    return $fields;
+}

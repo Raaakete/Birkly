@@ -55,5 +55,15 @@ assert_true(
     $collectionError !== null && str_contains($collectionError, 'comments')
 );
 
+$publicFields = ['title' => 'Hello', 'owner' => 'spoofed'];
+$filtered = birkly_filter_public_submit_fields($publicFields, [
+    'fields' => [
+        ['name' => 'title', 'type' => 'text', 'public_visible' => true],
+        ['name' => 'owner', 'type' => 'user', 'ownership' => true, 'public_visible' => false],
+    ],
+]);
+assert_true('public submit strips hidden owner field', !array_key_exists('owner', $filtered));
+assert_true('public submit keeps visible fields', ($filtered['title'] ?? '') === 'Hello');
+
 echo "\nentry_ownership_schema_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");
 exit($failures === 0 ? 0 : 1);
