@@ -365,6 +365,26 @@ function birkly_ai_merge_collection_config(array &$collection, array $actionData
         $collection['sub_collections'] = birkly_ai_process_sub_collections($actionData['sub_collections'], $parentSlug);
     }
 
+    if (
+        (isset($actionData['fields']) && is_array($actionData['fields']))
+        || (isset($actionData['sub_collections']) && is_array($actionData['sub_collections']))
+    ) {
+        require_once __DIR__ . '/entry_ownership.php';
+        $fieldsForOwnership = isset($actionData['fields']) && is_array($actionData['fields'])
+            ? $actionData['fields']
+            : (is_array($existing['fields'] ?? null) ? $existing['fields'] : ($collection['fields'] ?? []));
+        $subCollectionsForOwnership = isset($actionData['sub_collections']) && is_array($actionData['sub_collections'])
+            ? ($collection['sub_collections'] ?? [])
+            : (is_array($existing['sub_collections'] ?? null) ? $existing['sub_collections'] : ($collection['sub_collections'] ?? []));
+        $ownershipError = birkly_validate_collection_ownership_schemas(
+            is_array($fieldsForOwnership) ? $fieldsForOwnership : [],
+            is_array($subCollectionsForOwnership) ? $subCollectionsForOwnership : []
+        );
+        if ($ownershipError !== null) {
+            return $ownershipError;
+        }
+    }
+
     if (array_key_exists('multilanguage', $actionData)) {
         $normalized = birkly_ai_normalize_multilanguage_config($actionData['multilanguage']);
         if (is_string($normalized)) {

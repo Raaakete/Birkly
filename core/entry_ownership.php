@@ -162,3 +162,41 @@ function birkly_validate_schema_ownership_fields($schema): array
         'errors' => $errors,
     ];
 }
+
+/**
+ * Validate ownership rules on a collection schema and its sub-collections.
+ *
+ * @param list<array<string, mixed>> $fields
+ * @param list<array<string, mixed>> $subCollections
+ */
+function birkly_validate_collection_ownership_schemas(array $fields, array $subCollections = []): ?string
+{
+    $check = birkly_validate_schema_ownership_fields(['fields' => $fields]);
+    if (!$check['valid']) {
+        return implode('; ', $check['errors']);
+    }
+
+    foreach ($subCollections as $sub) {
+        if (!is_array($sub)) {
+            continue;
+        }
+        $subFields = $sub['fields'] ?? [];
+        if (!is_array($subFields)) {
+            $subFields = [];
+        }
+        $subCheck = birkly_validate_schema_ownership_fields(['fields' => $subFields]);
+        if (!$subCheck['valid']) {
+            $slug = (string) ($sub['slug'] ?? 'sub-collection');
+            return 'Sub-collection "' . $slug . '": ' . implode('; ', $subCheck['errors']);
+        }
+        $nested = $sub['sub_collections'] ?? [];
+        if (is_array($nested) && $nested !== []) {
+            $nestedError = birkly_validate_collection_ownership_schemas([], $nested);
+            if ($nestedError !== null) {
+                return $nestedError;
+            }
+        }
+    }
+
+    return null;
+}
