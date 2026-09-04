@@ -164,6 +164,39 @@ function birkly_validate_schema_ownership_fields($schema): array
 }
 
 /**
+ * Validate user_relationship field rules on a collection schema.
+ *
+ * @param list<array<string, mixed>> $fields
+ */
+function birkly_validate_collection_relationship_fields(array $fields): ?string
+{
+    $relationshipCount = 0;
+    $hasOwner = birkly_get_owner_field_config(['fields' => $fields]) !== null;
+
+    foreach (birkly_schema_fields_list(['fields' => $fields]) as $field) {
+        if (!is_array($field) || ($field['type'] ?? '') !== 'user_relationship') {
+            continue;
+        }
+        $relationshipCount++;
+        $fieldName = (string) ($field['name'] ?? '');
+        if (!empty($field['public_visible'])) {
+            return $fieldName !== ''
+                ? "Field \"$fieldName\" (user_relationship) cannot be public_visible"
+                : 'user_relationship fields cannot be public_visible';
+        }
+    }
+
+    if ($relationshipCount > 1) {
+        return 'At most one user_relationship field is allowed per schema';
+    }
+    if ($relationshipCount > 0 && !$hasOwner) {
+        return 'user_relationship requires an owner field (type user, ownership true)';
+    }
+
+    return null;
+}
+
+/**
  * Validate ownership rules on a collection schema and its sub-collections.
  *
  * @param list<array<string, mixed>> $fields
@@ -174,6 +207,11 @@ function birkly_validate_collection_ownership_schemas(array $fields, array $subC
     $check = birkly_validate_schema_ownership_fields(['fields' => $fields]);
     if (!$check['valid']) {
         return implode('; ', $check['errors']);
+    }
+
+    $relationshipError = birkly_validate_collection_relationship_fields($fields);
+    if ($relationshipError !== null) {
+        return $relationshipError;
     }
 
     foreach ($subCollections as $sub) {
@@ -188,6 +226,11 @@ function birkly_validate_collection_ownership_schemas(array $fields, array $subC
         if (!$subCheck['valid']) {
             $slug = (string) ($sub['slug'] ?? 'sub-collection');
             return 'Sub-collection "' . $slug . '": ' . implode('; ', $subCheck['errors']);
+        }
+        $subRelationshipError = birkly_validate_collection_relationship_fields($subFields);
+        if ($subRelationshipError !== null) {
+            $slug = (string) ($sub['slug'] ?? 'sub-collection');
+            return 'Sub-collection "' . $slug . '": ' . $subRelationshipError;
         }
         $nested = $sub['sub_collections'] ?? [];
         if (is_array($nested) && $nested !== []) {
@@ -216,6 +259,10 @@ function birkly_filter_public_submit_fields(array $fields, $schema): array
         }
         $name = (string) ($field['name'] ?? '');
         if ($name === '') {
+            continue;
+        }
+        if (($field['type'] ?? '') === 'user_relationship') {
+            unset($fields[$name]);
             continue;
         }
         $isOwnership = ($field['type'] ?? '') === 'user' && !empty($field['ownership']);

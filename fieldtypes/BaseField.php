@@ -132,6 +132,39 @@ abstract class BaseField {
     abstract public function processLoadedValue($value);
 
     /**
+     * Whether this fieldtype stores a value on the entry JSON file.
+     * Virtual fieldtypes (e.g. plugin-backed relationship panels) return false.
+     */
+    public function persistsInEntry(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Resolve display value for virtual fieldtypes when loading an entry.
+     *
+     * @param array<string, mixed> $entry
+     * @param array<string, mixed> $fieldConfig
+     * @param array<string, mixed> $context
+     */
+    public function resolveValueForEntry(array $entry, array $fieldConfig, array $context = [])
+    {
+        $name = (string) ($fieldConfig['name'] ?? $this->name);
+        return $entry[$name] ?? null;
+    }
+
+    /**
+     * Optional hook after a non-virtual entry save completes.
+     *
+     * @param array<string, mixed> $entry
+     * @param array<string, mixed> $fieldConfig
+     * @param array<string, mixed> $context
+     */
+    public function onEntrySaved(array $entry, array $fieldConfig, array $context = []): void
+    {
+    }
+
+    /**
      * Render a compact list/table cell representation for this field's value
      * Fieldtypes can override to provide richer summaries (e.g., thumbnails)
      */
