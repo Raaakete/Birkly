@@ -278,17 +278,17 @@ if ($action === 'list_entries') {
             $publishedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $publishedEntries);
         }
         
-        // Calculate likes_count and comments_count for social_posts collection
-        if ($collectionSlug === 'social_posts') {
+        // Calculate likes_count (and comments_count for social_posts) from sub-entries
+        if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
             require_once __DIR__ . '/../core/sub_entries.php';
             foreach ($publishedEntries as &$entry) {
                 if (empty($entry['id'])) continue;
-                // Count likes
                 $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
                 $entry['likes_count'] = count($likes);
-                // Count comments
-                $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
-                $entry['comments_count'] = count($comments);
+                if ($collectionSlug === 'social_posts') {
+                    $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
+                    $entry['comments_count'] = count($comments);
+                }
             }
             unset($entry); // Break reference
         }
@@ -322,17 +322,17 @@ if ($action === 'list_entries') {
             return $entry;
         }, $publishedEntries);
         
-        // Calculate likes_count and comments_count for social_posts collection (after transformation)
-        if ($collectionSlug === 'social_posts') {
+        // Calculate likes_count (and comments_count for social_posts) from sub-entries (after transformation)
+        if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
             require_once __DIR__ . '/../core/sub_entries.php';
             foreach ($transformedEntries as &$entry) {
                 if (empty($entry['id'])) continue;
-                // Count likes
                 $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
                 $entry['likes_count'] = count($likes);
-                // Count comments
-                $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
-                $entry['comments_count'] = count($comments);
+                if ($collectionSlug === 'social_posts') {
+                    $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
+                    $entry['comments_count'] = count($comments);
+                }
             }
             unset($entry); // Break reference
         }
@@ -432,16 +432,16 @@ if ($action === 'get_entry') {
     
     $data = birkly_public_entry_with_effective_slug($data);
     
-    // Calculate likes_count and comments_count for social_posts collection
+    // Calculate likes_count (and comments_count for social_posts) from sub-entries
     $collectionSlug = $collectionMeta['slug'] ?? '';
-    if ($collectionSlug === 'social_posts' && !empty($data['id'])) {
+    if (($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') && !empty($data['id'])) {
         require_once __DIR__ . '/../core/sub_entries.php';
-        // Count likes
         $likes = getSubEntries($collectionSlug, $data['id'], 'likes');
         $data['likes_count'] = count($likes);
-        // Count comments
-        $comments = getSubEntries($collectionSlug, $data['id'], 'comments');
-        $data['comments_count'] = count($comments);
+        if ($collectionSlug === 'social_posts') {
+            $comments = getSubEntries($collectionSlug, $data['id'], 'comments');
+            $data['comments_count'] = count($comments);
+        }
     }
     
     // Transform entry for language-specific content
