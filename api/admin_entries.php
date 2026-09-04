@@ -19,6 +19,7 @@ require_once __DIR__ . '/../core/entry_slug.php';
 require_once __DIR__ . '/../core/entry_validation.php';
 require_once __DIR__ . '/../core/entry_multilang.php';
 require_once __DIR__ . '/../core/entry_storage.php';
+require_once __DIR__ . '/../core/entry_ownership.php';
 require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugins.php';
@@ -844,6 +845,13 @@ function saveEntry() {
 
     $currentUserId = (string) ($_SESSION['user']['id'] ?? '');
     $previousStatus = is_array($entry) ? (string) ($entry['status'] ?? '') : '';
+    if ($action === 'create') {
+        try {
+            $entryOutput = birkly_stamp_entry_owner($entryOutput, $schema, $currentUserId, true);
+        } catch (RuntimeException $e) {
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
     if ($currentUserId !== '') {
         if ($action === 'create' && empty($entryOutput['author_id']) && empty($entryOutput['author_user_id'])) {
             $entryOutput['author_id'] = $currentUserId;
