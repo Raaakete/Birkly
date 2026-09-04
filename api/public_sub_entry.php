@@ -220,6 +220,9 @@ unset($submissionData['_birkly_honeypot']);
 unset($submissionData['_csrf']);
 unset($submissionData['operation']);
 
+$subSchema = ['fields' => $subCollectionConfig['fields'] ?? []];
+$submissionData = birkly_filter_public_submit_fields($submissionData, $subSchema);
+
 // Validate parent entry exists
 $parentEntryPath = "collections/{$parent_collection}/entries/{$parent_entry_id}.json";
 $parentEntry = $storage->read($parentEntryPath);

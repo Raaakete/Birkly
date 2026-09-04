@@ -669,6 +669,23 @@ try {
                     if (isset($fieldData['help']) && $fieldData['help'] !== '') {
                         $field['help'] = $fieldData['help'];
                     }
+
+                    if ($fieldType === 'user') {
+                        if (isset($fieldData['multiple'])) {
+                            $field['multiple'] = !empty($fieldData['multiple']);
+                        }
+                        if (isset($fieldData['ownership'])) {
+                            $field['ownership'] = !empty($fieldData['ownership']);
+                        }
+                        if (array_key_exists('public_visible', $fieldData)) {
+                            $field['public_visible'] = !empty($fieldData['public_visible']);
+                        } elseif (!empty($field['ownership'])) {
+                            $field['public_visible'] = false;
+                        }
+                        if (isset($fieldData['allow_roles']) && is_array($fieldData['allow_roles'])) {
+                            $field['allow_roles'] = array_values(array_filter(array_map('strval', $fieldData['allow_roles'])));
+                        }
+                    }
                     
                     error_log("Processed field: " . json_encode($field));
                     $processedSubFields[] = $field;
@@ -963,6 +980,24 @@ try {
                 }
                 if (isset($fieldData['multiple'])) {
                     $field['multiple'] = !empty($fieldData['multiple']);
+                }
+            }
+
+            // User fieldtype (User Management plugin)
+            if ($fieldType === 'user') {
+                if (isset($fieldData['multiple'])) {
+                    $field['multiple'] = !empty($fieldData['multiple']);
+                }
+                if (isset($fieldData['ownership'])) {
+                    $field['ownership'] = !empty($fieldData['ownership']);
+                }
+                if (array_key_exists('public_visible', $fieldData)) {
+                    $field['public_visible'] = !empty($fieldData['public_visible']);
+                } elseif (!empty($field['ownership'])) {
+                    $field['public_visible'] = false;
+                }
+                if (isset($fieldData['allow_roles']) && is_array($fieldData['allow_roles'])) {
+                    $field['allow_roles'] = array_values(array_filter(array_map('strval', $fieldData['allow_roles'])));
                 }
             }
             
