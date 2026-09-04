@@ -278,14 +278,16 @@ if ($action === 'list_entries') {
             $publishedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $publishedEntries);
         }
         
-        // Calculate likes_count (and comments_count for social_posts) from sub-entries
-        if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
+        // Calculate likes_count (and comments_count for social_posts / club-posts) from sub-entries
+        if (in_array($collectionSlug, ['social_posts', 'roadmap-features', 'club-posts'], true)) {
             require_once __DIR__ . '/../core/sub_entries.php';
             foreach ($publishedEntries as &$entry) {
                 if (empty($entry['id'])) continue;
-                $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
-                $entry['likes_count'] = count($likes);
-                if ($collectionSlug === 'social_posts') {
+                if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
+                    $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
+                    $entry['likes_count'] = count($likes);
+                }
+                if ($collectionSlug === 'social_posts' || $collectionSlug === 'club-posts') {
                     $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
                     $entry['comments_count'] = count($comments);
                 }
@@ -322,14 +324,16 @@ if ($action === 'list_entries') {
             return $entry;
         }, $publishedEntries);
         
-        // Calculate likes_count (and comments_count for social_posts) from sub-entries (after transformation)
-        if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
+        // Calculate likes_count (and comments_count for social_posts / club-posts) from sub-entries (after transformation)
+        if (in_array($collectionSlug, ['social_posts', 'roadmap-features', 'club-posts'], true)) {
             require_once __DIR__ . '/../core/sub_entries.php';
             foreach ($transformedEntries as &$entry) {
                 if (empty($entry['id'])) continue;
-                $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
-                $entry['likes_count'] = count($likes);
-                if ($collectionSlug === 'social_posts') {
+                if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
+                    $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
+                    $entry['likes_count'] = count($likes);
+                }
+                if ($collectionSlug === 'social_posts' || $collectionSlug === 'club-posts') {
                     $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
                     $entry['comments_count'] = count($comments);
                 }
@@ -432,13 +436,15 @@ if ($action === 'get_entry') {
     
     $data = birkly_public_entry_with_effective_slug($data);
     
-    // Calculate likes_count (and comments_count for social_posts) from sub-entries
+    // Calculate likes_count (and comments_count for social_posts / club-posts) from sub-entries
     $collectionSlug = $collectionMeta['slug'] ?? '';
-    if (($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') && !empty($data['id'])) {
+    if (in_array($collectionSlug, ['social_posts', 'roadmap-features', 'club-posts'], true) && !empty($data['id'])) {
         require_once __DIR__ . '/../core/sub_entries.php';
-        $likes = getSubEntries($collectionSlug, $data['id'], 'likes');
-        $data['likes_count'] = count($likes);
-        if ($collectionSlug === 'social_posts') {
+        if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
+            $likes = getSubEntries($collectionSlug, $data['id'], 'likes');
+            $data['likes_count'] = count($likes);
+        }
+        if ($collectionSlug === 'social_posts' || $collectionSlug === 'club-posts') {
             $comments = getSubEntries($collectionSlug, $data['id'], 'comments');
             $data['comments_count'] = count($comments);
         }
