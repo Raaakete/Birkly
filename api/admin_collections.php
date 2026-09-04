@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // SECURITY FIX: Require CSRF protection for all POST requests
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/entry_slug.php';
+require_once __DIR__ . '/../core/entry_ownership.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/auth.php';
 haru_secure_session_start();
@@ -973,6 +974,14 @@ try {
     $schemaData = [
         'fields' => $processedFields
     ];
+
+    $ownershipError = birkly_validate_collection_ownership_schemas(
+        $processedFields,
+        is_array($collectionData['sub_collections'] ?? null) ? $collectionData['sub_collections'] : []
+    );
+    if ($ownershipError !== null) {
+        throw new Exception($ownershipError);
+    }
     
     $schemaFile = $collectionDir . '/schema.json';
     if (file_put_contents($schemaFile, json_encode($schemaData, JSON_PRETTY_PRINT)) === false) {
