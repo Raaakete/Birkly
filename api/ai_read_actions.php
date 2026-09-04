@@ -57,6 +57,10 @@ function executeReadAction($actionData, $aiUser) {
             return ['success' => false, 'message' => 'Entry not found'];
         }
 
+        if (function_exists('apply_filters')) {
+            $entry = apply_filters('birkly_ai_read_entry', $entry, $collection);
+        }
+
         return ['success' => true, 'data' => ['entry' => $entry]];
 
     } elseif ($actionType === 'list_entries') {
