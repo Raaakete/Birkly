@@ -119,14 +119,21 @@ function birkly_admin_session_start() {
  */
 function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '', string $requestUri = ''): string {
     $uri = $requestUri !== '' ? $requestUri : ($_SERVER['REQUEST_URI'] ?? '');
+    $fromAdmin = strpos($referer, '/admin/') !== false;
 
-    // Admin panel and CMS API always share the main PHP session
-    if ($uri !== '' && preg_match('#/(admin|api)(/|$|\?)#', $uri)) {
-        return 'cms';
+    if (!empty($cookies['birkly_admin_sid']) || $fromAdmin) {
+        return !empty($cookies['birkly_admin_sid']) ? 'admin' : 'cms';
     }
 
-    if (!empty($cookies['birkly_admin_sid'])) {
-        return 'admin';
+    // Storefront site users (club, account pages) share CSRF with birkly_site_sid.
+    // Must run before the generic /api/ rule so /api/csrf.php matches the site session.
+    if (!empty($cookies['birkly_site_sid'])) {
+        return 'site';
+    }
+
+    // Admin panel and CMS API share the main PHP session when no site-user cookie is present.
+    if ($uri !== '' && preg_match('#/(admin|api)(/|$|\?)#', $uri)) {
+        return 'cms';
     }
 
     if (!empty($cookies['birkly_cms_sid'])) {
@@ -135,14 +142,6 @@ function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '',
 
     if (!empty($cookies['PHPSESSID'])) {
         return 'cms';
-    }
-
-    if (strpos($referer, '/admin/') !== false) {
-        return 'cms';
-    }
-
-    if (!empty($cookies['birkly_site_sid'])) {
-        return 'site';
     }
 
     return 'site';
