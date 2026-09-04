@@ -156,6 +156,13 @@ function birkly_entry_collection_multilanguage_languages(string $collectionSlug)
  */
 function birkly_entry_process_fieldtype_value(string $fieldName, string $fieldType, $rawValue, array $field)
 {
+    if (!function_exists('birkly_fieldtype_persists_in_entry')) {
+        require_once __DIR__ . '/fieldtype_virtual.php';
+    }
+    if (!birkly_fieldtype_persists_in_entry($field)) {
+        return null;
+    }
+
     $value = $rawValue;
     if ($fieldType === '') {
         return $value;
@@ -222,12 +229,19 @@ function birkly_entry_apply_multilang_fields(
                 : [];
         }
 
-        foreach ($fields as $field) {
+            foreach ($fields as $field) {
             if (!is_array($field)) {
                 continue;
             }
             $fieldName = (string) ($field['name'] ?? '');
             if ($fieldName === '') {
+                continue;
+            }
+
+            if (!function_exists('birkly_fieldtype_persists_in_entry')) {
+                require_once __DIR__ . '/fieldtype_virtual.php';
+            }
+            if (!birkly_fieldtype_persists_in_entry($field)) {
                 continue;
             }
 

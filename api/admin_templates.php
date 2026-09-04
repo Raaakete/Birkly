@@ -881,6 +881,13 @@ function birkly_admin_prepare_fieldtype_config(array $field, $value, ?string $la
     if (isset($entry['id'])) {
         $fieldConfig['entry_id'] = $entry['id'];
         $fieldConfig['user_id'] = $entry['user_id'] ?? '';
+        $fieldConfig['entry'] = $entry;
+        if (function_exists('birkly_get_entry_owner_id')) {
+            $ownerId = birkly_get_entry_owner_id($entry);
+            if ($ownerId !== '') {
+                $fieldConfig['entry_owner'] = $ownerId;
+            }
+        }
     }
 
     return $fieldConfig;
@@ -1451,6 +1458,16 @@ function getEntryEditorData($includeFieldHtml = false) {
             // If multi-language is enabled and value is not at top level, try default language
             if ($rawValue === null && $multilanguageEnabled && !empty($multilanguageLanguages) && isset($payload['entry'][$defaultLang][$name])) {
                 $rawValue = $payload['entry'][$defaultLang][$name];
+            }
+
+            if (!function_exists('birkly_fieldtype_resolve_value_for_entry')) {
+                require_once __DIR__ . '/../core/fieldtype_virtual.php';
+            }
+            if (!birkly_fieldtype_persists_in_entry($f)) {
+                $rawValue = birkly_fieldtype_resolve_value_for_entry($payload['entry'] ?? [], $f, [
+                    'collection' => $collectionSlug ?? '',
+                    'entry_id' => $payload['entry']['id'] ?? '',
+                ]);
             }
             
             // Use the proper fieldtype loader from admin_fieldtypes.php

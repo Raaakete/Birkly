@@ -20,6 +20,7 @@ require_once __DIR__ . '/../core/entry_validation.php';
 require_once __DIR__ . '/../core/entry_multilang.php';
 require_once __DIR__ . '/../core/entry_storage.php';
 require_once __DIR__ . '/../core/entry_ownership.php';
+require_once __DIR__ . '/../core/fieldtype_virtual.php';
 require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/../core/plugins.php';
@@ -666,6 +667,10 @@ function saveEntry() {
                     continue;
                 }
 
+                if (!birkly_fieldtype_persists_in_entry($field)) {
+                    continue;
+                }
+
                 $fieldType = $field['type'] ?? '';
                 $value = $rawValue;
 
@@ -715,6 +720,10 @@ function saveEntry() {
             $fieldName = $field['name'] ?? '';
             $fieldType = $field['type'] ?? '';
             if (empty($fieldName)) continue;
+
+            if (!birkly_fieldtype_persists_in_entry($field)) {
+                continue;
+            }
             
             // Get raw value - check both direct key and array key (for FormData)
             $rawValue = null;
@@ -827,6 +836,13 @@ function saveEntry() {
     if (function_exists('apply_filters')) {
         $entryOutput = apply_filters('before_entry_save', $entryOutput, $collectionSlug);
     }
+
+    $entryOutput = birkly_strip_non_persisting_entry_fields(
+        $entryOutput,
+        $fields,
+        $multilanguageEnabled,
+        $multilanguageLanguages
+    );
 
     $fieldErrors = birkly_validate_entry_required_fields($fields, $entryOutput, $entryData, $multilanguageEnabled, $multilanguageLanguages);
     if (!empty($fieldErrors)) {
