@@ -417,6 +417,9 @@ if ($ok && $notifyTo !== '') {
 }
 
 if ($ok) {
+    if (function_exists('do_action')) {
+        do_action('after_entry_save', $cleanData, $collectionSlug, null);
+    }
     respond([
         'status' => 'ok',
         'message' => 'Submission received. Thank you!',
