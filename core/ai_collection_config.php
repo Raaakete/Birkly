@@ -223,10 +223,39 @@ function birkly_ai_normalize_sub_collection_fields(array $fields): array
 }
 
 /**
+ * Summarize sub-collections for read_collection (includes nested sub_collections).
+ *
  * @param array<int, mixed> $subCollections
  * @return list<array<string, mixed>>
  */
-function birkly_ai_process_sub_collections(array $subCollections, string $parentSlug): array
+function birkly_ai_summarize_sub_collections_for_read(array $subCollections): array
+{
+    $summary = [];
+    foreach ($subCollections as $sc) {
+        if (!is_array($sc)) {
+            continue;
+        }
+        $row = [
+            'slug' => $sc['slug'] ?? '',
+            'name' => $sc['name'] ?? '',
+            'entry_method' => $sc['entry_method'] ?? 'admin_only',
+            'field_count' => count($sc['fields'] ?? []),
+        ];
+        $nested = $sc['sub_collections'] ?? [];
+        if (is_array($nested) && $nested !== []) {
+            $row['sub_collections'] = birkly_ai_summarize_sub_collections_for_read($nested);
+        }
+        $summary[] = $row;
+    }
+
+    return $summary;
+}
+
+/**
+ * @param array<int, mixed> $subCollections
+ * @return list<array<string, mixed>>
+ */
+function birkly_ai_process_sub_collections(array $subCollections, string $parentSlug, ?string $parentSubCollectionSlug = null): array
 {
     $processed = [];
     foreach ($subCollections as $subCollectionData) {
@@ -262,8 +291,18 @@ function birkly_ai_process_sub_collections(array $subCollections, string $parent
             'parent_field' => trim((string) ($subCollectionData['parent_field'] ?? ($parentSlug . '_id'))),
         ];
 
-        if (!empty($subCollectionData['parent_sub_collection'])) {
+        if ($parentSubCollectionSlug !== null && $parentSubCollectionSlug !== '') {
+            $sub['parent_sub_collection'] = $parentSubCollectionSlug;
+        } elseif (!empty($subCollectionData['parent_sub_collection'])) {
             $sub['parent_sub_collection'] = (string) $subCollectionData['parent_sub_collection'];
+        }
+
+        if (isset($subCollectionData['sub_collections']) && is_array($subCollectionData['sub_collections']) && $subCollectionData['sub_collections'] !== []) {
+            $sub['sub_collections'] = birkly_ai_process_sub_collections(
+                $subCollectionData['sub_collections'],
+                $slug,
+                $slug
+            );
         }
 
         $processed[] = $sub;
