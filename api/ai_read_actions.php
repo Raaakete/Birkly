@@ -222,16 +222,10 @@ function executeReadAction($actionData, $aiUser) {
             $collection['fields'] = $schema['fields'] ?? $collection['fields'] ?? [];
         }
 
-        // Surface sub_collections summary (slug + name + entry_method only)
+        // Surface sub_collections summary (includes nested sub_collections when present)
         if (!empty($collection['sub_collections']) && is_array($collection['sub_collections'])) {
-            $collection['sub_collections'] = array_map(function (array $sc): array {
-                return [
-                    'slug' => $sc['slug'] ?? '',
-                    'name' => $sc['name'] ?? '',
-                    'entry_method' => $sc['entry_method'] ?? 'admin_only',
-                    'field_count' => count($sc['fields'] ?? []),
-                ];
-            }, $collection['sub_collections']);
+            require_once __DIR__ . '/../core/ai_collection_config.php';
+            $collection['sub_collections'] = birkly_ai_summarize_sub_collections_for_read($collection['sub_collections']);
         }
 
         return ['success' => true, 'data' => ['collection' => $collection]];

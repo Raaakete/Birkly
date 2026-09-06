@@ -80,4 +80,38 @@ $subs = birkly_ai_process_sub_collections([
 assert_true('sub-collection processed', count($subs) === 1 && ($subs[0]['entry_method'] ?? '') === 'public_api');
 assert_true('sub-collection parent_field', ($subs[0]['parent_field'] ?? '') === 'blog_id');
 
+$nested = birkly_ai_process_sub_collections([
+    [
+        'slug' => 'comments',
+        'name' => 'Comments',
+        'entry_method' => 'public_api',
+        'fields' => [
+            ['name' => 'author', 'type' => 'text', 'label' => 'Author'],
+            ['name' => 'content', 'type' => 'textarea', 'label' => 'Comment'],
+        ],
+        'sub_collections' => [
+            [
+                'slug' => 'replies',
+                'name' => 'Replies',
+                'entry_method' => 'public_api',
+                'fields' => [
+                    ['name' => 'author', 'type' => 'text', 'label' => 'Author'],
+                    ['name' => 'content', 'type' => 'textarea', 'label' => 'Reply'],
+                ],
+            ],
+        ],
+    ],
+], 'club-posts');
+
+assert_true('nested sub-collection count', count($nested) === 1);
+assert_true('nested replies preserved', count($nested[0]['sub_collections'] ?? []) === 1);
+assert_true('nested replies slug', ($nested[0]['sub_collections'][0]['slug'] ?? '') === 'replies');
+assert_true('nested replies parent_sub_collection', ($nested[0]['sub_collections'][0]['parent_sub_collection'] ?? '') === 'comments');
+assert_true('nested replies parent_field', ($nested[0]['sub_collections'][0]['parent_field'] ?? '') === 'comments_id');
+assert_true('top-level comments has no parent_sub_collection', !array_key_exists('parent_sub_collection', $nested[0]));
+
+$summary = birkly_ai_summarize_sub_collections_for_read($nested);
+assert_true('read summary includes nested', count($summary[0]['sub_collections'] ?? []) === 1);
+assert_true('read summary nested slug', ($summary[0]['sub_collections'][0]['slug'] ?? '') === 'replies');
+
 exit($failures > 0 ? 1 : 0);
