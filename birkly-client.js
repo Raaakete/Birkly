@@ -1683,7 +1683,7 @@
         }
 
         try {
-            const res = await fetch(Birkly.apiEndpoint + '?action=template_functions_list', { credentials: 'include' });
+            const res = await birklyCredentialedFetch(Birkly.apiEndpoint + '?action=template_functions_list', {});
             
             // Handle non-OK responses gracefully
             if (!res.ok) {
@@ -1738,10 +1738,9 @@
             params.set('name', name);
             params.set('args', JSON.stringify(args || []));
 
-            const res = await fetch(Birkly.apiEndpoint, {
+            const res = await birklyCredentialedFetch(Birkly.apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                credentials: 'include',
                 body: params.toString()
             });
             
@@ -1994,6 +1993,83 @@
         }
     }
 
+    function birklyCredentialedFetch(url, options) {
+        const opts = options && typeof options === 'object' ? Object.assign({}, options) : {};
+        opts.credentials = 'include';
+        opts.headers = withSiteSessionHeaders(opts.headers || {});
+        return fetch(url, opts);
+    }
+
+    async function fetchSiteAuthState() {
+        try {
+            const res = await birklyCredentialedFetch(
+                Birkly.cmsUrl + '/api/index.php?route=user_auth&action=check',
+                { headers: { Accept: 'application/json' } }
+            );
+            const json = await res.json().catch(() => ({}));
+            return { loggedIn: !!json.logged_in, user: json.user || null };
+        } catch (e) {
+            Birkly.warn('Birkly: site auth check failed', e);
+            return { loggedIn: false, user: null };
+        }
+    }
+
+    function applySiteAuthUi(loggedIn, user) {
+        Birkly.userLoggedIn = loggedIn;
+        Birkly.siteUser = user || null;
+        try {
+            document.documentElement.setAttribute('data-birkly-user-logged-in', loggedIn ? '1' : '0');
+        } catch (_) { /* ignore */ }
+
+        document.querySelectorAll('[data-birkly-auth="guest"]').forEach((el) => {
+            el.hidden = loggedIn;
+        });
+        document.querySelectorAll('[data-birkly-auth="member"]').forEach((el) => {
+            el.hidden = !loggedIn;
+        });
+
+        if (loggedIn && user) {
+            document.querySelectorAll('[data-birkly-user-name]').forEach((el) => {
+                el.textContent = user.name || user.email || '';
+            });
+            document.querySelectorAll('[data-birkly-user-email]').forEach((el) => {
+                el.textContent = user.email || '';
+            });
+        }
+    }
+
+    async function syncSiteAuthUi() {
+        const hasAuthBlocks = !!document.querySelector('[data-birkly-auth]');
+        const hasStoredSession = !!getStoredSiteSessionId();
+        if (!hasAuthBlocks && !hasStoredSession) {
+            return { loggedIn: false, user: null };
+        }
+
+        const state = await fetchSiteAuthState();
+        if (!state.loggedIn) {
+            clearStoredSiteSessionId();
+        } else {
+            Birkly.pageBundle.data = Birkly.pageBundle.data || {};
+            Birkly.pageBundle.data.user_logged_in = true;
+            Birkly.pageBundle.data.user_current = state.user;
+        }
+
+        if (hasAuthBlocks) {
+            applySiteAuthUi(state.loggedIn, state.user);
+        }
+
+        try {
+            const url = new URL(window.location.href);
+            if (url.searchParams.has('ok') && /login/i.test(url.searchParams.get('ok') || '')) {
+                url.searchParams.delete('ok');
+                url.searchParams.delete('error');
+                window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+            }
+        } catch (_) { /* ignore */ }
+
+        return state;
+    }
+
     /**
      * Get CSRF token from CMS
      */
@@ -2003,10 +2079,7 @@
         }
         
         try {
-            const response = await fetch(Birkly.cmsUrl + '/api/csrf.php', {
-                credentials: 'include',
-                headers: withSiteSessionHeaders({})
-            });
+            const response = await birklyCredentialedFetch(Birkly.cmsUrl + '/api/csrf.php', {});
             const data = await response.json();
             
             if (data.status === 'ok' && data.data.csrf_token) {
@@ -2066,12 +2139,9 @@
         const url = `${Birkly.apiEndpoint}?${queryParams.toString()}`;
         
         try {
-            const response = await fetch(url, {
+            const response = await birklyCredentialedFetch(url, {
                 method: 'GET',
-                headers: withSiteSessionHeaders({
-                    'Content-Type': 'application/json'
-                }),
-                credentials: 'include'
+                headers: { 'Content-Type': 'application/json' }
             });
             
             if (!response.ok) {
@@ -4788,6 +4858,8 @@
 
         // Bind generic action forms ASAP (templates can take time to process)
         bindActionForms();
+
+        await syncSiteAuthUi();
         
         // Process templates immediately (don't wait for DOMContentLoaded)
         if (!ssrSkipTemplates) {
@@ -5062,11 +5134,10 @@
                     if (csrf) params.set('csrf_token', csrf);
                 } catch (_) { /* ignore */ }
 
-                const res = await fetch(Birkly.cmsUrl + '/api/index.php', {
+                const res = await birklyCredentialedFetch(Birkly.cmsUrl + '/api/index.php', {
                     method: 'POST',
-                    headers: withSiteSessionHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
-                    body: params.toString(),
-                    credentials: 'include'
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
                 });
                 json = await res.json().catch(() => ({}));
                 if (!res.ok || json.success === false || json.ok === false) {
@@ -5151,11 +5222,10 @@
                     body: params.toString().slice(0, 500)
                 });
 
-                const res = await fetch(endpoint, {
+                const res = await birklyCredentialedFetch(endpoint, {
                     method: 'POST',
-                    headers: withSiteSessionHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
-                    body: params.toString(),
-                    credentials: 'include'
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString()
                 });
                 let json = await res.json().catch(() => ({}));
                 if (!res.ok || (json.status && json.status !== 'ok') || (json.success === false)) {
