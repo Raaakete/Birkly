@@ -2035,6 +2035,12 @@
                 }
             }
             if (err) {
+<<<<<<< Updated upstream
+=======
+                if (/authentication required/i.test(err)) {
+                    clearStoredSiteSessionId();
+                }
+>>>>>>> Stashed changes
                 el.textContent = err.startsWith('Could not') ? err : ('Could not save: ' + err);
                 el.style.color = '#b33';
                 el.hidden = false;
@@ -2093,6 +2099,7 @@
         if (!state.loggedIn) {
             clearStoredSiteSessionId();
         } else {
+            captureSiteSessionFromResponse(state);
             Birkly.pageBundle.data = Birkly.pageBundle.data || {};
             Birkly.pageBundle.data.user_logged_in = true;
             Birkly.pageBundle.data.user_current = state.user;
