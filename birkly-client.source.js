@@ -4982,22 +4982,83 @@
             return base;
         }
 
+        function signupFieldsFromFormData(fd) {
+            const fields = {};
+            for (const [k, v] of fd.entries()) {
+                if (typeof v !== 'string') continue;
+                if (['route', 'action', 'csrf_token', 'flow_id', 'session_id', 'step_id'].includes(k)) continue;
+                fields[k] = v;
+            }
+            return fields;
+        }
+
+        async function completeSignupFlow(startJson, fd) {
+            const sessionId = String(startJson.session_id || '');
+            if (!sessionId) return startJson;
+
+            const fields = signupFieldsFromFormData(fd);
+            let json = startJson;
+            let stepId = (json.step && json.step.id) ? String(json.step.id) : 'fields';
+            let guard = 0;
+
+            while (!json.completed && guard++ < 12) {
+                const params = new URLSearchParams({
+                    route: 'user_signup',
+                    action: 'step',
+                    session_id: sessionId,
+                    step_id: stepId
+                });
+                Object.entries(fields).forEach(([k, v]) => params.append(k, v));
+                params.set('fields[email]', fields.email || '');
+                if (fields.password) params.set('fields[password]', fields.password);
+                if (fields.name) params.set('fields[name]', fields.name);
+                if (fields.username) params.set('fields[username]', fields.username);
+                if (fields.phone) params.set('fields[phone]', fields.phone);
+
+                try {
+                    const csrf = await getCSRFToken();
+                    if (csrf) params.set('csrf_token', csrf);
+                } catch (_) { /* ignore */ }
+
+                const res = await fetch(Birkly.cmsUrl + '/api/index.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params.toString(),
+                    credentials: 'include'
+                });
+                json = await res.json().catch(() => ({}));
+                if (!res.ok || json.success === false || json.ok === false) {
+                    throw new Error(formatActionError(json, 'Signup failed'));
+                }
+                stepId = (json.step && json.step.id) ? String(json.step.id) : '';
+                if (!stepId && !json.completed) break;
+            }
+
+            return json;
+        }
+
         async function handleSubmit(form, e) {
+            const route = form.getAttribute('data-birkly-route');
+            const action = form.getAttribute('data-birkly-action');
+            const directUrl = form.getAttribute('data-birkly-url');
+            const isBirklyActionForm = !!directUrl || !!(route && action);
+            if (!isBirklyActionForm) return;
+
+            if (e && typeof e.preventDefault === 'function') {
+                e.preventDefault();
+            }
+            if (e && typeof e.stopPropagation === 'function') {
+                e.stopPropagation();
+            }
+
             if (form.dataset.haruSubmitting === '1') return;
             form.dataset.haruSubmitting = '1';
             Birkly.warn('Birkly: handleSubmit()', {
                 eventType: e?.type,
-                hasDirectUrl: !!form.getAttribute('data-birkly-url'),
-                route: form.getAttribute('data-birkly-route'),
-                action: form.getAttribute('data-birkly-action')
+                hasDirectUrl: !!directUrl,
+                route: route,
+                action: action
             });
-            const route = form.getAttribute('data-birkly-route');
-            const action = form.getAttribute('data-birkly-action');
-            const directUrl = form.getAttribute('data-birkly-url');
-            // For direct URL forms, action is OPTIONAL (we won't inject it).
-            if (!directUrl && (!route || !action)) return;
-
-            e.preventDefault();
 
             // Collect form data
             const fd = new FormData(form);
@@ -5053,9 +5114,13 @@
                     body: params.toString(),
                     credentials: 'include'
                 });
-                const json = await res.json().catch(() => ({}));
+                let json = await res.json().catch(() => ({}));
                 if (!res.ok || (json.status && json.status !== 'ok') || (json.success === false)) {
                     throw new Error(formatActionError(json, 'Action failed'));
+                }
+
+                if (route === 'user_signup' && action === 'start' && json.session_id && !json.completed) {
+                    json = await completeSignupFlow(json, fd);
                 }
 
                 // Special-case public collection submissions (contact form, etc.)
@@ -5087,15 +5152,17 @@
                 }
             } catch (err) {
                 console.error('Birkly: action form submit failed:', err);
+                const msg = (err && err.name === 'TypeError')
+                    ? 'Could not reach the CMS (network or CORS). Check your connection and try again.'
+                    : String(err?.message || 'Action failed');
                 if (onSuccess === 'redirect') {
-                    const msg = String(err?.message || 'Action failed');
                     const target = (redirectTo === 'self') ? new URL(window.location.href) : new URL(redirectTo, window.location.href);
                     target.searchParams.delete(okParam);
                     target.searchParams.delete(errParam);
                     target.searchParams.set(errParam, msg);
                     window.location.href = target.toString();
                 } else {
-                    showFormStatus(form, err?.message || 'Action failed', true);
+                    showFormStatus(form, msg, true);
                 }
             } finally {
                 delete form.dataset.haruSubmitting;
