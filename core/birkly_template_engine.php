@@ -370,6 +370,47 @@ function birkly_template_engine_resolve_parent_collection_entry(string $collecti
     return birkly_template_engine_resolve_entry($collection, $identifier, $data);
 }
 
+/**
+ * Resolve a sub-collection loop parent identifier (slug, current, or {var.field}).
+ */
+function birkly_template_engine_resolve_loop_parent_identifier(string $raw, array $data): string
+{
+    $trimmed = trim($raw);
+    if ($trimmed === '') {
+        return '';
+    }
+    if (preg_match('/^\{([^}]+)\}$/D', $trimmed, $m)) {
+        $resolved = birkly_template_engine_resolve_context_path(trim($m[1]), $data);
+        if ($resolved !== null && $resolved !== '') {
+            return birkly_template_engine_js_string($resolved);
+        }
+        return '';
+    }
+    if (preg_match("/^'([^']+)'$/D", $trimmed, $m)) {
+        return $m[1];
+    }
+    return $trimmed;
+}
+
+/**
+ * Infer top-level collection + entry id from render data (detail page context).
+ *
+ * @return array{0:string,1:string}
+ */
+function birkly_template_engine_top_entry_context(array $data): array
+{
+    $entry = $data['entry'] ?? null;
+    if (!birkly_template_engine_truthy($entry) || !is_array($entry)) {
+        return ['', ''];
+    }
+    $collection = trim((string) ($data['query']['collection'] ?? ''));
+    if ($collection === '') {
+        $collection = trim((string) ($entry['parent_collection'] ?? ''));
+    }
+    $entryId = trim((string) ($entry['id'] ?? $entry['slug'] ?? ''));
+    return [$collection, $entryId];
+}
+
 /** @return mixed  entry array, or null */
 function birkly_template_engine_resolve_collection_entry_ref(string $ref, array $data)
 {
@@ -386,6 +427,36 @@ function birkly_template_engine_resolve_collection_entry_ref(string $ref, array 
 /** @return list<mixed> */
 function birkly_template_engine_resolve_sub_collection_items(string $subCollection, string $parentCollection, string $parentIdentifier, array $data): array
 {
+    $parentIdentifier = birkly_template_engine_resolve_loop_parent_identifier($parentIdentifier, $data);
+
+    $topLevelList = $data[$parentCollection] ?? null;
+    $isTopLevelCollection = is_array($topLevelList) && birkly_template_engine_is_list($topLevelList) && count($topLevelList) > 0;
+
+    if (!$isTopLevelCollection && $parentIdentifier !== '') {
+        [$topCollection, $topEntryId] = birkly_template_engine_top_entry_context($data);
+        if ($topCollection !== '' && $topEntryId !== '') {
+            $nestedKey = '__sub__:' . $topCollection . ':' . $topEntryId . ':'
+                . $parentCollection . ':' . $parentIdentifier . ':' . $subCollection;
+            if (isset($data[$nestedKey]) && is_array($data[$nestedKey]) && birkly_template_engine_is_list($data[$nestedKey])) {
+                return $data[$nestedKey];
+            }
+        }
+        foreach ($data as $varValue) {
+            if (!is_array($varValue)) {
+                continue;
+            }
+            $varId = birkly_template_engine_js_string($varValue['id'] ?? null);
+            $varSlug = birkly_template_engine_js_string($varValue['slug'] ?? null);
+            $needle = birkly_template_engine_js_string($parentIdentifier);
+            if ($needle !== '' && ($varId === $needle || $varSlug === $needle)
+                && isset($varValue[$subCollection]) && is_array($varValue[$subCollection])
+                && birkly_template_engine_is_list($varValue[$subCollection])) {
+                return $varValue[$subCollection];
+            }
+        }
+        return [];
+    }
+
     $parent = birkly_template_engine_resolve_parent_collection_entry($parentCollection, $parentIdentifier, $data);
     if (!birkly_template_engine_truthy($parent)) {
         return [];
@@ -434,6 +505,9 @@ function birkly_template_engine_resolve_sub_collection_items(string $subCollecti
 function birkly_template_engine_resolve_loop_items(string $inClause, array $data): array
 {
     $clause = trim($inClause);
+    if (preg_match("/^'([^']+)'\\s+of\\s+'([^']+)'\\.(\\{[^}]+\\}|[^\\s{}]+)\\s*$/iD", $clause, $m)) {
+        return birkly_template_engine_resolve_sub_collection_items($m[1], $m[2], $m[3], $data);
+    }
     if (preg_match("/^'([^']+)'\\s+of\\s+'([^']+)'\\.'([^']+)'\\s*$/iD", $clause, $m)) {
         return birkly_template_engine_resolve_sub_collection_items($m[1], $m[2], $m[3], $data);
     }
@@ -492,11 +566,31 @@ function birkly_template_engine_parse_loop_modifiers(string $inClause): array
     return $result;
 }
 
+function birkly_template_engine_resolve_loop_filter_value(string $value, array $data): string
+{
+    $trimmed = trim($value);
+    if ($trimmed === 'user_current') {
+        $user = $data['user_current'] ?? null;
+        if (is_array($user)) {
+            return birkly_template_engine_js_string($user['id'] ?? null);
+        }
+        return '';
+    }
+    if (preg_match('/^user_current\\.(.+)$/D', $trimmed, $m)) {
+        $user = $data['user_current'] ?? null;
+        if (is_array($user)) {
+            return birkly_template_engine_js_string($user[$m[1]] ?? null);
+        }
+        return '';
+    }
+    return $trimmed;
+}
+
 /**
  * @param list<mixed> $items
  * @return list<mixed>
  */
-function birkly_template_engine_apply_loop_filters(array $items, ?string $filter): array
+function birkly_template_engine_apply_loop_filters(array $items, ?string $filter, array $data = []): array
 {
     if ($filter === null || $filter === '') {
         return $items;
@@ -507,7 +601,7 @@ function birkly_template_engine_apply_loop_filters(array $items, ?string $filter
         if ($clause === '') {
             continue;
         }
-        $items = birkly_template_engine_apply_single_loop_filter($items, $clause);
+        $items = birkly_template_engine_apply_single_loop_filter($items, $clause, $data);
     }
     return $items;
 }
@@ -541,14 +635,35 @@ function birkly_template_engine_field_matches_filter_value(mixed $fieldValue, st
  * @param list<mixed> $items
  * @return list<mixed>
  */
-function birkly_template_engine_apply_single_loop_filter(array $items, string $filter): array
+function birkly_template_engine_apply_single_loop_filter(array $items, string $filter, array $data = []): array
 {
     if ($filter === '') {
         return $items;
     }
-    if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)$/D', $filter, $m)) {
+    if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)$/D', $filter, $m)) {
         $field = $m[1];
-        $value = $m[2];
+        $value = birkly_template_engine_resolve_loop_filter_value($m[2], $data);
+        if (($m[2] === 'user_current' || str_starts_with($m[2], 'user_current.')) && $value === '') {
+            return [];
+        }
+        $out = [];
+        foreach ($items as $it) {
+            if (!birkly_template_engine_truthy($it)) {
+                continue;
+            }
+            $raw = (is_array($it) && array_key_exists($field, $it)) ? $it[$field] : null;
+            if (birkly_template_engine_field_matches_filter_value($raw, $value)) {
+                $out[] = $it;
+            }
+        }
+        return $out;
+    }
+    if (preg_match('/^[\'"]([^\'"]+)[\'"]\s*=\s*([a-zA-Z_][a-zA-Z0-9_.]*)$/D', $filter, $m)) {
+        $field = $m[1];
+        $value = birkly_template_engine_resolve_loop_filter_value($m[2], $data);
+        if (($m[2] === 'user_current' || str_starts_with($m[2], 'user_current.')) && $value === '') {
+            return [];
+        }
         $out = [];
         foreach ($items as $it) {
             if (!birkly_template_engine_truthy($it)) {
@@ -975,6 +1090,13 @@ function birkly_template_engine_resolve_variable(string $name, array $data): str
  */
 function birkly_template_engine_resolve_field_path_from_parts(array $parts, array $data): string
 {
+    if (count($parts) === 1) {
+        $key = (isset($parts[0][1]) && $parts[0][1] !== '') ? $parts[0][1] : ($parts[0][2] ?? '');
+        if ($key !== '' && array_key_exists($key, $data) && !is_array($data[$key]) && $data[$key] !== null) {
+            return birkly_template_engine_js_string($data[$key]);
+        }
+    }
+
     $current = (array_key_exists('entry', $data) && birkly_template_engine_truthy($data['entry']))
         ? $data['entry']
         : $data;
@@ -1229,7 +1351,7 @@ function birkly_template_engine_process_from_get_blocks(string $html, array $dat
 /** @param callable(string,array):string $render */
 function birkly_template_engine_process_for_loops(string $html, array $data, callable $render): string
 {
-    $pattern = '/\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+([^}]+)\}/i';
+    $pattern = '/\{for\s+(?:each\s+)?([a-zA-Z0-9_]+)\s+in\s+((?:[^{}]|\{[^}]*\})*)\}/i';
     $guard = 0;
     while ($guard++ < 500) {
         if (!preg_match($pattern, $html, $m, PREG_OFFSET_CAPTURE)) {
@@ -1248,7 +1370,7 @@ function birkly_template_engine_process_for_loops(string $html, array $data, cal
         $loopBody = substr($html, $contentStart, $closePos - $contentStart);
         $header = birkly_template_engine_parse_loop_modifiers($inClause);
         $items = birkly_template_engine_resolve_loop_items($header['inClause'], $data);
-        $items = birkly_template_engine_apply_loop_filters($items, $header['filter']);
+        $items = birkly_template_engine_apply_loop_filters($items, $header['filter'], $data);
         $items = birkly_template_engine_apply_loop_order($items, $header['order']);
         $items = birkly_template_engine_apply_loop_limit($items, $header['limit']);
 
@@ -1257,11 +1379,11 @@ function birkly_template_engine_process_for_loops(string $html, array $data, cal
             $loopData = $data;
             $loopData[$itemVar] = $item;
             if (birkly_template_engine_truthy($item) && is_array($item)) {
+                foreach ($item as $k => $v) {
+                    $loopData[$k] = $v;
+                }
                 if ($itemVar === 'entry' || !array_key_exists('entry', $data)) {
                     $loopData['entry'] = $item;
-                    foreach ($item as $k => $v) {
-                        $loopData[$k] = $v;
-                    }
                 }
             }
             $rendered .= $render($loopBody, $loopData);

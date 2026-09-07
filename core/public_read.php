@@ -221,7 +221,231 @@ function birkly_public_entry_field_truthy(mixed $entry, string $field): bool
     return birkly_template_engine_filter_literal_bool(trim((string) $value)) === true;
 }
 
-function birkly_public_list_entries($storage, $collectionSlug, $language = 'en') {
+/**
+ * Bootstrap active plugins once before public-read filter hooks run.
+ */
+function birkly_public_bootstrap_plugins(): void
+{
+    if (!function_exists('birkly_public_load_active_plugins')) {
+        require_once __DIR__ . '/public_bootstrap.php';
+    }
+    birkly_public_load_active_plugins();
+}
+
+/**
+ * Bundle data key for sub-entry lists (supports nested levels).
+ */
+function birkly_public_sub_entries_bundle_key(
+    string $parentCollection,
+    string $parentEntryId,
+    string $subCollection,
+    ?string $parentSubCollection = null,
+    ?string $parentSubEntryId = null
+): string {
+    if ($parentSubCollection !== null && $parentSubCollection !== ''
+        && $parentSubEntryId !== null && $parentSubEntryId !== '') {
+        return '__sub__:' . $parentCollection . ':' . $parentEntryId . ':'
+            . $parentSubCollection . ':' . $parentSubEntryId . ':' . $subCollection;
+    }
+    return '__sub__:' . $parentCollection . ':' . $parentEntryId . ':' . $subCollection;
+}
+
+/**
+ * Resolve user_current for SSR/page_bundle render data when a site session exists.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_public_resolve_user_current(): ?array
+{
+    birkly_public_bootstrap_plugins();
+
+    if (function_exists('get_template_function')) {
+        $callback = get_template_function('user_current');
+        if (is_callable($callback)) {
+            try {
+                $user = call_user_func($callback);
+                return is_array($user) ? $user : null;
+            } catch (Throwable $e) {
+                error_log('birkly_public_resolve_user_current: ' . $e->getMessage());
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * @param list<array<string, mixed>> $subCollections
+ * @return list<array<string, mixed>>
+ */
+function birkly_public_flatten_sub_collection_configs(array $subCollections): array
+{
+    $flat = [];
+    foreach ($subCollections as $sub) {
+        if (!is_array($sub)) {
+            continue;
+        }
+        $flat[] = $sub;
+        $nested = $sub['sub_collections'] ?? [];
+        if (is_array($nested)) {
+            foreach ($nested as $child) {
+                if (!is_array($child)) {
+                    continue;
+                }
+                if (empty($child['parent_sub_collection'])) {
+                    $child['parent_sub_collection'] = $sub['slug'] ?? '';
+                }
+                $flat[] = $child;
+            }
+        }
+    }
+    return $flat;
+}
+
+/**
+ * Load sub-entries using an explicit storage instance (page_bundle / public_read path).
+ *
+ * @return list<array<string,mixed>>
+ */
+function birkly_public_load_sub_entries_from_storage(
+    $storage,
+    string $parentCollection,
+    string $parentEntryId,
+    string $subCollection,
+    ?string $parentSubCollection = null,
+    ?string $parentSubEntryId = null
+): array {
+    $dir = birkly_public_resolve_collection_dir($storage, $parentCollection);
+    if (!$dir) {
+        return [];
+    }
+
+    if ($parentSubCollection !== null && $parentSubCollection !== ''
+        && $parentSubEntryId !== null && $parentSubEntryId !== '') {
+        $subPath = "collections/$dir/entries/$parentEntryId/sub_entries/$parentSubCollection/$parentSubEntryId/sub_entries/$subCollection";
+    } else {
+        $subPath = "collections/$dir/entries/$parentEntryId/sub_entries/$subCollection";
+    }
+
+    $files = $storage->list($subPath);
+    $entries = [];
+    foreach ($files as $file) {
+        if (!is_string($file) || !str_ends_with($file, '.json') || str_starts_with($file, '.')) {
+            continue;
+        }
+        $data = $storage->read("$subPath/$file");
+        if (!is_array($data)) {
+            continue;
+        }
+        if (($data['status'] ?? 'published') !== 'published') {
+            continue;
+        }
+        $data['id'] = $data['id'] ?? basename($file, '.json');
+        $entries[] = $data;
+    }
+
+    return $entries;
+}
+
+/**
+ * Compute schema-driven aggregate counts from sub-collections (aggregate_on_parent.count_as).
+ *
+ * @param array<string, mixed> $entry
+ * @return array<string, mixed>
+ */
+function birkly_compute_parent_entry_aggregates($storage, string $collectionSlug, array $entry): array
+{
+    if (empty($entry['id'])) {
+        return $entry;
+    }
+
+    require_once __DIR__ . '/sub_entries.php';
+
+    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    if (!$dir) {
+        return $entry;
+    }
+
+    $collectionMeta = $storage->read("collections/$dir/collection.json");
+    $subCollections = is_array($collectionMeta['sub_collections'] ?? null)
+        ? $collectionMeta['sub_collections']
+        : [];
+
+    foreach (birkly_public_flatten_sub_collection_configs($subCollections) as $subConfig) {
+        $countAs = $subConfig['aggregate_on_parent']['count_as'] ?? null;
+        if (!is_string($countAs) || $countAs === '') {
+            continue;
+        }
+
+        $subSlug = (string) ($subConfig['slug'] ?? '');
+        if ($subSlug === '') {
+            continue;
+        }
+
+        $parentSubCollection = (string) ($subConfig['parent_sub_collection'] ?? '');
+        if ($parentSubCollection !== '') {
+            continue;
+        }
+
+        $subs = birkly_public_load_sub_entries_from_storage(
+            $storage,
+            $collectionSlug,
+            (string) $entry['id'],
+            $subSlug
+        );
+        $entry[$countAs] = count($subs);
+    }
+
+    return $entry;
+}
+
+/**
+ * Apply optional ?scope=mine filter using schema ownership field.
+ *
+ * @param list<array<string, mixed>> $entries
+ * @return list<array<string, mixed>>
+ */
+function birkly_public_apply_scope_mine_filter($storage, string $collectionSlug, array $entries, ?string $scope = null): array
+{
+    $scope = $scope ?? (string) ($_GET['scope'] ?? $_POST['scope'] ?? '');
+    if ($scope !== 'mine') {
+        return $entries;
+    }
+
+    require_once __DIR__ . '/entry_ownership.php';
+
+    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    if (!$dir) {
+        return [];
+    }
+
+    $schema = $storage->read("collections/$dir/schema.json");
+    $ownerField = birkly_get_owner_field_config(is_array($schema) ? $schema : []);
+    if ($ownerField === null) {
+        return $entries;
+    }
+
+    $fieldName = (string) ($ownerField['name'] ?? 'owner');
+    $user = birkly_public_resolve_user_current();
+    $userId = is_array($user) ? trim((string) ($user['id'] ?? '')) : '';
+    if ($userId === '') {
+        return [];
+    }
+
+    return array_values(array_filter($entries, static function ($entry) use ($fieldName, $userId) {
+        if (!is_array($entry)) {
+            return false;
+        }
+        $ownerId = birkly_get_entry_owner_id($entry, ['fields' => [[
+            'name' => $fieldName,
+            'type' => 'user',
+            'ownership' => true,
+        ]]]);
+        return $ownerId !== '' && $ownerId === $userId;
+    }));
+}
+
+function birkly_public_list_entries($storage, $collectionSlug, $language = 'en', array $options = []) {
     $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
     if (!$dir) {
         return ['status' => 'error', 'message' => 'Invalid request'];
@@ -272,6 +496,19 @@ function birkly_public_list_entries($storage, $collectionSlug, $language = 'en')
         $publishedEntries = array_map('birkly_public_entry_with_effective_slug', $publishedEntries);
     }
 
+    $publishedEntries = array_map(
+        static function ($entry) use ($storage, $collectionSlugResolved) {
+            return birkly_compute_parent_entry_aggregates($storage, $collectionSlugResolved, $entry);
+        },
+        $publishedEntries
+    );
+
+    $scope = $options['scope'] ?? null;
+    $publishedEntries = birkly_public_apply_scope_mine_filter($storage, $collectionSlugResolved, $publishedEntries, $scope);
+
+    birkly_public_bootstrap_plugins();
+    $publishedEntries = birkly_public_filter_entries($publishedEntries, $collectionSlugResolved, 'list');
+
     return ['status' => 'ok', 'data' => ['entries' => $publishedEntries]];
 }
 
@@ -316,14 +553,74 @@ function birkly_public_get_entry($storage, $collectionSlug, $slug = '', $entryId
     }
 
     $data = birkly_public_entry_with_effective_slug($data);
+    $collectionSlugResolved = $collectionMeta['slug'] ?? $collectionSlug;
+    $data = birkly_compute_parent_entry_aggregates($storage, $collectionSlugResolved, $data);
 
-    return ['status' => 'ok', 'data' => ['entry' => $data]];
+    birkly_public_bootstrap_plugins();
+    $filteredEntry = birkly_public_filter_entry($data, $collectionSlugResolved, 'get');
+    if ($filteredEntry === null) {
+        return ['status' => 'error', 'message' => 'Entry not found or not published'];
+    }
+
+    return ['status' => 'ok', 'data' => ['entry' => $filteredEntry]];
 }
 
-function birkly_public_list_sub_entries($parentCollection, $parentEntryId, $subCollection) {
-    require_once __DIR__ . '/sub_entries.php';
-    $entries = getSubEntries($parentCollection, $parentEntryId, $subCollection);
-    return ['status' => 'ok', 'data' => ['entries' => array_values($entries)]];
+function birkly_public_list_sub_entries(
+    $parentCollection,
+    $parentEntryId,
+    $subCollection,
+    ?string $parentSubCollection = null,
+    ?string $parentSubEntryId = null,
+    $storage = null
+) {
+    if ($storage === null) {
+        require_once __DIR__ . '/sub_entries.php';
+        if ($parentSubCollection !== null && $parentSubCollection !== ''
+            && $parentSubEntryId !== null && $parentSubEntryId !== '') {
+            $entries = getNestedSubEntries(
+                $parentCollection,
+                $parentEntryId,
+                $parentSubCollection,
+                $parentSubEntryId,
+                $subCollection
+            );
+        } else {
+            $entries = getSubEntries($parentCollection, $parentEntryId, $subCollection);
+        }
+    } else {
+        $entries = birkly_public_load_sub_entries_from_storage(
+            $storage,
+            $parentCollection,
+            $parentEntryId,
+            $subCollection,
+            $parentSubCollection,
+            $parentSubEntryId
+        );
+    }
+
+    $entries = array_values($entries);
+
+    birkly_public_bootstrap_plugins();
+    if (!function_exists('apply_filters')) {
+        require_once __DIR__ . '/plugins.php';
+    }
+    $filtered = apply_filters(
+        'birkly_public_sub_entries_filter',
+        $entries,
+        $parentCollection,
+        $parentEntryId,
+        $subCollection,
+        $parentSubCollection,
+        $parentSubEntryId
+    );
+    if (!is_array($filtered)) {
+        $filtered = [];
+    }
+    $entries = array_values(array_filter($filtered, static function ($entry) {
+        return is_array($entry);
+    }));
+
+    return ['status' => 'ok', 'data' => ['entries' => $entries]];
 }
 
 /**
@@ -336,6 +633,7 @@ function birkly_public_list_sub_entries($parentCollection, $parentEntryId, $subC
  */
 function birkly_public_filter_entries(array $entries, string $collectionSlug, string $context = 'list'): array
 {
+    birkly_public_bootstrap_plugins();
     if (!function_exists('apply_filters')) {
         require_once __DIR__ . '/plugins.php';
     }
@@ -364,6 +662,7 @@ function birkly_public_filter_entry($entry, string $collectionSlug, string $cont
         return null;
     }
 
+    birkly_public_bootstrap_plugins();
     if (!function_exists('apply_filters')) {
         require_once __DIR__ . '/plugins.php';
     }

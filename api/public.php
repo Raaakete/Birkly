@@ -204,7 +204,7 @@ if ($action === 'list_collection_groups') {
 if ($action === 'list_entries') {
     $collection = $input['collection'] ?? '';
     $id = $input['id'] ?? '';
-    $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en'; // Default to 'en'
+    $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en';
     $dir = '';
     $collections = $storage->list('collections');
     if ($id) {
@@ -218,179 +218,36 @@ if ($action === 'list_entries') {
             if ($m && $m['slug'] === $collection) { $dir = $d; break; }
         }
     }
-    // SECURITY FIX: Use generic error message to prevent collection enumeration
     if (!$dir) respond(['status'=>'error','message'=>'Invalid request']);
-    
-    // Get collection metadata
+
     $collectionMeta = $storage->read("collections/$dir/collection.json");
     $collectionSlug = $collectionMeta['slug'] ?? '';
     $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
     birkly_public_enforce_read_auth($collectionMeta, $collectionSlug);
-    $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
-    $multilanguageLanguages = $collectionMeta['multilanguage']['languages'] ?? [];
-    
-    // Validate language
-    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
-        if (!in_array($language, $multilanguageLanguages)) {
-            $language = $multilanguageLanguages[0] ?? 'en'; // Fallback to first available language
-        }
-    } else {
-        $language = null; // No multi-language, use original structure
-    }
-    
-    // Try to get cached entries
-    $cache = new Cache();
-    $cachedEntries = null;
-    if ($collectionSlug) {
-        $cachedEntries = $cache->getEntries($collectionSlug);
-    }
-    
-    if ($cachedEntries === null) {
-        // Cache miss - load entries from files
-    $entries = $storage->list("collections/$dir/entries");
-    $entryData = [];
-    foreach ($entries as $entry) {
-        $data = $storage->read("collections/$dir/entries/$entry");
-            if ($data) {
-            $entryData[] = $data;
-        }
-    }
-        
-        // Cache all entries (we'll filter published below)
-        if ($collectionSlug) {
-            $cache->setEntries($collectionSlug, $entryData);
-        }
-        $cachedEntries = $entryData;
-    }
-    
-    // Filter only published entries for public API
-    $publishedEntries = array_filter($cachedEntries, function($entry) {
-        return ($entry['status'] ?? 'draft') === 'published';
-    });
-    
-        // Apply permission filtering if user management plugin is installed and active
-        if (function_exists('get_plugin_state') && get_plugin_state('user_management')
-            && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
-            $entryPermissions = new EntryPermissions();
-            $currentUserId = $entryPermissions->getCurrentUserId();
-            
-            // Filter entries by view permission
-            $publishedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $publishedEntries);
-        }
-        
-        // Calculate likes_count (and comments_count for social_posts / club-posts) from sub-entries
-        if (in_array($collectionSlug, ['social_posts', 'roadmap-features', 'club-posts'], true)) {
-            require_once __DIR__ . '/../core/sub_entries.php';
-            foreach ($publishedEntries as &$entry) {
-                if (empty($entry['id'])) continue;
-                if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
-                    $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
-                    $entry['likes_count'] = count($likes);
-                }
-                if ($collectionSlug === 'social_posts' || $collectionSlug === 'club-posts') {
-                    $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
-                    $entry['comments_count'] = count($comments);
-                }
-            }
-            unset($entry); // Break reference
-        }
-        
-        // Transform entries for language-specific content
-        if ($language && $multilanguageEnabled) {
-        $transformedEntries = array_map(function($entry) use ($language, $multilanguageLanguages) {
-            // Check if entry has multi-language structure
-            $hasMultilang = false;
-            foreach ($multilanguageLanguages as $lang) {
-                if (isset($entry[$lang]) && is_array($entry[$lang])) {
-                    $hasMultilang = true;
-                    break;
-                }
-            }
-            
-            if ($hasMultilang && isset($entry[$language])) {
-                // Merge language-specific content with entry metadata
-                $transformed = array_merge($entry, $entry[$language]);
-                // Keep metadata fields
-                $transformed['id'] = $entry['id'] ?? '';
-                $transformed['slug'] = $entry['slug'] ?? '';
-                $transformed['status'] = $entry['status'] ?? 'draft';
-                $transformed['created_at'] = $entry['created_at'] ?? '';
-                $transformed['updated_at'] = $entry['updated_at'] ?? '';
-                $transformed['published_at'] = $entry['published_at'] ?? '';
-                return $transformed;
-            }
-            
-            // No multi-language structure, return as-is
-            return $entry;
-        }, $publishedEntries);
-        
-        // Calculate likes_count (and comments_count for social_posts / club-posts) from sub-entries (after transformation)
-        if (in_array($collectionSlug, ['social_posts', 'roadmap-features', 'club-posts'], true)) {
-            require_once __DIR__ . '/../core/sub_entries.php';
-            foreach ($transformedEntries as &$entry) {
-                if (empty($entry['id'])) continue;
-                if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
-                    $likes = getSubEntries($collectionSlug, $entry['id'], 'likes');
-                    $entry['likes_count'] = count($likes);
-                }
-                if ($collectionSlug === 'social_posts' || $collectionSlug === 'club-posts') {
-                    $comments = getSubEntries($collectionSlug, $entry['id'], 'comments');
-                    $entry['comments_count'] = count($comments);
-                }
-            }
-            unset($entry); // Break reference
-        }
-        
-        // Apply permission filtering if user management plugin is installed and active
-        if (function_exists('get_plugin_state') && get_plugin_state('user_management')
-            && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
-            $entryPermissions = new EntryPermissions();
-            $currentUserId = $entryPermissions->getCurrentUserId();
 
-            // Filter entries by view permission
-            $transformedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $transformedEntries);
-        }
-        
-        require_once __DIR__ . '/../core/entry_slug.php';
-        $transformedEntries = birkly_public_filter_entries(
-            array_values($transformedEntries),
-            $collectionSlug,
-            'list'
-        );
-        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', $transformedEntries)]]);
-    } else {
-        // Apply permission filtering if user management plugin is installed and active
-        if (function_exists('get_plugin_state') && get_plugin_state('user_management')
-            && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
-            $entryPermissions = new EntryPermissions();
-            $currentUserId = $entryPermissions->getCurrentUserId();
-            
-            // Filter entries by view permission
-            $publishedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $publishedEntries);
-        }
-        
-        // No multi-language, return entries as-is
-        require_once __DIR__ . '/../core/entry_slug.php';
-        $publishedEntries = birkly_public_filter_entries(
-            array_values($publishedEntries),
-            $collectionSlug,
-            'list'
-        );
-        respond(['status'=>'ok','data'=>['entries'=>array_map('birkly_public_entry_with_effective_slug', $publishedEntries)]]);
+    require_once __DIR__ . '/session.php';
+    birkly_site_session_start();
+
+    $scope = $input['scope'] ?? $_GET['scope'] ?? null;
+    $result = birkly_public_list_entries($storage, $collectionSlug, $language, [
+        'scope' => is_string($scope) ? $scope : null,
+    ]);
+    if (($result['status'] ?? '') !== 'ok') {
+        respond(['status'=>'error','message'=>'Invalid request']);
     }
+    respond(['status'=>'ok','data'=>['entries'=>$result['data']['entries'] ?? []]]);
 }
 
 if ($action === 'get_entry') {
     $collection = $input['collection'] ?? '';
     $id = $input['id'] ?? '';
     $entryId = $input['entry'] ?? '';
-    // Entry id alias: ?id= on detail pages (when not collection id)
     if ($entryId === '' && $id !== '' && $collection !== '') {
         $entryId = $id;
         $id = '';
     }
     $slug = $input['slug'] ?? $_GET['slug'] ?? '';
-    $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en'; // Default to 'en'
+    $language = $input['language'] ?? $_GET['language'] ?? $_GET['lang'] ?? $input['lang'] ?? 'en';
     $dir = '';
     $collections = $storage->list('collections');
     if ($id) {
@@ -404,94 +261,21 @@ if ($action === 'get_entry') {
             if ($m && $m['slug'] === $collection) { $dir = $d; break; }
         }
     }
-    // SECURITY FIX: Use generic error message to prevent collection enumeration
     if (!$dir) respond(['status'=>'error','message'=>'Invalid request']);
-    
-    // Get collection metadata
+
     $collectionMeta = $storage->read("collections/$dir/collection.json");
     $collectionSlug = $collectionMeta['slug'] ?? '';
     $collectionMeta = birkly_public_maybe_migrate_collection_meta($storage, $dir, is_array($collectionMeta) ? $collectionMeta : []);
     birkly_public_enforce_read_auth($collectionMeta, $collectionSlug);
-    $multilanguageEnabled = !empty($collectionMeta['multilanguage']['enabled']);
-    $multilanguageLanguages = $collectionMeta['multilanguage']['languages'] ?? [];
-    
-    // Validate language
-    if ($multilanguageEnabled && !empty($multilanguageLanguages)) {
-        if (!in_array($language, $multilanguageLanguages)) {
-            $language = $multilanguageLanguages[0] ?? 'en'; // Fallback to first available language
-        }
-    } else {
-        $language = null; // No multi-language, use original structure
-    }
-    
-    // Find entry by slug or ID
-    require_once __DIR__ . '/../core/entry_slug.php';
-    $data = null;
-    if ($slug) {
-        $entries = $storage->list("collections/$dir/entries");
-        foreach ($entries as $entryFile) {
-            $entryData = $storage->read("collections/$dir/entries/$entryFile");
-            if ($entryData && birkly_entry_matches_slug($entryData, $slug)) {
-                $data = $entryData;
-                break;
-            }
-        }
-    } elseif ($entryId) {
-    $data = $storage->read("collections/$dir/entries/$entryId.json");
-    }
-    
-    if (!$data || ($data['status'] ?? 'draft') !== 'published') {
-        respond(['status'=>'error','message'=>'Entry not found or not published']);
-    }
-    
-    $data = birkly_public_entry_with_effective_slug($data);
-    
-    // Calculate likes_count (and comments_count for social_posts / club-posts) from sub-entries
-    $collectionSlug = $collectionMeta['slug'] ?? '';
-    if (in_array($collectionSlug, ['social_posts', 'roadmap-features', 'club-posts'], true) && !empty($data['id'])) {
-        require_once __DIR__ . '/../core/sub_entries.php';
-        if ($collectionSlug === 'social_posts' || $collectionSlug === 'roadmap-features') {
-            $likes = getSubEntries($collectionSlug, $data['id'], 'likes');
-            $data['likes_count'] = count($likes);
-        }
-        if ($collectionSlug === 'social_posts' || $collectionSlug === 'club-posts') {
-            $comments = getSubEntries($collectionSlug, $data['id'], 'comments');
-            $data['comments_count'] = count($comments);
-        }
-    }
-    
-    // Transform entry for language-specific content
-    if ($language && $multilanguageEnabled) {
-        // Check if entry has multi-language structure
-        $hasMultilang = false;
-        foreach ($multilanguageLanguages as $lang) {
-            if (isset($data[$lang]) && is_array($data[$lang])) {
-                $hasMultilang = true;
-                break;
-            }
-        }
-        
-        if ($hasMultilang && isset($data[$language])) {
-            // Merge language-specific content with entry metadata
-            $transformed = array_merge($data, $data[$language]);
-            // Keep metadata fields
-            $transformed['id'] = $data['id'] ?? '';
-            $transformed['slug'] = $data['slug'] ?? '';
-            $transformed['status'] = $data['status'] ?? 'draft';
-            $transformed['created_at'] = $data['created_at'] ?? '';
-            $transformed['updated_at'] = $data['updated_at'] ?? '';
-            $transformed['published_at'] = $data['published_at'] ?? '';
-            $data = $transformed;
-        }
-    }
 
-    $filteredEntry = birkly_public_filter_entry($data, $collectionSlug, 'get');
-    if ($filteredEntry === null) {
+    require_once __DIR__ . '/session.php';
+    birkly_site_session_start();
+
+    $result = birkly_public_get_entry($storage, $collectionSlug, $slug, $entryId, $language);
+    if (($result['status'] ?? '') !== 'ok') {
         respond(['status'=>'error','message'=>'Entry not found or not published']);
     }
-    $data = $filteredEntry;
-    
-    respond(['status'=>'ok','data'=>['entry'=>$data]]);
+    respond(['status'=>'ok','data'=>['entry'=>$result['data']['entry'] ?? null]]);
 }
 
 if ($action === 'get_site_settings') {
