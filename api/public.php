@@ -10,6 +10,13 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/validate.php';
 set_security_headers('api');
 
+require_once __DIR__ . '/domain_auth.php';
+setDynamicCORS();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require_once __DIR__ . '/../core/storage/StorageFactory.php';
 require_once __DIR__ . '/../core/cache.php';
 require_once __DIR__ . '/../core/public_read.php';
@@ -173,12 +180,59 @@ if ($action === 'template_functions_list') {
 }
 
 if ($action === 'template_function_call') {
-    http_response_code(403);
-    respond([
-        'status' => 'error',
-        'message' => 'Template function calls are not available on this endpoint',
-        'code' => 'TEMPLATE_FUNCTION_DISABLED',
-    ]);
+    birkly_public_api_enforce_auth('read', null, null, 'template_function_call');
+    birkly_public_rate_limit('template_function_call', 30, 60);
+    @ini_set('memory_limit', '512M');
+
+    try {
+        require_once __DIR__ . '/session.php';
+        if (function_exists('birkly_site_session_start')) {
+            birkly_site_session_start();
+        } elseif (function_exists('haru_secure_session_start')) {
+            haru_secure_session_start();
+        } elseif (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+
+        require_once __DIR__ . '/../core/public_bootstrap.php';
+        require_once __DIR__ . '/../core/page_bundle_template_functions.php';
+
+        $name = '';
+        $args = [];
+
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        if (strpos($contentType, 'application/json') !== false) {
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            if (is_array($json)) {
+                $name = $json['name'] ?? '';
+                $args = $json['args'] ?? [];
+            }
+        } else {
+            $name = $input['name'] ?? '';
+            $argsRaw = $input['args'] ?? '[]';
+            if (is_string($argsRaw)) {
+                $decoded = json_decode($argsRaw, true);
+                $args = is_array($decoded) ? $decoded : [];
+            } elseif (is_array($argsRaw)) {
+                $args = $argsRaw;
+            }
+        }
+
+        if (!is_string($name) || $name === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
+            respond(['status' => 'error', 'message' => 'Invalid function name']);
+        }
+
+        if (!is_array($args)) {
+            $args = [];
+        }
+
+        $result = birkly_page_bundle_call_template_function($name, $args);
+        respond(['status' => 'ok', 'data' => ['result' => $result]]);
+    } catch (Throwable $e) {
+        error_log('Template function call error: ' . $e->getMessage());
+        respond(['status' => 'ok', 'data' => ['result' => null]]);
+    }
 }
 
 if ($action === 'list_collections') {

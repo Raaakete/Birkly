@@ -6,6 +6,13 @@ ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/domain_auth.php';
+setDynamicCORS();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 // IMPORTANT: Use absolute paths via __DIR__.
 // The PHP built-in server can have a changing working directory (cwd) across requests
 // if any code calls chdir(), which makes relative requires flaky and can surface as
