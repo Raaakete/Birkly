@@ -14,6 +14,7 @@ require_once __DIR__ . '/log.php';
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/../core/plugins.php';
 require_once __DIR__ . '/../core/mail/notify.php';
+require_once __DIR__ . '/../core/plugin_availability.php';
 if (function_exists('load_plugins')) {
     load_plugins();
 }
@@ -21,6 +22,32 @@ if (function_exists('load_plugins')) {
 // Public submits should use the site session scope (never create/admin sessions)
 if (function_exists('birkly_site_session_start')) {
     birkly_site_session_start();
+}
+
+/**
+ * Resolve the current storefront user for public submits.
+ * Uses UserAuth (plugin session storage fallback) — not raw $_SESSION alone.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_public_submit_current_user(): ?array
+{
+    if (!empty($_SESSION['user']['id']) && is_array($_SESSION['user'])) {
+        return $_SESSION['user'];
+    }
+
+    if (!birkly_require_plugin_file('user_management', 'includes/UserAuth.php')) {
+        return null;
+    }
+
+    $auth = new UserAuth();
+    $user = $auth->getCurrentUser();
+    if (!is_array($user) || empty($user['id'])) {
+        return null;
+    }
+
+    $_SESSION['user'] = $user;
+    return $user;
 }
 
 // Support JSON, multipart/form-data, and application/x-www-form-urlencoded
@@ -119,9 +146,10 @@ $fileFields = [];
 // Defer required validation for fields we can auto-populate generically
 $deferredRequired = [];
 
-// Resolve current site user from session snapshot (set by user_management plugin login)
-$currentUserId = $_SESSION['user']['id'] ?? null;
-$currentUserName = $_SESSION['user']['name'] ?? ($_SESSION['user']['username'] ?? null);
+// Resolve current site user (user_management login / cross-origin site session)
+$currentUser = birkly_public_submit_current_user();
+$currentUserId = $currentUser['id'] ?? null;
+$currentUserName = $currentUser['name'] ?? ($currentUser['username'] ?? null);
 $ownerFieldConfig = birkly_get_owner_field_config($schema);
 $ownerFieldName = is_array($ownerFieldConfig) ? (string) ($ownerFieldConfig['name'] ?? '') : '';
 
