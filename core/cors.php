@@ -13,7 +13,7 @@
  */
 function birkly_cors_allowed_request_headers(): string
 {
-    return 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, If-None-Match, If-Modified-Since';
+    return 'Content-Type, Authorization, X-CSRF-Token, X-Requested-With, X-Birkly-Site-Session, If-None-Match, If-Modified-Since';
 }
 
 /**
