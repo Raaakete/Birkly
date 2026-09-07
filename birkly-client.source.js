@@ -2079,7 +2079,76 @@
             }
         } catch (_) { /* ignore */ }
 
+        if (state.loggedIn) {
+            await syncClubProfileForms(state.user);
+        }
+
         return state;
+    }
+
+    async function syncClubProfileForms(user) {
+        const needsProfile = document.querySelector('[data-birkly-club-profile-form], [data-birkly-profile-avatar], [data-birkly-profile-link], [data-birkly-profile-field]');
+        if (!needsProfile) {
+            return;
+        }
+
+        if (!user) {
+            const state = await fetchSiteAuthState();
+            if (!state.loggedIn) {
+                return;
+            }
+            user = state.user;
+        }
+
+        try {
+            const res = await birklyCredentialedFetch(Birkly.cmsUrl + '/api/index.php?route=user_account&action=profile', {
+                method: 'GET',
+                headers: { Accept: 'application/json' }
+            });
+            const json = await res.json().catch(() => ({}));
+            if (!json.success) {
+                return;
+            }
+
+            const profile = json.club_profile || {};
+            const cmsBase = String(Birkly.cmsUrl || '').replace(/\/$/, '');
+            const rawAvatar = profile.avatar;
+            let avatarUrl = '';
+            if (rawAvatar && typeof rawAvatar === 'object') {
+                avatarUrl = String(rawAvatar.url || '');
+            } else if (typeof rawAvatar === 'string') {
+                avatarUrl = rawAvatar;
+            }
+            if (avatarUrl && !/^https?:\/\//i.test(avatarUrl) && cmsBase) {
+                avatarUrl = cmsBase + (avatarUrl.startsWith('/') ? avatarUrl : '/' + avatarUrl);
+            }
+
+            document.querySelectorAll('[data-birkly-profile-field]').forEach((el) => {
+                const key = el.getAttribute('data-birkly-profile-field');
+                if (!key) return;
+                const val = profile[key] ?? (user && user[key]) ?? '';
+                if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+                    el.value = (val && typeof val === 'object') ? '' : String(val);
+                }
+            });
+
+            document.querySelectorAll('[data-birkly-profile-avatar]').forEach((img) => {
+                if (!(img instanceof HTMLImageElement)) return;
+                if (avatarUrl) {
+                    img.src = avatarUrl;
+                    img.removeAttribute('hidden');
+                }
+            });
+
+            document.querySelectorAll('[data-birkly-profile-link]').forEach((link) => {
+                const slug = String(profile.slug || '').trim();
+                if (slug && link instanceof HTMLAnchorElement) {
+                    link.href = '/club/member.html?collection=club-profiles&slug=' + encodeURIComponent(slug);
+                }
+            });
+        } catch (err) {
+            Birkly.warn('Birkly: profile form sync failed:', err);
+        }
     }
 
     /**
@@ -5217,28 +5286,38 @@
             buttons.forEach(b => { b.disabled = true; if (b.tagName === 'BUTTON') b.textContent = 'Working…'; });
 
             try {
-                const params = new URLSearchParams();
-                for (const [k, v] of fd.entries()) {
-                    if (typeof v === 'string') params.append(k, v);
-                }
+                const hasFileUpload = Array.from(form.elements).some((el) => (
+                    el instanceof HTMLInputElement && el.type === 'file' && el.files && el.files.length > 0
+                ));
 
                 const endpoint = directUrl
                     ? (directUrl.startsWith('http') ? directUrl : (Birkly.cmsUrl + directUrl))
                     : (Birkly.cmsUrl + '/api/index.php');
 
-                Birkly.warn('Birkly: action form submit ->', {
-                    endpoint,
-                    route,
-                    action,
-                    onSuccess,
-                    body: params.toString().slice(0, 500)
-                });
+                let fetchOptions;
+                if (hasFileUpload && !directUrl) {
+                    fetchOptions = { method: 'POST', body: fd };
+                    Birkly.warn('Birkly: action form submit (multipart) ->', { endpoint, route, action, onSuccess });
+                } else {
+                    const params = new URLSearchParams();
+                    for (const [k, v] of fd.entries()) {
+                        if (typeof v === 'string') params.append(k, v);
+                    }
+                    fetchOptions = {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params.toString()
+                    };
+                    Birkly.warn('Birkly: action form submit ->', {
+                        endpoint,
+                        route,
+                        action,
+                        onSuccess,
+                        body: params.toString().slice(0, 500)
+                    });
+                }
 
-                const res = await birklyCredentialedFetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: params.toString()
-                });
+                const res = await birklyCredentialedFetch(endpoint, fetchOptions);
                 let json = await res.json().catch(() => ({}));
                 if (!res.ok || (json.status && json.status !== 'ok') || (json.success === false)) {
                     throw new Error(formatActionError(json, 'Action failed'));
