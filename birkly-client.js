@@ -1956,6 +1956,45 @@
     }
     
     /**
+     * Cross-origin storefront session fallback (when browsers block cms.birkly.cloud cookies).
+     */
+    const SITE_SESSION_STORAGE_KEY = 'birkly_site_session_id';
+
+    function getStoredSiteSessionId() {
+        try {
+            return localStorage.getItem(SITE_SESSION_STORAGE_KEY) || '';
+        } catch (_) {
+            return '';
+        }
+    }
+
+    function persistSiteSessionId(id) {
+        if (!id) return;
+        try {
+            localStorage.setItem(SITE_SESSION_STORAGE_KEY, String(id));
+        } catch (_) { /* ignore */ }
+    }
+
+    function clearStoredSiteSessionId() {
+        try {
+            localStorage.removeItem(SITE_SESSION_STORAGE_KEY);
+        } catch (_) { /* ignore */ }
+    }
+
+    function withSiteSessionHeaders(headers) {
+        const h = headers && typeof headers === 'object' ? Object.assign({}, headers) : {};
+        const sid = getStoredSiteSessionId();
+        if (sid) h['X-Birkly-Site-Session'] = sid;
+        return h;
+    }
+
+    function captureSiteSessionFromResponse(json) {
+        if (json && json.site_session_id) {
+            persistSiteSessionId(json.site_session_id);
+        }
+    }
+
+    /**
      * Get CSRF token from CMS
      */
     async function getCSRFToken() {
@@ -1964,7 +2003,10 @@
         }
         
         try {
-            const response = await fetch(Birkly.cmsUrl + '/api/csrf.php', { credentials: 'include' });
+            const response = await fetch(Birkly.cmsUrl + '/api/csrf.php', {
+                credentials: 'include',
+                headers: withSiteSessionHeaders({})
+            });
             const data = await response.json();
             
             if (data.status === 'ok' && data.data.csrf_token) {
@@ -2026,9 +2068,9 @@
         try {
             const response = await fetch(url, {
                 method: 'GET',
-                headers: {
+                headers: withSiteSessionHeaders({
                     'Content-Type': 'application/json'
-                },
+                }),
                 credentials: 'include'
             });
             
@@ -5022,7 +5064,7 @@
 
                 const res = await fetch(Birkly.cmsUrl + '/api/index.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: withSiteSessionHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
                     body: params.toString(),
                     credentials: 'include'
                 });
@@ -5030,6 +5072,7 @@
                 if (!res.ok || json.success === false || json.ok === false) {
                     throw new Error(formatActionError(json, 'Signup failed'));
                 }
+                captureSiteSessionFromResponse(json);
                 stepId = (json.step && json.step.id) ? String(json.step.id) : '';
                 if (!stepId && !json.completed) break;
             }
@@ -5110,13 +5153,18 @@
 
                 const res = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    headers: withSiteSessionHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
                     body: params.toString(),
                     credentials: 'include'
                 });
                 let json = await res.json().catch(() => ({}));
                 if (!res.ok || (json.status && json.status !== 'ok') || (json.success === false)) {
                     throw new Error(formatActionError(json, 'Action failed'));
+                }
+
+                captureSiteSessionFromResponse(json);
+                if (route === 'user_auth' && action === 'logout') {
+                    clearStoredSiteSessionId();
                 }
 
                 if (route === 'user_signup' && action === 'start' && json.session_id && !json.completed) {
@@ -5155,13 +5203,14 @@
                 const msg = (err && err.name === 'TypeError')
                     ? 'Could not reach the CMS (network or CORS). Check your connection and try again.'
                     : String(err?.message || 'Action failed');
+                if (onSuccess === 'redirect') {
                     const target = (redirectTo === 'self') ? new URL(window.location.href) : new URL(redirectTo, window.location.href);
                     target.searchParams.delete(okParam);
                     target.searchParams.delete(errParam);
                     target.searchParams.set(errParam, msg);
                     window.location.href = target.toString();
                 } else {
-                    showFormStatus(form, err?.message || 'Action failed', true);
+                    showFormStatus(form, msg, true);
                 }
             } finally {
                 delete form.dataset.haruSubmitting;
