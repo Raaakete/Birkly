@@ -2,7 +2,6 @@
 // api/domain_auth.php - Domain-based authentication for Birkly
 require_once 'storage.php';
 require_once 'validate.php';
-require_once 'rate_limit.php';
 require_once 'log.php';
 
 class DomainAuth {
