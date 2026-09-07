@@ -213,6 +213,15 @@ function birkly_ai_normalize_sub_collection_fields(array $fields): array
             'type' => $fieldType,
             'required' => !empty($fieldData['required']),
         ];
+        if (!empty($fieldData['ownership'])) {
+            $field['ownership'] = true;
+        }
+        if (array_key_exists('public_visible', $fieldData)) {
+            $field['public_visible'] = (bool) $fieldData['public_visible'];
+        }
+        if (!empty($fieldData['multiple'])) {
+            $field['multiple'] = true;
+        }
         if (isset($fieldData['options']) && is_array($fieldData['options'])) {
             $field['options'] = $fieldData['options'];
         }
@@ -295,6 +304,13 @@ function birkly_ai_process_sub_collections(array $subCollections, string $parent
             $sub['parent_sub_collection'] = $parentSubCollectionSlug;
         } elseif (!empty($subCollectionData['parent_sub_collection'])) {
             $sub['parent_sub_collection'] = (string) $subCollectionData['parent_sub_collection'];
+        }
+
+        if (isset($subCollectionData['aggregate_on_parent']) && is_array($subCollectionData['aggregate_on_parent'])) {
+            $countAs = trim((string) ($subCollectionData['aggregate_on_parent']['count_as'] ?? ''));
+            if ($countAs !== '') {
+                $sub['aggregate_on_parent'] = ['count_as' => $countAs];
+            }
         }
 
         if (isset($subCollectionData['sub_collections']) && is_array($subCollectionData['sub_collections']) && $subCollectionData['sub_collections'] !== []) {
