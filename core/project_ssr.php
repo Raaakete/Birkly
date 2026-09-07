@@ -477,6 +477,11 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
 
     if ($userCurrent !== null) {
         $data['user_current'] = $userCurrent;
+        $data['user_logged_in'] = true;
+    } else {
+        require_once __DIR__ . '/page_bundle_template_functions.php';
+        $loggedIn = birkly_page_bundle_call_template_function('user_logged_in', []);
+        $data['user_logged_in'] = (bool) $loggedIn;
     }
 
     $siteElementsList = null;
