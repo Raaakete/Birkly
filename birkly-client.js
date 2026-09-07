@@ -2007,11 +2007,43 @@
                 { headers: { Accept: 'application/json' } }
             );
             const json = await res.json().catch(() => ({}));
+            captureSiteSessionFromResponse(json);
             return { loggedIn: !!json.logged_in, user: json.user || null };
         } catch (e) {
             Birkly.warn('Birkly: site auth check failed', e);
             return { loggedIn: false, user: null };
         }
+    }
+
+    function applyQueryFlashMessages() {
+        try {
+            const url = new URL(window.location.href);
+            const err = url.searchParams.get('error');
+            const ok = url.searchParams.get('ok');
+            if (!err && !ok) return;
+
+            let el = document.querySelector('[data-birkly-query-flash], .birkly-query-flash, .bk-club-form-status');
+            if (!el) {
+                el = document.createElement('p');
+                el.className = 'bk-club-card bk-club-form-status birkly-query-flash';
+                el.setAttribute('data-birkly-query-flash', '');
+                const anchor = document.querySelector('.bk-club-pagehead, .bk-club-composer, main');
+                if (anchor && anchor.parentNode) {
+                    anchor.parentNode.insertBefore(el, anchor.nextSibling);
+                } else {
+                    document.body.prepend(el);
+                }
+            }
+            if (err) {
+                el.textContent = err.startsWith('Could not') ? err : ('Could not save: ' + err);
+                el.style.color = '#b33';
+                el.hidden = false;
+            } else if (ok) {
+                el.textContent = ok;
+                el.style.color = '';
+                el.hidden = false;
+            }
+        } catch (_) { /* ignore */ }
     }
 
     function applySiteAuthUi(loggedIn, user) {
@@ -2035,6 +2067,18 @@
             document.querySelectorAll('[data-birkly-user-email]').forEach((el) => {
                 el.textContent = user.email || '';
             });
+            if (user.id) {
+                document.querySelectorAll('[data-birkly-user-id]').forEach((el) => {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.value = String(user.id);
+                    } else {
+                        el.textContent = String(user.id);
+                    }
+                });
+                document.querySelectorAll('[data-birkly-like-id]').forEach((el) => {
+                    el.value = 'like_' + user.id;
+                });
+            }
         }
     }
 
@@ -4928,6 +4972,8 @@
         // Bind generic action forms ASAP (templates can take time to process)
         bindActionForms();
 
+        applyQueryFlashMessages();
+
         await syncSiteAuthUi();
         
         // Process templates immediately (don't wait for DOMContentLoaded)
@@ -5352,7 +5398,11 @@
                 const msg = (err && err.name === 'TypeError')
                     ? 'Could not reach the CMS (network or CORS). Check your connection and try again.'
                     : String(err?.message || 'Action failed');
+                if (/authentication required/i.test(msg)) {
+                    clearStoredSiteSessionId();
+                }
                 if (onSuccess === 'redirect') {
+                    showFormStatus(form, msg, true);
                     const target = (redirectTo === 'self') ? new URL(window.location.href) : new URL(redirectTo, window.location.href);
                     target.searchParams.delete(okParam);
                     target.searchParams.delete(errParam);
