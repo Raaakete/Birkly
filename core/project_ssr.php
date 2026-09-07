@@ -250,9 +250,135 @@ function birkly_project_ssr_collect_requests(string $html): array
     }
 
     // {for each entry in 'sub' of 'parent'.current ...}
-    if (preg_match_all('/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*(current|[^\'\s{}]+)/i', $text, $m, PREG_SET_ORDER)) {
+    if (preg_match_all('/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*current/i', $text, $m, PREG_SET_ORDER)) {
         foreach ($m as $match) {
             $add(['type' => 'list_entries', 'into' => $match[2], 'collection' => $match[2]]);
+        }
+    }
+
+    return $requests;
+}
+
+/**
+ * Build page_bundle sub_entries requests from template HTML + detail context.
+ *
+ * @return list<array<string,mixed>>
+ */
+function birkly_project_ssr_build_sub_entry_requests(string $html, array $query, ?array $entry = null): array
+{
+    $requests = [];
+    $seen = [];
+    $add = static function (array $req) use (&$requests, &$seen): void {
+        $key = json_encode($req);
+        if ($key === false || isset($seen[$key])) {
+            return;
+        }
+        $seen[$key] = true;
+        $requests[] = $req;
+    };
+
+    $topCollection = trim((string) ($query['collection'] ?? ''));
+    $topEntryId = '';
+    if (is_array($entry)) {
+        $topEntryId = trim((string) ($entry['id'] ?? $entry['slug'] ?? ''));
+        if ($topCollection === '') {
+            $topCollection = trim((string) ($entry['parent_collection'] ?? ''));
+        }
+    }
+    if ($topCollection === '' || $topEntryId === '') {
+        return [];
+    }
+
+    if (preg_match_all('/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*current/i', $html, $m, PREG_SET_ORDER)) {
+        foreach ($m as $match) {
+            $subCollection = $match[1];
+            $parentCollection = $match[2];
+            if ($parentCollection !== $topCollection) {
+                continue;
+            }
+            $into = birkly_public_sub_entries_bundle_key($topCollection, $topEntryId, $subCollection);
+            $add([
+                'type' => 'sub_entries',
+                'into' => $into,
+                'parent_collection' => $topCollection,
+                'parent_entry_id' => $topEntryId,
+                'sub_collection' => $subCollection,
+            ]);
+        }
+    }
+
+    return $requests;
+}
+
+/**
+ * Expand nested sub-entry bundle requests after first-level sub-entries are loaded.
+ *
+ * @param array<string,mixed> $data
+ * @return list<array<string,mixed>>
+ */
+function birkly_project_ssr_build_nested_sub_entry_requests(string $html, array $query, array $data): array
+{
+    $requests = [];
+    $seen = [];
+    $add = static function (array $req) use (&$requests, &$seen): void {
+        $key = json_encode($req);
+        if ($key === false || isset($seen[$key])) {
+            return;
+        }
+        $seen[$key] = true;
+        $requests[] = $req;
+    };
+
+    $topCollection = trim((string) ($query['collection'] ?? ''));
+    $topEntry = $data['entry'] ?? null;
+    $topEntryId = is_array($topEntry) ? trim((string) ($topEntry['id'] ?? $topEntry['slug'] ?? '')) : '';
+    if ($topCollection === '' || $topEntryId === '') {
+        return [];
+    }
+
+    if (!preg_match_all('/\{for\s+(?:each\s+)?[a-zA-Z0-9_]+\s+in\s+\'([^\']+)\'\s+of\s+\'([^\']+)\'\.\s*\{([^}]+)\}/i', $html, $m, PREG_SET_ORDER)) {
+        return [];
+    }
+
+    foreach ($m as $match) {
+        $nestedSub = $match[1];
+        $parentSubCollection = $match[2];
+        $parentRef = trim($match[3]);
+        $parentField = $parentRef;
+        if (strpos($parentRef, '.') !== false) {
+            $parentField = substr($parentRef, strrpos($parentRef, '.') + 1);
+        }
+
+        $firstLevelKey = birkly_public_sub_entries_bundle_key($topCollection, $topEntryId, $parentSubCollection);
+        $parentItems = $data[$firstLevelKey] ?? null;
+        if (!is_array($parentItems)) {
+            continue;
+        }
+
+        foreach ($parentItems as $parentItem) {
+            if (!is_array($parentItem)) {
+                continue;
+            }
+            $parentSubEntryId = trim((string) ($parentItem[$parentField] ?? $parentItem['id'] ?? $parentItem['slug'] ?? ''));
+            if ($parentSubEntryId === '') {
+                continue;
+            }
+            $into = birkly_public_sub_entries_bundle_key(
+                $topCollection,
+                $topEntryId,
+                $nestedSub,
+                $parentSubCollection,
+                $parentSubEntryId
+            );
+            $add([
+                'type' => 'sub_entries',
+                'into' => $into,
+                'parent_collection' => $topCollection,
+                'parent_entry_id' => $topEntryId,
+                'parent_sub_collection' => $parentSubCollection,
+                'parent_sub_entry_id' => $parentSubEntryId,
+                'sub_collection' => $nestedSub,
+            ]);
         }
     }
 
@@ -341,11 +467,17 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         'trusted_ssr' => true,
     ]);
 
+    $userCurrent = birkly_public_resolve_user_current();
+
     $data = [
         'current_year' => (int) date('Y'),
         'query' => $query,
         'current' => ['language' => $language],
     ];
+
+    if ($userCurrent !== null) {
+        $data['user_current'] = $userCurrent;
+    }
 
     $siteElementsList = null;
     foreach (($bundle['data'] ?? []) as $into => $value) {
@@ -397,6 +529,28 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
                 $data['entry'] = $entry;
                 $slugKey = $slug !== '' ? $slug : (string) ($entry['slug'] ?? $entryId);
                 $data['__entry__:' . $collection . ':' . $slugKey] = $entry;
+
+                $subRequests = birkly_project_ssr_build_sub_entry_requests($html, $query, $entry);
+                if ($subRequests !== []) {
+                    $subBundle = birkly_run_page_bundle_requests($storage, $subRequests, $language, [
+                        'lean' => true,
+                        'trusted_ssr' => true,
+                    ]);
+                    foreach (($subBundle['data'] ?? []) as $into => $value) {
+                        $data[$into] = $value;
+                    }
+
+                    $nestedRequests = birkly_project_ssr_build_nested_sub_entry_requests($html, $query, $data);
+                    if ($nestedRequests !== []) {
+                        $nestedBundle = birkly_run_page_bundle_requests($storage, $nestedRequests, $language, [
+                            'lean' => true,
+                            'trusted_ssr' => true,
+                        ]);
+                        foreach (($nestedBundle['data'] ?? []) as $into => $value) {
+                            $data[$into] = $value;
+                        }
+                    }
+                }
             }
         }
     }

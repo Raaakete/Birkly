@@ -110,6 +110,8 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                 $parentCollection = $req['parent_collection'] ?? '';
                 $parentEntryId = $req['parent_entry_id'] ?? '';
                 $subCollection = $req['sub_collection'] ?? '';
+                $parentSubCollection = $req['parent_sub_collection'] ?? null;
+                $parentSubEntryId = $req['parent_sub_entry_id'] ?? null;
                 if (!$parentCollection || !$parentEntryId || !$subCollection) {
                     $errors[] = "sub_entries:$into missing params";
                     $out[$into] = [];
@@ -120,7 +122,14 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
                     $out[$into] = [];
                     continue;
                 }
-                $result = birkly_public_list_sub_entries($parentCollection, $parentEntryId, $subCollection);
+                $result = birkly_public_list_sub_entries(
+                    $parentCollection,
+                    $parentEntryId,
+                    $subCollection,
+                    is_string($parentSubCollection) ? $parentSubCollection : null,
+                    is_string($parentSubEntryId) ? $parentSubEntryId : null,
+                    $storage
+                );
                 $entries = $result['data']['entries'] ?? [];
                 $out[$into] = birkly_page_bundle_prune_list($entries, $lean);
             } elseif ($type === 'list_collection_groups') {

@@ -94,8 +94,10 @@ function birkly_plugin_state_storage(): PluginStorage
 }
 
 // Plugin state management
+if (!function_exists('get_plugin_state')) {
 function get_plugin_state($plugin_id) {
     return birkly_is_plugin_active($plugin_id);
+}
 }
 
 /**
@@ -628,12 +630,14 @@ function load_plugins($plugins_dir = null) {
 }
 
 // Plugin settings management
+if (!function_exists('get_plugin_setting')) {
 function get_plugin_setting($plugin_id, $key, $default = null) {
     global $birkly_plugins;
     if (isset($birkly_plugins[$plugin_id]['settings'][$key])) {
         return $birkly_plugins[$plugin_id]['settings'][$key];
     }
     return $default;
+}
 }
 
 function set_plugin_setting($plugin_id, $key, $value) {
@@ -645,6 +649,7 @@ function set_plugin_setting($plugin_id, $key, $value) {
 }
 
 // Get all plugins with their metadata and state
+if (!function_exists('get_all_plugins')) {
 function get_all_plugins() {
     global $birkly_plugins;
     
@@ -656,6 +661,7 @@ function get_all_plugins() {
     load_plugin_states();
 
     return is_array($birkly_plugins) ? $birkly_plugins : [];
+}
 }
 
 // Get only active plugins

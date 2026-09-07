@@ -24,6 +24,10 @@ function birkly_page_bundle_collect_collections(array $requests): array {
             if ($parent !== '') {
                 $collections[] = $parent;
             }
+            $parentSub = $req['parent_sub_collection'] ?? '';
+            if ($parentSub !== '') {
+                $collections[] = $parent;
+            }
         }
     }
     $collections[] = 'site_elements';
