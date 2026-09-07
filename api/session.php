@@ -50,6 +50,97 @@ function birkly_request_is_secure(): bool
     return false;
 }
 
+/**
+ * Normalize a request host (strip port, lowercase).
+ */
+function birkly_normalize_request_host(string $host): string
+{
+    $host = strtolower(trim($host));
+    if ($host === '') {
+        return '';
+    }
+    $colon = strpos($host, ':');
+    if ($colon !== false) {
+        $host = substr($host, 0, $colon);
+    }
+    return $host;
+}
+
+/**
+ * Host from Origin or Referer when the storefront runs on a registered domain
+ * separate from the CMS host (e.g. birkly.io → cms.birkly.cloud).
+ */
+function birkly_client_site_host(string $origin = '', string $referer = ''): string
+{
+    $origin = $origin !== '' ? $origin : ($_SERVER['HTTP_ORIGIN'] ?? '');
+    if ($origin !== '') {
+        $host = parse_url($origin, PHP_URL_HOST);
+        if (is_string($host) && $host !== '') {
+            return birkly_normalize_request_host($host);
+        }
+    }
+
+    $referer = $referer !== '' ? $referer : ($_SERVER['HTTP_REFERER'] ?? '');
+    if ($referer !== '') {
+        $host = parse_url($referer, PHP_URL_HOST);
+        if (is_string($host) && $host !== '') {
+            return birkly_normalize_request_host($host);
+        }
+    }
+
+    return '';
+}
+
+/**
+ * True when the browser page is on a registered site domain that is not the CMS host.
+ * Cross-origin credentialed fetch requires SameSite=None site session cookies.
+ */
+function birkly_is_cross_origin_registered_site_request(string $origin = '', string $referer = ''): bool
+{
+    $clientHost = birkly_client_site_host($origin, $referer);
+    if ($clientHost === '') {
+        return false;
+    }
+
+    $cmsHost = birkly_normalize_request_host($_SERVER['HTTP_HOST'] ?? '');
+    if ($cmsHost === '' || $clientHost === $cmsHost) {
+        return false;
+    }
+
+    if (!function_exists('birkly_cors_origin_allowed')) {
+        require_once __DIR__ . '/../core/cors.php';
+    }
+
+    $originUrl = $origin !== '' ? $origin : ($_SERVER['HTTP_ORIGIN'] ?? '');
+    if ($originUrl === '' && $referer !== '') {
+        $scheme = parse_url($referer, PHP_URL_SCHEME);
+        if (!is_string($scheme) || $scheme === '') {
+            $scheme = 'https';
+        }
+        $originUrl = $scheme . '://' . $clientHost;
+    }
+    if ($originUrl === '' && !empty($_SERVER['HTTP_REFERER'])) {
+        $scheme = parse_url($_SERVER['HTTP_REFERER'], PHP_URL_SCHEME);
+        if (!is_string($scheme) || $scheme === '') {
+            $scheme = 'https';
+        }
+        $originUrl = $scheme . '://' . $clientHost;
+    }
+    if ($originUrl === '') {
+        return false;
+    }
+
+    return birkly_cors_origin_allowed($originUrl, get_registered_domains());
+}
+
+/**
+ * SameSite policy for storefront (birkly_site_sid) cookies.
+ */
+function birkly_site_session_samesite(string $origin = '', string $referer = ''): string
+{
+    return birkly_is_cross_origin_registered_site_request($origin, $referer) ? 'None' : 'Lax';
+}
+
 function haru_secure_session_start() {
     if (session_status() === PHP_SESSION_NONE) {
         session_name(BIRKLY_CMS_SESSION_NAME);
@@ -78,7 +169,8 @@ function birkly_site_session_start() {
     if (session_status() !== PHP_SESSION_NONE) {
         return;
     }
-    $secure = birkly_request_is_secure();
+    $sameSite = birkly_site_session_samesite();
+    $secure = birkly_request_is_secure() || $sameSite === 'None';
     $cookiePath = birkly_session_cookie_path();
     session_name('birkly_site_sid');
     session_set_cookie_params([
@@ -87,7 +179,7 @@ function birkly_site_session_start() {
         'domain' => '',
         'secure' => $secure,
         'httponly' => true,
-        'samesite' => 'Lax'
+        'samesite' => $sameSite
     ]);
     session_start();
 }
@@ -117,9 +209,10 @@ function birkly_admin_session_start() {
  * Resolve which session scope CSRF tokens should use.
  * Returns one of: admin, cms, site.
  */
-function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '', string $requestUri = ''): string {
+function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '', string $requestUri = '', string $origin = ''): string {
     $uri = $requestUri !== '' ? $requestUri : ($_SERVER['REQUEST_URI'] ?? '');
     $fromAdmin = strpos($referer, '/admin/') !== false;
+    $origin = $origin !== '' ? $origin : ($_SERVER['HTTP_ORIGIN'] ?? '');
 
     if (!empty($cookies['birkly_admin_sid']) || $fromAdmin) {
         return !empty($cookies['birkly_admin_sid']) ? 'admin' : 'cms';
@@ -128,6 +221,11 @@ function birkly_resolve_csrf_session_scope(array $cookies, string $referer = '',
     // Storefront site users (club, account pages) share CSRF with birkly_site_sid.
     // Must run before the generic /api/ rule so /api/csrf.php matches the site session.
     if (!empty($cookies['birkly_site_sid'])) {
+        return 'site';
+    }
+
+    // Club / storefront on a registered external domain (cross-origin from CMS host).
+    if (birkly_is_cross_origin_registered_site_request($origin, $referer)) {
         return 'site';
     }
 
