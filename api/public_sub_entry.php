@@ -16,6 +16,13 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/domain_auth.php';
+setDynamicCORS();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require_once __DIR__ . '/../core/sub_entries.php';
 require_once __DIR__ . '/../core/entry_ownership.php';
 require_once __DIR__ . '/../core/storage/StorageFactory.php';

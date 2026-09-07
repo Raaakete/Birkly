@@ -1,6 +1,12 @@
 <?php
 // api/public_submit.php - Public submission endpoint for Birkly collections (with file upload support)
 header('Content-Type: application/json');
+require_once __DIR__ . '/domain_auth.php';
+setDynamicCORS();
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 require_once __DIR__ . '/storage.php';
 require_once __DIR__ . '/validate.php';
 require_once __DIR__ . '/rate_limit.php';
