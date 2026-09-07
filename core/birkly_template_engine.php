@@ -1050,6 +1050,17 @@ function birkly_template_engine_evaluate_condition(string $condition, array $dat
         }
     }
 
+    // Bare identifier: context flags or zero-arg template functions (user_logged_in).
+    if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $cond)) {
+        if (array_key_exists($cond, $data)) {
+            return birkly_template_engine_truthy($data[$cond]);
+        }
+        $tfValue = birkly_template_engine_call_registered_function($cond, []);
+        if ($tfValue !== null) {
+            return birkly_template_engine_truthy($tfValue);
+        }
+    }
+
     return false;
 }
 
@@ -1442,6 +1453,136 @@ function birkly_template_engine_process_count_variables(string $html, array $dat
     return $out === null ? $html : $out;
 }
 
+/**
+ * Invoke a plugin-registered template function (SSR / page_bundle path).
+ *
+ * @param list<mixed> $args
+ */
+function birkly_template_engine_call_registered_function(string $name, array $args = []): mixed
+{
+    if ($name === '' || !preg_match('/^[a-zA-Z0-9_]+$/', $name)) {
+        return null;
+    }
+    if (!function_exists('birkly_page_bundle_call_template_function')) {
+        $path = __DIR__ . '/page_bundle_template_functions.php';
+        if (!is_file($path)) {
+            return null;
+        }
+        require_once $path;
+    }
+    if (!function_exists('birkly_page_bundle_call_template_function')) {
+        return null;
+    }
+    return birkly_page_bundle_call_template_function($name, $args);
+}
+
+/**
+ * Resolve a template-function argument: field ref {'body'}, literal 'text', or bare identifier.
+ *
+ * @param array<string,mixed> $data
+ */
+function birkly_template_engine_resolve_template_function_arg(string $raw, array $data): mixed
+{
+    $trimmed = trim($raw);
+    if ($trimmed === '') {
+        return '';
+    }
+    if (preg_match("/^'([^']*)'$/D", $trimmed, $m)) {
+        $key = $m[1];
+        if (array_key_exists($key, $data) && !is_array($data[$key])) {
+            return $data[$key];
+        }
+        $entry = (array_key_exists('entry', $data) && birkly_template_engine_truthy($data['entry']))
+            ? $data['entry']
+            : null;
+        if (is_array($entry) && array_key_exists($key, $entry) && !is_array($entry[$key])) {
+            return $entry[$key];
+        }
+        return $key;
+    }
+    if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $trimmed)) {
+        if (array_key_exists($trimmed, $data) && !is_array($data[$trimmed])) {
+            return $data[$trimmed];
+        }
+    }
+    return $trimmed;
+}
+
+/**
+ * Replace {template_function arg …} calls with SSR-evaluated results.
+ *
+ * @param array<string,mixed> $data
+ */
+function birkly_template_engine_process_template_functions(string $html, array $data): string
+{
+    if ($html === '' || !function_exists('birkly_page_bundle_template_functions_meta_list')) {
+        $path = __DIR__ . '/page_bundle_template_functions.php';
+        if (!is_file($path)) {
+            return $html;
+        }
+        require_once $path;
+    }
+
+    $meta = birkly_page_bundle_template_functions_meta_list();
+    $names = [];
+    foreach ($meta as $row) {
+        if (is_array($row) && !empty($row['name'])) {
+            $names[(string) $row['name']] = true;
+        }
+    }
+    if ($names === []) {
+        return $html;
+    }
+
+    $controlStarts = [
+        'if' => true, 'else' => true, 'elseif' => true, 'endif' => true,
+        'for' => true, 'endfor' => true, 'foreach' => true, 'endforeach' => true,
+        'from' => true, 'get' => true, 'endget' => true, 'endentry' => true,
+        'end' => true, 'set' => true, 'count' => true, 'entry' => true, 'public_form' => true,
+    ];
+
+    $out = preg_replace_callback(
+        '/\{([a-zA-Z0-9_]+)\s+((?:[^{}]|\{[^{}]*\})*)\}/',
+        static function (array $match) use ($data, $names, $controlStarts): string {
+            $funcName = $match[1];
+            if (!isset($names[$funcName]) || isset($controlStarts[$funcName])) {
+                return $match[0];
+            }
+            $rawArgs = trim($match[2]);
+            $args = [];
+            if ($rawArgs !== '') {
+                if (preg_match("/^\{'([^']+)'\}$/", $rawArgs, $fm)) {
+                    $args[] = birkly_template_engine_resolve_template_function_arg("'" . $fm[1] . "'", $data);
+                } elseif (preg_match_all("/'([^']*)'/", $rawArgs, $qm, PREG_SET_ORDER)) {
+                    foreach ($qm as $q) {
+                        $args[] = birkly_template_engine_resolve_template_function_arg("'" . $q[1] . "'", $data);
+                    }
+                } else {
+                    foreach (preg_split('/\s+/', $rawArgs) as $piece) {
+                        if ($piece !== '') {
+                            $args[] = birkly_template_engine_resolve_template_function_arg($piece, $data);
+                        }
+                    }
+                }
+            }
+            $result = birkly_template_engine_call_registered_function($funcName, $args);
+            if ($result === null) {
+                return '';
+            }
+            if (is_bool($result)) {
+                return $result ? '1' : '';
+            }
+            if (is_scalar($result)) {
+                return (string) $result;
+            }
+            return '';
+        },
+        $html
+    );
+
+    return $out === null ? $html : $out;
+}
+
 /** @param array<string,mixed> $options */
 function birkly_template_engine_process_variables(string $html, array $data, array $options): string
 {
@@ -1462,6 +1603,17 @@ function birkly_template_engine_process_variables(string $html, array $data, arr
         }
         if (preg_match('/^count\s+of\b/i', $trimmed)) {
             return $full;
+        }
+
+        // Context paths with optional date format: comment.created_at format "M j, Y"
+        if (preg_match('/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+)(?:\s+format\s+["\']([^"\']+)["\'])?\s*$/D', $trimmed, $dm)) {
+            $ctx = birkly_template_engine_resolve_context_path($dm[1], $data);
+            if ($ctx !== null) {
+                if (isset($dm[2]) && $dm[2] !== '' && $ctx !== '') {
+                    return birkly_template_engine_format_date($ctx, $dm[2]);
+                }
+                return birkly_template_engine_escape_output($dm[1], $ctx, $options);
+            }
         }
 
         // System / context paths: current.language, query.'lang', query.slug …
@@ -1595,6 +1747,7 @@ function birkly_template_engine_render(string $html, $data, array $options = [])
     $out = birkly_template_engine_process_for_loops($out, $data, $renderFn);
     $out = birkly_template_engine_process_if_blocks($out, $data, $renderFn);
     $out = birkly_template_engine_process_count_variables($out, $data);
+    $out = birkly_template_engine_process_template_functions($out, $data);
     $out = birkly_template_engine_process_variables($out, $data, $ctxOptions);
 
     if ($protect && count($protectedBlocks) > 0) {
