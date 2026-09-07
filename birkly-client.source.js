@@ -4962,6 +4962,9 @@
         // Detect API endpoint first
         await detectApiEndpoint();
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
+        try {
+            document.dispatchEvent(new CustomEvent('birkly:api-ready', { bubbles: true }));
+        } catch (_) { /* ignore */ }
 
         const ssrSkipTemplates = shouldSkipSsrClientHydration();
 
@@ -4993,6 +4996,9 @@
         } else {
             emitTemplatesProcessedSkipped();
         }
+        try {
+            document.dispatchEvent(new CustomEvent('birkly:client-ready', { bubbles: true }));
+        } catch (_) { /* ignore */ }
         // birkly:templates-processed is emitted by processTemplates() on full-document runs
         } catch (err) {
             console.error('[Birkly] init error:', err);
@@ -5700,6 +5706,23 @@
      */
     const renderEngine = Birkly.render;
     window.Birkly = {
+        /**
+         * Resolves when API endpoint detection has finished (safe to fetch CMS data).
+         */
+        whenApiReady: function whenApiReady() {
+            if (Birkly.apiEndpoint) {
+                return Promise.resolve(Birkly);
+            }
+            return new Promise((resolve) => {
+                const done = () => resolve(Birkly);
+                if (Birkly.apiEndpoint) {
+                    done();
+                    return;
+                }
+                document.addEventListener('birkly:api-ready', done, { once: true });
+            });
+        },
+
         /**
          * Initialize (called automatically, but can be called manually)
          */
