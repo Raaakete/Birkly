@@ -208,7 +208,14 @@ function render_threaded_entry($entry, $parent_collection, $parent_entry_id, $su
     }
     
     // Get replies (nested sub-entries)
-    $replies = getNestedSubEntries($parent_collection, $parent_entry_id, $sub_collection, $entry['id'], [], [
+    $replies = getNestedSubEntries(
+        $parent_collection,
+        $parent_entry_id,
+        $sub_collection,
+        $entry['id'],
+        $sub_collection,
+        [],
+        [
         'sort' => 'created_at',
         'order' => 'asc'
     ]);
