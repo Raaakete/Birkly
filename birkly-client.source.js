@@ -805,6 +805,15 @@
 
         Birkly.conditionals.parseLoopInClause = function(inClause) {
             const raw = String(inClause || '').trim();
+            const ofSubDynamic = raw.match(/^['"]([^'"]+)['"]\s+of\s+['"]([^'"]+)['"]\.(\{[^}]+\}|[^\s{}]+)\s*$/);
+            if (ofSubDynamic) {
+                return {
+                    kind: 'sub_of',
+                    subCollection: ofSubDynamic[1],
+                    parentCollection: ofSubDynamic[2],
+                    parentIdentifier: ofSubDynamic[3]
+                };
+            }
             const ofSub = raw.match(/^['"]([^'"]+)['"]\s+of\s+['"]([^'"]+)['"]\.(?:['"]([^'"]+)['"]|(current|newest|last-updated))\s*$/);
             if (ofSub) {
                 return {
@@ -820,13 +829,59 @@
             return { kind: 'raw', raw };
         };
 
+        Birkly.conditionals.resolveLoopParentIdentifier = function(raw, data) {
+            const trimmed = String(raw || '').trim();
+            if (!trimmed) return '';
+            const dynamic = trimmed.match(/^\{([^}]+)\}$/);
+            if (dynamic) {
+                const v = getNestedValue(data, dynamic[1].trim());
+                return v == null ? '' : String(v);
+            }
+            if (/^['"]([^'"]+)['"]$/.test(trimmed)) {
+                return trimmed.replace(/^['"]|['"]$/g, '');
+            }
+            return trimmed;
+        };
+
+        Birkly.conditionals.topEntryContext = function(data) {
+            const entry = data && data.entry;
+            if (!entry) return ['', ''];
+            const collection = (data.query && data.query.collection) ? String(data.query.collection) : String(entry.parent_collection || '');
+            const entryId = String(entry.id || entry.slug || '');
+            return [collection, entryId];
+        };
+
+        Birkly.conditionals.subEntriesBundleKey = function(parentCollection, parentEntryId, subCollection, parentSubCollection, parentSubEntryId) {
+            if (parentSubCollection && parentSubEntryId) {
+                return '__sub__:' + parentCollection + ':' + parentEntryId + ':' + parentSubCollection + ':' + parentSubEntryId + ':' + subCollection;
+            }
+            return '__sub__:' + parentCollection + ':' + parentEntryId + ':' + subCollection;
+        };
+
         Birkly.conditionals.resolveSubCollectionItems = function(subCollection, parentCollection, parentIdentifier, data) {
+            parentIdentifier = Birkly.conditionals.resolveLoopParentIdentifier(parentIdentifier, data);
+            const topLevelList = data[parentCollection];
+            const isTopLevel = Array.isArray(topLevelList);
+
+            if (!isTopLevel && parentIdentifier) {
+                const ctx = Birkly.conditionals.topEntryContext(data);
+                const topCollection = ctx[0];
+                const topEntryId = ctx[1];
+                if (topCollection && topEntryId) {
+                    const nestedKey = Birkly.conditionals.subEntriesBundleKey(
+                        topCollection, topEntryId, subCollection, parentCollection, parentIdentifier
+                    );
+                    if (Array.isArray(data[nestedKey])) return data[nestedKey];
+                }
+                return [];
+            }
+
             const parent = Birkly.conditionals.resolveParentCollectionEntry(parentCollection, parentIdentifier, data);
             if (!parent) return [];
 
             const ids = [parent.id, parent.slug, parentIdentifier].filter(v => v !== undefined && v !== null && v !== '');
             for (const id of ids) {
-                const key = '__sub__:' + parentCollection + ':' + id + ':' + subCollection;
+                const key = Birkly.conditionals.subEntriesBundleKey(parentCollection, id, subCollection);
                 if (Array.isArray(data[key])) return data[key];
             }
 
@@ -1225,7 +1280,9 @@
                         into,
                         parent_collection: el.getAttribute('data-parent-collection') || '',
                         parent_entry_id: el.getAttribute('data-parent-entry-id') || '',
-                        sub_collection: el.getAttribute('data-sub-collection') || ''
+                        sub_collection: el.getAttribute('data-sub-collection') || '',
+                        parent_sub_collection: el.getAttribute('data-parent-sub-collection') || '',
+                        parent_sub_entry_id: el.getAttribute('data-parent-sub-entry-id') || ''
                     });
                 } else if (type === 'entries') {
                     add({
@@ -4029,12 +4086,16 @@
         return null;
     }
 
-    async function fetchSubEntries(parentCollection, parentEntryId, subCollection) {
+    async function fetchSubEntries(parentCollection, parentEntryId, subCollection, parentSubCollection, parentSubEntryId) {
         const url = new URL(Birkly.cmsUrl + '/api/sub_entries.php');
         url.searchParams.set('action', 'list');
         url.searchParams.set('parent_collection', parentCollection);
         url.searchParams.set('parent_entry_id', parentEntryId);
         url.searchParams.set('sub_collection', subCollection);
+        if (parentSubCollection && parentSubEntryId) {
+            url.searchParams.set('parent_sub_collection', parentSubCollection);
+            url.searchParams.set('parent_sub_entry_id', parentSubEntryId);
+        }
 
         Birkly.log('Birkly: fetchSubEntries called with:', { parentCollection, parentEntryId, subCollection, url: url.toString() });
         const res = await fetch(url.toString(), { credentials: 'include' });
@@ -4090,14 +4151,34 @@
                     const parentCollection = resolve(el.getAttribute('data-parent-collection'));
                     const parentEntryId = resolve(el.getAttribute('data-parent-entry-id'));
                     const subCollection = resolve(el.getAttribute('data-sub-collection'));
+                    const parentSubCollection = resolve(el.getAttribute('data-parent-sub-collection'));
+                    const parentSubEntryId = resolve(el.getAttribute('data-parent-sub-entry-id'));
                     if (!parentCollection || !parentEntryId || !subCollection) {
                         Birkly.warn('Birkly: Prefetch sub_entries skipped - missing params:', { parentCollection, parentEntryId, subCollection });
                         return;
                     }
-                    Birkly.log('Birkly: Prefetching sub_entries:', { parentCollection, parentEntryId, subCollection, into });
-                    const subEntries = await fetchSubEntries(parentCollection, parentEntryId, subCollection);
-                    data[into] = Array.isArray(subEntries) ? subEntries : [];
-                    Birkly.log('Birkly: Prefetched', data[into].length, 'sub-entries into', into);
+                    const bundleInto = into.startsWith('__sub__')
+                        ? into
+                        : Birkly.conditionals.subEntriesBundleKey(
+                            parentCollection,
+                            parentEntryId,
+                            subCollection,
+                            parentSubCollection || null,
+                            parentSubEntryId || null
+                        );
+                    Birkly.log('Birkly: Prefetching sub_entries:', { parentCollection, parentEntryId, subCollection, into: bundleInto });
+                    const subEntries = await fetchSubEntries(
+                        parentCollection,
+                        parentEntryId,
+                        subCollection,
+                        parentSubCollection || null,
+                        parentSubEntryId || null
+                    );
+                    data[bundleInto] = Array.isArray(subEntries) ? subEntries : [];
+                    if (bundleInto !== into) {
+                        data[into] = data[bundleInto];
+                    }
+                    Birkly.log('Birkly: Prefetched', data[bundleInto].length, 'sub-entries into', bundleInto);
                 } else if (type === 'template_function') {
                     const name = resolve(el.getAttribute('data-name'));
                     const argsJson = resolve(el.getAttribute('data-args')) || '[]';

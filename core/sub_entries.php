@@ -288,13 +288,22 @@ function getSubEntriesWithAggregations($parent_collection, $parent_entry_id, $su
  * 
  * @param string $parent_collection Parent collection slug
  * @param string $parent_entry_id Parent entry ID
- * @param string $sub_collection Sub-collection slug
+ * @param string $parent_sub_collection Parent sub-collection slug (e.g. comments)
  * @param string $parent_sub_entry_id Parent sub-entry ID
+ * @param string $sub_collection Nested sub-collection slug (e.g. replies)
  * @param array $filters Optional filters
  * @param array $options Optional query options
  * @return array List of nested sub-entries
  */
-function getNestedSubEntries($parent_collection, $parent_entry_id, $sub_collection, $parent_sub_entry_id, $filters = [], $options = []) {
+function getNestedSubEntries(
+    $parent_collection,
+    $parent_entry_id,
+    $parent_sub_collection,
+    $parent_sub_entry_id,
+    $sub_collection,
+    $filters = [],
+    $options = []
+) {
     if (!function_exists('get_storage')) {
         require_once __DIR__ . '/storage/StorageFactory.php';
     }
@@ -306,7 +315,7 @@ function getNestedSubEntries($parent_collection, $parent_entry_id, $sub_collecti
     }
     
     // Build nested sub-entry path
-    $nestedPath = "collections/{$parent_collection}/entries/{$parent_entry_id}/sub_entries/{$sub_collection}/{$parent_sub_entry_id}/sub_entries/{$sub_collection}";
+    $nestedPath = "collections/{$parent_collection}/entries/{$parent_entry_id}/sub_entries/{$parent_sub_collection}/{$parent_sub_entry_id}/sub_entries/{$sub_collection}";
     
     // Get all nested sub-entry files
     $files = $storage->list($nestedPath);

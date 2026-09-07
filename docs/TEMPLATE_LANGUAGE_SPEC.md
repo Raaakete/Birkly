@@ -312,6 +312,23 @@ Example: blog posts with comments:
 - `'comments'` is a sub-collection attached to entries in `'blog'`.
 - `'Hello-World'` identifies a single entry in `'blog'` by **slug** or **id** (not title).
 
+#### Nested sub-collections (replies on comments)
+
+When a sub-collection has its own sub-collections (e.g. `replies` on `comments`), use the parent sub-entry id from the outer loop:
+
+```text
+{for each comment in 'comments' of 'posts'.current}
+  {'body'}
+  {for each reply in 'replies' of 'comments'.{comment.id} ordered by newest}
+    {'body'}
+  {endfor}
+{endfor}
+```
+
+- `'comments'` is the parent sub-collection slug (not the top-level collection).
+- `{comment.id}` resolves from the outer loop variable.
+- Page bundle / SSR populate nested data under `__sub__:{topCollection}:{topEntryId}:{parentSub}:{parentSubEntryId}:{nestedSub}` keys.
+
 #### Filters on loops
 
 Canonical filter word: **`with`**.
@@ -321,9 +338,12 @@ Canonical filter word: **`with`**.
 {for each entry in 'blog' with 'category' = 'news'}
 {for each entry in 'products' with 'price' <= 15}
 {for each entry in 'blog' with status = published with 'featured' = '1'}
+{for each entry in 'posts' with owner = user_current}
+{for each entry in 'posts' with 'owner' = user_current.id}
 ```
 
 - `status` is a system field.
+- Runtime loop filters resolve `user_current` and `user_current.id` from the render context (SSR/page_bundle inject `user_current` when a site session exists).
 - Quoted names like `'category'`, `'price'` are user-defined fields.
 - Multiple filters: repeat `with` before `ordered by` / `limit`. All clauses are AND-combined.
 - Checkbox / toggle fields store JSON booleans. Compare with `'1'`, `'true'`, or `'yes'` for checked rows and `'0'`, `'false'`, or `'no'` for unchecked.
