@@ -141,6 +141,24 @@ function birkly_site_session_samesite(string $origin = '', string $referer = '')
     return birkly_is_cross_origin_registered_site_request($origin, $referer) ? 'None' : 'Lax';
 }
 
+/**
+ * Cross-origin storefront fallback when browsers block third-party cookies.
+ * Only honored for registered external origins with a valid session id format.
+ */
+function birkly_site_session_id_from_request_header(string $origin = '', string $referer = ''): ?string
+{
+    if (!birkly_is_cross_origin_registered_site_request($origin, $referer)) {
+        return null;
+    }
+
+    $id = $_SERVER['HTTP_X_BIRKLY_SITE_SESSION'] ?? '';
+    if (!is_string($id) || $id === '' || !preg_match('/^[a-zA-Z0-9,-]{16,128}$/', $id)) {
+        return null;
+    }
+
+    return $id;
+}
+
 function haru_secure_session_start() {
     if (session_status() === PHP_SESSION_NONE) {
         session_name(BIRKLY_CMS_SESSION_NAME);
@@ -173,6 +191,10 @@ function birkly_site_session_start() {
     $secure = birkly_request_is_secure() || $sameSite === 'None';
     $cookiePath = birkly_session_cookie_path();
     session_name('birkly_site_sid');
+    $headerSession = birkly_site_session_id_from_request_header();
+    if ($headerSession !== null && empty($_COOKIE['birkly_site_sid'])) {
+        session_id($headerSession);
+    }
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => $cookiePath,
