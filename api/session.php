@@ -191,8 +191,11 @@ function birkly_site_session_start() {
     $secure = birkly_request_is_secure() || $sameSite === 'None';
     $cookiePath = birkly_session_cookie_path();
     session_name('birkly_site_sid');
+    // Cross-origin club/storefront sends X-Birkly-Site-Session when third-party
+    // cookies are blocked or stale. Always prefer the header over the cookie so
+    // public_submit and other site-session APIs see the logged-in user.
     $headerSession = birkly_site_session_id_from_request_header();
-    if ($headerSession !== null && empty($_COOKIE['birkly_site_sid'])) {
+    if ($headerSession !== null) {
         session_id($headerSession);
     }
     session_set_cookie_params([
