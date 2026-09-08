@@ -32,6 +32,12 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20260803-1')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/breadcrumb-truncate.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <?php
+    if (!function_exists('birkly_render_admin_script_tags')) {
+        require_once __DIR__ . '/../../core/plugins/admin_asset_shelf.php';
+    }
+    echo birkly_render_admin_script_tags(isset($page) ? (string) $page : null);
+    ?>
     <?php if (isset($page) && $page === 'dashboard'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard-widgets.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/dashboard.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
     <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
