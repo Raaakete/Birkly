@@ -1190,6 +1190,7 @@ function birkly_marketplace_offer_is_installable(array $offer): bool
 function birkly_marketplace_enrich_offer_install_state(array $offer): array
 {
     $slug = (string) ($offer['slug'] ?? '');
+    $offer['distribution'] = birkly_marketplace_offer_distribution($offer);
     $offer['install_state'] = birkly_marketplace_offer_install_state(
         $slug,
         (string) ($offer['latest_version'] ?? '')
@@ -1473,11 +1474,13 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
     $releases = birkly_marketplace_releases_for_channel($allReleases, $channel, $offerMeta);
     $latest = birkly_marketplace_latest_release_version($releases) ?? $currentVersion;
     $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latest, $offerMeta);
+    $offerDistribution = birkly_marketplace_offer_distribution($offerMeta);
 
     $result = [
         'ok' => true,
         'latest_version' => $latest,
         'latest_stability' => $latestStability,
+        'offer_distribution' => $offerDistribution,
         'update_channel' => $channel,
         'update_available' => version_compare($latest, $currentVersion, '>'),
         'current_version' => $currentVersion,

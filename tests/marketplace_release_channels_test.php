@@ -83,6 +83,12 @@ try {
     )) {
         $errors[] = 'Effective beta stability should require pre_release_ack';
     }
+
+    $alphaOffer = ['slug' => 'alpha-offer', 'distribution' => 'alpha'];
+    $enriched = birkly_marketplace_enrich_offer_install_state($alphaOffer);
+    if (($enriched['distribution'] ?? '') !== 'alpha') {
+        $errors[] = 'Enriched offer should normalize distribution to alpha';
+    }
 } catch (Throwable $e) {
     $errors[] = 'Exception: ' . $e->getMessage();
 } finally {
