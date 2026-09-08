@@ -38,6 +38,8 @@
     var marketplaceBaseUrl = '';
     var marketplaceSearchDebounceId = null;
     var marketplaceDisplayCurrency = 'EUR';
+    var marketplaceUpdateChannel = 'stable';
+    var pendingPreReleaseContext = null;
     var marketplaceCurrencyRates = {
         EUR: 1,
         USD: 1.08,
@@ -191,6 +193,10 @@
             closeInstallConsentModal();
         } else if (action === 'accept-install-consent') {
             acceptInstallConsent();
+        } else if (action === 'close-prerelease-ack') {
+            closePreReleaseAckModal();
+        } else if (action === 'accept-prerelease-ack') {
+            acceptPreReleaseAck();
         } else if (action === 'open-settings') {
             openPluginSettings(el.getAttribute('data-plugin-id'));
         } else if (action === 'close-settings-modal') {
@@ -238,6 +244,8 @@
                     action === 'submit-review' ||
                     action === 'close-install-consent' ||
                     action === 'accept-install-consent' ||
+                    action === 'close-prerelease-ack' ||
+                    action === 'accept-prerelease-ack' ||
                     action === 'open-settings' ||
                     action === 'close-settings-modal' ||
                     action === 'save-settings'
@@ -460,6 +468,88 @@
         pendingInstallContext = null;
     }
 
+    function openPreReleaseAckModal(context) {
+        pendingPreReleaseContext = context;
+        var modal = document.getElementById('marketplace-prerelease-modal');
+        var summaryEl = document.getElementById('marketplace-prerelease-summary');
+        var stabilityEl = document.getElementById('marketplace-prerelease-stability');
+        var acceptBtn = document.getElementById('marketplace-prerelease-accept-btn');
+        if (!modal) {
+            return;
+        }
+        var stability = String((context && context.stability) || 'beta').toLowerCase();
+        if (summaryEl) {
+            summaryEl.textContent = t(
+                'pre_release_ack_summary',
+                'This is a pre-release build and may be unstable. Confirm that you understand the risks before installing or updating.'
+            );
+        }
+        if (stabilityEl) {
+            stabilityEl.innerHTML = renderStabilityBadge(stability);
+        }
+        if (acceptBtn) {
+            acceptBtn.textContent = (context && (context.mode === 'update' || context.mode === 'upgrade'))
+                ? t('accept_pre_release_update', 'Accept risk & update')
+                : t('accept_pre_release_install', 'Accept risk & install');
+        }
+        modal.classList.add('active');
+    }
+
+    function closePreReleaseAckModal() {
+        var modal = document.getElementById('marketplace-prerelease-modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+        pendingPreReleaseContext = null;
+    }
+
+    async function acceptPreReleaseAck() {
+        var pending = pendingPreReleaseContext;
+        if (!pending) {
+            return;
+        }
+        var btn = document.getElementById('marketplace-prerelease-accept-btn');
+        if (btn) {
+            btn.disabled = true;
+        }
+        try {
+            if (pending.mode === 'update' || pending.mode === 'upgrade') {
+                var updateResult = await pluginsApi('update', {
+                    plugin_id: pending.pluginId,
+                    pre_release_ack: 1,
+                    consent_accepted: pending.consentAccepted ? 1 : 0,
+                });
+                closePreReleaseAckModal();
+                reloadAfterPluginChange(updateResult.message || t('plugin_updated', 'Plugin updated successfully'));
+                return;
+            }
+            await executeMarketplaceInstall(
+                pending.slug,
+                pending.version || '',
+                pending.licenseKey || '',
+                !!pending.consentAccepted,
+                { pre_release_ack: 1 }
+            );
+        } catch (err) {
+            if (err && err.code === 'consent_required') {
+                closePreReleaseAckModal();
+                openInstallConsentModal({
+                    slug: pending.slug,
+                    version: (err.data && err.data.version) || pending.version,
+                    licenseKey: pending.licenseKey,
+                    manifest: (err.data && err.data.permissions_manifest) || {},
+                    preReleaseAcked: true,
+                });
+                return;
+            }
+            showMessage(err.message || t('install_failed', 'Install failed'), 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+            }
+        }
+    }
+
     async function acceptInstallConsent() {
         var pending = pendingInstallContext;
         if (!pending) {
@@ -481,12 +571,19 @@
                 var updateResult = await pluginsApi('update', {
                     plugin_id: pending.pluginId,
                     consent_accepted: 1,
+                    pre_release_ack: pending.preReleaseAcked ? 1 : 0,
                 });
                 closeInstallConsentModal();
                 reloadAfterPluginChange(updateResult.message || t('plugin_updated', 'Plugin updated successfully'));
                 return;
             }
-            await executeMarketplaceInstall(pending.slug, pending.version || '', pending.licenseKey || '', true);
+            await executeMarketplaceInstall(
+                pending.slug,
+                pending.version || '',
+                pending.licenseKey || '',
+                true,
+                pending.preReleaseAcked ? { pre_release_ack: 1 } : {}
+            );
         } catch (err) {
             showMessage(isUpdate ? (err.message || t('update_failed', 'Update failed')) : marketplaceErrorMessage(err), 'error');
         } finally {
@@ -552,6 +649,15 @@
                 payload.confirm_required_plugins = 1;
                 payload.consent_accepted = 1;
                 await marketplaceApi('install', payload);
+            } else if (err.code === 'pre_release_ack_required') {
+                openPreReleaseAckModal({
+                    slug: slug,
+                    version: (err.data && err.data.version) || version,
+                    licenseKey: licenseKey,
+                    stability: (err.data && err.data.stability) || 'beta',
+                    consentAccepted: consentAccepted,
+                });
+                return;
             } else if (err.code === 'consent_required' && err.data && err.data.consent) {
                 openInstallConsentModal({
                     slug: err.data.consent.slug || slug,
@@ -561,12 +667,22 @@
                     packRetry: true,
                 });
                 return;
+            } else if (err.code === 'consent_required') {
+                openInstallConsentModal({
+                    slug: slug,
+                    version: (err.data && err.data.version) || version,
+                    licenseKey: licenseKey,
+                    manifest: (err.data && err.data.permissions_manifest) || {},
+                    preReleaseAcked: !!(packExtras && packExtras.pre_release_ack),
+                });
+                return;
             } else {
                 throw err;
             }
         }
         closeMarketplaceInstallModal();
         closeInstallConsentModal();
+        closePreReleaseAckModal();
         if (licenseKey) {
             rememberHubLicenseKey(licenseKey, licenseKeySuffix(licenseKey));
         }
@@ -670,6 +786,16 @@
         );
     }
 
+    function renderStabilityBadge(stability) {
+        var normalized = String(stability || 'stable').toLowerCase();
+        if (normalized === 'stable') {
+            return '';
+        }
+        var tone = normalized === 'alpha' ? 'badge-danger' : 'badge-warning';
+        var labelKey = 'marketplace_stability_' + normalized;
+        return '<span class="badge badge-sm ' + tone + '">' + escapeHtml(t(labelKey, normalized)) + '</span>';
+    }
+
     function convertPriceCents(cents, fromCurrency, toCurrency) {
         var from = String(fromCurrency || 'EUR').toUpperCase();
         var to = String(toCurrency || marketplaceDisplayCurrency).toUpperCase();
@@ -711,6 +837,52 @@
             });
         } catch (err) {
             // Preference save is best-effort; prices still update locally.
+        }
+    }
+
+    function applyMarketplaceUpdateChannel(channel) {
+        var normalized = String(channel || 'stable').toLowerCase();
+        if (['stable', 'beta', 'alpha'].indexOf(normalized) === -1) {
+            normalized = 'stable';
+        }
+        marketplaceUpdateChannel = normalized;
+        var select = document.getElementById('marketplace-update-channel');
+        if (select && select.value !== normalized) {
+            select.value = normalized;
+        }
+    }
+
+    async function saveUpdateChannel(channel) {
+        try {
+            await fetch(url('/api/marketplace.php'), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'save_update_channel',
+                    channel: channel,
+                    _csrf: csrfToken(),
+                }),
+            });
+        } catch (err) {
+            // Preference save is best-effort.
+        }
+    }
+
+    async function loadMarketplaceConfig() {
+        try {
+            var response = await fetch(url('/api/marketplace.php?action=config'), { credentials: 'same-origin' });
+            var result = await response.json();
+            if (result.status === 'ok' && result.data) {
+                if (result.data.display_currency) {
+                    applyMarketplaceDisplayCurrency(result.data.display_currency);
+                }
+                if (result.data.update_channel) {
+                    applyMarketplaceUpdateChannel(result.data.update_channel);
+                }
+            }
+        } catch (err) {
+            // Hub still works with defaults when config is unavailable.
         }
     }
 
@@ -1061,6 +1233,7 @@
                 '<article class="card' + (isLatest ? ' card--accent' : '') + '"><div class="card-body u-stack-2">' +
                 '<div class="u-cluster u-gap-2">' +
                 '<h4 class="u-text-base u-weight-semibold u-numeric u-m-0">v' + escapeHtml(version) + '</h4>' +
+                renderStabilityBadge(release.stability || 'stable') +
                 (isLatest ? '<span class="badge badge-sm badge-success">' + escapeHtml(t('marketplace_latest_version', 'Latest')) + '</span>' : '') +
                 (published ? '<span class="u-text-xs u-fg-tertiary u-numeric u-push-right">' + escapeHtml(published) + '</span>' : '') +
                 '</div>' +
@@ -1929,6 +2102,7 @@
             '<div class="u-stack-1 u-min-w-0">' +
             '<h3 class="card-title">' + pluginNameHtml + '</h3>' +
             (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
+            (hasUpdate && update.latest_stability ? renderStabilityBadge(update.latest_stability) : '') +
             '</div>' +
             '<div class="u-cluster u-gap-1 u-shrink-0">' +
             '<span class="badge badge-sm ' + healthTone + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
@@ -2943,6 +3117,9 @@
             if (result.data && result.data.display_currency) {
                 applyMarketplaceDisplayCurrency(result.data.display_currency);
             }
+            if (result.data && result.data.update_channel) {
+                applyMarketplaceUpdateChannel(result.data.update_channel);
+            }
 
             marketplaceFilterOptions = (result.data && result.data.filter_options) || marketplaceFilterOptions;
             updateCategoryFilterOptions(marketplaceFilterOptions.categories || []);
@@ -3204,6 +3381,15 @@
         try {
             await ensureInstallConsentThenRun(slug, version, licenseKey);
         } catch (err) {
+            if (err.code === 'pre_release_ack_required') {
+                openPreReleaseAckModal({
+                    slug: slug,
+                    version: (err.data && err.data.version) || version,
+                    licenseKey: licenseKey,
+                    stability: (err.data && err.data.stability) || 'beta',
+                });
+                return;
+            }
             if (err.code === 'consent_required') {
                 openInstallConsentModal({
                     slug: slug,
@@ -3391,6 +3577,13 @@
                 refreshMarketplacePriceDisplay();
             });
         }
+        var channelEl = document.getElementById('marketplace-update-channel');
+        if (channelEl) {
+            channelEl.addEventListener('change', function () {
+                applyMarketplaceUpdateChannel(channelEl.value);
+                saveUpdateChannel(marketplaceUpdateChannel);
+            });
+        }
         var search = document.getElementById('marketplace-search');
         if (search) {
             search.addEventListener('input', function () {
@@ -3435,6 +3628,7 @@
         initTabs();
         var tab = getInitialTab();
         switchTab(tab);
+        loadMarketplaceConfig();
         try {
             // Badge on Updates tab for all entry points
             if (tab !== 'updates') {

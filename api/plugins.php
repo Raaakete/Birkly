@@ -629,6 +629,23 @@ if ($action === 'update') {
     }
 
     $targetVersion = (string) ($check['latest_version'] ?? $current);
+    $preReleaseAck = !empty($input['pre_release_ack']) || !empty($input['preReleaseAck']);
+    $preReleaseCheck = birkly_marketplace_gate_pre_release_ack($slug, $targetVersion, $preReleaseAck);
+    if (!$preReleaseCheck['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $preReleaseCheck['error'] ?? 'Pre-release acknowledgment required',
+            'code' => $preReleaseCheck['code'] ?? 'pre_release_ack_required',
+            'data' => [
+                'slug' => $slug,
+                'plugin_id' => $plugin_id,
+                'version' => $targetVersion,
+                'stability' => $preReleaseCheck['stability'] ?? 'beta',
+            ],
+        ]);
+        exit;
+    }
+
     $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
     $consentCheck = birkly_marketplace_require_install_consent($slug, $targetVersion, $consentAccepted);
     if (!$consentCheck['ok']) {
@@ -673,6 +690,12 @@ if ($action === 'update') {
     }
 
     log_security_event('plugin_updated', ['plugin' => $plugin_id, 'version' => $targetVersion, 'user' => $_SESSION['user']['email'] ?? 'unknown']);
+    birkly_marketplace_finalize_pre_release_ack(
+        $slug,
+        $targetVersion,
+        (string) ($preReleaseCheck['stability'] ?? 'stable'),
+        $preReleaseAck
+    );
     require_once __DIR__ . '/../core/hub_update_attention.php';
     birkly_hub_update_attention_clear_plugin((string) $plugin_id);
     echo json_encode([

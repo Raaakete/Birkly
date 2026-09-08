@@ -258,20 +258,13 @@ function birkly_marketplace_install_permissions(string $slug, string $version = 
     $releases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
     $targetVersion = trim($version);
     if ($targetVersion === '') {
-        $latest = '0.0.0';
-        foreach ($releases as $release) {
-            if (!is_array($release)) {
-                continue;
-            }
-            $ver = (string) ($release['version'] ?? '');
-            if ($ver !== '' && version_compare($ver, $latest, '>')) {
-                $latest = $ver;
-            }
-        }
-        if ($latest === '0.0.0') {
+        $channel = birkly_marketplace_update_channel();
+        $targetVersion = birkly_marketplace_latest_release_version(
+            birkly_marketplace_releases_for_channel($releases, $channel)
+        ) ?? '';
+        if ($targetVersion === '') {
             return ['ok' => false, 'error' => 'No releases available for this offer'];
         }
-        $targetVersion = $latest;
     }
 
     $manifest = null;
