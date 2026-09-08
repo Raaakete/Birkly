@@ -1339,10 +1339,6 @@
                 }
             } catch (e) { /* ignore */ }
             const page = route && route.page ? route.page : '';
-            if (page === 'post') return 'blog';
-            if (page === 'service') return 'services';
-            if (page === 'product') return 'products';
-            if (page === 'event') return 'events';
             const slugs = Birkly.bundle.getTemplateCollectionSlugs(templateHtml || '');
             if (slugs.length === 1) return slugs[0];
             return null;
@@ -2185,12 +2181,12 @@
             const ok = url.searchParams.get('ok');
             if (!err && !ok) return;
 
-            let el = document.querySelector('[data-birkly-query-flash], .birkly-query-flash, .bk-club-form-status');
+            let el = document.querySelector('[data-birkly-query-flash], .birkly-query-flash');
             if (!el) {
                 el = document.createElement('p');
-                el.className = 'bk-club-card bk-club-form-status birkly-query-flash';
+                el.className = 'birkly-query-flash';
                 el.setAttribute('data-birkly-query-flash', '');
-                const anchor = document.querySelector('.bk-club-pagehead, .bk-club-composer, main');
+                const anchor = document.querySelector('main');
                 if (anchor && anchor.parentNode) {
                     anchor.parentNode.insertBefore(el, anchor.nextSibling);
                 } else {
@@ -2279,76 +2275,7 @@
             }
         } catch (_) { /* ignore */ }
 
-        if (state.loggedIn) {
-            await syncClubProfileForms(state.user);
-        }
-
         return state;
-    }
-
-    async function syncClubProfileForms(user) {
-        const needsProfile = document.querySelector('[data-birkly-club-profile-form], [data-birkly-profile-avatar], [data-birkly-profile-link], [data-birkly-profile-field]');
-        if (!needsProfile) {
-            return;
-        }
-
-        if (!user) {
-            const state = await fetchSiteAuthState();
-            if (!state.loggedIn) {
-                return;
-            }
-            user = state.user;
-        }
-
-        try {
-            const res = await birklyCredentialedFetch(Birkly.cmsUrl + '/api/index.php?route=user_account&action=profile', {
-                method: 'GET',
-                headers: { Accept: 'application/json' }
-            });
-            const json = await res.json().catch(() => ({}));
-            if (!json.success) {
-                return;
-            }
-
-            const profile = json.club_profile || {};
-            const cmsBase = String(Birkly.cmsUrl || '').replace(/\/$/, '');
-            const rawAvatar = profile.avatar;
-            let avatarUrl = '';
-            if (rawAvatar && typeof rawAvatar === 'object') {
-                avatarUrl = String(rawAvatar.url || '');
-            } else if (typeof rawAvatar === 'string') {
-                avatarUrl = rawAvatar;
-            }
-            if (avatarUrl && !/^https?:\/\//i.test(avatarUrl) && cmsBase) {
-                avatarUrl = cmsBase + (avatarUrl.startsWith('/') ? avatarUrl : '/' + avatarUrl);
-            }
-
-            document.querySelectorAll('[data-birkly-profile-field]').forEach((el) => {
-                const key = el.getAttribute('data-birkly-profile-field');
-                if (!key) return;
-                const val = profile[key] ?? (user && user[key]) ?? '';
-                if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-                    el.value = (val && typeof val === 'object') ? '' : String(val);
-                }
-            });
-
-            document.querySelectorAll('[data-birkly-profile-avatar]').forEach((img) => {
-                if (!(img instanceof HTMLImageElement)) return;
-                if (avatarUrl) {
-                    img.src = avatarUrl;
-                    img.removeAttribute('hidden');
-                }
-            });
-
-            document.querySelectorAll('[data-birkly-profile-link]').forEach((link) => {
-                const slug = String(profile.slug || '').trim();
-                if (slug && link instanceof HTMLAnchorElement) {
-                    link.href = '/club/member.html?collection=club-profiles&slug=' + encodeURIComponent(slug);
-                }
-            });
-        } catch (err) {
-            Birkly.warn('Birkly: profile form sync failed:', err);
-        }
     }
 
     /**
@@ -5401,51 +5328,6 @@
             return fields;
         }
 
-        async function completeSignupFlow(startJson, fd) {
-            const sessionId = String(startJson.session_id || '');
-            if (!sessionId) return startJson;
-
-            const fields = signupFieldsFromFormData(fd);
-            let json = startJson;
-            let stepId = (json.step && json.step.id) ? String(json.step.id) : 'fields';
-            let guard = 0;
-
-            while (!json.completed && guard++ < 12) {
-                const params = new URLSearchParams({
-                    route: 'user_signup',
-                    action: 'step',
-                    session_id: sessionId,
-                    step_id: stepId
-                });
-                Object.entries(fields).forEach(([k, v]) => params.append(k, v));
-                params.set('fields[email]', fields.email || '');
-                if (fields.password) params.set('fields[password]', fields.password);
-                if (fields.name) params.set('fields[name]', fields.name);
-                if (fields.username) params.set('fields[username]', fields.username);
-                if (fields.phone) params.set('fields[phone]', fields.phone);
-
-                try {
-                    const csrf = await getCSRFToken();
-                    if (csrf) params.set('csrf_token', csrf);
-                } catch (_) { /* ignore */ }
-
-                const res = await birklyCredentialedFetch(Birkly.cmsUrl + '/api/index.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: params.toString()
-                });
-                json = await res.json().catch(() => ({}));
-                if (!res.ok || json.success === false || json.ok === false) {
-                    throw new Error(formatActionError(json, 'Signup failed'));
-                }
-                captureSiteSessionFromResponse(json);
-                stepId = (json.step && json.step.id) ? String(json.step.id) : '';
-                if (!stepId && !json.completed) break;
-            }
-
-            return json;
-        }
-
         async function handleSubmit(form, e) {
             const route = form.getAttribute('data-birkly-route');
             const action = form.getAttribute('data-birkly-action');
@@ -5475,7 +5357,6 @@
             if (route && action) fd.set('route', route);
 
             // Attach CSRF token for routed (plugin) actions that go through /api/index.php
-            // Many admin+plugin endpoints require it (including user_auth login/logout).
             if (!directUrl) {
                 try {
                     const csrf = await getCSRFToken();
@@ -5538,13 +5419,6 @@
                 }
 
                 captureSiteSessionFromResponse(json);
-                if (route === 'user_auth' && action === 'logout') {
-                    clearStoredSiteSessionId();
-                }
-
-                if (route === 'user_signup' && action === 'start' && json.session_id && !json.completed) {
-                    json = await completeSignupFlow(json, fd);
-                }
 
                 // Special-case public collection submissions (contact form, etc.)
                 if (directUrl && /public_submit\.php(?:\?|$)/.test(directUrl)) {

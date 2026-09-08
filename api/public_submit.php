@@ -26,28 +26,13 @@ if (function_exists('birkly_site_session_start')) {
 
 /**
  * Resolve the current storefront user for public submits.
- * Uses UserAuth (plugin session storage fallback) — not raw $_SESSION alone.
  *
  * @return array<string, mixed>|null
  */
 function birkly_public_submit_current_user(): ?array
 {
-    if (!empty($_SESSION['user']['id']) && is_array($_SESSION['user'])) {
-        return $_SESSION['user'];
-    }
-
-    if (!birkly_require_plugin_file('user_management', 'includes/UserAuth.php')) {
-        return null;
-    }
-
-    $auth = new UserAuth();
-    $user = $auth->getCurrentUser();
-    if (!is_array($user) || empty($user['id'])) {
-        return null;
-    }
-
-    $_SESSION['user'] = $user;
-    return $user;
+    require_once __DIR__ . '/../core/public_current_user.php';
+    return birkly_public_current_user();
 }
 
 // Support JSON, multipart/form-data, and application/x-www-form-urlencoded
