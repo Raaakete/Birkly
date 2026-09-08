@@ -123,13 +123,22 @@ function birkly_ai_tools_for_user(array $aiUser): array
 }
 
 /**
- * Infer owning plugin id from MCP tool name (commerce_*, automation_*, etc.).
+ * Resolve owning plugin id for permission grouping.
+ * Registered plugin MCP tools use explicit plugin_id from the MCP shelf.
  */
 function birkly_ai_tool_plugin_id(string $actionType): string
 {
-    if (preg_match('/^(commerce|automation|events|user_management|payments)_/i', $actionType, $m)) {
-        return strtolower($m[1]);
+    if ($actionType === '') {
+        return '';
     }
+
+    if (function_exists('birkly_plugin_mcp_tool_definitions')) {
+        $definitions = birkly_plugin_mcp_tool_definitions();
+        if (isset($definitions[$actionType]['plugin_id'])) {
+            return (string) $definitions[$actionType]['plugin_id'];
+        }
+    }
+
     return '';
 }
 
