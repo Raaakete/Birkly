@@ -468,13 +468,26 @@ function birkly_notifications_list_recent(int $limit = 20): array
             if ($id === '') {
                 continue;
             }
-            $notifications[] = [
+            $entry = [
+                'event' => (string) ($item['event'] ?? 'plugin_activity'),
+                'user' => (string) ($item['plugin'] ?? 'plugin'),
+                'details' => array_merge(
+                    is_array($item['meta'] ?? null) ? $item['meta'] : [],
+                    [
+                        'title' => $item['title'] ?? '',
+                        'body' => $item['body'] ?? '',
+                        'link' => $item['link'] ?? '',
+                        'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
+                    ]
+                ),
+            ];
+            $notification = [
                 'id' => $id,
-                'event' => 'plugin_activity',
+                'event' => (string) ($item['event'] ?? 'plugin_activity'),
                 'timestamp' => $item['created_at'] ?? date('c'),
                 'user' => (string) ($item['plugin'] ?? 'plugin'),
-                'details' => $item['meta'] ?? [],
-                'message' => trim((string) (($item['title'] ?? '') . (($item['body'] ?? '') !== '' ? ' — ' . $item['body'] : ''))),
+                'details' => $entry['details'],
+                'message' => (string) ($entry['details']['message'] ?? ''),
                 'icon' => '🔔',
                 'color' => 'mint',
                 'category' => 'plugin',
@@ -482,6 +495,10 @@ function birkly_notifications_list_recent(int $limit = 20): array
                 'plugin' => $item['plugin'] ?? '',
                 'read' => !empty($item['read_at']) || in_array($id, $readIds, true),
             ];
+            if (function_exists('birkly_notification_apply_formatter')) {
+                birkly_notification_apply_formatter($notification, $entry, $userEmail);
+            }
+            $notifications[] = $notification;
         }
         usort($notifications, static function ($a, $b) {
             return strcmp((string) ($b['timestamp'] ?? ''), (string) ($a['timestamp'] ?? ''));

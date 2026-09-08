@@ -762,6 +762,9 @@ if ($action === 'check_updates') {
         }
     }
 
+    require_once __DIR__ . '/../core/hub_update_attention.php';
+    birkly_hub_update_attention_sync($updates);
+
     echo json_encode([
         'status' => 'ok',
         'data' => [
@@ -876,6 +879,9 @@ if ($action === 'upgrade') {
         'version' => $targetVersion,
         'user' => $_SESSION['user']['email'] ?? 'unknown',
     ]);
+
+    require_once __DIR__ . '/../core/hub_update_attention.php';
+    birkly_hub_update_attention_clear_plugin($pluginId);
 
     echo json_encode([
         'status' => 'ok',
