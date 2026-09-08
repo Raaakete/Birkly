@@ -50,7 +50,20 @@ if (is_array($rawInput)) {
 $input = array_merge($input, sanitize_input($input));
 $action = $input['action'] ?? $_GET['action'] ?? '';
 
-// All actions require authentication and manage_plugins permission
+// Read-only shelf introspection for any authenticated admin user.
+if ($action === 'admin_scripts') {
+    requireAuth('read');
+    $adminPage = trim((string) ($input['page'] ?? $_GET['page'] ?? ''));
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'scripts' => birkly_get_admin_scripts($adminPage !== '' ? $adminPage : null),
+        ],
+    ]);
+    exit;
+}
+
+// All other actions require manage_plugins permission
 requireAuth('manage_plugins');
 
 // Get plugin navigation
