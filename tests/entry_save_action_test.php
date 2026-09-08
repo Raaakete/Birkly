@@ -51,9 +51,9 @@ assert_true(
     'saveEntry uses resolve helper'
 );
 assert_true(
-    str_contains($source, "enqueue_automation('entry_created'") &&
+    str_contains($source, "do_action('birkly_entry_saved'") &&
     str_contains($source, '$isNewEntry'),
-    'entry_created enqueue is gated by isNewEntry'
+    'birkly_entry_saved action includes is_new from isNewEntry'
 );
 
 if ($failures > 0) {

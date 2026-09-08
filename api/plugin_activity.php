@@ -113,8 +113,13 @@ if ($action === 'emit_test') {
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
         exit;
     }
+    $plugin = trim((string) ($input['plugin'] ?? ''));
+    if ($plugin === '') {
+        echo json_encode(['status' => 'error', 'message' => 'plugin is required']);
+        exit;
+    }
     $activity = birkly_plugin_activity_emit([
-        'plugin' => (string) ($input['plugin'] ?? 'commerce'),
+        'plugin' => $plugin,
         'event' => (string) ($input['event'] ?? 'test'),
         'title' => (string) ($input['title'] ?? 'Test plugin activity'),
         'body' => (string) ($input['body'] ?? 'P61 activity bus test'),
