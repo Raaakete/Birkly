@@ -66,6 +66,32 @@ if ($action === 'config') {
             'cloud_account_linked' => birkly_cloud_account_is_linked(),
             'display_currency' => birkly_marketplace_display_currency(),
             'supported_currencies' => array_keys(birkly_marketplace_supported_display_currencies()),
+            'update_channel' => birkly_marketplace_update_channel(),
+            'supported_update_channels' => birkly_marketplace_update_channels(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'save_update_channel') {
+    $csrf = $input['_csrf'] ?? '';
+    if (!validate_plugin_csrf($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+
+    $channel = trim((string) ($input['channel'] ?? ''));
+    try {
+        birkly_marketplace_sync_update_channel($channel);
+    } catch (InvalidArgumentException $e) {
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        exit;
+    }
+
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'update_channel' => birkly_marketplace_update_channel(),
         ],
     ]);
     exit;
@@ -120,6 +146,8 @@ if ($action === 'browse') {
             'installation_owner_email' => birkly_marketplace_installation_owner_email(),
             'display_currency' => birkly_marketplace_display_currency(),
             'supported_currencies' => array_keys(birkly_marketplace_supported_display_currencies()),
+            'update_channel' => birkly_marketplace_update_channel(),
+            'supported_update_channels' => birkly_marketplace_update_channels(),
             'fallback' => !empty($result['fallback']),
             'filter_options' => $result['filter_options'] ?? ['categories' => [], 'offer_types' => []],
             'total' => count($result['offers']),
@@ -479,27 +507,28 @@ if ($action === 'install') {
     }
 
     if ($version === '') {
-        $detail = birkly_marketplace_offer_detail($slug);
-        if (!$detail['ok']) {
-            echo json_encode(['status' => 'error', 'message' => $detail['error'] ?? 'Offer not found']);
+        $resolved = birkly_marketplace_resolve_channel_install_version($slug);
+        if (empty($resolved['ok'])) {
+            echo json_encode(['status' => 'error', 'message' => $resolved['error'] ?? 'Offer not found']);
             exit;
         }
-        $releases = $detail['releases'] ?? [];
-        $latest = '0.0.0';
-        foreach ($releases as $release) {
-            if (!is_array($release)) {
-                continue;
-            }
-            $ver = (string) ($release['version'] ?? '');
-            if ($ver !== '' && version_compare($ver, $latest, '>')) {
-                $latest = $ver;
-            }
-        }
-        if ($latest === '0.0.0') {
-            echo json_encode(['status' => 'error', 'message' => 'No releases available for this offer']);
-            exit;
-        }
-        $version = $latest;
+        $version = (string) ($resolved['version'] ?? '');
+    }
+
+    $preReleaseAck = !empty($input['pre_release_ack']) || !empty($input['preReleaseAck']);
+    $preReleaseCheck = birkly_marketplace_gate_pre_release_ack($slug, $version, $preReleaseAck);
+    if (!$preReleaseCheck['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $preReleaseCheck['error'] ?? 'Pre-release acknowledgment required',
+            'code' => $preReleaseCheck['code'] ?? 'pre_release_ack_required',
+            'data' => [
+                'slug' => $slug,
+                'version' => $version,
+                'stability' => $preReleaseCheck['stability'] ?? 'beta',
+            ],
+        ]);
+        exit;
     }
 
     $offerType = 'plugin';
@@ -554,6 +583,13 @@ if ($action === 'install') {
         ]);
         exit;
     }
+
+    birkly_marketplace_finalize_pre_release_ack(
+        $slug,
+        $version,
+        (string) ($preReleaseCheck['stability'] ?? 'stable'),
+        $preReleaseAck
+    );
 
     if ($offerType === 'template_pack') {
         log_security_event('marketplace_template_pack_installed', [
@@ -771,6 +807,7 @@ if ($action === 'check_updates') {
             'updates' => $updates,
             'update_count' => count(array_filter($updates, fn ($u) => !empty($u['update_available']))),
             'any_available' => $anyAvailable,
+            'update_channel' => birkly_marketplace_update_channel(),
         ],
     ]);
     exit;
@@ -819,6 +856,23 @@ if ($action === 'upgrade') {
     }
 
     $targetVersion = (string) ($check['latest_version'] ?? $current);
+    $preReleaseAck = !empty($input['pre_release_ack']) || !empty($input['preReleaseAck']);
+    $preReleaseCheck = birkly_marketplace_gate_pre_release_ack($slug, $targetVersion, $preReleaseAck);
+    if (!$preReleaseCheck['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $preReleaseCheck['error'] ?? 'Pre-release acknowledgment required',
+            'code' => $preReleaseCheck['code'] ?? 'pre_release_ack_required',
+            'data' => [
+                'slug' => $slug,
+                'plugin_id' => $pluginId,
+                'version' => $targetVersion,
+                'stability' => $preReleaseCheck['stability'] ?? 'beta',
+            ],
+        ]);
+        exit;
+    }
+
     $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
     $consentCheck = birkly_marketplace_require_install_consent($slug, $targetVersion, $consentAccepted);
     if (!$consentCheck['ok']) {
@@ -879,6 +933,13 @@ if ($action === 'upgrade') {
         'version' => $targetVersion,
         'user' => $_SESSION['user']['email'] ?? 'unknown',
     ]);
+
+    birkly_marketplace_finalize_pre_release_ack(
+        $slug,
+        $targetVersion,
+        (string) ($preReleaseCheck['stability'] ?? 'stable'),
+        $preReleaseAck
+    );
 
     require_once __DIR__ . '/../core/hub_update_attention.php';
     birkly_hub_update_attention_clear_plugin($pluginId);

@@ -59,6 +59,11 @@
                     <option value="CAD">{translate 'admin.marketplace_currency_cad'}</option>
                     <option value="AUD">{translate 'admin.marketplace_currency_aud'}</option>
                 </select>
+                <select id="marketplace-update-channel" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_update_channel'}">
+                    <option value="stable">{translate 'admin.marketplace_update_channel_stable'}</option>
+                    <option value="beta">{translate 'admin.marketplace_update_channel_beta'}</option>
+                    <option value="alpha">{translate 'admin.marketplace_update_channel_alpha'}</option>
+                </select>
                 <select id="marketplace-price" class="select marketplace-filter-select" aria-label="{translate 'admin.marketplace_price_filter'}">
                     <option value="">{translate 'admin.marketplace_price_all_labeled'}</option>
                     <optgroup label="{translate 'admin.marketplace_price_range_group'}">
@@ -242,6 +247,28 @@
             <button type="button" class="btn btn-secondary" data-plugin-action="close-install-consent">Cancel</button>
             <button type="button" class="btn btn-primary" id="marketplace-consent-accept-btn" data-plugin-action="accept-install-consent">
                 Accept &amp; install
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Marketplace pre-release acknowledgment (P84) -->
+<div id="marketplace-prerelease-modal" class="modal-backdrop">
+    <div class="modal-content modal--md">
+        <div class="modal-header">
+            <h2 id="marketplace-prerelease-title">{translate 'admin.marketplace_pre_release_title'}</h2>
+            <button class="modal-close-btn" type="button" data-plugin-action="close-prerelease-ack">&times;</button>
+        </div>
+        <div class="modal-body u-stack-4">
+            <p id="marketplace-prerelease-summary" class="form-help u-m-0">
+                {translate 'admin.marketplace_pre_release_summary'}
+            </p>
+            <div id="marketplace-prerelease-stability" class="u-cluster u-gap-2"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-plugin-action="close-prerelease-ack">{translate 'admin.cancel'}</button>
+            <button type="button" class="btn btn-primary" id="marketplace-prerelease-accept-btn" data-plugin-action="accept-prerelease-ack">
+                {translate 'admin.marketplace_pre_release_accept_install'}
             </button>
         </div>
     </div>
