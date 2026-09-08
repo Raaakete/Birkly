@@ -173,6 +173,28 @@ function birkly_notification_event_matches_prefix(string $event): bool
 }
 
 /**
+ * Register a core/platform formatter (no active plugin required).
+ *
+ * Callable signature: fn(array $entry, string $currentUserEmail): ?array
+ */
+function birkly_notification_register_core_formatter(string $event, callable $formatter): bool
+{
+    global $birkly_notification_formatters;
+
+    if ($event === '' || !is_callable($formatter)) {
+        return false;
+    }
+
+    $event = strtolower(trim($event));
+    $birkly_notification_formatters[$event] = [
+        'plugin_id' => '_core',
+        'formatter' => $formatter,
+    ];
+
+    return true;
+}
+
+/**
  * Apply a registered formatter to a notification payload.
  *
  * @param array<string, mixed> $notification
