@@ -10,8 +10,8 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 
 header('Content-Type: application/json');
 
-require_once __DIR__ . '/../core/automation/bootstrap.php';
-if (!automation_bootstrap()) {
+require_once __DIR__ . '/../core/plugin_availability.php';
+if (!birkly_bootstrap_active_plugin('automation')) {
     http_response_code(404);
     echo json_encode(['status' => 'error', 'message' => 'Automation plugin is not active']);
     exit;
