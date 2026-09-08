@@ -164,52 +164,27 @@ function birkly_health_marketplace(): array
 }
 
 /**
- * Studio SSR / public route readiness (P23).
+ * Studio SSR / public route readiness (P23) — delegated to plugin via birkly_health_checks filter.
  *
  * @return array{public_entry:bool,htaccess_rule:bool,index_route:bool,plugin_active:bool,route_ready:bool,hints:list<string>}
  */
 function birkly_health_studio(): array
 {
-    $root = birkly_project_root();
-    $publicEntry = is_file($root . '/api/studio_public.php');
-    $htaccessRule = false;
-    $htaccess = $root . '/.htaccess';
-    if (is_readable($htaccess)) {
-        $body = (string) file_get_contents($htaccess);
-        $htaccessRule = str_contains($body, 'studio_public.php');
-    }
-    $indexRoute = false;
-    $index = $root . '/index.php';
-    if (is_readable($index)) {
-        $body = (string) file_get_contents($index);
-        $indexRoute = str_contains($body, '/site') && str_contains($body, 'studio_public.php');
-    }
-    $pluginActive = false;
-    if (!function_exists('get_plugin_state')) {
-        require_once __DIR__ . '/public_bootstrap.php';
-    }
-    if (function_exists('get_plugin_state')) {
-        $pluginActive = get_plugin_state('studio');
-    }
-    $routeReady = $publicEntry && $pluginActive && ($htaccessRule || $indexRoute);
-    $hints = [];
-    if (!$publicEntry) {
-        $hints[] = 'Deploy api/studio_public.php (missing on this server).';
-    }
-    if (!$htaccessRule && !$indexRoute) {
-        $hints[] = 'Route /site/* to api/studio_public.php (.htaccess on Apache, or nginx — see plugins/studio/README.md).';
-    }
-    if (!$pluginActive) {
-        $hints[] = 'Activate the Studio plugin in Admin → Settings → Plugins.';
+    $checks = function_exists('apply_filters')
+        ? apply_filters('birkly_health_checks', [])
+        : [];
+    $studio = is_array($checks['studio'] ?? null) ? $checks['studio'] : null;
+    if ($studio !== null) {
+        return $studio;
     }
 
     return [
-        'public_entry' => $publicEntry,
-        'htaccess_rule' => $htaccessRule,
-        'index_route' => $indexRoute,
-        'plugin_active' => $pluginActive,
-        'route_ready' => $routeReady,
-        'hints' => $hints,
+        'public_entry' => is_file(birkly_project_root() . '/api/studio_public.php'),
+        'htaccess_rule' => false,
+        'index_route' => false,
+        'plugin_active' => false,
+        'route_ready' => false,
+        'hints' => ['Activate the Studio plugin to register route health checks.'],
     ];
 }
 

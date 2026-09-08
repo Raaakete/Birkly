@@ -928,38 +928,18 @@ function saveEntry() {
         do_action('after_entry_save', $entryOutput, $collectionSlug, $entry);
     }
     
-    // Trigger automation system (when plugin active)
-    try {
-        require_once __DIR__ . '/../core/plugin_availability.php';
-        if (birkly_bootstrap_active_plugin('automation')) {
-            $oldStatus = $entry['status'] ?? '';
-            $newStatus = $entryOutput['status'] ?? '';
-            
-            // Determine trigger type from create/update resolution (not URL action=save).
-            if ($isNewEntry) {
-                enqueue_automation('entry_created', [
-                    'entry' => $entryOutput,
-                    'collection' => $collectionSlug
-                ]);
-            } else {
-                enqueue_automation('entry_updated', [
-                    'entry' => $entryOutput,
-                    'collection' => $collectionSlug,
-                    'old_entry' => $entry
-                ]);
-                
-                if ($oldStatus !== $newStatus) {
-                    enqueue_automation('status_changed', [
-                        'entry' => $entryOutput,
-                        'collection' => $collectionSlug,
-                        'from_status' => $oldStatus,
-                        'to_status' => $newStatus
-                    ]);
-                }
-            }
-        }
-    } catch (Throwable $automationError) {
-        error_log('saveEntry: automation trigger skipped: ' . $automationError->getMessage());
+    if (function_exists('do_action')) {
+        $oldStatus = $entry['status'] ?? '';
+        $newStatus = $entryOutput['status'] ?? '';
+        do_action('birkly_entry_saved', [
+            'entry' => $entryOutput,
+            'collection' => $collectionSlug,
+            'old_entry' => $isNewEntry ? null : $entry,
+            'is_new' => $isNewEntry,
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
+            'status_changed' => !$isNewEntry && $oldStatus !== $newStatus,
+        ]);
     }
     
     // Trigger webhooks

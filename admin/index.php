@@ -70,7 +70,6 @@ $pageViewPermissions = [
     'settings' => 'read_settings',
     'redirects' => 'manage_settings',
     'webhooks' => 'read_settings',
-    'automation' => 'manage_content',
     'updates' => 'manage_settings',
     'roles' => 'manage_settings',
     'users' => 'list_users',
@@ -78,7 +77,6 @@ $pageViewPermissions = [
     'user_tiers' => 'manage_users',
     'user_groups' => 'manage_users',
     'plugins' => 'manage_plugins',
-    'automation' => 'manage_content',
 
     // Account is always accessible to authenticated users
     'account' => null,
@@ -228,7 +226,7 @@ $templateFile = $allowedPages[$page] ?? 'dashboard.html';
 $templatePath = $templateFile ? __DIR__ . '/templates/' . $templateFile : null;
 
 // Fallback if template missing (never downgrade plugin admin pages)
-if (!$isPluginAdminPage && $page !== 'automation' && (!$templatePath || !file_exists($templatePath))) {
+if (!$isPluginAdminPage && (!$templatePath || !file_exists($templatePath))) {
     $page = 'dashboard';
     $templatePath = __DIR__ . '/templates/dashboard.html';
 }
@@ -654,12 +652,6 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                     echo '<div class="empty-state-actions"><a href="' . admin_url('dashboard') . '" class="btn btn-primary">Back to Dashboard</a></div>';
                     echo '</div>';
                 }
-            } elseif ($page === 'automation' && !birkly_is_plugin_active('automation')) {
-                echo '<div class="empty-state">';
-                echo '<p class="empty-state-title">Automation Unavailable</p>';
-                echo '<p class="empty-state-text">The Automation plugin is not active. Enable it from the Plugins page.</p>';
-                echo '<div class="empty-state-actions"><a href="' . admin_url('plugins') . '" class="btn btn-primary">Go to Plugins</a></div>';
-                echo '</div>';
             } else {
                 // Show "coming soon" for unimplemented pages
                 echo '<div class="empty-state">';

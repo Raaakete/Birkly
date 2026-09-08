@@ -71,6 +71,18 @@ guard_file('admin/js/ai-presence.js', [
     '/birkly_user_session/',
 ]);
 
+guard_file('admin/index.php', [
+    "/'automation'/",
+    '/"automation"/',
+    '/\$page === \'automation\'/',
+    '/\$page !== \'automation\'/',
+]);
+
+guard_file('api/plugin_activity.php', [
+    "/\\['plugin'\\].*'commerce'/",
+    '/\\$input\\[\'plugin\'\\].*\'commerce\'/',
+]);
+
 if ($failures !== []) {
     exit(1);
 }
