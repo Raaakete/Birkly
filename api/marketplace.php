@@ -833,7 +833,7 @@ if ($action === 'upgrade') {
     }
 
     $plugin = $plugins[$pluginId];
-    $slug = (string) ($plugin['marketplace_slug'] ?? '');
+    $slug = birkly_marketplace_plugin_offer_slug($pluginId, $plugin);
     if ($slug === '') {
         echo json_encode(['status' => 'error', 'message' => 'Plugin was not installed from marketplace']);
         exit;
@@ -854,8 +854,22 @@ if ($action === 'upgrade') {
         echo json_encode(['status' => 'error', 'message' => 'No update available']);
         exit;
     }
+    $channelGate = birkly_marketplace_gate_update_channel($check);
+    if (!$channelGate['ok']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => $channelGate['error'] ?? 'Update requires a different update channel',
+            'code' => $channelGate['code'] ?? 'update_channel_required',
+            'data' => [
+                'required_update_channel' => $channelGate['required_update_channel'] ?? null,
+                'latest_version' => $check['latest_version_overall'] ?? $check['latest_version'] ?? $current,
+                'update_channel' => $check['update_channel'] ?? birkly_marketplace_update_channel(),
+            ],
+        ]);
+        exit;
+    }
 
-    $targetVersion = (string) ($check['latest_version'] ?? $current);
+    $targetVersion = (string) ($check['latest_version_on_channel'] ?? $check['latest_version'] ?? $current);
     $preReleaseAck = !empty($input['pre_release_ack']) || !empty($input['preReleaseAck']);
     $preReleaseCheck = birkly_marketplace_gate_pre_release_ack($slug, $targetVersion, $preReleaseAck);
     if (!$preReleaseCheck['ok']) {

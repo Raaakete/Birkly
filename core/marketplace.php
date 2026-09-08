@@ -263,6 +263,41 @@ function birkly_marketplace_release_stability_from_releases(array $releases, str
     return 'stable';
 }
 
+/**
+ * Minimum site update channel required to receive a specific release.
+ */
+function birkly_marketplace_required_channel_for_release(array $offer, array $release): string
+{
+    $stability = birkly_marketplace_release_effective_stability($offer, $release);
+
+    return match ($stability) {
+        'alpha' => 'alpha',
+        'beta' => 'beta',
+        default => 'stable',
+    };
+}
+
+/**
+ * @param list<array<string, mixed>> $releases
+ */
+function birkly_marketplace_required_channel_for_version(array $releases, string $version, array $offer): string
+{
+    $version = trim($version);
+    if ($version === '') {
+        return 'stable';
+    }
+
+    foreach ($releases as $release) {
+        if (!is_array($release) || (string) ($release['version'] ?? '') !== $version) {
+            continue;
+        }
+
+        return birkly_marketplace_required_channel_for_release($offer, $release);
+    }
+
+    return birkly_marketplace_normalize_update_channel(birkly_marketplace_offer_distribution($offer));
+}
+
 function birkly_marketplace_stability_label(string $stability): string
 {
     return match (birkly_marketplace_normalize_release_stability($stability)) {
@@ -1515,20 +1550,41 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
     $allReleases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
     $offerMeta = is_array($detail['offer'] ?? null) ? $detail['offer'] : [];
     $releases = birkly_marketplace_releases_for_channel($allReleases, $channel, $offerMeta);
-    $latest = birkly_marketplace_latest_release_version($releases) ?? $currentVersion;
-    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latest, $offerMeta);
+    $latestOnChannel = birkly_marketplace_latest_release_version($releases);
+    $latestOverall = birkly_marketplace_latest_release_version($allReleases);
+    $latestOnChannelStr = $latestOnChannel ?? $currentVersion;
+    $latestOverallStr = $latestOverall ?? $currentVersion;
+    $updateActionable = $latestOnChannel !== null && version_compare($latestOnChannel, $currentVersion, '>');
+    $updateBlockedByChannel = !$updateActionable
+        && $latestOverall !== null
+        && version_compare($latestOverall, $currentVersion, '>');
+    $latestForDisplay = $updateActionable
+        ? $latestOnChannelStr
+        : ($updateBlockedByChannel ? $latestOverallStr : $latestOnChannelStr);
+    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latestForDisplay, $offerMeta);
     $offerDistribution = birkly_marketplace_offer_distribution($offerMeta);
 
     $result = [
         'ok' => true,
-        'latest_version' => $latest,
+        'latest_version' => $latestForDisplay,
+        'latest_version_on_channel' => $latestOnChannelStr,
+        'latest_version_overall' => $latestOverallStr,
         'latest_stability' => $latestStability,
         'offer_distribution' => $offerDistribution,
         'offer_distribution_notice' => birkly_marketplace_offer_distribution_notice($offerMeta),
         'update_channel' => $channel,
-        'update_available' => version_compare($latest, $currentVersion, '>'),
+        'update_actionable' => $updateActionable,
+        'update_blocked_by_channel' => $updateBlockedByChannel,
+        'update_available' => $updateActionable || $updateBlockedByChannel,
         'current_version' => $currentVersion,
     ];
+    if ($updateBlockedByChannel) {
+        $result['required_update_channel'] = birkly_marketplace_required_channel_for_version(
+            $allReleases,
+            (string) $latestOverall,
+            $offerMeta
+        );
+    }
 
     $licenseRef = trim((string) ($licenseRef ?? ''));
     if ($licenseRef !== '') {
@@ -1541,6 +1597,34 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
     }
 
     return $result;
+}
+
+/**
+ * Block one-click upgrade when a newer release exists but the site channel hides it.
+ *
+ * @param array<string, mixed> $check Result from birkly_marketplace_check_plugin_update()
+ * @return array{ok:bool,error?:string,code?:string,required_update_channel?:string}
+ */
+function birkly_marketplace_gate_update_channel(array $check): array
+{
+    if (empty($check['update_blocked_by_channel'])) {
+        return ['ok' => true];
+    }
+
+    $required = birkly_marketplace_normalize_update_channel(
+        (string) ($check['required_update_channel'] ?? 'alpha')
+    );
+
+    return [
+        'ok' => false,
+        'code' => 'update_channel_required',
+        'required_update_channel' => $required,
+        'error' => sprintf(
+            'Switch your site update channel to %s in the Hub toolbar to install v%s.',
+            birkly_marketplace_stability_label($required),
+            (string) ($check['latest_version_overall'] ?? $check['latest_version'] ?? '')
+        ),
+    ];
 }
 
 /**
