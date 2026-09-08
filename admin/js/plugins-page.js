@@ -544,7 +544,10 @@
         } catch (err) {
             if (err && err.code === 'consent_required') {
                 closePreReleaseAckModal();
+                var isUpdate = pending.mode === 'update' || pending.mode === 'upgrade';
                 openInstallConsentModal({
+                    mode: isUpdate ? 'update' : undefined,
+                    pluginId: isUpdate ? pending.pluginId : undefined,
                     slug: pending.slug,
                     version: (err.data && err.data.version) || pending.version,
                     licenseKey: pending.licenseKey,
@@ -553,7 +556,11 @@
                 });
                 return;
             }
-            showMessage(err.message || t('install_failed', 'Install failed'), 'error');
+            var isUpdateFailure = pending.mode === 'update' || pending.mode === 'upgrade';
+            showMessage(
+                err.message || (isUpdateFailure ? t('update_failed', 'Update failed') : t('install_failed', 'Install failed')),
+                'error'
+            );
         } finally {
             if (btn) {
                 btn.disabled = false;
@@ -3004,6 +3011,19 @@
                     slug: data.slug || '',
                     version: data.version || '',
                     manifest: data.permissions_manifest || {},
+                });
+                return;
+            }
+            if (err && err.code === 'pre_release_ack_required') {
+                var preReleaseData = err.data || {};
+                var pendingUpdate = updateMap[pluginId] || {};
+                openPreReleaseAckModal({
+                    mode: 'update',
+                    pluginId: preReleaseData.plugin_id || pluginId,
+                    slug: preReleaseData.slug || '',
+                    version: preReleaseData.version || pendingUpdate.latest_version || '',
+                    stability: preReleaseData.stability || pendingUpdate.latest_stability || pendingUpdate.offer_distribution || 'beta',
+                    distributionNotice: pendingUpdate.offer_distribution_notice || '',
                 });
                 return;
             }
