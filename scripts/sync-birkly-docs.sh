@@ -15,7 +15,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-DOCS_PATH="${BIRKLY_DOCS_PATH:-$ROOT/../birkly-docs}"
+DOCS_PATH="${BIRKLY_DOCS_PATH:-$ROOT/../Birkly-Docs}"
 SNAP_DIR="$ROOT/admin/docs/snapshots"
 MANIFEST_SRC="$DOCS_PATH/help-manifest.json"
 MANIFEST_OUT="$ROOT/admin/docs/help-offline-manifest.json"
