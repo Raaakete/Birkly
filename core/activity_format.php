@@ -6,6 +6,9 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_paths.php';
+if (!function_exists('birkly_notification_format_activity_message')) {
+    require_once __DIR__ . '/plugins/notification_shelf.php';
+}
 
 function birkly_activity_str_starts_with(string $haystack, string $needle): bool
 {
@@ -497,8 +500,9 @@ function birkly_activity_event_message(string $event, array $details): string
             return 'API key accepted for public access';
 
         default:
-            if (birkly_activity_str_starts_with($event, 'commerce_') || birkly_activity_str_starts_with($event, 'automation_')) {
-                return ucfirst(str_replace('_', ' ', $event));
+            $pluginMessage = birkly_notification_format_activity_message($event, $details);
+            if ($pluginMessage !== null) {
+                return $pluginMessage;
             }
             return ucfirst(str_replace('_', ' ', $event));
     }

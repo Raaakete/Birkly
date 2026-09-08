@@ -1,6 +1,6 @@
 <?php
 /**
- * Notifications + plugin activity bus integration (P61).
+ * Notifications + plugin activity bus integration (P61 / P83-M3).
  */
 
 declare(strict_types=1);
@@ -21,6 +21,12 @@ function npa_assert(string $name, bool $ok, string $detail = ''): void
         }
     }
 }
+
+// Populate shelf registry without bootstrapping plugins (avoids redeclare in isolated runs).
+$GLOBALS['birkly_notification_broadcast_actors']['commerce'] = 'commerce';
+$GLOBALS['birkly_notification_broadcast_actors']['events'] = 'events';
+$GLOBALS['birkly_notification_broadcast_prefixes'] = ['commerce_', 'events_'];
+$GLOBALS['birkly_notifications_shelf_bootstrapped'] = true;
 
 npa_assert('commerce actor is broadcast', isBroadcastNotificationActor('commerce', 'commerce_order_paid'));
 npa_assert('events actor is broadcast', isBroadcastNotificationActor('events', 'events_registration'));
