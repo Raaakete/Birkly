@@ -616,188 +616,52 @@
         });
     }
 
-    // ---- Plugin packs (M5) --------------------------------------------------
-    // Register only when (a) the plugin's public surface is present AND (b) the
-    // tool is enabled in the admin catalog. Detection-first so plugins do not
-    // need changes.
-    function registerCommercePack() {
-        var C = window.BirklyCommerce;
-        var present = !!(C && typeof C.getCart === 'function');
-        if (!present) return;
-
-        if (toolEnabled('birkly_commerce_get_cart')) {
-            register({
-                name: 'birkly_commerce_get_cart',
-                scope: 'commerce',
-                description: 'Get the current shopping cart contents and totals.',
-                execute: function () { return C.getCart(); }
-            });
-        }
-        if (toolEnabled('birkly_commerce_add_to_cart')) {
-            register({
-                name: 'birkly_commerce_add_to_cart',
-                scope: 'commerce',
-                description: 'Add a product (or variant) to the shopping cart. Asks the visitor to confirm.',
-                mutating: true,
-                consent: 'confirm',
-                inputSchema: {
-                    type: 'object',
-                    properties: {
-                        entry_id: { type: 'string', description: 'Product entry id.' },
-                        collection: { type: 'string' },
-                        variant: { type: 'string' },
-                        quantity: { type: 'number' }
-                    },
-                    required: ['entry_id']
-                },
-                confirmMessage: function () { return 'Add this item to your cart?'; },
-                execute: function (args) {
-                    return C.add({
-                        entry_id: args.entry_id,
-                        collection: args.collection,
-                        variant: args.variant,
-                        quantity: args.quantity || 1
-                    });
-                }
-            });
-        }
-        if (toolEnabled('birkly_commerce_checkout')) {
-            register({
-                name: 'birkly_commerce_checkout',
-                scope: 'commerce',
-                description: 'Begin or advance checkout. The payment step always asks the visitor to confirm.',
-                mutating: true,
-                consent: 'pay',
-                inputSchema: {
-                    type: 'object',
-                    properties: {
-                        email: { type: 'string' },
-                        group_key: { type: 'string' }
-                    }
-                },
-                confirmMessage: function () { return 'Start checkout and proceed to payment?'; },
-                execute: function (args) {
-                    return C.checkout(args || {});
-                }
-            });
-        }
-    }
-
-    function eventsSurfacePresent() {
-        return !!(window.BirklyEvents
-            || document.querySelector('[data-birkly-events], [data-event-rsvp], form[data-birkly-collection="events"]'));
-    }
-
-    function registerEventsPack() {
-        if (!eventsSurfacePresent()) return;
-        var E = window.BirklyEvents || null;
-
-        if (toolEnabled('birkly_events_list')) {
-            register({
-                name: 'birkly_events_list',
-                scope: 'events',
-                description: 'List published events relevant to this page.',
-                inputSchema: {
-                    type: 'object',
-                    properties: { collection: { type: 'string', description: 'Events collection slug (default "events").' } }
-                },
-                execute: function (args) {
-                    if (E && typeof E.list === 'function') return E.list(args || {});
-                    var col = (args && args.collection) || 'events';
-                    return apiGet('list_entries', { collection: col, language: pageContext().language })
-                        .then(function (res) { return (res && res.data && res.data.entries) || []; });
-                }
-            });
-        }
-        if (toolEnabled('birkly_events_rsvp')) {
-            register({
-                name: 'birkly_events_rsvp',
-                scope: 'events',
-                description: 'RSVP to an event on behalf of the visitor. Asks the visitor to confirm.',
-                mutating: true,
-                consent: 'confirm',
-                inputSchema: {
-                    type: 'object',
-                    properties: {
-                        collection: { type: 'string' },
-                        fields: { type: 'object' }
-                    },
-                    required: ['fields']
-                },
-                confirmMessage: function () { return 'Send this RSVP?'; },
-                gate: function (args) {
-                    if (E && typeof E.rsvp === 'function') return true;
-                    return collectionAllowed((args && args.collection) || 'events');
-                },
-                execute: function (args) {
-                    if (E && typeof E.rsvp === 'function') return E.rsvp(args || {});
-                    var col = (args && args.collection) || 'events';
-                    return submitPublicForm(col, (args && args.fields) || {}).then(function (res) {
-                        if (!res || res.status !== 'ok') throw new Error((res && res.message) || 'RSVP failed');
-                        return { ok: true, data: res.data || null };
-                    });
-                }
-            });
-        }
-    }
-
-    function userSurfacePresent() {
-        return !!(window.BirklyUser
-            || document.querySelector('[data-birkly-login], form[data-birkly-login], [data-birkly-user-session]'));
-    }
-
-    function registerUserPack() {
-        if (!userSurfacePresent()) return;
-        var U = window.BirklyUser || null;
-
-        if (toolEnabled('birkly_user_session')) {
-            register({
-                name: 'birkly_user_session',
-                scope: 'user',
-                description: 'Report whether the visitor is signed in, plus basic public session state.',
-                execute: function () {
-                    if (U && typeof U.session === 'function') return U.session();
-                    var el = document.querySelector('[data-birkly-user-session]');
-                    var loggedIn = el ? el.getAttribute('data-birkly-user-session') === 'in' : false;
-                    return { signed_in: loggedIn };
-                }
-            });
-        }
-        if (toolEnabled('birkly_user_login')) {
-            register({
-                name: 'birkly_user_login',
-                scope: 'user',
-                description: 'Start visitor sign-in. Off unless the owner opts in; always asks the visitor to confirm.',
-                mutating: true,
-                consent: 'login',
-                inputSchema: {
-                    type: 'object',
-                    properties: { email: { type: 'string' }, password: { type: 'string' } }
-                },
-                confirmMessage: function () { return 'Allow the AI assistant to sign you in?'; },
-                gate: function () {
-                    return !!(U && typeof U.login === 'function') || !!document.querySelector('form[data-birkly-login], [data-birkly-login]');
-                },
-                execute: function (args) {
-                    if (U && typeof U.login === 'function') return U.login(args || {});
-                    var form = document.querySelector('form[data-birkly-login]');
-                    if (form) {
-                        if (args && args.email) { var e = form.querySelector('[name="email"]'); if (e) e.value = args.email; }
-                        if (args && args.password) { var p = form.querySelector('[name="password"]'); if (p) p.value = args.password; }
-                        if (typeof form.requestSubmit === 'function') form.requestSubmit(); else form.submit();
-                        return { ok: true, note: 'Login form submitted.' };
-                    }
-                    throw new Error('No login surface on this page.');
-                }
-            });
-        }
+    // ---- Plugin packs (P83-M4 runtime shelf) ------------------------------
+    function runtimePackSurfacePresent(pack) {
+        if (!pack || typeof pack !== 'object') return false;
+        try {
+            if (pack.global && typeof window !== 'undefined' && window[pack.global]) {
+                var globalObj = window[pack.global];
+                if (globalObj && typeof globalObj === 'object') return true;
+            }
+            if (pack.surface) {
+                return !!document.querySelector(String(pack.surface));
+            }
+        } catch (e) { /* ignore */ }
+        return false;
     }
 
     function registerPluginPacks() {
-        try { registerCommercePack(); } catch (e) { log('commerce pack error', e); }
-        try { registerEventsPack(); } catch (e) { log('events pack error', e); }
-        try { registerUserPack(); } catch (e) { log('user pack error', e); }
+        var packs = (WebMCP.config && WebMCP.config.runtime_packs) || [];
+        var registry = (typeof window !== 'undefined' && window.BirklyWebMcp && window.BirklyWebMcp._packs) || {};
+        var helpers = {
+            apiGet: apiGet,
+            pageContext: pageContext,
+            collectionAllowed: collectionAllowed,
+            submitPublicForm: submitPublicForm
+        };
+
+        packs.forEach(function (packMeta) {
+            if (!packMeta || !packMeta.pack) return;
+            var enabledTools = packMeta.tools || [];
+            var anyEnabled = enabledTools.some(function (id) { return toolEnabled(id); });
+            if (!anyEnabled) return;
+            if (!runtimePackSurfacePresent(packMeta)) return;
+            var fn = registry[packMeta.pack];
+            if (typeof fn !== 'function') {
+                log('no runtime pack handler', packMeta.pack);
+                return;
+            }
+            try {
+                fn(register, toolEnabled, helpers);
+            } catch (e) {
+                log('pack error', packMeta.pack, e);
+            }
+        });
     }
+
+    // Legacy pack implementations removed — plugins register via
+    // window.BirklyWebMcp._packs[packId] in assets/webmcp-pack.js (P83-M4).
 
     // ---- Lifecycle ----------------------------------------------------------
     function abortAll() {
@@ -875,6 +739,14 @@
         isEnabled: function () { return !!(WebMCP.config && WebMCP.config.enabled); },
         isSupported: function () { return !!getModelContext(); },
         listRegistered: function () { return Object.keys(WebMCP.registered); },
+        /** Plugin runtime pack registrar (P83-M4). */
+        registerPack: function (packId, fn) {
+            if (!packId || typeof fn !== 'function') return false;
+            window.BirklyWebMcp._packs = window.BirklyWebMcp._packs || {};
+            window.BirklyWebMcp._packs[String(packId)] = fn;
+            return true;
+        },
+        _packs: {},
         _internal: WebMCP
     };
 
@@ -882,7 +754,8 @@
         if (typeof window !== 'undefined') {
             window.Birkly = window.Birkly || {};
             window.Birkly.webmcp = publicApi;
-            window.BirklyWebMCP = publicApi;
+            window.BirklyWebMcp = publicApi;
+            window.BirklyWebMcp._packs = window.BirklyWebMcp._packs || {};
         }
     } catch (e) {}
 

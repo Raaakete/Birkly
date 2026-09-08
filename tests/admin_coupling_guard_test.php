@@ -57,6 +57,20 @@ guard_file('api/notifications.php', [
     "/case 'commerce_subscription_created'/",
 ]);
 
+guard_file('birkly-webmcp.js', [
+    '/registerCommercePack/',
+    '/registerEventsPack/',
+    '/registerUserPack/',
+]);
+
+guard_file('admin/js/ai-presence.js', [
+    '/WEBMCP_TOOL_META/',
+    '/WEBMCP_PACK_META/',
+    '/birkly_commerce_get_cart/',
+    '/birkly_events_list/',
+    '/birkly_user_session/',
+]);
+
 if ($failures !== []) {
     exit(1);
 }
