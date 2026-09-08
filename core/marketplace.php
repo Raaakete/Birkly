@@ -118,6 +118,47 @@ function birkly_marketplace_offer_distribution(array $offer): string
     return birkly_marketplace_normalize_release_stability((string) ($offer['distribution'] ?? 'stable'));
 }
 
+function birkly_marketplace_default_distribution_notice(string $distribution): string
+{
+    return match (birkly_marketplace_normalize_release_stability($distribution)) {
+        'alpha' => 'This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk.',
+        'beta' => 'This is a beta pre-release. Builds may still have issues before general release.',
+        default => '',
+    };
+}
+
+function birkly_marketplace_offer_distribution_notices(array $offer): array
+{
+    $raw = is_array($offer['distribution_notices'] ?? null) ? $offer['distribution_notices'] : [];
+    $notices = [];
+    foreach (['alpha', 'beta'] as $channel) {
+        $custom = trim((string) ($raw[$channel] ?? ''));
+        if ($custom !== '') {
+            if (strlen($custom) > 2000) {
+                $custom = substr($custom, 0, 2000);
+            }
+            $notices[$channel] = $custom;
+        }
+    }
+
+    return $notices;
+}
+
+function birkly_marketplace_offer_distribution_notice(array $offer, ?string $distribution = null): string
+{
+    $distribution = birkly_marketplace_normalize_release_stability($distribution ?? birkly_marketplace_offer_distribution($offer));
+    if ($distribution === 'stable') {
+        return '';
+    }
+
+    $notices = birkly_marketplace_offer_distribution_notices($offer);
+    if (isset($notices[$distribution])) {
+        return $notices[$distribution];
+    }
+
+    return birkly_marketplace_default_distribution_notice($distribution);
+}
+
 function birkly_marketplace_pre_release_stability_rank(string $stability): int
 {
     return match (birkly_marketplace_normalize_release_stability($stability)) {
@@ -1191,6 +1232,8 @@ function birkly_marketplace_enrich_offer_install_state(array $offer): array
 {
     $slug = (string) ($offer['slug'] ?? '');
     $offer['distribution'] = birkly_marketplace_offer_distribution($offer);
+    $offer['distribution_notices'] = birkly_marketplace_offer_distribution_notices($offer);
+    $offer['distribution_notice'] = birkly_marketplace_offer_distribution_notice($offer);
     $offer['install_state'] = birkly_marketplace_offer_install_state(
         $slug,
         (string) ($offer['latest_version'] ?? '')
@@ -1481,6 +1524,7 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
         'latest_version' => $latest,
         'latest_stability' => $latestStability,
         'offer_distribution' => $offerDistribution,
+        'offer_distribution_notice' => birkly_marketplace_offer_distribution_notice($offerMeta),
         'update_channel' => $channel,
         'update_available' => version_compare($latest, $currentVersion, '>'),
         'current_version' => $currentVersion,

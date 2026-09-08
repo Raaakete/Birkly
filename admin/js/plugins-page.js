@@ -479,15 +479,21 @@
         }
         var stability = String((context && (context.stability || context.distribution)) || 'beta').toLowerCase();
         if (summaryEl) {
-            var summaryKey = stability === 'alpha'
-                ? 'marketplace_distribution_notice_alpha'
-                : (stability === 'beta' ? 'marketplace_distribution_notice_beta' : 'pre_release_ack_summary');
-            var summaryDefault = stability === 'alpha'
-                ? 'This offer is distributed on the Alpha channel. Early builds may be unstable. Switch your site update channel to Alpha to install or update.'
-                : (stability === 'beta'
-                    ? 'This offer is distributed on the Beta channel. Pre-release builds may have issues. Switch your site update channel to Beta or Alpha to install or update.'
-                    : 'This is a pre-release build and may be unstable. Confirm that you understand the risks before installing or updating.');
-            summaryEl.textContent = t(summaryKey, summaryDefault);
+            var noticeOffer = {
+                slug: context && context.slug ? context.slug : '',
+                distribution_notice: context && context.distributionNotice ? context.distributionNotice : '',
+                distribution_notices: context && context.distributionNotices ? context.distributionNotices : null,
+            };
+            var noticeText = resolveOfferDistributionNoticeText(noticeOffer, stability);
+            if (!noticeText) {
+                noticeText = t(
+                    'pre_release_ack_summary',
+                    'This is a pre-release build and may be unstable. Confirm that you understand the risks before installing or updating.'
+                );
+                summaryEl.textContent = noticeText;
+            } else {
+                summaryEl.innerHTML = renderMarketplaceNoticeMarkdown(noticeText);
+            }
         }
         if (stabilityEl) {
             stabilityEl.innerHTML = renderStabilityBadge(stability);
@@ -801,6 +807,45 @@
         return '<span class="badge badge-sm ' + tone + '">' + escapeHtml(t(labelKey, normalized)) + '</span>';
     }
 
+    function defaultDistributionNotice(distribution) {
+        var normalized = String(distribution || 'stable').toLowerCase();
+        if (normalized === 'alpha') {
+            return t(
+                'marketplace_distribution_notice_alpha',
+                'This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk.'
+            );
+        }
+        if (normalized === 'beta') {
+            return t(
+                'marketplace_distribution_notice_beta',
+                'This is a beta pre-release. Builds may still have issues before general release.'
+            );
+        }
+        return '';
+    }
+
+    function renderMarketplaceNoticeMarkdown(text) {
+        var escaped = escapeHtml(String(text || ''));
+        escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+        escaped = escaped.replace(/\*(.+?)\*/g, '<em>$1</em>');
+        escaped = escaped.replace(
+            /\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,
+            '<a href="$2" rel="noopener noreferrer" target="_blank">$1</a>'
+        );
+        return escaped.replace(/\n/g, '<br>');
+    }
+
+    function distributionChannelRequirement(distribution) {
+        distribution = resolveOfferDistribution({ distribution: distribution });
+        if (distribution === 'alpha') {
+            return 'Alpha';
+        }
+        if (distribution === 'beta') {
+            return 'Beta';
+        }
+        return 'Stable';
+    }
+
     function resolveOfferDistribution(offer) {
         if (!offer) {
             return 'stable';
@@ -850,32 +895,57 @@
         return 'stable';
     }
 
+    function resolveOfferDistributionNoticeText(offer, distribution) {
+        distribution = distribution || resolveOfferDistribution(offer);
+        if (distribution === 'stable') {
+            return '';
+        }
+        if (offer) {
+            if (offer.distribution_notice) {
+                return String(offer.distribution_notice);
+            }
+            if (offer.distribution_notices && offer.distribution_notices[distribution]) {
+                return String(offer.distribution_notices[distribution]);
+            }
+            if (offer.offer_distribution_notice) {
+                return String(offer.offer_distribution_notice);
+            }
+            if (offer.slug) {
+                var cached = findCachedOffer(offer.slug);
+                if (cached) {
+                    return resolveOfferDistributionNoticeText(cached, distribution);
+                }
+            }
+        }
+        return defaultDistributionNotice(distribution);
+    }
+
     function renderOfferDistributionNotice(offer) {
         var distribution = resolveOfferDistribution(offer);
         if (distribution === 'stable') {
             return '';
         }
-        var noticeKey = 'marketplace_distribution_notice_' + distribution;
-        var defaultText = distribution === 'alpha'
-            ? 'This offer is distributed on the Alpha channel. Early builds may be unstable. Switch your site update channel to Alpha to install or update.'
-            : 'This offer is distributed on the Beta channel. Pre-release builds may have issues. Switch your site update channel to Beta or Alpha to install or update.';
+        var noticeText = resolveOfferDistributionNoticeText(offer, distribution);
         var tone = distribution === 'alpha' ? 'callout-danger' : 'callout-warning';
         var channelHint = '';
         if (!isOfferVisibleOnCurrentChannel(distribution)) {
+            var currentChannel = String(marketplaceUpdateChannel || 'stable');
             channelHint =
                 '<p class="u-text-xs u-fg-secondary u-m-0 u-mt-1">' +
                 escapeHtml(
                     t(
                         'marketplace_distribution_channel_hint',
-                        'Your site update channel is set to {channel}. Change it in Hub filters to receive this offer\'s releases.'
-                    ).replace('{channel}', marketplaceUpdateChannel || 'stable')
+                        'Install and update are unavailable on the {current} update channel. Switch Update channel to {required} in the Hub toolbar above.'
+                    )
+                        .replace('{current}', currentChannel.charAt(0).toUpperCase() + currentChannel.slice(1))
+                        .replace('{required}', distributionChannelRequirement(distribution))
                 ) +
                 '</p>';
         }
         return (
             '<div class="callout ' + tone + ' callout--block u-text-sm">' +
             '<div class="u-cluster u-gap-2 u-mb-1">' + renderStabilityBadge(distribution) + '</div>' +
-            '<p class="u-m-0">' + escapeHtml(t(noticeKey, defaultText)) + '</p>' +
+            '<div class="u-m-0">' + renderMarketplaceNoticeMarkdown(noticeText) + '</div>' +
             channelHint +
             '</div>'
         );
@@ -2206,7 +2276,13 @@
             '</div>' +
             '</div>' +
             (plugin.description ? '<p class="u-text-sm u-fg-secondary u-m-0 u-clamp-3">' + escapeHtml(plugin.description) + '</p>' : '') +
-            (offerDistribution !== 'stable' ? renderOfferDistributionNotice({ distribution: offerDistribution }) : '') +
+            (offerDistribution !== 'stable'
+                ? renderOfferDistributionNotice({
+                    slug: offerSlug,
+                    distribution: offerDistribution,
+                    distribution_notice: update.offer_distribution_notice || '',
+                })
+                : '') +
             '<div class="u-cluster u-gap-2">' +
             '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
             (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="tag">Hub</span>' : '') +
