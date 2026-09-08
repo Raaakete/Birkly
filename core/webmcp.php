@@ -47,12 +47,12 @@ function birkly_webmcp_ensure_plugins_loaded(): void
 function birkly_webmcp_core_tool_catalog(): array
 {
     return [
-        ['id' => 'birkly_get_page_context',        'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_list_published_entries',  'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_get_published_entry',     'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_describe_form',           'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true],
-        ['id' => 'birkly_submit_public_form',      'pack' => 'core', 'kind' => 'write', 'mutating' => true,  'consent' => 'confirm', 'default' => true],
-        ['id' => 'birkly_set_language',            'pack' => 'core', 'kind' => 'write', 'mutating' => true,  'consent' => 'none',    'default' => true],
+        ['id' => 'birkly_get_page_context',        'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true, 'label' => 'Read this page',            'description' => 'Lets an AI helper see the page title, address and language.'],
+        ['id' => 'birkly_list_published_entries',  'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true, 'label' => 'List published items',      'description' => 'Lets an AI helper read the published items a page shows (e.g. blog posts).'],
+        ['id' => 'birkly_get_published_entry',     'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true, 'label' => 'Read one published item',   'description' => 'Lets an AI helper open a single published item by its address.'],
+        ['id' => 'birkly_describe_form',           'pack' => 'core', 'kind' => 'read',  'mutating' => false, 'consent' => 'none',    'default' => true, 'label' => 'Understand a form',         'description' => 'Lets an AI helper see a form’s fields so it can fill them correctly.'],
+        ['id' => 'birkly_submit_public_form',      'pack' => 'core', 'kind' => 'write', 'mutating' => true,  'consent' => 'confirm', 'default' => true, 'label' => 'Submit a form',            'description' => 'Lets an AI helper submit an allowed form — always after the visitor confirms.'],
+        ['id' => 'birkly_set_language',            'pack' => 'core', 'kind' => 'write', 'mutating' => true,  'consent' => 'none',    'default' => true, 'label' => 'Switch language',          'description' => 'Lets an AI helper change the site language, only where a language picker exists.'],
     ];
 }
 
@@ -453,5 +453,210 @@ function birkly_webmcp_public_config(): array
         'enabled' => true,
         'tools' => birkly_webmcp_enabled_tool_ids(),
         'form_allowlist' => $config['form_allowlist'],
+        'runtime_packs' => birkly_webmcp_public_runtime_packs(),
     ];
+}
+
+/**
+ * Register a browser runtime pack for WebMCP (P83-M4).
+ *
+ * @param array{
+ *   pack: string,
+ *   label?: string,
+ *   note?: string,
+ *   global?: string,
+ *   surface?: string,
+ *   script?: string,
+ *   tools?: list<string>
+ * } $config
+ */
+function birkly_webmcp_register_runtime_pack(string $pluginId, array $config): void
+{
+    if ($pluginId === '' || $pluginId === 'core') {
+        return;
+    }
+
+    $pack = trim((string) ($config['pack'] ?? $pluginId));
+    if ($pack === '' || !preg_match('/^[a-z][a-z0-9_-]*$/', $pack)) {
+        return;
+    }
+
+    if (!function_exists('add_filter')) {
+        birkly_webmcp_ensure_plugins_loaded();
+    }
+    if (!function_exists('add_filter')) {
+        return;
+    }
+
+    add_filter('webmcp_runtime_packs', static function (array $packs) use ($pluginId, $config, $pack): array {
+        if (!function_exists('birkly_is_plugin_active') || !birkly_is_plugin_active($pluginId)) {
+            return $packs;
+        }
+
+        $tools = [];
+        foreach (($config['tools'] ?? []) as $toolId) {
+            $toolId = trim((string) $toolId);
+            if ($toolId !== '' && preg_match('/^[a-z][a-z0-9_]*$/', $toolId)) {
+                $tools[] = $toolId;
+            }
+        }
+
+        $entry = [
+            'pack' => $pack,
+            'plugin_id' => $pluginId,
+            'label' => trim((string) ($config['label'] ?? '')),
+            'note' => trim((string) ($config['note'] ?? '')),
+            'global' => trim((string) ($config['global'] ?? '')),
+            'surface' => trim((string) ($config['surface'] ?? '')),
+            'script' => trim((string) ($config['script'] ?? '')),
+            'tools' => $tools,
+        ];
+
+        $packs[$pack] = $entry;
+        return $packs;
+    });
+}
+
+/**
+ * @return array<string, array<string, mixed>>
+ */
+function birkly_webmcp_runtime_packs(): array
+{
+    birkly_webmcp_ensure_plugins_loaded();
+
+    $packs = function_exists('apply_filters')
+        ? apply_filters('webmcp_runtime_packs', [])
+        : [];
+
+    if (!is_array($packs)) {
+        return [];
+    }
+
+    ksort($packs);
+    return $packs;
+}
+
+/**
+ * Secret-free runtime pack descriptors for the browser (enabled tools only).
+ *
+ * @return list<array<string, mixed>>
+ */
+function birkly_webmcp_public_runtime_packs(): array
+{
+    if (!birkly_webmcp_is_enabled()) {
+        return [];
+    }
+
+    $config = birkly_webmcp_load();
+    $enabled = [];
+    foreach ($config['tools'] as $id => $on) {
+        if ($on) {
+            $enabled[$id] = true;
+        }
+    }
+
+    $out = [];
+    foreach (birkly_webmcp_runtime_packs() as $pack) {
+        if (!is_array($pack)) {
+            continue;
+        }
+        $toolIds = [];
+        foreach (($pack['tools'] ?? []) as $toolId) {
+            if (isset($enabled[(string) $toolId])) {
+                $toolIds[] = (string) $toolId;
+            }
+        }
+        if ($toolIds === []) {
+            continue;
+        }
+
+        $entry = [
+            'pack' => (string) ($pack['pack'] ?? ''),
+            'tools' => $toolIds,
+        ];
+        if (!empty($pack['global'])) {
+            $entry['global'] = (string) $pack['global'];
+        }
+        if (!empty($pack['surface'])) {
+            $entry['surface'] = (string) $pack['surface'];
+        }
+        $out[] = $entry;
+    }
+
+    return $out;
+}
+
+/**
+ * Admin/API metadata for runtime pack grouping labels.
+ *
+ * @return list<array{pack:string,label:string,note:string,plugin_id?:string}>
+ */
+function birkly_webmcp_api_runtime_packs(): array
+{
+    $out = [];
+    foreach (birkly_webmcp_runtime_packs() as $pack) {
+        if (!is_array($pack)) {
+            continue;
+        }
+        $id = (string) ($pack['pack'] ?? '');
+        if ($id === '') {
+            continue;
+        }
+        $entry = [
+            'pack' => $id,
+            'label' => (string) (($pack['label'] ?? '') !== '' ? $pack['label'] : $id),
+            'note' => (string) ($pack['note'] ?? ''),
+        ];
+        if (!empty($pack['plugin_id'])) {
+            $entry['plugin_id'] = (string) $pack['plugin_id'];
+        }
+        $out[] = $entry;
+    }
+
+    return $out;
+}
+
+/**
+ * Render deferred script tags for plugin WebMCP runtime packs.
+ */
+function birkly_webmcp_render_pack_script_tags(): string
+{
+    if (!birkly_webmcp_is_enabled()) {
+        return '';
+    }
+
+    $publicPacks = birkly_webmcp_public_runtime_packs();
+    if ($publicPacks === []) {
+        return '';
+    }
+
+    $runtimeByPack = [];
+    foreach (birkly_webmcp_runtime_packs() as $pack) {
+        if (!is_array($pack)) {
+            continue;
+        }
+        $runtimeByPack[(string) ($pack['pack'] ?? '')] = $pack;
+    }
+
+    $html = '';
+    $seen = [];
+    foreach ($publicPacks as $pack) {
+        $id = (string) ($pack['pack'] ?? '');
+        if ($id === '' || isset($seen[$id])) {
+            continue;
+        }
+        $meta = $runtimeByPack[$id] ?? null;
+        if (!is_array($meta)) {
+            continue;
+        }
+        $script = trim((string) ($meta['script'] ?? ''));
+        if ($script === '' || !str_starts_with($script, '/plugins/')) {
+            continue;
+        }
+        $seen[$id] = true;
+        $src = function_exists('birkly_url') ? birkly_url($script) : $script;
+        $html .= '<script src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '" defer></script>' . "\n";
+    }
+
+    return $html;
 }

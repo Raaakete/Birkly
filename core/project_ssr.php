@@ -965,7 +965,8 @@ function birkly_project_ssr_inject_discovery_packs(string $html, array $context 
         require_once __DIR__ . '/build_info.php';
         $src = htmlspecialchars(birkly_public_runtime_asset_url('birkly-webmcp.js'), ENT_QUOTES, 'UTF-8');
         $inline = birkly_webmcp_inline_config_script();
-        $tag = $inline . "\n    " . '<script src="' . $src . '" defer></script>';
+        $packScripts = birkly_webmcp_render_pack_script_tags();
+        $tag = $inline . "\n    " . $packScripts . '    <script src="' . $src . '" defer></script>';
         if (stripos($html, '</body>') !== false) {
             $html = preg_replace('/<\/body>/i', '    ' . $tag . "\n</body>", $html, 1) ?? $html;
         } else {
