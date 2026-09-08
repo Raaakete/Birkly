@@ -538,65 +538,12 @@
             }).join('') + '</div>');
         });
 
-        dashboard.registerMount('commerceStats', renderCommerce);
-        dashboard.registerMount('eventsUpcoming', renderEvents);
-        dashboard.registerMount('studioPublishing', renderStudio);
-        dashboard.registerMount('automationRuns', renderAutomation);
         return true;
     }
 
     function sortByUpdated(left, right) {
         return new Date(right.modified_at || right.updated_at || right.created_at || 0) -
             new Date(left.modified_at || left.updated_at || left.created_at || 0);
-    }
-
-    function renderCommerce(element, widget, data) {
-        const summary = data && data.summary;
-        if (!summary) {
-            setContent(element, empty('No commerce orders yet.'));
-            return;
-        }
-        setContent(element, statGrid([
-            statTile(formatCents(summary.revenue_cents), 'Revenue', 'commerce'),
-            statTile(summary.order_count || 0, 'Orders', 'commerce'),
-        ]));
-    }
-
-    function renderEvents(element, widget, data) {
-        const events = data && Array.isArray(data.upcoming) ? data.upcoming : [];
-        if (!events.length) {
-            setContent(element, empty('No upcoming events.'));
-            return;
-        }
-        const items = events.slice(0, 5).map(function (event) {
-            const starts = event.start ? formatTimeAgo(event.start) : '';
-            return feedItem({
-                title: event.title || 'Untitled event',
-                meta: starts ? escapeHtml(starts) : '',
-            });
-        });
-        const footer = data.events_url
-            ? footerLinks('<a href="' + escapeHtml(data.events_url) + '">Manage events →</a>')
-            : '';
-        setContent(element, feedList(items) + footer);
-    }
-
-    function renderStudio(element, widget, data) {
-        setContent(element, statGrid([
-            statTile(data?.published || 0, 'Published', 'studio'),
-            statTile(data?.drafts || 0, 'Drafts', 'studio'),
-        ]));
-    }
-
-    function renderAutomation(element, widget, data) {
-        setContent(element, statGrid([
-            statTile(data?.enabled || 0, 'Active', 'automation'),
-            statTile(data?.queue?.pending || 0, 'Queued', 'automation'),
-        ]));
-    }
-
-    function formatCents(cents) {
-        return (Number(cents || 0) / 100).toLocaleString(undefined, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0 });
     }
 
     function loadAndMountWidget(body, widget) {
