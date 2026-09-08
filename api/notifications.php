@@ -26,6 +26,7 @@ require_once 'auth.php';
 require_once 'storage.php';
 require_once '../core/csrf.php';
 require_once __DIR__ . '/../core/notification_broadcast.php';
+require_once __DIR__ . '/../core/plugins/notification_shelf.php';
 
 if (!$__cmsMcpNotificationsFunctionsOnly) {
     // Check authentication
@@ -240,6 +241,13 @@ function formatNotification($entry, $currentUserEmail) {
         'user' => $user,
         'details' => $details
     ];
+
+    if (birkly_notification_apply_formatter($notification, $entry, $currentUserEmail)) {
+        if (!isset($notification['message'])) {
+            return null;
+        }
+        return $notification;
+    }
     
     // Generate message and metadata
     switch ($event) {
@@ -340,35 +348,6 @@ function formatNotification($entry, $currentUserEmail) {
             }
             break;
 
-        case 'commerce_order_created':
-            $notification['message'] = $details['message']
-                ?? sprintf('New order %s', $details['order_id'] ?? '');
-            $notification['icon'] = '🛒';
-            $notification['color'] = 'blue';
-            $notification['category'] = 'commerce';
-            $notification['link'] = $details['link']
-                ?? (function_exists('birkly_admin_url') ? birkly_admin_url('commerce') . '#orders' : '/admin/?page=commerce#orders');
-            break;
-
-        case 'commerce_order_paid':
-            $notification['message'] = $details['message']
-                ?? sprintf('Order %s paid', $details['order_id'] ?? '');
-            $notification['icon'] = '💳';
-            $notification['color'] = 'green';
-            $notification['category'] = 'commerce';
-            $notification['link'] = $details['link']
-                ?? (function_exists('birkly_admin_url') ? birkly_admin_url('commerce') . '#orders' : '/admin/?page=commerce#orders');
-            break;
-
-        case 'commerce_subscription_created':
-            $notification['message'] = $details['message']
-                ?? sprintf('New subscription %s', $details['subscription_id'] ?? '');
-            $notification['icon'] = '🔁';
-            $notification['color'] = 'green';
-            $notification['category'] = 'commerce';
-            $notification['link'] = $details['link'] ?? '/admin/commerce.html#subscriptions';
-            break;
-            
         default:
             // Generic notification for other events
             $notification['message'] = $details['message']

@@ -6,6 +6,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/plugins/notification_shelf.php';
+
 /**
  * Plugin/system actors write security.log rows for every admin (not a single user email).
  * Without this, commerce_order_* rows with user="commerce" never reach the bell.
@@ -13,23 +15,17 @@ declare(strict_types=1);
 function isBroadcastNotificationActor(string $entryUser, string $event = ''): bool
 {
     $user = strtolower(trim($entryUser));
-    if (in_array($user, [
-        'commerce',
-        'events',
-        'automation',
-        'studio',
-        'user_management',
-        'system',
-        'plugin',
-    ], true)) {
+    if (in_array($user, birkly_notification_core_broadcast_actors(), true)) {
+        return true;
+    }
+
+    if (in_array($user, birkly_notification_registered_actors(), true)) {
         return true;
     }
 
     $event = strtolower(trim($event));
-    foreach (['commerce_', 'events_', 'automation_', 'studio_', 'user_'] as $prefix) {
-        if ($event !== '' && str_starts_with($event, $prefix)) {
-            return true;
-        }
+    if ($event !== '' && birkly_notification_event_matches_prefix($event)) {
+        return true;
     }
 
     return false;
@@ -58,12 +54,6 @@ function birkly_notifications_skip_security_log_for_bus(string $event): bool
     if (!function_exists('birkly_plugin_activity_list')) {
         return false;
     }
-    $event = strtolower(trim($event));
-    foreach (['commerce_', 'events_', 'automation_', 'studio_', 'user_'] as $prefix) {
-        if (str_starts_with($event, $prefix)) {
-            return true;
-        }
-    }
 
-    return false;
+    return birkly_notification_event_matches_prefix($event);
 }

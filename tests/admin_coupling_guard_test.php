@@ -1,6 +1,6 @@
 <?php
 /**
- * P83 — Admin coupling guard (dashboard mounts must live in plugins).
+ * P83 — Admin coupling guard (dashboard mounts + notification literals).
  */
 declare(strict_types=1);
 
@@ -39,6 +39,22 @@ guard_file('admin/js/dashboard.js', [
     '/function renderEvents/',
     '/function renderStudio/',
     '/function renderAutomation/',
+]);
+
+guard_file('core/notification_broadcast.php', [
+    "/'commerce'/",
+    "/'events'/",
+    "/'automation'/",
+    "/'studio'/",
+    "/'user_management'/",
+    "/'commerce_'/",
+    "/'events_'/",
+]);
+
+guard_file('api/notifications.php', [
+    "/case 'commerce_order_created'/",
+    "/case 'commerce_order_paid'/",
+    "/case 'commerce_subscription_created'/",
 ]);
 
 if ($failures !== []) {
