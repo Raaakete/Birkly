@@ -874,6 +874,24 @@ function birkly_project_ssr_inject_marker(string $html): string
  *
  * @param array<string,mixed> $data
  */
+/**
+ * Resolve nav hrefs relative to the site root, not the current page directory.
+ */
+function birkly_project_ssr_normalize_site_href(string $href): string
+{
+    $href = trim($href);
+    if ($href === '' || $href[0] === '#') {
+        return $href;
+    }
+    if (preg_match('#^(?:https?:|mailto:|tel:|javascript:)#i', $href)) {
+        return $href;
+    }
+    if ($href[0] === '/') {
+        return $href;
+    }
+    return '/' . ltrim($href, './');
+}
+
 function birkly_project_ssr_inject_nav_links(string $html, array $data): string
 {
     if (stripos($html, '<birkly-header') === false) {
@@ -900,7 +918,7 @@ function birkly_project_ssr_inject_nav_links(string $html, array $data): string
         }
         $links[] = [
             'label' => $label,
-            'href' => $href,
+            'href' => birkly_project_ssr_normalize_site_href($href),
             'page_id' => trim((string) ($entry['page_id'] ?? '')),
             'sort_order' => (int) ($entry['sort_order'] ?? $entry['order'] ?? 0),
         ];
