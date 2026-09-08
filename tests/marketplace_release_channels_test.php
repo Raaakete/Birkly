@@ -84,6 +84,43 @@ try {
         $errors[] = 'Effective beta stability should require pre_release_ack';
     }
 
+    $alphaOffer = ['slug' => 'birkly-automation', 'distribution' => 'alpha'];
+    $allReleases = [
+        ['version' => '1.1.26', 'stability' => 'stable'],
+        ['version' => '1.1.27', 'stability' => 'stable'],
+    ];
+    $channelReleases = birkly_marketplace_releases_for_channel($allReleases, 'stable', $alphaOffer);
+    $latestOnChannel = birkly_marketplace_latest_release_version($channelReleases);
+    $latestOverall = birkly_marketplace_latest_release_version($allReleases);
+    if ($latestOnChannel !== null) {
+        $errors[] = 'Alpha-distributed offer should expose no stable-channel releases';
+    }
+    if ($latestOverall !== '1.1.27') {
+        $errors[] = 'Overall latest should still be 1.1.27';
+    }
+    $updateActionable = $latestOnChannel !== null && version_compare($latestOnChannel, '1.1.26', '>');
+    $updateBlockedByChannel = !$updateActionable
+        && $latestOverall !== null
+        && version_compare($latestOverall, '1.1.26', '>');
+    if ($updateActionable) {
+        $errors[] = 'Stable channel should not expose actionable update for alpha offer';
+    }
+    if (!$updateBlockedByChannel) {
+        $errors[] = 'Pending alpha-offer update should be blocked by channel on stable sites';
+    }
+    $requiredChannel = birkly_marketplace_required_channel_for_version($allReleases, '1.1.27', $alphaOffer);
+    if ($requiredChannel !== 'alpha') {
+        $errors[] = 'Required update channel should be alpha';
+    }
+    $gate = birkly_marketplace_gate_update_channel([
+        'update_blocked_by_channel' => true,
+        'required_update_channel' => $requiredChannel,
+        'latest_version_overall' => '1.1.27',
+    ]);
+    if (!empty($gate['ok']) || ($gate['code'] ?? '') !== 'update_channel_required') {
+        $errors[] = 'Upgrade should be blocked until site channel matches release';
+    }
+
     $alphaOffer = ['slug' => 'alpha-offer', 'distribution' => 'alpha'];
     $enriched = birkly_marketplace_enrich_offer_install_state($alphaOffer);
     if (($enriched['distribution'] ?? '') !== 'alpha') {
