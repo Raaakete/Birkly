@@ -104,6 +104,34 @@ function respond($data) {
  *
  * NOTE: This is required because client-side rendering cannot execute PHP callbacks.
  */
+if ($action === 'storefront_scripts') {
+    birkly_public_api_enforce_auth('read', null, null, 'storefront_scripts');
+    birkly_public_rate_limit('storefront_scripts', 60, 60);
+
+    require_once __DIR__ . '/../core/plugins/storefront_shelf.php';
+
+    respond([
+        'status' => 'ok',
+        'data' => [
+            'scripts' => birkly_get_storefront_scripts(),
+        ],
+    ]);
+}
+
+if ($action === 'site_client_config') {
+    birkly_public_api_enforce_auth('read', null, null, 'site_client_config');
+    birkly_public_rate_limit('site_client_config', 60, 60);
+
+    require_once __DIR__ . '/../core/public_bootstrap.php';
+    require_once __DIR__ . '/../core/plugins/storefront_shelf.php';
+    birkly_public_load_active_plugins();
+
+    respond([
+        'status' => 'ok',
+        'data' => birkly_get_site_client_config(),
+    ]);
+}
+
 if ($action === 'template_functions_list') {
     birkly_public_api_enforce_auth('read', null, null, 'template_functions_list');
     birkly_public_rate_limit('template_functions_list', 20, 60);
@@ -443,12 +471,9 @@ if ($action === 'delete_entry') {
     require_once __DIR__ . '/../core/public_bootstrap.php';
     birkly_public_load_active_plugins();
     
-  // Use EntryPermissions to get current user ID
-    $currentUserId = '';
-    if (birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
-        $entryPermissions = new EntryPermissions();
-        $currentUserId = $entryPermissions->getCurrentUserId();
-    }
+  // Resolve current user via generic public filter (P82-D6)
+    require_once __DIR__ . '/../core/public_current_user.php';
+    $currentUserId = birkly_public_current_user_id();
     
     if (empty($currentUserId)) {
         http_response_code(401);
