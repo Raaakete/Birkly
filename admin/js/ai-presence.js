@@ -31,6 +31,7 @@
         hubZone: 'guide',
         webmcpConfig: null,
         webmcpCatalog: [],
+        webmcpRuntimePacks: [],
         webmcpPublicForms: [],
         webmcpSupported: null,
         webmcpLoaded: false,
@@ -47,32 +48,24 @@
         return '/admin/index.php?page=settings&tab=ai';
     }
 
-    // Plain-language labels/descriptions for the WebMCP tool catalog. The admin
-    // API returns technical metadata (id/pack/kind/consent); the human copy
-    // lives here so it can be translated and kept out of the backend.
-    var WEBMCP_TOOL_META = {
-        birkly_get_page_context:       { label: 'Read this page',            desc: 'Lets an AI helper see the page title, address and language.' },
-        birkly_list_published_entries: { label: 'List published items',      desc: 'Lets an AI helper read the published items a page shows (e.g. blog posts).' },
-        birkly_get_published_entry:    { label: 'Read one published item',   desc: 'Lets an AI helper open a single published item by its address.' },
-        birkly_describe_form:          { label: 'Understand a form',         desc: 'Lets an AI helper see a form’s fields so it can fill them correctly.' },
-        birkly_submit_public_form:     { label: 'Submit a form',            desc: 'Lets an AI helper submit an allowed form — always after the visitor confirms.' },
-        birkly_set_language:           { label: 'Switch language',          desc: 'Lets an AI helper change the site language, only where a language picker exists.' },
-        birkly_commerce_get_cart:      { label: 'Read the cart',            desc: 'Lets an AI helper see what’s in the shopping cart.' },
-        birkly_commerce_add_to_cart:   { label: 'Add to cart',             desc: 'Lets an AI helper add a product to the cart — after the visitor confirms.' },
-        birkly_commerce_checkout:      { label: 'Start checkout',          desc: 'Lets an AI helper begin checkout. Paying always asks the visitor to confirm.' },
-        birkly_events_list:            { label: 'List events',             desc: 'Lets an AI helper read published events on the page.' },
-        birkly_events_rsvp:            { label: 'RSVP to an event',        desc: 'Lets an AI helper RSVP for the visitor — after they confirm.' },
-        birkly_user_session:           { label: 'Check sign-in',           desc: 'Lets an AI helper see whether the visitor is signed in.' },
-        birkly_user_login:             { label: 'Sign in',                 desc: 'Lets an AI helper start sign-in — off unless you opt in, and always confirmed.' }
-    };
-
-    var WEBMCP_PACK_META = {
-        core:             { label: 'Core actions',    note: '' },
-        commerce:         { label: 'Shop (Commerce)', note: 'Appears on pages where your shop is active.' },
-        events:           { label: 'Events',          note: 'Appears on pages where events are shown.' },
-        user:             { label: 'Accounts',        note: 'Appears on pages with sign-in.' },
-        user_management:  { label: 'Accounts',        note: 'Appears on pages with sign-in.' }
-    };
+    function webmcpPackMeta(pack) {
+        if (pack === 'core') {
+            return { label: t('ag_webmcp_pack_core', 'Core actions'), note: '' };
+        }
+        var packs = state.webmcpRuntimePacks || [];
+        for (var i = 0; i < packs.length; i++) {
+            if (packs[i].pack === pack) {
+                return {
+                    label: packs[i].label || pack,
+                    note: packs[i].note || ''
+                };
+            }
+        }
+        return {
+            label: String(pack || 'plugin').replace(/_/g, ' ').replace(/\b\w/g, function (ch) { return ch.toUpperCase(); }),
+            note: ''
+        };
+    }
 
     function webmcpConsentNote(tool) {
         if (!tool || !tool.mutating) return '';
@@ -3354,6 +3347,7 @@
                 if (res.status !== 'ok') throw new Error(res.message || 'Failed to load tools config');
                 state.webmcpConfig = res.data.config || { enabled: false, tools: {}, form_allowlist: [] };
                 state.webmcpCatalog = res.data.catalog || [];
+                state.webmcpRuntimePacks = res.data.runtime_packs || [];
                 state.webmcpPublicForms = res.data.public_forms || [];
                 state.webmcpLoaded = true;
                 renderTools();
@@ -3374,6 +3368,7 @@
                 if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
                 state.webmcpConfig = res.data.config || state.webmcpConfig;
                 state.webmcpCatalog = res.data.catalog || state.webmcpCatalog;
+                state.webmcpRuntimePacks = res.data.runtime_packs || state.webmcpRuntimePacks;
                 renderTools();
                 updateSpine();
                 renderPublishZone();
@@ -3429,10 +3424,7 @@
         packOrder.forEach(function (pack) {
             var tools = byPack[pack];
             if (!tools || !tools.length) return;
-            var packMeta = WEBMCP_PACK_META[pack] || {
-                label: pack.replace(/_/g, ' ').replace(/\b\w/g, function (ch) { return ch.toUpperCase(); }),
-                note: ''
-            };
+            var packMeta = webmcpPackMeta(pack);
             var group = document.createElement('div');
             group.className = 'card-section u-stack-2';
             var head = '<div class="u-split u-align-baseline"><h4 class="u-text-sm u-weight-semibold u-m-0">' +
@@ -3444,9 +3436,8 @@
             var list = document.createElement('ul');
             list.className = 'data-list';
             tools.forEach(function (tool) {
-                var meta = WEBMCP_TOOL_META[tool.id] || {};
-                var label = tool.label || meta.label || tool.id;
-                var desc = tool.description || meta.desc || '';
+                var label = tool.label || tool.id;
+                var desc = tool.description || '';
                 var li = document.createElement('li');
                 li.className = 'data-list-item u-split u-align-start u-gap-3';
                 var consent = webmcpConsentNote(tool);
@@ -3525,8 +3516,7 @@
             if (!tool.enabled) return;
             // Submit tool only exposes when at least one form is allowlisted.
             if (tool.id === 'birkly_submit_public_form' && (cfg.form_allowlist || []).length === 0) return;
-            var meta = WEBMCP_TOOL_META[tool.id] || { label: tool.id, desc: '' };
-            exposed.push(meta);
+            exposed.push({ label: tool.label || tool.id, desc: tool.description || '' });
         });
 
         if (empty) empty.hidden = exposed.length > 0;

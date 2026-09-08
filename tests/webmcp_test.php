@@ -175,9 +175,12 @@ echo "==> Admin catalog groups packs dynamically\n";
 $adminJs = (string) file_get_contents($root . '/admin/js/ai-presence.js');
 assert_true(strpos($adminJs, "['core', 'commerce', 'events', 'user'].forEach") === false, 'admin no longer hardcodes a fixed pack list');
 assert_true(strpos($adminJs, 'packOrder') !== false, 'admin iterates catalog packs dynamically');
-assert_true(strpos($adminJs, 'user_management') !== false, 'admin has a label for the user_management pack');
+assert_true(strpos($adminJs, 'webmcpRuntimePacks') !== false, 'admin loads runtime pack metadata from API');
+assert_true(strpos($adminJs, 'webmcpPackMeta') !== false, 'admin resolves pack labels from runtime_packs');
 assert_true(strpos($adminJs, 'tool.label ||') !== false, 'admin prefers catalog label over hardcoded copy');
 assert_true(strpos($adminJs, 'tool.description ||') !== false, 'admin prefers catalog description over hardcoded copy');
+assert_true(strpos($adminJs, 'WEBMCP_TOOL_META') === false, 'admin has no hardcoded plugin tool meta map');
+assert_true(strpos($adminJs, 'WEBMCP_PACK_META') === false, 'admin has no hardcoded plugin pack meta map');
 
 echo "==> SSR inject respects enable flag\n";
 require_once $root . '/core/project_ssr.php';
