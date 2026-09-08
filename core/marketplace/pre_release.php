@@ -164,7 +164,7 @@ function birkly_marketplace_finalize_pre_release_ack(
 }
 
 /**
- * Resolve default install version for the site update channel.
+ * Resolve default install version (latest published release).
  *
  * @return array{ok:bool,version?:string,stability?:string,channel?:string,error?:string}
  */
@@ -175,14 +175,11 @@ function birkly_marketplace_resolve_channel_install_version(string $slug, string
         return ['ok' => false, 'error' => $detail['error'] ?? 'Offer not found'];
     }
 
-    $channel = birkly_marketplace_update_channel();
     $releases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
     $offer = is_array($detail['offer'] ?? null) ? $detail['offer'] : [];
     $targetVersion = trim($version);
     if ($targetVersion === '') {
-        $targetVersion = birkly_marketplace_latest_release_version(
-            birkly_marketplace_releases_for_channel($releases, $channel, $offer)
-        ) ?? '';
+        $targetVersion = birkly_marketplace_latest_release_version($releases) ?? '';
         if ($targetVersion === '') {
             return ['ok' => false, 'error' => 'No releases available for this offer'];
         }
@@ -192,6 +189,5 @@ function birkly_marketplace_resolve_channel_install_version(string $slug, string
         'ok' => true,
         'version' => $targetVersion,
         'stability' => birkly_marketplace_release_stability_from_releases($releases, $targetVersion, $offer),
-        'channel' => $channel,
     ];
 }
