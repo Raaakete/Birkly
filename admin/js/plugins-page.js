@@ -152,6 +152,8 @@
             );
         } else if (action === 'check-updates') {
             checkAllUpdates();
+        } else if (action === 'focus-update-channel') {
+            focusUpdateChannelSelector();
         } else if (action === 'open-install-modal') {
             openInstallModal();
         } else if (action === 'install-from-file') {
@@ -2237,6 +2239,8 @@
         options = options || {};
         var update = updateMap[plugin.id] || {};
         var hasUpdate = !!update.update_available;
+        var updateBlockedByChannel = !!update.update_blocked_by_channel;
+        var updateActionable = update.update_actionable !== false && hasUpdate && !updateBlockedByChannel;
         var active = !!plugin.active;
         var health = plugin.health || {};
         var healthStatus = health.status || 'unknown';
@@ -2264,6 +2268,18 @@
             '<div class="u-stack-1 u-min-w-0">' +
             '<h3 class="card-title">' + pluginNameHtml + '</h3>' +
             (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
+            (updateBlockedByChannel
+                ? '<p class="u-text-xs u-fg-secondary u-m-0">' +
+                    escapeHtml(
+                        t(
+                            'hub_update_channel_required',
+                            'Switch Update channel to {required} in the Hub toolbar to install v{version}.'
+                        )
+                            .replace('{required}', distributionChannelRequirement(update.required_update_channel || update.offer_distribution || 'alpha'))
+                            .replace('{version}', String(update.latest_version || ''))
+                    ) +
+                    '</p>'
+                : '') +
             renderStabilityBadge(stabilityForBadge) +
             '</div>' +
             '<div class="u-cluster u-gap-1 u-shrink-0">' +
@@ -2291,9 +2307,11 @@
             '</div>' +
             '<div class="u-cluster u-mt-auto u-pt-2">' +
             detailsButton +
-            (hasUpdate
+            (updateActionable
                 ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
-                : '') +
+                : (updateBlockedByChannel
+                    ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="focus-update-channel">' + escapeHtml(t('switch_update_channel', 'Switch update channel')) + '</button>'
+                    : '')) +
             (options.hideManage ? '' :
                 (plugin.has_settings
                     ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-settings" data-plugin-id="' +
@@ -3003,6 +3021,23 @@
         }
     }
 
+    function focusUpdateChannelSelector() {
+        var select = document.getElementById('marketplace-update-channel');
+        if (select) {
+            select.focus();
+            select.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showMessage(
+                t('hub_update_channel_focus', 'Choose Alpha or Beta in Update channel, then check updates again.'),
+                'info'
+            );
+            return;
+        }
+        showMessage(
+            t('hub_update_channel_focus_missing', 'Use the Update channel control in the Hub toolbar to receive pre-release plugin updates.'),
+            'info'
+        );
+    }
+
     async function upgradePlugin(pluginId) {
         if (!(await BirklyFeedback.confirm(t('confirm_plugin_update', 'Update this plugin to the latest Hub version?')))) {
             return;
@@ -3020,6 +3055,11 @@
                     version: data.version || '',
                     manifest: data.permissions_manifest || {},
                 });
+                return;
+            }
+            if (err && err.code === 'update_channel_required') {
+                focusUpdateChannelSelector();
+                showMessage(err.message || t('update_failed', 'Update failed'), 'error');
                 return;
             }
             showMessage(err.message || t('update_failed', 'Update failed'), 'error');
