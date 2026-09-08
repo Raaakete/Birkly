@@ -93,6 +93,19 @@ if ($action === 'mark_read') {
     exit;
 }
 
+if ($action === 'clear_hub_updates') {
+    require_once __DIR__ . '/../core/hub_update_attention.php';
+    $cleared = birkly_hub_update_attention_acknowledge_all();
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'cleared' => $cleared,
+            'counts' => birkly_plugin_activity_nav_attention_counts(),
+        ],
+    ]);
+    exit;
+}
+
 if ($action === 'emit_test') {
     requireAuth('manage_settings');
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
