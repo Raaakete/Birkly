@@ -89,6 +89,16 @@ try {
     if (($enriched['distribution'] ?? '') !== 'alpha') {
         $errors[] = 'Enriched offer should normalize distribution to alpha';
     }
+    if (($enriched['distribution_notice'] ?? '') !== birkly_marketplace_default_distribution_notice('alpha')) {
+        $errors[] = 'Enriched alpha offer should expose default distribution notice';
+    }
+    $customOffer = array_merge($alphaOffer, [
+        'distribution_notices' => ['alpha' => 'See [alpha terms](https://example.com/alpha) before installing.'],
+    ]);
+    $customEnriched = birkly_marketplace_enrich_offer_install_state($customOffer);
+    if (($customEnriched['distribution_notice'] ?? '') !== 'See [alpha terms](https://example.com/alpha) before installing.') {
+        $errors[] = 'Enriched offer should expose custom distribution notice';
+    }
 } catch (Throwable $e) {
     $errors[] = 'Exception: ' . $e->getMessage();
 } finally {
