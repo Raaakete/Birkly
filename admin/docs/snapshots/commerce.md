@@ -80,7 +80,7 @@ Commerce routes each order line by fulfillment:
 
 `quantity_available` is a catalog projection of Inventory **Available** (or null for unlimited / capacity for `register`). Inventory is the ledger SoR for countable SKUs. `tax_class` defaults to `standard`; rates come from **Settings → Tax**. `weight_grams` is required on `ship` lines when EasyPost live rates are enabled.
 
-**PostPurchaseRouter** — idempotent handler keyed on `order_id` + line; fires typed automation triggers including `commerce_physical_fulfilled`, `commerce_digital_delivered`, `commerce_event_registered`, `commerce_gift_card_issued`, `commerce_membership_started`. Shipments also fire `commerce_shipment_created` / `commerce_order_shipped` when notify is enabled; EasyPost tracking fires `commerce_tracking_updated`.
+**PostPurchaseRouter** — idempotent handler keyed on `order_id` + line; fires typed automation triggers including `commerce_physical_fulfilled`, `commerce_digital_delivered`, `commerce_event_registered`, `commerce_gift_card_issued`, `commerce_subscription_started` (`commerce_membership_started` is a deprecated alias). Shipments also fire `commerce_shipment_created` / `commerce_order_shipped` when notify is enabled; EasyPost tracking fires `commerce_tracking_updated`.
 
 **Admin areas** (Commerce **1.0.29**)
 
@@ -139,7 +139,7 @@ Commerce routes each order line by fulfillment:
 - [Commerce multi-currency](../commerce-multi-currency.md)
 - [Commerce inventory webhooks](../commerce-inventory-webhooks.md)
 - [Commerce warehouse stock](../commerce-warehouse-stock.md) — Inventory modes
-- [Commerce membership wiring](../commerce-membership.md)
+- [User signup and membership](../user-signup-membership.md)
 - [Commerce CSV import](../commerce-import.md)
 - [Plugin security denylist](../plugin-security-denylist.md)
 - [Coexistence with Shop & Events](../commerce-coexistence.md)

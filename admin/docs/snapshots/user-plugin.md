@@ -42,7 +42,8 @@ Install and enable the plugin under **Settings → Plugins**. Admin pages **User
 **Key paths**
 
 - Plugin root: `plugins/user_management/`
-- APIs: `api/user_auth.php`, `api/user_registration.php`, `api/user_admin.php`, `api/collection_permissions.php`
+- APIs: `api/user_auth.php`, `api/user_registration.php`, `api/user_member_signup.php`, `api/user_members.php`, `api/user_account.php`, `api/user_admin.php`, `api/user_graph.php`, `api/user_graph_admin.php`, `api/collection_permissions.php`
+- Fieldtypes: `user_account*` (member marker), `user` (UGC reference), `password`, `user_relationship` (virtual graph panel on profile entries)
 - Permissions: `includes/EntryPermissions.php`, `includes/UserPermissions.php`
 
 **Template functions**
@@ -53,11 +54,28 @@ Install and enable the plugin under **Settings → Plugins**. Admin pages **User
 | `{user_current}` | Current user object (id, name, email, …) |
 | `{user_list}` | Filtered user list (admin/config dependent) |
 | `{user_profile "id"}` | Public profile entry if collection enabled |
+| `{user_is_following from to}` | Boolean |
+| `{user_is_friend a b}` | Boolean |
+| `{user_is_connected a b}` | Mutual connection |
+| `{user_graph_follows user_id}` | User ID list |
+| `{user_graph_followers user_id}` | User ID list |
+| `{user_graph_connected user_id}` | User ID list |
+| `{user_can_view entry}` | Boolean visibility |
+
+See [UGC ownership and social graph](user-ugc-ownership.md) for owner fields, `user_graph` API, `user_relationship` fieldtype, and likes sub-entries.
 
 **Automation hooks**
 
 - `user_registered` — after successful signup
 - `user_login` — after successful login
+
+**Member-as-entry (P77)**
+
+New sites model members as **collection entries** with a `user_account*` fieldtype — not separate User List rows. **Fieldtype profiles** (User → Fieldtypes) define signup requirements, social gates, and Commerce payment flags per tier. Collection-scoped signup uses `user_member_signup`; the **Members** tab is index-backed. See [User fieldtype profiles](user-fieldtype-profiles.md) and [Member migration](user-member-migration.md).
+
+**Signup flows and membership (P74 + P77)**
+
+Paid memberships use **signup flows** and **membership products** in User admin — not Commerce purchase mappings. Presets include `free_register`, `pay_then_activate`, `register_then_pay`, and `activate_only`. Public API: `user_signup` (`start`, `step`, `status`) for flow presets; **P77** adds `user_member_signup` for collection-scoped member registration. See [User signup and membership](user-signup-membership.md).
 
 **Ops guide (maintainers)**
 
@@ -65,11 +83,15 @@ See platform repo `docs/user-plugin-ops.md` for checklist, backup scope, and tro
 
 **Follow-up — public list/search permission filtering**
 
-Plugin-local entry visibility (`EntryPermissions`) is implemented and tested in the SoT repo. **Public** list/detail (and related read surfaces) may still skip that filter until the CMS adds a shared **public-read hook contract** (load active plugins, then filter in `core/public_read.php` / public API list and get paths). Documented as a CMS follow-up — not closable from the plugin alone. See SoT `docs/WAVE3-RELEASE-EVIDENCE.md`.
+The User plugin registers `birkly_public_entries_filter` and `birkly_public_entry_filter` hooks (Hub 1.0.38+). Core `entry_ownership.php` stamps owner from session on public create. Ensure production CMS runs current Birkly core with `core/public_read.php` hooks active.
 
 ## Related
 
 - [Plugins](plugins.md)
+- [User fieldtype profiles](user-fieldtype-profiles.md)
+- [Member migration](user-member-migration.md)
+- [User-generated content and ownership](user-ugc-ownership.md)
+- [User signup and membership](user-signup-membership.md)
 - [Roles and permissions](roles-and-permissions.md)
 - [Public forms](../04-integration/public-forms.md)
 - [Closed alpha guide](../00-overview/closed-alpha-guide.md)

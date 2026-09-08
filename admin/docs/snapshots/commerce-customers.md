@@ -48,4 +48,4 @@ When **User Management** is active, the customer detail/timeline can show a link
 - [Commerce plugin overview](plugins/commerce.md)
 - [Shopify cutover playbook](commerce-shopify-cutover.md)
 - [User plugin](user-plugin.md)
-- [Commerce membership wiring](commerce-membership.md)
+- [User signup and membership](user-signup-membership.md)

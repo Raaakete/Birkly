@@ -1073,6 +1073,22 @@
             "ai_topic": "templating"
         },
         {
+            "id": "project-sites-and-plugins",
+            "title": "Project sites and plugins",
+            "keywords": [
+                "storefront",
+                "plugin",
+                "birkly-client",
+                "data-user-require-auth",
+                "Birkly.fetch",
+                "cross-origin",
+                "storefront.scripts",
+                "member gate"
+            ],
+            "docs_path": "03-templating/project-sites-and-plugins.html",
+            "ai_topic": "templating"
+        },
+        {
             "id": "public-forms",
             "title": "Public forms",
             "keywords": [
@@ -1139,6 +1155,22 @@
             ],
             "docs_path": "01-admin/roles-and-permissions.html",
             "ai_topic": "settings-roles"
+        },
+        {
+            "id": "admin-plugin-extension",
+            "title": "Admin plugin extension",
+            "keywords": [
+                "admin",
+                "plugin",
+                "dashboard",
+                "notification",
+                "webmcp",
+                "shelf",
+                "extension",
+                "admin.scripts"
+            ],
+            "docs_path": "06-extensibility/admin-plugin-extension.html",
+            "ai_topic": "plugins-overview"
         },
         {
             "id": "scaffold-plugin",
