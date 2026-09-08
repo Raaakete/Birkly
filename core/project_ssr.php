@@ -454,6 +454,21 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         $requests = birkly_project_ssr_collect_requests($html);
     }
 
+    if (stripos($html, '<birkly-header') !== false) {
+        $hasNavLinks = false;
+        foreach ($requests as $req) {
+            $into = (string) ($req['into'] ?? '');
+            $collection = (string) ($req['collection'] ?? '');
+            if ($into === 'nav-links' || $collection === 'nav-links') {
+                $hasNavLinks = true;
+                break;
+            }
+        }
+        if (!$hasNavLinks) {
+            $requests[] = ['type' => 'list_entries', 'into' => 'nav-links', 'collection' => 'nav-links'];
+        }
+    }
+
     $detailReq = birkly_project_ssr_detail_request($query);
     if ($detailReq !== null) {
         $requests[] = $detailReq;
@@ -854,6 +869,86 @@ function birkly_project_ssr_inject_marker(string $html): string
 }
 
 /**
+ * Inject pre-rendered nav link JSON for <birkly-header> so the client header
+ * can paint navigation without waiting for a template API round-trip.
+ *
+ * @param array<string,mixed> $data
+ */
+/**
+ * Resolve nav hrefs relative to the site root, not the current page directory.
+ */
+function birkly_project_ssr_normalize_site_href(string $href): string
+{
+    $href = trim($href);
+    if ($href === '' || $href[0] === '#') {
+        return $href;
+    }
+    if (preg_match('#^(?:https?:|mailto:|tel:|javascript:)#i', $href)) {
+        return $href;
+    }
+    if ($href[0] === '/') {
+        return $href;
+    }
+    return '/' . ltrim($href, './');
+}
+
+function birkly_project_ssr_inject_nav_links(string $html, array $data): string
+{
+    if (stripos($html, '<birkly-header') === false) {
+        return $html;
+    }
+    if (stripos($html, 'id="birkly-nav-links-ssr"') !== false || stripos($html, "id='birkly-nav-links-ssr'") !== false) {
+        return $html;
+    }
+
+    $entries = $data['nav-links'] ?? null;
+    if (!is_array($entries) || $entries === []) {
+        return $html;
+    }
+
+    $links = [];
+    foreach ($entries as $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        $label = trim((string) ($entry['label'] ?? $entry['title'] ?? ''));
+        $href = trim((string) ($entry['href'] ?? ''));
+        if ($label === '' || $href === '') {
+            continue;
+        }
+        $links[] = [
+            'label' => $label,
+            'href' => birkly_project_ssr_normalize_site_href($href),
+            'page_id' => trim((string) ($entry['page_id'] ?? '')),
+            'sort_order' => (int) ($entry['sort_order'] ?? $entry['order'] ?? 0),
+        ];
+    }
+
+    if ($links === []) {
+        return $html;
+    }
+
+    usort($links, static function (array $a, array $b): int {
+        return ($a['sort_order'] ?? 0) <=> ($b['sort_order'] ?? 0);
+    });
+
+    $json = json_encode($links, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return $html;
+    }
+
+    $script = '<script type="application/json" id="birkly-nav-links-ssr">' . $json . '</script>';
+    if (preg_match('/<head[^>]*>/i', $html, $m, PREG_OFFSET_CAPTURE)) {
+        $pos = $m[0][1] + strlen($m[0][0]);
+        return substr($html, 0, $pos) . "\n    " . $script . substr($html, $pos);
+    }
+    if (stripos($html, '</head>') !== false) {
+        return preg_replace('/<\/head>/i', '    ' . $script . "\n</head>", $html, 1) ?? $html;
+    }
+    return $script . "\n" . $html;
+}
+
+/**
  * Inject Discovery packs into a rendered project page (P67).
  * Order: SEO head → Agent Guide discovery → WebMCP runtime.
  */
@@ -999,6 +1094,7 @@ function birkly_project_ssr_serve(string $filePath, array $query = []): bool
     }
 
     $rendered = birkly_project_ssr_inject_marker($rendered);
+    $rendered = birkly_project_ssr_inject_nav_links($rendered, $data);
     $seoContext = [];
     try {
         require_once __DIR__ . '/site_seo_url_map.php';

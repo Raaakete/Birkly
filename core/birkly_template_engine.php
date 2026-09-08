@@ -836,10 +836,11 @@ function birkly_template_engine_find_if_block_end(string $html, int $from): arra
     $length = strlen($html);
 
     while ($pos < $length && $depth > 0) {
-        if (!preg_match('/\{(if|elseif|else|endif)\}/i', $html, $m, PREG_OFFSET_CAPTURE, $pos)) {
+        if (!preg_match('/\{(if(?:\s+[^}]+)?|elseif\s+[^}]+|else|endif)\}/i', $html, $m, PREG_OFFSET_CAPTURE, $pos)) {
             break;
         }
-        $tag = strtolower($m[1][0]);
+        $rawTag = $m[1][0];
+        $tag = strtolower(preg_replace('/\s.*/', '', $rawTag));
         $tagPos = $m[0][1];
         $tagLen = strlen($m[0][0]);
 
