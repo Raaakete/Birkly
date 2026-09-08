@@ -396,13 +396,13 @@
         let depth = 1;
         let elsePos = null;
         let elseLen = 0;
-        const re = /\{(if|elseif|else|endif)\}/gi;
+        const re = /\{(if(?:\s+[^}]+)?|elseif\s+[^}]+|else|endif)\}/gi;
 
         while (pos < html.length && depth > 0) {
             re.lastIndex = pos;
             const m = re.exec(html);
             if (!m) break;
-            const tag = m[1].toLowerCase();
+            const tag = m[1].toLowerCase().replace(/\s.*/, '');
             const tagPos = m.index;
             const tagLen = m[0].length;
 
