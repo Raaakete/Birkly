@@ -38,7 +38,7 @@
     var marketplaceBaseUrl = '';
     var marketplaceSearchDebounceId = null;
     var marketplaceDisplayCurrency = 'EUR';
-    var marketplaceUpdateChannel = 'stable';
+    var marketplaceUpdateChannel = 'alpha';
     var pendingPreReleaseContext = null;
     var marketplaceCurrencyRates = {
         EUR: 1,
@@ -152,8 +152,6 @@
             );
         } else if (action === 'check-updates') {
             checkAllUpdates();
-        } else if (action === 'focus-update-channel') {
-            focusUpdateChannelSelector();
         } else if (action === 'open-install-modal') {
             openInstallModal();
         } else if (action === 'install-from-file') {
@@ -837,17 +835,6 @@
         return escaped.replace(/\n/g, '<br>');
     }
 
-    function distributionChannelRequirement(distribution) {
-        distribution = resolveOfferDistribution({ distribution: distribution });
-        if (distribution === 'alpha') {
-            return 'Alpha';
-        }
-        if (distribution === 'beta') {
-            return 'Beta';
-        }
-        return 'Stable';
-    }
-
     function resolveOfferDistribution(offer) {
         if (!offer) {
             return 'stable';
@@ -871,7 +858,7 @@
 
     function isOfferVisibleOnCurrentChannel(distribution) {
         distribution = resolveOfferDistribution({ distribution: distribution });
-        var channel = marketplaceUpdateChannel || 'stable';
+        var channel = marketplaceUpdateChannel || 'alpha';
         if (channel === 'alpha') {
             return true;
         }
@@ -929,26 +916,10 @@
         }
         var noticeText = resolveOfferDistributionNoticeText(offer, distribution);
         var tone = distribution === 'alpha' ? 'callout-danger' : 'callout-warning';
-        var channelHint = '';
-        if (!isOfferVisibleOnCurrentChannel(distribution)) {
-            var currentChannel = String(marketplaceUpdateChannel || 'stable');
-            channelHint =
-                '<p class="u-text-xs u-fg-secondary u-m-0 u-mt-1">' +
-                escapeHtml(
-                    t(
-                        'marketplace_distribution_channel_hint',
-                        'Install and update are unavailable on the {current} update channel. Switch Update channel to {required} in the Hub toolbar above.'
-                    )
-                        .replace('{current}', currentChannel.charAt(0).toUpperCase() + currentChannel.slice(1))
-                        .replace('{required}', distributionChannelRequirement(distribution))
-                ) +
-                '</p>';
-        }
         return (
             '<div class="callout ' + tone + ' callout--block u-text-sm">' +
             '<div class="u-cluster u-gap-2 u-mb-1">' + renderStabilityBadge(distribution) + '</div>' +
             '<div class="u-m-0">' + renderMarketplaceNoticeMarkdown(noticeText) + '</div>' +
-            channelHint +
             '</div>'
         );
     }
@@ -998,9 +969,9 @@
     }
 
     function applyMarketplaceUpdateChannel(channel) {
-        var normalized = String(channel || 'stable').toLowerCase();
+        var normalized = String(channel || 'alpha').toLowerCase();
         if (['stable', 'beta', 'alpha'].indexOf(normalized) === -1) {
-            normalized = 'stable';
+            normalized = 'alpha';
         }
         marketplaceUpdateChannel = normalized;
         var select = document.getElementById('marketplace-update-channel');
@@ -1045,7 +1016,7 @@
 
     function refreshMarketplacePriceDisplay() {
         if (marketplaceOffersCache.length) {
-            renderMarketplaceOffers(marketplaceOffersCache);
+            renderMarketplaceOffers(filterOffersForDiscoveryChannel(marketplaceOffersCache));
         }
         if (currentOfferDetail && currentOfferDetail.offer) {
             updateEmbedModalPanels();
@@ -2239,8 +2210,6 @@
         options = options || {};
         var update = updateMap[plugin.id] || {};
         var hasUpdate = !!update.update_available;
-        var updateBlockedByChannel = !!update.update_blocked_by_channel;
-        var updateActionable = update.update_actionable !== false && hasUpdate && !updateBlockedByChannel;
         var active = !!plugin.active;
         var health = plugin.health || {};
         var healthStatus = health.status || 'unknown';
@@ -2268,18 +2237,6 @@
             '<div class="u-stack-1 u-min-w-0">' +
             '<h3 class="card-title">' + pluginNameHtml + '</h3>' +
             (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
-            (updateBlockedByChannel
-                ? '<p class="u-text-xs u-fg-secondary u-m-0">' +
-                    escapeHtml(
-                        t(
-                            'hub_update_channel_required',
-                            'Switch Update channel to {required} in the Hub toolbar to install v{version}.'
-                        )
-                            .replace('{required}', distributionChannelRequirement(update.required_update_channel || update.offer_distribution || 'alpha'))
-                            .replace('{version}', String(update.latest_version || ''))
-                    ) +
-                    '</p>'
-                : '') +
             renderStabilityBadge(stabilityForBadge) +
             '</div>' +
             '<div class="u-cluster u-gap-1 u-shrink-0">' +
@@ -2307,11 +2264,9 @@
             '</div>' +
             '<div class="u-cluster u-mt-auto u-pt-2">' +
             detailsButton +
-            (updateActionable
+            (hasUpdate
                 ? '<button type="button" class="btn btn-sm btn-primary" data-plugin-action="upgrade" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('update', 'Update')) + '</button>'
-                : (updateBlockedByChannel
-                    ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="focus-update-channel">' + escapeHtml(t('switch_update_channel', 'Switch update channel')) + '</button>'
-                    : '')) +
+                : '') +
             (options.hideManage ? '' :
                 (plugin.has_settings
                     ? '<button type="button" class="btn btn-sm btn-secondary" data-plugin-action="open-settings" data-plugin-id="' +
@@ -3011,6 +2966,18 @@
         }
     }
 
+    function filterOffersForDiscoveryChannel(offers) {
+        return (offers || []).filter(function (offer) {
+            return isOfferVisibleOnCurrentChannel(resolveOfferDistribution(offer));
+        });
+    }
+
+    function refreshMarketplaceDiscoveryFilter() {
+        if (marketplaceOffersCache.length) {
+            renderMarketplaceOffers(filterOffersForDiscoveryChannel(marketplaceOffersCache));
+        }
+    }
+
     async function checkAllUpdates() {
         var count = await refreshUpdateBadge(false);
         if (count > 0) {
@@ -3019,23 +2986,6 @@
         } else {
             showMessage(t('hub_updates_none', 'All Hub plugins are up to date'), 'success');
         }
-    }
-
-    function focusUpdateChannelSelector() {
-        var select = document.getElementById('marketplace-update-channel');
-        if (select) {
-            select.focus();
-            select.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            showMessage(
-                t('hub_update_channel_focus', 'Choose Alpha or Beta in Update channel, then check updates again.'),
-                'info'
-            );
-            return;
-        }
-        showMessage(
-            t('hub_update_channel_focus_missing', 'Use the Update channel control in the Hub toolbar to receive pre-release plugin updates.'),
-            'info'
-        );
     }
 
     async function upgradePlugin(pluginId) {
@@ -3055,11 +3005,6 @@
                     version: data.version || '',
                     manifest: data.permissions_manifest || {},
                 });
-                return;
-            }
-            if (err && err.code === 'update_channel_required') {
-                focusUpdateChannelSelector();
-                showMessage(err.message || t('update_failed', 'Update failed'), 'error');
                 return;
             }
             showMessage(err.message || t('update_failed', 'Update failed'), 'error');
@@ -3337,7 +3282,7 @@
             marketplaceFilterOptions = (result.data && result.data.filter_options) || marketplaceFilterOptions;
             updateCategoryFilterOptions(marketplaceFilterOptions.categories || []);
             marketplaceOffersCache = (result.data && result.data.offers) || [];
-            renderMarketplaceOffers(marketplaceOffersCache);
+            renderMarketplaceOffers(filterOffersForDiscoveryChannel(marketplaceOffersCache));
         } catch (err) {
             if (grid) {
                 grid.innerHTML = '<div class="error-state"><p>' + escapeHtml(err.message) + '</p></div>';
@@ -3795,6 +3740,7 @@
             channelEl.addEventListener('change', function () {
                 applyMarketplaceUpdateChannel(channelEl.value);
                 saveUpdateChannel(marketplaceUpdateChannel);
+                refreshMarketplaceDiscoveryFilter();
             });
         }
         var search = document.getElementById('marketplace-search');

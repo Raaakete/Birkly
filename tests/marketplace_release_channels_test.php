@@ -22,14 +22,14 @@ $releases = [
 ];
 
 try {
-    if (birkly_marketplace_update_channel() !== 'stable') {
-        $errors[] = 'Default update channel should be stable';
+    if (birkly_marketplace_update_channel() !== 'alpha') {
+        $errors[] = 'Default release channel filter should be alpha (all releases)';
     }
 
     birkly_marketplace_sync_update_channel('beta');
     birkly_marketplace_settings_reset();
     if (birkly_marketplace_update_channel() !== 'beta') {
-        $errors[] = 'Saved update channel should persist';
+        $errors[] = 'Saved release channel filter should persist';
     }
 
     if (birkly_marketplace_latest_release_version(birkly_marketplace_releases_for_channel($releases, 'stable')) !== '1.0.0') {
@@ -76,7 +76,7 @@ try {
         $errors[] = 'Offer distribution beta should elevate stable release row';
     }
     if (birkly_marketplace_release_visible_for_channel($stableRelease, 'stable', $betaOffer)) {
-        $errors[] = 'Beta-distributed offer should be hidden from stable site channel';
+        $errors[] = 'Beta-distributed offer should be hidden from stable discover filter';
     }
     if (!birkly_marketplace_release_requires_pre_release_ack(
         birkly_marketplace_release_effective_stability($betaOffer, $stableRelease)
@@ -93,32 +93,13 @@ try {
     $latestOnChannel = birkly_marketplace_latest_release_version($channelReleases);
     $latestOverall = birkly_marketplace_latest_release_version($allReleases);
     if ($latestOnChannel !== null) {
-        $errors[] = 'Alpha-distributed offer should expose no stable-channel releases';
+        $errors[] = 'Alpha-distributed offer should expose no stable-filter releases';
     }
     if ($latestOverall !== '1.1.27') {
         $errors[] = 'Overall latest should still be 1.1.27';
     }
-    $updateActionable = $latestOnChannel !== null && version_compare($latestOnChannel, '1.1.26', '>');
-    $updateBlockedByChannel = !$updateActionable
-        && $latestOverall !== null
-        && version_compare($latestOverall, '1.1.26', '>');
-    if ($updateActionable) {
-        $errors[] = 'Stable channel should not expose actionable update for alpha offer';
-    }
-    if (!$updateBlockedByChannel) {
-        $errors[] = 'Pending alpha-offer update should be blocked by channel on stable sites';
-    }
-    $requiredChannel = birkly_marketplace_required_channel_for_version($allReleases, '1.1.27', $alphaOffer);
-    if ($requiredChannel !== 'alpha') {
-        $errors[] = 'Required update channel should be alpha';
-    }
-    $gate = birkly_marketplace_gate_update_channel([
-        'update_blocked_by_channel' => true,
-        'required_update_channel' => $requiredChannel,
-        'latest_version_overall' => '1.1.27',
-    ]);
-    if (!empty($gate['ok']) || ($gate['code'] ?? '') !== 'update_channel_required') {
-        $errors[] = 'Upgrade should be blocked until site channel matches release';
+    if (!version_compare($latestOverall, '1.1.26', '>')) {
+        $errors[] = 'Overall latest should be newer than installed version';
     }
 
     $alphaOffer = ['slug' => 'alpha-offer', 'distribution' => 'alpha'];

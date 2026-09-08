@@ -258,10 +258,7 @@ function birkly_marketplace_install_permissions(string $slug, string $version = 
     $releases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
     $targetVersion = trim($version);
     if ($targetVersion === '') {
-        $channel = birkly_marketplace_update_channel();
-        $targetVersion = birkly_marketplace_latest_release_version(
-            birkly_marketplace_releases_for_channel($releases, $channel)
-        ) ?? '';
+        $targetVersion = birkly_marketplace_latest_release_version($releases) ?? '';
         if ($targetVersion === '') {
             return ['ok' => false, 'error' => 'No releases available for this offer'];
         }

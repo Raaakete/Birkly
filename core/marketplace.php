@@ -5,7 +5,7 @@
 
 const BIRKLY_MARKETPLACE_DEFAULT_URL = 'https://marketplace.birkly.cloud';
 const BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY = 'EUR';
-const BIRKLY_MARKETPLACE_DEFAULT_UPDATE_CHANNEL = 'stable';
+const BIRKLY_MARKETPLACE_DEFAULT_UPDATE_CHANNEL = 'alpha';
 
 require_once __DIR__ . '/marketplace/http.php';
 
@@ -1546,45 +1546,23 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
         ];
     }
 
-    $channel = birkly_marketplace_update_channel();
     $allReleases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
     $offerMeta = is_array($detail['offer'] ?? null) ? $detail['offer'] : [];
-    $releases = birkly_marketplace_releases_for_channel($allReleases, $channel, $offerMeta);
-    $latestOnChannel = birkly_marketplace_latest_release_version($releases);
     $latestOverall = birkly_marketplace_latest_release_version($allReleases);
-    $latestOnChannelStr = $latestOnChannel ?? $currentVersion;
     $latestOverallStr = $latestOverall ?? $currentVersion;
-    $updateActionable = $latestOnChannel !== null && version_compare($latestOnChannel, $currentVersion, '>');
-    $updateBlockedByChannel = !$updateActionable
-        && $latestOverall !== null
-        && version_compare($latestOverall, $currentVersion, '>');
-    $latestForDisplay = $updateActionable
-        ? $latestOnChannelStr
-        : ($updateBlockedByChannel ? $latestOverallStr : $latestOnChannelStr);
-    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latestForDisplay, $offerMeta);
+    $updateAvailable = $latestOverall !== null && version_compare($latestOverall, $currentVersion, '>');
+    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latestOverallStr, $offerMeta);
     $offerDistribution = birkly_marketplace_offer_distribution($offerMeta);
 
     $result = [
         'ok' => true,
-        'latest_version' => $latestForDisplay,
-        'latest_version_on_channel' => $latestOnChannelStr,
-        'latest_version_overall' => $latestOverallStr,
+        'latest_version' => $latestOverallStr,
         'latest_stability' => $latestStability,
         'offer_distribution' => $offerDistribution,
         'offer_distribution_notice' => birkly_marketplace_offer_distribution_notice($offerMeta),
-        'update_channel' => $channel,
-        'update_actionable' => $updateActionable,
-        'update_blocked_by_channel' => $updateBlockedByChannel,
-        'update_available' => $updateActionable || $updateBlockedByChannel,
+        'update_available' => $updateAvailable,
         'current_version' => $currentVersion,
     ];
-    if ($updateBlockedByChannel) {
-        $result['required_update_channel'] = birkly_marketplace_required_channel_for_version(
-            $allReleases,
-            (string) $latestOverall,
-            $offerMeta
-        );
-    }
 
     $licenseRef = trim((string) ($licenseRef ?? ''));
     if ($licenseRef !== '') {
@@ -1597,34 +1575,6 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
     }
 
     return $result;
-}
-
-/**
- * Block one-click upgrade when a newer release exists but the site channel hides it.
- *
- * @param array<string, mixed> $check Result from birkly_marketplace_check_plugin_update()
- * @return array{ok:bool,error?:string,code?:string,required_update_channel?:string}
- */
-function birkly_marketplace_gate_update_channel(array $check): array
-{
-    if (empty($check['update_blocked_by_channel'])) {
-        return ['ok' => true];
-    }
-
-    $required = birkly_marketplace_normalize_update_channel(
-        (string) ($check['required_update_channel'] ?? 'alpha')
-    );
-
-    return [
-        'ok' => false,
-        'code' => 'update_channel_required',
-        'required_update_channel' => $required,
-        'error' => sprintf(
-            'Switch your site update channel to %s in the Hub toolbar to install v%s.',
-            birkly_marketplace_stability_label($required),
-            (string) ($check['latest_version_overall'] ?? $check['latest_version'] ?? '')
-        ),
-    ];
 }
 
 /**
