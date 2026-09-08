@@ -69,6 +69,20 @@ try {
     if (birkly_marketplace_offer_is_installable(['slug' => 'soon', 'status' => 'coming_soon'])) {
         $errors[] = 'Coming soon offers must remain non-installable';
     }
+
+    $betaOffer = ['distribution' => 'beta'];
+    $stableRelease = ['version' => '2.0.0', 'stability' => 'stable'];
+    if (birkly_marketplace_release_effective_stability($betaOffer, $stableRelease) !== 'beta') {
+        $errors[] = 'Offer distribution beta should elevate stable release row';
+    }
+    if (birkly_marketplace_release_visible_for_channel($stableRelease, 'stable', $betaOffer)) {
+        $errors[] = 'Beta-distributed offer should be hidden from stable site channel';
+    }
+    if (!birkly_marketplace_release_requires_pre_release_ack(
+        birkly_marketplace_release_effective_stability($betaOffer, $stableRelease)
+    )) {
+        $errors[] = 'Effective beta stability should require pre_release_ack';
+    }
 } catch (Throwable $e) {
     $errors[] = 'Exception: ' . $e->getMessage();
 } finally {

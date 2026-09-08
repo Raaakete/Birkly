@@ -113,10 +113,43 @@ function birkly_marketplace_normalize_release_stability(string $stability): stri
     return $stability;
 }
 
-function birkly_marketplace_release_visible_for_channel(array $release, string $channel): bool
+function birkly_marketplace_offer_distribution(array $offer): string
+{
+    return birkly_marketplace_normalize_release_stability((string) ($offer['distribution'] ?? 'stable'));
+}
+
+function birkly_marketplace_pre_release_stability_rank(string $stability): int
+{
+    return match (birkly_marketplace_normalize_release_stability($stability)) {
+        'alpha' => 2,
+        'beta' => 1,
+        default => 0,
+    };
+}
+
+function birkly_marketplace_merge_release_stability(string $left, string $right): string
+{
+    $left = birkly_marketplace_normalize_release_stability($left);
+    $right = birkly_marketplace_normalize_release_stability($right);
+
+    return birkly_marketplace_pre_release_stability_rank($left) >= birkly_marketplace_pre_release_stability_rank($right)
+        ? $left
+        : $right;
+}
+
+function birkly_marketplace_release_effective_stability(array $offer, array $release): string
+{
+    $releaseStability = birkly_marketplace_normalize_release_stability((string) ($release['stability'] ?? 'stable'));
+
+    return birkly_marketplace_merge_release_stability(birkly_marketplace_offer_distribution($offer), $releaseStability);
+}
+
+function birkly_marketplace_release_visible_for_channel(array $release, string $channel, ?array $offer = null): bool
 {
     $channel = birkly_marketplace_normalize_update_channel($channel);
-    $stability = birkly_marketplace_normalize_release_stability((string) ($release['stability'] ?? 'stable'));
+    $stability = $offer !== null
+        ? birkly_marketplace_release_effective_stability($offer, $release)
+        : birkly_marketplace_normalize_release_stability((string) ($release['stability'] ?? 'stable'));
     if ($channel === 'alpha') {
         return true;
     }
@@ -131,14 +164,14 @@ function birkly_marketplace_release_visible_for_channel(array $release, string $
  * @param list<array<string, mixed>> $releases
  * @return list<array<string, mixed>>
  */
-function birkly_marketplace_releases_for_channel(array $releases, string $channel): array
+function birkly_marketplace_releases_for_channel(array $releases, string $channel, ?array $offer = null): array
 {
     $filtered = [];
     foreach ($releases as $release) {
         if (!is_array($release)) {
             continue;
         }
-        if (birkly_marketplace_release_visible_for_channel($release, $channel)) {
+        if (birkly_marketplace_release_visible_for_channel($release, $channel, $offer)) {
             $filtered[] = $release;
         }
     }
@@ -172,11 +205,15 @@ function birkly_marketplace_latest_release_version(array $releases, ?string $cha
 /**
  * @param list<array<string, mixed>> $releases
  */
-function birkly_marketplace_release_stability_from_releases(array $releases, string $version): string
+function birkly_marketplace_release_stability_from_releases(array $releases, string $version, ?array $offer = null): string
 {
     foreach ($releases as $release) {
         if (!is_array($release) || (string) ($release['version'] ?? '') !== $version) {
             continue;
+        }
+
+        if ($offer !== null) {
+            return birkly_marketplace_release_effective_stability($offer, $release);
         }
 
         return birkly_marketplace_normalize_release_stability((string) ($release['stability'] ?? 'stable'));
@@ -1432,9 +1469,10 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
 
     $channel = birkly_marketplace_update_channel();
     $allReleases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
-    $releases = birkly_marketplace_releases_for_channel($allReleases, $channel);
+    $offerMeta = is_array($detail['offer'] ?? null) ? $detail['offer'] : [];
+    $releases = birkly_marketplace_releases_for_channel($allReleases, $channel, $offerMeta);
     $latest = birkly_marketplace_latest_release_version($releases) ?? $currentVersion;
-    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latest);
+    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latest, $offerMeta);
 
     $result = [
         'ok' => true,
