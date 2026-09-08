@@ -83,6 +83,20 @@ guard_file('api/plugin_activity.php', [
     '/\\$input\\[\'plugin\'\\].*\'commerce\'/',
 ]);
 
+guard_file('api/admin_entries.php', [
+    '/enqueue_automation/',
+]);
+
+guard_file('core/health.php', [
+    "/get_plugin_state\\('studio'\\)/",
+    '/plugins\\/studio\\//',
+]);
+
+guard_file('api/studio_view.php', [
+    '/plugins\\/studio\\//',
+    '/StudioRenderer\\.php/',
+]);
+
 if ($failures !== []) {
     exit(1);
 }
