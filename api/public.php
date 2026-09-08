@@ -104,6 +104,20 @@ function respond($data) {
  *
  * NOTE: This is required because client-side rendering cannot execute PHP callbacks.
  */
+if ($action === 'storefront_scripts') {
+    birkly_public_api_enforce_auth('read', null, null, 'storefront_scripts');
+    birkly_public_rate_limit('storefront_scripts', 60, 60);
+
+    require_once __DIR__ . '/../core/plugins/storefront_shelf.php';
+
+    respond([
+        'status' => 'ok',
+        'data' => [
+            'scripts' => birkly_get_storefront_scripts(),
+        ],
+    ]);
+}
+
 if ($action === 'template_functions_list') {
     birkly_public_api_enforce_auth('read', null, null, 'template_functions_list');
     birkly_public_rate_limit('template_functions_list', 20, 60);

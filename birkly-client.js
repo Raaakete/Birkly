@@ -2000,6 +2000,82 @@
         return fetch(url, opts);
     }
 
+    const STOREFRONT_SCRIPT_LOAD_TIMEOUT_MS = 15000;
+
+    /**
+     * Load active plugin storefront scripts declared in plugin.json (P82).
+     * Always uses public.php — not tied to secure_public collection reads.
+     */
+    async function loadStorefrontPluginScripts() {
+        const loaded = [];
+        try {
+            const manifestUrl = Birkly.cmsUrl + Birkly.publicApi + '?action=storefront_scripts';
+            const res = await birklyCredentialedFetch(manifestUrl, {
+                headers: { Accept: 'application/json' },
+            });
+            if (!res.ok) {
+                Birkly.warn('Birkly: storefront_scripts request failed', res.status);
+                return loaded;
+            }
+            const json = await res.json().catch(() => ({}));
+            const scripts = json?.data?.scripts;
+            if (!Array.isArray(scripts) || scripts.length === 0) {
+                return loaded;
+            }
+
+            const pending = [];
+
+            for (const entry of scripts) {
+                if (!entry || typeof entry !== 'object') continue;
+
+                const provides = String(entry.provides || '').trim();
+                if (provides && typeof window[provides] !== 'undefined') {
+                    Birkly.log('Birkly: skipping storefront script — global already present:', provides);
+                    continue;
+                }
+
+                const urlPath = String(entry.url || '').trim();
+                if (!urlPath) continue;
+
+                const version = String(entry.version || '').trim();
+                const base = String(Birkly.cmsUrl || '').replace(/\/$/, '');
+                let src = base + (urlPath.startsWith('/') ? urlPath : '/' + urlPath);
+                if (version) {
+                    src += (src.includes('?') ? '&' : '?') + 'v=' + encodeURIComponent(version);
+                }
+
+                pending.push(new Promise((resolve) => {
+                    const scriptEl = document.createElement('script');
+                    scriptEl.src = src;
+                    scriptEl.async = true;
+                    let settled = false;
+                    const finish = (ok) => {
+                        if (settled) return;
+                        settled = true;
+                        if (ok) {
+                            loaded.push(entry);
+                        } else {
+                            Birkly.warn('Birkly: storefront script failed to load:', src);
+                        }
+                        resolve();
+                    };
+                    scriptEl.onload = () => finish(true);
+                    scriptEl.onerror = () => finish(false);
+                    document.head.appendChild(scriptEl);
+                    setTimeout(() => finish(false), STOREFRONT_SCRIPT_LOAD_TIMEOUT_MS);
+                }));
+            }
+
+            if (pending.length > 0) {
+                await Promise.all(pending);
+            }
+        } catch (e) {
+            Birkly.warn('Birkly: storefront script loader error', e);
+        }
+
+        return loaded;
+    }
+
     async function fetchSiteAuthState() {
         try {
             const res = await birklyCredentialedFetch(
@@ -4962,6 +5038,11 @@
         Birkly.log('Birkly: API endpoint detected:', Birkly.apiEndpoint);
         try {
             document.dispatchEvent(new CustomEvent('birkly:api-ready', { bubbles: true }));
+        } catch (_) { /* ignore */ }
+
+        await loadStorefrontPluginScripts();
+        try {
+            document.dispatchEvent(new CustomEvent('birkly:plugins-ready', { bubbles: true }));
         } catch (_) { /* ignore */ }
 
         const ssrSkipTemplates = shouldSkipSsrClientHydration();
