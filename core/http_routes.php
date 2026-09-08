@@ -75,11 +75,6 @@ function birkly_dispatch_http_route(string $uri): bool
         }
     }
 
-    if (str_starts_with($uri, '/site') && ($uri === '/site' || str_starts_with($uri, '/site/'))) {
-        require __DIR__ . '/../api/studio_public.php';
-        return true;
-    }
-
     if (function_exists('load_plugins')) {
         load_plugins(dirname(__DIR__) . '/plugins');
     }

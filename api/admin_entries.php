@@ -930,8 +930,8 @@ function saveEntry() {
     
     // Trigger automation system (when plugin active)
     try {
-        require_once __DIR__ . '/../core/automation/bootstrap.php';
-        if (automation_bootstrap()) {
+        require_once __DIR__ . '/../core/plugin_availability.php';
+        if (birkly_bootstrap_active_plugin('automation')) {
             $oldStatus = $entry['status'] ?? '';
             $newStatus = $entryOutput['status'] ?? '';
             

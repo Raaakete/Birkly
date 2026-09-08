@@ -1,22 +1,18 @@
 <?php
 /**
- * Public SSR entry for Studio published sites (P22-M9).
- * Apache: .htaccess routes /site/* here. Dev: server-router dispatches via register_public_route.
+ * Public route alias entry (Apache / legacy). Dispatches via plugin register_public_route shelf.
  */
 
 require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 require_once __DIR__ . '/../core/plugins.php';
+require_once __DIR__ . '/../core/plugin_public_routes.php';
 
 load_plugins(dirname(__DIR__) . '/plugins');
 
-require_once __DIR__ . '/../plugins/studio/includes/studio_public_uri.php';
-require_once __DIR__ . '/../plugins/studio/includes/StudioRenderer.php';
-
-$uri = studio_resolve_public_uri();
-$renderer = new StudioRenderer();
-if ($renderer->handlePublicRequest($uri)) {
+$uri = parse_url($_SERVER['REQUEST_URI'] ?? '/site/', PHP_URL_PATH) ?: '/site/';
+if (function_exists('birkly_dispatch_public_routes') && birkly_dispatch_public_routes($uri)) {
     exit;
 }
 

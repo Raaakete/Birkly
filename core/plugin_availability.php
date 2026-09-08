@@ -43,3 +43,18 @@ function birkly_plugin_is_installed_and_active(string $plugin_id): bool
     }
     return birkly_is_plugin_active($plugin_id);
 }
+
+/**
+ * Load plugins registry and return whether a plugin is active (P82-M7).
+ */
+function birkly_bootstrap_active_plugin(string $plugin_id): bool
+{
+    if (!function_exists('load_plugins')) {
+        require_once __DIR__ . '/plugins.php';
+    }
+    if (!isset($GLOBALS['haru_plugins_loaded'])) {
+        load_plugins();
+        $GLOBALS['haru_plugins_loaded'] = true;
+    }
+    return birkly_plugin_is_installed_and_active($plugin_id);
+}
