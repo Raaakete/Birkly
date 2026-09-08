@@ -2233,6 +2233,20 @@
         renderInstalledPlugins();
     }
 
+    async function acknowledgeHubUpdatesAttention() {
+        try {
+            await fetch(url('/api/plugin_activity.php?action=clear_hub_updates'), { credentials: 'same-origin' });
+            if (typeof window.loadNavAttention === 'function') {
+                window.loadNavAttention();
+            }
+            if (typeof window.loadUnreadCount === 'function') {
+                window.loadUnreadCount();
+            }
+        } catch (err) {
+            // Non-blocking — updates tab still works offline
+        }
+    }
+
     async function loadUpdatesTab() {
         var grid = document.getElementById('hub-updates-grid');
         if (grid) {
@@ -2248,6 +2262,7 @@
         }
         await refreshUpdateBadge(true);
         renderUpdatesPanel();
+        await acknowledgeHubUpdatesAttention();
     }
 
     async function restorePendingHubLicensesFromServer() {
