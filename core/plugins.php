@@ -764,6 +764,7 @@ require_once __DIR__ . '/plugins/security.php';
 require_once __DIR__ . '/plugins/validation.php';
 require_once __DIR__ . '/plugins/template_functions.php';
 require_once __DIR__ . '/plugins/docs_shelf.php';
+require_once __DIR__ . '/plugins/storefront_shelf.php';
 require_once __DIR__ . '/plugins/mcp_shelf.php';
 require_once __DIR__ . '/plugins/admin_shelf.php';
 require_once __DIR__ . '/plugins/fieldtype_shelf.php';

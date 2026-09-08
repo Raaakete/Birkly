@@ -147,13 +147,8 @@ require_once __DIR__ . '/../core/birkly_paths.php';
     }
     
     // Check ownership - user can only delete their own sub-entries
-    // Use EntryPermissions to get current user ID (same approach as api/public.php)
-    $currentUserId = '';
-    if (file_exists(__DIR__ . '/../plugins/user_management/includes/EntryPermissions.php')) {
-        require_once __DIR__ . '/../plugins/user_management/includes/EntryPermissions.php';
-        $entryPermissions = new EntryPermissions();
-        $currentUserId = $entryPermissions->getCurrentUserId();
-    }
+    require_once __DIR__ . '/../core/public_current_user.php';
+    $currentUserId = birkly_public_current_user_id();
     
     if (empty($currentUserId)) {
         http_response_code(401);

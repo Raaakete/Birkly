@@ -516,15 +516,9 @@ if ($action === 'list_entries') {
         }
     }
     
-    // Apply permission filtering if user management plugin is installed and active
-    if (birkly_plugin_is_installed_and_active('user_management')
-        && birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
-        $entryPermissions = new EntryPermissions();
-        $currentUserId = $entryPermissions->getCurrentUserId();
-
-        // Filter entries by view permission
-        $cachedEntries = $entryPermissions->filterEntriesByViewPermission($currentUserId, $cachedEntries);
-    }
+    // Apply permission filtering via plugin filters (P82-D6)
+    require_once __DIR__ . '/../core/public_current_user.php';
+    $cachedEntries = birkly_filter_entries_for_current_user($cachedEntries, (string) ($collectionMeta['slug'] ?? $dir));
     
     // Get language parameter
     $language = $input['language'] ?? $_GET['language'] ?? 'en';
