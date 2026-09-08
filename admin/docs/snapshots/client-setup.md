@@ -4,7 +4,7 @@ How to load `birkly-client.js` so template tags render — same host as the CMS,
 
 ## Summary
 
-**In short:** Every templated HTML page needs `<script src="/birkly-client.js"></script>`. If the site is **not** on the same origin as Birkly, add `data-cms-url="https://your-cms.example"`. Without the script, visitors see raw `{for each…}` text. The default is client-side rendering; SSR is optional for SEO/performance budgets.
+**In short:** Every templated HTML page needs `<script src="/birkly-client.js"></script>`. If the site is **not** on the same origin as Birkly, add `data-cms-url="https://your-cms.example"`. Without the script, visitors see raw `{for each…}` text. Active plugins (User, Commerce, Events) load their storefront scripts automatically — do not add separate `/plugins/…/storefront.js` tags. See [Project sites and plugins](project-sites-and-plugins.md). The default is client-side rendering; SSR is optional for SEO/performance budgets.
 
 ![HTML → birkly-client.js → CMS → rendered page](../media/03-templating/client-setup/screenshots/client-pipeline.svg)
 
@@ -93,6 +93,7 @@ await Birkly.processTemplates({ root: el, silent: true, force: false });
 
 ## Related
 
+- [Project sites and plugins](project-sites-and-plugins.md) — auto-loaded storefront scripts, member gates, `Birkly.fetch`
 - [Templating overview](templating-overview.md)
 - [Client library](../04-integration/client-library.md)
 - [Website integration](../04-integration/website-integration.md)

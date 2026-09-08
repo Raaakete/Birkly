@@ -1299,6 +1299,25 @@
             "ai_topic": "templating"
         },
         {
+            "id": "project-sites-and-plugins",
+            "title": "Project sites and plugins",
+            "keywords": [
+                "storefront",
+                "plugin",
+                "birkly-client",
+                "data-user-require-auth",
+                "Birkly.fetch",
+                "cross-origin",
+                "storefront.scripts",
+                "member gate"
+            ],
+            "snapshot": "/admin/docs/snapshots/project-sites-and-plugins.md",
+            "docs_path": "03-templating/project-sites-and-plugins.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
             "id": "public-forms",
             "title": "Public forms",
             "keywords": [
@@ -1380,6 +1399,25 @@
             "nav_section": "admin",
             "nav_section_label": "Admin",
             "ai_topic": "settings-roles"
+        },
+        {
+            "id": "admin-plugin-extension",
+            "title": "Admin plugin extension",
+            "keywords": [
+                "admin",
+                "plugin",
+                "dashboard",
+                "notification",
+                "webmcp",
+                "shelf",
+                "extension",
+                "admin.scripts"
+            ],
+            "snapshot": "/admin/docs/snapshots/admin-plugin-extension.md",
+            "docs_path": "06-extensibility/admin-plugin-extension.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility",
+            "ai_topic": "plugins-overview"
         },
         {
             "id": "scaffold-plugin",
@@ -1619,6 +1657,6 @@
     ],
     "manifest_source": "offline",
     "offline": true,
-    "synced_at": "2026-09-02T08:32:46+00:00",
-    "synced_from": "/agent/repos/birkly-docs"
+    "synced_at": "2026-09-08T15:48:03+00:00",
+    "synced_from": "/agent/repos/Birkly-Docs"
 }

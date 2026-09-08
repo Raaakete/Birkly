@@ -98,14 +98,15 @@ On detail: `{title}` / `{'content'}` — **no** `{for each entry in 'blog'}`.
 | `{ media … }` | `{'featured_image'}` in `<img>` |
 | `ordered="date:desc"` | `ordered="newest"` |
 | Detail page collection loop | URL context + `.current` |
-| Custom form `fetch` | `{entry for}` |
+| Manual `/plugins/…/storefront.js` tags | Single `birkly-client.js` — [Project sites and plugins](project-sites-and-plugins.md) |
+| Custom `club-gate.js` auth script | `data-user-require-auth` on `<html>` / `<body>` |
 
 ### Learning map
 
 | Task | Doc |
 |------|-----|
 | Mental model | [Templating overview](templating-overview.md) |
-| Script tag | [Client setup](client-setup.md) |
+| Script tag + plugins | [Client setup](client-setup.md), [Project sites and plugins](project-sites-and-plugins.md) |
 | List/detail | [Loops](loops-and-lists.md), [Detail pages](detail-pages-and-url-context.md) |
 | Forms | [Public forms templating](public-forms-templating.md) |
 | Full tutorial | [Worked site walkthrough](worked-site-walkthrough.md) |

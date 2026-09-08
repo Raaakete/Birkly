@@ -58,17 +58,18 @@ See [Detail pages & URL context](detail-pages-and-url-context.md) and [Regions /
 </html>
 ```
 
-Every templated page needs the client script. On an **external** site (different domain than the CMS), add `data-cms-url="https://your-cms.example"`. See [Client setup](client-setup.md).
+Every templated page needs the client script. On an **external** site (different domain than the CMS), add `data-cms-url="https://your-cms.example"`. See [Client setup](client-setup.md). When User, Commerce, or Events plugins are active, storefront behavior loads automatically — [Project sites and plugins](project-sites-and-plugins.md).
 
 ### Learning path
 
 1. [Client setup](client-setup.md) — script tag, same-host vs external, SSR vs client  
-2. [Variables and output](variables-and-output.md) — `{title}` vs `{'field'}`  
-3. [Loops and lists](loops-and-lists.md) — `with`, `ordered by`, `limit`  
-4. [Detail pages & URL context](detail-pages-and-url-context.md) — `.current`, anti-patterns  
-5. [Conditionals](conditionals.md) · [Dates](dates-and-formatting.md) · [From…get](from-get-and-existence.md)  
-6. [Public forms templating](public-forms-templating.md) · [Worked site walkthrough](worked-site-walkthrough.md)  
-7. [Cheat sheet](cheat-sheet.md) — quick reference + phantoms  
+2. [Project sites and plugins](project-sites-and-plugins.md) — plugin storefront auto-load, member gates, `Birkly.fetch`  
+3. [Variables and output](variables-and-output.md) — `{title}` vs `{'field'}`  
+4. [Loops and lists](loops-and-lists.md) — `with`, `ordered by`, `limit`  
+5. [Detail pages & URL context](detail-pages-and-url-context.md) — `.current`, anti-patterns  
+6. [Conditionals](conditionals.md) · [Dates](dates-and-formatting.md) · [From…get](from-get-and-existence.md)  
+7. [Public forms templating](public-forms-templating.md) · [Worked site walkthrough](worked-site-walkthrough.md)  
+8. [Cheat sheet](cheat-sheet.md) — quick reference + phantoms  
 
 ### Where does replacement happen?
 
@@ -118,6 +119,7 @@ Every templated page needs the client script. On an **external** site (different
 
 - [Canonical syntax](canonical-syntax.md)
 - [Client setup](client-setup.md)
+- [Project sites and plugins](project-sites-and-plugins.md)
 - [Cheat sheet](cheat-sheet.md)
 - [Choose your stack](../04-integration/choose-your-stack.md)
 - [Website integration](../04-integration/website-integration.md)

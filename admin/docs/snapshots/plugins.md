@@ -71,6 +71,7 @@ Browse official and community extensions at [marketplace.birkly.cloud](https://m
 - **Templating** — Expose template functions or variables.
 - **Automation** — Register triggers or actions. Exact API depends on core/automation and plugin_integration.
 - **Website tools (WebMCP)** — Register visitor actions with `birkly_webmcp_register_tools()` so they appear in Discovery → WebMCP. Separate from inbound Birkly MCP (`register_plugin_mcp_tools()`). See [Website tools (WebMCP)](../04-integration/webmcp-tools.md#plugin-authors-register-a-webmcp-catalog).
+- **Admin presentation shelf (P83)** — Declare `admin.scripts[]`, dashboard mounts, notification formatters, and WebMCP runtime packs in the plugin repo. See [Admin plugin extension](admin-plugin-extension.md).
 
 **Structure (developer)**
 
@@ -109,5 +110,6 @@ The plugin system may support capabilities, permissions, migrations, scheduled t
 - [Marketplace — provider publishing guide](marketplace-provider-guide.md)
 - [Settings](../01-admin/settings.md)
 - [Commerce plugin](plugins/commerce.md)
+- [Admin plugin extension](admin-plugin-extension.md)
 - [Updates](updates.md)
 - [Automation overview](../05-automation/automation-overview.md)
