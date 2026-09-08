@@ -118,6 +118,20 @@ if ($action === 'storefront_scripts') {
     ]);
 }
 
+if ($action === 'site_client_config') {
+    birkly_public_api_enforce_auth('read', null, null, 'site_client_config');
+    birkly_public_rate_limit('site_client_config', 60, 60);
+
+    require_once __DIR__ . '/../core/public_bootstrap.php';
+    require_once __DIR__ . '/../core/plugins/storefront_shelf.php';
+    birkly_public_load_active_plugins();
+
+    respond([
+        'status' => 'ok',
+        'data' => birkly_get_site_client_config(),
+    ]);
+}
+
 if ($action === 'template_functions_list') {
     birkly_public_api_enforce_auth('read', null, null, 'template_functions_list');
     birkly_public_rate_limit('template_functions_list', 20, 60);

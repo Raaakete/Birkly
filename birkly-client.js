@@ -2076,14 +2076,101 @@
         return loaded;
     }
 
+    Birkly.siteClientConfig = null;
+
+    async function loadSiteClientConfig() {
+        if (Birkly.siteClientConfig && typeof Birkly.siteClientConfig === 'object') {
+            return Birkly.siteClientConfig;
+        }
+        try {
+            const url = Birkly.cmsUrl + Birkly.publicApi + '?action=site_client_config';
+            const res = await birklyCredentialedFetch(url, {
+                headers: { Accept: 'application/json' },
+            });
+            const json = await res.json().catch(() => ({}));
+            Birkly.siteClientConfig = (json?.data && typeof json.data === 'object') ? json.data : {};
+        } catch (e) {
+            Birkly.warn('Birkly: site_client_config request failed', e);
+            Birkly.siteClientConfig = {};
+        }
+        return Birkly.siteClientConfig;
+    }
+
+    /**
+     * Plugin API transport (P82-D4): credentialed fetch to /api/index.php?route=…
+     */
+    async function birklyRouteFetch(opts) {
+        const options = opts && typeof opts === 'object' ? opts : {};
+        const route = String(options.route || '').trim();
+        const action = String(options.action || '').trim();
+        if (!route || !action) {
+            throw new Error('Birkly.fetch requires route and action');
+        }
+
+        const method = String(options.method || 'GET').toUpperCase();
+        let url = Birkly.cmsUrl + '/api/index.php?route=' + encodeURIComponent(route)
+            + '&action=' + encodeURIComponent(action);
+
+        const params = options.params && typeof options.params === 'object' ? options.params : null;
+        if (params && method === 'GET') {
+            const qs = new URLSearchParams();
+            Object.keys(params).forEach((key) => {
+                const val = params[key];
+                if (val !== undefined && val !== null) {
+                    qs.set(key, String(val));
+                }
+            });
+            const extra = qs.toString();
+            if (extra) {
+                url += '&' + extra;
+            }
+        }
+
+        const headers = Object.assign({ Accept: 'application/json' }, options.headers || {});
+        const fetchOpts = { method, headers };
+
+        if (options.body !== undefined && method !== 'GET' && method !== 'HEAD') {
+            if (!headers['Content-Type'] && !headers['content-type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+            fetchOpts.body = typeof options.body === 'string'
+                ? options.body
+                : JSON.stringify(options.body);
+        }
+
+        const res = await birklyCredentialedFetch(url, fetchOpts);
+        const json = await res.json().catch(() => ({}));
+        captureSiteSessionFromResponse(json);
+        if (!res.ok && options.throwOnError !== false) {
+            const err = new Error(json.message || json.error || ('HTTP ' + res.status));
+            err.response = json;
+            err.status = res.status;
+            throw err;
+        }
+        return json;
+    }
+
+    async function birklyFetch(arg1, arg2, arg3) {
+        if (arg1 && typeof arg1 === 'object' && !Array.isArray(arg1)) {
+            return birklyRouteFetch(arg1);
+        }
+        return fetchContent(arg1, arg2, arg3);
+    }
+
     async function fetchSiteAuthState() {
         try {
-            const res = await birklyCredentialedFetch(
-                Birkly.cmsUrl + '/api/index.php?route=user_auth&action=check',
-                { headers: { Accept: 'application/json' } }
-            );
-            const json = await res.json().catch(() => ({}));
-            captureSiteSessionFromResponse(json);
+            const config = await loadSiteClientConfig();
+            const check = config?.auth?.check;
+            if (!check || !check.route || !check.action) {
+                return { loggedIn: false, user: null };
+            }
+
+            const json = await birklyRouteFetch({
+                route: check.route,
+                action: check.action,
+                method: 'GET',
+                throwOnError: false,
+            });
             return { loggedIn: !!json.logged_in, user: json.user || null };
         } catch (e) {
             Birkly.warn('Birkly: site auth check failed', e);
@@ -5040,6 +5127,7 @@
             document.dispatchEvent(new CustomEvent('birkly:api-ready', { bubbles: true }));
         } catch (_) { /* ignore */ }
 
+        await loadSiteClientConfig();
         await loadStorefrontPluginScripts();
         try {
             document.dispatchEvent(new CustomEvent('birkly:plugins-ready', { bubbles: true }));
@@ -5808,9 +5896,14 @@
         init: init,
         
         /**
-         * Fetch content from CMS
+         * Fetch content from CMS (public.php actions) or plugin APIs when given { route, action }.
          */
-        fetch: fetchContent,
+        fetch: birklyFetch,
+
+        /**
+         * Credentialed plugin API transport (P82-D4).
+         */
+        routeFetch: birklyRouteFetch,
         
         /**
          * Submit data to CMS (for forms)

@@ -239,3 +239,48 @@ function birkly_get_storefront_scripts(): array
 
     return array_values($scripts);
 }
+
+/**
+ * Deep-merge associative arrays for site_client_config contributions.
+ *
+ * @param array<string, mixed> $base
+ * @param array<string, mixed> $chunk
+ * @return array<string, mixed>
+ */
+function birkly_merge_site_client_config(array $base, array $chunk): array
+{
+    foreach ($chunk as $key => $value) {
+        if (is_array($value) && isset($base[$key]) && is_array($base[$key])) {
+            $base[$key] = birkly_merge_site_client_config($base[$key], $value);
+        } else {
+            $base[$key] = $value;
+        }
+    }
+
+    return $base;
+}
+
+/**
+ * Aggregate site client configuration from active plugins via filter.
+ *
+ * @return array<string, mixed>
+ */
+function birkly_get_site_client_config(): array
+{
+    birkly_bootstrap_plugins_for_storefront();
+
+    if (function_exists('birkly_public_load_active_plugins')) {
+        require_once dirname(__DIR__) . '/public_bootstrap.php';
+        birkly_public_load_active_plugins();
+    }
+
+    $config = [];
+    if (function_exists('apply_filters')) {
+        $filtered = apply_filters('birkly_site_client_config', $config);
+        if (is_array($filtered)) {
+            $config = $filtered;
+        }
+    }
+
+    return $config;
+}
