@@ -471,12 +471,9 @@ if ($action === 'delete_entry') {
     require_once __DIR__ . '/../core/public_bootstrap.php';
     birkly_public_load_active_plugins();
     
-  // Use EntryPermissions to get current user ID
-    $currentUserId = '';
-    if (birkly_require_plugin_file('user_management', 'includes/EntryPermissions.php')) {
-        $entryPermissions = new EntryPermissions();
-        $currentUserId = $entryPermissions->getCurrentUserId();
-    }
+  // Resolve current user via generic public filter (P82-D6)
+    require_once __DIR__ . '/../core/public_current_user.php';
+    $currentUserId = birkly_public_current_user_id();
     
     if (empty($currentUserId)) {
         http_response_code(401);
