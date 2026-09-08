@@ -2088,7 +2088,8 @@
     async function syncSiteAuthUi() {
         const hasAuthBlocks = !!document.querySelector('[data-birkly-auth]');
         const hasStoredSession = !!getStoredSiteSessionId();
-        if (!hasAuthBlocks && !hasStoredSession) {
+        const requiresMember = document.documentElement.hasAttribute('data-birkly-require-member');
+        if (!hasAuthBlocks && !hasStoredSession && !requiresMember) {
             return { loggedIn: false, user: null };
         }
 
