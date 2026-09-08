@@ -5,6 +5,7 @@
 
 const BIRKLY_MARKETPLACE_DEFAULT_URL = 'https://marketplace.birkly.cloud';
 const BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY = 'EUR';
+const BIRKLY_MARKETPLACE_DEFAULT_UPDATE_CHANNEL = 'stable';
 
 require_once __DIR__ . '/marketplace/http.php';
 
@@ -59,6 +60,138 @@ function birkly_marketplace_sync_display_currency(string $currency): void
     $data['display_currency'] = $currency;
     $storage->write('marketplace.json', $data);
     birkly_marketplace_settings_reset();
+}
+
+function birkly_marketplace_update_channels(): array
+{
+    return ['stable', 'beta', 'alpha'];
+}
+
+function birkly_marketplace_normalize_update_channel(string $channel): string
+{
+    $channel = strtolower(trim($channel));
+    if (!in_array($channel, birkly_marketplace_update_channels(), true)) {
+        return BIRKLY_MARKETPLACE_DEFAULT_UPDATE_CHANNEL;
+    }
+
+    return $channel;
+}
+
+function birkly_marketplace_update_channel(): string
+{
+    $channel = strtolower(trim((string) (birkly_marketplace_settings()['update_channel'] ?? BIRKLY_MARKETPLACE_DEFAULT_UPDATE_CHANNEL)));
+
+    return birkly_marketplace_normalize_update_channel($channel);
+}
+
+function birkly_marketplace_sync_update_channel(string $channel): void
+{
+    require_once __DIR__ . '/../api/storage.php';
+    $normalized = strtolower(trim($channel));
+    if (!in_array($normalized, birkly_marketplace_update_channels(), true)) {
+        throw new InvalidArgumentException('Unsupported update channel');
+    }
+
+    $storage = new Storage(birkly_marketplace_settings_dir());
+    $data = $storage->read('marketplace.json') ?? [];
+    if (!is_array($data)) {
+        $data = [];
+    }
+
+    $data['update_channel'] = $normalized;
+    $storage->write('marketplace.json', $data);
+    birkly_marketplace_settings_reset();
+}
+
+function birkly_marketplace_normalize_release_stability(string $stability): string
+{
+    $stability = strtolower(trim($stability));
+    if (!in_array($stability, birkly_marketplace_update_channels(), true)) {
+        return 'stable';
+    }
+
+    return $stability;
+}
+
+function birkly_marketplace_release_visible_for_channel(array $release, string $channel): bool
+{
+    $channel = birkly_marketplace_normalize_update_channel($channel);
+    $stability = birkly_marketplace_normalize_release_stability((string) ($release['stability'] ?? 'stable'));
+    if ($channel === 'alpha') {
+        return true;
+    }
+    if ($channel === 'beta') {
+        return in_array($stability, ['stable', 'beta'], true);
+    }
+
+    return $stability === 'stable';
+}
+
+/**
+ * @param list<array<string, mixed>> $releases
+ * @return list<array<string, mixed>>
+ */
+function birkly_marketplace_releases_for_channel(array $releases, string $channel): array
+{
+    $filtered = [];
+    foreach ($releases as $release) {
+        if (!is_array($release)) {
+            continue;
+        }
+        if (birkly_marketplace_release_visible_for_channel($release, $channel)) {
+            $filtered[] = $release;
+        }
+    }
+
+    return $filtered;
+}
+
+/**
+ * @param list<array<string, mixed>> $releases
+ */
+function birkly_marketplace_latest_release_version(array $releases, ?string $channel = null): ?string
+{
+    if ($channel !== null) {
+        $releases = birkly_marketplace_releases_for_channel($releases, $channel);
+    }
+
+    $latest = null;
+    foreach ($releases as $release) {
+        if (!is_array($release)) {
+            continue;
+        }
+        $ver = trim((string) ($release['version'] ?? ''));
+        if ($ver !== '' && ($latest === null || version_compare($ver, $latest, '>'))) {
+            $latest = $ver;
+        }
+    }
+
+    return $latest;
+}
+
+/**
+ * @param list<array<string, mixed>> $releases
+ */
+function birkly_marketplace_release_stability_from_releases(array $releases, string $version): string
+{
+    foreach ($releases as $release) {
+        if (!is_array($release) || (string) ($release['version'] ?? '') !== $version) {
+            continue;
+        }
+
+        return birkly_marketplace_normalize_release_stability((string) ($release['stability'] ?? 'stable'));
+    }
+
+    return 'stable';
+}
+
+function birkly_marketplace_stability_label(string $stability): string
+{
+    return match (birkly_marketplace_normalize_release_stability($stability)) {
+        'alpha' => 'Alpha',
+        'beta' => 'Beta',
+        default => 'Stable',
+    };
 }
 
 function birkly_marketplace_convert_cents(int $cents, string $fromCurrency, string $toCurrency): int
@@ -118,10 +251,15 @@ function birkly_marketplace_settings(): array
         $displayCurrency = BIRKLY_MARKETPLACE_DEFAULT_DISPLAY_CURRENCY;
     }
 
+    $updateChannel = birkly_marketplace_normalize_update_channel(
+        (string) ($stored['update_channel'] ?? BIRKLY_MARKETPLACE_DEFAULT_UPDATE_CHANNEL)
+    );
+
     $GLOBALS['__birkly_marketplace_settings'] = [
         'marketplace_url' => rtrim($url, '/'),
         'installation_owner_email' => trim((string) ($stored['installation_owner_email'] ?? '')),
         'display_currency' => $displayCurrency,
+        'update_channel' => $updateChannel,
         'entitlement_secret' => trim((string) ($stored['entitlement_secret'] ?? (getenv('BIRKLY_MARKETPLACE_ENTITLEMENT_SECRET') ?: ''))),
     ];
     return $GLOBALS['__birkly_marketplace_settings'];
@@ -1292,21 +1430,17 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
         ];
     }
 
-    $releases = $detail['releases'] ?? [];
-    $latest = $currentVersion;
-    foreach ($releases as $release) {
-        if (!is_array($release)) {
-            continue;
-        }
-        $ver = (string) ($release['version'] ?? '');
-        if ($ver !== '' && version_compare($ver, $latest, '>')) {
-            $latest = $ver;
-        }
-    }
+    $channel = birkly_marketplace_update_channel();
+    $allReleases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
+    $releases = birkly_marketplace_releases_for_channel($allReleases, $channel);
+    $latest = birkly_marketplace_latest_release_version($releases) ?? $currentVersion;
+    $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latest);
 
     $result = [
         'ok' => true,
         'latest_version' => $latest,
+        'latest_stability' => $latestStability,
+        'update_channel' => $channel,
         'update_available' => version_compare($latest, $currentVersion, '>'),
         'current_version' => $currentVersion,
     ];
@@ -1484,4 +1618,5 @@ function birkly_marketplace_submit_installation_review(string $slug, int $rating
 require_once __DIR__ . '/marketplace/install.php';
 require_once __DIR__ . '/marketplace/template_pack.php';
 require_once __DIR__ . '/marketplace/consent.php';
+require_once __DIR__ . '/marketplace/pre_release.php';
 require_once __DIR__ . '/marketplace/hub_licenses.php';

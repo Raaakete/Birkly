@@ -638,6 +638,8 @@ function birkly_marketplace_installed_plugin_updates(): array
             'marketplace_slug' => $slug,
             'current_version' => $current,
             'latest_version' => $check['latest_version'] ?? $current,
+            'latest_stability' => $check['latest_stability'] ?? 'stable',
+            'update_channel' => $check['update_channel'] ?? birkly_marketplace_update_channel(),
             'update_available' => !empty($check['update_available']),
             'license_lapsed' => !empty($check['license_lapsed']),
             'license_warning' => $check['license_warning'] ?? null,
