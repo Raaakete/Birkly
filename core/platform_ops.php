@@ -35,8 +35,8 @@ function birkly_ops_installations_register_url(): string
 function birkly_ops_local_instance_base_urls(): array
 {
     return [
-        'http://127.0.0.1:8090',
         'http://localhost:8090',
+        'http://127.0.0.1:8090',
         'http://host.docker.internal:8090',
     ];
 }
@@ -236,15 +236,67 @@ function birkly_ops_register_installation(bool $force = false): void
 }
 
 /**
- * @return array<string, mixed>|null Ops release check payload or null when not configured / failed
+ * @return list<string>
  */
-function birkly_ops_check_updates(string $currentVersion): ?array
+function birkly_ops_updates_check_candidate_urls(): array
 {
-    if (isset($GLOBALS['birkly_ops_check_updates_override']) && is_callable($GLOBALS['birkly_ops_check_updates_override'])) {
-        return ($GLOBALS['birkly_ops_check_updates_override'])($currentVersion);
+    $candidates = [];
+    $primary = birkly_ops_updates_check_url();
+    if ($primary !== '') {
+        $candidates[] = $primary;
     }
 
-    $baseUrl = birkly_ops_updates_check_url();
+    if (!function_exists('birkly_is_local_dev_request')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    $preferLocal = birkly_is_local_dev_request()
+        || birkly_is_platform_owner_install()
+        || PHP_SAPI === 'cli'
+        || PHP_SAPI === 'phpdbg';
+
+    if ($preferLocal) {
+        foreach (birkly_ops_local_instance_base_urls() as $base) {
+            $localUrl = rtrim($base, '/') . '/api/ops/v1/releases/check';
+            if (!in_array($localUrl, $candidates, true)) {
+                $candidates[] = $localUrl;
+            }
+        }
+
+        $cloudUrl = 'https://ops.birkly.cloud/api/ops/v1/releases/check';
+        if (!in_array($cloudUrl, $candidates, true)) {
+            $candidates[] = $cloudUrl;
+        }
+
+        if (birkly_is_local_dev_request() || PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg') {
+            usort($candidates, static function (string $a, string $b): int {
+                $aLocal = str_contains($a, '127.0.0.1')
+                    || str_contains($a, 'localhost')
+                    || str_contains($a, 'host.docker.internal');
+                $bLocal = str_contains($b, '127.0.0.1')
+                    || str_contains($b, 'localhost')
+                    || str_contains($b, 'host.docker.internal');
+                if ($aLocal && !$bLocal) {
+                    return -1;
+                }
+                if (!$aLocal && $bLocal) {
+                    return 1;
+                }
+
+                return 0;
+            });
+        }
+    }
+
+    return array_values(array_unique($candidates));
+}
+
+/**
+ * @return array<string, mixed>|null Ops release check payload or null when request failed
+ */
+function birkly_ops_fetch_updates_from_url(string $baseUrl, string $currentVersion): ?array
+{
+    $baseUrl = trim($baseUrl);
     if ($baseUrl === '' || !function_exists('curl_init')) {
         return null;
     }
@@ -256,12 +308,16 @@ function birkly_ops_check_updates(string $currentVersion): ?array
     ]);
     $url = str_contains($baseUrl, '?') ? $baseUrl . '&' . $query : $baseUrl . '?' . $query;
 
+    $isLocalUrl = str_contains($baseUrl, '127.0.0.1')
+        || str_contains($baseUrl, 'localhost')
+        || str_contains($baseUrl, 'host.docker.internal');
+
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_HTTPGET => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 8,
-        CURLOPT_CONNECTTIMEOUT => 4,
+        CURLOPT_TIMEOUT => $isLocalUrl ? 6 : 8,
+        CURLOPT_CONNECTTIMEOUT => $isLocalUrl ? 2 : 4,
         CURLOPT_HTTPHEADER => ['Accept: application/json'],
     ]);
     birkly_outbound_curl_apply_transport_defaults($ch);
@@ -279,4 +335,28 @@ function birkly_ops_check_updates(string $currentVersion): ?array
     }
 
     return $data;
+}
+
+/**
+ * @return array<string, mixed>|null Ops release check payload or null when not configured / failed
+ */
+function birkly_ops_check_updates(string $currentVersion): ?array
+{
+    if (isset($GLOBALS['birkly_ops_check_updates_override']) && is_callable($GLOBALS['birkly_ops_check_updates_override'])) {
+        return ($GLOBALS['birkly_ops_check_updates_override'])($currentVersion);
+    }
+
+    $urls = birkly_ops_updates_check_candidate_urls();
+    if ($urls === []) {
+        return null;
+    }
+
+    foreach ($urls as $baseUrl) {
+        $data = birkly_ops_fetch_updates_from_url($baseUrl, $currentVersion);
+        if ($data !== null) {
+            return $data;
+        }
+    }
+
+    return null;
 }

@@ -24,7 +24,7 @@ $GLOBALS['birkly_marketplace_http_transport'] = static function (
     bool $allowRetry = true
 ): array {
     if (str_ends_with($url, '/health')) {
-        if (str_contains($url, '127.0.0.1:8090')) {
+        if (str_contains($url, 'localhost:8090') || str_contains($url, '127.0.0.1:8090')) {
             return [
                 'ok' => true,
                 'status' => 200,
@@ -40,13 +40,13 @@ $GLOBALS['birkly_marketplace_http_transport'] = static function (
 };
 
 $resolved = birkly_marketplace_resolve_effective_url(BIRKLY_MARKETPLACE_DEFAULT_URL);
-if ($resolved !== 'http://127.0.0.1:8090') {
-    $errors[] = 'Local dev should fall back to marketplace on 127.0.0.1:8090 when cloud health probe fails';
+if (!in_array($resolved, ['http://localhost:8090', 'http://127.0.0.1:8090'], true)) {
+    $errors[] = 'Local dev should fall back to marketplace on localhost:8090 when cloud health probe fails';
 }
 
 birkly_marketplace_settings_reset();
 $settings = birkly_marketplace_settings();
-if (($settings['marketplace_url'] ?? '') !== 'http://127.0.0.1:8090') {
+if (!in_array($settings['marketplace_url'] ?? '', ['http://localhost:8090', 'http://127.0.0.1:8090'], true)) {
     $errors[] = 'Settings should expose resolved local marketplace URL';
 }
 

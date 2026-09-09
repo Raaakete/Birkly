@@ -24,8 +24,8 @@ $GLOBALS['birkly_ops_probe_health_override'] = static function (string $baseUrl)
 // Since we can't easily override birkly_ops_probe_health without changing code, test URL list + rewrite logic.
 
 $urls = birkly_ops_local_instance_base_urls();
-if ($urls === [] || $urls[0] !== 'http://127.0.0.1:8090') {
-    $errors[] = 'Local Ops base URLs should include 127.0.0.1:8090';
+if ($urls === [] || $urls[0] !== 'http://localhost:8090') {
+    $errors[] = 'Local Ops base URLs should prefer localhost:8090';
 }
 
 $relay = birkly_feedback_relay_url();
