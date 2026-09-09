@@ -99,3 +99,46 @@ if ($encoded === false || file_put_contents($outPath, $encoded . PHP_EOL) === fa
 }
 
 echo 'Wrote ' . count($offers) . ' official offers to ' . $outPath . PHP_EOL;
+
+$packagesDir = $root . '/catalog/packages';
+if (!is_dir($packagesDir) && !mkdir($packagesDir, 0755, true)) {
+    fwrite(STDERR, 'Failed to create ' . $packagesDir . PHP_EOL);
+    exit(1);
+}
+
+$marketplaceRoot = dirname($root) . '/Birkly-Marketplace';
+$sourcePackages = is_dir($marketplaceRoot . '/catalog/packages')
+    ? $marketplaceRoot . '/catalog/packages'
+    : '';
+
+$copied = 0;
+foreach ($offers as $offer) {
+    if (!is_array($offer)) {
+        continue;
+    }
+    $slug = trim((string) ($offer['slug'] ?? ''));
+    $version = trim((string) ($offer['latest_version'] ?? ''));
+    if ($slug === '' || $version === '') {
+        continue;
+    }
+
+    $filename = $slug . '-' . $version . '.zip';
+    $dest = $packagesDir . '/' . $filename;
+    $source = $sourcePackages !== '' ? $sourcePackages . '/' . $filename : '';
+    if ($source !== '' && is_file($source)) {
+        if (@copy($source, $dest)) {
+            $copied++;
+            continue;
+        }
+    }
+
+    $downloadUrl = $baseUrl . '/api/v1/artifacts/' . rawurlencode($slug) . '/' . rawurlencode($version) . '/download';
+    $artifactFetch = birkly_marketplace_http_fetch($downloadUrl, 'GET', ['User-Agent: Birkly-CMS'], null, 120);
+    if ($artifactFetch['ok'] && is_string($artifactFetch['body'] ?? null) && $artifactFetch['body'] !== '') {
+        if (file_put_contents($dest, $artifactFetch['body']) !== false) {
+            $copied++;
+        }
+    }
+}
+
+echo 'Synced ' . $copied . ' bundled plugin packages to ' . $packagesDir . PHP_EOL;

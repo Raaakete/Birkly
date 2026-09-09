@@ -1685,6 +1685,11 @@ function birkly_marketplace_local_catalog_roots(): array
     }
 
     $roots = [];
+    $bundledPackages = rtrim(birkly_project_root(), '/\\') . '/catalog/packages';
+    if (is_dir($bundledPackages)) {
+        $roots[] = rtrim(birkly_project_root(), '/\\');
+    }
+
     $envRoot = trim((string) (getenv('BIRKLY_MARKETPLACE_ROOT') ?: ''));
     if ($envRoot !== '' && is_dir($envRoot)) {
         $roots[] = rtrim($envRoot, '/\\');
@@ -1741,16 +1746,41 @@ function birkly_marketplace_find_local_catalog_zip(string $slug, ?string $versio
             continue;
         }
 
-        if ($version !== '') {
-            continue;
-        }
-
         usort($matches, 'strnatcasecmp');
 
         return (string) end($matches);
     }
 
     return null;
+}
+
+/**
+ * @return array{ok:bool,path?:string,error?:string}|null null when no bundled zip is available
+ */
+function birkly_marketplace_copy_local_catalog_zip(
+    string $slug,
+    ?string $version,
+    string $destination,
+    ?string $expectedSha256 = null
+): ?array {
+    $localZip = birkly_marketplace_find_local_catalog_zip($slug, $version);
+    if ($localZip === null || !is_file($localZip)) {
+        return null;
+    }
+
+    if (!@copy($localZip, $destination)) {
+        return ['ok' => false, 'error' => 'Failed to copy bundled plugin package'];
+    }
+
+    if ($expectedSha256 !== null && $expectedSha256 !== '') {
+        $actual = hash_file('sha256', $destination);
+        if (!hash_equals(strtolower($expectedSha256), strtolower((string) $actual))) {
+            @unlink($destination);
+            return ['ok' => false, 'error' => 'Checksum verification failed'];
+        }
+    }
+
+    return ['ok' => true, 'path' => $destination];
 }
 
 /**
