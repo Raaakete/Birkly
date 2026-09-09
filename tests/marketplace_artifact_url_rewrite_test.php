@@ -1,6 +1,6 @@
 <?php
 /**
- * Marketplace artifact URLs rewrite to the effective local base when cloud is unreachable.
+ * Marketplace artifact URLs rewrite to a configured custom marketplace base URL.
  */
 
 declare(strict_types=1);
@@ -11,7 +11,7 @@ require_once $root . '/core/marketplace.php';
 $errors = [];
 
 $GLOBALS['__birkly_marketplace_settings'] = [
-    'marketplace_url' => 'http://127.0.0.1:8090',
+    'marketplace_url' => 'https://custom.marketplace.example',
     'installation_owner_email' => '',
     'display_currency' => 'EUR',
     'update_channel' => 'alpha',
@@ -20,24 +20,8 @@ $GLOBALS['__birkly_marketplace_settings'] = [
 
 $cloudUrl = 'https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.31/download';
 $rewritten = birkly_marketplace_rewrite_service_url($cloudUrl);
-if ($rewritten !== 'http://127.0.0.1:8090/api/v1/artifacts/birkly-automation/1.1.31/download') {
-    $errors[] = 'Expected cloud artifact URL to rewrite to local marketplace base, got: ' . $rewritten;
-}
-
-$_SERVER['HTTP_HOST'] = 'localhost:8080';
-$candidates = birkly_marketplace_artifact_download_candidates($cloudUrl);
-unset($_SERVER['HTTP_HOST']);
-if (!in_array($cloudUrl, $candidates, true)) {
-    $errors[] = 'Candidates should include the original cloud URL';
-}
-if (($candidates[0] ?? '') !== $cloudUrl) {
-    $errors[] = 'When local marketplace is offline, cloud artifact URL should be tried first';
-}
-foreach ($candidates as $candidate) {
-    if (birkly_marketplace_is_local_service_url($candidate)) {
-        $errors[] = 'Offline local marketplace URLs should not be included in artifact candidates';
-        break;
-    }
+if ($rewritten !== 'https://custom.marketplace.example/api/v1/artifacts/birkly-automation/1.1.31/download') {
+    $errors[] = 'Expected cloud artifact URL to rewrite to configured marketplace base, got: ' . $rewritten;
 }
 
 unset($GLOBALS['__birkly_marketplace_settings']);

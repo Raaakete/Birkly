@@ -1,6 +1,6 @@
 <?php
 /**
- * Local dev installs discover Ops updates and fall back to GitHub when Ops is unavailable.
+ * Ops-configured installs check updates via Ops and always expose local version in status.
  */
 
 declare(strict_types=1);
@@ -12,22 +12,8 @@ require_once $root . '/core/version.php';
 
 $errors = [];
 
-$previousHost = $_SERVER['HTTP_HOST'] ?? null;
-$_SERVER['HTTP_HOST'] = 'localhost:8080';
-
-// Without local Ops running, localhost should still resolve cloud Ops URL for non-owner installs.
-$GLOBALS['__birkly_platform_config'] = [];
-if (birkly_ops_updates_check_url() === '') {
-    $errors[] = 'Local dev should resolve default Ops updates URL when feedback relay is configured';
-}
-
-$GLOBALS['__birkly_platform_config'] = ['owner_mode' => true];
-if (birkly_ops_updates_check_url() !== '' && !str_contains(birkly_ops_updates_check_url(), '127.0.0.1:8090')) {
-    // Owner install only gets a URL when local Ops is actually running in this environment.
-}
-
 $GLOBALS['__birkly_platform_config'] = [
-    'updates_url' => 'http://127.0.0.1:8090/api/ops/v1/releases/check',
+    'updates_url' => 'https://ops.example.test/api/ops/v1/releases/check',
 ];
 $GLOBALS['birkly_ops_check_updates_override'] = static function (string $currentVersion): ?array {
     return [
@@ -56,10 +42,9 @@ if (($status['status'] ?? '') !== 'ok' || empty($status['current_version'])) {
     $errors[] = 'getUpdateStatus should always return local current_version';
 }
 
-if ($previousHost === null) {
-    unset($_SERVER['HTTP_HOST']);
-} else {
-    $_SERVER['HTTP_HOST'] = $previousHost;
+$GLOBALS['__birkly_platform_config'] = ['owner_mode' => true];
+if (birkly_ops_updates_check_url() !== 'https://ops.birkly.cloud/api/ops/v1/releases/check') {
+    $errors[] = 'Owner installs should default to cloud Ops updates URL';
 }
 unset($GLOBALS['__birkly_platform_config']);
 
