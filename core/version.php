@@ -31,6 +31,10 @@ class BirklyVersion {
      */
     private static function fetchGithubJson(string $url): array
     {
+        if (isset($GLOBALS['birkly_fetch_github_json_override']) && is_callable($GLOBALS['birkly_fetch_github_json_override'])) {
+            return ($GLOBALS['birkly_fetch_github_json_override'])($url);
+        }
+
         $headers = self::getGithubHeaders('Birkly/' . self::getCurrentVersion());
         $headerLines = $headers;
 
@@ -402,6 +406,11 @@ class BirklyVersion {
                     'prerelease' => birkly_ops_release_channel() !== 'stable',
                     'source' => 'ops',
                 ];
+            }
+
+            $github = self::checkGithubForUpdates($currentVersion);
+            if (!isset($github['error'])) {
+                return $github;
             }
 
             return ['error' => 'Update check failed. Ops could not be reached — verify network access to your Ops platform.'];

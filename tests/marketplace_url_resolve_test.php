@@ -20,7 +20,8 @@ $GLOBALS['birkly_marketplace_http_transport'] = static function (
     array $headers,
     ?string $body,
     int $timeout,
-    bool $followRedirects
+    bool $followRedirects,
+    bool $allowRetry = true
 ): array {
     if (str_ends_with($url, '/health')) {
         if (str_contains($url, '127.0.0.1:8090')) {
