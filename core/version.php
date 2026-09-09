@@ -353,12 +353,6 @@ class BirklyVersion {
 
     private static function fetchRemoteBytes(string $url, array $extraHeaders = []): ?string
     {
-        $url = trim($url);
-        if ($url !== '' && is_file($url)) {
-            $body = @file_get_contents($url);
-            return is_string($body) && $body !== '' ? $body : null;
-        }
-
         $headers = array_merge(['User-Agent: Birkly/' . self::getCurrentVersion()], $extraHeaders);
 
         if (function_exists('curl_init')) {
@@ -414,21 +408,13 @@ class BirklyVersion {
                 ];
             }
 
-            if (!birkly_is_platform_owner_install()) {
-                $github = self::checkGithubForUpdates($currentVersion);
-                if (!isset($github['error'])) {
-                    return $github;
-                }
+            $github = self::checkGithubForUpdates($currentVersion);
+            if (!isset($github['error'])) {
+                return $github;
             }
 
-            $hint = ' Remote update check unavailable. Hub plugins install from bundled packages in catalog/packages/.';
-            if (birkly_is_platform_owner_install()) {
-                $hint .= ' For CMS updates, run Birkly-Marketplace on port 8090 (./start-server.sh -k) and publish your release in the Ops panel, or set BIRKLY_GITHUB_TOKEN.';
-            } else {
-                $hint .= ' For CMS updates, configure Ops relay or set BIRKLY_GITHUB_TOKEN.';
-            }
-
-            return ['error' => 'Update check failed. Ops could not be reached.' . $hint];
+            $detail = (string) ($github['error'] ?? 'GitHub update check failed.');
+            return ['error' => 'Update check failed. Ops could not be reached and GitHub fallback failed: ' . $detail];
         }
 
         return self::checkGithubForUpdates($currentVersion);

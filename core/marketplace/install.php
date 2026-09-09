@@ -29,63 +29,22 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
         return ['ok' => false, 'error' => 'Failed to create temp file'];
     }
 
-    $parsed = function_exists('birkly_marketplace_parse_artifact_slug_version')
-        ? birkly_marketplace_parse_artifact_slug_version($downloadUrl)
-        : ['slug' => '', 'version' => ''];
-    if (($parsed['slug'] ?? '') !== '' && function_exists('birkly_marketplace_copy_local_catalog_zip')) {
-        $bundled = birkly_marketplace_copy_local_catalog_zip(
-            (string) $parsed['slug'],
-            (string) ($parsed['version'] ?? '') !== '' ? (string) $parsed['version'] : null,
-            $tmp,
-            $expectedSha256
-        );
-        if (is_array($bundled) && !empty($bundled['ok'])) {
-            return $bundled;
-        }
-        if (is_array($bundled) && empty($bundled['ok'])) {
-            @unlink($tmp);
-            return $bundled;
-        }
-    }
+    $downloadUrl = function_exists('birkly_marketplace_rewrite_service_url')
+        ? birkly_marketplace_rewrite_service_url($downloadUrl)
+        : $downloadUrl;
 
-    $candidates = function_exists('birkly_marketplace_artifact_download_candidates')
-        ? birkly_marketplace_artifact_download_candidates($downloadUrl)
-        : [$downloadUrl];
-    $lastError = 'Download failed';
-    $download = ['ok' => false, 'error' => $lastError];
-    $candidateCount = count($candidates);
-    foreach ($candidates as $index => $candidate) {
-        $isLast = $index >= ($candidateCount - 1);
-        $download = birkly_marketplace_http_download_to_file(
-            $candidate,
-            $tmp,
-            ['User-Agent: Birkly-CMS'],
-            180,
-            $isLast ? 20 : 4
-        );
-        if ($download['ok']) {
-            break;
-        }
-        $lastError = (string) ($download['error'] ?? $lastError);
-    }
+    $download = birkly_marketplace_http_download_to_file(
+        $downloadUrl,
+        $tmp,
+        ['User-Agent: Birkly-CMS'],
+        120
+    );
 
     if (!$download['ok']) {
-        if (($parsed['slug'] ?? '') !== '' && function_exists('birkly_marketplace_copy_local_catalog_zip')) {
-            $bundled = birkly_marketplace_copy_local_catalog_zip(
-                (string) $parsed['slug'],
-                (string) ($parsed['version'] ?? '') !== '' ? (string) $parsed['version'] : null,
-                $tmp,
-                $expectedSha256
-            );
-            if (is_array($bundled) && !empty($bundled['ok'])) {
-                return $bundled;
-            }
-        }
-
         @unlink($tmp);
         return [
             'ok' => false,
-            'error' => birkly_marketplace_transport_error_message('Failed to download artifact', $lastError),
+            'error' => birkly_marketplace_transport_error_message('Failed to download artifact', $download['error'] ?? null),
         ];
     }
 

@@ -29,57 +29,6 @@ function birkly_ops_installations_register_url(): string
     return '';
 }
 
-/**
- * @return list<string>
- */
-function birkly_ops_local_instance_base_urls(): array
-{
-    return [
-        'http://localhost:8090',
-        'http://127.0.0.1:8090',
-        'http://host.docker.internal:8090',
-    ];
-}
-
-function birkly_ops_probe_health(string $baseUrl, int $timeout = 2): bool
-{
-    $baseUrl = rtrim(trim($baseUrl), '/');
-    if ($baseUrl === '' || !function_exists('curl_init')) {
-        return false;
-    }
-
-    $ch = curl_init($baseUrl . '/health');
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => max(1, $timeout),
-        CURLOPT_CONNECTTIMEOUT => max(1, min(3, $timeout)),
-        CURLOPT_HTTPHEADER => ['Accept: application/json'],
-    ]);
-    birkly_outbound_curl_apply_transport_defaults($ch);
-    $response = curl_exec($ch);
-    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if (!is_string($response) || $code < 200 || $code >= 300) {
-        return false;
-    }
-
-    $data = json_decode($response, true);
-
-    return is_array($data) && (string) ($data['status'] ?? '') === 'ok';
-}
-
-function birkly_ops_discover_local_updates_check_url(): string
-{
-    foreach (birkly_ops_local_instance_base_urls() as $base) {
-        if (birkly_ops_probe_health($base, 2)) {
-            return rtrim($base, '/') . '/api/ops/v1/releases/check';
-        }
-    }
-
-    return '';
-}
-
 function birkly_ops_updates_check_url(): string
 {
     $config = birkly_platform_config();
@@ -96,16 +45,6 @@ function birkly_ops_updates_check_url(): string
     $relay = birkly_feedback_relay_url();
     if ($relay !== '' && str_contains($relay, '/api/ops/v1/feedback')) {
         return str_replace('/api/ops/v1/feedback', '/api/ops/v1/releases/check', $relay);
-    }
-
-    if (!function_exists('birkly_is_local_dev_request')) {
-        require_once __DIR__ . '/birkly_paths.php';
-    }
-    if (birkly_is_local_dev_request() || birkly_is_platform_owner_install()) {
-        $local = birkly_ops_discover_local_updates_check_url();
-        if ($local !== '') {
-            return $local;
-        }
     }
 
     if (birkly_is_platform_owner_install()) {
@@ -236,151 +175,15 @@ function birkly_ops_register_installation(bool $force = false): void
 }
 
 /**
- * @return list<string>
+ * @return array<string, mixed>|null Ops release check payload or null when not configured / failed
  */
-function birkly_ops_local_marketplace_roots(): array
+function birkly_ops_check_updates(string $currentVersion): ?array
 {
-    if (!function_exists('birkly_project_root')) {
-        require_once __DIR__ . '/birkly_paths.php';
+    if (isset($GLOBALS['birkly_ops_check_updates_override']) && is_callable($GLOBALS['birkly_ops_check_updates_override'])) {
+        return ($GLOBALS['birkly_ops_check_updates_override'])($currentVersion);
     }
 
-    $roots = [];
-    $envRoot = trim((string) (getenv('BIRKLY_MARKETPLACE_ROOT') ?: ''));
-    if ($envRoot !== '' && is_dir($envRoot)) {
-        $roots[] = rtrim($envRoot, '/\\');
-    }
-
-    $sibling = dirname(rtrim(birkly_project_root(), '/\\')) . '/Birkly-Marketplace';
-    if (is_dir($sibling)) {
-        $roots[] = $sibling;
-    }
-
-    return array_values(array_unique($roots));
-}
-
-/**
- * Read CMS release metadata directly from a local Birkly-Marketplace data directory.
- *
- * @return array<string, mixed>|null
- */
-function birkly_ops_check_updates_from_filesystem(string $currentVersion): ?array
-{
-    $channel = birkly_ops_release_channel();
-    $currentVersion = trim($currentVersion);
-    if ($currentVersion === '') {
-        return null;
-    }
-
-    foreach (birkly_ops_local_marketplace_roots() as $root) {
-        $channelConfigPath = rtrim($root, '/\\') . '/data/ops/releases/' . $channel . '/_channel.json';
-        if (!is_file($channelConfigPath)) {
-            continue;
-        }
-
-        $config = json_decode((string) file_get_contents($channelConfigPath), true);
-        if (!is_array($config)) {
-            continue;
-        }
-
-        $activeVersion = trim((string) ($config['active_version'] ?? ''));
-        if ($activeVersion === '') {
-            continue;
-        }
-
-        $releasePath = rtrim($root, '/\\') . '/data/ops/releases/' . $channel . '/' . $activeVersion . '.json';
-        $zipPath = rtrim($root, '/\\') . '/data/ops/releases/' . $channel . '/' . $activeVersion . '.zip';
-        $record = is_file($releasePath)
-            ? json_decode((string) file_get_contents($releasePath), true)
-            : [];
-        $record = is_array($record) ? $record : [];
-
-        $updateAvailable = $currentVersion !== $activeVersion;
-        $downloadUrl = '';
-        if ($updateAvailable) {
-            if (is_file($zipPath)) {
-                $downloadUrl = $zipPath;
-            } else {
-                $downloadUrl = trim((string) ($record['download_url'] ?? ''));
-            }
-        }
-
-        return [
-            'ok' => true,
-            'update_available' => $updateAvailable,
-            'latest_version' => $activeVersion,
-            'current_version' => $currentVersion,
-            'download_url' => $downloadUrl,
-            'checksum_sha256' => $updateAvailable ? strtolower(trim((string) ($record['checksum_sha256'] ?? ''))) : '',
-            'release_notes' => $updateAvailable ? (string) ($record['release_notes'] ?? '') : '',
-            'source' => 'ops_filesystem',
-        ];
-    }
-
-    return null;
-}
-
-/**
- * @return list<string>
- */
-function birkly_ops_updates_check_candidate_urls(): array
-{
-    $candidates = [];
-    $primary = birkly_ops_updates_check_url();
-    if ($primary !== '') {
-        $candidates[] = $primary;
-    }
-
-    if (!function_exists('birkly_is_local_dev_request')) {
-        require_once __DIR__ . '/birkly_paths.php';
-    }
-
-    $preferLocal = birkly_is_local_dev_request()
-        || birkly_is_platform_owner_install()
-        || PHP_SAPI === 'cli'
-        || PHP_SAPI === 'phpdbg';
-
-    if ($preferLocal) {
-        foreach (birkly_ops_local_instance_base_urls() as $base) {
-            $localUrl = rtrim($base, '/') . '/api/ops/v1/releases/check';
-            if (!in_array($localUrl, $candidates, true)) {
-                $candidates[] = $localUrl;
-            }
-        }
-
-        $cloudUrl = 'https://ops.birkly.cloud/api/ops/v1/releases/check';
-        if (!in_array($cloudUrl, $candidates, true)) {
-            $candidates[] = $cloudUrl;
-        }
-
-        if (birkly_is_local_dev_request() || PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg') {
-            usort($candidates, static function (string $a, string $b): int {
-                $aLocal = str_contains($a, '127.0.0.1')
-                    || str_contains($a, 'localhost')
-                    || str_contains($a, 'host.docker.internal');
-                $bLocal = str_contains($b, '127.0.0.1')
-                    || str_contains($b, 'localhost')
-                    || str_contains($b, 'host.docker.internal');
-                if ($aLocal && !$bLocal) {
-                    return -1;
-                }
-                if (!$aLocal && $bLocal) {
-                    return 1;
-                }
-
-                return 0;
-            });
-        }
-    }
-
-    return array_values(array_unique($candidates));
-}
-
-/**
- * @return array<string, mixed>|null Ops release check payload or null when request failed
- */
-function birkly_ops_fetch_updates_from_url(string $baseUrl, string $currentVersion): ?array
-{
-    $baseUrl = trim($baseUrl);
+    $baseUrl = birkly_ops_updates_check_url();
     if ($baseUrl === '' || !function_exists('curl_init')) {
         return null;
     }
@@ -392,16 +195,12 @@ function birkly_ops_fetch_updates_from_url(string $baseUrl, string $currentVersi
     ]);
     $url = str_contains($baseUrl, '?') ? $baseUrl . '&' . $query : $baseUrl . '?' . $query;
 
-    $isLocalUrl = str_contains($baseUrl, '127.0.0.1')
-        || str_contains($baseUrl, 'localhost')
-        || str_contains($baseUrl, 'host.docker.internal');
-
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_HTTPGET => true,
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => $isLocalUrl ? 6 : 8,
-        CURLOPT_CONNECTTIMEOUT => $isLocalUrl ? 2 : 4,
+        CURLOPT_TIMEOUT => 8,
+        CURLOPT_CONNECTTIMEOUT => 4,
         CURLOPT_HTTPHEADER => ['Accept: application/json'],
     ]);
     birkly_outbound_curl_apply_transport_defaults($ch);
@@ -419,33 +218,4 @@ function birkly_ops_fetch_updates_from_url(string $baseUrl, string $currentVersi
     }
 
     return $data;
-}
-
-/**
- * @return array<string, mixed>|null Ops release check payload or null when not configured / failed
- */
-function birkly_ops_check_updates(string $currentVersion): ?array
-{
-    if (isset($GLOBALS['birkly_ops_check_updates_override']) && is_callable($GLOBALS['birkly_ops_check_updates_override'])) {
-        return ($GLOBALS['birkly_ops_check_updates_override'])($currentVersion);
-    }
-
-    $filesystem = birkly_ops_check_updates_from_filesystem($currentVersion);
-    if ($filesystem !== null) {
-        return $filesystem;
-    }
-
-    $urls = birkly_ops_updates_check_candidate_urls();
-    if ($urls === []) {
-        return null;
-    }
-
-    foreach ($urls as $baseUrl) {
-        $data = birkly_ops_fetch_updates_from_url($baseUrl, $currentVersion);
-        if ($data !== null) {
-            return $data;
-        }
-    }
-
-    return null;
 }

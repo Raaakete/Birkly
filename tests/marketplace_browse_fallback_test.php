@@ -31,8 +31,6 @@ $GLOBALS['birkly_marketplace_http_transport'] = static function (
     return ['ok' => false, 'status' => 0, 'body' => '', 'error' => 'unexpected url: ' . $url];
 };
 
-birkly_marketplace_set_url_reachability('https://marketplace.birkly.cloud', false);
-
 $started = microtime(true);
 $browse = birkly_marketplace_browse('', '', 'plugin');
 $elapsed = microtime(true) - $started;
@@ -47,7 +45,7 @@ if ($elapsed > 2.0) {
     $errors[] = 'Browse fallback should fail fast without waiting for registry timeouts';
 }
 
-unset($GLOBALS['birkly_marketplace_http_transport'], $GLOBALS['__birkly_marketplace_url_reachability']);
+unset($GLOBALS['birkly_marketplace_http_transport']);
 birkly_marketplace_settings_reset();
 
 if ($errors !== []) {
