@@ -414,7 +414,8 @@ class BirklyVersion {
             }
 
             $detail = (string) ($github['error'] ?? 'GitHub update check failed.');
-            return ['error' => 'Update check failed. Ops could not be reached and GitHub fallback failed: ' . $detail];
+            $hint = ' For local dev, start Birkly-Marketplace on port 8090 (./start-server.sh -k) and publish your CMS release in the Ops panel.';
+            return ['error' => 'Update check failed. Ops could not be reached and GitHub fallback failed: ' . $detail . $hint];
         }
 
         return self::checkGithubForUpdates($currentVersion);
