@@ -29,17 +29,29 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
         return ['ok' => false, 'error' => 'Failed to create temp file'];
     }
 
-    $download = birkly_marketplace_http_download_to_file(
-        $downloadUrl,
-        $tmp,
-        ['User-Agent: Birkly-CMS'],
-        120
-    );
+    $candidates = function_exists('birkly_marketplace_artifact_download_candidates')
+        ? birkly_marketplace_artifact_download_candidates($downloadUrl)
+        : [$downloadUrl];
+    $lastError = 'Download failed';
+    $download = ['ok' => false, 'error' => $lastError];
+    foreach ($candidates as $candidate) {
+        $download = birkly_marketplace_http_download_to_file(
+            $candidate,
+            $tmp,
+            ['User-Agent: Birkly-CMS'],
+            180
+        );
+        if ($download['ok']) {
+            break;
+        }
+        $lastError = (string) ($download['error'] ?? $lastError);
+    }
+
     if (!$download['ok']) {
         @unlink($tmp);
         return [
             'ok' => false,
-            'error' => birkly_marketplace_transport_error_message('Failed to download artifact', $download['error'] ?? null),
+            'error' => birkly_marketplace_transport_error_message('Failed to download artifact', $lastError),
         ];
     }
 

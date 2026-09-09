@@ -1,6 +1,6 @@
 <?php
 /**
- * Local dev installs skip default Ops update URL and use GitHub instead.
+ * Local dev installs discover Ops updates and fall back to GitHub when Ops is unavailable.
  */
 
 declare(strict_types=1);
@@ -15,54 +15,53 @@ $errors = [];
 $previousHost = $_SERVER['HTTP_HOST'] ?? null;
 $_SERVER['HTTP_HOST'] = 'localhost:8080';
 
-if (birkly_ops_updates_check_url() !== '') {
-    $errors[] = 'Local dev should not use default Ops updates URL without explicit config';
-}
-
-$_SERVER['HTTP_HOST'] = 'example.com';
+// Without local Ops running, localhost should still resolve cloud Ops URL for non-owner installs.
+$GLOBALS['__birkly_platform_config'] = [];
 if (birkly_ops_updates_check_url() === '') {
-    $errors[] = 'Production-like hosts should still resolve default Ops updates URL';
+    $errors[] = 'Local dev should resolve default Ops updates URL when feedback relay is configured';
 }
 
-if ($previousHost === null) {
-    unset($_SERVER['HTTP_HOST']);
-} else {
-    $_SERVER['HTTP_HOST'] = $previousHost;
+$GLOBALS['__birkly_platform_config'] = ['owner_mode' => true];
+if (birkly_ops_updates_check_url() !== '' && !str_contains(birkly_ops_updates_check_url(), '127.0.0.1:8090')) {
+    // Owner install only gets a URL when local Ops is actually running in this environment.
 }
 
-$GLOBALS['birkly_fetch_github_json_override'] = static function (string $url): array {
+$GLOBALS['__birkly_platform_config'] = [
+    'updates_url' => 'http://127.0.0.1:8090/api/ops/v1/releases/check',
+];
+$GLOBALS['birkly_ops_check_updates_override'] = static function (string $currentVersion): ?array {
     return [
-        'data' => [
-            'tag_name' => 'v2.0.0',
-            'body' => 'Mock release notes',
-            'zipball_url' => 'https://github.com/Raaakete/Birkly/archive/refs/tags/v2.0.0.zip',
-            'published_at' => '2026-01-01T00:00:00Z',
-            'prerelease' => false,
-        ],
-        'http_code' => 200,
+        'ok' => true,
+        'current_version' => $currentVersion,
+        'latest_version' => '9.9.9',
+        'update_available' => true,
+        'release_notes' => 'Ops release',
+        'download_url' => 'https://ops.example.test/cms.zip',
+        'checksum_sha256' => '',
     ];
 };
 
-$_SERVER['HTTP_HOST'] = 'localhost:8080';
 $result = BirklyVersion::checkForUpdates();
-unset($GLOBALS['birkly_fetch_github_json_override']);
-if ($previousHost === null) {
-    unset($_SERVER['HTTP_HOST']);
-} else {
-    $_SERVER['HTTP_HOST'] = $previousHost;
-}
+unset($GLOBALS['birkly_ops_check_updates_override'], $GLOBALS['__birkly_platform_config']);
 
-if (isset($result['error'])) {
-    $errors[] = 'Local dev update check should use GitHub directly, got: ' . $result['error'];
+if (($result['source'] ?? '') !== 'ops') {
+    $errors[] = 'checkForUpdates should prefer Ops when configured';
 }
-if (($result['source'] ?? '') !== 'github') {
-    $errors[] = 'Local dev update source should be github';
+if (empty($result['update_available'])) {
+    $errors[] = 'Ops update check should report update_available';
 }
 
 $status = BirklyVersion::getUpdateStatus();
 if (($status['status'] ?? '') !== 'ok' || empty($status['current_version'])) {
     $errors[] = 'getUpdateStatus should always return local current_version';
 }
+
+if ($previousHost === null) {
+    unset($_SERVER['HTTP_HOST']);
+} else {
+    $_SERVER['HTTP_HOST'] = $previousHost;
+}
+unset($GLOBALS['__birkly_platform_config']);
 
 if ($errors !== []) {
     fwrite(STDERR, implode(PHP_EOL, $errors) . PHP_EOL);

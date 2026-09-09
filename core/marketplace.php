@@ -1608,6 +1608,101 @@ function birkly_marketplace_permissions_manifest_for_release(array $releases, st
 }
 
 /**
+ * Rewrite cloud marketplace/Ops artifact URLs to the effective local marketplace base when needed.
+ */
+function birkly_marketplace_rewrite_service_url(string $url): string
+{
+    $url = trim($url);
+    if ($url === '') {
+        return $url;
+    }
+
+    $effectiveBase = rtrim(birkly_marketplace_url(), '/');
+    $knownBases = [
+        rtrim(BIRKLY_MARKETPLACE_DEFAULT_URL, '/'),
+        'https://marketplace.birkly.cloud',
+        'https://ops.birkly.cloud',
+    ];
+
+    foreach ($knownBases as $cloudBase) {
+        $cloudBase = rtrim($cloudBase, '/');
+        if ($cloudBase === '' || $effectiveBase === '' || $effectiveBase === $cloudBase) {
+            continue;
+        }
+        if (str_starts_with($url, $cloudBase . '/')) {
+            return $effectiveBase . substr($url, strlen($cloudBase));
+        }
+    }
+
+    return $url;
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_marketplace_artifact_download_candidates(string $downloadUrl): array
+{
+    $downloadUrl = trim($downloadUrl);
+    if ($downloadUrl === '') {
+        return [];
+    }
+
+    $candidates = [$downloadUrl];
+    $rewritten = birkly_marketplace_rewrite_service_url($downloadUrl);
+    if ($rewritten !== $downloadUrl) {
+        $candidates[] = $rewritten;
+    }
+
+    foreach (birkly_marketplace_local_instance_urls() as $localBase) {
+        $localCandidate = birkly_marketplace_rewrite_service_url_for_base($downloadUrl, $localBase);
+        if ($localCandidate !== '' && !in_array($localCandidate, $candidates, true)) {
+            $candidates[] = $localCandidate;
+        }
+    }
+
+    if (!birkly_marketplace_is_local_context()) {
+        return $candidates;
+    }
+
+    $localFirst = [];
+    $remote = [];
+    foreach ($candidates as $candidate) {
+        if (
+            str_contains($candidate, '127.0.0.1')
+            || str_contains($candidate, 'localhost')
+            || str_contains($candidate, 'host.docker.internal')
+        ) {
+            $localFirst[] = $candidate;
+        } else {
+            $remote[] = $candidate;
+        }
+    }
+
+    return array_values(array_unique(array_merge($localFirst, $remote)));
+}
+
+function birkly_marketplace_rewrite_service_url_for_base(string $url, string $baseUrl): string
+{
+    $url = trim($url);
+    $baseUrl = rtrim(trim($baseUrl), '/');
+    if ($url === '' || $baseUrl === '') {
+        return $url;
+    }
+
+    foreach ([
+        rtrim(BIRKLY_MARKETPLACE_DEFAULT_URL, '/'),
+        'https://marketplace.birkly.cloud',
+        'https://ops.birkly.cloud',
+    ] as $cloudBase) {
+        if (str_starts_with($url, $cloudBase . '/')) {
+            return $baseUrl . substr($url, strlen($cloudBase));
+        }
+    }
+
+    return $url;
+}
+
+/**
  * @param list<array<string, mixed>> $releases
  * @return array{ok:bool,version:string,download_url:string,checksum_sha256:string}|null
  */
@@ -1632,12 +1727,25 @@ function birkly_marketplace_release_download_from_releases(array $releases, stri
         return [
             'ok' => true,
             'version' => $version,
-            'download_url' => $downloadUrl,
+            'download_url' => birkly_marketplace_rewrite_service_url($downloadUrl),
             'checksum_sha256' => (string) ($artifact['checksum_sha256'] ?? $release['checksum_sha256'] ?? ''),
         ];
     }
 
     return null;
+}
+
+/**
+ * @return array{ok:bool,offer:array,releases:array,fallback:bool}|null
+ */
+function birkly_marketplace_offer_detail_from_fallback(string $slug): ?array
+{
+    $offer = birkly_marketplace_find_fallback_offer($slug);
+    if ($offer === null) {
+        return null;
+    }
+
+    return birkly_marketplace_detail_from_fallback_offer($offer);
 }
 
 /**
@@ -1902,10 +2010,12 @@ function birkly_marketplace_release_download(string $slug, string $version): arr
         return ['ok' => false, 'error' => $response['error'] ?? 'Release not found'];
     }
 
+    $downloadUrl = birkly_marketplace_rewrite_service_url((string) ($response['data']['download_url'] ?? ''));
+
     return [
         'ok' => true,
         'version' => (string) ($response['data']['version'] ?? $version),
-        'download_url' => (string) ($response['data']['download_url'] ?? ''),
+        'download_url' => $downloadUrl,
         'checksum_sha256' => (string) ($response['data']['checksum_sha256'] ?? ''),
     ];
 }
