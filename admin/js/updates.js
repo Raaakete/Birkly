@@ -73,6 +73,28 @@
         if (updateActions) updateActions.hidden = false;
     }
 
+    function showUpdateCheckWarning(message) {
+        const statusIndicator = el('update-status');
+        const updateDetails = el('update-details');
+        const updateActions = el('update-actions');
+        const updateInfo = el('update-info');
+
+        if (statusIndicator) {
+            statusIndicator.innerHTML = '<span class="badge badge-neutral">Remote check unavailable</span>';
+        }
+        if (updateInfo) {
+            updateInfo.innerHTML =
+                '<div class="u-stack-2">' +
+                '<h3 class="u-text-md u-weight-semibold">You are up to date locally</h3>' +
+                '<p class="u-text-sm u-fg-secondary">' + escapeHtml(message || 'Could not reach the update service.') + '</p>' +
+                '</div>';
+        }
+        if (updateDetails) updateDetails.hidden = false;
+        if (updateActions) updateActions.hidden = false;
+        const downloadBtn = el('download-update-btn');
+        if (downloadBtn) downloadBtn.hidden = true;
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
@@ -99,13 +121,37 @@
         try {
             const result = await updatesApi('get_update_status');
             if (result.status === 'ok' && result.current_version) {
-                updateVersionLabels(result.current_version);
+                applyUpdateStatus(result);
             } else if (result.status === 'error') {
                 updateVersionLabels('—');
             }
         } catch (e) {
             updateVersionLabels('—');
         }
+    }
+
+    function applyUpdateStatus(result) {
+        if (!result || result.status !== 'ok' || !result.current_version) {
+            showError(result && result.message ? result.message : 'Could not check for updates');
+            return;
+        }
+
+        updateData = {
+            current_version: result.current_version,
+            latest_version: result.latest_version || result.current_version,
+            update_available: !!result.update_available,
+            release_notes: result.release_notes || '',
+            published_at: result.published_at || '',
+            prerelease: !!result.prerelease,
+        };
+
+        if (result.update_check_error) {
+            updateVersionLabels(result.current_version);
+            showUpdateCheckWarning(result.update_check_error);
+            return;
+        }
+
+        displayUpdateStatus(updateData);
     }
 
     function ensureInstallButton() {
@@ -176,10 +222,20 @@
         try {
             const result = await updatesApi('check_updates');
             if (result.status === 'ok' && result.data) {
-                updateData = result.data;
-                displayUpdateStatus(result.data);
-            } else {
+                applyUpdateStatus({
+                    status: 'ok',
+                    current_version: result.data.current_version,
+                    latest_version: result.data.latest_version,
+                    update_available: result.data.update_available,
+                    release_notes: result.data.release_notes,
+                    published_at: result.data.published_at,
+                    prerelease: result.data.prerelease,
+                    update_check_error: result.data.update_check_error,
+                });
+            } else if (result.status === 'error') {
                 showError(result.message || 'Could not check for updates');
+            } else {
+                showError('Could not check for updates');
             }
         } catch (error) {
             showError(error.message || 'Failed to check for updates');

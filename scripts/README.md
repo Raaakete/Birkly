@@ -45,5 +45,6 @@ Official plugin IDs and marketplace slugs are defined in `scripts/cms-release-ma
 
 ## Other scripts
 
+- `sync-marketplace-fallback-catalog.php` — refresh `catalog/marketplace-registry-fallback.json` (bundled Hub offline catalog)
 - `ci-check.sh` — lint + full test harness before merge (in Birkly-Marketplace `internal/cms/scripts/`)
 - `agent-smoke-test.sh` — quick session smoke checks (internal workspace)

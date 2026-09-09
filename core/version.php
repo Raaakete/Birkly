@@ -413,7 +413,8 @@ class BirklyVersion {
                 return $github;
             }
 
-            return ['error' => 'Update check failed. Ops could not be reached — verify network access to your Ops platform.'];
+            $detail = (string) ($github['error'] ?? 'GitHub update check failed.');
+            return ['error' => 'Update check failed. Ops could not be reached and GitHub fallback failed: ' . $detail];
         }
 
         return self::checkGithubForUpdates($currentVersion);
@@ -800,15 +801,22 @@ class BirklyVersion {
      * Get update status for admin panel
      */
     public static function getUpdateStatus(): array {
+        $currentVersion = self::getCurrentVersion();
         $updateInfo = self::checkForUpdates();
-        
+
         if (isset($updateInfo['error'])) {
             return [
-                'status' => 'error',
-                'message' => $updateInfo['error']
+                'status' => 'ok',
+                'current_version' => $currentVersion,
+                'latest_version' => $currentVersion,
+                'update_available' => false,
+                'release_notes' => '',
+                'published_at' => '',
+                'prerelease' => false,
+                'update_check_error' => $updateInfo['error'],
             ];
         }
-        
+
         return [
             'status' => 'ok',
             'current_version' => $updateInfo['current_version'],
@@ -816,7 +824,8 @@ class BirklyVersion {
             'update_available' => $updateInfo['update_available'],
             'release_notes' => $updateInfo['release_notes'],
             'published_at' => $updateInfo['published_at'],
-            'prerelease' => $updateInfo['prerelease']
+            'prerelease' => $updateInfo['prerelease'],
+            'source' => $updateInfo['source'] ?? null,
         ];
     }
 }

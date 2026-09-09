@@ -53,24 +53,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 function checkForUpdates() {
     try {
-        $updateInfo = BirklyVersion::checkForUpdates();
-        
-        if (isset($updateInfo['error'])) {
-            log_security_event('update_check_failed', ['error' => $updateInfo['error'], 'user' => $_SESSION['user']['email']]);
-            echo json_encode(['status' => 'error', 'message' => $updateInfo['error']]);
+        $status = BirklyVersion::getUpdateStatus();
+
+        if (($status['status'] ?? '') !== 'ok') {
+            $message = (string) ($status['message'] ?? 'Update check failed');
+            log_security_event('update_check_failed', ['error' => $message, 'user' => $_SESSION['user']['email']]);
+            echo json_encode(['status' => 'error', 'message' => $message]);
             return;
         }
-        
-        log_security_event('update_check', [
-            'current_version' => $updateInfo['current_version'],
-            'latest_version' => $updateInfo['latest_version'],
-            'update_available' => $updateInfo['update_available'],
-            'user' => $_SESSION['user']['email']
-        ]);
-        
+
+        if (!empty($status['update_check_error'])) {
+            log_security_event('update_check_failed', ['error' => $status['update_check_error'], 'user' => $_SESSION['user']['email']]);
+        } else {
+            log_security_event('update_check', [
+                'current_version' => $status['current_version'],
+                'latest_version' => $status['latest_version'],
+                'update_available' => $status['update_available'],
+                'user' => $_SESSION['user']['email'],
+            ]);
+        }
+
         echo json_encode([
             'status' => 'ok',
-            'data' => $updateInfo
+            'data' => $status,
         ]);
         
     } catch (Exception $e) {

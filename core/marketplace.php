@@ -738,14 +738,19 @@ function birkly_marketplace_license_ref(string $licenseKey): string
 /**
  * @return array{ok:bool,status:int,data:?array,error?:string}
  */
-function birkly_marketplace_request(string $method, string $path, ?array $body = null, array $query = []): array
-{
+function birkly_marketplace_request(
+    string $method,
+    string $path,
+    ?array $body = null,
+    array $query = [],
+    bool $forceLive = false
+): array {
     if (isset($GLOBALS['birkly_marketplace_mock_handler']) && is_callable($GLOBALS['birkly_marketplace_mock_handler'])) {
         return ($GLOBALS['birkly_marketplace_mock_handler'])($method, $path, $body, $query);
     }
 
     $base = birkly_marketplace_url();
-    if (birkly_marketplace_url_reachability($base) === false) {
+    if (!$forceLive && birkly_marketplace_url_reachability($base) === false) {
         return [
             'ok' => false,
             'status' => 0,
@@ -769,7 +774,7 @@ function birkly_marketplace_request(string $method, string $path, ?array $body =
         $headers[] = 'Content-Type: application/json';
     }
 
-    $timeout = birkly_marketplace_url_reachability($base) === true ? 20 : 12;
+    $timeout = $forceLive ? 20 : (birkly_marketplace_url_reachability($base) === true ? 20 : 12);
     $fetch = birkly_marketplace_http_fetch($url, $method, $headers, $payload, $timeout);
     $status = (int) ($fetch['status'] ?? 0);
     if (!$fetch['ok']) {
@@ -779,6 +784,11 @@ function birkly_marketplace_request(string $method, string $path, ?array $body =
             'data' => null,
             'error' => birkly_marketplace_transport_error_message('Marketplace request failed', $fetch['error'] ?? null),
         ];
+    }
+
+    if ($forceLive) {
+        birkly_marketplace_record_probe_result($base, true);
+        birkly_marketplace_write_resolve_cache($base, true);
     }
 
     $raw = (string) ($fetch['body'] ?? '');
@@ -1176,7 +1186,7 @@ function birkly_marketplace_start_checkout(string $slug, array $options = []): a
         }
     }
 
-    $response = birkly_marketplace_request('POST', '/api/v1/checkout', $body);
+    $response = birkly_marketplace_request('POST', '/api/v1/checkout', $body, [], true);
     if (!$response['ok'] || !is_array($response['data'])) {
         $code = is_array($response['data']) ? (string) ($response['data']['error'] ?? '') : '';
         return [
@@ -1495,7 +1505,7 @@ function birkly_marketplace_find_fallback_offer(string $slug): ?array
  */
 function birkly_marketplace_offer_detail(string $slug): array
 {
-    $response = birkly_marketplace_request('GET', '/api/v1/offers/' . rawurlencode($slug));
+    $response = birkly_marketplace_request('GET', '/api/v1/offers/' . rawurlencode($slug), null, [], true);
     if ($response['ok'] && is_array($response['data'])) {
         $offer = is_array($response['data']['offer'] ?? null) ? $response['data']['offer'] : [];
         $provider = is_array($response['data']['provider'] ?? null) ? $response['data']['provider'] : null;
@@ -1513,10 +1523,12 @@ function birkly_marketplace_offer_detail(string $slug): array
 
     $offer = birkly_marketplace_find_fallback_offer($slug);
     if ($offer !== null) {
-        $releases = [];
-        $latest = (string) ($offer['latest_version'] ?? '');
-        if ($latest !== '') {
-            $releases[] = ['version' => $latest];
+        $releases = is_array($offer['releases'] ?? null) ? $offer['releases'] : [];
+        if ($releases === []) {
+            $latest = (string) ($offer['latest_version'] ?? '');
+            if ($latest !== '') {
+                $releases[] = ['version' => $latest, 'stability' => 'stable'];
+            }
         }
 
         return [
@@ -1624,7 +1636,7 @@ function birkly_marketplace_activate_license(string $licenseKey, array $options 
         $payload['offer_slug'] = trim((string) $options['offer_slug']);
     }
 
-    $response = birkly_marketplace_request('POST', '/api/v1/licenses/activate', $payload);
+    $response = birkly_marketplace_request('POST', '/api/v1/licenses/activate', $payload, [], true);
 
     if (!$response['ok'] || !is_array($response['data'])) {
         $code = is_array($response['data']) ? (string) ($response['data']['error'] ?? '') : '';
@@ -1698,7 +1710,7 @@ function birkly_marketplace_deactivate_license(string $licenseKey, ?string $inst
 function birkly_marketplace_release_download(string $slug, string $version): array
 {
     $path = '/api/v1/offers/' . rawurlencode($slug) . '/releases/' . rawurlencode($version);
-    $response = birkly_marketplace_request('GET', $path);
+    $response = birkly_marketplace_request('GET', $path, null, [], true);
     if (!$response['ok'] || !is_array($response['data'])) {
         return ['ok' => false, 'error' => $response['error'] ?? 'Release not found'];
     }
@@ -1822,7 +1834,9 @@ function birkly_marketplace_attest_installation_offer(string $slug, ?string $lic
     $response = birkly_marketplace_request(
         'POST',
         birkly_marketplace_installation_offer_api_path($slug, 'install'),
-        $body
+        $body,
+        [],
+        true
     );
     if (!$response['ok']) {
         return ['ok' => false, 'error' => $response['error'] ?? 'Install attestation failed'];
