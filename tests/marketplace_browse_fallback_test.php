@@ -21,7 +21,8 @@ $GLOBALS['birkly_marketplace_http_transport'] = static function (
     array $headers,
     ?string $body,
     int $timeout,
-    bool $followRedirects
+    bool $followRedirects,
+    bool $allowRetry = true
 ): array {
     if (str_ends_with($url, '/health')) {
         return ['ok' => false, 'status' => 0, 'body' => '', 'error' => 'Connection timed out'];

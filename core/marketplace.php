@@ -468,7 +468,7 @@ function birkly_marketplace_record_probe_result(string $url, bool $reachable): v
     birkly_marketplace_set_url_reachability($url, $reachable);
 }
 
-function birkly_marketplace_ensure_remote_reachable(string $baseUrl, int $timeout = 4): bool
+function birkly_marketplace_ensure_remote_reachable(string $baseUrl, int $timeout = 2): bool
 {
     $known = birkly_marketplace_url_reachability($baseUrl);
     if ($known !== null) {
@@ -479,6 +479,65 @@ function birkly_marketplace_ensure_remote_reachable(string $baseUrl, int $timeou
     birkly_marketplace_record_probe_result($baseUrl, $reachable);
 
     return $reachable;
+}
+
+function birkly_marketplace_resolve_cache_path(): string
+{
+    return birkly_marketplace_settings_dir() . '/.marketplace_resolve_cache.json';
+}
+
+/**
+ * @return array{effective_url?:string,cloud_reachable?:bool,checked_at?:int}|null
+ */
+function birkly_marketplace_read_resolve_cache(): ?array
+{
+    $path = birkly_marketplace_resolve_cache_path();
+    if (!is_file($path)) {
+        return null;
+    }
+
+    $decoded = json_decode((string) file_get_contents($path), true);
+    if (!is_array($decoded)) {
+        return null;
+    }
+
+    $checkedAt = (int) ($decoded['checked_at'] ?? 0);
+    $effectiveUrl = birkly_marketplace_normalize_base_url((string) ($decoded['effective_url'] ?? ''));
+    if ($checkedAt <= 0 || $effectiveUrl === '') {
+        return null;
+    }
+
+    $cloudReachable = !empty($decoded['cloud_reachable']);
+    $ttl = $cloudReachable ? 3600 : 300;
+    if ((time() - $checkedAt) > $ttl) {
+        return null;
+    }
+
+    return [
+        'effective_url' => $effectiveUrl,
+        'cloud_reachable' => $cloudReachable,
+        'checked_at' => $checkedAt,
+    ];
+}
+
+function birkly_marketplace_write_resolve_cache(string $effectiveUrl, bool $cloudReachable): void
+{
+    $effectiveUrl = birkly_marketplace_normalize_base_url($effectiveUrl);
+    if ($effectiveUrl === '') {
+        return;
+    }
+
+    $path = birkly_marketplace_resolve_cache_path();
+    $dir = dirname($path);
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+        return;
+    }
+
+    @file_put_contents($path, json_encode([
+        'effective_url' => $effectiveUrl,
+        'cloud_reachable' => $cloudReachable,
+        'checked_at' => time(),
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
 }
 
 function birkly_marketplace_is_local_context(): bool
@@ -502,7 +561,15 @@ function birkly_marketplace_probe_health(string $baseUrl, int $timeout = 4): boo
         return false;
     }
 
-    $fetch = birkly_marketplace_http_fetch($baseUrl . '/health', 'GET', ['Accept: application/json'], null, $timeout);
+    $fetch = birkly_marketplace_http_fetch(
+        $baseUrl . '/health',
+        'GET',
+        ['Accept: application/json'],
+        null,
+        $timeout,
+        false,
+        false
+    );
     if (!$fetch['ok']) {
         birkly_marketplace_record_probe_result($baseUrl, false);
         return false;
@@ -553,31 +620,52 @@ function birkly_marketplace_resolve_effective_url(string $configuredUrl): string
         return $cache[$configuredUrl] = $configuredUrl;
     }
 
+    $cached = birkly_marketplace_read_resolve_cache();
+    if ($cached !== null && !empty($cached['effective_url'])) {
+        $effectiveUrl = (string) $cached['effective_url'];
+        birkly_marketplace_record_probe_result($effectiveUrl, !empty($cached['cloud_reachable']));
+        if (empty($cached['cloud_reachable']) && $effectiveUrl === birkly_marketplace_normalize_base_url($configuredUrl)) {
+            birkly_marketplace_record_probe_result($configuredUrl, false);
+        }
+
+        return $cache[$configuredUrl] = $effectiveUrl;
+    }
+
     $isLocal = birkly_marketplace_is_local_context();
-    $cloudTimeout = $isLocal ? 3 : 4;
-    $localTimeout = 2;
+    $cloudTimeout = $isLocal ? 2 : 4;
+    $localTimeout = 1;
     $localUrls = birkly_marketplace_local_instance_urls();
 
     if ($isLocal) {
+        if (birkly_marketplace_probe_health($configuredUrl, $cloudTimeout)) {
+            birkly_marketplace_write_resolve_cache($configuredUrl, true);
+            return $cache[$configuredUrl] = $configuredUrl;
+        }
+
         foreach ($localUrls as $localUrl) {
             if (birkly_marketplace_probe_health($localUrl, $localTimeout)) {
+                birkly_marketplace_write_resolve_cache($localUrl, false);
                 return $cache[$configuredUrl] = $localUrl;
             }
         }
-    }
 
-    if (birkly_marketplace_probe_health($configuredUrl, $cloudTimeout)) {
+        birkly_marketplace_write_resolve_cache($configuredUrl, false);
         return $cache[$configuredUrl] = $configuredUrl;
     }
 
-    if (!$isLocal) {
-        foreach ($localUrls as $localUrl) {
-            if (birkly_marketplace_probe_health($localUrl, $localTimeout)) {
-                return $cache[$configuredUrl] = $localUrl;
-            }
+    if (birkly_marketplace_probe_health($configuredUrl, $cloudTimeout)) {
+        birkly_marketplace_write_resolve_cache($configuredUrl, true);
+        return $cache[$configuredUrl] = $configuredUrl;
+    }
+
+    foreach ($localUrls as $localUrl) {
+        if (birkly_marketplace_probe_health($localUrl, $localTimeout)) {
+            birkly_marketplace_write_resolve_cache($localUrl, false);
+            return $cache[$configuredUrl] = $localUrl;
         }
     }
 
+    birkly_marketplace_write_resolve_cache($configuredUrl, false);
     return $cache[$configuredUrl] = $configuredUrl;
 }
 
@@ -729,10 +817,11 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
     $effectiveSort = $priceSelection['sort'] !== '' ? $priceSelection['sort'] : $sort;
 
     $marketplaceBase = birkly_marketplace_url();
-    if (!birkly_marketplace_ensure_remote_reachable($marketplaceBase, 4)) {
-        $response = ['ok' => false, 'error' => 'Remote marketplace unreachable'];
-    } else {
+    $mocked = isset($GLOBALS['birkly_marketplace_mock_handler']) && is_callable($GLOBALS['birkly_marketplace_mock_handler']);
+    if ($mocked || birkly_marketplace_ensure_remote_reachable($marketplaceBase, 2)) {
         $response = birkly_marketplace_request('GET', '/api/v1/registry', null, $params);
+    } else {
+        $response = ['ok' => false, 'error' => 'Remote marketplace unreachable'];
     }
     if (!$response['ok'] || !is_array($response['data'])) {
         $fallback = birkly_marketplace_fallback_catalog();
