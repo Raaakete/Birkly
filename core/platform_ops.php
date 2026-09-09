@@ -42,6 +42,14 @@ function birkly_ops_updates_check_url(): string
         return $env;
     }
 
+    if (!function_exists('birkly_is_local_dev_request')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+    // Local installs use GitHub for CMS updates unless an Ops URL is set explicitly.
+    if (birkly_is_local_dev_request()) {
+        return '';
+    }
+
     $relay = birkly_feedback_relay_url();
     if ($relay !== '' && str_contains($relay, '/api/ops/v1/feedback')) {
         return str_replace('/api/ops/v1/feedback', '/api/ops/v1/releases/check', $relay);
