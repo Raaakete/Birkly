@@ -1,6 +1,8 @@
 <?php
 // core/version.php - Birkly Version Management System
 
+require_once __DIR__ . '/outbound_http.php';
+
 class BirklyVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
@@ -41,6 +43,7 @@ class BirklyVersion {
                 CURLOPT_HTTPHEADER => $headerLines,
                 CURLOPT_FOLLOWLOCATION => true,
             ]);
+            birkly_outbound_curl_apply_transport_defaults($ch);
             $response = curl_exec($ch);
             $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
@@ -357,6 +360,7 @@ class BirklyVersion {
                 CURLOPT_CONNECTTIMEOUT => 15,
                 CURLOPT_HTTPHEADER => $headers,
             ]);
+            birkly_outbound_curl_apply_transport_defaults($ch);
             $body = curl_exec($ch);
             $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
