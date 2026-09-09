@@ -16,7 +16,8 @@ $GLOBALS['birkly_marketplace_http_transport'] = static function (
     array $headers,
     ?string $body,
     int $timeout,
-    bool $followRedirects
+    bool $followRedirects,
+    bool $allowRetry = true
 ): array {
     if ($url === 'https://marketplace.test/api/v1/registry' && strtoupper($method) === 'GET') {
         return [

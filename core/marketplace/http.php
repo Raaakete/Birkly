@@ -45,15 +45,16 @@ function birkly_marketplace_http_fetch(
     array $headers = [],
     ?string $body = null,
     int $timeout = 20,
-    bool $followRedirects = false
+    bool $followRedirects = false,
+    bool $allowRetry = true
 ): array {
     if (isset($GLOBALS['birkly_marketplace_http_transport']) && is_callable($GLOBALS['birkly_marketplace_http_transport'])) {
-        return ($GLOBALS['birkly_marketplace_http_transport'])($url, $method, $headers, $body, $timeout, $followRedirects);
+        return ($GLOBALS['birkly_marketplace_http_transport'])($url, $method, $headers, $body, $timeout, $followRedirects, $allowRetry);
     }
 
     if (extension_loaded('curl')) {
         $result = birkly_marketplace_http_fetch_curl($url, $method, $headers, $body, $timeout, $followRedirects);
-        if ($result['ok'] || !birkly_marketplace_http_is_retryable_error((string) ($result['error'] ?? ''))) {
+        if (!$allowRetry || $result['ok'] || !birkly_marketplace_http_is_retryable_error((string) ($result['error'] ?? ''))) {
             return $result;
         }
 
@@ -96,7 +97,9 @@ function birkly_marketplace_http_fetch_curl(
         }
     }
 
-    $connectTimeout = $isRetry ? min(8, max(3, (int) ceil($timeout / 3))) : max(5, (int) min($timeout, 10));
+    $connectTimeout = $isRetry
+        ? min(8, max(2, (int) ceil($timeout / 2)))
+        : max(1, min($timeout, 8));
 
     curl_setopt_array($ch, [
         CURLOPT_CUSTOMREQUEST => $method,

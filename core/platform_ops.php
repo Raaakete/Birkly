@@ -175,6 +175,10 @@ function birkly_ops_register_installation(bool $force = false): void
  */
 function birkly_ops_check_updates(string $currentVersion): ?array
 {
+    if (isset($GLOBALS['birkly_ops_check_updates_override']) && is_callable($GLOBALS['birkly_ops_check_updates_override'])) {
+        return ($GLOBALS['birkly_ops_check_updates_override'])($currentVersion);
+    }
+
     $baseUrl = birkly_ops_updates_check_url();
     if ($baseUrl === '' || !function_exists('curl_init')) {
         return null;
