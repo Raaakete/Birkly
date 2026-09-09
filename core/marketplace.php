@@ -817,10 +817,11 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
     $effectiveSort = $priceSelection['sort'] !== '' ? $priceSelection['sort'] : $sort;
 
     $marketplaceBase = birkly_marketplace_url();
-    if (!birkly_marketplace_ensure_remote_reachable($marketplaceBase, 4)) {
-        $response = ['ok' => false, 'error' => 'Remote marketplace unreachable'];
-    } else {
+    $mocked = isset($GLOBALS['birkly_marketplace_mock_handler']) && is_callable($GLOBALS['birkly_marketplace_mock_handler']);
+    if ($mocked || birkly_marketplace_ensure_remote_reachable($marketplaceBase, 2)) {
         $response = birkly_marketplace_request('GET', '/api/v1/registry', null, $params);
+    } else {
+        $response = ['ok' => false, 'error' => 'Remote marketplace unreachable'];
     }
     if (!$response['ok'] || !is_array($response['data'])) {
         $fallback = birkly_marketplace_fallback_catalog();
