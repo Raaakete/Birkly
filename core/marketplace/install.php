@@ -34,12 +34,15 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
         : [$downloadUrl];
     $lastError = 'Download failed';
     $download = ['ok' => false, 'error' => $lastError];
-    foreach ($candidates as $candidate) {
+    $candidateCount = count($candidates);
+    foreach ($candidates as $index => $candidate) {
+        $isLast = $index >= ($candidateCount - 1);
         $download = birkly_marketplace_http_download_to_file(
             $candidate,
             $tmp,
             ['User-Agent: Birkly-CMS'],
-            180
+            180,
+            $isLast ? 20 : 4
         );
         if ($download['ok']) {
             break;
