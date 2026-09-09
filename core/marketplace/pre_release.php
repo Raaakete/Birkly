@@ -119,13 +119,16 @@ function birkly_marketplace_require_pre_release_ack(
  */
 function birkly_marketplace_gate_pre_release_ack(string $slug, string $version, bool $ackAccepted = false): array
 {
-    $detail = birkly_marketplace_offer_detail($slug);
-    if (!$detail['ok']) {
-        return [
-            'ok' => false,
-            'error' => $detail['error'] ?? 'Offer not found',
-            'code' => 'offer_not_found',
-        ];
+    $detail = birkly_marketplace_offer_detail_from_fallback($slug);
+    if ($detail === null) {
+        $detail = birkly_marketplace_offer_detail($slug);
+        if (!$detail['ok']) {
+            return [
+                'ok' => false,
+                'error' => $detail['error'] ?? 'Offer not found',
+                'code' => 'offer_not_found',
+            ];
+        }
     }
 
     $releases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
@@ -170,9 +173,12 @@ function birkly_marketplace_finalize_pre_release_ack(
  */
 function birkly_marketplace_resolve_channel_install_version(string $slug, string $version = ''): array
 {
-    $detail = birkly_marketplace_offer_detail($slug);
-    if (!$detail['ok']) {
-        return ['ok' => false, 'error' => $detail['error'] ?? 'Offer not found'];
+    $detail = birkly_marketplace_offer_detail_from_fallback($slug);
+    if ($detail === null) {
+        $detail = birkly_marketplace_offer_detail($slug);
+        if (!$detail['ok']) {
+            return ['ok' => false, 'error' => $detail['error'] ?? 'Offer not found'];
+        }
     }
 
     $releases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
