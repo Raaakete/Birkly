@@ -531,7 +531,7 @@ function birkly_marketplace_install_plugin(
         return ['ok' => false, 'errors' => $extract['errors'], 'preflight' => $preview];
     }
 
-    load_plugins();
+    load_plugins(birkly_marketplace_plugins_dir());
     $depErrors = check_plugin_dependencies($pluginId);
     if ($depErrors !== []) {
         return ['ok' => false, 'errors' => $depErrors, 'preflight' => $preview];
@@ -550,10 +550,16 @@ function birkly_marketplace_install_plugin(
         }
     }
 
+    $activated = false;
+    if (!$upgrade) {
+        $activated = set_plugin_state($pluginId, true);
+    }
+
     return [
         'ok' => true,
         'plugin_id' => $pluginId,
         'version' => $version,
+        'activated' => $activated,
         'errors' => [],
         'preflight' => $preview,
     ];

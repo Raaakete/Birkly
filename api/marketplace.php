@@ -668,12 +668,16 @@ if ($action === 'install') {
         'user' => $_SESSION['user']['email'] ?? 'unknown',
     ]);
 
+    $activated = !empty($install['activated']);
     echo json_encode([
         'status' => 'ok',
-        'message' => 'Plugin installed successfully',
+        'message' => $activated
+            ? 'Plugin installed and activated successfully'
+            : 'Plugin installed successfully',
         'data' => [
             'plugin_id' => $install['plugin_id'] ?? '',
             'version' => $install['version'] ?? $version,
+            'activated' => $activated,
             'capabilities' => $install['preflight']['capabilities'] ?? [],
         ],
     ]);
