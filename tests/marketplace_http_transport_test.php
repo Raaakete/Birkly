@@ -63,7 +63,7 @@ if ($tmp === false) {
         ['User-Agent: Birkly-CMS'],
         30
     );
-    if (!$download['ok'] || !is_file($tmp) || filesize($tmp) !== 8) {
+    if (!$download['ok'] || !is_file($tmp) || filesize($tmp) !== strlen('zip-bytes')) {
         $errors[] = 'Download transport mock should write artifact bytes';
     }
     @unlink($tmp);
