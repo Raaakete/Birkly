@@ -238,6 +238,90 @@ function birkly_ops_register_installation(bool $force = false): void
 /**
  * @return list<string>
  */
+function birkly_ops_local_marketplace_roots(): array
+{
+    if (!function_exists('birkly_project_root')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    $roots = [];
+    $envRoot = trim((string) (getenv('BIRKLY_MARKETPLACE_ROOT') ?: ''));
+    if ($envRoot !== '' && is_dir($envRoot)) {
+        $roots[] = rtrim($envRoot, '/\\');
+    }
+
+    $sibling = dirname(rtrim(birkly_project_root(), '/\\')) . '/Birkly-Marketplace';
+    if (is_dir($sibling)) {
+        $roots[] = $sibling;
+    }
+
+    return array_values(array_unique($roots));
+}
+
+/**
+ * Read CMS release metadata directly from a local Birkly-Marketplace data directory.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_ops_check_updates_from_filesystem(string $currentVersion): ?array
+{
+    $channel = birkly_ops_release_channel();
+    $currentVersion = trim($currentVersion);
+    if ($currentVersion === '') {
+        return null;
+    }
+
+    foreach (birkly_ops_local_marketplace_roots() as $root) {
+        $channelConfigPath = rtrim($root, '/\\') . '/data/ops/releases/' . $channel . '/_channel.json';
+        if (!is_file($channelConfigPath)) {
+            continue;
+        }
+
+        $config = json_decode((string) file_get_contents($channelConfigPath), true);
+        if (!is_array($config)) {
+            continue;
+        }
+
+        $activeVersion = trim((string) ($config['active_version'] ?? ''));
+        if ($activeVersion === '') {
+            continue;
+        }
+
+        $releasePath = rtrim($root, '/\\') . '/data/ops/releases/' . $channel . '/' . $activeVersion . '.json';
+        $zipPath = rtrim($root, '/\\') . '/data/ops/releases/' . $channel . '/' . $activeVersion . '.zip';
+        $record = is_file($releasePath)
+            ? json_decode((string) file_get_contents($releasePath), true)
+            : [];
+        $record = is_array($record) ? $record : [];
+
+        $updateAvailable = $currentVersion !== $activeVersion;
+        $downloadUrl = '';
+        if ($updateAvailable) {
+            if (is_file($zipPath)) {
+                $downloadUrl = $zipPath;
+            } else {
+                $downloadUrl = trim((string) ($record['download_url'] ?? ''));
+            }
+        }
+
+        return [
+            'ok' => true,
+            'update_available' => $updateAvailable,
+            'latest_version' => $activeVersion,
+            'current_version' => $currentVersion,
+            'download_url' => $downloadUrl,
+            'checksum_sha256' => $updateAvailable ? strtolower(trim((string) ($record['checksum_sha256'] ?? ''))) : '',
+            'release_notes' => $updateAvailable ? (string) ($record['release_notes'] ?? '') : '',
+            'source' => 'ops_filesystem',
+        ];
+    }
+
+    return null;
+}
+
+/**
+ * @return list<string>
+ */
 function birkly_ops_updates_check_candidate_urls(): array
 {
     $candidates = [];
@@ -344,6 +428,11 @@ function birkly_ops_check_updates(string $currentVersion): ?array
 {
     if (isset($GLOBALS['birkly_ops_check_updates_override']) && is_callable($GLOBALS['birkly_ops_check_updates_override'])) {
         return ($GLOBALS['birkly_ops_check_updates_override'])($currentVersion);
+    }
+
+    $filesystem = birkly_ops_check_updates_from_filesystem($currentVersion);
+    if ($filesystem !== null) {
+        return $filesystem;
     }
 
     $urls = birkly_ops_updates_check_candidate_urls();
