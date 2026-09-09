@@ -543,11 +543,16 @@
             return;
         }
         var btn = document.getElementById('marketplace-prerelease-accept-btn');
+        var previousPreReleaseLabel = btn ? btn.textContent : '';
+        var isUpdateFlow = pending.mode === 'update' || pending.mode === 'upgrade';
         if (btn) {
             btn.disabled = true;
+            btn.textContent = isUpdateFlow
+                ? t('accept_pre_release_update', 'Accept risk & update') + '…'
+                : t('accept_pre_release_install', 'Accept risk & install') + '…';
         }
         try {
-            if (pending.mode === 'update' || pending.mode === 'upgrade') {
+            if (isUpdateFlow) {
                 var updateResult = await pluginsApi('update', {
                     plugin_id: pending.pluginId,
                     pre_release_ack: 1,
@@ -587,6 +592,9 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
+                if (previousPreReleaseLabel) {
+                    btn.textContent = previousPreReleaseLabel;
+                }
             }
         }
     }
