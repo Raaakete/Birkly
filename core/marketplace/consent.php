@@ -250,6 +250,30 @@ function birkly_marketplace_install_permissions(string $slug, string $version = 
         return ['ok' => false, 'error' => 'Offer slug required'];
     }
 
+    $fallbackOffer = birkly_marketplace_find_fallback_offer($slug);
+    if ($fallbackOffer !== null) {
+        $fallbackReleases = is_array($fallbackOffer['releases'] ?? null) ? $fallbackOffer['releases'] : [];
+        $targetVersion = trim($version);
+        if ($targetVersion === '') {
+            $targetVersion = birkly_marketplace_latest_release_version($fallbackReleases) ?? '';
+        }
+        if ($targetVersion !== '') {
+            $manifest = birkly_marketplace_permissions_manifest_for_release($fallbackReleases, $targetVersion);
+            if ($manifest !== null) {
+                $permissionsManifest = birkly_marketplace_normalize_permissions_manifest($manifest);
+
+                return [
+                    'ok' => true,
+                    'version' => $targetVersion,
+                    'permissions_manifest' => $permissionsManifest,
+                    'consent_required' => birkly_marketplace_manifest_requires_consent($permissionsManifest)
+                        && !birkly_marketplace_has_install_consent($slug, $targetVersion),
+                    'consent_record' => birkly_marketplace_load_consent()[$slug][$targetVersion] ?? null,
+                ];
+            }
+        }
+    }
+
     $detail = birkly_marketplace_offer_detail($slug);
     if (!$detail['ok']) {
         return ['ok' => false, 'error' => $detail['error'] ?? 'Offer not found'];
@@ -264,21 +288,7 @@ function birkly_marketplace_install_permissions(string $slug, string $version = 
         }
     }
 
-    $manifest = null;
-    foreach ($releases as $release) {
-        if (!is_array($release) || (string) ($release['version'] ?? '') !== $targetVersion) {
-            continue;
-        }
-        if (is_array($release['permissions_manifest'] ?? null)) {
-            $manifest = $release['permissions_manifest'];
-            break;
-        }
-        $pluginJson = is_array($release['plugin_json'] ?? null) ? $release['plugin_json'] : null;
-        if ($pluginJson !== null) {
-            $manifest = birkly_marketplace_permissions_manifest_from_plugin_json($pluginJson);
-            break;
-        }
-    }
+    $manifest = birkly_marketplace_permissions_manifest_for_release($releases, $targetVersion);
 
     if ($manifest === null && empty($detail['fallback'])) {
         $releaseInfo = birkly_marketplace_release_download($slug, $targetVersion);
