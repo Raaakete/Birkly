@@ -234,11 +234,13 @@ function birkly_marketplace_http_download_to_file(
             return ['ok' => false, 'error' => 'Could not initialize cURL'];
         }
 
+        $connectTimeout = max(5, min(30, (int) ceil($timeout / 4)));
+
         curl_setopt_array($ch, [
             CURLOPT_FILE => $fp,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_TIMEOUT => max(1, $timeout),
-            CURLOPT_CONNECTTIMEOUT => max(5, (int) min($timeout, 15)),
+            CURLOPT_CONNECTTIMEOUT => $connectTimeout,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,

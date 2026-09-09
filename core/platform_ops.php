@@ -29,6 +29,57 @@ function birkly_ops_installations_register_url(): string
     return '';
 }
 
+/**
+ * @return list<string>
+ */
+function birkly_ops_local_instance_base_urls(): array
+{
+    return [
+        'http://127.0.0.1:8090',
+        'http://localhost:8090',
+        'http://host.docker.internal:8090',
+    ];
+}
+
+function birkly_ops_probe_health(string $baseUrl, int $timeout = 2): bool
+{
+    $baseUrl = rtrim(trim($baseUrl), '/');
+    if ($baseUrl === '' || !function_exists('curl_init')) {
+        return false;
+    }
+
+    $ch = curl_init($baseUrl . '/health');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => max(1, $timeout),
+        CURLOPT_CONNECTTIMEOUT => max(1, min(3, $timeout)),
+        CURLOPT_HTTPHEADER => ['Accept: application/json'],
+    ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
+    $response = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if (!is_string($response) || $code < 200 || $code >= 300) {
+        return false;
+    }
+
+    $data = json_decode($response, true);
+
+    return is_array($data) && (string) ($data['status'] ?? '') === 'ok';
+}
+
+function birkly_ops_discover_local_updates_check_url(): string
+{
+    foreach (birkly_ops_local_instance_base_urls() as $base) {
+        if (birkly_ops_probe_health($base, 2)) {
+            return rtrim($base, '/') . '/api/ops/v1/releases/check';
+        }
+    }
+
+    return '';
+}
+
 function birkly_ops_updates_check_url(): string
 {
     $config = birkly_platform_config();
@@ -42,17 +93,23 @@ function birkly_ops_updates_check_url(): string
         return $env;
     }
 
-    if (!function_exists('birkly_is_local_dev_request')) {
-        require_once __DIR__ . '/birkly_paths.php';
-    }
-    // Local installs use GitHub for CMS updates unless an Ops URL is set explicitly.
-    if (birkly_is_local_dev_request()) {
-        return '';
-    }
-
     $relay = birkly_feedback_relay_url();
     if ($relay !== '' && str_contains($relay, '/api/ops/v1/feedback')) {
         return str_replace('/api/ops/v1/feedback', '/api/ops/v1/releases/check', $relay);
+    }
+
+    if (!function_exists('birkly_is_local_dev_request')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+    if (birkly_is_local_dev_request() || birkly_is_platform_owner_install()) {
+        $local = birkly_ops_discover_local_updates_check_url();
+        if ($local !== '') {
+            return $local;
+        }
+    }
+
+    if (birkly_is_platform_owner_install()) {
+        return 'https://ops.birkly.cloud/api/ops/v1/releases/check';
     }
 
     return '';

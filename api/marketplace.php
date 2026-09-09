@@ -457,17 +457,20 @@ if ($action === 'install') {
         exit;
     }
 
-    $offerDetail = birkly_marketplace_offer_detail($slug);
-    if ($offerDetail['ok']) {
-        $offer = is_array($offerDetail['offer'] ?? null) ? $offerDetail['offer'] : [];
-        if (!birkly_marketplace_offer_is_installable($offer)) {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'This plugin is coming soon and cannot be installed yet.',
-                'code' => 'offer_coming_soon',
-            ]);
-            exit;
+    $installableOffer = birkly_marketplace_find_fallback_offer($slug);
+    if ($installableOffer === null) {
+        $offerDetail = birkly_marketplace_offer_detail($slug);
+        if ($offerDetail['ok']) {
+            $installableOffer = is_array($offerDetail['offer'] ?? null) ? $offerDetail['offer'] : null;
         }
+    }
+    if (is_array($installableOffer) && !birkly_marketplace_offer_is_installable($installableOffer)) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'This plugin is coming soon and cannot be installed yet.',
+            'code' => 'offer_coming_soon',
+        ]);
+        exit;
     }
 
     $freeInstall = false;
