@@ -360,13 +360,31 @@
         }
     }
 
+    function marketplaceFetchErrorMessage(err) {
+        if (err && err.name === 'AbortError') {
+            return t('marketplace_request_timeout', 'Hub request timed out. Check your network connection and try again.');
+        }
+        if (err && (err.message === 'Failed to fetch' || err.name === 'TypeError')) {
+            return t(
+                'marketplace_request_network',
+                'Could not reach the Hub service. The install may still be running — wait a moment, then try again.'
+            );
+        }
+        return (err && err.message) || t('marketplace_request_failed', 'Hub request failed.');
+    }
+
     async function marketplaceApi(action, extra) {
-        var response = await fetch(url('/api/marketplace.php'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'same-origin',
-            body: JSON.stringify(Object.assign({ action: action, _csrf: csrfToken() }, extra || {})),
-        });
+        var response;
+        try {
+            response = await fetch(url('/api/marketplace.php'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(Object.assign({ action: action, _csrf: csrfToken() }, extra || {})),
+            });
+        } catch (err) {
+            throw new Error(marketplaceFetchErrorMessage(err));
+        }
         var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
             var err = new Error(result.message || 'Request failed');
@@ -379,9 +397,14 @@
 
     async function marketplaceApiGet(action, params) {
         var qs = new URLSearchParams(Object.assign({ action: action }, params || {}));
-        var response = await fetch(url('/api/marketplace.php?' + qs.toString()), {
-            credentials: 'same-origin',
-        });
+        var response;
+        try {
+            response = await fetch(url('/api/marketplace.php?' + qs.toString()), {
+                credentials: 'same-origin',
+            });
+        } catch (err) {
+            throw new Error(marketplaceFetchErrorMessage(err));
+        }
         var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
             var err = new Error(result.message || 'Request failed');
@@ -581,8 +604,12 @@
             return;
         }
         var btn = document.getElementById('marketplace-consent-accept-btn');
+        var previousLabel = btn ? btn.textContent : '';
         if (btn) {
             btn.disabled = true;
+            btn.textContent = isUpdate
+                ? t('accept_and_update', 'Accept & update') + '…'
+                : t('accept_and_install', 'Accept & install') + '…';
         }
         try {
             if (isUpdate) {
@@ -607,6 +634,9 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
+                if (previousLabel) {
+                    btn.textContent = previousLabel;
+                }
             }
         }
     }
