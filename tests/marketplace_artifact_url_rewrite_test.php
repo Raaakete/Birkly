@@ -30,11 +30,14 @@ unset($_SERVER['HTTP_HOST']);
 if (!in_array($cloudUrl, $candidates, true)) {
     $errors[] = 'Candidates should include the original cloud URL';
 }
-if (!in_array('http://127.0.0.1:8090/api/v1/artifacts/birkly-automation/1.1.31/download', $candidates, true)) {
-    $errors[] = 'Candidates should include rewritten local marketplace URL';
+if (($candidates[0] ?? '') !== $cloudUrl) {
+    $errors[] = 'When local marketplace is offline, cloud artifact URL should be tried first';
 }
-if (($candidates[0] ?? '') !== 'http://127.0.0.1:8090/api/v1/artifacts/birkly-automation/1.1.31/download') {
-    $errors[] = 'Local dev should try local marketplace artifact URL before cloud';
+foreach ($candidates as $candidate) {
+    if (birkly_marketplace_is_local_service_url($candidate)) {
+        $errors[] = 'Offline local marketplace URLs should not be included in artifact candidates';
+        break;
+    }
 }
 
 unset($GLOBALS['__birkly_marketplace_settings']);
