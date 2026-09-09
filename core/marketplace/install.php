@@ -51,6 +51,29 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
     }
 
     if (!$download['ok']) {
+        if (function_exists('birkly_marketplace_is_local_context') && birkly_marketplace_is_local_context()) {
+            $parsed = function_exists('birkly_marketplace_parse_artifact_slug_version')
+                ? birkly_marketplace_parse_artifact_slug_version($downloadUrl)
+                : ['slug' => '', 'version' => ''];
+            if (($parsed['slug'] ?? '') !== '' && function_exists('birkly_marketplace_find_local_catalog_zip')) {
+                $localZip = birkly_marketplace_find_local_catalog_zip(
+                    (string) $parsed['slug'],
+                    (string) ($parsed['version'] ?? '') !== '' ? (string) $parsed['version'] : null
+                );
+                if ($localZip !== null && is_file($localZip) && @copy($localZip, $tmp)) {
+                    if ($expectedSha256 !== null && $expectedSha256 !== '') {
+                        $actual = hash_file('sha256', $tmp);
+                        if (!hash_equals(strtolower($expectedSha256), strtolower((string) $actual))) {
+                            @unlink($tmp);
+                            return ['ok' => false, 'error' => 'Checksum verification failed'];
+                        }
+                    }
+
+                    return ['ok' => true, 'path' => $tmp];
+                }
+            }
+        }
+
         @unlink($tmp);
         return [
             'ok' => false,

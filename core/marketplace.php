@@ -419,8 +419,8 @@ function birkly_marketplace_url(): string
 function birkly_marketplace_local_instance_urls(): array
 {
     return [
-        'http://127.0.0.1:8090',
         'http://localhost:8090',
+        'http://127.0.0.1:8090',
         'http://host.docker.internal:8090',
     ];
 }
@@ -623,12 +623,28 @@ function birkly_marketplace_resolve_effective_url(string $configuredUrl): string
     $cached = birkly_marketplace_read_resolve_cache();
     if ($cached !== null && !empty($cached['effective_url'])) {
         $effectiveUrl = (string) $cached['effective_url'];
-        birkly_marketplace_record_probe_result($effectiveUrl, !empty($cached['cloud_reachable']));
-        if (empty($cached['cloud_reachable']) && $effectiveUrl === birkly_marketplace_normalize_base_url($configuredUrl)) {
-            birkly_marketplace_record_probe_result($configuredUrl, false);
+        $cachedIsCloud = birkly_marketplace_normalize_base_url($effectiveUrl)
+            === birkly_marketplace_normalize_base_url($configuredUrl);
+        if (
+            birkly_marketplace_is_local_context()
+            && ($cachedIsCloud || empty($cached['cloud_reachable']))
+        ) {
+            foreach (birkly_marketplace_local_instance_urls() as $localUrl) {
+                if (birkly_marketplace_probe_health($localUrl, 1)) {
+                    $cached = null;
+                    break;
+                }
+            }
         }
 
-        return $cache[$configuredUrl] = $effectiveUrl;
+        if ($cached !== null) {
+            birkly_marketplace_record_probe_result($effectiveUrl, !empty($cached['cloud_reachable']));
+            if (empty($cached['cloud_reachable']) && $cachedIsCloud) {
+                birkly_marketplace_record_probe_result($configuredUrl, false);
+            }
+
+            return $cache[$configuredUrl] = $effectiveUrl;
+        }
     }
 
     $isLocal = birkly_marketplace_is_local_context();
@@ -637,16 +653,16 @@ function birkly_marketplace_resolve_effective_url(string $configuredUrl): string
     $localUrls = birkly_marketplace_local_instance_urls();
 
     if ($isLocal) {
-        if (birkly_marketplace_probe_health($configuredUrl, $cloudTimeout)) {
-            birkly_marketplace_write_resolve_cache($configuredUrl, true);
-            return $cache[$configuredUrl] = $configuredUrl;
-        }
-
         foreach ($localUrls as $localUrl) {
             if (birkly_marketplace_probe_health($localUrl, $localTimeout)) {
                 birkly_marketplace_write_resolve_cache($localUrl, false);
                 return $cache[$configuredUrl] = $localUrl;
             }
+        }
+
+        if (birkly_marketplace_probe_health($configuredUrl, $cloudTimeout)) {
+            birkly_marketplace_write_resolve_cache($configuredUrl, true);
+            return $cache[$configuredUrl] = $configuredUrl;
         }
 
         birkly_marketplace_write_resolve_cache($configuredUrl, false);
@@ -686,7 +702,7 @@ function birkly_marketplace_user_error_message(string $error): string
             . ' (terminal: curl -4 https://marketplace.birkly.cloud/health). '
             . 'Broken HTTP_PROXY env vars and IPv6 routing often cause PHP timeouts while curl in Terminal still works.';
         if (birkly_marketplace_is_local_context()) {
-            $hint .= ' For local-only dev, run Birkly-Marketplace on port 8090 or set BIRKLY_MARKETPLACE_URL=http://127.0.0.1:8090.';
+            $hint .= ' For local dev, run Birkly-Marketplace on port 8090 (./start-server.sh -k), set BIRKLY_MARKETPLACE_URL=http://127.0.0.1:8090, or place plugin zips in Birkly-Marketplace/catalog/packages/.';
         }
 
         return $error . ' ' . $hint;
@@ -1657,6 +1673,84 @@ function birkly_marketplace_healthy_local_instance_urls(): array
     }
 
     return $healthy;
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_marketplace_local_catalog_roots(): array
+{
+    if (!function_exists('birkly_project_root')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    $roots = [];
+    $envRoot = trim((string) (getenv('BIRKLY_MARKETPLACE_ROOT') ?: ''));
+    if ($envRoot !== '' && is_dir($envRoot)) {
+        $roots[] = rtrim($envRoot, '/\\');
+    }
+
+    $sibling = dirname(rtrim(birkly_project_root(), '/\\')) . '/Birkly-Marketplace';
+    if (is_dir($sibling)) {
+        $roots[] = $sibling;
+    }
+
+    return array_values(array_unique($roots));
+}
+
+/**
+ * @return array{slug:string,version:string}
+ */
+function birkly_marketplace_parse_artifact_slug_version(string $downloadUrl): array
+{
+    if (preg_match('#/api/v1/artifacts/([^/]+)/([^/]+)/download#', $downloadUrl, $matches) === 1) {
+        return [
+            'slug' => trim((string) ($matches[1] ?? '')),
+            'version' => trim((string) ($matches[2] ?? '')),
+        ];
+    }
+
+    return ['slug' => '', 'version' => ''];
+}
+
+function birkly_marketplace_find_local_catalog_zip(string $slug, ?string $version = null): ?string
+{
+    $slug = trim($slug);
+    if ($slug === '') {
+        return null;
+    }
+
+    $version = $version !== null ? trim($version) : '';
+
+    foreach (birkly_marketplace_local_catalog_roots() as $root) {
+        $pkgDir = rtrim($root, '/\\') . '/catalog/packages';
+        if (!is_dir($pkgDir)) {
+            continue;
+        }
+
+        if ($version !== '') {
+            $exact = $pkgDir . '/' . $slug . '-' . $version . '.zip';
+            if (is_file($exact)) {
+                return $exact;
+            }
+        }
+
+        $pattern = $pkgDir . '/' . $slug . '-*.zip';
+        $matches = glob($pattern) ?: [];
+        if ($matches === []) {
+            continue;
+        }
+
+        if ($version !== '') {
+            continue;
+        }
+
+        usort($matches, 'strnatcasecmp');
+
+        return (string) end($matches);
+    }
+
+    return null;
 }
 
 /**
