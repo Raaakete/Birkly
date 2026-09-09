@@ -1007,7 +1007,7 @@
     async function loadMarketplaceConfig() {
         try {
             var response = await fetch(url('/api/marketplace.php?action=config'), { credentials: 'same-origin' });
-            var result = await response.json();
+            var result = await parseMarketplaceResponse(response);
             if (result.status === 'ok' && result.data) {
                 if (result.data.display_currency) {
                     applyMarketplaceDisplayCurrency(result.data.display_currency);
@@ -3201,7 +3201,7 @@
             var response = await fetch(url('/api/marketplace.php?action=offer&slug=' + encodeURIComponent(slug)), {
                 credentials: 'same-origin',
             });
-            var result = await response.json();
+            var result = await parseMarketplaceResponse(response);
             if (result.status !== 'ok' || !result.data || !result.data.offer) {
                 throw new Error(result.message || 'Offer not found');
             }
@@ -3286,7 +3286,7 @@
             var browse = await fetch(url('/api/marketplace.php?' + query.toString()), {
                 credentials: 'same-origin',
             });
-            var result = await browse.json();
+            var result = await parseMarketplaceResponse(browse);
             if (result.status !== 'ok') {
                 throw new Error(result.message || 'Browse failed');
             }
