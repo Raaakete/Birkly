@@ -155,6 +155,7 @@ function birkly_ops_fetch_starters_catalog(?array &$errors = null, int $timeoutS
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTPHEADER => ['Accept: application/json'],
     ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
@@ -216,6 +217,7 @@ function birkly_ops_starter_download_info(string $starterId, ?array &$errors = n
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json'],
     ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
@@ -275,6 +277,7 @@ function birkly_ops_download_starter_zip(string $starterId, string $destPath, ?a
         CURLOPT_CONNECTTIMEOUT => 8,
         CURLOPT_HTTPHEADER => ['Accept: application/zip'],
     ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
     $ok = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlError = curl_error($ch);
