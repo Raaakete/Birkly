@@ -379,6 +379,8 @@ if ($action === 'list_hub_licenses') {
 }
 
 if ($action === 'permissions') {
+    @set_time_limit(120);
+
     $slug = trim((string) ($input['slug'] ?? $_GET['slug'] ?? ''));
     $version = trim((string) ($input['version'] ?? $_GET['version'] ?? ''));
     if ($slug === '') {
@@ -438,6 +440,8 @@ if ($action === 'accept_consent') {
 }
 
 if ($action === 'install') {
+    @set_time_limit(300);
+
     $csrf = $input['_csrf'] ?? '';
     if (!validate_plugin_csrf($csrf)) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
@@ -532,9 +536,14 @@ if ($action === 'install') {
     }
 
     $offerType = 'plugin';
-    $detailForType = birkly_marketplace_offer_detail($slug);
-    if ($detailForType['ok'] && is_array($detailForType['offer'] ?? null)) {
-        $offerType = (string) ($detailForType['offer']['offer_type'] ?? 'plugin');
+    $fallbackOffer = birkly_marketplace_find_fallback_offer($slug);
+    if ($fallbackOffer !== null) {
+        $offerType = (string) ($fallbackOffer['offer_type'] ?? 'plugin');
+    } else {
+        $detailForType = birkly_marketplace_offer_detail($slug);
+        if ($detailForType['ok'] && is_array($detailForType['offer'] ?? null)) {
+            $offerType = (string) ($detailForType['offer']['offer_type'] ?? 'plugin');
+        }
     }
 
     $consentAccepted = !empty($input['consent_accepted']) || !empty($input['consentAccepted']);
