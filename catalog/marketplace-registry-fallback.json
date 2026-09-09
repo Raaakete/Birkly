@@ -21,7 +21,7 @@
                 "amount_cents": 0
             },
             "trust_level": "verified",
-            "latest_version": null,
+            "latest_version": "1.1.31",
             "provider_id": "prov_06ebe42e73238e81",
             "provider_name": "Birkly and Other Things",
             "rating_summary": {
@@ -35,7 +35,248 @@
             "status": "published",
             "distribution": "alpha",
             "distribution_notices": [],
-            "distribution_notice": "This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk."
+            "distribution_notice": "This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk.",
+            "releases": [
+                {
+                    "version": "1.1.31",
+                    "published_at": "2026-09-09T06:46:40Z",
+                    "changelog": "## What's Changed\n* Automation 1.1.28: Send Email to Many UX + site user broadcasts by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/30\n* Automation 1.1.29 — organize starter templates, hide club recipe packs by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/31\n* Automation 1.1.30 — hotfix admin API parse error (empty JSON) by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/32\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.27...v1.1.31",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.31/download",
+                        "checksum_sha256": "424db62b9be37a381f951af0beb3a0347569eb8195ac100871e4925dab8206da",
+                        "size_bytes": 166952
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.30",
+                    "published_at": "2026-09-08T19:35:21Z",
+                    "changelog": "## What's Changed\n* Automation 1.1.28: Send Email to Many UX + site user broadcasts by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/30\n* Automation 1.1.29 — organize starter templates, hide club recipe packs by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/31\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.27...v1.1.30",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.30/download",
+                        "checksum_sha256": "b337a15cb1b9e591c66679cb5e166151586872906b42635aa2715a983c3c62a1",
+                        "size_bytes": 165992
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.29",
+                    "published_at": "2026-09-08T19:15:08Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.28...v1.1.29",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.29/download",
+                        "checksum_sha256": "9cfe2b4af22b1a3996192525e26bfca56628442a841e25c924ff7609b8d61486",
+                        "size_bytes": 165914
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.28",
+                    "published_at": "2026-09-08T19:04:57Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.27...v1.1.28",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.28/download",
+                        "checksum_sha256": "023c1feed5bba9ddfb136a5ade7b9a2902407b7d5dc7c5d03739074374c64390",
+                        "size_bytes": 169150
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.27",
+                    "published_at": "2026-09-08T18:18:14Z",
+                    "changelog": "## What's Changed\n* Advanced automation: broadcast email and related entry lookup (v1.1.27) by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/29\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.26...v1.1.27",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.27/download",
+                        "checksum_sha256": "cd32d5c8f6ca872dd81fef34ebe03d78b5dbac768aa17ccb5a24c7afd9373169",
+                        "size_bytes": 163412
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.26",
+                    "published_at": "2026-09-08T18:18:11Z",
+                    "changelog": "## What's Changed\n* Send Email: entry field tokens for recipient and body by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/pull/28\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.25...v1.1.26",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.26/download",
+                        "checksum_sha256": "6c6faf532432921b12582015b66dfb2f2bc00f845a1aa409511a73f7fb1a75e7",
+                        "size_bytes": 156975
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.25",
+                    "published_at": "2026-09-08T14:59:59Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.24...v1.1.25",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.25/download",
+                        "checksum_sha256": "998a87e3009daf1057328bb7b5879707ad5f08bc6a98eb2e41c7500306963410",
+                        "size_bytes": 155352
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "birkly_entry_saved",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.1.24",
+                    "published_at": "2026-09-08T14:29:04Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-Automation/compare/v1.1.23...v1.1.24",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.24/download",
+                        "checksum_sha256": "93f787fe4983b3971dd9fa53f899aec29665c898015a3fa838e664771b5955c1",
+                        "size_bytes": 154674
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_content"
+                        ],
+                        "hooks": [
+                            "automation_blocks_register",
+                            "plugin_activated",
+                            "plugin_deactivated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "none",
+                            "users": "none",
+                            "settings": "read_write"
+                        }
+                    }
+                }
+            ]
         },
         {
             "slug": "birkly-commerce",
@@ -78,7 +319,7 @@
                 ]
             },
             "trust_level": "verified",
-            "latest_version": null,
+            "latest_version": "1.0.115",
             "provider_id": "prov_06ebe42e73238e81",
             "provider_name": "Birkly and Other Things",
             "rating_summary": null,
@@ -89,7 +330,305 @@
             "status": "published",
             "distribution": "alpha",
             "distribution_notices": [],
-            "distribution_notice": "This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk."
+            "distribution_notice": "This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk.",
+            "releases": [
+                {
+                    "version": "1.0.115",
+                    "published_at": "2026-09-08T14:56:43Z",
+                    "changelog": "Commerce 1.0.115 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.115/download",
+                        "checksum_sha256": "3aa755793a084b3c12de218a6f2cf52a23f472436d959030e09c59d57c140a9f",
+                        "size_bytes": 519828
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.114",
+                    "published_at": "2026-09-08T14:28:55Z",
+                    "changelog": "Commerce 1.0.114 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.114/download",
+                        "checksum_sha256": "33f5184e0ed7285c73e51e80722d22b7e022a474550cf1c7da7b46b1566f1a34",
+                        "size_bytes": 518364
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.113",
+                    "published_at": "2026-09-08T14:21:59Z",
+                    "changelog": "Commerce 1.0.113 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.113/download",
+                        "checksum_sha256": "318ff2e616c5b26cbaa3cff3eeec0ee5fcf30b0639314e4057002eb0a3eace9a",
+                        "size_bytes": 517612
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.112",
+                    "published_at": "2026-09-08T12:29:45Z",
+                    "changelog": "Commerce 1.0.112 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.112/download",
+                        "checksum_sha256": "1420393de415c68d79279d5bec4fbbaa75d2664f6e9f4e6c728161d9bcd8e2fa",
+                        "size_bytes": 517073
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.111",
+                    "published_at": "2026-09-08T11:24:40Z",
+                    "changelog": "## Fixes\n\n- **commerce_order_paid** event payload now includes checkout metadata (e.g. `signup_flow_opt_in`) so User plugin can send club activation emails after one-time donations.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.111/download",
+                        "checksum_sha256": "4491df3dd0f2cd4436bcf57f5a285a0ad60305e901c9f95f10177d2d44415eb0",
+                        "size_bytes": 1426200
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.110",
+                    "published_at": "2026-09-03T08:55:08Z",
+                    "changelog": "Commerce 1.0.110 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.110/download",
+                        "checksum_sha256": "06c452291bddff06a2eee15179946b1cd9283a5df9dc25a236fdd4f09a52a4f0",
+                        "size_bytes": 515946
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.109",
+                    "published_at": "2026-09-03T08:55:25Z",
+                    "changelog": "Commerce 1.0.109 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.109/download",
+                        "checksum_sha256": "825eb38066d848c84214de9889e5f93f0e91bba406d60d8d447a31c3c9e67aca",
+                        "size_bytes": 511525
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.108",
+                    "published_at": "2026-09-02T22:04:20Z",
+                    "changelog": "Commerce 1.0.108 marketplace build.",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-commerce/1.0.108/download",
+                        "checksum_sha256": "d3a10aa818896cfa57897893496bc3e7328189fb888269adfb70597d80e564da",
+                        "size_bytes": 510671
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "access_commerce_shelf",
+                            "access_payment_shelf",
+                            "manage_commerce",
+                            "manage_payments",
+                            "view_commerce_orders",
+                            "view_commerce_stats",
+                            "view_payment_activity",
+                            "view_payment_stats"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "automation_blocks_register",
+                            "plugin_activated"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read",
+                            "settings": "read_write"
+                        }
+                    }
+                }
+            ]
         },
         {
             "slug": "birkly-events",
@@ -120,7 +659,22 @@
             "status": "coming_soon",
             "distribution": "stable",
             "distribution_notices": [],
-            "distribution_notice": ""
+            "distribution_notice": "",
+            "releases": [
+                {
+                    "version": "1.0.0",
+                    "published_at": "2026-07-23T10:31:24Z",
+                    "changelog": "Initial official marketplace release (P35-M28).",
+                    "min_birkly": ">=1.0.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-events/1.0.0/download",
+                        "checksum_sha256": "111d05e3f0da427713a0acacde9419f8ec614e0c21958574a272e17fac59051e",
+                        "size_bytes": 34758
+                    }
+                }
+            ]
         },
         {
             "slug": "birkly-studio",
@@ -151,7 +705,22 @@
             "status": "coming_soon",
             "distribution": "stable",
             "distribution_notices": [],
-            "distribution_notice": ""
+            "distribution_notice": "",
+            "releases": [
+                {
+                    "version": "1.0.0",
+                    "published_at": "2026-07-23T10:31:24Z",
+                    "changelog": "Initial official marketplace release (P35-M28).",
+                    "min_birkly": ">=1.0.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-studio/1.0.0/download",
+                        "checksum_sha256": "668ba72f25e3feb1a1fb73a4c5058bcd6a8fc1ce7f77eb7bded2ed77825c7c3f",
+                        "size_bytes": 75971
+                    }
+                }
+            ]
         },
         {
             "slug": "birkly-user-management",
@@ -171,7 +740,7 @@
                 "amount_cents": 0
             },
             "trust_level": "verified",
-            "latest_version": null,
+            "latest_version": "1.0.85",
             "provider_id": "prov_06ebe42e73238e81",
             "provider_name": "Birkly and Other Things",
             "rating_summary": null,
@@ -182,7 +751,437 @@
             "status": "published",
             "distribution": "alpha",
             "distribution_notices": [],
-            "distribution_notice": "This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk."
+            "distribution_notice": "This is an alpha pre-release. Builds may be unstable or incomplete. Only install if you accept that risk.",
+            "releases": [
+                {
+                    "version": "1.0.85",
+                    "published_at": "2026-09-08T18:29:45Z",
+                    "changelog": "## What's Changed\n* Fix Hub preflight: declare P82 storefront hooks (v1.0.85) by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-User/pull/57\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.84...v1.0.85",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "alpha",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.85/download",
+                        "checksum_sha256": "7b2022edd534c9b26e1d33fe48e347a1c93879adbc5e329e6874b0645413888c",
+                        "size_bytes": 333946
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_entries_view_filter",
+                            "birkly_entry_view_allowed",
+                            "birkly_public_current_user",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "birkly_site_client_config",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.79",
+                    "published_at": "2026-09-08T11:24:42Z",
+                    "changelog": "## What's Changed\n* Provision club tier for existing users on donation signup by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-User/pull/52\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.78...v1.0.79",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.79/download",
+                        "checksum_sha256": "cf7cbd952fb4372854e6f397e166a35e72364be6d141ab3fb9ab43a616752c84",
+                        "size_bytes": 329601
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.78",
+                    "published_at": "2026-09-08T08:36:36Z",
+                    "changelog": "## What's Changed\n* feat(club): @mention autocomplete for composers by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-User/pull/50\n* Add requireAuthGate for member-only storefront pages by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-User/pull/51\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.77...v1.0.78",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.78/download",
+                        "checksum_sha256": "cd09e2f2cbd94fba2ed981f55c10bc19cafffad48040fb7e5486ef5705fba46d",
+                        "size_bytes": 329243
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.77",
+                    "published_at": "2026-09-07T17:29:49Z",
+                    "changelog": "## What's Changed\n* Fix club tier reconcile never running (1.0.77) by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-User/pull/49\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.76...v1.0.77",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.77/download",
+                        "checksum_sha256": "bcb6d0cac244dd0162890c967850fd6221c7b2066aeb53877e7b2ffb623e56a8",
+                        "size_bytes": 325853
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.76",
+                    "published_at": "2026-09-07T17:15:52Z",
+                    "changelog": "## What's Changed\n* Fix club posting permissions for incomplete signups (1.0.76) by @Raaakete in https://github.com/Birkly-Other-Things/Birkly-Plugin-User/pull/48\n\n\n**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.75...v1.0.76",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.76/download",
+                        "checksum_sha256": "cee4fd86edc5f22e000d30356dba7892f8883c62f10a7e1a330e5c2f7782e3c6",
+                        "size_bytes": 325364
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.75",
+                    "published_at": "2026-09-07T10:35:19Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.74...v1.0.75",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.75/download",
+                        "checksum_sha256": "fd595617b89558e48f7e34bc9129ceeef469192c609e094615b4c08dd9d6b993",
+                        "size_bytes": 1065544
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.74",
+                    "published_at": "2026-09-07T10:26:36Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.73...v1.0.74",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.74/download",
+                        "checksum_sha256": "cd17fe212b1add5495a3d08aff608ac5c6246106fc730080edf4f256b8a7a9ac",
+                        "size_bytes": 1065455
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                },
+                {
+                    "version": "1.0.73",
+                    "published_at": "2026-09-07T10:06:52Z",
+                    "changelog": "**Full Changelog**: https://github.com/Birkly-Other-Things/Birkly-Plugin-User/compare/v1.0.72...v1.0.73",
+                    "min_birkly": ">=0.1.0",
+                    "stability": "stable",
+                    "artifact": {
+                        "type": "zip",
+                        "url": "https://marketplace.birkly.cloud/api/v1/artifacts/birkly-user-management/1.0.73/download",
+                        "checksum_sha256": "4576af73dd893f96fbf1ebafc6db587c7b826e1568400c3e32c4be863d54fe13",
+                        "size_bytes": 324116
+                    },
+                    "permissions_manifest": {
+                        "permissions": [
+                            "manage_users",
+                            "modify_collection_permissions",
+                            "modify_entry_permissions",
+                            "view_users"
+                        ],
+                        "hooks": [
+                            "after_entry_delete",
+                            "after_entry_save",
+                            "after_user_delete",
+                            "after_user_update",
+                            "automation_context",
+                            "before_entry_create",
+                            "before_entry_delete",
+                            "before_entry_save",
+                            "birkly_ai_read_entry",
+                            "birkly_public_entries_filter",
+                            "birkly_public_entry_filter",
+                            "club_member_onboarded",
+                            "club_member_reported",
+                            "club_mention_created",
+                            "club_post_created",
+                            "club_profile_created",
+                            "plugin_activated",
+                            "plugin_deactivated",
+                            "sub_entry_created",
+                            "supporter_badge_granted",
+                            "template_functions",
+                            "user_activation_entitled",
+                            "user_logged_in",
+                            "user_tier_changed"
+                        ],
+                        "data_access": {
+                            "entries": "read_write",
+                            "media": "read",
+                            "users": "read_write",
+                            "settings": "read_write"
+                        }
+                    }
+                }
+            ]
         }
     ]
 }

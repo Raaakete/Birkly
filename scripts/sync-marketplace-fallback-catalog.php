@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 require_once $root . '/core/marketplace/http.php';
+require_once $root . '/core/marketplace.php';
 
 $manifestPath = $root . '/scripts/cms-release-manifest.json';
 $manifest = is_file($manifestPath)
@@ -58,6 +59,26 @@ foreach ($data['offers'] ?? [] as $offer) {
     if ($slug === '' || !in_array($slug, $officialSlugs, true)) {
         continue;
     }
+
+    $detailFetch = birkly_marketplace_http_fetch(
+        $baseUrl . '/api/v1/offers/' . rawurlencode($slug),
+        'GET',
+        ['Accept: application/json'],
+        null,
+        30
+    );
+    if ($detailFetch['ok']) {
+        $detail = json_decode((string) ($detailFetch['body'] ?? ''), true);
+        if (is_array($detail)) {
+            $releases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
+            $offer['releases'] = array_slice($releases, 0, 8);
+            $latest = birkly_marketplace_latest_release_version($releases);
+            if ($latest !== null) {
+                $offer['latest_version'] = $latest;
+            }
+        }
+    }
+
     $offers[] = $offer;
 }
 
