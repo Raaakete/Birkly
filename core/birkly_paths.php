@@ -302,7 +302,28 @@ function birkly_ensure_runtime_dirs(?string $projectRoot = null): array
 }
 
 /**
- * True when the CMS is accessed on a local dev host (localhost, loopback, .local/.test/.dev).
+ * True for RFC1918 / loopback / link-local IPv4 hosts common in local dev (LAN, Docker).
+ */
+function birkly_is_private_lan_host(string $host): bool
+{
+    $host = strtolower(trim($host));
+    if ($host === '' || $host === 'host.docker.internal') {
+        return $host === 'host.docker.internal';
+    }
+
+    if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+        return filter_var(
+            $host,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) === false;
+    }
+
+    return false;
+}
+
+/**
+ * True when the CMS is accessed on a local dev host (localhost, loopback, .local/.test/.dev, LAN).
  */
 function birkly_is_local_dev_request(): bool
 {
@@ -313,8 +334,12 @@ function birkly_is_local_dev_request(): bool
     if (strpos($host, ':') !== false) {
         $host = explode(':', $host, 2)[0];
     }
-    $localHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+    $host = trim($host, '[]');
+    $localHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0', 'host.docker.internal'];
     if (in_array($host, $localHosts, true)) {
+        return true;
+    }
+    if (birkly_is_private_lan_host($host)) {
         return true;
     }
     foreach (['.local', '.test', '.dev'] as $suffix) {

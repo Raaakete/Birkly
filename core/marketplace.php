@@ -421,7 +421,64 @@ function birkly_marketplace_local_instance_urls(): array
     return [
         'http://127.0.0.1:8090',
         'http://localhost:8090',
+        'http://host.docker.internal:8090',
     ];
+}
+
+function birkly_marketplace_normalize_base_url(string $url): string
+{
+    return rtrim(trim($url), '/');
+}
+
+/**
+ * @return bool|null null when reachability has not been probed yet this request
+ */
+function birkly_marketplace_url_reachability(string $url): ?bool
+{
+    $key = birkly_marketplace_normalize_base_url($url);
+    if ($key === '') {
+        return false;
+    }
+
+    if (!isset($GLOBALS['__birkly_marketplace_url_reachability']) || !is_array($GLOBALS['__birkly_marketplace_url_reachability'])) {
+        return null;
+    }
+
+    return array_key_exists($key, $GLOBALS['__birkly_marketplace_url_reachability'])
+        ? (bool) $GLOBALS['__birkly_marketplace_url_reachability'][$key]
+        : null;
+}
+
+function birkly_marketplace_set_url_reachability(string $url, bool $reachable): void
+{
+    $key = birkly_marketplace_normalize_base_url($url);
+    if ($key === '') {
+        return;
+    }
+
+    if (!isset($GLOBALS['__birkly_marketplace_url_reachability']) || !is_array($GLOBALS['__birkly_marketplace_url_reachability'])) {
+        $GLOBALS['__birkly_marketplace_url_reachability'] = [];
+    }
+
+    $GLOBALS['__birkly_marketplace_url_reachability'][$key] = $reachable;
+}
+
+function birkly_marketplace_record_probe_result(string $url, bool $reachable): void
+{
+    birkly_marketplace_set_url_reachability($url, $reachable);
+}
+
+function birkly_marketplace_ensure_remote_reachable(string $baseUrl, int $timeout = 4): bool
+{
+    $known = birkly_marketplace_url_reachability($baseUrl);
+    if ($known !== null) {
+        return $known;
+    }
+
+    $reachable = birkly_marketplace_probe_health($baseUrl, $timeout);
+    birkly_marketplace_record_probe_result($baseUrl, $reachable);
+
+    return $reachable;
 }
 
 function birkly_marketplace_is_local_context(): bool
@@ -439,19 +496,23 @@ function birkly_marketplace_is_local_context(): bool
 
 function birkly_marketplace_probe_health(string $baseUrl, int $timeout = 4): bool
 {
-    $baseUrl = rtrim(trim($baseUrl), '/');
+    $baseUrl = birkly_marketplace_normalize_base_url($baseUrl);
     if ($baseUrl === '') {
+        birkly_marketplace_record_probe_result($baseUrl, false);
         return false;
     }
 
     $fetch = birkly_marketplace_http_fetch($baseUrl . '/health', 'GET', ['Accept: application/json'], null, $timeout);
     if (!$fetch['ok']) {
+        birkly_marketplace_record_probe_result($baseUrl, false);
         return false;
     }
 
     $data = json_decode((string) ($fetch['body'] ?? ''), true);
+    $reachable = is_array($data) && (string) ($data['status'] ?? '') === 'ok';
+    birkly_marketplace_record_probe_result($baseUrl, $reachable);
 
-    return is_array($data) && (string) ($data['status'] ?? '') === 'ok';
+    return $reachable;
 }
 
 function birkly_marketplace_should_probe_local_fallback(string $configuredUrl): bool
@@ -492,13 +553,28 @@ function birkly_marketplace_resolve_effective_url(string $configuredUrl): string
         return $cache[$configuredUrl] = $configuredUrl;
     }
 
-    if (birkly_marketplace_probe_health($configuredUrl, 5)) {
+    $isLocal = birkly_marketplace_is_local_context();
+    $cloudTimeout = $isLocal ? 3 : 4;
+    $localTimeout = 2;
+    $localUrls = birkly_marketplace_local_instance_urls();
+
+    if ($isLocal) {
+        foreach ($localUrls as $localUrl) {
+            if (birkly_marketplace_probe_health($localUrl, $localTimeout)) {
+                return $cache[$configuredUrl] = $localUrl;
+            }
+        }
+    }
+
+    if (birkly_marketplace_probe_health($configuredUrl, $cloudTimeout)) {
         return $cache[$configuredUrl] = $configuredUrl;
     }
 
-    foreach (birkly_marketplace_local_instance_urls() as $localUrl) {
-        if (birkly_marketplace_probe_health($localUrl, 2)) {
-            return $cache[$configuredUrl] = $localUrl;
+    if (!$isLocal) {
+        foreach ($localUrls as $localUrl) {
+            if (birkly_marketplace_probe_health($localUrl, $localTimeout)) {
+                return $cache[$configuredUrl] = $localUrl;
+            }
         }
     }
 
@@ -581,6 +657,15 @@ function birkly_marketplace_request(string $method, string $path, ?array $body =
     }
 
     $base = birkly_marketplace_url();
+    if (birkly_marketplace_url_reachability($base) === false) {
+        return [
+            'ok' => false,
+            'status' => 0,
+            'data' => null,
+            'error' => birkly_marketplace_transport_error_message('Marketplace request failed', 'Remote marketplace unreachable'),
+        ];
+    }
+
     $url = $base . '/' . ltrim($path, '/');
     if ($query !== []) {
         $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
@@ -596,7 +681,8 @@ function birkly_marketplace_request(string $method, string $path, ?array $body =
         $headers[] = 'Content-Type: application/json';
     }
 
-    $fetch = birkly_marketplace_http_fetch($url, $method, $headers, $payload, 20);
+    $timeout = birkly_marketplace_url_reachability($base) === true ? 20 : 12;
+    $fetch = birkly_marketplace_http_fetch($url, $method, $headers, $payload, $timeout);
     $status = (int) ($fetch['status'] ?? 0);
     if (!$fetch['ok']) {
         return [
@@ -642,7 +728,12 @@ function birkly_marketplace_browse(string $query = '', string $category = '', st
     $priceSelection = birkly_marketplace_price_selection($price);
     $effectiveSort = $priceSelection['sort'] !== '' ? $priceSelection['sort'] : $sort;
 
-    $response = birkly_marketplace_request('GET', '/api/v1/registry', null, $params);
+    $marketplaceBase = birkly_marketplace_url();
+    if (!birkly_marketplace_ensure_remote_reachable($marketplaceBase, 4)) {
+        $response = ['ok' => false, 'error' => 'Remote marketplace unreachable'];
+    } else {
+        $response = birkly_marketplace_request('GET', '/api/v1/registry', null, $params);
+    }
     if (!$response['ok'] || !is_array($response['data'])) {
         $fallback = birkly_marketplace_fallback_catalog();
         $offers = is_array($fallback['offers'] ?? null) ? $fallback['offers'] : [];

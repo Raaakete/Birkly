@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/platform.php';
+require_once __DIR__ . '/outbound_http.php';
 
 function birkly_ops_installations_register_url(): string
 {
@@ -122,6 +123,7 @@ function birkly_ops_register_installation(bool $force = false): void
         CURLOPT_TIMEOUT => $force ? 6 : 3,
         CURLOPT_CONNECTTIMEOUT => $force ? 3 : 2,
     ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr = curl_error($ch);
@@ -193,6 +195,7 @@ function birkly_ops_check_updates(string $currentVersion): ?array
         CURLOPT_CONNECTTIMEOUT => 4,
         CURLOPT_HTTPHEADER => ['Accept: application/json'],
     ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);

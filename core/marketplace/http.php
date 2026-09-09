@@ -6,24 +6,14 @@
  * back to PHP stream wrappers when cURL is unavailable.
  */
 
+require_once __DIR__ . '/../outbound_http.php';
+
 /**
- * Apply transport defaults that avoid common localhost/macOS failure modes:
- * broken HTTP(S)_PROXY env vars and IPv6 connect timeouts.
- *
  * @param resource|\CurlHandle $ch
  */
 function birkly_marketplace_curl_apply_transport_defaults($ch): void
 {
-    // Ignore HTTP_PROXY/HTTPS_PROXY — a stale local proxy causes 10s connect timeouts.
-    curl_setopt($ch, CURLOPT_PROXY, '');
-
-    if (defined('CURLOPT_IPRESOLVE') && defined('CURL_IPRESOLVE_V4')) {
-        curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-    }
-
-    if (defined('CURLOPT_HTTP_VERSION') && defined('CURL_HTTP_VERSION_1_1')) {
-        curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-    }
+    birkly_outbound_curl_apply_transport_defaults($ch);
 }
 
 function birkly_marketplace_http_is_retryable_error(string $error): bool
