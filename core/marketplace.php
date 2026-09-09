@@ -1637,6 +1637,28 @@ function birkly_marketplace_rewrite_service_url(string $url): string
     return $url;
 }
 
+function birkly_marketplace_is_local_service_url(string $url): bool
+{
+    return str_contains($url, '127.0.0.1')
+        || str_contains($url, 'localhost')
+        || str_contains($url, 'host.docker.internal');
+}
+
+/**
+ * @return list<string>
+ */
+function birkly_marketplace_healthy_local_instance_urls(): array
+{
+    $healthy = [];
+    foreach (birkly_marketplace_local_instance_urls() as $localBase) {
+        if (birkly_marketplace_probe_health($localBase, 2)) {
+            $healthy[] = rtrim($localBase, '/');
+        }
+    }
+
+    return $healthy;
+}
+
 /**
  * @return list<string>
  */
@@ -1647,38 +1669,29 @@ function birkly_marketplace_artifact_download_candidates(string $downloadUrl): a
         return [];
     }
 
-    $candidates = [$downloadUrl];
+    $cloudCandidates = [$downloadUrl];
     $rewritten = birkly_marketplace_rewrite_service_url($downloadUrl);
-    if ($rewritten !== $downloadUrl) {
-        $candidates[] = $rewritten;
+    if (
+        $rewritten !== ''
+        && $rewritten !== $downloadUrl
+        && !birkly_marketplace_is_local_service_url($rewritten)
+    ) {
+        $cloudCandidates[] = $rewritten;
     }
 
-    foreach (birkly_marketplace_local_instance_urls() as $localBase) {
+    $localCandidates = [];
+    foreach (birkly_marketplace_healthy_local_instance_urls() as $localBase) {
         $localCandidate = birkly_marketplace_rewrite_service_url_for_base($downloadUrl, $localBase);
-        if ($localCandidate !== '' && !in_array($localCandidate, $candidates, true)) {
-            $candidates[] = $localCandidate;
+        if ($localCandidate !== '' && !in_array($localCandidate, $localCandidates, true)) {
+            $localCandidates[] = $localCandidate;
         }
     }
 
-    if (!birkly_marketplace_is_local_context()) {
-        return $candidates;
+    if ($localCandidates !== [] && birkly_marketplace_is_local_context()) {
+        return array_values(array_unique(array_merge($localCandidates, $cloudCandidates)));
     }
 
-    $localFirst = [];
-    $remote = [];
-    foreach ($candidates as $candidate) {
-        if (
-            str_contains($candidate, '127.0.0.1')
-            || str_contains($candidate, 'localhost')
-            || str_contains($candidate, 'host.docker.internal')
-        ) {
-            $localFirst[] = $candidate;
-        } else {
-            $remote[] = $candidate;
-        }
-    }
-
-    return array_values(array_unique(array_merge($localFirst, $remote)));
+    return array_values(array_unique($cloudCandidates));
 }
 
 function birkly_marketplace_rewrite_service_url_for_base(string $url, string $baseUrl): string

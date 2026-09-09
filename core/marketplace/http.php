@@ -216,7 +216,8 @@ function birkly_marketplace_http_download_to_file(
     string $url,
     string $destinationPath,
     array $headers = [],
-    int $timeout = 120
+    int $timeout = 120,
+    ?int $connectTimeout = null
 ): array {
     if (isset($GLOBALS['birkly_marketplace_http_download']) && is_callable($GLOBALS['birkly_marketplace_http_download'])) {
         return ($GLOBALS['birkly_marketplace_http_download'])($url, $destinationPath, $headers, $timeout);
@@ -234,7 +235,9 @@ function birkly_marketplace_http_download_to_file(
             return ['ok' => false, 'error' => 'Could not initialize cURL'];
         }
 
-        $connectTimeout = max(5, min(30, (int) ceil($timeout / 4)));
+        if ($connectTimeout === null) {
+            $connectTimeout = max(5, min(30, (int) ceil($timeout / 4)));
+        }
 
         curl_setopt_array($ch, [
             CURLOPT_FILE => $fp,
