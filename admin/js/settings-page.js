@@ -37,6 +37,18 @@ function showMessage(message, type) {
     }, 5000);
 }
 
+function t(key, fallback, params) {
+    var text = (window.Birkly && window.Birkly.i18n)
+        ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+        : (fallback || key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
 function getSettingsUsers() {
     const el = document.getElementById('settings-users-data');
     if (!el) return [];
@@ -185,7 +197,7 @@ function populatePluginAccessGrid(gridId, role) {
         ? role.plugin_access.deny
         : [];
     if (!activePluginsForRoles.length) {
-        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">No active plugins</p>';
+        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('settings_role_no_active_plugins', 'No active plugins')) + '</p>';
         return;
     }
     grid.innerHTML = activePluginsForRoles.map(function (plugin) {
@@ -221,7 +233,7 @@ function openAddRoleModal() {
     const modal = document.getElementById('add-role-modal');
     if (!modal) {
         console.error('Add role modal not found');
-        showMessage('Role modal not found. Please refresh the page.', 'error');
+        showMessage(t('settings_role_add_modal_not_found', 'Role modal not found. Please refresh the page.'), 'error');
         return;
     }
     modal.style.display = 'flex';
@@ -246,7 +258,7 @@ async function editRole(roleId) {
     const modal = document.getElementById('edit-role-modal');
     if (!modal) {
         console.error('Edit role modal not found');
-        showMessage('Edit role modal not found. Please refresh the page.', 'error');
+        showMessage(t('settings_role_edit_modal_not_found', 'Edit role modal not found. Please refresh the page.'), 'error');
         return;
     }
     
@@ -273,12 +285,14 @@ async function editRole(roleId) {
             populatePluginAccessGrid('edit-plugin-access-grid', role);
             
         } else {
-            showMessage('Error loading role: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(t('settings_role_load_failed', 'Error loading role: {message}', {
+                message: result.message || t('settings_role_unknown_error', 'Unknown error'),
+            }), 'error');
             closeEditRoleModal();
         }
     } catch (error) {
         console.error('Error loading role:', error);
-        showMessage('Error loading role: ' + error.message, 'error');
+        showMessage(t('settings_role_load_failed', 'Error loading role: {message}', { message: error.message }), 'error');
         closeEditRoleModal();
     }
 }
@@ -295,7 +309,7 @@ async function updateRole() {
     const form = document.getElementById('edit-role-form');
     if (!form) {
         console.error('Edit form not found');
-        showMessage('Error: Form not found', 'error');
+        showMessage(t('settings_role_form_not_found', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -304,7 +318,7 @@ async function updateRole() {
     const descriptionInput = form.querySelector('#edit-role-description');
     
     if (!nameInput || !nameInput.value.trim()) {
-        showMessage('Error: Role name is required', 'error');
+        showMessage(t('settings_role_name_required', 'Error: Role name is required'), 'error');
         nameInput?.focus();
         return;
     }
@@ -344,15 +358,17 @@ async function updateRole() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Role updated successfully!', 'success');
+            showMessage(t('settings_role_updated_success', 'Role updated successfully!'), 'success');
             closeEditRoleModal();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(t('settings_role_update_failed', 'Error: {message}', {
+                message: result.message || t('settings_role_unknown_error', 'Unknown error'),
+            }), 'error');
         }
     } catch (error) {
         console.error('Error updating role:', error);
-        showMessage('Error updating role: ' + error.message, 'error');
+        showMessage(t('settings_role_updating_failed', 'Error updating role: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -360,7 +376,7 @@ async function createRole() {
     const form = document.getElementById('add-role-form');
     if (!form) {
         console.error('Form not found');
-        showMessage('Error: Form not found', 'error');
+        showMessage(t('settings_role_form_not_found', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -369,7 +385,7 @@ async function createRole() {
     const descriptionInput = form.querySelector('#role-description');
     
     if (!nameInput || !nameInput.value.trim()) {
-        showMessage('Error: Role name is required', 'error');
+        showMessage(t('settings_role_name_required', 'Error: Role name is required'), 'error');
         nameInput?.focus();
         return;
     }
@@ -412,20 +428,22 @@ async function createRole() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Role created successfully!', 'success');
+            showMessage(t('settings_role_created_success', 'Role created successfully!'), 'success');
             closeAddRoleModal();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(t('settings_role_create_failed', 'Error: {message}', {
+                message: result.message || t('settings_role_unknown_error', 'Unknown error'),
+            }), 'error');
         }
     } catch (error) {
         console.error('Error creating role:', error);
-        showMessage('Error creating role: ' + error.message, 'error');
+        showMessage(t('settings_role_creating_failed', 'Error creating role: {message}', { message: error.message }), 'error');
     }
 }
 
 async function deleteRole(roleId) {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to delete this role? This action cannot be undone.'))) {
+    if (!(await BirklyFeedback.confirm(t('settings_role_delete_confirm', 'Are you sure you want to delete this role? This action cannot be undone.')))) {
         return;
     }
     
@@ -443,14 +461,14 @@ async function deleteRole(roleId) {
     .then(response => response.json())
     .then(result => {
         if (result.status === 'ok') {
-            showMessage('Role deleted successfully!', 'success');
+            showMessage(t('settings_role_deleted_success', 'Role deleted successfully!'), 'success');
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_role_delete_failed', 'Error: {message}', { message: result.message }), 'error');
         }
     })
     .catch(error => {
-        showMessage('Error deleting role: ' + error.message, 'error');
+        showMessage(t('settings_role_deleting_failed', 'Error deleting role: {message}', { message: error.message }), 'error');
     });
 }
 
