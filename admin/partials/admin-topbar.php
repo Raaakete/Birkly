@@ -42,11 +42,11 @@ if ($showVisitProjectButton) {
         <?php endif; ?>
         <div class="topbar-control-group" role="group" aria-label="Workspace controls">
             <?php include __DIR__ . '/theme-switcher.php'; ?>
-            <button class="topbar-icon-btn" type="button" aria-label="Search" id="topbar-search-btn">
+            <button class="topbar-icon-btn" type="button" aria-label="<?= htmlspecialchars(__('admin.search'), ENT_QUOTES, 'UTF-8') ?>" id="topbar-search-btn">
                 <?= birkly_icon('magnifying-glass') ?>
             </button>
             <div class="dropdown notifications-wrapper">
-                <button class="dropdown-trigger topbar-icon-btn notifications-btn" type="button" id="notifications-btn" aria-label="Notifications" aria-expanded="false" aria-haspopup="true">
+                <button class="dropdown-trigger topbar-icon-btn notifications-btn" type="button" id="notifications-btn" aria-label="<?= htmlspecialchars(__('admin.notifications_aria_label'), ENT_QUOTES, 'UTF-8') ?>" aria-expanded="false" aria-haspopup="true">
                     <?= birkly_icon('bell') ?>
                     <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
                 </button>
