@@ -22,7 +22,7 @@
       <div class="card-body u-stack-4">
         <div id="sys-conn-email-status" class="sys-conn-status-banner" hidden aria-live="polite"></div>
         <div id="sys-conn-email-list">
-          <div class="loading-state"><p>Loading email connections…</p></div>
+          <div class="loading-state"><p><?= htmlspecialchars(__('admin.connections_loading_email'), ENT_QUOTES, 'UTF-8') ?></p></div>
         </div>
       </div>
     </section>
@@ -42,7 +42,7 @@
       </div>
       <div class="card-body u-stack-4">
         <div id="sys-conn-http-list">
-          <div class="loading-state"><p>Loading credentials…</p></div>
+          <div class="loading-state"><p><?= htmlspecialchars(__('admin.connections_loading_credentials'), ENT_QUOTES, 'UTF-8') ?></p></div>
         </div>
       </div>
     </section>
