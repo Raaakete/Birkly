@@ -15,6 +15,18 @@
         return div.innerHTML;
     }
 
+    function t(key, fallback, params) {
+        var text = (window.Birkly && window.Birkly.i18n)
+            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function isSafeNavigationUrl(url) {
         if (!url || typeof url !== 'string') {
             return false;
@@ -80,8 +92,8 @@
         });
 
         const labels = {
-            collection: 'Collections',
-            entry: 'Entries',
+            collection: t('search_group_collection', 'Collections'),
+            entry: t('search_group_entry', 'Entries'),
         };
 
         let html = '';
@@ -95,7 +107,7 @@
                 html += '<button type="button" class="search-result-item' + (selectedIndex === globalIndex ? ' selected' : '') + '" data-index="' + globalIndex + '" data-url="' + escapeHtml(result.url || '#') + '">';
                 html += '<span class="search-result-icon">' + escapeHtml(result.icon || '📌') + '</span>';
                 html += '<div class="search-result-content">';
-                html += '<div class="search-result-title">' + escapeHtml(result.title || 'Untitled') + '</div>';
+                html += '<div class="search-result-title">' + escapeHtml(result.title || t('search_untitled', 'Untitled')) + '</div>';
                 html += '<div class="search-result-subtitle">' + escapeHtml(result.subtitle || '') + '</div>';
                 html += '</div></button>';
             });
@@ -163,7 +175,7 @@
 
         const container = resultsContainer();
         if (container) {
-            container.innerHTML = '<div class="search-loading"><p>Searching...</p></div>';
+            container.innerHTML = '<div class="search-loading"><p>' + escapeHtml(t('search_searching', 'Searching...')) + '</p></div>';
         }
 
         fetch(apiUrl('/api/search.php?action=admin_search&q=' + encodeURIComponent(query) + '&limit=20'), {
@@ -177,7 +189,7 @@
             })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Search failed');
+                    throw new Error(payload.message || t('search_failed', 'Search failed'));
                 }
                 currentResults = Array.isArray(payload.results) ? payload.results : [];
                 selectedIndex = -1;
@@ -188,7 +200,7 @@
                 selectedIndex = -1;
                 const container = resultsContainer();
                 if (container) {
-                    container.innerHTML = '<div class="search-empty-state"><p>Error: ' + escapeHtml(error.message) + '</p></div>';
+                    container.innerHTML = '<div class="search-empty-state"><p>' + escapeHtml(t('search_error', 'Error: {message}', { message: error.message })) + '</p></div>';
                 }
             });
     }
