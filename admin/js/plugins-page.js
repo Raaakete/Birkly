@@ -802,7 +802,22 @@
 
     function t(key, fallback) {
         var i18n = window.PluginsPageI18n || {};
-        return i18n[key] || fallback || key;
+        if (i18n[key]) {
+            return i18n[key];
+        }
+        if (window.Birkly && window.Birkly.i18n) {
+            var full = window.Birkly.i18n.t('admin.' + key, '');
+            if (full && full !== 'admin.' + key) {
+                return full;
+            }
+            if (key.indexOf('marketplace_') !== 0) {
+                full = window.Birkly.i18n.t('admin.marketplace_' + key, '');
+                if (full && full !== 'admin.marketplace_' + key) {
+                    return full;
+                }
+            }
+        }
+        return fallback || key;
     }
 
     function isFreeOffer(offer) {
