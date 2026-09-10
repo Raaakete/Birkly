@@ -236,9 +236,13 @@ function birkly_plugin_admin_sidebar_navigation(): array
             continue;
         }
         $hasAttention = ($attention[$plugin_id] ?? 0) > 0;
+        $navLabel = (string) ($sidebar['label'] ?? $meta['title'] ?? $plugin_id);
+        if (function_exists('birkly_i18n_resolve_string')) {
+            $navLabel = birkly_i18n_resolve_string($navLabel);
+        }
         $nav[] = [
             'id' => $plugin_id,
-            'name' => (string) ($sidebar['label'] ?? $meta['title'] ?? $plugin_id),
+            'name' => $navLabel,
             'page' => (string) ($meta['root_page'] ?? $meta['page'] ?? $plugin_id),
             'icon' => (string) ($sidebar['icon'] ?? ''),
             'order' => (int) ($sidebar['order'] ?? 100),

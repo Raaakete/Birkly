@@ -36,10 +36,11 @@ $pageSlug = str_replace('-', '_', $pluginId);
 $adminHtml = $pageSlug . '.html';
 $adminJs = $pageSlug . '.js';
 
-$dirs = [
+    $dirs = [
     $target,
     $target . '/admin',
     $target . '/docs',
+    $target . '/lang',
 ];
 
 foreach ($dirs as $dir) {
@@ -48,6 +49,17 @@ foreach ($dirs as $dir) {
         exit(1);
     }
 }
+
+$i18nNamespace = 'plugins.' . str_replace('-', '_', $pluginId);
+$langEn = [
+    '_meta' => ['name' => 'English', 'native_name' => 'English', 'flag' => '🇺🇸'],
+    'plugins' => [
+        str_replace('-', '_', $pluginId) => [
+            'title' => $title,
+        ],
+    ],
+];
+file_put_contents($target . '/lang/en.json', json_encode($langEn, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n");
 
 $pluginJson = [
     'name' => $title,
@@ -64,6 +76,12 @@ $pluginJson = [
         'icon' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>',
     ],
     'settings_schema' => new stdClass(),
+    'admin' => [
+        'i18n' => [
+            'path' => 'lang',
+            'namespace' => 'plugins.' . str_replace('-', '_', $pluginId),
+        ],
+    ],
 ];
 
 if ($privileged) {
@@ -97,13 +115,13 @@ if (function_exists('register_admin_page')) {
 
 if (function_exists('register_plugin_admin_meta')) {
     register_plugin_admin_meta('{ID}', [
-        'title' => '{TITLE}',
+        'title' => '@i18n:{I18N_NS}.title',
         'root_page' => '{PAGE}',
         'permission' => null,
         'page_slugs' => ['{PAGE}'],
         'sidebar' => [
             'show' => true,
-            'label' => '{TITLE}',
+            'label' => '@i18n:{I18N_NS}.title',
             'order' => 90,
         ],
     ]);
@@ -124,8 +142,8 @@ if (function_exists('register_plugin_docs')) {
 PHP;
 
 $pluginPhp = str_replace(
-    ['{ID}', '{TITLE}', '{PAGE}', '{ADMIN_HTML}'],
-    [$pluginId, $title, $pageSlug, $adminHtml],
+    ['{ID}', '{TITLE}', '{PAGE}', '{ADMIN_HTML}', '{I18N_NS}'],
+    [$pluginId, $title, $pageSlug, $adminHtml, $i18nNamespace],
     $pluginPhp
 );
 file_put_contents($target . '/plugin.php', $pluginPhp);

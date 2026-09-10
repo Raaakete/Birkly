@@ -342,6 +342,10 @@ if ($action === 'get_settings') {
     $settings_schema = birkly_plugin_merge_activity_settings_schema(
         is_array($plugin['settings_schema'] ?? null) ? $plugin['settings_schema'] : []
     );
+    if (function_exists('birkly_i18n_localize_settings_schema')) {
+        birkly_boot_admin_i18n_for_api();
+        $settings_schema = birkly_i18n_localize_settings_schema($settings_schema);
+    }
     $current_settings = $plugin['settings'] ?? [];
     
     // Merge current settings with schema defaults

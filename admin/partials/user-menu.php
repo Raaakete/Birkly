@@ -36,7 +36,7 @@ $privacyUrl = birkly_legal_privacy_url();
 $showLegalLinks = birkly_alpha_program_enabled();
 ?>
 <div class="dropdown user-menu-wrapper topbar-user-menu">
-    <button class="dropdown-trigger user-menu-trigger" id="user-menu-trigger" aria-label="User menu" aria-expanded="false" aria-haspopup="true">
+    <button class="dropdown-trigger user-menu-trigger" id="user-menu-trigger" aria-label="<?= htmlspecialchars(__('admin.user_menu_aria')) ?>" aria-expanded="false" aria-haspopup="true">
         <?php if (!empty($avatarDisplayUrl)): ?>
             <img src="<?= htmlspecialchars($avatarDisplayUrl) ?>" alt="<?= htmlspecialchars($userName) ?>" class="user-avatar user-menu-trigger-face">
         <?php else: ?>
@@ -66,11 +66,11 @@ $showLegalLinks = birkly_alpha_program_enabled();
         <div class="user-menu-items">
             <a href="<?= htmlspecialchars(admin_url('account')) ?>" class="user-menu-item">
                 <?= birkly_icon('user') ?>
-                <span>Account Settings</span>
+                <span><?= htmlspecialchars(__('admin.account_settings')) ?></span>
             </a>
             <div class="user-menu-item user-menu-language">
                 <?= birkly_icon('globe') ?>
-                <select id="user-language-select" class="user-language-select" aria-label="Select language">
+                <select id="user-language-select" class="user-language-select" aria-label="<?= htmlspecialchars(__('admin.select_language_aria')) ?>">
                     <?php foreach ($availableLangs as $langCode => $langInfo): ?>
                         <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentLang ? 'selected' : '' ?>>
                             <?= htmlspecialchars($langInfo['native_name']) ?> <?= htmlspecialchars($langInfo['flag']) ?>
@@ -82,11 +82,11 @@ $showLegalLinks = birkly_alpha_program_enabled();
             <div class="user-menu-divider"></div>
             <a href="<?= htmlspecialchars($termsUrl) ?>" class="user-menu-item" target="_blank" rel="noopener noreferrer">
                 <?= birkly_icon('file-text') ?>
-                <span>Terms of service</span>
+                <span><?= htmlspecialchars(__('admin.terms_of_service')) ?></span>
             </a>
             <a href="<?= htmlspecialchars($privacyUrl) ?>" class="user-menu-item" target="_blank" rel="noopener noreferrer">
                 <?= birkly_icon('shield') ?>
-                <span>Privacy policy</span>
+                <span><?= htmlspecialchars(__('admin.privacy_policy')) ?></span>
             </a>
             <?php endif; ?>
             <div class="user-menu-divider"></div>
