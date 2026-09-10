@@ -770,7 +770,7 @@ window.migrateStorage = migrateStorage;
 
         bar.classList.remove('is-hidden');
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Settings';
+        saveBtn.textContent = t('settings_save_btn_label', 'Save Settings');
 
         if (dirtyBadge) {
             dirtyBadge.hidden = !hasDirtyTrackedTabs();
@@ -1074,7 +1074,7 @@ window.migrateStorage = migrateStorage;
             return true;
         }
 
-        var message = 'You have unsaved changes in ' + currentTab.replace(/-/g, ' ') + '. Leave this tab without saving?';
+        var message = t('settings_tab_unsaved_confirm', 'You have unsaved changes in {tab}. Leave this tab without saving?', { tab: currentTab.replace(/-/g, ' ') });
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
             return BirklyFeedback.confirm(message);
         }
@@ -1272,16 +1272,16 @@ function renderInviteMailNotice() {
 
     if (inviteMailStatus?.has_connection) {
         notice.classList.add('callout-info');
-        const name = inviteMailStatus.connection_name || inviteMailStatus.provider || 'Email connection';
+        const name = inviteMailStatus.connection_name || inviteMailStatus.provider || t('settings_invite_connection_fallback', 'Email connection');
         const from = inviteMailStatus.from_email ? ` (${inviteMailStatus.from_email})` : '';
         if (copy) {
-            copy.textContent = `Invitations are sent through your configured email connection: ${name}${from}. You can also create a link and share it manually.`;
+            copy.textContent = t('settings_invite_mail_via_connection', 'Invitations are sent through your configured email connection: {name}{from}. You can also create a link and share it manually.', { name: name, from: from });
         }
         if (sendBtn) sendBtn.disabled = false;
     } else {
         notice.classList.add('callout-warning');
         if (copy) {
-            copy.textContent = 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use “Create invite link” and share the URL yourself.';
+            copy.textContent = t('settings_invite_mail_no_connection', 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use "Create invite link" and share the URL yourself.');
         }
         if (sendBtn) sendBtn.disabled = true;
     }
@@ -1353,7 +1353,7 @@ async function submitInvitation(sendEmail) {
             if (inviteUrl) {
                 showInviteLinkResult(inviteUrl);
             }
-            let message = sendEmail ? 'Invitation email sent successfully!' : 'Invitation link created.';
+            let message = sendEmail ? t('settings_invite_email_sent', 'Invitation email sent successfully!') : t('settings_invite_link_created', 'Invitation link created.');
             if (result.data?.localhost_note) {
                 message = result.message + '\n\n' + result.data.localhost_note;
             }
@@ -1369,16 +1369,17 @@ async function submitInvitation(sendEmail) {
             showInviteLinkResult(inviteUrl);
             await loadTeamInvitations();
             showMessage(
-                (result.message || 'Could not send invitation email.') +
-                ' The invite link was saved — copy it below and share it manually.',
+                t('settings_invite_email_failed_with_link', '{message} The invite link was saved — copy it below and share it manually.', {
+                    message: result.message || t('settings_invite_could_not_send_email', 'Could not send invitation email.')
+                }),
                 'warning'
             );
             return;
         }
 
-        showMessage('Error: ' + (result.message || 'Invitation failed'), 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_invite_failed', 'Invitation failed') }), 'error');
     } catch (error) {
-        showMessage('Error sending invitation: ' + error.message, 'error');
+        showMessage(t('settings_invite_sending_error', 'Error sending invitation: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -1396,25 +1397,25 @@ function copyInviteLink() {
     if (!url) return;
     if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(() => {
-            showMessage('Invite link copied to clipboard.', 'success');
+            showMessage(t('settings_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
         }).catch(() => {
             field.select();
-            showMessage('Select the link field and copy it manually.', 'warning');
+            showMessage(t('settings_invite_copy_manual', 'Select the link field and copy it manually.'), 'warning');
         });
         return;
     }
     field.select();
-    showMessage('Select the link field and copy it manually.', 'warning');
+    showMessage(t('settings_invite_copy_manual', 'Select the link field and copy it manually.'), 'warning');
 }
 
 function invitationStatusBadge(status) {
     const map = {
-        pending: { className: 'badge-warning', label: 'Pending' },
-        expired: { className: 'badge-neutral', label: 'Expired' },
-        accepted: { className: 'badge-success', label: 'Accepted' },
-        cancelled: { className: 'badge-neutral', label: 'Cancelled' },
+        pending: { className: 'badge-warning', label: t('settings_invite_status_pending', 'Pending') },
+        expired: { className: 'badge-neutral', label: t('settings_invite_status_expired', 'Expired') },
+        accepted: { className: 'badge-success', label: t('settings_invite_status_accepted', 'Accepted') },
+        cancelled: { className: 'badge-neutral', label: t('settings_invite_status_cancelled', 'Cancelled') },
     };
-    return map[status] || { className: 'badge-neutral', label: status || 'Unknown' };
+    return map[status] || { className: 'badge-neutral', label: status || t('settings_invite_status_unknown', 'Unknown') };
 }
 
 function formatInvitationDate(value) {
@@ -1465,13 +1466,13 @@ async function loadTeamInvitations() {
             const actions = [];
 
             if (invite.can_copy_link && invite.invite_url) {
-                actions.push('<button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>Copy link</button>');
+                actions.push('<button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>' + escapeHtml(t('settings_invite_btn_copy_link', 'Copy link')) + '</button>');
             }
             if (invite.can_resend) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>Resend email</button>');
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>' + escapeHtml(t('settings_invite_btn_resend', 'Resend email')) + '</button>');
             }
             if (invite.can_cancel) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>Cancel</button>');
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(t('settings_invite_btn_cancel', 'Cancel')) + '</button>');
             }
 
             return '<div class="data-list-item">' +
@@ -1493,7 +1494,7 @@ async function loadTeamInvitations() {
         listEl.hidden = false;
     } catch (error) {
         emptyEl.hidden = false;
-        emptyEl.querySelector('.empty-state__description').textContent = 'Could not load invitations.';
+        emptyEl.querySelector('.empty-state__description').textContent = t('settings_invite_load_failed', 'Could not load invitations.');
     } finally {
         loadingEl.hidden = true;
     }
@@ -1503,7 +1504,7 @@ function copyTeamInvitationLink(url) {
     if (!url) return;
     if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(function () {
-            showMessage('Invite link copied to clipboard.', 'success');
+            showMessage(t('settings_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
         }).catch(function () {
             showMessage(url, 'info');
         });
@@ -1527,24 +1528,24 @@ async function resendTeamInvitation(token) {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(result.message || 'Invitation resent.', 'success');
+            showMessage(result.message || t('settings_invite_resent', 'Invitation resent.'), 'success');
             await loadTeamInvitations();
             return;
         }
         if (result.data?.invite_url) {
-            showMessage((result.message || 'Could not resend email.') + ' Copy the link from the list instead.', 'warning');
+            showMessage(t('settings_invite_resend_copy_instead', '{message} Copy the link from the list instead.', { message: result.message || t('settings_invite_could_not_resend_email', 'Could not resend email.') }), 'warning');
             await loadTeamInvitations();
             return;
         }
-        showMessage(result.message || 'Could not resend invitation.', 'error');
+        showMessage(result.message || t('settings_invite_resend_failed', 'Could not resend invitation.'), 'error');
     } catch (error) {
-        showMessage('Error resending invitation: ' + error.message, 'error');
+        showMessage(t('settings_invite_resending_error', 'Error resending invitation: {message}', { message: error.message }), 'error');
     }
 }
 
 async function cancelTeamInvitation(token, email) {
     if (!token) return;
-    const label = email ? 'Cancel invitation for ' + email + '?' : 'Cancel this invitation?';
+    const label = email ? t('settings_invite_cancel_confirm_email', 'Cancel invitation for {email}?', { email: email }) : t('settings_invite_cancel_confirm', 'Cancel this invitation?');
     let confirmed = true;
     if (window.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
         confirmed = await BirklyFeedback.confirm(label);
@@ -1566,13 +1567,13 @@ async function cancelTeamInvitation(token, email) {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(result.message || 'Invitation cancelled.', 'success');
+            showMessage(result.message || t('settings_invite_cancelled', 'Invitation cancelled.'), 'success');
             await loadTeamInvitations();
             return;
         }
-        showMessage(result.message || 'Could not cancel invitation.', 'error');
+        showMessage(result.message || t('settings_invite_cancel_failed', 'Could not cancel invitation.'), 'error');
     } catch (error) {
-        showMessage('Error cancelling invitation: ' + error.message, 'error');
+        showMessage(t('settings_invite_cancelling_error', 'Error cancelling invitation: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -1635,15 +1636,15 @@ async function createUser() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('User created successfully!', 'success');
+            showMessage(t('settings_user_created_success', 'User created successfully!'), 'success');
             closeAddUserModal();
             // Reload the page to show the new user
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error creating user: ' + error.message, 'error');
+        showMessage(t('settings_user_creating_error', 'Error creating user: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -1679,20 +1680,20 @@ async function updateUser() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('User updated successfully!', 'success');
+            showMessage(t('settings_user_updated_success', 'User updated successfully!'), 'success');
             closeEditUserModal();
             // Reload the page to show the updated user
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_update_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error updating user: ' + error.message, 'error');
+        showMessage(t('settings_user_updating_error', 'Error updating user: {message}', { message: error.message }), 'error');
     }
 }
 
 async function confirmDeleteUser(userId, email) {
-    if (await BirklyFeedback.confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
+    if (await BirklyFeedback.confirm(t('settings_user_delete_confirm', 'Are you sure you want to delete user "{email}"? This action cannot be undone.', { email: email }))) {
         deleteUser(userId);
     }
 }
@@ -1716,14 +1717,14 @@ async function deleteUser(userId) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('User deleted successfully!', 'success');
+            showMessage(t('settings_user_deleted_success', 'User deleted successfully!'), 'success');
             // Reload the page to show the updated user list
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_delete_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error deleting user: ' + error.message, 'error');
+        showMessage(t('settings_user_deleting_error', 'Error deleting user: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -1736,8 +1737,8 @@ function deleteUserFromModal() {
 
 async function revokeUserMcpSessions(userId, label) {
     if (!userId) return;
-    const who = label || 'this user';
-    if (!(await BirklyFeedback.confirm('Revoke all active AI app connections for ' + who + '? They will need to sign in again in Claude, Cursor, or ChatGPT.'))) {
+    const who = label || t('settings_ai_revoke_this_user', 'this user');
+    if (!(await BirklyFeedback.confirm(t('settings_ai_revoke_confirm', 'Revoke all active AI app connections for {who}? They will need to sign in again in Claude, Cursor, or ChatGPT.', { who: who })))) {
         return;
     }
 
@@ -1753,14 +1754,14 @@ async function revokeUserMcpSessions(userId, label) {
         .then((response) => response.json())
         .then((result) => {
             if (result.status === 'ok') {
-                showMessage(result.message || 'AI connections revoked', 'success');
+                showMessage(result.message || t('settings_ai_revoke_success', 'AI connections revoked'), 'success');
                 setTimeout(() => window.location.reload(), 800);
             } else {
-                showMessage('Error: ' + (result.message || 'Could not revoke AI access'), 'error');
+                showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_ai_revoke_failed', 'Could not revoke AI access') }), 'error');
             }
         })
         .catch((error) => {
-            showMessage('Error revoking AI access: ' + error.message, 'error');
+            showMessage(t('settings_ai_revoking_error', 'Error revoking AI access: {message}', { message: error.message }), 'error');
         });
 }
 
@@ -1784,22 +1785,22 @@ async function togglePlugin(pluginId, activate) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(result.message || 'Plugin ' + action + 'd successfully', 'success');
+            showMessage(result.message || (action === 'activate' ? t('settings_plugin_activated_success', 'Plugin activated successfully') : t('settings_plugin_deactivated_success', 'Plugin deactivated successfully')), 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            var errorMsg = 'Error: ' + (result.message || 'Failed to ' + action + ' plugin');
+            var errorMsg = t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_plugin_action_failed', 'Failed to {action} plugin', { action: action }) });
             if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
                 errorMsg += ' — ' + result.errors.join('; ');
             }
             showMessage(errorMsg, 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
     }
 }
 
 async function deletePlugin(pluginId) {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to delete this plugin? This action cannot be undone.'))) {
+    if (!(await BirklyFeedback.confirm(t('settings_plugin_delete_confirm', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
         return;
     }
     
@@ -1819,13 +1820,13 @@ async function deletePlugin(pluginId) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(result.message || 'Plugin deleted successfully', 'success');
+            showMessage(result.message || t('settings_plugin_deleted_success', 'Plugin deleted successfully'), 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Failed to delete plugin'), 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_plugin_delete_failed', 'Failed to delete plugin') }), 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -2068,7 +2069,7 @@ async function deletePlugin(pluginId) {
             return;
         }
         
-        listContainer.innerHTML = '<div class="loading-state"><p>Loading domains...</p></div>';
+        listContainer.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('settings_domains_loading', 'Loading domains...')) + '</p></div>';
         
         try {
             var responses = await Promise.all([
@@ -2091,12 +2092,12 @@ async function deletePlugin(pluginId) {
             if (data.status === 'ok' && data.data && data.data.licenses) {
                 renderDomains(data.data.licenses, domainRoles);
             } else {
-                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains registered yet.</p></div>';
+                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_domains_empty_registered', 'No domains registered yet.')) + '</p></div>';
             }
             attachDomainsCopyButtons(document.getElementById('domains'));
         } catch (error) {
             console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="message message-error" role="alert">Error loading domains: ' + escapeHtml(error.message) + '</div>';
+            listContainer.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(t('settings_domains_load_error', 'Error loading domains: {message}', { message: error.message })) + '</div>';
         }
     }
     
@@ -2130,12 +2131,12 @@ async function deletePlugin(pluginId) {
         return '' +
             '<div class="domains-code-block">' +
             '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(trackingCode) + '</code></pre>' +
-            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="Copy code">' +
+            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="' + escapeHtml(t('settings_domains_copy_title', 'Copy code')) + '">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
             '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
             '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
-            '</svg>Copy</button></div>' +
-            '<p class="form-help">Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.</p>';
+            '</svg>' + escapeHtml(t('settings_domains_copy_btn', 'Copy')) + '</button></div>' +
+            '<p class="form-help">' + t('settings_domains_snippet_help', 'Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.') + '</p>';
     }
 
     function attachDomainsCopyButtons(root) {
@@ -2155,7 +2156,7 @@ async function deletePlugin(pluginId) {
                     }
                     navigator.clipboard.writeText(code).then(function() {
                         var originalText = btn.innerHTML;
-                        btn.innerHTML = 'Copied';
+                        btn.innerHTML = escapeHtml(t('settings_domains_copied', 'Copied'));
                         setTimeout(function() {
                             btn.innerHTML = originalText;
                         }, 2000);
@@ -2193,20 +2194,22 @@ async function deletePlugin(pluginId) {
             try {
                 result = JSON.parse(responseText);
             } catch (parseError) {
-                throw new Error('Invalid response from server');
+                throw new Error(t('settings_domains_invalid_response', 'Invalid response from server'));
             }
 
             if (result.status !== 'ok') {
-                throw new Error(result.message || 'Failed to update analytics');
+                throw new Error(result.message || t('settings_domains_analytics_update_failed', 'Failed to update analytics'));
             }
 
-            showMessage(enabled ? 'Analytics enabled for ' + domainName : 'Analytics disabled for ' + domainName, 'success');
+            showMessage(enabled
+                ? t('settings_domains_analytics_enabled', 'Analytics enabled for {domain}', { domain: domainName })
+                : t('settings_domains_analytics_disabled', 'Analytics disabled for {domain}', { domain: domainName }), 'success');
             loadDomains();
         } catch (error) {
             if (toggleInput) {
                 toggleInput.checked = !enabled;
             }
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
         } finally {
             if (toggleInput) {
                 toggleInput.disabled = false;
@@ -2243,7 +2246,7 @@ async function deletePlugin(pluginId) {
         }
 
         container.hidden = false;
-        container.innerHTML = '<div class="loading-state"><p>Loading analytics report...</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('settings_domains_report_loading', 'Loading analytics report...')) + '</p></div>';
 
         try {
             var endDate = new Date().toISOString().slice(0, 10);
@@ -2254,20 +2257,20 @@ async function deletePlugin(pluginId) {
             var payload = await response.json();
 
             if (payload.status !== 'ok' || !payload.data) {
-                throw new Error(payload.message || 'Failed to load analytics report');
+                throw new Error(payload.message || t('settings_domains_report_failed', 'Failed to load analytics report'));
             }
 
             var report = payload.data;
             container.innerHTML =
                 '<div class="card card--sunken u-p-4 u-stack-4">' +
                 '<div class="u-grid-auto-sm">' +
-                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.page_views || 0)) + '</span><span class="stat-label">Page views (30d)</span></div>' +
-                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.unique_visitors || 0)) + '</span><span class="stat-label">Visitors (30d)</span></div>' +
+                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.page_views || 0)) + '</span><span class="stat-label">' + escapeHtml(t('settings_domains_page_views_label', 'Page views (30d)')) + '</span></div>' +
+                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.unique_visitors || 0)) + '</span><span class="stat-label">' + escapeHtml(t('settings_domains_visitors_label', 'Visitors (30d)')) + '</span></div>' +
                 '</div>' +
                 renderAnalyticsReportSections(report) +
                 '</div>';
         } catch (error) {
-            container.innerHTML = '<div class="message message-error" role="alert">Error loading analytics report: ' + escapeHtml(error.message) + '</div>';
+            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(t('settings_domains_report_load_error', 'Error loading analytics report: {message}', { message: error.message })) + '</div>';
         }
     }
 
@@ -2303,7 +2306,7 @@ async function deletePlugin(pluginId) {
         domainRoles = domainRoles || {};
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains yet. Click "Add domain" to connect one.</p></div>';
+            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_domains_empty_add', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
             return;
         }
 
@@ -2368,7 +2371,7 @@ async function deletePlugin(pluginId) {
                 (trackingScriptHtml ? '<div class="domain-tracking-script u-stack-2">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
                 (analyticsEnabled ?
                     '<div class="u-cluster">' +
-                    '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
+                    '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">' + escapeHtml(t('settings_domains_report_btn', 'View 30-day report')) + '</button>' +
                     '</div>' +
                     '<div class="domain-analytics-report" hidden></div>' : '') +
                 '</div>' +
@@ -2519,7 +2522,7 @@ function closeAddDomainModal() {
 async function registerDomain() {
     const form = document.getElementById('add-domain-form');
     if (!form) {
-        showMessage('Error: Form not found', 'error');
+        showMessage(t('settings_domains_form_not_found', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -2530,7 +2533,7 @@ async function registerDomain() {
     const customerEmail = (formData.get('customer_email') || '').trim();
     
     if (!domain || !customerEmail) {
-        showMessage('Error: Domain and customer email are required', 'error');
+        showMessage(t('settings_domains_required_fields', 'Error: Domain and customer email are required'), 'error');
         return;
     }
     
@@ -2562,7 +2565,7 @@ async function registerDomain() {
         } catch (parseError) {
             console.error('Failed to parse JSON response:', parseError);
             console.error('Response text:', responseText);
-            showMessage('Error: Invalid response from server. Check console for details.', 'error');
+            showMessage(t('settings_domains_invalid_response_detail', 'Error: Invalid response from server. Check console for details.'), 'error');
             return;
         }
         
@@ -2572,9 +2575,9 @@ async function registerDomain() {
                 ? ' (delivery: ' + result.data.delivery_role + ')'
                 : '';
             if (result.data && result.data.delivery_role_warning) {
-                showMessage('Domain registered' + roleMsg + ', but delivery role could not be applied: ' + result.data.delivery_role_warning, 'warning');
+                showMessage(t('settings_domains_registered_warning', 'Domain registered{roleMsg}, but delivery role could not be applied: {warning}', { roleMsg: roleMsg, warning: result.data.delivery_role_warning }), 'warning');
             } else {
-                showMessage('Domain registered successfully!' + roleMsg, 'success');
+                showMessage(t('settings_domains_registered_success', 'Domain registered successfully!{roleMsg}', { roleMsg: roleMsg }), 'success');
             }
             closeAddDomainModal();
             loadDomains();
@@ -2585,11 +2588,11 @@ async function registerDomain() {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_role_unknown_error', 'Unknown error') }), 'error');
         }
     } catch (error) {
         console.error('Error registering domain:', error);
-        showMessage('Error registering domain: ' + error.message, 'error');
+        showMessage(t('settings_domains_registering_error', 'Error registering domain: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -2630,7 +2633,7 @@ window.editDomain = async function(domainName) {
         }
     } catch (error) {
         console.error('Error loading domain details:', error);
-        showMessage('Error loading domain details: ' + error.message, 'error');
+        showMessage(t('settings_domains_load_details_error', 'Error loading domain details: {message}', { message: error.message }), 'error');
     }
 };
 
@@ -2686,26 +2689,26 @@ async function updateDomain() {
         } catch (parseError) {
             console.error('Failed to parse JSON response:', parseError);
             console.error('Response text:', responseText);
-            showMessage('Error: Invalid response from server. Check console for details.', 'error');
+            showMessage(t('settings_domains_invalid_response_detail', 'Error: Invalid response from server. Check console for details.'), 'error');
             return;
         }
         
         
         if (result.status === 'ok') {
-            showMessage('Domain updated successfully!', 'success');
+            showMessage(t('settings_domains_updated_success', 'Domain updated successfully!'), 'success');
             closeEditDomainModal();
             loadDomains();
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_role_unknown_error', 'Unknown error') }), 'error');
         }
     } catch (error) {
         console.error('Error updating domain:', error);
-        showMessage('Error updating domain: ' + error.message, 'error');
+        showMessage(t('settings_domains_updating_error', 'Error updating domain: {message}', { message: error.message }), 'error');
     }
 }
 
 window.deleteDomain = async function(domainName) {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.'))) {
+    if (!(await BirklyFeedback.confirm(t('settings_domains_delete_confirm', 'Are you sure you want to delete domain "{domain}"? This will revoke all access.', { domain: domainName })))) {
         return;
     }
     
@@ -2724,14 +2727,14 @@ window.deleteDomain = async function(domainName) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Domain deleted successfully!', 'success');
+            showMessage(t('settings_domains_deleted_success', 'Domain deleted successfully!'), 'success');
             loadDomains();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
         console.error('Error deleting domain:', error);
-        showMessage('Error deleting domain: ' + error.message, 'error');
+        showMessage(t('settings_domains_deleting_error', 'Error deleting domain: {message}', { message: error.message }), 'error');
     }
 };
 
@@ -3195,7 +3198,7 @@ async function addDenylistCollection() {
             showMessage('Collection added to denylist', 'success');
             loadDenylist();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
         showMessage('Error: ' + error.message, 'error');
@@ -3229,7 +3232,7 @@ async function addDenylistResource() {
             showMessage('Resource added to denylist', 'success');
             loadDenylist();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
         showMessage('Error: ' + error.message, 'error');
@@ -3258,7 +3261,7 @@ async function removeDenylistResource(resource) {
             showMessage('Resource removed from denylist', 'success');
             loadDenylist();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
         showMessage('Error: ' + error.message, 'error');
@@ -3494,7 +3497,7 @@ async function handleGlobalSave() {
     var hasCoreForms = !!(forms.general || forms.security || forms.storage || forms.monitoring);
     if (!hasCoreForms && !saveAnalytics) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-            BirklyFeedback.toast('Changes on this tab are saved when you confirm each action', 'info');
+            BirklyFeedback.toast(t('settings_independent_tab_toast', 'Changes on this tab are saved when you confirm each action'), 'info');
         }
         return;
     }
@@ -3507,15 +3510,15 @@ async function handleGlobalSave() {
             await collectAndSaveSettings(coreTabs, forms);
         } else if (saveAnalytics) {
             if (typeof window.showMessage === 'function') {
-                window.showMessage('Settings saved successfully!', 'success');
+                window.showMessage(t('settings_save_success', 'Settings saved successfully!'), 'success');
             } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-                BirklyFeedback.toast('Analytics settings saved', 'success');
+                BirklyFeedback.toast(t('settings_analytics_saved_toast', 'Analytics settings saved'), 'success');
             }
         }
     } catch (err) {
-        var msg = (err && err.message) ? err.message : 'Save failed';
+        var msg = (err && err.message) ? err.message : t('settings_save_failed', 'Save failed');
         if (typeof window.showMessage === 'function') {
-            window.showMessage('Error: ' + msg, 'error');
+            window.showMessage(t('settings_save_error', 'Error: {message}', { message: msg }), 'error');
         } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
             BirklyFeedback.toast(msg, 'error');
         }
@@ -3590,11 +3593,11 @@ async function collectAndSaveSettings(tabsToSave, forms) {
                 if (uploadResult.status === 'ok') {
                     logoPath = uploadResult.data.logoPath;
                 } else {
-                    showMessage('Error uploading logo: ' + (uploadResult.message || 'Unknown error'), 'error');
+                    showMessage(t('settings_logo_upload_error', 'Error uploading logo: {message}', { message: uploadResult.message || t('settings_role_unknown_error', 'Unknown error') }), 'error');
                     return;
                 }
             } catch (error) {
-                showMessage('Error uploading logo: ' + error.message, 'error');
+                showMessage(t('settings_logo_upload_error', 'Error uploading logo: {message}', { message: error.message }), 'error');
                 return;
             }
         }
@@ -3626,12 +3629,12 @@ async function collectAndSaveSettings(tabsToSave, forms) {
                     window.markSettingsClean(savedTabId);
                 });
             }
-            showMessage('Settings saved successfully!', 'success');
+            showMessage(t('settings_save_success', 'Settings saved successfully!'), 'success');
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error saving settings: ' + error.message, 'error');
+        showMessage(t('settings_saving_error', 'Error saving settings: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -3674,7 +3677,7 @@ function initGlobalSave() {
         const removeLogoBtn = document.getElementById('remove-logo-btn');
         if (removeLogoBtn) {
             removeLogoBtn.addEventListener('click', async function () {
-                if (await BirklyFeedback.confirm('Are you sure you want to remove the logo? The default Birkly icon will be used.')) {
+                if (await BirklyFeedback.confirm(t('settings_logo_remove_confirm', 'Are you sure you want to remove the logo? The default Birkly icon will be used.'))) {
                     try {
                         const response = await fetch(apiUrl('/api/settings.php'), {
                             method: 'POST',
@@ -3693,13 +3696,13 @@ function initGlobalSave() {
 
                         const result = await response.json();
                         if (result.status === 'ok') {
-                            showMessage('Logo removed successfully!', 'success');
+                            showMessage(t('settings_logo_removed_success', 'Logo removed successfully!'), 'success');
                             setTimeout(function () { location.reload(); }, 1000);
                         } else {
-                            showMessage('Error: ' + result.message, 'error');
+                            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
                         }
                     } catch (error) {
-                        showMessage('Error removing logo: ' + error.message, 'error');
+                        showMessage(t('settings_logo_remove_error', 'Error removing logo: {message}', { message: error.message }), 'error');
                     }
                 }
             });
@@ -3778,7 +3781,7 @@ function initRebuildSystem() {
         }
 
         confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Rebuilding…';
+        confirmBtn.textContent = t('settings_rebuild_in_progress', 'Rebuilding…');
 
         try {
             const response = await fetch(apiUrl('/api/settings.php'), {
@@ -3795,16 +3798,16 @@ function initRebuildSystem() {
 
             const result = await response.json();
             if (result.status === 'ok') {
-                showMessage(result.message || 'System rebuilt successfully', 'success');
+                showMessage(result.message || t('settings_rebuild_success', 'System rebuilt successfully'), 'success');
                 window.location.href = apiUrl(result.redirect || '/admin/index.php?page=onboarding');
                 return;
             }
 
-            showMessage('Error: ' + (result.message || 'Failed to rebuild system'), 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_rebuild_failed', 'Failed to rebuild system') }), 'error');
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
         } finally {
-            confirmBtn.textContent = 'Rebuild system';
+            confirmBtn.textContent = t('settings_rebuild_btn', 'Rebuild system');
             updateConfirmState();
         }
     });
