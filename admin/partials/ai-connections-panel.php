@@ -61,7 +61,7 @@
                 </div>
               </div>
               <div id="ai-personal-agent-card" class="card-body">
-                <div class="loading-state"><p>Loading personal connector...</p></div>
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_connections_loading_personal'), ENT_QUOTES, 'UTF-8') ?></p></div>
               </div>
             </div>
 
@@ -77,7 +77,7 @@
                 </button>
               </div>
               <div class="connections-list card-body" id="ai-service-agents-list">
-                <div class="loading-state"><p>Loading connections...</p></div>
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_connections_loading'), ENT_QUOTES, 'UTF-8') ?></p></div>
               </div>
             </div>
 
@@ -93,7 +93,7 @@
                 </button>
               </div>
               <div class="connections-list card-body" id="connections-list">
-                <div class="loading-state"><p>Loading connections...</p></div>
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_connections_loading'), ENT_QUOTES, 'UTF-8') ?></p></div>
               </div>
             </div>
           </div>
