@@ -11,12 +11,12 @@
     <section class="card">
       <div class="card-header">
         <div>
-          <h2 class="section-title">Email</h2>
-          <p class="settings-help">Set up how Birkly sends email — form notifications, order receipts, password resets, and more. You only need to do this once.</p>
+          <h2 class="section-title"><?= htmlspecialchars(__('admin.conn_panel_email_title'), ENT_QUOTES, 'UTF-8') ?></h2>
+          <p class="settings-help"><?= htmlspecialchars(__('admin.conn_panel_email_help'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
         <button type="button" class="btn btn-primary" data-sys-conn-action="open-email-wizard">
           <?= birkly_icon('plus', ['size' => 16]) ?>
-          Set up email
+          <?= htmlspecialchars(__('admin.conn_wizard_setup'), ENT_QUOTES, 'UTF-8') ?>
         </button>
       </div>
       <div class="card-body u-stack-4">
@@ -32,12 +32,12 @@
     <section class="card">
       <div class="card-header">
         <div>
-          <h2 class="section-title">HTTP credentials</h2>
-          <p class="settings-help">Saved login details for plugins that call external APIs (shipping, CRM, webhooks).</p>
+          <h2 class="section-title"><?= htmlspecialchars(__('admin.conn_panel_http_title'), ENT_QUOTES, 'UTF-8') ?></h2>
+          <p class="settings-help"><?= htmlspecialchars(__('admin.conn_panel_http_help'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
         <button type="button" class="btn btn-primary" data-sys-conn-action="open-http-wizard" data-connection-type="http_credential">
           <?= birkly_icon('plus', ['size' => 16]) ?>
-          Add credential
+          <?= htmlspecialchars(__('admin.conn_panel_add_credential'), ENT_QUOTES, 'UTF-8') ?>
         </button>
       </div>
       <div class="card-body u-stack-4">
