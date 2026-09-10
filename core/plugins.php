@@ -525,6 +525,13 @@ function register_admin_page($slug, $file) {
 // Enhanced plugin loader: supports both standalone .php files and plugin folders with plugin.php
 function load_plugins($plugins_dir = null) {
     global $birkly_plugins;
+
+    if (!empty($GLOBALS['birkly_load_plugins_depth'])) {
+        return;
+    }
+    $GLOBALS['birkly_load_plugins_depth'] = 1;
+
+    try {
     
     // Use absolute path if not provided
     if ($plugins_dir === null) {
@@ -627,6 +634,16 @@ function load_plugins($plugins_dir = null) {
 
     // Re-apply persisted state after discovery (covers reload paths)
     load_plugin_states();
+
+    if (function_exists('birkly_register_plugin_i18n_from_manifests')) {
+        birkly_register_plugin_i18n_from_manifests();
+    }
+    if (function_exists('birkly_merge_active_plugin_i18n_into_i18n')) {
+        birkly_merge_active_plugin_i18n_into_i18n();
+    }
+    } finally {
+        $GLOBALS['birkly_load_plugins_depth'] = 0;
+    }
 }
 
 // Plugin settings management
@@ -766,6 +783,7 @@ require_once __DIR__ . '/plugins/template_functions.php';
 require_once __DIR__ . '/plugins/docs_shelf.php';
 require_once __DIR__ . '/plugins/storefront_shelf.php';
 require_once __DIR__ . '/plugins/admin_asset_shelf.php';
+require_once __DIR__ . '/plugins/admin_i18n_shelf.php';
 require_once __DIR__ . '/plugins/notification_shelf.php';
 require_once __DIR__ . '/hub_update_attention.php';
 require_once __DIR__ . '/plugins/mcp_shelf.php';

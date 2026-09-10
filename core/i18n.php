@@ -9,6 +9,7 @@ class I18n {
     private static $translations = [];
     private static $fallbackLanguage = 'en';
     private static $loadedLanguages = [];
+    private static $pluginCatalogsMerged = [];
     
     /**
      * Initialize i18n system
@@ -83,7 +84,7 @@ class I18n {
     }
     
     /**
-     * Load language file
+     * Load core language file(s) for a locale.
      */
     private static function loadLanguage($language) {
         if (isset(self::$loadedLanguages[$language])) {
@@ -99,6 +100,10 @@ class I18n {
             }
         }
         
+        if (!isset(self::$translations[$language])) {
+            self::$translations[$language] = [];
+        }
+        
         // Always load fallback language
         if ($language !== self::$fallbackLanguage) {
             $fallbackFile = __DIR__ . "/../lang/" . self::$fallbackLanguage . ".json";
@@ -110,13 +115,101 @@ class I18n {
             }
         }
         
+        if (!isset(self::$translations[self::$fallbackLanguage])) {
+            self::$translations[self::$fallbackLanguage] = [];
+        }
+        
         self::$loadedLanguages[$language] = true;
+        
+        self::applyTranslationFilters($language);
+        if ($language !== self::$fallbackLanguage) {
+            self::applyTranslationFilters(self::$fallbackLanguage);
+        }
+    }
+    
+    /**
+     * Merge active plugin lang catalogs into loaded translations (P85-M1).
+     */
+    public static function mergePluginCatalogs(): void {
+        if (!function_exists('birkly_get_registered_plugin_i18n_catalogs')
+            || !function_exists('birkly_load_plugin_i18n_file')
+            || !function_exists('birkly_i18n_deep_merge')) {
+            return;
+        }
+
+        $languages = array_unique([self::$currentLanguage, self::$fallbackLanguage]);
+        $catalogs = birkly_get_registered_plugin_i18n_catalogs();
+
+        foreach ($languages as $language) {
+            if ($language === '' || isset(self::$pluginCatalogsMerged[$language])) {
+                continue;
+            }
+
+            if (!isset(self::$translations[$language])) {
+                self::$translations[$language] = [];
+            }
+
+            foreach ($catalogs as $catalog) {
+                $langDir = (string) ($catalog['lang_dir'] ?? '');
+                if ($langDir === '') {
+                    continue;
+                }
+                $pluginData = birkly_load_plugin_i18n_file($langDir, $language);
+                if (is_array($pluginData) && $pluginData !== []) {
+                    self::$translations[$language] = birkly_i18n_deep_merge(
+                        self::$translations[$language],
+                        $pluginData
+                    );
+                }
+            }
+
+            self::applyTranslationFilters($language);
+            self::$pluginCatalogsMerged[$language] = true;
+        }
+    }
+
+    /**
+     * Reset plugin merge state (tests).
+     */
+    public static function resetPluginCatalogMergeState(): void {
+        self::$pluginCatalogsMerged = [];
+    }
+
+    /**
+     * Full reset for unit tests.
+     */
+    public static function resetForTests(): void {
+        self::$pluginCatalogsMerged = [];
+        self::$loadedLanguages = [];
+        self::$translations = [];
+        self::$currentLanguage = 'en';
+    }
+    
+    /**
+     * Apply birkly_i18n_translations filter to a loaded locale bucket.
+     */
+    private static function applyTranslationFilters(string $language): void {
+        if (!function_exists('apply_filters')) {
+            return;
+        }
+
+        $merged = apply_filters(
+            'birkly_i18n_translations',
+            self::$translations[$language] ?? [],
+            $language
+        );
+
+        if (is_array($merged)) {
+            self::$translations[$language] = $merged;
+        }
     }
     
     /**
      * Translate a string
      */
     public static function translate($key, $params = []) {
+        self::ensurePluginCatalogsMerged();
+        
         // Try current language first
         $translation = self::getTranslation($key, self::$currentLanguage);
         
@@ -133,11 +226,17 @@ class I18n {
         // Replace parameters
         if (!empty($params)) {
             foreach ($params as $param => $value) {
-                $translation = str_replace("{{$param}}", $value, $translation);
+                $translation = str_replace('{{' . $param . '}}', (string) $value, $translation);
             }
         }
         
         return $translation;
+    }
+
+    private static function ensurePluginCatalogsMerged(): void {
+        if (function_exists('birkly_merge_active_plugin_i18n_into_i18n')) {
+            self::mergePluginCatalogs();
+        }
     }
     
     /**
@@ -160,6 +259,86 @@ class I18n {
         }
         
         return is_string($value) ? $value : null;
+    }
+
+    /**
+     * Flatten nested translation tree for JS injection (P85-M2).
+     *
+     * @param array<string, mixed> $tree
+     * @param string $prefix
+     * @return array<string, string>
+     */
+    public static function flattenForJs(array $tree, string $prefix = ''): array {
+        $flat = [];
+        foreach ($tree as $key => $value) {
+            if ($key === '_meta') {
+                continue;
+            }
+            $path = $prefix === '' ? (string) $key : $prefix . '.' . $key;
+            if (is_array($value)) {
+                $flat = array_merge($flat, self::flattenForJs($value, $path));
+            } elseif (is_string($value)) {
+                $flat[$path] = $value;
+            }
+        }
+        return $flat;
+    }
+
+    /**
+     * Subtree for a plugin namespace (e.g. plugins.commerce).
+     *
+     * @return array<string, mixed>
+     */
+    public static function getPluginSubtree(string $plugin_id, ?string $language = null): array {
+        self::ensurePluginCatalogsMerged();
+        $language = $language ?? self::$currentLanguage;
+        $plugins = self::$translations[$language]['plugins'][$plugin_id] ?? null;
+        if (is_array($plugins)) {
+            return $plugins;
+        }
+        if ($language !== self::$fallbackLanguage) {
+            $fallback = self::$translations[self::$fallbackLanguage]['plugins'][$plugin_id] ?? null;
+            return is_array($fallback) ? $fallback : [];
+        }
+        return [];
+    }
+    
+    /**
+     * Build flat JS dictionary: admin.* plus optional plugins.{id}.* subtree.
+     *
+     * @return array<string, string>
+     */
+    public static function getJsDictionary(?string $plugin_id = null): array {
+        self::ensurePluginCatalogsMerged();
+
+        $language = self::$currentLanguage;
+        $fallback = self::$fallbackLanguage;
+
+        $merged = is_array(self::$translations[$language] ?? null) ? self::$translations[$language] : [];
+        if ($language !== $fallback && is_array(self::$translations[$fallback] ?? null)) {
+            if (function_exists('birkly_i18n_deep_merge')) {
+                $merged = birkly_i18n_deep_merge(self::$translations[$fallback], $merged);
+            } else {
+                $merged = array_replace_recursive(self::$translations[$fallback], $merged);
+            }
+        }
+
+        $flat = [];
+        if (isset($merged['admin']) && is_array($merged['admin'])) {
+            $flat = array_merge($flat, self::flattenForJs(['admin' => $merged['admin']]));
+        }
+
+        $plugin_id = trim((string) $plugin_id);
+        if ($plugin_id !== ''
+            && isset($merged['plugins'][$plugin_id])
+            && is_array($merged['plugins'][$plugin_id])) {
+            $flat = array_merge(
+                $flat,
+                self::flattenForJs(['plugins' => [$plugin_id => $merged['plugins'][$plugin_id]]])
+            );
+        }
+
+        return $flat;
     }
     
     /**
@@ -209,4 +388,3 @@ function getCurrentLanguage() {
 function setLanguage($language) {
     I18n::setLanguage($language);
 }
-
