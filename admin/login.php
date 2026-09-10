@@ -19,6 +19,8 @@ haru_secure_session_start();
 
 // Include CSRF helper
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/i18n.php';
+I18n::init();
 
 function birkly_login_redirect_is_safe(string $redirect): bool
 {
@@ -246,12 +248,12 @@ $defaultLogo = birkly_url('/admin/assets/birkly-icon.svg');
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
-    <title>Login - <?= htmlspecialchars($projectName) ?> Admin</title>
+    <title><?= htmlspecialchars(__('admin.auth_login_title', ['project' => $projectName])) ?></title>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="<?= htmlspecialchars($logoUrl) ?>">
 </head>
@@ -261,8 +263,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
             <div class="card-body u-stack-6">
                 <div class="u-center-col u-stack-2">
                     <img class="auth-logo" src="<?= htmlspecialchars($logoUrl) ?>" alt="<?= htmlspecialchars($projectName) ?> logo">
-                    <h1 class="auth-title">Welcome back</h1>
-                    <p class="auth-subtitle">Sign in to your <?= htmlspecialchars($projectName) ?> admin account</p>
+                    <h1 class="auth-title"><?= htmlspecialchars(__('admin.auth_welcome_back')) ?></h1>
+                    <p class="auth-subtitle"><?= htmlspecialchars(__('admin.auth_sign_in_subtitle', ['project' => $projectName])) ?></p>
                 </div>
 
                 <?php if ($error): ?>
@@ -283,7 +285,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                             <p><?= htmlspecialchars($notice) ?></p>
                             <form method="POST" action="<?= htmlspecialchars(birkly_url('/admin/logout.php')) ?>">
                                 <input type="hidden" name="_csrf" value="<?= htmlspecialchars(get_csrf_token()) ?>">
-                                <button type="submit" class="btn btn-secondary btn-sm">Log out</button>
+                                <button type="submit" class="btn btn-secondary btn-sm"><?= htmlspecialchars(__('admin.auth_log_out')) ?></button>
                             </form>
                         </div>
                     </div>
@@ -293,7 +295,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     <input type="hidden" name="_csrf" value="<?= get_csrf_token() ?>">
 
                     <div class="field">
-                        <label class="field-label" for="email">Email address</label>
+                        <label class="field-label" for="email"><?= htmlspecialchars(__('admin.auth_email_address')) ?></label>
                         <input
                             class="input"
                             type="email"
@@ -307,7 +309,7 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     </div>
 
                     <div class="field">
-                        <label class="field-label" for="password">Password</label>
+                        <label class="field-label" for="password"><?= htmlspecialchars(__('admin.auth_password')) ?></label>
                         <input
                             class="input"
                             type="password"
@@ -315,12 +317,12 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                             name="password"
                             required
                             autocomplete="current-password"
-                            placeholder="Enter your password"
+                            placeholder="<?= htmlspecialchars(__('admin.auth_password_placeholder')) ?>"
                         >
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg btn-full u-mt-2" id="login-submit">
-                        Sign in
+                        <?= htmlspecialchars(__('admin.auth_sign_in')) ?>
                     </button>
                 </form>
 
@@ -333,14 +335,14 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
                     ?>
                     <p class="u-text-xs u-fg-secondary u-m-0">
                         <?= htmlspecialchars(birkly_program_status_label()) ?> ·
-                        <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer">Terms</a>
+                        <a href="<?= htmlspecialchars($termsUrl) ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.auth_terms_link')) ?></a>
                         ·
-                        <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer">Privacy</a>
+                        <a href="<?= htmlspecialchars($privacyUrl) ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.auth_privacy_link')) ?></a>
                         ·
-                        <a href="https://birkly.com/#waitlist" target="_blank" rel="noopener noreferrer">Request invite</a>
+                        <a href="https://birkly.com/#waitlist" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.auth_request_invite')) ?></a>
                     </p>
                     <?php endif; ?>
-                    <p class="u-text-sm u-fg-secondary u-m-0">Need help? Contact your system administrator.</p>
+                    <p class="u-text-sm u-fg-secondary u-m-0"><?= htmlspecialchars(__('admin.auth_need_help')) ?></p>
                 </div>
             </div>
         </section>

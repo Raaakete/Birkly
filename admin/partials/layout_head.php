@@ -25,17 +25,31 @@ $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
     ?>
     <?php
     $adminI18nLang = getCurrentLanguage();
-    $adminI18nFile = __DIR__ . '/../../lang/' . $adminI18nLang . '.json';
-    $adminI18nFallbackFile = __DIR__ . '/../../lang/en.json';
-    $adminI18nData = [];
-    if (is_file($adminI18nFallbackFile)) {
-        $decoded = json_decode((string) file_get_contents($adminI18nFallbackFile), true);
-        $adminI18nData = is_array($decoded['admin'] ?? null) ? $decoded['admin'] : [];
+    $pluginIdForI18n = null;
+    if (!empty($page) && function_exists('get_plugin_admin_meta_for_page')) {
+        $pluginMetaForI18n = get_plugin_admin_meta_for_page((string) $page);
+        if (is_array($pluginMetaForI18n)) {
+            $pluginIdForI18n = (string) ($pluginMetaForI18n['plugin_id'] ?? '');
+            if ($pluginIdForI18n === '') {
+                $pluginIdForI18n = null;
+            }
+        }
     }
-    if ($adminI18nLang !== 'en' && is_file($adminI18nFile)) {
-        $decoded = json_decode((string) file_get_contents($adminI18nFile), true);
-        if (is_array($decoded['admin'] ?? null)) {
-            $adminI18nData = array_merge($adminI18nData, $decoded['admin']);
+    if (class_exists('I18n')) {
+        I18n::mergePluginCatalogs();
+        $adminI18nData = I18n::getJsDictionary($pluginIdForI18n);
+    } else {
+        $adminI18nFallbackFile = __DIR__ . '/../../lang/en.json';
+        $adminI18nData = [];
+        if (is_file($adminI18nFallbackFile)) {
+            $decoded = json_decode((string) file_get_contents($adminI18nFallbackFile), true);
+            if (is_array($decoded['admin'] ?? null)) {
+                foreach ($decoded['admin'] as $k => $v) {
+                    if (is_string($v)) {
+                        $adminI18nData['admin.' . $k] = $v;
+                    }
+                }
+            }
         }
     }
     ?>
