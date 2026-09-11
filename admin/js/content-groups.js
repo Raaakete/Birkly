@@ -9,6 +9,18 @@
     const VIEW_STORAGE_KEY = 'birkly_content_view';
     const MAX_GROUP_DEPTH = 3;
 
+    function t(key, fallback, params) {
+        var text = (window.Birkly && window.Birkly.i18n && typeof window.Birkly.i18n.t === 'function')
+            ? window.Birkly.i18n.t('admin.' + key, fallback != null ? fallback : key)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function adminUrl(page, params) {
         if (window.Birkly && typeof Birkly.adminUrl === 'function') {
             return Birkly.adminUrl(page, params || {});
@@ -91,7 +103,7 @@
             if (!group || group.id === 'ungrouped') {
                 return {
                     id: 'ungrouped',
-                    name: group?.name || 'Ungrouped',
+                    name: group?.name || t('content_groups_ungrouped_name', 'Ungrouped'),
                     collections: Array.isArray(group?.collections) ? group.collections.slice() : []
                 };
             }
@@ -102,7 +114,7 @@
     function normalizeGroupNode(node) {
         const normalized = {
             id: node.id || ('group-' + Date.now()),
-            name: node.name || node.label || 'Untitled Group',
+            name: node.name || node.label || t('content_groups_untitled_group', 'Untitled group'),
             collections: Array.isArray(node.collections) ? node.collections.slice() : []
         };
         if (node.icon) {
@@ -115,7 +127,7 @@
     }
 
     function getGroupLabel(group) {
-        return group?.name || group?.label || 'Untitled Group';
+        return group?.name || group?.label || t('content_groups_untitled_group', 'Untitled group');
     }
 
     function findGroupInTree(groupList, id, parent = null) {
@@ -210,7 +222,7 @@
         const titleEl = section.querySelector(':scope > .group-header .group-title, :scope > .subgroup-header .subgroup-title');
         const group = {
             id: section.dataset.groupId,
-            name: titleEl?.textContent?.trim() || 'Untitled Group',
+            name: titleEl?.textContent?.trim() || t('content_groups_untitled_group', 'Untitled group'),
             collections: getSlugsFromGrid(section.querySelector(':scope > .group-collections')),
             children: []
         };
@@ -240,7 +252,7 @@
         if (ungroupedSection) {
             nextGroups.push({
                 id: 'ungrouped',
-                name: 'Ungrouped',
+                name: t('content_groups_ungrouped_name', 'Ungrouped'),
                 collections: getSlugsFromGrid(ungroupedSection.querySelector('.ungrouped-collections'))
             });
         } else {
@@ -365,7 +377,7 @@
         const collapseBtn = document.createElement('button');
         collapseBtn.type = 'button';
         collapseBtn.className = 'btn-icon group-collapse-btn';
-        collapseBtn.title = 'Collapse Group';
+        collapseBtn.title = t('content_groups_collapse_group', 'Collapse group');
         collapseBtn.innerHTML = icon('caret-down', { size: 14 });
         collapseBtn.onclick = (e) => {
             e.preventDefault();
@@ -377,7 +389,7 @@
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
         editBtn.className = 'btn-icon';
-        editBtn.title = 'Edit Group';
+        editBtn.title = t('content_groups_edit_group_title', 'Edit group');
         editBtn.innerHTML = icon('pencil-simple', { size: 14 });
         editBtn.onclick = (e) => {
             e.preventDefault();
@@ -388,7 +400,7 @@
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'btn-icon';
-        deleteBtn.title = 'Delete Group';
+        deleteBtn.title = t('content_groups_delete_group_title', 'Delete group');
         deleteBtn.innerHTML = icon('trash', { size: 14 });
         deleteBtn.onclick = (e) => {
             e.preventDefault();
@@ -415,7 +427,7 @@
             const addSubBtn = document.createElement('button');
             addSubBtn.type = 'button';
             addSubBtn.className = 'btn-icon';
-            addSubBtn.title = 'Add subgroup';
+            addSubBtn.title = t('content_groups_add_subgroup', 'Add subgroup');
             addSubBtn.innerHTML = icon('plus', { size: 14 });
             addSubBtn.onclick = (e) => {
                 e.preventDefault();
@@ -456,7 +468,7 @@
             grid.classList.add('empty-drop-zone');
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'empty-drop-message';
-            emptyMsg.textContent = 'Drop collections here';
+            emptyMsg.textContent = t('content_groups_drop_here', 'Drop collections here');
             grid.appendChild(emptyMsg);
         } else {
             groupCollections.forEach((col) => {
@@ -485,7 +497,7 @@
 
         const dragHandleWrapper = document.createElement('div');
         dragHandleWrapper.className = 'group-drag-handle';
-        dragHandleWrapper.appendChild(createDragHandle('Drag to reorder subgroup', 'drag-handle'));
+        dragHandleWrapper.appendChild(createDragHandle(t('content_groups_drag_subgroup', 'Drag to reorder subgroup'), 'drag-handle'));
 
         if (subgroup.icon) {
             const iconSpan = document.createElement('span');
@@ -536,7 +548,7 @@
 
         const dragHandleWrapper = document.createElement('div');
         dragHandleWrapper.className = 'group-drag-handle';
-        dragHandleWrapper.appendChild(createDragHandle('Drag to reorder group', 'drag-handle'));
+        dragHandleWrapper.appendChild(createDragHandle(t('content_groups_drag_group', 'Drag to reorder group'), 'drag-handle'));
 
         const title = document.createElement('h3');
         title.className = 'group-title';
@@ -581,18 +593,18 @@
 
         const title = document.createElement('h2');
         title.className = 'empty-state-title';
-        title.textContent = 'Create your first collection';
+        title.textContent = t('content_groups_first_title', 'Create your first collection');
 
         const message = document.createElement('p');
         message.className = 'empty-state-text';
-        message.textContent = 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.';
+        message.textContent = t('content_groups_first_message', 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.');
 
         const actions = document.createElement('div');
         actions.className = 'empty-state-actions';
         const createBtn = document.createElement('a');
         createBtn.className = 'btn btn-primary';
         createBtn.href = adminUrl('collection-editor');
-        createBtn.textContent = 'New collection';
+        createBtn.textContent = t('content_groups_new_collection', 'New collection');
         actions.appendChild(createBtn);
 
         empty.appendChild(iconWrap);
@@ -608,7 +620,7 @@
 
             const templatesHeading = document.createElement('h3');
             templatesHeading.className = 'section-title';
-            templatesHeading.textContent = 'Or start with a template';
+            templatesHeading.textContent = t('content_groups_or_template', 'Or start with a template');
 
             const grid = document.createElement('div');
             grid.className = 'u-grid-auto';
@@ -668,7 +680,7 @@
             throw new Error(data.message || 'Install failed');
         } catch (error) {
             if (window.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-                BirklyFeedback.toast(error.message || 'Failed to install template', 'error');
+            BirklyFeedback.toast(error.message || t('content_groups_install_template_failed', 'Failed to install template'), 'error');
             } else {
                 console.error(error);
             }
@@ -702,7 +714,7 @@
 
         const title = document.createElement('h3');
         title.className = 'group-title';
-        title.textContent = 'Ungrouped Collections';
+        title.textContent = t('content_groups_ungrouped_title', 'Ungrouped collections');
 
         const actions = document.createElement('div');
         actions.className = 'group-actions';
@@ -732,7 +744,7 @@
             grid.classList.add('empty-drop-zone');
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'empty-drop-message';
-            emptyMsg.textContent = 'Drop collections here';
+            emptyMsg.textContent = t('content_groups_drop_here', 'Drop collections here');
             grid.appendChild(emptyMsg);
         } else {
             collectionsList.forEach((col) => {
@@ -826,17 +838,17 @@
         const viewEntriesItem = document.createElement('a');
         viewEntriesItem.className = 'dropdown-item';
         viewEntriesItem.href = adminUrl('entries', { collection: collection.slug });
-        viewEntriesItem.innerHTML = icon('file-text', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">View Entries</span>';
+        viewEntriesItem.innerHTML = icon('file-text', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">' + escapeHtml(t('content_groups_view_entries', 'View entries')) + '</span>';
 
         const editItem = document.createElement('a');
         editItem.className = 'dropdown-item';
         editItem.href = adminUrl('collection-editor', { collection: collection.slug });
-        editItem.innerHTML = icon('pencil-simple', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Edit Collection</span>';
+        editItem.innerHTML = icon('pencil-simple', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">' + escapeHtml(t('content_groups_edit_collection', 'Edit collection')) + '</span>';
 
         const duplicateItem = document.createElement('button');
         duplicateItem.type = 'button';
         duplicateItem.className = 'dropdown-item';
-        duplicateItem.innerHTML = icon('copy', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Duplicate Collection</span>';
+        duplicateItem.innerHTML = icon('copy', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">' + escapeHtml(t('content_groups_duplicate_collection', 'Duplicate collection')) + '</span>';
         duplicateItem.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -847,7 +859,7 @@
         const deleteItem = document.createElement('button');
         deleteItem.type = 'button';
         deleteItem.className = 'dropdown-item dropdown-item-danger';
-        deleteItem.innerHTML = icon('trash', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">Delete Collection</span>';
+        deleteItem.innerHTML = icon('trash', { size: 16, class: 'dropdown-item-icon' }) + '<span class="dropdown-item-label">' + escapeHtml(t('content_groups_delete_collection', 'Delete collection')) + '</span>';
         deleteItem.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -899,7 +911,7 @@
     function duplicateCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
-            BirklyFeedback.toast('Error: Collection ID not found. Cannot duplicate collection.', 'error')
+            BirklyFeedback.toast(t('content_groups_duplicate_id_error', 'Collection ID not found. Cannot duplicate collection.'), 'error')
             return;
         }
 
@@ -918,12 +930,14 @@
             if (data.status === 'ok') {
                 window.location.reload();
             } else {
-                BirklyFeedback.toast('Failed to duplicate collection: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(t('content_groups_duplicate_failed', 'Failed to duplicate collection: {message}', {
+                    message: data.message || t('content_groups_unknown_error', 'Unknown error'),
+                }), 'error');
             }
         })
         .catch((error) => {
             console.error('Error duplicating collection:', error);
-            BirklyFeedback.toast('Error duplicating collection. Please try again.', 'error')
+            BirklyFeedback.toast(t('content_groups_duplicate_error', 'Error duplicating collection. Please try again.'), 'error')
         });
     }
 
@@ -946,22 +960,22 @@
         if (!modal || !form || !title || !nameInput) return;
 
         if (group) {
-            title.textContent = 'Edit Group';
+            title.textContent = t('content_groups_modal_edit', 'Edit group');
             nameInput.value = getGroupLabel(group);
             if (iconInput) {
                 iconInput.value = group.icon || '';
                 iconInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            submitBtn.textContent = 'Update Group';
+            submitBtn.textContent = t('content_groups_modal_update', 'Update group');
             form.dataset.groupId = group.id;
         } else {
-            title.textContent = 'New Group';
+            title.textContent = t('content_groups_modal_new', 'New group');
             nameInput.value = '';
             if (iconInput) {
                 iconInput.value = '';
                 iconInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            submitBtn.textContent = 'Create Group';
+            submitBtn.textContent = t('content_groups_modal_create', 'Create group');
             delete form.dataset.groupId;
         }
 
@@ -985,7 +999,7 @@
         const groupId = form.dataset.groupId;
 
         if (!nameInput || !nameInput.value.trim()) {
-            BirklyFeedback.toast('Please enter a group name', 'warning')
+            BirklyFeedback.toast(t('content_groups_name_required', 'Please enter a group name'), 'warning')
             return;
         }
 
@@ -1049,7 +1063,7 @@
     }
 
     async function deleteGroup(groupId) {
-        if (!(await BirklyFeedback.confirm('Are you sure you want to delete this group? Collections will be moved to ungrouped.'))) {
+        if (!(await BirklyFeedback.confirm(t('content_groups_delete_group_confirm', 'Are you sure you want to delete this group? Collections will be moved to ungrouped.')))) {
             return;
         }
 
@@ -1071,11 +1085,14 @@
     async function deleteCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
-            BirklyFeedback.toast('Error: Collection ID not found. Cannot delete collection.', 'error')
+            BirklyFeedback.toast(t('content_groups_delete_id_error', 'Collection ID not found. Cannot delete collection.'), 'error')
             return;
         }
 
-        const confirmMessage = `Are you sure you want to delete "${collection.name || 'this collection'}"? This will also delete all ${collection.entries_count || 0} entries in this collection. This action cannot be undone.`;
+        const confirmMessage = t('content_groups_delete_collection_confirm', 'Are you sure you want to delete “{name}”? This will also delete all {count} entries in this collection. This action cannot be undone.', {
+            name: collection.name || t('content_groups_delete_collection_fallback', 'this collection'),
+            count: collection.entries_count || 0,
+        });
         if (!(await BirklyFeedback.confirm(confirmMessage))) return;
 
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -1096,12 +1113,14 @@
                 saveGroups();
                 renderGroupsAndCollections();
             } else {
-                BirklyFeedback.toast('Failed to delete collection: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(t('content_groups_delete_failed', 'Failed to delete collection: {message}', {
+                    message: data.message || t('content_groups_unknown_error', 'Unknown error'),
+                }), 'error');
             }
         })
         .catch((error) => {
             console.error('Error deleting collection:', error);
-            BirklyFeedback.toast('Error deleting collection. Please try again.', 'error')
+            BirklyFeedback.toast(t('content_groups_delete_error', 'Error deleting collection. Please try again.'), 'error')
         });
     }
 
@@ -1125,12 +1144,14 @@
                 }
                 renderGroupsAndCollections();
             } else {
-                BirklyFeedback.toast('Failed to save groups: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(t('content_groups_save_failed', 'Failed to save groups: {message}', {
+                    message: data.message || t('content_groups_unknown_error', 'Unknown error'),
+                }), 'error');
             }
         })
         .catch((error) => {
             console.error('Error saving groups:', error);
-            BirklyFeedback.toast('Error saving groups. Please try again.', 'error')
+            BirklyFeedback.toast(t('content_groups_save_error', 'Error saving groups. Please try again.'), 'error')
         });
     }
 
@@ -1143,7 +1164,7 @@
             groupSection.classList.remove('collapsed');
             if (grid) grid.style.display = '';
             if (collapseBtn) {
-                collapseBtn.title = 'Collapse Group';
+                collapseBtn.title = t('content_groups_collapse_group', 'Collapse group');
                 collapseBtn.innerHTML = icon('caret-down', { size: 14 });
             }
             localStorage.setItem(`group-collapsed-${groupId}`, 'false');

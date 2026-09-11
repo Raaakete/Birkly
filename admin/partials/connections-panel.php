@@ -5,6 +5,12 @@
  * Email-first composition with a guided setup wizard. All element IDs use the
  * sys-conn- prefix to avoid collisions with Settings → AI connection UI.
  */
+$connText = static function (string $key): string {
+    return htmlspecialchars(__('admin.' . $key), ENT_QUOTES, 'UTF-8');
+};
+$connRich = static function (string $key, string $allowed = '<strong><em>') {
+    return strip_tags(__('admin.' . $key), $allowed);
+};
 ?>
 <div class="settings-stack connections-settings" id="sys-conn-settings-root">
   <div class="settings-pane-section" id="sys-conn-email-section" data-settings-search="connections email smtp resend postmark ses mailgun log mail sender provider notifications forms">
@@ -53,8 +59,8 @@
 <div class="modal" id="sys-conn-email-modal" role="dialog" aria-labelledby="sys-conn-email-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
-      <h2 id="sys-conn-email-modal-title">Set up email</h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-email-modal" aria-label="Close">
+      <h2 id="sys-conn-email-modal-title"><?= $connText('conn_wizard_setup') ?></h2>
+      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-email-modal" aria-label="<?= $connText('close') ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>
@@ -63,19 +69,19 @@
       <input type="hidden" id="sys-conn-email-type" name="type" value="email">
       <input type="hidden" id="sys-conn-email-provider" name="provider" value="">
 
-      <div class="conn-wizard-steps" role="tablist" aria-label="Email setup steps">
-        <span class="conn-wizard-step-indicator active" data-step="1">1. Choose method</span>
-        <span class="conn-wizard-step-indicator" data-step="2">2. Enter details</span>
-        <span class="conn-wizard-step-indicator" data-step="3">3. Test &amp; save</span>
+      <div class="conn-wizard-steps" role="tablist" aria-label="<?= $connText('conn_wizard_steps_aria') ?>">
+        <span class="conn-wizard-step-indicator active" data-step="1"><?= $connText('conn_wizard_step_choose') ?></span>
+        <span class="conn-wizard-step-indicator" data-step="2"><?= $connText('conn_wizard_step_details') ?></span>
+        <span class="conn-wizard-step-indicator" data-step="3"><?= $connText('conn_wizard_step_test') ?></span>
       </div>
 
       <div id="sys-conn-wizard-error" class="message message-error" role="alert" hidden></div>
 
       <!-- Step 1: Provider picker -->
       <section class="conn-wizard-panel" data-wizard-step="1">
-        <p class="conn-wizard-intro">How would you like Birkly to send email? Pick the option that matches your situation.</p>
-        <div id="sys-conn-provider-grid" class="conn-provider-grid" role="listbox" aria-label="Email sending methods"></div>
-        <p class="form-help">Not sure? Use <strong>Log only</strong> on your computer to try things out, or <strong>Resend</strong> / <strong>Postmark</strong> for production sites.</p>
+        <p class="conn-wizard-intro"><?= $connText('conn_wizard_intro_pick') ?></p>
+        <div id="sys-conn-provider-grid" class="conn-provider-grid" role="listbox" aria-label="<?= $connText('conn_wizard_provider_grid_aria') ?>"></div>
+        <p class="form-help"><?= $connRich('conn_wizard_intro_tip') ?></p>
       </section>
 
       <!-- Step 2: Configuration -->
@@ -88,36 +94,36 @@
         </div>
 
         <div class="form-group">
-          <label for="sys-conn-email-name">Connection name</label>
-          <input type="text" id="sys-conn-email-name" name="name" class="input" required placeholder="e.g. My website email">
-          <small class="form-help">A label you will recognize in the list — only you see this.</small>
+          <label for="sys-conn-email-name"><?= $connText('conn_wizard_label_connection_name') ?></label>
+          <input type="text" id="sys-conn-email-name" name="name" class="input" required placeholder="<?= $connText('conn_wizard_name_placeholder') ?>">
+          <small class="form-help"><?= $connText('conn_wizard_name_help') ?></small>
         </div>
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="sys-conn-email-from">Sender email address</label>
-            <input type="email" id="sys-conn-email-from" name="from_email" class="input" required placeholder="hello@yourdomain.com">
-            <small class="form-help">Recipients see this as the “From” address.</small>
+            <label for="sys-conn-email-from"><?= $connText('conn_wizard_label_from_email') ?></label>
+            <input type="email" id="sys-conn-email-from" name="from_email" class="input" required placeholder="<?= $connText('conn_wizard_from_placeholder') ?>">
+            <small class="form-help"><?= $connText('conn_wizard_from_email_help') ?></small>
           </div>
           <div class="form-group">
-            <label for="sys-conn-email-from-name">Sender name</label>
-            <input type="text" id="sys-conn-email-from-name" name="from_name" class="input" placeholder="Your site name">
+            <label for="sys-conn-email-from-name"><?= $connText('conn_wizard_label_from_name') ?></label>
+            <input type="text" id="sys-conn-email-from-name" name="from_name" class="input" placeholder="<?= $connText('conn_wizard_from_name_placeholder') ?>">
           </div>
         </div>
 
         <div id="sys-conn-provider-fields" class="u-stack-3"></div>
 
         <details class="sys-conn-advanced">
-          <summary>Advanced options</summary>
+          <summary><?= $connText('conn_wizard_advanced_summary') ?></summary>
           <div class="u-stack-3 u-pt-3">
             <div class="form-group">
-              <label for="sys-conn-email-alias">Internal reference name</label>
-              <input type="text" id="sys-conn-email-alias" name="alias" class="input" pattern="[a-z0-9_.-]+" placeholder="auto-generated">
-              <small class="form-help">Leave blank to auto-generate. Plugins use this to pick a specific connection.</small>
+              <label for="sys-conn-email-alias"><?= $connText('conn_wizard_label_alias') ?></label>
+              <input type="text" id="sys-conn-email-alias" name="alias" class="input" pattern="[a-z0-9_.-]+" placeholder="<?= $connText('conn_wizard_alias_placeholder') ?>">
+              <small class="form-help"><?= $connText('conn_wizard_alias_help') ?></small>
             </div>
             <label class="check">
               <input type="checkbox" id="sys-conn-email-enabled" name="enabled" value="1" checked>
-              <span>Connection is enabled</span>
+              <span><?= $connText('conn_wizard_enabled_label') ?></span>
             </label>
           </div>
         </details>
@@ -125,29 +131,29 @@
 
       <!-- Step 3: Test & save -->
       <section class="conn-wizard-panel" data-wizard-step="3" hidden>
-        <p class="conn-wizard-intro">Send yourself a quick test to make sure everything works.</p>
+        <p class="conn-wizard-intro"><?= $connText('conn_wizard_intro_test') ?></p>
         <div class="form-group">
-          <label for="sys-conn-test-email">Send test email to</label>
+          <label for="sys-conn-test-email"><?= $connText('conn_wizard_label_test_to') ?></label>
           <div class="input-with-action">
-            <input type="email" id="sys-conn-test-email" class="input" placeholder="you@example.com" autocomplete="email">
-            <button type="button" class="btn btn-secondary" id="sys-conn-send-test-btn">Send test</button>
+            <input type="email" id="sys-conn-test-email" class="input" placeholder="<?= $connText('conn_wizard_test_placeholder') ?>" autocomplete="email">
+            <button type="button" class="btn btn-secondary" id="sys-conn-send-test-btn"><?= $connText('conn_btn_send_test') ?></button>
           </div>
           <p id="sys-conn-test-status" class="form-help sys-conn-test-status" aria-live="polite"></p>
         </div>
 
         <label class="check">
           <input type="checkbox" id="sys-conn-set-default" name="set_default" value="1" checked>
-          <span>Use this as the <strong>default</strong> email connection for form notifications, Commerce, and other features</span>
+          <span><?= $connRich('conn_wizard_default_label') ?></span>
         </label>
 
-        <p class="form-help">You can change the default later from the connection list.</p>
+        <p class="form-help"><?= $connText('conn_wizard_default_help') ?></p>
       </section>
 
       <div class="conn-wizard-actions modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal">Cancel</button>
-        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden>Back</button>
-        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next">Continue</button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden>Save connection</button>
+        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal"><?= $connText('cancel') ?></button>
+        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden><?= $connText('back') ?></button>
+        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next"><?= $connText('continue') ?></button>
+        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden><?= $connText('conn_wizard_save_connection') ?></button>
       </div>
     </form>
   </div>
@@ -157,8 +163,8 @@
 <div class="modal" id="sys-conn-http-modal" role="dialog" aria-labelledby="sys-conn-http-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
-      <h2 id="sys-conn-http-modal-title">Add HTTP credential</h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="Close">
+      <h2 id="sys-conn-http-modal-title"><?= $connText('conn_http_modal_add_title') ?></h2>
+      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="<?= $connText('close') ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>
@@ -169,31 +175,31 @@
       <div id="sys-conn-http-error" class="message message-error" role="alert" hidden></div>
 
       <div class="form-group">
-        <label for="sys-conn-http-provider">Credential type</label>
+        <label for="sys-conn-http-provider"><?= $connText('conn_http_label_credential_type') ?></label>
         <select id="sys-conn-http-provider" name="provider" class="input" required></select>
       </div>
 
       <div class="form-group">
-        <label for="sys-conn-http-name">Name</label>
-        <input type="text" id="sys-conn-http-name" name="name" class="input" required placeholder="e.g. Shipping API">
+        <label for="sys-conn-http-name"><?= $connText('conn_http_label_name') ?></label>
+        <input type="text" id="sys-conn-http-name" name="name" class="input" required placeholder="<?= $connText('conn_http_name_placeholder') ?>">
       </div>
 
       <div class="form-group">
-        <label for="sys-conn-http-alias">Reference name</label>
-        <input type="text" id="sys-conn-http-alias" name="alias" class="input" required pattern="[a-z0-9_.-]+" placeholder="e.g. shipping-api">
-        <small class="form-help">Lowercase letters, numbers, dots, dashes and underscores.</small>
+        <label for="sys-conn-http-alias"><?= $connText('conn_http_label_reference') ?></label>
+        <input type="text" id="sys-conn-http-alias" name="alias" class="input" required pattern="[a-z0-9_.-]+" placeholder="<?= $connText('conn_http_reference_placeholder') ?>">
+        <small class="form-help"><?= $connText('conn_http_reference_help') ?></small>
       </div>
 
       <div id="sys-conn-http-provider-fields" class="u-stack-3"></div>
 
       <label class="check">
         <input type="checkbox" id="sys-conn-http-enabled" name="enabled" value="1" checked>
-        <span>Enabled</span>
+        <span><?= $connText('conn_http_enabled_label') ?></span>
       </label>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit">Save credential</button>
+        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal"><?= $connText('cancel') ?></button>
+        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit"><?= $connText('conn_http_submit_save') ?></button>
       </div>
     </form>
   </div>
