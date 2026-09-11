@@ -39,6 +39,17 @@
         return !!(modal && modal.classList.contains('show'));
     }
 
+    function fbT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback || key;
+    }
+
+    function submitLabel() {
+        return fbT('feedback_submit_btn', 'Submit');
+    }
+
     async function submitFeedback(e) {
         e.preventDefault();
         const btn = document.getElementById('feedback-submit-btn');
