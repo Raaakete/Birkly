@@ -357,7 +357,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo htmlspecialchars(get_csrf_token()); ?>">
-    <title>Setup - Birkly</title>
+    <title><?= htmlspecialchars(__('admin.onboarding_setup_title'), ENT_QUOTES, 'UTF-8') ?> - Birkly</title>
     <script<?= $__birklyOnboardingNonceAttr ?>>
       window.Birkly = window.Birkly || {};
       window.Birkly.basePath = <?= birkly_base_path_json() ?>;
