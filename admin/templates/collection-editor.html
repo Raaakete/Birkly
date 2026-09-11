@@ -72,7 +72,7 @@ if (!$cancelUrl) {
             <?php if ($isSubCollection): ?>
                 <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
                 <span class="separator">›</span>
-                <span class="current"><?= !empty($subCollectionData['slug']) ? 'Edit Sub-Collection' : 'New Sub-Collection' ?></span>
+                <span class="current"><?= !empty($subCollectionData['slug']) ? __('admin.col_editor_edit_sub_collection') : __('admin.col_editor_new_sub_collection') ?></span>
             <?php else: ?>
                 <span class="current"><?= htmlspecialchars(!empty($collection['title']) ? __('admin.edit_collection') : __('admin.new_collection')) ?></span>
             <?php endif; ?>
@@ -84,7 +84,7 @@ if (!$cancelUrl) {
     <?php
     $stickySaveBarForm = 'collection-form';
     if ($isSubCollection) {
-        $stickySaveBarSaveLabel = !empty($subCollectionData['slug']) ? 'Save Sub-Collection' : 'Create Sub-Collection';
+        $stickySaveBarSaveLabel = !empty($subCollectionData['slug']) ? __('admin.col_editor_save_sub_collection') : __('admin.col_editor_create_sub_collection');
     } else {
         $stickySaveBarSaveLabel = !empty($collection['title']) ? __('admin.save_collection') : __('admin.create_collection');
     }
@@ -123,10 +123,10 @@ if (!$cancelUrl) {
                                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                             </svg>
                             <div class="callout-body u-stack-1">
-                                <p class="callout-title"><?= $hasParentSubCollection ? 'Nested Sub-Collection' : 'Sub-Collection' ?></p>
+                                <p class="callout-title"><?= $hasParentSubCollection ? __('admin.col_editor_nested_sub_collection') : __('admin.col_editor_sub_collection') ?></p>
                                 <p><strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></p>
                                 <?php if ($hasParentSubCollection): ?>
-                                    <p><strong>Parent Sub-Collection:</strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? 'Sub-Collection') ?></p>
+                                    <p><strong><?= __('admin.col_editor_parent_sub_collection') ?></strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? __('admin.col_editor_sub_collection')) ?></p>
                                 <?php else: ?>
                                     <p>This sub-collection belongs to the parent collection above and will be attached to entries in that collection.</p>
                                 <?php endif; ?>
@@ -137,13 +137,13 @@ if (!$cancelUrl) {
                     <!-- Collection/Sub-Collection Title (Required, First Field) -->
                     <div class="field-block" data-field-name="name">
                         <div class="field-header">
-                            <div class="field-title"><?= $isSubCollection ? 'Sub-Collection Name' : __('admin.collection_title') ?> <span class="required">*</span></div>
+                            <div class="field-title"><?= $isSubCollection ? __('admin.col_editor_sub_collection_name') : __('admin.collection_title') ?> <span class="required">*</span></div>
                         </div>
                         <div class="field-control">
                             <?php if ($isSubCollection): ?>
-                                <input type="text" name="sub_collections[0][name]" id="name" class="input" value="<?= htmlspecialchars($subCollectionData['name'] ?? '') ?>" required placeholder="e.g., Comments">
+                                <input type="text" name="sub_collections[0][name]" id="name" class="input" value="<?= htmlspecialchars($subCollectionData['name'] ?? '') ?>" required placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_comments')) ?>">
                             <?php else: ?>
-                                <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
+                                <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_blog')) ?>">
                             <?php endif; ?>
                         </div>
                         <div class="field-feedback error" role="alert" aria-live="polite"></div>
@@ -152,7 +152,7 @@ if (!$cancelUrl) {
                     <?php if ($isSubCollection): ?>
                         <!-- Sub-Collection Fields Schema -->
                         <div class="fields-section u-mt-6">
-                            <h2 class="section-title">Sub-Collection Fields</h2>
+                            <h2 class="section-title"><?= __('admin.col_editor_sub_collection_fields') ?></h2>
                             <p class="section-description">Define the fields that sub-entries in this sub-collection will have.</p>
                             
                             <div id="sub-collection-fields-container">
@@ -226,7 +226,7 @@ if (!$cancelUrl) {
                         
                         <!-- Sub-Collections Section (for nested sub-collections) -->
                         <div class="fields-section u-mt-6">
-                            <h2 class="section-title">Sub-Collections</h2>
+                            <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
                             <p class="section-description">Configure nested sub-collections that can be attached to entries in this sub-collection. For example, a "Comments" sub-collection might have "Replies" as a nested sub-collection.</p>
                             
                             <div id="sub-collections-container">
@@ -248,11 +248,11 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
                                                     <label>Name <span class="required">*</span></label>
-                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][name]" value="<?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?>" placeholder="e.g., Replies" class="input" required>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][name]" value="<?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_replies')) ?>" class="input" required>
                                                 </div>
                                                 <div class="fieldtype-field">
                                                     <label>Slug <span class="required">*</span></label>
-                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][slug]" value="<?= htmlspecialchars($nestedSubCollection['slug'] ?? '') ?>" placeholder="e.g., replies" class="input" required>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][slug]" value="<?= htmlspecialchars($nestedSubCollection['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_ph_replies')) ?>" class="input" required>
                                                 </div>
                                             </div>
                                             <div class="fieldtype-row">
@@ -272,7 +272,7 @@ if (!$cancelUrl) {
                                                 <div class="fieldtype-field">
                                                     <label class="checkbox-label">
                                                         <input type="checkbox" name="sub_collections[0][sub_collections][<?= $index ?>][auto_publish]" value="1" <?= !empty($nestedSubCollection['auto_publish']) ? 'checked' : '' ?>>
-                                                        <span>Auto-publish</span>
+                                                        <span><?= __('admin.col_editor_auto_publish') ?></span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -286,7 +286,7 @@ if (!$cancelUrl) {
                             
                             <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
                                 <?= birkly_icon('plus', ['size' => 16]) ?>
-                                Add Sub-Collection
+                                <?= __('admin.col_editor_add_sub_collection') ?>
                             </button>
                         </div>
                     <?php else: ?>
@@ -392,7 +392,7 @@ if (!$cancelUrl) {
                     
                     <!-- Sub-Collections Section -->
                     <div class="fields-section u-mt-6">
-                        <h2 class="section-title">Sub-Collections</h2>
+                        <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
                         <p class="section-description">Configure sub-collections that can be attached to entries in this collection. For example, a blog post collection might have "Comments" and "Ratings" as sub-collections.</p>
                         
                         <div id="sub-collections-container">
@@ -414,11 +414,11 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-row">
                                             <div class="fieldtype-field">
                                                 <label>Name <span class="required">*</span></label>
-                                                <input type="text" name="sub_collections[<?= $index ?>][name]" value="<?= htmlspecialchars($subCollection['name'] ?? '') ?>" placeholder="e.g., Comments" class="input" required>
+                                                <input type="text" name="sub_collections[<?= $index ?>][name]" value="<?= htmlspecialchars($subCollection['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_comments')) ?>" class="input" required>
                                             </div>
                                             <div class="fieldtype-field">
                                                 <label>Slug <span class="required">*</span></label>
-                                                <input type="text" name="sub_collections[<?= $index ?>][slug]" value="<?= htmlspecialchars($subCollection['slug'] ?? '') ?>" placeholder="e.g., comments" class="input" required>
+                                                <input type="text" name="sub_collections[<?= $index ?>][slug]" value="<?= htmlspecialchars($subCollection['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_ph_comments')) ?>" class="input" required>
                                             </div>
                                         </div>
                                         <div class="fieldtype-row">
@@ -438,7 +438,7 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-field">
                                                 <label class="checkbox-label">
                                                     <input type="checkbox" name="sub_collections[<?= $index ?>][auto_publish]" value="1" <?= !empty($subCollection['auto_publish']) ? 'checked' : '' ?>>
-                                                    <span>Auto-publish submissions (if Public API)</span>
+                                                    <span><?= __('admin.col_editor_auto_publish_if_public_api') ?></span>
                                                 </label>
                                             </div>
                                         </div>
@@ -524,7 +524,7 @@ if (!$cancelUrl) {
                         
                         <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
                             <?= birkly_icon('plus', ['size' => 16]) ?>
-                            Add Sub-Collection
+                            <?= __('admin.col_editor_add_sub_collection') ?>
                         </button>
                     </div>
                     <?php endif; ?>
@@ -621,7 +621,7 @@ if (!$cancelUrl) {
 
                                     <div class="info-item">
                                         <label for="icon">Icon (emoji)</label>
-                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="e.g. 📝" maxlength="8" inputmode="text" data-icon-picker>
+                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_icon_ph')) ?>" maxlength="8" inputmode="text" data-icon-picker>
                                         <small class="form-text">
                                             Optional emoji shown on the content overview card — browse or paste
                                         </small>
@@ -629,7 +629,7 @@ if (!$cancelUrl) {
 
                                     <div class="info-item">
                                         <label for="icon_key">Icon key</label>
-                                        <input type="text" name="icon_key" id="icon_key" class="input" value="<?= htmlspecialchars($collection['icon_key'] ?? '') ?>" placeholder="e.g. document-text">
+                                        <input type="text" name="icon_key" id="icon_key" class="input" value="<?= htmlspecialchars($collection['icon_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_icon_key_ph')) ?>">
                                         <small class="form-text">
                                             Optional icon font key for future use
                                         </small>
@@ -736,7 +736,7 @@ if (!$cancelUrl) {
                                 <?php else: ?>
                                     <div id="public-api-settings" class="u-stack-3 card-section"<?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
                                 <?php endif; ?>
-                                    <h4 class="section-title">Public API Settings</h4>
+                                    <h4 class="section-title"><?= __('admin.col_editor_public_api_settings') ?></h4>
                                     
                                     <div class="info-item">
                                         <label>API Key</label>
@@ -774,7 +774,7 @@ if (!$cancelUrl) {
                                             <?php else: ?>
                                                 <input type="checkbox" name="api_settings[auto_publish]" value="1" <?= !empty($collection['api_settings']['auto_publish']) ? 'checked' : '' ?>>
                                             <?php endif; ?>
-                                            <span>Auto-publish submissions</span>
+                                            <span><?= __('admin.col_editor_auto_publish_submissions') ?></span>
                                         </label>
                                         <small class="form-text">
                                             If enabled, entries will be published automatically. Otherwise, they'll be saved as drafts for review.
@@ -1511,7 +1511,9 @@ document.addEventListener('DOMContentLoaded', function() {
         selectType: <?= json_encode(__('admin.col_editor_select_type')) ?>,
         entryMethodAdminOnly: <?= json_encode(__('admin.col_editor_entry_method_admin_only')) ?>,
         entryMethodPublicApi: <?= json_encode(__('admin.col_editor_entry_method_public_api')) ?>,
-        removeLanguageAria: <?= json_encode(__('admin.col_editor_remove_language_aria')) ?>
+        removeLanguageAria: <?= json_encode(__('admin.col_editor_remove_language_aria')) ?>,
+        addSubCollection: <?= json_encode(__('admin.col_editor_add_sub_collection')) ?>,
+        newSubCollectionDefault: <?= json_encode(__('admin.col_editor_new_sub_collection_default')) ?>
     };
     const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
         ? window.BirklyCollectionEditorCore.init({
@@ -2494,7 +2496,7 @@ document.addEventListener('DOMContentLoaded', function() {
         div.innerHTML = `
             <div class="fieldtype-header">
                 <div class="fieldtype-title">
-                    <span class="fieldtype-name">${data.name || 'New Sub-Collection'}</span>
+                    <span class="fieldtype-name">${data.name || colEditorUi.newSubCollectionDefault}</span>
                 </div>
                 <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
@@ -2504,11 +2506,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="fieldtype-row">
                     <div class="fieldtype-field">
                         <label>Name <span class="required">*</span></label>
-                        <input type="text" name="sub_collections[${index}][name]" value="${data.name || ''}" placeholder="e.g., Comments" class="input" required>
+                        <input type="text" name="sub_collections[${index}][name]" value="${data.name || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_comments')) ?>" class="input" required>
                     </div>
                     <div class="fieldtype-field">
                         <label>Slug <span class="required">*</span></label>
-                        <input type="text" name="sub_collections[${index}][slug]" value="${data.slug || ''}" placeholder="e.g., comments" class="input sub-collection-slug" required>
+                        <input type="text" name="sub_collections[${index}][slug]" value="${data.slug || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_ph_comments')) ?>" class="input sub-collection-slug" required>
                     </div>
                 </div>
                 <div class="fieldtype-row">
@@ -2528,7 +2530,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="fieldtype-field">
                         <label class="checkbox-label">
                             <input type="checkbox" name="sub_collections[${index}][auto_publish]" value="1" ${data.auto_publish ? 'checked' : ''}>
-                            <span>Auto-publish submissions (if Public API)</span>
+                            <span><?= __('admin.col_editor_auto_publish_if_public_api') ?></span>
                         </label>
                     </div>
                 </div>

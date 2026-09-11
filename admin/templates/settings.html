@@ -122,7 +122,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentSiteLanguage ? 'selected' : '' ?>><?= htmlspecialchars(trim($langLabel . ' ' . $langFlag)) ?></option>
                       <?php endforeach; ?>
                     </select>
-                    <small class="form-help">Default language used for your public site content and settings.</small>
+                    <small class="form-help"><?= __('admin.settings_default_site_language_help') ?></small>
                   </div>
                 </div>
                 <div class="form-group">
@@ -784,20 +784,20 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="settings-pane-section" data-settings-search="security two factor 2fa authentication policy grace period">
               <section class="card">
                 <div class="card-header">
-                  <h2>Two-factor authentication policy</h2>
+                  <h2><?= __('admin.settings_security_2fa_policy_title') ?></h2>
                 </div>
                 <div class="card-body u-stack-4">
-                <p class="settings-help">When enabled, all admin users must set up two-factor authentication. Users without 2FA receive a configurable grace period before login is blocked.</p>
+                <p class="settings-help"><?= __('admin.settings_security_2fa_policy_help') ?></p>
                 <div class="form-group">
                   <label class="checkbox-label">
                     <input type="checkbox" id="security-require-2fa" name="securityRequire2fa" <?= !empty($settings['security']['require_2fa']) ? 'checked' : '' ?>>
-                    <span>Require 2FA for all admin users</span>
+                    <span><?= __('admin.settings_security_require_2fa_label') ?></span>
                   </label>
                 </div>
                 <div class="form-group">
-                  <label for="security-require-2fa-grace-days">Grace period (days)</label>
+                  <label for="security-require-2fa-grace-days"><?= __('admin.settings_security_2fa_grace_label') ?></label>
                   <input type="number" id="security-require-2fa-grace-days" name="securityRequire2faGraceDays" class="input" value="<?= htmlspecialchars((string) ($settings['security']['require_2fa_grace_days'] ?? 30)) ?>" min="0" max="365">
-                  <p class="settings-help">Days users have to enable 2FA after the policy is turned on (default 30).</p>
+                  <p class="settings-help"><?= __('admin.settings_security_2fa_grace_help') ?></p>
                 </div>
                 </div>
               </section>
@@ -806,10 +806,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="settings-pane-section" data-settings-search="security ai mcp tools read only chat disabled">
               <section class="card">
                 <div class="card-header">
-                  <h2>AI &amp; MCP tools</h2>
+                  <h2><?= __('admin.settings_security_ai_mcp_title') ?></h2>
                 </div>
                 <div class="card-body u-stack-4">
-                  <p class="settings-help">Site-wide hard limit on AI tool access. Overrides per-connection approval settings — tools are removed from MCP and admin AI chat when restricted.</p>
+                  <p class="settings-help"><?= __('admin.settings_security_ai_mcp_help') ?></p>
                   <?php
                   $aiToolsMode = (string) ($settings['security']['ai_tools_mode'] ?? 'normal');
                   if (!in_array($aiToolsMode, ['normal', 'read_only_chat', 'disabled'], true)) {
@@ -819,15 +819,15 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="form-group u-stack-3">
                     <label class="radio-card">
                       <input type="radio" name="securityAiToolsMode" value="normal" <?= $aiToolsMode === 'normal' ? 'checked' : '' ?>>
-                      <span><strong>Normal</strong> — tools follow role permissions (default)</span>
+                      <span><strong><?= __('admin.settings_security_ai_mode_normal_strong') ?></strong><?= __('admin.settings_security_ai_mode_normal_after') ?></span>
                     </label>
                     <label class="radio-card">
                       <input type="radio" name="securityAiToolsMode" value="read_only_chat" <?= $aiToolsMode === 'read_only_chat' ? 'checked' : '' ?>>
-                      <span><strong>Read-only chat</strong> — built-in AI chat works; no MCP/tools exposed or executed</span>
+                      <span><strong><?= __('admin.settings_security_ai_mode_readonly_strong') ?></strong><?= __('admin.settings_security_ai_mode_readonly_after') ?></span>
                     </label>
                     <label class="radio-card">
                       <input type="radio" name="securityAiToolsMode" value="disabled" <?= $aiToolsMode === 'disabled' ? 'checked' : '' ?>>
-                      <span><strong>Disabled</strong> — block all tool execution; MCP <code>tools/list</code> is empty</span>
+                      <span><strong><?= __('admin.settings_security_ai_mode_disabled_strong') ?></strong><?= __('admin.settings_security_ai_mode_disabled_after') ?><code>tools/list</code><?= __('admin.settings_security_ai_mode_disabled_after_code') ?></span>
                     </label>
                   </div>
                 </div>
@@ -840,32 +840,32 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h2><?= __('admin.plugin_security_denylist') ?></h2>
                 </div>
                 <div class="card-body u-stack-4">
-                <p class="settings-help">Resources in the denylist are completely off-limits to all plugins, regardless of their granted capabilities. This is a hard security barrier that cannot be overridden.</p>
+                <p class="settings-help"><?= __('admin.settings_security_denylist_help') ?></p>
                 <div class="u-cluster-3 u-align-end">
                   <div class="form-group u-fill">
-                    <label for="denylist-collection-select">Protect collection</label>
+                    <label for="denylist-collection-select"><?= __('admin.settings_security_denylist_protect_collection') ?></label>
                     <select id="denylist-collection-select" class="input">
                       <option value=""><?= htmlspecialchars(__('admin.loading_collections')) ?></option>
                     </select>
                   </div>
                   <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
-                    Add collection
+                    <?= __('admin.settings_security_denylist_add_collection') ?>
                   </button>
                   <div class="form-group u-fill">
-                    <label for="denylist-plugin-select">Deny plugin admin space</label>
+                    <label for="denylist-plugin-select"><?= __('admin.settings_security_denylist_deny_plugin_space') ?></label>
                     <select id="denylist-plugin-select" class="input">
                       <option value=""><?= htmlspecialchars(__('admin.loading_plugins')) ?></option>
                     </select>
                   </div>
                   <button type="button" class="btn btn-secondary" id="denylist-add-plugin-btn" disabled>
-                    Add plugin
+                    <?= __('admin.settings_security_denylist_add_plugin') ?>
                   </button>
                   <button type="button" class="btn btn-secondary" data-admin-action="addDenylistResource">
                     <?= birkly_icon('plus', ['size' => 16]) ?>
-                    Add custom pattern
+                    <?= __('admin.settings_security_denylist_add_custom_pattern') ?>
                   </button>
                 </div>
-                <p class="settings-help">Deny plugin admin spaces (e.g. commerce, automation) to block sidebar injection and space-scoped hooks for that plugin.</p>
+                <p class="settings-help"><?= __('admin.settings_security_denylist_spaces_help') ?></p>
                 <div id="denylist-management">
                   <div class="loading-state"><p><?= __('admin.loading_denylist') ?></p></div>
                 </div>
@@ -1402,7 +1402,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-group">
             <label>Plugin access</label>
-            <p class="settings-help">Unchecked plugins are hidden from this role in the sidebar and blocked from plugin admin pages.</p>
+            <p class="settings-help"><?= __('admin.settings_role_plugin_visibility_help') ?></p>
             <div class="permissions-grid" id="add-plugin-access-grid"></div>
           </div>
         </form>
@@ -1440,7 +1440,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-group">
             <label>Plugin access</label>
-            <p class="settings-help">Unchecked plugins are hidden from this role in the sidebar and blocked from plugin admin pages.</p>
+            <p class="settings-help"><?= __('admin.settings_role_plugin_visibility_help') ?></p>
             <div class="permissions-grid" id="edit-plugin-access-grid"></div>
           </div>
         </form>
