@@ -6,49 +6,55 @@
  * removed in P60.1 — this partial is the single home. The connection modules
  * (mcp-connections.js / ai-connections.js) init against these DOM ids.
  */
+$aiPanelRich = static function (string $key, string $allowed = '<code><strong><em><a>') {
+    return strip_tags(__('admin.' . $key), $allowed);
+};
+$aiPanelText = static function (string $key): string {
+    return htmlspecialchars(__('admin.' . $key), ENT_QUOTES, 'UTF-8');
+};
 ?>
         <div class="settings-stack ai-settings">
           <div id="ai-integrations" class="settings-pane-section" data-settings-search="ai assistant mcp connections service agents outbound personal connector"><div class="u-stack-6">
           <div class="section-header">
             <div class="u-stack-1">
-              <h2 class="section-title">AI</h2>
-              <p class="settings-help">Connect AI apps to Birkly or chat inside the admin.</p>
+              <h2 class="section-title"><?= $aiPanelText('ai_panel_section_title') ?></h2>
+              <p class="settings-help"><?= $aiPanelText('ai_panel_section_help') ?></p>
             </div>
             <p class="u-cluster-3 u-text-sm">
-              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections">Step-by-step guide</a>
-              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer">Documentation</a>
+              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections"><?= $aiPanelText('ai_panel_step_by_step_guide') ?></a>
+              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer"><?= $aiPanelText('documentation') ?></a>
             </p>
           </div>
 
           <div class="callout callout-warning" id="ai-https-warning" role="alert" hidden>
             <div class="callout-body u-stack-1">
-              <p class="callout-title">Claude requires an HTTPS Connector URL</p>
-              <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
+              <p class="callout-title"><?= $aiPanelText('ai_panel_https_title') ?></p>
+              <p><?= $aiPanelRich('ai_panel_https_body') ?></p>
             </div>
           </div>
 
           <div class="card" id="ai-localhost-card">
             <div class="card-header">
               <div class="card-heading">
-                <h3 class="card-title">Working locally?</h3>
-                <p class="card-description">How AI connects when Birkly runs on <code>localhost</code> — without exposing admin insecurely.</p>
+                <h3 class="card-title"><?= $aiPanelText('ai_panel_localhost_title') ?></h3>
+                <p class="card-description"><?= $aiPanelRich('ai_panel_localhost_desc') ?></p>
               </div>
             </div>
             <div class="card-body u-stack-3">
               <ul class="settings-list">
-                <li><strong>Built-in assistant / Ollama on localhost</strong> — OK (outbound BYOAI or <code>http://localhost:11434</code>).</li>
-                <li><strong>Remote connectors</strong> (Claude / ChatGPT / Cursor cloud) need a <strong>public HTTPS</strong> Connector URL — plain <code>http://localhost/mcp</code> is rejected.</li>
-                <li><strong>mcp-bridge recipe</strong> — local stdio bridge for desktop AI tools: open <a href="#" data-mcp-bridge-link target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> (also under Developer / debug below).</li>
-                <li><strong>Tunnel recipe</strong> — <code>cloudflared</code> or ngrok → HTTPS → your local <code>/mcp</code>, then paste that HTTPS URL as the Connector URL.</li>
+                <li><?= $aiPanelRich('ai_panel_localhost_li_assistant') ?></li>
+                <li><?= $aiPanelRich('ai_panel_localhost_li_remote') ?></li>
+                <li><?= $aiPanelRich('ai_panel_localhost_li_bridge', '<code><strong><em><a>') ?></li>
+                <li><?= $aiPanelRich('ai_panel_localhost_li_tunnel') ?></li>
               </ul>
-              <p class="form-help">Keep security warnings on: do not expose the admin panel to the public internet as a default. Prefer mcp-bridge or a short-lived tunnel.</p>
+              <p class="form-help"><?= $aiPanelText('ai_panel_localhost_security_help') ?></p>
             </div>
           </div>
 
           <div class="callout callout-info" id="ai-agents-migration-banner" role="status" hidden>
             <div class="callout-body u-stack-1">
-              <p class="callout-title">Service agent visibility updated</p>
-              <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
+              <p class="callout-title"><?= $aiPanelText('ai_panel_migration_title') ?></p>
+              <p><?= $aiPanelRich('ai_panel_migration_body', '<em>') ?></p>
             </div>
           </div>
 
@@ -56,8 +62,8 @@
             <div class="card" id="ai-kind-personal">
               <div class="card-header">
                 <div class="card-heading">
-                  <h3 class="card-title">Personal connector</h3>
-                  <p class="card-description">Connect Claude, ChatGPT, or Cursor with your own Birkly permissions. Every team member uses the same URL but signs in with their own account.</p>
+                  <h3 class="card-title"><?= $aiPanelText('ai_panel_personal_title') ?></h3>
+                  <p class="card-description"><?= $aiPanelText('ai_panel_personal_desc') ?></p>
                 </div>
               </div>
               <div id="ai-personal-agent-card" class="card-body">
@@ -68,12 +74,12 @@
             <div class="card" id="ai-kind-service">
               <div class="card-header">
                 <div class="u-stack-1">
-                  <h3 class="card-title">Service agents</h3>
-                  <p class="card-description" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
+                  <h3 class="card-title"><?= $aiPanelText('ai_panel_service_title') ?></h3>
+                  <p class="card-description" id="ai-service-intro"><?= $aiPanelText('ai_panel_service_intro') ?></p>
                 </div>
                 <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" hidden>
                   <?= birkly_icon('plus', ['size' => 16]) ?>
-                  Add agent
+                  <?= $aiPanelText('ai_panel_add_agent') ?>
                 </button>
               </div>
               <div class="connections-list card-body" id="ai-service-agents-list">
@@ -84,12 +90,12 @@
             <div class="card" id="ai-kind-assistant">
               <div class="card-header">
                 <div class="u-stack-1">
-                  <h3 class="card-title">Built-in assistant</h3>
-                  <p class="card-description">Chat with AI inside Birkly using your provider API key.</p>
+                  <h3 class="card-title"><?= $aiPanelText('ai_panel_assistant_title') ?></h3>
+                  <p class="card-description"><?= $aiPanelText('ai_panel_assistant_desc') ?></p>
                 </div>
                 <button class="btn btn-primary" id="add-connection-btn" type="button">
                   <?= birkly_icon('plus', ['size' => 16]) ?>
-                  Quick connect
+                  <?= $aiPanelText('ai_panel_quick_connect') ?>
                 </button>
               </div>
               <div class="connections-list card-body" id="connections-list">
@@ -99,10 +105,10 @@
           </div>
 
           <details class="card u-p-4">
-            <summary class="u-clickable u-weight-medium">Developer / debug</summary>
+            <summary class="u-clickable u-weight-medium"><?= $aiPanelText('ai_panel_dev_summary') ?></summary>
             <div class="u-stack-2 u-pt-3 u-text-sm u-fg-secondary">
-              <p>For local development only. Not needed for normal setup.</p>
-              <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
+              <p><?= $aiPanelText('ai_panel_dev_lead') ?></p>
+              <p><?= $aiPanelRich('ai_panel_dev_bridge', '<a>') ?></p>
             </div>
           </details>
         </div>
@@ -111,7 +117,7 @@
         <div class="modal" id="add-connection-modal">
           <div class="modal-content modal--md">
             <div class="modal-header">
-              <h2 id="connection-modal-title">Quick connect assistant</h2>
+              <h2 id="connection-modal-title"><?= $aiPanelText('ai_conn_modal_quick_connect') ?></h2>
               <button class="btn-icon modal-close" id="close-modal-btn">
                 <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
@@ -121,12 +127,12 @@
 
               <div id="wizard-error" class="message message-error" role="alert" hidden></div>
 
-              <p class="modal-intro-text" id="assistant-modal-intro">Connect an AI provider for the in-admin chat button. You need a developer API key — consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access.</p>
+              <p class="modal-intro-text" id="assistant-modal-intro"><?= $aiPanelText('ai_panel_assistant_modal_intro') ?></p>
 
               <div class="form-group">
                 <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
                 <select id="connection-provider" name="provider" class="input" required>
-                  <option value="">Select a provider...</option>
+                  <option value=""><?= $aiPanelText('ai_conn_select_provider') ?></option>
                 </select>
               </div>
 
@@ -139,7 +145,7 @@
               <div class="form-group" id="api-url-group" hidden>
                 <label for="connection-api-url"><?= __('admin.api_url') ?></label>
                 <input type="url" id="connection-api-url" name="api_url" class="input" placeholder="https://api.example.com/v1/chat/completions">
-                <small id="api-url-hint">API endpoint URL (required for custom providers)</small>
+                <small id="api-url-hint"><?= $aiPanelText('ai_panel_api_url_hint') ?></small>
               </div>
 
               <div class="form-group" id="api-key-group">
@@ -151,14 +157,14 @@
               <div class="form-group" id="ollama-hint" hidden>
                 <div class="callout callout-info">
                   <div class="callout-body u-stack-1">
-                    <p class="callout-title">Ollama runs locally</p>
-                    <p>No API key needed. Make sure Ollama is running (default: <code>http://localhost:11434</code>).</p>
+                    <p class="callout-title"><?= $aiPanelText('ai_panel_ollama_title') ?></p>
+                    <p><?= $aiPanelRich('ai_panel_ollama_body') ?></p>
                   </div>
                 </div>
               </div>
 
               <div class="form-group" id="test-connection-group">
-                <button type="button" class="btn btn-secondary" id="test-connection-btn">Test connection</button>
+                <button type="button" class="btn btn-secondary" id="test-connection-btn"><?= $aiPanelText('ai_panel_test_connection') ?></button>
                 <span id="test-connection-status" class="test-connection-status"></span>
               </div>
 
@@ -166,15 +172,15 @@
                 <label for="connection-model-search"><?= __('admin.model') ?></label>
                 <div class="u-stack-2" id="connection-model-picker">
                   <div class="u-cluster">
-                    <input type="search" id="connection-model-search" class="input" placeholder="Search models…" autocomplete="off" aria-controls="connection-model-list">
-                    <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh">Refresh</button>
+                    <input type="search" id="connection-model-search" class="input" placeholder="<?= $aiPanelText('ai_panel_search_models') ?>" autocomplete="off" aria-controls="connection-model-list">
+                    <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh"><?= $aiPanelText('ai_panel_refresh_models') ?></button>
                   </div>
                   <input type="hidden" id="connection-model" name="model" value="">
-                  <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="Models"></div>
+                  <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="<?= $aiPanelText('ai_panel_models_list_aria') ?>"></div>
                   <p id="connection-model-status" class="form-help ai-model-picker-status"></p>
                 </div>
                 <input type="text" id="connection-model-custom" name="model_custom" class="input" placeholder="<?= __('admin.enter_model_name') ?>">
-                <small class="form-help">Models are loaded live from your provider. Search the list or type a model ID.</small>
+                <small class="form-help"><?= $aiPanelText('ai_panel_models_help') ?></small>
               </div>
 
               <div class="form-group">
@@ -189,7 +195,7 @@
               <div class="form-group">
                 <label class="check">
                   <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
-                  <span>Require approval for AI actions</span>
+                  <span><?= $aiPanelText('ai_panel_require_approval') ?></span>
                 </label>
                 <small><?= __('admin.ai_approval_mode_help') ?></small>
               </div>
@@ -206,41 +212,41 @@
         <div class="modal" id="add-mcp-modal">
           <div class="modal-content modal--md">
             <div class="modal-header">
-              <h2 id="mcp-modal-title">Add AI agent</h2>
-              <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
+              <h2 id="mcp-modal-title"><?= $aiPanelText('ai_panel_mcp_modal_title') ?></h2>
+              <button class="btn-icon modal-close" data-mcp-modal-close aria-label="<?= $aiPanelText('close') ?>">
                 <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
               <fieldset class="u-stack-3">
-                <legend class="u-label u-mb-2">What type of agent do you need?</legend>
-                <div class="u-grid-auto-sm" role="radiogroup" aria-label="Agent type">
+                <legend class="u-label u-mb-2"><?= $aiPanelText('ai_panel_mcp_type_legend') ?></legend>
+                <div class="u-grid-auto-sm" role="radiogroup" aria-label="<?= $aiPanelText('ai_panel_mcp_type_aria') ?>">
                   <label class="mcp-agent-type-option">
                     <input type="radio" name="agent_type" value="personal" id="mcp-agent-type-personal" checked>
                     <span class="mcp-agent-type-card">
-                      <span class="mcp-agent-type-name">Personal <span class="badge badge-success">Dynamic</span></span>
-                      <span class="mcp-agent-type-desc">Each user connects with <strong>their own</strong> Birkly role and permissions. One shared URL for the whole team.</span>
+                      <span class="mcp-agent-type-name"><?= $aiPanelText('ai_panel_mcp_type_personal_name') ?> <span class="badge badge-success"><?= $aiPanelText('ai_panel_mcp_badge_dynamic') ?></span></span>
+                      <span class="mcp-agent-type-desc"><?= $aiPanelRich('ai_panel_mcp_type_personal_desc', '<strong>') ?></span>
                     </span>
                   </label>
                   <label class="mcp-agent-type-option">
                     <input type="radio" name="agent_type" value="service" id="mcp-agent-type-service">
                     <span class="mcp-agent-type-card">
-                      <span class="mcp-agent-type-name">Service <span class="badge badge-info">Fixed role</span></span>
-                      <span class="mcp-agent-type-desc">A shared bot that <strong>always</strong> acts as a specific CMS role (e.g. always editor). You choose who can use it.</span>
+                      <span class="mcp-agent-type-name"><?= $aiPanelText('ai_panel_mcp_type_service_name') ?> <span class="badge badge-info"><?= $aiPanelText('ai_panel_mcp_badge_fixed') ?></span></span>
+                      <span class="mcp-agent-type-desc"><?= $aiPanelRich('ai_panel_mcp_type_service_desc', '<strong>') ?></span>
                     </span>
                   </label>
                 </div>
               </fieldset>
 
               <div id="mcp-personal-agent-panel" class="u-stack-4 u-mt-4">
-                <p class="modal-intro-text">The personal connector is already set up for your site. Copy its URL and paste it in Claude, ChatGPT, or Cursor — each team member signs in with their own account.</p>
+                <p class="modal-intro-text"><?= $aiPanelText('ai_panel_mcp_personal_intro') ?></p>
                 <div class="mcp-snippet-block">
-                  <span class="u-label u-text-sm">Personal connector URL</span>
+                  <span class="u-label u-text-sm"><?= $aiPanelText('ai_panel_mcp_personal_url_label') ?></span>
                   <div class="connector-url-row" id="mcp-modal-personal-url-row">
-                    <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="Click to copy">
+                    <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="<?= $aiPanelText('mcp_copy_click_title') ?>">
                       <span id="mcp-modal-personal-url-text" class="connector-url-text"><?= htmlspecialchars(__('admin.mcp_loading'), ENT_QUOTES, 'UTF-8') ?></span>
                     </button>
-                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="Copy connector URL">
+                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="<?= $aiPanelText('mcp_copy_url_aria') ?>">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
                     </button>
                   </div>
@@ -248,33 +254,33 @@
               </div>
 
               <div id="mcp-service-agent-panel" class="u-stack-4 u-mt-4" hidden>
-                <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it.</p>
+                <p class="modal-intro-text"><?= $aiPanelText('ai_panel_mcp_service_intro') ?></p>
 
-                <div class="u-stack-2" role="group" aria-label="Service agent presets">
+                <div class="u-stack-2" role="group" aria-label="<?= $aiPanelText('ai_panel_mcp_presets_label') ?>">
                   <div class="u-cluster">
-                    <span class="u-label">Quick presets</span>
-                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content">Content assistant</button>
-                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder">Site builder</button>
+                    <span class="u-label"><?= $aiPanelText('ai_panel_mcp_presets_label') ?></span>
+                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content"><?= $aiPanelText('mcp_preset_content_name') ?></button>
+                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder"><?= $aiPanelText('mcp_preset_site_builder_name') ?></button>
                   </div>
-                  <small class="form-help">Site builder uses the <strong>Admin</strong> role so connected AI can read and write <code>project/</code> HTML, CSS, and JS alongside CMS content.</small>
+                  <small class="form-help"><?= $aiPanelRich('ai_panel_mcp_presets_help', '<strong><code>') ?></small>
                 </div>
 
                 <div class="form-group">
-                  <label for="mcp-endpoint-name">Agent name</label>
-                  <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="e.g. Content assistant">
-                  <small>A name you'll recognize later</small>
+                  <label for="mcp-endpoint-name"><?= $aiPanelText('ai_panel_mcp_agent_name') ?></label>
+                  <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="<?= $aiPanelText('ai_panel_mcp_agent_name_placeholder') ?>">
+                  <small><?= $aiPanelText('ai_panel_mcp_agent_name_help') ?></small>
                 </div>
 
                 <div class="form-group">
-                  <label for="mcp-agent-description">Description <span class="u-fg-tertiary">(optional)</span></label>
-                  <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="e.g. Helps draft blog posts">
+                  <label for="mcp-agent-description"><?= $aiPanelText('ai_panel_mcp_description') ?> <span class="u-fg-tertiary"><?= $aiPanelText('ai_panel_mcp_optional') ?></span></label>
+                  <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="<?= $aiPanelText('ai_panel_mcp_description_placeholder') ?>">
                 </div>
 
                 <div class="form-group">
                   <label for="mcp-endpoint-role">
-                    Fixed CMS role
-                    <button type="button" class="help-tip" aria-label="Role help"
-                      data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
+                    <?= $aiPanelText('ai_panel_mcp_fixed_role') ?>
+                    <button type="button" class="help-tip" aria-label="<?= $aiPanelText('ai_panel_mcp_role_help_aria') ?>"
+                      data-tip="<?= $aiPanelText('ai_panel_mcp_role_help_tip') ?>">?</button>
                   </label>
                   <select id="mcp-endpoint-role" name="role" class="input">
                     <option value=""><?= htmlspecialchars(__('admin.mcp_loading_roles'), ENT_QUOTES, 'UTF-8') ?></option>
@@ -282,34 +288,34 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Who can use this agent</label>
-                  <small class="form-help">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
-                  <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
+                  <label><?= $aiPanelText('ai_panel_mcp_who_can_use') ?></label>
+                  <small class="form-help"><?= $aiPanelText('ai_panel_mcp_who_can_use_help') ?></small>
+                  <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="<?= $aiPanelText('ai_panel_mcp_visible_roles_aria') ?>">
                     <div class="loading-inline"><?= htmlspecialchars(__('admin.mcp_loading_roles'), ENT_QUOTES, 'UTF-8') ?></div>
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label>Individual users <span class="u-fg-tertiary">(optional)</span></label>
-                  <div id="mcp-allowed-users" class="mcp-checkbox-group" role="group" aria-label="Users that can use this agent">
+                  <label><?= $aiPanelText('ai_panel_mcp_individual_users') ?> <span class="u-fg-tertiary"><?= $aiPanelText('ai_panel_mcp_optional') ?></span></label>
+                  <div id="mcp-allowed-users" class="mcp-checkbox-group" role="group" aria-label="<?= $aiPanelText('ai_panel_mcp_allowed_users_aria') ?>">
                     <div class="loading-inline"><?= htmlspecialchars(__('admin.mcp_loading_users'), ENT_QUOTES, 'UTF-8') ?></div>
                   </div>
                 </div>
 
-                <p class="settings-help">Write approvals are handled in the AI app that connects (e.g. Claude tool permissions), not in Birkly.</p>
+                <p class="settings-help"><?= $aiPanelText('ai_panel_mcp_approvals_note') ?></p>
               </div>
 
               <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="oauth">
 
               <div id="mcp-create-success" class="callout callout-success u-stack-3" hidden>
-                <p><strong>Service agent created!</strong> Copy the Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
+                <p><strong><?= $aiPanelText('ai_panel_mcp_created_title') ?></strong> <?= $aiPanelText('ai_panel_mcp_created_body') ?></p>
                 <div class="mcp-snippet-block">
-                  <span class="u-label u-text-sm">Connector URL</span>
+                  <span class="u-label u-text-sm"><?= $aiPanelText('mcp_connector_url_label') ?></span>
                   <div class="connector-url-row" id="mcp-new-connector-url-row">
-                    <button type="button" class="connector-url-value" data-copy-source="mcp-new-connector-url-text" title="Click to copy">
+                    <button type="button" class="connector-url-value" data-copy-source="mcp-new-connector-url-text" title="<?= $aiPanelText('mcp_copy_click_title') ?>">
                       <span id="mcp-new-connector-url-text" class="connector-url-text"></span>
                     </button>
-                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="Copy connector URL">
+                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="<?= $aiPanelText('mcp_copy_url_aria') ?>">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
                     </button>
                   </div>
@@ -317,9 +323,9 @@
               </div>
 
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
-                <button type="button" class="btn btn-primary" id="mcp-personal-done-btn">Use personal connector</button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden>Create service agent</button>
+                <button type="button" class="btn btn-secondary" data-mcp-modal-close><?= __('admin.cancel') ?></button>
+                <button type="button" class="btn btn-primary" id="mcp-personal-done-btn"><?= $aiPanelText('ai_panel_mcp_use_personal') ?></button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden><?= $aiPanelText('mcp_btn_create_service_agent') ?></button>
               </div>
             </form>
           </div>
