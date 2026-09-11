@@ -180,7 +180,7 @@
               <div class="form-group">
                 <label for="connection-role"><?= __('admin.role') ?></label>
                 <select id="connection-role" name="role" class="input" required>
-                  <option value="">Loading roles...</option>
+                  <option value=""><?= htmlspecialchars(__('admin.mcp_loading_roles'), ENT_QUOTES, 'UTF-8') ?></option>
                 </select>
               </div>
 
@@ -238,7 +238,7 @@
                   <span class="u-label u-text-sm">Personal connector URL</span>
                   <div class="connector-url-row" id="mcp-modal-personal-url-row">
                     <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="Click to copy">
-                      <span id="mcp-modal-personal-url-text" class="connector-url-text">Loading...</span>
+                      <span id="mcp-modal-personal-url-text" class="connector-url-text"><?= htmlspecialchars(__('admin.mcp_loading'), ENT_QUOTES, 'UTF-8') ?></span>
                     </button>
                     <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="Copy connector URL">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
@@ -277,7 +277,7 @@
                       data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
                   </label>
                   <select id="mcp-endpoint-role" name="role" class="input">
-                    <option value="">Loading roles...</option>
+                    <option value=""><?= htmlspecialchars(__('admin.mcp_loading_roles'), ENT_QUOTES, 'UTF-8') ?></option>
                   </select>
                 </div>
 
@@ -285,14 +285,14 @@
                   <label>Who can use this agent</label>
                   <small class="form-help">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
                   <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
-                    <div class="loading-inline">Loading roles...</div>
+                    <div class="loading-inline"><?= htmlspecialchars(__('admin.mcp_loading_roles'), ENT_QUOTES, 'UTF-8') ?></div>
                   </div>
                 </div>
 
                 <div class="form-group">
                   <label>Individual users <span class="u-fg-tertiary">(optional)</span></label>
                   <div id="mcp-allowed-users" class="mcp-checkbox-group" role="group" aria-label="Users that can use this agent">
-                    <div class="loading-inline">Loading users...</div>
+                    <div class="loading-inline"><?= htmlspecialchars(__('admin.mcp_loading_users'), ENT_QUOTES, 'UTF-8') ?></div>
                   </div>
                 </div>
 

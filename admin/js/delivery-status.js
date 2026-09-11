@@ -6,6 +6,18 @@
 
     var instances = {};
 
+    function t(key, fallback, params) {
+        var text = (global.Birkly && global.Birkly.i18n)
+            ? global.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function apiUrl(path) {
         return (global.Birkly && typeof global.Birkly.url === 'function') ? global.Birkly.url(path) : path;
     }
@@ -50,7 +62,7 @@
             .then(function (r) { return r.json(); })
             .then(function (result) {
                 if (global.BirklyFeedback && typeof global.BirklyFeedback.toast === 'function') {
-                    global.BirklyFeedback.toast(result.message || 'Done', result.status === 'ok' ? 'success' : 'error');
+                    global.BirklyFeedback.toast(result.message || t('delivery_toast_done', 'Done'), result.status === 'ok' ? 'success' : 'error');
                 }
                 if (typeof onDone === 'function') {
                     onDone(result);
@@ -61,33 +73,37 @@
 
     function fixConfirmMessage(action) {
         if (action === 'repair') {
-            return 'Repair delivery: fix CMS/public URLs if needed, sync domain aliases, remove legacy demo-website/ and default demo HTML from project/, disable harmful /project redirects, fix project HTML paths, and clear SSR cache? A backup of hosting.json will be created when config changes.';
+            return t('delivery_confirm_repair', 'Repair delivery: fix CMS/public URLs if needed, sync domain aliases, remove legacy demo-website/ and default demo HTML from project/, disable harmful /project redirects, fix project HTML paths, and clear SSR cache? A backup of hosting.json will be created when config changes.');
         }
         if (action === 'set_same_host_public') {
-            return 'Set “Root / opens public site” on this domain? The site home page will be served at / with clean URLs and project HTML paths will be updated.';
+            return t('delivery_confirm_set_same_host_public', 'Set “Root / opens public site” on this domain? The site home page will be served at / with clean URLs and project HTML paths will be updated.');
         }
         if (action === 'fix_project_paths') {
-            return 'Rewrite /project/ paths in project HTML and inject the client script?';
+            return t('delivery_confirm_fix_project_paths', 'Rewrite /project/ paths in project HTML and inject the client script?');
         }
-        return 'Apply this fix?';
+        return t('delivery_confirm_apply_fix', 'Apply this fix?');
     }
 
     function renderFixControl(check) {
         if (!check.fix) return '';
         if (check.fix.action === 'fix_project_paths') {
-            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="fix_project_paths">Fix paths</button>';
+            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="fix_project_paths">' + escapeHtml(t('delivery_btn_fix_paths', 'Fix paths')) + '</button>';
         }
         if (check.fix.action === 'repair') {
-            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="repair">Fix</button>';
+            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="repair">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</button>';
         }
         if (check.fix.action === 'set_same_host_public') {
-            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="set_same_host_public">Fix</button>';
+            return ' <button type="button" class="btn btn-secondary btn-sm delivery-status-fix delivery-status-fix-action" data-fix-action="set_same_host_public">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</button>';
         }
-        return ' <a class="delivery-status-fix" href="' + escapeHtml(fixUrl(check.fix)) + '">Fix</a>';
+        return ' <a class="delivery-status-fix" href="' + escapeHtml(fixUrl(check.fix)) + '">' + escapeHtml(t('delivery_btn_fix', 'Fix')) + '</a>';
     }
 
     function renderStripHtml(id, overall, checks, meta) {
-        var label = overall === 'green' ? 'Delivery healthy' : (overall === 'yellow' ? 'Delivery needs attention' : 'Delivery broken');
+        var label = overall === 'green'
+            ? t('delivery_status_healthy', 'Delivery healthy')
+            : (overall === 'yellow'
+                ? t('delivery_status_attention', 'Delivery needs attention')
+                : t('delivery_status_broken', 'Delivery broken'));
         var rows = (checks || []).map(function (check) {
             return '<li class="delivery-status-check delivery-status-check--' + escapeHtml(check.status) + '">' +
                 '<span class="delivery-status-check-icon" aria-hidden="true">' + checkIcon(check.status) + '</span>' +
@@ -98,27 +114,30 @@
 
         var metaBits = [];
         if (meta && meta.request_host) {
-            metaBits.push('Host: ' + escapeHtml(meta.request_host) + ' (' + escapeHtml(meta.request_host_role || 'unknown') + ')');
+            metaBits.push(t('delivery_meta_host', 'Host: {host} ({role})', {
+                host: meta.request_host,
+                role: meta.request_host_role || t('delivery_meta_role_unknown', 'unknown')
+            }));
         }
         if (meta && meta.schema_version) {
-            metaBits.push('Schema v' + escapeHtml(String(meta.schema_version)));
+            metaBits.push(t('delivery_meta_schema', 'Schema v{version}', { version: String(meta.schema_version) }));
         }
         if (meta && meta.env_managed) {
-            metaBits.push('Env overrides active');
+            metaBits.push(t('delivery_meta_env_overrides', 'Env overrides active'));
         }
         if (meta && meta.migration_pending) {
-            metaBits.push('Migration pending');
+            metaBits.push(t('delivery_meta_migration_pending', 'Migration pending'));
         }
 
         return '' +
-            '<section class="delivery-status card ' + statusClass(overall) + '" data-delivery-status-id="' + escapeHtml(id) + '" aria-label="Site delivery status">' +
+            '<section class="delivery-status card ' + statusClass(overall) + '" data-delivery-status-id="' + escapeHtml(id) + '" aria-label="' + escapeHtml(t('delivery_aria_label', 'Site delivery status')) + '">' +
             '<div class="delivery-status-header">' +
             '<div><h3 class="delivery-status-title">' + escapeHtml(label) + '</h3>' +
-            (metaBits.length ? '<p class="delivery-status-meta">' + metaBits.join(' · ') + '</p>' : '') +
+            (metaBits.length ? '<p class="delivery-status-meta">' + metaBits.map(escapeHtml).join(' · ') + '</p>' : '') +
             '</div>' +
             '<div class="delivery-status-actions">' +
-            '<button type="button" class="btn btn-secondary btn-sm delivery-status-refresh">Refresh</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm delivery-status-repair">Repair delivery</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm delivery-status-refresh">' + escapeHtml(t('delivery_btn_refresh', 'Refresh')) + '</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm delivery-status-repair">' + escapeHtml(t('delivery_btn_repair', 'Repair delivery')) + '</button>' +
             '</div></div>' +
             '<ul class="delivery-status-checks">' + rows + '</ul>' +
             '</section>';
@@ -139,19 +158,19 @@
         if (!mountEl) return null;
 
         function load() {
-            mountEl.innerHTML = '<div class="loading-state"><p>Checking delivery…</p></div>';
+            mountEl.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('delivery_loading_checking', 'Checking delivery…')) + '</p></div>';
             fetch(apiUrl('/api/hosting.php?action=status'), { credentials: 'same-origin' })
                 .then(function (r) { return r.json(); })
                 .then(function (payload) {
                     if (!payload || payload.status !== 'ok' || !payload.data) {
-                        throw new Error('Failed to load delivery status');
+                        throw new Error(t('delivery_load_failed', 'Failed to load delivery status'));
                     }
                     var delivery = payload.data.delivery || {};
                     mountEl.innerHTML = renderStripHtml(id, delivery.overall || 'red', delivery.checks || [], delivery);
                     wireActions(mountEl, id);
                 })
                 .catch(function (err) {
-                    mountEl.innerHTML = '<div class="message message-error">' + escapeHtml(err.message || 'Delivery status unavailable') + '</div>';
+                    mountEl.innerHTML = '<div class="message message-error">' + escapeHtml(err.message || t('delivery_unavailable', 'Delivery status unavailable')) + '</div>';
                 });
         }
 
