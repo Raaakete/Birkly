@@ -4,6 +4,24 @@
  *       3 starter templates → complete
  */
 
+function escapeHtml(value) {
+    const element = document.createElement('div');
+    element.textContent = String(value ?? '');
+    return element.innerHTML;
+}
+
+function t(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback || key)
+        : (fallback || key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach((name) => {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
 const onboarding = {
     currentStep: 0,
     maxSteps: 3,
@@ -104,13 +122,13 @@ const onboarding = {
                     const cont = document.getElementById('starter-continue');
                     if (cont) cont.disabled = true;
                 }
-                let label = 'Internet connection needed';
+                let label = t('onboarding_starter_internet_needed', 'Internet connection needed');
                 if (meta && meta.catalog_reachable === false) {
-                    label = 'Internet connection needed';
+                    label = t('onboarding_starter_internet_needed', 'Internet connection needed');
                 } else if (meta && meta.enabled && !meta.ready) {
-                    label = 'Not available yet';
+                    label = t('onboarding_starter_not_available_yet', 'Not available yet');
                 } else if (meta && !meta.enabled) {
-                    label = 'Coming soon';
+                    label = t('marketplace_coming_soon', 'Coming soon');
                 }
                 if (statusEl) {
                     statusEl.textContent = label;
@@ -127,7 +145,10 @@ const onboarding = {
         if (note) {
             if (catalogMissing || anyRemoteUnavailable) {
                 note.hidden = false;
-                note.textContent = 'Marsk needs an internet connection from this computer so Birkly can download the demo pack. You can continue with Blank.';
+                note.textContent = t(
+                    'onboarding_starter_marsk_offline_note',
+                    'Marsk needs an internet connection from this computer so Birkly can download the demo pack. You can continue with Blank.'
+                );
             } else {
                 note.hidden = true;
                 note.textContent = '';
@@ -195,7 +216,7 @@ const onboarding = {
 
         errorDiv.hidden = true;
         if (password !== passwordConfirm) {
-            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.textContent = t('passwords_do_not_match', 'Passwords do not match');
             errorDiv.hidden = false;
             return;
         }
@@ -211,12 +232,12 @@ const onboarding = {
             if (data.status === 'ok') {
                 window.location.reload();
             } else {
-                errorDiv.textContent = data.message || 'Failed to create account';
+                errorDiv.textContent = data.message || t('onboarding_create_account_failed', 'Failed to create account');
                 errorDiv.hidden = false;
                 submitBtn.disabled = false;
             }
         } catch (error) {
-            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.textContent = t('onboarding_generic_error', 'An error occurred. Please try again.');
             errorDiv.hidden = false;
             submitBtn.disabled = false;
         }
@@ -254,21 +275,24 @@ const onboarding = {
         const body = document.getElementById('install-context-body');
         if (!body) return;
         const adminUrl = Birkly.url('/admin/index.php');
+        const adminLine = escapeHtml(t('onboarding_admin_panel_label', 'Admin panel:'))
+            + ' <a href="' + escapeHtml(adminUrl) + '">' + escapeHtml(adminUrl) + '</a>';
+        const nextHelp = '<p class="form-help">' + escapeHtml(t('onboarding_install_next_help', 'On the next step, name your project and optionally pick a starter template.')) + '</p>';
         if (this.installPath === 'local') {
-            body.innerHTML = '<p><strong>You are running Birkly locally.</strong></p>'
-                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>To start again later, run <code>./start-server.sh</code> from your Birkly folder, then open the admin URL above.</p>'
-                + '<p class="form-help">On the next step, name your project and optionally pick a starter template.</p>';
+            body.innerHTML = '<p><strong>' + escapeHtml(t('onboarding_install_local_lead', 'You are running Birkly locally.')) + '</strong></p>'
+                + '<p>' + adminLine + '</p>'
+                + '<p>' + escapeHtml(t('onboarding_install_local_restart', 'To start again later, run ./start-server.sh from your Birkly folder, then open the admin URL above.')) + '</p>'
+                + nextHelp;
         } else if (this.installPath === 'cloud') {
-            body.innerHTML = '<p><strong>Birkly is on your web server.</strong></p>'
-                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>Ensure <code>content/</code>, <code>media/</code>, <code>users/</code>, and <code>settings/</code> stay writable.</p>'
-                + '<p class="form-help">On the next step, name your project and optionally pick a starter template.</p>';
+            body.innerHTML = '<p><strong>' + escapeHtml(t('onboarding_install_cloud_lead', 'Birkly is on your web server.')) + '</strong></p>'
+                + '<p>' + adminLine + '</p>'
+                + '<p>' + escapeHtml(t('onboarding_install_cloud_writable', 'Ensure content/, media/, users/, and settings/ stay writable.')) + '</p>'
+                + nextHelp;
         } else {
-            body.innerHTML = '<p><strong>Birkly is ready.</strong></p>'
-                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>Re-open <code>0_START-HERE.html</code> from your Birkly folder if you need local vs cloud setup notes.</p>'
-                + '<p class="form-help">On the next step, name your project and optionally pick a starter template.</p>';
+            body.innerHTML = '<p><strong>' + escapeHtml(t('onboarding_install_default_lead', 'Birkly is ready.')) + '</strong></p>'
+                + '<p>' + adminLine + '</p>'
+                + '<p>' + escapeHtml(t('onboarding_install_default_start_here', 'Re-open 0_START-HERE.html from your Birkly folder if you need local vs cloud setup notes.')) + '</p>'
+                + nextHelp;
         }
     },
 
@@ -337,7 +361,7 @@ const onboarding = {
         const btn = document.getElementById('starter-continue');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = 'Installing…';
+            btn.textContent = t('onboarding_installing', 'Installing…');
         }
         try {
             const response = await fetch(Birkly.url('/api/demo.php?action=install_starter'), {
@@ -357,7 +381,7 @@ const onboarding = {
                 }
                 await this.complete();
             } else {
-                let message = data.message || 'Failed to install starter template';
+                let message = data.message || t('onboarding_starter_install_failed', 'Failed to install starter template');
                 const collectionsError = data.diagnostics?.collections_dir?.error;
                 const extractErrors = data.diagnostics?.extract?.errors;
                 if (Array.isArray(extractErrors) && extractErrors.length > 0) {
@@ -371,11 +395,11 @@ const onboarding = {
                 BirklyFeedback.toast(message, 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to install starter template.', 'error');
+            BirklyFeedback.toast(t('onboarding_starter_install_failed', 'Failed to install starter template.'), 'error');
         }
         if (btn) {
             btn.disabled = false;
-            btn.textContent = 'Continue';
+            btn.textContent = t('continue', 'Continue');
         }
     },
 
@@ -388,7 +412,7 @@ const onboarding = {
 
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Saving...';
+            submitBtn.textContent = t('onboarding_saving', 'Saving…');
         }
 
         try {
@@ -405,14 +429,14 @@ const onboarding = {
             if (data.status === 'ok') {
                 this.nextStep();
             } else {
-                BirklyFeedback.toast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(t('onboarding_save_failed_prefix', 'Failed to save:') + ' ' + (data.message || t('error_unknown', 'Unknown error')), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to save project information.', 'error');
+            BirklyFeedback.toast(t('onboarding_save_project_failed', 'Failed to save project information.'), 'error');
         }
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Continue';
+            submitBtn.textContent = t('continue', 'Continue');
         }
     },
 
@@ -458,7 +482,7 @@ const onboarding = {
             if (this.starterTemplate) params.set('starter_template', this.starterTemplate);
             window.location.href = Birkly.url('/admin/index.php?' + params.toString());
         } else {
-            BirklyFeedback.toast('Failed to complete onboarding: ' + (data.message || 'Unknown error'), 'error');
+            BirklyFeedback.toast(t('onboarding_complete_failed_prefix', 'Failed to complete onboarding:') + ' ' + (data.message || t('error_unknown', 'Unknown error')), 'error');
         }
     },
 
@@ -469,7 +493,7 @@ const onboarding = {
     },
 
     async skip() {
-        if (!(await BirklyFeedback.confirm('Skip setup? You can finish later from the dashboard.'))) return;
+        if (!(await BirklyFeedback.confirm(t('onboarding_skip_confirm', 'Skip setup? You can finish later from the dashboard.')))) return;
         try {
             const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), {
                 method: 'POST',
