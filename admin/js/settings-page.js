@@ -1840,14 +1840,14 @@ async function deletePlugin(pluginId) {
     
     function deliveryRoleLabel(role) {
         var labels = {
-            cms_primary: 'CMS (primary)',
-            cms: 'CMS alias',
-            public_primary: 'Public (primary)',
-            public: 'Public alias',
-            api_only: 'API only (CORS)',
-            unassigned: 'Unassigned'
+            cms_primary: t('settings_delivery_role_cms_primary', 'CMS (primary)'),
+            cms: t('settings_delivery_role_cms', 'CMS alias'),
+            public_primary: t('settings_delivery_role_public_primary', 'Public (primary)'),
+            public: t('settings_delivery_role_public', 'Public alias'),
+            api_only: t('settings_delivery_role_api_only', 'API only (CORS)'),
+            unassigned: t('settings_delivery_role_unassigned', 'Unassigned')
         };
-        return labels[role] || role || 'Unassigned';
+        return labels[role] || role || t('settings_delivery_role_unassigned', 'Unassigned');
     }
 
     function deliveryRoleBadgeClass(role) {
@@ -1869,9 +1869,9 @@ async function deletePlugin(pluginId) {
             });
             var result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || 'Failed to update delivery role');
+                throw new Error(result.message || t('settings_delivery_role_update_failed', 'Failed to update delivery role'));
             }
-            showMessage('Delivery role updated for ' + host, 'success');
+            showMessage(t('settings_delivery_role_updated', 'Delivery role updated for {host}', { host: host }), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1881,14 +1881,14 @@ async function deletePlugin(pluginId) {
             loadDomains();
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
             if (selectEl) selectEl.disabled = false;
         }
     }
 
     async function setPublicPrimary(host, buttonEl) {
         if (!host) return;
-        if (!(await BirklyFeedback.confirm('Make ' + host + ' the primary public URL? The current primary will become an alias.'))) {
+        if (!(await BirklyFeedback.confirm(t('settings_delivery_primary_confirm', 'Make {host} the primary public URL? The current primary will become an alias.', { host: host })))) {
             return;
         }
         if (buttonEl) buttonEl.disabled = true;
@@ -1901,9 +1901,9 @@ async function deletePlugin(pluginId) {
             });
             var result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || 'Failed to update primary URL');
+                throw new Error(result.message || t('settings_delivery_primary_update_failed', 'Failed to update primary URL'));
             }
-            showMessage(result.message || 'Primary public URL updated', 'success');
+            showMessage(result.message || t('settings_delivery_primary_updated', 'Primary public URL updated'), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1913,7 +1913,7 @@ async function deletePlugin(pluginId) {
             loadDomains();
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
             if (buttonEl) buttonEl.disabled = false;
         }
     }
@@ -1929,9 +1929,9 @@ async function deletePlugin(pluginId) {
             });
             var result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || 'Failed to update alias redirect');
+                throw new Error(result.message || t('settings_delivery_alias_update_failed', 'Failed to update alias redirect'));
             }
-            showMessage(result.message || 'Alias redirect updated', 'success');
+            showMessage(result.message || t('settings_delivery_alias_updated', 'Alias redirect updated'), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1940,7 +1940,7 @@ async function deletePlugin(pluginId) {
             }
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
             if (checkboxEl) checkboxEl.checked = !enabled;
         } finally {
             if (checkboxEl) checkboxEl.disabled = false;
@@ -1977,23 +1977,23 @@ async function deletePlugin(pluginId) {
             roleCell = '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
         }
         var corsBadge = row.cors_registered
-            ? '<span class="badge badge-success">Registered</span>'
-            : '<span class="badge badge-neutral">Not registered</span>';
+            ? '<span class="badge badge-success">' + escapeHtml(t('settings_delivery_cors_registered', 'Registered')) + '</span>'
+            : '<span class="badge badge-neutral">' + escapeHtml(t('settings_delivery_cors_not_registered', 'Not registered')) + '</span>';
         var suggestHint = '';
         if (!row.is_primary && row.suggested_role && row.settable_role !== row.suggested_role && role === 'api_only') {
-            suggestHint = '<div class="form-help">Suggested: ' + escapeHtml(row.suggested_role) + ' — ' + escapeHtml(row.suggest_reason || '') + '</div>';
+            suggestHint = '<div class="form-help">' + escapeHtml(t('settings_delivery_suggested', 'Suggested: {role} — {reason}', { role: row.suggested_role, reason: row.suggest_reason || '' })) + '</div>';
         }
         var routingCell = '—';
         if (row.is_primary) {
-            routingCell = '<span class="badge badge-accent">Primary URL</span>';
+            routingCell = '<span class="badge badge-accent">' + escapeHtml(t('settings_delivery_primary_url_badge', 'Primary URL')) + '</span>';
         } else if (row.redirects_to_primary && row.redirect_target_host) {
-            routingCell = '<span class="badge badge-info">301 → ' + escapeHtml(row.redirect_target_host) + '</span>';
+            routingCell = '<span class="badge badge-info">' + escapeHtml(t('settings_delivery_redirect_badge', '301 → {host}', { host: row.redirect_target_host })) + '</span>';
         } else if (row.is_alias) {
-            routingCell = '<span class="badge badge-success">Serves directly</span>';
+            routingCell = '<span class="badge badge-success">' + escapeHtml(t('settings_delivery_serves_directly', 'Serves directly')) + '</span>';
         }
         var actions = '';
         if (row.can_make_public_primary) {
-            actions = ' <button type="button" class="btn btn-secondary btn-sm delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
+            actions = ' <button type="button" class="btn btn-secondary btn-sm delivery-make-primary" data-host="' + escapeHtml(host) + '">' + escapeHtml(t('settings_delivery_make_primary', 'Make primary')) + '</button>';
         }
         return '<tr>' +
             '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
@@ -2012,7 +2012,7 @@ async function deletePlugin(pluginId) {
         renderDeliveryRoutingOptions(meta.hosting || {}, meta.detect || {});
 
         if (!rows.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.</p></div>';
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_delivery_matrix_empty', 'No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.')) + '</p></div>';
             return;
         }
 
@@ -2020,9 +2020,9 @@ async function deletePlugin(pluginId) {
         container.innerHTML =
             '<div class="table-container">' +
             '<table class="table table--hover">' +
-            '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th><th>Visitor routing</th></tr></thead>' +
+            '<thead><tr><th>' + escapeHtml(t('settings_delivery_matrix_hostname', 'Hostname')) + '</th><th>' + escapeHtml(t('settings_delivery_matrix_cors', 'CORS')) + '</th><th>' + escapeHtml(t('settings_delivery_matrix_role', 'Delivery role')) + '</th><th>' + escapeHtml(t('settings_delivery_matrix_routing', 'Visitor routing')) + '</th></tr></thead>' +
             '<tbody>' + body + '</tbody></table></div>' +
-            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.</p>';
+            '<p class="form-help">' + t('settings_delivery_matrix_help', 'Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.') + '</p>';
 
         var roleSelects = container.querySelectorAll('.domain-delivery-role');
         for (var r = 0; r < roleSelects.length; r++) {
@@ -2044,7 +2044,7 @@ async function deletePlugin(pluginId) {
         var container = document.getElementById('delivery-matrix-content');
         if (!container) return;
 
-        container.innerHTML = '<div class="loading-state"><p>Loading delivery matrix...</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('settings_delivery_matrix_loading', 'Loading delivery matrix...')) + '</p></div>';
         try {
             var response = await fetch(apiUrl('/api/hosting.php?action=get'), {
                 method: 'GET',
@@ -2058,7 +2058,7 @@ async function deletePlugin(pluginId) {
                 detect: data.detect || {}
             });
         } catch (error) {
-            container.innerHTML = '<div class="message message-error" role="alert">Error loading delivery matrix: ' + escapeHtml(error.message) + '</div>';
+            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(t('settings_delivery_matrix_load_error', 'Error loading delivery matrix: {message}', { message: error.message })) + '</div>';
         }
     }
 
@@ -2282,16 +2282,16 @@ async function deletePlugin(pluginId) {
             return '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
         }
         var options = [
-            { value: 'api_only', label: 'API only (CORS)' },
-            { value: 'cms', label: 'CMS alias' },
-            { value: 'public', label: 'Public alias' }
+            { value: 'api_only', label: t('settings_delivery_role_api_only', 'API only (CORS)') },
+            { value: 'cms', label: t('settings_delivery_role_cms', 'CMS alias') },
+            { value: 'public', label: t('settings_delivery_role_public', 'Public alias') }
         ];
         var selected = (role === 'cms' || role === 'public' || role === 'api_only') ? role : 'api_only';
         var optionHtml = options.map(function (opt) {
             return '<option value="' + escapeHtml(opt.value) + '"' + (opt.value === selected ? ' selected' : '') + '>' +
                 escapeHtml(opt.label) + '</option>';
         }).join('');
-        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="Delivery role for ' + escapeHtml(host) + '">' +
+        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="' + escapeHtml(t('settings_delivery_role_aria', 'Delivery role for {host}', { host: host })) + '">' +
             optionHtml + '</select>';
     }
 
@@ -2455,7 +2455,7 @@ function openAddDomainModal() {
     }
     var helpEl = document.getElementById('domain-delivery-role-help');
     if (helpEl) {
-        helpEl.textContent = 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.';
+        helpEl.textContent = t('settings_domain_delivery_help', 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.');
     }
     bindRegisterDomainSuggestInline();
 }
@@ -2880,7 +2880,7 @@ window.deleteDomain = async function(domainName) {
         if (!tbody) return;
         
         if (refresh) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>Loading...</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>' + escapeHtml(t('settings_audit_loading', 'Loading...')) + '</p></div></td></tr>';
         }
         
         // Load both audit logs and activity
@@ -2938,7 +2938,7 @@ window.deleteDomain = async function(domainName) {
             // Populate event filter
             const eventFilter = document.getElementById('event-filter');
             if (eventFilter) {
-                eventFilter.innerHTML = '<option value="">All Events</option>';
+                eventFilter.innerHTML = '<option value="">' + escapeHtml(t('settings_audit_all_events', 'All Events')) + '</option>';
                 Array.from(eventTypes).sort().forEach(event => {
                     const option = document.createElement('option');
                     option.value = event;
@@ -2954,7 +2954,7 @@ window.deleteDomain = async function(domainName) {
             console.error('Error loading logs:', error);
             const tbody = document.getElementById('log-entries');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">Error loading logs: ' + escapeHtml(error.message) + '</p></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">' + escapeHtml(t('settings_audit_load_error', 'Error loading logs: {message}', { message: error.message })) + '</p></div></td></tr>';
             }
         });
     }
@@ -2968,7 +2968,7 @@ window.deleteDomain = async function(domainName) {
         const logsToShow = filteredLogs.slice(0, endIndex);
         
         if (logsToShow.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">No log entries found</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_audit_no_entries', 'No log entries found')) + '</p></div></td></tr>';
             const loadMoreBtn = document.getElementById('load-more');
             if (loadMoreBtn) {
                 loadMoreBtn.hidden = true;
@@ -2987,12 +2987,12 @@ window.deleteDomain = async function(domainName) {
             html += `
                 <tr>
                     <td class="u-fg-secondary u-nowrap">${timestamp}</td>
-                    <td>${escapeHtml(log.user || 'Unknown')}</td>
-                    <td><span class="badge ${categoryBadge}">${escapeHtml(log.event || 'Unknown')}</span></td>
+                    <td>${escapeHtml(log.user || t('settings_audit_unknown_user', 'Unknown'))}</td>
+                    <td><span class="badge ${categoryBadge}">${escapeHtml(log.event || t('settings_audit_unknown_event', 'Unknown'))}</span></td>
                     <td><span class="badge badge-neutral">${escapeHtml(category)}</span></td>
-                    <td class="u-fg-secondary u-nowrap">${escapeHtml(log.ip || 'Unknown')}</td>
+                    <td class="u-fg-secondary u-nowrap">${escapeHtml(log.ip || t('settings_audit_unknown_user', 'Unknown'))}</td>
                     <td>
-                        ${formattedDetails ? `<details><summary class="u-clickable u-text-sm">View Details</summary><pre class="u-surface-sunken u-radius-sm u-p-3 u-mt-2 u-text-xs u-mono u-scroll-x">${escapeHtml(formattedDetails)}</pre></details>` : '-'}
+                        ${formattedDetails ? `<details><summary class="u-clickable u-text-sm">${escapeHtml(t('settings_audit_view_details', 'View Details'))}</summary><pre class="u-surface-sunken u-radius-sm u-p-3 u-mt-2 u-text-xs u-mono u-scroll-x">${escapeHtml(formattedDetails)}</pre></details>` : '-'}
                     </td>
                 </tr>
             `;
@@ -3025,7 +3025,7 @@ async function loadDenylistCollections() {
         const response = await fetch(apiUrl('/api/content.php?action=list_collections'));
         const result = await response.json();
         const collections = (result.data && result.data.collections) || result.collections || [];
-        select.innerHTML = '<option value="">Select a collection…</option>';
+        select.innerHTML = '<option value="">' + escapeHtml(t('settings_denylist_select_collection', 'Select a collection…')) + '</option>';
         collections.forEach(col => {
             const slug = col.slug || col.id || '';
             if (!slug) return;
@@ -3037,7 +3037,7 @@ async function loadDenylistCollections() {
         if (addBtn) addBtn.disabled = collections.length === 0;
         denylistCollectionsLoaded = true;
     } catch (error) {
-        select.innerHTML = '<option value="">Failed to load collections</option>';
+        select.innerHTML = '<option value="">' + escapeHtml(t('settings_denylist_load_collections_failed', 'Failed to load collections')) + '</option>';
         if (addBtn) addBtn.disabled = true;
     }
 }
@@ -3059,7 +3059,7 @@ async function loadDenylist() {
             renderDenylist(data.resources || [], data.deny_collections || [], data.deny_spaces || []);
             populateDenylistPluginSelect(data.available_plugins || []);
         } else {
-            container.innerHTML = `<div class="message message-error" role="alert">Error loading denylist: ${escapeHtml(result.message || '')}</div>`;
+            container.innerHTML = `<div class="message message-error" role="alert">${escapeHtml(t('settings_denylist_load_error', 'Error loading denylist: {message}', { message: result.message || '' }))}</div>`;
         }
     } catch (error) {
         container.innerHTML = `<div class="message message-error" role="alert">Error: ${escapeHtml(error.message)}</div>`;
@@ -3071,7 +3071,7 @@ function populateDenylistPluginSelect(plugins) {
     const select = document.getElementById('denylist-plugin-select');
     const addBtn = document.getElementById('denylist-add-plugin-btn');
     if (!select) return;
-    select.innerHTML = '<option value="">Select a plugin…</option>';
+    select.innerHTML = '<option value="">' + escapeHtml(t('settings_denylist_select_plugin', 'Select a plugin…')) + '</option>';
     plugins.forEach(function (plugin) {
         const id = plugin.id || '';
         if (!id) return;
@@ -3084,14 +3084,14 @@ function populateDenylistPluginSelect(plugins) {
 }
 
 function renderDenylistItem(resource, type) {
-    const label = type === 'collection' ? 'collection' : (type === 'space' ? 'space' : 'pattern');
+    const label = type === 'collection' ? t('settings_denylist_type_collection', 'collection') : (type === 'space' ? t('settings_denylist_type_space', 'space') : t('settings_denylist_type_pattern', 'pattern'));
     return `
         <div class="data-list-item">
             <code class="u-mono u-text-sm u-fill u-break-word">${escapeHtml(resource)}</code>
-            <span class="badge badge-neutral">${label}</span>
+            <span class="badge badge-neutral">${escapeHtml(label)}</span>
             <div class="data-list-actions">
                 <button type="button" class="btn btn-sm btn-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
-                    Remove
+                    ${escapeHtml(t('settings_denylist_remove', 'Remove'))}
                 </button>
             </div>
         </div>
@@ -3108,7 +3108,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     let html = '';
 
     if ((denyCollections || []).length > 0) {
-        html += '<h3 class="u-label">Protected collections</h3><div class="data-list data-list--flush">';
+        html += '<h3 class="u-label">' + escapeHtml(t('settings_denylist_protected_collections', 'Protected collections')) + '</h3><div class="data-list data-list--flush">';
         denyCollections.forEach(resource => {
             html += renderDenylistItem(resource, 'collection');
         });
@@ -3116,7 +3116,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if (customResources.length > 0) {
-        html += '<h3 class="u-label u-mt-4">Custom patterns</h3><div class="data-list data-list--flush">';
+        html += '<h3 class="u-label u-mt-4">' + escapeHtml(t('settings_denylist_custom_patterns', 'Custom patterns')) + '</h3><div class="data-list data-list--flush">';
         customResources.forEach(resource => {
             html += renderDenylistItem(resource, 'pattern');
         });
@@ -3124,7 +3124,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if ((denySpaces || []).length > 0) {
-        html += '<h3 class="u-label u-mt-4">Protected spaces</h3><div class="data-list data-list--flush">';
+        html += '<h3 class="u-label u-mt-4">' + escapeHtml(t('settings_denylist_protected_spaces', 'Protected spaces')) + '</h3><div class="data-list data-list--flush">';
         denySpaces.forEach(resource => {
             html += renderDenylistItem(resource, 'space');
         });
@@ -3132,7 +3132,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if (!html) {
-        container.innerHTML = '<p class="settings-help">No protected resources. All collections are accessible to plugins (subject to capability checks).</p>';
+        container.innerHTML = '<p class="settings-help">' + escapeHtml(t('settings_denylist_empty_help', 'No protected resources. All collections are accessible to plugins (subject to capability checks).')) + '</p>';
         return;
     }
 
@@ -3143,7 +3143,7 @@ async function addDenylistPlugin() {
     const select = document.getElementById('denylist-plugin-select');
     const pluginId = select?.value || '';
     if (!pluginId) {
-        showMessage('Select a plugin first', 'error');
+        showMessage(t('settings_denylist_select_plugin_first', 'Select a plugin first'), 'error');
         return;
     }
 
@@ -3160,13 +3160,13 @@ async function addDenylistPlugin() {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage('Plugin added to denylist', 'success');
+            showMessage(t('settings_denylist_plugin_added', 'Plugin added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage(result.message || 'Failed to add plugin', 'error');
+            showMessage(result.message || t('settings_denylist_plugin_add_failed', 'Failed to add plugin'), 'error');
         }
     } catch (error) {
-        showMessage(error.message || 'Failed to add plugin', 'error');
+        showMessage(error.message || t('settings_denylist_plugin_add_failed', 'Failed to add plugin'), 'error');
     }
 }
 
@@ -3174,7 +3174,7 @@ async function addDenylistCollection() {
     const select = document.getElementById('denylist-collection-select');
     const slug = select?.value || '';
     if (!slug) {
-        showMessage('Select a collection first', 'error');
+        showMessage(t('settings_denylist_select_collection_first', 'Select a collection first'), 'error');
         return;
     }
 
@@ -3195,21 +3195,21 @@ async function addDenylistCollection() {
         const result = await response.json();
 
         if (result.status === 'ok') {
-            showMessage('Collection added to denylist', 'success');
+            showMessage(t('settings_denylist_collection_added', 'Collection added to denylist'), 'success');
             loadDenylist();
         } else {
             showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
     }
 }
 
 async function addDenylistResource() {
     const resource = await BirklyFeedback.prompt(
-        'Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):',
+        t('settings_denylist_prompt_resource', 'Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):'),
         '',
-        { title: 'Add to denylist', confirmLabel: 'Add', placeholder: 'e.g. payroll/*' }
+        { title: t('settings_denylist_prompt_title', 'Add to denylist'), confirmLabel: t('settings_denylist_prompt_confirm', 'Add'), placeholder: t('settings_denylist_prompt_placeholder', 'e.g. payroll/*') }
     );
     if (!resource || resource.trim() === '') return;
     
@@ -3229,18 +3229,18 @@ async function addDenylistResource() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Resource added to denylist', 'success');
+            showMessage(t('settings_denylist_resource_added', 'Resource added to denylist'), 'success');
             loadDenylist();
         } else {
             showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
     }
 }
 
 async function removeDenylistResource(resource) {
-    if (!(await BirklyFeedback.confirm(`Remove "${resource}" from the denylist?`))) return;
+    if (!(await BirklyFeedback.confirm(t('settings_denylist_remove_confirm', 'Remove "{resource}" from the denylist?', { resource: resource })))) return;
     
     try {
         const response = await fetch(apiUrl('/api/plugins_permissions.php'), {
@@ -3258,13 +3258,13 @@ async function removeDenylistResource(resource) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Resource removed from denylist', 'success');
+            showMessage(t('settings_denylist_resource_removed', 'Resource removed from denylist'), 'success');
             loadDenylist();
         } else {
             showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
     }
 }
 
@@ -3290,7 +3290,7 @@ function testDatabaseConnection() {
     const resultEl = document.getElementById('db-test-result');
     
     if (!resultEl) return;
-    resultEl.textContent = 'Testing...';
+    resultEl.textContent = t('settings_db_testing', 'Testing...');
     resultEl.style.color = 'var(--text-secondary)';
     
     fetch(apiUrl('/api/settings.php?action=test_database'), {
@@ -3312,31 +3312,31 @@ function testDatabaseConnection() {
     .then(res => res.json())
     .then(data => {
         if (data.status === 'ok') {
-            resultEl.textContent = '✓ Connection successful';
+            resultEl.textContent = t('settings_db_connection_success', '✓ Connection successful');
             resultEl.style.color = 'var(--success-600)';
         } else {
-            resultEl.textContent = '✗ ' + (data.message || 'Connection failed');
+            resultEl.textContent = t('settings_db_connection_error', '✗ Error: {message}', { message: data.message || t('settings_db_connection_failed', 'Connection failed') });
             resultEl.style.color = 'var(--error-600)';
         }
     })
     .catch(error => {
-        resultEl.textContent = '✗ Error: ' + error.message;
+        resultEl.textContent = t('settings_db_connection_error', '✗ Error: {message}', { message: error.message });
         resultEl.style.color = 'var(--error-600)';
     });
 }
 
 async function migrateStorage() {
-    if (!(await BirklyFeedback.confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?'))) {
+    if (!(await BirklyFeedback.confirm(t('settings_migration_confirm_backup', 'This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')))) {
         return;
     }
     
     const backend = document.getElementById('storage-backend')?.value;
     if (!backend || backend === 'flatfile') {
-        showMessage('Please select a database backend first', 'error');
+        showMessage(t('settings_migration_select_backend', 'Please select a database backend first'), 'error');
         return;
     }
     
-    if (!(await BirklyFeedback.confirm('Migration may take some time. Do not close this window. Continue?'))) {
+    if (!(await BirklyFeedback.confirm(t('settings_migration_confirm_time', 'Migration may take some time. Do not close this window. Continue?')))) {
         return;
     }
 
@@ -3351,16 +3351,16 @@ async function migrateStorage() {
     const prefix = document.getElementById('db-prefix')?.value;
 
     if (!host || !name || !user) {
-        showMessage('Enter database host, name, and user before migrating', 'error');
+        showMessage(t('settings_migration_enter_credentials', 'Enter database host, name, and user before migrating'), 'error');
         return;
     }
 
     if (migrateBtn) {
         migrateBtn.disabled = true;
-        migrateBtn.textContent = 'Migrating...';
+        migrateBtn.textContent = t('settings_migration_in_progress_btn', 'Migrating...');
     }
     if (statusEl) {
-        statusEl.textContent = 'Migration in progress...';
+        statusEl.textContent = t('settings_migration_in_progress_status', 'Migration in progress...');
         statusEl.style.color = 'var(--text-secondary)';
     }
     
@@ -3386,29 +3386,29 @@ async function migrateStorage() {
         try {
             data = await response.json();
         } catch (parseError) {
-            throw new Error('Server returned an invalid response. Check server logs.');
+            throw new Error(t('settings_migration_invalid_response', 'Server returned an invalid response. Check server logs.'));
         }
 
         if (data.status === 'ok') {
             const migratedCount = data.data && typeof data.data.migrated === 'number'
-                ? ' (' + data.data.migrated + ' files)'
+                ? t('settings_migration_migrated_files', ' ({count} files)', { count: data.data.migrated })
                 : '';
-            const successMessage = 'Migration completed successfully' + migratedCount + '!';
+            const successMessage = t('settings_migration_success', 'Migration completed successfully{migrated}!', { migrated: migratedCount });
             showMessage(successMessage, 'success');
             if (statusEl) {
                 statusEl.textContent = '✓ ' + successMessage;
                 statusEl.style.color = 'var(--success-600)';
             }
         } else {
-            const failureMessage = data.message || 'Unknown error';
-            showMessage('Migration failed: ' + failureMessage, 'error');
+            const failureMessage = data.message || t('settings_role_unknown_error', 'Unknown error');
+            showMessage(t('settings_migration_failed', 'Migration failed: {message}', { message: failureMessage }), 'error');
             if (statusEl) {
                 statusEl.textContent = '✗ ' + failureMessage;
                 statusEl.style.color = 'var(--error-600)';
             }
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
         if (statusEl) {
             statusEl.textContent = '✗ ' + error.message;
             statusEl.style.color = 'var(--error-600)';
