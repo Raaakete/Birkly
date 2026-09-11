@@ -63,7 +63,7 @@
 
         if (!title || !description) return;
 
-        if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+        if (btn) { btn.disabled = true; btn.textContent = fbT('feedback_sending', 'Sending…'); }
         if (err) err.hidden = true;
         if (ok) ok.hidden = true;
 
@@ -84,7 +84,7 @@
             });
             const data = await res.json();
             if (!res.ok || data.status !== 'ok') {
-                throw new Error(data.message || 'Submission failed');
+                throw new Error(data.message || fbT('feedback_submit_failed', 'Submission failed'));
             }
 
             document.getElementById('feedback-submit-form')?.reset();
@@ -97,7 +97,7 @@
                 err.hidden = false;
             }
         } finally {
-            if (btn) { btn.disabled = false; btn.textContent = 'Submit'; }
+            if (btn) { btn.disabled = false; btn.textContent = submitLabel(); }
         }
     }
 

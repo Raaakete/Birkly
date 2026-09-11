@@ -8,6 +8,13 @@
     let selectedId = null;
     const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || '';
 
+    function fbT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback || key;
+    }
+
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text ?? '';
@@ -23,13 +30,18 @@
         }
     }
 
-    function statusBadge(status) {
-        const labels = {
-            new: 'New',
-            in_progress: 'In progress',
-            resolved: 'Resolved',
-            closed: 'Closed',
+    function statusLabel(status) {
+        const keys = {
+            new: ['feedback_status_new', 'New'],
+            in_progress: ['feedback_status_in_progress', 'In progress'],
+            resolved: ['feedback_status_resolved', 'Resolved'],
+            closed: ['feedback_status_closed', 'Closed'],
         };
+        const pair = keys[status];
+        return pair ? fbT(pair[0], pair[1]) : status;
+    }
+
+    function statusBadge(status) {
         const tones = {
             new: 'badge-info',
             in_progress: 'badge-warning',
@@ -37,25 +49,32 @@
             closed: 'badge-neutral',
         };
         const tone = tones[status] || 'badge-neutral';
-        return `<span class="badge ${tone}">${escapeHtml(labels[status] || status)}</span>`;
+        return `<span class="badge ${tone}">${escapeHtml(statusLabel(status))}</span>`;
     }
 
     function typeLabel(type) {
-        const labels = { bug: 'Bug', feature: 'Feature', feedback: 'Feedback', question: 'Question' };
-        return labels[type] || type;
+        const keys = {
+            bug: ['feedback_type_bug', 'Bug report'],
+            feature: ['feedback_type_feature', 'Feature request'],
+            feedback: ['feedback_type_general', 'General feedback'],
+            question: ['feedback_type_question', 'Question / support'],
+        };
+        const pair = keys[type];
+        return pair ? fbT(pair[0], pair[1]) : type;
     }
 
     function categoryLabel(category) {
-        const labels = {
-            admin: 'Admin',
-            content: 'Content',
-            commerce: 'Commerce',
-            marketplace: 'Hub',
-            plugins: 'Plugins',
-            ai: 'AI & MCP',
-            other: 'Other',
+        const keys = {
+            admin: ['feedback_category_admin', 'Admin & settings'],
+            content: ['feedback_category_content', 'Content & editor'],
+            commerce: ['feedback_category_commerce', 'Commerce'],
+            marketplace: ['feedback_category_marketplace', 'Hub & plugins'],
+            plugins: ['feedback_category_plugins', 'Installed plugins'],
+            ai: ['feedback_category_ai', 'AI & MCP'],
+            other: ['feedback_category_other', 'Other'],
         };
-        return labels[category] || category || 'Other';
+        const pair = keys[category];
+        return pair ? fbT(pair[0], pair[1]) : (category || fbT('feedback_category_other', 'Other'));
     }
 
     async function loadFeedback() {
@@ -66,7 +85,10 @@
         const type = document.getElementById('feedback-filter-type')?.value || '';
         const category = document.getElementById('feedback-filter-category')?.value || '';
 
-        if (loading) loading.hidden = false;
+        if (loading) {
+            loading.hidden = false;
+            loading.textContent = fbT('feedback_loading', 'Loading feedback…');
+        }
         if (empty) empty.hidden = true;
         if (wrap) wrap.hidden = true;
 
@@ -78,12 +100,16 @@
         try {
             const res = await fetch('/api/feedback.php?' + params.toString());
             const data = await res.json();
-            if (data.status !== 'ok') throw new Error(data.message || 'Failed to load');
+            if (data.status !== 'ok') {
+                throw new Error(data.message || fbT('feedback_load_failed', 'Failed to load'));
+            }
 
             items = data.data?.items || [];
             renderTable();
         } catch (err) {
-            if (loading) loading.textContent = 'Error: ' + err.message;
+            if (loading) {
+                loading.textContent = fbT('feedback_error_prefix', 'Error:') + ' ' + err.message;
+            }
         }
     }
 
@@ -106,6 +132,8 @@
 
         if (!tbody) return;
 
+        const viewLabel = escapeHtml(fbT('feedback_view_btn', 'View'));
+
         tbody.innerHTML = items.map((item) => `
             <tr>
                 <td>${escapeHtml(formatDate(item.created_at))}</td>
@@ -114,7 +142,7 @@
                 <td>${escapeHtml(item.title)}</td>
                 <td>${escapeHtml(item.user_email || item.user_id || '—')}</td>
                 <td>${statusBadge(item.status)}</td>
-                <td><button type="button" class="btn btn-sm btn-secondary" data-feedback-id="${escapeHtml(item.id)}">View</button></td>
+                <td><button type="button" class="btn btn-sm btn-secondary" data-feedback-id="${escapeHtml(item.id)}">${viewLabel}</button></td>
             </tr>
         `).join('');
 
@@ -136,16 +164,22 @@
         if (title) title.textContent = item.title;
         if (statusSelect) statusSelect.value = item.status || 'new';
         if (body) {
+            const typeLbl = fbT('feedback_detail_type', 'Type');
+            const catLbl = fbT('feedback_detail_category', 'Category');
+            const fromLbl = fbT('feedback_detail_from', 'From');
+            const pageLbl = fbT('feedback_detail_page', 'Page');
+            const submittedLbl = fbT('feedback_detail_submitted', 'Submitted');
+            const notesLbl = fbT('feedback_admin_notes', 'Internal notes');
             body.innerHTML = `
-                <p><strong>Type:</strong> ${escapeHtml(typeLabel(item.type))}</p>
-                <p><strong>Category:</strong> ${escapeHtml(categoryLabel(item.category))}</p>
-                <p><strong>From:</strong> ${escapeHtml(item.user_email || item.user_id)} (${escapeHtml(item.user_role || '')})</p>
-                <p><strong>Page:</strong> ${escapeHtml(item.page_context || '—')}</p>
-                <p><strong>Submitted:</strong> ${escapeHtml(formatDate(item.created_at))}</p>
+                <p><strong>${escapeHtml(typeLbl)}:</strong> ${escapeHtml(typeLabel(item.type))}</p>
+                <p><strong>${escapeHtml(catLbl)}:</strong> ${escapeHtml(categoryLabel(item.category))}</p>
+                <p><strong>${escapeHtml(fromLbl)}:</strong> ${escapeHtml(item.user_email || item.user_id)} (${escapeHtml(item.user_role || '')})</p>
+                <p><strong>${escapeHtml(pageLbl)}:</strong> ${escapeHtml(item.page_context || '—')}</p>
+                <p><strong>${escapeHtml(submittedLbl)}:</strong> ${escapeHtml(formatDate(item.created_at))}</p>
                 <hr>
                 <p style="white-space: pre-wrap;">${escapeHtml(item.description)}</p>
                 <div class="form-group" style="margin-top: 1rem;">
-                    <label for="feedback-admin-notes">Internal notes</label>
+                    <label for="feedback-admin-notes">${escapeHtml(notesLbl)}</label>
                     <textarea id="feedback-admin-notes" class="form-control" rows="3">${escapeHtml(item.admin_notes || '')}</textarea>
                 </div>
             `;
@@ -177,12 +211,14 @@
                 }),
             });
             const data = await res.json();
-            if (data.status !== 'ok') throw new Error(data.message || 'Save failed');
+            if (data.status !== 'ok') {
+                throw new Error(data.message || fbT('feedback_save_failed', 'Save failed'));
+            }
 
             closeDetail();
             await loadFeedback();
         } catch (err) {
-            BirklyFeedback.toast('Error: ' + err.message, 'error')
+            BirklyFeedback.toast(fbT('feedback_error_prefix', 'Error:') + ' ' + err.message, 'error');
         }
     }
 

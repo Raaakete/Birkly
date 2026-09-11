@@ -3,70 +3,70 @@
         <div class="breadcrumbs">
             <a href="<?= admin_url('settings') ?>"><?= __('admin.settings') ?></a>
             <span class="separator">›</span>
-            <span class="current">Alpha Feedback</span>
+            <span class="current"><?= __('admin.feedback_admin_title') ?></span>
         </div>
     </div>
     <div class="page-header-actions"></div>
 </div>
 
 <div class="page-body u-stack-6">
-    <p class="u-text-sm u-fg-secondary">Review and triage feedback submitted during the closed alpha.</p>
+    <p class="u-text-sm u-fg-secondary"><?= __('admin.feedback_admin_intro') ?></p>
 
     <div class="main-actions-bar">
         <div class="main-actions-left u-align-end">
             <div class="form-group u-m-0">
-                <label for="feedback-filter-status">Status</label>
+                <label for="feedback-filter-status"><?= __('admin.feedback_status_label') ?></label>
                 <select id="feedback-filter-status" class="input">
-                    <option value="">All statuses</option>
-                    <option value="new">New</option>
-                    <option value="in_progress">In progress</option>
-                    <option value="resolved">Resolved</option>
-                    <option value="closed">Closed</option>
+                    <option value=""><?= __('admin.feedback_all_statuses') ?></option>
+                    <option value="new"><?= __('admin.feedback_status_new') ?></option>
+                    <option value="in_progress"><?= __('admin.feedback_status_in_progress') ?></option>
+                    <option value="resolved"><?= __('admin.feedback_status_resolved') ?></option>
+                    <option value="closed"><?= __('admin.feedback_status_closed') ?></option>
                 </select>
             </div>
             <div class="form-group u-m-0">
-                <label for="feedback-filter-type">Type</label>
+                <label for="feedback-filter-type"><?= __('admin.feedback_type_label') ?></label>
                 <select id="feedback-filter-type" class="input">
-                    <option value="">All types</option>
-                    <option value="bug">Bug</option>
-                    <option value="feature">Feature request</option>
-                    <option value="feedback">General feedback</option>
-                    <option value="question">Question</option>
+                    <option value=""><?= __('admin.feedback_all_types') ?></option>
+                    <option value="bug"><?= __('admin.feedback_type_bug') ?></option>
+                    <option value="feature"><?= __('admin.feedback_type_feature') ?></option>
+                    <option value="feedback"><?= __('admin.feedback_type_general') ?></option>
+                    <option value="question"><?= __('admin.feedback_type_question') ?></option>
                 </select>
             </div>
             <div class="form-group u-m-0">
-                <label for="feedback-filter-category">Category</label>
+                <label for="feedback-filter-category"><?= __('admin.feedback_category_label') ?></label>
                 <select id="feedback-filter-category" class="input">
-                    <option value="">All categories</option>
-                    <option value="admin">Admin &amp; settings</option>
-                    <option value="content">Content &amp; editor</option>
-                    <option value="commerce">Commerce</option>
-                    <option value="marketplace">Hub &amp; plugins</option>
-                    <option value="plugins">Installed plugins</option>
-                    <option value="ai">AI &amp; MCP</option>
-                    <option value="other">Other</option>
+                    <option value=""><?= __('admin.feedback_all_categories') ?></option>
+                    <option value="admin"><?= __('admin.feedback_category_admin') ?></option>
+                    <option value="content"><?= __('admin.feedback_category_content') ?></option>
+                    <option value="commerce"><?= __('admin.feedback_category_commerce') ?></option>
+                    <option value="marketplace"><?= __('admin.feedback_category_marketplace') ?></option>
+                    <option value="plugins"><?= __('admin.feedback_category_plugins') ?></option>
+                    <option value="ai"><?= __('admin.feedback_category_ai') ?></option>
+                    <option value="other"><?= __('admin.feedback_category_other') ?></option>
                 </select>
             </div>
         </div>
         <div class="main-actions-right">
-            <button type="button" class="btn btn-secondary" id="feedback-refresh-btn">Refresh</button>
+            <button type="button" class="btn btn-secondary" id="feedback-refresh-btn"><?= __('admin.feedback_refresh') ?></button>
         </div>
     </div>
 
-    <div id="feedback-list-loading" class="loading-state">Loading feedback…</div>
+    <div id="feedback-list-loading" class="loading-state"><?= __('admin.feedback_loading') ?></div>
     <div id="feedback-list-empty" class="empty-state" hidden>
-        <p class="empty-state-text">No feedback submissions yet.</p>
+        <p class="empty-state-text"><?= __('admin.feedback_empty') ?></p>
     </div>
     <div class="table-container" id="feedback-table-wrap" hidden>
         <table class="table" id="feedback-table">
             <thead>
                 <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Category</th>
-                    <th>Title</th>
-                    <th>From</th>
-                    <th>Status</th>
+                    <th><?= __('admin.feedback_col_date') ?></th>
+                    <th><?= __('admin.feedback_col_type') ?></th>
+                    <th><?= __('admin.feedback_col_category') ?></th>
+                    <th><?= __('admin.feedback_col_title') ?></th>
+                    <th><?= __('admin.feedback_col_from') ?></th>
+                    <th><?= __('admin.feedback_col_status') ?></th>
                     <th></th>
                 </tr>
             </thead>
@@ -80,18 +80,18 @@
     <div class="modal-backdrop" data-close-feedback-modal></div>
     <div class="modal-content modal--md">
         <div class="modal-header">
-            <h2 id="feedback-detail-title">Feedback</h2>
-            <button type="button" class="modal-close" data-close-feedback-modal aria-label="Close">×</button>
+            <h2 id="feedback-detail-title"><?= __('admin.feedback_admin_title') ?></h2>
+            <button type="button" class="modal-close" data-close-feedback-modal aria-label="<?= __('admin.close') ?>">×</button>
         </div>
         <div class="modal-body" id="feedback-detail-body"></div>
         <div class="modal-footer">
             <select id="feedback-detail-status" class="input u-w-auto">
-                <option value="new">New</option>
-                <option value="in_progress">In progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="closed">Closed</option>
+                <option value="new"><?= __('admin.feedback_status_new') ?></option>
+                <option value="in_progress"><?= __('admin.feedback_status_in_progress') ?></option>
+                <option value="resolved"><?= __('admin.feedback_status_resolved') ?></option>
+                <option value="closed"><?= __('admin.feedback_status_closed') ?></option>
             </select>
-            <button type="button" class="btn btn-primary" id="feedback-save-status-btn">Save status</button>
+            <button type="button" class="btn btn-primary" id="feedback-save-status-btn"><?= __('admin.feedback_save_status') ?></button>
         </div>
     </div>
 </div>
