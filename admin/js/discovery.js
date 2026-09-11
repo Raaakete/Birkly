@@ -11,28 +11,28 @@
             labelKey: 'discovery_seo_surfaces_onpage',
             label: 'On-page tags',
             items: [
-                { key: 'meta_tags', label: 'Meta tags (title, description)' },
-                { key: 'canonical', label: 'Canonical URLs' },
-                { key: 'open_graph', label: 'Open Graph / social cards' },
-                { key: 'twitter_cards', label: 'Twitter / X cards' },
+                { key: 'meta_tags', labelKey: 'discovery_seo_surface_meta_tags', label: 'Meta tags (title, description)' },
+                { key: 'canonical', labelKey: 'discovery_seo_surface_canonical', label: 'Canonical URLs' },
+                { key: 'open_graph', labelKey: 'discovery_seo_surface_open_graph', label: 'Open Graph / social cards' },
+                { key: 'twitter_cards', labelKey: 'discovery_seo_surface_twitter_cards', label: 'Twitter / X cards' },
             ],
         },
         {
             labelKey: 'discovery_seo_surfaces_structured',
             label: 'Structured data (JSON-LD)',
             items: [
-                { key: 'json_ld_website', label: 'WebSite schema' },
-                { key: 'json_ld_organization', label: 'Organization schema' },
-                { key: 'json_ld_article', label: 'Article on detail pages' },
+                { key: 'json_ld_website', labelKey: 'discovery_seo_surface_json_ld_website', label: 'WebSite schema' },
+                { key: 'json_ld_organization', labelKey: 'discovery_seo_surface_json_ld_organization', label: 'Organization schema' },
+                { key: 'json_ld_article', labelKey: 'discovery_seo_surface_json_ld_article', label: 'Article on detail pages' },
             ],
         },
         {
             labelKey: 'discovery_seo_surfaces_crawl',
             label: 'Crawling & discovery',
             items: [
-                { key: 'sitemap', label: 'Dynamic sitemap.xml' },
-                { key: 'robots_sitemap_line', label: 'robots.txt Sitemap: line' },
-                { key: 'indexnow', label: 'IndexNow ping on publish' },
+                { key: 'sitemap', labelKey: 'discovery_seo_surface_sitemap', label: 'Dynamic sitemap.xml' },
+                { key: 'robots_sitemap_line', labelKey: 'discovery_seo_surface_robots_sitemap', label: 'robots.txt Sitemap: line' },
+                { key: 'indexnow', labelKey: 'discovery_seo_surface_indexnow', label: 'IndexNow ping on publish' },
             ],
         },
     ];
@@ -48,11 +48,19 @@
         apReady: false,
     };
 
-    function t(key, fallback) {
+    function t(key, fallback, params) {
+        var text;
         if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
-            return global.Birkly.i18n.t('admin.' + key, fallback);
+            text = global.Birkly.i18n.t('admin.' + key, fallback);
+        } else {
+            text = fallback || key;
         }
-        return fallback || key;
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
     }
 
     function formatDateTime(iso) {
@@ -221,7 +229,7 @@
                 var label = document.createElement('label');
                 label.className = 'checkbox-label u-block u-mb-2';
                 var checked = surfaces[item.key] !== false;
-                label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + item.label;
+                label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + escapeHtml(t(item.labelKey, item.label));
                 box.appendChild(label);
             });
         });
@@ -230,7 +238,7 @@
     function buildSeoPreviewTitle() {
         var siteTitle = ($('#disc-seo-site-title') || {}).value || '';
         var suffix = ($('#disc-seo-title-suffix') || {}).value || '';
-        var title = siteTitle.trim() || 'Site title';
+        var title = siteTitle.trim() || t('discovery_seo_preview_site_title_fallback', 'Site title');
         if (suffix && title.indexOf(suffix) < 0) {
             title += suffix;
         }
@@ -239,7 +247,7 @@
 
     function renderSeoPreviews() {
         var title = buildSeoPreviewTitle();
-        var desc = (($('#disc-seo-description') || {}).value || '').trim() || 'Meta description preview';
+        var desc = (($('#disc-seo-description') || {}).value || '').trim() || t('discovery_seo_preview_meta_desc_fallback', 'Meta description preview');
         var image = (($('#disc-seo-og-image') || {}).value || '').trim();
         var siteHost = 'yoursite.com';
         if (state.status && state.status.hosting && state.status.hosting.public_site_url) {
@@ -517,23 +525,29 @@
     function formatScanMeta(seo, summary) {
         var parts = [];
         if (seo && seo.scan && seo.scan.last_at) {
-            parts.push('Last scan: ' + seo.scan.last_at);
+            parts.push(t('discovery_seo_scan_last', 'Last scan: {at}', { at: seo.scan.last_at }));
             if (seo.scan.project_revision) {
-                parts.push('rev ' + seo.scan.project_revision);
+                parts.push(t('discovery_seo_scan_rev', 'rev {rev}', { rev: seo.scan.project_revision }));
             }
         }
         var counts = getUrlMapCounts(seo, summary);
         var statBits = [];
-        if (counts.pageCount > 0) statBits.push(counts.pageCount + ' page' + (counts.pageCount === 1 ? '' : 's'));
-        if (counts.templateFiles.length) {
-            statBits.push(counts.templateFiles.length + ' repeating template' + (counts.templateFiles.length === 1 ? '' : 's'));
+        if (counts.pageCount > 0) {
+            statBits.push(t('discovery_seo_scan_pages', '{count} page(s)', { count: counts.pageCount }));
         }
-        if (counts.detailCount > 0) statBits.push(counts.detailCount + ' collection entr' + (counts.detailCount === 1 ? 'y' : 'ies'));
-        if (counts.redirectCount > 0) statBits.push(counts.redirectCount + ' redirect' + (counts.redirectCount === 1 ? '' : 's'));
+        if (counts.templateFiles.length) {
+            statBits.push(t('discovery_seo_scan_templates_count', '{count} repeating template(s)', { count: counts.templateFiles.length }));
+        }
+        if (counts.detailCount > 0) {
+            statBits.push(t('discovery_seo_scan_entries', '{count} collection entries', { count: counts.detailCount }));
+        }
+        if (counts.redirectCount > 0) {
+            statBits.push(t('discovery_seo_scan_redirects', '{count} redirect(s)', { count: counts.redirectCount }));
+        }
         var stats = (summary && typeof summary === 'object') ? summary
             : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
         if (stats && stats.excluded > 0) {
-            statBits.push(stats.excluded + ' internal files skipped');
+            statBits.push(t('discovery_seo_scan_excluded', '{count} internal files skipped', { count: stats.excluded }));
         }
         if (statBits.length) parts.push(statBits.join(' · '));
         return parts.join(' — ');
@@ -779,7 +793,7 @@
         var bindings = (seo && seo.detail_bindings) || [];
         if (!bindings.length) {
             list.innerHTML = '<p class="form-help u-m-0">' + escapeHtml(
-                'No repeating pages yet. Templates with <meta name="birkly-collection"> are detected when you refresh from site files.'
+                t('discovery_seo_bindings_empty', 'No repeating pages yet. Templates with <meta name="birkly-collection"> are detected when you refresh from site files.')
             ) + '</p>';
             return;
         }
@@ -790,20 +804,20 @@
             var template = binding.template_path || '';
             var count = bindingEntryCount(seo, binding.collection || '');
             var countLabel = count > 0
-                ? count + ' published ' + (count === 1 ? 'entry' : 'entries') + ' in search listings'
-                : 'No published entries yet';
+                ? t('discovery_seo_bindings_published_count', '{count} published entries in search listings', { count: count })
+                : t('discovery_seo_bindings_no_published', 'No published entries yet');
             var pattern = binding.url_pattern
-                ? '<div class="u-text-xs u-fg-secondary u-mt-1">Shorter links: <code>' + escapeHtml(binding.url_pattern) + '</code></div>'
+                ? '<div class="u-text-xs u-fg-secondary u-mt-1">' + escapeHtml(t('discovery_seo_bindings_shorter_links', 'Shorter links:')) + ' <code>' + escapeHtml(binding.url_pattern) + '</code></div>'
                 : '';
             card.innerHTML = '<button type="button" class="disc-binding-card__main" data-binding-edit="' + escapeHtml(binding.id || '') + '">'
                 + '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
-                + ' <span class="u-fg-secondary">opens in</span> <span class="disc-site-file" title="' + escapeHtml(template) + '">'
+                + ' <span class="u-fg-secondary">' + escapeHtml(t('discovery_seo_bindings_opens_in', 'opens in')) + '</span> <span class="disc-site-file" title="' + escapeHtml(template) + '">'
                 + escapeHtml(template) + '</span></div>'
-                + '<div class="u-text-sm u-fg-secondary u-mt-1">Summary field: ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
+                + '<div class="u-text-sm u-fg-secondary u-mt-1">' + escapeHtml(t('discovery_seo_bindings_summary_field', 'Summary field:')) + ' ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
                 + pattern
                 + '</button>'
                 + '<button type="button" class="btn btn-ghost btn-sm disc-binding-card__remove" data-binding-delete="'
-                + escapeHtml(binding.id || '') + '">Remove</button>';
+                + escapeHtml(binding.id || '') + '">' + escapeHtml(t('discovery_seo_bindings_remove', 'Remove')) + '</button>';
             list.appendChild(card);
         });
     }
