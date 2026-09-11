@@ -35,7 +35,7 @@
             })
             .catch(error => {
                 console.error('Error loading tracking list:', error);
-                container.innerHTML = '<div class="error">Error loading tracking configurations</div>';
+                container.innerHTML = '<div class="error">' + anaT('analytics_js_load_error', 'Error loading tracking configurations') + '</div>';
             });
     }
     
@@ -45,18 +45,22 @@
         if (!container) return;
         
         if (Object.keys(trackingIds).length === 0) {
-            container.innerHTML = `
-                <div class="empty-state" style="text-align: center; padding: 3rem;">
-                    <p style="color: #6b7280; margin-bottom: 1rem;">No websites are being tracked yet.</p>
-                    <button class="btn btn-primary" onclick="openAddTrackingModal()">Add Your First Website</button>
-                </div>
-            `;
+            container.innerHTML =
+                '<div class="empty-state" style="text-align: center; padding: 3rem;">' +
+                '<p style="color: #6b7280; margin-bottom: 1rem;">' + escapeHtml(anaT('analytics_js_empty_not_tracked', 'No websites are being tracked yet.')) + '</p>' +
+                '<button type="button" class="btn btn-primary" onclick="openAddTrackingModal()">' + escapeHtml(anaT('analytics_js_add_first_website', 'Add Your First Website')) + '</button>' +
+                '</div>';
             return;
         }
         
         container.innerHTML = Object.values(trackingIds).map(config => {
             const statusClass = config.enabled ? 'enabled' : 'disabled';
-            const statusText = config.enabled ? 'Enabled' : 'Disabled';
+            const statusText = config.enabled ? anaT('enabled', 'Enabled') : anaT('analytics_js_disabled', 'Disabled');
+            const toggleLabel = config.enabled ? anaT('analytics_js_disable', 'Disable') : anaT('analytics_js_enable', 'Enable');
+            const deleteLabel = anaT('delete', 'Delete');
+            const codeLabel = anaT('analytics_js_tracking_code_label', 'Tracking Code');
+            const copyTitle = anaT('analytics_js_copy_code', 'Copy code');
+            const embedHint = anaT('analytics_js_embed_hint', 'Add this code to your website before the closing </body> tag');
             
             return `
                 <div class="tracking-card" data-tracking-id="${config.id}">
@@ -66,12 +70,12 @@
                             <p class="tracking-domain">${escapeHtml(config.domain)}</p>
                         </div>
                         <div class="tracking-status">
-                            <span class="status-badge ${statusClass}">${statusText}</span>
+                            <span class="status-badge ${statusClass}">${escapeHtml(statusText)}</span>
                         </div>
                     </div>
                     <div class="tracking-body">
                         <div class="tracking-code-section">
-                            <label>Tracking Code</label>
+                            <label>${escapeHtml(codeLabel)}</label>
                             <div class="code-block">
                                 <pre><code>&lt;script&gt;
   window.HaruAnalytics = {
@@ -86,20 +90,20 @@
     cmsUrl: '${cmsUrl}'
   };
 </script>
-<script src="${cmsUrl}/birkly-analytics.js"></script>`)}" title="Copy code">
+<script src="${cmsUrl}/birkly-analytics.js"></script>`)}" title="${escapeHtml(copyTitle)}">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                         <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                     </svg>
                                 </button>
                             </div>
-                            <small>Add this code to your website before the closing &lt;/body&gt; tag</small>
+                            <small>${escapeHtml(embedHint)}</small>
                         </div>
                         <div class="tracking-actions">
                             <button class="btn btn-secondary toggle-tracking-btn" data-id="${config.id}" data-enabled="${config.enabled}">
-                                ${config.enabled ? 'Disable' : 'Enable'}
+                                ${escapeHtml(toggleLabel)}
                             </button>
-                            <button class="btn btn-danger delete-tracking-btn" data-id="${config.id}">Delete</button>
+                            <button class="btn btn-danger delete-tracking-btn" data-id="${config.id}">${escapeHtml(deleteLabel)}</button>
                         </div>
                     </div>
                 </div>

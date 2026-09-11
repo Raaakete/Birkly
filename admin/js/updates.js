@@ -64,7 +64,7 @@
         const updateDetails = el('update-details');
         if (!statusIndicator) return;
 
-        statusIndicator.innerHTML = '<span class="badge badge-neutral">Checking for updates...</span>';
+        statusIndicator.innerHTML = '<span class="badge badge-neutral">' + escapeHtml(updT('updates_js_checking', 'Checking for updates...')) + '</span>';
         if (updateDetails) updateDetails.hidden = true;
     }
 
@@ -75,7 +75,7 @@
         const updateInfo = el('update-info');
 
         if (statusIndicator) {
-            statusIndicator.innerHTML = '<span class="badge badge-danger">Update check failed</span>';
+            statusIndicator.innerHTML = '<span class="badge badge-danger">' + escapeHtml(updT('updates_js_check_failed_badge', 'Update check failed')) + '</span>';
         }
         if (updateInfo) {
             updateInfo.innerHTML =
@@ -92,12 +92,12 @@
         const updateInfo = el('update-info');
 
         if (statusIndicator) {
-            statusIndicator.innerHTML = '<span class="badge badge-neutral">Remote check unavailable</span>';
+            statusIndicator.innerHTML = '<span class="badge badge-neutral">' + escapeHtml(updT('updates_js_remote_unavailable', 'Remote check unavailable')) + '</span>';
         }
         if (updateInfo) {
             updateInfo.innerHTML =
                 '<div class="u-stack-2">' +
-                '<h3 class="u-text-md u-weight-semibold">You are up to date locally</h3>' +
+                '<h3 class="u-text-md u-weight-semibold">' + escapeHtml(updT('updates_js_up_to_date_locally', 'You are up to date locally')) + '</h3>' +
                 '<p class="u-text-sm u-fg-secondary">' + escapeHtml(message || updT('updates_js_update_service_unreachable', 'Could not reach the update service.')) + '</p>' +
                 '</div>';
         }
@@ -117,7 +117,7 @@
         const changelog = el('changelog-content');
         if (!changelog) return;
         if (!notes) {
-            changelog.innerHTML = '<p class="u-fg-secondary">No release notes available.</p>';
+            changelog.innerHTML = '<p class="u-fg-secondary">' + escapeHtml(updT('updates_js_no_release_notes', 'No release notes available.')) + '</p>';
             return;
         }
         changelog.innerHTML = '<div class="u-text-sm u-leading-normal">' + escapeHtml(notes).replace(/\n/g, '<br>') + '</div>';
@@ -179,7 +179,7 @@
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
             '<path d="M12 2v6m0 0l3-3m-3 3L9 5"></path>' +
             '<path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"></path>' +
-            '</svg> Install Update';
+            '</svg> ' + updT('updates_js_install_update', 'Install Update');
         btn.addEventListener('click', installUpdate);
         actions.insertBefore(btn, actions.firstChild);
     }
@@ -196,19 +196,19 @@
         renderChangelog(data.release_notes || '');
 
         if (data.update_available) {
-            statusIndicator.innerHTML = '<span class="badge badge-warning">Update available</span>';
+            statusIndicator.innerHTML = '<span class="badge badge-warning">' + escapeHtml(updT('updates_js_update_available_badge', 'Update available')) + '</span>';
             updateInfo.innerHTML =
                 '<div class="u-stack-2">' +
-                '<h3 class="u-text-md u-weight-semibold">Version ' + escapeHtml(data.latest_version) + ' is available</h3>' +
-                '<p>You are running version ' + escapeHtml(data.current_version) + '.</p>' +
-                (data.published_at ? '<p class="u-text-sm u-fg-secondary">Published: ' + escapeHtml(data.published_at) + '</p>' : '') +
+                '<h3 class="u-text-md u-weight-semibold">' + escapeHtml(updT('updates_js_version_available', 'Version {version} is available', { version: data.latest_version })) + '</h3>' +
+                '<p>' + escapeHtml(updT('updates_js_running_version_you', 'You are running version {version}.', { version: data.current_version })) + '</p>' +
+                (data.published_at ? '<p class="u-text-sm u-fg-secondary">' + escapeHtml(updT('updates_js_published_at', 'Published: {date}', { date: data.published_at })) + '</p>' : '') +
                 '</div>';
         } else {
-            statusIndicator.innerHTML = '<span class="badge badge-success">Up to date</span>';
+            statusIndicator.innerHTML = '<span class="badge badge-success">' + escapeHtml(updT('updates_js_up_to_date_badge', 'Up to date')) + '</span>';
             updateInfo.innerHTML =
                 '<div class="u-stack-2">' +
-                '<h3 class="u-text-md u-weight-semibold">You are up to date</h3>' +
-                '<p>Running version ' + escapeHtml(data.current_version) + '.</p>' +
+                '<h3 class="u-text-md u-weight-semibold">' + escapeHtml(updT('updates_js_up_to_date_title', 'You are up to date')) + '</h3>' +
+                '<p>' + escapeHtml(updT('updates_js_running_version', 'Running version {version}.', { version: data.current_version })) + '</p>' +
                 '</div>';
         }
 
