@@ -233,7 +233,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <p class="form-help">When enabled, visitors on aliases such as <code>birkly.io</code> are sent to the primary public URL (e.g. <code>birkly.cloud</code>). Uncheck to keep each hostname in the browser address bar.</p>
               </div>
               <div id="delivery-matrix-content">
-                <div class="loading-state"><p>Loading delivery matrix...</p></div>
+                <div class="loading-state"><p><?= __('admin.loading_delivery_matrix') ?></p></div>
               </div>
             </div>
           </section>
@@ -340,7 +340,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <div class="card-body u-stack-4">
             <div id="project-overview-content" class="u-stack-3">
-              <div class="loading-state"><p>Loading project info...</p></div>
+              <div class="loading-state"><p><?= __('admin.loading_project_info') ?></p></div>
             </div>
             <div class="form-group">
               <label class="checkbox-label">
@@ -490,7 +490,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <div class="card-body u-stack-4">
             <div id="project-git-body">
-              <div class="loading-state"><p>Checking git availability...</p></div>
+              <div class="loading-state"><p><?= __('admin.loading_git_availability') ?></p></div>
             </div>
             </div>
           </section>
@@ -867,7 +867,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 </div>
                 <p class="settings-help">Deny plugin admin spaces (e.g. commerce, automation) to block sidebar injection and space-scoped hooks for that plugin.</p>
                 <div id="denylist-management">
-                  <div class="loading-state"><p>Loading denylist...</p></div>
+                  <div class="loading-state"><p><?= __('admin.loading_denylist') ?></p></div>
                 </div>
                 </div>
               </section>
@@ -984,7 +984,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
               <div class="card-body u-stack-4">
                 <div id="analytics-preset-cards" class="u-stack-3" aria-live="polite">
-                  <div class="loading-state"><p>Loading presets…</p></div>
+                  <div class="loading-state"><p><?= __('admin.loading_presets') ?></p></div>
                 </div>
                 <p class="form-help">Not legal advice — you remain responsible for privacy law in your region.</p>
                 <div id="analytics-consent-fields" class="u-stack-3" hidden>
@@ -1057,7 +1057,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
               <div class="card-body u-stack-4" id="developer-mode-tools" hidden>
                 <div id="developer-system-info" class="card card--sunken">
-                  <div class="card-body"><div class="loading-state"><p>Loading system info…</p></div></div>
+                  <div class="card-body"><div class="loading-state"><p><?= __('admin.loading_system_info') ?></p></div></div>
                 </div>
                 <div class="form-group">
                   <label class="checkbox-label">

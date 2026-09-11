@@ -2037,7 +2037,7 @@ async function deletePlugin(pluginId) {
         var container = document.getElementById('delivery-matrix-content');
         if (!container) return;
 
-        container.innerHTML = '<div class="loading-state"><p>Loading delivery matrix...</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_delivery_matrix', 'Loading delivery matrix...')) + '</p></div>';
         try {
             var response = await fetch(apiUrl('/api/hosting.php?action=get'), {
                 method: 'GET',
@@ -2051,7 +2051,7 @@ async function deletePlugin(pluginId) {
                 detect: data.detect || {}
             });
         } catch (error) {
-            container.innerHTML = '<div class="message message-error" role="alert">Error loading delivery matrix: ' + escapeHtml(error.message) + '</div>';
+            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(stT('settings_js_err_loading_delivery_matrix', 'Error loading delivery matrix: {message}', { message: error.message })) + '</div>';
         }
     }
 
@@ -2062,7 +2062,7 @@ async function deletePlugin(pluginId) {
             return;
         }
         
-        listContainer.innerHTML = '<div class="loading-state"><p>Loading domains...</p></div>';
+        listContainer.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_domains', 'Loading domains')) + '</p></div>';
         
         try {
             var responses = await Promise.all([
@@ -2237,7 +2237,7 @@ async function deletePlugin(pluginId) {
         }
 
         container.hidden = false;
-        container.innerHTML = '<div class="loading-state"><p>Loading analytics report...</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_analytics_report', 'Loading analytics report...')) + '</p></div>';
 
         try {
             var endDate = new Date().toISOString().slice(0, 10);
@@ -3460,7 +3460,7 @@ async function handleGlobalSave() {
 
     if (!tabsToSave.length) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-            BirklyFeedback.toast('No pending changes to save', 'info');
+            BirklyFeedback.toast(stT('settings_js_no_pending_changes', 'No pending changes to save'), 'info');
         }
         return;
     }
@@ -3488,7 +3488,7 @@ async function handleGlobalSave() {
     var hasCoreForms = !!(forms.general || forms.security || forms.storage || forms.monitoring);
     if (!hasCoreForms && !saveAnalytics) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-            BirklyFeedback.toast('Changes on this tab are saved when you confirm each action', 'info');
+            BirklyFeedback.toast(stT('settings_js_changes_save_per_action', 'Changes on this tab are saved when you confirm each action'), 'info');
         }
         return;
     }
@@ -3503,7 +3503,7 @@ async function handleGlobalSave() {
             if (typeof window.showMessage === 'function') {
                 window.showMessage(stT('settings_js_settings_saved', 'Settings saved successfully!'), 'success');
             } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-                BirklyFeedback.toast('Analytics settings saved', 'success');
+                BirklyFeedback.toast(stT('settings_js_analytics_settings_saved', 'Analytics settings saved'), 'success');
             }
         }
     } catch (err) {

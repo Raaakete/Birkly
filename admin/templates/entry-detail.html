@@ -415,7 +415,7 @@
                     ?>
                 <?php else: ?>
                     <div class="empty-state empty-state--compact">
-                        <p class="empty-state-text">No sub-entries found.</p>
+                        <p class="empty-state-text">{translate 'admin.entry_detail_no_sub_entries'}</p>
                     </div>
                 <?php endif; ?>
             </section>
@@ -437,6 +437,8 @@ const entryDetailI18n = {
     bulkOperationError: <?= json_encode(__('admin.entry_detail_js_bulk_operation_error')) ?>,
     reorderFailed: <?= json_encode(__('admin.entry_detail_js_reorder_failed')) ?>,
     reorderRetry: <?= json_encode(__('admin.entry_detail_js_reorder_retry')) ?>,
+    bulkDeleteConfirm: <?= json_encode(__('admin.entry_detail_js_bulk_delete_confirm')) ?>,
+    collectionNotFound: <?= json_encode(__('admin.entry_detail_js_collection_not_found')) ?>,
     unknownError: <?= json_encode(__('admin.error_unknown')) ?>,
 };
 
@@ -627,7 +629,7 @@ document.querySelectorAll('.bulk-publish-btn, .bulk-unpublish-btn, .bulk-delete-
         const ids = Array.from(checkboxes).map(cb => cb.value);
 
         if (!ids.length) return;
-        if (operation === 'delete' && !(await BirklyFeedback.confirm('Delete ' + ids.length + ' sub-entries?', { danger: true }))) return;
+        if (operation === 'delete' && !(await BirklyFeedback.confirm(entryDetailFormat(entryDetailI18n.bulkDeleteConfirm, { count: ids.length }), { danger: true }))) return;
         
         // Build request payload
         const payload = {
@@ -812,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 windowSlug: window.collectionSlug,
                 urlSlug: collectionSlug
             });
-            BirklyFeedback.toast('Error: Collection not found. Please refresh the page.', 'error');
+            BirklyFeedback.toast(entryDetailErrorMsg(null, entryDetailI18n.collectionNotFound), 'error');
             return;
         }
         

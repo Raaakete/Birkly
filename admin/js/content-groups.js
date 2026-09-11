@@ -911,7 +911,7 @@
     function duplicateCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
-            BirklyFeedback.toast('Error: Collection ID not found. Cannot duplicate collection.', 'error')
+            BirklyFeedback.toast(cgT('feedback_error_prefix', 'Error:') + ' ' + cgT('content_js_err_collection_id_duplicate', 'Collection ID not found. Cannot duplicate collection.'), 'error')
             return;
         }
 
@@ -930,12 +930,12 @@
             if (data.status === 'ok') {
                 window.location.reload();
             } else {
-                BirklyFeedback.toast('Failed to duplicate collection: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(cgT('content_js_failed_duplicate_collection', 'Failed to duplicate collection: {message}', { message: data.message || cgT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch((error) => {
             console.error('Error duplicating collection:', error);
-            BirklyFeedback.toast('Error duplicating collection. Please try again.', 'error')
+            BirklyFeedback.toast(cgT('content_js_err_duplicate_retry', 'Error duplicating collection. Please try again.'), 'error')
         });
     }
 
@@ -997,7 +997,7 @@
         const groupId = form.dataset.groupId;
 
         if (!nameInput || !nameInput.value.trim()) {
-            BirklyFeedback.toast('Please enter a group name', 'warning')
+            BirklyFeedback.toast(cgT('content_js_group_name_required', 'Please enter a group name'), 'warning')
             return;
         }
 
@@ -1083,7 +1083,7 @@
     async function deleteCollection(collection) {
         const collectionId = collection.id;
         if (!collectionId) {
-            BirklyFeedback.toast('Error: Collection ID not found. Cannot delete collection.', 'error')
+            BirklyFeedback.toast(cgT('feedback_error_prefix', 'Error:') + ' ' + cgT('content_js_err_collection_id_delete', 'Collection ID not found. Cannot delete collection.'), 'error')
             return;
         }
 
@@ -1108,12 +1108,12 @@
                 saveGroups();
                 renderGroupsAndCollections();
             } else {
-                BirklyFeedback.toast('Failed to delete collection: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(cgT('content_js_failed_delete_collection', 'Failed to delete collection: {message}', { message: data.message || cgT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch((error) => {
             console.error('Error deleting collection:', error);
-            BirklyFeedback.toast('Error deleting collection. Please try again.', 'error')
+            BirklyFeedback.toast(cgT('content_js_err_delete_retry', 'Error deleting collection. Please try again.'), 'error')
         });
     }
 
@@ -1137,12 +1137,12 @@
                 }
                 renderGroupsAndCollections();
             } else {
-                BirklyFeedback.toast('Failed to save groups: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(cgT('content_js_failed_save_groups', 'Failed to save groups: {message}', { message: data.message || cgT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch((error) => {
             console.error('Error saving groups:', error);
-            BirklyFeedback.toast('Error saving groups. Please try again.', 'error')
+            BirklyFeedback.toast(cgT('content_js_err_save_groups_retry', 'Error saving groups. Please try again.'), 'error')
         });
     }
 

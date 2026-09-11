@@ -383,7 +383,7 @@ const onboarding = {
                 BirklyFeedback.toast(message, 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to install starter template.', 'error');
+            BirklyFeedback.toast(obT('onboarding_js_install_template_failed', 'Failed to install starter template.'), 'error');
         }
         if (btn) {
             btn.disabled = false;
@@ -417,10 +417,10 @@ const onboarding = {
             if (data.status === 'ok') {
                 this.nextStep();
             } else {
-                BirklyFeedback.toast('Failed to save: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(obT('onboarding_js_save_failed', 'Failed to save: {message}', { message: data.message || obT('error_unknown', 'Unknown error') }), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to save project information.', 'error');
+            BirklyFeedback.toast(obT('onboarding_js_save_project_failed', 'Failed to save project information.'), 'error');
         }
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -470,7 +470,7 @@ const onboarding = {
             if (this.starterTemplate) params.set('starter_template', this.starterTemplate);
             window.location.href = Birkly.url('/admin/index.php?' + params.toString());
         } else {
-            BirklyFeedback.toast('Failed to complete onboarding: ' + (data.message || 'Unknown error'), 'error');
+            BirklyFeedback.toast(obT('onboarding_js_complete_failed', 'Failed to complete onboarding: {message}', { message: data.message || obT('error_unknown', 'Unknown error') }), 'error');
         }
     },
 
