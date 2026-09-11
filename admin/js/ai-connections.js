@@ -554,7 +554,7 @@
         if (provider === 'ollama') {
             if (testBtn) testBtn.disabled = true;
             if (statusEl) {
-                statusEl.textContent = 'Testing…';
+                statusEl.textContent = aiT('ai_conn_js_testing', 'Testing…');
                 statusEl.className = 'test-connection-status pending';
             }
 
@@ -608,7 +608,7 @@
 
         if (testBtn) testBtn.disabled = true;
         if (statusEl) {
-            statusEl.textContent = 'Testing…';
+            statusEl.textContent = aiT('ai_conn_js_testing', 'Testing…');
             statusEl.className = 'test-connection-status pending';
         }
 
@@ -681,7 +681,7 @@
                 if (select) {
                     const outbound = Object.entries(providersCache)
                         .filter(([key]) => key !== 'mcp');
-                    select.innerHTML = '<option value="">Select a provider...</option>' +
+                    select.innerHTML = '<option value="">' + escapeHtml(aiT('ai_conn_select_provider', 'Select a provider…')) + '</option>' +
                         outbound.map(([key, provider]) =>
                             `<option value="${key}">${escapeHtml(provider.name)}</option>`
                         ).join('');
@@ -1120,11 +1120,11 @@
     }
 
     function showError(message) {
-        BirklyFeedback.toast('Error: ' + message, 'error')
+        BirklyFeedback.toast(aiT('feedback_error_prefix', 'Error:') + ' ' + message, 'error')
     }
 
     function showSuccess(message) {
-        BirklyFeedback.toast('Success: ' + message, 'success')
+        BirklyFeedback.toast(aiT('feedback_success_prefix', 'Success:') + ' ' + message, 'success')
     }
 
     window.aiConnections = {

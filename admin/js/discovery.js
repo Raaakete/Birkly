@@ -427,7 +427,7 @@
         var lr = $('#disc-verify-last-run');
         if (lr) {
             if (lastRun) {
-                lr.textContent = 'Last run: ' + lastRun;
+                lr.textContent = t('discovery_js_last_run', 'Last run: {at}', { at: lastRun });
                 lr.hidden = false;
             } else {
                 lr.hidden = true;
@@ -437,7 +437,7 @@
 
     function load() {
         return getJson().then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Load failed');
+            if (res.status !== 'ok') throw new Error(res.message || t('discovery_js_load_failed', 'Load failed'));
             state.status = res.data;
             updatePackTabDots(res.data);
             renderPackToggles(res.data);
@@ -448,11 +448,11 @@
 
     function savePack(packId, patch) {
         return postJson({ action: 'save_pack', pack: packId, patch: patch }).then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
+            if (res.status !== 'ok') throw new Error(res.message || t('discovery_js_save_failed', 'Save failed'));
             state.status = res.data;
             updatePackTabDots(res.data);
             renderPackToggles(res.data);
-            showMessage('Saved');
+            showMessage(t('discovery_js_saved', 'Saved'));
             return res.data;
         });
     }
@@ -465,12 +465,12 @@
         var pages = summary && summary.pages != null ? summary.pages : countRowsByType(rows, 'page');
         var details = summary && summary.detail_urls != null ? summary.detail_urls : countRowsByType(rows, 'detail');
         var templates = summary && summary.templates != null ? summary.templates : 0;
-        var parts = ['Found ' + pages + ' main page' + (pages === 1 ? '' : 's')];
+        var parts = [t('discovery_js_scan_found_pages', 'Found {n} main page(s)', { n: pages })];
         if (details > 0) {
-            parts.push(details + ' post' + (details === 1 ? '' : 's') + ' from collections');
+            parts.push(t('discovery_js_scan_posts_from_collections', '{n} post(s) from collections', { n: details }));
         }
         if (templates > 0) {
-            parts.push(templates + ' repeating template' + (templates === 1 ? '' : 's') + ' detected');
+            parts.push(t('discovery_js_scan_templates_detected', '{n} repeating template(s) detected', { n: templates }));
         }
         return parts.join(' · ');
     }
@@ -603,7 +603,7 @@
         var to = (($('#disc-redirect-to') || {}).value || '').trim();
         var status = parseInt(($('#disc-redirect-status') || {}).value || '301', 10) || 301;
         if (!from || !to) {
-            showMessage('From and to paths are required', true);
+            showMessage(t('discovery_js_redirect_paths_required', 'From and to paths are required'), true);
             return;
         }
         var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
@@ -618,7 +618,7 @@
         postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message);
             closeRedirectModal();
-            applyUrlMapResponse(res, 'Redirect saved');
+            applyUrlMapResponse(res, t('discovery_js_redirect_saved', 'Redirect saved'));
             state.urlMapFilter = 'redirect';
             updateUrlMapToolbar();
             renderUrlMap(state.seo);
@@ -631,7 +631,7 @@
         redirects.splice(index, 1);
         postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message);
-            applyUrlMapResponse(res, 'Redirect removed');
+            applyUrlMapResponse(res, t('discovery_js_redirect_removed', 'Redirect removed'));
         }).catch(function (err) { showMessage(err.message, true); });
     }
 
@@ -899,7 +899,7 @@
                     state.seo = res.data.seo;
                     state.urlMapRows = res.data.rows || buildUrlMapRowsFromSeo(state.seo);
                     renderUrlMap(state.seo);
-                    showMessage('URL override saved');
+                    showMessage(t('discovery_js_url_override_saved', 'URL override saved'));
                 }).catch(function (err) { showMessage(err.message, true); });
             });
         }
@@ -916,7 +916,9 @@
                     state.urlMapRows = res.data.rows || [];
                     renderUrlMap(state.seo);
                     var warns = (res.data.warnings || []).join('; ');
-                    showMessage(warns ? 'Proposals applied — ' + warns : 'Proposals applied — review and publish');
+                    showMessage(warns
+                        ? t('discovery_js_proposals_applied_warns', 'Proposals applied — {warns}', { warns: warns })
+                        : t('discovery_js_proposals_applied_review', 'Proposals applied — review and publish'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -951,7 +953,7 @@
                     });
                     state.activeBindingId = saved ? (saved.id || null) : null;
                     if (saved) fillBindingForm(saved);
-                    applyUrlMapResponse(res, 'Connection saved — posts added to search listings');
+                    applyUrlMapResponse(res, t('discovery_js_connection_saved_listings', 'Connection saved — posts added to search listings'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -981,7 +983,7 @@
                         state.activeBindingId = null;
                         fillBindingForm(null);
                     }
-                    applyUrlMapResponse(res, 'Connection removed');
+                    applyUrlMapResponse(res, t('discovery_js_connection_removed', 'Connection removed'));
                 }).catch(function (err) { showMessage(err.message, true); });
             });
         }
@@ -994,7 +996,7 @@
             input.addEventListener('change', function () {
                 var pack = input.getAttribute('data-pack');
                 savePack(pack, { enabled: input.checked }).catch(function (e) {
-                    showMessage(e.message || 'Could not save', true);
+                    showMessage(e.message || t('discovery_js_could_not_save', 'Could not save'), true);
                     input.checked = !input.checked;
                 });
             });
@@ -1011,7 +1013,7 @@
                     state.seo = res.data.seo;
                     renderPackToggles(state.status);
                     markSeoBaseline();
-                    showMessage('SEO settings saved');
+                    showMessage(t('discovery_js_seo_settings_saved', 'SEO settings saved'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1028,7 +1030,7 @@
                     if ($('#disc-seo-title-suffix')) $('#disc-seo-title-suffix').value = proposal.title_suffix || '';
                     renderSeoPreviews();
                     updateSeoStickyBar();
-                    showMessage('Proposed defaults — review and save');
+                    showMessage(t('discovery_js_proposed_defaults', 'Proposed defaults — review and save'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1051,7 +1053,9 @@
         if (pub) {
             pub.addEventListener('click', function () {
                 var live = !!(state.status && state.status.packs && state.status.packs.seo && state.status.packs.seo.live);
-                publishSeoFlow(live ? 'SEO updates published' : 'SEO published')
+                publishSeoFlow(live
+                    ? t('discovery_js_seo_updates_published', 'SEO updates published')
+                    : t('discovery_js_seo_published', 'SEO published'))
                     .catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1062,7 +1066,7 @@
                     state.status = res.data;
                     updatePackTabDots(res.data);
                     renderPackToggles(res.data);
-                    showMessage('SEO unpublished');
+                    showMessage(t('discovery_js_seo_unpublished', 'SEO unpublished'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1093,7 +1097,7 @@
                     if (res.status !== 'ok') throw new Error(res.message);
                     state.status = res.data;
                     renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
-                    showMessage('Verify checklist updated');
+                    showMessage(t('discovery_js_verify_updated', 'Verify checklist updated'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1121,7 +1125,7 @@
         load().then(function () {
             initApEmbed();
         }).catch(function (e) {
-            showMessage(e.message || 'Could not load Discovery', true);
+            showMessage(e.message || t('discovery_js_load_discovery_failed', 'Could not load Discovery'), true);
             initApEmbed();
         });
     }
