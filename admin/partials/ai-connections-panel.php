@@ -206,41 +206,41 @@
         <div class="modal" id="add-mcp-modal">
           <div class="modal-content modal--md">
             <div class="modal-header">
-              <h2 id="mcp-modal-title">Add AI agent</h2>
-              <button class="btn-icon modal-close" data-mcp-modal-close aria-label="Close">
+              <h2 id="mcp-modal-title"><?= htmlspecialchars(__('admin.ai_mcp_modal_title')) ?></h2>
+              <button class="btn-icon modal-close" data-mcp-modal-close aria-label="<?= htmlspecialchars(__('admin.close')) ?>">
                 <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
             </div>
             <form id="add-mcp-form" class="modal-body">
               <fieldset class="u-stack-3">
-                <legend class="u-label u-mb-2">What type of agent do you need?</legend>
-                <div class="u-grid-auto-sm" role="radiogroup" aria-label="Agent type">
+                <legend class="u-label u-mb-2"><?= htmlspecialchars(__('admin.ai_mcp_agent_type_legend')) ?></legend>
+                <div class="u-grid-auto-sm" role="radiogroup" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_agent_type_aria')) ?>">
                   <label class="mcp-agent-type-option">
                     <input type="radio" name="agent_type" value="personal" id="mcp-agent-type-personal" checked>
                     <span class="mcp-agent-type-card">
-                      <span class="mcp-agent-type-name">Personal <span class="badge badge-success">Dynamic</span></span>
-                      <span class="mcp-agent-type-desc">Each user connects with <strong>their own</strong> Birkly role and permissions. One shared URL for the whole team.</span>
+                      <span class="mcp-agent-type-name"><?= htmlspecialchars(__('admin.ai_mcp_personal_name')) ?> <span class="badge badge-success"><?= htmlspecialchars(__('admin.ai_mcp_badge_dynamic')) ?></span></span>
+                      <span class="mcp-agent-type-desc"><?= htmlspecialchars(__('admin.ai_mcp_personal_desc')) ?></span>
                     </span>
                   </label>
                   <label class="mcp-agent-type-option">
                     <input type="radio" name="agent_type" value="service" id="mcp-agent-type-service">
                     <span class="mcp-agent-type-card">
-                      <span class="mcp-agent-type-name">Service <span class="badge badge-info">Fixed role</span></span>
-                      <span class="mcp-agent-type-desc">A shared bot that <strong>always</strong> acts as a specific CMS role (e.g. always editor). You choose who can use it.</span>
+                      <span class="mcp-agent-type-name"><?= htmlspecialchars(__('admin.ai_mcp_service_name')) ?> <span class="badge badge-info"><?= htmlspecialchars(__('admin.ai_mcp_badge_fixed_role')) ?></span></span>
+                      <span class="mcp-agent-type-desc"><?= htmlspecialchars(__('admin.ai_mcp_service_desc')) ?></span>
                     </span>
                   </label>
                 </div>
               </fieldset>
 
               <div id="mcp-personal-agent-panel" class="u-stack-4 u-mt-4">
-                <p class="modal-intro-text">The personal connector is already set up for your site. Copy its URL and paste it in Claude, ChatGPT, or Cursor — each team member signs in with their own account.</p>
+                <p class="modal-intro-text"><?= htmlspecialchars(__('admin.ai_mcp_personal_panel_intro')) ?></p>
                 <div class="mcp-snippet-block">
-                  <span class="u-label u-text-sm">Personal connector URL</span>
+                  <span class="u-label u-text-sm"><?= htmlspecialchars(__('admin.ai_mcp_personal_url_label')) ?></span>
                   <div class="connector-url-row" id="mcp-modal-personal-url-row">
-                    <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="Click to copy">
-                      <span id="mcp-modal-personal-url-text" class="connector-url-text">Loading...</span>
+                    <button type="button" class="connector-url-value" data-copy-source="mcp-modal-personal-url-text" title="<?= htmlspecialchars(__('admin.ai_mcp_click_copy')) ?>">
+                      <span id="mcp-modal-personal-url-text" class="connector-url-text"><?= htmlspecialchars(__('admin.ai_mcp_loading')) ?></span>
                     </button>
-                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="Copy connector URL">
+                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-modal-personal-url-text" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_copy_url_aria')) ?>">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
                     </button>
                   </div>
@@ -248,68 +248,68 @@
               </div>
 
               <div id="mcp-service-agent-panel" class="u-stack-4 u-mt-4" hidden>
-                <p class="modal-intro-text">Create a shared service agent with a fixed CMS role. Choose who can see and connect to it.</p>
+                <p class="modal-intro-text"><?= htmlspecialchars(__('admin.ai_mcp_service_panel_intro')) ?></p>
 
-                <div class="u-stack-2" role="group" aria-label="Service agent presets">
+                <div class="u-stack-2" role="group" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_quick_presets')) ?>">
                   <div class="u-cluster">
-                    <span class="u-label">Quick presets</span>
-                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content">Content assistant</button>
-                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder">Site builder</button>
+                    <span class="u-label"><?= htmlspecialchars(__('admin.ai_mcp_quick_presets')) ?></span>
+                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="content"><?= htmlspecialchars(__('admin.ai_mcp_preset_content')) ?></button>
+                    <button type="button" class="btn btn-sm btn-secondary mcp-preset-btn" data-mcp-preset="site-builder"><?= htmlspecialchars(__('admin.ai_mcp_preset_site_builder')) ?></button>
                   </div>
-                  <small class="form-help">Site builder uses the <strong>Admin</strong> role so connected AI can read and write <code>project/</code> HTML, CSS, and JS alongside CMS content.</small>
+                  <small class="form-help"><?= htmlspecialchars(__('admin.ai_mcp_preset_site_builder_help')) ?></small>
                 </div>
 
                 <div class="form-group">
-                  <label for="mcp-endpoint-name">Agent name</label>
-                  <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="e.g. Content assistant">
-                  <small>A name you'll recognize later</small>
+                  <label for="mcp-endpoint-name"><?= htmlspecialchars(__('admin.ai_mcp_agent_name_label')) ?></label>
+                  <input type="text" id="mcp-endpoint-name" name="name" class="input" placeholder="<?= htmlspecialchars(__('admin.ai_mcp_agent_name_placeholder')) ?>">
+                  <small><?= htmlspecialchars(__('admin.ai_mcp_agent_name_help')) ?></small>
                 </div>
 
                 <div class="form-group">
-                  <label for="mcp-agent-description">Description <span class="u-fg-tertiary">(optional)</span></label>
-                  <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="e.g. Helps draft blog posts">
+                  <label for="mcp-agent-description"><?= htmlspecialchars(__('admin.ai_mcp_description_label')) ?> <span class="u-fg-tertiary">(<?= htmlspecialchars(__('admin.optional')) ?>)</span></label>
+                  <input type="text" id="mcp-agent-description" name="description" class="input" placeholder="<?= htmlspecialchars(__('admin.ai_mcp_description_placeholder')) ?>">
                 </div>
 
                 <div class="form-group">
                   <label for="mcp-endpoint-role">
-                    Fixed CMS role
-                    <button type="button" class="help-tip" aria-label="Role help"
-                      data-tip="Viewer = read only. Editor = suggest changes (often needs your approval). Admin = full access. This role applies to everyone who connects to this service agent.">?</button>
+                    <?= htmlspecialchars(__('admin.ai_mcp_fixed_role_label')) ?>
+                    <button type="button" class="help-tip" aria-label="<?= htmlspecialchars(__('admin.role')) ?>"
+                      data-tip="<?= htmlspecialchars(__('admin.ai_mcp_role_help_tip')) ?>">?</button>
                   </label>
                   <select id="mcp-endpoint-role" name="role" class="input">
-                    <option value="">Loading roles...</option>
+                    <option value=""><?= htmlspecialchars(__('admin.ai_conn_loading_roles')) ?></option>
                   </select>
                 </div>
 
                 <div class="form-group">
-                  <label>Who can use this agent</label>
-                  <small class="form-help">Admins always see all service agents. Select roles and/or individual users who may connect.</small>
-                  <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="Roles that can use this agent">
-                    <div class="loading-inline">Loading roles...</div>
+                  <label><?= htmlspecialchars(__('admin.ai_mcp_who_can_use')) ?></label>
+                  <small class="form-help"><?= htmlspecialchars(__('admin.ai_mcp_who_can_use_help')) ?></small>
+                  <div id="mcp-visible-roles" class="mcp-checkbox-group" role="group" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_visible_roles_aria')) ?>">
+                    <div class="loading-inline"><?= htmlspecialchars(__('admin.ai_conn_loading_roles')) ?></div>
                   </div>
                 </div>
 
                 <div class="form-group">
-                  <label>Individual users <span class="u-fg-tertiary">(optional)</span></label>
-                  <div id="mcp-allowed-users" class="mcp-checkbox-group" role="group" aria-label="Users that can use this agent">
-                    <div class="loading-inline">Loading users...</div>
+                  <label><?= htmlspecialchars(__('admin.ai_mcp_individual_users')) ?> <span class="u-fg-tertiary">(<?= htmlspecialchars(__('admin.optional')) ?>)</span></label>
+                  <div id="mcp-allowed-users" class="mcp-checkbox-group" role="group" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_allowed_users_aria')) ?>">
+                    <div class="loading-inline"><?= htmlspecialchars(__('admin.ai_mcp_loading_users')) ?></div>
                   </div>
                 </div>
 
-                <p class="settings-help">Write approvals are handled in the AI app that connects (e.g. Claude tool permissions), not in Birkly.</p>
+                <p class="settings-help"><?= htmlspecialchars(__('admin.ai_mcp_write_approvals_settings')) ?></p>
               </div>
 
               <input type="hidden" id="mcp-auth-mode" name="auth_mode" value="oauth">
 
               <div id="mcp-create-success" class="callout callout-success u-stack-3" hidden>
-                <p><strong>Service agent created!</strong> Copy the Connector URL and paste it in your AI app. Leave Client ID and Client Secret empty.</p>
+                <p><strong><?= htmlspecialchars(__('admin.ai_mcp_create_success_title')) ?></strong> <?= htmlspecialchars(__('admin.ai_mcp_create_success_body')) ?></p>
                 <div class="mcp-snippet-block">
-                  <span class="u-label u-text-sm">Connector URL</span>
+                  <span class="u-label u-text-sm"><?= htmlspecialchars(__('admin.ai_mcp_connector_url_label')) ?></span>
                   <div class="connector-url-row" id="mcp-new-connector-url-row">
-                    <button type="button" class="connector-url-value" data-copy-source="mcp-new-connector-url-text" title="Click to copy">
+                    <button type="button" class="connector-url-value" data-copy-source="mcp-new-connector-url-text" title="<?= htmlspecialchars(__('admin.ai_mcp_click_copy')) ?>">
                       <span id="mcp-new-connector-url-text" class="connector-url-text"></span>
                     </button>
-                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="Copy connector URL">
+                    <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="mcp-new-connector-url-text" aria-label="<?= htmlspecialchars(__('admin.ai_mcp_copy_url_aria')) ?>">
                       <?= birkly_icon('copy', ['size' => 16]) ?>
                     </button>
                   </div>
@@ -317,9 +317,9 @@
               </div>
 
               <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-mcp-modal-close>Cancel</button>
-                <button type="button" class="btn btn-primary" id="mcp-personal-done-btn">Use personal connector</button>
-                <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden>Create service agent</button>
+                <button type="button" class="btn btn-secondary" data-mcp-modal-close><?= htmlspecialchars(__('admin.cancel')) ?></button>
+                <button type="button" class="btn btn-primary" id="mcp-personal-done-btn"><?= htmlspecialchars(__('admin.ai_mcp_use_personal')) ?></button>
+                <button type="submit" class="btn btn-primary" id="mcp-submit-btn" hidden><?= htmlspecialchars(__('admin.ai_mcp_create_service')) ?></button>
               </div>
             </form>
           </div>

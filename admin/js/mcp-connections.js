@@ -10,6 +10,14 @@
     let serverUrl = '';
     let isAdmin = false;
     let personalAgentUrl = '';
+
+    function mcpT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     const DOCS_HELP_URL = typeof Birkly !== 'undefined' && Birkly.adminUrl
         ? Birkly.adminUrl('help') + '#mcp-connections'
         : '/admin/index.php?page=help#mcp-connections';
@@ -231,9 +239,16 @@
 
     function typeBadge(type) {
         if (type === 'personal') {
-            return '<span class="badge badge-success">Personal</span>';
+            return '<span class="badge badge-success">' + escapeHtml(mcpT('ai_mcp_type_badge_personal', 'Personal')) + '</span>';
         }
-        return '<span class="badge badge-info">Service</span>';
+        return '<span class="badge badge-info">' + escapeHtml(mcpT('ai_mcp_type_badge_service', 'Service')) + '</span>';
+    }
+
+    function roleLabel(roleId) {
+        if (roleId === 'viewer') return mcpT('ai_mcp_role_viewer', 'Viewer — read only');
+        if (roleId === 'editor') return mcpT('ai_mcp_role_editor', 'Editor — suggest edits');
+        if (roleId === 'admin') return mcpT('ai_mcp_role_admin', 'Admin — full access');
+        return roleId;
     }
 
     function visibilitySummary(agent) {
@@ -241,13 +256,13 @@
         const users = agent.allowed_users || [];
         const parts = [];
         if (roles.length) {
-            parts.push('Roles: ' + roles.join(', '));
+            parts.push(mcpT('ai_mcp_visibility_roles_prefix', 'Roles:') + ' ' + roles.join(', '));
         }
         if (users.length) {
-            parts.push(users.length + ' user(s)');
+            parts.push(mcpT('ai_mcp_visibility_user_count', '%n% user(s)').replace('%n%', String(users.length)));
         }
         if (!parts.length) {
-            return 'Admin only';
+            return mcpT('ai_mcp_admin_only', 'Admin only');
         }
         return parts.join(' · ');
     }
@@ -259,8 +274,8 @@
         if (!agent) {
             card.innerHTML = `
             <div class="empty-state empty-state-friendly">
-                <p><strong>Personal connector unavailable</strong></p>
-                <p>Refresh the page. If this persists, contact your administrator.</p>
+                <p><strong>${escapeHtml(mcpT('ai_mcp_personal_unavailable_title', 'Personal connector unavailable'))}</strong></p>
+                <p>${escapeHtml(mcpT('ai_mcp_personal_unavailable_body', 'Refresh the page. If this persists, contact your administrator.'))}</p>
             </div>`;
             return;
         }
@@ -269,26 +284,32 @@
         const statusClass = status === 'active' ? 'active' : 'inactive';
         const url = resolveConnectorUrl(agent.connector_url || serverUrl);
         const agentId = agent.id || 'ai_agent_personal';
+        const statusLabel = status === 'active'
+            ? mcpT('ai_mcp_status_active', 'Active')
+            : mcpT('ai_mcp_status_disabled', 'Disabled');
+        const toggleLabel = status === 'active'
+            ? mcpT('ai_mcp_btn_disable', 'Disable')
+            : mcpT('ai_mcp_btn_enable', 'Enable');
         const disabledNote = status === 'disabled'
-            ? '<p class="agent-disabled-note" role="alert">Personal connector is disabled. Only admins can re-enable it.</p>'
+            ? `<p class="agent-disabled-note" role="alert">${escapeHtml(mcpT('ai_mcp_personal_disabled_note', 'Personal connector is disabled. Only admins can re-enable it.'))}</p>`
             : '';
 
         card.innerHTML = `
             <div class="ai-connection-entry" data-agent-id="${escapeHtml(agentId)}">
                 <div class="ai-connection-entry-header">
-                    <strong>${escapeHtml(agent.name || 'Your personal connector')}</strong>
-                    <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Disabled'}</span>
+                    <strong>${escapeHtml(agent.name || mcpT('ai_mcp_personal_default_name', 'Your personal connector'))}</strong>
+                    <span class="mcp-endpoint-status ${statusClass}">${escapeHtml(statusLabel)}</span>
                 </div>
-                <p class="settings-help">${escapeHtml(agent.description || 'Connect Claude or ChatGPT with your own Birkly permissions. Every team member uses this same URL but signs in with their own account.')}</p>
-                <p class="settings-help mcp-approval-note"><strong>Write approvals:</strong> MCP write confirmations happen in your AI app (Cursor, Claude) — not in the Birkly Approvals tab. The built-in assistant uses a separate approval flow under Settings → Built-in assistant.</p>
+                <p class="settings-help">${escapeHtml(agent.description || mcpT('ai_mcp_personal_default_desc', 'Connect Claude or ChatGPT with your own Birkly permissions. Every team member uses this same URL but signs in with their own account.'))}</p>
+                <p class="settings-help mcp-approval-note">${escapeHtml(mcpT('ai_mcp_write_approvals_note', 'Write approvals: MCP write confirmations happen in your AI app (Cursor, Claude) — not in the Birkly Approvals tab. The built-in assistant uses a separate approval flow under Settings → Built-in assistant.'))}</p>
                 <div class="ai-connection-entry-meta">
-                    <span class="connection-role">Your role when you connect</span>
+                    <span class="connection-role">${escapeHtml(mcpT('ai_mcp_role_when_connect', 'Your role when you connect'))}</span>
                 </div>
                 ${disabledNote}
                 <div class="ai-connection-entry-setup">
                     ${renderSetupSteps(agentId, url, true)}
                 </div>
-                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-secondary" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${status === 'active' ? 'Disable' : 'Enable'}</button></div>` : ''}
+                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-secondary" data-toggle-personal-status="${status === 'active' ? 'disabled' : 'active'}">${escapeHtml(toggleLabel)}</button></div>` : ''}
             </div>`;
     }
 
@@ -297,12 +318,16 @@
         if (!list) return;
 
         if (agents.length === 0) {
+            const emptyTitle = isAdmin
+                ? mcpT('ai_mcp_empty_service_admin_title', 'No service agents yet')
+                : mcpT('ai_mcp_empty_service_user_title', 'No service agents assigned to you');
+            const emptyBody = isAdmin
+                ? mcpT('ai_mcp_empty_service_admin_body', 'Click Add agent to create a shared connection with a fixed role.')
+                : mcpT('ai_mcp_empty_service_user_body', 'Ask an admin to assign you a service agent, or use the personal connector.');
             list.innerHTML = `
             <div class="empty-state empty-state-friendly">
-                <p><strong>${isAdmin ? 'No service agents yet' : 'No service agents assigned to you'}</strong></p>
-                <p>${isAdmin
-                    ? 'Click <em>Add agent</em> to create a shared connection with a fixed role.'
-                    : 'Ask an admin to assign you a service agent, or use the personal connector.'}</p>
+                <p><strong>${escapeHtml(emptyTitle)}</strong></p>
+                <p>${escapeHtml(emptyBody)}</p>
             </div>`;
             return;
         }
@@ -311,22 +336,26 @@
             const status = agent.status || 'active';
             const statusClass = status === 'active' ? 'active' : 'inactive';
             const url = resolveConnectorUrl(agent.connector_url || serverUrl);
+            const statusLabel = status === 'active'
+                ? mcpT('ai_mcp_status_active', 'Active')
+                : mcpT('ai_mcp_status_inactive', 'Inactive');
+            const fixedRole = mcpT('ai_mcp_fixed_role_prefix', 'Fixed role:') + ' ' + (agent.role || 'viewer');
 
             return `
             <div class="ai-connection-entry" data-agent-id="${escapeHtml(agent.id)}">
                 <div class="ai-connection-entry-header">
                     <strong>${escapeHtml(agent.name || agent.id)}</strong>
-                    <span class="mcp-endpoint-status ${statusClass}">${status === 'active' ? 'Active' : 'Inactive'}</span>
+                    <span class="mcp-endpoint-status ${statusClass}">${escapeHtml(statusLabel)}</span>
                 </div>
                 ${agent.description ? `<p class="settings-help">${escapeHtml(agent.description)}</p>` : ''}
                 <div class="ai-connection-entry-meta">
-                    <span class="connection-role">Fixed role: ${escapeHtml(agent.role || 'viewer')}</span>
+                    <span class="connection-role">${escapeHtml(fixedRole)}</span>
                     ${isAdmin ? `<span class="agent-visibility">${escapeHtml(visibilitySummary(agent))}</span>` : ''}
                 </div>
                 <div class="ai-connection-entry-setup">
                     ${renderSetupSteps(agent.id, url, false)}
                 </div>
-                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">Remove</button></div>` : ''}
+                ${isAdmin ? `<div class="ai-connection-entry-actions"><button type="button" class="btn btn-sm btn-danger" data-revoke-endpoint="${escapeHtml(agent.id)}">${escapeHtml(mcpT('ai_mcp_btn_remove', 'Remove'))}</button></div>` : ''}
             </div>`;
         }).join('');
     }
@@ -367,11 +396,11 @@
                 if (open) {
                     panel.removeAttribute('hidden');
                     this.setAttribute('aria-expanded', 'true');
-                    this.textContent = 'Hide Connector URL';
+                    this.textContent = mcpT('ai_mcp_hide_connector_url', 'Hide Connector URL');
                 } else {
                     panel.setAttribute('hidden', '');
                     this.setAttribute('aria-expanded', 'false');
-                    this.textContent = 'Show Connector URL';
+                    this.textContent = mcpT('ai_mcp_show_connector_url', 'Show Connector URL');
                 }
             });
         });
@@ -393,10 +422,10 @@
         const insecureClass = connectorUrlIsUsable(url) ? '' : ' mcp-url-insecure';
         return `
         <div class="connector-url-row${insecureClass}">
-            <button type="button" class="connector-url-value" data-copy-source="${escapeHtml(textId)}" title="Click to copy">
+            <button type="button" class="connector-url-value" data-copy-source="${escapeHtml(textId)}" title="${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}">
                 <span id="${escapeHtml(textId)}" class="connector-url-text">${escapeHtml(url)}</span>
             </button>
-            <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="${escapeHtml(textId)}" aria-label="Copy connector URL">
+            <button type="button" class="btn-icon connector-url-copy-icon" data-copy-source="${escapeHtml(textId)}" aria-label="${escapeHtml(mcpT('ai_mcp_copy_url_aria', 'Copy connector URL'))}">
                 ${copyIconHtml()}
             </button>
         </div>`;
@@ -426,24 +455,24 @@
         const url = connectorUrlOverride || resolveConnectorUrl(serverUrl);
         const httpWarning = connectorUrlIsUsable(url) ? '' : `
         <p class="mcp-http-url-warning" role="alert">
-            <strong>This URL uses HTTP.</strong> Claude will reject it — open Birkly with <code>https://</code> and copy the URL again.
+            ${escapeHtml(mcpT('ai_mcp_http_url_warning', 'This URL uses HTTP. Claude will reject it — open Birkly with https:// and copy the URL again.'))}
         </p>`;
         const personalNote = isPersonal
-            ? 'Sign in with <strong>your</strong> Birkly account — permissions follow your role.'
-            : 'This service agent uses a <strong>fixed role</strong> set by your admin.';
+            ? mcpT('ai_mcp_setup_personal_note', 'Sign in with your Birkly account — permissions follow your role.')
+            : mcpT('ai_mcp_setup_service_note', 'This service agent uses a fixed role set by your admin.');
 
         // Kept intentionally brief: exact menu paths in Claude/ChatGPT/Cursor
         // change often, so the canonical steps live in the linked guide
         // instead of going stale here (P56-R2 #7).
         return `
         <ol class="endpoint-setup-steps">
-            <li>Copy the <strong>Connector URL</strong> below and add it as a remote MCP server in your AI app — leave Client ID/Secret empty (OAuth is automatic).</li>
-            <li>${personalNote}</li>
-            <li><a href="${escapeHtml(DOCS_HELP_URL)}">Full setup guide</a> for Claude, ChatGPT, and Cursor.</li>
+            <li>${escapeHtml(mcpT('ai_mcp_setup_step1', 'Copy the Connector URL below and add it as a remote MCP server in your AI app — leave Client ID/Secret empty (OAuth is automatic).'))}</li>
+            <li>${escapeHtml(personalNote)}</li>
+            <li><a href="${escapeHtml(DOCS_HELP_URL)}">${escapeHtml(mcpT('ai_mcp_setup_guide', 'Full setup guide'))}</a></li>
         </ol>
         ${httpWarning}
         <div class="mcp-snippet-block">
-            <span class="u-label u-text-sm">Connector URL</span>
+            <span class="u-label u-text-sm">${escapeHtml(mcpT('ai_mcp_connector_url_label', 'Connector URL'))}</span>
             ${renderConnectorUrlRow(endpointId, url)}
         </div>`;
     }
@@ -473,7 +502,7 @@
         const modalUrl = document.getElementById('mcp-modal-personal-url-text');
         const modalRow = document.getElementById('mcp-modal-personal-url-row');
         if (modalUrl) {
-            modalUrl.textContent = personalAgentUrl || 'Loading...';
+            modalUrl.textContent = personalAgentUrl || mcpT('ai_mcp_loading', 'Loading…');
         }
         if (modalRow) {
             modalRow.classList.toggle('mcp-url-insecure', personalAgentUrl && !connectorUrlIsUsable(personalAgentUrl));
@@ -488,7 +517,7 @@
         if (panel && toggle) {
             panel.removeAttribute('hidden');
             toggle.setAttribute('aria-expanded', 'true');
-            toggle.textContent = 'Hide Connector URL';
+            toggle.textContent = mcpT('ai_mcp_hide_connector_url', 'Hide Connector URL');
         }
         card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -510,7 +539,7 @@
 
         const submitBtn = document.getElementById('mcp-submit-btn');
         if (submitBtn) {
-            submitBtn.textContent = 'Create service agent';
+            submitBtn.textContent = mcpT('ai_mcp_create_service', 'Create service agent');
             submitBtn.disabled = false;
         }
 
@@ -537,15 +566,15 @@
         const roleSelect = document.getElementById('mcp-endpoint-role');
 
         if (preset === 'site-builder') {
-            if (nameInput) nameInput.value = 'Site builder';
-            if (descInput) descInput.value = 'Build and edit project/ HTML, CSS, and JS with CMS content tools';
+            if (nameInput) nameInput.value = mcpT('ai_mcp_preset_site_builder_name', 'Site builder');
+            if (descInput) descInput.value = mcpT('ai_mcp_preset_site_builder_desc', 'Build and edit project/ HTML, CSS, and JS with CMS content tools');
             if (roleSelect) roleSelect.value = 'admin';
             return;
         }
 
         if (preset === 'content') {
-            if (nameInput) nameInput.value = 'Content assistant';
-            if (descInput) descInput.value = 'Draft and edit CMS collections and entries';
+            if (nameInput) nameInput.value = mcpT('ai_mcp_preset_content', 'Content assistant');
+            if (descInput) descInput.value = mcpT('ai_mcp_preset_content_desc', 'Draft and edit CMS collections and entries');
             if (roleSelect) roleSelect.value = 'editor';
         }
     }
@@ -555,9 +584,9 @@
         if (!select) return;
 
         const legacyRoles = [
-            { id: 'viewer', name: 'Viewer — read only' },
-            { id: 'editor', name: 'Editor — suggest edits' },
-            { id: 'admin', name: 'Admin — full access' }
+            { id: 'viewer', name: roleLabel('viewer') },
+            { id: 'editor', name: roleLabel('editor') },
+            { id: 'admin', name: roleLabel('admin') }
         ];
 
         try {
@@ -570,9 +599,9 @@
             select.innerHTML = roles.map(role => {
                 const roleId = role.id || role.name || '';
                 let label = role.name || roleId;
-                if (roleId === 'viewer') label = 'Viewer — read only';
-                if (roleId === 'editor') label = 'Editor — suggest edits';
-                if (roleId === 'admin') label = 'Admin — full access';
+                if (roleId === 'viewer' || roleId === 'editor' || roleId === 'admin') {
+                    label = roleLabel(roleId);
+                }
                 return `<option value="${escapeHtml(roleId)}">${escapeHtml(label)}</option>`;
             }).join('');
 
@@ -598,8 +627,8 @@
         const usersContainer = document.getElementById('mcp-allowed-users');
         if (!rolesContainer || !usersContainer) return;
 
-        rolesContainer.innerHTML = '<div class="loading-inline">Loading roles...</div>';
-        usersContainer.innerHTML = '<div class="loading-inline">Loading users...</div>';
+        rolesContainer.innerHTML = '<div class="loading-inline">' + escapeHtml(mcpT('ai_conn_loading_roles', 'Loading roles…')) + '</div>';
+        usersContainer.innerHTML = '<div class="loading-inline">' + escapeHtml(mcpT('ai_mcp_loading_users', 'Loading users…')) + '</div>';
 
         const roles = await loadRoles();
         rolesContainer.innerHTML = roles.map(role => {
@@ -614,7 +643,7 @@
             const users = (result.status === 'ok' && result.data?.users) ? result.data.users : [];
 
             if (!users.length) {
-                usersContainer.innerHTML = '<p class="u-fg-secondary">No users available.</p>';
+                usersContainer.innerHTML = '<p class="u-fg-secondary">' + escapeHtml(mcpT('ai_mcp_no_users', 'No users available.')) + '</p>';
                 return;
             }
 
@@ -623,7 +652,7 @@
                 return `<label class="mcp-checkbox-label"><input type="checkbox" name="allowed_users" value="${escapeHtml(user.id)}"> ${escapeHtml(label)} <span class="u-fg-secondary">(${escapeHtml(user.role || '')})</span></label>`;
             }).join('');
         } catch (error) {
-            usersContainer.innerHTML = '<p class="u-fg-secondary">Could not load users.</p>';
+            usersContainer.innerHTML = '<p class="u-fg-secondary">' + escapeHtml(mcpT('ai_mcp_users_load_failed', 'Could not load users.')) + '</p>';
         }
     }
 
@@ -671,7 +700,7 @@
             if (result && result.status === 'ok') {
                 const agentId = result.data?.agent?.id || '';
                 const agentUrl = result.data?.agent?.connector_url || serverUrl;
-                if (submitBtn) submitBtn.textContent = 'Done — close when ready';
+                if (submitBtn) submitBtn.textContent = mcpT('ai_mcp_done_close', 'Done — close when ready');
                 await loadEndpoints();
                 const successPanel = document.getElementById('mcp-create-success');
                 const urlText = document.getElementById('mcp-new-connector-url-text');
@@ -691,19 +720,19 @@
                         if (panel && toggle) {
                             panel.removeAttribute('hidden');
                             toggle.setAttribute('aria-expanded', 'true');
-                            toggle.textContent = 'Hide Connector URL';
+                            toggle.textContent = mcpT('ai_mcp_hide_connector_url', 'Hide Connector URL');
                             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                         }
                     }, 300);
                 }
-                showToast('Service agent created! Copy the Connector URL into your AI app.');
+                showToast(mcpT('ai_mcp_service_toast_created', 'Service agent created! Copy the Connector URL into your AI app.'));
             } else {
-                showToast(result?.message || 'Could not create connection', true);
+                showToast(result?.message || mcpT('ai_mcp_toast_create_failed', 'Could not create connection'), true);
                 if (submitBtn) submitBtn.disabled = false;
             }
         } catch (error) {
             console.error('Error creating connection:', error);
-            showToast('Something went wrong. Please try again.', true);
+            showToast(mcpT('ai_mcp_toast_generic_error', 'Something went wrong. Please try again.'), true);
             if (submitBtn) submitBtn.disabled = false;
         }
     }
@@ -725,13 +754,15 @@
             });
             const result = await response.json();
             if (result.status === 'ok') {
-                showToast(newStatus === 'active' ? 'Personal connector enabled.' : 'Personal connector disabled.');
+                showToast(newStatus === 'active'
+                    ? mcpT('ai_mcp_personal_toast_enabled', 'Personal connector enabled.')
+                    : mcpT('ai_mcp_personal_toast_disabled', 'Personal connector disabled.'));
                 loadEndpoints();
             } else {
-                showToast(result.message || 'Could not update personal connector', true);
+                showToast(result.message || mcpT('ai_mcp_toast_update_personal_failed', 'Could not update personal connector'), true);
             }
         } catch (error) {
-            showToast('Something went wrong.', true);
+            showToast(mcpT('ai_mcp_toast_generic_error', 'Something went wrong. Please try again.'), true);
         }
     }
 
@@ -742,7 +773,7 @@
 
     async function revokeAgent(agentId) {
         if (!agentId || !isAdmin) return;
-        if (!(await BirklyFeedback.confirm('Remove this service agent? Your AI app will no longer access your site through it.'))) {
+        if (!(await BirklyFeedback.confirm(mcpT('ai_mcp_revoke_confirm', 'Remove this service agent? Your AI app will no longer access your site through it.')))) {
             return;
         }
 
@@ -757,18 +788,18 @@
             try {
                 result = await response.json();
             } catch (parseErr) {
-                showToast('Server returned an invalid response. Try again.', true);
+                showToast(mcpT('ai_mcp_toast_invalid_response', 'Server returned an invalid response. Try again.'), true);
                 return;
             }
 
             if (result.status === 'ok') {
-                showToast('Service agent removed.');
+                showToast(mcpT('ai_mcp_service_toast_removed', 'Service agent removed.'));
                 loadEndpoints();
             } else {
-                showToast(result.message || 'Could not remove agent', true);
+                showToast(result.message || mcpT('ai_mcp_toast_remove_failed', 'Could not remove agent'), true);
             }
         } catch (error) {
-            showToast('Something went wrong.', true);
+            showToast(mcpT('ai_mcp_toast_generic_error', 'Something went wrong. Please try again.'), true);
         }
     }
 
@@ -783,9 +814,9 @@
                 return;
             }
             if (isHttp) {
-                showToast('Copied. Claude requires HTTPS for remote connectors.');
+                showToast(mcpT('ai_mcp_toast_copied_https', 'Copied. Claude requires HTTPS for remote connectors.'));
             } else {
-                showToast('Copied to clipboard!');
+                showToast(mcpT('ai_mcp_toast_copied', 'Copied to clipboard!'));
             }
         };
 
@@ -816,7 +847,7 @@
             document.execCommand('copy');
             if (done) done();
         } catch (err) {
-            showToast('Could not copy — please select the text manually.', true);
+            showToast(mcpT('ai_mcp_copy_failed', 'Could not copy — please select the text manually.'), true);
         }
         document.body.removeChild(textarea);
     }
@@ -830,7 +861,7 @@
             document.execCommand('copy');
             if (done) done();
         } catch (err) {
-            showToast('Could not copy — please select the text manually.', true);
+            showToast(mcpT('ai_mcp_copy_failed', 'Could not copy — please select the text manually.'), true);
         }
     }
 

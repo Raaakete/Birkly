@@ -307,11 +307,11 @@
             const apiUrl = document.getElementById('connection-api-url')?.value || '';
 
             if (provider === 'custom' && !apiUrl) {
-                showWizardError('API URL is required for custom providers.');
+                showWizardError(aiT('ai_conn_js_api_url_required', 'API URL is required for custom providers.'));
                 return;
             }
             if (provider !== 'ollama' && !apiKey) {
-                showWizardError('API key is required. Consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access — get a key from your provider\'s developer console.');
+                showWizardError(aiT('ai_conn_js_api_key_required_wizard', 'API key is required. Consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access — get a key from your provider\'s developer console.'));
                 return;
             }
             if (provider !== 'ollama' && !connectionTestPassed) {
@@ -483,12 +483,12 @@
 
         updateModelPickerVisibility(provider);
         if (provider === 'custom') {
-            setModelPickerStatus('Enter the model ID required by your endpoint.');
+            setModelPickerStatus(aiT('ai_conn_js_enter_model_id', 'Enter the model ID required by your endpoint.'));
             return null;
         }
 
         if (!canFetchModelsForProvider(provider)) {
-            setModelPickerStatus('Enter your API key to load models from ' + (providersCache?.[provider]?.name || provider) + '.');
+            setModelPickerStatus(aiT('ai_conn_js_enter_api_key_load_models', 'Enter your API key to load models from %s.').replace('%s', (providersCache?.[provider]?.name || provider)));
             renderModelPickerList([], '');
             return null;
         }
@@ -513,7 +513,7 @@
             });
             const result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || 'Failed to load models');
+                throw new Error(result.message || aiT('ai_conn_js_failed_load_models', 'Failed to load models'));
             }
 
             providerModelsCache = result.data?.models || [];
@@ -531,7 +531,7 @@
         } catch (error) {
             providerModelsCache = [];
             renderModelPickerList([], '');
-            setModelPickerStatus(error.message || 'Could not load models', 'error');
+            setModelPickerStatus(error.message || aiT('ai_conn_js_could_not_load_models', 'Could not load models'), 'error');
             return null;
         } finally {
             modelPickerLoading = false;
@@ -753,7 +753,7 @@
                 setModelPickerStatus(
                     canFetchModelsWithoutKey(provider)
                         ? 'Loading models…'
-                        : 'Enter your API key, then test the connection to load models.'
+                        : aiT('ai_conn_js_enter_api_key_test_load_models', 'Enter your API key, then test the connection to load models.')
                 );
             }
         }
@@ -824,7 +824,7 @@
                     }
                 }
                 if (apiUrlHint && provider === 'ollama') {
-                    apiUrlHint.textContent = 'Local Ollama URL (default: http://localhost:11434/api/chat)';
+                    apiUrlHint.textContent = aiT('ai_conn_js_ollama_api_url_hint', 'Local Ollama URL (default: http://localhost:11434/api/chat)');
                 }
             } else {
                 apiUrlGroup.style.display = 'none';
@@ -870,11 +870,11 @@
                 return;
             }
             if (provider === 'custom' && !apiUrl) {
-                showWizardError('API URL is required for custom providers.');
+                showWizardError(aiT('ai_conn_js_api_url_required', 'API URL is required for custom providers.'));
                 return;
             }
             if (provider !== 'ollama' && !apiKey) {
-                showWizardError('API key is required.');
+                showWizardError(aiT('ai_conn_js_api_key_required', 'API key is required.'));
                 return;
             }
             if (!connectionTestPassed) {
@@ -954,45 +954,45 @@
                 }));
             } else {
                 const providerErr = result?.data?.provider_error;
-                showError(formatSaveError(providerErr || result?.message || 'Unknown error'));
+                showError(formatSaveError(providerErr || result?.message || aiT('ai_conn_js_unknown_error', 'Unknown error')));
             }
         } catch (error) {
             console.error('Error saving connection:', error);
-            showError('Could not reach the server. Check your network connection and try again.');
+            showError(aiT('ai_conn_js_save_network_error', 'Could not reach the server. Check your network connection and try again.'));
         }
     }
 
     function formatSaveError(message) {
         const m = String(message);
         if (m.includes('Invalid API key') || m.includes('HTTP 401') || m.includes('HTTP 403')) {
-            return 'Invalid API key. Make sure you copied the key from your provider\'s developer console — ChatGPT Plus and Claude Pro subscriptions do not include API access.';
+            return aiT('ai_conn_js_err_invalid_api_key', 'Invalid API key. Make sure you copied the key from your provider\'s developer console — ChatGPT Plus and Claude Pro subscriptions do not include API access.');
         }
         if (m.includes('rate limit') || m.includes('HTTP 429')) {
-            return 'Rate limited by the provider. Wait a moment and try again, or check your API plan limits.';
+            return aiT('ai_conn_js_err_rate_limit', 'Rate limited by the provider. Wait a moment and try again, or check your API plan limits.');
         }
         if (m.includes('HTTP 404') || m.includes('not found')) {
-            return 'Provider rejected the request — the model may be retired. Try another model (e.g. gemini-2.5-flash for Gemini). Details: ' + m;
+            return aiT('ai_conn_js_err_model_retired', 'Provider rejected the request — the model may be retired. Try another model (e.g. gemini-2.5-flash for Gemini). Details: %s').replace('%s', m);
         }
         if (m.includes('402') || m.toLowerCase().includes('insufficient') || m.toLowerCase().includes('credit')) {
-            return 'API key looks valid, but the provider account may need credits before chat works.';
+            return aiT('ai_conn_js_err_insufficient_credits', 'API key looks valid, but the provider account may need credits before chat works.');
         }
         if (m.includes('Unsupported provider')) {
-            return 'This provider is not supported for outbound connections.';
+            return aiT('ai_conn_js_err_unsupported_provider', 'This provider is not supported for outbound connections.');
         }
         if (m.includes('already exists')) {
-            return 'You already have a connection for this provider. Edit the existing connection or delete it first.';
+            return aiT('ai_conn_js_err_already_exists', 'You already have a connection for this provider. Edit the existing connection or delete it first.');
         }
         if (m.includes('API key is required')) {
-            return 'API key is required. Get one from your provider\'s developer portal (not from a consumer subscription).';
+            return aiT('ai_conn_js_err_api_key_required', 'API key is required. Get one from your provider\'s developer portal (not from a consumer subscription).');
         }
         if (m.includes('API URL is required')) {
-            return 'API URL is required for custom providers.';
+            return aiT('ai_conn_js_err_api_url_required', 'API URL is required for custom providers.');
         }
         if (m.includes('Cannot reach Ollama') || m.includes('Ollama returned')) {
-            return 'Cannot reach Ollama. Ensure it is running and the URL is correct from the Birkly server (not just your browser).';
+            return aiT('ai_conn_js_err_ollama_unreachable', 'Cannot reach Ollama. Ensure it is running and the URL is correct from the Birkly server (not just your browser).');
         }
         if (m.includes('validation failed')) {
-            return m.replace('API key validation failed: ', 'Connection test failed: ');
+            return m.replace('API key validation failed: ', aiT('ai_conn_js_err_validation_failed_prefix', 'Connection test failed: '));
         }
         return m;
     }
@@ -1070,7 +1070,7 @@
             modal.style.display = 'flex';
         } catch (error) {
             console.error('Error loading connection for edit:', error);
-            showError('Error loading connection details');
+            showError(aiT('ai_conn_js_load_edit_error', 'Error loading connection details'));
         }
     }
 
@@ -1090,22 +1090,22 @@
             try {
                 result = await response.json();
             } catch (parseErr) {
-                showError('Server returned an invalid response. Check that you are logged in and try again.');
+                showError(aiT('ai_conn_js_invalid_server_response', 'Server returned an invalid response. Check that you are logged in and try again.'));
                 return;
             }
 
             if (result.status === 'ok') {
-                showSuccess('Connection deleted');
+                showSuccess(aiT('ai_conn_js_connection_deleted', 'Connection deleted'));
                 loadConnections();
                 window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
                     detail: { action: 'delete', id: connectionId }
                 }));
             } else {
-                showError('Failed to delete: ' + (result.message || 'Unknown error'));
+                showError(aiT('ai_conn_js_delete_failed', 'Failed to delete: %s').replace('%s', (result.message || aiT('ai_conn_js_unknown_error', 'Unknown error'))));
             }
         } catch (error) {
             console.error('Error deleting connection:', error);
-            showError('Could not reach the server. Check your connection and try again.');
+            showError(aiT('ai_conn_js_delete_network_error', 'Could not reach the server. Check your connection and try again.'));
         }
     }
 
