@@ -138,17 +138,20 @@
 
         const lines = [message];
         if (details.provider_label || details.provider) {
-            lines.push(
-                'Provider: ' + (details.provider_label || details.provider)
-                + (details.model ? ' · Model: ' + details.model : '')
-                + (details.http_code ? ' · HTTP ' + details.http_code : '')
-            );
+            const provider = details.provider_label || details.provider;
+            let modelPart = details.model ? chatT('ai_chat_js_err_model_part', ' · Model: {model}', { model: details.model }) : '';
+            let httpPart = details.http_code ? chatT('ai_chat_js_err_http_part', ' · HTTP {code}', { code: details.http_code }) : '';
+            lines.push(chatT('ai_chat_js_err_provider', 'Provider: {provider}{model}{http}', {
+                provider: provider,
+                model: modelPart,
+                http: httpPart,
+            }));
         }
         if (details.provider_message && !message.includes(details.provider_message)) {
-            lines.push('Details: ' + details.provider_message);
+            lines.push(chatT('ai_chat_js_err_details_prefix', 'Details: {message}', { message: details.provider_message }));
         }
         if (details.hint) {
-            lines.push('Hint: ' + details.hint);
+            lines.push(chatT('ai_chat_js_err_hint_prefix', 'Hint: {hint}', { hint: details.hint }));
         }
         return lines.join('\n\n');
     }
@@ -591,7 +594,9 @@
 
         list.innerHTML = consoleLogs.map(function (entry) {
             const level = entry.level || 'info';
-            const levelLabel = level.charAt(0).toUpperCase() + level.slice(1);
+            const levelKey = 'ai_chat_js_console_level_' + level;
+            const levelFallback = level.charAt(0).toUpperCase() + level.slice(1);
+            const levelLabel = chatT(levelKey, levelFallback);
             const detailsText = formatConsoleDetails(entry.details);
             const detailsHtml = detailsText
                 ? '<pre class="ai-chat-console-details">' + escapeHtml(detailsText) + '</pre>'
@@ -1549,7 +1554,7 @@
             const iconName = item.type === 'image' ? 'image' : 'file-text';
             return '<span class="chip ai-chat-attachment-chip">' + icon(iconName, { size: 14 }) +
                 '<span class="u-truncate">' + escapeHtml(item.name) + '</span>' +
-                '<button type="button" class="chip-remove" data-remove-attachment="' + index + '" aria-label="Remove">×</button></span>';
+                '<button type="button" class="chip-remove" data-remove-attachment="' + index + '" aria-label="' + escapeHtml(chatT('ai_chat_js_remove_attachment', 'Remove')) + '">×</button></span>';
         }).join('');
         list.querySelectorAll('[data-remove-attachment]').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -2281,23 +2286,47 @@
 
         if (page === 'entry-editor' && collection) {
             const actions = [
-                { label: 'Summarize entry', prompt: 'Summarize this entry in 2-3 sentences.' },
-                { label: 'Suggest title', prompt: 'Suggest a clearer, SEO-friendly title for this entry.' },
-                { label: 'Fix grammar', prompt: 'Fix grammar and spelling in the main text fields of this entry. List suggested changes before applying.' }
+                {
+                    label: chatT('ai_chat_js_qa_summarize_entry', 'Summarize entry'),
+                    prompt: chatT('ai_chat_js_qa_prompt_summarize_entry', 'Summarize this entry in 2-3 sentences.'),
+                },
+                {
+                    label: chatT('ai_chat_js_qa_suggest_title', 'Suggest title'),
+                    prompt: chatT('ai_chat_js_qa_prompt_suggest_title', 'Suggest a clearer, SEO-friendly title for this entry.'),
+                },
+                {
+                    label: chatT('ai_chat_js_qa_fix_grammar', 'Fix grammar'),
+                    prompt: chatT('ai_chat_js_qa_prompt_fix_grammar', 'Fix grammar and spelling in the main text fields of this entry. List suggested changes before applying.'),
+                },
             ];
             if (entryId) {
-                actions.push({ label: 'Improve excerpt', prompt: 'Write a short excerpt or meta description for this entry.' });
+                actions.push({
+                    label: chatT('ai_chat_js_qa_improve_excerpt', 'Improve excerpt'),
+                    prompt: chatT('ai_chat_js_qa_prompt_improve_excerpt', 'Write a short excerpt or meta description for this entry.'),
+                });
             } else {
-                actions.unshift({ label: 'Draft from outline', prompt: 'Help me draft this new entry. Ask what topic I want, then suggest field content.' });
+                actions.unshift({
+                    label: chatT('ai_chat_js_qa_draft_outline', 'Draft from outline'),
+                    prompt: chatT('ai_chat_js_qa_prompt_draft_outline', 'Help me draft this new entry. Ask what topic I want, then suggest field content.'),
+                });
             }
             return actions;
         }
 
         if (page === 'entries' && collection) {
             return [
-                { label: 'Summarize collection', prompt: 'Summarize the entries in this collection. Highlight themes and gaps.' },
-                { label: 'Suggest entries', prompt: 'Suggest 5 new entry ideas for this collection with titles and brief outlines.' },
-                { label: 'Find duplicates', prompt: 'Check this collection for possible duplicate or very similar entries.' }
+                {
+                    label: chatT('ai_chat_js_qa_summarize_collection', 'Summarize collection'),
+                    prompt: chatT('ai_chat_js_qa_prompt_summarize_collection', 'Summarize the entries in this collection. Highlight themes and gaps.'),
+                },
+                {
+                    label: chatT('ai_chat_js_qa_suggest_entries', 'Suggest entries'),
+                    prompt: chatT('ai_chat_js_qa_prompt_suggest_entries', 'Suggest 5 new entry ideas for this collection with titles and brief outlines.'),
+                },
+                {
+                    label: chatT('ai_chat_js_qa_find_duplicates', 'Find duplicates'),
+                    prompt: chatT('ai_chat_js_qa_prompt_find_duplicates', 'Check this collection for possible duplicate or very similar entries.'),
+                },
             ];
         }
 
@@ -2581,6 +2610,16 @@
         return html;
     }
     
+    function formatApprovalStatusLabel(status) {
+        const map = {
+            pending: chatT('ai_chat_js_status_pending', 'Pending'),
+            approved: chatT('ai_chat_js_approved', 'Approved'),
+            rejected: chatT('ai_chat_js_rejected', 'Rejected'),
+        };
+        if (map[status]) return map[status];
+        return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+
     // Add approval card to chat
     function addApprovalCard(approval) {
         const messages = document.getElementById('ai-chat-messages');
@@ -2599,19 +2638,24 @@
         const actionTypeLabel = actionType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         const description = approval.description || chatT('ai_chat_js_no_description', 'No description');
         const status = approval.status || 'pending';
-        const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
+        const statusLabel = formatApprovalStatusLabel(status);
         const statusClass = 'ai-chat-approval-status-' + status;
         
         // Format action data for display
         let actionDataHtml = '';
         if (approval.action_data) {
             const data = approval.action_data;
-            if (data.name) actionDataHtml += `<div><strong>Name:</strong> ${escapeHtml(data.name)}</div>`;
-            if (data.slug) actionDataHtml += `<div><strong>Slug:</strong> ${escapeHtml(data.slug)}</div>`;
-            if (data.collection) actionDataHtml += `<div><strong>Collection:</strong> ${escapeHtml(data.collection)}</div>`;
-            if (data.title) actionDataHtml += `<div><strong>Title:</strong> ${escapeHtml(data.title)}</div>`;
+            const labelName = chatT('name', 'Name');
+            const labelSlug = chatT('ai_chat_js_label_slug', 'Slug');
+            const labelCollection = chatT('collection', 'Collection');
+            const labelTitle = chatT('title', 'Title');
+            const labelFields = chatT('ai_chat_js_label_fields', 'Fields');
+            if (data.name) actionDataHtml += `<div><strong>${escapeHtml(labelName)}:</strong> ${escapeHtml(data.name)}</div>`;
+            if (data.slug) actionDataHtml += `<div><strong>${escapeHtml(labelSlug)}:</strong> ${escapeHtml(data.slug)}</div>`;
+            if (data.collection) actionDataHtml += `<div><strong>${escapeHtml(labelCollection)}:</strong> ${escapeHtml(data.collection)}</div>`;
+            if (data.title) actionDataHtml += `<div><strong>${escapeHtml(labelTitle)}:</strong> ${escapeHtml(data.title)}</div>`;
             if (data.fields && Array.isArray(data.fields)) {
-                actionDataHtml += `<div><strong>Fields:</strong> ${data.fields.length} field(s)</div>`;
+                actionDataHtml += `<div><strong>${escapeHtml(labelFields)}:</strong> ${escapeHtml(chatT('ai_chat_js_fields_count', '{n} field(s)', { n: data.fields.length }))}</div>`;
             }
         }
         

@@ -303,6 +303,59 @@ STRINGS: dict[str, tuple[str, str]] = {
         "Diese Änderungen können bestehende Inhalte betreffen:",
     ),
     "ui_feedback_dismiss_toast": ("Dismiss notification", "Benachrichtigung schließen"),
+    # — quick actions (entry editor / entries) —
+    "ai_chat_js_qa_summarize_entry": ("Summarize entry", "Eintrag zusammenfassen"),
+    "ai_chat_js_qa_suggest_title": ("Suggest title", "Titel vorschlagen"),
+    "ai_chat_js_qa_fix_grammar": ("Fix grammar", "Grammatik korrigieren"),
+    "ai_chat_js_qa_improve_excerpt": ("Improve excerpt", "Auszug verbessern"),
+    "ai_chat_js_qa_draft_outline": ("Draft from outline", "Entwurf aus Gliederung"),
+    "ai_chat_js_qa_summarize_collection": ("Summarize collection", "Collection zusammenfassen"),
+    "ai_chat_js_qa_suggest_entries": ("Suggest entries", "Einträge vorschlagen"),
+    "ai_chat_js_qa_find_duplicates": ("Find duplicates", "Duplikate finden"),
+    "ai_chat_js_qa_prompt_summarize_entry": (
+        "Summarize this entry in 2-3 sentences.",
+        "Fasse diesen Eintrag in 2–3 Sätzen zusammen.",
+    ),
+    "ai_chat_js_qa_prompt_suggest_title": (
+        "Suggest a clearer, SEO-friendly title for this entry.",
+        "Schlage einen klareren, SEO-freundlichen Titel für diesen Eintrag vor.",
+    ),
+    "ai_chat_js_qa_prompt_fix_grammar": (
+        "Fix grammar and spelling in the main text fields of this entry. List suggested changes before applying.",
+        "Korrigiere Grammatik und Rechtschreibung in den Haupttextfeldern dieses Eintrags. Liste Änderungsvorschläge vor der Anwendung.",
+    ),
+    "ai_chat_js_qa_prompt_improve_excerpt": (
+        "Write a short excerpt or meta description for this entry.",
+        "Schreibe einen kurzen Auszug oder eine Meta-Beschreibung für diesen Eintrag.",
+    ),
+    "ai_chat_js_qa_prompt_draft_outline": (
+        "Help me draft this new entry. Ask what topic I want, then suggest field content.",
+        "Hilf mir, diesen neuen Eintrag zu entwerfen. Frage nach dem Thema und schlage dann Feldinhalte vor.",
+    ),
+    "ai_chat_js_qa_prompt_summarize_collection": (
+        "Summarize the entries in this collection. Highlight themes and gaps.",
+        "Fasse die Einträge in dieser Collection zusammen. Hebe Themen und Lücken hervor.",
+    ),
+    "ai_chat_js_qa_prompt_suggest_entries": (
+        "Suggest 5 new entry ideas for this collection with titles and brief outlines.",
+        "Schlage 5 neue Eintragsideen für diese Collection mit Titeln und kurzen Gliederungen vor.",
+    ),
+    "ai_chat_js_qa_prompt_find_duplicates": (
+        "Check this collection for possible duplicate or very similar entries.",
+        "Prüfe diese Collection auf mögliche Duplikate oder sehr ähnliche Einträge.",
+    ),
+    "ai_chat_js_label_slug": ("Slug", "Slug"),
+    "ai_chat_js_label_fields": ("Fields", "Felder"),
+    "ai_chat_js_fields_count": ("{n} field(s)", "{n} Feld(er)"),
+    "ai_chat_js_status_pending": ("Pending", "Ausstehend"),
+    "ai_chat_js_err_provider": ("Provider: {provider}{model}{http}", "Anbieter: {provider}{model}{http}"),
+    "ai_chat_js_err_details_prefix": ("Details: {message}", "Details: {message}"),
+    "ai_chat_js_err_hint_prefix": ("Hint: {hint}", "Hinweis: {hint}"),
+    "ai_chat_js_err_model_part": (" · Model: {model}", " · Modell: {model}"),
+    "ai_chat_js_err_http_part": (" · HTTP {code}", " · HTTP {code}"),
+    "ai_chat_js_console_level_info": ("Info", "Info"),
+    "ai_chat_js_console_level_warn": ("Warn", "Warnung"),
+    "ai_chat_js_console_level_error": ("Error", "Fehler"),
 }
 
 
