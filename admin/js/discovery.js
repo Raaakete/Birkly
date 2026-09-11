@@ -48,11 +48,16 @@
         apReady: false,
     };
 
-    function t(key, fallback) {
-        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
-            return global.Birkly.i18n.t('admin.' + key, fallback);
+    function t(key, fallback, params) {
+        var text = (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function')
+            ? global.Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
         }
-        return fallback || key;
+        return text;
     }
 
     function formatDateTime(iso) {
@@ -419,7 +424,7 @@
         var lr = $('#disc-verify-last-run');
         if (lr) {
             if (lastRun) {
-                lr.textContent = 'Last run: ' + lastRun;
+                lr.textContent = t('discovery_verify_last_run', 'Last run: {time}', { time: lastRun });
                 lr.hidden = false;
             } else {
                 lr.hidden = true;
