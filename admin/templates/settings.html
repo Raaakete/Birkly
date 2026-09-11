@@ -609,11 +609,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="card-body u-stack-3">
                     <div class="u-stack-1 u-text-sm">
                       <div class="u-split">
-                        <span class="u-fg-secondary">Created</span>
+                        <span class="u-fg-secondary"><?= __('admin.created') ?></span>
                         <span><?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : __('admin.unknown') ?></span>
                       </div>
                       <div class="u-split">
-                        <span class="u-fg-secondary">Last login</span>
+                        <span class="u-fg-secondary"><?= __('admin.last_login') ?></span>
                         <span><?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : __('admin.never') ?></span>
                       </div>
                     </div>
@@ -661,7 +661,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         </button>
                         <?php endif; ?>
                         <?php if (!empty($byoaiConnections)): ?>
-                        <p class="u-text-sm u-fg-secondary">Manage built-in assistant keys under <strong>Settings → AI</strong>.</p>
+                        <p class="u-text-sm u-fg-secondary"><?= __('admin.settings_manage_builtin_assistant_keys_before') ?><strong><?= __('admin.settings_ai') ?></strong><?= __('admin.settings_manage_builtin_assistant_keys_after') ?></p>
                         <?php endif; ?>
                       <?php endif; ?>
                     </div>
@@ -714,7 +714,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <p class="card-description"><?= htmlspecialchars($role['description']) ?></p>
               <div class="u-stack-3">
                 <?php foreach ($role['permissions'] ?? [] as $resource => $actions):
-                  $resourceLabel = $resource === '*' ? 'All resources' : ucfirst(str_replace('_', ' ', (string) $resource));
+                  $resourceLabel = $resource === '*' ? __('admin.all_resources') : ucfirst(str_replace('_', ' ', (string) $resource));
                   $actionList = is_array($actions) ? $actions : [$actions];
                 ?>
                 <div class="u-stack-2">

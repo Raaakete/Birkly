@@ -303,7 +303,7 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-header">
                                             <div class="fieldtype-header-main">
                                                 <div class="fieldtype-drag-handle">
-                                                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                                                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => __('admin.drag_to_reorder')]) ?>
                                                 </div>
                                                 <div class="fieldtype-title">
                                                     <?= birkly_fieldtype_type_badge($field['type'] ?? null, $fieldtypes) ?>
@@ -743,7 +743,7 @@ if (!$cancelUrl) {
                                         <div class="info-value">
                                             <?php if ($isSubCollection): ?>
                                                 <code id="sub-collection-api-key-display">
-                                                    <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : 'Not generated yet' ?>
+                                                    <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : htmlspecialchars(__('admin.col_editor_js_api_key_not_generated')) ?>
                                                 </code>
                                                 <button type="button" id="sub-collection-generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
                                                     <?= birkly_icon('arrows-clockwise', ['size' => 14]) ?>
@@ -754,7 +754,7 @@ if (!$cancelUrl) {
                                                 <input type="hidden" name="sub_collections[0][api_key]" id="sub-collection-api_key" value="<?= htmlspecialchars($subCollectionData['api_key'] ?? '') ?>">
                                             <?php else: ?>
                                                 <code id="api-key-display">
-                                                    <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : 'Not generated yet' ?>
+                                                    <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : htmlspecialchars(__('admin.col_editor_js_api_key_not_generated')) ?>
                                                 </code>
                                                 <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
                                                     <?= birkly_icon('arrows-clockwise', ['size' => 14]) ?>
@@ -1288,7 +1288,7 @@ echo htmlspecialchars($formCode);
         <div class="fieldtype-header">
             <div class="fieldtype-header-main">
                 <div class="fieldtype-drag-handle">
-                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => __('admin.drag_to_reorder')]) ?>
                 </div>
                 <div class="fieldtype-title">
                     <span class="fieldtype-type" data-fieldtype="">
@@ -1500,6 +1500,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const fieldtypeModal = document.getElementById('fieldtype-selector-modal');
     const fieldtypeGrid = document.getElementById('fieldtype-grid');
     const closeFieldtypeModal = document.getElementById('close-fieldtype-modal');
+    const colEditorUi = {
+        confirmRemoveSubCollection: <?= json_encode(__('admin.col_editor_js_confirm_remove_sub_collection')) ?>,
+        confirmRemoveField: <?= json_encode(__('admin.col_editor_js_confirm_remove_field')) ?>,
+        copyClipboardFailed: <?= json_encode(__('admin.col_editor_js_copy_clipboard_failed')) ?>,
+        copyApiKeyFailed: <?= json_encode(__('admin.col_editor_js_copy_api_key_failed')) ?>
+    };
     const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
         ? window.BirklyCollectionEditorCore.init({
             formId: 'collection-form',
@@ -1996,7 +2002,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         }).catch(function(err) {
             console.error('Failed to copy:', err);
-            BirklyFeedback.toast('Failed to copy to clipboard', 'error');
+            BirklyFeedback.toast(colEditorUi.copyClipboardFailed, 'error');
         });
     }
     
@@ -2449,7 +2455,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 }.bind(this)).catch(function(err) {
                     console.error('Failed to copy:', err);
-                    BirklyFeedback.toast('Failed to copy API key', 'error');
+                    BirklyFeedback.toast(colEditorUi.copyApiKeyFailed, 'error');
                 });
             }
         });
@@ -2597,7 +2603,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const removeBtn = div.querySelector('.remove-sub-collection-btn');
         if (removeBtn) {
             removeBtn.addEventListener('click', async function() {
-                if (!(await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
+                if (!(await BirklyFeedback.confirm(colEditorUi.confirmRemoveSubCollection, { danger: true }))) {
                     return;
                 }
                 div.remove();
@@ -2614,7 +2620,7 @@ document.addEventListener('DOMContentLoaded', function() {
         subCollectionFieldsContainer.addEventListener('click', async function(e) {
             if (e.target.closest('.remove-sub-field-btn')) {
                 const fieldSection = e.target.closest('.fieldtype-section[data-sub-field-index]');
-                if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
+                if (fieldSection && (await BirklyFeedback.confirm(colEditorUi.confirmRemoveField, { danger: true }))) {
                     fieldSection.remove();
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();
@@ -2648,7 +2654,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.closest('.remove-sub-collection-btn')) {
                 const btn = e.target.closest('.remove-sub-collection-btn');
                 const section = btn.closest('.fieldtype-section');
-                if (section && (await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
+                if (section && (await BirklyFeedback.confirm(colEditorUi.confirmRemoveSubCollection, { danger: true }))) {
                     section.remove();
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();
@@ -2658,7 +2664,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.closest('.remove-sub-field-btn')) {
                 const btn = e.target.closest('.remove-sub-field-btn');
                 const fieldSection = btn.closest('.fieldtype-section[data-sub-field-index]');
-                if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
+                if (fieldSection && (await BirklyFeedback.confirm(colEditorUi.confirmRemoveField, { danger: true }))) {
                     fieldSection.remove();
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();

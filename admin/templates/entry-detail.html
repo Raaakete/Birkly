@@ -429,6 +429,28 @@ const entryDetailConfirmDelete = <?= json_encode(__('admin.confirm_delete')) ?>;
 const entryDetailCollection = <?= json_encode($collection['slug'] ?? '') ?>;
 const entryDetailEntryId = <?= json_encode($entry['id'] ?? '') ?>;
 const entryDetailEntriesUrl = <?= json_encode(admin_url('entries', ['collection' => $collection['slug'] ?? ''])) ?>;
+const entryDetailI18n = {
+    errorPrefix: <?= json_encode(__('admin.feedback_error_prefix')) ?>,
+    deleteFailed: <?= json_encode(__('admin.entry_detail_js_delete_failed')) ?>,
+    actionFailed: <?= json_encode(__('admin.entry_detail_js_action_failed')) ?>,
+    duplicateFailed: <?= json_encode(__('admin.entry_detail_js_duplicate_failed')) ?>,
+    bulkOperationError: <?= json_encode(__('admin.entry_detail_js_bulk_operation_error')) ?>,
+    reorderFailed: <?= json_encode(__('admin.entry_detail_js_reorder_failed')) ?>,
+    reorderRetry: <?= json_encode(__('admin.entry_detail_js_reorder_retry')) ?>,
+    unknownError: <?= json_encode(__('admin.error_unknown')) ?>,
+};
+
+function entryDetailFormat(template, params) {
+    let text = template;
+    Object.keys(params || {}).forEach(function (name) {
+        text = text.split('{' + name + '}').join(String(params[name]));
+    });
+    return text;
+}
+
+function entryDetailErrorMsg(message, fallback) {
+    return entryDetailI18n.errorPrefix + ' ' + (message || fallback);
+}
 
 function entryDetailCsrf() {
     return document.getElementById('csrf-token')?.value || '';
@@ -454,7 +476,7 @@ document.querySelector('.main-entry-table')?.addEventListener('click', async fun
             if (d.status === 'ok') {
                 window.location.href = entryDetailEntriesUrl;
             } else {
-                BirklyFeedback.toast('Error: ' + (d.message || 'Delete failed'), 'error');
+                BirklyFeedback.toast(entryDetailErrorMsg(d.message, entryDetailI18n.deleteFailed), 'error');
             }
         });
         return;
@@ -479,7 +501,7 @@ document.querySelector('.main-entry-table')?.addEventListener('click', async fun
             })
         }).then(r => r.json()).then(d => {
             if (d.status === 'ok') window.location.reload();
-            else BirklyFeedback.toast('Error: ' + (d.message || 'Action failed'), 'error');
+            else BirklyFeedback.toast(entryDetailErrorMsg(d.message, entryDetailI18n.actionFailed), 'error');
         });
         return;
     }
@@ -494,7 +516,7 @@ document.querySelector('.main-entry-table')?.addEventListener('click', async fun
             if (d.status === 'ok') {
                 window.location.reload();
             } else {
-                BirklyFeedback.toast('Error: ' + (d.message || 'Duplicate failed'), 'error');
+                BirklyFeedback.toast(entryDetailErrorMsg(d.message, entryDetailI18n.duplicateFailed), 'error');
             }
         });
         return;
@@ -542,7 +564,7 @@ document.querySelectorAll('.delete-sub-entry-btn').forEach(btn => {
             if (d.status === 'ok') {
                 location.reload();
             } else {
-                BirklyFeedback.toast('Error: ' + d.message, 'error');
+                BirklyFeedback.toast(entryDetailErrorMsg(d.message, entryDetailI18n.actionFailed), 'error');
             }
         });
     });
@@ -634,12 +656,12 @@ document.querySelectorAll('.bulk-publish-btn, .bulk-unpublish-btn, .bulk-delete-
             if (d.status === 'ok') {
                 location.reload();
             } else {
-                BirklyFeedback.toast('Error: ' + d.message, 'error');
+                BirklyFeedback.toast(entryDetailErrorMsg(d.message, entryDetailI18n.actionFailed), 'error');
             }
         })
         .catch(err => {
             console.error('Bulk operation error:', err);
-            BirklyFeedback.toast('Error performing bulk operation: ' + err.message, 'error');
+            BirklyFeedback.toast(entryDetailFormat(entryDetailI18n.bulkOperationError, { message: err.message }), 'error');
         });
     });
 });
@@ -841,10 +863,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 600);
                 }
             } else {
-                BirklyFeedback.toast('Failed to reorder entries: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(entryDetailFormat(entryDetailI18n.reorderFailed, {
+                    message: data.message || entryDetailI18n.unknownError
+                }), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to reorder entries. Please try again.', 'error');
+            BirklyFeedback.toast(entryDetailI18n.reorderRetry, 'error');
         }
     }
     
