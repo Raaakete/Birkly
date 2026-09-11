@@ -26,15 +26,15 @@
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">{translate 'admin.current_version'}</h2>
-                <span class="badge badge-info" id="current-version">Loading...</span>
+                <span class="badge badge-info" id="current-version">{translate 'admin.settings_js_loading_table'}</span>
             </div>
             <div class="card-body u-stack-3">
-                <p>{translate 'admin.version_running'} <strong id="current-version-text">Loading...</strong></p>
+                <p>{translate 'admin.version_running'} <strong id="current-version-text">{translate 'admin.settings_js_loading_table'}</strong></p>
                 <div class="kv">
                     <span class="kv-key">{translate 'admin.installation_date'}</span>
-                    <span class="kv-value" id="install-date">Unknown</span>
+                    <span class="kv-value" id="install-date">{translate 'admin.unknown'}</span>
                     <span class="kv-key">{translate 'admin.last_update'}</span>
-                    <span class="kv-value" id="last-update">Never</span>
+                    <span class="kv-value" id="last-update">{translate 'admin.never'}</span>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
             <div class="card-header">
                 <h2 class="card-title">{translate 'admin.update_status'}</h2>
                 <div id="update-status">
-                    <span class="badge badge-neutral">{translate 'admin.checking_updates'}...</span>
+                    <span class="badge badge-neutral">{translate 'admin.updates_js_checking'}</span>
                 </div>
             </div>
             <div class="card-body u-stack-3" id="update-details" hidden>
@@ -69,7 +69,7 @@
             </div>
             <div class="card-body">
                 <div id="changelog-content">
-                    <div class="loading-state"><p>Loading changelog...</p></div>
+                    <div class="loading-state"><p>{translate 'admin.loading_changelog'}</p></div>
                 </div>
             </div>
         </div>

@@ -425,7 +425,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <div class="entry-info-item entry-info-half">
                                             <div class="entry-info-label">Created By</div>
                                             <div class="entry-info-value">
-                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? 'Unknown') ?></div>
+                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? __('admin.unknown')) ?></div>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -456,7 +456,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <div class="entry-info-item entry-info-half">
                                             <div class="entry-info-label">Updated By</div>
                                             <div class="entry-info-value">
-                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? 'Unknown') ?></div>
+                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? __('admin.unknown')) ?></div>
                                             </div>
                                         </div>
                                     <?php endif; ?>

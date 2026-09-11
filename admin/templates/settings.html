@@ -610,11 +610,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <div class="u-stack-1 u-text-sm">
                       <div class="u-split">
                         <span class="u-fg-secondary">Created</span>
-                        <span><?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : 'Unknown' ?></span>
+                        <span><?= $userCreated ? date('M j, Y', strtotime((string) $userCreated)) : __('admin.unknown') ?></span>
                       </div>
                       <div class="u-split">
                         <span class="u-fg-secondary">Last login</span>
-                        <span><?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : 'Never' ?></span>
+                        <span><?= $userLastLogin ? date('M j, Y', strtotime((string) $userLastLogin)) : __('admin.never') ?></span>
                       </div>
                     </div>
                     <?php
@@ -630,7 +630,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         <ul class="data-list data-list--flush data-list--compact">
                           <?php foreach ($byoaiConnections as $connection):
                             $connectedAt = $connection['created_at'] ?? '';
-                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
+                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : __('admin.unknown');
                           ?>
                             <li class="data-list-item">
                               <span class="data-list-main">
@@ -641,7 +641,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                           <?php endforeach; ?>
                           <?php foreach ($mcpSessions as $session):
                             $connectedAt = $session['connected_at'] ?? '';
-                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : 'Unknown';
+                            $connectedLabel = $connectedAt ? date('M j, Y', strtotime((string) $connectedAt)) : __('admin.unknown');
                           ?>
                             <li class="data-list-item">
                               <span class="data-list-main">
@@ -950,7 +950,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <tbody id="webhooks-list">
                 <tr>
                   <td colspan="6">
-                    <div class="loading-state"><p>Loading...</p></div>
+                    <div class="loading-state"><p><?= __('admin.loading_webhooks') ?></p></div>
                   </td>
                 </tr>
               </tbody>
