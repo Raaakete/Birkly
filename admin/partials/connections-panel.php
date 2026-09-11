@@ -144,10 +144,10 @@
       </section>
 
       <div class="conn-wizard-actions modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal">Cancel</button>
-        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden>Back</button>
-        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next">Continue</button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden>Save connection</button>
+        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden><?= __('admin.connections_panel_wizard_back') ?></button>
+        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next"><?= __('admin.connections_panel_wizard_continue') ?></button>
+        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden><?= __('admin.connections_panel_save_connection') ?></button>
       </div>
     </form>
   </div>
@@ -157,8 +157,8 @@
 <div class="modal" id="sys-conn-http-modal" role="dialog" aria-labelledby="sys-conn-http-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
-      <h2 id="sys-conn-http-modal-title">Add HTTP credential</h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="Close">
+      <h2 id="sys-conn-http-modal-title"><?= __('admin.connections_panel_add_http_credential') ?></h2>
+      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>
@@ -192,8 +192,8 @@
       </label>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit">Save credential</button>
+        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal"><?= __('admin.cancel') ?></button>
+        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit"><?= __('admin.connections_js_save_credential') ?></button>
       </div>
     </form>
   </div>

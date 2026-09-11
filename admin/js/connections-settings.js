@@ -17,50 +17,16 @@ function connT(key, fallback, params) {
     return text;
 }
 
-    var EMAIL_PROVIDER_CARDS = {
-        log: {
-            title: 'Log only',
-            subtitle: 'Save emails to a file on this server — nothing is sent. Great for trying Birkly on your computer.',
-            badge: 'Local / testing',
-            help: 'Emails are written to logs/mail.jsonl. Use this while developing; switch to a real provider before going live.',
-        },
-        smtp: {
-            title: 'Email server (SMTP)',
-            subtitle: 'Use SMTP from your hosting company, Google Workspace, Microsoft 365, or any mail server.',
-            badge: 'Most common',
-            help: 'You will need the SMTP host, port, username, and password from your email or hosting provider.',
-        },
-        resend: {
-            title: 'Resend',
-            subtitle: 'Modern email API — sign up at resend.com, verify your domain, and paste your API key.',
-            badge: 'Recommended',
-            help: 'Create an API key in the Resend dashboard. Your sender address must use a domain you verified there.',
-        },
-        postmark: {
-            title: 'Postmark',
-            subtitle: 'Reliable transactional email — paste your Server API token from Postmark.',
-            badge: 'Transactional',
-            help: 'In Postmark, open your server → API tokens → copy the Server API token.',
-        },
-        ses: {
-            title: 'Amazon SES',
-            subtitle: 'Send through AWS Simple Email Service with your access keys and region.',
-            badge: 'AWS',
-            help: 'Create IAM credentials with SES send permissions. Use the region where your SES identity is verified.',
-        },
-        mailgun: {
-            title: 'Mailgun',
-            subtitle: 'Send via Mailgun — enter your domain and private API key.',
-            badge: 'API',
-            help: 'Find your API key and sending domain in the Mailgun control panel.',
-        },
-        mail: {
-            title: 'PHP mail()',
-            subtitle: 'Use the server built-in mail function. Often unreliable — only use if your host requires it.',
-            badge: 'Advanced',
-            help: 'Many shared hosts block or limit PHP mail(). Prefer SMTP or an email service for production.',
-        },
-    };
+    var EMAIL_PROVIDER_KEYS = ['log', 'smtp', 'resend', 'postmark', 'ses', 'mailgun', 'mail'];
+
+    function getEmailProviderCard(key) {
+        return {
+            title: connT('connections_provider_' + key + '_title', key),
+            subtitle: connT('connections_provider_' + key + '_subtitle', ''),
+            badge: connT('connections_provider_' + key + '_badge', ''),
+            help: connT('connections_provider_' + key + '_help', ''),
+        };
+    }
 
     var HTTP_PROVIDERS = ['basic_auth', 'bearer', 'custom_header'];
 
@@ -150,9 +116,9 @@ function connT(key, fallback, params) {
 
     function renderProviderGrid() {
         if (!providerGrid) return;
-        var keys = Object.keys(EMAIL_PROVIDER_CARDS);
+        var keys = EMAIL_PROVIDER_KEYS;
         providerGrid.innerHTML = keys.map(function (key) {
-            var card = EMAIL_PROVIDER_CARDS[key];
+            var card = getEmailProviderCard(key);
             var schema = providers[key] || {};
             return '<button type="button" class="conn-provider-card" data-provider="' + escapeHtml(key) + '" role="option">' +
                 '<span class="conn-provider-card-badge">' + escapeHtml(card.badge) + '</span>' +
@@ -183,7 +149,7 @@ function connT(key, fallback, params) {
         var summary = document.getElementById('sys-conn-provider-summary');
         var titleEl = document.getElementById('sys-conn-provider-summary-title');
         var helpEl = document.getElementById('sys-conn-provider-summary-help');
-        var card = EMAIL_PROVIDER_CARDS[providerKey] || {};
+        var card = getEmailProviderCard(providerKey);
         if (!summary || !titleEl || !helpEl) return;
         if (!providerKey) {
             summary.hidden = true;
@@ -219,7 +185,7 @@ function connT(key, fallback, params) {
         }
         var def = emailConnections.find(function (c) { return c.is_default; }) || emailConnections[0];
         var providerKey = def.provider || '';
-        var card = EMAIL_PROVIDER_CARDS[providerKey] || {};
+        var card = getEmailProviderCard(providerKey);
         var providerLabel = card.title || (providers[providerKey] || {}).label || providerKey;
         if (providerKey === 'log') {
             emailStatusEl.hidden = false;
@@ -248,7 +214,7 @@ function connT(key, fallback, params) {
         }
 
         var rows = emailConnections.map(function (c) {
-            var card = EMAIL_PROVIDER_CARDS[c.provider] || {};
+            var card = getEmailProviderCard(c.provider || '');
             var providerLabel = card.title || (providers[c.provider] || {}).label || escapeHtml(c.provider);
             var defaultBadge = c.is_default ? '<span class="badge badge-accent">Default</span>' : '';
             var statusBadge = (c.enabled === false)
@@ -352,7 +318,9 @@ function connT(key, fallback, params) {
                 if (testResult.status === 'ok' && testResult.send_result && testResult.send_result.status !== 'failed') {
                     showToast(connT('connections_js_connection_test_success', 'Connection test succeeded.'), 'success');
                 } else {
-                    showToast('Test failed: ' + ((testResult.send_result && testResult.send_result.error) || 'unknown error'), 'error');
+                    showToast(connT('connections_js_test_failed_unknown', 'Test failed: {message}', {
+                        message: (testResult.send_result && testResult.send_result.error) || connT('error_unknown', 'Unknown error'),
+                    }), 'error');
                 }
             }
         }
@@ -370,7 +338,9 @@ function connT(key, fallback, params) {
         if (testResult.status === 'ok' && testResult.send_result && testResult.send_result.status !== 'failed') {
             showToast(connT('connections_js_test_email_sent_inbox', 'Test email sent. Check your inbox (and spam folder).'), 'success');
         } else {
-            showToast('Test failed: ' + ((testResult.send_result && testResult.send_result.error) || 'unknown error'), 'error');
+            showToast(connT('connections_js_test_failed_unknown', 'Test failed: {message}', {
+                message: (testResult.send_result && testResult.send_result.error) || connT('error_unknown', 'Unknown error'),
+            }), 'error');
         }
     }
 
@@ -624,7 +594,7 @@ function connT(key, fallback, params) {
             renderProviderFields(provider, {});
             var nameInput = document.getElementById('sys-conn-email-name');
             if (nameInput && !nameInput.value) {
-                var card = EMAIL_PROVIDER_CARDS[provider] || {};
+                var card = getEmailProviderCard(provider);
                 nameInput.value = card.title || provider;
             }
             if (provider === 'log') {

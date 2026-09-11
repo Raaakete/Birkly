@@ -1465,7 +1465,7 @@ async function loadTeamInvitations() {
                 actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>Resend email</button>');
             }
             if (invite.can_cancel) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>Cancel</button>');
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(stT('cancel', 'Cancel')) + '</button>');
             }
 
             return '<div class="data-list-item">' +
