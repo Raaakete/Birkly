@@ -112,7 +112,7 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                         </a>
                         <?php elseif ($trashedCount > 0): ?>
                         <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item">
-                            <span class="dropdown-item-label">View trash (<?= (int) $trashedCount ?>)</span>
+                            <span class="dropdown-item-label"><?= htmlspecialchars(__('admin.entries_view_trash', ['count' => (int) $trashedCount])) ?></span>
                         </a>
                         <?php endif; ?>
                     </div>
