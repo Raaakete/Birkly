@@ -336,7 +336,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-stack">
           <section class="card">
             <div class="card-header">
-              <h3 class="card-title">Overview</h3>
+              <h3 class="card-title"><?= __('admin.settings_project_overview_card') ?></h3>
             </div>
             <div class="card-body u-stack-4">
             <div id="project-overview-content" class="u-stack-3">
@@ -359,7 +359,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <small class="form-help" id="project-visit-url-format-help"><?= __('admin.settings_project_visit_url_help') ?></small>
             </div>
             <div class="u-cluster">
-              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm">Domains</a>
+              <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#domains') ?>" class="btn btn-secondary btn-sm"><?= __('admin.domains') ?></a>
               <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'site-delivery']) . '#hosting') ?>" class="btn btn-secondary btn-sm"><?= __('admin.settings_project_hosting_urls_btn') ?></a>
               <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'ai'])) ?>" class="btn btn-secondary btn-sm"><?= __('admin.settings_project_ai_connections_btn') ?></a>
             </div>
@@ -381,10 +381,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="card-header">
               <h3 class="card-title"><?= __('admin.settings_project_browse_files_title') ?></h3>
               <div class="card-actions">
-                <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn">New folder</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn">Upload</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="project-new-folder-btn"><?= __('admin.new_folder') ?></button>
+                <button type="button" class="btn btn-secondary btn-sm" id="project-upload-file-btn"><?= __('admin.upload') ?></button>
                 <input type="file" id="project-upload-input" multiple hidden>
-                <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn">New file</button>
+                <button type="button" class="btn btn-primary btn-sm" id="project-add-file-btn"><?= __('admin.settings_project_new_file_btn') ?></button>
               </div>
             </div>
             <div class="card-body u-stack-4">
@@ -397,7 +397,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
               <div class="project-file-preview-wrap">
                 <div class="u-split u-px-4 u-py-3 u-border-bottom">
-                  <h3 id="project-preview-title">Preview</h3>
+                  <h3 id="project-preview-title"><?= __('admin.preview') ?></h3>
                   <div class="u-cluster">
                     <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" hidden>Save</button>
                     <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" hidden>Delete</button>
@@ -483,7 +483,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="settings-stack">
           <section class="card" id="project-git-card">
             <div class="card-header">
-              <h3 class="card-title">Repository</h3>
+              <h3 class="card-title"><?= __('admin.settings_repository_title') ?></h3>
               <div class="card-actions" id="project-git-status-actions" hidden>
                 <button type="button" class="btn btn-secondary btn-sm" id="project-git-refresh-btn"><?= __('admin.settings_project_git_refresh_btn') ?></button>
               </div>
@@ -511,10 +511,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
             <div class="card-body u-stack-4">
             <div class="project-activity-filters" id="project-activity-filters" role="group" aria-label="Filter project activity">
-              <button type="button" class="btn btn-secondary btn-sm is-active" data-project-activity-filter="all">All</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="files">Files</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="git">Git</button>
-              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="settings">Settings</button>
+              <button type="button" class="btn btn-secondary btn-sm is-active" data-project-activity-filter="all"><?= __('admin.settings_project_activity_filter_all') ?></button>
+              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="files"><?= __('admin.settings_project_activity_filter_files') ?></button>
+              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="git"><?= __('admin.settings_project_activity_filter_git') ?></button>
+              <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="settings"><?= __('admin.settings_project_activity_filter_settings') ?></button>
             </div>
             <div id="project-activity-list" class="project-activity-list">
               <div class="loading-state"></div>
@@ -623,9 +623,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       $hasAiConnections = !empty($mcpSessions) || !empty($byoaiConnections);
                     ?>
                     <div class="u-stack-2">
-                      <p class="u-label">AI connections</p>
+                      <p class="u-label"><?= __('admin.settings_team_ai_connections_label') ?></p>
                       <?php if (!$hasAiConnections): ?>
-                        <p class="u-text-sm u-fg-tertiary">None active</p>
+                        <p class="u-text-sm u-fg-tertiary"><?= __('admin.settings_team_ai_connections_none') ?></p>
                       <?php else: ?>
                         <ul class="data-list data-list--flush data-list--compact">
                           <?php foreach ($byoaiConnections as $connection):
@@ -635,7 +635,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                             <li class="data-list-item">
                               <span class="data-list-main">
                                 <span class="data-list-title"><?= htmlspecialchars((string) ($connection['name'] ?? 'Built-in assistant')) ?></span>
-                                <span class="data-list-meta">outbound · since <?= htmlspecialchars($connectedLabel) ?></span>
+                                <span class="data-list-meta"><?= __('admin.settings_connection_meta_outbound', ['connected' => $connectedLabel]) ?></span>
                               </span>
                             </li>
                           <?php endforeach; ?>
@@ -646,7 +646,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                             <li class="data-list-item">
                               <span class="data-list-main">
                                 <span class="data-list-title"><?= htmlspecialchars((string) ($session['agent_name'] ?? 'MCP connector')) ?></span>
-                                <span class="data-list-meta">MCP · since <?= htmlspecialchars($connectedLabel) ?></span>
+                                <span class="data-list-meta"><?= __('admin.settings_connection_meta_mcp', ['connected' => $connectedLabel]) ?></span>
                               </span>
                             </li>
                           <?php endforeach; ?>
@@ -689,7 +689,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </section></div>
           <div class="settings-pane-section" data-settings-search="team access roles permissions management"><section class="card">
           <div class="card-header">
-            <h2>Role Management</h2>
+            <h2><?= __('admin.role_management') ?></h2>
             <button class="btn btn-primary" data-admin-action="openAddRoleModal">
               <?= birkly_icon('plus', ['size' => 16]) ?>
               Add Role
@@ -1162,7 +1162,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         <input type="text" id="db-name" name="db_name" value="<?= htmlspecialchars((string) $dbName) ?>" class="input" placeholder="birkly">
                       </div>
                       <div class="form-group">
-                        <label for="db-user">Database User</label>
+                        <label for="db-user"><?= __('admin.settings_db_user_label') ?></label>
                         <input type="text" id="db-user" name="db_user" value="<?= htmlspecialchars((string) $dbUser) ?>" class="input" placeholder="username">
                       </div>
                     </div>
@@ -1173,7 +1173,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                         <input type="password" id="db-password" name="db_password" value="<?= htmlspecialchars((string) $dbPassword) ?>" class="input" placeholder="password">
                       </div>
                       <div class="form-group">
-                        <label for="db-prefix">Table Prefix</label>
+                        <label for="db-prefix"><?= __('admin.settings_db_table_prefix_label') ?></label>
                         <input type="text" id="db-prefix" name="db_prefix" value="<?= htmlspecialchars((string) $dbPrefix) ?>" class="input" placeholder="birkly_">
                       </div>
                     </div>
@@ -1285,7 +1285,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="form-group">
             <label for="domain-permission-level"><?= __('admin.permission_level') ?></label>
             <select id="domain-permission-level" name="permission_level" class="input">
-              <option value="read_only">Read Only</option>
+              <option value="read_only"><?= __('admin.settings_storage_read_only') ?></option>
               <option value="read_write" selected>Read & Write</option>
             </select>
             <small class="form-help"><?= __('admin.settings_domain_api_read_write_help') ?></small>
@@ -1334,7 +1334,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="form-group">
             <label for="edit-domain-permission-level"><?= __('admin.permission_level') ?></label>
             <select id="edit-domain-permission-level" name="permission_level" class="input">
-              <option value="read_only">Read Only</option>
+              <option value="read_only"><?= __('admin.settings_storage_read_only') ?></option>
               <option value="read_write"><?= __('admin.settings_domain_read_write') ?></option>
             </select>
           </div>
@@ -1488,9 +1488,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="form-group">
             <label for="invite-role">Role</label>
             <select id="invite-role" name="role" class="input">
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-              <option value="admin">Admin</option>
+              <option value="viewer"><?= __('admin.settings_role_option_viewer') ?></option>
+              <option value="editor"><?= __('admin.settings_role_option_editor') ?></option>
+              <option value="admin"><?= __('admin.settings_role_option_admin') ?></option>
             </select>
           </div>
           <div class="form-group">
@@ -1531,9 +1531,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="form-group">
             <label for="user-role">Role</label>
             <select id="user-role" name="role" class="input">
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-              <option value="admin">Admin</option>
+              <option value="viewer"><?= __('admin.settings_role_option_viewer') ?></option>
+              <option value="editor"><?= __('admin.settings_role_option_editor') ?></option>
+              <option value="admin"><?= __('admin.settings_role_option_admin') ?></option>
             </select>
           </div>
         </form>
@@ -1587,9 +1587,9 @@ include __DIR__ . '/components/sticky-save-bar.php';
           <div class="form-group">
             <label for="edit-user-role">Role</label>
             <select id="edit-user-role" name="role" class="input">
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-              <option value="admin">Admin</option>
+              <option value="viewer"><?= __('admin.settings_role_option_viewer') ?></option>
+              <option value="editor"><?= __('admin.settings_role_option_editor') ?></option>
+              <option value="admin"><?= __('admin.settings_role_option_admin') ?></option>
             </select>
           </div>
         </form>

@@ -101,14 +101,14 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
                     </button>
                     <div class="dropdown-menu dropdown-menu-right collection-actions-menu">
                         <a href="<?= htmlspecialchars(admin_url('collection-editor', ['collection' => $collectionSlugParam])) ?>" class="dropdown-item">
-                            <span class="dropdown-item-label">Edit this collection</span>
+                            <span class="dropdown-item-label"><?= __('admin.entries_edit_this_collection') ?></span>
                         </a>
                         <a href="<?= htmlspecialchars($createSubCollectionUrl) ?>" class="dropdown-item">
-                            <span class="dropdown-item-label">Create sub-collection</span>
+                            <span class="dropdown-item-label"><?= __('admin.entries_create_sub_collection') ?></span>
                         </a>
                         <?php if ($isTrashView): ?>
                         <a href="<?= htmlspecialchars($entriesReturnUrl) ?>" class="dropdown-item">
-                            <span class="dropdown-item-label">Back to active entries</span>
+                            <span class="dropdown-item-label"><?= __('admin.entries_back_to_active') ?></span>
                         </a>
                         <?php elseif ($trashedCount > 0): ?>
                         <a href="<?= htmlspecialchars($trashUrl) ?>" class="dropdown-item">
