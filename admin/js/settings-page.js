@@ -2478,7 +2478,10 @@ function bindRegisterDomainSuggestInline() {
                     roleSelect.value = payload.data.role;
                 }
                 if (helpEl && payload.data.reason) {
-                    helpEl.textContent = 'Suggested: ' + payload.data.role + ' — ' + payload.data.reason;
+                    helpEl.textContent = t('settings_delivery_suggested', 'Suggested: {role} — {reason}', {
+                        role: payload.data.role,
+                        reason: payload.data.reason || '',
+                    });
                 }
             })
             .catch(function () { /* optional */ });
