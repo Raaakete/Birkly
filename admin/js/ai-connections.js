@@ -648,7 +648,7 @@
         } catch (error) {
             connectionTestPassed = false;
             if (statusEl) {
-                statusEl.textContent = 'Network error — could not reach Birkly server.';
+                statusEl.textContent = aiT('ai_conn_js_network_error', 'Network error — could not reach Birkly server.');
                 statusEl.className = 'test-connection-status error';
             }
         } finally {
