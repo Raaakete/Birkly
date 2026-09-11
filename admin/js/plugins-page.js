@@ -2320,7 +2320,7 @@
                 '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
                 (active ? 'Deactivate' : 'Activate') +
                 '</button>' +
-                '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">Delete</button>') +
+                '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('delete', 'Delete')) + '</button>') +
             '</div>' +
             '</div>'
         );
@@ -2903,7 +2903,7 @@
             titleEl.textContent = status.has_review ? 'Your review' : 'Write a review';
         }
         if (summaryEl) {
-            summaryEl.textContent = 'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.';
+            summaryEl.textContent = t('hub_js_reviews_site_hint', 'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.');
         }
 
         if (existingEl) {
@@ -2947,7 +2947,7 @@
         var rating = ratingInput ? parseInt(ratingInput.value, 10) : 5;
 
         if (!slug && !pluginId) {
-            showMessage('Missing plugin information', 'error');
+            showMessage(t('hub_js_missing_plugin_info', 'Missing plugin information'), 'error');
             return;
         }
         if (!body.trim()) {
@@ -2982,7 +2982,7 @@
     }
 
     async function deletePlugin(pluginId) {
-        if (!(await BirklyFeedback.confirm('Are you sure you want to delete this plugin? This action cannot be undone.'))) {
+        if (!(await BirklyFeedback.confirm(t('settings_js_confirm_delete_plugin', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
             return;
         }
         try {

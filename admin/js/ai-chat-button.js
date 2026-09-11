@@ -6,6 +6,19 @@
 (function() {
     'use strict';
 
+    function chatT(key, fallback, params) {
+        let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
+
     let currentConnection = null;
     let conversationId = null;
     let csrfToken = '';
@@ -50,16 +63,16 @@
 
         if (state === 'idle') {
             button.setAttribute('aria-expanded', 'false');
-            button.setAttribute('aria-label', 'Open assist menu');
-            button.title = 'Assist';
+            button.setAttribute('aria-label', chatT('ai_chat_js_open_assist_menu', 'Open assist menu'));
+            button.title = chatT('ai_chat_js_assist', 'Assist');
         } else if (state === 'menu') {
             button.setAttribute('aria-expanded', 'true');
-            button.setAttribute('aria-label', 'Open AI Assistant');
-            button.title = 'AI Assistant';
+            button.setAttribute('aria-label', chatT('ai_chat_js_open_assistant', 'Open AI Assistant'));
+            button.title = chatT('ai_chat_js_open_assistant', 'Open AI Assistant');
         } else if (state === 'chat') {
             button.setAttribute('aria-expanded', 'false');
-            button.setAttribute('aria-label', 'Close AI Assistant');
-            button.title = 'Close';
+            button.setAttribute('aria-label', chatT('ai_chat_js_close_assistant', 'Close AI Assistant'));
+            button.title = chatT('ai_chat_js_close', 'Close');
         }
     }
 
@@ -88,7 +101,7 @@
     }
 
     function formatHttpError(status, bodyText) {
-        let message = bodyText || 'Server error';
+        let message = bodyText || chatT('ai_chat_js_server_error', 'Server error');
         try {
             const parsed = JSON.parse(bodyText);
             if (parsed && parsed.message) {
@@ -98,12 +111,12 @@
             // keep raw body
         }
         if (status === 401) {
-            return 'Your session expired. Please refresh the page and log in again.';
+            return chatT('ai_chat_js_session_expired', 'Your session expired. Please refresh the page and log in again.');
         }
         if (status === 504) {
-            return 'The request timed out (504). Large site builds can take a minute — try again, use a faster model, or ask for fewer files at once (e.g. "write index.html first").';
+            return chatT('ai_chat_js_timeout_504', 'The request timed out (504). Large site builds can take a minute — try again, use a faster model, or ask for fewer files at once (e.g. "write index.html first").');
         }
-        return 'HTTP Error ' + status + ': ' + message;
+        return chatT('ai_chat_js_http_error', 'HTTP Error {status}: {message}', { status: status, message: message });
     }
 
     function normalizeProviderError(message) {
@@ -117,7 +130,7 @@
     function formatChatErrorDetails(result) {
         const details = result?.error_details || result?.data?.error_details || null;
         let message = normalizeProviderError(
-            result?.message || result?.error || result?.data?.message || 'Unknown error'
+            result?.message || result?.error || result?.data?.message || chatT('ai_chat_js_unknown_error', 'Unknown error')
         );
         if (!details || typeof details !== 'object') {
             return message;
@@ -339,7 +352,7 @@
         menu.className = 'assist-fab-menu';
         menu.setAttribute('role', 'menu');
         menu.innerHTML = `
-            <button type="button" class="btn assist-fab-action" id="assist-fab-feedback" role="menuitem" title="Send feedback" aria-label="Send feedback">
+            <button type="button" class="btn assist-fab-action" id="assist-fab-feedback" role="menuitem" title="${chatT('ai_chat_js_send_feedback', 'Send feedback')}" aria-label="${chatT('ai_chat_js_send_feedback', 'Send feedback')}">
                 ${icon('paper-plane-tilt', { size: 20 })}
                 <span>Feedback</span>
             </button>
@@ -349,10 +362,10 @@
         button.id = 'ai-chat-floating-btn';
         button.className = 'ai-chat-floating-btn assist-fab-main';
         button.type = 'button';
-        button.setAttribute('aria-label', 'Open assist menu');
+        button.setAttribute('aria-label', chatT('ai_chat_js_open_assist_menu', 'Open assist menu'));
         button.setAttribute('aria-expanded', 'false');
         button.setAttribute('aria-haspopup', 'menu');
-        button.title = 'Assist';
+        button.title = chatT('ai_chat_js_assist', 'Assist');
         button.innerHTML = `
             <span class="assist-fab-visual" aria-hidden="true">
                 <span class="assist-fab-icon-slot assist-fab-icon-plus">${icon('plus', { size: 22 })}</span>
@@ -420,9 +433,9 @@
             badge.hidden = false;
             badge.setAttribute('aria-hidden', 'false');
             if (button && assistFabState === 'chat') {
-                button.setAttribute('aria-label', `Close AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
+                button.setAttribute('aria-label', chatT('ai_chat_js_aria_close_pending', 'Close AI Assistant ({count} pending)', { count: count }));
             } else if (button && assistFabState === 'menu') {
-                button.setAttribute('aria-label', `Open AI Assistant, ${count} pending approval${count === 1 ? '' : 's'}`);
+                button.setAttribute('aria-label', chatT('ai_chat_js_aria_open_pending', 'Open AI Assistant ({count} pending)', { count: count }));
             }
         } else {
             badge.textContent = '';
@@ -430,11 +443,11 @@
             badge.setAttribute('aria-hidden', 'true');
             if (button) {
                 if (assistFabState === 'chat') {
-                    button.setAttribute('aria-label', 'Close AI Assistant');
+                    button.setAttribute('aria-label', chatT('ai_chat_js_close_assistant', 'Close AI Assistant'));
                 } else if (assistFabState === 'menu') {
-                    button.setAttribute('aria-label', 'Open AI Assistant');
+                    button.setAttribute('aria-label', chatT('ai_chat_js_open_assistant', 'Open AI Assistant'));
                 } else {
-                    button.setAttribute('aria-label', 'Open assist menu');
+                    button.setAttribute('aria-label', chatT('ai_chat_js_open_assist_menu', 'Open assist menu'));
                 }
             }
         }
@@ -483,7 +496,7 @@
                     <div class="ai-chat-approval-type">${escapeHtml(actionType)}</div>
                     <span class="ai-chat-approval-time u-text-xs u-fg-tertiary">${formatTime(approval.created_at)}</span>
                 </div>
-                <div class="ai-chat-approval-description">${escapeHtml(approval.description || 'No description')}</div>
+                <div class="ai-chat-approval-description">${escapeHtml(approval.description || chatT('ai_chat_js_no_description', 'No description'))}</div>
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
                     <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">Approve</button>
                     <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">Reject</button>
@@ -630,7 +643,7 @@
         if (consolePanel) consolePanel.hidden = view !== 'console';
         if (approvalsPanel) approvalsPanel.hidden = view !== 'approvals';
 
-        const titles = { history: 'History', console: 'Console', approvals: 'Approvals' };
+        const titles = { history: chatT('ai_chat_js_history', 'History'), console: chatT('ai_chat_js_console', 'Console'), approvals: chatT('ai_chat_js_approvals', 'Approvals') };
         if (titleEl) titleEl.textContent = titles[view] || 'Panel';
 
         Object.keys(buttons).forEach(function (key) {
@@ -726,27 +739,27 @@
             <div class="ai-chat-header">
                 <div class="ai-chat-header-brand u-row-1 u-fill">
                     <span class="ai-chat-header-prefix">AI:</span>
-                    <label for="ai-chat-connection-select" class="u-sr-only">AI connection</label>
-                    <select id="ai-chat-connection-select" class="ai-chat-connection-inline" title="Choose AI connection">
-                        <option value="">Loading connections...</option>
+                    <label for="ai-chat-connection-select" class="u-sr-only">${chatT('ai_chat_js_ai_connection', 'AI connection')}</label>
+                    <select id="ai-chat-connection-select" class="ai-chat-connection-inline" title="${chatT('ai_chat_js_choose_connection', 'Choose AI connection')}">
+                        <option value="">${chatT('ai_chat_js_loading_connections', 'Loading connections...')}</option>
                     </select>
                 </div>
                 <div class="ai-chat-header-actions u-row-1 u-shrink-0">
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="History" aria-label="History" aria-pressed="false">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-history-btn" data-tooltip="${chatT('ai_chat_js_history', 'History')}" aria-label="${chatT('ai_chat_js_history', 'History')}" aria-pressed="false">
                         ${icon('clock', { size: 18 })}
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="Console" aria-label="Console" aria-pressed="false">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-console-btn" data-tooltip="${chatT('ai_chat_js_console', 'Console')}" aria-label="${chatT('ai_chat_js_console', 'Console')}" aria-pressed="false">
                         ${icon('code', { size: 18 })}
                         <span class="ai-chat-header-badge" id="ai-chat-console-header-badge" hidden></span>
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="Approvals" aria-label="Approvals" aria-pressed="false" hidden>
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-approvals-btn" data-tooltip="${chatT('ai_chat_js_approvals', 'Approvals')}" aria-label="${chatT('ai_chat_js_approvals', 'Approvals')}" aria-pressed="false" hidden>
                         ${icon('list-checks', { size: 18 })}
                         <span class="ai-chat-header-badge" id="ai-chat-approvals-header-badge" hidden></span>
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="New chat" aria-label="New chat">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-new-btn" data-tooltip="${chatT('ai_chat_js_new_chat', 'New chat')}" aria-label="${chatT('ai_chat_js_new_chat', 'New chat')}">
                         ${icon('plus', { size: 18 })}
                     </button>
-                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="Fullscreen" aria-label="Toggle fullscreen">
+                    <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-fullscreen-btn" data-tooltip="${chatT('ai_chat_js_fullscreen', 'Fullscreen')}" aria-label="${chatT('ai_chat_js_toggle_fullscreen', 'Toggle fullscreen')}">
                         ${icon('arrows-out', { size: 18 })}
                     </button>
                 </div>
@@ -756,16 +769,16 @@
                     <div class="ai-chat-messages-panel" id="ai-chat-messages-panel">
                         <div class="ai-chat-messages" id="ai-chat-messages">
                             <div class="ai-chat-welcome">
-                                <p>Select an AI connection to start chatting. The AI can help you create and edit content.</p>
+                                <p>${chatT('ai_chat_js_welcome', 'Select an AI connection to start chatting. The AI can help you create and edit content.')}</p>
                             </div>
                         </div>
                     </div>
                     <div class="ai-chat-overlay" id="ai-chat-overlay" aria-hidden="true">
-                        <button type="button" class="ai-chat-overlay-backdrop" id="ai-chat-overlay-backdrop" aria-label="Close panel"></button>
+                        <button type="button" class="ai-chat-overlay-backdrop" id="ai-chat-overlay-backdrop" aria-label="${chatT('ai_chat_js_close_panel', 'Close panel')}"></button>
                         <div class="ai-chat-side-panel" id="ai-chat-side-panel" role="dialog" aria-modal="true">
                             <div class="ai-chat-side-panel-head u-split">
-                                <span id="ai-chat-side-panel-title">History</span>
-                                <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="Back to chat" aria-label="Back to chat">
+                                <span id="ai-chat-side-panel-title">${chatT('ai_chat_js_history', 'History')}</span>
+                                <button type="button" class="btn-icon ai-chat-header-icon-btn" id="ai-chat-side-panel-back" data-tooltip="${chatT('ai_chat_js_back_to_chat', 'Back to chat')}" aria-label="${chatT('ai_chat_js_back_to_chat', 'Back to chat')}">
                                     ${icon('x', { size: 16 })}
                                 </button>
                             </div>
@@ -774,13 +787,13 @@
                             </div>
                             <div class="ai-chat-console-panel ai-chat-side-panel-body" id="ai-chat-console-panel" hidden>
                                 <div class="ai-chat-console-toolbar u-split u-gap-2 u-shrink-0">
-                                    <span class="ai-chat-console-hint u-text-xs u-fg-secondary">Action results and errors from this session</span>
-                                    <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">Clear</button>
+                                    <span class="ai-chat-console-hint u-text-xs u-fg-secondary">${chatT('ai_chat_js_console_hint', 'Action results and errors from this session')}</span>
+                                    <button type="button" class="btn btn-sm btn-secondary" id="ai-chat-console-clear">${chatT('ai_chat_js_clear', 'Clear')}</button>
                                 </div>
                                 <div class="ai-chat-console-list u-stack-2" id="ai-chat-console-list"></div>
                             </div>
                             <div class="ai-chat-approvals-panel ai-chat-side-panel-body" id="ai-chat-approvals-panel" hidden>
-                                <div class="loading-state">Loading approvals…</div>
+                                <div class="loading-state">${chatT('ai_chat_js_loading_approvals', 'Loading approvals…')}</div>
                             </div>
                         </div>
                     </div>
@@ -789,7 +802,7 @@
                     <div class="ai-chat-activity-inner u-row-3 u-align-start">
                         <span class="ai-chat-activity-icon spinner" aria-hidden="true"></span>
                         <div class="ai-chat-activity-copy u-stack-1 u-min-w-0">
-                            <span class="ai-chat-activity-status u-text-sm u-fg-secondary" id="ai-chat-activity-status">Waiting for AI…</span>
+                            <span class="ai-chat-activity-status u-text-sm u-fg-secondary" id="ai-chat-activity-status">${chatT('ai_chat_js_waiting_ai', 'Waiting for AI…')}</span>
                             <span class="ai-chat-activity-tip u-text-xs u-fg-tertiary" id="ai-chat-activity-tip"></span>
                         </div>
                     </div>
@@ -799,29 +812,29 @@
                     <div class="ai-chat-composer-box">
                         <textarea
                             id="ai-chat-input"
-                            placeholder="Ask the AI to create or edit content… Paste or drop images and files here."
+                            placeholder="${chatT('ai_chat_js_composer_placeholder', 'Ask the AI to create or edit content… Paste or drop images and files here.')}"
                             rows="1"
                         ></textarea>
                         <div class="ai-chat-composer-footer u-split u-gap-2">
                             <div class="ai-chat-composer-tools u-cluster u-gap-1 u-min-w-0">
                                 <input type="file" id="ai-chat-image-input" accept="image/*" hidden>
                                 <input type="file" id="ai-chat-doc-input" accept=".txt,.md,.json,.csv,.pdf" hidden>
-                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="Add image" aria-label="Add image" hidden>
+                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-image" data-tooltip="${chatT('ai_chat_js_add_image', 'Add image')}" aria-label="${chatT('ai_chat_js_add_image', 'Add image')}" hidden>
                                     ${icon('image', { size: 18 })}
                                 </button>
-                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="Add document" aria-label="Add document" hidden>
+                                <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn" id="ai-chat-attach-doc" data-tooltip="${chatT('ai_chat_js_add_document', 'Add document')}" aria-label="${chatT('ai_chat_js_add_document', 'Add document')}" hidden>
                                     ${icon('file-text', { size: 18 })}
                                 </button>
                                 <div class="ai-chat-model-picker" id="ai-chat-model-picker" hidden>
-                                    <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="Choose model" aria-haspopup="listbox" aria-expanded="false">
+                                    <button type="button" class="btn btn-ghost btn-sm ai-chat-tool-btn ai-chat-model-trigger" id="ai-chat-model-trigger" data-tooltip="${chatT('ai_chat_js_choose_model', 'Choose model')}" aria-haspopup="listbox" aria-expanded="false">
                                         ${icon('sparkle', { size: 16 })}
-                                        <span id="ai-chat-model-label">Model</span>
+                                        <span id="ai-chat-model-label">${chatT('ai_chat_js_model', 'Model')}</span>
                                         ${icon('caret-down', { size: 12 })}
                                     </button>
                                     <div class="popover ai-chat-model-menu" id="ai-chat-model-menu" role="listbox" hidden></div>
                                 </div>
                             </div>
-                            <button type="button" class="btn-icon btn-primary ai-chat-send-btn" id="ai-chat-send-btn" aria-label="Send message">
+                            <button type="button" class="btn-icon btn-primary ai-chat-send-btn" id="ai-chat-send-btn" aria-label="${chatT('ai_chat_js_send_message', 'Send message')}">
                                 <span class="ai-chat-send-icon">${icon('paper-plane-tilt', { size: 18 })}</span>
                                 <span class="ai-chat-cancel-icon" hidden>${icon('stop', { size: 18 })}</span>
                             </button>
@@ -832,7 +845,7 @@
             </div>
             <div class="ai-chat-connection-selector" id="ai-chat-connection-selector" hidden aria-hidden="true">
                 <div class="ai-chat-connection-list u-stack-2" id="ai-chat-connection-list">
-                    <div class="loading-state">Loading connections…</div>
+                    <div class="loading-state">${chatT('ai_chat_js_loading_connections', 'Loading connections...')}</div>
                 </div>
             </div>
         `;
@@ -900,7 +913,7 @@
             const connectionId = e.target.value;
             if (!connectionId) return;
             if (currentConnection && currentConnection.id === connectionId) return;
-            if (chatMessages.length > 0 && !(await BirklyFeedback.confirm('Switch AI connection? This starts a new chat.'))) {
+            if (chatMessages.length > 0 && !(await BirklyFeedback.confirm(chatT('ai_chat_js_confirm_switch_connection', 'Switch AI connection? This starts a new chat.')))) {
                 e.target.value = currentConnection?.id || '';
                 return;
             }
@@ -928,7 +941,7 @@
         if (chatMessages.length > 0) {
             indexRecentChat();
         }
-        if (await BirklyFeedback.confirm('Start a new chat? This will clear the current conversation.')) {
+        if (await BirklyFeedback.confirm(chatT('ai_chat_js_confirm_new_chat', 'Start a new chat? This will clear the current conversation.'))) {
             clearChatState();
             closeSidePanel();
             const messages = document.getElementById('ai-chat-messages');
@@ -947,11 +960,11 @@
         const modelPicker = document.getElementById('ai-chat-model-picker');
         if (imageBtn) {
             imageBtn.hidden = !caps.vision;
-            imageBtn.title = caps.vision ? 'Add image — or paste / drop into the chat box' : 'Images not supported for this provider';
+            imageBtn.title = caps.vision ? chatT('ai_chat_js_add_image_hint', 'Add image — or paste / drop into the chat box') : chatT('ai_chat_js_images_not_supported', 'Images not supported for this provider');
         }
         if (docBtn) {
             docBtn.hidden = !caps.documents;
-            docBtn.title = caps.documents ? 'Add document — or paste / drop into the chat box' : 'Documents not supported for this provider';
+            docBtn.title = caps.documents ? chatT('ai_chat_js_add_doc_hint', 'Add document — or paste / drop into the chat box') : chatT('ai_chat_js_docs_not_supported', 'Documents not supported for this provider');
         }
         if (modelPicker) modelPicker.hidden = !caps.model_picker;
         updateApprovalsHeaderButton();
@@ -1387,19 +1400,19 @@
     async function queueImageFile(file, suggestedName) {
         if (!file) return false;
         if (!canAttachImages()) {
-            notifyAttachmentIssue('Image paste is not supported for this connection. Use a vision-capable provider.');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_vision_required', 'Image paste is not supported for this connection. Use a vision-capable provider.'));
             return false;
         }
         if (!String(file.type || '').startsWith('image/')) {
-            notifyAttachmentIssue('Only image files can be attached as images.');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_images_only', 'Only image files can be attached as images.'));
             return false;
         }
         if (file.size > MAX_IMAGE_BYTES) {
-            notifyAttachmentIssue('Image is too large (max 4 MB).');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_image_too_large', 'Image is too large (max 4 MB).'));
             return false;
         }
         if (pendingAttachments.length >= MAX_CHAT_ATTACHMENTS) {
-            notifyAttachmentIssue('Maximum ' + MAX_CHAT_ATTACHMENTS + ' attachments per message.');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_max', 'Maximum {max} attachments per message.', { max: MAX_CHAT_ATTACHMENTS }));
             return false;
         }
         try {
@@ -1414,7 +1427,7 @@
             renderAttachmentList();
             return true;
         } catch (error) {
-            notifyAttachmentIssue('Could not read image: ' + error.message);
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_read_image_failed', 'Could not read image: {message}', { message: error.message }));
             return false;
         }
     }
@@ -1422,15 +1435,15 @@
     async function queueDocumentFile(file) {
         if (!file) return false;
         if (!canAttachDocuments()) {
-            notifyAttachmentIssue('Document attachments are not supported for this connection.');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_docs_not_supported', 'Document attachments are not supported for this connection.'));
             return false;
         }
         if (!isTextDocumentFile(file)) {
-            notifyAttachmentIssue('Only text-based documents are supported (.txt, .md, .json, .csv, etc.).');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_text_docs_only', 'Only text-based documents are supported (.txt, .md, .json, .csv, etc.).'));
             return false;
         }
         if (pendingAttachments.length >= MAX_CHAT_ATTACHMENTS) {
-            notifyAttachmentIssue('Maximum ' + MAX_CHAT_ATTACHMENTS + ' attachments per message.');
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_max', 'Maximum {max} attachments per message.', { max: MAX_CHAT_ATTACHMENTS }));
             return false;
         }
         try {
@@ -1443,7 +1456,7 @@
             renderAttachmentList();
             return true;
         } catch (error) {
-            notifyAttachmentIssue('Could not read document: ' + error.message);
+            notifyAttachmentIssue(chatT('ai_chat_js_attach_read_doc_failed', 'Could not read document: {message}', { message: error.message }));
             return false;
         }
     }
@@ -1458,7 +1471,7 @@
             } else if (isTextDocumentFile(file)) {
                 if (await queueDocumentFile(file)) added++;
             } else {
-                notifyAttachmentIssue('Unsupported file: ' + (file.name || 'unknown') + '. Paste images or text documents.');
+                notifyAttachmentIssue(chatT('ai_chat_js_attach_unsupported_file', 'Unsupported file: {name}. Paste images or text documents.', { name: (file.name || 'unknown') }));
             }
         }
         if (added > 0 && sourceLabel) {
@@ -1576,7 +1589,7 @@
         const text = String(rawMessage || '').trim();
         if (text) return text;
         if (pendingAttachments.length === 0) return '';
-        return 'Attached: ' + pendingAttachments.map(function (a) { return a.name; }).join(', ');
+        return chatT('ai_chat_js_attached_prefix', 'Attached: ') + pendingAttachments.map(function (a) { return a.name; }).join(', ');
     }
 
     // Show chat window
@@ -1763,14 +1776,14 @@
                     
                     saveChatState();
                 } else {
-                    showError('Failed to load connection: ' + (result.message || 'Unknown error'));
+                    showError(chatT('ai_chat_js_failed_load_connection_msg', 'Failed to load connection: {message}', { message: (result.message || chatT('ai_chat_js_unknown_error', 'Unknown error')) }));
                     validateCurrentConnection();
                     renderConnectionDropdown();
                 }
             })
             .catch(err => {
                 console.error('Error loading connection:', err);
-                showError('Failed to load connection');
+                showError(chatT('ai_chat_js_failed_load_connection', 'Failed to load connection'));
             });
     }
 
@@ -1817,54 +1830,35 @@
         const btn = document.getElementById('ai-chat-send-btn');
         if (!btn) return;
         btn.classList.toggle('ai-chat-send-btn--streaming', streaming);
-        btn.setAttribute('aria-label', streaming ? 'Cancel response' : 'Send message');
-        btn.title = streaming ? 'Cancel' : 'Send';
+        btn.setAttribute('aria-label', streaming ? chatT('ai_chat_js_cancel_response', 'Cancel response') : chatT('ai_chat_js_send_message', 'Send message'));
+        btn.title = streaming ? chatT('ai_chat_js_cancel', 'Cancel') : chatT('ai_chat_js_send', 'Send');
         const sendIcon = btn.querySelector('.ai-chat-send-icon');
         const cancelIcon = btn.querySelector('.ai-chat-cancel-icon');
         if (sendIcon) sendIcon.hidden = streaming;
         if (cancelIcon) cancelIcon.hidden = !streaming;
     }
 
-    const CHAT_ACTIVITY_STATUS_CYCLE = [
-        'Waiting for AI…',
-        'AI is thinking…',
-        'AI is working…',
-        'Still working…',
-    ];
+    function chatActivityStatusCycle() {
+        return [
+            chatT('ai_chat_js_waiting_ai', 'Waiting for AI…'),
+            chatT('ai_chat_js_ai_thinking', 'AI is thinking…'),
+            chatT('ai_chat_js_ai_working', 'AI is working…'),
+            chatT('ai_chat_js_still_working', 'Still working…'),
+        ];
+    }
 
-    const CHAT_ACTIVITY_TIPS = [
-        {
-            text: 'Did you know Birkly can run with MySQL or PostgreSQL instead of flat files?',
-            href: 'https://docs.birkly.com/content/01-admin/settings.html#storage-backends',
-            label: 'Learn more',
-        },
-        {
-            text: 'The AI can read and edit files in your project/ folder for site builds.',
-            href: 'https://docs.birkly.com/content/03-ai/ai-assistant.html',
-            label: 'Learn more',
-        },
-        {
-            text: 'You can attach images and documents to chat messages for context.',
-        },
-        {
-            text: 'Use the Approvals tab to review AI-proposed changes before they run.',
-            href: 'https://docs.birkly.com/content/03-ai/approvals.html',
-            label: 'Learn more',
-        },
-        {
-            text: 'Collections and entries live under content/ — back them up regularly.',
-            href: 'https://docs.birkly.com/content/07-operations/backup-and-restore.html',
-            label: 'Learn more',
-        },
-        {
-            text: 'Switch models from the sparkle menu in the composer for faster or smarter replies.',
-        },
-        {
-            text: 'Birkly templates use {for each entry in \'collection\'} syntax for dynamic pages.',
-            href: 'https://docs.birkly.com/content/02-content/templating.html',
-            label: 'Learn more',
-        },
-    ];
+    function chatActivityTips() {
+        var learn = chatT('ai_chat_js_learn_more', 'Learn more');
+        return [
+            { text: chatT('ai_chat_js_tip_storage', 'Did you know Birkly can run with MySQL or PostgreSQL instead of flat files?'), href: 'https://docs.birkly.com/content/01-admin/settings.html#storage-backends', label: learn },
+            { text: chatT('ai_chat_js_tip_project_files', 'The AI can read and edit files in your project/ folder for site builds.'), href: 'https://docs.birkly.com/content/03-ai/ai-assistant.html', label: learn },
+            { text: chatT('ai_chat_js_tip_attachments', 'You can attach images and documents to chat messages for context.') },
+            { text: chatT('ai_chat_js_tip_approvals', 'Use the Approvals tab to review AI-proposed changes before they run.'), href: 'https://docs.birkly.com/content/03-ai/approvals.html', label: learn },
+            { text: chatT('ai_chat_js_tip_backup', 'Collections and entries live under content/ — back them up regularly.'), href: 'https://docs.birkly.com/content/07-operations/backup-and-restore.html', label: learn },
+            { text: chatT('ai_chat_js_tip_models', 'Switch models from the sparkle menu in the composer for faster or smarter replies.') },
+            { text: chatT('ai_chat_js_tip_templating', "Birkly templates use {for each entry in 'collection'} syntax for dynamic pages."), href: 'https://docs.birkly.com/content/02-content/templating.html', label: learn },
+        ];
+    }
 
     let chatActivityStatusTimer = null;
     let chatActivityTipTimer = null;
@@ -1881,7 +1875,7 @@
 
     function renderChatActivityTip(tip) {
         if (!tip) return '';
-        const label = tip.label ? escapeHtml(tip.label) : 'Learn more';
+        const label = tip.label ? escapeHtml(tip.label) : chatT('ai_chat_js_learn_more', 'Learn more');
         if (tip.href) {
             return escapeHtml(tip.text) + ' <a href="' + escapeHtml(tip.href) + '" target="_blank" rel="noopener noreferrer">' + label + '</a>.';
         }
@@ -1892,15 +1886,15 @@
         if (chatActivityServerStatus) return;
         const statusEl = document.getElementById('ai-chat-activity-status');
         if (!statusEl) return;
-        chatActivityStatusIndex = (chatActivityStatusIndex + 1) % CHAT_ACTIVITY_STATUS_CYCLE.length;
-        statusEl.textContent = CHAT_ACTIVITY_STATUS_CYCLE[chatActivityStatusIndex];
+        chatActivityStatusIndex = (chatActivityStatusIndex + 1) % chatActivityStatusCycle().length;
+        statusEl.textContent = chatActivityStatusCycle()[chatActivityStatusIndex];
     }
 
     function rotateChatActivityTip() {
         const tipEl = document.getElementById('ai-chat-activity-tip');
         if (!tipEl) return;
-        chatActivityTipIndex = (chatActivityTipIndex + 1) % CHAT_ACTIVITY_TIPS.length;
-        tipEl.innerHTML = renderChatActivityTip(CHAT_ACTIVITY_TIPS[chatActivityTipIndex]);
+        chatActivityTipIndex = (chatActivityTipIndex + 1) % chatActivityTips().length;
+        tipEl.innerHTML = renderChatActivityTip(chatActivityTips()[chatActivityTipIndex]);
     }
 
     function showChatActivity(initialStatus) {
@@ -1911,10 +1905,10 @@
 
         chatActivityServerStatus = '';
         chatActivityStatusIndex = 0;
-        chatActivityTipIndex = Math.floor(Math.random() * CHAT_ACTIVITY_TIPS.length);
+        chatActivityTipIndex = Math.floor(Math.random() * chatActivityTips().length);
 
-        statusEl.textContent = initialStatus || CHAT_ACTIVITY_STATUS_CYCLE[0];
-        tipEl.innerHTML = renderChatActivityTip(CHAT_ACTIVITY_TIPS[chatActivityTipIndex]);
+        statusEl.textContent = initialStatus || chatActivityStatusCycle()[0];
+        tipEl.innerHTML = renderChatActivityTip(chatActivityTips()[chatActivityTipIndex]);
         activityEl.hidden = false;
 
         clearInterval(chatActivityStatusTimer);
@@ -1971,7 +1965,7 @@
         isChatRequestInFlight = false;
         setSendButtonStreaming(false);
         hideChatActivity();
-        addChatMessage('system', 'Request cancelled.');
+        addChatMessage('system', chatT('ai_chat_js_request_cancelled', 'Request cancelled.'));
     }
 
     function updateStreamingMessage(messageId, content, isComplete) {
@@ -2026,8 +2020,8 @@
                 }
                 saveChatState();
             } else if (result.data.requires_approval) {
-                updateStreamingMessage(assistantMessageId, 'Prepared actions for your review (see below).', true);
-                chatMessages.push({ role: 'assistant', content: 'Prepared actions for your review.' });
+                updateStreamingMessage(assistantMessageId, chatT('ai_chat_js_prepared_actions', 'Prepared actions for your review (see below).'), true);
+                chatMessages.push({ role: 'assistant', content: chatT('ai_chat_js_prepared_actions_short', 'Prepared actions for your review.') });
                 saveChatState();
             } else {
                 messageEl?.classList.remove('ai-chat-message-streaming');
@@ -2054,12 +2048,12 @@
                 );
             });
             if (failedActions.length > 0) {
-                addChatMessage('system', 'Warning: ' + failedActions.length + ' action(s) failed. See the Console tab for details.');
+                addChatMessage('system', chatT('ai_chat_js_actions_failed', 'Warning: {count} action(s) failed. See the Console tab for details.', { count: failedActions.length }));
             }
         }
 
         if (result.data.requires_approval && result.data.actions_created > 0) {
-            addChatMessage('system', result.data.actions_created + ' action(s) pending approval. Open the Approvals tab to review.');
+            addChatMessage('system', chatT('ai_chat_js_actions_pending', '{count} action(s) pending approval. Open the Approvals tab to review.', { count: result.data.actions_created }));
             if (result.data.approvals && result.data.approvals.length > 0) {
                 result.data.approvals.forEach(function(approval) {
                     addApprovalCard(approval);
@@ -2080,7 +2074,7 @@
                     );
                 });
                 if (!responseHasExecutionReport(responseText)) {
-                    addChatMessage('system', successCount + ' action(s) executed successfully.');
+                    addChatMessage('system', chatT('ai_chat_js_actions_executed', '{count} action(s) executed successfully.', { count: successCount }));
                 }
             }
         }
@@ -2137,7 +2131,7 @@
     // Send chat message (supports streaming, cancel, retry — P39-M12)
     async function sendChatMessage(messageOverride) {
         if (!currentConnection) {
-            showError('No connection selected');
+            showError(chatT('ai_chat_js_no_connection', 'No connection selected'));
             return;
         }
 
@@ -2145,7 +2139,7 @@
         const rawMessage = (typeof messageOverride === 'string' ? messageOverride : input?.value || '').trim();
         if (!rawMessage && pendingAttachments.length === 0) return;
 
-        const message = buildMessageWithAttachments(rawMessage || 'Please review the attached file(s).');
+        const message = buildMessageWithAttachments(rawMessage || chatT('ai_chat_js_review_attached', 'Please review the attached file(s).'));
         const displayMessage = buildDisplayMessage(rawMessage);
         const attachmentsPayload = serializeAttachmentsForApi();
 
@@ -2163,7 +2157,7 @@
         renderAttachmentList();
 
         const assistantRef = { id: null };
-        showChatActivity('Waiting for AI…');
+        showChatActivity(chatT('ai_chat_js_waiting_ai', 'Waiting for AI…'));
 
         activeChatAbortController = new AbortController();
         isChatRequestInFlight = true;
@@ -2213,7 +2207,7 @@
                     }
                     lastFailedMessage = message;
                     appendConsoleLog('error', 'Stream ended without a response');
-                    addChatMessageWithRetry('error', 'Stream ended without a response.');
+                    addChatMessageWithRetry('error', chatT('ai_chat_js_stream_ended', 'Stream ended without a response.'));
                     return;
                 }
             } else {
@@ -2224,7 +2218,7 @@
                 } catch (parseError) {
                     lastFailedMessage = message;
                     appendConsoleLog('error', 'Invalid response from server', parseError.message);
-                    addChatMessageWithRetry('error', 'Invalid response from server.');
+                    addChatMessageWithRetry('error', chatT('ai_chat_js_invalid_response', 'Invalid response from server.'));
                     return;
                 }
             }
@@ -2339,7 +2333,7 @@
             saveChatState();
         }
         if (!currentConnection) {
-            showError('Select an AI connection first');
+            showError(chatT('ai_chat_js_select_connection_first', 'Select an AI connection first'));
             return;
         }
         const input = document.getElementById('ai-chat-input');
@@ -2432,7 +2426,7 @@
     function indexRecentChat() {
         if (!conversationId || !chatMessages.length) return;
         const firstUser = chatMessages.find(m => m.role === 'user');
-        const title = firstUser ? String(firstUser.content).slice(0, 72) : 'Chat';
+        const title = firstUser ? String(firstUser.content).slice(0, 72) : chatT('ai_chat_js_chat_title', 'Chat');
         const entry = {
             id: conversationId,
             title: title,
@@ -2599,7 +2593,7 @@
         
         const actionType = approval.action_type || 'unknown';
         const actionTypeLabel = actionType.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        const description = approval.description || 'No description';
+        const description = approval.description || chatT('ai_chat_js_no_description', 'No description');
         const status = approval.status || 'pending';
         const statusLabel = status.charAt(0).toUpperCase() + status.slice(1);
         const statusClass = 'ai-chat-approval-status-' + status;
@@ -2647,7 +2641,7 @@
     
     // Approve action from chat
     async function approveAction(approvalId) {
-        if (!(await BirklyFeedback.confirm('Approve this action?'))) return;
+        if (!(await BirklyFeedback.confirm(chatT('ai_chat_js_confirm_approve_action', 'Approve this action?')))) return;
         
         try {
             const response = await fetch(apiUrl('/api/ai_approvals.php'), {
@@ -2673,16 +2667,16 @@
                         actionsDiv.innerHTML = '<div class="ai-chat-approval-status approved">✓ Approved and executed</div>';
                     }
                 }
-                addChatMessage('system', 'Action approved and executed successfully.');
+                addChatMessage('system', chatT('ai_chat_js_action_approved', 'Action approved and executed successfully.'));
                 loadApprovalQueue();
             } else {
                 appendConsoleLog('error', 'Failed to approve action', result);
-                addChatMessage('error', 'Failed to approve: ' + (result.message || 'Unknown error'));
+                addChatMessage('error', chatT('ai_chat_js_failed_approve', 'Failed to approve: {message}', { message: (result.message || chatT('ai_chat_js_unknown_error', 'Unknown error')) }));
             }
         } catch (error) {
             console.error('Error approving action:', error);
             appendConsoleLog('error', 'Error approving action: ' + error.message);
-            addChatMessage('error', 'Error approving action');
+            addChatMessage('error', chatT('ai_chat_js_error_approving', 'Error approving action'));
         }
     }
     
@@ -2718,16 +2712,16 @@
                         actionsDiv.innerHTML = '<div class="ai-chat-approval-status rejected">✗ Rejected</div>';
                     }
                 }
-                addChatMessage('system', 'Action rejected.');
+                addChatMessage('system', chatT('ai_chat_js_action_rejected', 'Action rejected.'));
                 loadApprovalQueue();
             } else {
                 appendConsoleLog('error', 'Failed to reject action', result);
-                addChatMessage('error', 'Failed to reject: ' + (result.message || 'Unknown error'));
+                addChatMessage('error', chatT('ai_chat_js_failed_reject', 'Failed to reject: {message}', { message: (result.message || chatT('ai_chat_js_unknown_error', 'Unknown error')) }));
             }
         } catch (error) {
             console.error('Error rejecting action:', error);
             appendConsoleLog('error', 'Error rejecting action: ' + error.message);
-            addChatMessage('error', 'Error rejecting action');
+            addChatMessage('error', chatT('ai_chat_js_error_rejecting', 'Error rejecting action'));
         }
     }
     
@@ -2755,7 +2749,7 @@
         
         // Render markdown for assistant messages, plain text for user messages
         const renderedContent = isLoading 
-            ? '<span class="spinner" role="status" aria-label="Loading"></span>' 
+            ? '<span class="spinner" role="status" aria-label="' + escapeHtml(chatT('ai_chat_js_loading', 'Loading')) + '"></span>' 
             : (role === 'assistant'
                 ? renderMarkdown(sanitizeChatDisplayText(content))
                 : (role === 'error'
@@ -2797,7 +2791,7 @@
                 fullscreenBtn.innerHTML = isFullscreen
                     ? icon('arrows-in', { size: 16 })
                     : icon('arrows-out', { size: 16 });
-                fullscreenBtn.title = isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
+                fullscreenBtn.title = isFullscreen ? chatT('ai_chat_js_exit_fullscreen', 'Exit fullscreen') : chatT('ai_chat_js_enter_fullscreen', 'Enter fullscreen');
             }
         }
     }
