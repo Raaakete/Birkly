@@ -3,11 +3,16 @@
  * Handles profile, password, language, and notification preferences
  */
 
-function accountT(key, fallback) {
-    if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
-        return Birkly.i18n.t('admin.' + key, fallback);
+function accountT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
     }
-    return fallback != null ? fallback : key;
+    return text;
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -465,7 +470,7 @@ async function openAccount2FASetupModal() {
 
     modal.style.display = 'flex';
     modal.classList.add('active');
-    content.innerHTML = '<div class="loading-state"><p>Setting up 2FA...</p></div>';
+    content.innerHTML = '<div class="loading-state"><p>' + escapeHtml(accountT('account_js_setting_up_2fa', 'Setting up 2FA...')) + '</p></div>';
 
     try {
         const response = await fetch(Birkly.url('/api/2fa.php?action=setup'), {
@@ -541,7 +546,7 @@ window.accountClose2FASetupModal = accountClose2FASetupModal;
 async function enableAccount2FA() {
     const code = document.getElementById('account-2fa-verify-code')?.value.trim();
     if (!code || code.length !== 6) {
-        BirklyFeedback.toast('Please enter a valid 6-digit code', 'warning')
+        BirklyFeedback.toast(accountT('account_js_2fa_code_invalid', 'Please enter a valid 6-digit code'), 'warning')
         return;
     }
 
@@ -577,7 +582,7 @@ async function enableAccount2FA() {
         }
     } catch (err) {
         console.error('Enable 2FA error:', err);
-        BirklyFeedback.toast('Error enabling 2FA: ' + (err.message || 'Unknown error'), 'error');
+        BirklyFeedback.toast(accountT('account_js_err_enabling_2fa', 'Error enabling 2FA: {message}', { message: err.message || accountT('error_unknown', 'Unknown error') }), 'error');
     }
 }
 
@@ -621,7 +626,7 @@ document.getElementById('account-2fa-disable-form')?.addEventListener('submit', 
         loadAccount2FAStatus();
     } catch (err) {
         console.error('Disable 2FA error:', err);
-        BirklyFeedback.toast('Error disabling 2FA: ' + (err.message || 'Unknown error'), 'error');
+        BirklyFeedback.toast(accountT('account_js_err_disabling_2fa', 'Error disabling 2FA: {message}', { message: err.message || accountT('error_unknown', 'Unknown error') }), 'error');
     }
 });
 
@@ -688,7 +693,7 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
         }
     } catch (err) {
         console.error('Regenerate backup codes error:', err);
-        BirklyFeedback.toast('Error regenerating backup codes: ' + (err.message || 'Unknown error'), 'error');
+        BirklyFeedback.toast(accountT('account_js_err_regenerating_backup', 'Error regenerating backup codes: {message}', { message: err.message || accountT('error_unknown', 'Unknown error') }), 'error');
     }
 });
 
@@ -961,7 +966,7 @@ async function handleRemoveAvatar() {
     })
     .catch(error => {
         console.error('Remove avatar error:', error);
-        BirklyFeedback.toast('Error removing avatar', 'error')
+        BirklyFeedback.toast(accountT('account_js_err_remove_avatar', 'Error removing avatar'), 'error')
     });
 }
 

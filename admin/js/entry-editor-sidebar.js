@@ -18,6 +18,18 @@
     let formDirty = false;
     let initialSnapshot = '';
 
+    function sidebarT(key, fallback, params) {
+        let text = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function $(id) {
         return document.getElementById(id);
     }
@@ -390,7 +402,7 @@
         const entryId = config.entry_id || '';
         if (!collectionSlug || !entryId || !version) return;
 
-        if (!(await BirklyFeedback.confirm('Restore version ' + version + '? Your current draft will be saved to history first.'))) {
+        if (!(await BirklyFeedback.confirm(sidebarT('entry_editor_sidebar_js_restore_confirm', 'Restore version {version}? Your current draft will be saved to history first.', { version: version })))) {
             return;
         }
 

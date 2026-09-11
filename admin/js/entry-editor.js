@@ -26,6 +26,18 @@
     let isSubmittingEntry = false;
     let knownEntryId = '';
 
+    function eeT(key, fallback, params) {
+        let text = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function isSafeAdminRedirectUrl(url) {
         if (!url || typeof url !== 'string') {
             return false;
@@ -709,7 +721,7 @@
         const reviewer = document.getElementById('reviewer')?.value || '';
         
         if (!entryId || !collectionSlug) {
-            BirklyFeedback.toast('Cannot submit review: missing entry or collection information', 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_review_missing_context', 'Cannot submit review: missing entry or collection information'), 'error')
             return;
         }
         
@@ -729,15 +741,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                BirklyFeedback.toast('Review action submitted successfully. Reloading page...', 'success')
+                BirklyFeedback.toast(eeT('entry_editor_js_review_submitted_reload', 'Review action submitted successfully. Reloading page...'), 'success')
                 window.location.reload();
             } else {
-                BirklyFeedback.toast('Error submitting review: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(eeT('entry_editor_js_err_review_submit', 'Error submitting review: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch(error => {
             console.error('Review error:', error);
-            BirklyFeedback.toast('Error submitting review: ' + error.message, 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_review_submit', 'Error submitting review: {message}', { message: error.message }), 'error')
         });
     }
 
@@ -762,7 +774,7 @@
         const collectionSlug = form.querySelector('input[name="collection"]')?.value;
         
         if (!entryId || !collectionSlug) {
-            BirklyFeedback.toast('Cannot view history: missing entry or collection information', 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_history_missing_context', 'Cannot view history: missing entry or collection information'), 'error')
             return;
         }
         
@@ -773,12 +785,12 @@
                 if (data.status === 'ok' && data.versions) {
                     renderVersionModal(data.versions, collectionSlug, entryId);
                 } else {
-                    BirklyFeedback.toast('Error loading version history: ' + (data.message || 'Unknown error'), 'error');
+                    BirklyFeedback.toast(eeT('entry_editor_js_err_load_history', 'Error loading version history: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
                 }
             })
             .catch(error => {
                 console.error('Version history error:', error);
-                BirklyFeedback.toast('Error loading version history: ' + error.message, 'error')
+                BirklyFeedback.toast(eeT('entry_editor_js_err_load_history', 'Error loading version history: {message}', { message: error.message }), 'error')
             });
     }
     
@@ -865,12 +877,12 @@
             const v2 = version2Select.value;
             
             if (!v1 || !v2) {
-                BirklyFeedback.toast('Please select both versions to compare', 'warning')
+                BirklyFeedback.toast(eeT('entry_editor_js_select_two_versions', 'Please select both versions to compare'), 'warning')
                 return;
             }
             
             if (v1 === v2) {
-                BirklyFeedback.toast('Please select two different versions', 'warning')
+                BirklyFeedback.toast(eeT('entry_editor_js_select_different_versions', 'Please select two different versions'), 'warning')
                 return;
             }
             
@@ -883,12 +895,12 @@
                         diffView.style.display = 'block';
                         document.getElementById('versions-list').style.display = 'none';
                     } else {
-                        BirklyFeedback.toast('Error loading diff: ' + (data.message || 'Unknown error'), 'error');
+                        BirklyFeedback.toast(eeT('entry_editor_js_err_load_diff', 'Error loading diff: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Diff error:', error);
-                    BirklyFeedback.toast('Error loading diff: ' + error.message, 'error')
+                    BirklyFeedback.toast(eeT('entry_editor_js_err_load_diff', 'Error loading diff: {message}', { message: error.message }), 'error')
                 });
         });
         
@@ -964,7 +976,7 @@
     }
     
     window.restoreVersion = async function(collectionSlug, entryId, version) {
-        if (!(await BirklyFeedback.confirm('Are you sure you want to restore this version? Current version will be saved as a new version.'))) {
+        if (!(await BirklyFeedback.confirm(eeT('entry_editor_js_confirm_restore_version', 'Are you sure you want to restore this version? Current version will be saved as a new version.')))) {
             return;
         }
         
@@ -980,15 +992,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                BirklyFeedback.toast('Version restored successfully. Reloading page...', 'success')
+                BirklyFeedback.toast(eeT('entry_editor_js_version_restored_reload', 'Version restored successfully. Reloading page...'), 'success')
                 window.location.reload();
             } else {
-                BirklyFeedback.toast('Error restoring version: ' + (data.message || 'Unknown error'), 'error');
+                BirklyFeedback.toast(eeT('entry_editor_js_err_restore_version', 'Error restoring version: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch(error => {
             console.error('Restore error:', error);
-            BirklyFeedback.toast('Error restoring version: ' + error.message, 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_restore_version', 'Error restoring version: {message}', { message: error.message }), 'error')
         });
     }
 
@@ -1614,18 +1626,18 @@
                     }
                 } else if (data && data.status === 'error') {
                     if (!applyFieldErrors(data.field_errors)) {
-                        BirklyFeedback.toast('Error: ' + (data.message || raw || 'Unknown error'), 'error');
+                        BirklyFeedback.toast(eeT('feedback_error_prefix', 'Error:') + ' ' + (data.message || raw || eeT('error_unknown', 'Unknown error')), 'error');
                     }
                 } else if (!response.ok) {
                     // HTTP error but no valid JSON
                     throw new Error((data && data.message) || (raw || ('HTTP ' + response.status + ' ' + response.statusText)));
                 } else {
                     // Unexpected response format
-                    BirklyFeedback.toast('Error: Unexpected response format', 'error')
+                    BirklyFeedback.toast(eeT('feedback_error_prefix', 'Error:') + ' ' + eeT('entry_editor_js_err_unexpected_response', 'Unexpected response format'), 'error')
                 }
             } catch (error) {
                 console.error('Error saving entry:', error);
-                BirklyFeedback.toast('Error saving entry: ' + error.message, 'error')
+                BirklyFeedback.toast(eeT('entry_editor_js_err_save_entry', 'Error saving entry: {message}', { message: error.message }), 'error')
             }
     }
 

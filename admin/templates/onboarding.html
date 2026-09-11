@@ -22,8 +22,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 require_once $root . '/core/demo_starter_templates.php';
 $starterCards = [
-    'marsk' => ['label' => 'Marsk', 'hint' => 'Slow living journal + demo site'],
-    'blank' => ['label' => 'Start blank', 'hint' => 'No demo content'],
+    'marsk' => ['label' => __('admin.onboarding_starter_marsk_label'), 'hint' => __('admin.onboarding_starter_marsk_hint')],
+    'blank' => ['label' => __('admin.onboarding_starter_blank_label'), 'hint' => __('admin.onboarding_starter_blank_hint')],
 ];
 $localCatalog = birkly_demo_starter_catalog();
 ?>

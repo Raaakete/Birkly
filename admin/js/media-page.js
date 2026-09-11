@@ -257,7 +257,7 @@ function resolveMediaItemUrl(url) {
       try {
         await uploadFiles(files);
       } catch (error) {
-        showError(error.message || 'Upload failed.');
+        showError(error.message || mdT('media_js_upload_failed', 'Upload failed.'));
       }
     });
   }
@@ -503,8 +503,8 @@ function resolveMediaItemUrl(url) {
 
     if (!items.length) {
       grid.innerHTML = '<div class="empty-state empty-state--compact">' +
-        '<p class="empty-state-title">No media found</p>' +
-        '<p class="empty-state-text">Upload files or change the current filters.</p></div>';
+        '<p class="empty-state-title">' + escapeHtml(mdT('media_js_empty_title', 'No media found')) + '</p>' +
+        '<p class="empty-state-text">' + escapeHtml(mdT('media_js_empty_hint', 'Upload files or change the current filters.')) + '</p></div>';
       updateSelectionToolbar();
       return;
     }
@@ -645,7 +645,7 @@ function resolveMediaItemUrl(url) {
       await uploadFiles(files);
       closeUploadModal();
     } catch (error) {
-      showError(error.message || 'Upload failed.');
+      showError(error.message || mdT('media_js_upload_failed', 'Upload failed.'));
     }
   }
 
@@ -686,13 +686,21 @@ function resolveMediaItemUrl(url) {
   }
 
   async function createFolder() {
-    const name = await BirklyFeedback.prompt('', '', { title: 'New folder', placeholder: 'Folder name', confirmLabel: 'Create' });
+    const name = await BirklyFeedback.prompt('', '', {
+      title: mdT('media_js_new_folder_title', 'New folder'),
+      placeholder: mdT('media_js_folder_name_placeholder', 'Folder name'),
+      confirmLabel: mdT('media_js_prompt_create_label', 'Create'),
+    });
     if (!name) return;
     await createFolderRequest(name.trim());
   }
 
   async function createSubfolder(basePath) {
-    const name = await BirklyFeedback.prompt('', '', { title: 'New subfolder', placeholder: 'Subfolder name', confirmLabel: 'Create' });
+    const name = await BirklyFeedback.prompt('', '', {
+      title: mdT('media_js_new_subfolder_title', 'New subfolder'),
+      placeholder: mdT('media_js_subfolder_name_placeholder', 'Subfolder name'),
+      confirmLabel: mdT('media_js_prompt_create_label', 'Create'),
+    });
     if (!name) return;
     const folderName = basePath ? basePath + '/' + name.trim() : name.trim();
     await createFolderRequest(folderName);
@@ -724,7 +732,7 @@ function resolveMediaItemUrl(url) {
 
   async function renameFolder(folderPath) {
     const currentName = folderPath.split('/').pop();
-    const newName = await BirklyFeedback.prompt('Enter a new name for this folder.', currentName, {
+    const newName = await BirklyFeedback.prompt(mdT('media_js_rename_folder_message', 'Enter a new name for this folder.'), currentName, {
       title: 'Rename folder',
       placeholder: 'Folder name',
       confirmLabel: 'Rename',
