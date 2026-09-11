@@ -22,8 +22,8 @@ $stickySaveBarMessageClass = 'message settings-toast';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarStatusHtml = '<span id="settings-dirty-badge" class="badge badge-warning" hidden aria-live="polite">' . __('admin.unsaved_changes') . '</span>';
 $stickySaveBarRightHtml = ''
-    . '<label class="u-hidden" for="settings-search-input">Search settings</label>'
-    . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="Search settings" autocomplete="off">'
+    . '<label class="u-hidden" for="settings-search-input">' . htmlspecialchars(__('admin.settings_search_settings')) . '</label>'
+    . '<input type="search" id="settings-search-input" class="input settings-search-input" placeholder="' . htmlspecialchars(__('admin.settings_search_settings')) . '" autocomplete="off">'
     . '<a href="' . htmlspecialchars(birkly_admin_url('activity')) . '" class="btn btn-secondary btn-sm">View activity</a>';
 include __DIR__ . '/components/sticky-save-bar.php';
 ?>
@@ -845,7 +845,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="form-group u-fill">
                     <label for="denylist-collection-select">Protect collection</label>
                     <select id="denylist-collection-select" class="input">
-                      <option value="">Loading collections…</option>
+                      <option value=""><?= htmlspecialchars(__('admin.loading_collections')) ?></option>
                     </select>
                   </div>
                   <button type="button" class="btn btn-secondary" id="denylist-add-collection-btn" disabled>
@@ -854,7 +854,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <div class="form-group u-fill">
                     <label for="denylist-plugin-select">Deny plugin admin space</label>
                     <select id="denylist-plugin-select" class="input">
-                      <option value="">Loading plugins…</option>
+                      <option value=""><?= htmlspecialchars(__('admin.loading_plugins')) ?></option>
                     </select>
                   </div>
                   <button type="button" class="btn btn-secondary" id="denylist-add-plugin-btn" disabled>
@@ -911,7 +911,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <?php if ($domainCount > 0): ?>
               <p class="u-text-sm">Per-domain rate limits apply to registered API domains. Configure limits in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>">Domains</a> tab.</p>
               <?php else: ?>
-              <p class="u-text-sm">No domains registered — per-domain rate limits are not configured. Register a domain in the <a href="<?= htmlspecialchars($domainsTabUrl) ?>">Domains</a> tab to enable API access controls.</p>
+              <p class="u-text-sm"><?= __('admin.settings_domains_rate_limit_before') ?><a href="<?= htmlspecialchars($domainsTabUrl) ?>"><?= __('admin.domains') ?></a><?= __('admin.settings_domains_rate_limit_after') ?></p>
               <?php endif; ?>
             </div>
           </div>
@@ -1017,7 +1017,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               </div>
               <div id="analytics-health-banner" class="card-body" hidden></div>
               <div class="card-body u-stack-5" id="analytics-report-panel">
-                <div class="empty-state"><p>Select a preset above and save, then visit your site to see reports.</p></div>
+                <div class="empty-state"><p><?= __('admin.settings_analytics_select_preset_hint') ?></p></div>
               </div>
             </section>
           </div>
@@ -1392,7 +1392,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-group">
             <label for="role-description"><?= __('admin.description') ?></label>
-            <textarea id="role-description" name="description" class="input" rows="3" placeholder="Describe what this role can do"></textarea>
+            <textarea id="role-description" name="description" class="input" rows="3" placeholder="<?= htmlspecialchars(__('admin.settings_role_description_placeholder')) ?>"></textarea>
           </div>
           <div class="form-group">
             <label><?= __('admin.permissions') ?></label>

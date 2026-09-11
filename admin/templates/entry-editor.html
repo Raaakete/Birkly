@@ -473,7 +473,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     </p>
                                     <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
                                     <div id="entry-revisions-list" class="entry-revisions-list">
-                                        <div class="entry-revisions-empty">Loading revisions…</div>
+                                        <div class="entry-revisions-empty"><?= htmlspecialchars(__('admin.entry_editor_js_loading_revisions')) ?></div>
                                     </div>
                                 </div>
                             <?php endif; ?>
@@ -540,7 +540,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="u-text-sm u-fg-secondary">No fields defined yet. Add fields to see their slugs.</p>
+                                            <p class="u-text-sm u-fg-secondary"><?= __('admin.entry_editor_no_fields_slugs') ?></p>
                                         <?php endif; ?>
                                     </div>
                                 </div>

@@ -680,7 +680,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="review-notes-input">${label}</label>
-                    <textarea id="review-notes-input" class="input" rows="4" placeholder="Enter notes..."></textarea>
+                    <textarea id="review-notes-input" class="input" rows="4" placeholder="${eeT('entry_editor_js_review_notes_placeholder', 'Enter notes...')}"></textarea>
                 </div>
                 <div class="form-actions">
                     <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
@@ -914,7 +914,7 @@
     
     function renderDiffView(container, diff, version1, version2, v1Label, v2Label) {
         if (diff.length === 0) {
-            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">No differences found between these versions.</p>';
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">' + escapeHtml(eeT('entry_editor_js_no_version_diff', 'No differences found between these versions.')) + '</p>';
             return;
         }
         

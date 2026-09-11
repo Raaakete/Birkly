@@ -720,7 +720,7 @@ function resolveMediaItemUrl(url) {
 
       const result = await response.json();
       if (result.status === 'ok') {
-        showSuccess('Folder created successfully.');
+        showSuccess(mdT('media_js_folder_created_success', 'Folder created successfully.'));
         await loadFolders();
       } else {
         showError(mdT('media_js_err_create_folder', 'Failed to create folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
@@ -757,7 +757,7 @@ function resolveMediaItemUrl(url) {
 
       const result = await response.json();
       if (result.status === 'ok') {
-        showSuccess('Folder renamed successfully.');
+        showSuccess(mdT('media_js_folder_renamed_success', 'Folder renamed successfully.'));
         if (state.currentFolder === folderPath) {
           state.currentFolder = newPath;
         }
@@ -866,7 +866,7 @@ function resolveMediaItemUrl(url) {
         '<div class="u-stack-4">' +
           '<div class="field">' +
             '<label class="field-label" for="media-alt-text">Alt text</label>' +
-            '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="Describe the image for screen readers">' +
+            '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="' + escapeHtml(mdT('media_js_alt_text_placeholder', 'Describe the image for screen readers')) + '">' +
           '</div>' +
           '<div class="u-grid-2">' +
             '<div class="field">' +
@@ -945,7 +945,7 @@ function resolveMediaItemUrl(url) {
         state.currentMediaItem = normalizeMediaItem({ ...state.currentMediaItem, ...updatedMedia });
         renderMediaCollection(getFilteredMedia());
         renderMediaModalBody(state.currentMediaItem);
-        showSuccess('Media details saved successfully.');
+        showSuccess(mdT('media_js_media_details_saved', 'Media details saved successfully.'));
       } else {
         showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
@@ -1117,7 +1117,7 @@ function resolveMediaItemUrl(url) {
     if (failures.length) {
       showError(failures.join('\n'));
     } else {
-      showSuccess('Selected media deleted successfully.');
+      showSuccess(mdT('media_js_selected_media_deleted_success', 'Selected media deleted successfully.'));
     }
   }
 
@@ -1136,7 +1136,7 @@ function resolveMediaItemUrl(url) {
       closeMediaModal();
       state.selectedIds.delete(mediaId);
       await Promise.all([loadFolders(), loadMedia()]);
-      showSuccess('Media deleted successfully.');
+      showSuccess(mdT('media_js_media_deleted_success', 'Media deleted successfully.'));
     } else {
       showError(mdT('media_js_err_delete_media', 'Failed to delete media:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
     }

@@ -350,7 +350,7 @@
         if (!list) return;
 
         if (!Array.isArray(versions) || versions.length === 0) {
-            list.innerHTML = '<div class="entry-revisions-empty">No saved revisions yet.</div>';
+            list.innerHTML = '<div class="entry-revisions-empty">' + escapeHtml(sidebarT('entry_editor_js_no_revisions_yet', 'No saved revisions yet.')) + '</div>';
             return;
         }
 
@@ -379,7 +379,7 @@
         const list = $('entry-revisions-list');
         if (!list || !collectionSlug || !entryId) return;
 
-        list.innerHTML = '<div class="entry-revisions-empty">Loading revisions…</div>';
+        list.innerHTML = '<div class="entry-revisions-empty">' + escapeHtml(sidebarT('entry_editor_js_loading_revisions', 'Loading revisions…')) + '</div>';
         setRevisionFeedback('');
 
         try {

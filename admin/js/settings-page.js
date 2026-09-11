@@ -197,7 +197,7 @@ function populatePluginAccessGrid(gridId, role) {
         ? role.plugin_access.deny
         : [];
     if (!activePluginsForRoles.length) {
-        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">No active plugins</p>';
+        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(stT('settings_js_no_active_plugins', 'No active plugins')) + '</p>';
         return;
     }
     grid.innerHTML = activePluginsForRoles.map(function (plugin) {
@@ -2005,7 +2005,7 @@ async function deletePlugin(pluginId) {
         renderDeliveryRoutingOptions(meta.hosting || {}, meta.detect || {});
 
         if (!rows.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.</p></div>';
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_delivery_hostnames', 'No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.')) + '</p></div>';
             return;
         }
 
@@ -2085,7 +2085,7 @@ async function deletePlugin(pluginId) {
             if (data.status === 'ok' && data.data && data.data.licenses) {
                 renderDomains(data.data.licenses, domainRoles);
             } else {
-                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains registered yet.</p></div>';
+                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
             }
             attachDomainsCopyButtons(document.getElementById('domains'));
         } catch (error) {
@@ -2297,7 +2297,7 @@ async function deletePlugin(pluginId) {
         domainRoles = domainRoles || {};
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">No domains yet. Click "Add domain" to connect one.</p></div>';
+            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_add_hint', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
             return;
         }
 
@@ -2959,7 +2959,7 @@ window.deleteDomain = async function(domainName) {
         const logsToShow = filteredLogs.slice(0, endIndex);
         
         if (logsToShow.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">No log entries found</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_log_entries', 'No log entries found')) + '</p></div></td></tr>';
             const loadMoreBtn = document.getElementById('load-more');
             if (loadMoreBtn) {
                 loadMoreBtn.hidden = true;
@@ -3123,7 +3123,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if (!html) {
-        container.innerHTML = '<p class="settings-help">No protected resources. All collections are accessible to plugins (subject to capability checks).</p>';
+        container.innerHTML = '<p class="settings-help">' + escapeHtml(stT('settings_js_no_protected_resources', 'No protected resources. All collections are accessible to plugins (subject to capability checks).')) + '</p>';
         return;
     }
 
