@@ -49,6 +49,8 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
 
     <script<?= $__birklyScriptNonceAttr ?>>
+    const i18nOpenPage = <?= json_encode(__('admin.open_page'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nOpenPageNamed = <?= json_encode(__('admin.open_page_named'), JSON_UNESCAPED_UNICODE) ?>;
     // If user was redirected due to missing permission, show unified modal.
     (function() {
         try {
@@ -58,7 +60,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 const needed = params.get('needed') || '';
                 if (window.Birkly && window.Birkly.Utils && typeof window.Birkly.Utils.showPermissionDenied === 'function') {
                     window.Birkly.Utils.showPermissionDenied({
-                        action: from ? `Open ${from}` : 'Open page',
+                        action: from ? i18nOpenPageNamed.replace('{name}', from) : i18nOpenPage,
                         url: needed ? `Requires: ${needed}` : ''
                     });
                 }
@@ -76,12 +78,17 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     
     <!-- Logout functionality -->
     <script<?= $__birklyScriptNonceAttr ?>>
+    const i18nLogoutConfirm = <?= json_encode(__('admin.logout_confirm'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nLoggingOut = <?= json_encode(__('admin.logging_out'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nLogoutLabel = <?= json_encode(__('admin.logout'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nErrorLoggingOut = <?= json_encode(__('admin.error_logging_out'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nErrorLoggingOutRetry = <?= json_encode(__('admin.error_logging_out_retry'), JSON_UNESCAPED_UNICODE) ?>;
     document.addEventListener('DOMContentLoaded', function() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to logout?')) {
-                    logoutBtn.textContent = 'Logging out...';
+                if (confirm(i18nLogoutConfirm)) {
+                    logoutBtn.textContent = i18nLoggingOut;
                     logoutBtn.disabled = true;
                     
                     fetch(Birkly.url('/admin/logout.php'), {
@@ -96,15 +103,15 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                         if (data.status === 'ok') {
                             window.location.href = Birkly.url('/admin/login.php');
                         } else {
-                            alert('Error logging out: ' + data.message);
-                            logoutBtn.textContent = 'Logout';
+                            alert(i18nErrorLoggingOut + ' ' + data.message);
+                            logoutBtn.textContent = i18nLogoutLabel;
                             logoutBtn.disabled = false;
                         }
                     })
                     .catch(error => {
                         console.error('Logout error:', error);
-                        alert('Error logging out. Please try again.');
-                        logoutBtn.textContent = 'Logout';
+                        alert(i18nErrorLoggingOutRetry);
+                        logoutBtn.textContent = i18nLogoutLabel;
                         logoutBtn.disabled = false;
                     });
                 }
@@ -285,20 +292,25 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <!-- Notifications Dropdown (will be moved to notifications-wrapper by JS) - Unified Dropdown System -->
     <div class="dropdown-menu dropdown-menu-right notifications-dropdown" id="notifications-dropdown">
         <div class="notifications-header">
-            <h3>Notifications</h3>
-            <button type="button" class="btn btn-ghost btn-sm mark-all-read-btn" id="mark-all-read-btn" hidden>Mark all as read</button>
+            <h3><?= htmlspecialchars(__('admin.notifications_title')) ?></h3>
+            <button type="button" class="btn btn-ghost btn-sm mark-all-read-btn" id="mark-all-read-btn" hidden><?= htmlspecialchars(__('admin.mark_all_as_read')) ?></button>
         </div>
         <div class="notifications-list" id="notifications-list">
-            <div class="notifications-loading">Loading notifications...</div>
+            <div class="notifications-loading"><?= htmlspecialchars(__('admin.notifications_loading')) ?></div>
         </div>
         <div class="notifications-footer">
-            <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>">View all activity</a>
+            <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>"><?= htmlspecialchars(__('admin.view_all_activity')) ?></a>
         </div>
     </div>
     
     <!-- Notifications Functionality -->
     <script<?= $__birklyScriptNonceAttr ?>>
     (function() {
+        const i18nNotificationsEmpty = <?= json_encode(__('admin.notifications_empty'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nNotificationsLoadFailed = <?= json_encode(__('admin.notifications_load_failed'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nNotificationsLoadError = <?= json_encode(__('admin.notifications_load_error'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nErrorUnknown = <?= json_encode(__('admin.error_unknown'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nJustNow = <?= json_encode(__('admin.just_now'), JSON_UNESCAPED_UNICODE) ?>;
         let notifications = [];
         let unreadCount = 0;
         let pendingCount = 0;
@@ -334,12 +346,12 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                         markVisibleNotificationsSeen();
                     } else {
                         console.error('Failed to load notifications:', data.message);
-                        showError('Failed to load notifications: ' + (data.message || 'Unknown error'));
+                        showError(i18nNotificationsLoadFailed + ' ' + (data.message || i18nErrorUnknown));
                     }
                 })
                 .catch(error => {
                     console.error('Notifications error:', error);
-                    showError('Error loading notifications: ' + error.message);
+                    showError(i18nNotificationsLoadError + ' ' + error.message);
                 });
         }
         
@@ -414,7 +426,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
             if (!notificationsList) return;
             
             if (notifications.length === 0) {
-                notificationsList.innerHTML = '<div class="notifications-empty">No notifications</div>';
+                notificationsList.innerHTML = '<div class="notifications-empty">' + escapeHtml(i18nNotificationsEmpty) + '</div>';
                 if (markAllReadBtn) markAllReadBtn.hidden = true;
                 return;
             }
@@ -488,7 +500,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
             
-            if (diffMins < 1) return 'Just now';
+            if (diffMins < 1) return i18nJustNow;
             if (diffMins < 60) return `${diffMins}m ago`;
             if (diffHours < 24) return `${diffHours}h ago`;
             if (diffDays < 7) return `${diffDays}d ago`;

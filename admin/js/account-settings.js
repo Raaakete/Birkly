@@ -3,6 +3,13 @@
  * Handles profile, password, language, and notification preferences
  */
 
+function accountT(key, fallback) {
+    if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+        return Birkly.i18n.t('admin.' + key, fallback);
+    }
+    return fallback != null ? fallback : key;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const unifiedSaveBtn = document.getElementById('account-save-btn');
     if (unifiedSaveBtn) {
@@ -717,7 +724,7 @@ async function handleUnifiedAccountSave() {
             });
             const languageResult = await languageResponse.json();
             if (languageResult.status !== 'ok') {
-                throw new Error(languageResult.message || 'Error saving language preference');
+                throw new Error(languageResult.message || accountT('language_save_error', 'Error saving language preference'));
             }
             reloadAfterLanguage = true;
         }
@@ -872,17 +879,17 @@ function handleLanguageSubmit(e) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'ok') {
-            showMessage(messageEl, 'Language preference saved. Reloading page...', 'success');
+            showMessage(messageEl, accountT('language_preference_saved_reload', 'Language preference saved. Reloading page…'), 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
         } else {
-            showMessage(messageEl, data.message || 'Error saving language preference', 'error');
+            showMessage(messageEl, data.message || accountT('language_save_error', 'Error saving language preference'), 'error');
         }
     })
     .catch(error => {
         console.error('Language change error:', error);
-        showMessage(messageEl, 'Error saving language preference', 'error');
+        showMessage(messageEl, accountT('language_save_error', 'Error saving language preference'), 'error');
     });
 }
 

@@ -8,6 +8,13 @@
     let collections = [];
     let webhooks = [];
 
+    function t(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     function apiUrl(path) {
         if (typeof Birkly !== 'undefined' && typeof Birkly.url === 'function') {
             return Birkly.url(path);
@@ -103,7 +110,8 @@
         const select = document.getElementById('webhook-collections');
         if (!select) return;
         const selected = Array.from(select.selectedOptions).map(function(opt) { return opt.value; });
-        select.innerHTML = '<option value="*">All collections</option>';
+        const allLabel = escapeHtml(t('all_collections', 'All collections'));
+        select.innerHTML = '<option value="*">' + allLabel + '</option>';
         collections.forEach(function(collection) {
             const option = document.createElement('option');
             option.value = collection.slug;
@@ -121,7 +129,8 @@
         const tbody = document.getElementById('webhooks-list');
         if (!tbody) return;
 
-        tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>Loading...</p></div></td></tr>';
+        const loadingLabel = escapeHtml(t('loading_webhooks', 'Loading…'));
+        tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>' + loadingLabel + '</p></div></td></tr>';
 
         try {
             const response = await fetch(apiUrl('/api/webhooks.php?action=list'));
@@ -129,7 +138,8 @@
             webhooks = (result.status === 'ok' && Array.isArray(result.webhooks)) ? result.webhooks : [];
             renderWebhooks();
         } catch (error) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">Failed to load webhooks.</p></div></td></tr>';
+            const failMsg = escapeHtml(t('webhook_load_failed', 'Failed to load webhooks.'));
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">' + failMsg + '</p></div></td></tr>';
         }
     }
 
@@ -138,14 +148,22 @@
         if (!tbody) return;
 
         if (!webhooks.length) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">No webhooks configured yet.</p></div></td></tr>';
+            const emptyMsg = escapeHtml(t('webhook_empty', 'No webhooks configured yet.'));
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">' + emptyMsg + '</p></div></td></tr>';
             return;
         }
+
+        const activeLabel = escapeHtml(t('webhook_active', 'Active'));
+        const inactiveLabel = escapeHtml(t('webhook_inactive', 'Inactive'));
+        const editLabel = escapeHtml(t('edit', 'Edit'));
+        const deleteLabel = escapeHtml(t('delete', 'Delete'));
 
         tbody.innerHTML = webhooks.map(function(webhook) {
             const events = (webhook.events || []).join(', ') || '—';
             const cols = (webhook.collections || []).join(', ') || '—';
-            const status = webhook.active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-neutral">Inactive</span>';
+            const status = webhook.active
+                ? '<span class="badge badge-success">' + activeLabel + '</span>'
+                : '<span class="badge badge-neutral">' + inactiveLabel + '</span>';
             const lastTriggered = webhook.last_triggered ? escapeHtml(webhook.last_triggered) : '—';
 
             return '<tr>' +
@@ -155,8 +173,8 @@
                 '<td>' + status + '</td>' +
                 '<td>' + lastTriggered + '</td>' +
                 '<td class="cell-actions">' +
-                    '<button type="button" class="btn btn-sm btn-secondary" data-edit-webhook="' + escapeHtml(webhook.id) + '">Edit</button> ' +
-                    '<button type="button" class="btn btn-sm btn-danger" data-delete-webhook="' + escapeHtml(webhook.id) + '">Delete</button>' +
+                    '<button type="button" class="btn btn-sm btn-secondary" data-edit-webhook="' + escapeHtml(webhook.id) + '">' + editLabel + '</button> ' +
+                    '<button type="button" class="btn btn-sm btn-danger" data-delete-webhook="' + escapeHtml(webhook.id) + '">' + deleteLabel + '</button>' +
                 '</td>' +
             '</tr>';
         }).join('');
@@ -176,7 +194,7 @@
         if (webhookId) {
             const webhook = webhooks.find(function(item) { return item.id === webhookId; });
             if (!webhook) return;
-            if (title) title.textContent = 'Edit webhook';
+            if (title) title.textContent = t('webhook_edit', 'Edit webhook');
             document.getElementById('webhook-id').value = webhook.id;
             document.getElementById('webhook-url').value = webhook.url || '';
             document.getElementById('webhook-active').checked = !!webhook.active;
@@ -193,7 +211,7 @@
                 });
             }
         } else if (title) {
-            title.textContent = 'Create webhook';
+            title.textContent = t('create_webhook', 'Create webhook');
         }
 
         modal.style.display = 'flex';
@@ -245,15 +263,15 @@
                 closeWebhookModal();
                 loadWebhooks();
             } else {
-                BirklyFeedback.toast(result.message || 'Failed to save webhook', 'error')
+                BirklyFeedback.toast(result.message || t('webhook_save_failed', 'Failed to save webhook'), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to save webhook: ' + error.message, 'error')
+            BirklyFeedback.toast(t('webhook_save_failed', 'Failed to save webhook') + ': ' + error.message, 'error');
         }
     }
 
     async function deleteWebhook(webhookId) {
-        if (!webhookId || !(await BirklyFeedback.confirm('Delete this webhook?'))) {
+        if (!webhookId || !(await BirklyFeedback.confirm(t('webhook_delete_confirm', 'Delete this webhook?')))) {
             return;
         }
         try {
@@ -266,17 +284,17 @@
             if (result.status === 'ok') {
                 loadWebhooks();
             } else {
-                BirklyFeedback.toast(result.message || 'Failed to delete webhook', 'error')
+                BirklyFeedback.toast(result.message || t('webhook_delete_failed', 'Failed to delete webhook'), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Failed to delete webhook: ' + error.message, 'error')
+            BirklyFeedback.toast(t('webhook_delete_failed', 'Failed to delete webhook') + ': ' + error.message, 'error');
         }
     }
 
     async function testWebhook() {
         const payload = readWebhookForm();
         if (!payload.id) {
-            BirklyFeedback.toast('Save the webhook before testing.', 'error')
+            BirklyFeedback.toast(t('webhook_test_save_first', 'Save the webhook before testing.'), 'error');
             return;
         }
         try {
@@ -287,12 +305,12 @@
             });
             const result = await response.json();
             if (result.status === 'ok') {
-                BirklyFeedback.toast('Test webhook sent successfully.', 'success')
+                BirklyFeedback.toast(t('webhook_test_success', 'Test webhook sent successfully.'), 'success');
             } else {
-                BirklyFeedback.toast(result.message || 'Webhook test failed', 'error')
+                BirklyFeedback.toast(result.message || t('webhook_test_failed', 'Webhook test failed'), 'error');
             }
         } catch (error) {
-            BirklyFeedback.toast('Webhook test failed: ' + error.message, 'error')
+            BirklyFeedback.toast(t('webhook_test_failed', 'Webhook test failed') + ': ' + error.message, 'error');
         }
     }
 
