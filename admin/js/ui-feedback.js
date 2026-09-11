@@ -10,6 +10,13 @@
     var promptResolve = null;
     var focusTrapHandler = null;
 
+    function uiT(key, fallback) {
+        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
+            return global.Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     var TOAST_ICONS = {
         success: '\u2713',
         error: '\u2717',
@@ -62,7 +69,7 @@
         el.innerHTML =
             '<span class="birkly-feedback-toast__icon" aria-hidden="true">' + escapeHtml(TOAST_ICONS[toastType] || TOAST_ICONS.info) + '</span>' +
             '<span class="birkly-feedback-toast__message">' + escapeHtml(message) + '</span>' +
-            '<button type="button" class="birkly-feedback-toast__close" aria-label="Dismiss notification">&times;</button>';
+            '<button type="button" class="birkly-feedback-toast__close" aria-label="' + escapeHtml(uiT('ui_feedback_dismiss_toast', 'Dismiss notification')) + '">&times;</button>';
 
         var closeBtn = el.querySelector('.birkly-feedback-toast__close');
         if (closeBtn) {
@@ -206,16 +213,16 @@
         modal.innerHTML =
             '<div class="modal-content birkly-feedback-dialog">' +
             '<div class="modal-header">' +
-            '<h2 id="birkly-feedback-confirm-title">Confirm</h2>' +
-            '<button type="button" class="modal-close-btn" data-birkly-feedback-action="cancel" aria-label="Close">&times;</button>' +
+            '<h2 id="birkly-feedback-confirm-title">' + escapeHtml(uiT('ui_feedback_confirm_title', 'Confirm')) + '</h2>' +
+            '<button type="button" class="modal-close-btn" data-birkly-feedback-action="cancel" aria-label="' + escapeHtml(uiT('ui_feedback_close', 'Close')) + '">&times;</button>' +
             '</div>' +
             '<div class="modal-body">' +
             '<p id="birkly-feedback-confirm-message"></p>' +
             '<div id="birkly-feedback-confirm-details" class="birkly-feedback-confirm-details" hidden></div>' +
             '</div>' +
             '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" data-birkly-feedback-action="cancel">Cancel</button>' +
-            '<button type="button" class="btn btn-primary" data-birkly-feedback-action="confirm">Confirm</button>' +
+            '<button type="button" class="btn btn-secondary" data-birkly-feedback-action="cancel">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>' +
+            '<button type="button" class="btn btn-primary" data-birkly-feedback-action="confirm">' + escapeHtml(uiT('ui_feedback_confirm_label', 'Confirm')) + '</button>' +
             '</div>' +
             '</div>';
 
@@ -266,16 +273,16 @@
         modal.innerHTML =
             '<div class="modal-content birkly-feedback-dialog">' +
             '<div class="modal-header">' +
-            '<h2 id="birkly-feedback-prompt-title">Input required</h2>' +
-            '<button type="button" class="modal-close-btn" data-birkly-prompt-action="cancel" aria-label="Close">&times;</button>' +
+            '<h2 id="birkly-feedback-prompt-title">' + escapeHtml(uiT('ui_feedback_input_required', 'Input required')) + '</h2>' +
+            '<button type="button" class="modal-close-btn" data-birkly-prompt-action="cancel" aria-label="' + escapeHtml(uiT('ui_feedback_close', 'Close')) + '">&times;</button>' +
             '</div>' +
             '<div class="modal-body">' +
             '<p id="birkly-feedback-prompt-message"></p>' +
             '<input type="text" id="birkly-feedback-prompt-input" class="input" autocomplete="off">' +
             '</div>' +
             '<div class="modal-footer">' +
-            '<button type="button" class="btn btn-secondary" data-birkly-prompt-action="cancel">Cancel</button>' +
-            '<button type="button" class="btn btn-primary" data-birkly-prompt-action="confirm">OK</button>' +
+            '<button type="button" class="btn btn-secondary" data-birkly-prompt-action="cancel">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>' +
+            '<button type="button" class="btn btn-primary" data-birkly-prompt-action="confirm">' + escapeHtml(uiT('ui_feedback_ok_label', 'OK')) + '</button>' +
             '</div>' +
             '</div>';
 
@@ -325,14 +332,14 @@
             var confirmBtn = modal.querySelector('[data-birkly-feedback-action="confirm"]');
             var cancelBtn = modal.querySelector('[data-birkly-feedback-action="cancel"]');
 
-            if (titleEl) titleEl.textContent = options.title || 'Confirm';
+            if (titleEl) titleEl.textContent = options.title || uiT('ui_feedback_confirm_title', 'Confirm');
             if (messageEl) messageEl.textContent = String(message ?? '');
             renderConfirmDetails(modal, options.details);
             if (confirmBtn) {
-                confirmBtn.textContent = options.confirmLabel || 'Confirm';
+                confirmBtn.textContent = options.confirmLabel || uiT('ui_feedback_confirm_label', 'Confirm');
                 confirmBtn.className = options.danger ? 'btn btn-danger' : 'btn btn-primary';
             }
-            if (cancelBtn) cancelBtn.textContent = options.cancelLabel || 'Cancel';
+            if (cancelBtn) cancelBtn.textContent = options.cancelLabel || uiT('ui_feedback_cancel_label', 'Cancel');
 
             modal.classList.toggle('birkly-feedback-confirm-modal--danger', !!options.danger);
             confirmResolve = resolve;
@@ -349,12 +356,12 @@
     function confirmDestructive(message, changes, options) {
         options = options || {};
         return confirm(message, {
-            title: options.title || 'Confirm destructive changes',
-            confirmLabel: options.confirmLabel || 'Continue',
-            cancelLabel: options.cancelLabel || 'Cancel',
+            title: options.title || uiT('ui_feedback_destructive_title', 'Confirm destructive changes'),
+            confirmLabel: options.confirmLabel || uiT('ui_feedback_continue', 'Continue'),
+            cancelLabel: options.cancelLabel || uiT('ui_feedback_cancel_label', 'Cancel'),
             danger: true,
             details: {
-                intro: options.intro || 'These changes can affect existing content:',
+                intro: options.intro || uiT('ui_feedback_destructive_intro', 'These changes can affect existing content:'),
                 items: Array.isArray(changes) ? changes : []
             }
         });
@@ -376,14 +383,14 @@
             var confirmBtn = modal.querySelector('[data-birkly-prompt-action="confirm"]');
             var cancelBtn = modal.querySelector('[data-birkly-prompt-action="cancel"]');
 
-            if (titleEl) titleEl.textContent = options.title || 'Input required';
+            if (titleEl) titleEl.textContent = options.title || uiT('ui_feedback_input_required', 'Input required');
             if (messageEl) messageEl.textContent = String(message ?? '');
             if (input) {
                 input.value = defaultValue != null ? String(defaultValue) : '';
                 input.placeholder = options.placeholder || '';
             }
-            if (confirmBtn) confirmBtn.textContent = options.confirmLabel || 'OK';
-            if (cancelBtn) cancelBtn.textContent = options.cancelLabel || 'Cancel';
+            if (confirmBtn) confirmBtn.textContent = options.confirmLabel || uiT('ui_feedback_ok_label', 'OK');
+            if (cancelBtn) cancelBtn.textContent = options.cancelLabel || uiT('ui_feedback_cancel_label', 'Cancel');
 
             promptResolve = resolve;
             openModal(modal);

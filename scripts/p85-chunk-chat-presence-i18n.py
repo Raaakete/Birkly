@@ -248,6 +248,61 @@ STRINGS: dict[str, tuple[str, str]] = {
         "Bewertungen gelten für diese Birkly-Installation. Nur Nutzer, die das Plugin hier installiert haben, können bewerten.",
     ),
     "hub_js_missing_plugin_info": ("Missing plugin information", "Plugin-Informationen fehlen"),
+    # — ai chat empty states + approvals UI (round 2) —
+    "ai_chat_js_no_connections_available": ("No connections available", "Keine Verbindungen verfügbar"),
+    "ai_chat_js_connection_removed": (
+        "Your previous AI connection was removed. Choose a connection to continue.",
+        "Ihre frühere KI-Verbindung wurde entfernt. Wählen Sie eine Verbindung, um fortzufahren.",
+    ),
+    "ai_chat_js_no_connection_title": ("No AI Connection Found", "Keine KI-Verbindung gefunden"),
+    "ai_chat_js_no_connection_body": (
+        "You need to set up an AI connection first to use the AI assistant.",
+        "Richten Sie zuerst eine KI-Verbindung ein, um den KI-Assistenten zu nutzen.",
+    ),
+    "ai_chat_js_open_ai_connections": ("Open AI connections", "KI-Verbindungen öffnen"),
+    "ai_chat_js_no_recent_chats": (
+        "No recent chats yet. Start a conversation to see it here.",
+        "Noch keine Chats. Starten Sie eine Unterhaltung — sie erscheint hier.",
+    ),
+    "ai_chat_js_console_empty": (
+        "No log entries yet. Failed actions and errors appear here.",
+        "Noch keine Log-Einträge. Fehlgeschlagene Aktionen und Fehler erscheinen hier.",
+    ),
+    "ai_chat_js_approvals_empty": (
+        "No pending approvals. When AI wants to change content, requests will appear here.",
+        "Keine ausstehenden Freigaben. Wenn die KI Inhalte ändern möchte, erscheinen Anfragen hier.",
+    ),
+    "ai_chat_js_fab_feedback": ("Feedback", "Feedback"),
+    "ai_chat_js_fab_assistant": ("AI Assistant", "KI-Assistent"),
+    "ai_chat_js_side_panel": ("Panel", "Panel"),
+    "ai_chat_js_approve": ("Approve", "Freigeben"),
+    "ai_chat_js_reject": ("Reject", "Ablehnen"),
+    "ai_chat_js_approved": ("Approved", "Freigegeben"),
+    "ai_chat_js_rejected": ("Rejected", "Abgelehnt"),
+    "ai_chat_js_approved_executed": ("Approved and executed", "Freigegeben und ausgeführt"),
+    "ai_chat_js_reject_title": ("Reject action", "Aktion ablehnen"),
+    "ai_chat_js_reject_reason_placeholder": ("Reason (optional)", "Grund (optional)"),
+    "ai_chat_js_no_reason": ("No reason provided", "Kein Grund angegeben"),
+    "ai_chat_js_error_sending": ("Error sending message: {message}", "Fehler beim Senden: {message}"),
+    "ai_chat_js_retry": ("Retry", "Erneut versuchen"),
+    "ai_chat_js_no_models_listed": ("No models listed", "Keine Modelle aufgelistet"),
+    "ai_chat_js_no_models_match": ("No models match your search.", "Keine Modelle passen zur Suche."),
+    "ai_chat_js_thinking": ("Thinking...", "Denkt nach …"),
+    "ai_chat_js_header_prefix": ("AI:", "KI:"),
+    # — BirklyFeedback modal chrome —
+    "ui_feedback_confirm_title": ("Confirm", "Bestätigen"),
+    "ui_feedback_confirm_label": ("Confirm", "Bestätigen"),
+    "ui_feedback_cancel_label": ("Cancel", "Abbrechen"),
+    "ui_feedback_ok_label": ("OK", "OK"),
+    "ui_feedback_close": ("Close", "Schließen"),
+    "ui_feedback_input_required": ("Input required", "Eingabe erforderlich"),
+    "ui_feedback_destructive_title": ("Confirm destructive changes", "Destruktive Änderungen bestätigen"),
+    "ui_feedback_continue": ("Continue", "Fortfahren"),
+    "ui_feedback_destructive_intro": (
+        "These changes can affect existing content:",
+        "Diese Änderungen können bestehende Inhalte betreffen:",
+    ),
+    "ui_feedback_dismiss_toast": ("Dismiss notification", "Benachrichtigung schließen"),
 }
 
 
@@ -635,11 +690,136 @@ def patch_chat():
     path.write_text(text)
 
 
+def patch_chat_round2():
+    path = ROOT / "admin/js/ai-chat-button.js"
+    text = path.read_text()
+    repl = [
+        ("<span>Feedback</span>", "<span>${chatT('ai_chat_js_fab_feedback', 'Feedback')}</span>"),
+        ("<span class=\"assist-fab-label\">AI Assistant</span>", "<span class=\"assist-fab-label\">${chatT('ai_chat_js_fab_assistant', 'AI Assistant')}</span>"),
+        ("<span class=\"ai-chat-header-prefix\">AI:</span>", "<span class=\"ai-chat-header-prefix\">${chatT('ai_chat_js_header_prefix', 'AI:')}</span>"),
+        ("select.innerHTML = '<option value=\"\">No connections available</option>';",
+         "select.innerHTML = '<option value=\"\">' + escapeHtml(chatT('ai_chat_js_no_connections_available', 'No connections available')) + '</option>';"),
+        ("messages.innerHTML = '<div class=\"ai-chat-welcome\"><p>Your previous AI connection was removed. Choose a connection to continue.</p></div>';",
+         "messages.innerHTML = '<div class=\"ai-chat-welcome\"><p>' + escapeHtml(chatT('ai_chat_js_connection_removed', 'Your previous AI connection was removed. Choose a connection to continue.')) + '</p></div>';"),
+        ("list.innerHTML = '<div class=\"ai-chat-welcome\"><p>No recent chats yet. Start a conversation to see it here.</p></div>';",
+         "list.innerHTML = '<div class=\"ai-chat-welcome\"><p>' + escapeHtml(chatT('ai_chat_js_no_recent_chats', 'No recent chats yet. Start a conversation to see it here.')) + '</p></div>';"),
+        ("list.innerHTML = '<div class=\"ai-chat-console-empty\">No log entries yet. Failed actions and errors appear here.</div>';",
+         "list.innerHTML = '<div class=\"ai-chat-console-empty\">' + escapeHtml(chatT('ai_chat_js_console_empty', 'No log entries yet. Failed actions and errors appear here.')) + '</div>';"),
+        ("panel.innerHTML = '<div class=\"ai-chat-welcome\"><p>No pending approvals. When AI wants to change content, requests will appear here.</p></div>';",
+         "panel.innerHTML = '<div class=\"ai-chat-welcome\"><p>' + escapeHtml(chatT('ai_chat_js_approvals_empty', 'No pending approvals. When AI wants to change content, requests will appear here.')) + '</p></div>';"),
+        ("if (titleEl) titleEl.textContent = titles[view] || 'Panel';",
+         "if (titleEl) titleEl.textContent = titles[view] || chatT('ai_chat_js_side_panel', 'Panel');"),
+        ('">Approve</button>', "'\">' + escapeHtml(chatT('ai_chat_js_approve', 'Approve')) + '</button>'"),
+        ('">Reject</button>', "'\">' + escapeHtml(chatT('ai_chat_js_reject', 'Reject')) + '</button>'"),
+        ("list.innerHTML = '<div class=\"ai-chat-model-empty\">No models listed</div>';",
+         "list.innerHTML = '<div class=\"ai-chat-model-empty\">' + escapeHtml(chatT('ai_chat_js_no_models_listed', 'No models listed')) + '</div>';"),
+        ("list.innerHTML = '<div class=\"ai-chat-model-empty\">No models match your search.</div>';",
+         "list.innerHTML = '<div class=\"ai-chat-model-empty\">' + escapeHtml(chatT('ai_chat_js_no_models_match', 'No models match your search.')) + '</div>';"),
+        ("retryBtn.textContent = 'Retry';", "retryBtn.textContent = chatT('ai_chat_js_retry', 'Retry');"),
+        ("addChatMessageWithRetry('error', 'Error sending message: ' + error.message);",
+         "addChatMessageWithRetry('error', chatT('ai_chat_js_error_sending', 'Error sending message: {message}', { message: error.message }));"),
+        ("streamedText !== 'Thinking...'", "streamedText !== chatT('ai_chat_js_thinking', 'Thinking...')"),
+        ("reason: reason || 'No reason provided',", "reason: reason || chatT('ai_chat_js_no_reason', 'No reason provided'),"),
+        ("title: 'Reject action',", "title: chatT('ai_chat_js_reject_title', 'Reject action'),"),
+        ("placeholder: 'Reason (optional)',", "placeholder: chatT('ai_chat_js_reject_reason_placeholder', 'Reason (optional)'),"),
+        ("confirmLabel: 'Reject',", "confirmLabel: chatT('ai_chat_js_reject', 'Reject'),"),
+        ("${escapeHtml(chat.title || 'Chat')}", "${escapeHtml(chat.title || chatT('ai_chat_js_chat_title', 'Chat'))}"),
+    ]
+    for old, new in repl:
+        if old not in text:
+            print("WARN chat r2 missing:", old[:60])
+        else:
+            text = text.replace(old, new)
+    # showNoConnectionMessage block
+    old_block = """            messages.innerHTML = `
+                <div class="ai-chat-welcome">
+                    <h3>No AI Connection Found</h3>
+                    <p>You need to set up an AI connection first to use the AI assistant.</p>
+                    <button class="btn btn-primary" onclick="window.location.href = (Birkly.adminUrl ? Birkly.adminUrl('settings', { tab: 'ai' }) : Birkly.url('/admin/index.php?page=settings&tab=ai'))">
+                        Open AI connections
+                    </button>
+                </div>
+            `;"""
+    new_block = """            messages.innerHTML =
+                '<div class="ai-chat-welcome">' +
+                '<h3>' + escapeHtml(chatT('ai_chat_js_no_connection_title', 'No AI Connection Found')) + '</h3>' +
+                '<p>' + escapeHtml(chatT('ai_chat_js_no_connection_body', 'You need to set up an AI connection first to use the AI assistant.')) + '</p>' +
+                '<button type="button" class="btn btn-primary" id="ai-chat-open-connections-btn">' +
+                escapeHtml(chatT('ai_chat_js_open_ai_connections', 'Open AI connections')) +
+                '</button></div>';
+            const openConnBtn = messages.querySelector('#ai-chat-open-connections-btn');
+            if (openConnBtn) {
+                openConnBtn.addEventListener('click', function () {
+                    window.location.href = (Birkly.adminUrl ? Birkly.adminUrl('settings', { tab: 'ai' }) : Birkly.url('/admin/index.php?page=settings&tab=ai'));
+                });
+            }"""
+    if old_block in text:
+        text = text.replace(old_block, new_block)
+    else:
+        print("WARN chat r2: showNoConnectionMessage block missing")
+
+    path.write_text(text)
+
+
+def patch_ui_feedback():
+    path = ROOT / "admin/js/ui-feedback.js"
+    text = path.read_text()
+    if "function uiT" not in text:
+        text = text.replace(
+            "    var focusTrapHandler = null;\n",
+            "    var focusTrapHandler = null;\n\n"
+            "    function uiT(key, fallback) {\n"
+            "        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {\n"
+            "            return global.Birkly.i18n.t('admin.' + key, fallback);\n"
+            "        }\n"
+            "        return fallback != null ? fallback : key;\n"
+            "    }\n",
+        )
+    repl = [
+        ("'<button type=\"button\" class=\"birkly-feedback-toast__close\" aria-label=\"Dismiss notification\">&times;</button>';",
+         "'<button type=\"button\" class=\"birkly-feedback-toast__close\" aria-label=\"' + escapeHtml(uiT('ui_feedback_dismiss_toast', 'Dismiss notification')) + '\">&times;</button>';"),
+        ("if (titleEl) titleEl.textContent = options.title || 'Confirm';",
+         "if (titleEl) titleEl.textContent = options.title || uiT('ui_feedback_confirm_title', 'Confirm');"),
+        ("confirmBtn.textContent = options.confirmLabel || 'Confirm';",
+         "confirmBtn.textContent = options.confirmLabel || uiT('ui_feedback_confirm_label', 'Confirm');"),
+        ("if (cancelBtn) cancelBtn.textContent = options.cancelLabel || 'Cancel';",
+         "if (cancelBtn) cancelBtn.textContent = options.cancelLabel || uiT('ui_feedback_cancel_label', 'Cancel');"),
+        ("title: options.title || 'Confirm destructive changes',",
+         "title: options.title || uiT('ui_feedback_destructive_title', 'Confirm destructive changes'),"),
+        ("confirmLabel: options.confirmLabel || 'Continue',",
+         "confirmLabel: options.confirmLabel || uiT('ui_feedback_continue', 'Continue'),"),
+        ("cancelLabel: options.cancelLabel || 'Cancel',",
+         "cancelLabel: options.cancelLabel || uiT('ui_feedback_cancel_label', 'Cancel'),"),
+        ("intro: options.intro || 'These changes can affect existing content:',",
+         "intro: options.intro || uiT('ui_feedback_destructive_intro', 'These changes can affect existing content:'),"),
+        ("if (titleEl) titleEl.textContent = options.title || 'Input required';",
+         "if (titleEl) titleEl.textContent = options.title || uiT('ui_feedback_input_required', 'Input required');"),
+        ("if (confirmBtn) confirmBtn.textContent = options.confirmLabel || 'OK';",
+         "if (confirmBtn) confirmBtn.textContent = options.confirmLabel || uiT('ui_feedback_ok_label', 'OK');"),
+        ("'<h2 id=\"birkly-feedback-confirm-title\">Confirm</h2>'",
+         "'<h2 id=\"birkly-feedback-confirm-title\">' + escapeHtml(uiT('ui_feedback_confirm_title', 'Confirm')) + '</h2>'"),
+        ("'aria-label=\"Close\">&times;</button>'",
+         "'aria-label=\"' + escapeHtml(uiT('ui_feedback_close', 'Close')) + '\">&times;</button>'"),
+        ("'data-birkly-feedback-action=\"cancel\">Cancel</button>'",
+         "'data-birkly-feedback-action=\"cancel\">' + escapeHtml(uiT('ui_feedback_cancel_label', 'Cancel')) + '</button>'"),
+        ("'data-birkly-feedback-action=\"confirm\">Confirm</button>'",
+         "'data-birkly-feedback-action=\"confirm\">' + escapeHtml(uiT('ui_feedback_confirm_label', 'Confirm')) + '</button>'"),
+    ]
+    for old, new in repl:
+        if old not in text:
+            print("WARN ui-feedback missing:", old[:50])
+        else:
+            text = text.replace(old, new)
+    path.write_text(text)
+
+
 def main():
     merge_lang()
     patch_presence()
     patch_plugins()
     patch_chat()
+    patch_chat_round2()
+    patch_ui_feedback()
     print("P85 chat/presence chunk:", len(STRINGS), "keys")
 
 

@@ -354,7 +354,7 @@
         menu.innerHTML = `
             <button type="button" class="btn assist-fab-action" id="assist-fab-feedback" role="menuitem" title="${chatT('ai_chat_js_send_feedback', 'Send feedback')}" aria-label="${chatT('ai_chat_js_send_feedback', 'Send feedback')}">
                 ${icon('paper-plane-tilt', { size: 20 })}
-                <span>Feedback</span>
+                <span>${chatT('ai_chat_js_fab_feedback', 'Feedback')}</span>
             </button>
         `;
 
@@ -372,7 +372,7 @@
                 <span class="assist-fab-icon-slot assist-fab-icon-sparkle">${icon('sparkle', { size: 22 })}</span>
                 <span class="assist-fab-icon-slot assist-fab-icon-close">${icon('x', { size: 22 })}</span>
             </span>
-            <span class="assist-fab-label">AI Assistant</span>
+            <span class="assist-fab-label">${chatT('ai_chat_js_fab_assistant', 'AI Assistant')}</span>
         `;
 
         const badge = document.createElement('span');
@@ -484,7 +484,7 @@
         if (!panel) return;
 
         if (pendingApprovals.length === 0) {
-            panel.innerHTML = '<div class="ai-chat-welcome"><p>No pending approvals. When AI wants to change content, requests will appear here.</p></div>';
+            panel.innerHTML = '<div class="ai-chat-welcome"><p>' + escapeHtml(chatT('ai_chat_js_approvals_empty', 'No pending approvals. When AI wants to change content, requests will appear here.')) + '</p></div>';
             return;
         }
 
@@ -498,8 +498,8 @@
                 </div>
                 <div class="ai-chat-approval-description">${escapeHtml(approval.description || chatT('ai_chat_js_no_description', 'No description'))}</div>
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
-                    <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">Approve</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">Reject</button>
+                    <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">${escapeHtml(chatT('ai_chat_js_reject', 'Reject'))}</button>
                 </div>
             </div>`;
         }).join('');
@@ -585,7 +585,7 @@
         if (!list) return;
 
         if (!consoleLogs.length) {
-            list.innerHTML = '<div class="ai-chat-console-empty">No log entries yet. Failed actions and errors appear here.</div>';
+            list.innerHTML = '<div class="ai-chat-console-empty">' + escapeHtml(chatT('ai_chat_js_console_empty', 'No log entries yet. Failed actions and errors appear here.')) + '</div>';
             return;
         }
 
@@ -644,7 +644,7 @@
         if (approvalsPanel) approvalsPanel.hidden = view !== 'approvals';
 
         const titles = { history: chatT('ai_chat_js_history', 'History'), console: chatT('ai_chat_js_console', 'Console'), approvals: chatT('ai_chat_js_approvals', 'Approvals') };
-        if (titleEl) titleEl.textContent = titles[view] || 'Panel';
+        if (titleEl) titleEl.textContent = titles[view] || chatT('ai_chat_js_side_panel', 'Panel');
 
         Object.keys(buttons).forEach(function (key) {
             const btn = buttons[key];
@@ -738,7 +738,7 @@
         chatWindow.innerHTML = `
             <div class="ai-chat-header">
                 <div class="ai-chat-header-brand u-row-1 u-fill">
-                    <span class="ai-chat-header-prefix">AI:</span>
+                    <span class="ai-chat-header-prefix">${chatT('ai_chat_js_header_prefix', 'AI:')}</span>
                     <label for="ai-chat-connection-select" class="u-sr-only">${chatT('ai_chat_js_ai_connection', 'AI connection')}</label>
                     <select id="ai-chat-connection-select" class="ai-chat-connection-inline" title="${chatT('ai_chat_js_choose_connection', 'Choose AI connection')}">
                         <option value="">${chatT('ai_chat_js_loading_connections', 'Loading connections...')}</option>
@@ -1093,7 +1093,7 @@
         if (menu.querySelector('.ai-chat-model-menu-list')) return;
         menu.innerHTML =
             '<div class="ai-chat-model-menu-search-wrap">' +
-            '<input type="search" class="ai-chat-model-menu-search" placeholder="Search models…" aria-label="Search models" autocomplete="off">' +
+            '<input type="search" class="ai-chat-model-menu-search" placeholder="' + escapeHtml(chatT('ai_chat_js_search_models', 'Search models…')) + '" aria-label="' + escapeHtml(chatT('ai_chat_js_search_models', 'Search models…')) + '" autocomplete="off">' +
             '</div>' +
             '<div class="ai-chat-model-menu-list" role="presentation"></div>';
         const search = menu.querySelector('.ai-chat-model-menu-search');
@@ -1119,12 +1119,12 @@
         const filtered = filterChatModels(chatModelOptions, chatModelSearchQuery);
 
         if (chatModelOptions.length === 0) {
-            list.innerHTML = '<div class="ai-chat-model-empty">No models listed</div>';
+            list.innerHTML = '<div class="ai-chat-model-empty">' + escapeHtml(chatT('ai_chat_js_no_models_listed', 'No models listed')) + '</div>';
             return;
         }
 
         if (!filtered.length) {
-            list.innerHTML = '<div class="ai-chat-model-empty">No models match your search.</div>';
+            list.innerHTML = '<div class="ai-chat-model-empty">' + escapeHtml(chatT('ai_chat_js_no_models_match', 'No models match your search.')) + '</div>';
             return;
         }
 
@@ -1635,7 +1635,7 @@
             currentConnection = null;
             const messages = document.getElementById('ai-chat-messages');
             if (messages) {
-                messages.innerHTML = '<div class="ai-chat-welcome"><p>Your previous AI connection was removed. Choose a connection to continue.</p></div>';
+                messages.innerHTML = '<div class="ai-chat-welcome"><p>' + escapeHtml(chatT('ai_chat_js_connection_removed', 'Your previous AI connection was removed. Choose a connection to continue.')) + '</p></div>';
             }
         }
     }
@@ -1652,7 +1652,7 @@
         if (!select) return;
 
         if (availableConnections.length === 0) {
-            select.innerHTML = '<option value="">No connections available</option>';
+            select.innerHTML = '<option value="">' + escapeHtml(chatT('ai_chat_js_no_connections_available', 'No connections available')) + '</option>';
             select.disabled = true;
             currentConnection = null;
             return;
@@ -1705,15 +1705,19 @@
     function showNoConnectionMessage() {
         const messages = document.getElementById('ai-chat-messages');
         if (messages) {
-            messages.innerHTML = `
-                <div class="ai-chat-welcome">
-                    <h3>No AI Connection Found</h3>
-                    <p>You need to set up an AI connection first to use the AI assistant.</p>
-                    <button class="btn btn-primary" onclick="window.location.href = (Birkly.adminUrl ? Birkly.adminUrl('settings', { tab: 'ai' }) : Birkly.url('/admin/index.php?page=settings&tab=ai'))">
-                        Open AI connections
-                    </button>
-                </div>
-            `;
+            messages.innerHTML =
+                '<div class="ai-chat-welcome">' +
+                '<h3>' + escapeHtml(chatT('ai_chat_js_no_connection_title', 'No AI Connection Found')) + '</h3>' +
+                '<p>' + escapeHtml(chatT('ai_chat_js_no_connection_body', 'You need to set up an AI connection first to use the AI assistant.')) + '</p>' +
+                '<button type="button" class="btn btn-primary" id="ai-chat-open-connections-btn">' +
+                escapeHtml(chatT('ai_chat_js_open_ai_connections', 'Open AI connections')) +
+                '</button></div>';
+            const openConnBtn = messages.querySelector('#ai-chat-open-connections-btn');
+            if (openConnBtn) {
+                openConnBtn.addEventListener('click', function () {
+                    window.location.href = (Birkly.adminUrl ? Birkly.adminUrl('settings', { tab: 'ai' }) : Birkly.url('/admin/index.php?page=settings&tab=ai'));
+                });
+            }
         }
         
         const composer = document.querySelector('.ai-chat-composer');
@@ -2008,7 +2012,7 @@
             const messageEl = document.getElementById(assistantMessageId);
             const contentEl = messageEl ? messageEl.querySelector('.ai-chat-message-content') : null;
             const streamedText = contentEl ? contentEl.textContent.trim() : '';
-            const finalText = responseText || (streamedText && streamedText !== 'Thinking...' ? streamedText : '');
+            const finalText = responseText || (streamedText && streamedText !== chatT('ai_chat_js_thinking', 'Thinking...') ? streamedText : '');
             if (finalText) {
                 updateStreamingMessage(assistantMessageId, finalText, true);
                 const assistantEntry = { role: 'assistant', content: finalText };
@@ -2239,7 +2243,7 @@
                 removeChatMessage(assistantRef.id);
             }
             lastFailedMessage = message;
-            addChatMessageWithRetry('error', 'Error sending message: ' + error.message);
+            addChatMessageWithRetry('error', chatT('ai_chat_js_error_sending', 'Error sending message: {message}', { message: error.message }));
         } finally {
             hideChatActivity();
             activeChatAbortController = null;
@@ -2263,7 +2267,7 @@
         const retryBtn = document.createElement('button');
         retryBtn.type = 'button';
         retryBtn.className = 'btn btn-sm ai-chat-retry-btn';
-        retryBtn.textContent = 'Retry';
+        retryBtn.textContent = chatT('ai_chat_js_retry', 'Retry');
         retryBtn.addEventListener('click', retryLastMessage);
         messageEl.querySelector('.ai-chat-message-content')?.appendChild(retryBtn);
         return messageId;
@@ -2446,13 +2450,13 @@
         if (!list) return;
         const recent = getRecentChats();
         if (!recent.length) {
-            list.innerHTML = '<div class="ai-chat-welcome"><p>No recent chats yet. Start a conversation to see it here.</p></div>';
+            list.innerHTML = '<div class="ai-chat-welcome"><p>' + escapeHtml(chatT('ai_chat_js_no_recent_chats', 'No recent chats yet. Start a conversation to see it here.')) + '</p></div>';
             return;
         }
         list.innerHTML = recent.map(function (chat) {
             return `
             <button type="button" class="card card--interactive ai-chat-history-item" data-conv-id="${escapeHtml(chat.id)}" data-conn-id="${escapeHtml(chat.connection_id || '')}">
-                <strong>${escapeHtml(chat.title || 'Chat')}</strong>
+                <strong>${escapeHtml(chat.title || chatT('ai_chat_js_chat_title', 'Chat'))}</strong>
                 <span class="ai-chat-history-meta u-text-2xs u-fg-tertiary">${escapeHtml(chat.connection_name || '')} · ${formatTime(chat.updated_at)}</span>
                 <span class="ai-chat-history-preview u-clamp-2 u-text-xs u-fg-secondary">${escapeHtml(chat.preview || '')}</span>
             </button>`;
@@ -2625,12 +2629,12 @@
                 <div class="ai-chat-approval-actions u-row-2 u-mt-3">
                     ${status === 'pending' ? `
                     <button type="button" class="btn btn-sm btn-success" data-ai-approve="${escapeHtml(approval.id)}">
-                        ✓ Approve
+                        ✓ ${escapeHtml(chatT('ai_chat_js_approve', 'Approve'))}
                     </button>
                     <button type="button" class="btn btn-sm btn-danger" data-ai-reject="${escapeHtml(approval.id)}">
-                        ✗ Reject
+                        ✗ ${escapeHtml(chatT('ai_chat_js_reject', 'Reject'))}
                     </button>
-                    ` : `<div class="ai-chat-approval-status ${statusClass}">${status === 'approved' ? '✓ Approved' : status === 'rejected' ? '✗ Rejected' : escapeHtml(statusLabel)}</div>`}
+                    ` : `<div class="ai-chat-approval-status ${statusClass}">${status === 'approved' ? '✓ ' + escapeHtml(chatT('ai_chat_js_approved', 'Approved')) : status === 'rejected' ? '✗ ' + escapeHtml(chatT('ai_chat_js_rejected', 'Rejected')) : escapeHtml(statusLabel)}</div>`}
                 </div>
             </div>
         `;
@@ -2664,7 +2668,7 @@
                     card.classList.add('ai-chat-approval-approved');
                     const actionsDiv = card.querySelector('.ai-chat-approval-actions');
                     if (actionsDiv) {
-                        actionsDiv.innerHTML = '<div class="ai-chat-approval-status approved">✓ Approved and executed</div>';
+                        actionsDiv.innerHTML = '<div class="ai-chat-approval-status approved">✓ ' + escapeHtml(chatT('ai_chat_js_approved_executed', 'Approved and executed')) + '</div>';
                     }
                 }
                 addChatMessage('system', chatT('ai_chat_js_action_approved', 'Action approved and executed successfully.'));
@@ -2683,9 +2687,9 @@
     // Reject action from chat
     async function rejectAction(approvalId) {
         const reason = await BirklyFeedback.prompt('', '', {
-            title: 'Reject action',
-            placeholder: 'Reason (optional)',
-            confirmLabel: 'Reject',
+            title: chatT('ai_chat_js_reject_title', 'Reject action'),
+            placeholder: chatT('ai_chat_js_reject_reason_placeholder', 'Reason (optional)'),
+            confirmLabel: chatT('ai_chat_js_reject', 'Reject'),
         });
         
         try {
@@ -2696,7 +2700,7 @@
                 body: JSON.stringify({
                     action: 'reject',
                     id: approvalId,
-                    reason: reason || 'No reason provided',
+                    reason: reason || chatT('ai_chat_js_no_reason', 'No reason provided'),
                     _csrf: csrfToken
                 })
             });
@@ -2709,7 +2713,7 @@
                     card.classList.add('ai-chat-approval-rejected');
                     const actionsDiv = card.querySelector('.ai-chat-approval-actions');
                     if (actionsDiv) {
-                        actionsDiv.innerHTML = '<div class="ai-chat-approval-status rejected">✗ Rejected</div>';
+                        actionsDiv.innerHTML = '<div class="ai-chat-approval-status rejected">✗ ' + escapeHtml(chatT('ai_chat_js_rejected', 'Rejected')) + '</div>';
                     }
                 }
                 addChatMessage('system', chatT('ai_chat_js_action_rejected', 'Action rejected.'));
