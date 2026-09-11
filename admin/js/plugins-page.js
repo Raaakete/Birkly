@@ -3084,7 +3084,7 @@
         }
 
         if (!offers.length) {
-            grid.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state-title">No offers found.</p></div>';
+            grid.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state-title">' + escapeHtml(t('marketplace_no_offers_found', 'No offers found.')) + '</p></div>';
             return;
         }
 

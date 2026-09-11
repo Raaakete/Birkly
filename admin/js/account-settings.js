@@ -441,8 +441,8 @@ function renderAccount2FAStatus(container, enabled, enabledAt, backupCodesCount)
             </div>
             <p class="u-text-sm u-fg-secondary">You have ${codesCount} backup codes remaining.</p>
             <div class="u-cluster">
-              <button class="btn btn-secondary btn-sm" type="button" id="account-2fa-regenerate-btn" onclick="openAccount2FARegenerateModal()">Regenerate Backup Codes</button>
-              <button class="btn btn-danger btn-sm" type="button" id="account-2fa-disable-btn" onclick="openAccount2FADisableModal()">Disable 2FA</button>
+              <button class="btn btn-secondary btn-sm" type="button" id="account-2fa-regenerate-btn" onclick="openAccount2FARegenerateModal()">${escapeHtml(accountT('account_js_regenerate_backup_btn', 'Regenerate Backup Codes'))}</button>
+              <button class="btn btn-danger btn-sm" type="button" id="account-2fa-disable-btn" onclick="openAccount2FADisableModal()">${escapeHtml(accountT('account_js_disable_2fa_btn', 'Disable 2FA'))}</button>
             </div>
           </div>
         `;
@@ -453,7 +453,7 @@ function renderAccount2FAStatus(container, enabled, enabledAt, backupCodesCount)
         container.innerHTML = `
           <div class="u-stack-4">
             <p class="u-text-sm u-fg-secondary">Two-factor authentication is not enabled for your account.</p>
-            <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-enable-btn" onclick="openAccount2FASetupModal()">Enable 2FA</button>
+            <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-enable-btn" onclick="openAccount2FASetupModal()">${escapeHtml(accountT('account_js_enable_2fa_btn', 'Enable 2FA'))}</button>
           </div>
         `;
         document.getElementById('account-2fa-enable-btn')?.addEventListener('click', openAccount2FASetupModal);
@@ -490,26 +490,26 @@ async function openAccount2FASetupModal() {
           <div class="account-2fa-step1 u-stack-4">
             <h3 class="u-text-md u-weight-semibold">Step 1: Scan QR Code</h3>
             <p class="u-text-sm u-fg-secondary">Scan this QR code with your authenticator app.</p>
-            <img class="account-2fa-qr u-mx-auto" src="${qrUrl}" alt="2FA QR Code">
+            <img class="account-2fa-qr u-mx-auto" src="${qrUrl}" alt="${escapeHtml(accountT('account_js_2fa_qr_alt', '2FA QR Code'))}">
             <div class="u-surface-sunken u-radius-sm u-p-3 u-stack-2">
               <p class="u-label">Manual entry</p>
               <code class="u-block u-mono u-text-sm u-break-word">${manualKey}</code>
             </div>
             <div class="u-cluster">
-              <button class="btn btn-primary" type="button" id="account-2fa-step1-next">I have scanned the code</button>
-              <button class="btn btn-secondary" type="button" id="account-2fa-cancel">Cancel</button>
+              <button class="btn btn-primary" type="button" id="account-2fa-step1-next">${escapeHtml(accountT('account_js_2fa_scanned_confirm', 'I have scanned the code'))}</button>
+              <button class="btn btn-secondary" type="button" id="account-2fa-cancel">${escapeHtml(accountT('cancel', 'Cancel'))}</button>
             </div>
           </div>
           <div class="account-2fa-step2 u-stack-4" hidden>
             <h3 class="u-text-md u-weight-semibold">Step 2: Verify Code</h3>
             <p class="u-text-sm u-fg-secondary">Enter the 6-digit code from your authenticator app:</p>
             <div class="form-group">
-              <label for="account-2fa-verify-code">Verification Code</label>
-              <input type="text" id="account-2fa-verify-code" class="input account-2fa-code-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+              <label for="account-2fa-verify-code">${escapeHtml(accountT('account_js_2fa_verification_code_label', 'Verification Code'))}</label>
+              <input type="text" id="account-2fa-verify-code" class="input account-2fa-code-input" placeholder="${escapeHtml(accountT('account_js_2fa_code_placeholder', '000000'))}" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
             </div>
             <div class="u-cluster">
-              <button class="btn btn-primary" type="button" id="account-2fa-enable-confirm">Enable 2FA</button>
-              <button class="btn btn-secondary" type="button" id="account-2fa-cancel2">Cancel</button>
+              <button class="btn btn-primary" type="button" id="account-2fa-enable-confirm">${escapeHtml(accountT('account_js_2fa_enable_confirm_btn', 'Enable 2FA'))}</button>
+              <button class="btn btn-secondary" type="button" id="account-2fa-cancel2">${escapeHtml(accountT('cancel', 'Cancel'))}</button>
             </div>
           </div>
         `;
@@ -572,7 +572,7 @@ async function enableAccount2FA() {
                 <div class="u-surface-sunken u-radius-sm u-p-4">
                   <code class="u-block u-mono u-text-sm u-leading-relaxed">${codesHtml}</code>
                 </div>
-                <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-done">Done</button>
+                <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-done">${escapeHtml(accountT('account_js_2fa_done', 'Done'))}</button>
               </div>
             `;
             document.getElementById('account-2fa-done')?.addEventListener('click', async () => {

@@ -175,11 +175,11 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
                                                     <label>Display Name <span class="required">*</span></label>
-                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                                 </div>
                                                 <div class="fieldtype-field">
                                                     <label>API Name</label>
-                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                                 </div>
                                             </div>
                                             <div class="fieldtype-row">
@@ -258,7 +258,7 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
                                                     <label>Description</label>
-                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][description]" value="<?= htmlspecialchars($nestedSubCollection['description'] ?? '') ?>" placeholder="Optional description" class="input">
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][description]" value="<?= htmlspecialchars($nestedSubCollection['description'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_optional_description_placeholder')) ?>" class="input">
                                                 </div>
                                                 <div class="fieldtype-field">
                                                     <label>Entry Method</label>
@@ -326,11 +326,11 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
                                                     <label>Display Name <span class="required">*</span></label>
-                                                    <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                    <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                                 </div>
                                                 <div class="fieldtype-field">
                                                     <label>API Name</label>
-                                                    <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                    <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                                 </div>
                                             </div>
                                             <div class="fieldtype-row">
@@ -424,7 +424,7 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-row">
                                             <div class="fieldtype-field">
                                                 <label>Description</label>
-                                                <input type="text" name="sub_collections[<?= $index ?>][description]" value="<?= htmlspecialchars($subCollection['description'] ?? '') ?>" placeholder="Optional description" class="input">
+                                                <input type="text" name="sub_collections[<?= $index ?>][description]" value="<?= htmlspecialchars($subCollection['description'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_optional_description_placeholder')) ?>" class="input">
                                             </div>
                                             <div class="fieldtype-field">
                                                 <label>Entry Method</label>
@@ -467,11 +467,11 @@ if (!$cancelUrl) {
                                                             <div class="fieldtype-row">
                                                                 <div class="fieldtype-field">
                                                                     <label>Display Name <span class="required">*</span></label>
-                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                                                 </div>
                                                                 <div class="fieldtype-field">
                                                                     <label>API Name</label>
-                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                                                 </div>
                                                             </div>
                                                             <div class="fieldtype-row">
@@ -1314,11 +1314,11 @@ echo htmlspecialchars($formCode);
             <div class="fieldtype-row">
                 <div class="fieldtype-field">
                     <label>Display Name <span class="required">*</span></label>
-                    <input type="text" name="fields[__INDEX__][label]" value="__LABEL__" placeholder="Field label" class="input" required>
+                    <input type="text" name="fields[__INDEX__][label]" value="__LABEL__" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                 </div>
                 <div class="fieldtype-field">
                     <label>API Name</label>
-                    <input type="text" name="fields[__INDEX__][name]" value="__NAME__" placeholder="Field name" class="input">
+                    <input type="text" name="fields[__INDEX__][name]" value="__NAME__" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                 </div>
             </div>
             <div class="fieldtype-row">
@@ -1504,7 +1504,10 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmRemoveSubCollection: <?= json_encode(__('admin.col_editor_js_confirm_remove_sub_collection')) ?>,
         confirmRemoveField: <?= json_encode(__('admin.col_editor_js_confirm_remove_field')) ?>,
         copyClipboardFailed: <?= json_encode(__('admin.col_editor_js_copy_clipboard_failed')) ?>,
-        copyApiKeyFailed: <?= json_encode(__('admin.col_editor_js_copy_api_key_failed')) ?>
+        copyApiKeyFailed: <?= json_encode(__('admin.col_editor_js_copy_api_key_failed')) ?>,
+        fieldLabelPlaceholder: <?= json_encode(__('admin.col_editor_field_label_placeholder')) ?>,
+        fieldNamePlaceholder: <?= json_encode(__('admin.col_editor_field_name_placeholder')) ?>,
+        optionalDescriptionPlaceholder: <?= json_encode(__('admin.col_editor_optional_description_placeholder')) ?>
     };
     const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
         ? window.BirklyCollectionEditorCore.init({
@@ -1565,11 +1568,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="fieldtype-row">
                         <div class="fieldtype-field">
                             <label>Display Name <span class="required">*</span></label>
-                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][label]" value="" placeholder="Field label" class="input" required>
+                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][label]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                         </div>
                         <div class="fieldtype-field">
                             <label>API Name</label>
-                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][name]" value="" placeholder="Field name" class="input">
+                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][name]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                         </div>
                     </div>
                     <div class="fieldtype-row">
@@ -2507,7 +2510,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="fieldtype-row">
                     <div class="fieldtype-field">
                         <label>Description</label>
-                        <input type="text" name="sub_collections[${index}][description]" value="${data.description || ''}" placeholder="Optional description" class="input">
+                        <input type="text" name="sub_collections[${index}][description]" value="${data.description || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_optional_description_placeholder')) ?>" class="input">
                     </div>
                     <div class="fieldtype-field">
                         <label>Entry Method</label>
@@ -2545,11 +2548,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="fieldtype-row">
                                         <div class="fieldtype-field">
                                             <label>Display Name <span class="required">*</span></label>
-                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][label]" value="${field.label || ''}" placeholder="Field label" class="input" required>
+                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][label]" value="${field.label || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                         </div>
                                         <div class="fieldtype-field">
                                             <label>API Name</label>
-                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][name]" value="${field.name || ''}" placeholder="Field name" class="input">
+                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][name]" value="${field.name || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                         </div>
                                     </div>
                                     <div class="fieldtype-row">
@@ -2692,11 +2695,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="fieldtype-row">
                                     <div class="fieldtype-field">
                                         <label>Display Name <span class="required">*</span></label>
-                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][label]" value="" placeholder="Field label" class="input" required>
+                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][label]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                     </div>
                                     <div class="fieldtype-field">
                                         <label>API Name</label>
-                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][name]" value="" placeholder="Field name" class="input">
+                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][name]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                     </div>
                                 </div>
                                 <div class="fieldtype-row">
