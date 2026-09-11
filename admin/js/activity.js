@@ -37,7 +37,7 @@
 
         if (filteredActivity.length === 0) {
             feed.innerHTML = '<div class="empty-state empty-state--compact">'
-                + '<p class="empty-state__description">No activity found</p></div>';
+                + '<p class="empty-state__description">' + actT('activity_js_no_activity_found', 'No activity found') + '</p></div>';
             if (loadMoreBtn) loadMoreBtn.hidden = true;
             return;
         }

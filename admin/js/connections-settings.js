@@ -197,8 +197,8 @@ function connT(key, fallback, params) {
     async function loadConnections() {
         var result = await api('list', 'GET');
         if (result.status !== 'ok') {
-            if (emailListEl) emailListEl.innerHTML = '<p class="message message-error">Could not load email connections. Please refresh the page.</p>';
-            if (httpListEl) httpListEl.innerHTML = '<p class="message message-error">Could not load credentials.</p>';
+            if (emailListEl) emailListEl.innerHTML = '<p class="message message-error">' + escapeHtml(connT('connections_js_err_load_email_connections', 'Could not load email connections. Please refresh the page.')) + '</p>';
+            if (httpListEl) httpListEl.innerHTML = '<p class="message message-error">' + escapeHtml(connT('connections_js_err_load_credentials', 'Could not load credentials.')) + '</p>';
             return;
         }
         connections = result.connections || [];
@@ -213,8 +213,8 @@ function connT(key, fallback, params) {
         if (emailConnections.length === 0) {
             emailStatusEl.hidden = false;
             emailStatusEl.className = 'sys-conn-status-banner callout callout-warning';
-            emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">No email connection yet</p>' +
-                '<p>Form submissions and plugin emails will not reach a real inbox until you set up email below.</p></div>';
+            emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">' + escapeHtml(connT('connections_js_no_email_connection_title', 'No email connection yet')) + '</p>' +
+                '<p>' + escapeHtml(connT('connections_js_no_email_connection_body', 'Form submissions and plugin emails will not reach a real inbox until you set up email below.')) + '</p></div>';
             return;
         }
         var def = emailConnections.find(function (c) { return c.is_default; }) || emailConnections[0];
@@ -224,16 +224,17 @@ function connT(key, fallback, params) {
         if (providerKey === 'log') {
             emailStatusEl.hidden = false;
             emailStatusEl.className = 'sys-conn-status-banner callout callout-warning';
-            emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">Emails are logged, not sent</p>' +
-                '<p>Your default connection (<strong>' + escapeHtml(def.name) + '</strong>) uses <strong>Log only</strong>. ' +
-                'Switch to SMTP or an email service before going live.</p></div>';
+            emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">' + escapeHtml(connT('connections_js_emails_logged_title', 'Emails are logged, not sent')) + '</p>' +
+                '<p>' + escapeHtml(connT('connections_js_emails_logged_body', 'Your default connection ({name}) uses Log only. Switch to SMTP or an email service before going live.', { name: def.name })) + '</p></div>';
             return;
         }
         emailStatusEl.hidden = false;
         emailStatusEl.className = 'sys-conn-status-banner callout callout-info';
-        emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">Default email: ' + escapeHtml(def.name) + '</p>' +
-            '<p>Sending via <strong>' + escapeHtml(providerLabel) + '</strong> from <strong>' + escapeHtml(def.from_email || '') + '</strong>. ' +
-            'Form notifications and plugins use this connection.</p></div>';
+        emailStatusEl.innerHTML = '<div class="callout-body"><p class="callout-title">' + escapeHtml(connT('connections_js_default_email_title', 'Default email: {name}', { name: def.name })) + '</p>' +
+            '<p>' + escapeHtml(connT('connections_js_default_email_body', 'Sending via {provider} from {from_email}. Form notifications and plugins use this connection.', {
+                provider: providerLabel,
+                from_email: def.from_email || '',
+            })) + '</p></div>';
     }
 
     function renderEmailConnections() {
@@ -241,8 +242,8 @@ function connT(key, fallback, params) {
         var emailConnections = connections.filter(function (c) { return (c.type || 'email') === 'email'; });
         if (emailConnections.length === 0) {
             emailListEl.innerHTML = '<div class="empty-state empty-state-friendly">' +
-                '<p><strong>No email set up yet</strong></p>' +
-                '<p>Click <em>Set up email</em> above and follow the steps. It only takes a minute.</p></div>';
+                '<p><strong>' + escapeHtml(connT('connections_js_no_email_setup_title', 'No email set up yet')) + '</strong></p>' +
+                '<p>' + escapeHtml(connT('connections_js_no_email_setup_hint', 'Click Set up email above and follow the steps. It only takes a minute.')) + '</p></div>';
             return;
         }
 
@@ -349,7 +350,7 @@ function connT(key, fallback, params) {
             } else {
                 var testResult = await api('test', 'POST', { alias: connection.alias });
                 if (testResult.status === 'ok' && testResult.send_result && testResult.send_result.status !== 'failed') {
-                    showToast('Connection test succeeded.', 'success');
+                    showToast(connT('connections_js_connection_test_success', 'Connection test succeeded.'), 'success');
                 } else {
                     showToast('Test failed: ' + ((testResult.send_result && testResult.send_result.error) || 'unknown error'), 'error');
                 }
@@ -360,14 +361,14 @@ function connT(key, fallback, params) {
     async function openTestPrompt(connection) {
         var testEmail = '';
         if (window.BirklyFeedback && typeof BirklyFeedback.prompt === 'function') {
-            testEmail = await BirklyFeedback.prompt('Send a test email to:', '');
+            testEmail = await BirklyFeedback.prompt(connT('connections_js_test_email_prompt', 'Send a test email to:'), '');
         } else {
-            testEmail = prompt('Send a test email to:', '') || '';
+            testEmail = prompt(connT('connections_js_test_email_prompt', 'Send a test email to:'), '') || '';
         }
         if (!testEmail) return;
         var testResult = await api('test', 'POST', { alias: connection.alias, test_email: testEmail });
         if (testResult.status === 'ok' && testResult.send_result && testResult.send_result.status !== 'failed') {
-            showToast('Test email sent. Check your inbox (and spam folder).', 'success');
+            showToast(connT('connections_js_test_email_sent_inbox', 'Test email sent. Check your inbox (and spam folder).'), 'success');
         } else {
             showToast('Test failed: ' + ((testResult.send_result && testResult.send_result.error) || 'unknown error'), 'error');
         }
@@ -429,7 +430,7 @@ function connT(key, fallback, params) {
             renderSchemaFields(providerFields, schema.fields, values);
             return;
         }
-        providerFields.innerHTML = '<p class="form-help">No extra settings needed for this method.</p>';
+            providerFields.innerHTML = '<p class="form-help">' + escapeHtml(connT('connections_js_no_extra_provider_settings', 'No extra settings needed for this method.')) + '</p>';
     }
 
     function showWizardStep(step) {

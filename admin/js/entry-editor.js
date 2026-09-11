@@ -683,8 +683,8 @@
                     <textarea id="review-notes-input" class="input" rows="4" placeholder="${eeT('entry_editor_js_review_notes_placeholder', 'Enter notes...')}"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
-                    <button class="btn btn-primary" id="submit-review-btn">Submit</button>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">${eeT('cancel', 'Cancel')}</button>
+                    <button class="btn btn-primary" id="submit-review-btn">${eeT('entry_editor_js_submit_review', 'Submit')}</button>
                 </div>
             </div>
         `;
