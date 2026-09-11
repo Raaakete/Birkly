@@ -2,47 +2,47 @@
 <div class="redirects-settings u-stack-4">
     <div class="section-header">
         <div>
-            <h2>Redirects</h2>
-            <p class="settings-help">Manage URL redirects for your site. Rules are enforced by the Birkly router when requests hit this installation.</p>
+            <h2><?= htmlspecialchars(__('admin.redirects'), ENT_QUOTES, 'UTF-8') ?></h2>
+            <p class="settings-help"><?= htmlspecialchars(__('admin.settings_redirects_help'), ENT_QUOTES, 'UTF-8') ?></p>
         </div>
     </div>
 
     <div class="settings-stack">
         <section class="card">
             <div class="card-header">
-                <h3 class="card-title">Create or update redirect</h3>
+                <h3 class="card-title"><?= htmlspecialchars(__('admin.settings_redirects_form_title'), ENT_QUOTES, 'UTF-8') ?></h3>
             </div>
             <div class="card-body">
                 <form id="redirect-form" class="settings-form u-stack-4">
                     <input type="hidden" id="redirect-id" value="">
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="redirect-from-path">From path</label>
-                            <input type="text" id="redirect-from-path" class="input" placeholder="/old-path" required>
+                            <label for="redirect-from-path"><?= htmlspecialchars(__('admin.discovery_seo_redirect_from'), ENT_QUOTES, 'UTF-8') ?></label>
+                            <input type="text" id="redirect-from-path" class="input" placeholder="<?= htmlspecialchars(__('admin.settings_redirects_from_placeholder'), ENT_QUOTES, 'UTF-8') ?>" required>
                         </div>
                         <div class="form-group">
-                            <label for="redirect-to-path">To path or URL</label>
-                            <input type="text" id="redirect-to-path" class="input" placeholder="/new-path or https://example.com" required>
+                            <label for="redirect-to-path"><?= htmlspecialchars(__('admin.discovery_seo_redirect_to'), ENT_QUOTES, 'UTF-8') ?></label>
+                            <input type="text" id="redirect-to-path" class="input" placeholder="<?= htmlspecialchars(__('admin.settings_redirects_to_placeholder'), ENT_QUOTES, 'UTF-8') ?>" required>
                         </div>
                     </div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="redirect-type">Redirect type</label>
+                            <label for="redirect-type"><?= htmlspecialchars(__('admin.discovery_seo_redirect_type'), ENT_QUOTES, 'UTF-8') ?></label>
                             <select id="redirect-type" class="input">
-                                <option value="301">301 Permanent</option>
-                                <option value="302">302 Temporary</option>
+                                <option value="301"><?= htmlspecialchars(__('admin.discovery_seo_redirect_301'), ENT_QUOTES, 'UTF-8') ?></option>
+                                <option value="302"><?= htmlspecialchars(__('admin.discovery_seo_redirect_302'), ENT_QUOTES, 'UTF-8') ?></option>
                             </select>
                         </div>
                         <div class="form-group u-justify-end">
                             <label class="check">
                                 <input type="checkbox" id="redirect-enabled" checked>
-                                <span>Enabled</span>
+                                <span><?= htmlspecialchars(__('admin.enabled'), ENT_QUOTES, 'UTF-8') ?></span>
                             </label>
                         </div>
                     </div>
                     <div class="u-cluster-3">
-                        <button type="submit" class="btn btn-primary">Save redirect</button>
-                        <button type="button" class="btn btn-secondary" id="redirect-form-reset">Clear</button>
+                        <button type="submit" class="btn btn-primary"><?= htmlspecialchars(__('admin.discovery_seo_redirect_save'), ENT_QUOTES, 'UTF-8') ?></button>
+                        <button type="button" class="btn btn-secondary" id="redirect-form-reset"><?= htmlspecialchars(__('admin.clear'), ENT_QUOTES, 'UTF-8') ?></button>
                     </div>
                     <div id="redirect-feedback" class="u-text-sm" aria-live="polite" hidden></div>
                 </form>
@@ -51,22 +51,22 @@
 
         <section class="card">
             <div class="card-header">
-                <h3 class="card-title">Saved redirects</h3>
+                <h3 class="card-title"><?= htmlspecialchars(__('admin.settings_redirects_list_title'), ENT_QUOTES, 'UTF-8') ?></h3>
             </div>
             <div class="card-body u-stack-3">
                 <div id="redirects-empty" class="empty-state empty-state--compact" hidden>
-                    <p class="empty-state__description">No redirects saved yet.</p>
+                    <p class="empty-state__description"><?= htmlspecialchars(__('admin.settings_redirects_empty'), ENT_QUOTES, 'UTF-8') ?></p>
                 </div>
                 <div class="table-container">
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>From</th>
-                                <th>To</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Updated</th>
-                                <th>Actions</th>
+                                <th><?= htmlspecialchars(__('admin.settings_redirects_col_from'), ENT_QUOTES, 'UTF-8') ?></th>
+                                <th><?= htmlspecialchars(__('admin.settings_redirects_col_to'), ENT_QUOTES, 'UTF-8') ?></th>
+                                <th><?= htmlspecialchars(__('admin.discovery_seo_redirect_type'), ENT_QUOTES, 'UTF-8') ?></th>
+                                <th><?= htmlspecialchars(__('admin.status'), ENT_QUOTES, 'UTF-8') ?></th>
+                                <th><?= htmlspecialchars(__('admin.updated'), ENT_QUOTES, 'UTF-8') ?></th>
+                                <th><?= htmlspecialchars(__('admin.actions'), ENT_QUOTES, 'UTF-8') ?></th>
                             </tr>
                         </thead>
                         <tbody id="redirects-table-body"></tbody>

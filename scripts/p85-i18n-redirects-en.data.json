@@ -1,0 +1,18 @@
+{
+  "settings_redirects_help": "Manage URL redirects for your site. Rules are enforced by the Birkly router when requests hit this installation.",
+  "settings_redirects_form_title": "Create or update redirect",
+  "settings_redirects_list_title": "Saved redirects",
+  "settings_redirects_empty": "No redirects saved yet.",
+  "settings_redirects_from_placeholder": "/old-path",
+  "settings_redirects_to_placeholder": "/new-path or https://example.com",
+  "settings_redirects_col_from": "From",
+  "settings_redirects_col_to": "To",
+  "settings_redirects_load_failed": "Failed to load redirects",
+  "settings_redirects_save_failed": "Failed to save redirect",
+  "settings_redirects_saved": "Redirect saved.",
+  "settings_redirects_delete_confirm": "Delete this redirect?",
+  "settings_redirects_delete_failed": "Failed to delete redirect",
+  "settings_redirects_deleted": "Redirect deleted.",
+  "settings_redirects_editing": "Editing redirect {path}",
+  "disabled": "Disabled"
+}

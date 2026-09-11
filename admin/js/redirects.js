@@ -4,6 +4,18 @@
     let initialized = false;
     let redirects = [];
 
+    function t(key, fallback, params) {
+        let text = (window.Birkly && window.Birkly.i18n && typeof window.Birkly.i18n.t === 'function')
+            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function apiUrl(path) {
         return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
     }
@@ -79,11 +91,13 @@
                 '<td><code>' + escapeHtml(redirect.from_path || '') + '</code></td>' +
                 '<td><code>' + escapeHtml(redirect.to_path || '') + '</code></td>' +
                 '<td>' + escapeHtml(String(redirect.type || 301)) + '</td>' +
-                '<td>' + (redirect.enabled ? '<span class="badge badge-success">Enabled</span>' : '<span class="badge badge-neutral">Disabled</span>') + '</td>' +
+                '<td>' + (redirect.enabled
+                    ? '<span class="badge badge-success">' + escapeHtml(t('enabled', 'Enabled')) + '</span>'
+                    : '<span class="badge badge-neutral">' + escapeHtml(t('disabled', 'Disabled')) + '</span>') + '</td>' +
                 '<td>' + escapeHtml(redirect.updated_at || '—') + '</td>' +
                 '<td class="cell-actions">' +
-                    '<button type="button" class="btn btn-secondary btn-sm redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">Edit</button>' +
-                    '<button type="button" class="btn btn-danger btn-sm redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">Delete</button>' +
+                    '<button type="button" class="btn btn-secondary btn-sm redirect-edit-btn" data-id="' + escapeHtml(redirect.id || '') + '">' + escapeHtml(t('edit', 'Edit')) + '</button>' +
+                    '<button type="button" class="btn btn-danger btn-sm redirect-delete-btn" data-id="' + escapeHtml(redirect.id || '') + '">' + escapeHtml(t('delete', 'Delete')) + '</button>' +
                 '</td>' +
             '</tr>';
         }).join('');
@@ -94,12 +108,12 @@
             const response = await fetch(apiUrl('/api/redirects.php?action=list'), { credentials: 'same-origin' });
             const payload = await response.json();
             if (!response.ok || payload.status !== 'ok') {
-                throw new Error(payload.message || 'Failed to load redirects');
+                throw new Error(payload.message || t('settings_redirects_load_failed', 'Failed to load redirects'));
             }
             redirects = Array.isArray(payload?.data?.redirects) ? payload.data.redirects : [];
             renderTable();
         } catch (error) {
-            setFeedback(error.message || 'Failed to load redirects', 'error');
+            setFeedback(error.message || t('settings_redirects_load_failed', 'Failed to load redirects'), 'error');
         }
     }
 
@@ -124,19 +138,19 @@
             });
             const payload = await response.json();
             if (!response.ok || payload.status !== 'ok') {
-                throw new Error(payload.message || 'Failed to save redirect');
+                throw new Error(payload.message || t('settings_redirects_save_failed', 'Failed to save redirect'));
             }
             resetForm();
-            setFeedback(payload.message || 'Redirect saved.', 'success');
+            setFeedback(payload.message || t('settings_redirects_saved', 'Redirect saved.'), 'success');
             await loadRedirects();
         } catch (error) {
-            setFeedback(error.message || 'Failed to save redirect', 'error');
+            setFeedback(error.message || t('settings_redirects_save_failed', 'Failed to save redirect'), 'error');
         }
     }
 
     async function deleteRedirect(id) {
         const { idInput } = getElements();
-        if (!id || !(await BirklyFeedback.confirm('Delete this redirect?'))) {
+        if (!id || !(await BirklyFeedback.confirm(t('settings_redirects_delete_confirm', 'Delete this redirect?')))) {
             return;
         }
 
@@ -152,15 +166,15 @@
             });
             const payload = await response.json();
             if (!response.ok || payload.status !== 'ok') {
-                throw new Error(payload.message || 'Failed to delete redirect');
+                throw new Error(payload.message || t('settings_redirects_delete_failed', 'Failed to delete redirect'));
             }
             if (idInput && idInput.value === id) {
                 resetForm();
             }
-            setFeedback(payload.message || 'Redirect deleted.', 'success');
+            setFeedback(payload.message || t('settings_redirects_deleted', 'Redirect deleted.'), 'success');
             await loadRedirects();
         } catch (error) {
-            setFeedback(error.message || 'Failed to delete redirect', 'error');
+            setFeedback(error.message || t('settings_redirects_delete_failed', 'Failed to delete redirect'), 'error');
         }
     }
 
@@ -178,7 +192,7 @@
         if (toInput) toInput.value = redirect.to_path || '';
         if (typeInput) typeInput.value = String(redirect.type || 301);
         if (enabledInput) enabledInput.checked = Boolean(redirect.enabled);
-        setFeedback('Editing redirect ' + (redirect.from_path || ''), 'success');
+        setFeedback(t('settings_redirects_editing', 'Editing redirect {path}', { path: redirect.from_path || '' }), 'success');
         fromInput?.focus();
     }
 
