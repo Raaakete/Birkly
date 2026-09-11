@@ -37,6 +37,18 @@ function showMessage(message, type) {
     }, 5000);
 }
 
+function stT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
 function getSettingsUsers() {
     const el = document.getElementById('settings-users-data');
     if (!el) return [];
@@ -72,7 +84,7 @@ function createPermissionsGrid(containerId, permissions = {}) {
 
         const heading = document.createElement('h4');
         heading.className = 'u-label';
-        heading.textContent = resource;
+        heading.textContent = stT('settings_js_perm_' + resource, resource);
         section.appendChild(heading);
 
         const checkboxesDiv = document.createElement('div');
@@ -94,7 +106,7 @@ function createPermissionsGrid(containerId, permissions = {}) {
             });
 
             const span = document.createElement('span');
-            span.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+            span.textContent = stT('settings_js_perm_' + action, action.charAt(0).toUpperCase() + action.slice(1));
 
             label.appendChild(checkbox);
             label.appendChild(span);
@@ -221,7 +233,7 @@ function openAddRoleModal() {
     const modal = document.getElementById('add-role-modal');
     if (!modal) {
         console.error('Add role modal not found');
-        showMessage('Role modal not found. Please refresh the page.', 'error');
+        showMessage(stT('settings_js_role_modal_missing', 'Role modal not found. Please refresh the page.'), 'error');
         return;
     }
     modal.style.display = 'flex';
@@ -246,7 +258,7 @@ async function editRole(roleId) {
     const modal = document.getElementById('edit-role-modal');
     if (!modal) {
         console.error('Edit role modal not found');
-        showMessage('Edit role modal not found. Please refresh the page.', 'error');
+        showMessage(stT('settings_js_edit_role_modal_missing', 'Edit role modal not found. Please refresh the page.'), 'error');
         return;
     }
     
@@ -273,12 +285,12 @@ async function editRole(roleId) {
             populatePluginAccessGrid('edit-plugin-access-grid', role);
             
         } else {
-            showMessage('Error loading role: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(stT('settings_js_err_loading_role', 'Error loading role:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
             closeEditRoleModal();
         }
     } catch (error) {
         console.error('Error loading role:', error);
-        showMessage('Error loading role: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_loading_role', 'Error loading role:') + ' ' + error.message, 'error');
         closeEditRoleModal();
     }
 }
@@ -295,7 +307,7 @@ async function updateRole() {
     const form = document.getElementById('edit-role-form');
     if (!form) {
         console.error('Edit form not found');
-        showMessage('Error: Form not found', 'error');
+        showMessage(stT('settings_js_err_form_missing', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -304,7 +316,7 @@ async function updateRole() {
     const descriptionInput = form.querySelector('#edit-role-description');
     
     if (!nameInput || !nameInput.value.trim()) {
-        showMessage('Error: Role name is required', 'error');
+        showMessage(stT('settings_js_err_role_name_required', 'Error: Role name is required'), 'error');
         nameInput?.focus();
         return;
     }
@@ -344,15 +356,15 @@ async function updateRole() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Role updated successfully!', 'success');
+            showMessage(stT('settings_js_role_updated', 'Role updated successfully!'), 'success');
             closeEditRoleModal();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error updating role:', error);
-        showMessage('Error updating role: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_updating_role', 'Error updating role:') + ' ' + error.message, 'error');
     }
 }
 
@@ -360,7 +372,7 @@ async function createRole() {
     const form = document.getElementById('add-role-form');
     if (!form) {
         console.error('Form not found');
-        showMessage('Error: Form not found', 'error');
+        showMessage(stT('settings_js_err_form_missing', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -369,7 +381,7 @@ async function createRole() {
     const descriptionInput = form.querySelector('#role-description');
     
     if (!nameInput || !nameInput.value.trim()) {
-        showMessage('Error: Role name is required', 'error');
+        showMessage(stT('settings_js_err_role_name_required', 'Error: Role name is required'), 'error');
         nameInput?.focus();
         return;
     }
@@ -412,20 +424,20 @@ async function createRole() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Role created successfully!', 'success');
+            showMessage(stT('settings_js_role_created', 'Role created successfully!'), 'success');
             closeAddRoleModal();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error creating role:', error);
-        showMessage('Error creating role: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_creating_role', 'Error creating role:') + ' ' + error.message, 'error');
     }
 }
 
 async function deleteRole(roleId) {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to delete this role? This action cannot be undone.'))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_delete_role', 'Are you sure you want to delete this role? This action cannot be undone.')))) {
         return;
     }
     
@@ -443,14 +455,14 @@ async function deleteRole(roleId) {
     .then(response => response.json())
     .then(result => {
         if (result.status === 'ok') {
-            showMessage('Role deleted successfully!', 'success');
+            showMessage(stT('settings_js_role_deleted', 'Role deleted successfully!'), 'success');
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     })
     .catch(error => {
-        showMessage('Error deleting role: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_deleting_role', 'Error deleting role:') + ' ' + error.message, 'error');
     });
 }
 
@@ -752,7 +764,7 @@ window.migrateStorage = migrateStorage;
 
         bar.classList.remove('is-hidden');
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Settings';
+        saveBtn.textContent = stT('settings_js_save_settings_btn', 'Save Settings');
 
         if (dirtyBadge) {
             dirtyBadge.hidden = !hasDirtyTrackedTabs();
@@ -1263,7 +1275,7 @@ function renderInviteMailNotice() {
     } else {
         notice.classList.add('callout-warning');
         if (copy) {
-            copy.textContent = 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use “Create invite link” and share the URL yourself.';
+            copy.textContent = stT('settings_js_invite_email_connection_hint', 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use “Create invite link” and share the URL yourself.');
         }
         if (sendBtn) sendBtn.disabled = true;
     }
@@ -1358,9 +1370,9 @@ async function submitInvitation(sendEmail) {
             return;
         }
 
-        showMessage('Error: ' + (result.message || 'Invitation failed'), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_invitation_failed', 'Invitation failed')), 'error');
     } catch (error) {
-        showMessage('Error sending invitation: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_sending_invitation', 'Error sending invitation:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1378,15 +1390,15 @@ function copyInviteLink() {
     if (!url) return;
     if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(() => {
-            showMessage('Invite link copied to clipboard.', 'success');
+            showMessage(stT('settings_js_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
         }).catch(() => {
             field.select();
-            showMessage('Select the link field and copy it manually.', 'warning');
+            showMessage(stT('settings_js_copy_link_manual', 'Select the link field and copy it manually.'), 'warning');
         });
         return;
     }
     field.select();
-    showMessage('Select the link field and copy it manually.', 'warning');
+    showMessage(stT('settings_js_copy_link_manual', 'Select the link field and copy it manually.'), 'warning');
 }
 
 function invitationStatusBadge(status) {
@@ -1475,7 +1487,7 @@ async function loadTeamInvitations() {
         listEl.hidden = false;
     } catch (error) {
         emptyEl.hidden = false;
-        emptyEl.querySelector('.empty-state__description').textContent = 'Could not load invitations.';
+        emptyEl.querySelector('.empty-state__description').textContent = stT('settings_js_invitations_load_failed', 'Could not load invitations.');
     } finally {
         loadingEl.hidden = true;
     }
@@ -1485,7 +1497,7 @@ function copyTeamInvitationLink(url) {
     if (!url) return;
     if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(function () {
-            showMessage('Invite link copied to clipboard.', 'success');
+            showMessage(stT('settings_js_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
         }).catch(function () {
             showMessage(url, 'info');
         });
@@ -1509,18 +1521,18 @@ async function resendTeamInvitation(token) {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(result.message || 'Invitation resent.', 'success');
+            showMessage(result.message || stT('settings_js_invitation_resent', 'Invitation resent.'), 'success');
             await loadTeamInvitations();
             return;
         }
         if (result.data?.invite_url) {
-            showMessage((result.message || 'Could not resend email.') + ' Copy the link from the list instead.', 'warning');
+            showMessage((result.message || stT('settings_js_could_not_resend_email', 'Could not resend email.')) + stT('settings_js_resend_copy_instead', ' Copy the link from the list instead.'), 'warning');
             await loadTeamInvitations();
             return;
         }
-        showMessage(result.message || 'Could not resend invitation.', 'error');
+        showMessage(result.message || stT('settings_js_could_not_resend_invitation', 'Could not resend invitation.'), 'error');
     } catch (error) {
-        showMessage('Error resending invitation: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_resending_invitation', 'Error resending invitation:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1548,13 +1560,13 @@ async function cancelTeamInvitation(token, email) {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(result.message || 'Invitation cancelled.', 'success');
+            showMessage(result.message || stT('settings_js_invitation_cancelled', 'Invitation cancelled.'), 'success');
             await loadTeamInvitations();
             return;
         }
-        showMessage(result.message || 'Could not cancel invitation.', 'error');
+        showMessage(result.message || stT('settings_js_could_not_cancel_invitation', 'Could not cancel invitation.'), 'error');
     } catch (error) {
-        showMessage('Error cancelling invitation: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_cancelling_invitation', 'Error cancelling invitation:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1617,15 +1629,15 @@ async function createUser() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('User created successfully!', 'success');
+            showMessage(stT('settings_js_user_created', 'User created successfully!'), 'success');
             closeAddUserModal();
             // Reload the page to show the new user
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error creating user: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_creating_user', 'Error creating user:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1661,20 +1673,20 @@ async function updateUser() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('User updated successfully!', 'success');
+            showMessage(stT('settings_js_user_updated', 'User updated successfully!'), 'success');
             closeEditUserModal();
             // Reload the page to show the updated user
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error updating user: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_updating_user', 'Error updating user:') + ' ' + error.message, 'error');
     }
 }
 
 async function confirmDeleteUser(userId, email) {
-    if (await BirklyFeedback.confirm('Are you sure you want to delete user "' + email + '"? This action cannot be undone.')) {
+    if (await BirklyFeedback.confirm(stT('settings_js_confirm_delete_user', 'Are you sure you want to delete user "{email}"? This action cannot be undone.', { email: email }))) {
         deleteUser(userId);
     }
 }
@@ -1698,14 +1710,14 @@ async function deleteUser(userId) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('User deleted successfully!', 'success');
+            showMessage(stT('settings_js_user_deleted', 'User deleted successfully!'), 'success');
             // Reload the page to show the updated user list
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error deleting user: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_deleting_user', 'Error deleting user:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1719,7 +1731,7 @@ function deleteUserFromModal() {
 async function revokeUserMcpSessions(userId, label) {
     if (!userId) return;
     const who = label || 'this user';
-    if (!(await BirklyFeedback.confirm('Revoke all active AI app connections for ' + who + '? They will need to sign in again in Claude, Cursor, or ChatGPT.'))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_revoke_ai', 'Revoke all active AI app connections for {who}? They will need to sign in again in Claude, Cursor, or ChatGPT.', { who: who })))) {
         return;
     }
 
@@ -1735,14 +1747,14 @@ async function revokeUserMcpSessions(userId, label) {
         .then((response) => response.json())
         .then((result) => {
             if (result.status === 'ok') {
-                showMessage(result.message || 'AI connections revoked', 'success');
+                showMessage(result.message || stT('settings_js_ai_connections_revoked', 'AI connections revoked'), 'success');
                 setTimeout(() => window.location.reload(), 800);
             } else {
-                showMessage('Error: ' + (result.message || 'Could not revoke AI access'), 'error');
+                showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_could_not_revoke_ai', 'Could not revoke AI access')), 'error');
             }
         })
         .catch((error) => {
-            showMessage('Error revoking AI access: ' + error.message, 'error');
+            showMessage(stT('settings_js_err_revoking_ai', 'Error revoking AI access:') + ' ' + error.message, 'error');
         });
 }
 
@@ -1766,22 +1778,22 @@ async function togglePlugin(pluginId, activate) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(result.message || 'Plugin ' + action + 'd successfully', 'success');
+            showMessage(result.message || stT('settings_js_plugin_action_success', 'Plugin {action}d successfully', { action: action }), 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            var errorMsg = 'Error: ' + (result.message || 'Failed to ' + action + ' plugin');
+            var errorMsg = stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_failed_plugin_action', 'Failed to {action} plugin', { action: action }));
             if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
                 errorMsg += ' — ' + result.errors.join('; ');
             }
             showMessage(errorMsg, 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
 async function deletePlugin(pluginId) {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to delete this plugin? This action cannot be undone.'))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_delete_plugin', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
         return;
     }
     
@@ -1801,13 +1813,13 @@ async function deletePlugin(pluginId) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(result.message || 'Plugin deleted successfully', 'success');
+            showMessage(result.message || stT('settings_js_plugin_deleted', 'Plugin deleted successfully'), 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            showMessage('Error: ' + (result.message || 'Failed to delete plugin'), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_failed_delete_plugin', 'Failed to delete plugin')), 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1852,7 +1864,7 @@ async function deletePlugin(pluginId) {
             if (result.status !== 'ok') {
                 throw new Error(result.message || 'Failed to update delivery role');
             }
-            showMessage('Delivery role updated for ' + host, 'success');
+            showMessage(stT('settings_js_delivery_role_updated', 'Delivery role updated for {host}', { host: host }), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1862,14 +1874,14 @@ async function deletePlugin(pluginId) {
             loadDomains();
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (selectEl) selectEl.disabled = false;
         }
     }
 
     async function setPublicPrimary(host, buttonEl) {
         if (!host) return;
-        if (!(await BirklyFeedback.confirm('Make ' + host + ' the primary public URL? The current primary will become an alias.'))) {
+        if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_primary_url', 'Make {host} the primary public URL? The current primary will become an alias.', { host: host })))) {
             return;
         }
         if (buttonEl) buttonEl.disabled = true;
@@ -1884,7 +1896,7 @@ async function deletePlugin(pluginId) {
             if (result.status !== 'ok') {
                 throw new Error(result.message || 'Failed to update primary URL');
             }
-            showMessage(result.message || 'Primary public URL updated', 'success');
+            showMessage(result.message || stT('settings_js_primary_url_updated', 'Primary public URL updated'), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1894,7 +1906,7 @@ async function deletePlugin(pluginId) {
             loadDomains();
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (buttonEl) buttonEl.disabled = false;
         }
     }
@@ -1912,7 +1924,7 @@ async function deletePlugin(pluginId) {
             if (result.status !== 'ok') {
                 throw new Error(result.message || 'Failed to update alias redirect');
             }
-            showMessage(result.message || 'Alias redirect updated', 'success');
+            showMessage(result.message || stT('settings_js_alias_redirect_updated', 'Alias redirect updated'), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1921,7 +1933,7 @@ async function deletePlugin(pluginId) {
             }
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (checkboxEl) checkboxEl.checked = !enabled;
         } finally {
             if (checkboxEl) checkboxEl.disabled = false;
@@ -2182,13 +2194,13 @@ async function deletePlugin(pluginId) {
                 throw new Error(result.message || 'Failed to update analytics');
             }
 
-            showMessage(enabled ? 'Analytics enabled for ' + domainName : 'Analytics disabled for ' + domainName, 'success');
+            showMessage(enabled ? stT('settings_js_analytics_enabled', 'Analytics enabled for {domain}', { domain: domainName }) : stT('settings_js_analytics_disabled', 'Analytics disabled for {domain}', { domain: domainName }), 'success');
             loadDomains();
         } catch (error) {
             if (toggleInput) {
                 toggleInput.checked = !enabled;
             }
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         } finally {
             if (toggleInput) {
                 toggleInput.disabled = false;
@@ -2434,7 +2446,7 @@ function openAddDomainModal() {
     }
     var helpEl = document.getElementById('domain-delivery-role-help');
     if (helpEl) {
-        helpEl.textContent = 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.';
+        helpEl.textContent = stT('settings_js_domain_delivery_help', 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.');
     }
     bindRegisterDomainSuggestInline();
 }
@@ -2457,7 +2469,7 @@ function bindRegisterDomainSuggestInline() {
                     roleSelect.value = payload.data.role;
                 }
                 if (helpEl && payload.data.reason) {
-                    helpEl.textContent = 'Suggested: ' + payload.data.role + ' — ' + payload.data.reason;
+                    helpEl.textContent = stT('settings_js_domain_suggested_role', 'Suggested: {role} — {reason}', { role: payload.data.role, reason: payload.data.reason });
                 }
             })
             .catch(function () { /* optional */ });
@@ -2501,7 +2513,7 @@ function closeAddDomainModal() {
 async function registerDomain() {
     const form = document.getElementById('add-domain-form');
     if (!form) {
-        showMessage('Error: Form not found', 'error');
+        showMessage(stT('settings_js_err_form_missing', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -2512,7 +2524,7 @@ async function registerDomain() {
     const customerEmail = (formData.get('customer_email') || '').trim();
     
     if (!domain || !customerEmail) {
-        showMessage('Error: Domain and customer email are required', 'error');
+        showMessage(stT('settings_js_err_domain_email_required', 'Error: Domain and customer email are required'), 'error');
         return;
     }
     
@@ -2544,7 +2556,7 @@ async function registerDomain() {
         } catch (parseError) {
             console.error('Failed to parse JSON response:', parseError);
             console.error('Response text:', responseText);
-            showMessage('Error: Invalid response from server. Check console for details.', 'error');
+            showMessage(stT('settings_js_err_invalid_server_response', 'Error: Invalid response from server. Check console for details.'), 'error');
             return;
         }
         
@@ -2554,9 +2566,9 @@ async function registerDomain() {
                 ? ' (delivery: ' + result.data.delivery_role + ')'
                 : '';
             if (result.data && result.data.delivery_role_warning) {
-                showMessage('Domain registered' + roleMsg + ', but delivery role could not be applied: ' + result.data.delivery_role_warning, 'warning');
+                showMessage(stT('settings_js_domain_registered_warning', 'Domain registered{role_msg}, but delivery role could not be applied: {warning}', { role_msg: roleMsg, warning: result.data.delivery_role_warning }), 'warning');
             } else {
-                showMessage('Domain registered successfully!' + roleMsg, 'success');
+                showMessage(stT('settings_js_domain_registered_success', 'Domain registered successfully!{role_msg}', { role_msg: roleMsg }), 'success');
             }
             closeAddDomainModal();
             loadDomains();
@@ -2567,11 +2579,11 @@ async function registerDomain() {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error registering domain:', error);
-        showMessage('Error registering domain: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_registering_domain', 'Error registering domain:') + ' ' + error.message, 'error');
     }
 }
 
@@ -2612,7 +2624,7 @@ window.editDomain = async function(domainName) {
         }
     } catch (error) {
         console.error('Error loading domain details:', error);
-        showMessage('Error loading domain details: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_loading_domain', 'Error loading domain details:') + ' ' + error.message, 'error');
     }
 };
 
@@ -2668,26 +2680,26 @@ async function updateDomain() {
         } catch (parseError) {
             console.error('Failed to parse JSON response:', parseError);
             console.error('Response text:', responseText);
-            showMessage('Error: Invalid response from server. Check console for details.', 'error');
+            showMessage(stT('settings_js_err_invalid_server_response', 'Error: Invalid response from server. Check console for details.'), 'error');
             return;
         }
         
         
         if (result.status === 'ok') {
-            showMessage('Domain updated successfully!', 'success');
+            showMessage(stT('settings_js_domain_updated', 'Domain updated successfully!'), 'success');
             closeEditDomainModal();
             loadDomains();
         } else {
-            showMessage('Error: ' + (result.message || 'Unknown error'), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error updating domain:', error);
-        showMessage('Error updating domain: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_updating_domain', 'Error updating domain:') + ' ' + error.message, 'error');
     }
 }
 
 window.deleteDomain = async function(domainName) {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to delete domain "' + domainName + '"? This will revoke all access.'))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_delete_domain', 'Are you sure you want to delete domain "{name}"? This will revoke all access.', { name: domainName })))) {
         return;
     }
     
@@ -2706,14 +2718,14 @@ window.deleteDomain = async function(domainName) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Domain deleted successfully!', 'success');
+            showMessage(stT('settings_js_domain_deleted', 'Domain deleted successfully!'), 'success');
             loadDomains();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
         console.error('Error deleting domain:', error);
-        showMessage('Error deleting domain: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_deleting_domain', 'Error deleting domain:') + ' ' + error.message, 'error');
     }
 };
 
@@ -2859,7 +2871,7 @@ window.deleteDomain = async function(domainName) {
         if (!tbody) return;
         
         if (refresh) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>Loading...</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>' + escapeHtml(stT('settings_js_loading_table', 'Loading...')) + '</p></div></td></tr>';
         }
         
         // Load both audit logs and activity
@@ -3122,7 +3134,7 @@ async function addDenylistPlugin() {
     const select = document.getElementById('denylist-plugin-select');
     const pluginId = select?.value || '';
     if (!pluginId) {
-        showMessage('Select a plugin first', 'error');
+        showMessage(stT('settings_js_select_plugin_first', 'Select a plugin first'), 'error');
         return;
     }
 
@@ -3139,13 +3151,13 @@ async function addDenylistPlugin() {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage('Plugin added to denylist', 'success');
+            showMessage(stT('settings_js_plugin_denylist_added', 'Plugin added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage(result.message || 'Failed to add plugin', 'error');
+            showMessage(result.message || stT('settings_js_failed_add_plugin', 'Failed to add plugin'), 'error');
         }
     } catch (error) {
-        showMessage(error.message || 'Failed to add plugin', 'error');
+        showMessage(error.message || stT('settings_js_failed_add_plugin', 'Failed to add plugin'), 'error');
     }
 }
 
@@ -3153,7 +3165,7 @@ async function addDenylistCollection() {
     const select = document.getElementById('denylist-collection-select');
     const slug = select?.value || '';
     if (!slug) {
-        showMessage('Select a collection first', 'error');
+        showMessage(stT('settings_js_select_collection_first', 'Select a collection first'), 'error');
         return;
     }
 
@@ -3174,13 +3186,13 @@ async function addDenylistCollection() {
         const result = await response.json();
 
         if (result.status === 'ok') {
-            showMessage('Collection added to denylist', 'success');
+            showMessage(stT('settings_js_collection_denylist_added', 'Collection added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
@@ -3208,18 +3220,18 @@ async function addDenylistResource() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Resource added to denylist', 'success');
+            showMessage(stT('settings_js_resource_denylist_added', 'Resource added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
 async function removeDenylistResource(resource) {
-    if (!(await BirklyFeedback.confirm(`Remove "${resource}" from the denylist?`))) return;
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_remove_denylist', 'Remove "{resource}" from the denylist?', { resource: resource })))) return;
     
     try {
         const response = await fetch(apiUrl('/api/plugins_permissions.php'), {
@@ -3237,13 +3249,13 @@ async function removeDenylistResource(resource) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage('Resource removed from denylist', 'success');
+            showMessage(stT('settings_js_resource_denylist_removed', 'Resource removed from denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
@@ -3269,7 +3281,7 @@ function testDatabaseConnection() {
     const resultEl = document.getElementById('db-test-result');
     
     if (!resultEl) return;
-    resultEl.textContent = 'Testing...';
+    resultEl.textContent = stT('settings_js_testing_connection', 'Testing...');
     resultEl.style.color = 'var(--text-secondary)';
     
     fetch(apiUrl('/api/settings.php?action=test_database'), {
@@ -3305,17 +3317,17 @@ function testDatabaseConnection() {
 }
 
 async function migrateStorage() {
-    if (!(await BirklyFeedback.confirm('This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?'))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_migration_backup', 'This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')))) {
         return;
     }
     
     const backend = document.getElementById('storage-backend')?.value;
     if (!backend || backend === 'flatfile') {
-        showMessage('Please select a database backend first', 'error');
+        showMessage(stT('settings_js_select_db_backend', 'Please select a database backend first'), 'error');
         return;
     }
     
-    if (!(await BirklyFeedback.confirm('Migration may take some time. Do not close this window. Continue?'))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_migration_wait', 'Migration may take some time. Do not close this window. Continue?')))) {
         return;
     }
 
@@ -3330,16 +3342,16 @@ async function migrateStorage() {
     const prefix = document.getElementById('db-prefix')?.value;
 
     if (!host || !name || !user) {
-        showMessage('Enter database host, name, and user before migrating', 'error');
+        showMessage(stT('settings_js_migration_db_fields_required', 'Enter database host, name, and user before migrating'), 'error');
         return;
     }
 
     if (migrateBtn) {
         migrateBtn.disabled = true;
-        migrateBtn.textContent = 'Migrating...';
+        migrateBtn.textContent = stT('settings_js_migrating_btn', 'Migrating...');
     }
     if (statusEl) {
-        statusEl.textContent = 'Migration in progress...';
+        statusEl.textContent = stT('settings_js_migration_in_progress', 'Migration in progress...');
         statusEl.style.color = 'var(--text-secondary)';
     }
     
@@ -3380,14 +3392,14 @@ async function migrateStorage() {
             }
         } else {
             const failureMessage = data.message || 'Unknown error';
-            showMessage('Migration failed: ' + failureMessage, 'error');
+            showMessage(stT('settings_js_migration_failed', 'Migration failed:') + ' ' + failureMessage, 'error');
             if (statusEl) {
                 statusEl.textContent = '✗ ' + failureMessage;
                 statusEl.style.color = 'var(--error-600)';
             }
         }
     } catch (error) {
-        showMessage('Error: ' + error.message, 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         if (statusEl) {
             statusEl.textContent = '✗ ' + error.message;
             statusEl.style.color = 'var(--error-600)';
@@ -3489,7 +3501,7 @@ async function handleGlobalSave() {
             await collectAndSaveSettings(coreTabs, forms);
         } else if (saveAnalytics) {
             if (typeof window.showMessage === 'function') {
-                window.showMessage('Settings saved successfully!', 'success');
+                window.showMessage(stT('settings_js_settings_saved', 'Settings saved successfully!'), 'success');
             } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
                 BirklyFeedback.toast('Analytics settings saved', 'success');
             }
@@ -3497,7 +3509,7 @@ async function handleGlobalSave() {
     } catch (err) {
         var msg = (err && err.message) ? err.message : 'Save failed';
         if (typeof window.showMessage === 'function') {
-            window.showMessage('Error: ' + msg, 'error');
+            window.showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + msg, 'error');
         } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
             BirklyFeedback.toast(msg, 'error');
         }
@@ -3572,11 +3584,11 @@ async function collectAndSaveSettings(tabsToSave, forms) {
                 if (uploadResult.status === 'ok') {
                     logoPath = uploadResult.data.logoPath;
                 } else {
-                    showMessage('Error uploading logo: ' + (uploadResult.message || 'Unknown error'), 'error');
+                    showMessage(stT('settings_js_err_uploading_logo', 'Error uploading logo:') + ' ' + (uploadResult.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
                     return;
                 }
             } catch (error) {
-                showMessage('Error uploading logo: ' + error.message, 'error');
+                showMessage(stT('settings_js_err_uploading_logo', 'Error uploading logo:') + ' ' + error.message, 'error');
                 return;
             }
         }
@@ -3608,12 +3620,12 @@ async function collectAndSaveSettings(tabsToSave, forms) {
                     window.markSettingsClean(savedTabId);
                 });
             }
-            showMessage('Settings saved successfully!', 'success');
+            showMessage(stT('settings_js_settings_saved', 'Settings saved successfully!'), 'success');
         } else {
-            showMessage('Error: ' + result.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage('Error saving settings: ' + error.message, 'error');
+        showMessage(stT('settings_js_err_saving_settings', 'Error saving settings:') + ' ' + error.message, 'error');
     }
 }
 
@@ -3656,7 +3668,7 @@ function initGlobalSave() {
         const removeLogoBtn = document.getElementById('remove-logo-btn');
         if (removeLogoBtn) {
             removeLogoBtn.addEventListener('click', async function () {
-                if (await BirklyFeedback.confirm('Are you sure you want to remove the logo? The default Birkly icon will be used.')) {
+                if (await BirklyFeedback.confirm(stT('settings_js_confirm_remove_logo', 'Are you sure you want to remove the logo? The default Birkly icon will be used.'))) {
                     try {
                         const response = await fetch(apiUrl('/api/settings.php'), {
                             method: 'POST',
@@ -3675,13 +3687,13 @@ function initGlobalSave() {
 
                         const result = await response.json();
                         if (result.status === 'ok') {
-                            showMessage('Logo removed successfully!', 'success');
+                            showMessage(stT('settings_js_logo_removed', 'Logo removed successfully!'), 'success');
                             setTimeout(function () { location.reload(); }, 1000);
                         } else {
-                            showMessage('Error: ' + result.message, 'error');
+                            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
                         }
                     } catch (error) {
-                        showMessage('Error removing logo: ' + error.message, 'error');
+                        showMessage(stT('settings_js_err_removing_logo', 'Error removing logo:') + ' ' + error.message, 'error');
                     }
                 }
             });
@@ -3760,7 +3772,7 @@ function initRebuildSystem() {
         }
 
         confirmBtn.disabled = true;
-        confirmBtn.textContent = 'Rebuilding…';
+        confirmBtn.textContent = stT('settings_js_rebuilding_btn', 'Rebuilding…');
 
         try {
             const response = await fetch(apiUrl('/api/settings.php'), {
@@ -3777,16 +3789,16 @@ function initRebuildSystem() {
 
             const result = await response.json();
             if (result.status === 'ok') {
-                showMessage(result.message || 'System rebuilt successfully', 'success');
+                showMessage(result.message || stT('settings_js_system_rebuilt', 'System rebuilt successfully'), 'success');
                 window.location.href = apiUrl(result.redirect || '/admin/index.php?page=onboarding');
                 return;
             }
 
-            showMessage('Error: ' + (result.message || 'Failed to rebuild system'), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_failed_rebuild', 'Failed to rebuild system')), 'error');
         } catch (error) {
-            showMessage('Error: ' + error.message, 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         } finally {
-            confirmBtn.textContent = 'Rebuild system';
+            confirmBtn.textContent = stT('settings_js_rebuild_system_btn', 'Rebuild system');
             updateConfirmState();
         }
     });

@@ -9,6 +9,18 @@
     const VIEW_STORAGE_KEY = 'birkly_content_view';
     const MAX_GROUP_DEPTH = 3;
 
+    function cgT(key, fallback, params) {
+        let text = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function adminUrl(page, params) {
         if (window.Birkly && typeof Birkly.adminUrl === 'function') {
             return Birkly.adminUrl(page, params || {});
@@ -456,7 +468,7 @@
             grid.classList.add('empty-drop-zone');
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'empty-drop-message';
-            emptyMsg.textContent = 'Drop collections here';
+            emptyMsg.textContent = cgT('content_groups_drop_here', 'Drop collections here');
             grid.appendChild(emptyMsg);
         } else {
             groupCollections.forEach((col) => {
@@ -581,18 +593,18 @@
 
         const title = document.createElement('h2');
         title.className = 'empty-state-title';
-        title.textContent = 'Create your first collection';
+        title.textContent = cgT('content_groups_first_title', 'Create your first collection');
 
         const message = document.createElement('p');
         message.className = 'empty-state-text';
-        message.textContent = 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.';
+        message.textContent = cgT('content_groups_first_message', 'Collections hold your site content — blog posts, products, pages, and more. Start from scratch or install a starter template.');
 
         const actions = document.createElement('div');
         actions.className = 'empty-state-actions';
         const createBtn = document.createElement('a');
         createBtn.className = 'btn btn-primary';
         createBtn.href = adminUrl('collection-editor');
-        createBtn.textContent = 'New collection';
+        createBtn.textContent = cgT('content_groups_new_collection', 'New collection');
         actions.appendChild(createBtn);
 
         empty.appendChild(iconWrap);
@@ -608,7 +620,7 @@
 
             const templatesHeading = document.createElement('h3');
             templatesHeading.className = 'section-title';
-            templatesHeading.textContent = 'Or start with a template';
+            templatesHeading.textContent = cgT('content_groups_or_template', 'Or start with a template');
 
             const grid = document.createElement('div');
             grid.className = 'u-grid-auto';
@@ -702,7 +714,7 @@
 
         const title = document.createElement('h3');
         title.className = 'group-title';
-        title.textContent = 'Ungrouped Collections';
+        title.textContent = cgT('content_groups_ungrouped_title', 'Ungrouped Collections');
 
         const actions = document.createElement('div');
         actions.className = 'group-actions';
@@ -732,7 +744,7 @@
             grid.classList.add('empty-drop-zone');
             const emptyMsg = document.createElement('div');
             emptyMsg.className = 'empty-drop-message';
-            emptyMsg.textContent = 'Drop collections here';
+            emptyMsg.textContent = cgT('content_groups_drop_here', 'Drop collections here');
             grid.appendChild(emptyMsg);
         } else {
             collectionsList.forEach((col) => {
@@ -946,22 +958,22 @@
         if (!modal || !form || !title || !nameInput) return;
 
         if (group) {
-            title.textContent = 'Edit Group';
+            title.textContent = cgT('content_groups_edit_group', 'Edit Group');
             nameInput.value = getGroupLabel(group);
             if (iconInput) {
                 iconInput.value = group.icon || '';
                 iconInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            submitBtn.textContent = 'Update Group';
+            submitBtn.textContent = cgT('content_groups_update_group', 'Update Group');
             form.dataset.groupId = group.id;
         } else {
-            title.textContent = 'New Group';
+            title.textContent = cgT('content_groups_new_group', 'New Group');
             nameInput.value = '';
             if (iconInput) {
                 iconInput.value = '';
                 iconInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            submitBtn.textContent = 'Create Group';
+            submitBtn.textContent = cgT('content_groups_create_group', 'Create Group');
             delete form.dataset.groupId;
         }
 
@@ -1049,7 +1061,7 @@
     }
 
     async function deleteGroup(groupId) {
-        if (!(await BirklyFeedback.confirm('Are you sure you want to delete this group? Collections will be moved to ungrouped.'))) {
+        if (!(await BirklyFeedback.confirm(cgT('content_groups_confirm_delete_group', 'Are you sure you want to delete this group? Collections will be moved to ungrouped.')))) {
             return;
         }
 

@@ -32,6 +32,18 @@ function resolveMediaItemUrl(url) {
     currentView: 'grid',
   };
 
+  function mdT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+      ? Birkly.i18n.t('admin.' + key, fallback)
+      : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+      Object.keys(params).forEach(function (name) {
+        text = text.split('{' + name + '}').join(String(params[name]));
+      });
+    }
+    return text;
+  }
+
   function icon(name, opts) {
     return (typeof Birkly !== 'undefined' && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
   }
@@ -461,10 +473,10 @@ function resolveMediaItemUrl(url) {
         pruneSelection();
         renderMediaCollection(getFilteredMedia());
       } else {
-        showError('Failed to load media: ' + getResultMessage(result, 'Unknown error'));
+        showError(mdT('media_js_err_load', 'Failed to load media:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError('Error loading media: ' + error.message);
+      showError(mdT('media_js_err_load_generic', 'Error loading media:') + ' ' + error.message);
     }
   }
 
@@ -562,7 +574,7 @@ function resolveMediaItemUrl(url) {
     if (item.alt_text) {
       const altEl = document.createElement('div');
       altEl.className = 'u-text-xs u-fg-secondary u-clamp-2';
-      altEl.textContent = 'Alt: ' + item.alt_text;
+      altEl.textContent = mdT('media_js_alt_prefix', 'Alt:') + ' ' + item.alt_text;
       meta.appendChild(altEl);
     }
 
@@ -625,7 +637,7 @@ function resolveMediaItemUrl(url) {
     const input = document.getElementById('file-input');
     const files = Array.from(input?.files || []);
     if (!files.length) {
-      showError('Select a file to upload.');
+      showError(mdT('media_js_select_file_upload', 'Select a file to upload.'));
       return;
     }
 
@@ -703,10 +715,10 @@ function resolveMediaItemUrl(url) {
         showSuccess('Folder created successfully.');
         await loadFolders();
       } else {
-        showError('Failed to create folder: ' + getResultMessage(result, 'Unknown error'));
+        showError(mdT('media_js_err_create_folder', 'Failed to create folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError('Error creating folder: ' + error.message);
+      showError(mdT('media_js_err_create_folder_generic', 'Error creating folder:') + ' ' + error.message);
     }
   }
 
@@ -743,10 +755,10 @@ function resolveMediaItemUrl(url) {
         }
         await Promise.all([loadFolders(), loadMedia()]);
       } else {
-        showError('Failed to rename folder: ' + getResultMessage(result, 'Unknown error'));
+        showError(mdT('media_js_err_rename_folder', 'Failed to rename folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError('Error renaming folder: ' + error.message);
+      showError(mdT('media_js_err_rename_folder_generic', 'Error renaming folder:') + ' ' + error.message);
     }
   }
 
@@ -789,10 +801,10 @@ function resolveMediaItemUrl(url) {
         }
         await Promise.all([loadFolders(), loadMedia()]);
       } else {
-        showError('Failed to delete folder: ' + getResultMessage(result, 'Unknown error'));
+        showError(mdT('media_js_err_delete_folder', 'Failed to delete folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError('Error deleting folder: ' + error.message);
+      showError(mdT('media_js_err_delete_folder_generic', 'Error deleting folder:') + ' ' + error.message);
     }
   }
 
@@ -801,7 +813,7 @@ function resolveMediaItemUrl(url) {
       return entry.id === id;
     });
     if (!item) {
-      showError('Media item not found.');
+      showError(mdT('media_js_item_not_found', 'Media item not found.'));
       return;
     }
 
@@ -889,7 +901,7 @@ function resolveMediaItemUrl(url) {
 
   async function saveCurrentMediaDetails() {
     if (!state.currentMediaItem) {
-      showError('No media item selected.');
+      showError(mdT('media_js_no_item_selected', 'No media item selected.'));
       return;
     }
 
@@ -927,10 +939,10 @@ function resolveMediaItemUrl(url) {
         renderMediaModalBody(state.currentMediaItem);
         showSuccess('Media details saved successfully.');
       } else {
-        showError('Failed to save media details: ' + getResultMessage(result, 'Unknown error'));
+        showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError('Error saving media details: ' + error.message);
+      showError(mdT('media_js_err_save_details_generic', 'Error saving media details:') + ' ' + error.message);
     }
   }
 
@@ -940,7 +952,7 @@ function resolveMediaItemUrl(url) {
       : (state.currentMediaItem ? [state.currentMediaItem.id] : []);
 
     if (!moveIds.length) {
-      showError('Select at least one media item to move.');
+      showError(mdT('media_js_select_items_move', 'Select at least one media item to move.'));
       return;
     }
 
@@ -977,7 +989,7 @@ function resolveMediaItemUrl(url) {
 
   async function confirmMove() {
     if (!state.pendingMoveIds.length) {
-      showError('No media selected to move.');
+      showError(mdT('media_js_no_media_move', 'No media selected to move.'));
       return;
     }
 
@@ -1076,7 +1088,7 @@ function resolveMediaItemUrl(url) {
   async function deleteSelectedMedia() {
     const ids = Array.from(state.selectedIds);
     if (!ids.length) {
-      showError('No media selected.');
+      showError(mdT('media_js_no_media_selected', 'No media selected.'));
       return;
     }
     if (!(await BirklyFeedback.confirm('Delete the selected media items?'))) {
@@ -1103,7 +1115,7 @@ function resolveMediaItemUrl(url) {
 
   async function deleteCurrentMedia() {
     if (!state.currentMediaItem) {
-      showError('No media item selected.');
+      showError(mdT('media_js_no_item_selected', 'No media item selected.'));
       return;
     }
     if (!(await BirklyFeedback.confirm('Delete this media file?'))) {
@@ -1118,7 +1130,7 @@ function resolveMediaItemUrl(url) {
       await Promise.all([loadFolders(), loadMedia()]);
       showSuccess('Media deleted successfully.');
     } else {
-      showError('Failed to delete media: ' + getResultMessage(result, 'Unknown error'));
+      showError(mdT('media_js_err_delete_media', 'Failed to delete media:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
     }
   }
 

@@ -4,6 +4,18 @@
  *       3 starter templates → complete
  */
 
+function obT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
 const onboarding = {
     currentStep: 0,
     maxSteps: 3,
@@ -127,7 +139,7 @@ const onboarding = {
         if (note) {
             if (catalogMissing || anyRemoteUnavailable) {
                 note.hidden = false;
-                note.textContent = 'Marsk needs an internet connection from this computer so Birkly can download the demo pack. You can continue with Blank.';
+                note.textContent = obT('onboarding_js_marsk_network_note', 'Marsk needs an internet connection from this computer so Birkly can download the demo pack. You can continue with Blank.');
             } else {
                 note.hidden = true;
                 note.textContent = '';
@@ -195,7 +207,7 @@ const onboarding = {
 
         errorDiv.hidden = true;
         if (password !== passwordConfirm) {
-            errorDiv.textContent = 'Passwords do not match';
+            errorDiv.textContent = obT('onboarding_js_passwords_mismatch', 'Passwords do not match');
             errorDiv.hidden = false;
             return;
         }
@@ -216,7 +228,7 @@ const onboarding = {
                 submitBtn.disabled = false;
             }
         } catch (error) {
-            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.textContent = obT('onboarding_js_generic_error', 'An error occurred. Please try again.');
             errorDiv.hidden = false;
             submitBtn.disabled = false;
         }
@@ -337,7 +349,7 @@ const onboarding = {
         const btn = document.getElementById('starter-continue');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = 'Installing…';
+            btn.textContent = obT('onboarding_js_installing', 'Installing…');
         }
         try {
             const response = await fetch(Birkly.url('/api/demo.php?action=install_starter'), {
@@ -375,7 +387,7 @@ const onboarding = {
         }
         if (btn) {
             btn.disabled = false;
-            btn.textContent = 'Continue';
+            btn.textContent = obT('onboarding_js_continue', 'Continue');
         }
     },
 
@@ -388,7 +400,7 @@ const onboarding = {
 
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.textContent = 'Saving...';
+            submitBtn.textContent = obT('onboarding_js_saving', 'Saving...');
         }
 
         try {
@@ -412,7 +424,7 @@ const onboarding = {
         }
         if (submitBtn) {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Continue';
+            submitBtn.textContent = obT('onboarding_js_continue', 'Continue');
         }
     },
 

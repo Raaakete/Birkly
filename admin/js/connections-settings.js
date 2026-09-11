@@ -5,6 +5,18 @@
 (function () {
     'use strict';
 
+function connT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
     var EMAIL_PROVIDER_CARDS = {
         log: {
             title: 'Log only',
@@ -311,9 +323,9 @@
             var label = connection.name || 'this connection';
             var ok = true;
             if (window.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
-                ok = await BirklyFeedback.confirm('Delete "' + label + '"? This cannot be undone.');
+                ok = await BirklyFeedback.confirm(connT('connections_js_confirm_delete', 'Delete "{label}"? This cannot be undone.', { label: label }));
             } else {
-                ok = confirm('Delete "' + label + '"?');
+                ok = confirm(connT('connections_js_confirm_delete', 'Delete "{label}"? This cannot be undone.', { label: label }));
             }
             if (!ok) return;
             var delResult = await api('delete', 'POST', { id: id });
@@ -646,7 +658,7 @@
         var statusEl = document.getElementById('sys-conn-test-status');
         if (!testEmail) {
             if (statusEl) {
-                statusEl.textContent = 'Enter your email address first.';
+                statusEl.textContent = connT('connections_js_enter_email_first', 'Enter your email address first.');
                 statusEl.className = 'form-help sys-conn-test-status is-error';
             }
             return;
@@ -658,7 +670,7 @@
         var saveFirst = !isEdit || data.alias !== pendingTestAlias;
 
         if (statusEl) {
-            statusEl.textContent = 'Sending test…';
+            statusEl.textContent = connT('connections_js_sending_test', 'Sending test…');
             statusEl.className = 'form-help sys-conn-test-status';
         }
 
@@ -684,16 +696,16 @@
             var st = testResult.send_result.status;
             if (statusEl) {
                 if (st === 'logged') {
-                    statusEl.textContent = 'Test logged successfully (Log only mode — check logs/mail.jsonl).';
+                    statusEl.textContent = connT('connections_js_test_logged', 'Test logged successfully (Log only mode — check logs/mail.jsonl).');
                 } else {
-                    statusEl.textContent = 'Test sent! Check your inbox and spam folder.';
+                    statusEl.textContent = connT('connections_js_test_sent', 'Test sent! Check your inbox and spam folder.');
                 }
                 statusEl.className = 'form-help sys-conn-test-status is-success';
             }
         } else {
             testPassed = false;
             if (statusEl) {
-                statusEl.textContent = 'Test failed: ' + ((testResult.send_result && testResult.send_result.error) || testResult.message || 'unknown error');
+                statusEl.textContent = connT('connections_js_test_failed', 'Test failed:') + ' ' + ((testResult.send_result && testResult.send_result.error) || testResult.message || connT('ai_conn_js_unknown_error', 'unknown error'));
                 statusEl.className = 'form-help sys-conn-test-status is-error';
             }
         }
@@ -741,8 +753,8 @@
         document.getElementById('sys-conn-http-enabled').checked = true;
         httpProviderFields.innerHTML = '';
         httpError.hidden = true;
-        document.getElementById('sys-conn-http-modal-title').textContent = 'Add HTTP credential';
-        document.getElementById('sys-conn-http-submit').textContent = 'Save credential';
+        document.getElementById('sys-conn-http-modal-title').textContent = connT('connections_js_add_http_credential', 'Add HTTP credential');
+        document.getElementById('sys-conn-http-submit').textContent = connT('connections_js_save_credential', 'Save credential');
         var provider = document.getElementById('sys-conn-http-provider').value;
         renderHttpProviderFields(provider, {});
         httpModal.classList.add('active');
@@ -757,8 +769,8 @@
         document.getElementById('sys-conn-http-alias').value = connection.alias || '';
         document.getElementById('sys-conn-http-enabled').checked = connection.enabled !== false;
         httpError.hidden = true;
-        document.getElementById('sys-conn-http-modal-title').textContent = 'Edit HTTP credential';
-        document.getElementById('sys-conn-http-submit').textContent = 'Update credential';
+        document.getElementById('sys-conn-http-modal-title').textContent = connT('connections_js_edit_http_credential', 'Edit HTTP credential');
+        document.getElementById('sys-conn-http-submit').textContent = connT('connections_js_update_credential', 'Update credential');
         renderHttpProviderFields(connection.provider || 'bearer', {
             'config[base_url]': (connection.config || {}).base_url,
             'config[timeout]': (connection.config || {}).timeout,

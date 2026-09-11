@@ -19,6 +19,13 @@
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
+    function updT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     function el(id) {
         return document.getElementById(id);
     }
@@ -251,7 +258,7 @@
         const downloadBtn = el('download-update-btn');
         if (downloadBtn) {
             downloadBtn.disabled = true;
-            downloadBtn.textContent = 'Downloading...';
+            downloadBtn.textContent = updT('updates_js_downloading', 'Downloading...');
         }
 
         try {
@@ -299,7 +306,7 @@
         const installBtn = el('install-update-btn');
         if (installBtn) {
             installBtn.disabled = true;
-            installBtn.textContent = 'Installing...';
+            installBtn.textContent = updT('updates_js_installing', 'Installing...');
         }
 
         try {
@@ -319,7 +326,7 @@
         } finally {
             if (installBtn) {
                 installBtn.disabled = false;
-                installBtn.textContent = 'Install Update';
+                installBtn.textContent = updT('updates_js_install_update', 'Install Update');
             }
         }
     }

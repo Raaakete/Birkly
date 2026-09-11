@@ -14,6 +14,13 @@
         return window.BirklyActivityRows;
     }
 
+    function actT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     function apiUrl(path) {
         if (typeof window.Birkly !== 'undefined' && typeof window.Birkly.url === 'function') {
             return window.Birkly.url(path.startsWith('/') ? path : '/' + path);
@@ -71,7 +78,7 @@
     function loadActivity() {
         const feed = document.getElementById('activity-feed');
         if (feed) {
-            feed.innerHTML = '<div class="loading-state"><p>Loading...</p></div>';
+            feed.innerHTML = '<div class="loading-state"><p>' + actT('loading', 'Loading') + '…</p></div>';
         }
 
         const category = document.getElementById('category-filter')?.value || 'all';

@@ -4,13 +4,20 @@
     
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const cmsUrl = window.location.origin;
+
+    function anaT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
     
     // Load tracking configurations
     function loadTrackingList() {
         const container = document.getElementById('tracking-list');
         if (!container) return;
         
-        container.innerHTML = '<div class="loading">Loading...</div>';
+        container.innerHTML = '<div class="loading">' + anaT('loading', 'Loading') + '…</div>';
         
         fetch('/api/analytics.php?action=list')
             .then(response => response.json())
@@ -18,7 +25,7 @@
                 if (data.status === 'ok') {
                     renderTrackingList(data.data);
                 } else {
-                    container.innerHTML = '<div class="error">Error loading tracking configurations</div>';
+                    container.innerHTML = '<div class="error">' + anaT('analytics_js_load_error', 'Error loading tracking configurations') + '</div>';
                 }
             })
             .catch(error => {
