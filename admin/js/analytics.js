@@ -5,11 +5,16 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     const cmsUrl = window.location.origin;
 
-    function anaT(key, fallback) {
-        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
-            return Birkly.i18n.t('admin.' + key, fallback);
+    function anaT(key, fallback, params) {
+        let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
         }
-        return fallback != null ? fallback : key;
+        return text;
     }
     
     // Load tracking configurations
@@ -134,7 +139,7 @@
         document.querySelectorAll('.delete-tracking-btn').forEach(btn => {
             btn.addEventListener('click', async function () {
                 const trackingId = this.getAttribute('data-id');
-                if (await BirklyFeedback.confirm('Are you sure you want to delete this tracking configuration? This will stop collecting analytics for this website.')) {
+                if (await BirklyFeedback.confirm(anaT('analytics_js_confirm_delete_tracking', 'Are you sure you want to delete this tracking configuration? This will stop collecting analytics for this website.'))) {
                     deleteTracking(trackingId);
                 }
             });
@@ -159,12 +164,12 @@
             if (data.status === 'ok') {
                 loadTrackingList();
             } else {
-                BirklyFeedback.toast('Error: ' + (data.message || 'Failed to update tracking'), 'error');
+                BirklyFeedback.toast(anaT('feedback_error_prefix', 'Error:') + ' ' + (data.message || anaT('analytics_js_failed_update_tracking', 'Failed to update tracking')), 'error');
             }
         })
         .catch(error => {
             console.error('Error toggling tracking:', error);
-            BirklyFeedback.toast('Error updating tracking configuration', 'error')
+            BirklyFeedback.toast(anaT('analytics_js_err_update_tracking', 'Error updating tracking configuration'), 'error')
         });
     }
     
@@ -185,12 +190,12 @@
             if (data.status === 'ok') {
                 loadTrackingList();
             } else {
-                BirklyFeedback.toast('Error: ' + (data.message || 'Failed to delete tracking'), 'error');
+                BirklyFeedback.toast(anaT('feedback_error_prefix', 'Error:') + ' ' + (data.message || anaT('analytics_js_failed_delete_tracking', 'Failed to delete tracking')), 'error');
             }
         })
         .catch(error => {
             console.error('Error deleting tracking:', error);
-            BirklyFeedback.toast('Error deleting tracking configuration', 'error')
+            BirklyFeedback.toast(anaT('analytics_js_err_delete_tracking', 'Error deleting tracking configuration'), 'error')
         });
     }
     
@@ -221,7 +226,7 @@
             const domain = document.getElementById('tracking-domain').value;
             
             if (!name || !domain) {
-                BirklyFeedback.toast('Please fill in all fields', 'warning')
+                BirklyFeedback.toast(anaT('analytics_js_fill_all_fields', 'Please fill in all fields'), 'warning')
                 return;
             }
             
@@ -242,12 +247,12 @@
                     closeAddTrackingModal();
                     loadTrackingList();
                 } else {
-                    BirklyFeedback.toast('Error: ' + (data.message || 'Failed to create tracking'), 'error');
+                    BirklyFeedback.toast(anaT('feedback_error_prefix', 'Error:') + ' ' + (data.message || anaT('analytics_js_failed_create_tracking', 'Failed to create tracking')), 'error');
                 }
             })
             .catch(error => {
                 console.error('Error creating tracking:', error);
-                BirklyFeedback.toast('Error creating tracking configuration', 'error')
+                BirklyFeedback.toast(anaT('analytics_js_err_create_tracking', 'Error creating tracking configuration'), 'error')
             });
         });
     }

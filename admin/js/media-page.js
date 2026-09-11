@@ -771,13 +771,13 @@ function resolveMediaItemUrl(url) {
     let handleFiles = 'move';
 
     if (hasFiles) {
-      const choice = await BirklyFeedback.confirm('Folder "' + folderName + '" contains files.\n\nClick OK to move files to root, or Cancel to delete them with the folder.');
+      const choice = await BirklyFeedback.confirm(mdT('media_js_confirm_folder_has_files', 'Folder "{name}" contains files.\n\nClick OK to move files to root, or Cancel to delete them with the folder.', { name: folderName }));
       handleFiles = choice ? 'move' : 'delete';
     }
 
     const confirmMessage = hasFiles
-      ? 'Delete folder "' + folderName + '" and ' + (handleFiles === 'delete' ? 'delete its files' : 'move its files to root') + '?'
-      : 'Delete folder "' + folderName + '"?';
+      ? (handleFiles === 'delete' ? mdT('media_js_confirm_delete_folder_and_files', 'Delete folder "{name}" and delete its files?', { name: folderName }) : mdT('media_js_confirm_delete_folder_move_files', 'Delete folder "{name}" and move its files to root?', { name: folderName }))
+      : mdT('media_js_confirm_delete_folder', 'Delete folder "{name}"?', { name: folderName });
 
     if (!(await BirklyFeedback.confirm(confirmMessage))) return;
 
@@ -1091,7 +1091,7 @@ function resolveMediaItemUrl(url) {
       showError(mdT('media_js_no_media_selected', 'No media selected.'));
       return;
     }
-    if (!(await BirklyFeedback.confirm('Delete the selected media items?'))) {
+    if (!(await BirklyFeedback.confirm(mdT('media_js_confirm_delete_selected', 'Delete the selected media items?')))) {
       return;
     }
 
@@ -1118,7 +1118,7 @@ function resolveMediaItemUrl(url) {
       showError(mdT('media_js_no_item_selected', 'No media item selected.'));
       return;
     }
-    if (!(await BirklyFeedback.confirm('Delete this media file?'))) {
+    if (!(await BirklyFeedback.confirm(mdT('media_js_confirm_delete_file', 'Delete this media file?')))) {
       return;
     }
 

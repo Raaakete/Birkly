@@ -19,11 +19,16 @@
         return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
     }
 
-    function updT(key, fallback) {
-        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
-            return Birkly.i18n.t('admin.' + key, fallback);
+    function updT(key, fallback, params) {
+        let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
         }
-        return fallback != null ? fallback : key;
+        return text;
     }
 
     function el(id) {
@@ -42,12 +47,12 @@
         try {
             result = await response.json();
         } catch (e) {
-            throw new Error('Invalid response from update server');
+            throw new Error(updT('updates_js_invalid_response', 'Invalid response from update server'));
         }
 
         if (!response.ok && result) {
             const detail = result.detail || result.error || '';
-            const msg = result.message || 'Request failed';
+            const msg = result.message || updT('updates_js_request_failed', 'Request failed');
             throw new Error(detail ? msg + ': ' + detail : msg);
         }
 
@@ -74,7 +79,7 @@
         }
         if (updateInfo) {
             updateInfo.innerHTML =
-                '<p class="u-fg-danger">' + escapeHtml(message || 'Unknown error') + '</p>';
+                '<p class="u-fg-danger">' + escapeHtml(message || updT('ai_conn_js_unknown_error', 'Unknown error')) + '</p>';
         }
         if (updateDetails) updateDetails.hidden = false;
         if (updateActions) updateActions.hidden = false;
@@ -93,7 +98,7 @@
             updateInfo.innerHTML =
                 '<div class="u-stack-2">' +
                 '<h3 class="u-text-md u-weight-semibold">You are up to date locally</h3>' +
-                '<p class="u-text-sm u-fg-secondary">' + escapeHtml(message || 'Could not reach the update service.') + '</p>' +
+                '<p class="u-text-sm u-fg-secondary">' + escapeHtml(message || updT('updates_js_update_service_unreachable', 'Could not reach the update service.')) + '</p>' +
                 '</div>';
         }
         if (updateDetails) updateDetails.hidden = false;
@@ -139,7 +144,7 @@
 
     function applyUpdateStatus(result) {
         if (!result || result.status !== 'ok' || !result.current_version) {
-            showError(result && result.message ? result.message : 'Could not check for updates');
+            showError(result && result.message ? result.message : updT('updates_js_check_failed', 'Could not check for updates'));
             return;
         }
 
@@ -240,18 +245,18 @@
                     update_check_error: result.data.update_check_error,
                 });
             } else if (result.status === 'error') {
-                showError(result.message || 'Could not check for updates');
+                showError(result.message || updT('updates_js_check_failed', 'Could not check for updates'));
             } else {
-                showError('Could not check for updates');
+                showError(updT('updates_js_check_failed', 'Could not check for updates'));
             }
         } catch (error) {
-            showError(error.message || 'Failed to check for updates');
+            showError(error.message || updT('updates_js_check_failed_msg', 'Failed to check for updates'));
         }
     }
 
     async function downloadUpdate() {
         if (!updateData || !updateData.update_available) {
-            BirklyFeedback.toast('No update available to download.', 'error')
+            BirklyFeedback.toast(updT('updates_js_no_update_download', 'No update available to download.'), 'error')
             return;
         }
 
@@ -271,15 +276,13 @@
                 const updateInfo = el('update-info');
                 if (updateInfo) {
                     updateInfo.innerHTML +=
-                        '<p class="u-fg-success">Update downloaded (' +
-                        Math.round((result.data.size || 0) / 1024) +
-                        ' KB). Click <strong>Install Update</strong> to apply.</p>';
+                        '<p class="u-fg-success">' + escapeHtml(updT('updates_js_download_success_hint', 'Update downloaded ({size} KB). Click Install Update to apply.', { size: Math.round((result.data.size || 0) / 1024) })) + '</p>';
                 }
             } else {
-                BirklyFeedback.toast(result.message || 'Download failed', 'error')
+                BirklyFeedback.toast(result.message || updT('updates_js_download_failed', 'Download failed'), 'error')
             }
         } catch (error) {
-            BirklyFeedback.toast(error.message || 'Download failed', 'error')
+            BirklyFeedback.toast(error.message || updT('updates_js_download_failed', 'Download failed'), 'error')
         } finally {
             if (downloadBtn) {
                 downloadBtn.disabled = false;
@@ -288,18 +291,18 @@
                     '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>' +
                     '<polyline points="7,10 12,15 17,10"></polyline>' +
                     '<line x1="12" y1="15" x2="12" y2="3"></line>' +
-                    '</svg> Download Update';
+                    '</svg> ' + updT('updates_js_download_update_btn', 'Download Update');
             }
         }
     }
 
     async function installUpdate() {
         if (!downloadedPackage || !updateData) {
-            BirklyFeedback.toast('Download an update first.', 'error')
+            BirklyFeedback.toast(updT('updates_js_download_first', 'Download an update first.'), 'error')
             return;
         }
 
-        if (!(await BirklyFeedback.confirm('Install Birkly ' + updateData.latest_version + '? A backup will be created first.'))) {
+        if (!(await BirklyFeedback.confirm(updT('updates_js_confirm_install', 'Install Birkly {version}? A backup will be created first.', { version: updateData.latest_version })))) {
             return;
         }
 
@@ -316,13 +319,13 @@
             });
 
             if (result.status === 'ok') {
-                BirklyFeedback.toast('Update installed successfully. The page will reload.', 'success')
+                BirklyFeedback.toast(updT('updates_js_install_success_reload', 'Update installed successfully. The page will reload.'), 'success')
                 window.location.reload();
             } else {
-                BirklyFeedback.toast(result.message || 'Installation failed', 'error')
+                BirklyFeedback.toast(result.message || updT('updates_js_install_failed', 'Installation failed'), 'error')
             }
         } catch (error) {
-            BirklyFeedback.toast(error.message || 'Installation failed', 'error')
+            BirklyFeedback.toast(error.message || updT('updates_js_install_failed', 'Installation failed'), 'error')
         } finally {
             if (installBtn) {
                 installBtn.disabled = false;

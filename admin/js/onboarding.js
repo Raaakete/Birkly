@@ -481,7 +481,7 @@ const onboarding = {
     },
 
     async skip() {
-        if (!(await BirklyFeedback.confirm('Skip setup? You can finish later from the dashboard.'))) return;
+        if (!(await BirklyFeedback.confirm(obT('onboarding_js_confirm_skip_setup', 'Skip setup? You can finish later from the dashboard.')))) return;
         try {
             const response = await fetch(Birkly.url('/api/onboarding.php?action=skip'), {
                 method: 'POST',

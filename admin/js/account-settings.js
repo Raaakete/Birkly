@@ -381,7 +381,7 @@ async function startCloudAccountLink() {
 }
 
 async function unlinkCloudAccount() {
-    if (!(await BirklyFeedback.confirm('Unlink your Birkly cloud account from this CMS installation?'))) return;
+    if (!(await BirklyFeedback.confirm(accountT('account_js_confirm_unlink_cloud', 'Unlink your Birkly cloud account from this CMS installation?')))) return;
     try {
         const response = await fetch(Birkly.url('/api/cloud_account.php?action=unlink'), {
             method: 'POST',
@@ -936,7 +936,7 @@ function handleNotificationsSubmit(e) {
 }
 
 async function handleRemoveAvatar() {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to remove your avatar?'))) {
+    if (!(await BirklyFeedback.confirm(accountT('account_js_confirm_remove_avatar', 'Are you sure you want to remove your avatar?')))) {
         return;
     }
     
