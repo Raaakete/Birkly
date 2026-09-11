@@ -263,8 +263,8 @@ if (!$cancelUrl) {
                                                 <div class="fieldtype-field">
                                                     <label>Entry Method</label>
                                                     <select name="sub_collections[0][sub_collections][<?= $index ?>][entry_method]" class="input">
-                                                        <option value="admin_only" <?= ($nestedSubCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                                        <option value="public_api" <?= ($nestedSubCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                                        <option value="admin_only" <?= ($nestedSubCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                                        <option value="public_api" <?= ($nestedSubCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -429,8 +429,8 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-field">
                                                 <label>Entry Method</label>
                                                 <select name="sub_collections[<?= $index ?>][entry_method]" class="input">
-                                                    <option value="admin_only" <?= ($subCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                                    <option value="public_api" <?= ($subCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                                    <option value="admin_only" <?= ($subCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                                    <option value="public_api" <?= ($subCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -591,8 +591,8 @@ if (!$cancelUrl) {
                                     <div class="info-item">
                                         <label>Entry Method</label>
                                         <select name="sub_collections[0][entry_method]" id="sub-collection-entry-method" class="input">
-                                            <option value="admin_only" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                            <option value="public_api" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                            <option value="admin_only" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                            <option value="public_api" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                         </select>
                                         <small class="form-text">
                                             Choose how entries can be created for this sub-collection
@@ -649,8 +649,8 @@ if (!$cancelUrl) {
                                     <div class="info-item">
                                         <label>Entry Method</label>
                                         <select name="entry_method" id="entry_method" class="input">
-                                            <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                            <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                            <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                            <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                         </select>
                                         <small class="form-text">
                                             Choose how entries can be created for this collection
@@ -697,14 +697,14 @@ if (!$cancelUrl) {
                                                 ?>
                                                     <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
                                                         <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_language_aria')) ?>">×</button>
                                                         <input type="hidden" name="sub_collections[0][multilanguage_languages][]" value="<?= htmlspecialchars($langCode) ?>">
                                                     </span>
                                                 <?php endforeach; ?>
-                                                <input type="text" id="sub-collection-language-input" placeholder="Type language code or name..." autocomplete="off">
+                                                <input type="text" id="sub-collection-language-input" placeholder="<?= htmlspecialchars(__('admin.col_editor_language_input_ph')) ?>" autocomplete="off">
                                             </div>
                                             <small class="form-text">
-                                                Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                                <?= __('admin.col_editor_language_input_help') ?>
                                             </small>
                                         </div>
                                     <?php else: ?>
@@ -717,14 +717,14 @@ if (!$cancelUrl) {
                                                 ?>
                                                     <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
                                                         <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_language_aria')) ?>">×</button>
                                                         <input type="hidden" name="multilanguage_languages[]" value="<?= htmlspecialchars($langCode) ?>">
                                                     </span>
                                                 <?php endforeach; ?>
-                                                <input type="text" id="language-input" placeholder="Type language code or name..." autocomplete="off">
+                                                <input type="text" id="language-input" placeholder="<?= htmlspecialchars(__('admin.col_editor_language_input_ph')) ?>" autocomplete="off">
                                             </div>
                                             <small class="form-text">
-                                                Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                                <?= __('admin.col_editor_language_input_help') ?>
                                             </small>
                                         </div>
                                     <?php endif; ?>
@@ -836,45 +836,45 @@ if (!$cancelUrl) {
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>CAPTCHA Provider</label>
+                                        <label><?= __('admin.col_editor_captcha_provider_label') ?></label>
                                         <?php if ($isSubCollection): ?>
                                             <select name="sub_collections[0][api_settings][captcha_provider]" id="sub-collection-captcha_provider" class="input">
-                                                <option value="">None (use honeypot only)</option>
-                                                <option value="recaptcha_v3" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
-                                                <option value="hcaptcha" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                                <option value=""><?= __('admin.col_editor_captcha_none_honeypot') ?></option>
+                                                <option value="recaptcha_v3" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_recaptcha_v3') ?></option>
+                                                <option value="hcaptcha" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_hcaptcha') ?></option>
                                             </select>
                                         <?php else: ?>
                                             <select name="api_settings[captcha_provider]" id="captcha_provider" class="input">
-                                                <option value="">None (use honeypot only)</option>
-                                                <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
-                                                <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                                <option value=""><?= __('admin.col_editor_captcha_none_honeypot') ?></option>
+                                                <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_recaptcha_v3') ?></option>
+                                                <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_hcaptcha') ?></option>
                                             </select>
                                         <?php endif; ?>
                                         <small class="form-text">
-                                            Optional: Add CAPTCHA protection (requires configuration)
+                                            <?= __('admin.col_editor_captcha_optional_help') ?>
                                         </small>
                                     </div>
                                     
                                     <?php if ($isSubCollection): ?>
                                         <div id="sub-collection-captcha-settings" class="u-stack-2 u-mt-3"<?= !empty($subCollectionData['api_settings']['captcha_provider']) ? '' : ' hidden' ?>>
                                             <div class="info-item">
-                                                <label>CAPTCHA Site Key</label>
-                                                <input type="text" name="sub_collections[0][api_settings][captcha_site_key]" id="sub-collection-captcha_site_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                                <label><?= __('admin.col_editor_captcha_site_key_label') ?></label>
+                                                <input type="text" name="sub_collections[0][api_settings][captcha_site_key]" id="sub-collection-captcha_site_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_site_key_ph')) ?>">
                                             </div>
                                             <div class="info-item">
-                                                <label>CAPTCHA Secret Key</label>
-                                                <input type="text" name="sub_collections[0][api_settings][captcha_secret_key]" id="sub-collection-captcha_secret_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                                <label><?= __('admin.col_editor_captcha_secret_key_label') ?></label>
+                                                <input type="text" name="sub_collections[0][api_settings][captcha_secret_key]" id="sub-collection-captcha_secret_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_secret_key_ph')) ?>">
                                             </div>
                                         </div>
                                     <?php else: ?>
                                         <div id="captcha-settings" class="u-stack-2 u-mt-3"<?= !empty($collection['api_settings']['captcha_provider']) ? '' : ' hidden' ?>>
                                             <div class="info-item">
-                                                <label>CAPTCHA Site Key</label>
-                                                <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                                <label><?= __('admin.col_editor_captcha_site_key_label') ?></label>
+                                                <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_site_key_ph')) ?>">
                                             </div>
                                             <div class="info-item">
-                                                <label>CAPTCHA Secret Key</label>
-                                                <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                                <label><?= __('admin.col_editor_captcha_secret_key_label') ?></label>
+                                                <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_secret_key_ph')) ?>">
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -960,7 +960,7 @@ if (!$cancelUrl) {
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="u-text-sm u-fg-secondary">No fields defined yet. Add fields to see their slugs.</p>
+                                            <p class="u-text-sm u-fg-secondary"><?= __('admin.col_editor_no_fields_slugs_yet') ?></p>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -1507,7 +1507,11 @@ document.addEventListener('DOMContentLoaded', function() {
         copyApiKeyFailed: <?= json_encode(__('admin.col_editor_js_copy_api_key_failed')) ?>,
         fieldLabelPlaceholder: <?= json_encode(__('admin.col_editor_field_label_placeholder')) ?>,
         fieldNamePlaceholder: <?= json_encode(__('admin.col_editor_field_name_placeholder')) ?>,
-        optionalDescriptionPlaceholder: <?= json_encode(__('admin.col_editor_optional_description_placeholder')) ?>
+        optionalDescriptionPlaceholder: <?= json_encode(__('admin.col_editor_optional_description_placeholder')) ?>,
+        selectType: <?= json_encode(__('admin.col_editor_select_type')) ?>,
+        entryMethodAdminOnly: <?= json_encode(__('admin.col_editor_entry_method_admin_only')) ?>,
+        entryMethodPublicApi: <?= json_encode(__('admin.col_editor_entry_method_public_api')) ?>,
+        removeLanguageAria: <?= json_encode(__('admin.col_editor_remove_language_aria')) ?>
     };
     const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
         ? window.BirklyCollectionEditorCore.init({
@@ -1742,7 +1746,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderFieldtypeTypeBadgeHtml(fieldtypeName, label) {
         const safeName = String(fieldtypeName || '');
-        const safeLabel = String(label || 'Select Type').toUpperCase();
+        const safeLabel = String(label || colEditorUi.selectType).toUpperCase();
         return '<span class="fieldtype-type" data-fieldtype="' + safeName.replace(/"/g, '&quot;') + '">' +
             '<span class="fieldtype-type-icon" aria-hidden="true">' + getFieldtypeIcon(safeName, 14) + '</span>' +
             '<span class="fieldtype-type-label u-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
@@ -1765,7 +1769,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/__INDEX__/g, fieldIndex)
             .replace(/__NAME__/g, fieldData.name || '')
             .replace(/__LABEL__/g, fieldData.label || '')
-            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type || ft.type === fieldData.type)?.label || fieldData.type : 'Select Type')
+            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type || ft.type === fieldData.type)?.label || fieldData.type : colEditorUi.selectType)
             .replace(/__REQUIRED_CHECKED__/g, fieldData.required ? 'checked' : '')
             .replace(/__FIELDTYPE_OPTIONS__/g, fieldtypeOptions);
         
@@ -2363,7 +2367,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tag.dataset.lang = langCode;
         tag.innerHTML = `
             ${langCode.toUpperCase()}
-            <button type="button" class="language-tag-remove" data-lang="${langCode}" aria-label="Remove language">×</button>
+            <button type="button" class="language-tag-remove" data-lang="${langCode}" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_language_aria')) ?>">×</button>
             <input type="hidden" name="${multilanguageHiddenName}" value="${langCode}">
         `;
         
@@ -2515,8 +2519,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="fieldtype-field">
                         <label>Entry Method</label>
                         <select name="sub_collections[${index}][entry_method]" class="input">
-                            <option value="admin_only" ${(data.entry_method || 'admin_only') === 'admin_only' ? 'selected' : ''}>Admin Only</option>
-                            <option value="public_api" ${(data.entry_method || '') === 'public_api' ? 'selected' : ''}>Public API</option>
+                            <option value="admin_only" ${(data.entry_method || 'admin_only') === 'admin_only' ? 'selected' : ''}><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                            <option value="public_api" ${(data.entry_method || '') === 'public_api' ? 'selected' : ''}><?= __('admin.col_editor_entry_method_public_api') ?></option>
                         </select>
                     </div>
                 </div>
@@ -2537,7 +2541,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                                 <div class="fieldtype-header">
                                     <div class="fieldtype-title">
-                                        ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || 'Select Type')}
+                                        ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || colEditorUi.selectType)}
                                         <span class="fieldtype-name">${field.label || field.name || ''}</span>
                                     </div>
                                     <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
@@ -2684,7 +2688,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                             <div class="fieldtype-header">
                                 <div class="fieldtype-title">
-                                    ${renderFieldtypeTypeBadgeHtml('', 'Select Type')}
+                                    ${renderFieldtypeTypeBadgeHtml('', colEditorUi.selectType)}
                                     <span class="fieldtype-name">New Field</span>
                                 </div>
                                 <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
