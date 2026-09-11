@@ -238,14 +238,14 @@
         if (payload.public_site_mode !== 'none' && cmsHost !== '' && publicHost !== '' && cmsHost === publicHost) {
             messages.push({
                 severity: 'info',
-                text: 'CMS and public share ' + cmsHost + '. With “Root / opens admin”, the bundled site is served at /project/.'
+                text: t('hosting_wizard_val_same_host_project', 'CMS and public share {host}. With “Root / opens admin”, the bundled site is served at /project/.', { host: cmsHost })
             });
         }
 
         if (payload.cms_base_url && /\/admin\/?$/i.test(String(payload.cms_base_url).trim())) {
             messages.push({
                 severity: 'error',
-                text: 'CMS URL should be the site origin only (https://' + (cmsHost || 'example.com') + '), not …/admin.'
+                text: t('hosting_wizard_val_cms_no_admin', 'CMS URL should be the site origin only (https://{host}), not …/admin.', { host: cmsHost || 'example.com' })
             });
         }
 
@@ -262,7 +262,7 @@
             if (publicAliases.indexOf(alias) !== -1) {
                 messages.push({
                     severity: 'warn',
-                    text: '"' + alias + '" is on both CMS and public alias lists. Requests resolve as CMS — remove it from public aliases.'
+                    text: t('hosting_wizard_val_alias_overlap', '"{alias}" is on both CMS and public alias lists. Requests resolve as CMS — remove it from public aliases.', { alias: alias })
                 });
             }
         });
