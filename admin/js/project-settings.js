@@ -4,6 +4,18 @@
 (function () {
     'use strict';
 
+    function t(key, fallback, params) {
+        var text = (window.Birkly && window.Birkly.i18n)
+            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     var state = {
         currentPath: '',
         selectedFile: null,
@@ -67,10 +79,10 @@
                 try {
                     payload = text ? JSON.parse(text) : {};
                 } catch (e) {
-                    throw new Error('Invalid response from server');
+                    throw new Error(t('project_err_invalid_response', 'Invalid response from server'));
                 }
                 if (!response.ok || payload.status !== 'ok') {
-                    throw new Error(payload.message || ('Request failed (' + response.status + ')'));
+                    throw new Error(payload.message || t('project_err_request_failed', 'Request failed ({status})', { status: String(response.status) }));
                 }
                 return payload;
             });
@@ -93,7 +105,7 @@
             existing.className = 'btn btn-secondary btn-sm admin-visit-project-btn';
             existing.target = '_blank';
             existing.rel = 'noopener noreferrer';
-            existing.textContent = 'Visit project';
+            existing.textContent = t('project_btn_visit', 'Visit project');
             // Keep Developer mode badge to the left of Visit project when present.
             var badge = document.getElementById('developer-mode-badge');
             var insertBefore = topbar.querySelector('.topbar-control-group');
@@ -110,16 +122,16 @@
     }
 
     function formatActor(item) {
-        var user = item.user || 'Unknown';
+        var user = item.user || t('project_actor_unknown', 'Unknown');
         var details = item.details || {};
         if (details.reviewed_by) {
-            return details.reviewed_by + ' approved AI change';
+            return t('project_actor_ai_approved', '{reviewer} approved AI change', { reviewer: details.reviewed_by });
         }
         if (details.source === 'ai') {
-            return details.ai_user_id ? ('AI · ' + details.ai_user_id) : 'AI';
+            return details.ai_user_id ? (t('project_actor_ai_user', 'AI · {id}', { id: details.ai_user_id })) : t('project_actor_ai', 'AI');
         }
         if (details.source === 'admin') {
-            return user + ' (admin)';
+            return t('project_actor_admin', '{user} (admin)', { user: user });
         }
         return user;
     }
@@ -189,7 +201,7 @@
         var deleteBtn = document.getElementById('project-delete-file-btn');
         var title = document.getElementById('project-preview-title');
 
-        if (title) title.textContent = 'Preview';
+        if (title) title.textContent = t('project_preview_title', 'Preview');
         if (placeholder) placeholder.hidden = false;
         if (editor) { editor.hidden = true; editor.value = ''; }
         if (preview) { preview.hidden = true; preview.textContent = ''; }
@@ -199,11 +211,11 @@
     }
 
     function loadOverview() {
-        setLoading('project-overview-content', 'Loading project info...');
+        setLoading('project-overview-content', t('project_loading_overview', 'Loading project info...'));
         return fetchJson(apiUrl('/api/project_site.php?action=overview')).then(function (payload) {
             renderOverview(payload.data || {});
         }).catch(function (error) {
-            setError('project-overview-content', error.message || 'Failed to load project overview');
+            setError('project-overview-content', error.message || t('project_load_overview_failed', 'Failed to load project overview'));
         });
     }
 
@@ -215,25 +227,25 @@
         state.hasIndex = !!data.has_index;
         state.visitUrlFormat = data.visit_url_format || 'auto';
 
-        var starter = data.starter ? escapeHtml(data.starter) : 'Unknown';
+        var starter = data.starter ? escapeHtml(data.starter) : escapeHtml(t('project_starter_unknown', 'Unknown'));
         var lastChange = data.last_change && data.last_change.timestamp
             ? formatDate(data.last_change.timestamp) + (data.last_change.path ? ' · ' + escapeHtml(data.last_change.path) : '')
             : '—';
 
         container.innerHTML =
-            '<div class="kv"><div class="kv-key">Path</div><div class="kv-value"><code>' + escapeHtml(data.site_dir || 'project') + '/</code></div></div>' +
-            '<div class="kv"><div class="kv-key">Public URL</div><div class="kv-value">' +
+            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_path', 'Path')) + '</div><div class="kv-value"><code>' + escapeHtml(data.site_dir || 'project') + '/</code></div></div>' +
+            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_public_url', 'Public URL')) + '</div><div class="kv-value">' +
                 (data.public_url ? '<a href="' + escapeHtml(apiUrl(data.public_url)) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(data.public_url) + '</a>' : '—') +
             '</div></div>' +
             (data.also_served_on && data.also_served_on.length
-                ? '<div class="kv"><div class="kv-key">Also served on</div><div class="kv-value">' +
+                ? '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_also_served', 'Also served on')) + '</div><div class="kv-value">' +
                     escapeHtml(data.also_served_on.join(', ')) +
-                    ' <span class="u-fg-tertiary">(read-only — edit in Settings → Site delivery)</span></div></div>'
+                    ' <span class="u-fg-tertiary">' + escapeHtml(t('project_kv_also_served_hint', '(read-only — edit in Settings → Site delivery)')) + '</span></div></div>'
                 : '') +
-            '<div class="kv"><div class="kv-key">Starter</div><div class="kv-value">' + starter + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Last change</div><div class="kv-value">' + lastChange + '</div></div>' +
-            '<div class="kv"><div class="kv-key">Index</div><div class="kv-value">' + (data.has_index ? 'index.html present' : 'No index.html') + '</div></div>' +
-            (data.visit_url ? '<div class="kv"><div class="kv-key">Visit URL</div><div class="kv-value"><code>' + escapeHtml(data.visit_url) + '</code>' +
+            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_starter', 'Starter')) + '</div><div class="kv-value">' + starter + '</div></div>' +
+            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_last_change', 'Last change')) + '</div><div class="kv-value">' + lastChange + '</div></div>' +
+            '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_index', 'Index')) + '</div><div class="kv-value">' + (data.has_index ? escapeHtml(t('project_index_present', 'index.html present')) : escapeHtml(t('project_index_missing', 'No index.html'))) + '</div></div>' +
+            (data.visit_url ? '<div class="kv"><div class="kv-key">' + escapeHtml(t('project_kv_visit_url', 'Visit URL')) + '</div><div class="kv-value"><code>' + escapeHtml(data.visit_url) + '</code>' +
                 (data.visit_url_format_resolved ? ' <span class="u-fg-tertiary">(' + escapeHtml(data.visit_url_format || 'auto') + ' → ' + escapeHtml(data.visit_url_format_resolved) + ')</span>' : '') +
             '</div></div>' : '');
 
@@ -277,12 +289,12 @@
     // The only runtime failure worth surfacing is a missing/broken engine file.
     function ssrRuntimeMessage(reason) {
         if (reason === 'engine_missing') {
-            return 'Server rendering cannot run: the built-in PHP template engine is missing from this install. Pages will fall back to client-side rendering.';
+            return t('project_ssr_engine_missing', 'Server rendering cannot run: the built-in PHP template engine is missing from this install. Pages will fall back to client-side rendering.');
         }
         if (reason) {
-            return 'Server rendering is not ready on this host (' + reason + '). Pages will fall back to client-side rendering.';
+            return t('project_ssr_not_ready_reason', 'Server rendering is not ready on this host ({reason}). Pages will fall back to client-side rendering.', { reason: reason });
         }
-        return 'Server rendering runtime is not ready. Pages will fall back to client-side rendering.';
+        return t('project_ssr_not_ready', 'Server rendering runtime is not ready. Pages will fall back to client-side rendering.');
     }
 
     // SSR only when Site delivery mode is project (Birkly-hosted). External/none → disabled.
@@ -355,9 +367,9 @@
             })
         }).then(function (payload) {
             applyRenderSettings(payload.data || {});
-            BirklyFeedback.toast('Rendering settings saved', 'success');
+            BirklyFeedback.toast(t('project_rendering_saved', 'Rendering settings saved'), 'success');
         }).catch(function (error) {
-            BirklyFeedback.toast(error.message || 'Failed to save rendering settings', 'error');
+            BirklyFeedback.toast(error.message || t('project_rendering_save_failed', 'Failed to save rendering settings'), 'error');
         }).then(function () {
             updateRenderingDisabledState();
         });
@@ -375,9 +387,9 @@
                 _csrf: getCsrfToken()
             })
         }).then(function () {
-            BirklyFeedback.toast('SSR cache invalidated', 'success');
+            BirklyFeedback.toast(t('project_ssr_cache_invalidated', 'SSR cache invalidated'), 'success');
         }).catch(function (error) {
-            BirklyFeedback.toast(error.message || 'Failed to invalidate SSR cache', 'error');
+            BirklyFeedback.toast(error.message || t('project_ssr_cache_invalidate_failed', 'Failed to invalidate SSR cache'), 'error');
         }).then(function () {
             updateRenderingDisabledState();
         });
@@ -406,7 +418,7 @@
             }
             syncVisitProjectButton(enabled);
             if (enabled && !state.visitUrl) {
-                throw new Error('Visit URL is not available');
+                throw new Error(t('project_visit_url_unavailable', 'Visit URL is not available'));
             }
             return data;
         });
@@ -437,7 +449,7 @@
         if (!container) return;
 
         if (!entries.length) {
-            container.innerHTML = '<div class="empty-state"><p>This folder is empty.</p></div>';
+            container.innerHTML = '<div class="empty-state"><p>' + escapeHtml(t('project_folder_empty', 'This folder is empty.')) + '</p></div>';
             return;
         }
 
@@ -457,7 +469,7 @@
             renderBreadcrumb(state.currentPath);
             renderFileTree((payload.data && payload.data.entries) || []);
         }).catch(function (error) {
-            setError('project-file-tree', error.message || 'Failed to list files');
+            setError('project-file-tree', error.message || t('project_list_files_failed', 'Failed to list files'));
         });
     }
 
@@ -499,7 +511,7 @@
         if (image) image.hidden = true;
         if (preview) {
             preview.hidden = false;
-            preview.textContent = data.content || '(Binary or unsupported preview)';
+            preview.textContent = data.content || t('project_preview_binary', '(Binary or unsupported preview)');
         }
     }
 
@@ -507,7 +519,7 @@
         return fetchJson(apiUrl('/api/project_site.php?action=read&path=' + encodeURIComponent(path))).then(function (payload) {
             openFile(path, payload.data || {});
         }).catch(function (error) {
-            BirklyFeedback.toast(error.message || 'Failed to read file', 'error')
+            BirklyFeedback.toast(error.message || t('project_read_file_failed', 'Failed to read file'), 'error')
         });
     }
 
@@ -530,7 +542,7 @@
             state.dirty = false;
             loadActivity();
         }).catch(function (error) {
-            BirklyFeedback.toast(error.message || 'Failed to save file', 'error')
+            BirklyFeedback.toast(error.message || t('project_save_file_failed', 'Failed to save file'), 'error')
         });
     }
 
@@ -552,7 +564,7 @@
                 return response.text().then(function (text) {
                     var payload = text ? JSON.parse(text) : {};
                     if (!response.ok || payload.status !== 'ok') {
-                        throw new Error(payload.message || ('Upload failed for ' + file.name));
+                        throw new Error(payload.message || t('project_upload_failed', 'Upload failed for {name}', { name: file.name }));
                     }
                     return payload;
                 });
@@ -604,7 +616,7 @@
         var api = window.BirklyActivityRows;
 
         if (!filtered.length) {
-            container.innerHTML = '<div class="empty-state"><p>No project activity yet.</p></div>';
+            container.innerHTML = '<div class="empty-state"><p>' + escapeHtml(t('project_activity_empty', 'No project activity yet.')) + '</p></div>';
             return;
         }
 
@@ -632,7 +644,7 @@
             projectActivityCache = (payload.data && payload.data.activity) || [];
             renderProjectActivity(projectActivityCache);
         }).catch(function (error) {
-            setError('project-activity-list', error.message || 'Failed to load activity');
+            setError('project-activity-list', error.message || t('project_activity_load_failed', 'Failed to load activity'));
         });
     }
 
@@ -662,9 +674,9 @@
                             loadOverview();
                         }
                     }
-                    BirklyFeedback.toast('Visit URL updated', 'success');
+                    BirklyFeedback.toast(t('project_visit_url_updated', 'Visit URL updated'), 'success');
                 }).catch(function (error) {
-                    BirklyFeedback.toast(error.message || 'Failed to save visit URL setting', 'error');
+                    BirklyFeedback.toast(error.message || t('project_visit_url_save_failed', 'Failed to save visit URL setting'), 'error');
                     visitFormat.value = state.visitUrlFormat || 'auto';
                 });
             });
@@ -747,11 +759,15 @@
         if (folderBtn && folderBtn.dataset.bound !== '1') {
             folderBtn.dataset.bound = '1';
             folderBtn.addEventListener('click', async function () {
-                var name = await BirklyFeedback.prompt('', '', { title: 'New folder', placeholder: 'Folder name', confirmLabel: 'Create' });
+                var name = await BirklyFeedback.prompt('', '', {
+                    title: t('project_new_folder_title', 'New folder'),
+                    placeholder: t('project_new_folder_placeholder', 'Folder name'),
+                    confirmLabel: t('project_btn_create', 'Create')
+                });
                 if (!name) return;
                 name = name.replace(/^\/+/, '').replace(/\/+$/, '');
                 if (!name || name.indexOf('/') >= 0 || name.indexOf('..') >= 0) {
-                    BirklyFeedback.toast('Enter a single folder name without slashes.', 'warning')
+                    BirklyFeedback.toast(t('project_new_folder_invalid', 'Enter a single folder name without slashes.'), 'warning')
                     return;
                 }
                 var fullPath = state.currentPath ? state.currentPath + '/' + name : name;
@@ -790,13 +806,21 @@
         if (addBtn && addBtn.dataset.bound !== '1') {
             addBtn.dataset.bound = '1';
             addBtn.addEventListener('click', async function () {
-                var relative = await BirklyFeedback.prompt('', '', { title: 'New file', placeholder: 'about.html', confirmLabel: 'Continue' });
+                var relative = await BirklyFeedback.prompt('', '', {
+                    title: t('project_new_file_title', 'New file'),
+                    placeholder: 'about.html',
+                    confirmLabel: t('project_btn_continue', 'Continue')
+                });
                 if (!relative) return;
                 relative = relative.replace(/^\/+/, '');
                 if (state.currentPath) {
                     relative = state.currentPath + '/' + relative;
                 }
-                var content = await BirklyFeedback.prompt('', '', { title: 'Initial content', placeholder: '(optional)', confirmLabel: 'Create' }) || '';
+                var content = await BirklyFeedback.prompt('', '', {
+                    title: t('project_initial_content_title', 'Initial content'),
+                    placeholder: t('project_initial_content_optional', '(optional)'),
+                    confirmLabel: t('project_btn_create', 'Create')
+                }) || '';
                 fetchJson(apiUrl('/api/project_site.php?action=create'), {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -825,7 +849,7 @@
             deleteBtn.dataset.bound = '1';
             deleteBtn.addEventListener('click', async function () {
                 if (!state.selectedFile) return;
-                if (!(await BirklyFeedback.confirm('Delete ' + state.selectedFile + '? This cannot be undone.'))) return;
+                if (!(await BirklyFeedback.confirm(t('project_delete_file_confirm', 'Delete {path}? This cannot be undone.', { path: state.selectedFile })))) return;
                 fetchJson(apiUrl('/api/project_site.php?action=delete'), {
                     method: 'POST',
                     credentials: 'same-origin',
@@ -850,18 +874,18 @@
             deleteProjectBtn.dataset.bound = '1';
             deleteProjectBtn.addEventListener('click', async function () {
                 var confirmed = await BirklyFeedback.confirm(
-                    'Delete the entire project folder? All HTML, CSS, JS, and assets will be removed. This cannot be undone.',
-                    { danger: true, title: 'Delete project', confirmLabel: 'Continue' }
+                    t('project_delete_all_confirm', 'Delete the entire project folder? All HTML, CSS, JS, and assets will be removed. This cannot be undone.'),
+                    { danger: true, title: t('project_delete_all_title', 'Delete project'), confirmLabel: t('project_btn_continue', 'Continue') }
                 );
                 if (!confirmed) return;
                 var phrase = await BirklyFeedback.prompt(
-                    'Type DELETE to confirm permanent removal of all project files.',
+                    t('project_delete_all_phrase_prompt', 'Type DELETE to confirm permanent removal of all project files.'),
                     '',
-                    { title: 'Confirm deletion', placeholder: 'DELETE', confirmLabel: 'Delete project' }
+                    { title: t('project_delete_all_confirm_title', 'Confirm deletion'), placeholder: 'DELETE', confirmLabel: t('project_delete_all_btn', 'Delete project') }
                 );
                 if (phrase !== 'DELETE') {
                     if (phrase !== null) {
-                        BirklyFeedback.toast('Deletion cancelled — confirmation phrase did not match.', 'warning');
+                        BirklyFeedback.toast(t('project_delete_cancelled', 'Deletion cancelled — confirmation phrase did not match.'), 'warning');
                     }
                     return;
                 }
@@ -881,7 +905,7 @@
                     refreshFiles();
                     loadOverview();
                     loadActivity();
-                    BirklyFeedback.toast('Project contents deleted.', 'success');
+                    BirklyFeedback.toast(t('project_deleted_success', 'Project contents deleted.'), 'success');
                 }).catch(function (error) {
                     BirklyFeedback.toast(error.message, 'error');
                 });
