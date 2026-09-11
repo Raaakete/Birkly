@@ -11,44 +11,44 @@
           <div id="ai-integrations" class="settings-pane-section" data-settings-search="ai assistant mcp connections service agents outbound personal connector"><div class="u-stack-6">
           <div class="section-header">
             <div class="u-stack-1">
-              <h2 class="section-title">AI</h2>
-              <p class="settings-help">Connect AI apps to Birkly or chat inside the admin.</p>
+              <h2 class="section-title"><?= htmlspecialchars(__('admin.ai_integrations')) ?></h2>
+              <p class="settings-help"><?= htmlspecialchars(__('admin.ai_conn_panel_help')) ?></p>
             </div>
             <p class="u-cluster-3 u-text-sm">
-              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections">Step-by-step guide</a>
-              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer">Documentation</a>
+              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
+              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.documentation')) ?></a>
             </p>
           </div>
 
           <div class="callout callout-warning" id="ai-https-warning" role="alert" hidden>
             <div class="callout-body u-stack-1">
-              <p class="callout-title">Claude requires an HTTPS Connector URL</p>
-              <p>Claude, ChatGPT, and Cursor reject <code>http://</code> connector URLs. Open Birkly using <code>https://</code> on a public address, then copy the Connector URL shown here. HTTP and localhost URLs will not work in Claude.</p>
+              <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_https_title')) ?></p>
+              <p><?= htmlspecialchars(__('admin.ai_conn_https_body')) ?></p>
             </div>
           </div>
 
           <div class="card" id="ai-localhost-card">
             <div class="card-header">
               <div class="card-heading">
-                <h3 class="card-title">Working locally?</h3>
-                <p class="card-description">How AI connects when Birkly runs on <code>localhost</code> — without exposing admin insecurely.</p>
+                <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_conn_localhost_title')) ?></h3>
+                <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_localhost_desc')) ?></p>
               </div>
             </div>
             <div class="card-body u-stack-3">
               <ul class="settings-list">
-                <li><strong>Built-in assistant / Ollama on localhost</strong> — OK (outbound BYOAI or <code>http://localhost:11434</code>).</li>
-                <li><strong>Remote connectors</strong> (Claude / ChatGPT / Cursor cloud) need a <strong>public HTTPS</strong> Connector URL — plain <code>http://localhost/mcp</code> is rejected.</li>
-                <li><strong>mcp-bridge recipe</strong> — local stdio bridge for desktop AI tools: open <a href="#" data-mcp-bridge-link target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> (also under Developer / debug below).</li>
-                <li><strong>Tunnel recipe</strong> — <code>cloudflared</code> or ngrok → HTTPS → your local <code>/mcp</code>, then paste that HTTPS URL as the Connector URL.</li>
+                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_assistant')) ?></li>
+                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_remote')) ?></li>
+                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_bridge')) ?></li>
+                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_tunnel')) ?></li>
               </ul>
-              <p class="form-help">Keep security warnings on: do not expose the admin panel to the public internet as a default. Prefer mcp-bridge or a short-lived tunnel.</p>
+              <p class="form-help"><?= htmlspecialchars(__('admin.ai_conn_localhost_security_note')) ?></p>
             </div>
           </div>
 
           <div class="callout callout-info" id="ai-agents-migration-banner" role="status" hidden>
             <div class="callout-body u-stack-1">
-              <p class="callout-title">Service agent visibility updated</p>
-              <p>Existing service agents are admin-only until you assign roles or users. Edit each service agent's <em>Who can use</em> settings to share access.</p>
+              <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_migration_title')) ?></p>
+              <p><?= htmlspecialchars(__('admin.ai_conn_migration_body')) ?></p>
             </div>
           </div>
 
@@ -56,53 +56,53 @@
             <div class="card" id="ai-kind-personal">
               <div class="card-header">
                 <div class="card-heading">
-                  <h3 class="card-title">Personal connector</h3>
-                  <p class="card-description">Connect Claude, ChatGPT, or Cursor with your own Birkly permissions. Every team member uses the same URL but signs in with their own account.</p>
+                  <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_personal_title')) ?></h3>
+                  <p class="card-description"><?= htmlspecialchars(__('admin.ai_connections_intro_personal_body')) ?></p>
                 </div>
               </div>
               <div id="ai-personal-agent-card" class="card-body">
-                <div class="loading-state"><p>Loading personal connector...</p></div>
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_loading_personal')) ?></p></div>
               </div>
             </div>
 
             <div class="card" id="ai-kind-service">
               <div class="card-header">
                 <div class="u-stack-1">
-                  <h3 class="card-title">Service agents</h3>
-                  <p class="card-description" id="ai-service-intro">Shared AI connections with a fixed CMS role. Only admins can create service agents.</p>
+                  <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_service_title')) ?></h3>
+                  <p class="card-description" id="ai-service-intro"><?= htmlspecialchars(__('admin.ai_conn_service_card_desc')) ?></p>
                 </div>
                 <button class="btn btn-primary" id="add-mcp-endpoint-btn" type="button" hidden>
                   <?= birkly_icon('plus', ['size' => 16]) ?>
-                  Add agent
+                  <?= htmlspecialchars(__('admin.ai_conn_add_agent')) ?>
                 </button>
               </div>
               <div class="connections-list card-body" id="ai-service-agents-list">
-                <div class="loading-state"><p>Loading connections...</p></div>
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_loading_list')) ?></p></div>
               </div>
             </div>
 
             <div class="card" id="ai-kind-assistant">
               <div class="card-header">
                 <div class="u-stack-1">
-                  <h3 class="card-title">Built-in assistant</h3>
-                  <p class="card-description">Chat with AI inside Birkly using your provider API key.</p>
+                  <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_connections_intro_assistant_title')) ?></h3>
+                  <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_assistant_card_desc')) ?></p>
                 </div>
                 <button class="btn btn-primary" id="add-connection-btn" type="button">
                   <?= birkly_icon('plus', ['size' => 16]) ?>
-                  Quick connect
+                  <?= htmlspecialchars(__('admin.ai_conn_quick_connect')) ?>
                 </button>
               </div>
               <div class="connections-list card-body" id="connections-list">
-                <div class="loading-state"><p>Loading connections...</p></div>
+                <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_loading_list')) ?></p></div>
               </div>
             </div>
           </div>
 
           <details class="card u-p-4">
-            <summary class="u-clickable u-weight-medium">Developer / debug</summary>
+            <summary class="u-clickable u-weight-medium"><?= htmlspecialchars(__('admin.ai_conn_dev_summary')) ?></summary>
             <div class="u-stack-2 u-pt-3 u-text-sm u-fg-secondary">
-              <p>For local development only. Not needed for normal setup.</p>
-              <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> — local development helper for Claude Desktop (advanced only).</p>
+              <p><?= htmlspecialchars(__('admin.ai_conn_dev_intro')) ?></p>
+              <p><a href="#" id="mcp-bridge-dev-link" target="_blank" rel="noopener noreferrer">mcp-bridge.js</a> <?= htmlspecialchars(__('admin.ai_conn_dev_bridge_note')) ?></p>
             </div>
           </details>
         </div>
@@ -111,7 +111,7 @@
         <div class="modal" id="add-connection-modal">
           <div class="modal-content modal--md">
             <div class="modal-header">
-              <h2 id="connection-modal-title">Quick connect assistant</h2>
+              <h2 id="connection-modal-title"><?= htmlspecialchars(__('admin.ai_conn_modal_quick_connect')) ?></h2>
               <button class="btn-icon modal-close" id="close-modal-btn">
                 <?= birkly_icon('x', ['size' => 16]) ?>
               </button>
@@ -121,12 +121,12 @@
 
               <div id="wizard-error" class="message message-error" role="alert" hidden></div>
 
-              <p class="modal-intro-text" id="assistant-modal-intro">Connect an AI provider for the in-admin chat button. You need a developer API key — consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access.</p>
+              <p class="modal-intro-text" id="assistant-modal-intro"><?= htmlspecialchars(__('admin.ai_conn_modal_assistant_intro')) ?></p>
 
               <div class="form-group">
                 <label for="connection-provider"><?= __('admin.ai_provider') ?></label>
                 <select id="connection-provider" name="provider" class="input" required>
-                  <option value="">Select a provider...</option>
+                  <option value=""><?= htmlspecialchars(__('admin.ai_conn_select_provider')) ?></option>
                 </select>
               </div>
 
@@ -139,7 +139,7 @@
               <div class="form-group" id="api-url-group" hidden>
                 <label for="connection-api-url"><?= __('admin.api_url') ?></label>
                 <input type="url" id="connection-api-url" name="api_url" class="input" placeholder="https://api.example.com/v1/chat/completions">
-                <small id="api-url-hint">API endpoint URL (required for custom providers)</small>
+                <small id="api-url-hint"><?= htmlspecialchars(__('admin.ai_conn_api_url_custom_help')) ?></small>
               </div>
 
               <div class="form-group" id="api-key-group">
@@ -151,14 +151,14 @@
               <div class="form-group" id="ollama-hint" hidden>
                 <div class="callout callout-info">
                   <div class="callout-body u-stack-1">
-                    <p class="callout-title">Ollama runs locally</p>
-                    <p>No API key needed. Make sure Ollama is running (default: <code>http://localhost:11434</code>).</p>
+                    <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_ollama_title')) ?></p>
+                    <p><?= htmlspecialchars(__('admin.ai_conn_ollama_body')) ?></p>
                   </div>
                 </div>
               </div>
 
               <div class="form-group" id="test-connection-group">
-                <button type="button" class="btn btn-secondary" id="test-connection-btn">Test connection</button>
+                <button type="button" class="btn btn-secondary" id="test-connection-btn"><?= htmlspecialchars(__('admin.test_connection')) ?></button>
                 <span id="test-connection-status" class="test-connection-status"></span>
               </div>
 
@@ -166,21 +166,21 @@
                 <label for="connection-model-search"><?= __('admin.model') ?></label>
                 <div class="u-stack-2" id="connection-model-picker">
                   <div class="u-cluster">
-                    <input type="search" id="connection-model-search" class="input" placeholder="Search models…" autocomplete="off" aria-controls="connection-model-list">
-                    <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh">Refresh</button>
+                    <input type="search" id="connection-model-search" class="input" placeholder="<?= htmlspecialchars(__('admin.ai_conn_search_models_placeholder')) ?>" autocomplete="off" aria-controls="connection-model-list">
+                    <button type="button" class="btn btn-sm btn-secondary" id="connection-model-refresh"><?= htmlspecialchars(__('admin.refresh')) ?></button>
                   </div>
                   <input type="hidden" id="connection-model" name="model" value="">
-                  <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="Models"></div>
+                  <div id="connection-model-list" class="ai-model-picker-list" role="listbox" aria-label="<?= htmlspecialchars(__('admin.ai_conn_models_list_aria')) ?>"></div>
                   <p id="connection-model-status" class="form-help ai-model-picker-status"></p>
                 </div>
                 <input type="text" id="connection-model-custom" name="model_custom" class="input" placeholder="<?= __('admin.enter_model_name') ?>">
-                <small class="form-help">Models are loaded live from your provider. Search the list or type a model ID.</small>
+                <small class="form-help"><?= htmlspecialchars(__('admin.ai_conn_models_picker_help')) ?></small>
               </div>
 
               <div class="form-group">
                 <label for="connection-role"><?= __('admin.role') ?></label>
                 <select id="connection-role" name="role" class="input" required>
-                  <option value="">Loading roles...</option>
+                  <option value=""><?= htmlspecialchars(__('admin.ai_conn_loading_roles')) ?></option>
                 </select>
               </div>
 
@@ -189,7 +189,7 @@
               <div class="form-group">
                 <label class="check">
                   <input type="checkbox" id="connection-require-approval" name="require_approval" value="1" checked>
-                  <span>Require approval for AI actions</span>
+                  <span><?= htmlspecialchars(__('admin.ai_conn_require_approval_label')) ?></span>
                 </label>
                 <small><?= __('admin.ai_approval_mode_help') ?></small>
               </div>

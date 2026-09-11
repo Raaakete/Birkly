@@ -24,6 +24,13 @@
         return path;
     }
 
+    function aiT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
         if (!pane) return false;
@@ -170,15 +177,22 @@
         });
 
         if (unique.length === 0) {
-            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>No assistant connected</strong></p><p>Click <em>Quick connect</em> to add your AI provider and API key for in-admin chat.</p></div>';
+            const emptyTitle = escapeHtml(aiT('ai_conn_empty_assistant_title', 'No assistant connected'));
+            const emptyBody = escapeHtml(aiT('ai_conn_empty_assistant_body', 'Click Quick connect to add your AI provider and API key for in-admin chat.'));
+            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>' + emptyTitle + '</strong></p><p>' + emptyBody + '</p></div>';
             return;
         }
+
+        const activeLabel = escapeHtml(aiT('webhook_active', 'Active'));
+        const inactiveLabel = escapeHtml(aiT('webhook_inactive', 'Inactive'));
+        const editLabel = escapeHtml(aiT('edit', 'Edit'));
+        const deleteLabel = escapeHtml(aiT('delete', 'Delete'));
 
         list.innerHTML = unique.map(conn => `
             <div class="ai-connection-entry" data-connection-id="${escapeHtml(conn.id)}">
                 <div class="ai-connection-entry-header">
                     <strong>${escapeHtml(conn.name || conn.provider)}</strong>
-                    <span class="mcp-endpoint-status ${conn.status === 'active' ? 'active' : 'inactive'}">${conn.status === 'active' ? 'Active' : 'Inactive'}</span>
+                    <span class="mcp-endpoint-status ${conn.status === 'active' ? 'active' : 'inactive'}">${conn.status === 'active' ? activeLabel : inactiveLabel}</span>
                 </div>
                 <div class="ai-connection-entry-meta">
                     <span class="connection-provider">${escapeHtml(conn.provider)}</span>
@@ -186,8 +200,8 @@
                     ${conn.model ? `<span class="connection-model">${escapeHtml(conn.model)}</span>` : ''}
                 </div>
                 <div class="ai-connection-entry-actions">
-                    <button type="button" class="btn btn-sm btn-secondary" data-edit-connection="${escapeHtml(conn.id)}">Edit</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-delete-connection="${escapeHtml(conn.id)}">Delete</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-edit-connection="${escapeHtml(conn.id)}">${editLabel}</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-delete-connection="${escapeHtml(conn.id)}">${deleteLabel}</button>
                 </div>
             </div>
         `).join('');
@@ -204,7 +218,7 @@
 
         const title = document.getElementById('connection-modal-title');
         const intro = document.getElementById('assistant-modal-intro');
-        if (title) title.textContent = 'Quick connect assistant';
+        if (title) title.textContent = aiT('ai_conn_modal_quick_connect', 'Quick connect assistant');
         if (intro) intro.style.display = 'block';
 
         modal.style.display = 'flex';
@@ -278,7 +292,7 @@
         if (wizardStep === 1) {
             const provider = document.getElementById('connection-provider')?.value;
             if (!provider) {
-                showWizardError('Please select a provider.');
+                showWizardError(aiT('ai_conn_js_select_provider', 'Please select a provider.'));
                 return;
             }
             updateProviderFields();
@@ -301,11 +315,11 @@
                 return;
             }
             if (provider !== 'ollama' && !connectionTestPassed) {
-                showWizardError('Please test the connection before continuing, or fix any errors shown.');
+                showWizardError(aiT('ai_conn_js_test_before_continue', 'Please test the connection before continuing, or fix any errors shown.'));
                 return;
             }
             if (provider === 'ollama' && !connectionTestPassed) {
-                showWizardError('Please test that Birkly can reach your Ollama server before continuing.');
+                showWizardError(aiT('ai_conn_js_ollama_test_required', 'Please test that Birkly can reach your Ollama server before continuing.'));
                 return;
             }
 
@@ -372,7 +386,7 @@
         if (list) {
             list.innerHTML = '';
             list.classList.add('is-empty');
-            list.textContent = 'Load models after selecting a provider.';
+            list.textContent = aiT('ai_conn_js_load_models_provider', 'Load models after selecting a provider.');
         }
         setModelPickerStatus('');
     }
@@ -421,8 +435,8 @@
             list.classList.add('is-empty');
             list.innerHTML = '';
             list.textContent = models && models.length
-                ? 'No models match your search.'
-                : 'No models loaded yet.';
+                ? aiT('ai_conn_js_no_models_search', 'No models match your search.')
+                : aiT('ai_conn_js_no_models_yet', 'No models loaded yet.');
             return;
         }
 
@@ -481,7 +495,7 @@
 
         if (modelPickerLoading && !options.force) return null;
         modelPickerLoading = true;
-        setModelPickerStatus('Loading models…', 'loading');
+        setModelPickerStatus(aiT('ai_conn_js_loading_models', 'Loading models…'), 'loading');
 
         const apiKey = document.getElementById('connection-api-key')?.value || '';
         const apiUrl = document.getElementById('connection-api-url')?.value || '';
@@ -533,7 +547,7 @@
         const testBtn = document.getElementById('test-connection-btn');
 
         if (!provider) {
-            showWizardError('Select a provider first.');
+            showWizardError(aiT('ai_conn_js_select_provider_first', 'Select a provider first.'));
             return;
         }
 
@@ -560,7 +574,7 @@
                 if (result.status === 'ok' && result.data?.valid) {
                     connectionTestPassed = true;
                     if (statusEl) {
-                        statusEl.textContent = result.data.message || 'Ollama reachable';
+                        statusEl.textContent = result.data.message || aiT('ai_conn_js_ollama_reachable', 'Ollama reachable');
                         statusEl.className = 'test-connection-status success';
                     }
                     fetchProviderModels({ force: true, autoSelectDefault: !getSelectedModel() }).catch(function(err) {
@@ -578,7 +592,7 @@
             } catch (error) {
                 connectionTestPassed = false;
                 if (statusEl) {
-                    statusEl.textContent = 'Network error — could not reach Birkly server.';
+                    statusEl.textContent = aiT('ai_conn_js_network_error', 'Network error — could not reach Birkly server.');
                     statusEl.className = 'test-connection-status error';
                 }
             } finally {
@@ -588,7 +602,7 @@
         }
 
         if (!apiKey) {
-            showWizardError('Enter an API key before testing.');
+            showWizardError(aiT('ai_conn_js_enter_api_key_test', 'Enter an API key before testing.'));
             return;
         }
 
@@ -616,7 +630,7 @@
             if (result.status === 'ok' && result.data?.valid) {
                 connectionTestPassed = true;
                 if (statusEl) {
-                    statusEl.textContent = result.data.message || 'Connection successful';
+                    statusEl.textContent = result.data.message || aiT('ai_conn_js_connection_success', 'Connection successful');
                     statusEl.className = 'test-connection-status success';
                 }
                 fetchProviderModels({ force: true, autoSelectDefault: !getSelectedModel() }).catch(function(err) {
@@ -648,11 +662,11 @@
         if (!title || !submitBtn) return;
 
         if (isEditMode) {
-            title.textContent = 'Edit assistant connection';
-            submitBtn.textContent = 'Save Changes';
+            title.textContent = aiT('ai_conn_modal_edit_title', 'Edit assistant connection');
+            submitBtn.textContent = aiT('save_changes', 'Save changes');
         } else {
-            title.textContent = 'Quick connect assistant';
-            submitBtn.textContent = 'Connect';
+            title.textContent = aiT('ai_conn_modal_quick_connect', 'Quick connect assistant');
+            submitBtn.textContent = aiT('connect', 'Connect');
         }
     }
 
@@ -852,7 +866,7 @@
             const apiUrl = formData.get('api_url') || '';
 
             if (!provider) {
-                showWizardError('Please select a provider.');
+                showWizardError(aiT('ai_conn_js_select_provider', 'Please select a provider.'));
                 return;
             }
             if (provider === 'custom' && !apiUrl) {
@@ -864,7 +878,7 @@
                 return;
             }
             if (!connectionTestPassed) {
-                showWizardError('Please test the connection before saving.');
+                showWizardError(aiT('ai_conn_js_test_before_save', 'Please test the connection before saving.'));
                 return;
             }
         }
@@ -930,7 +944,7 @@
                 const newId = result.data?.connection?.id || connectionId;
                 hideAddConnectionModal();
                 await loadConnections();
-                showSuccess(connectionId ? 'AI connection updated successfully' : 'AI connection created successfully');
+                showSuccess(connectionId ? aiT('ai_conn_js_updated_success', 'AI connection updated successfully') : aiT('ai_conn_js_created_success', 'AI connection created successfully'));
                 window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
                     detail: {
                         action: connectionId ? 'update' : 'create',
@@ -989,7 +1003,7 @@
             const result = await response.json();
 
             if (result.status !== 'ok' || !result.data?.connection) {
-                showError('Failed to load connection details');
+                showError(aiT('ai_conn_js_load_connection_failed', 'Failed to load connection details'));
                 return;
             }
 
@@ -1005,7 +1019,7 @@
 
             const title = document.getElementById('connection-modal-title');
             const intro = document.getElementById('assistant-modal-intro');
-            if (title) title.textContent = 'Edit assistant connection';
+            if (title) title.textContent = aiT('ai_conn_modal_edit_title', 'Edit assistant connection');
             if (intro) intro.style.display = 'none';
 
             await loadProviders();
@@ -1062,7 +1076,7 @@
 
     async function deleteConnection(connectionId) {
         if (!connectionId) return;
-        if (!(await BirklyFeedback.confirm('Delete this assistant connection? This cannot be undone.'))) return;
+        if (!(await BirklyFeedback.confirm(aiT('ai_conn_js_delete_confirm', 'Delete this assistant connection? This cannot be undone.')))) return;
 
         try {
             csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || csrfToken;
