@@ -25,12 +25,12 @@
             <?php else: ?>
                 <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
                 <span class="separator">›</span>
-                <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
+                <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? __('admin.col_editor_breadcrumb_collection_fallback')) ?></a>
                 <?php if (!empty($is_sub_entry_detail)): ?>
                     <span class="separator">›</span>
-                    <a href="<?= admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['_parent_entry_id'] ?? '']) ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? 'Parent Entry') ?></a>
+                    <a href="<?= admin_url('entry-detail', ['collection' => $collection['slug'] ?? '', 'entry' => $entry['_parent_entry_id'] ?? '']) ?>"><?= htmlspecialchars($entry['_parent_entry_title'] ?? __('admin.entry_detail_parent_entry')) ?></a>
                     <span class="separator">›</span>
-                    <span class="current"><?= htmlspecialchars($sub_collection_slug ?? 'Sub-Entry') ?>: <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
+                    <span class="current"><?= htmlspecialchars($sub_collection_slug ?? __('admin.entry_detail_sub_entry_fallback')) ?>: <?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
                 <?php else: ?>
                     <span class="separator">›</span>
                     <span class="current"><?= htmlspecialchars($entry['__cells']['__title'] ?? $entry['title'] ?? __('admin.untitled')) ?></span>
@@ -92,7 +92,7 @@
     <div class="page-body u-stack-6">
     <section class="u-stack-4">
         <div class="section-header">
-            <h2 class="section-title">Main Entry</h2>
+            <h2 class="section-title"><?= __('admin.entry_detail_main_entry') ?></h2>
         </div>
 
         <?php
@@ -118,7 +118,7 @@
         if (file_exists($componentPath)) {
             include $componentPath;
         } else {
-            echo '<div class="error-message">Smart table component not found at: ' . htmlspecialchars($componentPath) . '</div>';
+            echo '<div class="error-message">' . htmlspecialchars(__('admin.smart_table_component_not_found_at', ['path' => $componentPath])) . '</div>';
         }
 
         if ($originalEntries !== null) {
@@ -175,7 +175,7 @@
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
-                            Add Sub-Entry
+                            <?= __('admin.add_sub_entry') ?>
                         </a>
                     </div>
                     
@@ -185,14 +185,14 @@
                         <select id="sub-entry-status-filter-<?= htmlspecialchars($subCollectionSlug) ?>" class="sub-entry-status-filter collection-filter-select" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>">
                             <option value=""><?= __('admin.all_statuses') ?></option>
                             <option value="published"><?= __('admin.published') ?></option>
-                            <option value="unpublished">Unpublished</option>
-                            <option value="scheduled">Scheduled</option>
-                            <option value="pending_review">Pending for Review</option>
+                            <option value="unpublished"><?= __('admin.unpublished') ?></option>
+                            <option value="scheduled"><?= __('admin.scheduled') ?></option>
+                            <option value="pending_review"><?= __('admin.pending_review') ?></option>
                         </select>
                         
                         <!-- Sub-Collection Actions Dropdown (3-dot menu) -->
                         <div class="dropdown collection-actions-dropdown">
-                            <button type="button" class="dropdown-trigger btn-icon" aria-label="Sub-collection actions" aria-expanded="false" aria-haspopup="true" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>">
+                            <button type="button" class="dropdown-trigger btn-icon" aria-label="<?= htmlspecialchars(__('admin.entry_detail_sub_collection_actions_aria')) ?>" aria-expanded="false" aria-haspopup="true" data-sub-collection="<?= htmlspecialchars($subCollectionSlug) ?>">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="12" cy="12" r="1"></circle>
                                     <circle cx="12" cy="5" r="1"></circle>
@@ -227,21 +227,15 @@
                                     ['return_to' => $currentPageUrl]
                                 ));
                                 
-                                // Debug: Log what we're generating
-                                error_log("Edit sub-collection URL: " . $editSubCollectionUrl);
-                                error_log("Add sub-collection URL: " . $addSubCollectionUrl);
-                                error_log("Current sub-collection slug: " . $subCollectionSlug);
                                 ?>
-                                <!-- DEBUG: Edit URL for sub-collection "<?= htmlspecialchars($subCollectionSlug) ?>": <?= htmlspecialchars($editSubCollectionUrl) ?> -->
-                                <a href="<?= htmlspecialchars($editSubCollectionUrl) ?>" class="dropdown-item" aria-label="Edit this sub-collection">
+                                <a href="<?= htmlspecialchars($editSubCollectionUrl) ?>" class="dropdown-item" aria-label="<?= htmlspecialchars(__('admin.entry_detail_edit_sub_collection')) ?>">
                                     <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                     </svg>
                                     <span class="dropdown-item-label"><?= __('admin.entry_detail_edit_sub_collection') ?> (<?= htmlspecialchars($subCollectionSlug) ?>)</span>
                                 </a>
-                                <!-- DEBUG: Add URL under "<?= htmlspecialchars($subCollectionSlug) ?>": <?= htmlspecialchars($addSubCollectionUrl) ?> -->
-                                <a href="<?= htmlspecialchars($addSubCollectionUrl) ?>" class="dropdown-item" aria-label="Add a new sub-collection">
+                                <a href="<?= htmlspecialchars($addSubCollectionUrl) ?>" class="dropdown-item" aria-label="<?= htmlspecialchars(__('admin.entry_detail_add_sub_collection_aria')) ?>">
                                     <svg class="dropdown-item-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="12" y1="5" x2="12" y2="19"></line>
                                         <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -402,7 +396,7 @@
                     if (file_exists($componentPath)) {
                         include $componentPath;
                     } else {
-                        echo '<div class="error-message">Smart table component not found at: ' . htmlspecialchars($componentPath) . '</div>';
+                        echo '<div class="error-message">' . htmlspecialchars(__('admin.smart_table_component_not_found_at', ['path' => $componentPath])) . '</div>';
                     }
                     
                     // Restore original variables if they existed

@@ -26,7 +26,7 @@
         {if parent_entry_id exist}
             <!-- Link to main entry -->
             <a href="{admin_url 'entry-detail' collection='collection.slug' entry='parent_entry_id'}">
-                {if entry._parent_entry_title exist}{entry._parent_entry_title}{else}Parent Entry{endif}
+                {if entry._parent_entry_title exist}{entry._parent_entry_title}{else}{translate 'admin.entry_detail_parent_entry'}{endif}
             </a>
             <span class="separator">›</span>
             
@@ -36,7 +36,7 @@
                     {if parent_sub_entry_id exist}
                         <a href="{admin_url 'entry-detail' collection='collection.slug' entry='parent_entry_id' sub_collection='parent_sub_collection' sub_entry='parent_sub_entry_id'}">
                             {parent_sub_collection}: 
-                            {if entry._parent_sub_entry_title exist}{entry._parent_sub_entry_title}{else}Parent Sub-Entry{endif}
+                            {if entry._parent_sub_entry_title exist}{entry._parent_sub_entry_title}{else}{translate 'admin.entry_detail_parent_sub_entry'}{endif}
                         </a>
                         <span class="separator">›</span>
                     {endif}

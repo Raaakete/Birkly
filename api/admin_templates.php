@@ -1263,7 +1263,7 @@ function getEntryEditorData($includeFieldHtml = false) {
             // Get parent entry title for breadcrumbs
             $parentEntry = birkly_entry_read_record($collectionSlug, $entryId);
             if ($parentEntry !== null) {
-                $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
+                $entry['_parent_entry_title'] = $parentEntry['title'] ?? __('admin.entry_detail_parent_entry');
             }
             // Check if this is a nested sub-entry (has parent sub-entry info)
             // This happens when editing a nested sub-entry
@@ -1273,7 +1273,7 @@ function getEntryEditorData($includeFieldHtml = false) {
                 // Load parent sub-entry for breadcrumbs
                 $parentSubEntry = getSubEntry($collectionSlug, $entryId, $parentSubCollectionSlug, $parentSubEntryId);
                 if ($parentSubEntry) {
-                    $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? 'Parent Sub-Entry';
+                    $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? __('admin.entry_detail_parent_sub_entry');
                     $entry['_parent_sub_collection_slug'] = $parentSubCollectionSlug;
                 }
             }
@@ -1303,12 +1303,12 @@ function getEntryEditorData($includeFieldHtml = false) {
                 $entry['_parent_sub_collection'] = $parentSubCollectionSlug;
                 $entry['_parent_sub_entry_id'] = $parentSubEntryId;
                 // Store parent sub-entry info for breadcrumbs
-                $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? 'Parent Sub-Entry';
+                $entry['_parent_sub_entry_title'] = $parentSubEntry['title'] ?? __('admin.entry_detail_parent_sub_entry');
                 $entry['_parent_sub_collection_slug'] = $parentSubCollectionSlug;
                 // Get main entry title for breadcrumbs
                 $parentEntry = birkly_entry_read_record($collectionSlug, $entryId);
                 if ($parentEntry !== null) {
-                    $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
+                    $entry['_parent_entry_title'] = $parentEntry['title'] ?? __('admin.entry_detail_parent_entry');
                 }
             } else {
                 error_log("Failed to load parent sub-entry - falling back to main entry");
@@ -3086,7 +3086,7 @@ function getEntryDetailData() {
         // Get parent entry for context
         $parentEntry = birkly_entry_read_record($collectionSlug, $entryId);
         if ($parentEntry !== null) {
-            $entry['_parent_entry_title'] = $parentEntry['title'] ?? 'Parent Entry';
+            $entry['_parent_entry_title'] = $parentEntry['title'] ?? __('admin.entry_detail_parent_entry');
         }
 
         if ($isNestedSubEntryDetail) {
