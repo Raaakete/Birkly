@@ -43,9 +43,9 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
                 </div>
                 <div class="card card--sunken" id="onboarding-complete-demo-card" hidden>
                     <div class="card-body u-stack-2">
-                        <h3>View demo website</h3>
+                        <h3><?= htmlspecialchars(__('admin.dashboard_view_demo_website')) ?></h3>
                         <p class="u-text-sm u-fg-secondary"><?= __('admin.dashboard_starter_site_help') ?></p>
-                        <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-sm u-self-start u-mt-auto" target="_blank" rel="noopener">Open demo site</a>
+                        <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-sm u-self-start u-mt-auto" target="_blank" rel="noopener"><?= htmlspecialchars(__('admin.dashboard_open_demo_site')) ?></a>
                     </div>
                 </div>
                 <div class="card card--sunken">
@@ -73,7 +73,7 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
 <div class="main-actions-bar">
     <div class="main-actions-left">
         <button type="button" class="btn btn-secondary" id="dashboard-customize-btn" aria-haspopup="dialog" aria-controls="dashboard-customize-modal">
-            Customize dashboard
+            <?= htmlspecialchars(__('admin.dashboard_customize_title')) ?>
         </button>
     </div>
 </div>
@@ -81,21 +81,21 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
 <div id="dashboard-customize-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="dashboard-customize-title">
     <div class="modal-content modal--md">
         <div class="modal-header">
-            <h2 class="modal-title" id="dashboard-customize-title">Customize dashboard</h2>
-            <button type="button" class="modal-close" id="dashboard-customize-close" aria-label="Close">×</button>
+            <h2 class="modal-title" id="dashboard-customize-title"><?= htmlspecialchars(__('admin.dashboard_customize_title')) ?></h2>
+            <button type="button" class="modal-close" id="dashboard-customize-close" aria-label="<?= htmlspecialchars(__('admin.close')) ?>">×</button>
         </div>
         <div class="modal-body">
             <p class="modal-intro-text"><?= __('admin.dashboard_customize_intro') ?></p>
             <div class="main-actions-bar">
                 <div class="main-actions-right">
-                    <button type="button" class="btn btn-ghost btn-sm" id="dashboard-reset-layout-btn">Reset to defaults</button>
+                    <button type="button" class="btn btn-ghost btn-sm" id="dashboard-reset-layout-btn"><?= htmlspecialchars(__('admin.dashboard_reset_to_defaults')) ?></button>
                 </div>
             </div>
             <ul class="dashboard-widget-picker" id="dashboard-widget-picker"></ul>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="dashboard-customize-cancel">Cancel</button>
-            <button type="button" class="btn btn-primary" id="dashboard-customize-save">Done</button>
+            <button type="button" class="btn btn-secondary" id="dashboard-customize-cancel"><?= htmlspecialchars(__('admin.cancel')) ?></button>
+            <button type="button" class="btn btn-primary" id="dashboard-customize-save"><?= htmlspecialchars(__('admin.modal_done')) ?></button>
         </div>
     </div>
 </div>
@@ -126,13 +126,13 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
                         <a class="data-list-title" href="<?= htmlspecialchars($item['link'] ?? '#') ?>"><?= htmlspecialchars($item['label'] ?? '') ?></a>
                         <?php if (!empty($item['hint'])): ?><span class="data-list-meta"><?= htmlspecialchars($item['hint']) ?></span><?php endif; ?>
                     </div>
-                    <?php if (empty($item['completed'])): ?><button type="button" class="btn-icon btn-icon-sm checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" aria-label="Dismiss" title="Dismiss">×</button><?php endif; ?>
+                    <?php if (empty($item['completed'])): ?><button type="button" class="btn-icon btn-icon-sm checklist-dismiss" data-dismiss-id="<?= htmlspecialchars($item['id'] ?? '') ?>" aria-label="<?= htmlspecialchars(__('admin.checklist_dismiss')) ?>" title="<?= htmlspecialchars(__('admin.checklist_dismiss')) ?>">×</button><?php endif; ?>
                 </div>
                 <?php endforeach; ?>
             </div>
         </div>
         <div class="card-footer">
-            <button type="button" class="btn btn-ghost btn-sm u-push-right" id="hide-checklist-btn">Hide checklist</button>
+            <button type="button" class="btn btn-ghost btn-sm u-push-right" id="hide-checklist-btn"><?= htmlspecialchars(__('admin.hide_checklist')) ?></button>
         </div>
     </details>
 <?php endif; ?>

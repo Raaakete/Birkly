@@ -67,11 +67,11 @@
     }
 
     const statusMessages = {
-        unpublished: 'Hidden from your live site and public API. Only visible in the admin.',
-        draft: 'Hidden from your live site and public API. Only visible in the admin.',
-        published: 'Visible on your site and included in the public API.',
-        scheduled: 'Will publish automatically at the date you set. Hidden until then.',
-        pending_review: 'Waiting for reviewer approval. Not visible on the live site.',
+        unpublished: sidebarT('entry_editor_status_clarity_unpublished', 'Hidden from your live site and public API. Only visible in the admin.'),
+        draft: sidebarT('entry_editor_status_clarity_unpublished', 'Hidden from your live site and public API. Only visible in the admin.'),
+        published: sidebarT('entry_editor_status_clarity_published', 'Visible on your site and included in the public API.'),
+        scheduled: sidebarT('entry_editor_status_clarity_scheduled', 'Will publish automatically at the date you set. Hidden until then.'),
+        pending_review: sidebarT('entry_editor_status_clarity_pending_review', 'Waiting for reviewer approval. Not visible on the live site.'),
     };
 
     function updateStatusClarity() {
