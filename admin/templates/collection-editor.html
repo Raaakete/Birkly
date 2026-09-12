@@ -1108,6 +1108,14 @@ $apiUrl = htmlspecialchars('http' . (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS
 $captchaProvider = $isSubCollection ? ($subCollectionData['api_settings']['captcha_provider'] ?? '') : ($collection['api_settings']['captcha_provider'] ?? '');
 $captchaSiteKey = $isSubCollection ? ($subCollectionData['api_settings']['captcha_site_key'] ?? '') : ($collection['api_settings']['captcha_site_key'] ?? '');
 
+$formUiSelectPlaceholder = htmlspecialchars(__('admin.col_editor_form_select_placeholder'), ENT_QUOTES, 'UTF-8');
+$formUiSubmit = htmlspecialchars(__('admin.col_editor_form_submit'), ENT_QUOTES, 'UTF-8');
+$formUiSubmittingJs = json_encode(__('admin.col_editor_form_submitting'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$formUiSuccessJs = json_encode(__('admin.col_editor_form_success'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$formUiErrorPrefixJs = json_encode(__('admin.col_editor_form_error_prefix'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$formUiErrorGenericJs = json_encode(__('admin.col_editor_form_error_generic'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+$formUiErrorSubmitJs = json_encode(__('admin.col_editor_form_error_submit'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
 $formCode = '<form id="haru-form-' . ($isSubCollection ? $subCollectionSlug : $collectionSlug) . '" class="haru-form">';
 $formCode .= "\n";
 $formFields = $isSubCollection ? ($subCollectionData['schema']['fields'] ?? $subCollectionData['fields'] ?? []) : $fields;
@@ -1137,7 +1145,7 @@ if (!empty($formFields)) {
                 $formCode .= ' required';
             }
             $formCode .= '>' . "\n";
-            $formCode .= '      <option value="">Select...</option>' . "\n";
+            $formCode .= '      <option value="">' . $formUiSelectPlaceholder . '</option>' . "\n";
             if (!empty($field['options']) && is_array($field['options'])) {
                 foreach ($field['options'] as $option) {
                     $optLabel = $option['label'] ?? $option['value'] ?? '';
@@ -1179,7 +1187,7 @@ if (!empty($captchaProvider) && !empty($captchaSiteKey)) {
     }
 }
 
-$formCode .= '  <button type="submit" class="btn btn-primary">Submit</button>' . "\n";
+$formCode .= '  <button type="submit" class="btn btn-primary">' . $formUiSubmit . '</button>' . "\n";
 $formCode .= '  <div data-form-status role="status" aria-live="polite" style="display: none; margin-top: 12px; font-size: 14px;"></div>' . "\n";
 $formCode .= '</form>' . "\n";
 $formCode .= "\n";
@@ -1202,7 +1210,7 @@ $formCode .= '    statusEl.style.display = "block";' . "\n";
 $formCode .= '    statusEl.style.color = type === "error" ? "#b91c1c" : "#166534";' . "\n";
 $formCode .= '  };' . "\n";
 $formCode .= '  submitBtn.disabled = true;' . "\n";
-$formCode .= '  submitBtn.textContent = "Submitting...";' . "\n";
+$formCode .= '  submitBtn.textContent = ' . $formUiSubmittingJs . ';' . "\n";
 $formCode .= '  setStatus("", "success");' . "\n";
 $formCode .= "\n";
 $formCode .= '  const formData = new FormData(form);' . "\n";
@@ -1238,14 +1246,14 @@ $formCode .= '    .then(response => response.json())' . "\n";
 $formCode .= '    .then(result => {' . "\n";
 $formCode .= '      if (result.status === "ok") {' . "\n";
 $formCode .= '        form.reset();' . "\n";
-$formCode .= '        setStatus("Thank you! Your submission has been received.", "success");' . "\n";
+$formCode .= '        setStatus(' . $formUiSuccessJs . ', "success");' . "\n";
 $formCode .= '      } else {' . "\n";
-$formCode .= '        setStatus("Error: " + (result.message || "Something went wrong"), "error");' . "\n";
+$formCode .= '        setStatus(' . $formUiErrorPrefixJs . ' + (result.message || ' . $formUiErrorGenericJs . '), "error");' . "\n";
 $formCode .= '      }' . "\n";
 $formCode .= '    })' . "\n";
 $formCode .= '    .catch(error => {' . "\n";
 $formCode .= '      console.error("Error:", error);' . "\n";
-$formCode .= '      setStatus("Error submitting form. Please try again.", "error");' . "\n";
+$formCode .= '      setStatus(' . $formUiErrorSubmitJs . ', "error");' . "\n";
 $formCode .= '    })' . "\n";
 $formCode .= '    .finally(() => {' . "\n";
 $formCode .= '      submitBtn.disabled = false;' . "\n";
