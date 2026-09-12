@@ -387,7 +387,7 @@
         }
         var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
-            var err = new Error(result.message || 'Request failed');
+            var err = new Error(result.message || t('plugins_request_failed', 'Request failed'));
             err.code = result.code || '';
             err.data = result.data || null;
             throw err;
@@ -407,7 +407,7 @@
         }
         var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
-            var err = new Error(result.message || 'Request failed');
+            var err = new Error(result.message || t('plugins_request_failed', 'Request failed'));
             err.code = result.code || '';
             err.data = result.data || null;
             throw err;
@@ -792,7 +792,7 @@
         });
         var result = await parsePluginsResponse(response);
         if (!response.ok || result.status === 'error') {
-            var err = new Error(result.message || 'Request failed');
+            var err = new Error(result.message || t('plugins_request_failed', 'Request failed'));
             err.code = result.code || '';
             err.data = result.data || null;
             throw err;
@@ -2281,7 +2281,7 @@
             '<div class="u-split u-align-start u-gap-3">' +
             '<div class="u-stack-1 u-min-w-0">' +
             '<h3 class="card-title">' + pluginNameHtml + '</h3>' +
-            (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml('Update: v' + (update.latest_version || '')) + '</span>' : '') +
+            (hasUpdate ? '<span class="badge badge-warning badge-sm u-self-start">' + escapeHtml(t('hub_plugin_update_badge', 'Update: v{version}').replace('{version}', update.latest_version || '')) + '</span>' : '') +
             renderStabilityBadge(stabilityForBadge) +
             '</div>' +
             '<div class="u-cluster u-gap-1 u-shrink-0">' +
@@ -2289,7 +2289,7 @@
             escapeHtml(healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)) +
             '</span>' +
             '<span class="status-badge badge-sm ' + (active ? 'status-active' : 'status-inactive') + '">' +
-            (active ? 'Active' : 'Inactive') +
+            (active ? escapeHtml(t('active', 'Active')) : escapeHtml(t('inactive', 'Inactive'))) +
             '</span>' +
             '</div>' +
             '</div>' +
@@ -2304,7 +2304,7 @@
             '<div class="u-cluster u-gap-2">' +
             '<span class="chip u-numeric">v' + escapeHtml(plugin.version || '1.0.0') + '</span>' +
             (plugin.from_marketplace || hasMarketplaceOffer ? '<span class="tag">Hub</span>' : '') +
-            (plugin.license_ref ? '<span class="chip u-mono" title="License ref">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
+            (plugin.license_ref ? '<span class="chip u-mono" title="' + escapeHtml(t('hub_license_ref', 'License ref')) + '">#' + escapeHtml(plugin.license_ref) + '</span>' : '') +
             reviewChip +
             '</div>' +
             '<div class="u-cluster u-mt-auto u-pt-2">' +

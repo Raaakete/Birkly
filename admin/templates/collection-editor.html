@@ -445,7 +445,7 @@ if (!$cancelUrl) {
                                         
                                         <!-- Sub-Collection Fields Schema -->
                                         <div class="sub-collection-fields-section">
-                                            <h4>Fields Schema</h4>
+                                            <h4><?= __('admin.col_editor_fields_schema') ?></h4>
                                             <div class="sub-collection-fields-container" data-sub-collection-index="<?= $index ?>">
                                                 <?php 
                                                 // Check for fields in schema[fields] structure first (form sends this), then fall back to direct fields (saved structure)
@@ -1513,7 +1513,8 @@ document.addEventListener('DOMContentLoaded', function() {
         entryMethodPublicApi: <?= json_encode(__('admin.col_editor_entry_method_public_api')) ?>,
         removeLanguageAria: <?= json_encode(__('admin.col_editor_remove_language_aria')) ?>,
         addSubCollection: <?= json_encode(__('admin.col_editor_add_sub_collection')) ?>,
-        newSubCollectionDefault: <?= json_encode(__('admin.col_editor_new_sub_collection_default')) ?>
+        newSubCollectionDefault: <?= json_encode(__('admin.col_editor_new_sub_collection_default')) ?>,
+        fieldsSchema: <?= json_encode(__('admin.col_editor_fields_schema')) ?>
     };
     const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
         ? window.BirklyCollectionEditorCore.init({
@@ -2537,7 +2538,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 <!-- Sub-Collection Fields Schema -->
                 <div class="sub-collection-fields-section">
-                    <h4>Fields Schema</h4>
+                    <h4>${colEditorUi.fieldsSchema}</h4>
                     <div class="sub-collection-fields-container" data-sub-collection-index="${index}">
                         ${((data.schema && data.schema.fields) || data.fields) ? (data.schema?.fields || data.fields || []).map((field, fieldIndex) => `
                             <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
