@@ -8,6 +8,13 @@
     var cacheAt = 0;
     var CACHE_MS = 30000;
 
+    function pickerT(key, fallback) {
+        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
+            return global.Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
+    }
+
     function apiUrl(path) {
         return (global.Birkly && typeof global.Birkly.url === 'function') ? global.Birkly.url(path) : path;
     }
@@ -78,7 +85,7 @@
 
         if (!data.has_connections) {
             html += '<select id="' + escapeHtml(fieldId) + '" class="input" disabled>';
-            html += '<option value="">No email connection set up yet</option>';
+            html += '<option value="">' + escapeHtml(pickerT('email_picker_no_connection', 'No email connection set up yet')) + '</option>';
             html += '</select>';
             html += '<p class="form-help">Set up email in <a href="' + escapeHtml(settingsConnectionsUrl()) + '">Settings → Connections</a> before notifications can be sent.</p>';
         } else {

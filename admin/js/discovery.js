@@ -11,28 +11,28 @@
             labelKey: 'discovery_seo_surfaces_onpage',
             label: 'On-page tags',
             items: [
-                { key: 'meta_tags', label: 'Meta tags (title, description)' },
-                { key: 'canonical', label: 'Canonical URLs' },
-                { key: 'open_graph', label: 'Open Graph / social cards' },
-                { key: 'twitter_cards', label: 'Twitter / X cards' },
+                { key: 'meta_tags', labelKey: 'discovery_seo_surface_meta_tags', label: 'Meta tags (title, description)' },
+                { key: 'canonical', labelKey: 'discovery_seo_surface_canonical', label: 'Canonical URLs' },
+                { key: 'open_graph', labelKey: 'discovery_seo_surface_open_graph', label: 'Open Graph / social cards' },
+                { key: 'twitter_cards', labelKey: 'discovery_seo_surface_twitter_cards', label: 'Twitter / X cards' },
             ],
         },
         {
             labelKey: 'discovery_seo_surfaces_structured',
             label: 'Structured data (JSON-LD)',
             items: [
-                { key: 'json_ld_website', label: 'WebSite schema' },
-                { key: 'json_ld_organization', label: 'Organization schema' },
-                { key: 'json_ld_article', label: 'Article on detail pages' },
+                { key: 'json_ld_website', labelKey: 'discovery_seo_surface_json_ld_website', label: 'WebSite schema' },
+                { key: 'json_ld_organization', labelKey: 'discovery_seo_surface_json_ld_organization', label: 'Organization schema' },
+                { key: 'json_ld_article', labelKey: 'discovery_seo_surface_json_ld_article', label: 'Article on detail pages' },
             ],
         },
         {
             labelKey: 'discovery_seo_surfaces_crawl',
             label: 'Crawling & discovery',
             items: [
-                { key: 'sitemap', label: 'Dynamic sitemap.xml' },
-                { key: 'robots_sitemap_line', label: 'robots.txt Sitemap: line' },
-                { key: 'indexnow', label: 'IndexNow ping on publish' },
+                { key: 'sitemap', labelKey: 'discovery_seo_surface_sitemap', label: 'Dynamic sitemap.xml' },
+                { key: 'robots_sitemap_line', labelKey: 'discovery_seo_surface_robots_sitemap', label: 'robots.txt Sitemap: line' },
+                { key: 'indexnow', labelKey: 'discovery_seo_surface_indexnow', label: 'IndexNow ping on publish' },
             ],
         },
     ];
@@ -49,9 +49,12 @@
     };
 
     function t(key, fallback, params) {
-        var text = (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function')
-            ? global.Birkly.i18n.t('admin.' + key, fallback)
-            : (fallback || key);
+        var text;
+        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
+            text = global.Birkly.i18n.t('admin.' + key, fallback);
+        } else {
+            text = fallback || key;
+        }
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
                 text = text.split('{' + name + '}').join(String(params[name]));
@@ -226,7 +229,7 @@
                 var label = document.createElement('label');
                 label.className = 'checkbox-label u-block u-mb-2';
                 var checked = surfaces[item.key] !== false;
-                label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + item.label;
+                label.innerHTML = '<input type="checkbox" data-seo-surface="' + item.key + '"' + (checked ? ' checked' : '') + '> ' + escapeHtml(t(item.labelKey, item.label));
                 box.appendChild(label);
             });
         });
@@ -235,7 +238,7 @@
     function buildSeoPreviewTitle() {
         var siteTitle = ($('#disc-seo-site-title') || {}).value || '';
         var suffix = ($('#disc-seo-title-suffix') || {}).value || '';
-        var title = siteTitle.trim() || 'Site title';
+        var title = siteTitle.trim() || t('discovery_seo_preview_site_title_fallback', 'Site title');
         if (suffix && title.indexOf(suffix) < 0) {
             title += suffix;
         }
@@ -244,7 +247,7 @@
 
     function renderSeoPreviews() {
         var title = buildSeoPreviewTitle();
-        var desc = (($('#disc-seo-description') || {}).value || '').trim() || 'Meta description preview';
+        var desc = (($('#disc-seo-description') || {}).value || '').trim() || t('discovery_seo_preview_meta_desc_fallback', 'Meta description preview');
         var image = (($('#disc-seo-og-image') || {}).value || '').trim();
         var siteHost = 'yoursite.com';
         if (state.status && state.status.hosting && state.status.hosting.public_site_url) {
@@ -424,7 +427,7 @@
         var lr = $('#disc-verify-last-run');
         if (lr) {
             if (lastRun) {
-                lr.textContent = t('discovery_verify_last_run', 'Last run: {time}', { time: lastRun });
+                lr.textContent = t('discovery_js_last_run', 'Last run: {at}', { at: lastRun });
                 lr.hidden = false;
             } else {
                 lr.hidden = true;
@@ -434,7 +437,7 @@
 
     function load() {
         return getJson().then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Load failed');
+            if (res.status !== 'ok') throw new Error(res.message || t('discovery_js_load_failed', 'Load failed'));
             state.status = res.data;
             updatePackTabDots(res.data);
             renderPackToggles(res.data);
@@ -445,11 +448,11 @@
 
     function savePack(packId, patch) {
         return postJson({ action: 'save_pack', pack: packId, patch: patch }).then(function (res) {
-            if (res.status !== 'ok') throw new Error(res.message || 'Save failed');
+            if (res.status !== 'ok') throw new Error(res.message || t('discovery_js_save_failed', 'Save failed'));
             state.status = res.data;
             updatePackTabDots(res.data);
             renderPackToggles(res.data);
-            showMessage('Saved');
+            showMessage(t('discovery_js_saved', 'Saved'));
             return res.data;
         });
     }
@@ -462,12 +465,12 @@
         var pages = summary && summary.pages != null ? summary.pages : countRowsByType(rows, 'page');
         var details = summary && summary.detail_urls != null ? summary.detail_urls : countRowsByType(rows, 'detail');
         var templates = summary && summary.templates != null ? summary.templates : 0;
-        var parts = ['Found ' + pages + ' main page' + (pages === 1 ? '' : 's')];
+        var parts = [t('discovery_js_scan_found_pages', 'Found {n} main page(s)', { n: pages })];
         if (details > 0) {
-            parts.push(details + ' post' + (details === 1 ? '' : 's') + ' from collections');
+            parts.push(t('discovery_js_scan_posts_from_collections', '{n} post(s) from collections', { n: details }));
         }
         if (templates > 0) {
-            parts.push(templates + ' repeating template' + (templates === 1 ? '' : 's') + ' detected');
+            parts.push(t('discovery_js_scan_templates_detected', '{n} repeating template(s) detected', { n: templates }));
         }
         return parts.join(' · ');
     }
@@ -522,23 +525,29 @@
     function formatScanMeta(seo, summary) {
         var parts = [];
         if (seo && seo.scan && seo.scan.last_at) {
-            parts.push('Last scan: ' + seo.scan.last_at);
+            parts.push(t('discovery_seo_scan_last', 'Last scan: {at}', { at: seo.scan.last_at }));
             if (seo.scan.project_revision) {
-                parts.push('rev ' + seo.scan.project_revision);
+                parts.push(t('discovery_seo_scan_rev', 'rev {rev}', { rev: seo.scan.project_revision }));
             }
         }
         var counts = getUrlMapCounts(seo, summary);
         var statBits = [];
-        if (counts.pageCount > 0) statBits.push(counts.pageCount + ' page' + (counts.pageCount === 1 ? '' : 's'));
-        if (counts.templateFiles.length) {
-            statBits.push(counts.templateFiles.length + ' repeating template' + (counts.templateFiles.length === 1 ? '' : 's'));
+        if (counts.pageCount > 0) {
+            statBits.push(t('discovery_seo_scan_pages', '{count} page(s)', { count: counts.pageCount }));
         }
-        if (counts.detailCount > 0) statBits.push(counts.detailCount + ' collection entr' + (counts.detailCount === 1 ? 'y' : 'ies'));
-        if (counts.redirectCount > 0) statBits.push(counts.redirectCount + ' redirect' + (counts.redirectCount === 1 ? '' : 's'));
+        if (counts.templateFiles.length) {
+            statBits.push(t('discovery_seo_scan_templates_count', '{count} repeating template(s)', { count: counts.templateFiles.length }));
+        }
+        if (counts.detailCount > 0) {
+            statBits.push(t('discovery_seo_scan_entries', '{count} collection entries', { count: counts.detailCount }));
+        }
+        if (counts.redirectCount > 0) {
+            statBits.push(t('discovery_seo_scan_redirects', '{count} redirect(s)', { count: counts.redirectCount }));
+        }
         var stats = (summary && typeof summary === 'object') ? summary
             : (seo && seo.scan && seo.scan.stats) ? seo.scan.stats : null;
         if (stats && stats.excluded > 0) {
-            statBits.push(stats.excluded + ' internal files skipped');
+            statBits.push(t('discovery_seo_scan_excluded', '{count} internal files skipped', { count: stats.excluded }));
         }
         if (statBits.length) parts.push(statBits.join(' · '));
         return parts.join(' — ');
@@ -594,7 +603,7 @@
         var to = (($('#disc-redirect-to') || {}).value || '').trim();
         var status = parseInt(($('#disc-redirect-status') || {}).value || '301', 10) || 301;
         if (!from || !to) {
-            showMessage('From and to paths are required', true);
+            showMessage(t('discovery_js_redirect_paths_required', 'From and to paths are required'), true);
             return;
         }
         var redirects = ((state.seo && state.seo.url_map && state.seo.url_map.redirects) || []).slice();
@@ -609,7 +618,7 @@
         postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message);
             closeRedirectModal();
-            applyUrlMapResponse(res, 'Redirect saved');
+            applyUrlMapResponse(res, t('discovery_js_redirect_saved', 'Redirect saved'));
             state.urlMapFilter = 'redirect';
             updateUrlMapToolbar();
             renderUrlMap(state.seo);
@@ -622,7 +631,7 @@
         redirects.splice(index, 1);
         postJson({ action: 'save_url_map', url_map: { redirects: redirects } }).then(function (res) {
             if (res.status !== 'ok') throw new Error(res.message);
-            applyUrlMapResponse(res, 'Redirect removed');
+            applyUrlMapResponse(res, t('discovery_js_redirect_removed', 'Redirect removed'));
         }).catch(function (err) { showMessage(err.message, true); });
     }
 
@@ -784,7 +793,7 @@
         var bindings = (seo && seo.detail_bindings) || [];
         if (!bindings.length) {
             list.innerHTML = '<p class="form-help u-m-0">' + escapeHtml(
-                'No repeating pages yet. Templates with <meta name="birkly-collection"> are detected when you refresh from site files.'
+                t('discovery_seo_bindings_empty', 'No repeating pages yet. Templates with <meta name="birkly-collection"> are detected when you refresh from site files.')
             ) + '</p>';
             return;
         }
@@ -795,20 +804,20 @@
             var template = binding.template_path || '';
             var count = bindingEntryCount(seo, binding.collection || '');
             var countLabel = count > 0
-                ? count + ' published ' + (count === 1 ? 'entry' : 'entries') + ' in search listings'
-                : 'No published entries yet';
+                ? t('discovery_seo_bindings_published_count', '{count} published entries in search listings', { count: count })
+                : t('discovery_seo_bindings_no_published', 'No published entries yet');
             var pattern = binding.url_pattern
-                ? '<div class="u-text-xs u-fg-secondary u-mt-1">Shorter links: <code>' + escapeHtml(binding.url_pattern) + '</code></div>'
+                ? '<div class="u-text-xs u-fg-secondary u-mt-1">' + escapeHtml(t('discovery_seo_bindings_shorter_links', 'Shorter links:')) + ' <code>' + escapeHtml(binding.url_pattern) + '</code></div>'
                 : '';
             card.innerHTML = '<button type="button" class="disc-binding-card__main" data-binding-edit="' + escapeHtml(binding.id || '') + '">'
                 + '<div><strong>' + escapeHtml(binding.collection || '') + '</strong>'
-                + ' <span class="u-fg-secondary">opens in</span> <span class="disc-site-file" title="' + escapeHtml(template) + '">'
+                + ' <span class="u-fg-secondary">' + escapeHtml(t('discovery_seo_bindings_opens_in', 'opens in')) + '</span> <span class="disc-site-file" title="' + escapeHtml(template) + '">'
                 + escapeHtml(template) + '</span></div>'
-                + '<div class="u-text-sm u-fg-secondary u-mt-1">Summary field: ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
+                + '<div class="u-text-sm u-fg-secondary u-mt-1">' + escapeHtml(t('discovery_seo_bindings_summary_field', 'Summary field:')) + ' ' + escapeHtml(excerpt) + ' · ' + escapeHtml(countLabel) + '</div>'
                 + pattern
                 + '</button>'
                 + '<button type="button" class="btn btn-ghost btn-sm disc-binding-card__remove" data-binding-delete="'
-                + escapeHtml(binding.id || '') + '">Remove</button>';
+                + escapeHtml(binding.id || '') + '">' + escapeHtml(t('discovery_seo_bindings_remove', 'Remove')) + '</button>';
             list.appendChild(card);
         });
     }
@@ -890,7 +899,7 @@
                     state.seo = res.data.seo;
                     state.urlMapRows = res.data.rows || buildUrlMapRowsFromSeo(state.seo);
                     renderUrlMap(state.seo);
-                    showMessage('URL override saved');
+                    showMessage(t('discovery_js_url_override_saved', 'URL override saved'));
                 }).catch(function (err) { showMessage(err.message, true); });
             });
         }
@@ -907,7 +916,9 @@
                     state.urlMapRows = res.data.rows || [];
                     renderUrlMap(state.seo);
                     var warns = (res.data.warnings || []).join('; ');
-                    showMessage(warns ? 'Proposals applied — ' + warns : 'Proposals applied — review and publish');
+                    showMessage(warns
+                        ? t('discovery_js_proposals_applied_warns', 'Proposals applied — {warns}', { warns: warns })
+                        : t('discovery_js_proposals_applied_review', 'Proposals applied — review and publish'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -942,7 +953,7 @@
                     });
                     state.activeBindingId = saved ? (saved.id || null) : null;
                     if (saved) fillBindingForm(saved);
-                    applyUrlMapResponse(res, 'Connection saved — posts added to search listings');
+                    applyUrlMapResponse(res, t('discovery_js_connection_saved_listings', 'Connection saved — posts added to search listings'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -972,7 +983,7 @@
                         state.activeBindingId = null;
                         fillBindingForm(null);
                     }
-                    applyUrlMapResponse(res, 'Connection removed');
+                    applyUrlMapResponse(res, t('discovery_js_connection_removed', 'Connection removed'));
                 }).catch(function (err) { showMessage(err.message, true); });
             });
         }
@@ -985,7 +996,7 @@
             input.addEventListener('change', function () {
                 var pack = input.getAttribute('data-pack');
                 savePack(pack, { enabled: input.checked }).catch(function (e) {
-                    showMessage(e.message || 'Could not save', true);
+                    showMessage(e.message || t('discovery_js_could_not_save', 'Could not save'), true);
                     input.checked = !input.checked;
                 });
             });
@@ -1002,7 +1013,7 @@
                     state.seo = res.data.seo;
                     renderPackToggles(state.status);
                     markSeoBaseline();
-                    showMessage('SEO settings saved');
+                    showMessage(t('discovery_js_seo_settings_saved', 'SEO settings saved'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1019,7 +1030,7 @@
                     if ($('#disc-seo-title-suffix')) $('#disc-seo-title-suffix').value = proposal.title_suffix || '';
                     renderSeoPreviews();
                     updateSeoStickyBar();
-                    showMessage('Proposed defaults — review and save');
+                    showMessage(t('discovery_js_proposed_defaults', 'Proposed defaults — review and save'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1042,7 +1053,9 @@
         if (pub) {
             pub.addEventListener('click', function () {
                 var live = !!(state.status && state.status.packs && state.status.packs.seo && state.status.packs.seo.live);
-                publishSeoFlow(live ? 'SEO updates published' : 'SEO published')
+                publishSeoFlow(live
+                    ? t('discovery_js_seo_updates_published', 'SEO updates published')
+                    : t('discovery_js_seo_published', 'SEO published'))
                     .catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1053,7 +1066,7 @@
                     state.status = res.data;
                     updatePackTabDots(res.data);
                     renderPackToggles(res.data);
-                    showMessage('SEO unpublished');
+                    showMessage(t('discovery_js_seo_unpublished', 'SEO unpublished'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1084,7 +1097,7 @@
                     if (res.status !== 'ok') throw new Error(res.message);
                     state.status = res.data;
                     renderVerifyChecks(res.data.verify_checks, res.data.verify_last_run);
-                    showMessage('Verify checklist updated');
+                    showMessage(t('discovery_js_verify_updated', 'Verify checklist updated'));
                 }).catch(function (e) { showMessage(e.message, true); });
             });
         }
@@ -1112,7 +1125,7 @@
         load().then(function () {
             initApEmbed();
         }).catch(function (e) {
-            showMessage(e.message || 'Could not load Discovery', true);
+            showMessage(e.message || t('discovery_js_load_discovery_failed', 'Could not load Discovery'), true);
             initApEmbed();
         });
     }

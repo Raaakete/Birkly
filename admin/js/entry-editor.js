@@ -26,10 +26,10 @@
     let isSubmittingEntry = false;
     let knownEntryId = '';
 
-    function t(key, fallback, params) {
-        var text = (window.Birkly && window.Birkly.i18n)
-            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
-            : (fallback || key);
+    function eeT(key, fallback, params) {
+        let text = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
                 text = text.split('{' + name + '}').join(String(params[name]));
@@ -37,22 +37,6 @@
         }
         return text;
     }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    const SAVE_LABEL_I18N_KEYS = {
-        savedToast: 'entry_editor_saved_toast',
-        publishedToast: 'entry_editor_published_toast',
-        publishAndSave: 'entry_editor_publish_and_save',
-        saving: 'entry_editor_saving',
-        publishing: 'entry_editor_publishing',
-        processingSave: 'entry_editor_processing_save',
-        processingPublish: 'entry_editor_processing_save',
-    };
 
     function isSafeAdminRedirectUrl(url) {
         if (!url || typeof url !== 'string') {
@@ -231,14 +215,7 @@
     }
 
     function saveLabel(key, fallback) {
-        if (config.saveLabels && config.saveLabels[key]) {
-            return config.saveLabels[key];
-        }
-        const i18nKey = SAVE_LABEL_I18N_KEYS[key];
-        if (i18nKey) {
-            return t(i18nKey, fallback);
-        }
-        return fallback;
+        return (config.saveLabels && config.saveLabels[key]) || fallback;
     }
 
     function getPublishButton() {
@@ -626,13 +603,13 @@
         
         if (rejectBtn) {
             rejectBtn.addEventListener('click', async function () {
-                showReviewModal('rejected', t('entry_editor_reject_title', 'Reject Entry'), t('entry_editor_reject_label', 'Enter rejection reason:'));
+                showReviewModal('rejected', 'Reject Entry', 'Enter rejection reason:');
             });
         }
         
         if (requestChangesBtn) {
             requestChangesBtn.addEventListener('click', async function () {
-                showReviewModal('draft', t('entry_editor_request_changes_title', 'Request Changes'), t('entry_editor_request_changes_label', 'Enter change request details:'));
+                showReviewModal('draft', 'Request Changes', 'Enter change request details:');
             });
         }
     }
@@ -650,7 +627,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'ok' && data.data && data.data.users) {
-                    reviewerSelect.innerHTML = '<option value="">' + escapeHtml(t('entry_editor_reviewer_placeholder', 'Select a reviewer...')) + '</option>';
+                    reviewerSelect.innerHTML = '<option value="">Select a reviewer...</option>';
                     data.data.users.forEach(user => {
                         if (user.role === 'admin' || user.role === 'editor') {
                             const option = document.createElement('option');
@@ -697,17 +674,17 @@
         
         modalContent.innerHTML = `
             <div class="modal-header">
-                <h2>${escapeHtml(title)}</h2>
+                <h2>${title}</h2>
                 <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="review-notes-input">${escapeHtml(label)}</label>
-                    <textarea id="review-notes-input" class="input" rows="4" placeholder="${escapeHtml(t('entry_editor_notes_placeholder', 'Enter notes...'))}"></textarea>
+                    <label for="review-notes-input">${label}</label>
+                    <textarea id="review-notes-input" class="input" rows="4" placeholder="${eeT('entry_editor_js_review_notes_placeholder', 'Enter notes...')}"></textarea>
                 </div>
                 <div class="form-actions">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">${escapeHtml(t('entry_editor_cancel', 'Cancel'))}</button>
-                    <button class="btn btn-primary" id="submit-review-btn">${escapeHtml(t('entry_editor_submit', 'Submit'))}</button>
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">${eeT('cancel', 'Cancel')}</button>
+                    <button class="btn btn-primary" id="submit-review-btn">${eeT('entry_editor_js_submit_review', 'Submit')}</button>
                 </div>
             </div>
         `;
@@ -744,7 +721,7 @@
         const reviewer = document.getElementById('reviewer')?.value || '';
         
         if (!entryId || !collectionSlug) {
-            BirklyFeedback.toast(t('entry_editor_review_missing_context', 'Cannot submit review: missing entry or collection information'), 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_review_missing_context', 'Cannot submit review: missing entry or collection information'), 'error')
             return;
         }
         
@@ -764,17 +741,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                BirklyFeedback.toast(t('entry_editor_review_success', 'Review action submitted successfully. Reloading page...'), 'success')
+                BirklyFeedback.toast(eeT('entry_editor_js_review_submitted_reload', 'Review action submitted successfully. Reloading page...'), 'success')
                 window.location.reload();
             } else {
-                BirklyFeedback.toast(t('entry_editor_review_error', 'Error submitting review: {message}', {
-                    message: data.message || t('entry_editor_unknown_error', 'Unknown error')
-                }), 'error');
+                BirklyFeedback.toast(eeT('entry_editor_js_err_review_submit', 'Error submitting review: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch(error => {
             console.error('Review error:', error);
-            BirklyFeedback.toast(t('entry_editor_review_error', 'Error submitting review: {message}', { message: error.message }), 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_review_submit', 'Error submitting review: {message}', { message: error.message }), 'error')
         });
     }
 
@@ -799,7 +774,7 @@
         const collectionSlug = form.querySelector('input[name="collection"]')?.value;
         
         if (!entryId || !collectionSlug) {
-            BirklyFeedback.toast(t('entry_editor_history_missing_context', 'Cannot view history: missing entry or collection information'), 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_history_missing_context', 'Cannot view history: missing entry or collection information'), 'error')
             return;
         }
         
@@ -810,23 +785,15 @@
                 if (data.status === 'ok' && data.versions) {
                     renderVersionModal(data.versions, collectionSlug, entryId);
                 } else {
-                    BirklyFeedback.toast(t('entry_editor_history_load_error', 'Error loading version history: {message}', {
-                        message: data.message || t('entry_editor_unknown_error', 'Unknown error')
-                    }), 'error');
+                    BirklyFeedback.toast(eeT('entry_editor_js_err_load_history', 'Error loading version history: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
                 }
             })
             .catch(error => {
                 console.error('Version history error:', error);
-                BirklyFeedback.toast(t('entry_editor_history_load_error', 'Error loading version history: {message}', { message: error.message }), 'error')
+                BirklyFeedback.toast(eeT('entry_editor_js_err_load_history', 'Error loading version history: {message}', { message: error.message }), 'error')
             });
     }
     
-    function versionDisplayLabel(version, index, versions) {
-        const number = version.version || (versions.length - index);
-        const suffix = index === 0 ? t('entry_editor_version_current_suffix', ' (Current)') : '';
-        return t('entry_editor_version_option', 'Version {number}{suffix}', { number: number, suffix: suffix });
-    }
-
     function renderVersionModal(versions, collectionSlug, entryId) {
         // Create modal
         const modal = document.createElement('div');
@@ -836,66 +803,62 @@
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
         modalContent.style.maxWidth = '1200px';
-
-        const selectPlaceholder = escapeHtml(t('entry_editor_select_version', 'Select version...'));
-        const versionOptionsV1 = versions.map(function (version, index) {
-            const value = escapeHtml(String(version.version || 'current'));
-            const selected = index === 0 ? ' selected' : '';
-            return '<option value="' + value + '"' + selected + '>' + escapeHtml(versionDisplayLabel(version, index, versions)) + '</option>';
-        }).join('');
-        const versionOptionsV2 = versions.map(function (version, index) {
-            const value = escapeHtml(String(version.version || 'current'));
-            const selected = index === 1 ? ' selected' : '';
-            return '<option value="' + value + '"' + selected + '>' + escapeHtml(versionDisplayLabel(version, index, versions)) + '</option>';
-        }).join('');
-        const versionListHtml = versions.map(function (version, index) {
-            const authorSuffix = version.author
-                ? escapeHtml(t('entry_editor_version_by', ' by {author}', { author: version.author }))
-                : '';
-            const restoreLabel = escapeHtml(t('entry_editor_restore_btn', 'Restore'));
-            const currentBadge = index === 0
-                ? '<span style="margin-left: 8px; color: #0a0;">' + escapeHtml(t('entry_editor_current_badge', 'Current')) + '</span>'
-                : '';
-            return '<div class="version-item" style="padding: 12px; border-bottom: 1px solid #eee;">' +
-                '<div style="display: flex; justify-content: space-between; align-items: start;">' +
-                '<div><strong>' + escapeHtml(versionDisplayLabel(version, index, versions)) + '</strong>' +
-                '<div style="font-size: 0.875em; color: #666; margin-top: 4px;">' +
-                escapeHtml(new Date(version.created_at).toLocaleString()) + authorSuffix +
-                '</div></div><div>' +
-                '<button class="btn btn-sm" onclick="window.restoreVersion(\'' + escapeHtml(collectionSlug) + '\', \'' + escapeHtml(entryId) + '\', \'' + escapeHtml(String(version.version)) + '\')">' +
-                restoreLabel + '</button>' + currentBadge +
-                '</div></div></div>';
-        }).join('');
         
         modalContent.innerHTML = `
             <div class="modal-header">
-                <h2>${escapeHtml(t('entry_editor_version_history_title', 'Version History'))}</h2>
+                <h2>Version History</h2>
                 <button class="modal-close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">${escapeHtml(t('entry_editor_compare_version_1', 'Compare Version 1:'))}</label>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Compare Version 1:</label>
                         <select id="version1-select" class="form-control" style="width: 100%;">
-                            <option value="">${selectPlaceholder}</option>
-                            ${versionOptionsV1}
+                            <option value="">Select version...</option>
+                            ${versions.map((version, index) => `
+                                <option value="${version.version || 'current'}" ${index === 0 ? 'selected' : ''}>
+                                    Version ${version.version || (versions.length - index)} ${index === 0 ? '(Current)' : ''}
+                                </option>
+                            `).join('')}
                         </select>
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">${escapeHtml(t('entry_editor_compare_version_2', 'Compare Version 2:'))}</label>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Compare Version 2:</label>
                         <select id="version2-select" class="form-control" style="width: 100%;">
-                            <option value="">${selectPlaceholder}</option>
-                            ${versionOptionsV2}
+                            <option value="">Select version...</option>
+                            ${versions.map((version, index) => `
+                                <option value="${version.version || 'current'}" ${index === 1 ? 'selected' : ''}>
+                                    Version ${version.version || (versions.length - index)} ${index === 0 ? '(Current)' : ''}
+                                </option>
+                            `).join('')}
                         </select>
                     </div>
                 </div>
                 <div style="margin-bottom: 20px;">
-                    <button id="compare-versions-btn" class="btn btn-primary">${escapeHtml(t('entry_editor_compare_versions_btn', 'Compare Versions'))}</button>
+                    <button id="compare-versions-btn" class="btn btn-primary">Compare Versions</button>
                 </div>
                 <div id="diff-view" style="display: none;"></div>
                 <div class="versions-list" id="versions-list">
-                    <h3 style="margin-bottom: 12px;">${escapeHtml(t('entry_editor_all_versions', 'All Versions'))}</h3>
-                    ${versionListHtml}
+                    <h3 style="margin-bottom: 12px;">All Versions</h3>
+                    ${versions.map((version, index) => `
+                        <div class="version-item" style="padding: 12px; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div>
+                                    <strong>Version ${version.version || (versions.length - index)}</strong>
+                                    <div style="font-size: 0.875em; color: #666; margin-top: 4px;">
+                                        ${new Date(version.created_at).toLocaleString()}
+                                        ${version.author ? ` by ${version.author}` : ''}
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn btn-sm" onclick="window.restoreVersion('${collectionSlug}', '${entryId}', '${version.version}')">
+                                        Restore
+                                    </button>
+                                    ${index === 0 ? '<span style="margin-left: 8px; color: #0a0;">Current</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;
@@ -914,12 +877,12 @@
             const v2 = version2Select.value;
             
             if (!v1 || !v2) {
-                BirklyFeedback.toast(t('entry_editor_compare_select_both', 'Please select both versions to compare'), 'warning')
+                BirklyFeedback.toast(eeT('entry_editor_js_select_two_versions', 'Please select both versions to compare'), 'warning')
                 return;
             }
             
             if (v1 === v2) {
-                BirklyFeedback.toast(t('entry_editor_compare_select_different', 'Please select two different versions'), 'warning')
+                BirklyFeedback.toast(eeT('entry_editor_js_select_different_versions', 'Please select two different versions'), 'warning')
                 return;
             }
             
@@ -932,14 +895,12 @@
                         diffView.style.display = 'block';
                         document.getElementById('versions-list').style.display = 'none';
                     } else {
-                        BirklyFeedback.toast(t('entry_editor_diff_load_error', 'Error loading diff: {message}', {
-                            message: data.message || t('entry_editor_unknown_error', 'Unknown error')
-                        }), 'error');
+                        BirklyFeedback.toast(eeT('entry_editor_js_err_load_diff', 'Error loading diff: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Diff error:', error);
-                    BirklyFeedback.toast(t('entry_editor_diff_load_error', 'Error loading diff: {message}', { message: error.message }), 'error')
+                    BirklyFeedback.toast(eeT('entry_editor_js_err_load_diff', 'Error loading diff: {message}', { message: error.message }), 'error')
                 });
         });
         
@@ -953,13 +914,13 @@
     
     function renderDiffView(container, diff, version1, version2, v1Label, v2Label) {
         if (diff.length === 0) {
-            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">' + escapeHtml(t('entry_editor_diff_no_differences', 'No differences found between these versions.')) + '</p>';
+            container.innerHTML = '<p style="padding: 20px; text-align: center; color: #666;">' + escapeHtml(eeT('entry_editor_js_no_version_diff', 'No differences found between these versions.')) + '</p>';
             return;
         }
         
         container.innerHTML = `
             <div style="margin-bottom: 20px;">
-                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('diff-view').style.display='none'; document.getElementById('versions-list').style.display='block';">${escapeHtml(t('entry_editor_diff_back', 'Back to Versions'))}</button>
+                <button class="btn btn-sm btn-secondary" onclick="document.getElementById('diff-view').style.display='none'; document.getElementById('versions-list').style.display='block';">Back to Versions</button>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid #ddd; border-radius: 4px; overflow: hidden; margin-bottom: 20px;">
                 <div style="background: #f5f5f5; padding: 12px; border-right: 1px solid #ddd;">
@@ -971,9 +932,8 @@
             </div>
             <div style="max-height: 600px; overflow-y: auto;">
                 ${diff.map(change => {
-                    const emptyMarkup = '<em style="color: #999;">' + escapeHtml(t('entry_editor_diff_empty', '(empty)')) + '</em>';
-                    const oldValue = change.old || emptyMarkup;
-                    const newValue = change.new || emptyMarkup;
+                    const oldValue = change.old || '<em style="color: #999;">(empty)</em>';
+                    const newValue = change.new || '<em style="color: #999;">(empty)</em>';
                     let bgColor1 = '#fff';
                     let bgColor2 = '#fff';
                     let borderColor1 = '#ddd';
@@ -1009,8 +969,14 @@
         `;
     }
     
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     window.restoreVersion = async function(collectionSlug, entryId, version) {
-        if (!(await BirklyFeedback.confirm(t('entry_editor_restore_confirm', 'Are you sure you want to restore this version? Current version will be saved as a new version.')))) {
+        if (!(await BirklyFeedback.confirm(eeT('entry_editor_js_confirm_restore_version', 'Are you sure you want to restore this version? Current version will be saved as a new version.')))) {
             return;
         }
         
@@ -1026,17 +992,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
-                BirklyFeedback.toast(t('entry_editor_restore_success', 'Version restored successfully. Reloading page...'), 'success')
+                BirklyFeedback.toast(eeT('entry_editor_js_version_restored_reload', 'Version restored successfully. Reloading page...'), 'success')
                 window.location.reload();
             } else {
-                BirklyFeedback.toast(t('entry_editor_restore_error', 'Error restoring version: {message}', {
-                    message: data.message || t('entry_editor_unknown_error', 'Unknown error')
-                }), 'error');
+                BirklyFeedback.toast(eeT('entry_editor_js_err_restore_version', 'Error restoring version: {message}', { message: data.message || eeT('error_unknown', 'Unknown error') }), 'error');
             }
         })
         .catch(error => {
             console.error('Restore error:', error);
-            BirklyFeedback.toast(t('entry_editor_restore_error', 'Error restoring version: {message}', { message: error.message }), 'error')
+            BirklyFeedback.toast(eeT('entry_editor_js_err_restore_version', 'Error restoring version: {message}', { message: error.message }), 'error')
         });
     }
 
@@ -1264,7 +1228,7 @@
             try {
                 await executeEntrySave(form, 'published');
             } catch (err) {
-                showEntrySavedToast(err.message || t('entry_editor_publish_failed', 'Publish failed'), 'error');
+                showEntrySavedToast(err.message || 'Publish failed', 'error');
             } finally {
                 releaseSaveLock();
             }
@@ -1662,20 +1626,18 @@
                     }
                 } else if (data && data.status === 'error') {
                     if (!applyFieldErrors(data.field_errors)) {
-                        BirklyFeedback.toast(t('entry_editor_save_error_prefix', 'Error: {message}', {
-                            message: data.message || raw || t('entry_editor_unknown_error', 'Unknown error')
-                        }), 'error');
+                        BirklyFeedback.toast(eeT('feedback_error_prefix', 'Error:') + ' ' + (data.message || raw || eeT('error_unknown', 'Unknown error')), 'error');
                     }
                 } else if (!response.ok) {
                     // HTTP error but no valid JSON
                     throw new Error((data && data.message) || (raw || ('HTTP ' + response.status + ' ' + response.statusText)));
                 } else {
                     // Unexpected response format
-                    BirklyFeedback.toast(t('entry_editor_unexpected_response', 'Unexpected response format'), 'error')
+                    BirklyFeedback.toast(eeT('feedback_error_prefix', 'Error:') + ' ' + eeT('entry_editor_js_err_unexpected_response', 'Unexpected response format'), 'error')
                 }
             } catch (error) {
                 console.error('Error saving entry:', error);
-                BirklyFeedback.toast(t('entry_editor_save_entry_error', 'Error saving entry: {message}', { message: error.message }), 'error')
+                BirklyFeedback.toast(eeT('entry_editor_js_err_save_entry', 'Error saving entry: {message}', { message: error.message }), 'error')
             }
     }
 

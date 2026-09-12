@@ -22,14 +22,8 @@ $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 require_once $root . '/core/demo_starter_templates.php';
 $starterCards = [
-    'marsk' => [
-        'label' => __('admin.onboarding_starter_marsk_label'),
-        'hint' => __('admin.onboarding_starter_marsk_hint'),
-    ],
-    'blank' => [
-        'label' => __('admin.onboarding_starter_blank_label'),
-        'hint' => __('admin.onboarding_starter_blank_hint'),
-    ],
+    'marsk' => ['label' => __('admin.onboarding_starter_marsk_label'), 'hint' => __('admin.onboarding_starter_marsk_hint')],
+    'blank' => ['label' => __('admin.onboarding_starter_blank_label'), 'hint' => __('admin.onboarding_starter_blank_hint')],
 ];
 $localCatalog = birkly_demo_starter_catalog();
 ?>
@@ -48,7 +42,7 @@ $localCatalog = birkly_demo_starter_catalog();
             <ol class="progress-steps" id="progress-steps" aria-label="<?= __('admin.setup_progress') ?>">
                 <li class="progress-step" data-step="1"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.welcome') ?></span></li>
                 <li class="progress-step" data-step="2"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.project_info') ?></span></li>
-                <li class="progress-step" data-step="3"><span class="progress-step-dot"></span><span class="progress-step-label"><?= __('admin.onboarding_starter_step_label') ?></span></li>
+                <li class="progress-step" data-step="3"><span class="progress-step-dot"></span><span class="progress-step-label">Starters</span></li>
             </ol>
         </div>
 
@@ -89,10 +83,10 @@ $localCatalog = birkly_demo_starter_catalog();
             <div class="onboarding-content">
                 <div class="welcome-header u-center-col u-stack-2">
                     <h1><?= __('admin.welcome_to_birkly_exclamation') ?></h1>
-                    <p class="welcome-subtitle"><?= htmlspecialchars(__('admin.onboarding_welcome_subtitle'), ENT_QUOTES, 'UTF-8') ?></p>
+                    <p class="welcome-subtitle"><?= __('admin.onboarding_welcome_subtitle') ?></p>
                 </div>
                 <div class="install-context-card" id="install-context-card">
-                    <p id="install-context-body"><?= htmlspecialchars(__('admin.onboarding_loading'), ENT_QUOTES, 'UTF-8') ?></p>
+                    <p id="install-context-body">Loading…</p>
                 </div>
                 <div class="onboarding-actions onboarding-actions--split">
                     <button type="button" class="btn btn-ghost" data-onboarding-action="skip"><?= __('admin.skip_setup') ?></button>
@@ -129,8 +123,8 @@ $localCatalog = birkly_demo_starter_catalog();
         <div class="onboarding-step" id="step-starter-templates" data-step="3" hidden>
             <div class="onboarding-content">
                 <div class="step-header">
-                    <h2 class="step-title"><?= htmlspecialchars(__('admin.onboarding_choose_starter_title'), ENT_QUOTES, 'UTF-8') ?></h2>
-                    <p class="step-subtitle"><?= htmlspecialchars(__('admin.onboarding_choose_starter_subtitle'), ENT_QUOTES, 'UTF-8') ?></p>
+                    <h2 class="step-title"><?= __('admin.onboarding_choose_template_title') ?></h2>
+                    <p class="step-subtitle"><?= __('admin.onboarding_choose_template_subtitle') ?></p>
                     <p id="starter-availability-note" class="step-subtitle" style="margin-top:0.5rem;" hidden></p>
                 </div>
                 <div class="use-case-grid starter-template-grid">
@@ -149,9 +143,9 @@ $localCatalog = birkly_demo_starter_catalog();
                             <strong><?= htmlspecialchars($card['label']) ?></strong>
                             <span><?= htmlspecialchars($card['hint']) ?></span>
                             <?php if ($starterId !== 'blank' && $locallyEnabled): ?>
-                                <em class="starter-coming-soon" data-starter-status><?= htmlspecialchars(__('admin.onboarding_starter_checking'), ENT_QUOTES, 'UTF-8') ?></em>
+                                <em class="starter-coming-soon" data-starter-status>Checking…</em>
                             <?php elseif ($starterId !== 'blank'): ?>
-                                <em class="starter-coming-soon" data-starter-status><?= htmlspecialchars(__('admin.marketplace_coming_soon'), ENT_QUOTES, 'UTF-8') ?></em>
+                                <em class="starter-coming-soon" data-starter-status>Coming soon</em>
                             <?php endif; ?>
                         </button>
                     <?php endforeach; ?>
@@ -159,7 +153,7 @@ $localCatalog = birkly_demo_starter_catalog();
                 <div class="onboarding-actions onboarding-actions--split">
                     <button type="button" class="btn btn-secondary" data-onboarding-action="prev"><?= __('admin.back') ?></button>
                     <div class="onboarding-actions-right">
-                        <button type="button" class="btn btn-ghost" data-onboarding-action="skip-starter"><?= htmlspecialchars(__('admin.onboarding_starter_skip'), ENT_QUOTES, 'UTF-8') ?></button>
+                        <button type="button" class="btn btn-ghost" data-onboarding-action="skip-starter">Skip</button>
                         <button type="button" class="btn btn-primary" data-onboarding-action="apply-starter" id="starter-continue" disabled><?= __('admin.continue') ?></button>
                     </div>
                 </div>

@@ -44,7 +44,7 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
                 <div class="card card--sunken" id="onboarding-complete-demo-card" hidden>
                     <div class="card-body u-stack-2">
                         <h3>View demo website</h3>
-                        <p class="u-text-sm u-fg-secondary">Open the starter template site that was installed with your CMS.</p>
+                        <p class="u-text-sm u-fg-secondary"><?= __('admin.dashboard_starter_site_help') ?></p>
                         <a href="#" id="onboarding-complete-demo-link" class="btn btn-secondary btn-sm u-self-start u-mt-auto" target="_blank" rel="noopener">Open demo site</a>
                     </div>
                 </div>
@@ -85,7 +85,7 @@ $isInvitedUser = !empty($onboardingData['invited_user']);
             <button type="button" class="modal-close" id="dashboard-customize-close" aria-label="Close">×</button>
         </div>
         <div class="modal-body">
-            <p class="modal-intro-text">Drag widgets to reorder them and use the checkboxes to show or hide widgets on your dashboard.</p>
+            <p class="modal-intro-text"><?= __('admin.dashboard_customize_intro') ?></p>
             <div class="main-actions-bar">
                 <div class="main-actions-right">
                     <button type="button" class="btn btn-ghost btn-sm" id="dashboard-reset-layout-btn">Reset to defaults</button>

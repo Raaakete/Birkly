@@ -6,18 +6,6 @@
 (function() {
     'use strict';
 
-    function t(key, fallback, params) {
-        let text = (typeof Birkly !== 'undefined' && Birkly.i18n)
-            ? Birkly.i18n.t('admin.' + key, fallback || key)
-            : (fallback || key);
-        if (params && typeof params === 'object') {
-            Object.keys(params).forEach(function (name) {
-                text = text.split('{' + name + '}').join(String(params[name]));
-            });
-        }
-        return text;
-    }
-
     let csrfToken = '';
     let initialized = false;
     let isEditMode = false;
@@ -34,6 +22,13 @@
             return Birkly.url(path);
         }
         return path;
+    }
+
+    function aiT(key, fallback) {
+        if (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function') {
+            return Birkly.i18n.t('admin.' + key, fallback);
+        }
+        return fallback != null ? fallback : key;
     }
 
     function isAiIntegrationsContext() {
@@ -182,15 +177,22 @@
         });
 
         if (unique.length === 0) {
-            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>' + escapeHtml(t('ai_conn_empty_title', 'No assistant connected')) + '</strong></p><p>' + t('ai_conn_empty_body', 'Click <em>Quick connect</em> to add your AI provider and API key for in-admin chat.') + '</p></div>';
+            const emptyTitle = escapeHtml(aiT('ai_conn_empty_assistant_title', 'No assistant connected'));
+            const emptyBody = escapeHtml(aiT('ai_conn_empty_assistant_body', 'Click Quick connect to add your AI provider and API key for in-admin chat.'));
+            list.innerHTML = '<div class="empty-state empty-state-friendly"><p><strong>' + emptyTitle + '</strong></p><p>' + emptyBody + '</p></div>';
             return;
         }
+
+        const activeLabel = escapeHtml(aiT('webhook_active', 'Active'));
+        const inactiveLabel = escapeHtml(aiT('webhook_inactive', 'Inactive'));
+        const editLabel = escapeHtml(aiT('edit', 'Edit'));
+        const deleteLabel = escapeHtml(aiT('delete', 'Delete'));
 
         list.innerHTML = unique.map(conn => `
             <div class="ai-connection-entry" data-connection-id="${escapeHtml(conn.id)}">
                 <div class="ai-connection-entry-header">
                     <strong>${escapeHtml(conn.name || conn.provider)}</strong>
-                    <span class="mcp-endpoint-status ${conn.status === 'active' ? 'active' : 'inactive'}">${conn.status === 'active' ? escapeHtml(t('ai_conn_status_active', 'Active')) : escapeHtml(t('ai_conn_status_inactive', 'Inactive'))}</span>
+                    <span class="mcp-endpoint-status ${conn.status === 'active' ? 'active' : 'inactive'}">${conn.status === 'active' ? activeLabel : inactiveLabel}</span>
                 </div>
                 <div class="ai-connection-entry-meta">
                     <span class="connection-provider">${escapeHtml(conn.provider)}</span>
@@ -198,8 +200,8 @@
                     ${conn.model ? `<span class="connection-model">${escapeHtml(conn.model)}</span>` : ''}
                 </div>
                 <div class="ai-connection-entry-actions">
-                    <button type="button" class="btn btn-sm btn-secondary" data-edit-connection="${escapeHtml(conn.id)}">${escapeHtml(t('ai_conn_btn_edit', 'Edit'))}</button>
-                    <button type="button" class="btn btn-sm btn-danger" data-delete-connection="${escapeHtml(conn.id)}">${escapeHtml(t('ai_conn_btn_delete', 'Delete'))}</button>
+                    <button type="button" class="btn btn-sm btn-secondary" data-edit-connection="${escapeHtml(conn.id)}">${editLabel}</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-delete-connection="${escapeHtml(conn.id)}">${deleteLabel}</button>
                 </div>
             </div>
         `).join('');
@@ -216,7 +218,7 @@
 
         const title = document.getElementById('connection-modal-title');
         const intro = document.getElementById('assistant-modal-intro');
-        if (title) title.textContent = t('ai_conn_modal_quick_connect', 'Quick connect assistant');
+        if (title) title.textContent = aiT('ai_conn_modal_quick_connect', 'Quick connect assistant');
         if (intro) intro.style.display = 'block';
 
         modal.style.display = 'flex';
@@ -290,7 +292,7 @@
         if (wizardStep === 1) {
             const provider = document.getElementById('connection-provider')?.value;
             if (!provider) {
-                showWizardError(t('ai_conn_err_select_provider', 'Please select a provider.'));
+                showWizardError(aiT('ai_conn_js_select_provider', 'Please select a provider.'));
                 return;
             }
             updateProviderFields();
@@ -305,19 +307,19 @@
             const apiUrl = document.getElementById('connection-api-url')?.value || '';
 
             if (provider === 'custom' && !apiUrl) {
-                showWizardError(t('ai_conn_err_api_url_required', 'API URL is required for custom providers.'));
+                showWizardError(aiT('ai_conn_js_api_url_required', 'API URL is required for custom providers.'));
                 return;
             }
             if (provider !== 'ollama' && !apiKey) {
-                showWizardError(t('ai_conn_err_api_key_required_detail', 'API key is required. Consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access — get a key from your provider\'s developer console.'));
+                showWizardError(aiT('ai_conn_js_api_key_required_wizard', 'API key is required. Consumer subscriptions (ChatGPT Plus, Claude Pro) do not include API access — get a key from your provider\'s developer console.'));
                 return;
             }
             if (provider !== 'ollama' && !connectionTestPassed) {
-                showWizardError(t('ai_conn_err_test_before_continue', 'Please test the connection before continuing, or fix any errors shown.'));
+                showWizardError(aiT('ai_conn_js_test_before_continue', 'Please test the connection before continuing, or fix any errors shown.'));
                 return;
             }
             if (provider === 'ollama' && !connectionTestPassed) {
-                showWizardError(t('ai_conn_err_test_ollama', 'Please test that Birkly can reach your Ollama server before continuing.'));
+                showWizardError(aiT('ai_conn_js_ollama_test_required', 'Please test that Birkly can reach your Ollama server before continuing.'));
                 return;
             }
 
@@ -384,7 +386,7 @@
         if (list) {
             list.innerHTML = '';
             list.classList.add('is-empty');
-            list.textContent = t('ai_conn_models_load_hint', 'Load models after selecting a provider.');
+            list.textContent = aiT('ai_conn_js_load_models_provider', 'Load models after selecting a provider.');
         }
         setModelPickerStatus('');
     }
@@ -433,8 +435,8 @@
             list.classList.add('is-empty');
             list.innerHTML = '';
             list.textContent = models && models.length
-                ? t('ai_conn_models_no_match', 'No models match your search.')
-                : t('ai_conn_models_not_loaded', 'No models loaded yet.');
+                ? aiT('ai_conn_js_no_models_search', 'No models match your search.')
+                : aiT('ai_conn_js_no_models_yet', 'No models loaded yet.');
             return;
         }
 
@@ -444,7 +446,7 @@
             const name = escapeHtml(model.name || model.id || '');
             const description = escapeHtml(model.description || '');
             const context = model.context_length
-                ? '<span class="ai-model-picker-option-meta">' + Number(model.context_length).toLocaleString() + ' ' + t('ai_conn_tokens_label', 'tokens') + '</span>'
+                ? '<span class="ai-model-picker-option-meta">' + Number(model.context_length).toLocaleString() + ' tokens</span>'
                 : '';
             const meta = description
                 ? '<span class="ai-model-picker-option-meta">' + description + '</span>'
@@ -481,21 +483,19 @@
 
         updateModelPickerVisibility(provider);
         if (provider === 'custom') {
-            setModelPickerStatus(t('ai_conn_models_custom_hint', 'Enter the model ID required by your endpoint.'));
+            setModelPickerStatus(aiT('ai_conn_js_enter_model_id', 'Enter the model ID required by your endpoint.'));
             return null;
         }
 
         if (!canFetchModelsForProvider(provider)) {
-            setModelPickerStatus(t('ai_conn_models_enter_api_key', 'Enter your API key to load models from {provider}.', {
-                provider: (providersCache?.[provider]?.name || provider)
-            }));
+            setModelPickerStatus(aiT('ai_conn_js_enter_api_key_load_models', 'Enter your API key to load models from %s.').replace('%s', (providersCache?.[provider]?.name || provider)));
             renderModelPickerList([], '');
             return null;
         }
 
         if (modelPickerLoading && !options.force) return null;
         modelPickerLoading = true;
-        setModelPickerStatus(t('ai_conn_models_loading', 'Loading models…'), 'loading');
+        setModelPickerStatus(aiT('ai_conn_js_loading_models', 'Loading models…'), 'loading');
 
         const apiKey = document.getElementById('connection-api-key')?.value || '';
         const apiUrl = document.getElementById('connection-api-url')?.value || '';
@@ -513,14 +513,14 @@
             });
             const result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || t('ai_conn_models_load_failed', 'Failed to load models'));
+                throw new Error(result.message || aiT('ai_conn_js_failed_load_models', 'Failed to load models'));
             }
 
             providerModelsCache = result.data?.models || [];
             const defaultModel = result.data?.default_model || '';
             const search = document.getElementById('connection-model-search');
             renderModelPickerList(providerModelsCache, search ? search.value : '');
-            setModelPickerStatus(result.message || t('ai_conn_models_loaded_count', '{count} models loaded', { count: String(providerModelsCache.length) }));
+            setModelPickerStatus(result.message || (providerModelsCache.length + ' models loaded'));
 
             if (options.autoSelectDefault && defaultModel && !getSelectedModel()) {
                 const hasDefault = providerModelsCache.some(function(m) { return m.id === defaultModel; });
@@ -531,7 +531,7 @@
         } catch (error) {
             providerModelsCache = [];
             renderModelPickerList([], '');
-            setModelPickerStatus(error.message || t('ai_conn_models_could_not_load', 'Could not load models'), 'error');
+            setModelPickerStatus(error.message || aiT('ai_conn_js_could_not_load_models', 'Could not load models'), 'error');
             return null;
         } finally {
             modelPickerLoading = false;
@@ -547,14 +547,14 @@
         const testBtn = document.getElementById('test-connection-btn');
 
         if (!provider) {
-            showWizardError(t('ai_conn_err_select_provider_first', 'Select a provider first.'));
+            showWizardError(aiT('ai_conn_js_select_provider_first', 'Select a provider first.'));
             return;
         }
 
         if (provider === 'ollama') {
             if (testBtn) testBtn.disabled = true;
             if (statusEl) {
-                statusEl.textContent = t('ai_conn_testing', 'Testing…');
+                statusEl.textContent = aiT('ai_conn_js_testing', 'Testing…');
                 statusEl.className = 'test-connection-status pending';
             }
 
@@ -574,7 +574,7 @@
                 if (result.status === 'ok' && result.data?.valid) {
                     connectionTestPassed = true;
                     if (statusEl) {
-                        statusEl.textContent = result.data.message || t('ai_conn_test_ollama_ok', 'Ollama reachable');
+                        statusEl.textContent = result.data.message || aiT('ai_conn_js_ollama_reachable', 'Ollama reachable');
                         statusEl.className = 'test-connection-status success';
                     }
                     fetchProviderModels({ force: true, autoSelectDefault: !getSelectedModel() }).catch(function(err) {
@@ -582,7 +582,7 @@
                     });
                 } else {
                     connectionTestPassed = false;
-                    const providerErr = result.data?.provider_error || result.message || t('ai_conn_test_ollama_fail', 'Cannot reach Ollama');
+                    const providerErr = result.data?.provider_error || result.message || 'Cannot reach Ollama';
                     const msg = formatSaveError(providerErr);
                     if (statusEl) {
                         statusEl.textContent = msg;
@@ -592,7 +592,7 @@
             } catch (error) {
                 connectionTestPassed = false;
                 if (statusEl) {
-                    statusEl.textContent = t('ai_conn_test_network_error', 'Network error — could not reach Birkly server.');
+                    statusEl.textContent = aiT('ai_conn_js_network_error', 'Network error — could not reach Birkly server.');
                     statusEl.className = 'test-connection-status error';
                 }
             } finally {
@@ -602,13 +602,13 @@
         }
 
         if (!apiKey) {
-            showWizardError(t('ai_conn_err_enter_api_key_test', 'Enter an API key before testing.'));
+            showWizardError(aiT('ai_conn_js_enter_api_key_test', 'Enter an API key before testing.'));
             return;
         }
 
         if (testBtn) testBtn.disabled = true;
         if (statusEl) {
-            statusEl.textContent = t('ai_conn_testing', 'Testing…');
+            statusEl.textContent = aiT('ai_conn_js_testing', 'Testing…');
             statusEl.className = 'test-connection-status pending';
         }
 
@@ -630,7 +630,7 @@
             if (result.status === 'ok' && result.data?.valid) {
                 connectionTestPassed = true;
                 if (statusEl) {
-                    statusEl.textContent = result.data.message || t('ai_conn_test_success', 'Connection successful');
+                    statusEl.textContent = result.data.message || aiT('ai_conn_js_connection_success', 'Connection successful');
                     statusEl.className = 'test-connection-status success';
                 }
                 fetchProviderModels({ force: true, autoSelectDefault: !getSelectedModel() }).catch(function(err) {
@@ -638,7 +638,7 @@
                 });
             } else {
                     connectionTestPassed = false;
-                    const providerErr = result.message || result.data?.message || result.data?.provider_error || t('ai_conn_test_failed', 'Connection test failed');
+                    const providerErr = result.message || result.data?.message || result.data?.provider_error || 'Connection test failed';
                     const msg = formatSaveError(providerErr);
                 if (statusEl) {
                     statusEl.textContent = msg;
@@ -648,7 +648,7 @@
         } catch (error) {
             connectionTestPassed = false;
             if (statusEl) {
-                statusEl.textContent = t('ai_conn_test_network_error', 'Network error — could not reach Birkly server.');
+                statusEl.textContent = aiT('ai_conn_js_network_error', 'Network error — could not reach Birkly server.');
                 statusEl.className = 'test-connection-status error';
             }
         } finally {
@@ -662,11 +662,11 @@
         if (!title || !submitBtn) return;
 
         if (isEditMode) {
-            title.textContent = t('ai_conn_modal_edit', 'Edit assistant connection');
-            submitBtn.textContent = t('ai_conn_btn_save_changes', 'Save Changes');
+            title.textContent = aiT('ai_conn_modal_edit_title', 'Edit assistant connection');
+            submitBtn.textContent = aiT('save_changes', 'Save changes');
         } else {
-            title.textContent = t('ai_conn_modal_quick_connect', 'Quick connect assistant');
-            submitBtn.textContent = t('ai_conn_btn_connect', 'Connect');
+            title.textContent = aiT('ai_conn_modal_quick_connect', 'Quick connect assistant');
+            submitBtn.textContent = aiT('connect', 'Connect');
         }
     }
 
@@ -681,7 +681,7 @@
                 if (select) {
                     const outbound = Object.entries(providersCache)
                         .filter(([key]) => key !== 'mcp');
-                    select.innerHTML = '<option value="">' + escapeHtml(t('ai_conn_select_provider', 'Select a provider...')) + '</option>' +
+                    select.innerHTML = '<option value="">' + escapeHtml(aiT('ai_conn_select_provider', 'Select a provider…')) + '</option>' +
                         outbound.map(([key, provider]) =>
                             `<option value="${key}">${escapeHtml(provider.name)}</option>`
                         ).join('');
@@ -699,10 +699,10 @@
         if (!select) return;
 
         const legacyRoles = [
-            { id: 'viewer', name: t('ai_conn_role_viewer', 'Viewer'), description: t('ai_conn_role_viewer_desc', 'Read-only') },
-            { id: 'author', name: t('ai_conn_role_author', 'Author'), description: t('ai_conn_role_author_desc', 'Create content') },
-            { id: 'editor', name: t('ai_conn_role_editor', 'Editor'), description: t('ai_conn_role_editor_desc', 'Create & Edit') },
-            { id: 'admin', name: t('ai_conn_role_admin', 'Admin'), description: t('ai_conn_role_admin_desc', 'Full access') }
+            { id: 'viewer', name: 'Viewer', description: 'Read-only' },
+            { id: 'author', name: 'Author', description: 'Create content' },
+            { id: 'editor', name: 'Editor', description: 'Create & Edit' },
+            { id: 'admin', name: 'Admin', description: 'Full access' }
         ];
 
         try {
@@ -752,8 +752,8 @@
             if (provider !== 'custom') {
                 setModelPickerStatus(
                     canFetchModelsWithoutKey(provider)
-                        ? t('ai_conn_models_loading', 'Loading models…')
-                        : t('ai_conn_models_test_to_load', 'Enter your API key, then test the connection to load models.')
+                        ? 'Loading models…'
+                        : aiT('ai_conn_js_enter_api_key_test_load_models', 'Enter your API key, then test the connection to load models.')
                 );
             }
         }
@@ -775,14 +775,14 @@
                             </label>
                         `).join('');
                     } else {
-                        usersList.innerHTML = '<div class="empty-state"><p>' + escapeHtml(t('ai_conn_no_users', 'No users found')) + '</p></div>';
+                        usersList.innerHTML = '<div class="empty-state"><p>No users found</p></div>';
                     }
                 }
             }
         } catch (error) {
             console.error('Error loading users:', error);
             const usersList = document.getElementById('allowed-users-list');
-            if (usersList) usersList.innerHTML = '<div class="error">' + escapeHtml(t('ai_conn_users_load_error', 'Error loading users')) + '</div>';
+            if (usersList) usersList.innerHTML = '<div class="error">Error loading users</div>';
         }
     }
 
@@ -824,7 +824,7 @@
                     }
                 }
                 if (apiUrlHint && provider === 'ollama') {
-                    apiUrlHint.textContent = t('ai_conn_ollama_url_hint', 'Local Ollama URL (default: http://localhost:11434/api/chat)');
+                    apiUrlHint.textContent = aiT('ai_conn_js_ollama_api_url_hint', 'Local Ollama URL (default: http://localhost:11434/api/chat)');
                 }
             } else {
                 apiUrlGroup.style.display = 'none';
@@ -866,19 +866,19 @@
             const apiUrl = formData.get('api_url') || '';
 
             if (!provider) {
-                showWizardError(t('ai_conn_err_select_provider', 'Please select a provider.'));
+                showWizardError(aiT('ai_conn_js_select_provider', 'Please select a provider.'));
                 return;
             }
             if (provider === 'custom' && !apiUrl) {
-                showWizardError(t('ai_conn_err_api_url_required', 'API URL is required for custom providers.'));
+                showWizardError(aiT('ai_conn_js_api_url_required', 'API URL is required for custom providers.'));
                 return;
             }
             if (provider !== 'ollama' && !apiKey) {
-                showWizardError(t('ai_conn_err_api_key_required', 'API key is required.'));
+                showWizardError(aiT('ai_conn_js_api_key_required', 'API key is required.'));
                 return;
             }
             if (!connectionTestPassed) {
-                showWizardError(t('ai_conn_err_test_before_save', 'Please test the connection before saving.'));
+                showWizardError(aiT('ai_conn_js_test_before_save', 'Please test the connection before saving.'));
                 return;
             }
         }
@@ -944,7 +944,7 @@
                 const newId = result.data?.connection?.id || connectionId;
                 hideAddConnectionModal();
                 await loadConnections();
-                showSuccess(connectionId ? t('ai_conn_updated_success', 'AI connection updated successfully') : t('ai_conn_created_success', 'AI connection created successfully'));
+                showSuccess(connectionId ? aiT('ai_conn_js_updated_success', 'AI connection updated successfully') : aiT('ai_conn_js_created_success', 'AI connection created successfully'));
                 window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
                     detail: {
                         action: connectionId ? 'update' : 'create',
@@ -954,45 +954,45 @@
                 }));
             } else {
                 const providerErr = result?.data?.provider_error;
-                showError(formatSaveError(providerErr || result?.message || t('ai_conn_unknown_error', 'Unknown error')));
+                showError(formatSaveError(providerErr || result?.message || aiT('ai_conn_js_unknown_error', 'Unknown error')));
             }
         } catch (error) {
             console.error('Error saving connection:', error);
-            showError(t('ai_conn_save_network_error', 'Could not reach the server. Check your network connection and try again.'));
+            showError(aiT('ai_conn_js_save_network_error', 'Could not reach the server. Check your network connection and try again.'));
         }
     }
 
     function formatSaveError(message) {
         const m = String(message);
         if (m.includes('Invalid API key') || m.includes('HTTP 401') || m.includes('HTTP 403')) {
-            return t('ai_conn_err_invalid_api_key', 'Invalid API key. Make sure you copied the key from your provider\'s developer console — ChatGPT Plus and Claude Pro subscriptions do not include API access.');
+            return aiT('ai_conn_js_err_invalid_api_key', 'Invalid API key. Make sure you copied the key from your provider\'s developer console — ChatGPT Plus and Claude Pro subscriptions do not include API access.');
         }
         if (m.includes('rate limit') || m.includes('HTTP 429')) {
-            return t('ai_conn_err_rate_limit', 'Rate limited by the provider. Wait a moment and try again, or check your API plan limits.');
+            return aiT('ai_conn_js_err_rate_limit', 'Rate limited by the provider. Wait a moment and try again, or check your API plan limits.');
         }
         if (m.includes('HTTP 404') || m.includes('not found')) {
-            return t('ai_conn_err_model_not_found', 'Provider rejected the request — the model may be retired. Try another model (e.g. gemini-2.5-flash for Gemini). Details: {details}', { details: m });
+            return aiT('ai_conn_js_err_model_retired', 'Provider rejected the request — the model may be retired. Try another model (e.g. gemini-2.5-flash for Gemini). Details: %s').replace('%s', m);
         }
         if (m.includes('402') || m.toLowerCase().includes('insufficient') || m.toLowerCase().includes('credit')) {
-            return t('ai_conn_err_credits', 'API key looks valid, but the provider account may need credits before chat works.');
+            return aiT('ai_conn_js_err_insufficient_credits', 'API key looks valid, but the provider account may need credits before chat works.');
         }
         if (m.includes('Unsupported provider')) {
-            return t('ai_conn_err_unsupported_provider', 'This provider is not supported for outbound connections.');
+            return aiT('ai_conn_js_err_unsupported_provider', 'This provider is not supported for outbound connections.');
         }
         if (m.includes('already exists')) {
-            return t('ai_conn_err_already_exists', 'You already have a connection for this provider. Edit the existing connection or delete it first.');
+            return aiT('ai_conn_js_err_already_exists', 'You already have a connection for this provider. Edit the existing connection or delete it first.');
         }
         if (m.includes('API key is required')) {
-            return t('ai_conn_err_api_key_portal', 'API key is required. Get one from your provider\'s developer portal (not from a consumer subscription).');
+            return aiT('ai_conn_js_err_api_key_required', 'API key is required. Get one from your provider\'s developer portal (not from a consumer subscription).');
         }
         if (m.includes('API URL is required')) {
-            return t('ai_conn_err_api_url_required', 'API URL is required for custom providers.');
+            return aiT('ai_conn_js_err_api_url_required', 'API URL is required for custom providers.');
         }
         if (m.includes('Cannot reach Ollama') || m.includes('Ollama returned')) {
-            return t('ai_conn_err_ollama_reach', 'Cannot reach Ollama. Ensure it is running and the URL is correct from the Birkly server (not just your browser).');
+            return aiT('ai_conn_js_err_ollama_unreachable', 'Cannot reach Ollama. Ensure it is running and the URL is correct from the Birkly server (not just your browser).');
         }
         if (m.includes('validation failed')) {
-            return m.replace('API key validation failed: ', t('ai_conn_test_failed_prefix', 'Connection test failed: '));
+            return m.replace('API key validation failed: ', aiT('ai_conn_js_err_validation_failed_prefix', 'Connection test failed: '));
         }
         return m;
     }
@@ -1003,7 +1003,7 @@
             const result = await response.json();
 
             if (result.status !== 'ok' || !result.data?.connection) {
-                showError(t('ai_conn_load_details_failed', 'Failed to load connection details'));
+                showError(aiT('ai_conn_js_load_connection_failed', 'Failed to load connection details'));
                 return;
             }
 
@@ -1019,7 +1019,7 @@
 
             const title = document.getElementById('connection-modal-title');
             const intro = document.getElementById('assistant-modal-intro');
-            if (title) title.textContent = t('ai_conn_modal_edit', 'Edit assistant connection');
+            if (title) title.textContent = aiT('ai_conn_modal_edit_title', 'Edit assistant connection');
             if (intro) intro.style.display = 'none';
 
             await loadProviders();
@@ -1070,13 +1070,13 @@
             modal.style.display = 'flex';
         } catch (error) {
             console.error('Error loading connection for edit:', error);
-            showError(t('ai_conn_load_details_error', 'Error loading connection details'));
+            showError(aiT('ai_conn_js_load_edit_error', 'Error loading connection details'));
         }
     }
 
     async function deleteConnection(connectionId) {
         if (!connectionId) return;
-        if (!(await BirklyFeedback.confirm(t('ai_conn_delete_confirm', 'Delete this assistant connection? This cannot be undone.')))) return;
+        if (!(await BirklyFeedback.confirm(aiT('ai_conn_js_delete_confirm', 'Delete this assistant connection? This cannot be undone.')))) return;
 
         try {
             csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || csrfToken;
@@ -1090,22 +1090,22 @@
             try {
                 result = await response.json();
             } catch (parseErr) {
-                showError(t('ai_conn_invalid_server_response', 'Server returned an invalid response. Check that you are logged in and try again.'));
+                showError(aiT('ai_conn_js_invalid_server_response', 'Server returned an invalid response. Check that you are logged in and try again.'));
                 return;
             }
 
             if (result.status === 'ok') {
-                showSuccess(t('ai_conn_deleted', 'Connection deleted'));
+                showSuccess(aiT('ai_conn_js_connection_deleted', 'Connection deleted'));
                 loadConnections();
                 window.dispatchEvent(new CustomEvent('birkly:ai-connection-changed', {
                     detail: { action: 'delete', id: connectionId }
                 }));
             } else {
-                showError(t('ai_conn_delete_failed', 'Failed to delete: {message}', { message: result.message || t('ai_conn_unknown_error', 'Unknown error') }));
+                showError(aiT('ai_conn_js_delete_failed', 'Failed to delete: %s').replace('%s', (result.message || aiT('ai_conn_js_unknown_error', 'Unknown error'))));
             }
         } catch (error) {
             console.error('Error deleting connection:', error);
-            showError(t('ai_conn_delete_network_error', 'Could not reach the server. Check your connection and try again.'));
+            showError(aiT('ai_conn_js_delete_network_error', 'Could not reach the server. Check your connection and try again.'));
         }
     }
 
@@ -1120,11 +1120,11 @@
     }
 
     function showError(message) {
-        BirklyFeedback.toast(t('ai_conn_toast_error', 'Error: {message}', { message: message }), 'error');
+        BirklyFeedback.toast(aiT('feedback_error_prefix', 'Error:') + ' ' + message, 'error')
     }
 
     function showSuccess(message) {
-        BirklyFeedback.toast(t('ai_conn_toast_success', 'Success: {message}', { message: message }), 'success');
+        BirklyFeedback.toast(aiT('feedback_success_prefix', 'Success:') + ' ' + message, 'success')
     }
 
     window.aiConnections = {

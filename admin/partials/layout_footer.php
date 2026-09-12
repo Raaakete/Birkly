@@ -49,6 +49,8 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <?php if (isset($page) && $page === 'media'): ?><script src="<?= htmlspecialchars(birkly_url('/admin/js/media-page.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script><?php endif; ?>
 
     <script<?= $__birklyScriptNonceAttr ?>>
+    const i18nOpenPage = <?= json_encode(__('admin.open_page'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nOpenPageNamed = <?= json_encode(__('admin.open_page_named'), JSON_UNESCAPED_UNICODE) ?>;
     // If user was redirected due to missing permission, show unified modal.
     (function() {
         try {
@@ -58,7 +60,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 const needed = params.get('needed') || '';
                 if (window.Birkly && window.Birkly.Utils && typeof window.Birkly.Utils.showPermissionDenied === 'function') {
                     window.Birkly.Utils.showPermissionDenied({
-                        action: from ? `Open ${from}` : 'Open page',
+                        action: from ? i18nOpenPageNamed.replace('{name}', from) : i18nOpenPage,
                         url: needed ? `Requires: ${needed}` : ''
                     });
                 }
@@ -76,12 +78,17 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     
     <!-- Logout functionality -->
     <script<?= $__birklyScriptNonceAttr ?>>
+    const i18nLogoutConfirm = <?= json_encode(__('admin.logout_confirm'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nLoggingOut = <?= json_encode(__('admin.logging_out'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nLogoutLabel = <?= json_encode(__('admin.logout'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nErrorLoggingOut = <?= json_encode(__('admin.error_logging_out'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nErrorLoggingOutRetry = <?= json_encode(__('admin.error_logging_out_retry'), JSON_UNESCAPED_UNICODE) ?>;
     document.addEventListener('DOMContentLoaded', function() {
         const logoutBtn = document.getElementById('logout-btn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function() {
-                if (confirm('Are you sure you want to logout?')) {
-                    logoutBtn.textContent = 'Logging out...';
+                if (confirm(i18nLogoutConfirm)) {
+                    logoutBtn.textContent = i18nLoggingOut;
                     logoutBtn.disabled = true;
                     
                     fetch(Birkly.url('/admin/logout.php'), {
@@ -96,15 +103,15 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                         if (data.status === 'ok') {
                             window.location.href = Birkly.url('/admin/login.php');
                         } else {
-                            alert('Error logging out: ' + data.message);
-                            logoutBtn.textContent = 'Logout';
+                            alert(i18nErrorLoggingOut + ' ' + data.message);
+                            logoutBtn.textContent = i18nLogoutLabel;
                             logoutBtn.disabled = false;
                         }
                     })
                     .catch(error => {
                         console.error('Logout error:', error);
-                        alert('Error logging out. Please try again.');
-                        logoutBtn.textContent = 'Logout';
+                        alert(i18nErrorLoggingOutRetry);
+                        logoutBtn.textContent = i18nLogoutLabel;
                         logoutBtn.disabled = false;
                     });
                 }
@@ -112,17 +119,6 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
         }
     });
     
-    const i18nNotifications = {
-        empty: <?= json_encode(__('admin.notifications_empty'), JSON_UNESCAPED_UNICODE) ?>,
-        loadFailed: <?= json_encode(__('admin.notifications_load_failed'), JSON_UNESCAPED_UNICODE) ?>,
-        unknownError: <?= json_encode(__('admin.notifications_unknown_error'), JSON_UNESCAPED_UNICODE) ?>,
-        justNow: <?= json_encode(__('admin.notif_time_just_now'), JSON_UNESCAPED_UNICODE) ?>,
-        minutesAgo: <?= json_encode(__('admin.notif_time_minutes_ago'), JSON_UNESCAPED_UNICODE) ?>,
-        hoursAgo: <?= json_encode(__('admin.notif_time_hours_ago'), JSON_UNESCAPED_UNICODE) ?>,
-        daysAgo: <?= json_encode(__('admin.notif_time_days_ago'), JSON_UNESCAPED_UNICODE) ?>,
-        ariaLabel: <?= json_encode(__('admin.notifications_aria_label'), JSON_UNESCAPED_UNICODE) ?>,
-    };
-
     // User menu lives in admin-topbar.php — legacy move only when topbar is absent.
     (function() {
         function moveBreadcrumbsToTopbar() {
@@ -198,7 +194,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 const searchBtn = document.createElement('button');
                 searchBtn.className = 'topbar-icon-btn';
                 searchBtn.type = 'button';
-                searchBtn.setAttribute('aria-label', <?= json_encode(__('admin.search'), JSON_UNESCAPED_UNICODE) ?>);
+                searchBtn.setAttribute('aria-label', 'Search');
                 searchBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>';
 
                 // Create wrapper for notifications button to position dropdown - Unified Dropdown System
@@ -209,7 +205,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 notificationsBtn.className = 'dropdown-trigger topbar-icon-btn notifications-btn';
                 notificationsBtn.type = 'button';
                 notificationsBtn.id = 'notifications-btn';
-                notificationsBtn.setAttribute('aria-label', i18nNotifications.ariaLabel);
+                notificationsBtn.setAttribute('aria-label', 'Notifications');
                 notificationsBtn.setAttribute('aria-expanded', 'false');
                 notificationsBtn.setAttribute('aria-haspopup', 'true');
                 notificationsBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 01-3.46 0"></path></svg><span class="notification-badge" id="notification-badge" style="display: none;">0</span>';
@@ -278,7 +274,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                     // Reload page to apply new language
                     window.location.reload();
                 } else {
-                    alert(i18nLangErrorPrefix + ' ' + (data.message || i18nNotifications.unknownError));
+                    alert(i18nLangErrorPrefix + ' ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
@@ -296,20 +292,25 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <!-- Notifications Dropdown (will be moved to notifications-wrapper by JS) - Unified Dropdown System -->
     <div class="dropdown-menu dropdown-menu-right notifications-dropdown" id="notifications-dropdown">
         <div class="notifications-header">
-            <h3><?= htmlspecialchars(__('admin.notifications')) ?></h3>
-            <button type="button" class="btn btn-ghost btn-sm mark-all-read-btn" id="mark-all-read-btn" hidden><?= htmlspecialchars(__('admin.notifications_mark_all_read')) ?></button>
+            <h3><?= htmlspecialchars(__('admin.notifications_title')) ?></h3>
+            <button type="button" class="btn btn-ghost btn-sm mark-all-read-btn" id="mark-all-read-btn" hidden><?= htmlspecialchars(__('admin.mark_all_as_read')) ?></button>
         </div>
         <div class="notifications-list" id="notifications-list">
             <div class="notifications-loading"><?= htmlspecialchars(__('admin.notifications_loading')) ?></div>
         </div>
         <div class="notifications-footer">
-            <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>"><?= htmlspecialchars(__('admin.notifications_view_all_activity')) ?></a>
+            <a href="<?= htmlspecialchars(birkly_admin_url('activity')) ?>"><?= htmlspecialchars(__('admin.view_all_activity')) ?></a>
         </div>
     </div>
     
     <!-- Notifications Functionality -->
     <script<?= $__birklyScriptNonceAttr ?>>
     (function() {
+        const i18nNotificationsEmpty = <?= json_encode(__('admin.notifications_empty'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nNotificationsLoadFailed = <?= json_encode(__('admin.notifications_load_failed'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nNotificationsLoadError = <?= json_encode(__('admin.notifications_load_error'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nErrorUnknown = <?= json_encode(__('admin.error_unknown'), JSON_UNESCAPED_UNICODE) ?>;
+        const i18nJustNow = <?= json_encode(__('admin.just_now'), JSON_UNESCAPED_UNICODE) ?>;
         let notifications = [];
         let unreadCount = 0;
         let pendingCount = 0;
@@ -345,12 +346,12 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                         markVisibleNotificationsSeen();
                     } else {
                         console.error('Failed to load notifications:', data.message);
-                        showError(i18nNotifications.loadFailed + ': ' + (data.message || i18nNotifications.unknownError));
+                        showError(i18nNotificationsLoadFailed + ' ' + (data.message || i18nErrorUnknown));
                     }
                 })
                 .catch(error => {
                     console.error('Notifications error:', error);
-                    showError(i18nNotifications.loadFailed + ': ' + error.message);
+                    showError(i18nNotificationsLoadError + ' ' + error.message);
                 });
         }
         
@@ -425,7 +426,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
             if (!notificationsList) return;
             
             if (notifications.length === 0) {
-                notificationsList.innerHTML = '<div class="notifications-empty">' + escapeHtml(i18nNotifications.empty) + '</div>';
+                notificationsList.innerHTML = '<div class="notifications-empty">' + escapeHtml(i18nNotificationsEmpty) + '</div>';
                 if (markAllReadBtn) markAllReadBtn.hidden = true;
                 return;
             }
@@ -499,10 +500,10 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
             
-            if (diffMins < 1) return i18nNotifications.justNow;
-            if (diffMins < 60) return i18nNotifications.minutesAgo.replace('{n}', String(diffMins));
-            if (diffHours < 24) return i18nNotifications.hoursAgo.replace('{n}', String(diffHours));
-            if (diffDays < 7) return i18nNotifications.daysAgo.replace('{n}', String(diffDays));
+            if (diffMins < 1) return i18nJustNow;
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
             return time.toLocaleDateString();
         }
         

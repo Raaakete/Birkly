@@ -37,10 +37,10 @@ function showMessage(message, type) {
     }, 5000);
 }
 
-function t(key, fallback, params) {
-    var text = (window.Birkly && window.Birkly.i18n)
-        ? window.Birkly.i18n.t('admin.' + key, fallback || key)
-        : (fallback || key);
+function stT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
     if (params && typeof params === 'object') {
         Object.keys(params).forEach(function (name) {
             text = text.split('{' + name + '}').join(String(params[name]));
@@ -84,7 +84,7 @@ function createPermissionsGrid(containerId, permissions = {}) {
 
         const heading = document.createElement('h4');
         heading.className = 'u-label';
-        heading.textContent = resource;
+        heading.textContent = stT('settings_js_perm_' + resource, resource);
         section.appendChild(heading);
 
         const checkboxesDiv = document.createElement('div');
@@ -106,7 +106,7 @@ function createPermissionsGrid(containerId, permissions = {}) {
             });
 
             const span = document.createElement('span');
-            span.textContent = action.charAt(0).toUpperCase() + action.slice(1);
+            span.textContent = stT('settings_js_perm_' + action, action.charAt(0).toUpperCase() + action.slice(1));
 
             label.appendChild(checkbox);
             label.appendChild(span);
@@ -197,7 +197,7 @@ function populatePluginAccessGrid(gridId, role) {
         ? role.plugin_access.deny
         : [];
     if (!activePluginsForRoles.length) {
-        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('settings_role_no_active_plugins', 'No active plugins')) + '</p>';
+        grid.innerHTML = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(stT('settings_js_no_active_plugins', 'No active plugins')) + '</p>';
         return;
     }
     grid.innerHTML = activePluginsForRoles.map(function (plugin) {
@@ -233,7 +233,7 @@ function openAddRoleModal() {
     const modal = document.getElementById('add-role-modal');
     if (!modal) {
         console.error('Add role modal not found');
-        showMessage(t('settings_role_add_modal_not_found', 'Role modal not found. Please refresh the page.'), 'error');
+        showMessage(stT('settings_js_role_modal_missing', 'Role modal not found. Please refresh the page.'), 'error');
         return;
     }
     modal.style.display = 'flex';
@@ -258,7 +258,7 @@ async function editRole(roleId) {
     const modal = document.getElementById('edit-role-modal');
     if (!modal) {
         console.error('Edit role modal not found');
-        showMessage(t('settings_role_edit_modal_not_found', 'Edit role modal not found. Please refresh the page.'), 'error');
+        showMessage(stT('settings_js_edit_role_modal_missing', 'Edit role modal not found. Please refresh the page.'), 'error');
         return;
     }
     
@@ -285,14 +285,12 @@ async function editRole(roleId) {
             populatePluginAccessGrid('edit-plugin-access-grid', role);
             
         } else {
-            showMessage(t('settings_role_load_failed', 'Error loading role: {message}', {
-                message: result.message || t('settings_role_unknown_error', 'Unknown error'),
-            }), 'error');
+            showMessage(stT('settings_js_err_loading_role', 'Error loading role:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
             closeEditRoleModal();
         }
     } catch (error) {
         console.error('Error loading role:', error);
-        showMessage(t('settings_role_load_failed', 'Error loading role: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_loading_role', 'Error loading role:') + ' ' + error.message, 'error');
         closeEditRoleModal();
     }
 }
@@ -309,7 +307,7 @@ async function updateRole() {
     const form = document.getElementById('edit-role-form');
     if (!form) {
         console.error('Edit form not found');
-        showMessage(t('settings_role_form_not_found', 'Error: Form not found'), 'error');
+        showMessage(stT('settings_js_err_form_missing', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -318,7 +316,7 @@ async function updateRole() {
     const descriptionInput = form.querySelector('#edit-role-description');
     
     if (!nameInput || !nameInput.value.trim()) {
-        showMessage(t('settings_role_name_required', 'Error: Role name is required'), 'error');
+        showMessage(stT('settings_js_err_role_name_required', 'Error: Role name is required'), 'error');
         nameInput?.focus();
         return;
     }
@@ -358,17 +356,15 @@ async function updateRole() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_role_updated_success', 'Role updated successfully!'), 'success');
+            showMessage(stT('settings_js_role_updated', 'Role updated successfully!'), 'success');
             closeEditRoleModal();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage(t('settings_role_update_failed', 'Error: {message}', {
-                message: result.message || t('settings_role_unknown_error', 'Unknown error'),
-            }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error updating role:', error);
-        showMessage(t('settings_role_updating_failed', 'Error updating role: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_updating_role', 'Error updating role:') + ' ' + error.message, 'error');
     }
 }
 
@@ -376,7 +372,7 @@ async function createRole() {
     const form = document.getElementById('add-role-form');
     if (!form) {
         console.error('Form not found');
-        showMessage(t('settings_role_form_not_found', 'Error: Form not found'), 'error');
+        showMessage(stT('settings_js_err_form_missing', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -385,7 +381,7 @@ async function createRole() {
     const descriptionInput = form.querySelector('#role-description');
     
     if (!nameInput || !nameInput.value.trim()) {
-        showMessage(t('settings_role_name_required', 'Error: Role name is required'), 'error');
+        showMessage(stT('settings_js_err_role_name_required', 'Error: Role name is required'), 'error');
         nameInput?.focus();
         return;
     }
@@ -428,22 +424,20 @@ async function createRole() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_role_created_success', 'Role created successfully!'), 'success');
+            showMessage(stT('settings_js_role_created', 'Role created successfully!'), 'success');
             closeAddRoleModal();
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage(t('settings_role_create_failed', 'Error: {message}', {
-                message: result.message || t('settings_role_unknown_error', 'Unknown error'),
-            }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error creating role:', error);
-        showMessage(t('settings_role_creating_failed', 'Error creating role: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_creating_role', 'Error creating role:') + ' ' + error.message, 'error');
     }
 }
 
 async function deleteRole(roleId) {
-    if (!(await BirklyFeedback.confirm(t('settings_role_delete_confirm', 'Are you sure you want to delete this role? This action cannot be undone.')))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_delete_role', 'Are you sure you want to delete this role? This action cannot be undone.')))) {
         return;
     }
     
@@ -461,14 +455,14 @@ async function deleteRole(roleId) {
     .then(response => response.json())
     .then(result => {
         if (result.status === 'ok') {
-            showMessage(t('settings_role_deleted_success', 'Role deleted successfully!'), 'success');
+            showMessage(stT('settings_js_role_deleted', 'Role deleted successfully!'), 'success');
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage(t('settings_role_delete_failed', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     })
     .catch(error => {
-        showMessage(t('settings_role_deleting_failed', 'Error deleting role: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_deleting_role', 'Error deleting role:') + ' ' + error.message, 'error');
     });
 }
 
@@ -770,7 +764,7 @@ window.migrateStorage = migrateStorage;
 
         bar.classList.remove('is-hidden');
         saveBtn.disabled = false;
-        saveBtn.textContent = t('settings_save_btn_label', 'Save Settings');
+        saveBtn.textContent = stT('settings_js_save_settings_btn', 'Save Settings');
 
         if (dirtyBadge) {
             dirtyBadge.hidden = !hasDirtyTrackedTabs();
@@ -1074,7 +1068,7 @@ window.migrateStorage = migrateStorage;
             return true;
         }
 
-        var message = t('settings_tab_unsaved_confirm', 'You have unsaved changes in {tab}. Leave this tab without saving?', { tab: currentTab.replace(/-/g, ' ') });
+        var message = 'You have unsaved changes in ' + currentTab.replace(/-/g, ' ') + '. Leave this tab without saving?';
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
             return BirklyFeedback.confirm(message);
         }
@@ -1272,16 +1266,16 @@ function renderInviteMailNotice() {
 
     if (inviteMailStatus?.has_connection) {
         notice.classList.add('callout-info');
-        const name = inviteMailStatus.connection_name || inviteMailStatus.provider || t('settings_invite_connection_fallback', 'Email connection');
+        const name = inviteMailStatus.connection_name || inviteMailStatus.provider || 'Email connection';
         const from = inviteMailStatus.from_email ? ` (${inviteMailStatus.from_email})` : '';
         if (copy) {
-            copy.textContent = t('settings_invite_mail_via_connection', 'Invitations are sent through your configured email connection: {name}{from}. You can also create a link and share it manually.', { name: name, from: from });
+            copy.textContent = `Invitations are sent through your configured email connection: ${name}${from}. You can also create a link and share it manually.`;
         }
         if (sendBtn) sendBtn.disabled = false;
     } else {
         notice.classList.add('callout-warning');
         if (copy) {
-            copy.textContent = t('settings_invite_mail_no_connection', 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use "Create invite link" and share the URL yourself.');
+            copy.textContent = stT('settings_js_invite_email_connection_hint', 'Sending invitation emails requires an email connection under Settings → Connections. Without one, use “Create invite link” and share the URL yourself.');
         }
         if (sendBtn) sendBtn.disabled = true;
     }
@@ -1353,7 +1347,7 @@ async function submitInvitation(sendEmail) {
             if (inviteUrl) {
                 showInviteLinkResult(inviteUrl);
             }
-            let message = sendEmail ? t('settings_invite_email_sent', 'Invitation email sent successfully!') : t('settings_invite_link_created', 'Invitation link created.');
+            let message = sendEmail ? 'Invitation email sent successfully!' : 'Invitation link created.';
             if (result.data?.localhost_note) {
                 message = result.message + '\n\n' + result.data.localhost_note;
             }
@@ -1369,17 +1363,16 @@ async function submitInvitation(sendEmail) {
             showInviteLinkResult(inviteUrl);
             await loadTeamInvitations();
             showMessage(
-                t('settings_invite_email_failed_with_link', '{message} The invite link was saved — copy it below and share it manually.', {
-                    message: result.message || t('settings_invite_could_not_send_email', 'Could not send invitation email.')
-                }),
+                (result.message || 'Could not send invitation email.') +
+                ' The invite link was saved — copy it below and share it manually.',
                 'warning'
             );
             return;
         }
 
-        showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_invite_failed', 'Invitation failed') }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_invitation_failed', 'Invitation failed')), 'error');
     } catch (error) {
-        showMessage(t('settings_invite_sending_error', 'Error sending invitation: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_sending_invitation', 'Error sending invitation:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1397,25 +1390,25 @@ function copyInviteLink() {
     if (!url) return;
     if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(() => {
-            showMessage(t('settings_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
+            showMessage(stT('settings_js_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
         }).catch(() => {
             field.select();
-            showMessage(t('settings_invite_copy_manual', 'Select the link field and copy it manually.'), 'warning');
+            showMessage(stT('settings_js_copy_link_manual', 'Select the link field and copy it manually.'), 'warning');
         });
         return;
     }
     field.select();
-    showMessage(t('settings_invite_copy_manual', 'Select the link field and copy it manually.'), 'warning');
+    showMessage(stT('settings_js_copy_link_manual', 'Select the link field and copy it manually.'), 'warning');
 }
 
 function invitationStatusBadge(status) {
     const map = {
-        pending: { className: 'badge-warning', label: t('settings_invite_status_pending', 'Pending') },
-        expired: { className: 'badge-neutral', label: t('settings_invite_status_expired', 'Expired') },
-        accepted: { className: 'badge-success', label: t('settings_invite_status_accepted', 'Accepted') },
-        cancelled: { className: 'badge-neutral', label: t('settings_invite_status_cancelled', 'Cancelled') },
+        pending: { className: 'badge-warning', label: 'Pending' },
+        expired: { className: 'badge-neutral', label: 'Expired' },
+        accepted: { className: 'badge-success', label: 'Accepted' },
+        cancelled: { className: 'badge-neutral', label: 'Cancelled' },
     };
-    return map[status] || { className: 'badge-neutral', label: status || t('settings_invite_status_unknown', 'Unknown') };
+    return map[status] || { className: 'badge-neutral', label: status || 'Unknown' };
 }
 
 function formatInvitationDate(value) {
@@ -1466,13 +1459,13 @@ async function loadTeamInvitations() {
             const actions = [];
 
             if (invite.can_copy_link && invite.invite_url) {
-                actions.push('<button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>' + escapeHtml(t('settings_invite_btn_copy_link', 'Copy link')) + '</button>');
+                actions.push('<button type="button" class="btn btn-secondary btn-sm" data-admin-action="copyTeamInvitationLink" data-admin-args=\'' + JSON.stringify([invite.invite_url]) + '\'>Copy link</button>');
             }
             if (invite.can_resend) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>' + escapeHtml(t('settings_invite_btn_resend', 'Resend email')) + '</button>');
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="resendTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token]) + '\'>Resend email</button>');
             }
             if (invite.can_cancel) {
-                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(t('settings_invite_btn_cancel', 'Cancel')) + '</button>');
+                actions.push('<button type="button" class="btn btn-ghost btn-sm" data-admin-action="cancelTeamInvitation" data-admin-args=\'' + JSON.stringify([invite.token, invite.email]) + '\'>' + escapeHtml(stT('cancel', 'Cancel')) + '</button>');
             }
 
             return '<div class="data-list-item">' +
@@ -1494,7 +1487,7 @@ async function loadTeamInvitations() {
         listEl.hidden = false;
     } catch (error) {
         emptyEl.hidden = false;
-        emptyEl.querySelector('.empty-state__description').textContent = t('settings_invite_load_failed', 'Could not load invitations.');
+        emptyEl.querySelector('.empty-state__description').textContent = stT('settings_js_invitations_load_failed', 'Could not load invitations.');
     } finally {
         loadingEl.hidden = true;
     }
@@ -1504,7 +1497,7 @@ function copyTeamInvitationLink(url) {
     if (!url) return;
     if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(url).then(function () {
-            showMessage(t('settings_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
+            showMessage(stT('settings_js_invite_link_copied', 'Invite link copied to clipboard.'), 'success');
         }).catch(function () {
             showMessage(url, 'info');
         });
@@ -1528,24 +1521,24 @@ async function resendTeamInvitation(token) {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(result.message || t('settings_invite_resent', 'Invitation resent.'), 'success');
+            showMessage(result.message || stT('settings_js_invitation_resent', 'Invitation resent.'), 'success');
             await loadTeamInvitations();
             return;
         }
         if (result.data?.invite_url) {
-            showMessage(t('settings_invite_resend_copy_instead', '{message} Copy the link from the list instead.', { message: result.message || t('settings_invite_could_not_resend_email', 'Could not resend email.') }), 'warning');
+            showMessage((result.message || stT('settings_js_could_not_resend_email', 'Could not resend email.')) + stT('settings_js_resend_copy_instead', ' Copy the link from the list instead.'), 'warning');
             await loadTeamInvitations();
             return;
         }
-        showMessage(result.message || t('settings_invite_resend_failed', 'Could not resend invitation.'), 'error');
+        showMessage(result.message || stT('settings_js_could_not_resend_invitation', 'Could not resend invitation.'), 'error');
     } catch (error) {
-        showMessage(t('settings_invite_resending_error', 'Error resending invitation: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_resending_invitation', 'Error resending invitation:') + ' ' + error.message, 'error');
     }
 }
 
 async function cancelTeamInvitation(token, email) {
     if (!token) return;
-    const label = email ? t('settings_invite_cancel_confirm_email', 'Cancel invitation for {email}?', { email: email }) : t('settings_invite_cancel_confirm', 'Cancel this invitation?');
+    const label = email ? 'Cancel invitation for ' + email + '?' : 'Cancel this invitation?';
     let confirmed = true;
     if (window.BirklyFeedback && typeof BirklyFeedback.confirm === 'function') {
         confirmed = await BirklyFeedback.confirm(label);
@@ -1567,13 +1560,13 @@ async function cancelTeamInvitation(token, email) {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(result.message || t('settings_invite_cancelled', 'Invitation cancelled.'), 'success');
+            showMessage(result.message || stT('settings_js_invitation_cancelled', 'Invitation cancelled.'), 'success');
             await loadTeamInvitations();
             return;
         }
-        showMessage(result.message || t('settings_invite_cancel_failed', 'Could not cancel invitation.'), 'error');
+        showMessage(result.message || stT('settings_js_could_not_cancel_invitation', 'Could not cancel invitation.'), 'error');
     } catch (error) {
-        showMessage(t('settings_invite_cancelling_error', 'Error cancelling invitation: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_cancelling_invitation', 'Error cancelling invitation:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1636,15 +1629,15 @@ async function createUser() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_user_created_success', 'User created successfully!'), 'success');
+            showMessage(stT('settings_js_user_created', 'User created successfully!'), 'success');
             closeAddUserModal();
             // Reload the page to show the new user
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_user_creating_error', 'Error creating user: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_creating_user', 'Error creating user:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1680,20 +1673,20 @@ async function updateUser() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_user_updated_success', 'User updated successfully!'), 'success');
+            showMessage(stT('settings_js_user_updated', 'User updated successfully!'), 'success');
             closeEditUserModal();
             // Reload the page to show the updated user
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage(t('settings_user_update_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_user_updating_error', 'Error updating user: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_updating_user', 'Error updating user:') + ' ' + error.message, 'error');
     }
 }
 
 async function confirmDeleteUser(userId, email) {
-    if (await BirklyFeedback.confirm(t('settings_user_delete_confirm', 'Are you sure you want to delete user "{email}"? This action cannot be undone.', { email: email }))) {
+    if (await BirklyFeedback.confirm(stT('settings_js_confirm_delete_user', 'Are you sure you want to delete user "{email}"? This action cannot be undone.', { email: email }))) {
         deleteUser(userId);
     }
 }
@@ -1717,14 +1710,14 @@ async function deleteUser(userId) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_user_deleted_success', 'User deleted successfully!'), 'success');
+            showMessage(stT('settings_js_user_deleted', 'User deleted successfully!'), 'success');
             // Reload the page to show the updated user list
             setTimeout(() => window.location.reload(), 1000);
         } else {
-            showMessage(t('settings_user_delete_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_user_deleting_error', 'Error deleting user: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_deleting_user', 'Error deleting user:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1737,8 +1730,8 @@ function deleteUserFromModal() {
 
 async function revokeUserMcpSessions(userId, label) {
     if (!userId) return;
-    const who = label || t('settings_ai_revoke_this_user', 'this user');
-    if (!(await BirklyFeedback.confirm(t('settings_ai_revoke_confirm', 'Revoke all active AI app connections for {who}? They will need to sign in again in Claude, Cursor, or ChatGPT.', { who: who })))) {
+    const who = label || 'this user';
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_revoke_ai', 'Revoke all active AI app connections for {who}? They will need to sign in again in Claude, Cursor, or ChatGPT.', { who: who })))) {
         return;
     }
 
@@ -1754,14 +1747,14 @@ async function revokeUserMcpSessions(userId, label) {
         .then((response) => response.json())
         .then((result) => {
             if (result.status === 'ok') {
-                showMessage(result.message || t('settings_ai_revoke_success', 'AI connections revoked'), 'success');
+                showMessage(result.message || stT('settings_js_ai_connections_revoked', 'AI connections revoked'), 'success');
                 setTimeout(() => window.location.reload(), 800);
             } else {
-                showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_ai_revoke_failed', 'Could not revoke AI access') }), 'error');
+                showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_could_not_revoke_ai', 'Could not revoke AI access')), 'error');
             }
         })
         .catch((error) => {
-            showMessage(t('settings_ai_revoking_error', 'Error revoking AI access: {message}', { message: error.message }), 'error');
+            showMessage(stT('settings_js_err_revoking_ai', 'Error revoking AI access:') + ' ' + error.message, 'error');
         });
 }
 
@@ -1785,22 +1778,22 @@ async function togglePlugin(pluginId, activate) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(result.message || (action === 'activate' ? t('settings_plugin_activated_success', 'Plugin activated successfully') : t('settings_plugin_deactivated_success', 'Plugin deactivated successfully')), 'success');
+            showMessage(result.message || stT('settings_js_plugin_action_success', 'Plugin {action}d successfully', { action: action }), 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            var errorMsg = t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_plugin_action_failed', 'Failed to {action} plugin', { action: action }) });
+            var errorMsg = stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_failed_plugin_action', 'Failed to {action} plugin', { action: action }));
             if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
                 errorMsg += ' — ' + result.errors.join('; ');
             }
             showMessage(errorMsg, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
 async function deletePlugin(pluginId) {
-    if (!(await BirklyFeedback.confirm(t('settings_plugin_delete_confirm', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_delete_plugin', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
         return;
     }
     
@@ -1820,13 +1813,13 @@ async function deletePlugin(pluginId) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(result.message || t('settings_plugin_deleted_success', 'Plugin deleted successfully'), 'success');
+            showMessage(result.message || stT('settings_js_plugin_deleted', 'Plugin deleted successfully'), 'success');
             setTimeout(() => location.reload(), 1000);
         } else {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_plugin_delete_failed', 'Failed to delete plugin') }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_failed_delete_plugin', 'Failed to delete plugin')), 'error');
         }
     } catch (error) {
-        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
@@ -1840,14 +1833,14 @@ async function deletePlugin(pluginId) {
     
     function deliveryRoleLabel(role) {
         var labels = {
-            cms_primary: t('settings_delivery_role_cms_primary', 'CMS (primary)'),
-            cms: t('settings_delivery_role_cms', 'CMS alias'),
-            public_primary: t('settings_delivery_role_public_primary', 'Public (primary)'),
-            public: t('settings_delivery_role_public', 'Public alias'),
-            api_only: t('settings_delivery_role_api_only', 'API only (CORS)'),
-            unassigned: t('settings_delivery_role_unassigned', 'Unassigned')
+            cms_primary: 'CMS (primary)',
+            cms: 'CMS alias',
+            public_primary: 'Public (primary)',
+            public: 'Public alias',
+            api_only: 'API only (CORS)',
+            unassigned: 'Unassigned'
         };
-        return labels[role] || role || t('settings_delivery_role_unassigned', 'Unassigned');
+        return labels[role] || role || 'Unassigned';
     }
 
     function deliveryRoleBadgeClass(role) {
@@ -1869,9 +1862,9 @@ async function deletePlugin(pluginId) {
             });
             var result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || t('settings_delivery_role_update_failed', 'Failed to update delivery role'));
+                throw new Error(result.message || 'Failed to update delivery role');
             }
-            showMessage(t('settings_delivery_role_updated', 'Delivery role updated for {host}', { host: host }), 'success');
+            showMessage(stT('settings_js_delivery_role_updated', 'Delivery role updated for {host}', { host: host }), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1881,14 +1874,14 @@ async function deletePlugin(pluginId) {
             loadDomains();
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (selectEl) selectEl.disabled = false;
         }
     }
 
     async function setPublicPrimary(host, buttonEl) {
         if (!host) return;
-        if (!(await BirklyFeedback.confirm(t('settings_delivery_primary_confirm', 'Make {host} the primary public URL? The current primary will become an alias.', { host: host })))) {
+        if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_primary_url', 'Make {host} the primary public URL? The current primary will become an alias.', { host: host })))) {
             return;
         }
         if (buttonEl) buttonEl.disabled = true;
@@ -1901,9 +1894,9 @@ async function deletePlugin(pluginId) {
             });
             var result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || t('settings_delivery_primary_update_failed', 'Failed to update primary URL'));
+                throw new Error(result.message || 'Failed to update primary URL');
             }
-            showMessage(result.message || t('settings_delivery_primary_updated', 'Primary public URL updated'), 'success');
+            showMessage(result.message || stT('settings_js_primary_url_updated', 'Primary public URL updated'), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1913,7 +1906,7 @@ async function deletePlugin(pluginId) {
             loadDomains();
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (buttonEl) buttonEl.disabled = false;
         }
     }
@@ -1929,9 +1922,9 @@ async function deletePlugin(pluginId) {
             });
             var result = await response.json();
             if (result.status !== 'ok') {
-                throw new Error(result.message || t('settings_delivery_alias_update_failed', 'Failed to update alias redirect'));
+                throw new Error(result.message || 'Failed to update alias redirect');
             }
-            showMessage(result.message || t('settings_delivery_alias_updated', 'Alias redirect updated'), 'success');
+            showMessage(result.message || stT('settings_js_alias_redirect_updated', 'Alias redirect updated'), 'success');
             if (typeof window.initDeliveryStatus === 'function') {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
@@ -1940,7 +1933,7 @@ async function deletePlugin(pluginId) {
             }
             loadDeliveryMatrix();
         } catch (error) {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
             if (checkboxEl) checkboxEl.checked = !enabled;
         } finally {
             if (checkboxEl) checkboxEl.disabled = false;
@@ -1977,23 +1970,23 @@ async function deletePlugin(pluginId) {
             roleCell = '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
         }
         var corsBadge = row.cors_registered
-            ? '<span class="badge badge-success">' + escapeHtml(t('settings_delivery_cors_registered', 'Registered')) + '</span>'
-            : '<span class="badge badge-neutral">' + escapeHtml(t('settings_delivery_cors_not_registered', 'Not registered')) + '</span>';
+            ? '<span class="badge badge-success">Registered</span>'
+            : '<span class="badge badge-neutral">Not registered</span>';
         var suggestHint = '';
         if (!row.is_primary && row.suggested_role && row.settable_role !== row.suggested_role && role === 'api_only') {
-            suggestHint = '<div class="form-help">' + escapeHtml(t('settings_delivery_suggested', 'Suggested: {role} — {reason}', { role: row.suggested_role, reason: row.suggest_reason || '' })) + '</div>';
+            suggestHint = '<div class="form-help">Suggested: ' + escapeHtml(row.suggested_role) + ' — ' + escapeHtml(row.suggest_reason || '') + '</div>';
         }
         var routingCell = '—';
         if (row.is_primary) {
-            routingCell = '<span class="badge badge-accent">' + escapeHtml(t('settings_delivery_primary_url_badge', 'Primary URL')) + '</span>';
+            routingCell = '<span class="badge badge-accent">Primary URL</span>';
         } else if (row.redirects_to_primary && row.redirect_target_host) {
-            routingCell = '<span class="badge badge-info">' + escapeHtml(t('settings_delivery_redirect_badge', '301 → {host}', { host: row.redirect_target_host })) + '</span>';
+            routingCell = '<span class="badge badge-info">301 → ' + escapeHtml(row.redirect_target_host) + '</span>';
         } else if (row.is_alias) {
-            routingCell = '<span class="badge badge-success">' + escapeHtml(t('settings_delivery_serves_directly', 'Serves directly')) + '</span>';
+            routingCell = '<span class="badge badge-success">Serves directly</span>';
         }
         var actions = '';
         if (row.can_make_public_primary) {
-            actions = ' <button type="button" class="btn btn-secondary btn-sm delivery-make-primary" data-host="' + escapeHtml(host) + '">' + escapeHtml(t('settings_delivery_make_primary', 'Make primary')) + '</button>';
+            actions = ' <button type="button" class="btn btn-secondary btn-sm delivery-make-primary" data-host="' + escapeHtml(host) + '">Make primary</button>';
         }
         return '<tr>' +
             '<td><code>' + escapeHtml(host) + '</code>' + suggestHint + '</td>' +
@@ -2012,7 +2005,7 @@ async function deletePlugin(pluginId) {
         renderDeliveryRoutingOptions(meta.hosting || {}, meta.detect || {});
 
         if (!rows.length) {
-            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_delivery_matrix_empty', 'No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.')) + '</p></div>';
+            container.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_delivery_hostnames', 'No delivery hostnames yet. Register a domain or configure hosting URLs in the wizard below.')) + '</p></div>';
             return;
         }
 
@@ -2020,9 +2013,9 @@ async function deletePlugin(pluginId) {
         container.innerHTML =
             '<div class="table-container">' +
             '<table class="table table--hover">' +
-            '<thead><tr><th>' + escapeHtml(t('settings_delivery_matrix_hostname', 'Hostname')) + '</th><th>' + escapeHtml(t('settings_delivery_matrix_cors', 'CORS')) + '</th><th>' + escapeHtml(t('settings_delivery_matrix_role', 'Delivery role')) + '</th><th>' + escapeHtml(t('settings_delivery_matrix_routing', 'Visitor routing')) + '</th></tr></thead>' +
+            '<thead><tr><th>Hostname</th><th>CORS</th><th>Delivery role</th><th>Visitor routing</th></tr></thead>' +
             '<tbody>' + body + '</tbody></table></div>' +
-            '<p class="form-help">' + t('settings_delivery_matrix_help', 'Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.') + '</p>';
+            '<p class="form-help">Use <strong>Make primary</strong> to swap which URL is canonical. Uncheck alias redirect above to serve aliases without sending visitors to the primary hostname. Apex and <code>www</code> pairs are linked automatically when you assign a delivery role.</p>';
 
         var roleSelects = container.querySelectorAll('.domain-delivery-role');
         for (var r = 0; r < roleSelects.length; r++) {
@@ -2044,7 +2037,7 @@ async function deletePlugin(pluginId) {
         var container = document.getElementById('delivery-matrix-content');
         if (!container) return;
 
-        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('settings_delivery_matrix_loading', 'Loading delivery matrix...')) + '</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_delivery_matrix', 'Loading delivery matrix...')) + '</p></div>';
         try {
             var response = await fetch(apiUrl('/api/hosting.php?action=get'), {
                 method: 'GET',
@@ -2058,7 +2051,7 @@ async function deletePlugin(pluginId) {
                 detect: data.detect || {}
             });
         } catch (error) {
-            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(t('settings_delivery_matrix_load_error', 'Error loading delivery matrix: {message}', { message: error.message })) + '</div>';
+            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(stT('settings_js_err_loading_delivery_matrix', 'Error loading delivery matrix: {message}', { message: error.message })) + '</div>';
         }
     }
 
@@ -2069,7 +2062,7 @@ async function deletePlugin(pluginId) {
             return;
         }
         
-        listContainer.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('settings_domains_loading', 'Loading domains...')) + '</p></div>';
+        listContainer.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_domains', 'Loading domains')) + '</p></div>';
         
         try {
             var responses = await Promise.all([
@@ -2092,12 +2085,12 @@ async function deletePlugin(pluginId) {
             if (data.status === 'ok' && data.data && data.data.licenses) {
                 renderDomains(data.data.licenses, domainRoles);
             } else {
-                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_domains_empty_registered', 'No domains registered yet.')) + '</p></div>';
+                listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_registered', 'No domains registered yet.')) + '</p></div>';
             }
             attachDomainsCopyButtons(document.getElementById('domains'));
         } catch (error) {
             console.error('Error loading domains:', error);
-            listContainer.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(t('settings_domains_load_error', 'Error loading domains: {message}', { message: error.message })) + '</div>';
+            listContainer.innerHTML = '<div class="message message-error" role="alert">Error loading domains: ' + escapeHtml(error.message) + '</div>';
         }
     }
     
@@ -2131,12 +2124,12 @@ async function deletePlugin(pluginId) {
         return '' +
             '<div class="domains-code-block">' +
             '<pre class="domains-code-pre"><code id="' + escapeHtml(codeId) + '">' + escapeHtml(trackingCode) + '</code></pre>' +
-            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="' + escapeHtml(t('settings_domains_copy_title', 'Copy code')) + '">' +
+            '<button type="button" class="btn btn-secondary btn-sm domains-copy-btn" data-copy-target="' + escapeHtml(codeId) + '" title="Copy code">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">' +
             '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>' +
             '<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>' +
-            '</svg>' + escapeHtml(t('settings_domains_copy_btn', 'Copy')) + '</button></div>' +
-            '<p class="form-help">' + t('settings_domains_snippet_help', 'Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.') + '</p>';
+            '</svg>Copy</button></div>' +
+            '<p class="form-help">Add this snippet before the <code>&lt;/body&gt;</code> tag on your site.</p>';
     }
 
     function attachDomainsCopyButtons(root) {
@@ -2156,7 +2149,7 @@ async function deletePlugin(pluginId) {
                     }
                     navigator.clipboard.writeText(code).then(function() {
                         var originalText = btn.innerHTML;
-                        btn.innerHTML = escapeHtml(t('settings_domains_copied', 'Copied'));
+                        btn.innerHTML = 'Copied';
                         setTimeout(function() {
                             btn.innerHTML = originalText;
                         }, 2000);
@@ -2194,22 +2187,20 @@ async function deletePlugin(pluginId) {
             try {
                 result = JSON.parse(responseText);
             } catch (parseError) {
-                throw new Error(t('settings_domains_invalid_response', 'Invalid response from server'));
+                throw new Error('Invalid response from server');
             }
 
             if (result.status !== 'ok') {
-                throw new Error(result.message || t('settings_domains_analytics_update_failed', 'Failed to update analytics'));
+                throw new Error(result.message || 'Failed to update analytics');
             }
 
-            showMessage(enabled
-                ? t('settings_domains_analytics_enabled', 'Analytics enabled for {domain}', { domain: domainName })
-                : t('settings_domains_analytics_disabled', 'Analytics disabled for {domain}', { domain: domainName }), 'success');
+            showMessage(enabled ? stT('settings_js_analytics_enabled', 'Analytics enabled for {domain}', { domain: domainName }) : stT('settings_js_analytics_disabled', 'Analytics disabled for {domain}', { domain: domainName }), 'success');
             loadDomains();
         } catch (error) {
             if (toggleInput) {
                 toggleInput.checked = !enabled;
             }
-            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         } finally {
             if (toggleInput) {
                 toggleInput.disabled = false;
@@ -2246,7 +2237,7 @@ async function deletePlugin(pluginId) {
         }
 
         container.hidden = false;
-        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('settings_domains_report_loading', 'Loading analytics report...')) + '</p></div>';
+        container.innerHTML = '<div class="loading-state"><p>' + escapeHtml(stT('loading_analytics_report', 'Loading analytics report...')) + '</p></div>';
 
         try {
             var endDate = new Date().toISOString().slice(0, 10);
@@ -2257,20 +2248,20 @@ async function deletePlugin(pluginId) {
             var payload = await response.json();
 
             if (payload.status !== 'ok' || !payload.data) {
-                throw new Error(payload.message || t('settings_domains_report_failed', 'Failed to load analytics report'));
+                throw new Error(payload.message || 'Failed to load analytics report');
             }
 
             var report = payload.data;
             container.innerHTML =
                 '<div class="card card--sunken u-p-4 u-stack-4">' +
                 '<div class="u-grid-auto-sm">' +
-                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.page_views || 0)) + '</span><span class="stat-label">' + escapeHtml(t('settings_domains_page_views_label', 'Page views (30d)')) + '</span></div>' +
-                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.unique_visitors || 0)) + '</span><span class="stat-label">' + escapeHtml(t('settings_domains_visitors_label', 'Visitors (30d)')) + '</span></div>' +
+                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.page_views || 0)) + '</span><span class="stat-label">Page views (30d)</span></div>' +
+                '<div class="stat"><span class="stat-value">' + escapeHtml(String(report.unique_visitors || 0)) + '</span><span class="stat-label">Visitors (30d)</span></div>' +
                 '</div>' +
                 renderAnalyticsReportSections(report) +
                 '</div>';
         } catch (error) {
-            container.innerHTML = '<div class="message message-error" role="alert">' + escapeHtml(t('settings_domains_report_load_error', 'Error loading analytics report: {message}', { message: error.message })) + '</div>';
+            container.innerHTML = '<div class="message message-error" role="alert">Error loading analytics report: ' + escapeHtml(error.message) + '</div>';
         }
     }
 
@@ -2282,16 +2273,16 @@ async function deletePlugin(pluginId) {
             return '<span class="badge badge-' + deliveryRoleBadgeClass(role) + '">' + escapeHtml(deliveryRoleLabel(role)) + '</span>';
         }
         var options = [
-            { value: 'api_only', label: t('settings_delivery_role_api_only', 'API only (CORS)') },
-            { value: 'cms', label: t('settings_delivery_role_cms', 'CMS alias') },
-            { value: 'public', label: t('settings_delivery_role_public', 'Public alias') }
+            { value: 'api_only', label: 'API only (CORS)' },
+            { value: 'cms', label: 'CMS alias' },
+            { value: 'public', label: 'Public alias' }
         ];
         var selected = (role === 'cms' || role === 'public' || role === 'api_only') ? role : 'api_only';
         var optionHtml = options.map(function (opt) {
             return '<option value="' + escapeHtml(opt.value) + '"' + (opt.value === selected ? ' selected' : '') + '>' +
                 escapeHtml(opt.label) + '</option>';
         }).join('');
-        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="' + escapeHtml(t('settings_delivery_role_aria', 'Delivery role for {host}', { host: host })) + '">' +
+        return '<select class="input input-sm domain-delivery-role" data-domain="' + escapeHtml(host) + '" aria-label="Delivery role for ' + escapeHtml(host) + '">' +
             optionHtml + '</select>';
     }
 
@@ -2306,7 +2297,7 @@ async function deletePlugin(pluginId) {
         domainRoles = domainRoles || {};
 
         if (!domains.length) {
-            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_domains_empty_add', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
+            listContainer.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_domains_add_hint', 'No domains yet. Click "Add domain" to connect one.')) + '</p></div>';
             return;
         }
 
@@ -2371,7 +2362,7 @@ async function deletePlugin(pluginId) {
                 (trackingScriptHtml ? '<div class="domain-tracking-script u-stack-2">' + trackingScriptHtml + '</div>' : '<div class="domain-tracking-script" hidden></div>') +
                 (analyticsEnabled ?
                     '<div class="u-cluster">' +
-                    '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">' + escapeHtml(t('settings_domains_report_btn', 'View 30-day report')) + '</button>' +
+                    '<button type="button" class="btn btn-secondary btn-sm domain-analytics-report-btn" data-domain="' + domainEscaped + '">View 30-day report</button>' +
                     '</div>' +
                     '<div class="domain-analytics-report" hidden></div>' : '') +
                 '</div>' +
@@ -2455,7 +2446,7 @@ function openAddDomainModal() {
     }
     var helpEl = document.getElementById('domain-delivery-role-help');
     if (helpEl) {
-        helpEl.textContent = t('settings_domain_delivery_help', 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.');
+        helpEl.textContent = stT('settings_js_domain_delivery_help', 'Choose how this hostname is used for site delivery. Apex and www pairs are linked automatically.');
     }
     bindRegisterDomainSuggestInline();
 }
@@ -2478,10 +2469,7 @@ function bindRegisterDomainSuggestInline() {
                     roleSelect.value = payload.data.role;
                 }
                 if (helpEl && payload.data.reason) {
-                    helpEl.textContent = t('settings_delivery_suggested', 'Suggested: {role} — {reason}', {
-                        role: payload.data.role,
-                        reason: payload.data.reason || '',
-                    });
+                    helpEl.textContent = stT('settings_js_domain_suggested_role', 'Suggested: {role} — {reason}', { role: payload.data.role, reason: payload.data.reason });
                 }
             })
             .catch(function () { /* optional */ });
@@ -2525,7 +2513,7 @@ function closeAddDomainModal() {
 async function registerDomain() {
     const form = document.getElementById('add-domain-form');
     if (!form) {
-        showMessage(t('settings_domains_form_not_found', 'Error: Form not found'), 'error');
+        showMessage(stT('settings_js_err_form_missing', 'Error: Form not found'), 'error');
         return;
     }
     
@@ -2536,7 +2524,7 @@ async function registerDomain() {
     const customerEmail = (formData.get('customer_email') || '').trim();
     
     if (!domain || !customerEmail) {
-        showMessage(t('settings_domains_required_fields', 'Error: Domain and customer email are required'), 'error');
+        showMessage(stT('settings_js_err_domain_email_required', 'Error: Domain and customer email are required'), 'error');
         return;
     }
     
@@ -2568,7 +2556,7 @@ async function registerDomain() {
         } catch (parseError) {
             console.error('Failed to parse JSON response:', parseError);
             console.error('Response text:', responseText);
-            showMessage(t('settings_domains_invalid_response_detail', 'Error: Invalid response from server. Check console for details.'), 'error');
+            showMessage(stT('settings_js_err_invalid_server_response', 'Error: Invalid response from server. Check console for details.'), 'error');
             return;
         }
         
@@ -2578,9 +2566,9 @@ async function registerDomain() {
                 ? ' (delivery: ' + result.data.delivery_role + ')'
                 : '';
             if (result.data && result.data.delivery_role_warning) {
-                showMessage(t('settings_domains_registered_warning', 'Domain registered{roleMsg}, but delivery role could not be applied: {warning}', { roleMsg: roleMsg, warning: result.data.delivery_role_warning }), 'warning');
+                showMessage(stT('settings_js_domain_registered_warning', 'Domain registered{role_msg}, but delivery role could not be applied: {warning}', { role_msg: roleMsg, warning: result.data.delivery_role_warning }), 'warning');
             } else {
-                showMessage(t('settings_domains_registered_success', 'Domain registered successfully!{roleMsg}', { roleMsg: roleMsg }), 'success');
+                showMessage(stT('settings_js_domain_registered_success', 'Domain registered successfully!{role_msg}', { role_msg: roleMsg }), 'success');
             }
             closeAddDomainModal();
             loadDomains();
@@ -2591,11 +2579,11 @@ async function registerDomain() {
                 window.initDeliveryStatus('#delivery-status-site-delivery');
             }
         } else {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_role_unknown_error', 'Unknown error') }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error registering domain:', error);
-        showMessage(t('settings_domains_registering_error', 'Error registering domain: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_registering_domain', 'Error registering domain:') + ' ' + error.message, 'error');
     }
 }
 
@@ -2636,7 +2624,7 @@ window.editDomain = async function(domainName) {
         }
     } catch (error) {
         console.error('Error loading domain details:', error);
-        showMessage(t('settings_domains_load_details_error', 'Error loading domain details: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_loading_domain', 'Error loading domain details:') + ' ' + error.message, 'error');
     }
 };
 
@@ -2692,26 +2680,26 @@ async function updateDomain() {
         } catch (parseError) {
             console.error('Failed to parse JSON response:', parseError);
             console.error('Response text:', responseText);
-            showMessage(t('settings_domains_invalid_response_detail', 'Error: Invalid response from server. Check console for details.'), 'error');
+            showMessage(stT('settings_js_err_invalid_server_response', 'Error: Invalid response from server. Check console for details.'), 'error');
             return;
         }
         
         
         if (result.status === 'ok') {
-            showMessage(t('settings_domains_updated_success', 'Domain updated successfully!'), 'success');
+            showMessage(stT('settings_js_domain_updated', 'Domain updated successfully!'), 'success');
             closeEditDomainModal();
             loadDomains();
         } else {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_role_unknown_error', 'Unknown error') }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
         }
     } catch (error) {
         console.error('Error updating domain:', error);
-        showMessage(t('settings_domains_updating_error', 'Error updating domain: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_updating_domain', 'Error updating domain:') + ' ' + error.message, 'error');
     }
 }
 
 window.deleteDomain = async function(domainName) {
-    if (!(await BirklyFeedback.confirm(t('settings_domains_delete_confirm', 'Are you sure you want to delete domain "{domain}"? This will revoke all access.', { domain: domainName })))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_delete_domain', 'Are you sure you want to delete domain "{name}"? This will revoke all access.', { name: domainName })))) {
         return;
     }
     
@@ -2730,14 +2718,14 @@ window.deleteDomain = async function(domainName) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_domains_deleted_success', 'Domain deleted successfully!'), 'success');
+            showMessage(stT('settings_js_domain_deleted', 'Domain deleted successfully!'), 'success');
             loadDomains();
         } else {
-            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
         console.error('Error deleting domain:', error);
-        showMessage(t('settings_domains_deleting_error', 'Error deleting domain: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_deleting_domain', 'Error deleting domain:') + ' ' + error.message, 'error');
     }
 };
 
@@ -2883,7 +2871,7 @@ window.deleteDomain = async function(domainName) {
         if (!tbody) return;
         
         if (refresh) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>' + escapeHtml(t('settings_audit_loading', 'Loading...')) + '</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="loading-state"><p>' + escapeHtml(stT('settings_js_loading_table', 'Loading...')) + '</p></div></td></tr>';
         }
         
         // Load both audit logs and activity
@@ -2941,7 +2929,7 @@ window.deleteDomain = async function(domainName) {
             // Populate event filter
             const eventFilter = document.getElementById('event-filter');
             if (eventFilter) {
-                eventFilter.innerHTML = '<option value="">' + escapeHtml(t('settings_audit_all_events', 'All Events')) + '</option>';
+                eventFilter.innerHTML = '<option value="">All Events</option>';
                 Array.from(eventTypes).sort().forEach(event => {
                     const option = document.createElement('option');
                     option.value = event;
@@ -2957,7 +2945,7 @@ window.deleteDomain = async function(domainName) {
             console.error('Error loading logs:', error);
             const tbody = document.getElementById('log-entries');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">' + escapeHtml(t('settings_audit_load_error', 'Error loading logs: {message}', { message: error.message })) + '</p></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact empty-state--error" role="alert"><p class="empty-state__description">Error loading logs: ' + escapeHtml(error.message) + '</p></div></td></tr>';
             }
         });
     }
@@ -2971,7 +2959,7 @@ window.deleteDomain = async function(domainName) {
         const logsToShow = filteredLogs.slice(0, endIndex);
         
         if (logsToShow.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(t('settings_audit_no_entries', 'No log entries found')) + '</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state empty-state--compact"><p class="empty-state__description">' + escapeHtml(stT('settings_js_no_log_entries', 'No log entries found')) + '</p></div></td></tr>';
             const loadMoreBtn = document.getElementById('load-more');
             if (loadMoreBtn) {
                 loadMoreBtn.hidden = true;
@@ -2990,12 +2978,12 @@ window.deleteDomain = async function(domainName) {
             html += `
                 <tr>
                     <td class="u-fg-secondary u-nowrap">${timestamp}</td>
-                    <td>${escapeHtml(log.user || t('settings_audit_unknown_user', 'Unknown'))}</td>
-                    <td><span class="badge ${categoryBadge}">${escapeHtml(log.event || t('settings_audit_unknown_event', 'Unknown'))}</span></td>
+                    <td>${escapeHtml(log.user || 'Unknown')}</td>
+                    <td><span class="badge ${categoryBadge}">${escapeHtml(log.event || 'Unknown')}</span></td>
                     <td><span class="badge badge-neutral">${escapeHtml(category)}</span></td>
-                    <td class="u-fg-secondary u-nowrap">${escapeHtml(log.ip || t('settings_audit_unknown_user', 'Unknown'))}</td>
+                    <td class="u-fg-secondary u-nowrap">${escapeHtml(log.ip || 'Unknown')}</td>
                     <td>
-                        ${formattedDetails ? `<details><summary class="u-clickable u-text-sm">${escapeHtml(t('settings_audit_view_details', 'View Details'))}</summary><pre class="u-surface-sunken u-radius-sm u-p-3 u-mt-2 u-text-xs u-mono u-scroll-x">${escapeHtml(formattedDetails)}</pre></details>` : '-'}
+                        ${formattedDetails ? `<details><summary class="u-clickable u-text-sm">View Details</summary><pre class="u-surface-sunken u-radius-sm u-p-3 u-mt-2 u-text-xs u-mono u-scroll-x">${escapeHtml(formattedDetails)}</pre></details>` : '-'}
                     </td>
                 </tr>
             `;
@@ -3028,7 +3016,7 @@ async function loadDenylistCollections() {
         const response = await fetch(apiUrl('/api/content.php?action=list_collections'));
         const result = await response.json();
         const collections = (result.data && result.data.collections) || result.collections || [];
-        select.innerHTML = '<option value="">' + escapeHtml(t('settings_denylist_select_collection', 'Select a collection…')) + '</option>';
+        select.innerHTML = '<option value="">Select a collection…</option>';
         collections.forEach(col => {
             const slug = col.slug || col.id || '';
             if (!slug) return;
@@ -3040,7 +3028,7 @@ async function loadDenylistCollections() {
         if (addBtn) addBtn.disabled = collections.length === 0;
         denylistCollectionsLoaded = true;
     } catch (error) {
-        select.innerHTML = '<option value="">' + escapeHtml(t('settings_denylist_load_collections_failed', 'Failed to load collections')) + '</option>';
+        select.innerHTML = '<option value="">Failed to load collections</option>';
         if (addBtn) addBtn.disabled = true;
     }
 }
@@ -3062,7 +3050,7 @@ async function loadDenylist() {
             renderDenylist(data.resources || [], data.deny_collections || [], data.deny_spaces || []);
             populateDenylistPluginSelect(data.available_plugins || []);
         } else {
-            container.innerHTML = `<div class="message message-error" role="alert">${escapeHtml(t('settings_denylist_load_error', 'Error loading denylist: {message}', { message: result.message || '' }))}</div>`;
+            container.innerHTML = `<div class="message message-error" role="alert">Error loading denylist: ${escapeHtml(result.message || '')}</div>`;
         }
     } catch (error) {
         container.innerHTML = `<div class="message message-error" role="alert">Error: ${escapeHtml(error.message)}</div>`;
@@ -3074,7 +3062,7 @@ function populateDenylistPluginSelect(plugins) {
     const select = document.getElementById('denylist-plugin-select');
     const addBtn = document.getElementById('denylist-add-plugin-btn');
     if (!select) return;
-    select.innerHTML = '<option value="">' + escapeHtml(t('settings_denylist_select_plugin', 'Select a plugin…')) + '</option>';
+    select.innerHTML = '<option value="">Select a plugin…</option>';
     plugins.forEach(function (plugin) {
         const id = plugin.id || '';
         if (!id) return;
@@ -3087,14 +3075,14 @@ function populateDenylistPluginSelect(plugins) {
 }
 
 function renderDenylistItem(resource, type) {
-    const label = type === 'collection' ? t('settings_denylist_type_collection', 'collection') : (type === 'space' ? t('settings_denylist_type_space', 'space') : t('settings_denylist_type_pattern', 'pattern'));
+    const label = type === 'collection' ? 'collection' : (type === 'space' ? 'space' : 'pattern');
     return `
         <div class="data-list-item">
             <code class="u-mono u-text-sm u-fill u-break-word">${escapeHtml(resource)}</code>
-            <span class="badge badge-neutral">${escapeHtml(label)}</span>
+            <span class="badge badge-neutral">${label}</span>
             <div class="data-list-actions">
                 <button type="button" class="btn btn-sm btn-danger" data-denylist-resource="${escapeHtml(resource)}" onclick="removeDenylistResource(this.dataset.denylistResource)">
-                    ${escapeHtml(t('settings_denylist_remove', 'Remove'))}
+                    Remove
                 </button>
             </div>
         </div>
@@ -3111,7 +3099,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     let html = '';
 
     if ((denyCollections || []).length > 0) {
-        html += '<h3 class="u-label">' + escapeHtml(t('settings_denylist_protected_collections', 'Protected collections')) + '</h3><div class="data-list data-list--flush">';
+        html += '<h3 class="u-label">Protected collections</h3><div class="data-list data-list--flush">';
         denyCollections.forEach(resource => {
             html += renderDenylistItem(resource, 'collection');
         });
@@ -3119,7 +3107,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if (customResources.length > 0) {
-        html += '<h3 class="u-label u-mt-4">' + escapeHtml(t('settings_denylist_custom_patterns', 'Custom patterns')) + '</h3><div class="data-list data-list--flush">';
+        html += '<h3 class="u-label u-mt-4">Custom patterns</h3><div class="data-list data-list--flush">';
         customResources.forEach(resource => {
             html += renderDenylistItem(resource, 'pattern');
         });
@@ -3127,7 +3115,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if ((denySpaces || []).length > 0) {
-        html += '<h3 class="u-label u-mt-4">' + escapeHtml(t('settings_denylist_protected_spaces', 'Protected spaces')) + '</h3><div class="data-list data-list--flush">';
+        html += '<h3 class="u-label u-mt-4">Protected spaces</h3><div class="data-list data-list--flush">';
         denySpaces.forEach(resource => {
             html += renderDenylistItem(resource, 'space');
         });
@@ -3135,7 +3123,7 @@ function renderDenylist(resources, denyCollections, denySpaces) {
     }
 
     if (!html) {
-        container.innerHTML = '<p class="settings-help">' + escapeHtml(t('settings_denylist_empty_help', 'No protected resources. All collections are accessible to plugins (subject to capability checks).')) + '</p>';
+        container.innerHTML = '<p class="settings-help">' + escapeHtml(stT('settings_js_no_protected_resources', 'No protected resources. All collections are accessible to plugins (subject to capability checks).')) + '</p>';
         return;
     }
 
@@ -3146,7 +3134,7 @@ async function addDenylistPlugin() {
     const select = document.getElementById('denylist-plugin-select');
     const pluginId = select?.value || '';
     if (!pluginId) {
-        showMessage(t('settings_denylist_select_plugin_first', 'Select a plugin first'), 'error');
+        showMessage(stT('settings_js_select_plugin_first', 'Select a plugin first'), 'error');
         return;
     }
 
@@ -3163,13 +3151,13 @@ async function addDenylistPlugin() {
         });
         const result = await response.json();
         if (result.status === 'ok') {
-            showMessage(t('settings_denylist_plugin_added', 'Plugin added to denylist'), 'success');
+            showMessage(stT('settings_js_plugin_denylist_added', 'Plugin added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage(result.message || t('settings_denylist_plugin_add_failed', 'Failed to add plugin'), 'error');
+            showMessage(result.message || stT('settings_js_failed_add_plugin', 'Failed to add plugin'), 'error');
         }
     } catch (error) {
-        showMessage(error.message || t('settings_denylist_plugin_add_failed', 'Failed to add plugin'), 'error');
+        showMessage(error.message || stT('settings_js_failed_add_plugin', 'Failed to add plugin'), 'error');
     }
 }
 
@@ -3177,7 +3165,7 @@ async function addDenylistCollection() {
     const select = document.getElementById('denylist-collection-select');
     const slug = select?.value || '';
     if (!slug) {
-        showMessage(t('settings_denylist_select_collection_first', 'Select a collection first'), 'error');
+        showMessage(stT('settings_js_select_collection_first', 'Select a collection first'), 'error');
         return;
     }
 
@@ -3198,21 +3186,21 @@ async function addDenylistCollection() {
         const result = await response.json();
 
         if (result.status === 'ok') {
-            showMessage(t('settings_denylist_collection_added', 'Collection added to denylist'), 'success');
+            showMessage(stT('settings_js_collection_denylist_added', 'Collection added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
 async function addDenylistResource() {
     const resource = await BirklyFeedback.prompt(
-        t('settings_denylist_prompt_resource', 'Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):'),
+        'Enter resource identifier (collection slug, entry ID, or pattern like "payroll/*"):',
         '',
-        { title: t('settings_denylist_prompt_title', 'Add to denylist'), confirmLabel: t('settings_denylist_prompt_confirm', 'Add'), placeholder: t('settings_denylist_prompt_placeholder', 'e.g. payroll/*') }
+        { title: 'Add to denylist', confirmLabel: 'Add', placeholder: 'e.g. payroll/*' }
     );
     if (!resource || resource.trim() === '') return;
     
@@ -3232,18 +3220,18 @@ async function addDenylistResource() {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_denylist_resource_added', 'Resource added to denylist'), 'success');
+            showMessage(stT('settings_js_resource_denylist_added', 'Resource added to denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
 async function removeDenylistResource(resource) {
-    if (!(await BirklyFeedback.confirm(t('settings_denylist_remove_confirm', 'Remove "{resource}" from the denylist?', { resource: resource })))) return;
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_remove_denylist', 'Remove "{resource}" from the denylist?', { resource: resource })))) return;
     
     try {
         const response = await fetch(apiUrl('/api/plugins_permissions.php'), {
@@ -3261,13 +3249,13 @@ async function removeDenylistResource(resource) {
         const result = await response.json();
         
         if (result.status === 'ok') {
-            showMessage(t('settings_denylist_resource_removed', 'Resource removed from denylist'), 'success');
+            showMessage(stT('settings_js_resource_denylist_removed', 'Resource removed from denylist'), 'success');
             loadDenylist();
         } else {
-            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
     }
 }
 
@@ -3293,7 +3281,7 @@ function testDatabaseConnection() {
     const resultEl = document.getElementById('db-test-result');
     
     if (!resultEl) return;
-    resultEl.textContent = t('settings_db_testing', 'Testing...');
+    resultEl.textContent = stT('settings_js_testing_connection', 'Testing...');
     resultEl.style.color = 'var(--text-secondary)';
     
     fetch(apiUrl('/api/settings.php?action=test_database'), {
@@ -3315,31 +3303,31 @@ function testDatabaseConnection() {
     .then(res => res.json())
     .then(data => {
         if (data.status === 'ok') {
-            resultEl.textContent = t('settings_db_connection_success', '✓ Connection successful');
+            resultEl.textContent = '✓ Connection successful';
             resultEl.style.color = 'var(--success-600)';
         } else {
-            resultEl.textContent = t('settings_db_connection_error', '✗ Error: {message}', { message: data.message || t('settings_db_connection_failed', 'Connection failed') });
+            resultEl.textContent = '✗ ' + (data.message || 'Connection failed');
             resultEl.style.color = 'var(--error-600)';
         }
     })
     .catch(error => {
-        resultEl.textContent = t('settings_db_connection_error', '✗ Error: {message}', { message: error.message });
+        resultEl.textContent = '✗ Error: ' + error.message;
         resultEl.style.color = 'var(--error-600)';
     });
 }
 
 async function migrateStorage() {
-    if (!(await BirklyFeedback.confirm(t('settings_migration_confirm_backup', 'This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_migration_backup', 'This will migrate all data to the selected storage backend. Make sure you have a backup! Continue?')))) {
         return;
     }
     
     const backend = document.getElementById('storage-backend')?.value;
     if (!backend || backend === 'flatfile') {
-        showMessage(t('settings_migration_select_backend', 'Please select a database backend first'), 'error');
+        showMessage(stT('settings_js_select_db_backend', 'Please select a database backend first'), 'error');
         return;
     }
     
-    if (!(await BirklyFeedback.confirm(t('settings_migration_confirm_time', 'Migration may take some time. Do not close this window. Continue?')))) {
+    if (!(await BirklyFeedback.confirm(stT('settings_js_confirm_migration_wait', 'Migration may take some time. Do not close this window. Continue?')))) {
         return;
     }
 
@@ -3354,16 +3342,16 @@ async function migrateStorage() {
     const prefix = document.getElementById('db-prefix')?.value;
 
     if (!host || !name || !user) {
-        showMessage(t('settings_migration_enter_credentials', 'Enter database host, name, and user before migrating'), 'error');
+        showMessage(stT('settings_js_migration_db_fields_required', 'Enter database host, name, and user before migrating'), 'error');
         return;
     }
 
     if (migrateBtn) {
         migrateBtn.disabled = true;
-        migrateBtn.textContent = t('settings_migration_in_progress_btn', 'Migrating...');
+        migrateBtn.textContent = stT('settings_js_migrating_btn', 'Migrating...');
     }
     if (statusEl) {
-        statusEl.textContent = t('settings_migration_in_progress_status', 'Migration in progress...');
+        statusEl.textContent = stT('settings_js_migration_in_progress', 'Migration in progress...');
         statusEl.style.color = 'var(--text-secondary)';
     }
     
@@ -3389,29 +3377,29 @@ async function migrateStorage() {
         try {
             data = await response.json();
         } catch (parseError) {
-            throw new Error(t('settings_migration_invalid_response', 'Server returned an invalid response. Check server logs.'));
+            throw new Error('Server returned an invalid response. Check server logs.');
         }
 
         if (data.status === 'ok') {
             const migratedCount = data.data && typeof data.data.migrated === 'number'
-                ? t('settings_migration_migrated_files', ' ({count} files)', { count: data.data.migrated })
+                ? ' (' + data.data.migrated + ' files)'
                 : '';
-            const successMessage = t('settings_migration_success', 'Migration completed successfully{migrated}!', { migrated: migratedCount });
+            const successMessage = 'Migration completed successfully' + migratedCount + '!';
             showMessage(successMessage, 'success');
             if (statusEl) {
                 statusEl.textContent = '✓ ' + successMessage;
                 statusEl.style.color = 'var(--success-600)';
             }
         } else {
-            const failureMessage = data.message || t('settings_role_unknown_error', 'Unknown error');
-            showMessage(t('settings_migration_failed', 'Migration failed: {message}', { message: failureMessage }), 'error');
+            const failureMessage = data.message || 'Unknown error';
+            showMessage(stT('settings_js_migration_failed', 'Migration failed:') + ' ' + failureMessage, 'error');
             if (statusEl) {
                 statusEl.textContent = '✗ ' + failureMessage;
                 statusEl.style.color = 'var(--error-600)';
             }
         }
     } catch (error) {
-        showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+        showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         if (statusEl) {
             statusEl.textContent = '✗ ' + error.message;
             statusEl.style.color = 'var(--error-600)';
@@ -3472,7 +3460,7 @@ async function handleGlobalSave() {
 
     if (!tabsToSave.length) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-            BirklyFeedback.toast('No pending changes to save', 'info');
+            BirklyFeedback.toast(stT('settings_js_no_pending_changes', 'No pending changes to save'), 'info');
         }
         return;
     }
@@ -3500,7 +3488,7 @@ async function handleGlobalSave() {
     var hasCoreForms = !!(forms.general || forms.security || forms.storage || forms.monitoring);
     if (!hasCoreForms && !saveAnalytics) {
         if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-            BirklyFeedback.toast(t('settings_independent_tab_toast', 'Changes on this tab are saved when you confirm each action'), 'info');
+            BirklyFeedback.toast(stT('settings_js_changes_save_per_action', 'Changes on this tab are saved when you confirm each action'), 'info');
         }
         return;
     }
@@ -3513,15 +3501,15 @@ async function handleGlobalSave() {
             await collectAndSaveSettings(coreTabs, forms);
         } else if (saveAnalytics) {
             if (typeof window.showMessage === 'function') {
-                window.showMessage(t('settings_save_success', 'Settings saved successfully!'), 'success');
+                window.showMessage(stT('settings_js_settings_saved', 'Settings saved successfully!'), 'success');
             } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-                BirklyFeedback.toast(t('settings_analytics_saved_toast', 'Analytics settings saved'), 'success');
+                BirklyFeedback.toast(stT('settings_js_analytics_settings_saved', 'Analytics settings saved'), 'success');
             }
         }
     } catch (err) {
-        var msg = (err && err.message) ? err.message : t('settings_save_failed', 'Save failed');
+        var msg = (err && err.message) ? err.message : 'Save failed';
         if (typeof window.showMessage === 'function') {
-            window.showMessage(t('settings_save_error', 'Error: {message}', { message: msg }), 'error');
+            window.showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + msg, 'error');
         } else if (globalThis.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
             BirklyFeedback.toast(msg, 'error');
         }
@@ -3596,11 +3584,11 @@ async function collectAndSaveSettings(tabsToSave, forms) {
                 if (uploadResult.status === 'ok') {
                     logoPath = uploadResult.data.logoPath;
                 } else {
-                    showMessage(t('settings_logo_upload_error', 'Error uploading logo: {message}', { message: uploadResult.message || t('settings_role_unknown_error', 'Unknown error') }), 'error');
+                    showMessage(stT('settings_js_err_uploading_logo', 'Error uploading logo:') + ' ' + (uploadResult.message || stT('ai_conn_js_unknown_error', 'Unknown error')), 'error');
                     return;
                 }
             } catch (error) {
-                showMessage(t('settings_logo_upload_error', 'Error uploading logo: {message}', { message: error.message }), 'error');
+                showMessage(stT('settings_js_err_uploading_logo', 'Error uploading logo:') + ' ' + error.message, 'error');
                 return;
             }
         }
@@ -3632,12 +3620,12 @@ async function collectAndSaveSettings(tabsToSave, forms) {
                     window.markSettingsClean(savedTabId);
                 });
             }
-            showMessage(t('settings_save_success', 'Settings saved successfully!'), 'success');
+            showMessage(stT('settings_js_settings_saved', 'Settings saved successfully!'), 'success');
         } else {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
         }
     } catch (error) {
-        showMessage(t('settings_saving_error', 'Error saving settings: {message}', { message: error.message }), 'error');
+        showMessage(stT('settings_js_err_saving_settings', 'Error saving settings:') + ' ' + error.message, 'error');
     }
 }
 
@@ -3680,7 +3668,7 @@ function initGlobalSave() {
         const removeLogoBtn = document.getElementById('remove-logo-btn');
         if (removeLogoBtn) {
             removeLogoBtn.addEventListener('click', async function () {
-                if (await BirklyFeedback.confirm(t('settings_logo_remove_confirm', 'Are you sure you want to remove the logo? The default Birkly icon will be used.'))) {
+                if (await BirklyFeedback.confirm(stT('settings_js_confirm_remove_logo', 'Are you sure you want to remove the logo? The default Birkly icon will be used.'))) {
                     try {
                         const response = await fetch(apiUrl('/api/settings.php'), {
                             method: 'POST',
@@ -3699,13 +3687,13 @@ function initGlobalSave() {
 
                         const result = await response.json();
                         if (result.status === 'ok') {
-                            showMessage(t('settings_logo_removed_success', 'Logo removed successfully!'), 'success');
+                            showMessage(stT('settings_js_logo_removed', 'Logo removed successfully!'), 'success');
                             setTimeout(function () { location.reload(); }, 1000);
                         } else {
-                            showMessage(t('settings_user_create_error', 'Error: {message}', { message: result.message }), 'error');
+                            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + result.message, 'error');
                         }
                     } catch (error) {
-                        showMessage(t('settings_logo_remove_error', 'Error removing logo: {message}', { message: error.message }), 'error');
+                        showMessage(stT('settings_js_err_removing_logo', 'Error removing logo:') + ' ' + error.message, 'error');
                     }
                 }
             });
@@ -3784,7 +3772,7 @@ function initRebuildSystem() {
         }
 
         confirmBtn.disabled = true;
-        confirmBtn.textContent = t('settings_rebuild_in_progress', 'Rebuilding…');
+        confirmBtn.textContent = stT('settings_js_rebuilding_btn', 'Rebuilding…');
 
         try {
             const response = await fetch(apiUrl('/api/settings.php'), {
@@ -3801,16 +3789,16 @@ function initRebuildSystem() {
 
             const result = await response.json();
             if (result.status === 'ok') {
-                showMessage(result.message || t('settings_rebuild_success', 'System rebuilt successfully'), 'success');
+                showMessage(result.message || stT('settings_js_system_rebuilt', 'System rebuilt successfully'), 'success');
                 window.location.href = apiUrl(result.redirect || '/admin/index.php?page=onboarding');
                 return;
             }
 
-            showMessage(t('settings_save_error', 'Error: {message}', { message: result.message || t('settings_rebuild_failed', 'Failed to rebuild system') }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + (result.message || stT('settings_js_failed_rebuild', 'Failed to rebuild system')), 'error');
         } catch (error) {
-            showMessage(t('settings_save_error', 'Error: {message}', { message: error.message }), 'error');
+            showMessage(stT('feedback_error_prefix', 'Error:') + ' ' + error.message, 'error');
         } finally {
-            confirmBtn.textContent = t('settings_rebuild_btn', 'Rebuild system');
+            confirmBtn.textContent = stT('settings_js_rebuild_system_btn', 'Rebuild system');
             updateConfirmState();
         }
     });

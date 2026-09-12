@@ -32,6 +32,18 @@ function resolveMediaItemUrl(url) {
     currentView: 'grid',
   };
 
+  function mdT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+      ? Birkly.i18n.t('admin.' + key, fallback)
+      : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+      Object.keys(params).forEach(function (name) {
+        text = text.split('{' + name + '}').join(String(params[name]));
+      });
+    }
+    return text;
+  }
+
   function icon(name, opts) {
     return (typeof Birkly !== 'undefined' && typeof Birkly.icon === 'function') ? Birkly.icon(name, opts) : '';
   }
@@ -44,18 +56,6 @@ function resolveMediaItemUrl(url) {
     const div = document.createElement('div');
     div.textContent = value == null ? '' : String(value);
     return div.innerHTML;
-  }
-
-  function t(key, fallback, params) {
-    var text = (window.Birkly && window.Birkly.i18n)
-      ? window.Birkly.i18n.t('admin.' + key, fallback || key)
-      : (fallback || key);
-    if (params && typeof params === 'object') {
-      Object.keys(params).forEach(function (name) {
-        text = text.split('{' + name + '}').join(String(params[name]));
-      });
-    }
-    return text;
   }
 
   function getResultMessage(result, fallback) {
@@ -257,7 +257,7 @@ function resolveMediaItemUrl(url) {
       try {
         await uploadFiles(files);
       } catch (error) {
-        showError(error.message || t('media_upload_failed', 'Upload failed.'));
+        showError(error.message || mdT('media_js_upload_failed', 'Upload failed.'));
       }
     });
   }
@@ -294,11 +294,11 @@ function resolveMediaItemUrl(url) {
     if (!breadcrumb) return;
 
     if (state.currentFolder === 'all') {
-      breadcrumb.innerHTML = '<span class="breadcrumb-item is-current">' + escapeHtml(t('media_breadcrumb_all', 'All media')) + '</span>';
+      breadcrumb.innerHTML = '<span class="breadcrumb-item is-current">All media</span>';
       return;
     }
 
-    breadcrumb.innerHTML = '<button type="button" class="breadcrumb-item" data-media-folder="">' + escapeHtml(t('media_breadcrumb_root', 'Root')) + '</button>';
+    breadcrumb.innerHTML = '<button type="button" class="breadcrumb-item" data-media-folder="">Root</button>';
 
     if (!state.currentFolder) {
       return;
@@ -358,8 +358,8 @@ function resolveMediaItemUrl(url) {
       const addButton = document.createElement('button');
       addButton.type = 'button';
       addButton.className = 'btn-icon btn-icon-xs';
-      addButton.setAttribute('aria-label', t('media_aria_create_subfolder', 'Create subfolder in {name}', { name: folder.name || t('media_folder_fallback', 'folder') }));
-      addButton.title = t('media_title_create_subfolder', 'Create subfolder');
+      addButton.setAttribute('aria-label', 'Create subfolder in ' + (folder.name || 'folder'));
+      addButton.title = 'Create subfolder';
       addButton.innerHTML = icon('plus', { size: 12 });
       addButton.addEventListener('click', async function (event) {
         event.stopPropagation();
@@ -369,8 +369,8 @@ function resolveMediaItemUrl(url) {
       const renameButton = document.createElement('button');
       renameButton.type = 'button';
       renameButton.className = 'btn-icon btn-icon-xs btn-icon--edit';
-      renameButton.setAttribute('aria-label', t('media_aria_rename_folder', 'Rename folder {name}', { name: folder.name || t('media_folder_fallback', 'folder') }));
-      renameButton.title = t('media_title_rename_folder', 'Rename folder');
+      renameButton.setAttribute('aria-label', 'Rename folder ' + (folder.name || 'folder'));
+      renameButton.title = 'Rename folder';
       renameButton.innerHTML = icon('pencil-simple', { size: 12 });
       renameButton.addEventListener('click', async function (event) {
         event.stopPropagation();
@@ -380,8 +380,8 @@ function resolveMediaItemUrl(url) {
       const deleteButton = document.createElement('button');
       deleteButton.type = 'button';
       deleteButton.className = 'btn-icon btn-icon-xs btn-icon--danger';
-      deleteButton.setAttribute('aria-label', t('media_aria_delete_folder', 'Delete folder {name}', { name: folder.name || t('media_folder_fallback', 'folder') }));
-      deleteButton.title = t('media_title_delete_folder', 'Delete folder');
+      deleteButton.setAttribute('aria-label', 'Delete folder ' + (folder.name || 'folder'));
+      deleteButton.title = 'Delete folder';
       deleteButton.innerHTML = icon('trash', { size: 12 });
       deleteButton.addEventListener('click', async function (event) {
         event.stopPropagation();
@@ -473,10 +473,10 @@ function resolveMediaItemUrl(url) {
         pruneSelection();
         renderMediaCollection(getFilteredMedia());
       } else {
-        showError(t('media_load_failed', 'Failed to load media: {message}', { message: getResultMessage(result, t('media_unknown_error', 'Unknown error')) }));
+        showError(mdT('media_js_err_load', 'Failed to load media:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError(t('media_load_error', 'Error loading media: {message}', { message: error.message }));
+      showError(mdT('media_js_err_load_generic', 'Error loading media:') + ' ' + error.message);
     }
   }
 
@@ -503,8 +503,8 @@ function resolveMediaItemUrl(url) {
 
     if (!items.length) {
       grid.innerHTML = '<div class="empty-state empty-state--compact">' +
-        '<p class="empty-state-title">' + escapeHtml(t('media_empty_title', 'No media found')) + '</p>' +
-        '<p class="empty-state-text">' + escapeHtml(t('media_empty_text', 'Upload files or change the current filters.')) + '</p></div>';
+        '<p class="empty-state-title">' + escapeHtml(mdT('media_js_empty_title', 'No media found')) + '</p>' +
+        '<p class="empty-state-text">' + escapeHtml(mdT('media_js_empty_hint', 'Upload files or change the current filters.')) + '</p></div>';
       updateSelectionToolbar();
       return;
     }
@@ -526,7 +526,7 @@ function resolveMediaItemUrl(url) {
     const preview = document.createElement('button');
     preview.type = 'button';
     preview.className = 'media-card__preview';
-    preview.setAttribute('aria-label', t('media_aria_open_item', 'Open {name}', { name: item.name || t('media_item_fallback', 'media item') }));
+    preview.setAttribute('aria-label', 'Open ' + (item.name || 'media item'));
     preview.innerHTML = getMediaThumbnailHTML(item);
     bindThumbnailFallback(preview);
     preview.addEventListener('click', async function () {
@@ -539,8 +539,8 @@ function resolveMediaItemUrl(url) {
     const checkboxLabel = document.createElement('label');
     checkboxLabel.className = 'u-inline-flex u-shrink-0 u-clickable';
     checkboxLabel.innerHTML =
-      '<input type="checkbox" class="media-select-checkbox" aria-label="' + escapeHtml(t('media_aria_select_item', 'Select {name}', { name: item.name || t('media_item_fallback', 'media item') })) + '">' +
-      '<span class="u-sr-only">' + escapeHtml(t('media_select_sr', 'Select')) + '</span>';
+      '<input type="checkbox" class="media-select-checkbox" aria-label="Select ' + escapeHtml(item.name || 'media item') + '">' +
+      '<span class="u-sr-only">Select</span>';
 
     const checkbox = checkboxLabel.querySelector('input');
     checkbox.checked = state.selectedIds.has(item.id);
@@ -554,8 +554,8 @@ function resolveMediaItemUrl(url) {
     const nameEl = document.createElement('button');
     nameEl.type = 'button';
     nameEl.className = 'media-card__name';
-    nameEl.title = item.name || t('media_untitled', 'Untitled');
-    nameEl.textContent = item.name || t('media_untitled', 'Untitled');
+    nameEl.title = item.name || 'Untitled';
+    nameEl.textContent = item.name || 'Untitled';
     nameEl.addEventListener('click', async function () {
       viewMedia(item.id);
     });
@@ -574,7 +574,7 @@ function resolveMediaItemUrl(url) {
     if (item.alt_text) {
       const altEl = document.createElement('div');
       altEl.className = 'u-text-xs u-fg-secondary u-clamp-2';
-      altEl.textContent = t('media_alt_prefix', 'Alt: {text}', { text: item.alt_text });
+      altEl.textContent = mdT('media_js_alt_prefix', 'Alt:') + ' ' + item.alt_text;
       meta.appendChild(altEl);
     }
 
@@ -637,7 +637,7 @@ function resolveMediaItemUrl(url) {
     const input = document.getElementById('file-input');
     const files = Array.from(input?.files || []);
     if (!files.length) {
-      showError(t('media_select_file', 'Select a file to upload.'));
+      showError(mdT('media_js_select_file_upload', 'Select a file to upload.'));
       return;
     }
 
@@ -645,7 +645,7 @@ function resolveMediaItemUrl(url) {
       await uploadFiles(files);
       closeUploadModal();
     } catch (error) {
-      showError(error.message || t('media_upload_failed', 'Upload failed.'));
+      showError(error.message || mdT('media_js_upload_failed', 'Upload failed.'));
     }
   }
 
@@ -672,7 +672,7 @@ function resolveMediaItemUrl(url) {
 
       const result = await response.json();
       if (result.status !== 'ok') {
-        failures.push(file.name + ': ' + getResultMessage(result, t('media_upload_failed', 'Upload failed.')));
+        failures.push(file.name + ': ' + getResultMessage(result, 'Upload failed'));
       }
     }
 
@@ -682,17 +682,25 @@ function resolveMediaItemUrl(url) {
       throw new Error(failures.join('\n'));
     }
 
-    showSuccess(files.length === 1 ? t('media_upload_success_one', 'Media uploaded successfully.') : t('media_upload_success_many', 'Files uploaded successfully.'));
+    showSuccess(files.length === 1 ? 'Media uploaded successfully.' : 'Files uploaded successfully.');
   }
 
   async function createFolder() {
-    const name = await BirklyFeedback.prompt('', '', { title: t('media_prompt_new_folder_title', 'New folder'), placeholder: t('media_prompt_folder_placeholder', 'Folder name'), confirmLabel: t('media_prompt_create', 'Create') });
+    const name = await BirklyFeedback.prompt('', '', {
+      title: mdT('media_js_new_folder_title', 'New folder'),
+      placeholder: mdT('media_js_folder_name_placeholder', 'Folder name'),
+      confirmLabel: mdT('media_js_prompt_create_label', 'Create'),
+    });
     if (!name) return;
     await createFolderRequest(name.trim());
   }
 
   async function createSubfolder(basePath) {
-    const name = await BirklyFeedback.prompt('', '', { title: t('media_prompt_new_subfolder_title', 'New subfolder'), placeholder: t('media_prompt_subfolder_placeholder', 'Subfolder name'), confirmLabel: t('media_prompt_create', 'Create') });
+    const name = await BirklyFeedback.prompt('', '', {
+      title: mdT('media_js_new_subfolder_title', 'New subfolder'),
+      placeholder: mdT('media_js_subfolder_name_placeholder', 'Subfolder name'),
+      confirmLabel: mdT('media_js_prompt_create_label', 'Create'),
+    });
     if (!name) return;
     const folderName = basePath ? basePath + '/' + name.trim() : name.trim();
     await createFolderRequest(folderName);
@@ -712,22 +720,22 @@ function resolveMediaItemUrl(url) {
 
       const result = await response.json();
       if (result.status === 'ok') {
-        showSuccess(t('media_folder_created', 'Folder created successfully.'));
+        showSuccess(mdT('media_js_folder_created_success', 'Folder created successfully.'));
         await loadFolders();
       } else {
-        showError(t('media_folder_create_failed', 'Failed to create folder: {message}', { message: getResultMessage(result, t('media_unknown_error', 'Unknown error')) }));
+        showError(mdT('media_js_err_create_folder', 'Failed to create folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError(t('media_folder_create_error', 'Error creating folder: {message}', { message: error.message }));
+      showError(mdT('media_js_err_create_folder_generic', 'Error creating folder:') + ' ' + error.message);
     }
   }
 
   async function renameFolder(folderPath) {
     const currentName = folderPath.split('/').pop();
-    const newName = await BirklyFeedback.prompt(t('media_prompt_rename_message', 'Enter a new name for this folder.'), currentName, {
-      title: t('media_prompt_rename_title', 'Rename folder'),
-      placeholder: t('media_prompt_folder_placeholder', 'Folder name'),
-      confirmLabel: t('media_prompt_rename_confirm', 'Rename'),
+    const newName = await BirklyFeedback.prompt(mdT('media_js_rename_folder_message', 'Enter a new name for this folder.'), currentName, {
+      title: 'Rename folder',
+      placeholder: 'Folder name',
+      confirmLabel: 'Rename',
     });
     if (!newName || newName === currentName) return;
 
@@ -749,16 +757,16 @@ function resolveMediaItemUrl(url) {
 
       const result = await response.json();
       if (result.status === 'ok') {
-        showSuccess(t('media_folder_renamed', 'Folder renamed successfully.'));
+        showSuccess(mdT('media_js_folder_renamed_success', 'Folder renamed successfully.'));
         if (state.currentFolder === folderPath) {
           state.currentFolder = newPath;
         }
         await Promise.all([loadFolders(), loadMedia()]);
       } else {
-        showError(t('media_folder_rename_failed', 'Failed to rename folder: {message}', { message: getResultMessage(result, t('media_unknown_error', 'Unknown error')) }));
+        showError(mdT('media_js_err_rename_folder', 'Failed to rename folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError(t('media_folder_rename_error', 'Error renaming folder: {message}', { message: error.message }));
+      showError(mdT('media_js_err_rename_folder_generic', 'Error renaming folder:') + ' ' + error.message);
     }
   }
 
@@ -771,15 +779,13 @@ function resolveMediaItemUrl(url) {
     let handleFiles = 'move';
 
     if (hasFiles) {
-      const choice = await BirklyFeedback.confirm(t('media_folder_has_files_confirm', 'Folder "{name}" contains files.\n\nClick OK to move files to root, or Cancel to delete them with the folder.', { name: folderName }));
+      const choice = await BirklyFeedback.confirm(mdT('media_js_confirm_folder_has_files', 'Folder "{name}" contains files.\n\nClick OK to move files to root, or Cancel to delete them with the folder.', { name: folderName }));
       handleFiles = choice ? 'move' : 'delete';
     }
 
     const confirmMessage = hasFiles
-      ? (handleFiles === 'delete'
-        ? t('media_folder_delete_with_files', 'Delete folder "{name}" and delete its files?', { name: folderName })
-        : t('media_folder_delete_with_move', 'Delete folder "{name}" and move its files to root?', { name: folderName }))
-      : t('media_folder_delete_confirm', 'Delete folder "{name}"?', { name: folderName });
+      ? (handleFiles === 'delete' ? mdT('media_js_confirm_delete_folder_and_files', 'Delete folder "{name}" and delete its files?', { name: folderName }) : mdT('media_js_confirm_delete_folder_move_files', 'Delete folder "{name}" and move its files to root?', { name: folderName }))
+      : mdT('media_js_confirm_delete_folder', 'Delete folder "{name}"?', { name: folderName });
 
     if (!(await BirklyFeedback.confirm(confirmMessage))) return;
 
@@ -797,16 +803,16 @@ function resolveMediaItemUrl(url) {
 
       const result = await response.json();
       if (result.status === 'ok') {
-        showSuccess(getResultMessage(result, t('media_folder_deleted', 'Folder deleted successfully.')));
+        showSuccess(getResultMessage(result, 'Folder deleted successfully.'));
         if (state.currentFolder === folderPath) {
           state.currentFolder = '';
         }
         await Promise.all([loadFolders(), loadMedia()]);
       } else {
-        showError(t('media_folder_delete_failed', 'Failed to delete folder: {message}', { message: getResultMessage(result, t('media_unknown_error', 'Unknown error')) }));
+        showError(mdT('media_js_err_delete_folder', 'Failed to delete folder:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError(t('media_folder_delete_error', 'Error deleting folder: {message}', { message: error.message }));
+      showError(mdT('media_js_err_delete_folder_generic', 'Error deleting folder:') + ' ' + error.message);
     }
   }
 
@@ -815,12 +821,12 @@ function resolveMediaItemUrl(url) {
       return entry.id === id;
     });
     if (!item) {
-      showError(t('media_item_not_found', 'Media item not found.'));
+      showError(mdT('media_js_item_not_found', 'Media item not found.'));
       return;
     }
 
     state.currentMediaItem = normalizeMediaItem(item);
-    document.getElementById('media-modal-title').textContent = item.name || t('media_modal_title', 'Media details');
+    document.getElementById('media-modal-title').textContent = item.name || 'Media details';
     renderMediaModalBody(state.currentMediaItem);
     openModal('media-modal');
   }
@@ -860,7 +866,7 @@ function resolveMediaItemUrl(url) {
         '<div class="u-stack-4">' +
           '<div class="field">' +
             '<label class="field-label" for="media-alt-text">Alt text</label>' +
-            '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="Describe the image for screen readers">' +
+            '<input type="text" id="media-alt-text" class="input" value="' + escapeHtml(item.alt_text || '') + '" placeholder="' + escapeHtml(mdT('media_js_alt_text_placeholder', 'Describe the image for screen readers')) + '">' +
           '</div>' +
           '<div class="u-grid-2">' +
             '<div class="field">' +
@@ -903,7 +909,7 @@ function resolveMediaItemUrl(url) {
 
   async function saveCurrentMediaDetails() {
     if (!state.currentMediaItem) {
-      showError(t('media_no_item_selected', 'No media item selected.'));
+      showError(mdT('media_js_no_item_selected', 'No media item selected.'));
       return;
     }
 
@@ -939,12 +945,12 @@ function resolveMediaItemUrl(url) {
         state.currentMediaItem = normalizeMediaItem({ ...state.currentMediaItem, ...updatedMedia });
         renderMediaCollection(getFilteredMedia());
         renderMediaModalBody(state.currentMediaItem);
-        showSuccess(t('media_details_saved', 'Media details saved successfully.'));
+        showSuccess(mdT('media_js_media_details_saved', 'Media details saved successfully.'));
       } else {
-        showError(t('media_details_save_failed', 'Failed to save media details: {message}', { message: getResultMessage(result, t('media_unknown_error', 'Unknown error')) }));
+        showError(mdT('media_js_err_save_details', 'Failed to save media details:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
       }
     } catch (error) {
-      showError(t('media_details_save_error', 'Error saving media details: {message}', { message: error.message }));
+      showError(mdT('media_js_err_save_details_generic', 'Error saving media details:') + ' ' + error.message);
     }
   }
 
@@ -954,7 +960,7 @@ function resolveMediaItemUrl(url) {
       : (state.currentMediaItem ? [state.currentMediaItem.id] : []);
 
     if (!moveIds.length) {
-      showError(t('media_select_to_move', 'Select at least one media item to move.'));
+      showError(mdT('media_js_select_items_move', 'Select at least one media item to move.'));
       return;
     }
 
@@ -991,7 +997,7 @@ function resolveMediaItemUrl(url) {
 
   async function confirmMove() {
     if (!state.pendingMoveIds.length) {
-      showError(t('media_none_to_move', 'No media selected to move.'));
+      showError(mdT('media_js_no_media_move', 'No media selected to move.'));
       return;
     }
 
@@ -1012,7 +1018,7 @@ function resolveMediaItemUrl(url) {
     if (failures.length) {
       showError(failures.join('\n'));
     } else {
-      showSuccess(moveCount === 1 ? t('media_moved_one', 'Media moved successfully.') : t('media_moved_many', 'Selected media moved successfully.'));
+      showSuccess(moveCount === 1 ? 'Media moved successfully.' : 'Selected media moved successfully.');
     }
   }
 
@@ -1090,10 +1096,10 @@ function resolveMediaItemUrl(url) {
   async function deleteSelectedMedia() {
     const ids = Array.from(state.selectedIds);
     if (!ids.length) {
-      showError(t('media_none_selected', 'No media selected.'));
+      showError(mdT('media_js_no_media_selected', 'No media selected.'));
       return;
     }
-    if (!(await BirklyFeedback.confirm(t('media_delete_selected_confirm', 'Delete the selected media items?')))) {
+    if (!(await BirklyFeedback.confirm(mdT('media_js_confirm_delete_selected', 'Delete the selected media items?')))) {
       return;
     }
 
@@ -1111,16 +1117,16 @@ function resolveMediaItemUrl(url) {
     if (failures.length) {
       showError(failures.join('\n'));
     } else {
-      showSuccess(t('media_deleted_selected', 'Selected media deleted successfully.'));
+      showSuccess(mdT('media_js_selected_media_deleted_success', 'Selected media deleted successfully.'));
     }
   }
 
   async function deleteCurrentMedia() {
     if (!state.currentMediaItem) {
-      showError(t('media_no_item_selected', 'No media item selected.'));
+      showError(mdT('media_js_no_item_selected', 'No media item selected.'));
       return;
     }
-    if (!(await BirklyFeedback.confirm(t('media_delete_file_confirm', 'Delete this media file?')))) {
+    if (!(await BirklyFeedback.confirm(mdT('media_js_confirm_delete_file', 'Delete this media file?')))) {
       return;
     }
 
@@ -1130,9 +1136,9 @@ function resolveMediaItemUrl(url) {
       closeMediaModal();
       state.selectedIds.delete(mediaId);
       await Promise.all([loadFolders(), loadMedia()]);
-      showSuccess(t('media_deleted', 'Media deleted successfully.'));
+      showSuccess(mdT('media_js_media_deleted_success', 'Media deleted successfully.'));
     } else {
-      showError(t('media_delete_failed', 'Failed to delete media: {message}', { message: getResultMessage(result, t('media_unknown_error', 'Unknown error')) }));
+      showError(mdT('media_js_err_delete_media', 'Failed to delete media:') + ' ' + getResultMessage(result, mdT('ai_conn_js_unknown_error', 'Unknown error')));
     }
   }
 
