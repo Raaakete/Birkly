@@ -106,7 +106,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
         . '<span class="entry-editor-action-status__spinner spinner" aria-hidden="true" hidden></span>'
         . '<span class="entry-editor-action-status__text"></span>'
         . '</span>'
-        . '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">Unsaved changes</span>';
+        . '<span id="editor-unsaved-badge" class="editor-unsaved-badge" aria-live="polite">' . htmlspecialchars(__('admin.unsaved_changes')) . '</span>';
   if (!$isSubEntry):
     $stickySaveBarAfterSaveHtml = '<button type="button" class="btn btn-primary" id="entry-publish-btn">'
         . htmlspecialchars(__('admin.entry_publish_and_save'))
@@ -242,32 +242,32 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
             <div class="editor-sidebar">
                 <div class="sidebar-tabs tabs-v2-root">
                     <div class="tabs tab-nav">
-                        <button type="button" class="tab tab-btn active" data-tab="general">General</button>
-                        <button type="button" class="tab tab-btn" data-tab="templating">Templating</button>
+                        <button type="button" class="tab tab-btn active" data-tab="general"><?= htmlspecialchars(__('admin.general')) ?></button>
+                        <button type="button" class="tab tab-btn" data-tab="templating"><?= htmlspecialchars(__('admin.templating')) ?></button>
                     </div>
                     
                     <div class="tab-content">
                         <!-- General Information Tab -->
                         <div class="tab-pane active" id="general-tab">
                             <div class="form-group">
-                                <label for="slug">Slug</label>
-                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="Auto-generated">
+                                <label for="slug"><?= htmlspecialchars(__('admin.col_editor_slug_label')) ?></label>
+                                <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($entry['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_auto_ph')) ?>">
                                 <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($autoSlugChecked) ? '1' : '0' ?>">
                                 <label class="auto-slug-toggle">
                                     <input type="checkbox" id="auto_slug_checkbox" <?= !empty($autoSlugChecked) ? 'checked' : '' ?>>
-                                    Auto-generate slug from title
+                                    <?= htmlspecialchars(__('admin.col_editor_auto_generate_slug')) ?>
                                 </label>
                                 <small class="form-text">
-                                    URL-friendly identifier (ASCII letters, numbers, and hyphens). Titles support any language; non-Latin titles need a manual slug for readable URLs.
+                                    <?= htmlspecialchars(__('admin.entry_editor_slug_help')) ?>
                                 </small>
                                 <div id="slug-unicode-hint" class="form-text slug-unicode-hint" hidden>
-                                    This title cannot produce an ASCII slug. Enter a manual slug (e.g. romanized text or <code>post-2026</code>) or the entry ID will be used.
+                                    <?= __('admin.entry_editor_slug_unicode_hint') ?>
                                 </div>
                                 <div class="permalink-preview" id="permalink-preview">
                                     <div class="permalink-preview-label"><?= __('admin.entry_editor_permalink_preview') ?></div>
                                     <div class="permalink-preview-url">
                                         <code id="permalink-preview-url">/</code>
-                                        <button type="button" class="copy-btn btn-icon" data-copy="" id="copy-permalink-btn" title="Copy permalink" aria-label="Copy permalink">
+                                        <button type="button" class="copy-btn btn-icon" data-copy="" id="copy-permalink-btn" title="<?= htmlspecialchars(__('admin.entry_editor_copy_permalink')) ?>" aria-label="<?= htmlspecialchars(__('admin.entry_editor_copy_permalink')) ?>">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         </button>
                                     </div>
@@ -284,43 +284,43 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             </div>
                             
                             <div class="info-item u-pt-4 u-border-top">
-                                <label for="status">Status</label>
+                                <label for="status"><?= htmlspecialchars(__('admin.status')) ?></label>
                                 <select name="status" id="status" class="input">
-                                    <option value="unpublished" <?= in_array($entry['status'] ?? 'unpublished', ['unpublished', 'draft']) ? 'selected' : '' ?>>Unpublished</option>
-                                    <option value="published" <?= ($entry['status'] ?? '') === 'published' ? 'selected' : '' ?>>Published</option>
-                                    <option value="scheduled" <?= ($entry['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>>Scheduled</option>
-                                    <option value="pending_review" <?= ($entry['status'] ?? '') === 'pending_review' ? 'selected' : '' ?>>Pending for Review</option>
+                                    <option value="unpublished" <?= in_array($entry['status'] ?? 'unpublished', ['unpublished', 'draft']) ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.unpublished')) ?></option>
+                                    <option value="published" <?= ($entry['status'] ?? '') === 'published' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.published')) ?></option>
+                                    <option value="scheduled" <?= ($entry['status'] ?? '') === 'scheduled' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.scheduled')) ?></option>
+                                    <option value="pending_review" <?= ($entry['status'] ?? '') === 'pending_review' ? 'selected' : '' ?>><?= htmlspecialchars(__('admin.pending_review')) ?></option>
                                 </select>
-                                <p class="status-clarity" id="status-clarity-text">Hidden from your live site and public API.</p>
+                                <p class="status-clarity" id="status-clarity-text"><?= htmlspecialchars(__('admin.entry_editor_status_clarity_unpublished')) ?></p>
                             </div>
                             
                             <!-- Scheduled: Show Publish At field -->
                             <div class="form-group" id="publish-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'scheduled' ? '' : 'hidden' ?>>
-                                <label for="published_at">Publish At</label>
+                                <label for="published_at"><?= htmlspecialchars(__('admin.entry_editor_publish_at')) ?></label>
                                 <input type="datetime-local" name="published_at" id="published_at" class="input" 
                                        value="<?= !empty($entry['published_at']) ? date('Y-m-d\TH:i', strtotime($entry['published_at'])) : '' ?>"
                                        data-value="<?= htmlspecialchars($entry['published_at'] ?? '') ?>">
                                 <small class="form-text">
-                                    The entry will be automatically published at this date and time
+                                    <?= htmlspecialchars(__('admin.entry_editor_publish_at_help')) ?>
                                 </small>
                             </div>
                             
                             <!-- Published: Show Unpublish At field -->
                             <div class="form-group" id="expire-schedule-group" <?= ($entry['status'] ?? 'unpublished') === 'published' ? '' : 'hidden' ?>>
-                                <label for="expires_at">Unpublish At</label>
+                                <label for="expires_at"><?= htmlspecialchars(__('admin.entry_editor_unpublish_at')) ?></label>
                                 <input type="datetime-local" name="expires_at" id="expires_at" class="input"
                                        value="<?= !empty($entry['expires_at']) ? date('Y-m-d\TH:i', strtotime($entry['expires_at'])) : '' ?>"
                                        data-value="<?= htmlspecialchars($entry['expires_at'] ?? '') ?>">
                                 <small class="form-text">
-                                    Optional: The entry will be automatically unpublished at this date and time
+                                    <?= htmlspecialchars(__('admin.entry_editor_unpublish_at_help')) ?>
                                 </small>
                             </div>
                             
                             <!-- Pending Review: Show Reviewer selection -->
                             <div class="form-group" id="reviewer-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
-                                <label for="reviewer">Notify Reviewer</label>
+                                <label for="reviewer"><?= htmlspecialchars(__('admin.entry_editor_notify_reviewer')) ?></label>
                                 <select name="reviewer" id="reviewer" class="input">
-                                    <option value="">Select a reviewer...</option>
+                                    <option value=""><?= htmlspecialchars(__('admin.entry_editor_select_reviewer')) ?></option>
                                     <?php
                                     // Load users for reviewer selection
                                     $users = [];
@@ -352,7 +352,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <!-- Hidden input to preserve reviewer value when field is hidden -->
                                 <input type="hidden" name="reviewer_hidden" id="reviewer_hidden" value="<?= htmlspecialchars($currentReviewer) ?>">
                                 <small class="form-text">
-                                    Select a user to notify when this entry is submitted for review
+                                    <?= htmlspecialchars(__('admin.entry_editor_reviewer_help')) ?>
                                 </small>
                             </div>
 
@@ -360,9 +360,9 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <div class="entry-review-actions" id="review-action-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
                                     <div class="entry-review-actions__title"><?= __('admin.entry_editor_review_actions_title') ?></div>
                                     <div class="entry-review-actions__buttons">
-                                        <button type="button" class="btn btn-secondary btn-sm" id="approve-entry">Approve</button>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="request-changes">Request changes</button>
-                                        <button type="button" class="btn btn-danger btn-sm" id="reject-entry">Reject</button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="approve-entry"><?= htmlspecialchars(__('admin.approve')) ?></button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="request-changes"><?= htmlspecialchars(__('admin.request_changes')) ?></button>
+                                        <button type="button" class="btn btn-danger btn-sm" id="reject-entry"><?= htmlspecialchars(__('admin.reject')) ?></button>
                                     </div>
                                 </div>
                             <?php endif; ?>
@@ -371,7 +371,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <div class="entry-info-section">
                                 <?php if (!empty($entry['id'])): ?>
                                     <div class="entry-info-item">
-                                        <div class="entry-info-label">Entry ID</div>
+                                        <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_entry_id')) ?></div>
                                         <div class="entry-info-value entry-info-id"><?= htmlspecialchars($entry['id']) ?></div>
                                     </div>
                                 <?php endif; ?>
@@ -379,7 +379,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <div class="entry-info-row">
                                     <?php if (!empty($entry['created_at'])): ?>
                                         <div class="entry-info-item entry-info-half">
-                                            <div class="entry-info-label">Created</div>
+                                            <div class="entry-info-label"><?= htmlspecialchars(__('admin.created')) ?></div>
                                             <div class="entry-info-value">
                                                 <div class="entry-info-date"><?= htmlspecialchars(date('Y-m-d', strtotime($entry['created_at']))) ?></div>
                                                 <div class="entry-info-time"><?= htmlspecialchars(date('H:i:s', strtotime($entry['created_at']))) ?></div>
@@ -389,7 +389,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     
                                     <?php if (!empty($entry['updated_at'])): ?>
                                         <div class="entry-info-item entry-info-half">
-                                            <div class="entry-info-label">Updated</div>
+                                            <div class="entry-info-label"><?= htmlspecialchars(__('admin.updated')) ?></div>
                                             <div class="entry-info-value">
                                                 <div class="entry-info-date"><?= htmlspecialchars(date('Y-m-d', strtotime($entry['updated_at']))) ?></div>
                                                 <div class="entry-info-time"><?= htmlspecialchars(date('H:i:s', strtotime($entry['updated_at']))) ?></div>
@@ -406,7 +406,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         $createdByUser = getUserInfo($createdByUserId);
                                         ?>
                                         <div class="entry-info-item entry-info-half">
-                                            <div class="entry-info-label">Created By</div>
+                                            <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_created_by')) ?></div>
                                             <div class="entry-info-value">
                                                 <?php if ($createdByUser): ?>
                                                     <div class="entry-info-user-name"><?= htmlspecialchars($createdByUser['name'] ?: $createdByUser['email'] ?: $createdByUserId) ?></div>
@@ -423,7 +423,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         $currentUser = $_SESSION['user'];
                                         ?>
                                         <div class="entry-info-item entry-info-half">
-                                            <div class="entry-info-label">Created By</div>
+                                            <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_created_by')) ?></div>
                                             <div class="entry-info-value">
                                                 <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? __('admin.unknown')) ?></div>
                                             </div>
@@ -437,7 +437,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         $updatedByUser = getUserInfo($updatedByUserId);
                                         ?>
                                         <div class="entry-info-item entry-info-half">
-                                            <div class="entry-info-label">Updated By</div>
+                                            <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_updated_by')) ?></div>
                                             <div class="entry-info-value">
                                                 <?php if ($updatedByUser): ?>
                                                     <div class="entry-info-user-name"><?= htmlspecialchars($updatedByUser['name'] ?: $updatedByUser['email'] ?: $updatedByUserId) ?></div>
@@ -454,7 +454,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         $currentUser = $_SESSION['user'];
                                         ?>
                                         <div class="entry-info-item entry-info-half">
-                                            <div class="entry-info-label">Updated By</div>
+                                            <div class="entry-info-label"><?= htmlspecialchars(__('admin.entry_editor_updated_by')) ?></div>
                                             <div class="entry-info-value">
                                                 <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? __('admin.unknown')) ?></div>
                                             </div>
@@ -465,11 +465,11 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                             <?php if (!$isSubEntry && !empty($entry['id']) && !empty($collection['slug'])): ?>
                                 <div class="entry-revisions-section">
                                     <div class="section-header">
-                                        <h4>Revisions</h4>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="refresh-entry-revisions-btn">Refresh</button>
+                                        <h4><?= htmlspecialchars(__('admin.entry_editor_revisions')) ?></h4>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="refresh-entry-revisions-btn"><?= htmlspecialchars(__('admin.refresh')) ?></button>
                                     </div>
                                     <p class="u-text-xs u-fg-secondary">
-                                        Review previous saved versions and restore an older revision when needed.
+                                        <?= htmlspecialchars(__('admin.entry_editor_revisions_help')) ?>
                                     </p>
                                     <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
                                     <div id="entry-revisions-list" class="entry-revisions-list">
@@ -484,21 +484,20 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                         <div class="tab-pane" id="templating-tab">
                             <div class="templating-content">
                                 <p class="templating-intro">
-                                    For a detailed overview about templating, please visit 
-                                    <a href="<?= admin_url('help') ?>#templating" target="_blank">the documentation site</a>.
+                                    <?= htmlspecialchars(__('admin.entry_editor_templating_intro_before')) ?><a href="<?= admin_url('help') ?>#templating" target="_blank"><?= htmlspecialchars(__('admin.entry_editor_templating_intro_link')) ?></a><?= htmlspecialchars(__('admin.entry_editor_templating_intro_after')) ?>
                                 </p>
 
                                 <?php if (!empty($sidebar['collection_template'])): ?>
                                     <div class="templating-section">
-                                        <div class="section-header"><h4>Collection template</h4></div>
+                                        <div class="section-header"><h4><?= htmlspecialchars(__('admin.entry_editor_collection_template')) ?></h4></div>
                                         <p class="u-text-xs u-fg-secondary"><code><?= htmlspecialchars($sidebar['collection_template']) ?></code></p>
                                     </div>
                                 <?php endif; ?>
 
                                 <div class="templating-section templating-meta-snippet">
                                     <div class="section-header">
-                                        <h4>Meta &amp; SEO snippet</h4>
-                                        <button type="button" class="copy-btn" data-copy="" id="copy-meta-snippet-btn" title="Copy meta snippet">
+                                        <h4><?= htmlspecialchars(__('admin.entry_editor_meta_seo_snippet')) ?></h4>
+                                        <button type="button" class="copy-btn" data-copy="" id="copy-meta-snippet-btn" title="<?= htmlspecialchars(__('admin.entry_editor_copy_meta_snippet')) ?>">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                         </button>
                                     </div>
@@ -514,8 +513,8 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <!-- Field Slugs Section -->
                                 <div class="templating-section">
                                     <div class="section-header">
-                                        <h4>Field slugs</h4>
-                                        <button type="button" class="btn btn-secondary btn-sm" id="copy-all-bindings-btn">Copy all</button>
+                                        <h4><?= htmlspecialchars(__('admin.col_editor_field_slugs_title')) ?></h4>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="copy-all-bindings-btn"><?= htmlspecialchars(__('admin.entry_editor_copy_all_bindings')) ?></button>
                                     </div>
                                     <div class="field-slugs-list">
                                         <?php 
@@ -530,7 +529,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                                     <div class="field-slug-label"><?= htmlspecialchars($fieldLabel) ?>:</div>
                                                     <div class="field-slug-value">
                                                         <code><?= htmlspecialchars($slug) ?></code>
-                                                        <button type="button" class="copy-btn" data-copy="<?= htmlspecialchars($slug) ?>" title="Copy to clipboard">
+                                                        <button type="button" class="copy-btn" data-copy="<?= htmlspecialchars($slug) ?>" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard')) ?>">
                                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -548,8 +547,8 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                 <!-- Entry Level Example -->
                                 <div class="templating-section">
                                     <div class="section-header">
-                                        <h4>Entry Level Example</h4>
-                                        <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                        <h4><?= htmlspecialchars(__('admin.entry_editor_entry_level_example')) ?></h4>
+                                        <button type="button" class="copy-btn" id="copy-entry-example" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard')) ?>">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -592,8 +591,8 @@ echo htmlspecialchars($entryExample);
                                 <!-- Collection Level Example -->
                                 <div class="templating-section">
                                     <div class="section-header">
-                                        <h4>Collection Level Example</h4>
-                                        <button type="button" class="copy-btn" id="copy-collection-example" title="Copy to clipboard">
+                                        <h4><?= htmlspecialchars(__('admin.entry_editor_collection_level_example')) ?></h4>
+                                        <button type="button" class="copy-btn" id="copy-collection-example" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard')) ?>">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                                                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
