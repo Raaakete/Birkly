@@ -805,6 +805,20 @@
         return i18n[key] || fallback || key;
     }
 
+    function formatPluginHealthLabel(status) {
+        var normalized = String(status || 'unknown').toLowerCase();
+        if (['healthy', 'warning', 'error', 'unknown'].indexOf(normalized) === -1) {
+            normalized = 'unknown';
+        }
+        var fallbacks = {
+            healthy: 'Healthy',
+            warning: 'Warning',
+            error: 'Error',
+            unknown: 'Unknown',
+        };
+        return t('hub_health_status_' + normalized, fallbacks[normalized] || fallbacks.unknown);
+    }
+
     function isFreeOffer(offer) {
         if (!offer || !offer.pricing) {
             return false;
@@ -2286,7 +2300,7 @@
             '</div>' +
             '<div class="u-cluster u-gap-1 u-shrink-0">' +
             '<span class="badge badge-sm ' + healthTone + '" title="' + escapeHtml(healthTitle || healthStatus) + '">' +
-            escapeHtml(healthStatus.charAt(0).toUpperCase() + healthStatus.slice(1)) +
+            escapeHtml(formatPluginHealthLabel(healthStatus)) +
             '</span>' +
             '<span class="status-badge badge-sm ' + (active ? 'status-active' : 'status-inactive') + '">' +
             (active ? escapeHtml(t('active', 'Active')) : escapeHtml(t('inactive', 'Inactive'))) +

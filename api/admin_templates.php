@@ -3597,6 +3597,10 @@ function getPluginsData() {
             'marketplace_distribution_notice_beta' => __('admin.marketplace_distribution_notice_beta'),
             'hub_license_ref' => __('admin.hub_license_ref'),
             'hub_plugin_update_badge' => __('admin.hub_plugin_update_badge'),
+            'hub_health_status_healthy' => __('admin.hub_health_status_healthy'),
+            'hub_health_status_warning' => __('admin.hub_health_status_warning'),
+            'hub_health_status_error' => __('admin.hub_health_status_error'),
+            'hub_health_status_unknown' => __('admin.hub_health_status_unknown'),
         ],
     ];
 }
