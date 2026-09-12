@@ -102,10 +102,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <label for="site-timezone"><?= __('admin.timezone') ?></label>
                     <select id="site-timezone" name="siteTimezone" class="input">
                       <option value="UTC" <?= ($settings['site']['timezone'] ?? '') === 'UTC' ? 'selected' : '' ?>>UTC</option>
-                      <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>>Eastern Time</option>
-                      <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>>Central Time</option>
-                      <option value="America/Denver" <?= ($settings['site']['timezone'] ?? '') === 'America/Denver' ? 'selected' : '' ?>>Mountain Time</option>
-                      <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>>Pacific Time</option>
+                      <option value="America/New_York" <?= ($settings['site']['timezone'] ?? '') === 'America/New_York' ? 'selected' : '' ?>><?= __('admin.settings_timezone_eastern') ?></option>
+                      <option value="America/Chicago" <?= ($settings['site']['timezone'] ?? '') === 'America/Chicago' ? 'selected' : '' ?>><?= __('admin.settings_timezone_central') ?></option>
+                      <option value="America/Denver" <?= ($settings['site']['timezone'] ?? '') === 'America/Denver' ? 'selected' : '' ?>><?= __('admin.settings_timezone_mountain') ?></option>
+                      <option value="America/Los_Angeles" <?= ($settings['site']['timezone'] ?? '') === 'America/Los_Angeles' ? 'selected' : '' ?>><?= __('admin.settings_timezone_pacific') ?></option>
                     </select>
                   </div>
                 </div>
@@ -331,7 +331,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h2 class="section-title"><?= __('admin.settings_project_overview_title') ?></h2>
               <p class="settings-help"><?= __('admin.settings_project_workspace_help') ?></p>
             </div>
-            <a href="#" id="project-visit-public-link" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden>Visit public site</a>
+            <a href="#" id="project-visit-public-link" class="btn btn-secondary" target="_blank" rel="noopener noreferrer" hidden><?= __('admin.settings_project_visit_public_btn') ?></a>
           </div>
           <div class="settings-stack">
           <section class="card">
@@ -399,8 +399,8 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div class="u-split u-px-4 u-py-3 u-border-bottom">
                   <h3 id="project-preview-title"><?= __('admin.preview') ?></h3>
                   <div class="u-cluster">
-                    <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" hidden>Save</button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" hidden>Delete</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="project-save-file-btn" hidden><?= __('admin.save') ?></button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="project-delete-file-btn" hidden><?= __('admin.delete') ?></button>
                   </div>
                 </div>
                 <div id="project-file-preview-area">
@@ -510,7 +510,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <h3 class="card-title"><?= __('admin.settings_project_activity_card_title') ?></h3>
             </div>
             <div class="card-body u-stack-4">
-            <div class="project-activity-filters" id="project-activity-filters" role="group" aria-label="Filter project activity">
+            <div class="project-activity-filters" id="project-activity-filters" role="group" aria-label="<?= htmlspecialchars(__('admin.settings_project_activity_filter_aria')) ?>">
               <button type="button" class="btn btn-secondary btn-sm is-active" data-project-activity-filter="all"><?= __('admin.settings_project_activity_filter_all') ?></button>
               <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="files"><?= __('admin.settings_project_activity_filter_files') ?></button>
               <button type="button" class="btn btn-secondary btn-sm" data-project-activity-filter="git"><?= __('admin.settings_project_activity_filter_git') ?></button>
@@ -546,17 +546,17 @@ include __DIR__ . '/components/sticky-save-bar.php';
             <div class="card-actions">
               <button class="btn btn-secondary" data-admin-action="openInviteUserModal">
                 <?= birkly_icon('envelope', ['size' => 16]) ?>
-                Invite User
+                <?= __('admin.settings_invite_user_btn') ?>
               </button>
               <button class="btn btn-primary" data-admin-action="openAddUserModal">
                 <?= birkly_icon('plus', ['size' => 16]) ?>
-                Add User
+                <?= __('admin.settings_add_user_btn') ?>
               </button>
             </div>
           </div>
     <div class="card-body u-stack-4">
           <p class="settings-help">
-            CMS users here manage the admin panel. Site visitors and members are managed separately in <strong>Site Users</strong> (User Management plugin).
+            <?= __('admin.settings_users_cms_help_prefix') ?><strong><?= __('admin.settings_site_users_label') ?></strong><?= __('admin.settings_users_cms_help_suffix') ?>
           </p>
           <div class="u-grid-auto-lg">
             <?php if (empty($users)): ?>
@@ -598,10 +598,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                       <span class="badge <?= ($user['role'] ?? 'viewer') === 'admin' ? 'badge-accent' : 'badge-neutral' ?> u-w-fit"><?= htmlspecialchars((string) ($user['role'] ?? 'viewer')) ?></span>
                     </div>
                     <div class="card-actions">
-                      <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="Edit User" aria-label="Edit user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
+                      <button class="btn-icon btn-icon--edit" data-admin-action="editUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.edit_user')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_user_aria') . ' ' . $userLabel) ?>">
                         <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                       </button>
-                      <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="Delete User" aria-label="Delete user <?= htmlspecialchars($userLabel, ENT_QUOTES) ?>">
+                      <button class="btn-icon btn-icon--danger" data-admin-action="confirmDeleteUser" data-admin-args='["<?= htmlspecialchars((string) ($user['id'] ?? ''), ENT_QUOTES) ?>", "<?= htmlspecialchars($userLabel, ENT_QUOTES) ?>"]' title="<?= htmlspecialchars(__('admin.settings_delete_user_btn')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_user_aria') . ' ' . $userLabel) ?>">
                         <?= birkly_icon('trash', ['size' => 16]) ?>
                       </button>
                     </div>
@@ -702,10 +702,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
               <div class="card-header">
                 <h3 class="card-title"><?= htmlspecialchars($role['name']) ?></h3>
                 <div class="card-actions">
-                  <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Edit Role" aria-label="Edit role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
+                  <button class="btn-icon btn-icon--edit" data-admin-action="editRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.edit_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_edit_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
                     <?= birkly_icon('pencil-simple', ['size' => 16]) ?>
                   </button>
-                  <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="Delete Role" aria-label="Delete role <?= htmlspecialchars($role['name'] ?? $role['id']) ?>">
+                  <button class="btn-icon btn-icon--danger" data-admin-action="deleteRole" data-admin-args='["<?= htmlspecialchars($role['id']) ?>"]' title="<?= htmlspecialchars(__('admin.delete_role')) ?>" aria-label="<?= htmlspecialchars(__('admin.settings_delete_role_aria') . ' ' . ($role['name'] ?? $role['id'])) ?>">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
                   </button>
                 </div>
@@ -768,7 +768,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                 <div class="form-group">
                   <label class="checkbox-label">
                     <input type="checkbox" id="security-require-strong-password" name="securityRequireStrongPassword" <?= ($settings['security']['require_strong_password'] ?? $settings['security']['requireStrongPassword'] ?? true) ? 'checked' : '' ?>>
-                    <span>Require Strong Password</span>
+                    <span><?= __('admin.settings_require_strong_password') ?></span>
                   </label>
                 </div>
                 <div class="form-group">
@@ -1135,10 +1135,10 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     <div class="form-group">
                       <label for="storage-backend"><?= __('admin.storage_backend') ?></label>
                       <select id="storage-backend" name="storage_backend" class="input">
-                        <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>>Flat File Storage (Default)</option>
-                        <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>>MySQL/MariaDB</option>
-                        <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>>PostgreSQL</option>
-                        <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>>SQLite (coming soon)</option>
+                        <option value="flatfile" <?= $storageDriver === 'flatfile' ? 'selected' : '' ?>><?= __('admin.settings_storage_flatfile') ?></option>
+                        <option value="mysql" <?= $storageDriver === 'mysql' ? 'selected' : '' ?>><?= __('admin.settings_storage_mysql') ?></option>
+                        <option value="postgresql" <?= $storageDriver === 'postgresql' ? 'selected' : '' ?>><?= __('admin.settings_storage_postgresql') ?></option>
+                        <option value="sqlite" disabled <?= $storageDriver === 'sqlite' ? 'selected' : '' ?>><?= __('admin.settings_storage_sqlite_soon') ?></option>
                       </select>
                       <small><?= __('admin.changing_storage_backend_warning') ?></small>
                     </div>
@@ -1347,11 +1347,11 @@ include __DIR__ . '/components/sticky-save-bar.php';
           </div>
           <div class="form-grid">
             <div class="form-group">
-              <label>Read Rate Limit (per minute)</label>
+              <label><?= __('admin.read_rate_limit_per_minute') ?></label>
               <input type="number" id="edit-domain-read-limit" name="read_limit" min="1" class="input">
             </div>
             <div class="form-group">
-              <label>Write Rate Limit (per hour)</label>
+              <label><?= __('admin.write_rate_limit_per_hour') ?></label>
               <input type="number" id="edit-domain-write-limit" name="write_limit" min="1" class="input">
             </div>
           </div>
@@ -1401,7 +1401,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </div>
           <div class="form-group">
-            <label>Plugin access</label>
+            <label><?= __('admin.settings_plugin_access_label') ?></label>
             <p class="settings-help"><?= __('admin.settings_role_plugin_visibility_help') ?></p>
             <div class="permissions-grid" id="add-plugin-access-grid"></div>
           </div>
@@ -1439,7 +1439,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
             </div>
           </div>
           <div class="form-group">
-            <label>Plugin access</label>
+            <label><?= __('admin.settings_plugin_access_label') ?></label>
             <p class="settings-help"><?= __('admin.settings_role_plugin_visibility_help') ?></p>
             <div class="permissions-grid" id="edit-plugin-access-grid"></div>
           </div>
