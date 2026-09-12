@@ -441,6 +441,15 @@ if ($ok && $notifyTo !== '') {
 if ($ok) {
     if (function_exists('do_action')) {
         do_action('after_entry_save', $cleanData, $collectionSlug, null);
+        do_action('birkly_entry_saved', [
+            'entry' => $cleanData,
+            'collection' => $collectionSlug,
+            'old_entry' => null,
+            'is_new' => true,
+            'old_status' => '',
+            'new_status' => (string) ($cleanData['status'] ?? ''),
+            'status_changed' => false,
+        ]);
     }
     respond([
         'status' => 'ok',
