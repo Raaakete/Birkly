@@ -25,6 +25,18 @@
         return meta ? meta.getAttribute('content') : '';
     }
 
+    function t(key, fallback, params) {
+        var out = (window.Birkly && window.Birkly.i18n)
+            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                out = out.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return out;
+    }
+
     function escapeHtml(text) {
         var d = document.createElement('div');
         d.textContent = text == null ? '' : String(text);
@@ -83,7 +95,7 @@
         if (!select) return;
 
         var current = selectedScope();
-        var options = ['<option value="all">All enabled domains</option>'];
+        var options = ['<option value="all">' + escapeHtml(t('analytics_scope_all', 'All enabled domains')) + '</option>'];
         state.trackingDomains.forEach(function (domain) {
             options.push('<option value="' + escapeHtml(domain) + '">' + escapeHtml(domain) + '</option>');
         });
@@ -110,15 +122,15 @@
 
         var messages = [];
         if (health.consent_required) {
-            messages.push('Without consent, only anonymous page views are counted (path + daily visitor estimate). Detailed metrics require accepting the banner.');
+            messages.push(t('analytics_health_consent', 'Without consent, only anonymous page views are counted (path + daily visitor estimate). Detailed metrics require accepting the banner.'));
         }
         if (Array.isArray(health.capped_domains) && health.capped_domains.length) {
-            messages.push('Daily event cap reached for ' + health.capped_domains.length + ' domain/day pair(s). Older events may have been trimmed.');
+            messages.push(t('analytics_health_capped', 'Daily event cap reached for {count} domain/day pair(s). Older events may have been trimmed.', { count: health.capped_domains.length }));
         }
         if (!health.last_event_at) {
-            messages.push('No events recorded yet. Visit your public site to start collecting.');
+            messages.push(t('analytics_health_no_events', 'No events recorded yet. Visit your public site to start collecting.'));
         } else {
-            messages.push('Last event: ' + health.last_event_at + ' · ' + (health.enabled_domain_count || 0) + ' enabled domain(s).');
+            messages.push(t('analytics_health_last_event', 'Last event: {time} · {count} enabled domain(s).', { time: health.last_event_at, count: health.enabled_domain_count || 0 }));
         }
 
         if (!messages.length) {
@@ -138,11 +150,11 @@
         if (!mount) return;
         var current = (state.settings && state.settings.preset) || 'off';
         if (!state.presets.length) {
-            mount.innerHTML = '<div class="empty-state"><p>No presets available.</p></div>';
+            mount.innerHTML = '<div class="empty-state"><p>' + escapeHtml(t('analytics_presets_empty', 'No presets available.')) + '</p></div>';
             return;
         }
 
-        mount.innerHTML = '<div class="u-grid-auto-lg" role="radiogroup" aria-label="Analytics preset">' +
+        mount.innerHTML = '<div class="u-grid-auto-lg" role="radiogroup" aria-label="' + escapeHtml(t('analytics_preset_radiogroup', 'Analytics preset')) + '">' +
             state.presets.map(function (p) {
                 var selected = p.id === current;
                 return '' +
@@ -151,15 +163,15 @@
                     '<div class="u-cluster u-justify-between">' +
                     '<strong>' + escapeHtml(p.label) + '</strong>' +
                     '<input type="radio" name="analytics-preset" value="' + escapeHtml(p.id) + '"' +
-                    (selected ? ' checked' : '') + ' aria-label="' + escapeHtml(p.label) + ' preset">' +
+                    (selected ? ' checked' : '') + ' aria-label="' + escapeHtml(p.label) + escapeHtml(t('analytics_preset_aria_suffix', ' preset')) + '">' +
                     '</div>' +
                     '<p class="form-help">' + escapeHtml(p.summary || '') + '</p>' +
-                    '<p class="u-text-sm"><span class="u-fg-secondary">Upside</span> — ' + escapeHtml(p.upside || '') + '</p>' +
-                    '<p class="u-text-sm"><span class="u-fg-secondary">Downside</span> — ' + escapeHtml(p.downside || '') + '</p>' +
+                    '<p class="u-text-sm"><span class="u-fg-secondary">' + escapeHtml(t('analytics_label_upside', 'Upside')) + '</span> — ' + escapeHtml(p.upside || '') + '</p>' +
+                    '<p class="u-text-sm"><span class="u-fg-secondary">' + escapeHtml(t('analytics_label_downside', 'Downside')) + '</span> — ' + escapeHtml(p.downside || '') + '</p>' +
                     (p.consent_required
-                        ? '<p class="form-help">Visitor consent banner is required for this preset.</p>'
+                        ? '<p class="form-help">' + escapeHtml(t('analytics_consent_required_help', 'Visitor consent banner is required for this preset.')) + '</p>'
                         : '') +
-                    '<p class="form-help">Default retention: ' + escapeHtml(String(p.retention_days || 0)) + ' days</p>' +
+                    '<p class="form-help">' + escapeHtml(t('analytics_default_retention', 'Default retention: {days} days', { days: p.retention_days || 0 })) + '</p>' +
                     '</div></label>';
             }).join('') +
             '</div>';
@@ -205,7 +217,7 @@
         if (!rows.length) {
             return '<section class="analytics-panel">' +
                 '<h4 class="analytics-panel__title">' + escapeHtml(title) + '</h4>' +
-                '<p class="form-help u-m-0">No data yet.</p></section>';
+                '<p class="form-help u-m-0">' + escapeHtml(t('analytics_no_data', 'No data yet.')) + '</p></section>';
         }
         var max = 1;
         rows.forEach(function (row) {
@@ -233,8 +245,8 @@
         daily = Array.isArray(daily) ? daily.slice() : [];
         if (!daily.length) {
             return '<section class="analytics-panel analytics-panel--wide analytics-panel--chart">' +
-                '<h4 class="analytics-panel__title">Daily trend</h4>' +
-                '<p class="form-help u-m-0">No daily data yet.</p></section>';
+                '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_daily_trend', 'Daily trend')) + '</h4>' +
+                '<p class="form-help u-m-0">' + escapeHtml(t('analytics_no_daily_data', 'No daily data yet.')) + '</p></section>';
         }
         daily.sort(function (a, b) {
             return String(a.date || '').localeCompare(String(b.date || ''));
@@ -250,8 +262,7 @@
             var visitors = Number(row.visitors) || 0;
             var viewsPct = Math.max(6, Math.round((views / max) * 100));
             var visitorsPct = Math.max(4, Math.round((visitors / max) * 100));
-            return '<li class="analytics-trend-col" title="' + escapeHtml(String(row.date || '')) +
-                ': ' + views + ' page views, ' + visitors + ' visitors">' +
+            return '<li class="analytics-trend-col" title="' + escapeHtml(t('analytics_trend_tooltip', '{date}: {views} page views, {visitors} visitors', { date: row.date || '', views: views, visitors: visitors })) + '">' +
                 '<span class="analytics-trend-col__stack" aria-hidden="true">' +
                 '<span class="analytics-trend-col__bar analytics-trend-col__bar--views" style="height:' + viewsPct + '%"></span>' +
                 (isAdvanced()
@@ -263,13 +274,13 @@
         }).join('');
         var legend = isAdvanced()
             ? '<div class="analytics-trend-legend" aria-hidden="true">' +
-                '<span><i class="analytics-swatch analytics-swatch--views"></i> Page views</span>' +
-                '<span><i class="analytics-swatch analytics-swatch--visitors"></i> Visitors</span>' +
+                '<span><i class="analytics-swatch analytics-swatch--views"></i> ' + escapeHtml(t('analytics_legend_page_views', 'Page views')) + '</span>' +
+                '<span><i class="analytics-swatch analytics-swatch--visitors"></i> ' + escapeHtml(t('analytics_legend_visitors', 'Visitors')) + '</span>' +
                 '</div>'
             : '';
         return '<section class="analytics-panel analytics-panel--wide analytics-panel--chart">' +
             '<div class="u-cluster u-justify-between u-gap-3">' +
-            '<h4 class="analytics-panel__title">Daily page views (last ' + windowDays + ' days)</h4>' +
+            '<h4 class="analytics-panel__title">' + escapeHtml(t('analytics_trend_title', 'Daily page views (last {days} days)', { days: windowDays })) + '</h4>' +
             legend +
             '</div>' +
             '<ul class="analytics-trend-cols">' + bars + '</ul></section>';
@@ -279,57 +290,57 @@
         report = report || {};
         var preset = selectedPreset();
         var scope = selectedScope();
-        var scopeLabel = scope === 'all' ? 'All enabled domains' : scope;
+        var scopeLabel = scope === 'all' ? t('analytics_scope_all', 'All enabled domains') : scope;
         var help = document.getElementById('analytics-report-help');
         if (help) {
             help.textContent = isAdvanced()
-                ? 'Advanced report for ' + scopeLabel + ' — sessions, bounce, funnels, forms, outbound clicks, OS, and plugin events.'
-                : 'Combined snapshot for ' + scopeLabel + '. Depth follows your preset.';
+                ? t('analytics_report_help_advanced', 'Advanced report for {scope} — sessions, bounce, funnels, forms, outbound clicks, OS, and plugin events.', { scope: scopeLabel })
+                : t('analytics_report_help_standard', 'Combined snapshot for {scope}. Depth follows your preset.', { scope: scopeLabel });
         }
 
         var html = '<div class="analytics-report' + (isAdvanced() ? ' analytics-report--advanced' : '') + '">';
 
-        html += sectionHeading('Overview', 'Last 30 days · ' + scopeLabel) +
+        html += sectionHeading(t('analytics_section_overview', 'Overview'), t('analytics_section_overview_sub', 'Last 30 days · {scope}', { scope: scopeLabel })) +
             '<div class="analytics-kpi-grid">' +
-            kpi(report.page_views || 0, 'Page views', 'Page loads only') +
-            kpi(report.unique_visitors || 0, 'Visitors', preset === 'minimal' ? 'Daily privacy-safe estimate' : 'Unique visitors');
+            kpi(report.page_views || 0, t('analytics_kpi_page_views', 'Page views'), t('analytics_kpi_page_views_hint', 'Page loads only')) +
+            kpi(report.unique_visitors || 0, t('analytics_kpi_visitors', 'Visitors'), preset === 'minimal' ? t('analytics_kpi_visitors_minimal_hint', 'Daily privacy-safe estimate') : t('analytics_kpi_visitors_hint', 'Unique visitors'));
 
         if (preset !== 'minimal' && preset !== 'off') {
-            html += kpi(report.sessions || 0, 'Sessions', 'With session id') +
-                kpi(report.pages_per_visitor || 0, 'Pages / visitor', 'Engagement');
+            html += kpi(report.sessions || 0, t('analytics_kpi_sessions', 'Sessions'), t('analytics_kpi_sessions_hint', 'With session id')) +
+                kpi(report.pages_per_visitor || 0, t('analytics_kpi_pages_per_visitor', 'Pages / visitor'), t('analytics_kpi_engagement', 'Engagement'));
         }
         if (isAdvanced()) {
-            html += kpi((report.bounce_rate || 0) + '%', 'Bounce rate', 'Single-page sessions') +
-                kpi((report.event_counts && report.event_counts.form_submit) || 0, 'Form submits', 'Advanced events') +
-                kpi((report.event_counts && report.event_counts.outbound_click) || 0, 'Outbound clicks', 'Advanced events') +
-                kpi((report.event_counts && report.event_counts.plugin_event) || 0, 'Plugin events', 'Advanced events');
+            html += kpi((report.bounce_rate || 0) + '%', t('analytics_kpi_bounce_rate', 'Bounce rate'), t('analytics_kpi_bounce_hint', 'Single-page sessions')) +
+                kpi((report.event_counts && report.event_counts.form_submit) || 0, t('analytics_kpi_form_submits', 'Form submits'), t('analytics_kpi_advanced_events', 'Advanced events')) +
+                kpi((report.event_counts && report.event_counts.outbound_click) || 0, t('analytics_kpi_outbound_clicks', 'Outbound clicks'), t('analytics_kpi_advanced_events', 'Advanced events')) +
+                kpi((report.event_counts && report.event_counts.plugin_event) || 0, t('analytics_kpi_plugin_events', 'Plugin events'), t('analytics_kpi_advanced_events', 'Advanced events'));
         }
 
         html += '</div>' + renderTrends(report.daily_stats);
 
-        html += sectionHeading('Content & acquisition', 'Where traffic lands and comes from') +
+        html += sectionHeading(t('analytics_section_content', 'Content & acquisition'), t('analytics_section_content_sub', 'Where traffic lands and comes from')) +
             '<div class="analytics-panel-grid">' +
-            renderBarList('Top pages', report.top_pages, 'path', 'views') +
-            renderBarList('Traffic sources', report.traffic_sources, 'source', 'visits') +
-            renderBarList('Referrers', report.referrers, 'domain', 'visits') +
-            renderBarList('Devices', report.devices, 'device_type', 'visits');
+            renderBarList(t('analytics_bar_top_pages', 'Top pages'), report.top_pages, 'path', 'views') +
+            renderBarList(t('analytics_bar_traffic_sources', 'Traffic sources'), report.traffic_sources, 'source', 'visits') +
+            renderBarList(t('analytics_bar_referrers', 'Referrers'), report.referrers, 'domain', 'visits') +
+            renderBarList(t('analytics_bar_devices', 'Devices'), report.devices, 'device_type', 'visits');
 
         if (preset === 'standard' || isAdvanced()) {
-            html += renderBarList('Entrance pages', report.entrance_pages, 'path', 'entrances') +
-                renderBarList('Exit pages', report.exit_pages, 'path', 'exits') +
-                renderBarList('Campaigns', report.campaigns, 'campaign', 'visits') +
-                renderBarList('Browsers', report.browsers, 'browser', 'visits') +
-                renderBarList('Locations', report.countries, 'country', 'visits');
+            html += renderBarList(t('analytics_bar_entrance_pages', 'Entrance pages'), report.entrance_pages, 'path', 'entrances') +
+                renderBarList(t('analytics_bar_exit_pages', 'Exit pages'), report.exit_pages, 'path', 'exits') +
+                renderBarList(t('analytics_bar_campaigns', 'Campaigns'), report.campaigns, 'campaign', 'visits') +
+                renderBarList(t('analytics_bar_browsers', 'Browsers'), report.browsers, 'browser', 'visits') +
+                renderBarList(t('analytics_bar_locations', 'Locations'), report.countries, 'country', 'visits');
         }
         html += '</div>';
 
         if (isAdvanced()) {
-            html += sectionHeading('Audience & events', 'Advanced-only detail') +
+            html += sectionHeading(t('analytics_section_audience', 'Audience & events'), t('analytics_section_audience_sub', 'Advanced-only detail')) +
                 '<div class="analytics-panel-grid">' +
-                renderBarList('Operating systems', report.operating_systems, 'os', 'visits') +
-                renderBarList('Outbound links', report.outbound_targets, 'url', 'clicks') +
-                renderBarList('Forms', report.forms, 'form', 'submits') +
-                renderBarList('Plugin events', report.plugin_events, 'event', 'count') +
+                renderBarList(t('analytics_bar_operating_systems', 'Operating systems'), report.operating_systems, 'os', 'visits') +
+                renderBarList(t('analytics_bar_outbound_links', 'Outbound links'), report.outbound_targets, 'url', 'clicks') +
+                renderBarList(t('analytics_bar_forms', 'Forms'), report.forms, 'form', 'submits') +
+                renderBarList(t('analytics_bar_plugin_events', 'Plugin events'), report.plugin_events, 'event', 'count') +
                 '</div>';
         }
 
@@ -366,13 +377,13 @@
 
         if (!state.settings || state.settings.preset === 'off') {
             state.lastReport = null;
-            panel.innerHTML = '<div class="empty-state"><p class="empty-state__title">Analytics is Off</p>' +
-                '<p class="empty-state__description">Nothing is collected. Choose Minimal or higher, then Save Settings.</p></div>';
+            panel.innerHTML = '<div class="empty-state"><p class="empty-state__title">' + escapeHtml(t('analytics_report_off_title', 'Analytics is Off')) + '</p>' +
+                '<p class="empty-state__description">' + escapeHtml(t('analytics_report_off_desc', 'Nothing is collected. Choose Minimal or higher, then Save Settings.')) + '</p></div>';
             updateExportVisibility();
             return Promise.resolve();
         }
 
-        panel.innerHTML = '<div class="loading-state"><p>Loading report…</p></div>';
+        panel.innerHTML = '<div class="loading-state"><p>' + escapeHtml(t('analytics_report_loading', 'Loading report…')) + '</p></div>';
         var trackingId = selectedScope() || 'all';
         state.trackingId = trackingId;
         updateExportVisibility();
@@ -386,7 +397,7 @@
             .then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Report failed');
+                    throw new Error(payload.message || t('analytics_report_failed', 'Report failed'));
                 }
                 if (payload.meta && payload.meta.health) {
                     state.health = payload.meta.health;
@@ -405,7 +416,7 @@
             .then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Failed to load analytics settings');
+                    throw new Error(payload.message || t('analytics_load_settings_failed', 'Failed to load analytics settings'));
                 }
                 state.presets = (payload.data && payload.data.presets) || [];
                 state.settings = (payload.data && payload.data.settings) || {};
@@ -461,7 +472,7 @@
         }).then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Save failed');
+                    throw new Error(payload.message || t('analytics_save_failed', 'Save failed'));
                 }
                 state.settings = payload.data.settings;
                 state.active = payload.data.active;
@@ -478,7 +489,7 @@
     function exportCsv() {
         var scope = selectedScope();
         if (!scope || scope === 'all' || selectedPreset() === 'off') {
-            toast('Choose a single domain to export CSV', 'error');
+            toast(t('analytics_export_domain_required', 'Choose a single domain to export CSV'), 'error');
             return;
         }
         var end = new Date();

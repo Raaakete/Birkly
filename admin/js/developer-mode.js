@@ -4,6 +4,18 @@
 (function () {
     'use strict';
 
+    function t(key, fallback, params) {
+        var text = (window.Birkly && window.Birkly.i18n)
+            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     var initialized = false;
 
     function apiUrl(path) {
@@ -64,21 +76,20 @@
             '<span class="kv-key">Active plugins</span><span class="kv-value">' +
             escapeHtml(activePlugins.length ? activePlugins.join(', ') : 'none') + '</span>' +
             '</div>' +
-            '<p class="form-help">Debug helpers: add <code>?__dbg=1</code> to a public page for client logs. ' +
-            'MCP endpoint: <code>/mcp</code>. Template export never includes users or secrets.</p>' +
+            '<p class="form-help">' + t('dev_debug_help', 'Debug helpers: add <code>?__dbg=1</code> to a public page for client logs. MCP endpoint: <code>/mcp</code>. Template export never includes users or secrets.') + '</p>' +
             '</div>';
     }
 
     function loadSystemInfo() {
         var mount = document.getElementById('developer-system-info');
         if (mount) {
-            mount.innerHTML = '<div class="card-body"><div class="loading-state"><p>Loading system info…</p></div></div>';
+            mount.innerHTML = '<div class="card-body"><div class="loading-state"><p>' + escapeHtml(t('dev_loading_system_info', 'Loading system info…')) + '</p></div></div>';
         }
         return fetch(apiUrl('/api/developer.php?action=system_info'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Failed to load system info');
+                    throw new Error(payload.message || t('dev_load_system_info_failed', 'Failed to load system info'));
                 }
                 renderSystemInfo(payload.data || {});
             })
@@ -99,10 +110,10 @@
         }).then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Failed to save');
+                    throw new Error(payload.message || t('dev_save_failed', 'Failed to save'));
                 }
                 setToolsVisible(!!enabled);
-                toast(enabled ? 'Developer mode on' : 'Developer mode off', 'success');
+                toast(enabled ? t('dev_mode_on', 'Developer mode on') : t('dev_mode_off', 'Developer mode off'), 'success');
                 if (enabled) {
                     return loadSystemInfo();
                 }
@@ -128,10 +139,10 @@
             var type = (response.headers.get('Content-Type') || '').toLowerCase();
             if (!response.ok || type.indexOf('application/zip') === -1) {
                 return response.json().then(function (payload) {
-                    throw new Error((payload && payload.message) || 'Export failed');
+                    throw new Error((payload && payload.message) || t('dev_export_failed', 'Export failed'));
                 }).catch(function (err) {
                     if (err && err.message) throw err;
-                    throw new Error('Export failed');
+                    throw new Error(t('dev_export_failed', 'Export failed'));
                 });
             }
             return response.blob().then(function (blob) {
@@ -146,10 +157,10 @@
                 a.click();
                 a.remove();
                 URL.revokeObjectURL(url);
-                toast('Template pack downloaded', 'success');
+                toast(t('dev_template_downloaded', 'Template pack downloaded'), 'success');
             });
         }).catch(function (err) {
-            toast(err.message || 'Export failed', 'error');
+            toast(err.message || t('dev_export_failed', 'Export failed'), 'error');
         }).finally(function () {
             if (btn) btn.disabled = false;
         });
@@ -163,20 +174,20 @@
             .then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Smoke failed');
+                    throw new Error(payload.message || t('dev_smoke_failed', 'Smoke failed'));
                 }
                 if (out) {
                     out.hidden = false;
                     out.textContent = JSON.stringify(payload.data || {}, null, 2);
                 }
-                toast('Smoke checks complete', 'success');
+                toast(t('dev_smoke_complete', 'Smoke checks complete'), 'success');
             })
             .catch(function (err) {
                 if (out) {
                     out.hidden = false;
-                    out.textContent = err.message || 'Smoke failed';
+                    out.textContent = err.message || t('dev_smoke_failed', 'Smoke failed');
                 }
-                toast(err.message || 'Smoke failed', 'error');
+                toast(err.message || t('dev_smoke_failed', 'Smoke failed'), 'error');
             })
             .finally(function () {
                 if (btn) btn.disabled = false;
@@ -191,7 +202,7 @@
             .then(function (r) { return r.json(); })
             .then(function (payload) {
                 if (payload.status !== 'ok') {
-                    throw new Error(payload.message || 'Failed to load developer mode');
+                    throw new Error(payload.message || t('dev_load_failed', 'Failed to load developer mode'));
                 }
                 var enabled = !!(payload.data && payload.data.enabled);
                 toggle.checked = enabled;
@@ -202,7 +213,7 @@
                 return null;
             })
             .catch(function (err) {
-                toast(err.message || 'Failed to load developer mode', 'error');
+                toast(err.message || t('dev_load_failed', 'Failed to load developer mode'), 'error');
             });
     }
 
@@ -218,7 +229,7 @@
                     saveEnabled(next).catch(function (err) {
                         toggle.checked = !next;
                         setToolsVisible(!next);
-                        toast(err.message || 'Failed to save', 'error');
+                        toast(err.message || t('dev_save_failed', 'Failed to save'), 'error');
                     });
                 });
             }

@@ -31,6 +31,18 @@
         return '/admin/index.php?' + new URLSearchParams({ page: page, ...(params || {}) }).toString();
     }
 
+    function t(key, fallback, params) {
+        var text = (window.Birkly && window.Birkly.i18n)
+            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
+    }
+
     function setContent(element, html) {
         if (element) element.innerHTML = html;
     }
@@ -54,10 +66,10 @@
         if (!timestamp) return '';
         const date = new Date(timestamp);
         const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-        if (diff < 60) return 'Just now';
-        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-        if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+        if (diff < 60) return t('dash_time_just_now', 'Just now');
+        if (diff < 3600) return t('dash_time_minutes_ago', '{n}m ago', { n: Math.floor(diff / 60) });
+        if (diff < 86400) return t('dash_time_hours_ago', '{n}h ago', { n: Math.floor(diff / 3600) });
+        if (diff < 604800) return t('dash_time_days_ago', '{n}d ago', { n: Math.floor(diff / 86400) });
         return date.toLocaleDateString();
     }
 
@@ -106,7 +118,7 @@
 
     function statusBadge(status) {
         if (status === 'pending_review') {
-            return '<span class="badge badge-warning">Pending review</span>';
+            return '<span class="badge badge-warning">' + escapeHtml(t('dash_pending_review_badge', 'Pending review')) + '</span>';
         }
         const published = status === 'published';
         return published
@@ -155,19 +167,19 @@
             setContent(element,
                 '<div class="card-section">' +
                 '<div class="u-grid-2">' +
-                statTile(collections, 'Collections', null, 'stack') +
-                statTile(total, 'Entries', null, 'article') +
+                statTile(collections, t('collections', 'Collections'), null, 'stack') +
+                statTile(total, t('dash_stat_entries', 'Entries'), null, 'article') +
                 '</div>' +
                 '</div>' +
                 '<div class="card-section">' +
                 '<div class="u-split">' +
-                '<span class="stat-label">Published</span>' +
+                '<span class="stat-label">' + escapeHtml(t('published', 'Published')) + '</span>' +
                 '<span class="badge badge-success u-numeric">' + publishedPct + '%</span>' +
                 '</div>' +
                 '<div class="progress u-mt-2"><div class="progress-bar" style="width:' + publishedPct + '%"></div></div>' +
                 '<div class="u-split u-mt-2">' +
-                '<span class="u-text-xs u-fg-secondary">' + birklyIcon('check-square', { size: 12 }) + ' <span class="u-numeric">' + published + '</span> published</span>' +
-                '<span class="u-text-xs u-fg-secondary">' + birklyIcon('file-text', { size: 12 }) + ' <span class="u-numeric">' + drafts + '</span> draft' + (drafts === 1 ? '' : 's') + '</span>' +
+                '<span class="u-text-xs u-fg-secondary">' + birklyIcon('check-square', { size: 12 }) + ' <span class="u-numeric">' + published + '</span> ' + escapeHtml(t('published', 'Published').toLowerCase()) + '</span>' +
+                '<span class="u-text-xs u-fg-secondary">' + birklyIcon('file-text', { size: 12 }) + ' <span class="u-numeric">' + drafts + '</span> ' + escapeHtml(drafts === 1 ? t('dash_draft_singular', 'draft') : t('dash_draft_plural', 'drafts')) + '</span>' +
                 '</div>' +
                 '</div>'
             );
@@ -176,30 +188,30 @@
         dashboard.registerMount('analyticsMini', function (element, widget, data) {
             var analyticsSettingsUrl = adminUrl('settings', { tab: 'analytics' });
             if (!data) {
-                setContent(element, callout('—', 'Analytics not configured', 'Choose a preset under Settings → Analytics.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
+                setContent(element, callout('—', t('dash_analytics_not_configured', 'Analytics not configured'), t('dash_analytics_not_configured_help', 'Choose a preset under Settings → Analytics.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open Analytics →'), 'muted'));
                 return;
             }
             if (data.analytics_collecting === false || data.analytics_preset === 'off') {
-                setContent(element, callout('—', 'Analytics is Off', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
+                setContent(element, callout('—', t('dash_analytics_off', 'Analytics is off'), t('dash_analytics_off_help', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open Analytics →'), 'muted'));
                 return;
             }
             if (!data.has_analytics) {
-                setContent(element, callout('—', 'Tracking not enabled yet', 'Re-save your Analytics preset to enable site tracking, or enable a domain under Site delivery.', analyticsSettingsUrl, 'Open Analytics →', 'muted'));
+                setContent(element, callout('—', t('dash_tracking_not_enabled', 'Tracking not enabled yet'), t('dash_tracking_not_enabled_help', 'Re-save your Analytics preset to enable site tracking, or enable a domain under Site delivery.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open Analytics →'), 'muted'));
                 return;
             }
             var pageViews = Number(data.total_page_views || 0);
             var visitors = Number(data.total_visitors || 0);
             if (pageViews === 0 && visitors === 0) {
                 var waitMsg = data.analytics_consent_required
-                    ? 'Anonymous page views are counted without consent. Accept the banner for detailed metrics.'
-                    : 'Preset is on. Visit your public site (or localhost preview) to record the first page views.';
-                setContent(element, callout('0', 'Waiting for traffic', waitMsg, analyticsSettingsUrl, 'View Analytics →', 'muted'));
+                    ? t('dash_analytics_wait_consent', 'Anonymous page views are counted without consent. Accept the banner for detailed metrics.')
+                    : t('dash_analytics_wait_traffic', 'Preset is on. Visit your public site (or localhost preview) to record the first page views.');
+                setContent(element, callout('0', t('dash_waiting_for_traffic', 'Waiting for traffic'), waitMsg, analyticsSettingsUrl, t('dash_view_analytics', 'View Analytics →'), 'muted'));
                 return;
             }
 
             function formatCountry(code) {
-                if (!code || code === 'unknown') return 'Not detected';
-                if (code === 'LOCAL') return 'Local network';
+                if (!code || code === 'unknown') return t('dash_not_detected', 'Not detected');
+                if (code === 'LOCAL') return t('dash_local_network', 'Local network');
                 try {
                     if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
                         var name = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' }).of(code);
@@ -212,13 +224,13 @@
             function formatLabel(raw, type) {
                 var value = String(raw || '').trim();
                 if (!value || value.toLowerCase() === 'unknown') {
-                    return 'Not detected';
+                    return t('dash_not_detected', 'Not detected');
                 }
                 if (type === 'device') {
-                    return { mobile: 'Mobile', tablet: 'Tablet', desktop: 'Desktop', bot: 'Bot' }[value.toLowerCase()] || value.charAt(0).toUpperCase() + value.slice(1);
+                    return { mobile: t('dash_device_mobile', 'Mobile'), tablet: t('dash_device_tablet', 'Tablet'), desktop: t('dash_device_desktop', 'Desktop'), bot: t('dash_device_bot', 'Bot') }[value.toLowerCase()] || value.charAt(0).toUpperCase() + value.slice(1);
                 }
                 if (type === 'source') {
-                    if (value === 'direct') return 'Direct';
+                    if (value === 'direct') return t('dash_traffic_direct', 'Direct');
                     if (value.indexOf('referral:') === 0) return value.slice(9);
                     if (value.indexOf('campaign:') === 0) return value.slice(9).replace('/', ' · ');
                 }
@@ -235,7 +247,7 @@
                 if (!Array.isArray(rows) || rows.length === 0) {
                     return '<div class="u-stack-2">' +
                         '<h4 class="u-label">' + escapeHtml(title) + '</h4>' +
-                        '<p class="u-text-sm u-fg-tertiary">No data yet</p></div>';
+                        '<p class="u-text-sm u-fg-tertiary">' + escapeHtml(t('dash_no_data_yet', 'No data yet')) + '</p></div>';
                 }
 
                 var max = Math.max.apply(null, rows.map(function (row) { return Number(row[valueKey] || 0); }).concat([1]));
@@ -263,12 +275,12 @@
             var health = data.collection_health || {};
             var healthNote = '';
             if (Array.isArray(health.capped_domains) && health.capped_domains.length) {
-                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Daily cap reached for some domains — counts may be understated.</p>';
+                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('dash_analytics_cap_note', 'Daily cap reached for some domains — counts may be understated.')) + '</p>';
             } else if (health.consent_required) {
-                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">Anonymous visits count without consent; detailed metrics need banner acceptance.</p>';
+                healthNote = '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('dash_analytics_consent_note', 'Anonymous visits count without consent; detailed metrics need banner acceptance.')) + '</p>';
             }
             if ((data.tracking_count || 0) > 1) {
-                healthNote += '<p class="u-text-sm u-fg-secondary u-m-0">Combined across ' + Number(data.tracking_count).toLocaleString() + ' enabled domains.</p>';
+                healthNote += '<p class="u-text-sm u-fg-secondary u-m-0">' + escapeHtml(t('dash_analytics_domains_note', 'Combined across {count} enabled domains.', { count: Number(data.tracking_count).toLocaleString() })) + '</p>';
             }
 
             function kpi(value, label, hint) {
@@ -292,22 +304,22 @@
             setContent(element,
                 '<div class="card-section">' +
                 '<div class="u-grid-3">' +
-                kpi(pageViews.toLocaleString(), 'Page views', 'Last 30 days · all domains') +
-                kpi(visitors.toLocaleString(), 'Visitors', 'Deduped across domains') +
-                kpi(String(viewsPerVisitor), 'Pages / visitor', 'Engagement') +
+                kpi(pageViews.toLocaleString(), t('dash_kpi_page_views', 'Page views'), t('dash_kpi_page_views_help', 'Last 30 days · all domains')) +
+                kpi(visitors.toLocaleString(), t('dash_kpi_visitors', 'Visitors'), t('dash_kpi_visitors_help', 'Deduped across domains')) +
+                kpi(String(viewsPerVisitor), t('dash_kpi_pages_per_visitor', 'Pages / visitor'), t('dash_kpi_engagement', 'Engagement')) +
                 '</div>' +
                 (healthNote ? '<div class="u-stack-2">' + healthNote + '</div>' : '') +
                 '</div>' +
                 '<div class="card-section">' +
                 '<div class="u-grid-2">' +
-                panel('Visitor journey',
-                    renderBarGroup('Entrance pages', insights.entrance_pages, 'path', 'entrances', 'path') +
-                    renderBarGroup('Exit pages', insights.exit_pages, 'path', 'exits', 'path') +
-                    renderBarGroup('Traffic sources', insights.traffic_sources, 'source', 'visits', 'source')) +
-                panel('Audience',
-                    renderBarGroup('Devices', insights.devices, 'device_type', 'visits', 'device') +
-                    renderBarGroup('Locations', insights.countries, 'country', 'visits', 'country') +
-                    renderBarGroup('Browsers', insights.browsers, 'browser', 'visits', 'browser')) +
+                panel(t('dash_panel_visitor_journey', 'Visitor journey'),
+                    renderBarGroup(t('dash_panel_entrance_pages', 'Entrance pages'), insights.entrance_pages, 'path', 'entrances', 'path') +
+                    renderBarGroup(t('dash_panel_exit_pages', 'Exit pages'), insights.exit_pages, 'path', 'exits', 'path') +
+                    renderBarGroup(t('dash_panel_traffic_sources', 'Traffic sources'), insights.traffic_sources, 'source', 'visits', 'source')) +
+                panel(t('dash_panel_audience', 'Audience'),
+                    renderBarGroup(t('dash_panel_devices', 'Devices'), insights.devices, 'device_type', 'visits', 'device') +
+                    renderBarGroup(t('dash_panel_locations', 'Locations'), insights.countries, 'country', 'visits', 'country') +
+                    renderBarGroup(t('dash_panel_browsers', 'Browsers'), insights.browsers, 'browser', 'visits', 'browser')) +
                 '</div>' +
                 '</div>' +
                 footerLinks('<a href="' + escapeHtml(adminUrl('settings') + '#domains') + '">Per-domain reports in Settings → Domains</a>')
@@ -315,17 +327,17 @@
         });
 
         dashboard.registerMount('recentCollections', function (element) {
-            setContent(element, loading('Loading collections…'));
+            setContent(element, loading(t('dash_loading_collections', 'Loading collections…')));
             fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(function (payload) {
                     const collections = payload?.data?.collections || payload?.data || payload;
                     if (!Array.isArray(collections) || collections.length === 0) {
-                        setContent(element, empty('No collections yet.'));
+                        setContent(element, empty(t('dash_no_collections', 'No collections yet.')));
                         return;
                     }
                     const items = collections.slice().sort(sortByUpdated).slice(0, 6).map(function (collection) {
-                        const name = collection.name || collection.title || collection.slug || 'Untitled';
+                        const name = collection.name || collection.title || collection.slug || t('dash_untitled', 'Untitled');
                         const count = collection.total_entries ?? collection.entries_count ?? 0;
                         const slug = collection.slug || '';
                         return feedItem({
@@ -336,11 +348,11 @@
                     });
                     setContent(element, feedList(items));
                 })
-                .catch(function () { setContent(element, errorState('Unable to load collections.')); });
+                .catch(function () { setContent(element, errorState(t('dash_unable_load_collections', 'Unable to load collections.'))); });
         });
 
         dashboard.registerMount('recentEntries', function (element) {
-            setContent(element, loading('Loading entries…'));
+            setContent(element, loading(t('dash_loading_entries', 'Loading entries…')));
             fetch(apiUrl('/api/content.php?action=list_collections'), { credentials: 'same-origin' })
                 .then(response => response.json())
                 .then(function (payload) {
@@ -366,11 +378,11 @@
                 .then(function (groups) {
                     const entries = Array.isArray(groups) ? groups.flat().sort(sortByUpdated).slice(0, 8) : [];
                     if (entries.length === 0) {
-                        setContent(element, empty('No recent entries.'));
+                        setContent(element, empty(t('dash_no_recent_entries', 'No recent entries.')));
                         return;
                     }
                     const items = entries.map(function (entry) {
-                        const title = entry.title || entry.name || 'Untitled';
+                        const title = entry.title || entry.name || t('dash_untitled', 'Untitled');
                         const modified = formatTimeAgo(entry.modified_at || entry.updated_at || entry.created_at);
                         const metaParts = [escapeHtml(entry.collectionName || entry.collection)];
                         if (modified) metaParts.push(escapeHtml(modified));
@@ -383,24 +395,24 @@
                     });
                     setContent(element, feedList(items));
                 })
-                .catch(function () { setContent(element, errorState('Unable to load entries.')); });
+                .catch(function () { setContent(element, errorState(t('dash_unable_load_entries', 'Unable to load entries.'))); });
         });
 
         dashboard.registerMount('pendingReview', function (element, widget, data) {
             const entries = data && Array.isArray(data.entries) ? data.entries : [];
             if (!entries.length) {
-                setContent(element, empty('No entries are waiting for review.'));
+                setContent(element, empty(t('dash_no_pending_review', 'No entries are waiting for review.')));
                 return;
             }
             const items = entries.map(function (entry) {
                 const modified = formatTimeAgo(entry.updated_at);
                 const metaParts = [
-                    'By ' + escapeHtml(entry.submitted_by || 'Unknown'),
-                    'Reviewer: ' + escapeHtml(entry.reviewer || 'Unassigned'),
+                    escapeHtml(t('dash_by_user', 'By {user}', { user: entry.submitted_by || t('unknown', 'Unknown') })),
+                    escapeHtml(t('dash_reviewer', 'Reviewer: {name}', { name: entry.reviewer || t('dash_unassigned', 'Unassigned') })),
                 ];
                 if (modified) metaParts.push(escapeHtml(modified));
                 return feedItem({
-                    title: entry.title || 'Untitled',
+                    title: entry.title || t('dash_untitled', 'Untitled'),
                     href: adminUrl('entry-editor', { collection: entry.collection, entry: entry.id || '' }),
                     meta: metaParts.join(' · '),
                     aside: statusBadge('pending_review'),
@@ -452,7 +464,7 @@
                     : '';
                 const rowHref = item.href ? (api ? api.resolveHref(item) : adminUrl('activity')) : adminUrl('activity');
                 return feedItem({
-                    title: item.message || item.event || 'Activity',
+                    title: item.message || item.event || t('activity', 'Activity'),
                     href: rowHref,
                     meta: metaParts.join(' · '),
                     aside: aside,
@@ -460,30 +472,30 @@
             });
             setContent(element, legacyItems.length
                 ? feedList(legacyItems)
-                : empty('No recent activity.'));
+                : empty(t('dash_no_recent_activity', 'No recent activity.')));
         });
 
         dashboard.registerMount('drafts', function (element, widget, data) {
             const count = Number(data?.stats?.drafts || 0);
             if (count === 0) {
-                setContent(element, empty('No drafts waiting for review.'));
+                setContent(element, empty(t('dash_no_drafts_review', 'No drafts waiting for review.')));
                 return;
             }
             setContent(element, callout(
                 count,
-                'Drafts needing attention',
-                'Review unpublished entries and finish them when ready.',
+                t('dash_drafts_needing_attention', 'Drafts needing attention'),
+                t('dash_drafts_needing_attention_help', 'Review unpublished entries and finish them when ready.'),
                 adminUrl('content'),
-                'Open content →',
+                t('dash_open_content', 'Open content →'),
                 'warning'
             ));
         });
 
         dashboard.registerMount('systemStatus', function (element, widget, data) {
-            if (!data) return setContent(element, errorState('System status is unavailable.'));
+            if (!data) return setContent(element, errorState(t('dash_system_unavailable', 'System status is unavailable.')));
             const responseMs = Number(data.api_response_time || 0);
             const responseTone = responseMs < 100 ? 'success' : responseMs < 500 ? 'warning' : 'danger';
-            const responseLabel = responseMs < 100 ? 'Fast' : responseMs < 500 ? 'Moderate' : 'Slow';
+            const responseLabel = responseMs < 100 ? t('dash_response_fast', 'Fast') : responseMs < 500 ? t('dash_response_moderate', 'Moderate') : t('dash_response_slow', 'Slow');
             const mediaMb = Number(data.media?.size_mb || 0);
             // No storage quota is exposed by the API — this reads as a soft
             // reference band (500 MB), not a literal "% of your plan".
@@ -501,14 +513,14 @@
                 '</div>' +
                 '<div class="card-section">' +
                 '<div class="u-split">' +
-                '<span class="stat-label">Media storage</span>' +
+                '<span class="stat-label">' + escapeHtml(t('dash_stat_media_storage', 'Media storage')) + '</span>' +
                 '<span class="stat-meta u-numeric">' + mediaMb + ' MB</span>' +
                 '</div>' +
                 '<div class="progress u-mt-2"><div class="progress-bar" style="width:' + mediaPct + '%"></div></div>' +
                 '</div>' +
                 '<div class="card-section">' +
                 '<div class="u-split">' +
-                '<span class="stat-label">Cache files</span>' +
+                '<span class="stat-label">' + escapeHtml(t('dash_stat_cache_files', 'Cache files')) + '</span>' +
                 '<span class="badge ' + (cacheEnabled ? 'badge-neutral' : 'badge-warning') + ' u-numeric">' + cacheFiles + '</span>' +
                 '</div>' +
                 '</div>'
@@ -519,10 +531,10 @@
             const activity = data && Array.isArray(data.activity) ? data.activity : [];
             setContent(element, callout(
                 activity.length,
-                'Account events',
-                activity.length === 1 ? 'Recent sign-in or account change.' : 'Recent sign-ins and account changes.',
+                t('dash_account_events', 'Account events'),
+                activity.length === 1 ? t('dash_account_events_one', 'Recent sign-in or account change.') : t('dash_account_events_many', 'Recent sign-ins and account changes.'),
                 adminUrl('settings'),
-                'Security settings →',
+                t('dash_security_settings', 'Security settings →'),
                 activity.length > 0 ? 'info' : 'muted'
             ));
         });
@@ -530,7 +542,7 @@
         dashboard.registerMount('updates', function (element, widget, data) {
             const notifications = data && Array.isArray(data.notifications) ? data.notifications : [];
             if (!notifications.length) {
-                setContent(element, empty('No updates or alerts.'));
+                setContent(element, empty(t('dash_no_updates_alerts', 'No updates or alerts.')));
                 return;
             }
             setContent(element, '<div class="u-stack-2">' + notifications.map(function (item) {
@@ -552,7 +564,7 @@
                 return Birkly.Dashboard.mountWidget(body, widget, data);
             })
             .catch(function () {
-                setContent(body, errorState('Unable to load this widget.'));
+                setContent(body, errorState(t('dash_unable_load_widget', 'Unable to load this widget.')));
                 return false;
             });
     }
@@ -587,7 +599,7 @@
 
         const body = document.createElement('div');
         body.className = 'card-body dash-widget-body';
-        body.innerHTML = loading('Loading…');
+        body.innerHTML = loading(t('dash_loading', 'Loading…'));
         card.append(heading, body);
         return { card: card, body: body };
     }
@@ -811,7 +823,7 @@
                 dashboardState.layout = payload?.data?.layout || dashboardState.layout;
                 renderWidgets();
             })
-            .catch(function () { grid.innerHTML = errorState('Unable to load dashboard widgets.'); });
+            .catch(function () { grid.innerHTML = errorState(t('dash_unable_load_widgets', 'Unable to load dashboard widgets.')); });
     }
 
     function setupOnboardingHandlers() {

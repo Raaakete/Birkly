@@ -4,11 +4,28 @@
 (function () {
     'use strict';
 
-    function t(key, fallback) {
-        if (window.Birkly && window.Birkly.i18n && typeof window.Birkly.i18n.t === 'function') {
-            return window.Birkly.i18n.t('admin.' + key, fallback);
+    function t(key, fallback, params) {
+        var text = (window.Birkly && window.Birkly.i18n && typeof window.Birkly.i18n.t === 'function')
+            ? window.Birkly.i18n.t('admin.' + key, fallback != null ? fallback : key)
+            : (fallback != null ? fallback : key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
         }
-        return fallback != null ? fallback : key;
+        return text;
+    }
+
+    function toastError(error) {
+        var message = error && error.message ? error.message : t('entries_load_failed', 'Failed to load entries');
+        BirklyFeedback.toast(t('entries_error_prefix', 'Error: {message}', { message: message }), 'error');
+    }
+
+    function bulkCountLabel(oneKey, manyKey, count, oneFallback, manyFallback) {
+        if (count === 1) {
+            return t(oneKey, oneFallback);
+        }
+        return t(manyKey, manyFallback).replace('%count%', String(count));
     }
 
     function apiUrl(path) {
@@ -269,7 +286,7 @@
         try {
             data = JSON.parse(text);
         } catch (error) {
-            throw new Error('Invalid JSON response');
+            throw new Error(t('entries_invalid_json', 'Invalid JSON response'));
         }
         if (!response.ok || data?.status === 'error') {
             throw new Error(data?.message || ('HTTP ' + response.status));
@@ -349,7 +366,7 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');;
+            toastError(error);
         }
     }
 
@@ -374,15 +391,15 @@
             return;
         }
 
-        const progress = showProgress('Updating field values…');
+        const progress = showProgress(t('entries_bulk_updating_fields', 'Updating field values…'));
         try {
             const result = await performBulkFieldEdit(Array.from(selectedEntries), fieldNameValue, fieldValueValue);
             progress.remove();
-            BirklyFeedback.toast(result.message || 'Field updated successfully.', 'success');
+            BirklyFeedback.toast(result.message || t('entries_bulk_field_updated', 'Field updated successfully.'), 'success');
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');;
+            toastError(error);
         }
     }
 
@@ -390,14 +407,14 @@
         if (!(await BirklyFeedback.confirm(t('entries_move_to_trash_confirm', 'Move this entry to trash?')))) {
             return;
         }
-        const progress = showProgress('Moving entry to trash…');
+        const progress = showProgress(t('entries_moving_to_trash', 'Moving entry to trash…'));
         try {
             await performEntryAction('delete', entryId);
             progress.remove();
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');
+            toastError(error);
         }
     }
 
@@ -405,19 +422,19 @@
         if (!(await BirklyFeedback.confirm(t('entries_restore_confirm', 'Restore this entry?')))) {
             return;
         }
-        const progress = showProgress('Restoring entry…');
+        const progress = showProgress(t('entries_restoring_entry', 'Restoring entry…'));
         try {
             await performEntryAction('restore', entryId);
             progress.remove();
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');
+            toastError(error);
         }
     }
 
     async function handleDuplicateEntry(entryId) {
-        const progress = showProgress('Duplicating entry…');
+        const progress = showProgress(t('entries_duplicating_entry', 'Duplicating entry…'));
         try {
             const result = await performEntryAction('duplicate', entryId);
             progress.remove();
@@ -429,7 +446,7 @@
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');
+            toastError(error);
         }
     }
 
@@ -457,38 +474,42 @@
     }
 
     bulkPublishBtn?.addEventListener('click', async function () {
+        var count = selectedEntries.size;
         runBulkAction(
             'publish',
-            'Publish the selected entries?',
-            'Publishing entries…',
-            'Published %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '.'
+            t('entries_bulk_publish_confirm', 'Publish the selected entries?'),
+            t('entries_bulk_publish_progress', 'Publishing entries…'),
+            bulkCountLabel('entries_bulk_published_one', 'entries_bulk_published', count, 'Published 1 entry.', 'Published %count% entries.')
         );
     });
 
     bulkUnpublishBtn?.addEventListener('click', async function () {
+        var count = selectedEntries.size;
         runBulkAction(
             'unpublish',
-            'Unpublish the selected entries?',
-            'Unpublishing entries…',
-            'Unpublished %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '.'
+            t('entries_bulk_unpublish_confirm', 'Unpublish the selected entries?'),
+            t('entries_bulk_unpublish_progress', 'Unpublishing entries…'),
+            bulkCountLabel('entries_bulk_unpublished_one', 'entries_bulk_unpublished', count, 'Unpublished 1 entry.', 'Unpublished %count% entries.')
         );
     });
 
     bulkDeleteBtn?.addEventListener('click', async function () {
+        var count = selectedEntries.size;
         runBulkAction(
             'delete',
-            'Move the selected entries to trash?',
-            'Moving entries to trash…',
-            'Moved %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + ' to trash.'
+            t('entries_bulk_trash_confirm', 'Move the selected entries to trash?'),
+            t('entries_bulk_trash_progress', 'Moving entries to trash…'),
+            bulkCountLabel('entries_bulk_trashed_one', 'entries_bulk_trashed', count, 'Moved 1 entry to trash.', 'Moved %count% entries to trash.')
         );
     });
 
     bulkRestoreBtn?.addEventListener('click', async function () {
+        var count = selectedEntries.size;
         runBulkAction(
             'restore',
-            'Restore the selected entries?',
-            'Restoring entries…',
-            'Restored %count% entr' + (selectedEntries.size === 1 ? 'y' : 'ies') + '.'
+            t('entries_bulk_restore_confirm', 'Restore the selected entries?'),
+            t('entries_bulk_restore_progress', 'Restoring entries…'),
+            bulkCountLabel('entries_bulk_restored_one', 'entries_bulk_restored', count, 'Restored 1 entry.', 'Restored %count% entries.')
         );
     });
 
@@ -567,14 +588,14 @@
         if (!(await BirklyFeedback.confirm(confirmMsg))) {
             return;
         }
-        const progress = showProgress(publish ? 'Publishing entry…' : 'Unpublishing entry…');
+        const progress = showProgress(publish ? t('entries_publishing_entry', 'Publishing entry…') : t('entries_unpublishing_entry', 'Unpublishing entry…'));
         try {
             await performBulkOperation(action, [entryId]);
             progress.remove();
             window.location.reload();
         } catch (error) {
             progress.remove();
-            BirklyFeedback.toast('Error: ' + error.message, 'error');
+            toastError(error);
         }
     }
 
@@ -638,7 +659,7 @@
 
     function renderEntryRow(entry) {
         const entryId = entry && entry.id ? String(entry.id) : '';
-        const title = entry && entry.__cells && entry.__cells.__title ? entry.__cells.__title : (entry.title || entry.slug || entryId || 'Untitled');
+        const title = entry && entry.__cells && entry.__cells.__title ? entry.__cells.__title : (entry.title || entry.slug || entryId || t('untitled', 'Untitled'));
         const normalizedStatus = normalizeStatus(entry && entry.__cells ? entry.__cells.__status : entry.status);
         const statusClassMap = {
             pending_review: ' pending review-status',
@@ -654,8 +675,8 @@
         const reviewer = entry && entry.reviewer ? String(entry.reviewer) : '';
         const reviewedBy = entry && entry.reviewed_by ? String(entry.reviewed_by) : '';
         const reviewTitle = reviewer
-            ? ' title="Assigned to: ' + escapeHtml(reviewer) + '"'
-            : (reviewedBy ? ' title="Reviewed by: ' + escapeHtml(reviewedBy) + '"' : '');
+            ? ' title="' + escapeHtml(t('entries_assigned_to', 'Assigned to: {name}', { name: reviewer })) + '"'
+            : (reviewedBy ? ' title="' + escapeHtml(t('entries_reviewed_by', 'Reviewed by: {name}', { name: reviewedBy })) + '"' : '');
         const titleUrl = buildTitleUrl(entry);
         const editUrl = buildEditUrl(entry);
         const subEntryCount = Number(entry && entry.__sub_entry_count ? entry.__sub_entry_count : 0);
@@ -685,7 +706,7 @@
                 (hasSubCollections
                     ? '<td class="cell cell-sub-entries">' +
                         (subEntryCount > 0
-                            ? '<a href="' + escapeHtml(titleUrl) + '" class="badge badge-accent badge-count sub-entry-count-badge" title="' + escapeHtml(String(subEntryCount) + ' sub-entries') + '">+' + escapeHtml(subEntryCount) + '</a>'
+                            ? '<a href="' + escapeHtml(titleUrl) + '" class="badge badge-accent badge-count sub-entry-count-badge" title="' + escapeHtml(t('entries_sub_entries_count', '{count} sub-entries', { count: subEntryCount })) + '">+' + escapeHtml(subEntryCount) + '</a>'
                             : '<span class="u-text-xs u-fg-tertiary">&ndash;</span>') +
                     '</td>'
                     : '') +
@@ -695,7 +716,7 @@
                 '<td class="cell cell-status">' +
                     '<span class="status-badge ' + escapeHtml(statusClass.trim()) + '" data-status="' + escapeHtml(normalizedStatus) + '" aria-label="' + escapeHtml(t('status', 'Status') + ': ' + statusText) + '"' + reviewTitle + '>' + escapeHtml(statusText) + '</span>' +
                     (normalizedStatus === 'pending_review' && reviewer
-                        ? '<div class="reviewer-indicator" title="Assigned to: ' + escapeHtml(reviewer) + '">' + icon('user', { size: 12 }) + '</div>'
+                        ? '<div class="reviewer-indicator" title="' + escapeHtml(t('entries_assigned_to', 'Assigned to: {name}', { name: reviewer })) + '">' + icon('user', { size: 12 }) + '</div>'
                         : '') +
                 '</td>' +
                 fieldCells +
@@ -809,7 +830,7 @@
             try {
                 payload = JSON.parse(text);
             } catch (error) {
-                throw new Error('Invalid JSON response');
+                throw new Error(t('entries_invalid_json', 'Invalid JSON response'));
             }
             if (!response.ok || payload?.status === 'error') {
                 throw new Error(payload?.message || ('HTTP ' + response.status));
@@ -842,7 +863,9 @@
             if (error && error.name === 'AbortError') {
                 return;
             }
-            BirklyFeedback.toast('Error: ' + (error && error.message ? error.message : 'Failed to load entries'), 'error');
+            BirklyFeedback.toast(t('entries_error_prefix', 'Error: {message}', {
+                message: (error && error.message) ? error.message : t('entries_load_failed', 'Failed to load entries'),
+            }), 'error');
         } finally {
             if (requestId === listRequestId) {
                 setListLoading(false);
@@ -998,7 +1021,7 @@
             refreshTableElements();
             initializeEntryDragHandlers();
         } catch (error) {
-            BirklyFeedback.toast('Error saving entry order: ' + error.message, 'error');
+            BirklyFeedback.toast(t('entries_save_order_failed', 'Error saving entry order: {message}', { message: error.message }), 'error');
             throw error;
         }
     }

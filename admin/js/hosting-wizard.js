@@ -23,11 +23,16 @@
         return div.innerHTML;
     }
 
-    function t(key, fallback) {
-        if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
-            return global.Birkly.i18n.t('admin.' + key, fallback);
+    function t(key, fallback, params) {
+        var text = (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function')
+            ? global.Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback || key);
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
         }
-        return fallback || key;
+        return text;
     }
 
     function renderWizardHtml(id) {
@@ -35,13 +40,13 @@
             '<div class="hosting-wizard" data-wizard-id="' + escapeHtml(id) + '">' +
             '<div class="hosting-wizard-proposal card card--padded" hidden>' +
             '<div class="hosting-wizard-proposal-head u-stack-1">' +
-            '<h4 class="hosting-wizard-proposal-title">Suggested delivery setup</h4>' +
-            '<p class="hosting-wizard-proposal-desc form-help">Review detected settings before applying. Nothing is saved until you confirm.</p>' +
+            '<h4 class="hosting-wizard-proposal-title">' + escapeHtml(t('hosting_wizard_proposal_title', 'Suggested delivery setup')) + '</h4>' +
+            '<p class="hosting-wizard-proposal-desc form-help">' + escapeHtml(t('hosting_wizard_proposal_desc', 'Review detected settings before applying. Nothing is saved until you confirm.')) + '</p>' +
             '</div>' +
             '<ul class="hosting-wizard-proposal-changes"></ul>' +
             '<div class="u-cluster">' +
-            '<button type="button" class="btn btn-primary btn-sm hosting-wizard-apply-proposal">Apply suggestion</button>' +
-            '<button type="button" class="btn btn-secondary btn-sm hosting-wizard-dismiss-proposal">Dismiss</button>' +
+            '<button type="button" class="btn btn-primary btn-sm hosting-wizard-apply-proposal">' + escapeHtml(t('hosting_wizard_apply_proposal', 'Apply suggestion')) + '</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm hosting-wizard-dismiss-proposal">' + escapeHtml(t('hosting_wizard_dismiss_proposal', 'Dismiss')) + '</button>' +
             '</div>' +
             '</div>' +
             '<p class="hosting-wizard-env-banner message message-info" hidden>Delivery URLs are managed by environment variables (read-only).</p>' +
@@ -88,7 +93,7 @@
             '<div class="form-group hosting-wizard-public-field" hidden>' +
             '<label for="' + id + '-public-url">' + escapeHtml(t('hosting_wizard_public_url', 'Public site URL')) + '</label>' +
             '<input type="url" id="' + id + '-public-url" class="input hosting-wizard-public-url" placeholder="https://www.example.com">' +
-            '<small class="form-help">' + escapeHtml(t('hosting_wizard_public_url_help', 'Visitors see this URL in the browser.')) + ' Do not include /project — use the hostname only (e.g. https://example.com).</small>' +
+            '<small class="form-help">' + escapeHtml(t('hosting_wizard_public_url_help', 'Visitors see this URL in the browser.')) + ' ' + escapeHtml(t('hosting_wizard_public_url_help_extra', 'Do not include /project — use the hostname only (e.g. https://example.com).')) + '</small>' +
             '</div>' +
             '<fieldset class="form-group hosting-wizard-same-host-field" hidden>' +
             '<legend>' + escapeHtml(t('hosting_wizard_same_host_legend', 'When CMS and public use the same domain')) + '</legend>' +
@@ -233,21 +238,21 @@
         if (payload.public_site_mode !== 'none' && cmsHost !== '' && publicHost !== '' && cmsHost === publicHost) {
             messages.push({
                 severity: 'info',
-                text: 'CMS and public share ' + cmsHost + '. With “Root / opens admin”, the bundled site is served at /project/.'
+                text: t('hosting_wizard_val_same_host_project', 'CMS and public share {host}. With “Root / opens admin”, the bundled site is served at /project/.', { host: cmsHost })
             });
         }
 
         if (payload.cms_base_url && /\/admin\/?$/i.test(String(payload.cms_base_url).trim())) {
             messages.push({
                 severity: 'error',
-                text: 'CMS URL should be the site origin only (https://' + (cmsHost || 'example.com') + '), not …/admin.'
+                text: t('hosting_wizard_val_cms_no_admin', 'CMS URL should be the site origin only (https://{host}), not …/admin.', { host: cmsHost || 'example.com' })
             });
         }
 
         if (payload.public_site_url && /\/project(\/|$)/i.test(String(payload.public_site_url).trim())) {
             messages.push({
                 severity: 'error',
-                text: 'Public URL must not include /project — use the hostname only.'
+                text: t('hosting_wizard_public_url_no_project', 'Public URL must not include /project — use the hostname only.')
             });
         }
 
@@ -257,7 +262,7 @@
             if (publicAliases.indexOf(alias) !== -1) {
                 messages.push({
                     severity: 'warn',
-                    text: '"' + alias + '" is on both CMS and public alias lists. Requests resolve as CMS — remove it from public aliases.'
+                    text: t('hosting_wizard_val_alias_overlap', '"{alias}" is on both CMS and public alias lists. Requests resolve as CMS — remove it from public aliases.', { alias: alias })
                 });
             }
         });
@@ -304,7 +309,9 @@
             var key = li.getAttribute('data-check');
             var ok = !!checks[key];
             li.classList.toggle('is-ok', ok);
-            li.setAttribute('aria-label', (ok ? 'Done: ' : 'Todo: ') + li.textContent);
+            li.setAttribute('aria-label', ok
+                ? t('hosting_wizard_checklist_done', 'Done: {item}', { item: li.textContent })
+                : t('hosting_wizard_checklist_todo', 'Todo: {item}', { item: li.textContent }));
         });
 
         var regEl = this.$('.hosting-wizard-registered-host');
@@ -486,7 +493,7 @@
                         global.initDeliveryStatus('#delivery-status-site-delivery');
                     }
                 } else if (global.BirklyFeedback && typeof global.BirklyFeedback.toast === 'function') {
-                    global.BirklyFeedback.toast(payload.message || 'Failed to apply suggestion', 'error');
+                    global.BirklyFeedback.toast(payload.message || t('hosting_wizard_proposal_apply_failed', 'Failed to apply suggestion'), 'error');
                 }
                 return payload;
             });
@@ -497,7 +504,7 @@
         return fetch(apiUrl('/api/hosting.php?action=get'), { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (payload) {
-                if (payload.status !== 'ok') throw new Error(payload.message || 'Failed to load hosting');
+                if (payload.status !== 'ok') throw new Error(payload.message || t('hosting_wizard_load_failed', 'Failed to load hosting'));
                 self.populateFromApi(payload.data || {});
                 return self.loadProposal().then(function () { return payload; });
             });
