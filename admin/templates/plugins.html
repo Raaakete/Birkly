@@ -234,19 +234,19 @@
 <div id="marketplace-consent-modal" class="modal-backdrop">
     <div class="modal-content modal--md">
         <div class="modal-header">
-            <h2 id="marketplace-consent-title">Plugin permissions</h2>
+            <h2 id="marketplace-consent-title">{translate 'admin.marketplace_consent_title'}</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-install-consent">&times;</button>
         </div>
         <div class="modal-body u-stack-4">
             <p id="marketplace-consent-summary" class="form-help u-m-0">
-                This plugin requests access to your site. Review the permissions below, then accept to install.
+                {translate 'admin.marketplace_install_consent_summary'}
             </p>
             <div id="marketplace-consent-manifest" class="prose u-text-sm"></div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-plugin-action="close-install-consent">{translate 'admin.cancel'}</button>
             <button type="button" class="btn btn-primary" id="marketplace-consent-accept-btn" data-plugin-action="accept-install-consent">
-                Accept &amp; install
+                {translate 'admin.marketplace_accept_and_install'}
             </button>
         </div>
     </div>
@@ -319,7 +319,7 @@
 <div id="plugin-review-modal" class="modal-backdrop">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 id="plugin-review-title">Write a review</h2>
+            <h2 id="plugin-review-title">{translate 'admin.marketplace_write_review'}</h2>
             <button class="modal-close-btn" type="button" data-plugin-action="close-review-modal">&times;</button>
         </div>
         <div class="modal-body">
@@ -327,16 +327,16 @@
             <div id="plugin-review-existing" class="callout callout-neutral u-mt-4" hidden></div>
             <form id="plugin-review-form" class="u-stack-4 u-mt-4">
                 <fieldset class="u-cluster-4 u-border-none u-p-0 u-m-0">
-                    <legend class="u-label u-mb-2">Rating</legend>
-                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="5" checked> 5 stars</label>
-                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="4"> 4 stars</label>
-                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="3"> 3 stars</label>
-                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="2"> 2 stars</label>
-                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="1"> 1 star</label>
+                    <legend class="u-label u-mb-2">{translate 'admin.marketplace_review_rating_legend'}</legend>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="5" checked> {translate 'admin.marketplace_review_stars_5'}</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="4"> {translate 'admin.marketplace_review_stars_4'}</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="3"> {translate 'admin.marketplace_review_stars_3'}</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="2"> {translate 'admin.marketplace_review_stars_2'}</label>
+                    <label class="u-row-1 u-text-sm"><input type="radio" name="plugin-review-rating" value="1"> {translate 'admin.marketplace_review_stars_1'}</label>
                 </fieldset>
                 <div class="form-group">
-                    <label for="plugin-review-body">Your review</label>
-                    <textarea id="plugin-review-body" class="input" rows="4" maxlength="2000" required placeholder="Share your experience using this plugin on your site."></textarea>
+                    <label for="plugin-review-body">{translate 'admin.marketplace_review_your_body_label'}</label>
+                    <textarea id="plugin-review-body" class="input" rows="4" maxlength="2000" required placeholder="{translate 'admin.marketplace_review_body_placeholder'}"></textarea>
                 </div>
                 <input type="hidden" id="plugin-review-plugin-id" value="">
                 <input type="hidden" id="plugin-review-slug" value="">
@@ -344,7 +344,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-plugin-action="close-review-modal">{translate 'admin.cancel'}</button>
-            <button type="button" class="btn btn-primary" id="plugin-review-submit-btn" data-plugin-action="submit-review">Submit review</button>
+            <button type="button" class="btn btn-primary" id="plugin-review-submit-btn" data-plugin-action="submit-review">{translate 'admin.marketplace_review_submit_btn'}</button>
         </div>
     </div>
 </div>

@@ -2900,17 +2900,29 @@
         document.getElementById('plugin-review-slug').value = offerSlug || plugin.marketplace_slug || plugin.offer_slug || '';
 
         if (titleEl) {
-            titleEl.textContent = status.has_review ? 'Your review' : 'Write a review';
+            titleEl.textContent = status.has_review
+                ? t('your_review', 'Your review')
+                : t('marketplace_write_review', 'Write a review');
         }
         if (summaryEl) {
-            summaryEl.textContent = t('hub_js_reviews_site_hint', 'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.');
+            summaryEl.textContent = t(
+                'marketplace_reviews_site_bound',
+                t(
+                    'hub_js_reviews_site_hint',
+                    'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.'
+                )
+            );
         }
 
         if (existingEl) {
             if (status.has_review && status.review) {
                 existingEl.hidden = false;
+                var starsLabel = t('marketplace_review_stars_display', '{rating} stars').replace(
+                    '{rating}',
+                    String(status.review.rating || '')
+                );
                 existingEl.innerHTML =
-                    '<p><strong>' + escapeHtml(String(status.review.rating || '')) + ' stars</strong></p>' +
+                    '<p><strong>' + escapeHtml(starsLabel) + '</strong></p>' +
                     '<p>' + escapeHtml(status.review.body || '') + '</p>';
             } else {
                 existingEl.hidden = true;
@@ -2951,7 +2963,7 @@
             return;
         }
         if (!body.trim()) {
-            showMessage('Please write a review', 'error');
+            showMessage(t('marketplace_review_body_required', 'Please write a review'), 'error');
             return;
         }
 
