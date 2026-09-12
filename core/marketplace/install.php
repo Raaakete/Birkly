@@ -60,6 +60,41 @@ function birkly_marketplace_download_artifact(string $downloadUrl, ?string $expe
 }
 
 /**
+ * Resolve release metadata and download artifact, refreshing cache after checksum drift.
+ *
+ * @return array{ok:bool,path?:string,release?:array,error?:string}
+ */
+function birkly_marketplace_fetch_release_artifact(string $slug, string $version): array
+{
+    $release = birkly_marketplace_release_download($slug, $version);
+    if (!$release['ok']) {
+        return ['ok' => false, 'error' => $release['error'] ?? 'Release lookup failed'];
+    }
+
+    $download = birkly_marketplace_download_artifact(
+        (string) ($release['download_url'] ?? ''),
+        $release['checksum_sha256'] ?? null
+    );
+
+    if ((!$download['ok'] || empty($download['path'])) && ($download['error'] ?? '') === 'Checksum verification failed') {
+        birkly_marketplace_clear_offer_detail_disk_cache($slug);
+        $release = birkly_marketplace_release_download($slug, $version);
+        if ($release['ok']) {
+            $download = birkly_marketplace_download_artifact(
+                (string) ($release['download_url'] ?? ''),
+                $release['checksum_sha256'] ?? null
+            );
+        }
+    }
+
+    if (!$download['ok'] || empty($download['path'])) {
+        return ['ok' => false, 'error' => $download['error'] ?? 'Download failed'];
+    }
+
+    return ['ok' => true, 'path' => $download['path'], 'release' => $release];
+}
+
+/**
  * Map marketplace offer slug → installed plugin directory id.
  */
 function birkly_marketplace_plugin_id_from_slug(string $marketplaceSlug): ?string
@@ -499,20 +534,12 @@ function birkly_marketplace_install_plugin(
         ];
     }
 
-    $release = birkly_marketplace_release_download($slug, $version);
-    if (!$release['ok']) {
-        return ['ok' => false, 'errors' => [$release['error'] ?? 'Release lookup failed']];
+    $fetched = birkly_marketplace_fetch_release_artifact($slug, $version);
+    if (!$fetched['ok'] || empty($fetched['path'])) {
+        return ['ok' => false, 'errors' => [$fetched['error'] ?? 'Download failed']];
     }
 
-    $download = birkly_marketplace_download_artifact(
-        (string) ($release['download_url'] ?? ''),
-        $release['checksum_sha256'] ?? null
-    );
-    if (!$download['ok'] || empty($download['path'])) {
-        return ['ok' => false, 'errors' => [$download['error'] ?? 'Download failed']];
-    }
-
-    $zipPath = $download['path'];
+    $zipPath = $fetched['path'];
     $preview = birkly_marketplace_preview_zip_capabilities($zipPath);
     $pluginId = birkly_marketplace_resolve_plugin_id($zipPath, $slug);
 

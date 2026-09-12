@@ -1303,6 +1303,61 @@ function birkly_marketplace_write_offer_detail_disk_cache(string $slug, array $d
     }
 }
 
+function birkly_marketplace_clear_offer_detail_disk_cache(?string $slug = null): void
+{
+    $path = birkly_marketplace_offer_detail_disk_cache_path();
+    if (!is_file($path)) {
+        return;
+    }
+
+    if ($slug === null || trim($slug) === '') {
+        @unlink($path);
+        return;
+    }
+
+    $raw = file_get_contents($path);
+    if (!is_string($raw) || $raw === '') {
+        return;
+    }
+
+    $data = json_decode($raw, true);
+    if (!is_array($data)) {
+        return;
+    }
+
+    unset($data[trim($slug)]);
+    if ($data === []) {
+        @unlink($path);
+        return;
+    }
+
+    $encoded = json_encode($data, JSON_UNESCAPED_SLASHES);
+    if ($encoded !== false) {
+        @file_put_contents($path, $encoded);
+    }
+}
+
+/**
+ * @return array{ok:bool,version?:string,download_url?:string,checksum_sha256?:string,error?:string}
+ */
+function birkly_marketplace_release_download_from_registry_api(string $slug, string $version): array
+{
+    $path = '/api/v1/offers/' . rawurlencode($slug) . '/releases/' . rawurlencode($version);
+    $response = birkly_marketplace_request('GET', $path, null, [], true);
+    if (!$response['ok'] || !is_array($response['data'])) {
+        return ['ok' => false, 'error' => $response['error'] ?? 'Release not found'];
+    }
+
+    $downloadUrl = birkly_marketplace_rewrite_service_url((string) ($response['data']['download_url'] ?? ''));
+
+    return [
+        'ok' => true,
+        'version' => (string) ($response['data']['version'] ?? $version),
+        'download_url' => $downloadUrl,
+        'checksum_sha256' => (string) ($response['data']['checksum_sha256'] ?? ''),
+    ];
+}
+
 /**
  * @param list<array<string, mixed>> $releases
  * @return array{permissions?:array,hooks?:array,data_access?:array}|null
@@ -1335,12 +1390,31 @@ function birkly_marketplace_rewrite_service_url(string $url): string
         return $url;
     }
 
+    $isArtifact = str_contains($url, '/api/v1/artifacts/');
     $effectiveBase = rtrim(birkly_marketplace_url(), '/');
+    $publicMarketplace = rtrim(BIRKLY_MARKETPLACE_DEFAULT_URL, '/');
     $knownBases = [
         rtrim(BIRKLY_MARKETPLACE_DEFAULT_URL, '/'),
         'https://marketplace.birkly.cloud',
         'https://ops.birkly.cloud',
     ];
+
+    // Ops does not serve public artifact downloads (wrong_surface). Keep marketplace URLs as-is.
+    if ($isArtifact) {
+        foreach ($knownBases as $cloudBase) {
+            $cloudBase = rtrim($cloudBase, '/');
+            if ($cloudBase === '' || !str_starts_with($url, $cloudBase . '/')) {
+                continue;
+            }
+            if ($effectiveBase === 'https://ops.birkly.cloud' || $effectiveBase === 'http://ops.birkly.cloud') {
+                if ($cloudBase === 'https://ops.birkly.cloud' || $cloudBase === 'http://ops.birkly.cloud') {
+                    return $url;
+                }
+                return $publicMarketplace . substr($url, strlen($cloudBase));
+            }
+            break;
+        }
+    }
 
     foreach ($knownBases as $cloudBase) {
         $cloudBase = rtrim($cloudBase, '/');
@@ -1348,7 +1422,11 @@ function birkly_marketplace_rewrite_service_url(string $url): string
             continue;
         }
         if (str_starts_with($url, $cloudBase . '/')) {
-            return $effectiveBase . substr($url, strlen($cloudBase));
+            $rewritten = $effectiveBase . substr($url, strlen($cloudBase));
+            if ($isArtifact && ($effectiveBase === 'https://ops.birkly.cloud' || $effectiveBase === 'http://ops.birkly.cloud')) {
+                return $url;
+            }
+            return $rewritten;
         }
     }
 
@@ -1431,6 +1509,9 @@ function birkly_marketplace_offer_detail(string $slug): array
             'provider' => $provider,
             'fallback' => false,
         ];
+        if ($detail['releases'] === [] && is_array($offer['releases'] ?? null)) {
+            $detail['releases'] = $offer['releases'];
+        }
         birkly_marketplace_write_offer_detail_disk_cache($slug, $detail);
         $requestCache[$slug] = $detail;
         return $detail;
@@ -1626,6 +1707,11 @@ function birkly_marketplace_deactivate_license(string $licenseKey, ?string $inst
  */
 function birkly_marketplace_release_download(string $slug, string $version): array
 {
+    $fromApi = birkly_marketplace_release_download_from_registry_api($slug, $version);
+    if (!empty($fromApi['ok'])) {
+        return $fromApi;
+    }
+
     $fallbackOffer = birkly_marketplace_find_fallback_offer($slug);
     if ($fallbackOffer !== null) {
         $fromFallback = birkly_marketplace_release_download_from_releases(
@@ -1648,20 +1734,7 @@ function birkly_marketplace_release_download(string $slug, string $version): arr
         }
     }
 
-    $path = '/api/v1/offers/' . rawurlencode($slug) . '/releases/' . rawurlencode($version);
-    $response = birkly_marketplace_request('GET', $path, null, [], true);
-    if (!$response['ok'] || !is_array($response['data'])) {
-        return ['ok' => false, 'error' => $response['error'] ?? 'Release not found'];
-    }
-
-    $downloadUrl = birkly_marketplace_rewrite_service_url((string) ($response['data']['download_url'] ?? ''));
-
-    return [
-        'ok' => true,
-        'version' => (string) ($response['data']['version'] ?? $version),
-        'download_url' => $downloadUrl,
-        'checksum_sha256' => (string) ($response['data']['checksum_sha256'] ?? ''),
-    ];
+    return $fromApi;
 }
 
 /**
