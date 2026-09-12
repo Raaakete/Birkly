@@ -49,24 +49,36 @@ if (is_file($localeFile)) {
 
 $missing = array_diff_key($enAdmin, $localeAdmin);
 $identical = [];
+$identicalQuality = [];
 $allowIdentical = ['birkly', 'hub', 'mcp', 'api', 'url', 'csv', 'json', 'html', 'css', 'js', 'stripe', 'github'];
+$keepLatinValues = ['api', 'csv', 'json', 'html', 'css', 'js', 'url', 'stripe', 'github', 'mcp', 'birkly', 'hub'];
 
 foreach ($localeAdmin as $key => $value) {
     if (!isset($enAdmin[$key]) || !is_string($value) || !is_string($enAdmin[$key])) {
         continue;
     }
-    if ($value === $enAdmin[$key] && strlen($value) > 2) {
-        $lower = strtolower($key . ' ' . $value);
-        $skip = false;
-        foreach ($allowIdentical as $token) {
-            if (str_contains($lower, $token)) {
-                $skip = true;
-                break;
-            }
+    if ($value !== $enAdmin[$key] || strlen($value) <= 2) {
+        continue;
+    }
+    $valLower = strtolower(trim($value));
+    if (in_array($valLower, $keepLatinValues, true)) {
+        continue;
+    }
+    if (strlen($value) <= 5 && $value === strtoupper($value)) {
+        continue;
+    }
+    $identicalQuality[] = $key;
+
+    $lower = strtolower($key . ' ' . $value);
+    $skip = false;
+    foreach ($allowIdentical as $token) {
+        if (str_contains($lower, $token)) {
+            $skip = true;
+            break;
         }
-        if (!$skip) {
-            $identical[] = $key;
-        }
+    }
+    if (!$skip) {
+        $identical[] = $key;
     }
 }
 
@@ -83,7 +95,16 @@ if ($missing !== []) {
 }
 
 if ($identical !== [] && $checkUntranslated) {
-    $msg = count($identical) . ' de admin.* values identical to English (likely untranslated)';
+    $msg = count($identical) . ' admin.* values identical to English (legacy substring filter)';
+    if ($warnOnly) {
+        $warnings[] = $msg;
+    } else {
+        $errors[] = $msg;
+    }
+}
+
+if ($identicalQuality !== [] && $checkUntranslated) {
+    $msg = count($identicalQuality) . ' admin.* values identical to English (translation quality)';
     if ($warnOnly) {
         $warnings[] = $msg;
     } else {
@@ -96,6 +117,7 @@ fwrite(STDOUT, '  en admin keys: ' . count($enAdmin) . "\n");
 fwrite(STDOUT, '  locale admin keys: ' . count($localeAdmin) . "\n");
 fwrite(STDOUT, '  missing: ' . count($missing) . "\n");
 fwrite(STDOUT, '  identical-to-en (de strict): ' . count($identical) . "\n");
+fwrite(STDOUT, '  identical-to-en (quality): ' . count($identicalQuality) . "\n");
 
 if ($warnings !== []) {
     foreach ($warnings as $warning) {

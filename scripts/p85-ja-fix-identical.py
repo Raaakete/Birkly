@@ -13,7 +13,36 @@ ble = importlib.util.module_from_spec(spec)
 assert spec.loader
 spec.loader.exec_module(ble)
 
-ALLOW = {"birkly", "hub", "mcp", "api", "url", "csv", "json", "html", "css", "js", "stripe", "github"}
+# Only skip strings that should stay Latin product tokens (not keys containing "api"/"mcp").
+KEEP_LATIN = frozenset(
+    {
+        "api",
+        "csv",
+        "json",
+        "html",
+        "css",
+        "js",
+        "url",
+        "stripe",
+        "github",
+        "mcp",
+        "birkly",
+        "hub",
+    }
+)
+
+
+def keep_english_value(en_val: str) -> bool:
+    v = en_val.strip()
+    if len(v) <= 2:
+        return True
+    lower = v.lower()
+    if lower in KEEP_LATIN:
+        return True
+    # Short acronyms / codes
+    if len(v) <= 5 and v.isupper():
+        return True
+    return False
 
 
 def translate_one(text: str) -> str:
@@ -52,13 +81,9 @@ def fix_file(lang_dir: Path, locale: str, source: str = "en.json") -> int:
     todo: list[tuple[tuple[str, ...], str]] = []
     for path, en_val in pairs:
         existing = ble.get_at(data, path)
-        if not isinstance(en_val, str) or len(en_val) <= 2:
+        if not isinstance(en_val, str) or keep_english_value(en_val):
             continue
         if not isinstance(existing, str) or existing != en_val:
-            continue
-        key_path = ".".join(path)
-        lower = (key_path + " " + en_val).lower()
-        if any(t in lower for t in ALLOW):
             continue
         todo.append((path, en_val))
 
