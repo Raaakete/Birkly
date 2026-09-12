@@ -56,6 +56,13 @@ assert_true(
     'birkly_entry_saved action includes is_new from isNewEntry'
 );
 
+$publicSubmit = file_get_contents(__DIR__ . '/../api/public_submit.php');
+assert_true(
+    str_contains($publicSubmit, "do_action('birkly_entry_saved'") &&
+    str_contains($publicSubmit, "'is_new' => true"),
+    'public_submit fires birkly_entry_saved with is_new for automations'
+);
+
 if ($failures > 0) {
     fwrite(STDERR, "\n$failures failure(s)\n");
     exit(1);
