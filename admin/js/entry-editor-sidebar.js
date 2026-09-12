@@ -18,24 +18,24 @@
     let formDirty = false;
     let initialSnapshot = '';
 
-    function $(id) {
-        return document.getElementById(id);
-    }
-
-    function apiUrl(path) {
-        return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
-    }
-
-    function t(key, fallback, params) {
-        var text = (window.Birkly && window.Birkly.i18n)
-            ? window.Birkly.i18n.t('admin.' + key, fallback || key)
-            : (fallback || key);
+    function sidebarT(key, fallback, params) {
+        let text = (window.Birkly && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+            ? Birkly.i18n.t('admin.' + key, fallback)
+            : (fallback != null ? fallback : key);
         if (params && typeof params === 'object') {
             Object.keys(params).forEach(function (name) {
                 text = text.split('{' + name + '}').join(String(params[name]));
             });
         }
         return text;
+    }
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    function apiUrl(path) {
+        return (window.Birkly && typeof window.Birkly.url === 'function') ? window.Birkly.url(path) : path;
     }
 
     function getTitleValue() {
@@ -52,8 +52,8 @@
     }
 
     function buildPermalink() {
-        const slug = getSlugValue() || t('entry_sidebar_permalink_slug_placeholder', 'your-slug');
-        const collection = config.collection_slug || t('entry_sidebar_permalink_collection_fallback', 'collection');
+        const slug = getSlugValue() || 'your-slug';
+        const collection = config.collection_slug || 'collection';
         const siteUrl = (config.site_url || '').replace(/\/$/, '');
         const path = '/' + collection + '/' + slug;
         return siteUrl ? siteUrl + path : path;
@@ -67,11 +67,11 @@
     }
 
     const statusMessages = {
-        unpublished: t('entry_sidebar_status_unpublished', 'Hidden from your live site and public API. Only visible in the admin.'),
-        draft: t('entry_sidebar_status_draft', 'Hidden from your live site and public API. Only visible in the admin.'),
-        published: t('entry_sidebar_status_published', 'Visible on your site and included in the public API.'),
-        scheduled: t('entry_sidebar_status_scheduled', 'Will publish automatically at the date you set. Hidden until then.'),
-        pending_review: t('entry_sidebar_status_pending_review', 'Waiting for reviewer approval. Not visible on the live site.'),
+        unpublished: 'Hidden from your live site and public API. Only visible in the admin.',
+        draft: 'Hidden from your live site and public API. Only visible in the admin.',
+        published: 'Visible on your site and included in the public API.',
+        scheduled: 'Will publish automatically at the date you set. Hidden until then.',
+        pending_review: 'Waiting for reviewer approval. Not visible on the live site.',
     };
 
     function updateStatusClarity() {
@@ -95,7 +95,7 @@
 
         function refresh() {
             const len = (input.value || '').length;
-            counter.textContent = t('entry_sidebar_char_counter', '{len} / {ideal} (max {max})', { len: len, ideal: ideal, max: max });
+            counter.textContent = len + ' / ' + ideal + ' (max ' + max + ')';
             counter.className = 'char-counter ' + counterState(len, ideal, max);
         }
         input.addEventListener('input', refresh);
@@ -103,15 +103,15 @@
     }
 
     function effectiveMetaTitle() {
-        return ($('meta_title')?.value || '').trim() || getTitleValue() || t('entry_sidebar_meta_title_fallback', 'Page title');
+        return ($('meta_title')?.value || '').trim() || getTitleValue() || 'Page title';
     }
 
     function effectiveMetaDescription() {
-        return ($('meta_description')?.value || '').trim() || t('entry_sidebar_meta_desc_fallback', 'Add a meta description to improve search and AI summaries.');
+        return ($('meta_description')?.value || '').trim() || 'Add a meta description to improve search and AI summaries.';
     }
 
     function effectiveOgTitle() {
-        return ($('og_title')?.value || '').trim() || ($('meta_title')?.value || '').trim() || getTitleValue() || t('entry_sidebar_meta_title_fallback', 'Page title');
+        return ($('og_title')?.value || '').trim() || ($('meta_title')?.value || '').trim() || getTitleValue() || 'Page title';
     }
 
     function effectiveOgDescription() {
@@ -255,20 +255,20 @@
         const issues = [];
         const slug = getSlugValue();
         if (slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
-            issues.push(t('entry_sidebar_slug_invalid', 'Slug should use lowercase letters, numbers, and hyphens only.'));
+            issues.push('Slug should use lowercase letters, numbers, and hyphens only.');
         }
         const metaTitle = ($('meta_title')?.value || '').length;
         if (metaTitle > 70) {
-            issues.push(t('entry_sidebar_meta_title_long', 'Meta title is longer than recommended (70 characters).'));
+            issues.push('Meta title is longer than recommended (70 characters).');
         }
         const metaDesc = ($('meta_description')?.value || '').length;
         if (metaDesc > 0 && metaDesc < 50) {
-            issues.push(t('entry_sidebar_meta_desc_short', 'Meta description is quite short — aim for 120–160 characters for SEO and AI summaries.'));
+            issues.push('Meta description is quite short — aim for 120–160 characters for SEO and AI summaries.');
         }
         const scheduled = $('status')?.value === 'scheduled';
         const publishAt = $('published_at')?.value;
         if (scheduled && !publishAt) {
-            issues.push(t('entry_sidebar_scheduled_needs_date', 'Scheduled entries need a publish date.'));
+            issues.push('Scheduled entries need a publish date.');
         }
 
         const box = $('sidebar-validation');
@@ -340,7 +340,7 @@
     }
 
     function formatRevisionDate(value) {
-        if (!value) return t('entry_sidebar_revision_unknown_date', 'Unknown date');
+        if (!value) return 'Unknown date';
         const date = new Date(value.replace(' ', 'T'));
         return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
     }
@@ -350,24 +350,24 @@
         if (!list) return;
 
         if (!Array.isArray(versions) || versions.length === 0) {
-            list.innerHTML = '<div class="entry-revisions-empty">' + t('entry_sidebar_revision_empty', 'No saved revisions yet.') + '</div>';
+            list.innerHTML = '<div class="entry-revisions-empty">' + escapeHtml(sidebarT('entry_editor_js_no_revisions_yet', 'No saved revisions yet.')) + '</div>';
             return;
         }
 
         list.innerHTML = versions.map(function (version) {
             const number = Number(version.version || 0);
             const isCurrent = version.author === 'Current';
-            const author = isCurrent ? t('entry_sidebar_revision_current_author', 'Current version') : (version.author || t('entry_sidebar_revision_unknown_author', 'Unknown author'));
+            const author = isCurrent ? 'Current version' : (version.author || 'Unknown author');
             const subtitle = author + ' · ' + formatRevisionDate(version.created_at || version.updated_at || '');
             return '<div class="entry-revision-item' + (isCurrent ? ' is-current' : '') + '">' +
                 '<div class="entry-revision-meta">' +
-                    '<div class="entry-revision-title">' + t('entry_sidebar_revision_version', 'Version {number}', { number: number }) + (isCurrent ? ' · ' + t('entry_sidebar_revision_current', 'Current') : '') + '</div>' +
+                    '<div class="entry-revision-title">Version ' + number + (isCurrent ? ' · Current' : '') + '</div>' +
                     '<div class="entry-revision-subtitle">' + subtitle + '</div>' +
                 '</div>' +
                 '<div class="entry-revision-actions">' +
                     (isCurrent
-                        ? '<span class="status-badge published" style="white-space:nowrap;">' + t('entry_sidebar_revision_current', 'Current') + '</span>'
-                        : '<button type="button" class="btn btn-secondary btn-sm restore-entry-version-btn" data-version="' + number + '">' + t('entry_sidebar_revision_restore', 'Restore') + '</button>') +
+                        ? '<span class="status-badge published" style="white-space:nowrap;">Current</span>'
+                        : '<button type="button" class="btn btn-secondary btn-sm restore-entry-version-btn" data-version="' + number + '">Restore</button>') +
                 '</div>' +
             '</div>';
         }).join('');
@@ -379,7 +379,7 @@
         const list = $('entry-revisions-list');
         if (!list || !collectionSlug || !entryId) return;
 
-        list.innerHTML = '<div class="entry-revisions-empty">' + t('entry_sidebar_revision_loading', 'Loading revisions…') + '</div>';
+        list.innerHTML = '<div class="entry-revisions-empty">' + escapeHtml(sidebarT('entry_editor_js_loading_revisions', 'Loading revisions…')) + '</div>';
         setRevisionFeedback('');
 
         try {
@@ -388,12 +388,12 @@
             });
             const payload = await response.json();
             if (!response.ok || payload.status !== 'ok') {
-                throw new Error(payload.message || t('entry_sidebar_revision_load_failed', 'Unable to load revisions.'));
+                throw new Error(payload.message || 'Failed to load revisions');
             }
             renderRevisionHistory(payload.versions || []);
         } catch (error) {
-            list.innerHTML = '<div class="entry-revisions-empty">' + t('entry_sidebar_revision_load_failed', 'Unable to load revisions.') + '</div>';
-            setRevisionFeedback(error.message || t('entry_sidebar_revision_load_failed', 'Unable to load revisions.'), 'error');
+            list.innerHTML = '<div class="entry-revisions-empty">Unable to load revisions.</div>';
+            setRevisionFeedback(error.message || 'Unable to load revisions', 'error');
         }
     }
 
@@ -402,11 +402,11 @@
         const entryId = config.entry_id || '';
         if (!collectionSlug || !entryId || !version) return;
 
-        if (!(await BirklyFeedback.confirm(t('entry_sidebar_revision_restore_confirm', 'Restore version {version}? Your current draft will be saved to history first.', { version: version })))) {
+        if (!(await BirklyFeedback.confirm(sidebarT('entry_editor_sidebar_js_restore_confirm', 'Restore version {version}? Your current draft will be saved to history first.', { version: version })))) {
             return;
         }
 
-        setRevisionFeedback(t('entry_sidebar_revision_restoring', 'Restoring version {version}…', { version: version }));
+        setRevisionFeedback('Restoring version ' + version + '…');
 
         try {
             const response = await fetch(apiUrl('/api/admin_entries.php?action=restore_version'), {
@@ -422,14 +422,14 @@
             });
             const payload = await response.json();
             if (!response.ok || payload.status !== 'ok') {
-                throw new Error(payload.message || t('entry_sidebar_revision_restore_failed', 'Failed to restore revision'));
+                throw new Error(payload.message || 'Failed to restore revision');
             }
-            setRevisionFeedback(t('entry_sidebar_revision_restored', 'Revision restored. Reloading…'), 'success');
+            setRevisionFeedback('Revision restored. Reloading…', 'success');
             window.setTimeout(function () {
                 window.location.reload();
             }, 500);
         } catch (error) {
-            setRevisionFeedback(error.message || t('entry_sidebar_revision_restore_failed', 'Failed to restore revision'), 'error');
+            setRevisionFeedback(error.message || 'Failed to restore revision', 'error');
         }
     }
 

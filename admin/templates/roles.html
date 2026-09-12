@@ -47,7 +47,7 @@
                         </div>
                         <div class="card-body u-stack-4">
                         <p class="card-description">
-                            {if role.description exist}{role.description}{else}No description{endif}
+                            {if role.description exist}{role.description}{else}{translate 'admin.roles_no_description'}{endif}
                         </p>
                         <div class="u-stack-2">
                             <h4 class="u-label">{translate 'admin.permissions'}</h4>
@@ -90,10 +90,12 @@
                     </div>
                 {endfor}
             {else}
-                {component 'empty-state' 
-                    message='No custom roles found' 
-                    button_text='Add First Role' 
-                    button_action='openAddRoleModal()'}
+                <div class="empty-state empty-state--compact">
+                    <p class="empty-state__message">{translate 'admin.roles_empty_custom'}</p>
+                    <div class="empty-state__action">
+                        <button type="button" class="btn btn-primary" data-admin-action="openAddRoleModal">{translate 'admin.roles_add_first'}</button>
+                    </div>
+                </div>
             {endif}
         </div>
     </div>

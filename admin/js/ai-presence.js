@@ -201,7 +201,7 @@
         var statusEl = document.getElementById('ap-source-upload-status');
         if (statusEl) {
             statusEl.hidden = false;
-            statusEl.textContent = 'Uploading ' + file.name + '…';
+            statusEl.textContent = t('ag_js_uploading', 'Uploading {name}…', { name: file.name });
         }
         var mediaUrl = global.Birkly && typeof global.Birkly.url === 'function'
             ? global.Birkly.url('/api/admin_media.php?action=upload')
@@ -210,7 +210,7 @@
             .then(function (r) { return r.json(); })
             .then(function (result) {
                 if (result.status !== 'ok' || !result.data) {
-                    throw new Error(result.message || 'Upload failed');
+                    throw new Error(result.message || t('ag_js_upload_failed', 'Upload failed'));
                 }
                 ensureSourcesArray();
                 var roleEl = document.getElementById('ap-source-role');
@@ -225,10 +225,10 @@
                 syncLegacyConnectedFromSources();
                 renderSources();
                 state.dirty = true;
-                toast('Document added as source of truth', 'success');
+                toast(t('ag_js_doc_added_source', 'Document added as source of truth'), 'success');
             })
             .catch(function (err) {
-                toast(err.message || 'Upload failed', 'error');
+                toast(err.message || t('ag_js_upload_failed', 'Upload failed'), 'error');
             })
             .finally(function () {
                 if (statusEl) statusEl.hidden = true;
@@ -365,7 +365,7 @@
             var collection = colSel ? colSel.value : '';
             var entryId = entSel ? entSel.value : '';
             if (!collection || !entryId) {
-                toast('Select collection and entry for CMS link', 'warning');
+                toast(t('ag_js_select_collection_entry', 'Select collection and entry for CMS link'), 'warning');
                 return;
             }
             var opt = entSel.options[entSel.selectedIndex];
@@ -378,7 +378,7 @@
             source.label = source.label || source.ref.label;
             source.url = '';
         } else if (!url && !label) {
-            toast('Enter a label or URL', 'warning');
+            toast(t('ag_js_enter_label_or_url', 'Enter a label or URL'), 'warning');
             return;
         }
         modalState.productSources.push(source);
@@ -392,7 +392,7 @@
         var label = document.getElementById('ap-claim-source-label').value.trim();
         var url = document.getElementById('ap-claim-source-url').value.trim();
         if (!url && !label) {
-            toast('Enter a label or URL', 'warning');
+            toast(t('ag_js_enter_label_or_url', 'Enter a label or URL'), 'warning');
             return;
         }
         modalState.claimSources.push({
@@ -438,7 +438,7 @@
                 state.dirty = !!updateStatus;
             }
             renderLinkHealth(res.data.results || []);
-            toast('Link check complete', 'success');
+            toast(t('ag_js_link_check_complete', 'Link check complete'), 'success');
         }).catch(function (e) {
             hideAiLoading();
             throw e;
@@ -463,7 +463,7 @@
             });
             renderAssistSuggestions();
             openAssistSidebar();
-            toast('Link suggestions ready — review in AI Assist', 'success');
+            toast(t('ag_js_link_suggestions_ready', 'Link suggestions ready — review in AI Assist'), 'success');
         }).catch(function (e) {
             hideAiLoading();
             throw e;
@@ -569,11 +569,19 @@
         scrollAssistResults();
     }
 
-    function t(key, fallback) {
+    function t(key, fallback, params) {
+        var text;
         if (global.Birkly && global.Birkly.i18n && typeof global.Birkly.i18n.t === 'function') {
-            return global.Birkly.i18n.t('admin.' + key, fallback);
+            text = global.Birkly.i18n.t('admin.' + key, fallback);
+        } else {
+            text = fallback || key;
         }
-        return fallback || key;
+        if (params && typeof params === 'object') {
+            Object.keys(params).forEach(function (name) {
+                text = text.split('{' + name + '}').join(String(params[name]));
+            });
+        }
+        return text;
     }
 
     function escapeHtml(text) {
@@ -966,7 +974,7 @@
             return fn(signal);
         }).catch(function (err) {
             if (err && err.name === 'AbortError') {
-                toast('AI request cancelled', 'info');
+                toast(t('ag_js_ai_cancelled', 'AI request cancelled'), 'info');
                 return;
             }
             throw err;
@@ -1008,7 +1016,7 @@
             try {
                 val = el.value.trim() ? JSON.parse(el.value) : [];
             } catch (e) {
-                toast('Invalid JSON in ' + path, 'error');
+                toast(t('ag_js_invalid_json', 'Invalid JSON in {path}', { path: path }), 'error');
                 return;
             }
         } else if (el.getAttribute('data-array') === 'lines') {
@@ -1230,13 +1238,13 @@
         var el = document.getElementById('ap-claim-detail');
         if (!el) return;
         if (!state.selectedClaimId) {
-            el.textContent = 'Select a claim to view details.';
+            el.textContent = t('ag_js_select_claim', 'Select a claim to view details.');
             el.className = 'u-text-sm u-fg-secondary';
             return;
         }
         var claim = (state.draft.claims || []).find(function (c) { return c.id === state.selectedClaimId; });
         if (!claim) {
-            el.textContent = 'Claim not found.';
+            el.textContent = t('ag_js_claim_not_found', 'Claim not found.');
             return;
         }
         el.className = 'u-stack-2 u-text-sm';
@@ -1707,7 +1715,7 @@
         if (state.collections.length && shown === 0 && q) {
             var hint = document.createElement('option');
             hint.disabled = true;
-            hint.textContent = 'No collections match your search';
+            hint.textContent = t('ag_js_no_collections_match', 'No collections match your search');
             sel.appendChild(hint);
         }
     }
@@ -1925,7 +1933,7 @@
             state.draft = res.data.draft;
             state.dirty = false;
             if (!options.silent) {
-                toast('Draft saved', 'success');
+                toast(t('ag_js_draft_saved', 'Draft saved'), 'success');
             }
             if (options.skipReload) {
                 return res;
@@ -2004,7 +2012,7 @@
     function runCopilot(mode) {
         var connId = getSelectedAiConnection();
         if (!connId && mode !== 'fill_gaps') {
-            toast('Select an AI connection for this action, or use Fill gaps for basic suggestions', 'warning');
+            toast(t('ag_js_select_connection_or_fill_gaps', 'Select an AI connection for this action, or use Fill gaps for basic suggestions'), 'warning');
             return Promise.resolve();
         }
         var statusMsg = mode === 'fill_complete' ? 'Generating complete profile…'
@@ -2027,9 +2035,9 @@
                     toast(res.data.ai_error, 'warning');
                 }
                 if (state.suggestions.length) {
-                    toast(state.suggestions.length + ' suggestion(s) to review', 'info');
+                    toast(t('ag_js_suggestions_count', '{n} suggestion(s) to review', { n: state.suggestions.length }), 'info');
                 } else if (!res.data.ai_error) {
-                    toast('No suggestions — try linking CMS content or running Auto-fill', 'info');
+                    toast(t('ag_js_no_suggestions_hint', 'No suggestions — try linking CMS content or running Auto-fill'), 'info');
                 }
             }).finally(function () { setAssistStatus(''); });
         });
@@ -2044,7 +2052,7 @@
             state.suggestions = state.suggestions.filter(function (s) { return s.id !== id; });
             bindFields();
             refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [] });
-            toast('Suggestion accepted', 'success');
+            toast(t('ag_js_suggestion_accepted', 'Suggestion accepted'), 'success');
         });
     }
 
@@ -2065,7 +2073,7 @@
                     state.studioDraftPatch = null;
                     bindFields();
                     refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [], publish_state: state.publishState });
-                    toast('Draft proposal applied', 'success');
+                    toast(t('ag_js_draft_proposal_applied', 'Draft proposal applied'), 'success');
                 });
             }
             return postJson({ action: 'accept_suggestions', suggestions: state.suggestions })
@@ -2075,7 +2083,7 @@
                     state.suggestions = [];
                     bindFields();
                     refreshAllRenders({ draft: state.draft, meta: state.meta, staleness: [], publish_state: state.publishState });
-                    toast('All suggestions accepted', 'success');
+                    toast(t('ag_js_all_suggestions_accepted', 'All suggestions accepted'), 'success');
                 });
         });
     }
@@ -2083,7 +2091,7 @@
     function runFieldAi(field) {
         var connId = getSelectedAiConnection();
         if (!connId) {
-            toast('Select an AI connection in the sidebar first', 'warning');
+            toast(t('ag_js_select_connection_sidebar', 'Select an AI connection in the sidebar first'), 'warning');
             openAssistSidebar();
             return Promise.resolve();
         }
@@ -2097,7 +2105,7 @@
                     throw new Error(res.data.error);
                 }
                 if (!suggestions.length) {
-                    toast('No suggestions returned for this field', 'info');
+                    toast(t('ag_js_no_suggestions_field', 'No suggestions returned for this field'), 'info');
                     return;
                 }
                 var suggestion = suggestions[0];
@@ -2106,7 +2114,7 @@
                     state.draft = acceptRes.data.draft;
                     bindFields();
                     state.dirty = true;
-                    toast('Field updated', 'success');
+                    toast(t('ag_js_field_updated', 'Field updated'), 'success');
                 });
             })
             .finally(function () {
@@ -2117,12 +2125,12 @@
     function assistAutoFill() {
         var connId = getSelectedAiConnection();
         if (!connId) {
-            toast('Select an AI connection in the sidebar first', 'warning');
+            toast(t('ag_js_select_connection_sidebar', 'Select an AI connection in the sidebar first'), 'warning');
             openAssistSidebar();
             return Promise.resolve();
         }
         if (!state.collections.length) {
-            toast('No CMS collections found — create content collections first', 'warning');
+            toast(t('ag_js_no_collections', 'No CMS collections found — create content collections first'), 'warning');
             return Promise.resolve();
         }
         var slugs = state.collections.map(collectionKey).filter(Boolean);
@@ -2145,9 +2153,9 @@
                     toast(res.data.ai_error, 'error');
                 }
                 if (state.suggestions.length) {
-                    toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
+                    toast(t('ag_js_proposals_ready', '{n} proposal(s) ready to review', { n: state.suggestions.length }), 'success');
                 } else {
-                    toast('No proposals generated', 'info');
+                    toast(t('ag_js_no_proposals', 'No proposals generated'), 'info');
                 }
             }).finally(function () {
                 if (btn) btn.disabled = false;
@@ -2161,12 +2169,12 @@
         if (!sel) return Promise.resolve();
         var collections = Array.from(sel.selectedOptions).map(function (o) { return o.value; });
         if (!collections.length) {
-            toast('Select at least one collection', 'warning');
+            toast(t('ag_js_select_one_collection', 'Select at least one collection'), 'warning');
             return Promise.resolve();
         }
         var connId = getSelectedAiConnection();
         if (!connId) {
-            toast('Select an AI connection for CMS generation', 'warning');
+            toast(t('ag_js_select_connection_cms', 'Select an AI connection for CMS generation'), 'warning');
             return Promise.resolve();
         }
         var btn = document.getElementById('ap-assist-build');
@@ -2186,7 +2194,7 @@
                 if (res.data.ai_error) {
                     toast(res.data.ai_error, 'error');
                 }
-                toast(state.suggestions.length + ' proposal(s) ready to review', 'success');
+                toast(t('ag_js_proposals_ready', '{n} proposal(s) ready to review', { n: state.suggestions.length }), 'success');
             }).finally(function () {
                 if (btn) btn.disabled = false;
                 setAssistStatus('');
@@ -2208,7 +2216,7 @@
     function assistFillComplete() {
         var connId = getSelectedAiConnection();
         if (!connId) {
-            toast('Select an AI connection in the sidebar first', 'warning');
+            toast(t('ag_js_select_connection_sidebar', 'Select an AI connection in the sidebar first'), 'warning');
             openAssistSidebar();
             return Promise.resolve();
         }
@@ -2233,9 +2241,9 @@
                     toast(res.data.ai_error, 'warning');
                 }
                 if (state.suggestions.length) {
-                    toast(state.suggestions.length + ' proposal(s) for a complete profile — review and accept', 'success');
+                    toast(t('ag_js_proposals_profile', '{n} proposal(s) for a complete profile — review and accept', { n: state.suggestions.length }), 'success');
                 } else {
-                    toast('No proposals generated — try Fill gaps or add more context first', 'info');
+                    toast(t('ag_js_no_proposals_context', 'No proposals generated — try Fill gaps or add more context first'), 'info');
                 }
             }).finally(function () {
                 if (btn) btn.disabled = false;
@@ -2276,7 +2284,7 @@
                 if (media) setProductMediaPreview(media);
             });
         } else {
-            toast('Media picker unavailable — reload the page', 'error');
+            toast(t('ag_js_media_picker_unavailable', 'Media picker unavailable — reload the page'), 'error');
         }
     }
 
@@ -2417,7 +2425,7 @@
         closeApModal('ap-product-modal');
         renderProducts();
         state.dirty = true;
-        toast('Product saved — remember to save draft', 'success');
+        toast(t('ag_js_product_saved', 'Product saved — remember to save draft'), 'success');
     }
 
     function addProduct() {
@@ -2429,7 +2437,7 @@
     }
 
     function deleteProduct(idx) {
-        confirmAsync('Delete this product/service?').then(function (ok) {
+        confirmAsync(t('ag_js_confirm_delete_product', 'Delete this product/service?')).then(function (ok) {
             if (!ok) return;
             state.draft.products_services.splice(idx, 1);
             renderProducts();
@@ -2597,7 +2605,7 @@
             return r.ref_type === 'entry' && r.entry_id;
         });
         if (!refs.length) {
-            toast('Connect CMS entries first (Context tab)', 'warning');
+            toast(t('ag_js_connect_cms_first', 'Connect CMS entries first (Context tab)'), 'warning');
             return;
         }
         var sel = document.getElementById('ap-cms-evidence-entry');
@@ -2686,7 +2694,7 @@
                 if (media) setPickedMedia(media);
             });
         } else {
-            toast('Media picker unavailable — reload the page', 'error');
+            toast(t('ag_js_media_picker_unavailable', 'Media picker unavailable — reload the page'), 'error');
         }
     }
 
@@ -2953,7 +2961,7 @@
             syncLegacyConnectedFromSources();
             renderSources();
             state.dirty = true;
-            toast('Source added', 'success');
+            toast(t('ag_js_source_added', 'Source added'), 'success');
         });
 
         bindEl('ap-add-url-source', 'click', function () {
@@ -2977,7 +2985,7 @@
             if (urlEl) urlEl.value = '';
             renderSources();
             state.dirty = true;
-            toast('Source added', 'success');
+            toast(t('ag_js_source_added', 'Source added'), 'success');
         });
 
         var sourcesList = document.getElementById('ap-sources-list');
@@ -3085,7 +3093,7 @@
             var repEl = document.getElementById('ap-media-represents');
             var mediaId = mediaIdEl ? mediaIdEl.value.trim() : '';
             if (!mediaId) {
-                toast('Pick a media file first', 'warning');
+                toast(t('ag_js_pick_media_first', 'Pick a media file first'), 'warning');
                 return;
             }
             var repType = repEl ? repEl.value : 'brand';
@@ -3115,7 +3123,7 @@
                     openMediaEditModal(idx);
                 }
                 if (e.target.classList.contains('ap-remove-media')) {
-                    confirmAsync('Remove this media context?').then(function (ok) {
+                    confirmAsync(t('ag_js_confirm_remove_media', 'Remove this media context?')).then(function (ok) {
                         if (!ok) return;
                         state.draft.media_context.splice(idx, 1);
                         renderMedia();
@@ -3344,7 +3352,7 @@
         return fetch(webmcpApiUrl() + '?action=get', { credentials: 'same-origin' })
             .then(function (r) { return r.json(); })
             .then(function (res) {
-                if (res.status !== 'ok') throw new Error(res.message || 'Failed to load tools config');
+                if (res.status !== 'ok') throw new Error(res.message || t('ag_js_failed_load_tools', 'Failed to load tools config'));
                 state.webmcpConfig = res.data.config || { enabled: false, tools: {}, form_allowlist: [] };
                 state.webmcpCatalog = res.data.catalog || [];
                 state.webmcpRuntimePacks = res.data.runtime_packs || [];
@@ -3355,7 +3363,7 @@
                 renderPublishZone();
             })
             .catch(function (err) {
-                toast(err.message || 'Failed to load tools config', 'error');
+                toast(err.message || t('ag_js_failed_load_tools', 'Failed to load tools config'), 'error');
                 updateSpine();
             });
     }
@@ -3756,7 +3764,7 @@
             renderAssistSuggestions();
             updateSpine();
         }).catch(function (e) {
-            toast(e.message || 'Failed to load AI Presence', 'error');
+            toast(e.message || t('ag_js_failed_load_presence', 'Failed to load AI Presence'), 'error');
             loadAiConnections().finally(function () {
                 if (!state.webmcpLoaded) {
                     loadWebmcpConfig().finally(function () {

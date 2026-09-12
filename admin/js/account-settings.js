@@ -3,6 +3,18 @@
  * Handles profile, password, language, and notification preferences
  */
 
+function accountT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const unifiedSaveBtn = document.getElementById('account-save-btn');
     if (unifiedSaveBtn) {
@@ -374,7 +386,7 @@ async function startCloudAccountLink() {
 }
 
 async function unlinkCloudAccount() {
-    if (!(await BirklyFeedback.confirm('Unlink your Birkly cloud account from this CMS installation?'))) return;
+    if (!(await BirklyFeedback.confirm(accountT('account_js_confirm_unlink_cloud', 'Unlink your Birkly cloud account from this CMS installation?')))) return;
     try {
         const response = await fetch(Birkly.url('/api/cloud_account.php?action=unlink'), {
             method: 'POST',
@@ -412,7 +424,7 @@ async function loadAccount2FAStatus() {
         renderAccount2FAStatus(container, !!data.enabled, data.enabled_at, data.backup_codes_count);
     } catch (err) {
         console.error('Error loading 2FA status:', err);
-        container.innerHTML = '<p class="u-fg-danger" role="alert">Error loading 2FA status</p>';
+        container.innerHTML = '<p class="u-fg-danger" role="alert">' + escapeHtml(accountT('account_js_2fa_load_error', 'Error loading 2FA status')) + '</p>';
     }
 }
 
@@ -421,16 +433,19 @@ function renderAccount2FAStatus(container, enabled, enabledAt, backupCodesCount)
     const codesCount = backupCodesCount || 0;
 
     if (enabled) {
+        const enabledOnText = enabledDate
+            ? accountT('account_js_2fa_enabled_on', 'Enabled on {date}', { date: enabledDate })
+            : '';
         container.innerHTML = `
           <div class="u-stack-4">
             <div class="u-cluster-3">
-              <span class="badge badge-success">Enabled</span>
-              <span class="u-text-sm u-fg-secondary">${escapeHtml(enabledDate ? `Enabled on ${enabledDate}` : '')}</span>
+              <span class="badge badge-success">${escapeHtml(accountT('account_js_2fa_enabled_badge', 'Enabled'))}</span>
+              <span class="u-text-sm u-fg-secondary">${escapeHtml(enabledOnText)}</span>
             </div>
-            <p class="u-text-sm u-fg-secondary">You have ${codesCount} backup codes remaining.</p>
+            <p class="u-text-sm u-fg-secondary">${escapeHtml(accountT('account_js_2fa_backup_codes_remaining', 'You have {count} backup codes remaining.', { count: String(codesCount) }))}</p>
             <div class="u-cluster">
-              <button class="btn btn-secondary btn-sm" type="button" id="account-2fa-regenerate-btn" onclick="openAccount2FARegenerateModal()">Regenerate Backup Codes</button>
-              <button class="btn btn-danger btn-sm" type="button" id="account-2fa-disable-btn" onclick="openAccount2FADisableModal()">Disable 2FA</button>
+              <button class="btn btn-secondary btn-sm" type="button" id="account-2fa-regenerate-btn" onclick="openAccount2FARegenerateModal()">${escapeHtml(accountT('account_js_regenerate_backup_btn', 'Regenerate Backup Codes'))}</button>
+              <button class="btn btn-danger btn-sm" type="button" id="account-2fa-disable-btn" onclick="openAccount2FADisableModal()">${escapeHtml(accountT('account_js_disable_2fa_btn', 'Disable 2FA'))}</button>
             </div>
           </div>
         `;
@@ -440,8 +455,8 @@ function renderAccount2FAStatus(container, enabled, enabledAt, backupCodesCount)
     } else {
         container.innerHTML = `
           <div class="u-stack-4">
-            <p class="u-text-sm u-fg-secondary">Two-factor authentication is not enabled for your account.</p>
-            <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-enable-btn" onclick="openAccount2FASetupModal()">Enable 2FA</button>
+            <p class="u-text-sm u-fg-secondary">${escapeHtml(accountT('account_js_2fa_not_enabled', 'Two-factor authentication is not enabled for your account.'))}</p>
+            <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-enable-btn" onclick="openAccount2FASetupModal()">${escapeHtml(accountT('account_js_enable_2fa_btn', 'Enable 2FA'))}</button>
           </div>
         `;
         document.getElementById('account-2fa-enable-btn')?.addEventListener('click', openAccount2FASetupModal);
@@ -458,7 +473,7 @@ async function openAccount2FASetupModal() {
 
     modal.style.display = 'flex';
     modal.classList.add('active');
-    content.innerHTML = '<div class="loading-state"><p>Setting up 2FA...</p></div>';
+    content.innerHTML = '<div class="loading-state"><p>' + escapeHtml(accountT('account_js_setting_up_2fa', 'Setting up 2FA...')) + '</p></div>';
 
     try {
         const response = await fetch(Birkly.url('/api/2fa.php?action=setup'), {
@@ -476,28 +491,28 @@ async function openAccount2FASetupModal() {
 
         content.innerHTML = `
           <div class="account-2fa-step1 u-stack-4">
-            <h3 class="u-text-md u-weight-semibold">Step 1: Scan QR Code</h3>
-            <p class="u-text-sm u-fg-secondary">Scan this QR code with your authenticator app.</p>
-            <img class="account-2fa-qr u-mx-auto" src="${qrUrl}" alt="2FA QR Code">
+            <h3 class="u-text-md u-weight-semibold">${escapeHtml(accountT('account_js_2fa_step1_title', 'Step 1: Scan QR Code'))}</h3>
+            <p class="u-text-sm u-fg-secondary">${escapeHtml(accountT('account_js_2fa_step1_help', 'Scan this QR code with your authenticator app.'))}</p>
+            <img class="account-2fa-qr u-mx-auto" src="${qrUrl}" alt="${escapeHtml(accountT('account_js_2fa_qr_alt', '2FA QR Code'))}">
             <div class="u-surface-sunken u-radius-sm u-p-3 u-stack-2">
-              <p class="u-label">Manual entry</p>
+              <p class="u-label">${escapeHtml(accountT('account_js_2fa_manual_entry', 'Manual entry'))}</p>
               <code class="u-block u-mono u-text-sm u-break-word">${manualKey}</code>
             </div>
             <div class="u-cluster">
-              <button class="btn btn-primary" type="button" id="account-2fa-step1-next">I have scanned the code</button>
-              <button class="btn btn-secondary" type="button" id="account-2fa-cancel">Cancel</button>
+              <button class="btn btn-primary" type="button" id="account-2fa-step1-next">${escapeHtml(accountT('account_js_2fa_scanned_confirm', 'I have scanned the code'))}</button>
+              <button class="btn btn-secondary" type="button" id="account-2fa-cancel">${escapeHtml(accountT('cancel', 'Cancel'))}</button>
             </div>
           </div>
           <div class="account-2fa-step2 u-stack-4" hidden>
-            <h3 class="u-text-md u-weight-semibold">Step 2: Verify Code</h3>
-            <p class="u-text-sm u-fg-secondary">Enter the 6-digit code from your authenticator app:</p>
+            <h3 class="u-text-md u-weight-semibold">${escapeHtml(accountT('account_js_2fa_step2_title', 'Step 2: Verify Code'))}</h3>
+            <p class="u-text-sm u-fg-secondary">${escapeHtml(accountT('account_js_2fa_step2_help', 'Enter the 6-digit code from your authenticator app:'))}</p>
             <div class="form-group">
-              <label for="account-2fa-verify-code">Verification Code</label>
-              <input type="text" id="account-2fa-verify-code" class="input account-2fa-code-input" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+              <label for="account-2fa-verify-code">${escapeHtml(accountT('account_js_2fa_verification_code_label', 'Verification Code'))}</label>
+              <input type="text" id="account-2fa-verify-code" class="input account-2fa-code-input" placeholder="${escapeHtml(accountT('account_js_2fa_code_placeholder', '000000'))}" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
             </div>
             <div class="u-cluster">
-              <button class="btn btn-primary" type="button" id="account-2fa-enable-confirm">Enable 2FA</button>
-              <button class="btn btn-secondary" type="button" id="account-2fa-cancel2">Cancel</button>
+              <button class="btn btn-primary" type="button" id="account-2fa-enable-confirm">${escapeHtml(accountT('account_js_2fa_enable_confirm_btn', 'Enable 2FA'))}</button>
+              <button class="btn btn-secondary" type="button" id="account-2fa-cancel2">${escapeHtml(accountT('cancel', 'Cancel'))}</button>
             </div>
           </div>
         `;
@@ -534,7 +549,7 @@ window.accountClose2FASetupModal = accountClose2FASetupModal;
 async function enableAccount2FA() {
     const code = document.getElementById('account-2fa-verify-code')?.value.trim();
     if (!code || code.length !== 6) {
-        BirklyFeedback.toast('Please enter a valid 6-digit code', 'warning')
+        BirklyFeedback.toast(accountT('account_js_2fa_code_invalid', 'Please enter a valid 6-digit code'), 'warning')
         return;
     }
 
@@ -555,12 +570,12 @@ async function enableAccount2FA() {
         if (content) {
             content.innerHTML = `
               <div class="account-2fa-step3 u-stack-4">
-                <h3 class="u-text-md u-weight-semibold">Step 3: Save Backup Codes</h3>
-                <p class="u-text-sm u-fg-secondary">Save these backup codes in a safe place. Each code can be used once.</p>
+                <h3 class="u-text-md u-weight-semibold">${escapeHtml(accountT('account_js_2fa_step3_title', 'Step 3: Save Backup Codes'))}</h3>
+                <p class="u-text-sm u-fg-secondary">${escapeHtml(accountT('account_js_2fa_step3_help', 'Save these backup codes in a safe place. Each code can be used once.'))}</p>
                 <div class="u-surface-sunken u-radius-sm u-p-4">
                   <code class="u-block u-mono u-text-sm u-leading-relaxed">${codesHtml}</code>
                 </div>
-                <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-done">Done</button>
+                <button class="btn btn-primary u-w-fit" type="button" id="account-2fa-done">${escapeHtml(accountT('account_js_2fa_done', 'Done'))}</button>
               </div>
             `;
             document.getElementById('account-2fa-done')?.addEventListener('click', async () => {
@@ -570,7 +585,7 @@ async function enableAccount2FA() {
         }
     } catch (err) {
         console.error('Enable 2FA error:', err);
-        BirklyFeedback.toast('Error enabling 2FA: ' + (err.message || 'Unknown error'), 'error');
+        BirklyFeedback.toast(accountT('account_js_err_enabling_2fa', 'Error enabling 2FA: {message}', { message: err.message || accountT('error_unknown', 'Unknown error') }), 'error');
     }
 }
 
@@ -614,7 +629,7 @@ document.getElementById('account-2fa-disable-form')?.addEventListener('submit', 
         loadAccount2FAStatus();
     } catch (err) {
         console.error('Disable 2FA error:', err);
-        BirklyFeedback.toast('Error disabling 2FA: ' + (err.message || 'Unknown error'), 'error');
+        BirklyFeedback.toast(accountT('account_js_err_disabling_2fa', 'Error disabling 2FA: {message}', { message: err.message || accountT('error_unknown', 'Unknown error') }), 'error');
     }
 });
 
@@ -661,12 +676,12 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
         if (content) {
             content.innerHTML = `
               <div class="account-2fa-backup-list u-stack-4">
-                <p class="u-text-sm u-fg-secondary">Here are your new backup codes. Store them in a safe place. Each code can be used once.</p>
+                <p class="u-text-sm u-fg-secondary">${escapeHtml(accountT('account_js_2fa_regenerate_codes_intro', 'Here are your new backup codes. Store them in a safe place. Each code can be used once.'))}</p>
                 <div class="u-surface-sunken u-radius-sm u-p-4">
                   <code class="u-block u-mono u-text-sm u-leading-relaxed">${codesHtml}</code>
                 </div>
                 <div class="form-actions">
-                  <button type="button" class="btn btn-primary" id="account-2fa-regenerate-done">Done</button>
+                  <button type="button" class="btn btn-primary" id="account-2fa-regenerate-done">${escapeHtml(accountT('account_js_2fa_done', 'Done'))}</button>
                 </div>
               </div>
             `;
@@ -681,7 +696,7 @@ document.getElementById('account-2fa-regenerate-form')?.addEventListener('submit
         }
     } catch (err) {
         console.error('Regenerate backup codes error:', err);
-        BirklyFeedback.toast('Error regenerating backup codes: ' + (err.message || 'Unknown error'), 'error');
+        BirklyFeedback.toast(accountT('account_js_err_regenerating_backup', 'Error regenerating backup codes: {message}', { message: err.message || accountT('error_unknown', 'Unknown error') }), 'error');
     }
 });
 
@@ -717,7 +732,7 @@ async function handleUnifiedAccountSave() {
             });
             const languageResult = await languageResponse.json();
             if (languageResult.status !== 'ok') {
-                throw new Error(languageResult.message || 'Error saving language preference');
+                throw new Error(languageResult.message || accountT('language_save_error', 'Error saving language preference'));
             }
             reloadAfterLanguage = true;
         }
@@ -872,17 +887,17 @@ function handleLanguageSubmit(e) {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'ok') {
-            showMessage(messageEl, 'Language preference saved. Reloading page...', 'success');
+            showMessage(messageEl, accountT('language_preference_saved_reload', 'Language preference saved. Reloading page…'), 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
         } else {
-            showMessage(messageEl, data.message || 'Error saving language preference', 'error');
+            showMessage(messageEl, data.message || accountT('language_save_error', 'Error saving language preference'), 'error');
         }
     })
     .catch(error => {
         console.error('Language change error:', error);
-        showMessage(messageEl, 'Error saving language preference', 'error');
+        showMessage(messageEl, accountT('language_save_error', 'Error saving language preference'), 'error');
     });
 }
 
@@ -929,7 +944,7 @@ function handleNotificationsSubmit(e) {
 }
 
 async function handleRemoveAvatar() {
-    if (!(await BirklyFeedback.confirm('Are you sure you want to remove your avatar?'))) {
+    if (!(await BirklyFeedback.confirm(accountT('account_js_confirm_remove_avatar', 'Are you sure you want to remove your avatar?')))) {
         return;
     }
     
@@ -954,7 +969,7 @@ async function handleRemoveAvatar() {
     })
     .catch(error => {
         console.error('Remove avatar error:', error);
-        BirklyFeedback.toast('Error removing avatar', 'error')
+        BirklyFeedback.toast(accountT('account_js_err_remove_avatar', 'Error removing avatar'), 'error')
     });
 }
 

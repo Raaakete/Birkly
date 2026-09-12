@@ -104,8 +104,8 @@
 
   <section class="card">
     <div class="card-header">
-      <h2 class="card-title">Display &amp; spacing</h2>
-      <p class="card-description">Adjust text size and spacing across the admin interface.</p>
+      <h2 class="card-title">{translate 'admin.account_display_spacing_title'}</h2>
+      <p class="card-description">{translate 'admin.account_display_spacing_description'}</p>
     </div>
     <form id="account-density-form" class="settings-form card-body u-stack-4">
       <div class="form-group u-stack-3">
@@ -263,7 +263,7 @@
     </div>
     <div class="modal-body">
       <div id="account-2fa-setup-content">
-        <div class="loading-state"><p>Initializing 2FA setup...</p></div>
+        <div class="loading-state"><p>{translate 'admin.account_js_initializing_2fa'}</p></div>
       </div>
     </div>
   </div>
@@ -283,12 +283,12 @@
           <input type="password" id="account-disable-password" name="password" class="input" required>
         </div>
         <div class="form-group">
-          <label for="account-disable-code">Verification Code (optional)</label>
-          <input type="text" id="account-disable-code" name="code" class="input" placeholder="000000" maxlength="6">
-          <small class="form-text">Enter a code from your authenticator app or leave blank</small>
+          <label for="account-disable-code">{translate 'admin.verification_code_optional'}</label>
+          <input type="text" id="account-disable-code" name="code" class="input" placeholder="{translate 'admin.verification_code_placeholder'}" maxlength="6">
+          <small class="form-text">{translate 'admin.verification_code_help'}</small>
         </div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FADisableModal">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FADisableModal">{translate 'admin.cancel'}</button>
           <button type="submit" class="btn btn-danger">{translate 'admin.disable_2fa'}</button>
         </div>
       </form>
@@ -310,11 +310,11 @@
           <input type="password" id="account-regenerate-password" name="password" class="input" required>
         </div>
         <div class="form-group">
-          <label for="account-regenerate-code">Verification Code (optional)</label>
-          <input type="text" id="account-regenerate-code" name="code" class="input" placeholder="000000" maxlength="6">
+          <label for="account-regenerate-code">{translate 'admin.verification_code_optional'}</label>
+          <input type="text" id="account-regenerate-code" name="code" class="input" placeholder="{translate 'admin.verification_code_placeholder'}" maxlength="6">
         </div>
         <div class="form-actions">
-          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FARegenerateModal">Cancel</button>
+          <button type="button" class="btn btn-secondary" data-admin-action="accountClose2FARegenerateModal">{translate 'admin.cancel'}</button>
           <button type="submit" class="btn btn-primary">{translate 'admin.regenerate_backup_codes'}</button>
         </div>
       </form>

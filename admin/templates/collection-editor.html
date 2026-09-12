@@ -70,9 +70,9 @@ if (!$cancelUrl) {
             <a href="<?= admin_url('content') ?>"><?= __('admin.content') ?></a>
             <span class="separator">›</span>
             <?php if ($isSubCollection): ?>
-                <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></a>
+                <a href="<?= admin_url('entries', ['collection' => $collection['slug'] ?? '']) ?>"><?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? __('admin.col_editor_breadcrumb_collection_fallback')) ?></a>
                 <span class="separator">›</span>
-                <span class="current"><?= !empty($subCollectionData['slug']) ? 'Edit Sub-Collection' : 'New Sub-Collection' ?></span>
+                <span class="current"><?= !empty($subCollectionData['slug']) ? __('admin.col_editor_edit_sub_collection') : __('admin.col_editor_new_sub_collection') ?></span>
             <?php else: ?>
                 <span class="current"><?= htmlspecialchars(!empty($collection['title']) ? __('admin.edit_collection') : __('admin.new_collection')) ?></span>
             <?php endif; ?>
@@ -84,7 +84,7 @@ if (!$cancelUrl) {
     <?php
     $stickySaveBarForm = 'collection-form';
     if ($isSubCollection) {
-        $stickySaveBarSaveLabel = !empty($subCollectionData['slug']) ? 'Save Sub-Collection' : 'Create Sub-Collection';
+        $stickySaveBarSaveLabel = !empty($subCollectionData['slug']) ? __('admin.col_editor_save_sub_collection') : __('admin.col_editor_create_sub_collection');
     } else {
         $stickySaveBarSaveLabel = !empty($collection['title']) ? __('admin.save_collection') : __('admin.create_collection');
     }
@@ -123,12 +123,12 @@ if (!$cancelUrl) {
                                 <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                             </svg>
                             <div class="callout-body u-stack-1">
-                                <p class="callout-title"><?= $hasParentSubCollection ? 'Nested Sub-Collection' : 'Sub-Collection' ?></p>
-                                <p><strong>Parent Collection:</strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? 'Collection') ?></p>
+                                <p class="callout-title"><?= $hasParentSubCollection ? __('admin.col_editor_nested_sub_collection') : __('admin.col_editor_sub_collection') ?></p>
+                                <p><strong><?= __('admin.col_editor_parent_collection_label') ?></strong> <?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? $collection['slug'] ?? __('admin.col_editor_breadcrumb_collection_fallback')) ?></p>
                                 <?php if ($hasParentSubCollection): ?>
-                                    <p><strong>Parent Sub-Collection:</strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? 'Sub-Collection') ?></p>
+                                    <p><strong><?= __('admin.col_editor_parent_sub_collection') ?></strong> <?= htmlspecialchars($parentSubCollectionData['name'] ?? __('admin.col_editor_sub_collection')) ?></p>
                                 <?php else: ?>
-                                    <p>This sub-collection belongs to the parent collection above and will be attached to entries in that collection.</p>
+                                    <p><?= __('admin.col_editor_sub_belongs_help') ?></p>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -137,13 +137,13 @@ if (!$cancelUrl) {
                     <!-- Collection/Sub-Collection Title (Required, First Field) -->
                     <div class="field-block" data-field-name="name">
                         <div class="field-header">
-                            <div class="field-title"><?= $isSubCollection ? 'Sub-Collection Name' : __('admin.collection_title') ?> <span class="required">*</span></div>
+                            <div class="field-title"><?= $isSubCollection ? __('admin.col_editor_sub_collection_name') : __('admin.collection_title') ?> <span class="required">*</span></div>
                         </div>
                         <div class="field-control">
                             <?php if ($isSubCollection): ?>
-                                <input type="text" name="sub_collections[0][name]" id="name" class="input" value="<?= htmlspecialchars($subCollectionData['name'] ?? '') ?>" required placeholder="e.g., Comments">
+                                <input type="text" name="sub_collections[0][name]" id="name" class="input" value="<?= htmlspecialchars($subCollectionData['name'] ?? '') ?>" required placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_comments')) ?>">
                             <?php else: ?>
-                                <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="e.g., Blog Posts">
+                                <input type="text" name="name" id="name" class="input" value="<?= htmlspecialchars($collection['name'] ?? $collection['title'] ?? '') ?>" required placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_blog')) ?>">
                             <?php endif; ?>
                         </div>
                         <div class="field-feedback error" role="alert" aria-live="polite"></div>
@@ -152,8 +152,8 @@ if (!$cancelUrl) {
                     <?php if ($isSubCollection): ?>
                         <!-- Sub-Collection Fields Schema -->
                         <div class="fields-section u-mt-6">
-                            <h2 class="section-title">Sub-Collection Fields</h2>
-                            <p class="section-description">Define the fields that sub-entries in this sub-collection will have.</p>
+                            <h2 class="section-title"><?= __('admin.col_editor_sub_collection_fields') ?></h2>
+                            <p class="section-description"><?= __('admin.col_editor_section_desc_sub_fields') ?></p>
                             
                             <div id="sub-collection-fields-container">
                                 <?php 
@@ -167,26 +167,26 @@ if (!$cancelUrl) {
                                                 <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
                                                 <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
                                             </div>
-                                            <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                            <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                                 <?= birkly_icon('trash', ['size' => 16]) ?>
                                             </button>
                                         </div>
                                         <div class="fieldtype-body">
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
-                                                    <label>Display Name <span class="required">*</span></label>
-                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                    <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label>API Name</label>
-                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                    <label><?= __('admin.col_editor_api_name') ?></label>
+                                                    <input type="text" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                                 </div>
                                             </div>
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
-                                                    <label>Field Type</label>
+                                                    <label><?= __('admin.col_editor_field_type') ?></label>
                                                     <select name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][type]" class="input sub-field-type-select" required>
-                                                        <option value="">Select type...</option>
+                                                        <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                                                         <?php foreach ($fieldtypes as $fieldtype): ?>
                                                             <?php
                                                             $subFieldType = $subField['type'] ?? '';
@@ -203,7 +203,7 @@ if (!$cancelUrl) {
                                                     </select>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label>Mandatory Field</label>
+                                                    <label><?= __('admin.col_editor_mandatory_field') ?></label>
                                                     <label class="switch">
                                                         <input type="checkbox" name="sub_collections[0][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
                                                         <span class="switch__slider"></span>
@@ -226,8 +226,8 @@ if (!$cancelUrl) {
                         
                         <!-- Sub-Collections Section (for nested sub-collections) -->
                         <div class="fields-section u-mt-6">
-                            <h2 class="section-title">Sub-Collections</h2>
-                            <p class="section-description">Configure nested sub-collections that can be attached to entries in this sub-collection. For example, a "Comments" sub-collection might have "Replies" as a nested sub-collection.</p>
+                            <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
+                            <p class="section-description"><?= __('admin.col_editor_section_desc_nested_sub_collections') ?></p>
                             
                             <div id="sub-collections-container">
                                 <?php 
@@ -240,31 +240,31 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-title">
                                                 <span class="fieldtype-name"><?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?></span>
                                             </div>
-                                            <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
+                                            <button type="button" class="btn-icon remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
                                                 <?= birkly_icon('trash', ['size' => 16]) ?>
                                             </button>
                                         </div>
                                         <div class="fieldtype-body">
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
-                                                    <label>Name <span class="required">*</span></label>
-                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][name]" value="<?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?>" placeholder="e.g., Replies" class="input" required>
+                                                    <label><?= __('admin.name') ?> <span class="required">*</span></label>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][name]" value="<?= htmlspecialchars($nestedSubCollection['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_replies')) ?>" class="input" required>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label>Slug <span class="required">*</span></label>
-                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][slug]" value="<?= htmlspecialchars($nestedSubCollection['slug'] ?? '') ?>" placeholder="e.g., replies" class="input" required>
+                                                    <label><?= __('admin.col_editor_slug_label') ?> <span class="required">*</span></label>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][slug]" value="<?= htmlspecialchars($nestedSubCollection['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_ph_replies')) ?>" class="input" required>
                                                 </div>
                                             </div>
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
-                                                    <label>Description</label>
-                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][description]" value="<?= htmlspecialchars($nestedSubCollection['description'] ?? '') ?>" placeholder="Optional description" class="input">
+                                                    <label><?= __('admin.description') ?></label>
+                                                    <input type="text" name="sub_collections[0][sub_collections][<?= $index ?>][description]" value="<?= htmlspecialchars($nestedSubCollection['description'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_optional_description_placeholder')) ?>" class="input">
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label>Entry Method</label>
+                                                    <label><?= __('admin.col_editor_entry_method_label') ?></label>
                                                     <select name="sub_collections[0][sub_collections][<?= $index ?>][entry_method]" class="input">
-                                                        <option value="admin_only" <?= ($nestedSubCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                                        <option value="public_api" <?= ($nestedSubCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                                        <option value="admin_only" <?= ($nestedSubCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                                        <option value="public_api" <?= ($nestedSubCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -272,7 +272,7 @@ if (!$cancelUrl) {
                                                 <div class="fieldtype-field">
                                                     <label class="checkbox-label">
                                                         <input type="checkbox" name="sub_collections[0][sub_collections][<?= $index ?>][auto_publish]" value="1" <?= !empty($nestedSubCollection['auto_publish']) ? 'checked' : '' ?>>
-                                                        <span>Auto-publish</span>
+                                                        <span><?= __('admin.col_editor_auto_publish') ?></span>
                                                     </label>
                                                 </div>
                                             </div>
@@ -286,15 +286,15 @@ if (!$cancelUrl) {
                             
                             <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
                                 <?= birkly_icon('plus', ['size' => 16]) ?>
-                                Add Sub-Collection
+                                <?= __('admin.col_editor_add_sub_collection') ?>
                             </button>
                         </div>
                     <?php else: ?>
                     
                     <!-- Custom Fieldtypes -->
                     <div class="fields-section">
-                        <h2 class="section-title">Collection Fields</h2>
-                        <p class="section-description">Define the fields that entries in this collection will have.</p>
+                        <h2 class="section-title"><?= __('admin.col_editor_collection_fields_title') ?></h2>
+                        <p class="section-description"><?= __('admin.col_editor_section_desc_collection_fields') ?></p>
                         
                         <div id="fields-container">
                             <?php if (!empty($fields)): ?>
@@ -303,7 +303,7 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-header">
                                             <div class="fieldtype-header-main">
                                                 <div class="fieldtype-drag-handle">
-                                                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                                                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => __('admin.drag_to_reorder')]) ?>
                                                 </div>
                                                 <div class="fieldtype-title">
                                                     <?= birkly_fieldtype_type_badge($field['type'] ?? null, $fieldtypes) ?>
@@ -311,13 +311,13 @@ if (!$cancelUrl) {
                                                 </div>
                                             </div>
                                             <div class="fieldtype-header-actions">
-                                                <button type="button" class="btn-icon field-move-up-btn" title="Move field up" aria-label="Move field up">
+                                                <button type="button" class="btn-icon field-move-up-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>">
                                                     <?= birkly_icon('caret-up', ['size' => 16]) ?>
                                                 </button>
-                                                <button type="button" class="btn-icon field-move-down-btn" title="Move field down" aria-label="Move field down">
+                                                <button type="button" class="btn-icon field-move-down-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>">
                                                     <?= birkly_icon('caret-down', ['size' => 16]) ?>
                                                 </button>
-                                                <button type="button" class="btn-icon remove-field-btn" title="Remove field" aria-label="Remove field">
+                                                <button type="button" class="btn-icon remove-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                                     <?= birkly_icon('trash', ['size' => 16]) ?>
                                                 </button>
                                             </div>
@@ -325,19 +325,19 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-body">
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
-                                                    <label>Display Name <span class="required">*</span></label>
-                                                    <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                    <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                                                    <input type="text" name="fields[<?= $index ?>][label]" value="<?= htmlspecialchars($field['label'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label>API Name</label>
-                                                    <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                    <label><?= __('admin.col_editor_api_name') ?></label>
+                                                    <input type="text" name="fields[<?= $index ?>][name]" value="<?= htmlspecialchars($field['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                                 </div>
                                             </div>
                                             <div class="fieldtype-row">
                                                 <div class="fieldtype-field">
-                                                    <label>Field Type</label>
+                                                    <label><?= __('admin.col_editor_field_type') ?></label>
                                                     <select name="fields[<?= $index ?>][type]" class="input field-type-select" required>
-                                                        <option value="">Select type...</option>
+                                                        <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                                                         <?php foreach ($fieldtypes as $fieldtype): ?>
                                                             <?php
                                                             // Normalize fieldtype names for comparison (handle content-editor vs contenteditor)
@@ -357,7 +357,7 @@ if (!$cancelUrl) {
                                                     </select>
                                                 </div>
                                                 <div class="fieldtype-field">
-                                                    <label>Mandatory Field</label>
+                                                    <label><?= __('admin.col_editor_mandatory_field') ?></label>
                                                     <label class="switch">
                                                         <input type="checkbox" name="fields[<?= $index ?>][required]" value="1" <?= !empty($field['required']) ? 'checked' : '' ?>>
                                                         <span class="switch__slider"></span>
@@ -367,7 +367,7 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-config" data-field-index="<?= $index ?>"<?php if (($field['type'] ?? '') !== 'select' || empty($field['options'])): ?> hidden<?php endif; ?>>
                                                 <?php if (($field['type'] ?? '') === 'select' && !empty($field['options'])): ?>
                                                     <div class="field-config-section">
-                                                        <label>Options (one per line, format: label|value)</label>
+                                                        <label><?= __('admin.col_editor_field_options_label') ?></label>
                                                         <textarea name="fields[<?= $index ?>][options_text]" class="input" rows="4"><?php
                                                             if (!empty($field['options']) && is_array($field['options'])) {
                                                                 foreach ($field['options'] as $opt) {
@@ -392,8 +392,8 @@ if (!$cancelUrl) {
                     
                     <!-- Sub-Collections Section -->
                     <div class="fields-section u-mt-6">
-                        <h2 class="section-title">Sub-Collections</h2>
-                        <p class="section-description">Configure sub-collections that can be attached to entries in this collection. For example, a blog post collection might have "Comments" and "Ratings" as sub-collections.</p>
+                        <h2 class="section-title"><?= __('admin.col_editor_sub_collections') ?></h2>
+                        <p class="section-description"><?= __('admin.col_editor_section_desc_sub_collections') ?></p>
                         
                         <div id="sub-collections-container">
                             <?php 
@@ -406,31 +406,31 @@ if (!$cancelUrl) {
                                         <div class="fieldtype-title">
                                             <span class="fieldtype-name"><?= htmlspecialchars($subCollection['name'] ?? '') ?></span>
                                         </div>
-                                        <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
+                                        <button type="button" class="btn-icon remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
                                             <?= birkly_icon('trash', ['size' => 16]) ?>
                                         </button>
                                     </div>
                                     <div class="fieldtype-body">
                                         <div class="fieldtype-row">
                                             <div class="fieldtype-field">
-                                                <label>Name <span class="required">*</span></label>
-                                                <input type="text" name="sub_collections[<?= $index ?>][name]" value="<?= htmlspecialchars($subCollection['name'] ?? '') ?>" placeholder="e.g., Comments" class="input" required>
+                                                <label><?= __('admin.name') ?> <span class="required">*</span></label>
+                                                <input type="text" name="sub_collections[<?= $index ?>][name]" value="<?= htmlspecialchars($subCollection['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_comments')) ?>" class="input" required>
                                             </div>
                                             <div class="fieldtype-field">
-                                                <label>Slug <span class="required">*</span></label>
-                                                <input type="text" name="sub_collections[<?= $index ?>][slug]" value="<?= htmlspecialchars($subCollection['slug'] ?? '') ?>" placeholder="e.g., comments" class="input" required>
+                                                <label><?= __('admin.col_editor_slug_label') ?> <span class="required">*</span></label>
+                                                <input type="text" name="sub_collections[<?= $index ?>][slug]" value="<?= htmlspecialchars($subCollection['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_ph_comments')) ?>" class="input" required>
                                             </div>
                                         </div>
                                         <div class="fieldtype-row">
                                             <div class="fieldtype-field">
-                                                <label>Description</label>
-                                                <input type="text" name="sub_collections[<?= $index ?>][description]" value="<?= htmlspecialchars($subCollection['description'] ?? '') ?>" placeholder="Optional description" class="input">
+                                                <label><?= __('admin.description') ?></label>
+                                                <input type="text" name="sub_collections[<?= $index ?>][description]" value="<?= htmlspecialchars($subCollection['description'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_optional_description_placeholder')) ?>" class="input">
                                             </div>
                                             <div class="fieldtype-field">
-                                                <label>Entry Method</label>
+                                                <label><?= __('admin.col_editor_entry_method_label') ?></label>
                                                 <select name="sub_collections[<?= $index ?>][entry_method]" class="input">
-                                                    <option value="admin_only" <?= ($subCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                                    <option value="public_api" <?= ($subCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                                    <option value="admin_only" <?= ($subCollection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                                    <option value="public_api" <?= ($subCollection['entry_method'] ?? '') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                                 </select>
                                             </div>
                                         </div>
@@ -438,7 +438,7 @@ if (!$cancelUrl) {
                                             <div class="fieldtype-field">
                                                 <label class="checkbox-label">
                                                     <input type="checkbox" name="sub_collections[<?= $index ?>][auto_publish]" value="1" <?= !empty($subCollection['auto_publish']) ? 'checked' : '' ?>>
-                                                    <span>Auto-publish submissions (if Public API)</span>
+                                                    <span><?= __('admin.col_editor_auto_publish_if_public_api') ?></span>
                                                 </label>
                                             </div>
                                         </div>
@@ -459,26 +459,26 @@ if (!$cancelUrl) {
                                                                 <?= birkly_fieldtype_type_badge($subField['type'] ?? null, $fieldtypes) ?>
                                                                 <span class="fieldtype-name"><?= htmlspecialchars($subField['label'] ?? $subField['name'] ?? '') ?></span>
                                                             </div>
-                                                            <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                                            <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                                                 <?= birkly_icon('trash', ['size' => 16]) ?>
                                                             </button>
                                                         </div>
                                                         <div class="fieldtype-body">
                                                             <div class="fieldtype-row">
                                                                 <div class="fieldtype-field">
-                                                                    <label>Display Name <span class="required">*</span></label>
-                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="Field label" class="input" required>
+                                                                    <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][label]" value="<?= htmlspecialchars($subField['label'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                                                 </div>
                                                                 <div class="fieldtype-field">
-                                                                    <label>API Name</label>
-                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="Field name" class="input">
+                                                                    <label><?= __('admin.col_editor_api_name') ?></label>
+                                                                    <input type="text" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][name]" value="<?= htmlspecialchars($subField['name'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                                                 </div>
                                                             </div>
                                                             <div class="fieldtype-row">
                                                                 <div class="fieldtype-field">
-                                                                    <label>Field Type</label>
+                                                                    <label><?= __('admin.col_editor_field_type') ?></label>
                                                                     <select name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][type]" class="input sub-field-type-select" required>
-                                                                        <option value="">Select type...</option>
+                                                                        <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                                                                         <?php foreach ($fieldtypes as $fieldtype): ?>
                                                                             <?php
                                                                             $subFieldType = $subField['type'] ?? '';
@@ -495,7 +495,7 @@ if (!$cancelUrl) {
                                                                     </select>
                                                                 </div>
                                                                 <div class="fieldtype-field">
-                                                                    <label>Mandatory Field</label>
+                                                                    <label><?= __('admin.col_editor_mandatory_field') ?></label>
                                                                     <label class="switch">
                                                                         <input type="checkbox" name="sub_collections[<?= $index ?>][schema][fields][<?= $fieldIndex ?>][required]" value="1" <?= !empty($subField['required']) ? 'checked' : '' ?>>
                                                                         <span class="switch__slider"></span>
@@ -524,7 +524,7 @@ if (!$cancelUrl) {
                         
                         <button type="button" id="add-sub-collection-btn" class="btn btn-secondary">
                             <?= birkly_icon('plus', ['size' => 16]) ?>
-                            Add Sub-Collection
+                            <?= __('admin.col_editor_add_sub_collection') ?>
                         </button>
                     </div>
                     <?php endif; ?>
@@ -563,39 +563,39 @@ if (!$cancelUrl) {
                                     <?php endif; ?>
                                     
                                     <div class="info-item">
-                                        <label for="sub-collection-slug-sidebar">Slug</label>
-                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subCollectionData['slug'] ?? '') ?>" placeholder="auto-generated">
+                                        <label for="sub-collection-slug-sidebar"><?= __('admin.col_editor_slug_label') ?></label>
+                                        <input type="text" name="sub_collections[0][slug]" id="sub-collection-slug-sidebar" class="input" value="<?= htmlspecialchars($subCollectionData['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_auto_ph')) ?>">
                                         <input type="hidden" name="sub_collections[0][auto_slug]" id="sub_auto_slug" value="<?= !empty($subAutoSlugChecked) ? '1' : '0' ?>">
                                         <label class="auto-slug-toggle">
                                             <input type="checkbox" id="sub_auto_slug_checkbox" <?= !empty($subAutoSlugChecked) ? 'checked' : '' ?>>
-                                            Auto-generate slug from title
+                                            <?= __('admin.col_editor_auto_generate_slug') ?>
                                         </label>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Description</label>
-                                        <textarea name="sub_collections[0][description]" id="sub-collection-description" class="input" rows="3" placeholder="Describe what this sub-collection is for"><?= htmlspecialchars($subCollectionData['description'] ?? '') ?></textarea>
+                                        <label><?= __('admin.description') ?></label>
+                                        <textarea name="sub_collections[0][description]" id="sub-collection-description" class="input" rows="3" placeholder="<?= htmlspecialchars(__('admin.col_editor_describe_sub_ph')) ?>"><?= htmlspecialchars($subCollectionData['description'] ?? '') ?></textarea>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Default Sort Order</label>
+                                        <label><?= __('admin.col_editor_default_sort_order') ?></label>
                                         <select name="sub_collections[0][sort]" id="sub-collection-sort" class="input">
-                                            <option value="created_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
-                                            <option value="created_asc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
+                                            <option value="created_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>><?= __('admin.col_editor_sort_newest') ?></option>
+                                            <option value="created_asc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>><?= __('admin.col_editor_sort_oldest') ?></option>
                                             <option value="title_asc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>><?= __('admin.title_az') ?></option>
                                             <option value="title_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>><?= __('admin.title_za') ?></option>
-                                            <option value="updated_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
+                                            <option value="updated_desc" <?= ($subCollectionData['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>><?= __('admin.col_editor_sort_recently_updated') ?></option>
                                         </select>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Entry Method</label>
+                                        <label><?= __('admin.col_editor_entry_method_label') ?></label>
                                         <select name="sub_collections[0][entry_method]" id="sub-collection-entry-method" class="input">
-                                            <option value="admin_only" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                            <option value="public_api" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                            <option value="admin_only" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                            <option value="public_api" <?= ($subCollectionData['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                         </select>
                                         <small class="form-text">
-                                            Choose how entries can be created for this sub-collection
+                                            <?= __('admin.col_editor_entry_method_help_sub') ?>
                                         </small>
                                     </div>
                                 <?php else: ?>
@@ -605,65 +605,65 @@ if (!$cancelUrl) {
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label for="slug">Slug</label>
-                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="auto-generated">
+                                        <label for="slug"><?= __('admin.col_editor_slug_label') ?></label>
+                                        <input type="text" name="slug" id="slug" class="input" value="<?= htmlspecialchars($collection['slug'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_auto_ph')) ?>">
                                         <input type="hidden" name="auto_slug" id="auto_slug" value="<?= !empty($collAutoSlugChecked) ? '1' : '0' ?>">
                                         <label class="auto-slug-toggle">
                                             <input type="checkbox" id="auto_slug_checkbox" <?= !empty($collAutoSlugChecked) ? 'checked' : '' ?>>
-                                            Auto-generate slug from title
+                                            <?= __('admin.col_editor_auto_generate_slug') ?>
                                         </label>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Description</label>
-                                        <textarea name="description" id="description" class="input" rows="3" placeholder="Describe what this collection is for"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
+                                        <label><?= __('admin.description') ?></label>
+                                        <textarea name="description" id="description" class="input" rows="3" placeholder="<?= htmlspecialchars(__('admin.col_editor_describe_collection_ph')) ?>"><?= htmlspecialchars($collection['description'] ?? '') ?></textarea>
                                     </div>
 
                                     <div class="info-item">
-                                        <label for="icon">Icon (emoji)</label>
-                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="e.g. 📝" maxlength="8" inputmode="text" data-icon-picker>
+                                        <label for="icon"><?= __('admin.col_editor_icon_emoji_label') ?></label>
+                                        <input type="text" name="icon" id="icon" class="input collection-icon-input" value="<?= htmlspecialchars($collection['icon'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_icon_ph')) ?>" maxlength="8" inputmode="text" data-icon-picker>
                                         <small class="form-text">
                                             Optional emoji shown on the content overview card — browse or paste
                                         </small>
                                     </div>
 
                                     <div class="info-item">
-                                        <label for="icon_key">Icon key</label>
-                                        <input type="text" name="icon_key" id="icon_key" class="input" value="<?= htmlspecialchars($collection['icon_key'] ?? '') ?>" placeholder="e.g. document-text">
+                                        <label for="icon_key"><?= __('admin.col_editor_icon_key_label') ?></label>
+                                        <input type="text" name="icon_key" id="icon_key" class="input" value="<?= htmlspecialchars($collection['icon_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_icon_key_ph')) ?>">
                                         <small class="form-text">
                                             Optional icon font key for future use
                                         </small>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Default Sort Order</label>
+                                        <label><?= __('admin.col_editor_default_sort_order') ?></label>
                                         <select name="sort" id="sort" class="input">
-                                            <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>>Newest First</option>
-                                            <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>>Oldest First</option>
+                                            <option value="created_desc" <?= ($collection['sort'] ?? 'created_desc') === 'created_desc' ? 'selected' : '' ?>><?= __('admin.col_editor_sort_newest') ?></option>
+                                            <option value="created_asc" <?= ($collection['sort'] ?? 'created_desc') === 'created_asc' ? 'selected' : '' ?>><?= __('admin.col_editor_sort_oldest') ?></option>
                                             <option value="title_asc" <?= ($collection['sort'] ?? 'created_desc') === 'title_asc' ? 'selected' : '' ?>><?= __('admin.title_az') ?></option>
                                             <option value="title_desc" <?= ($collection['sort'] ?? 'created_desc') === 'title_desc' ? 'selected' : '' ?>><?= __('admin.title_za') ?></option>
-                                            <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>>Recently Updated</option>
+                                            <option value="updated_desc" <?= ($collection['sort'] ?? 'created_desc') === 'updated_desc' ? 'selected' : '' ?>><?= __('admin.col_editor_sort_recently_updated') ?></option>
                                         </select>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Entry Method</label>
+                                        <label><?= __('admin.col_editor_entry_method_label') ?></label>
                                         <select name="entry_method" id="entry_method" class="input">
-                                            <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>>Admin Only</option>
-                                            <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>>Public API</option>
+                                            <option value="admin_only" <?= ($collection['entry_method'] ?? 'admin_only') === 'admin_only' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                                            <option value="public_api" <?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? 'selected' : '' ?>><?= __('admin.col_editor_entry_method_public_api') ?></option>
                                         </select>
                                         <small class="form-text">
-                                            Choose how entries can be created for this collection
+                                            <?= __('admin.col_editor_entry_method_help_collection') ?>
                                         </small>
                                     </div>
 
                                     <div class="info-item">
                                         <label class="checkbox-label">
                                             <input type="checkbox" name="allow_public_read" value="1" <?= !empty($collection['allow_public_read']) ? 'checked' : '' ?>>
-                                            <span>Allow public read access</span>
+                                            <span><?= __('admin.col_editor_allow_public_read') ?></span>
                                         </label>
                                         <small class="form-text">
-                                            When off, this collection can only be read by pages rendered by Birkly itself. Turn on only if an external site needs to fetch it. Anything readable this way should be treated as public.
+                                            <?= __('admin.col_editor_allow_public_read_help') ?>
                                         </small>
                                     </div>
                                 <?php endif; ?>
@@ -681,10 +681,10 @@ if (!$cancelUrl) {
                                             <?php endif; ?>
                                             <span class="switch__slider"></span>
                                         </label>
-                                        <span class="u-weight-medium">Enable multi-language support for this <?= $isSubCollection ? 'sub-collection' : 'collection' ?></span>
+                                        <span class="u-weight-medium"><?= $isSubCollection ? __('admin.col_editor_multilang_enable_sub') : __('admin.col_editor_multilang_enable_collection') ?></span>
                                     </div>
                                     <small class="form-text">
-                                        When enabled, entries can have content in multiple languages
+                                        <?= __('admin.col_editor_multilang_when_enabled_help') ?>
                                     </small>
                                     
                                     <?php if ($isSubCollection): ?>
@@ -697,14 +697,14 @@ if (!$cancelUrl) {
                                                 ?>
                                                     <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
                                                         <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_language_aria')) ?>">×</button>
                                                         <input type="hidden" name="sub_collections[0][multilanguage_languages][]" value="<?= htmlspecialchars($langCode) ?>">
                                                     </span>
                                                 <?php endforeach; ?>
-                                                <input type="text" id="sub-collection-language-input" placeholder="Type language code or name..." autocomplete="off">
+                                                <input type="text" id="sub-collection-language-input" placeholder="<?= htmlspecialchars(__('admin.col_editor_language_input_ph')) ?>" autocomplete="off">
                                             </div>
                                             <small class="form-text">
-                                                Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                                <?= __('admin.col_editor_language_input_help') ?>
                                             </small>
                                         </div>
                                     <?php else: ?>
@@ -717,14 +717,14 @@ if (!$cancelUrl) {
                                                 ?>
                                                     <span class="language-tag" data-lang="<?= htmlspecialchars($langCode) ?>">
                                                         <?= htmlspecialchars(strtoupper($langCode)) ?>
-                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="Remove language">×</button>
+                                                        <button type="button" class="language-tag-remove" data-lang="<?= htmlspecialchars($langCode) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_language_aria')) ?>">×</button>
                                                         <input type="hidden" name="multilanguage_languages[]" value="<?= htmlspecialchars($langCode) ?>">
                                                     </span>
                                                 <?php endforeach; ?>
-                                                <input type="text" id="language-input" placeholder="Type language code or name..." autocomplete="off">
+                                                <input type="text" id="language-input" placeholder="<?= htmlspecialchars(__('admin.col_editor_language_input_ph')) ?>" autocomplete="off">
                                             </div>
                                             <small class="form-text">
-                                                Type a language code (e.g., en, de, fr) or name to see suggestions. Press Enter to add.
+                                                <?= __('admin.col_editor_language_input_help') ?>
                                             </small>
                                         </div>
                                     <?php endif; ?>
@@ -736,30 +736,30 @@ if (!$cancelUrl) {
                                 <?php else: ?>
                                     <div id="public-api-settings" class="u-stack-3 card-section"<?= ($collection['entry_method'] ?? 'admin_only') === 'public_api' ? '' : ' hidden' ?>>
                                 <?php endif; ?>
-                                    <h4 class="section-title">Public API Settings</h4>
+                                    <h4 class="section-title"><?= __('admin.col_editor_public_api_settings') ?></h4>
                                     
                                     <div class="info-item">
-                                        <label>API Key</label>
+                                        <label><?= __('admin.api_key') ?></label>
                                         <div class="info-value">
                                             <?php if ($isSubCollection): ?>
                                                 <code id="sub-collection-api-key-display">
-                                                    <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : 'Not generated yet' ?>
+                                                    <?= !empty($subCollectionData['api_key']) ? htmlspecialchars($subCollectionData['api_key']) : htmlspecialchars(__('admin.col_editor_js_api_key_not_generated')) ?>
                                                 </code>
-                                                <button type="button" id="sub-collection-generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
+                                                <button type="button" id="sub-collection-generate-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_generate_api_key_title')) ?>">
                                                     <?= birkly_icon('arrows-clockwise', ['size' => 14]) ?>
                                                 </button>
-                                                <button type="button" id="sub-collection-copy-api-key-btn" class="btn btn-sm btn-secondary" title="Copy API key" <?= empty($subCollectionData['api_key']) ? 'disabled' : '' ?>>
+                                                <button type="button" id="sub-collection-copy-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_copy_api_key_title')) ?>" <?= empty($subCollectionData['api_key']) ? 'disabled' : '' ?>>
                                                     <?= birkly_icon('copy', ['size' => 14]) ?>
                                                 </button>
                                                 <input type="hidden" name="sub_collections[0][api_key]" id="sub-collection-api_key" value="<?= htmlspecialchars($subCollectionData['api_key'] ?? '') ?>">
                                             <?php else: ?>
                                                 <code id="api-key-display">
-                                                    <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : 'Not generated yet' ?>
+                                                    <?= !empty($collection['api_key']) ? htmlspecialchars($collection['api_key']) : htmlspecialchars(__('admin.col_editor_js_api_key_not_generated')) ?>
                                                 </code>
-                                                <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="Generate new API key">
+                                                <button type="button" id="generate-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_generate_api_key_title')) ?>">
                                                     <?= birkly_icon('arrows-clockwise', ['size' => 14]) ?>
                                                 </button>
-                                                <button type="button" id="copy-api-key-btn" class="btn btn-sm btn-secondary" title="Copy API key" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
+                                                <button type="button" id="copy-api-key-btn" class="btn btn-sm btn-secondary" title="<?= htmlspecialchars(__('admin.col_editor_copy_api_key_title')) ?>" <?= empty($collection['api_key']) ? 'disabled' : '' ?>>
                                                     <?= birkly_icon('copy', ['size' => 14]) ?>
                                                 </button>
                                                 <input type="hidden" name="api_key" id="api_key" value="<?= htmlspecialchars($collection['api_key'] ?? '') ?>">
@@ -774,10 +774,10 @@ if (!$cancelUrl) {
                                             <?php else: ?>
                                                 <input type="checkbox" name="api_settings[auto_publish]" value="1" <?= !empty($collection['api_settings']['auto_publish']) ? 'checked' : '' ?>>
                                             <?php endif; ?>
-                                            <span>Auto-publish submissions</span>
+                                            <span><?= __('admin.col_editor_auto_publish_submissions') ?></span>
                                         </label>
                                         <small class="form-text">
-                                            If enabled, entries will be published automatically. Otherwise, they'll be saved as drafts for review.
+                                            <?= __('admin.col_editor_auto_publish_draft_help') ?>
                                         </small>
                                     </div>
 
@@ -788,34 +788,34 @@ if (!$cancelUrl) {
                                             <?php else: ?>
                                                 <input type="checkbox" name="api_settings[allow_anonymous_submit]" value="1" <?= !empty($collection['api_settings']['allow_anonymous_submit']) ? 'checked' : '' ?>>
                                             <?php endif; ?>
-                                            <span>Allow anonymous submissions</span>
+                                            <span><?= __('admin.col_editor_allow_anonymous_submissions') ?></span>
                                         </label>
                                         <small class="form-text">
-                                            Off by default. When enabled, anyone can submit to this collection without a domain license or API key.
+                                            <?= __('admin.col_editor_allow_anonymous_help') ?>
                                         </small>
                                     </div>
 
                                     <div class="info-item">
-                                        <label>Rate Limit (per hour)</label>
+                                        <label><?= __('admin.col_editor_rate_limit_per_hour') ?></label>
                                         <?php if ($isSubCollection): ?>
                                             <input type="number" name="sub_collections[0][api_settings][rate_limit]" id="sub-collection-rate_limit" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
                                         <?php else: ?>
                                             <input type="number" name="api_settings[rate_limit]" id="rate_limit" class="input" value="<?= htmlspecialchars($collection['api_settings']['rate_limit'] ?? '10') ?>" min="1" max="1000">
                                         <?php endif; ?>
                                         <small class="form-text">
-                                            Maximum number of submissions allowed per hour per API key
+                                            <?= __('admin.col_editor_rate_limit_help') ?>
                                         </small>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Notification Email</label>
+                                        <label><?= __('admin.col_editor_notification_email') ?></label>
                                         <?php if ($isSubCollection): ?>
-                                            <input type="email" name="sub_collections[0][api_settings][notification_email]" id="sub-collection-notification_email" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
+                                            <input type="email" name="sub_collections[0][api_settings][notification_email]" id="sub-collection-notification_email" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['notification_email'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_notification_email_ph')) ?>">
                                         <?php else: ?>
-                                            <input type="email" name="api_settings[notification_email]" id="notification_email" class="input" value="<?= htmlspecialchars($collection['api_settings']['notification_email'] ?? '') ?>" placeholder="email@example.com">
+                                            <input type="email" name="api_settings[notification_email]" id="notification_email" class="input" value="<?= htmlspecialchars($collection['api_settings']['notification_email'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_notification_email_ph')) ?>">
                                         <?php endif; ?>
                                         <small class="form-text">
-                                            Who should receive an email when someone submits this form?
+                                            <?= __('admin.col_editor_notification_email_help') ?>
                                         </small>
                                     </div>
 
@@ -825,56 +825,56 @@ if (!$cancelUrl) {
                                                  data-picker-name="sub_collections[0][api_settings][email_connection_alias]"
                                                  data-picker-value="<?= htmlspecialchars($subCollectionData['api_settings']['email_connection_alias'] ?? '') ?>"
                                                  data-picker-id="sub-collection-email-connection"
-                                                 data-picker-help="Which email connection should send these notifications?"></div>
+                                                 data-picker-help="<?= htmlspecialchars(__('admin.col_editor_email_connection_picker_help'), ENT_QUOTES, 'UTF-8') ?>"></div>
                                         <?php else: ?>
                                             <div data-email-connection-picker
                                                  data-picker-name="api_settings[email_connection_alias]"
                                                  data-picker-value="<?= htmlspecialchars($collection['api_settings']['email_connection_alias'] ?? '') ?>"
                                                  data-picker-id="collection-email-connection"
-                                                 data-picker-help="Which email connection should send these notifications?"></div>
+                                                 data-picker-help="<?= htmlspecialchars(__('admin.col_editor_email_connection_picker_help'), ENT_QUOTES, 'UTF-8') ?>"></div>
                                         <?php endif; ?>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>CAPTCHA Provider</label>
+                                        <label><?= __('admin.col_editor_captcha_provider_label') ?></label>
                                         <?php if ($isSubCollection): ?>
                                             <select name="sub_collections[0][api_settings][captcha_provider]" id="sub-collection-captcha_provider" class="input">
-                                                <option value="">None (use honeypot only)</option>
-                                                <option value="recaptcha_v3" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
-                                                <option value="hcaptcha" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                                <option value=""><?= __('admin.col_editor_captcha_none_honeypot') ?></option>
+                                                <option value="recaptcha_v3" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_recaptcha_v3') ?></option>
+                                                <option value="hcaptcha" <?= ($subCollectionData['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_hcaptcha') ?></option>
                                             </select>
                                         <?php else: ?>
                                             <select name="api_settings[captcha_provider]" id="captcha_provider" class="input">
-                                                <option value="">None (use honeypot only)</option>
-                                                <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>>Google reCAPTCHA v3</option>
-                                                <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>>hCaptcha</option>
+                                                <option value=""><?= __('admin.col_editor_captcha_none_honeypot') ?></option>
+                                                <option value="recaptcha_v3" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'recaptcha_v3' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_recaptcha_v3') ?></option>
+                                                <option value="hcaptcha" <?= ($collection['api_settings']['captcha_provider'] ?? '') === 'hcaptcha' ? 'selected' : '' ?>><?= __('admin.col_editor_captcha_hcaptcha') ?></option>
                                             </select>
                                         <?php endif; ?>
                                         <small class="form-text">
-                                            Optional: Add CAPTCHA protection (requires configuration)
+                                            <?= __('admin.col_editor_captcha_optional_help') ?>
                                         </small>
                                     </div>
                                     
                                     <?php if ($isSubCollection): ?>
                                         <div id="sub-collection-captcha-settings" class="u-stack-2 u-mt-3"<?= !empty($subCollectionData['api_settings']['captcha_provider']) ? '' : ' hidden' ?>>
                                             <div class="info-item">
-                                                <label>CAPTCHA Site Key</label>
-                                                <input type="text" name="sub_collections[0][api_settings][captcha_site_key]" id="sub-collection-captcha_site_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                                <label><?= __('admin.col_editor_captcha_site_key_label') ?></label>
+                                                <input type="text" name="sub_collections[0][api_settings][captcha_site_key]" id="sub-collection-captcha_site_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_site_key_ph')) ?>">
                                             </div>
                                             <div class="info-item">
-                                                <label>CAPTCHA Secret Key</label>
-                                                <input type="text" name="sub_collections[0][api_settings][captcha_secret_key]" id="sub-collection-captcha_secret_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                                <label><?= __('admin.col_editor_captcha_secret_key_label') ?></label>
+                                                <input type="text" name="sub_collections[0][api_settings][captcha_secret_key]" id="sub-collection-captcha_secret_key" class="input" value="<?= htmlspecialchars($subCollectionData['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_secret_key_ph')) ?>">
                                             </div>
                                         </div>
                                     <?php else: ?>
                                         <div id="captcha-settings" class="u-stack-2 u-mt-3"<?= !empty($collection['api_settings']['captcha_provider']) ? '' : ' hidden' ?>>
                                             <div class="info-item">
-                                                <label>CAPTCHA Site Key</label>
-                                                <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="Your CAPTCHA site key">
+                                                <label><?= __('admin.col_editor_captcha_site_key_label') ?></label>
+                                                <input type="text" name="api_settings[captcha_site_key]" id="captcha_site_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_site_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_site_key_ph')) ?>">
                                             </div>
                                             <div class="info-item">
-                                                <label>CAPTCHA Secret Key</label>
-                                                <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="Your CAPTCHA secret key">
+                                                <label><?= __('admin.col_editor_captcha_secret_key_label') ?></label>
+                                                <input type="text" name="api_settings[captcha_secret_key]" id="captcha_secret_key" class="input" value="<?= htmlspecialchars($collection['api_settings']['captcha_secret_key'] ?? '') ?>" placeholder="<?= htmlspecialchars(__('admin.col_editor_captcha_secret_key_ph')) ?>">
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -890,12 +890,12 @@ if (!$cancelUrl) {
                                         $updatedAt = $subCollectionData['updated_at'] ?? null;
                                         ?>
                                         <div class="info-item">
-                                            <label>Created</label>
+                                            <label><?= __('admin.created') ?></label>
                                             <div class="info-value"><?= $createdAt ? date('m.d.Y, g:i A', strtotime($createdAt)) : '—' ?></div>
                                         </div>
                                         
                                         <div class="info-item">
-                                            <label>Last Update</label>
+                                            <label><?= __('admin.col_editor_last_update') ?></label>
                                             <div class="info-value"><?= $updatedAt ? date('m.d.Y, g:i A', strtotime($updatedAt)) : '—' ?></div>
                                         </div>
                                     <?php endif; ?>
@@ -911,12 +911,12 @@ if (!$cancelUrl) {
                                     }
                                     ?>
                                     <div class="info-item">
-                                        <label>Created</label>
+                                        <label><?= __('admin.created') ?></label>
                                         <div class="info-value"><?= $createdAt ? date('m.d.Y, g:i A', strtotime($createdAt)) : '—' ?></div>
                                     </div>
                                     
                                     <div class="info-item">
-                                        <label>Last Update</label>
+                                        <label><?= __('admin.col_editor_last_update') ?></label>
                                         <div class="info-value"><?= $updatedAt ? date('m.d.Y, g:i A', strtotime($updatedAt)) : '—' ?></div>
                                     </div>
                                 <?php endif; ?>
@@ -930,14 +930,14 @@ if (!$cancelUrl) {
                         <div class="tab-pane" id="templating-tab">
                             <div class="templating-content">
                                 <p class="templating-intro">
-                                    For a detailed overview about templating, please visit 
-                                    <a href="<?= admin_url('help') ?>#templating" target="_blank">the documentation site</a>.
+                                    <?= __('admin.col_editor_templating_intro_before') ?>
+                                    <a href="<?= admin_url('help') ?>#templating" target="_blank"><?= __('admin.col_editor_templating_doc_link') ?></a>.
                                 </p>
                                 
                                 <!-- Field Slugs Section -->
                                 <div class="templating-section">
                                     <div class="section-header">
-                                        <h4>Field slugs</h4>
+                                        <h4><?= __('admin.col_editor_field_slugs_title') ?></h4>
                                     </div>
                                     <div class="field-slugs-list">
                                         <?php 
@@ -953,14 +953,14 @@ if (!$cancelUrl) {
                                                     <div class="field-slug-label"><?= htmlspecialchars($fieldLabel) ?>:</div>
                                                     <div class="field-slug-value">
                                                         <code><?= htmlspecialchars($slug) ?></code>
-                                                        <button type="button" class="copy-btn" data-copy="<?= htmlspecialchars($slug) ?>" title="Copy to clipboard">
+                                                        <button type="button" class="copy-btn" data-copy="<?= htmlspecialchars($slug) ?>" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard'), ENT_QUOTES, 'UTF-8') ?>">
                                                             <?= birkly_icon('copy', ['size' => 14]) ?>
                                                         </button>
                                                     </div>
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="u-text-sm u-fg-secondary">No fields defined yet. Add fields to see their slugs.</p>
+                                            <p class="u-text-sm u-fg-secondary"><?= __('admin.col_editor_no_fields_slugs_yet') ?></p>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -969,8 +969,8 @@ if (!$cancelUrl) {
                                     <!-- Sub-Entry Level Example -->
                                     <div class="templating-section">
                                         <div class="section-header">
-                                            <h4>Sub-Entry Level Example</h4>
-                                            <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                            <h4><?= __('admin.col_editor_example_sub_entry_level') ?></h4>
+                                            <button type="button" class="copy-btn" id="copy-entry-example" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard'), ENT_QUOTES, 'UTF-8') ?>">
                                                 <?= birkly_icon('copy', ['size' => 14]) ?>
                                             </button>
                                         </div>
@@ -1013,8 +1013,8 @@ echo htmlspecialchars($entryExample);
                                     <!-- Entry Level Example -->
                                     <div class="templating-section">
                                         <div class="section-header">
-                                            <h4>Entry Level Example</h4>
-                                            <button type="button" class="copy-btn" id="copy-entry-example" title="Copy to clipboard">
+                                            <h4><?= __('admin.col_editor_example_entry_level') ?></h4>
+                                            <button type="button" class="copy-btn" id="copy-entry-example" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard'), ENT_QUOTES, 'UTF-8') ?>">
                                                 <?= birkly_icon('copy', ['size' => 14]) ?>
                                             </button>
                                         </div>
@@ -1050,8 +1050,8 @@ echo htmlspecialchars($entryExample);
                                     <!-- Collection Level Example -->
                                     <div class="templating-section">
                                         <div class="section-header">
-                                            <h4>Collection Level Example</h4>
-                                            <button type="button" class="copy-btn" id="copy-collection-example" title="Copy to clipboard">
+                                            <h4><?= __('admin.col_editor_example_collection_level') ?></h4>
+                                            <button type="button" class="copy-btn" id="copy-collection-example" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard'), ENT_QUOTES, 'UTF-8') ?>">
                                                 <?= birkly_icon('copy', ['size' => 14]) ?>
                                             </button>
                                         </div>
@@ -1092,13 +1092,13 @@ echo htmlspecialchars($collectionExample);
                                 ?>
                                 <div class="templating-section">
                                     <div class="section-header">
-                                        <h4>Embeddable Form Code</h4>
-                                        <button type="button" class="copy-btn" id="copy-form-code" title="Copy to clipboard">
+                                        <h4><?= __('admin.col_editor_embeddable_form_code') ?></h4>
+                                        <button type="button" class="copy-btn" id="copy-form-code" title="<?= htmlspecialchars(__('admin.col_editor_copy_to_clipboard'), ENT_QUOTES, 'UTF-8') ?>">
                                             <?= birkly_icon('copy', ['size' => 14]) ?>
                                         </button>
                                     </div>
                                     <p class="u-text-xs u-fg-secondary">
-                                        Copy and paste this code into your website to create a form that submits to this collection.
+                                        <?= __('admin.col_editor_form_code_help') ?>
                                     </p>
                                     <pre class="code-example" id="form-code"><code><?php
 $collectionSlug = htmlspecialchars($collection['slug'] ?? 'collection');
@@ -1288,7 +1288,7 @@ echo htmlspecialchars($formCode);
         <div class="fieldtype-header">
             <div class="fieldtype-header-main">
                 <div class="fieldtype-drag-handle">
-                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => 'Drag to reorder']) ?>
+                    <?= birkly_icon('dots-six-vertical', ['size' => 16, 'title' => __('admin.drag_to_reorder')]) ?>
                 </div>
                 <div class="fieldtype-title">
                     <span class="fieldtype-type" data-fieldtype="">
@@ -1299,13 +1299,13 @@ echo htmlspecialchars($formCode);
                 </div>
             </div>
             <div class="fieldtype-header-actions">
-                <button type="button" class="btn-icon field-move-up-btn" title="Move field up" aria-label="Move field up">
+                <button type="button" class="btn-icon field-move-up-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_up')) ?>">
                     <?= birkly_icon('caret-up', ['size' => 16]) ?>
                 </button>
-                <button type="button" class="btn-icon field-move-down-btn" title="Move field down" aria-label="Move field down">
+                <button type="button" class="btn-icon field-move-down-btn" title="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_move_field_down')) ?>">
                     <?= birkly_icon('caret-down', ['size' => 16]) ?>
                 </button>
-                <button type="button" class="btn-icon remove-field-btn" title="Remove field" aria-label="Remove field">
+                <button type="button" class="btn-icon remove-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
                 </button>
             </div>
@@ -1313,24 +1313,24 @@ echo htmlspecialchars($formCode);
         <div class="fieldtype-body">
             <div class="fieldtype-row">
                 <div class="fieldtype-field">
-                    <label>Display Name <span class="required">*</span></label>
-                    <input type="text" name="fields[__INDEX__][label]" value="__LABEL__" placeholder="Field label" class="input" required>
+                    <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                    <input type="text" name="fields[__INDEX__][label]" value="__LABEL__" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                 </div>
                 <div class="fieldtype-field">
-                    <label>API Name</label>
-                    <input type="text" name="fields[__INDEX__][name]" value="__NAME__" placeholder="Field name" class="input">
+                    <label><?= __('admin.col_editor_api_name') ?></label>
+                    <input type="text" name="fields[__INDEX__][name]" value="__NAME__" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                 </div>
             </div>
             <div class="fieldtype-row">
                 <div class="fieldtype-field">
-                    <label>Field Type</label>
+                    <label><?= __('admin.col_editor_field_type') ?></label>
                     <select name="fields[__INDEX__][type]" class="input field-type-select" required>
-                        <option value="">Select type...</option>
+                        <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                         __FIELDTYPE_OPTIONS__
                     </select>
                 </div>
                 <div class="fieldtype-field">
-                    <label>Mandatory Field</label>
+                    <label><?= __('admin.col_editor_mandatory_field') ?></label>
                     <label class="switch">
                         <input type="checkbox" name="fields[__INDEX__][required]" value="1" __REQUIRED_CHECKED__>
                         <span class="switch__slider"></span>
@@ -1348,7 +1348,7 @@ echo htmlspecialchars($formCode);
 <div id="fieldtype-selector-modal" class="modal">
     <div class="modal-content modal--lg">
         <div class="modal-header">
-            <h2>Select Field Type</h2>
+            <h2><?= __('admin.col_editor_select_field_type_modal') ?></h2>
             <button type="button" class="btn-icon modal-close" id="close-fieldtype-modal">
                 <?= birkly_icon('x', ['size' => 16]) ?>
             </button>
@@ -1500,6 +1500,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const fieldtypeModal = document.getElementById('fieldtype-selector-modal');
     const fieldtypeGrid = document.getElementById('fieldtype-grid');
     const closeFieldtypeModal = document.getElementById('close-fieldtype-modal');
+    const colEditorUi = {
+        confirmRemoveSubCollection: <?= json_encode(__('admin.col_editor_js_confirm_remove_sub_collection')) ?>,
+        confirmRemoveField: <?= json_encode(__('admin.col_editor_js_confirm_remove_field')) ?>,
+        copyClipboardFailed: <?= json_encode(__('admin.col_editor_js_copy_clipboard_failed')) ?>,
+        copyApiKeyFailed: <?= json_encode(__('admin.col_editor_js_copy_api_key_failed')) ?>,
+        fieldLabelPlaceholder: <?= json_encode(__('admin.col_editor_field_label_placeholder')) ?>,
+        fieldNamePlaceholder: <?= json_encode(__('admin.col_editor_field_name_placeholder')) ?>,
+        optionalDescriptionPlaceholder: <?= json_encode(__('admin.col_editor_optional_description_placeholder')) ?>,
+        selectType: <?= json_encode(__('admin.col_editor_select_type')) ?>,
+        entryMethodAdminOnly: <?= json_encode(__('admin.col_editor_entry_method_admin_only')) ?>,
+        entryMethodPublicApi: <?= json_encode(__('admin.col_editor_entry_method_public_api')) ?>,
+        removeLanguageAria: <?= json_encode(__('admin.col_editor_remove_language_aria')) ?>,
+        addSubCollection: <?= json_encode(__('admin.col_editor_add_sub_collection')) ?>,
+        newSubCollectionDefault: <?= json_encode(__('admin.col_editor_new_sub_collection_default')) ?>
+    };
     const collectionEditorCore = window.BirklyCollectionEditorCore && typeof window.BirklyCollectionEditorCore.init === 'function'
         ? window.BirklyCollectionEditorCore.init({
             formId: 'collection-form',
@@ -1549,33 +1564,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="fieldtype-header">
                     <div class="fieldtype-title">
                         ${renderFieldtypeTypeBadgeHtml(selectedFieldtype, typeLabel)}
-                        <span class="fieldtype-name">New Field</span>
+                        <span class="fieldtype-name"><?= __('admin.col_editor_new_field_default') ?></span>
                     </div>
-                    <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                    <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                         <?= birkly_icon('trash', ['size' => 16]) ?>
                     </button>
                 </div>
                 <div class="fieldtype-body">
                     <div class="fieldtype-row">
                         <div class="fieldtype-field">
-                            <label>Display Name <span class="required">*</span></label>
-                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][label]" value="" placeholder="Field label" class="input" required>
+                            <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][label]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                         </div>
                         <div class="fieldtype-field">
-                            <label>API Name</label>
-                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][name]" value="" placeholder="Field name" class="input">
+                            <label><?= __('admin.col_editor_api_name') ?></label>
+                            <input type="text" name="sub_collections[0][schema][fields][${fieldIndex}][name]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                         </div>
                     </div>
                     <div class="fieldtype-row">
                         <div class="fieldtype-field">
-                            <label>Field Type</label>
+                            <label><?= __('admin.col_editor_field_type') ?></label>
                             <select name="sub_collections[0][schema][fields][${fieldIndex}][type]" class="input sub-field-type-select" required>
-                                <option value="">Select type...</option>
+                                <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                                 ${optionsHtml}
                             </select>
                         </div>
                         <div class="fieldtype-field">
-                            <label>Mandatory Field</label>
+                            <label><?= __('admin.col_editor_mandatory_field') ?></label>
                             <label class="switch">
                                 <input type="checkbox" name="sub_collections[0][schema][fields][${fieldIndex}][required]" value="1">
                                 <span class="switch__slider"></span>
@@ -1733,7 +1748,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderFieldtypeTypeBadgeHtml(fieldtypeName, label) {
         const safeName = String(fieldtypeName || '');
-        const safeLabel = String(label || 'Select Type').toUpperCase();
+        const safeLabel = String(label || colEditorUi.selectType).toUpperCase();
         return '<span class="fieldtype-type" data-fieldtype="' + safeName.replace(/"/g, '&quot;') + '">' +
             '<span class="fieldtype-type-icon" aria-hidden="true">' + getFieldtypeIcon(safeName, 14) + '</span>' +
             '<span class="fieldtype-type-label u-label">' + safeLabel.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>' +
@@ -1756,7 +1771,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/__INDEX__/g, fieldIndex)
             .replace(/__NAME__/g, fieldData.name || '')
             .replace(/__LABEL__/g, fieldData.label || '')
-            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type || ft.type === fieldData.type)?.label || fieldData.type : 'Select Type')
+            .replace(/__TYPE__/g, fieldData.type ? availableFieldtypes.find(ft => ft.name === fieldData.type || ft.type === fieldData.type)?.label || fieldData.type : colEditorUi.selectType)
             .replace(/__REQUIRED_CHECKED__/g, fieldData.required ? 'checked' : '')
             .replace(/__FIELDTYPE_OPTIONS__/g, fieldtypeOptions);
         
@@ -1996,7 +2011,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         }).catch(function(err) {
             console.error('Failed to copy:', err);
-            BirklyFeedback.toast('Failed to copy to clipboard', 'error');
+            BirklyFeedback.toast(colEditorUi.copyClipboardFailed, 'error');
         });
     }
     
@@ -2354,7 +2369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tag.dataset.lang = langCode;
         tag.innerHTML = `
             ${langCode.toUpperCase()}
-            <button type="button" class="language-tag-remove" data-lang="${langCode}" aria-label="Remove language">×</button>
+            <button type="button" class="language-tag-remove" data-lang="${langCode}" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_language_aria')) ?>">×</button>
             <input type="hidden" name="${multilanguageHiddenName}" value="${langCode}">
         `;
         
@@ -2449,7 +2464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 2000);
                 }.bind(this)).catch(function(err) {
                     console.error('Failed to copy:', err);
-                    BirklyFeedback.toast('Failed to copy API key', 'error');
+                    BirklyFeedback.toast(colEditorUi.copyApiKeyFailed, 'error');
                 });
             }
         });
@@ -2481,33 +2496,33 @@ document.addEventListener('DOMContentLoaded', function() {
         div.innerHTML = `
             <div class="fieldtype-header">
                 <div class="fieldtype-title">
-                    <span class="fieldtype-name">${data.name || 'New Sub-Collection'}</span>
+                    <span class="fieldtype-name">${data.name || colEditorUi.newSubCollectionDefault}</span>
                 </div>
-                <button type="button" class="btn-icon remove-sub-collection-btn" title="Remove sub-collection">
+                <button type="button" class="btn-icon remove-sub-collection-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>" aria-label="<?= htmlspecialchars(__('admin.col_editor_remove_sub_collection')) ?>">
                     <?= birkly_icon('trash', ['size' => 16]) ?>
                 </button>
             </div>
             <div class="fieldtype-body">
                 <div class="fieldtype-row">
                     <div class="fieldtype-field">
-                        <label>Name <span class="required">*</span></label>
-                        <input type="text" name="sub_collections[${index}][name]" value="${data.name || ''}" placeholder="e.g., Comments" class="input" required>
+                        <label><?= __('admin.name') ?> <span class="required">*</span></label>
+                        <input type="text" name="sub_collections[${index}][name]" value="${data.name || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_name_ph_comments')) ?>" class="input" required>
                     </div>
                     <div class="fieldtype-field">
-                        <label>Slug <span class="required">*</span></label>
-                        <input type="text" name="sub_collections[${index}][slug]" value="${data.slug || ''}" placeholder="e.g., comments" class="input sub-collection-slug" required>
+                        <label><?= __('admin.col_editor_slug_label') ?> <span class="required">*</span></label>
+                        <input type="text" name="sub_collections[${index}][slug]" value="${data.slug || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_slug_ph_comments')) ?>" class="input sub-collection-slug" required>
                     </div>
                 </div>
                 <div class="fieldtype-row">
                     <div class="fieldtype-field">
-                        <label>Description</label>
-                        <input type="text" name="sub_collections[${index}][description]" value="${data.description || ''}" placeholder="Optional description" class="input">
+                        <label><?= __('admin.description') ?></label>
+                        <input type="text" name="sub_collections[${index}][description]" value="${data.description || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_optional_description_placeholder')) ?>" class="input">
                     </div>
                     <div class="fieldtype-field">
-                        <label>Entry Method</label>
+                        <label><?= __('admin.col_editor_entry_method_label') ?></label>
                         <select name="sub_collections[${index}][entry_method]" class="input">
-                            <option value="admin_only" ${(data.entry_method || 'admin_only') === 'admin_only' ? 'selected' : ''}>Admin Only</option>
-                            <option value="public_api" ${(data.entry_method || '') === 'public_api' ? 'selected' : ''}>Public API</option>
+                            <option value="admin_only" ${(data.entry_method || 'admin_only') === 'admin_only' ? 'selected' : ''}><?= __('admin.col_editor_entry_method_admin_only') ?></option>
+                            <option value="public_api" ${(data.entry_method || '') === 'public_api' ? 'selected' : ''}><?= __('admin.col_editor_entry_method_public_api') ?></option>
                         </select>
                     </div>
                 </div>
@@ -2515,7 +2530,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="fieldtype-field">
                         <label class="checkbox-label">
                             <input type="checkbox" name="sub_collections[${index}][auto_publish]" value="1" ${data.auto_publish ? 'checked' : ''}>
-                            <span>Auto-publish submissions (if Public API)</span>
+                            <span><?= __('admin.col_editor_auto_publish_if_public_api') ?></span>
                         </label>
                     </div>
                 </div>
@@ -2528,29 +2543,29 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                                 <div class="fieldtype-header">
                                     <div class="fieldtype-title">
-                                        ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || 'Select Type')}
+                                        ${renderFieldtypeTypeBadgeHtml(field.type || '', field.type || colEditorUi.selectType)}
                                         <span class="fieldtype-name">${field.label || field.name || ''}</span>
                                     </div>
-                                    <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                    <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                         <?= birkly_icon('trash', ['size' => 16]) ?>
                                     </button>
                                 </div>
                                 <div class="fieldtype-body">
                                     <div class="fieldtype-row">
                                         <div class="fieldtype-field">
-                                            <label>Display Name <span class="required">*</span></label>
-                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][label]" value="${field.label || ''}" placeholder="Field label" class="input" required>
+                                            <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][label]" value="${field.label || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                         </div>
                                         <div class="fieldtype-field">
-                                            <label>API Name</label>
-                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][name]" value="${field.name || ''}" placeholder="Field name" class="input">
+                                            <label><?= __('admin.col_editor_api_name') ?></label>
+                                            <input type="text" name="sub_collections[${index}][schema][fields][${fieldIndex}][name]" value="${field.name || ''}" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                         </div>
                                     </div>
                                     <div class="fieldtype-row">
                                         <div class="fieldtype-field">
-                                            <label>Field Type</label>
+                                            <label><?= __('admin.col_editor_field_type') ?></label>
                                             <select name="sub_collections[${index}][schema][fields][${fieldIndex}][type]" class="input sub-field-type-select" required>
-                                                <option value="">Select type...</option>
+                                                <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                                                 ${window.fieldtypes ? window.fieldtypes.map(ft => `
                                                     <option value="${ft.type || ft.name}" ${(field.type === ft.type || field.type === ft.name) ? 'selected' : ''}>
                                                         ${ft.label}
@@ -2559,7 +2574,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                             </select>
                                         </div>
                                         <div class="fieldtype-field">
-                                            <label>Mandatory Field</label>
+                                            <label><?= __('admin.col_editor_mandatory_field') ?></label>
                                             <label class="switch">
                                                 <input type="checkbox" name="sub_collections[${index}][schema][fields][${fieldIndex}][required]" value="1" ${field.required ? 'checked' : ''}>
                                                 <span class="switch__slider"></span>
@@ -2597,7 +2612,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const removeBtn = div.querySelector('.remove-sub-collection-btn');
         if (removeBtn) {
             removeBtn.addEventListener('click', async function() {
-                if (!(await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
+                if (!(await BirklyFeedback.confirm(colEditorUi.confirmRemoveSubCollection, { danger: true }))) {
                     return;
                 }
                 div.remove();
@@ -2614,7 +2629,7 @@ document.addEventListener('DOMContentLoaded', function() {
         subCollectionFieldsContainer.addEventListener('click', async function(e) {
             if (e.target.closest('.remove-sub-field-btn')) {
                 const fieldSection = e.target.closest('.fieldtype-section[data-sub-field-index]');
-                if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
+                if (fieldSection && (await BirklyFeedback.confirm(colEditorUi.confirmRemoveField, { danger: true }))) {
                     fieldSection.remove();
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();
@@ -2648,7 +2663,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.closest('.remove-sub-collection-btn')) {
                 const btn = e.target.closest('.remove-sub-collection-btn');
                 const section = btn.closest('.fieldtype-section');
-                if (section && (await BirklyFeedback.confirm('Are you sure you want to remove this sub-collection?', { danger: true }))) {
+                if (section && (await BirklyFeedback.confirm(colEditorUi.confirmRemoveSubCollection, { danger: true }))) {
                     section.remove();
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();
@@ -2658,7 +2673,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target.closest('.remove-sub-field-btn')) {
                 const btn = e.target.closest('.remove-sub-field-btn');
                 const fieldSection = btn.closest('.fieldtype-section[data-sub-field-index]');
-                if (fieldSection && (await BirklyFeedback.confirm('Are you sure you want to remove this field?', { danger: true }))) {
+                if (fieldSection && (await BirklyFeedback.confirm(colEditorUi.confirmRemoveField, { danger: true }))) {
                     fieldSection.remove();
                     if (collectionEditorCore) {
                         collectionEditorCore.notifyStructureChange();
@@ -2675,36 +2690,36 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="fieldtype-section" data-sub-field-index="${fieldIndex}">
                             <div class="fieldtype-header">
                                 <div class="fieldtype-title">
-                                    ${renderFieldtypeTypeBadgeHtml('', 'Select Type')}
-                                    <span class="fieldtype-name">New Field</span>
+                                    ${renderFieldtypeTypeBadgeHtml('', colEditorUi.selectType)}
+                                    <span class="fieldtype-name"><?= __('admin.col_editor_new_field_default') ?></span>
                                 </div>
-                                <button type="button" class="btn-icon remove-sub-field-btn" title="Remove field">
+                                <button type="button" class="btn-icon remove-sub-field-btn" title="<?= htmlspecialchars(__('admin.col_editor_remove_field')) ?>">
                                     <?= birkly_icon('trash', ['size' => 16]) ?>
                                 </button>
                             </div>
                             <div class="fieldtype-body">
                                 <div class="fieldtype-row">
                                     <div class="fieldtype-field">
-                                        <label>Display Name <span class="required">*</span></label>
-                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][label]" value="" placeholder="Field label" class="input" required>
+                                        <label><?= __('admin.col_editor_display_name') ?> <span class="required">*</span></label>
+                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][label]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_label_placeholder')) ?>" class="input" required>
                                     </div>
                                     <div class="fieldtype-field">
-                                        <label>API Name</label>
-                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][name]" value="" placeholder="Field name" class="input">
+                                        <label><?= __('admin.col_editor_api_name') ?></label>
+                                        <input type="text" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][name]" value="" placeholder="<?= htmlspecialchars(__('admin.col_editor_field_name_placeholder')) ?>" class="input">
                                     </div>
                                 </div>
                                 <div class="fieldtype-row">
                                     <div class="fieldtype-field">
-                                        <label>Field Type</label>
+                                        <label><?= __('admin.col_editor_field_type') ?></label>
                                         <select name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][type]" class="input sub-field-type-select" required>
-                                            <option value="">Select type...</option>
+                                            <option value=""><?= __('admin.col_editor_select_type_ph') ?></option>
                                             ${window.fieldtypes ? window.fieldtypes.map(ft => `
                                                 <option value="${ft.type || ft.name}">${ft.label}</option>
                                             `).join('') : ''}
                                         </select>
                                     </div>
                                     <div class="fieldtype-field">
-                                        <label>Mandatory Field</label>
+                                        <label><?= __('admin.col_editor_mandatory_field') ?></label>
                                         <label class="switch">
                                             <input type="checkbox" name="sub_collections[${subCollectionIndex}][schema][fields][${fieldIndex}][required]" value="1">
                                             <span class="switch__slider"></span>

@@ -264,7 +264,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     This title cannot produce an ASCII slug. Enter a manual slug (e.g. romanized text or <code>post-2026</code>) or the entry ID will be used.
                                 </div>
                                 <div class="permalink-preview" id="permalink-preview">
-                                    <div class="permalink-preview-label">Permalink preview</div>
+                                    <div class="permalink-preview-label"><?= __('admin.entry_editor_permalink_preview') ?></div>
                                     <div class="permalink-preview-url">
                                         <code id="permalink-preview-url">/</code>
                                         <button type="button" class="copy-btn btn-icon" data-copy="" id="copy-permalink-btn" title="Copy permalink" aria-label="Copy permalink">
@@ -272,13 +272,13 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         </button>
                                     </div>
                                     <?php if (empty($sidebar['site_url'])): ?>
-                                        <small class="form-text">Set your site URL in <a href="<?= admin_url('settings') ?>">Settings</a> for a full preview.</small>
+                                        <small class="form-text"><?= __('admin.entry_editor_site_url_preview_help_before') ?><a href="<?= admin_url('settings') ?>"><?= __('admin.entry_editor_site_url_preview_help_link') ?></a><?= __('admin.entry_editor_site_url_preview_help_after') ?></small>
                                     <?php endif; ?>
                                 </div>
                                 <?php if (!empty($sidebar['discovery_seo_url'])): ?>
                                     <div class="form-group u-pt-2">
-                                        <a href="<?= htmlspecialchars($sidebar['discovery_seo_url']) ?>" class="btn btn-ghost btn-sm">Search listing in Discovery</a>
-                                        <small class="form-text">Edit how this entry appears in Google and social networks.</small>
+                                        <a href="<?= htmlspecialchars($sidebar['discovery_seo_url']) ?>" class="btn btn-ghost btn-sm"><?= __('admin.entry_editor_discovery_seo_btn') ?></a>
+                                        <small class="form-text"><?= __('admin.entry_editor_discovery_seo_help') ?></small>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -358,7 +358,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
 
                             <?php if (!empty($can_review_entry)): ?>
                                 <div class="entry-review-actions" id="review-action-group" <?= ($entry['status'] ?? 'unpublished') === 'pending_review' ? '' : 'hidden' ?>>
-                                    <div class="entry-review-actions__title">Review actions</div>
+                                    <div class="entry-review-actions__title"><?= __('admin.entry_editor_review_actions_title') ?></div>
                                     <div class="entry-review-actions__buttons">
                                         <button type="button" class="btn btn-secondary btn-sm" id="approve-entry">Approve</button>
                                         <button type="button" class="btn btn-secondary btn-sm" id="request-changes">Request changes</button>
@@ -425,7 +425,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <div class="entry-info-item entry-info-half">
                                             <div class="entry-info-label">Created By</div>
                                             <div class="entry-info-value">
-                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? 'Unknown') ?></div>
+                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? __('admin.unknown')) ?></div>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -456,7 +456,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                         <div class="entry-info-item entry-info-half">
                                             <div class="entry-info-label">Updated By</div>
                                             <div class="entry-info-value">
-                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? 'Unknown') ?></div>
+                                                <div class="entry-info-user-name"><?= htmlspecialchars($currentUser['name'] ?? $currentUser['email'] ?? $currentUser['id'] ?? __('admin.unknown')) ?></div>
                                             </div>
                                         </div>
                                     <?php endif; ?>
@@ -473,7 +473,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                     </p>
                                     <div id="entry-revisions-feedback" class="entry-revisions-feedback" hidden aria-live="polite"></div>
                                     <div id="entry-revisions-list" class="entry-revisions-list">
-                                        <div class="entry-revisions-empty">Loading revisions…</div>
+                                        <div class="entry-revisions-empty"><?= htmlspecialchars(__('admin.entry_editor_js_loading_revisions')) ?></div>
                                     </div>
                                 </div>
                             <?php endif; ?>
@@ -540,7 +540,7 @@ $formAction = $isSubEntry ? '/api/sub_entries.php' : '/api/admin_entries.php?act
                                                 </div>
                                             <?php endforeach; ?>
                                         <?php else: ?>
-                                            <p class="u-text-sm u-fg-secondary">No fields defined yet. Add fields to see their slugs.</p>
+                                            <p class="u-text-sm u-fg-secondary"><?= __('admin.entry_editor_no_fields_slugs') ?></p>
                                         <?php endif; ?>
                                     </div>
                                 </div>

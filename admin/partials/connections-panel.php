@@ -5,30 +5,24 @@
  * Email-first composition with a guided setup wizard. All element IDs use the
  * sys-conn- prefix to avoid collisions with Settings → AI connection UI.
  */
-$connText = static function (string $key): string {
-    return htmlspecialchars(__('admin.' . $key), ENT_QUOTES, 'UTF-8');
-};
-$connRich = static function (string $key, string $allowed = '<strong><em>') {
-    return strip_tags(__('admin.' . $key), $allowed);
-};
 ?>
 <div class="settings-stack connections-settings" id="sys-conn-settings-root">
   <div class="settings-pane-section" id="sys-conn-email-section" data-settings-search="connections email smtp resend postmark ses mailgun log mail sender provider notifications forms">
     <section class="card">
       <div class="card-header">
         <div>
-          <h2 class="section-title"><?= htmlspecialchars(__('admin.conn_panel_email_title'), ENT_QUOTES, 'UTF-8') ?></h2>
-          <p class="settings-help"><?= htmlspecialchars(__('admin.conn_panel_email_help'), ENT_QUOTES, 'UTF-8') ?></p>
+          <h2 class="section-title"><?= __('admin.connections_panel_email_title') ?></h2>
+          <p class="settings-help"><?= __('admin.connections_panel_email_help') ?></p>
         </div>
         <button type="button" class="btn btn-primary" data-sys-conn-action="open-email-wizard">
           <?= birkly_icon('plus', ['size' => 16]) ?>
-          <?= htmlspecialchars(__('admin.conn_wizard_setup'), ENT_QUOTES, 'UTF-8') ?>
+          <?= __('admin.connections_panel_setup_email_btn') ?>
         </button>
       </div>
       <div class="card-body u-stack-4">
         <div id="sys-conn-email-status" class="sys-conn-status-banner" hidden aria-live="polite"></div>
         <div id="sys-conn-email-list">
-          <div class="loading-state"><p><?= htmlspecialchars(__('admin.connections_loading_email'), ENT_QUOTES, 'UTF-8') ?></p></div>
+          <div class="loading-state"><p><?= __('admin.connections_panel_loading_email') ?></p></div>
         </div>
       </div>
     </section>
@@ -38,17 +32,17 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
     <section class="card">
       <div class="card-header">
         <div>
-          <h2 class="section-title"><?= htmlspecialchars(__('admin.conn_panel_http_title'), ENT_QUOTES, 'UTF-8') ?></h2>
-          <p class="settings-help"><?= htmlspecialchars(__('admin.conn_panel_http_help'), ENT_QUOTES, 'UTF-8') ?></p>
+          <h2 class="section-title"><?= __('admin.connections_panel_http_title') ?></h2>
+          <p class="settings-help"><?= __('admin.connections_panel_http_help') ?></p>
         </div>
         <button type="button" class="btn btn-primary" data-sys-conn-action="open-http-wizard" data-connection-type="http_credential">
           <?= birkly_icon('plus', ['size' => 16]) ?>
-          <?= htmlspecialchars(__('admin.conn_panel_add_credential'), ENT_QUOTES, 'UTF-8') ?>
+          <?= __('admin.connections_panel_add_credential_btn') ?>
         </button>
       </div>
       <div class="card-body u-stack-4">
         <div id="sys-conn-http-list">
-          <div class="loading-state"><p><?= htmlspecialchars(__('admin.connections_loading_credentials'), ENT_QUOTES, 'UTF-8') ?></p></div>
+          <div class="loading-state"><p><?= __('admin.connections_panel_loading_credentials') ?></p></div>
         </div>
       </div>
     </section>
@@ -59,8 +53,8 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
 <div class="modal" id="sys-conn-email-modal" role="dialog" aria-labelledby="sys-conn-email-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
-      <h2 id="sys-conn-email-modal-title"><?= $connText('conn_wizard_setup') ?></h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-email-modal" aria-label="<?= $connText('close') ?>">
+      <h2 id="sys-conn-email-modal-title"><?= __('admin.connections_panel_wizard_title') ?></h2>
+      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-email-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>
@@ -69,19 +63,19 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
       <input type="hidden" id="sys-conn-email-type" name="type" value="email">
       <input type="hidden" id="sys-conn-email-provider" name="provider" value="">
 
-      <div class="conn-wizard-steps" role="tablist" aria-label="<?= $connText('conn_wizard_steps_aria') ?>">
-        <span class="conn-wizard-step-indicator active" data-step="1"><?= $connText('conn_wizard_step_choose') ?></span>
-        <span class="conn-wizard-step-indicator" data-step="2"><?= $connText('conn_wizard_step_details') ?></span>
-        <span class="conn-wizard-step-indicator" data-step="3"><?= $connText('conn_wizard_step_test') ?></span>
+      <div class="conn-wizard-steps" role="tablist" aria-label="<?= htmlspecialchars(__('admin.connections_panel_wizard_steps_aria')) ?>">
+        <span class="conn-wizard-step-indicator active" data-step="1"><?= __('admin.connections_panel_step_choose') ?></span>
+        <span class="conn-wizard-step-indicator" data-step="2"><?= __('admin.connections_panel_step_details') ?></span>
+        <span class="conn-wizard-step-indicator" data-step="3"><?= __('admin.connections_panel_step_test') ?></span>
       </div>
 
       <div id="sys-conn-wizard-error" class="message message-error" role="alert" hidden></div>
 
       <!-- Step 1: Provider picker -->
       <section class="conn-wizard-panel" data-wizard-step="1">
-        <p class="conn-wizard-intro"><?= $connText('conn_wizard_intro_pick') ?></p>
-        <div id="sys-conn-provider-grid" class="conn-provider-grid" role="listbox" aria-label="<?= $connText('conn_wizard_provider_grid_aria') ?>"></div>
-        <p class="form-help"><?= $connRich('conn_wizard_intro_tip') ?></p>
+        <p class="conn-wizard-intro"><?= __('admin.connections_panel_wizard_intro_choose') ?></p>
+        <div id="sys-conn-provider-grid" class="conn-provider-grid" role="listbox" aria-label="Email sending methods"></div>
+        <p class="form-help"><?= __('admin.connections_panel_wizard_pick_help_before') ?><?= __('admin.connections_panel_wizard_pick_help_after') ?></p>
       </section>
 
       <!-- Step 2: Configuration -->
@@ -94,36 +88,36 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
         </div>
 
         <div class="form-group">
-          <label for="sys-conn-email-name"><?= $connText('conn_wizard_label_connection_name') ?></label>
-          <input type="text" id="sys-conn-email-name" name="name" class="input" required placeholder="<?= $connText('conn_wizard_name_placeholder') ?>">
-          <small class="form-help"><?= $connText('conn_wizard_name_help') ?></small>
+          <label for="sys-conn-email-name"><?= __('admin.connections_panel_connection_name_label') ?></label>
+          <input type="text" id="sys-conn-email-name" name="name" class="input" required placeholder="<?= htmlspecialchars(__('admin.connections_panel_connection_name_ph')) ?>">
+          <small class="form-help"><?= __('admin.connections_panel_connection_name_help') ?></small>
         </div>
 
         <div class="form-grid">
           <div class="form-group">
-            <label for="sys-conn-email-from"><?= $connText('conn_wizard_label_from_email') ?></label>
-            <input type="email" id="sys-conn-email-from" name="from_email" class="input" required placeholder="<?= $connText('conn_wizard_from_placeholder') ?>">
-            <small class="form-help"><?= $connText('conn_wizard_from_email_help') ?></small>
+            <label for="sys-conn-email-from"><?= __('admin.connections_panel_from_email_label') ?></label>
+            <input type="email" id="sys-conn-email-from" name="from_email" class="input" required placeholder="<?= htmlspecialchars(__('admin.connections_panel_from_email_ph')) ?>">
+            <small class="form-help"><?= __('admin.connections_panel_from_email_help') ?></small>
           </div>
           <div class="form-group">
-            <label for="sys-conn-email-from-name"><?= $connText('conn_wizard_label_from_name') ?></label>
-            <input type="text" id="sys-conn-email-from-name" name="from_name" class="input" placeholder="<?= $connText('conn_wizard_from_name_placeholder') ?>">
+            <label for="sys-conn-email-from-name"><?= __('admin.connections_panel_from_name_label') ?></label>
+            <input type="text" id="sys-conn-email-from-name" name="from_name" class="input" placeholder="<?= htmlspecialchars(__('admin.connections_panel_from_name_ph')) ?>">
           </div>
         </div>
 
         <div id="sys-conn-provider-fields" class="u-stack-3"></div>
 
         <details class="sys-conn-advanced">
-          <summary><?= $connText('conn_wizard_advanced_summary') ?></summary>
+          <summary><?= __('admin.connections_panel_advanced_options') ?></summary>
           <div class="u-stack-3 u-pt-3">
             <div class="form-group">
-              <label for="sys-conn-email-alias"><?= $connText('conn_wizard_label_alias') ?></label>
-              <input type="text" id="sys-conn-email-alias" name="alias" class="input" pattern="[a-z0-9_.-]+" placeholder="<?= $connText('conn_wizard_alias_placeholder') ?>">
-              <small class="form-help"><?= $connText('conn_wizard_alias_help') ?></small>
+              <label for="sys-conn-email-alias"><?= __('admin.connections_panel_alias_label') ?></label>
+              <input type="text" id="sys-conn-email-alias" name="alias" class="input" pattern="[a-z0-9_.-]+" placeholder="<?= htmlspecialchars(__('admin.connections_panel_alias_ph')) ?>">
+              <small class="form-help"><?= __('admin.connections_panel_alias_help') ?></small>
             </div>
             <label class="check">
               <input type="checkbox" id="sys-conn-email-enabled" name="enabled" value="1" checked>
-              <span><?= $connText('conn_wizard_enabled_label') ?></span>
+              <span><?= __('admin.connections_panel_connection_enabled') ?></span>
             </label>
           </div>
         </details>
@@ -131,29 +125,29 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
 
       <!-- Step 3: Test & save -->
       <section class="conn-wizard-panel" data-wizard-step="3" hidden>
-        <p class="conn-wizard-intro"><?= $connText('conn_wizard_intro_test') ?></p>
+        <p class="conn-wizard-intro"><?= __('admin.connections_panel_wizard_intro_test') ?></p>
         <div class="form-group">
-          <label for="sys-conn-test-email"><?= $connText('conn_wizard_label_test_to') ?></label>
+          <label for="sys-conn-test-email"><?= __('admin.connections_panel_send_test_label') ?></label>
           <div class="input-with-action">
-            <input type="email" id="sys-conn-test-email" class="input" placeholder="<?= $connText('conn_wizard_test_placeholder') ?>" autocomplete="email">
-            <button type="button" class="btn btn-secondary" id="sys-conn-send-test-btn"><?= $connText('conn_btn_send_test') ?></button>
+            <input type="email" id="sys-conn-test-email" class="input" placeholder="<?= htmlspecialchars(__('admin.connections_panel_test_email_ph')) ?>" autocomplete="email">
+            <button type="button" class="btn btn-secondary" id="sys-conn-send-test-btn"><?= __('admin.connections_panel_send_test_btn') ?></button>
           </div>
           <p id="sys-conn-test-status" class="form-help sys-conn-test-status" aria-live="polite"></p>
         </div>
 
         <label class="check">
           <input type="checkbox" id="sys-conn-set-default" name="set_default" value="1" checked>
-          <span><?= $connRich('conn_wizard_default_label') ?></span>
+          <span><?= __('admin.connections_panel_default_checkbox_before') ?><strong><?= __('admin.connections_panel_default_checkbox_strong') ?></strong><?= __('admin.connections_panel_default_checkbox_after') ?></span>
         </label>
 
-        <p class="form-help"><?= $connText('conn_wizard_default_help') ?></p>
+        <p class="form-help"><?= __('admin.connections_panel_default_help_later') ?></p>
       </section>
 
       <div class="conn-wizard-actions modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal"><?= $connText('cancel') ?></button>
-        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden><?= $connText('back') ?></button>
-        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next"><?= $connText('continue') ?></button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden><?= $connText('conn_wizard_save_connection') ?></button>
+        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-email-modal"><?= __('admin.cancel') ?></button>
+        <button type="button" class="btn btn-secondary" id="sys-conn-wizard-back" hidden><?= __('admin.connections_panel_wizard_back') ?></button>
+        <button type="button" class="btn btn-primary" id="sys-conn-wizard-next"><?= __('admin.connections_panel_wizard_continue') ?></button>
+        <button type="submit" class="btn btn-primary" id="sys-conn-wizard-save" hidden><?= __('admin.connections_panel_save_connection') ?></button>
       </div>
     </form>
   </div>
@@ -163,8 +157,8 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
 <div class="modal" id="sys-conn-http-modal" role="dialog" aria-labelledby="sys-conn-http-modal-title" aria-modal="true">
   <div class="modal-content modal--md">
     <div class="modal-header">
-      <h2 id="sys-conn-http-modal-title"><?= $connText('conn_http_modal_add_title') ?></h2>
-      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="<?= $connText('close') ?>">
+      <h2 id="sys-conn-http-modal-title"><?= __('admin.connections_panel_add_http_credential') ?></h2>
+      <button type="button" class="btn-icon modal-close" data-sys-conn-action="close-http-modal" aria-label="<?= htmlspecialchars(__('admin.ui_feedback_close')) ?>">
         <?= birkly_icon('x', ['size' => 16]) ?>
       </button>
     </div>
@@ -175,31 +169,31 @@ $connRich = static function (string $key, string $allowed = '<strong><em>') {
       <div id="sys-conn-http-error" class="message message-error" role="alert" hidden></div>
 
       <div class="form-group">
-        <label for="sys-conn-http-provider"><?= $connText('conn_http_label_credential_type') ?></label>
+        <label for="sys-conn-http-provider"><?= __('admin.connections_panel_http_credential_type') ?></label>
         <select id="sys-conn-http-provider" name="provider" class="input" required></select>
       </div>
 
       <div class="form-group">
-        <label for="sys-conn-http-name"><?= $connText('conn_http_label_name') ?></label>
-        <input type="text" id="sys-conn-http-name" name="name" class="input" required placeholder="<?= $connText('conn_http_name_placeholder') ?>">
+        <label for="sys-conn-http-name"><?= __('admin.name') ?></label>
+        <input type="text" id="sys-conn-http-name" name="name" class="input" required placeholder="<?= htmlspecialchars(__('admin.connections_panel_http_name_ph')) ?>">
       </div>
 
       <div class="form-group">
-        <label for="sys-conn-http-alias"><?= $connText('conn_http_label_reference') ?></label>
-        <input type="text" id="sys-conn-http-alias" name="alias" class="input" required pattern="[a-z0-9_.-]+" placeholder="<?= $connText('conn_http_reference_placeholder') ?>">
-        <small class="form-help"><?= $connText('conn_http_reference_help') ?></small>
+        <label for="sys-conn-http-alias"><?= __('admin.connections_panel_http_alias_label') ?></label>
+        <input type="text" id="sys-conn-http-alias" name="alias" class="input" required pattern="[a-z0-9_.-]+" placeholder="<?= htmlspecialchars(__('admin.connections_panel_http_alias_ph')) ?>">
+        <small class="form-help"><?= __('admin.connections_panel_http_alias_help') ?></small>
       </div>
 
       <div id="sys-conn-http-provider-fields" class="u-stack-3"></div>
 
       <label class="check">
         <input type="checkbox" id="sys-conn-http-enabled" name="enabled" value="1" checked>
-        <span><?= $connText('conn_http_enabled_label') ?></span>
+        <span><?= __('admin.connections_panel_http_enabled') ?></span>
       </label>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal"><?= $connText('cancel') ?></button>
-        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit"><?= $connText('conn_http_submit_save') ?></button>
+        <button type="button" class="btn btn-secondary" data-sys-conn-action="close-http-modal"><?= __('admin.cancel') ?></button>
+        <button type="submit" class="btn btn-primary" id="sys-conn-http-submit"><?= __('admin.connections_js_save_credential') ?></button>
       </div>
     </form>
   </div>

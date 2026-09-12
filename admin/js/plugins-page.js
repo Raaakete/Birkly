@@ -387,7 +387,7 @@
         }
         var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
-            var err = new Error(result.message || t('plugins_request_failed', 'Request failed'));
+            var err = new Error(result.message || 'Request failed');
             err.code = result.code || '';
             err.data = result.data || null;
             throw err;
@@ -407,7 +407,7 @@
         }
         var result = await parseMarketplaceResponse(response);
         if (!response.ok || result.status === 'error') {
-            var err = new Error(result.message || t('plugins_request_failed', 'Request failed'));
+            var err = new Error(result.message || 'Request failed');
             err.code = result.code || '';
             err.data = result.data || null;
             throw err;
@@ -792,7 +792,7 @@
         });
         var result = await parsePluginsResponse(response);
         if (!response.ok || result.status === 'error') {
-            var err = new Error(result.message || t('plugins_request_failed', 'Request failed'));
+            var err = new Error(result.message || 'Request failed');
             err.code = result.code || '';
             err.data = result.data || null;
             throw err;
@@ -800,29 +800,9 @@
         return result;
     }
 
-    function t(key, fallback, params) {
+    function t(key, fallback) {
         var i18n = window.PluginsPageI18n || {};
-        var text = i18n[key];
-        if (!text && window.Birkly && window.Birkly.i18n) {
-            var full = window.Birkly.i18n.t('admin.' + key, '');
-            if (full && full !== 'admin.' + key) {
-                text = full;
-            } else if (key.indexOf('marketplace_') !== 0) {
-                full = window.Birkly.i18n.t('admin.marketplace_' + key, '');
-                if (full && full !== 'admin.marketplace_' + key) {
-                    text = full;
-                }
-            }
-        }
-        if (!text) {
-            text = fallback || key;
-        }
-        if (params && typeof params === 'object') {
-            Object.keys(params).forEach(function (name) {
-                text = text.split('{' + name + '}').join(String(params[name]));
-            });
-        }
-        return text;
+        return i18n[key] || fallback || key;
     }
 
     function isFreeOffer(offer) {
@@ -2338,7 +2318,7 @@
                         escapeHtml(plugin.id) + '">' + escapeHtml(t('settings', 'Settings')) + '</button>'
                     : '') +
                 '<button type="button" class="btn btn-sm ' + (active ? 'btn-secondary' : 'btn-primary') + '" data-plugin-action="toggle" data-plugin-id="' + escapeHtml(plugin.id) + '" data-plugin-activate="' + (!active) + '">' +
-                (active ? escapeHtml(t('deactivate_plugin', 'Deactivate')) : escapeHtml(t('activate_plugin', 'Activate'))) +
+                (active ? 'Deactivate' : 'Activate') +
                 '</button>' +
                 '<button type="button" class="btn btn-sm btn-danger" data-plugin-action="delete" data-plugin-id="' + escapeHtml(plugin.id) + '">' + escapeHtml(t('delete', 'Delete')) + '</button>') +
             '</div>' +
@@ -2920,25 +2900,17 @@
         document.getElementById('plugin-review-slug').value = offerSlug || plugin.marketplace_slug || plugin.offer_slug || '';
 
         if (titleEl) {
-            titleEl.textContent = status.has_review
-                ? t('your_review', 'Your review')
-                : t('marketplace_write_review', 'Write a review');
+            titleEl.textContent = status.has_review ? 'Your review' : 'Write a review';
         }
         if (summaryEl) {
-            summaryEl.textContent = t(
-                'marketplace_reviews_site_bound',
-                'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.'
-            );
+            summaryEl.textContent = t('hub_js_reviews_site_hint', 'Reviews are tied to this Birkly site installation. Only people who installed and use the plugin here can submit a review.');
         }
 
         if (existingEl) {
             if (status.has_review && status.review) {
                 existingEl.hidden = false;
-                var ratingLabel = t('marketplace_review_stars_display', '{rating} stars', {
-                    rating: String(status.review.rating || ''),
-                });
                 existingEl.innerHTML =
-                    '<p><strong>' + escapeHtml(ratingLabel) + '</strong></p>' +
+                    '<p><strong>' + escapeHtml(String(status.review.rating || '')) + ' stars</strong></p>' +
                     '<p>' + escapeHtml(status.review.body || '') + '</p>';
             } else {
                 existingEl.hidden = true;
@@ -2975,11 +2947,11 @@
         var rating = ratingInput ? parseInt(ratingInput.value, 10) : 5;
 
         if (!slug && !pluginId) {
-            showMessage(t('marketplace_review_missing_plugin', 'Missing plugin information'), 'error');
+            showMessage(t('hub_js_missing_plugin_info', 'Missing plugin information'), 'error');
             return;
         }
         if (!body.trim()) {
-            showMessage(t('marketplace_review_body_required', 'Please write a review'), 'error');
+            showMessage('Please write a review', 'error');
             return;
         }
 
@@ -2990,7 +2962,7 @@
                 rating: rating,
                 body: body.trim(),
             });
-            showMessage(result.message || t('marketplace_review_submitted', 'Review submitted'), 'success');
+            showMessage(result.message || 'Review submitted', 'success');
             closeReviewModal();
             await loadReviewStatuses();
             renderInstalledPlugins();
@@ -3010,7 +2982,7 @@
     }
 
     async function deletePlugin(pluginId) {
-        if (!(await BirklyFeedback.confirm(t('hub_delete_plugin_confirm', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
+        if (!(await BirklyFeedback.confirm(t('settings_js_confirm_delete_plugin', 'Are you sure you want to delete this plugin? This action cannot be undone.')))) {
             return;
         }
         try {
@@ -3054,7 +3026,7 @@
     async function checkAllUpdates() {
         var count = await refreshUpdateBadge(false);
         if (count > 0) {
-            showMessage(t('hub_plugin_updates_available', '{count} plugin update(s) available', { count: count }), 'info');
+            showMessage(count + ' plugin update(s) available', 'info');
             switchTab('updates');
         } else {
             showMessage(t('hub_updates_none', 'All Hub plugins are up to date'), 'success');
@@ -3560,9 +3532,7 @@
         document.getElementById('marketplace-install-title').textContent =
             t('install_from_marketplace', 'Install from Hub') + ': ' + title;
         document.getElementById('marketplace-install-summary').textContent =
-            version
-                ? t('marketplace_install_latest_version', 'Latest version: v{version}', { version: version })
-                : t('marketplace_install_latest_release', 'Latest release will be installed.');
+            version ? 'Latest version: v' + version : 'Latest release will be installed.';
         var licenseInput = document.getElementById('marketplace-license-key');
         if (licenseInput) {
             licenseInput.value = prefillLicenseKey ? String(prefillLicenseKey) : '';
@@ -3954,7 +3924,7 @@
                 return renderPluginSettingField(key, schema[key], settings[key]);
             }).join('');
         } catch (err) {
-            fields.innerHTML = '<p class="callout callout-danger">' + escapeHtml(err.message || t('plugin_settings_load_failed', 'Failed to load settings')) + '</p>';
+            fields.innerHTML = '<p class="callout callout-danger">' + escapeHtml(err.message || 'Failed to load settings') + '</p>';
         }
     }
 
