@@ -1,5 +1,8 @@
 <?php
 // api/public_submit.php - Public submission endpoint for Birkly collections (with file upload support)
+if (!defined('BIRKLY_IN_PUBLIC_SUBMIT')) {
+    define('BIRKLY_IN_PUBLIC_SUBMIT', true);
+}
 header('Content-Type: application/json');
 require_once __DIR__ . '/domain_auth.php';
 setDynamicCORS();
