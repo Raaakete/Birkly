@@ -3549,6 +3549,7 @@ function getPluginsData() {
             'accept_and_update' => __('admin.marketplace_accept_and_update'),
             'marketplace_write_review' => __('admin.marketplace_write_review'),
             'marketplace_reviews_site_bound' => __('admin.marketplace_reviews_site_bound'),
+            'hub_js_reviews_site_hint' => __('admin.hub_js_reviews_site_hint'),
             'marketplace_review_stars_display' => __('admin.marketplace_review_stars_display'),
             'marketplace_no_offers_found' => __('admin.marketplace_no_offers_found'),
             'hub_delete_plugin_confirm' => __('admin.hub_delete_plugin_confirm'),
