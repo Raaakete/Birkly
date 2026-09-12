@@ -24,6 +24,19 @@ if ($rewritten !== 'https://custom.marketplace.example/api/v1/artifacts/birkly-a
     $errors[] = 'Expected cloud artifact URL to rewrite to configured marketplace base, got: ' . $rewritten;
 }
 
+$GLOBALS['__birkly_marketplace_settings'] = [
+    'marketplace_url' => 'https://ops.birkly.cloud',
+    'installation_owner_email' => '',
+    'display_currency' => 'EUR',
+    'update_channel' => 'alpha',
+    'entitlement_secret' => '',
+];
+$opsArtifactUrl = 'https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.34/download';
+$opsRewritten = birkly_marketplace_rewrite_service_url($opsArtifactUrl);
+if ($opsRewritten !== 'https://marketplace.birkly.cloud/api/v1/artifacts/birkly-automation/1.1.34/download') {
+    $errors[] = 'Artifact URLs must not rewrite to Ops host, got: ' . $opsRewritten;
+}
+
 unset($GLOBALS['__birkly_marketplace_settings']);
 
 if ($errors !== []) {
