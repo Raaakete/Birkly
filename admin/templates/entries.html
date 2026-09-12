@@ -185,7 +185,7 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     if (is_file($componentPath)) {
         include $componentPath;
     } else {
-        echo '<div class="error-message">Smart table component not found.</div>';
+        echo '<div class="error-message">' . htmlspecialchars(__('admin.smart_table_component_not_found')) . '</div>';
     }
 
     $pageWindowStart = max(1, $currentPage - 2);
