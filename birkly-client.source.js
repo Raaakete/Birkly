@@ -2244,64 +2244,6 @@
         }
     }
 
-    function pageShowsClubGuestGate() {
-        const heading = document.querySelector('main .bk-club-auth-card .bk-h2');
-        return !!(heading && /sign in required/i.test(heading.textContent || ''));
-    }
-
-    /**
-     * Cross-origin club sites SSR as guests (no site cookie on the public host).
-     * After login, swap in member HTML from the CMS project URL using X-Birkly-Site-Session.
-     */
-    async function refreshMemberPageIfAuthedAfterGuestSsr(state) {
-        const requiresMember = document.documentElement.hasAttribute('data-birkly-require-member');
-        if (!requiresMember || !state.loggedIn || !pageShowsClubGuestGate()) {
-            return;
-        }
-        if (document.documentElement.dataset.birklyMemberSsrRefresh === '1') {
-            return;
-        }
-        document.documentElement.dataset.birklyMemberSsrRefresh = '1';
-
-        const cmsBase = (Birkly.cmsUrl || '').replace(/\/$/, '');
-        if (!cmsBase) {
-            delete document.documentElement.dataset.birklyMemberSsrRefresh;
-            return;
-        }
-        const path = window.location.pathname || '/';
-        const projectPath = '/project' + (path.startsWith('/') ? path : '/' + path);
-
-        try {
-            const res = await birklyCredentialedFetch(cmsBase + projectPath, {
-                method: 'GET',
-                headers: { Accept: 'text/html' },
-            });
-            if (!res.ok) {
-                return;
-            }
-            const html = await res.text();
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            const newMain = doc.querySelector('main#club-main');
-            const curMain = document.querySelector('main#club-main');
-            if (!newMain || !curMain) {
-                return;
-            }
-            const newGate = newMain.querySelector('.bk-club-auth-card .bk-h2');
-            if (newGate && /sign in required/i.test(newGate.textContent || '')) {
-                return;
-            }
-            curMain.replaceWith(document.importNode(newMain, true));
-            applySiteAuthUi(true, state.user);
-            if (typeof bindActionForms.refresh === 'function') {
-                bindActionForms.refresh();
-            }
-        } catch (e) {
-            Birkly.warn('Birkly: member SSR refresh failed', e);
-        } finally {
-            delete document.documentElement.dataset.birklyMemberSsrRefresh;
-        }
-    }
-
     async function syncSiteAuthUi() {
         const hasAuthBlocks = !!document.querySelector('[data-birkly-auth]');
         const hasStoredSession = !!getStoredSiteSessionId();
@@ -2322,10 +2264,6 @@
 
         if (hasAuthBlocks || requiresMember) {
             applySiteAuthUi(state.loggedIn, state.user);
-        }
-
-        if (state.loggedIn) {
-            await refreshMemberPageIfAuthedAfterGuestSsr(state);
         }
 
         try {
