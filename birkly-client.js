@@ -2330,10 +2330,14 @@
 
         try {
             const url = new URL(window.location.href);
-            if (url.searchParams.has('ok') && /login/i.test(url.searchParams.get('ok') || '')) {
+            const okMsg = url.searchParams.get('ok') || '';
+            if (url.searchParams.has('ok') && /login/i.test(okMsg)) {
                 url.searchParams.delete('ok');
                 url.searchParams.delete('error');
                 window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+                document.querySelectorAll('[data-birkly-query-flash], .birkly-query-flash').forEach((el) => {
+                    el.remove();
+                });
             }
         } catch (_) { /* ignore */ }
 
@@ -5138,9 +5142,9 @@
         // Bind generic action forms ASAP (templates can take time to process)
         bindActionForms();
 
-        applyQueryFlashMessages();
-
         await syncSiteAuthUi();
+
+        applyQueryFlashMessages();
         
         // Process templates immediately (don't wait for DOMContentLoaded)
         if (!ssrSkipTemplates) {
@@ -5506,7 +5510,11 @@
                     // Remove previous flash params
                     target.searchParams.delete(okParam);
                     target.searchParams.delete(errParam);
-                    target.searchParams.set(okParam, msg);
+                    const skipOkFlash = form.getAttribute('data-birkly-skip-ok-flash') === '1'
+                        || form.getAttribute('data-birkly-skip-ok-flash') === 'true';
+                    if (!skipOkFlash && okParam) {
+                        target.searchParams.set(okParam, msg);
+                    }
                     window.location.href = target.toString();
                 }
             } catch (err) {
