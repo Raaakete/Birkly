@@ -79,6 +79,11 @@ body.ai-chat-window-open .assist-chrome-stack {
   background: var(--accent);
 }
 
+.guide-post-onboarding-mount {
+  margin: 0 var(--space-6) var(--space-4);
+  max-width: var(--measure-lg, 72ch);
+}
+
 .guide-panel {
   position: fixed;
   inset-block-end: calc(var(--space-6) + 2.25rem + var(--space-2) + 3rem + var(--space-2));

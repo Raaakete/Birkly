@@ -46,4 +46,18 @@ $payload3 = birkly_guide_build_progress_payload($prefs, 'dashboard');
 guide_assert('checklist counts', ($payload3['checklist_total'] ?? 0) === 4 && isset($payload3['checklist_done_count']));
 guide_assert('payload journeys', count($payload3['journeys'] ?? []) >= 2);
 
+$prefsSnooze = $prefs;
+$prefsSnooze['tips_snoozed_until'] = date('c', time() + 86400);
+guide_assert('snooze active', birkly_guide_is_tips_snoozed($prefsSnooze));
+$payloadSnooze = birkly_guide_build_progress_payload($prefsSnooze, 'content');
+guide_assert('snooze suppresses attention', empty($payloadSnooze['attention']));
+
+$prefsNudge = birkly_guide_default_prefs();
+$prefsNudge['first_admin_visit_ack_at'] = date('c');
+$prefsNudge['post_onboarding_nudge_pending'] = true;
+$payloadNudge = birkly_guide_build_progress_payload($prefsNudge, 'dashboard');
+guide_assert('post onboarding nudge on dashboard', !empty($payloadNudge['show_post_onboarding_nudge']));
+$payloadNudgeContent = birkly_guide_build_progress_payload($prefsNudge, 'content');
+guide_assert('no nudge off dashboard', empty($payloadNudgeContent['show_post_onboarding_nudge']));
+
 echo "guide_core_test passed.\n";
