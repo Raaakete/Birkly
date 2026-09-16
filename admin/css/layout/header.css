@@ -298,7 +298,8 @@
 }
 
 .topbar-control-group .user-menu-trigger-face.user-avatar-initials,
-.topbar-user-menu .user-menu-trigger .user-menu-trigger-face.user-avatar-initials {
+.topbar-user-menu .user-menu-trigger .user-menu-trigger-face.user-avatar-initials,
+.topbar-user-menu .user-avatar-initials {
   display: flex;
   align-items: center;
   justify-content: center;
