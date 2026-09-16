@@ -43,7 +43,7 @@ function birkly_demo_starter_catalog(): array
         ],
         'blank' => [
             'label' => 'Start blank',
-            'description' => 'No demo collections or demo website.',
+            'description' => 'No demo collections — includes a minimal learning site in project/.',
             'collections' => [],
             'onboarding_enabled' => true,
         ],
@@ -292,18 +292,22 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
     $contentRoot = $collectionsReady['path'];
 
     if ($templateId === 'blank') {
-        if (!is_dir($websiteRoot)) {
-            @mkdir($websiteRoot, 0755, true);
-            @touch($websiteRoot . '/.gitkeep');
+        require_once __DIR__ . '/project_learning_site.php';
+        $wrote = birkly_write_learning_project_site_index($projectRoot);
+        if ($wrote) {
+            birkly_demo_enable_visit_project_after_install($projectRoot);
         }
+        $indexPath = $websiteRoot . '/index.html';
         return [
-            'success' => true,
+            'success' => $wrote,
             'template' => $templateId,
             'installed_collections' => [],
             'demo_website' => false,
-            'project_site' => false,
+            'project_site' => $wrote && is_file($indexPath),
             'removed' => $removed,
-            'message' => 'Starter content cleared',
+            'message' => $wrote
+                ? 'Starter content cleared; learning site ready in project/'
+                : 'Starter content cleared but learning site could not be written',
         ];
     }
 

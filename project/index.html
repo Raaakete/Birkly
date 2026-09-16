@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Birkly learning site</title>
+</head>
+<body>
+  <!-- birkly-learning-starter-site -->
+  <main>
+    <h1>Birkly learning site</h1>
+    <p>
+      This page is a minimal starter template for testing and learning.
+      It is not a production design — use it to practice how Birkly connects
+      collections in the admin to HTML on your public site.
+    </p>
+    <p>
+      In the admin Guide, create a collection with slug <code>posts</code>,
+      turn on <strong>public read</strong>, publish an entry, then reload this page
+      to see it listed below.
+    </p>
+    <section aria-labelledby="posts-heading">
+      <h2 id="posts-heading">Published entries</h2>
+      <ul>
+        {for each entry in 'posts' with status = published ordered by newest}
+        <li><strong>{title}</strong></li>
+        {endfor}
+      </ul>
+    </section>
+  </main>
+  <script src="/birkly-client.js"></script>
+</body>
+</html>
