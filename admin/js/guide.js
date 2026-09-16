@@ -214,20 +214,87 @@
         }
     }
 
+    function isOnboardingWelcomeVisible() {
+        const modal = document.getElementById('onboarding-complete-modal');
+        if (!modal) {
+            return false;
+        }
+        if (modal.style.display === 'flex') {
+            return true;
+        }
+        const params = new URLSearchParams(window.location.search);
+        return modal.dataset.showWelcome === '1' || params.get('onboarding_complete') === 'true';
+    }
+
+    function runFirstVisitAutoOpen(data) {
+        if (!data || !data.should_auto_open_panel || isOnboardingWelcomeVisible()) {
+            return;
+        }
+        setPanelOpen(true);
+        postUpdate({ ack_first_visit: true }).catch(function () { /* ignore */ });
+        if (data.tip && data.tip.area) {
+            postUpdate({ mark_tip_seen: data.tip.area }).catch(function () { /* ignore */ });
+        }
+    }
+
+    function dismissPostOnboardingNudge() {
+        return postUpdate({ dismiss_post_onboarding_nudge: true }).then(applyProgress);
+    }
+
+    function updatePostOnboardingBanner(data) {
+        const mount = document.getElementById('guide-post-onboarding-mount');
+        if (!mount || document.body.getAttribute('data-admin-page') !== 'dashboard') {
+            return;
+        }
+        if (!data || !data.show_post_onboarding_nudge) {
+            mount.hidden = true;
+            mount.innerHTML = '';
+            mount.dataset.bound = '';
+            return;
+        }
+        mount.hidden = false;
+        if (mount.dataset.bound === '1') {
+            return;
+        }
+        mount.className = 'guide-post-onboarding-mount callout callout-info';
+        mount.setAttribute('role', 'region');
+        mount.setAttribute('aria-label', t('guide_post_onboarding_title', 'Continue in Guide'));
+        mount.innerHTML =
+            '<div class="u-split u-gap-3">' +
+            '<div><p class="u-text-sm u-mb-0"><strong>' + escapeHtml(t('guide_post_onboarding_title', 'Continue in Guide')) + '</strong></p>' +
+            '<p class="u-text-sm u-fg-secondary u-mb-0">' + escapeHtml(t('guide_post_onboarding_body', 'Use the checklist and journeys to publish your first content and explore Hub.')) + '</p></div>' +
+            '<div class="u-cluster u-shrink-0">' +
+            '<button type="button" class="btn btn-primary btn-sm" data-guide-nudge-open>' + escapeHtml(t('guide_open_panel', 'Open Guide')) + '</button>' +
+            '<button type="button" class="btn btn-ghost btn-sm" data-guide-nudge-dismiss>' + escapeHtml(t('guide_post_onboarding_dismiss', 'Dismiss')) + '</button>' +
+            '</div></div>';
+        mount.dataset.bound = '1';
+        mount.querySelector('[data-guide-nudge-open]')?.addEventListener('click', function () {
+            openGuide({ tab: 'setup' });
+            dismissPostOnboardingNudge().catch(function () { /* ignore */ });
+        });
+        mount.querySelector('[data-guide-nudge-dismiss]')?.addEventListener('click', function () {
+            dismissPostOnboardingNudge().catch(function () { /* ignore */ });
+        });
+    }
+
     function applyProgress(data) {
         state.data = data;
         state.area = data.area || '';
         renderPanel(data);
         const showAttention = !!data.attention && !state.open;
         setLauncherAttention(showAttention);
-        if (data.should_auto_open_panel) {
-            setPanelOpen(true);
-            postUpdate({ ack_first_visit: true }).catch(function () { /* ignore */ });
-            if (data.tip && data.tip.area) {
-                postUpdate({ mark_tip_seen: data.tip.area }).catch(function () { /* ignore */ });
-            }
-        }
+        runFirstVisitAutoOpen(data);
+        updatePostOnboardingBanner(data);
         global.dispatchEvent(new CustomEvent('birkly:guide-progress', { detail: data }));
+    }
+
+    function afterOnboardingWelcomeClosed() {
+        fetchProgress().then(function (data) {
+            applyProgress(data);
+            if (data.should_auto_open_panel) {
+                runFirstVisitAutoOpen(data);
+            }
+        }).catch(function () { /* ignore */ });
     }
 
     async function refresh() {
@@ -333,6 +400,21 @@
             }
         }).catch(function () { /* ignore */ });
 
+        document.getElementById('account-guide-snooze')?.addEventListener('click', function () {
+            const msg = document.getElementById('account-guide-message');
+            postUpdate({ snooze_tips_days: 7 }).then(function () {
+                if (msg) {
+                    msg.hidden = false;
+                    msg.textContent = t('guide_snooze_done', 'Guide tips snoozed for 7 days.');
+                }
+            }).catch(function (err) {
+                if (msg) {
+                    msg.hidden = false;
+                    msg.textContent = err.message || 'Error';
+                }
+            });
+        });
+
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             const disable = document.getElementById('account-guide-disable-attention');
@@ -395,6 +477,7 @@
         open: openGuide,
         refresh: refresh,
         fetchProgress: fetchProgress,
+        afterOnboardingWelcomeClosed: afterOnboardingWelcomeClosed,
     };
 
     if (document.readyState === 'loading') {

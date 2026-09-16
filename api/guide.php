@@ -86,6 +86,15 @@ if ($action === 'update') {
         }
         $patch['attention_dismissed'] = $dismissed;
     }
+    if (!empty($input['snooze_tips_days'])) {
+        $days = (int) $input['snooze_tips_days'];
+        $days = max(1, min(30, $days));
+        $patch['tips_snoozed_until'] = date('c', time() + ($days * 86400));
+    }
+    if (!empty($input['dismiss_post_onboarding_nudge'])) {
+        $patch['post_onboarding_nudge_pending'] = false;
+        $patch['post_onboarding_nudge_dismissed_at'] = date('c');
+    }
     if (!empty($input['mark_journey_complete']) && is_string($input['mark_journey_complete'])) {
         $journeys = is_array($prefs['journeys_completed'] ?? null) ? $prefs['journeys_completed'] : [];
         $jid = $input['mark_journey_complete'];

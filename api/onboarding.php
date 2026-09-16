@@ -528,6 +528,16 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         
         saveOnboardingProgress($userId, $progressData);
 
+        require_once __DIR__ . '/../core/birkly_users.php';
+        require_once __DIR__ . '/../core/admin_guide.php';
+        $account = birkly_load_user_account_for_session($_SESSION['user']);
+        if ($account !== null) {
+            $updatedGuide = birkly_guide_merge_prefs($account, ['post_onboarding_nudge_pending' => true]);
+            if ($updatedGuide !== null) {
+                $_SESSION['user']['ui_preferences'] = $updatedGuide['ui_preferences'] ?? [];
+            }
+        }
+
         require_once __DIR__ . '/../core/site_domain.php';
         require_once __DIR__ . '/../core/hosting_urls.php';
         birkly_ensure_site_domain_registered();

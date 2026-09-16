@@ -27,8 +27,21 @@ function birkly_guide_default_prefs(): array
         'attention_dismissed' => [],
         'journeys_completed' => [],
         'disable_attention' => false,
+        'tips_snoozed_until' => null,
+        'post_onboarding_nudge_pending' => false,
+        'post_onboarding_nudge_dismissed_at' => null,
         'reset_at' => null,
     ];
+}
+
+function birkly_guide_is_tips_snoozed(array $guidePrefs): bool
+{
+    $until = $guidePrefs['tips_snoozed_until'] ?? null;
+    if ($until === null || $until === '') {
+        return false;
+    }
+    $ts = strtotime((string) $until);
+    return $ts !== false && $ts > time();
 }
 
 /**
@@ -207,6 +220,12 @@ function birkly_guide_area_tips(): array
             'body_key' => 'guide_tip_delivery_body',
             'help_topic' => 'getting-started',
         ],
+        [
+            'area' => 'media',
+            'title_key' => 'guide_tip_media_title',
+            'body_key' => 'guide_tip_media_body',
+            'help_topic' => 'media-library',
+        ],
     ];
 }
 
@@ -356,12 +375,21 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area): a
     $attentionDismissed = is_array($guidePrefs['attention_dismissed'] ?? null) ? $guidePrefs['attention_dismissed'] : [];
     $tip = birkly_guide_tip_for_area($area);
     $attention = false;
-    if ($tip && empty($guidePrefs['disable_attention'])) {
+    $snoozed = birkly_guide_is_tips_snoozed($guidePrefs);
+    if ($tip && empty($guidePrefs['disable_attention']) && !$snoozed) {
         $areaId = (string) ($tip['area'] ?? '');
         if ($areaId !== '' && !in_array($areaId, $tipsSeen, true) && !in_array($areaId, $attentionDismissed, true)) {
             $attention = true;
         }
     }
+
+    $showPostOnboardingNudge = $area === 'dashboard'
+        && !empty($guidePrefs['post_onboarding_nudge_pending'])
+        && empty($guidePrefs['post_onboarding_nudge_dismissed_at'])
+        && !$snoozed
+        && empty($guidePrefs['disable_attention'])
+        && ($guidePrefs['first_admin_visit_ack_at'] ?? null) !== null
+        && ($guidePrefs['first_admin_visit_ack_at'] ?? '') !== '';
 
     $checklist = birkly_guide_checklist_items();
     foreach ($checklist as &$item) {
@@ -383,6 +411,8 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area): a
         'tip' => $tip,
         'attention' => $attention,
         'should_auto_open_panel' => $shouldAutoOpen,
+        'show_post_onboarding_nudge' => $showPostOnboardingNudge,
+        'tips_snoozed' => $snoozed,
         'journeys' => birkly_guide_resolve_journeys($guidePrefs),
         'concepts' => birkly_guide_resolve_concepts(),
     ];
