@@ -858,6 +858,9 @@
             url.searchParams.delete('starter_template');
             url.searchParams.delete('onboarding_complete');
             window.history.replaceState({}, '', url);
+            if (window.BirklyGuide && typeof window.BirklyGuide.afterOnboardingWelcomeClosed === 'function') {
+                window.BirklyGuide.afterOnboardingWelcomeClosed();
+            }
         };
         document.getElementById('onboarding-complete-close')?.addEventListener('click', close);
         document.getElementById('onboarding-complete-close-btn')?.addEventListener('click', close);
