@@ -22,6 +22,9 @@ guide_assert('area dashboard', birkly_guide_area_from_request('dashboard', '') =
 guide_assert('area content', birkly_guide_area_from_request('content', '') === 'content');
 guide_assert('area hub plugins page', birkly_guide_area_from_request('plugins', '') === 'hub');
 guide_assert('area settings delivery', birkly_guide_area_from_request('settings', 'site-delivery') === 'settings-delivery');
+guide_assert('area discovery', birkly_guide_area_from_request('discovery', '') === 'discovery');
+guide_assert('area settings project', birkly_guide_area_from_request('settings', 'project') === 'settings-project');
+guide_assert('area settings ai', birkly_guide_area_from_request('settings', 'ai') === 'settings-ai');
 
 $prefs = birkly_guide_default_prefs();
 guide_assert('default first visit empty', array_key_exists('first_admin_visit_ack_at', $prefs) && $prefs['first_admin_visit_ack_at'] === null);
@@ -39,16 +42,22 @@ $prefs['first_admin_visit_ack_at'] = date('c');
 $payload2 = birkly_guide_build_progress_payload($prefs, 'content');
 guide_assert('no auto open after ack', empty($payload2['should_auto_open_panel']));
 guide_assert('content tip', ($payload2['tip']['area'] ?? '') === 'content');
+$payloadDiscovery = birkly_guide_build_progress_payload($prefs, 'discovery');
+guide_assert('discovery tip', ($payloadDiscovery['tip']['area'] ?? '') === 'discovery');
+guide_assert('ai nudge without user', !empty($payload2['show_ai_connection_nudge']));
+guide_assert('ai connection href', strpos((string) ($payload2['ai_connection_href'] ?? ''), 'tab=ai') !== false);
 
 $manifest = birkly_guide_load_manifest();
 guide_assert('manifest journeys', count($manifest['journeys'] ?? []) >= 2);
-guide_assert('manifest concepts', count($manifest['concepts'] ?? []) >= 3);
+guide_assert('manifest concepts', count($manifest['concepts'] ?? []) >= 6);
 
 $journeys = birkly_guide_resolve_journeys($prefs);
 guide_assert('resolve journeys', count($journeys) >= 2 && ($journeys[0]['id'] ?? '') === 'first-content');
 
 $concepts = birkly_guide_resolve_concepts();
-guide_assert('resolve concepts', count($concepts) >= 3);
+guide_assert('resolve concepts', count($concepts) >= 6);
+$firstConcept = $concepts[0] ?? [];
+guide_assert('concept has href', ($firstConcept['href'] ?? '') !== '');
 
 $payload3 = birkly_guide_build_progress_payload($prefs, 'dashboard');
 guide_assert('checklist counts', ($payload3['checklist_total'] ?? 0) === 4 && isset($payload3['checklist_done_count']));
