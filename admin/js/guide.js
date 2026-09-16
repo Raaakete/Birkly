@@ -8,6 +8,7 @@
         open: false,
         data: null,
         area: '',
+        panelTab: 'setup',
     };
 
     function t(key, fallback, params) {
@@ -44,12 +45,12 @@
         return apiUrl('/admin/index.php?page=help&topic=' + encodeURIComponent(topic));
     }
 
-    async function fetchProgress() {
+    async function fetchProgress(pageOverride, tabOverride) {
         const ctx = adminPageContext();
         const qs = new URLSearchParams({
             action: 'progress',
-            page: ctx.page,
-            tab: ctx.tab,
+            page: pageOverride || ctx.page,
+            tab: tabOverride || ctx.tab,
         });
         const res = await fetch(apiUrl('/api/guide.php?' + qs.toString()), { credentials: 'same-origin' });
         const json = await res.json();
@@ -109,11 +110,8 @@
         }
     }
 
-    function renderPanel(data) {
-        const body = document.getElementById('guide-panel-body');
-        if (!body || !data) return;
-
-        const checklistHtml = (data.checklist || []).map(function (item) {
+    function renderChecklistHtml(checklist) {
+        return (checklist || []).map(function (item) {
             const done = item.done ? ' is-done' : '';
             const mark = item.done ? '✓' : '○';
             const label = item.done
@@ -121,21 +119,89 @@
                 : '<a href="' + escapeHtml(item.href || '#') + '">' + escapeHtml(item.label || item.id) + '</a>';
             return '<li class="' + done + '"><span aria-hidden="true">' + mark + '</span><span>' + label + '</span></li>';
         }).join('');
+    }
 
-        let tipHtml = '';
-        if (data.tip) {
-            const topic = data.tip.help_topic || 'getting-started';
-            tipHtml = '<div class="guide-tip-block">' +
-                '<h4>' + escapeHtml(tipTitle(data.tip)) + '</h4>' +
-                '<p>' + escapeHtml(tipBody(data.tip)) + '</p>' +
-                '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(topic)) + '">' +
-                escapeHtml(t('guide_learn_more', 'Learn more')) + '</a></div>';
+    function renderJourneysHtml(journeys) {
+        return (journeys || []).map(function (journey) {
+            const doneClass = journey.completed ? ' is-done' : '';
+            const steps = (journey.steps || []).map(function (step, idx) {
+                return '<li class="guide-journey-step">' +
+                    '<p class="guide-journey-teach">' + escapeHtml(step.teach || '') + '</p>' +
+                    (step.href ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(step.href) + '">' +
+                        escapeHtml(t('guide_journey_go', 'Go there')) + '</a> ' : '') +
+                    '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(step.help_topic || 'getting-started')) + '">' +
+                        escapeHtml(t('guide_learn_more', 'Learn more')) + '</a>' +
+                    '</li>';
+            }).join('');
+            const completeBtn = journey.completed ? '' :
+                '<button type="button" class="btn btn-ghost btn-sm guide-journey-done" data-journey-id="' + escapeHtml(journey.id) + '">' +
+                escapeHtml(t('guide_journey_mark_done', 'Mark journey done')) + '</button>';
+            return '<details class="guide-journey' + doneClass + '"' + (journey.completed ? '' : ' open') + '>' +
+                '<summary class="guide-journey-title">' + escapeHtml(journey.title || journey.id) + '</summary>' +
+                '<ol class="guide-journey-steps">' + steps + '</ol>' + completeBtn + '</details>';
+        }).join('');
+    }
+
+    function renderConceptsHtml(concepts) {
+        return (concepts || []).map(function (c) {
+            return '<article class="guide-concept-card">' +
+                '<h4>' + escapeHtml(c.title || '') + '</h4>' +
+                '<p>' + escapeHtml(c.body || '') + '</p>' +
+                '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(c.help_topic || 'getting-started')) + '">' +
+                escapeHtml(t('guide_learn_more', 'Learn more')) + '</a></article>';
+        }).join('');
+    }
+
+    function renderPanelBody(data) {
+        const tab = state.panelTab;
+        let inner = '';
+        if (tab === 'setup') {
+            let tipHtml = '';
+            if (data.tip) {
+                const topic = data.tip.help_topic || 'getting-started';
+                tipHtml = '<div class="guide-tip-block">' +
+                    '<h4>' + escapeHtml(tipTitle(data.tip)) + '</h4>' +
+                    '<p>' + escapeHtml(tipBody(data.tip)) + '</p>' +
+                    '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(topic)) + '">' +
+                    escapeHtml(t('guide_learn_more', 'Learn more')) + '</a></div>';
+            }
+            inner = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('guide_panel_intro', 'Finish these steps to get your site live.')) + '</p>' +
+                '<ul class="guide-checklist" role="list">' + renderChecklistHtml(data.checklist) + '</ul>' + tipHtml;
+        } else if (tab === 'journeys') {
+            inner = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('guide_journeys_intro', 'Short paths with one action per step.')) + '</p>' +
+                renderJourneysHtml(data.journeys);
+        } else {
+            inner = '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('guide_concepts_intro', 'Optional background — skip if you prefer learning by doing.')) + '</p>' +
+                '<div class="guide-concepts">' + renderConceptsHtml(data.concepts) + '</div>';
+        }
+        return inner;
+    }
+
+    function bindPanelInteractions(body) {
+        body.querySelectorAll('.guide-journey-done').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const id = btn.getAttribute('data-journey-id');
+                if (!id) return;
+                postUpdate({ mark_journey_complete: id }).then(applyProgress).catch(function () { /* ignore */ });
+            });
+        });
+    }
+
+    function renderPanel(data) {
+        const body = document.getElementById('guide-panel-body');
+        const tabs = document.getElementById('guide-panel-tabs');
+        if (!body || !data) return;
+
+        if (tabs) {
+            tabs.querySelectorAll('[data-guide-tab]').forEach(function (btn) {
+                const active = btn.getAttribute('data-guide-tab') === state.panelTab;
+                btn.classList.toggle('is-active', active);
+                btn.setAttribute('aria-selected', active ? 'true' : 'false');
+            });
         }
 
-        body.innerHTML =
-            '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('guide_panel_intro', 'Finish these steps to get your site live.')) + '</p>' +
-            '<ul class="guide-checklist" role="list">' + checklistHtml + '</ul>' +
-            tipHtml;
+        body.innerHTML = renderPanelBody(data);
+        bindPanelInteractions(body);
     }
 
     function applyProgress(data) {
@@ -151,6 +217,7 @@
                 postUpdate({ mark_tip_seen: data.tip.area }).catch(function () { /* ignore */ });
             }
         }
+        global.dispatchEvent(new CustomEvent('birkly:guide-progress', { detail: data }));
     }
 
     async function refresh() {
@@ -181,7 +248,16 @@
             '<div class="guide-panel-header">' +
             '<h2 class="guide-panel-title">' + escapeHtml(t('guide_panel_title', 'Guide')) + '</h2>' +
             '<button type="button" class="btn btn-icon" id="guide-panel-close" aria-label="' + escapeHtml(t('close', 'Close')) + '">×</button>' +
-            '</div><div class="guide-panel-body" id="guide-panel-body"></div>';
+            '</div>' +
+            '<div class="guide-panel-tabs" id="guide-panel-tabs" role="tablist">' +
+            '<button type="button" class="guide-panel-tab is-active" data-guide-tab="setup" role="tab" aria-selected="true">' +
+            escapeHtml(t('guide_tab_setup', 'Setup')) + '</button>' +
+            '<button type="button" class="guide-panel-tab" data-guide-tab="journeys" role="tab" aria-selected="false">' +
+            escapeHtml(t('guide_tab_journeys', 'Journeys')) + '</button>' +
+            '<button type="button" class="guide-panel-tab" data-guide-tab="concepts" role="tab" aria-selected="false">' +
+            escapeHtml(t('guide_tab_concepts', 'How it works')) + '</button>' +
+            '</div>' +
+            '<div class="guide-panel-body" id="guide-panel-body"></div>';
         document.body.appendChild(panel);
 
         mount.dataset.guideMounted = '1';
@@ -196,8 +272,76 @@
         document.getElementById('guide-panel-close').addEventListener('click', function () {
             setPanelOpen(false);
         });
+        document.getElementById('guide-panel-tabs').addEventListener('click', function (e) {
+            const btn = e.target.closest('[data-guide-tab]');
+            if (!btn) return;
+            state.panelTab = btn.getAttribute('data-guide-tab') || 'setup';
+            renderPanel(state.data);
+        });
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && state.open) setPanelOpen(false);
+        });
+    }
+
+    function registerDashboardWidget() {
+        const dash = global.Birkly && global.Birkly.Dashboard;
+        if (!dash || typeof dash.registerMount !== 'function') return;
+        dash.registerMount('guideSetup', function (element, widget, data) {
+            if (!element) return;
+            if (!data) {
+                element.innerHTML = '<p class="empty-state-text">' + escapeHtml(t('loading', 'Loading…')) + '</p>';
+                return;
+            }
+            const done = data.checklist_done_count || 0;
+            const total = data.checklist_total || 0;
+            if (total > 0 && done >= total) {
+                element.innerHTML = '<p class="u-text-sm u-fg-secondary">' +
+                    escapeHtml(t('guide_dashboard_all_done', 'Setup checklist complete. Open Guide anytime for journeys and help.')) +
+                    '</p><button type="button" class="btn btn-secondary btn-sm u-mt-2" data-guide-open-widget>' +
+                    escapeHtml(t('guide_launcher_label', 'Guide')) + '</button>';
+            } else {
+                element.innerHTML =
+                    '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('guide_dashboard_progress', '{done} of {total} done', { done: done, total: total })) + '</p>' +
+                    '<ul class="guide-checklist guide-checklist--compact" role="list">' + renderChecklistHtml(data.checklist) + '</ul>' +
+                    '<button type="button" class="btn btn-primary btn-sm u-mt-2" data-guide-open-widget>' +
+                    escapeHtml(t('guide_open_panel', 'Open Guide')) + '</button>';
+            }
+            element.querySelector('[data-guide-open-widget]')?.addEventListener('click', function () {
+                global.BirklyGuide.open();
+            });
+        });
+    }
+
+    function initAccountGuidePrefs() {
+        if (document.body.getAttribute('data-admin-page') !== 'account') return;
+        const form = document.getElementById('account-guide-form');
+        if (!form) return;
+        fetchProgress('account', '').then(function (data) {
+            const disable = document.getElementById('account-guide-disable-attention');
+            if (disable) {
+                disable.checked = !!(data.prefs && data.prefs.disable_attention);
+            }
+        }).catch(function () { /* ignore */ });
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const disable = document.getElementById('account-guide-disable-attention');
+            const msg = document.getElementById('account-guide-message');
+            const reset = e.submitter && e.submitter.getAttribute('data-guide-reset') === '1';
+            const payload = reset
+                ? { reset_progress: true }
+                : { disable_attention: !!(disable && disable.checked) };
+            postUpdate(payload).then(function () {
+                if (msg) {
+                    msg.hidden = false;
+                    msg.textContent = t(reset ? 'guide_reset_done' : 'guide_prefs_saved', reset ? 'Guide progress reset.' : 'Guide preferences saved.');
+                }
+            }).catch(function (err) {
+                if (msg) {
+                    msg.hidden = false;
+                    msg.textContent = err.message || 'Error';
+                }
+            });
         });
     }
 
@@ -207,16 +351,20 @@
     }
 
     function init() {
+        registerDashboardWidget();
         if (!shouldRun()) return;
         mountLauncher();
         refresh();
+        initAccountGuidePrefs();
     }
 
     global.BirklyGuide = {
         open: function () {
             setPanelOpen(true);
+            refresh();
         },
         refresh: refresh,
+        fetchProgress: fetchProgress,
     };
 
     if (document.readyState === 'loading') {
@@ -225,7 +373,6 @@
         init();
     }
 
-    // Re-check attention when admin SPA-like navigation updates body dataset (best-effort).
     const observer = new MutationObserver(function (mutations) {
         for (const m of mutations) {
             if (m.type === 'attributes' && (m.attributeName === 'data-admin-page' || m.attributeName === 'data-admin-tab')) {

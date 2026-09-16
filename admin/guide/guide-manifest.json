@@ -1,0 +1,62 @@
+{
+  "journeys": [
+    {
+      "id": "first-content",
+      "title_key": "guide_journey_first_content_title",
+      "steps": [
+        {
+          "teach_key": "guide_journey_first_content_s1_teach",
+          "href_page": "collection-editor",
+          "help_topic": "collections"
+        },
+        {
+          "teach_key": "guide_journey_first_content_s2_teach",
+          "href_page": "content",
+          "help_topic": "entries"
+        },
+        {
+          "teach_key": "guide_journey_first_content_s3_teach",
+          "href_page": "settings",
+          "href_tab": "site-delivery",
+          "help_topic": "getting-started"
+        }
+      ]
+    },
+    {
+      "id": "hub-first-plugin",
+      "title_key": "guide_journey_hub_plugin_title",
+      "steps": [
+        {
+          "teach_key": "guide_journey_hub_plugin_s1_teach",
+          "href_page": "plugins",
+          "help_topic": "marketplace"
+        },
+        {
+          "teach_key": "guide_journey_hub_plugin_s2_teach",
+          "href_page": "plugins",
+          "help_topic": "marketplace"
+        }
+      ]
+    }
+  ],
+  "concepts": [
+    {
+      "id": "content",
+      "title_key": "guide_concept_content_title",
+      "body_key": "guide_concept_content_body",
+      "help_topic": "content-model-overview"
+    },
+    {
+      "id": "site",
+      "title_key": "guide_concept_site_title",
+      "body_key": "guide_concept_site_body",
+      "help_topic": "templating-overview"
+    },
+    {
+      "id": "plugins",
+      "title_key": "guide_concept_plugins_title",
+      "body_key": "guide_concept_plugins_body",
+      "help_topic": "marketplace"
+    }
+  ]
+}

@@ -104,6 +104,30 @@
 
   <section class="card">
     <div class="card-header">
+      <h2 class="card-title">{translate 'admin.guide_account_title'}</h2>
+      <p class="card-description">{translate 'admin.guide_account_description'}</p>
+    </div>
+    <form id="account-guide-form" class="settings-form card-body u-stack-4">
+      <div class="data-list-item">
+        <div class="data-list-main">
+          <span class="data-list-title">{translate 'admin.guide_disable_attention_label'}</span>
+          <small class="data-list-meta">{translate 'admin.guide_disable_attention_help'}</small>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="account-guide-disable-attention" name="disable_attention">
+          <span class="switch__slider"></span>
+        </label>
+      </div>
+      <div class="empty-state-actions">
+        <button type="submit" class="btn btn-primary">{translate 'admin.save_changes'}</button>
+        <button type="submit" class="btn btn-secondary" data-guide-reset="1">{translate 'admin.guide_reset_progress'}</button>
+      </div>
+      <div id="account-guide-message" class="message" role="status" aria-live="polite" hidden></div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
       <h2 class="card-title">{translate 'admin.account_display_spacing_title'}</h2>
       <p class="card-description">{translate 'admin.account_display_spacing_description'}</p>
     </div>
