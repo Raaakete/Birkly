@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../api/auth.php';
 require_once __DIR__ . '/../../core/ai_presence.php';
+require_once __DIR__ . '/../../core/safe_http_fetch.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -38,35 +39,18 @@ if (!birkly_ai_presence_is_safe_external_url($url)) {
     exit;
 }
 
-// Fetch remote HTML
-$ch = curl_init($url);
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_MAXREDIRS => 5,
-    CURLOPT_TIMEOUT => 10,
-    CURLOPT_CONNECTTIMEOUT => 5,
-    CURLOPT_USERAGENT => 'Birkly-ContentEditor/1.0 (+https://github.com/Raaakete/Birkly)',
-    CURLOPT_SSL_VERIFYPEER => true,
-    CURLOPT_SSL_VERIFYHOST => 2,
-    CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+$fetch = birkly_safe_http_fetch($url, [
+    'timeout' => 10,
+    'user_agent' => 'Birkly-ContentEditor/1.0 (+https://github.com/Raaakete/Birkly)',
+    'max_bytes' => 500000,
 ]);
-
-$html = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-if ($html === false || $httpCode >= 400) {
-    $error = curl_error($ch) ?: "HTTP {$httpCode}";
-    curl_close($ch);
+if (empty($fetch['ok'])) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Failed to fetch URL: ' . $error]);
+    echo json_encode(['success' => false, 'message' => 'Failed to fetch URL: ' . ($fetch['error'] ?? 'unknown')]);
     exit;
 }
 
-curl_close($ch);
-
-// Limit HTML size to avoid excessive processing
-$html = substr($html, 0, 500000);
+$html = (string) ($fetch['body'] ?? '');
 
 libxml_use_internal_errors(true);
 $dom = new DOMDocument();

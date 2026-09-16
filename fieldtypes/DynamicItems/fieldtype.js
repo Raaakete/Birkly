@@ -400,12 +400,20 @@ window.HaruFieldtypes['dynamicitems'] = {
             styleElement.textContent = data.css;
           }
           
-          // Execute JavaScript if provided
+          // Execute JavaScript if provided (nonce-aligned with admin CSP — P88)
           if (data.javascript) {
             try {
-              // Wrap in IIFE to avoid conflicts
               const wrappedJs = `(function() { ${data.javascript} })();`;
-              eval(wrappedJs);
+              const nonceEl = document.querySelector('script[nonce]');
+              const nonce = nonceEl ? (nonceEl.nonce || nonceEl.getAttribute('nonce') || '') : '';
+              const script = document.createElement('script');
+              script.id = `dynamicitems-js-${fieldName}-${idx}`;
+              if (nonce) {
+                script.nonce = nonce;
+                script.setAttribute('nonce', nonce);
+              }
+              script.textContent = wrappedJs;
+              document.head.appendChild(script);
             } catch (e) {
               console.error('Error executing fieldtype JavaScript:', e);
             }

@@ -112,7 +112,7 @@ class TemplateSafeRenderer
 
         try {
             $render = function () use ($tmp, $data) {
-                extract($data);
+                extract($data, EXTR_SKIP);
                 include $tmp;
             };
             $render = \Closure::bind($render, $context, get_class($context));

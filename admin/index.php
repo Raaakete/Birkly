@@ -488,7 +488,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         if (!defined('__TEMPLATE_DIR__')) {
                             define('__TEMPLATE_DIR__', __DIR__ . '/templates');
                         }
-                        extract($data);
+                        extract($data, EXTR_SKIP);
                         include __DIR__ . '/templates/content.html';
                     }
                 } catch (Throwable $e) {
@@ -508,7 +508,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                         if (!defined('__TEMPLATE_DIR__')) {
                             define('__TEMPLATE_DIR__', __DIR__ . '/templates');
                         }
-                        extract($data);
+                        extract($data, EXTR_SKIP);
                         include __DIR__ . '/templates/' . $templateFile;
                     }
                 } catch (Throwable $e) {
@@ -618,7 +618,7 @@ $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
                                 echo $output;
                             }
                         } else {
-                            extract($data);
+                            extract($data, EXTR_SKIP);
                             include $templatePath;
                         }
                     }
