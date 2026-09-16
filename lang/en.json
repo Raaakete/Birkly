@@ -1598,6 +1598,8 @@
         "feedback_description_help": "Optional: paste a screenshot into the description, attach files below, or email one to",
         "feedback_attachments_label": "Screenshots or video (optional)",
         "feedback_attachments_help": "Up to 5 files, 5 MB each — JPEG, PNG, GIF, WebP, or MP4.",
+        "feedback_contact_allow_label": "Allow the Birkly team to contact me at %s for follow-up on this feedback",
+        "feedback_contact_allow_help": "Your email is only shared with the Birkly ops inbox when this is enabled.",
         "feedback_description_label": "Description",
         "feedback_description_placeholder": "What happened? What did you expect?",
         "feedback_detail_category": "Category",

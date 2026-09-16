@@ -7,6 +7,7 @@ $privacyLink = '<a href="' . htmlspecialchars($privacyUrl, ENT_QUOTES, 'UTF-8') 
 $termsLink = '<a href="' . htmlspecialchars($termsUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer">'
     . htmlspecialchars(__('admin.feedback_alpha_terms'), ENT_QUOTES, 'UTF-8') . '</a>';
 $privacyNotice = sprintf(__('admin.feedback_privacy_notice'), $privacyLink, $termsLink);
+$feedbackSubmitterEmail = trim((string) ($_SESSION['user']['email'] ?? ''));
 ?>
 <!-- Alpha feedback floating button + modal (P3-M10, P15-M4) -->
 <div class="feedback-floating-wrap" id="feedback-floating-wrap">
@@ -61,6 +62,15 @@ $privacyNotice = sprintf(__('admin.feedback_privacy_notice'), $privacyLink, $ter
                     <a href="mailto:hello@birkly.io?subject=Birkly%20alpha%20feedback%20screenshot">hello@birkly.io</a>
                 </p>
             </div>
+            <?php if ($feedbackSubmitterEmail !== ''): ?>
+            <div class="field">
+                <label class="field-checkbox feedback-contact-toggle" for="feedback-contact-allowed">
+                    <input type="checkbox" id="feedback-contact-allowed" name="contact_allowed" value="1">
+                    <span><?= sprintf(__('admin.feedback_contact_allow_label'), htmlspecialchars($feedbackSubmitterEmail, ENT_QUOTES, 'UTF-8')) ?></span>
+                </label>
+                <p class="field-help"><?= htmlspecialchars(__('admin.feedback_contact_allow_help'), ENT_QUOTES, 'UTF-8') ?></p>
+            </div>
+            <?php endif; ?>
             <div class="field">
                 <label class="field-label" for="feedback-attachments"><?= htmlspecialchars(__('admin.feedback_attachments_label'), ENT_QUOTES, 'UTF-8') ?></label>
                 <input type="file" id="feedback-attachments" name="attachments[]" class="input" multiple accept="image/jpeg,image/png,image/gif,image/webp,video/mp4">
