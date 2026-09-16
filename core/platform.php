@@ -72,6 +72,44 @@ function birkly_platform_persist_config(array $updates): void
     birkly_platform_config_reset();
 }
 
+/**
+ * Remove stored per-install relay secret (e.g. after Ops returns invalid_signature).
+ */
+function birkly_platform_clear_feedback_relay_secret(): void
+{
+    $path = __DIR__ . '/../settings/platform.json';
+    $config = birkly_platform_config();
+    if (!array_key_exists('feedback_relay_secret', $config)) {
+        return;
+    }
+    unset($config['feedback_relay_secret']);
+
+    if (is_file($path)) {
+        $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($encoded !== false) {
+            file_put_contents($path, $encoded . "\n");
+        }
+    }
+
+    $GLOBALS['__birkly_platform_config'] = $config;
+
+    require_once __DIR__ . '/birkly_paths.php';
+    $stampFile = rtrim(birkly_project_root(), '/\\') . '/settings/.ops_register_stamp';
+    if (is_file($stampFile)) {
+        @unlink($stampFile);
+    }
+}
+
+function birkly_feedback_submit_ui_enabled(): bool
+{
+    // Owner installs triage locally but must still reach Ops via the submit modal (P86).
+    if (birkly_is_platform_owner_install()) {
+        return true;
+    }
+
+    return birkly_alpha_program_enabled();
+}
+
 function birkly_is_platform_owner_install(): bool
 {
     $config = birkly_platform_config();

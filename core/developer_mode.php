@@ -231,6 +231,12 @@ function birkly_developer_system_info(): array
         }
     }
 
+    $opsRelay = [];
+    if (is_file(__DIR__ . '/platform_ops.php')) {
+        require_once __DIR__ . '/platform_ops.php';
+        $opsRelay = birkly_ops_relay_status(false);
+    }
+
     return [
         'php_version' => PHP_VERSION,
         'sapi' => PHP_SAPI,
@@ -241,5 +247,6 @@ function birkly_developer_system_info(): array
         'developer_mode' => birkly_developer_mode_enabled(),
         'plugins' => $plugins,
         'os' => PHP_OS_FAMILY,
+        'ops_relay' => $opsRelay,
     ];
 }
