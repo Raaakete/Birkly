@@ -82,8 +82,7 @@ function birkly_ops_request_signature(string $body): string
  *
  * Throttled by default so admin HTML is not blocked on every navigation.
  * Pass $force=true from explicit admin actions (e.g. feedback) when needed.
- */
-/**
+ *
  * @return string Per-install relay secret when registration succeeded and returned one (may already be persisted)
  */
 function birkly_ops_register_installation(bool $force = false): string
@@ -232,4 +231,58 @@ function birkly_ops_check_updates(string $currentVersion): ?array
     }
 
     return $data;
+}
+
+/**
+ * Diagnostics for Settings / developer tools (no secrets returned).
+ *
+ * @return array<string, mixed>
+ */
+function birkly_ops_relay_status(bool $forceRegister = false): array
+{
+    $installId = birkly_platform_install_id();
+    $status = [
+        'installation_id' => $installId,
+        'relay_url' => birkly_feedback_relay_url(),
+        'register_url' => birkly_ops_installations_register_url(),
+        'has_relay_secret' => birkly_feedback_relay_secret() !== '',
+        'owner_mode' => birkly_is_platform_owner_install(),
+        'feedback_ui_enabled' => birkly_feedback_submit_ui_enabled(),
+    ];
+
+    if ($forceRegister) {
+        $provisioned = birkly_ops_register_installation(true);
+        $status['register_attempted'] = true;
+        $status['register_provisioned_secret'] = $provisioned !== '';
+        $status['has_relay_secret'] = birkly_feedback_relay_secret() !== '';
+    }
+
+    $opsHealthUrl = 'https://ops.birkly.cloud/health';
+    if (!function_exists('curl_init')) {
+        $status['ops_reachable'] = false;
+        $status['ops_health_error'] = 'curl extension missing';
+        return $status;
+    }
+
+    $ch = curl_init($opsHealthUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_HTTPGET => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 6,
+        CURLOPT_CONNECTTIMEOUT => 3,
+        CURLOPT_HTTPHEADER => ['Accept: application/json'],
+    ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
+    $response = curl_exec($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlErr = curl_error($ch);
+    curl_close($ch);
+
+    $status['ops_reachable'] = is_string($response) && $code >= 200 && $code < 300;
+    $status['ops_health_http'] = $code;
+    if ($curlErr !== '') {
+        $status['ops_health_error'] = $curlErr;
+    }
+
+    return $status;
 }

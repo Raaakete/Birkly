@@ -853,7 +853,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     <!-- No SPA router/scripts in MPA mode -->
 <?php
 require_once __DIR__ . '/../../core/platform.php';
-if (birkly_alpha_program_enabled()) {
+if (birkly_feedback_submit_ui_enabled()) {
     include __DIR__ . '/feedback-widget.php';
 }
 ?>

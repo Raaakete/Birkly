@@ -118,4 +118,18 @@ if ($action === 'smoke') {
     exit;
 }
 
+if ($action === 'ops_relay_status') {
+    if (!birkly_developer_mode_enabled()) {
+        echo json_encode(['status' => 'error', 'message' => 'Developer mode is off', 'code' => 'dev_mode_off']);
+        exit;
+    }
+    require_once __DIR__ . '/../core/platform_ops.php';
+    $force = !empty($input['force_register']);
+    echo json_encode([
+        'status' => 'ok',
+        'data' => birkly_ops_relay_status($force),
+    ]);
+    exit;
+}
+
 echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
