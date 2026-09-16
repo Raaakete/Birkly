@@ -139,8 +139,8 @@ function birkly_feedback_relay_url(): string
         return '';
     }
 
-    // Self-host / alpha: relay only when explicitly configured (P86-D6).
-    return '';
+    // Alpha / self-host customer installs relay to Ops by default (P5.4-M2, P86).
+    return BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL;
 }
 
 function birkly_feedback_relay_secret(): string
