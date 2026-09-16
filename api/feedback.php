@@ -115,8 +115,10 @@ function feedback_json_error(int $code, string $message, array $extra = []): voi
 function feedback_relay_to_platform(array $record): void
 {
     $url = birkly_feedback_relay_url();
+    if ($url === '' && defined('BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL')) {
+        $url = BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL;
+    }
     if ($url === '') {
-        // Owner installs intentionally have no default relay URL.
         return;
     }
     if (!function_exists('curl_init')) {
