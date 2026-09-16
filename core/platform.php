@@ -55,10 +55,20 @@ function birkly_platform_persist_config(array $updates): void
         mkdir($dir, 0755, true);
     }
 
-    file_put_contents(
-        $path,
-        json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n"
-    );
+    $encoded = json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    if ($encoded === false) {
+        error_log('platform.json persist failed: could not encode config');
+        return;
+    }
+
+    $written = file_put_contents($path, $encoded . "\n");
+    if ($written === false) {
+        // Keep merged config in memory so same-request relay can proceed (e.g. feedback submit).
+        $GLOBALS['__birkly_platform_config'] = $config;
+        error_log('platform.json persist failed: could not write ' . $path);
+        return;
+    }
+
     birkly_platform_config_reset();
 }
 
