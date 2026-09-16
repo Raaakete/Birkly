@@ -95,6 +95,19 @@ function feedback_cms_version(): string
     return class_exists('BirklyVersion') ? BirklyVersion::getCurrentVersion() : '';
 }
 
+function feedback_parse_contact_allowed(mixed $value): bool
+{
+    if (is_bool($value)) {
+        return $value;
+    }
+    if (is_int($value) || is_float($value)) {
+        return (int) $value === 1;
+    }
+    $normalized = strtolower(trim((string) $value));
+
+    return in_array($normalized, ['1', 'true', 'yes', 'on'], true);
+}
+
 function feedback_user_key(): string
 {
     $user = $_SESSION['user'] ?? [];
@@ -292,6 +305,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             }
 
             $user = $_SESSION['user'];
+            $contactAllowed = feedback_parse_contact_allowed($input['contact_allowed'] ?? false);
             $now = gmdate('c');
             $feedbackId = feedback_generate_id();
             $attachments = feedback_process_uploads($feedbackId);
@@ -304,7 +318,8 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 'status' => 'new',
                 'cms_version' => feedback_cms_version(),
                 'user_id' => $user['id'] ?? '',
-                'user_email' => $user['email'] ?? '',
+                'contact_allowed' => $contactAllowed,
+                'user_email' => $contactAllowed ? trim((string) ($user['email'] ?? '')) : '',
                 'user_role' => $user['role'] ?? '',
                 'page_context' => substr((string) ($input['page_context'] ?? ''), 0, 500),
                 'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 300),

@@ -69,7 +69,8 @@
 
         const fileInput = document.getElementById('feedback-attachments');
         const files = fileInput?.files ? Array.from(fileInput.files) : [];
-        const useMultipart = files.length > 0;
+        const contactAllowed = document.getElementById('feedback-contact-allowed')?.checked === true;
+        const useMultipart = files.length > 0 || contactAllowed;
 
         try {
             let res;
@@ -82,6 +83,9 @@
                 formData.append('description', description);
                 formData.append('page_context', window.location.pathname + window.location.search);
                 formData.append('_csrf', csrf());
+                if (contactAllowed) {
+                    formData.append('contact_allowed', '1');
+                }
                 files.forEach((file) => formData.append('attachments[]', file));
                 res = await fetch(feedbackApiUrl(), {
                     method: 'POST',
@@ -101,6 +105,7 @@
                         title,
                         description,
                         page_context: window.location.pathname + window.location.search,
+                        contact_allowed: contactAllowed,
                         _csrf: csrf(),
                     }),
                 });
