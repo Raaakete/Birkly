@@ -93,8 +93,19 @@
 
     function setLauncherAttention(on) {
         const btn = document.getElementById('guide-launcher-btn');
-        if (!btn) return;
-        btn.classList.toggle('is-attention', !!on);
+        const mount = document.getElementById('guide-launcher-mount');
+        if (btn) {
+            btn.classList.toggle('is-attention', !!on);
+            btn.setAttribute(
+                'aria-label',
+                on
+                    ? t('guide_launcher_attention', 'Guide — tip for this page')
+                    : t('guide_launcher_label', 'Guide')
+            );
+        }
+        if (mount) {
+            mount.classList.toggle('has-guide-attention', !!on);
+        }
     }
 
     function setPanelOpen(open) {
@@ -295,18 +306,14 @@
         }
         setPanelOpen(true);
         postUpdate({ ack_first_visit: true }).catch(function () { /* ignore */ });
-        if (data.tip && data.tip.area) {
-            postUpdate({ mark_tip_seen: data.tip.area }).catch(function () { /* ignore */ });
-        }
     }
 
     function applyProgress(data) {
         state.data = data;
         state.area = data.area || '';
         renderPanel(data);
-        const showAttention = !!data.attention && !state.open;
-        setLauncherAttention(showAttention);
         runFirstVisitAutoOpen(data);
+        setLauncherAttention(!!data.attention && !state.open);
         global.dispatchEvent(new CustomEvent('birkly:guide-progress', { detail: data }));
     }
 
