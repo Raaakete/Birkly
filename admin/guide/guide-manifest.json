@@ -44,19 +44,46 @@
       "id": "content",
       "title_key": "guide_concept_content_title",
       "body_key": "guide_concept_content_body",
-      "help_topic": "content-model-overview"
+      "help_topic": "content-model-overview",
+      "href_page": "content"
     },
     {
-      "id": "site",
+      "id": "media",
+      "title_key": "guide_concept_media_title",
+      "body_key": "guide_concept_media_body",
+      "help_topic": "media-library",
+      "href_page": "media"
+    },
+    {
+      "id": "discovery",
+      "title_key": "guide_concept_discovery_title",
+      "body_key": "guide_concept_discovery_body",
+      "help_topic": "discovery",
+      "href_page": "discovery"
+    },
+    {
+      "id": "settings-project",
+      "title_key": "guide_concept_project_title",
+      "body_key": "guide_concept_project_body",
+      "help_topic": "getting-started",
+      "href_page": "settings",
+      "href_tab": "project"
+    },
+    {
+      "id": "settings-delivery",
       "title_key": "guide_concept_site_title",
       "body_key": "guide_concept_site_body",
-      "help_topic": "templating-overview"
+      "help_topic": "getting-started",
+      "href_page": "settings",
+      "href_tab": "site-delivery"
     },
     {
-      "id": "plugins",
-      "title_key": "guide_concept_plugins_title",
-      "body_key": "guide_concept_plugins_body",
-      "help_topic": "marketplace"
+      "id": "settings-ai",
+      "title_key": "guide_concept_ai_title",
+      "body_key": "guide_concept_ai_body",
+      "help_topic": "getting-started",
+      "href_page": "settings",
+      "href_tab": "ai"
     }
   ]
 }

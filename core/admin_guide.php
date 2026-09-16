@@ -172,6 +172,9 @@ function birkly_guide_area_from_request(string $page, string $tab = ''): string
     if ($page === 'content') {
         return 'content';
     }
+    if ($page === 'discovery' || $page === 'agent-guide' || $page === 'ai-presence') {
+        return 'discovery';
+    }
     if ($page === 'plugins') {
         return 'hub';
     }
@@ -226,7 +229,37 @@ function birkly_guide_area_tips(): array
             'body_key' => 'guide_tip_media_body',
             'help_topic' => 'media-library',
         ],
+        [
+            'area' => 'discovery',
+            'title_key' => 'guide_tip_discovery_title',
+            'body_key' => 'guide_tip_discovery_body',
+            'help_topic' => 'discovery',
+        ],
+        [
+            'area' => 'settings-project',
+            'title_key' => 'guide_tip_project_title',
+            'body_key' => 'guide_tip_project_body',
+            'help_topic' => 'getting-started',
+        ],
+        [
+            'area' => 'settings-ai',
+            'title_key' => 'guide_tip_ai_title',
+            'body_key' => 'guide_tip_ai_body',
+            'help_topic' => 'getting-started',
+        ],
     ];
+}
+
+function birkly_guide_user_has_ai_connection(?array $user): bool
+{
+    if (!is_array($user)) {
+        return false;
+    }
+    if (!function_exists('birkly_list_accessible_ai_connections_for_session_user')) {
+        require_once dirname(__DIR__) . '/api/ai_helpers.php';
+    }
+    $connections = birkly_list_accessible_ai_connections_for_session_user($user);
+    return is_array($connections) && count($connections) > 0;
 }
 
 /**
@@ -391,11 +424,15 @@ function birkly_guide_resolve_concepts(): array
         if (!is_array($concept)) {
             continue;
         }
+        $page = (string) ($concept['href_page'] ?? '');
+        $tab = (string) ($concept['href_tab'] ?? '');
+        $params = $tab !== '' ? ['tab' => $tab] : [];
         $out[] = [
             'id' => (string) ($concept['id'] ?? ''),
             'title' => __('admin.' . (string) ($concept['title_key'] ?? '')),
             'body' => __('admin.' . (string) ($concept['body_key'] ?? '')),
             'help_topic' => (string) ($concept['help_topic'] ?? 'getting-started'),
+            'href' => $page !== '' ? birkly_guide_admin_page_url($page, $params) : '',
         ];
     }
     return $out;
@@ -452,5 +489,7 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
         'tips_snoozed' => $snoozed,
         'journeys' => birkly_guide_resolve_journeys($guidePrefs),
         'concepts' => birkly_guide_resolve_concepts(),
+        'show_ai_connection_nudge' => !birkly_guide_user_has_ai_connection($user),
+        'ai_connection_href' => birkly_guide_admin_page_url('settings', ['tab' => 'ai']),
     ];
 }

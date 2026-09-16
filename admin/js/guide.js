@@ -179,18 +179,39 @@
         }).join('');
     }
 
+    function renderAiConnectionNudge(data) {
+        if (!data || !data.show_ai_connection_nudge) {
+            return '';
+        }
+        const href = data.ai_connection_href || '';
+        const action = href
+            ? '<a class="guide-concept-card__link" href="' + escapeHtml(href) + '">' +
+                escapeHtml(t('guide_ai_nudge_action', 'Set up in Settings → AI')) + ' →</a>'
+            : '';
+        return '<section class="guide-ai-nudge" role="note">' +
+            '<h4 class="guide-ai-nudge__title">' + escapeHtml(t('guide_ai_nudge_title', 'Connect AI for advanced guidance')) + '</h4>' +
+            '<p class="guide-ai-nudge__body">' + escapeHtml(t('guide_ai_nudge_body', 'Add an AI connection in Settings so the assistant can give deeper, context-aware help while you work.')) + '</p>' +
+            action + '</section>';
+    }
+
     function renderConceptsHtml(concepts) {
         return (concepts || []).map(function (c) {
+            const goLink = c.href
+                ? '<a class="guide-concept-card__link" href="' + escapeHtml(c.href) + '">' +
+                    escapeHtml(t('guide_journey_go', 'Go there')) + ' →</a>'
+                : '';
+            const learnLink = '<a class="guide-concept-card__link" href="' + escapeHtml(helpUrl(c.help_topic || 'getting-started')) + '">' +
+                escapeHtml(t('guide_learn_more', 'Learn more')) + ' →</a>';
             return '<article class="guide-concept-card">' +
                 '<h4 class="guide-concept-card__title">' + escapeHtml(c.title || '') + '</h4>' +
                 '<p class="guide-concept-card__body">' + escapeHtml(c.body || '') + '</p>' +
-                '<a class="guide-concept-card__link" href="' + escapeHtml(helpUrl(c.help_topic || 'getting-started')) + '">' +
-                escapeHtml(t('guide_learn_more', 'Learn more')) + ' →</a></article>';
+                '<div class="guide-concept-card__actions">' + goLink + learnLink + '</div></article>';
         }).join('');
     }
 
     function renderPanelBody(data) {
         const tab = state.panelTab;
+        const nudge = renderAiConnectionNudge(data);
         let inner = '';
         if (tab === 'setup') {
             let tipHtml = '';
@@ -203,16 +224,18 @@
                     '<a class="guide-concept-card__link" href="' + escapeHtml(helpUrl(topic)) + '">' +
                     escapeHtml(t('guide_learn_more', 'Learn more')) + ' →</a></section>';
             }
-            inner = tipHtml +
+            inner = nudge + tipHtml +
                 '<p class="guide-section-lede">' + escapeHtml(t('guide_panel_intro', 'Finish these steps to get your site live.')) + '</p>' +
                 renderSetupProgress(data) +
                 '<ul class="guide-checklist" role="list">' + renderChecklistHtml(data.checklist) + '</ul>';
         } else if (tab === 'journeys') {
-            inner = '<p class="guide-section-lede">' + escapeHtml(t('guide_journeys_intro', 'Short paths with one action per step.')) + '</p>' +
+            inner = nudge +
+                '<p class="guide-section-lede">' + escapeHtml(t('guide_journeys_intro', 'Short paths with one action per step.')) + '</p>' +
                 '<div class="guide-journey-list">' + renderJourneysHtml(data.journeys) + '</div>';
         } else {
-            inner = '<p class="guide-section-lede guide-section-lede--concepts">' +
-                escapeHtml(t('guide_concepts_intro', 'Optional background — skip if you prefer learning by doing.')) + '</p>' +
+            inner = nudge +
+                '<p class="guide-section-lede guide-section-lede--concepts">' +
+                escapeHtml(t('guide_concepts_intro', 'Quick orientation for Content, Media, Discovery, and key Settings tabs.')) + '</p>' +
                 '<div class="guide-concepts guide-concepts--expanded">' + renderConceptsHtml(data.concepts) + '</div>';
         }
         return inner;
