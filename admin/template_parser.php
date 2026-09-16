@@ -133,7 +133,10 @@ class TemplateParser {
         $parsed = preg_replace_callback(
             '/\{plugin_asset_url\s+[\'"]([^\'"]+)[\'"]\s+[\'"]([^\'"]+)[\'"]\}/',
             function ($matches) {
-                return '<?= htmlspecialchars(birkly_plugin_asset_url(\'' . addslashes($matches[1]) . '\', \'' . addslashes($matches[2]) . '\')) ?>';
+                $pluginId = addslashes($matches[1]);
+                $rel = addslashes($matches[2]);
+                $fallbackPath = '/plugins/' . $matches[1] . '/' . ltrim($matches[2], '/');
+                return '<?= htmlspecialchars(function_exists(\'birkly_plugin_asset_url\') ? birkly_plugin_asset_url(\'' . $pluginId . '\', \'' . $rel . '\') : birkly_url(\'' . addslashes($fallbackPath) . '\')) ?>';
             },
             $parsed
         );
