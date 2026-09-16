@@ -1,0 +1,189 @@
+/* P87 — Admin Guide launcher + panel (Assist chrome stack) */
+
+.assist-chrome-stack {
+  position: fixed;
+  inset-block-end: var(--space-6);
+  inset-inline-end: var(--space-6);
+  z-index: var(--z-chrome);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.assist-chrome-stack > * {
+  pointer-events: auto;
+}
+
+.assist-chrome-stack .assist-fab-wrap {
+  position: static;
+  inset: auto;
+}
+
+body.ai-chat-window-open .assist-chrome-stack {
+  inset-block-end: calc(5.5rem + min(51rem, calc(100vh - var(--space-16) - var(--space-6))) + var(--space-3));
+}
+
+.guide-launcher-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  box-shadow: var(--elevation-1);
+  cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-out),
+              color var(--motion-fast) var(--ease-out),
+              box-shadow var(--motion-fast) var(--ease-out),
+              transform var(--motion-fast) var(--ease-out);
+}
+
+.guide-launcher-btn:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-text);
+}
+
+.guide-launcher-btn:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+.guide-launcher-btn.is-attention {
+  border-color: var(--accent);
+  color: var(--accent-text);
+  box-shadow: var(--elevation-2), 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+  animation: guide-launcher-pulse 1.6s var(--ease-out) 2;
+}
+
+@keyframes guide-launcher-pulse {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-launcher-btn.is-attention {
+    animation: none;
+    box-shadow: var(--elevation-2);
+  }
+}
+
+.guide-launcher-btn.is-open {
+  border-color: var(--accent);
+  color: var(--ink-on-accent);
+  background: var(--accent);
+}
+
+.guide-panel {
+  position: fixed;
+  inset-block-end: calc(var(--space-6) + 2.25rem + var(--space-2) + 3rem + var(--space-2));
+  inset-inline-end: var(--space-6);
+  z-index: var(--z-drawer);
+  width: min(22rem, calc(100vw - var(--space-12)));
+  max-height: min(28rem, calc(100vh - 8rem));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-3);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(var(--space-2));
+  transition: opacity var(--motion-base) var(--ease-out),
+              transform var(--motion-base) var(--ease-out),
+              visibility var(--motion-base);
+}
+
+.guide-panel.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+body.ai-chat-window-open .guide-panel {
+  inset-block-end: calc(5.5rem + min(51rem, calc(100vh - var(--space-16) - var(--space-6))) + var(--space-3) + 2.25rem + var(--space-2) + 3rem);
+}
+
+.guide-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+
+.guide-panel-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.guide-panel-body {
+  padding: var(--space-4);
+  overflow: auto;
+  flex: 1 1 auto;
+}
+
+.guide-checklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.guide-checklist li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.guide-checklist li.is-done {
+  color: var(--text-tertiary);
+}
+
+.guide-checklist a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+.guide-checklist a:hover {
+  text-decoration: underline;
+}
+
+.guide-tip-block {
+  margin-block-start: var(--space-4);
+  padding-block-start: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+}
+
+.guide-tip-block h4 {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+.guide-tip-block p {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .assist-chrome-stack {
+    inset-block-end: max(var(--space-4), env(safe-area-inset-bottom, 0px));
+    inset-inline-end: max(var(--space-4), env(safe-area-inset-right, 0px));
+  }
+}
