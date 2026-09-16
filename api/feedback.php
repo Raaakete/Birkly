@@ -20,6 +20,7 @@ require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/platform.php';
 require_once __DIR__ . '/../core/outbound_http.php';
+require_once __DIR__ . '/../core/feedback_attachments.php';
 
 const FEEDBACK_DIR = __DIR__ . '/../data/feedback';
 const FEEDBACK_STATUSES = ['new', 'in_progress', 'resolved', 'closed'];
@@ -198,9 +199,15 @@ function feedback_relay_to_platform(array $record): array
         return ['relayed' => false, 'install_id' => $installId, 'error' => 'no_relay_secret'];
     }
 
+    $relayRecord = $record;
+    $attachments = is_array($record['attachments'] ?? null) ? $record['attachments'] : [];
+    if ($attachments !== []) {
+        $relayRecord['attachments'] = feedback_relay_attachments_payload((string) ($record['id'] ?? ''), $attachments);
+    }
+
     $payload = [
         'install_id' => $installId,
-        'feedback' => $record,
+        'feedback' => $relayRecord,
         'submitted_at' => gmdate('c'),
     ];
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
@@ -241,7 +248,14 @@ function feedback_relay_to_platform(array $record): array
 if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
     requireAuth('read');
 
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    $contentType = (string) ($_SERVER['CONTENT_TYPE'] ?? '');
+    $isMultipart = stripos($contentType, 'multipart/form-data') !== false;
+    $input = $isMultipart
+        ? $_POST
+        : (json_decode(file_get_contents('php://input'), true) ?? []);
+    if (!is_array($input)) {
+        $input = [];
+    }
     $action = $_GET['action'] ?? $_POST['action'] ?? $input['action'] ?? 'list';
 
     switch ($action) {
@@ -279,8 +293,10 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
 
             $user = $_SESSION['user'];
             $now = gmdate('c');
+            $feedbackId = feedback_generate_id();
+            $attachments = feedback_process_uploads($feedbackId);
             $record = [
-                'id' => feedback_generate_id(),
+                'id' => $feedbackId,
                 'type' => $type,
                 'category' => $category,
                 'title' => $title,
@@ -293,6 +309,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
                 'page_context' => substr((string) ($input['page_context'] ?? ''), 0, 500),
                 'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 300),
                 'admin_notes' => '',
+                'attachments' => $attachments,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
