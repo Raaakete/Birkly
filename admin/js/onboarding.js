@@ -481,6 +481,10 @@ const onboarding = {
         return baseUrl + '/project/';
     },
 
+    async finishWithoutAiStep() {
+        return this.complete();
+    },
+
     async skip() {
         if (!(await BirklyFeedback.confirm(obT('onboarding_js_confirm_skip_setup', 'Skip setup? You can finish later from the dashboard.')))) return;
         try {
