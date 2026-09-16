@@ -203,12 +203,12 @@ function birkly_legal_terms_url(): string
 {
     $config = birkly_platform_config();
     $url = trim((string) ($config['legal_terms_url'] ?? ''));
-    return $url !== '' ? $url : 'https://birkly.com/terms.html';
+    return $url !== '' ? $url : 'https://docs.birkly.com/00-overview/alpha-legal.html';
 }
 
 function birkly_legal_privacy_url(): string
 {
     $config = birkly_platform_config();
     $url = trim((string) ($config['legal_privacy_url'] ?? ''));
-    return $url !== '' ? $url : 'https://birkly.com/privacy.html';
+    return $url !== '' ? $url : 'https://docs.birkly.com/00-overview/alpha-legal.html';
 }

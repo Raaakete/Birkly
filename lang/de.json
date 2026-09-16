@@ -1611,7 +1611,7 @@
         "feedback_error_prefix": "Fehler:",
         "feedback_load_failed": "Laden fehlgeschlagen",
         "feedback_loading": "Feedback wird geladen…",
-        "feedback_privacy_notice": "Ihr Feedback hilft, Birkly in der geschlossenen Alpha zu verbessern. Übermittelt werden Ihre Konto-E-Mail, die aktuelle Seite und Browser-Infos. Siehe %1$s und %2$s.",
+        "feedback_privacy_notice": "Ihr Feedback hilft, Birkly in der geschlossenen Alpha zu verbessern. Übermittelt werden die aktuelle Admin-Seite und Browser-Infos. Ihre Konto-E-Mail wird nur weitergegeben, wenn Sie unten die Kontakt-Erlaubnis aktivieren. Siehe {{privacy}} und {{terms}}.",
         "feedback_privacy_policy": "Datenschutzerklärung",
         "feedback_refresh": "Aktualisieren",
         "feedback_save_failed": "Speichern fehlgeschlagen",
