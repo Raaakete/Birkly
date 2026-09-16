@@ -607,6 +607,17 @@
         createBtn.textContent = cgT('content_groups_new_collection', 'New collection');
         actions.appendChild(createBtn);
 
+        const guideBtn = document.createElement('button');
+        guideBtn.type = 'button';
+        guideBtn.className = 'btn btn-ghost btn-sm';
+        guideBtn.textContent = cgT('guide_show_me_how', 'Show me how');
+        guideBtn.addEventListener('click', function () {
+            if (window.BirklyGuide && typeof window.BirklyGuide.open === 'function') {
+                window.BirklyGuide.open();
+            }
+        });
+        actions.appendChild(guideBtn);
+
         empty.appendChild(iconWrap);
         empty.appendChild(title);
         empty.appendChild(message);
