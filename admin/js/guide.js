@@ -196,22 +196,24 @@
             let tipHtml = '';
             if (data.tip) {
                 const topic = data.tip.help_topic || 'getting-started';
-                tipHtml = '<section class="guide-tip-block">' +
+                tipHtml = '<section class="guide-tip-block guide-tip-block--lead">' +
                     '<p class="guide-section-eyebrow">' + escapeHtml(t('guide_tip_eyebrow', 'Tip for this page')) + '</p>' +
                     '<h4 class="guide-tip-block__title">' + escapeHtml(tipTitle(data.tip)) + '</h4>' +
                     '<p class="guide-tip-block__body">' + escapeHtml(tipBody(data.tip)) + '</p>' +
                     '<a class="guide-concept-card__link" href="' + escapeHtml(helpUrl(topic)) + '">' +
                     escapeHtml(t('guide_learn_more', 'Learn more')) + ' →</a></section>';
             }
-            inner = '<p class="guide-section-lede">' + escapeHtml(t('guide_panel_intro', 'Finish these steps to get your site live.')) + '</p>' +
+            inner = tipHtml +
+                '<p class="guide-section-lede">' + escapeHtml(t('guide_panel_intro', 'Finish these steps to get your site live.')) + '</p>' +
                 renderSetupProgress(data) +
-                '<ul class="guide-checklist" role="list">' + renderChecklistHtml(data.checklist) + '</ul>' + tipHtml;
+                '<ul class="guide-checklist" role="list">' + renderChecklistHtml(data.checklist) + '</ul>';
         } else if (tab === 'journeys') {
             inner = '<p class="guide-section-lede">' + escapeHtml(t('guide_journeys_intro', 'Short paths with one action per step.')) + '</p>' +
                 '<div class="guide-journey-list">' + renderJourneysHtml(data.journeys) + '</div>';
         } else {
-            inner = '<p class="guide-section-lede">' + escapeHtml(t('guide_concepts_intro', 'Optional background — skip if you prefer learning by doing.')) + '</p>' +
-                '<div class="guide-concepts">' + renderConceptsHtml(data.concepts) + '</div>';
+            inner = '<p class="guide-section-lede guide-section-lede--concepts">' +
+                escapeHtml(t('guide_concepts_intro', 'Optional background — skip if you prefer learning by doing.')) + '</p>' +
+                '<div class="guide-concepts guide-concepts--expanded">' + renderConceptsHtml(data.concepts) + '</div>';
         }
         return inner;
     }
