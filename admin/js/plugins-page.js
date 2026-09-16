@@ -2405,8 +2405,16 @@
                 '<button type="button" class="btn btn-primary" data-plugin-action="switch-marketplace">' +
                 escapeHtml(t('browse_marketplace', 'Browse Hub')) +
                 '</button>' +
+                '<button type="button" class="btn btn-ghost btn-sm" data-guide-open-hub>' +
+                escapeHtml(t('guide_show_me_how', 'Show me how')) +
+                '</button>' +
                 '</div>' +
                 '</div>';
+            grid.querySelector('[data-guide-open-hub]')?.addEventListener('click', function () {
+                if (window.BirklyGuide && typeof window.BirklyGuide.open === 'function') {
+                    window.BirklyGuide.open();
+                }
+            });
             return;
         }
 

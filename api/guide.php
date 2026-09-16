@@ -86,6 +86,30 @@ if ($action === 'update') {
         }
         $patch['attention_dismissed'] = $dismissed;
     }
+    if (!empty($input['mark_journey_complete']) && is_string($input['mark_journey_complete'])) {
+        $journeys = is_array($prefs['journeys_completed'] ?? null) ? $prefs['journeys_completed'] : [];
+        $jid = $input['mark_journey_complete'];
+        if (!in_array($jid, $journeys, true)) {
+            $journeys[] = $jid;
+        }
+        $patch['journeys_completed'] = $journeys;
+    }
+    if (!empty($input['reset_progress'])) {
+        $ui = is_array($user['ui_preferences'] ?? null) ? $user['ui_preferences'] : [];
+        $ui['guide'] = array_merge(birkly_guide_default_prefs(), ['reset_at' => date('c')]);
+        $user['ui_preferences'] = $ui;
+        if (!birkly_save_user_account($user)) {
+            echo json_encode(['status' => 'error', 'message' => 'Failed to reset guide progress']);
+            exit;
+        }
+        $_SESSION['user']['ui_preferences'] = $user['ui_preferences'];
+        $newPrefs = birkly_guide_prefs_from_user($user);
+        echo json_encode([
+            'status' => 'ok',
+            'data' => birkly_guide_build_progress_payload($newPrefs, $area),
+        ]);
+        exit;
+    }
 
     $updated = birkly_guide_merge_prefs($user, $patch);
     if ($updated === null) {
