@@ -67,21 +67,44 @@
         if (err) err.hidden = true;
         if (ok) ok.hidden = true;
 
+        const fileInput = document.getElementById('feedback-attachments');
+        const files = fileInput?.files ? Array.from(fileInput.files) : [];
+        const useMultipart = files.length > 0;
+
         try {
-            const res = await fetch(feedbackApiUrl(), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    action: 'submit',
-                    type,
-                    category,
-                    title,
-                    description,
-                    page_context: window.location.pathname + window.location.search,
-                    _csrf: csrf(),
-                }),
-            });
+            let res;
+            if (useMultipart) {
+                const formData = new FormData();
+                formData.append('action', 'submit');
+                formData.append('type', type);
+                formData.append('category', category);
+                formData.append('title', title);
+                formData.append('description', description);
+                formData.append('page_context', window.location.pathname + window.location.search);
+                formData.append('_csrf', csrf());
+                files.forEach((file) => formData.append('attachments[]', file));
+                res = await fetch(feedbackApiUrl(), {
+                    method: 'POST',
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                    body: formData,
+                });
+            } else {
+                res = await fetch(feedbackApiUrl(), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        action: 'submit',
+                        type,
+                        category,
+                        title,
+                        description,
+                        page_context: window.location.pathname + window.location.search,
+                        _csrf: csrf(),
+                    }),
+                });
+            }
             const raw = await res.text();
             let data = {};
             try {
