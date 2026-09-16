@@ -566,16 +566,63 @@ body.entries-filter-drawer-open { overflow: hidden; }
   margin-block-end: var(--space-3);
 }
 
-.entries-page .bulk-actions-content,
 .entry-detail-page .bulk-actions-content {
   flex-wrap: wrap;
   row-gap: var(--space-2);
 }
 
-.entries-page .bulk-actions-buttons .input,
-.entry-detail-page .bulk-actions-buttons .input {
+/* Entries list: primary actions on one row; field bulk-edit on a second row */
+.entries-page .bulk-actions-content--entries {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.entries-page .bulk-actions-row--primary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.entries-page .bulk-actions-buttons--primary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.entries-page .bulk-actions-cancel {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+.entries-page .bulk-actions-row--field-edit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  width: 100%;
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--accent-border);
+}
+
+.entries-page .bulk-actions-row--field-edit > .custom-select {
+  flex-shrink: 0;
+}
+
+.entries-page .bulk-actions-row--field-edit .custom-select-trigger,
+.entries-page .bulk-actions-row--field-edit .input {
+  height: var(--control-sm);
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.entries-page .bulk-actions-row--field-edit .input {
   min-width: 8rem;
   max-width: 14rem;
+  flex: 1 1 8rem;
 }
 
 .entries-pagination {

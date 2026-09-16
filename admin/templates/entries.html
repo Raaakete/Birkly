@@ -122,33 +122,39 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     </div>
 
     <div class="page-body u-stack-6">
-        <div id="bulk-actions-toolbar" class="bulk-actions-toolbar" hidden>
-            <div class="bulk-actions-content">
-                <span class="bulk-actions-count">
-                    <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
-                </span>
-                <div class="bulk-actions-buttons">
-                    <?php if (!$isTrashView): ?>
-                        <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
-                        <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
-                        <label class="sr-only" for="bulk-field-name">Field to edit</label>
-                        <select id="bulk-field-name" class="collection-filter-select">
-                            <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
-                            <?php foreach ($bulkEditableFields as $field): ?>
-                                <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
-                                    <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <label class="sr-only" for="bulk-field-value">Field value</label>
-                        <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
-                        <button class="btn btn-sm" id="bulk-field-apply-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_apply_field_edit')) ?>"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
-                        <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_move_to_trash')) ?>"><?= __('admin.entries_bulk_move_to_trash') ?></button>
-                    <?php else: ?>
-                        <button class="btn btn-sm" id="bulk-restore-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_restore')) ?>"><?= __('admin.entries_bulk_restore') ?></button>
-                    <?php endif; ?>
-                    <button class="btn btn-sm btn-secondary" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
+        <div id="bulk-actions-toolbar" class="bulk-actions-toolbar bulk-actions-toolbar--entries" hidden>
+            <div class="bulk-actions-content bulk-actions-content--entries">
+                <div class="bulk-actions-row bulk-actions-row--primary">
+                    <span class="bulk-actions-count">
+                        <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
+                    </span>
+                    <div class="bulk-actions-buttons bulk-actions-buttons--primary">
+                        <?php if (!$isTrashView): ?>
+                            <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
+                            <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
+                            <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_move_to_trash')) ?>"><?= __('admin.entries_bulk_move_to_trash') ?></button>
+                        <?php else: ?>
+                            <button class="btn btn-sm" id="bulk-restore-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_restore')) ?>"><?= __('admin.entries_bulk_restore') ?></button>
+                        <?php endif; ?>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary bulk-actions-cancel" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
                 </div>
+                <?php if (!$isTrashView): ?>
+                <div class="bulk-actions-row bulk-actions-row--field-edit">
+                    <label class="sr-only" for="bulk-field-name">Field to edit</label>
+                    <select id="bulk-field-name" class="collection-filter-select">
+                        <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
+                        <?php foreach ($bulkEditableFields as $field): ?>
+                            <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
+                                <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <label class="sr-only" for="bulk-field-value">Field value</label>
+                    <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
+                    <button type="button" class="btn btn-sm" id="bulk-field-apply-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_apply_field_edit')) ?>"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
 
