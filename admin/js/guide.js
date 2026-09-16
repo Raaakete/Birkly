@@ -353,11 +353,8 @@
             escapeHtml(t('guide_launcher_label', 'Guide')) + '">' +
             '<span class="guide-launcher-btn__halo" aria-hidden="true"></span>' +
             '<span class="guide-launcher-btn__focus-ring" aria-hidden="true"></span>' +
-            '<span class="guide-launcher-btn__inner">' +
-            '<span class="guide-launcher-btn__icons" aria-hidden="true">' +
-            icon('map-pin', 15) + icon('list-checks', 13) +
-            '</span>' +
-            '<span class="guide-launcher-btn__label">' + escapeHtml(t('guide_launcher_label', 'Guide')) + '</span>' +
+            '<span class="guide-launcher-btn__inner" aria-hidden="true">' +
+            icon('map-pin', 20) +
             '</span></button>';
 
         const panel = document.createElement('div');

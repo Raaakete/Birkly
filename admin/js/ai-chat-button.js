@@ -396,9 +396,9 @@
         button.title = chatT('ai_chat_js_assist', 'Assist');
         button.innerHTML = `
             <span class="assist-fab-visual" aria-hidden="true">
-                <span class="assist-fab-icon-slot assist-fab-icon-plus">${icon('plus', { size: 22 })}</span>
-                <span class="assist-fab-icon-slot assist-fab-icon-sparkle">${icon('sparkle', { size: 22 })}</span>
-                <span class="assist-fab-icon-slot assist-fab-icon-close">${icon('x', { size: 22 })}</span>
+                <span class="assist-fab-icon-slot assist-fab-icon-plus">${icon('plus', { size: 24 })}</span>
+                <span class="assist-fab-icon-slot assist-fab-icon-sparkle">${icon('sparkle', { size: 24 })}</span>
+                <span class="assist-fab-icon-slot assist-fab-icon-close">${icon('x', { size: 24 })}</span>
             </span>
             <span class="assist-fab-label">${chatT('ai_chat_js_fab_assistant', 'AI Assistant')}</span>
         `;

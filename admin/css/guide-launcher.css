@@ -6,16 +6,24 @@
   inset-inline-end: var(--space-6);
   z-index: var(--z-chrome);
   pointer-events: none;
-}
-
-.assist-chrome-stack > * {
-  pointer-events: auto;
+  --chrome-glass-bg: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--surface-raised) 78%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 65%, transparent) 48%,
+    color-mix(in srgb, var(--surface-sunken) 72%, transparent) 100%
+  );
+  --chrome-glass-border: color-mix(in srgb, var(--accent) 42%, var(--border-subtle));
+  --chrome-glass-blur: blur(14px) saturate(1.3);
+  --chrome-glass-shadow:
+    var(--elevation-2),
+    inset 0 1px 0 color-mix(in srgb, var(--text-primary) 8%, transparent);
+  --chrome-accent-glow: 0 0 1.25rem color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .assist-fab-wrap {
   --assist-fab-size: 3rem;
   --guide-launcher-gap: 0.625rem;
-  --guide-launcher-height: 2.125rem;
+  --guide-launcher-height: var(--assist-fab-size);
   --assist-guide-menu-lift: 0px;
   --assist-guide-chat-lift: 0px;
   position: relative;
@@ -61,19 +69,16 @@ body.ai-chat-window-open .assist-fab-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: var(--assist-fab-size);
+  width: var(--assist-fab-size);
   height: var(--guide-launcher-height);
-  padding: 0 var(--space-3);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
+  padding: 0;
+  border: 1px solid var(--chrome-glass-border, color-mix(in srgb, var(--accent) 42%, var(--border-subtle)));
   border-radius: var(--radius-pill);
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--surface-raised) 92%, var(--accent) 8%) 0%,
-    var(--surface-raised) 55%,
-    color-mix(in srgb, var(--surface-sunken) 85%, var(--accent) 15%) 100%
-  );
-  color: var(--text-primary);
-  box-shadow: var(--elevation-1);
+  background: var(--chrome-glass-bg);
+  backdrop-filter: var(--chrome-glass-blur);
+  -webkit-backdrop-filter: var(--chrome-glass-blur);
+  color: var(--accent-text);
+  box-shadow: var(--chrome-glass-shadow);
   cursor: pointer;
   overflow: visible;
   transition:
@@ -138,38 +143,15 @@ body.ai-chat-window-open .assist-fab-wrap {
   z-index: 1;
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-}
-
-.guide-launcher-btn__icons {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.125rem;
-  color: var(--accent-text);
-}
-
-.guide-launcher-btn__icons .birkly-icon:last-child {
-  opacity: 0.72;
-  transform: translateY(0.5px);
-}
-
-.guide-launcher-btn__label {
-  font-size: var(--text-2xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  line-height: 1;
-  color: var(--text-secondary);
+  justify-content: center;
+  color: var(--accent);
+  filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--accent) 45%, transparent));
 }
 
 .guide-launcher-btn:hover {
-  border-color: var(--accent-border);
-  box-shadow: var(--elevation-2);
+  border-color: var(--accent);
+  box-shadow: var(--chrome-glass-shadow), var(--chrome-accent-glow);
   transform: translateY(-1px);
-}
-
-.guide-launcher-btn:hover .guide-launcher-btn__label {
-  color: var(--text-primary);
 }
 
 .guide-launcher-btn.is-attention {
@@ -180,13 +162,16 @@ body.ai-chat-window-open .assist-fab-wrap {
 
 .guide-launcher-btn.is-open {
   border-color: var(--accent);
-  color: var(--ink-on-accent);
-  background: linear-gradient(165deg, var(--accent-hover) 0%, var(--accent) 100%);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--accent) 38%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 22%, transparent) 100%
+  );
+  box-shadow: var(--chrome-glass-shadow), var(--chrome-accent-glow);
 }
 
-.guide-launcher-btn.is-open .guide-launcher-btn__label,
-.guide-launcher-btn.is-open .guide-launcher-btn__icons {
-  color: var(--ink-on-accent);
+.guide-launcher-btn.is-open .guide-launcher-btn__inner {
+  color: var(--accent-text);
 }
 
 @keyframes guide-launcher-halo {
