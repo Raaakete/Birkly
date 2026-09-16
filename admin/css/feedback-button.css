@@ -139,3 +139,13 @@
 
 .admin-legal-footer a { color: var(--text-secondary); text-decoration: underline; text-underline-offset: 2px; }
 .admin-legal-footer a:hover { color: var(--text-link); }
+
+.feedback-privacy-notice .feedback-legal-link {
+  color: var(--text-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.feedback-privacy-notice .feedback-legal-link:hover {
+  color: var(--accent);
+}
