@@ -420,8 +420,8 @@
             var li = document.createElement('li');
             var status = check.status || 'neutral';
             var pack = check.pack ? '[' + check.pack + '] ' : '';
-            li.innerHTML = '<span class="disc-verify-status disc-verify-' + status + '">' + status + '</span> '
-                + pack + '<strong>' + (check.label || '') + '</strong> — ' + (check.detail || '');
+            li.innerHTML = '<span class="disc-verify-status disc-verify-' + escapeHtml(status) + '">' + escapeHtml(status) + '</span> '
+                + escapeHtml(pack) + '<strong>' + escapeHtml(check.label || '') + '</strong> — ' + escapeHtml(check.detail || '');
             list.appendChild(li);
         });
         var lr = $('#disc-verify-last-run');

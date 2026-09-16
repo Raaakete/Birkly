@@ -63,10 +63,12 @@ if ($action === 'start_link') {
         exit;
     }
 
+    $oauth = birkly_cloud_oauth_status();
     echo json_encode([
         'status' => 'ok',
         'data' => [
             'authorization_url' => $result['authorization_url'],
+            'oauth_base_url' => $oauth['base_url'] ?? '',
         ],
     ]);
     exit;
