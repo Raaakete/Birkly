@@ -124,37 +124,48 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     <div class="page-body u-stack-6">
         <div id="bulk-actions-toolbar" class="bulk-actions-toolbar bulk-actions-toolbar--entries" hidden>
             <div class="bulk-actions-content bulk-actions-content--entries">
-                <div class="bulk-actions-row bulk-actions-row--primary">
-                    <span class="bulk-actions-count">
-                        <span id="bulk-selected-count">0</span> <?= __('admin.selected') ?>
-                    </span>
-                    <div class="bulk-actions-buttons bulk-actions-buttons--primary">
-                        <?php if (!$isTrashView): ?>
-                            <button class="btn btn-sm" id="bulk-publish-btn" aria-label="Publish selected entries"><?= __('admin.publish') ?></button>
-                            <button class="btn btn-sm" id="bulk-unpublish-btn" aria-label="Unpublish selected entries"><?= __('admin.unpublish') ?></button>
-                            <button class="btn btn-sm btn-danger" id="bulk-delete-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_move_to_trash')) ?>"><?= __('admin.entries_bulk_move_to_trash') ?></button>
-                        <?php else: ?>
-                            <button class="btn btn-sm" id="bulk-restore-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_restore')) ?>"><?= __('admin.entries_bulk_restore') ?></button>
-                        <?php endif; ?>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-secondary bulk-actions-cancel" id="bulk-cancel-btn" aria-label="Cancel selection"><?= __('admin.cancel') ?></button>
+                <div class="bulk-actions-header">
+                    <p class="bulk-actions-badge" role="status">
+                        <span class="bulk-actions-badge__count" id="bulk-selected-count">0</span>
+                        <span class="bulk-actions-badge__label"><?= __('admin.selected') ?></span>
+                    </p>
+                    <button type="button" class="btn btn-sm btn-link bulk-actions-clear" id="bulk-cancel-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_clear_selection')) ?>"><?= __('admin.entries_bulk_clear_selection') ?></button>
                 </div>
-                <?php if (!$isTrashView): ?>
-                <div class="bulk-actions-row bulk-actions-row--field-edit">
-                    <label class="sr-only" for="bulk-field-name">Field to edit</label>
-                    <select id="bulk-field-name" class="collection-filter-select">
-                        <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
-                        <?php foreach ($bulkEditableFields as $field): ?>
-                            <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
-                                <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <label class="sr-only" for="bulk-field-value">Field value</label>
-                    <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
-                    <button type="button" class="btn btn-sm" id="bulk-field-apply-btn" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_apply_field_edit')) ?>"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
+                <div class="bulk-actions-body">
+                    <section class="bulk-actions-cluster bulk-actions-cluster--status" aria-label="<?= htmlspecialchars(__('admin.status')) ?>">
+                        <span class="bulk-actions-cluster-label"><?= __('admin.status') ?></span>
+                        <div class="bulk-actions-cluster-row">
+                            <?php if (!$isTrashView): ?>
+                                <div class="btn-group" role="group" aria-label="<?= htmlspecialchars(__('admin.publish')) ?> / <?= htmlspecialchars(__('admin.unpublish')) ?>">
+                                    <button type="button" class="btn btn-sm" id="bulk-publish-btn"><?= __('admin.publish') ?></button>
+                                    <button type="button" class="btn btn-sm" id="bulk-unpublish-btn"><?= __('admin.unpublish') ?></button>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-danger" id="bulk-delete-btn"><?= __('admin.entries_bulk_move_to_trash') ?></button>
+                            <?php else: ?>
+                                <button type="button" class="btn btn-sm" id="bulk-restore-btn"><?= __('admin.entries_bulk_restore') ?></button>
+                            <?php endif; ?>
+                        </div>
+                    </section>
+                    <?php if (!$isTrashView): ?>
+                    <section class="bulk-actions-cluster bulk-actions-cluster--fields" aria-label="<?= htmlspecialchars(__('admin.entries_bulk_field_values')) ?>">
+                        <span class="bulk-actions-cluster-label"><?= __('admin.entries_bulk_field_values') ?></span>
+                        <div class="bulk-actions-field-form">
+                            <label class="sr-only" for="bulk-field-name"><?= __('admin.entries_bulk_edit_field') ?></label>
+                            <select id="bulk-field-name" class="collection-filter-select">
+                                <option value=""><?= __('admin.entries_bulk_edit_field') ?></option>
+                                <?php foreach ($bulkEditableFields as $field): ?>
+                                    <option value="<?= htmlspecialchars((string) ($field['name'] ?? '')) ?>">
+                                        <?= htmlspecialchars((string) ($field['label'] ?? $field['name'] ?? 'Field')) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <label class="sr-only" for="bulk-field-value"><?= __('admin.entries_bulk_new_value') ?></label>
+                            <input type="text" id="bulk-field-value" class="input" placeholder="<?= htmlspecialchars(__('admin.entries_bulk_new_value')) ?>">
+                            <button type="button" class="btn btn-sm btn-primary" id="bulk-field-apply-btn"><?= __('admin.entries_bulk_apply_field_edit') ?></button>
+                        </div>
+                    </section>
+                    <?php endif; ?>
                 </div>
-                <?php endif; ?>
             </div>
         </div>
 
