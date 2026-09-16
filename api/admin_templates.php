@@ -411,8 +411,8 @@ function getDashboardData() {
         ];
     }
 
-    // AI checklist item when no connection exists yet (optional)
-    if (!$hasAiConnection) {
+    // AI checklist only after user skipped the optional wizard AI step (P19-D4).
+    if ($aiSkipped && !$hasAiConnection) {
         $checklist[] = [
             'id' => 'connect_ai',
             'label' => __('admin.connect_ai_assistant'),
