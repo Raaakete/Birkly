@@ -347,6 +347,18 @@
     function createFloatingButton() {
         document.body.classList.add('assist-fab-active');
 
+        let chromeStack = document.getElementById('assist-chrome-stack');
+        if (!chromeStack) {
+            chromeStack = document.createElement('div');
+            chromeStack.id = 'assist-chrome-stack';
+            chromeStack.className = 'assist-chrome-stack';
+            const guideMount = document.createElement('div');
+            guideMount.id = 'guide-launcher-mount';
+            guideMount.setAttribute('aria-hidden', 'false');
+            chromeStack.appendChild(guideMount);
+            document.body.appendChild(chromeStack);
+        }
+
         const wrap = document.createElement('div');
         wrap.id = 'assist-fab-wrap';
         wrap.className = 'assist-fab-wrap fab-idle';
@@ -387,7 +399,7 @@
 
         wrap.appendChild(menu);
         wrap.appendChild(button);
-        document.body.appendChild(wrap);
+        chromeStack.appendChild(wrap);
 
         button.addEventListener('click', async function (e) {
             e.stopPropagation();

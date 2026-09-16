@@ -101,7 +101,9 @@ if (isset($_SESSION['user'])) {
     $__birklyUiDensity = birkly_user_ui_density($_SESSION['user']);
 }
 $__birklyBodyClass = trim(($__birklyDeveloperModeOn ? 'developer-mode-on' : '') . ' density-' . $__birklyUiDensity);
+$__birklyAdminPage = isset($page) ? (string) $page : '';
+$__birklyAdminTab = isset($_GET['tab']) ? (string) $_GET['tab'] : '';
 ?>
-<body<?= $__birklyBodyClass !== '' ? ' class="' . htmlspecialchars($__birklyBodyClass, ENT_QUOTES, 'UTF-8') . '"' : '' ?> data-density="<?= htmlspecialchars($__birklyUiDensity, ENT_QUOTES, 'UTF-8') ?>">
+<body<?= $__birklyBodyClass !== '' ? ' class="' . htmlspecialchars($__birklyBodyClass, ENT_QUOTES, 'UTF-8') . '"' : '' ?> data-density="<?= htmlspecialchars($__birklyUiDensity, ENT_QUOTES, 'UTF-8') ?>" data-admin-page="<?= htmlspecialchars($__birklyAdminPage, ENT_QUOTES, 'UTF-8') ?>" data-admin-tab="<?= htmlspecialchars($__birklyAdminTab, ENT_QUOTES, 'UTF-8') ?>">
     <div class="admin-layout">
 
