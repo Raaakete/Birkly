@@ -58,7 +58,7 @@ $privacyNotice = sprintf(__('admin.feedback_privacy_notice'), $privacyLink, $ter
                 <textarea id="feedback-description" name="description" class="textarea" rows="5" maxlength="5000" required placeholder="<?= htmlspecialchars(__('admin.feedback_description_placeholder'), ENT_QUOTES, 'UTF-8') ?>"></textarea>
                 <p class="field-help">
                     <?= htmlspecialchars(__('admin.feedback_description_help'), ENT_QUOTES, 'UTF-8') ?>
-                    <a href="mailto:hello@birkly.com?subject=Birkly%20alpha%20feedback%20screenshot">hello@birkly.com</a>
+                    <a href="mailto:hello@birkly.io?subject=Birkly%20alpha%20feedback%20screenshot">hello@birkly.io</a>
                 </p>
             </div>
             <div id="feedback-submit-error" class="callout callout-danger" hidden></div>
