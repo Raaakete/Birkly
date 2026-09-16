@@ -243,6 +243,42 @@ function birkly_guide_tip_for_area(string $area): ?array
 }
 
 /**
+ * @param array<string, mixed> $user Session or account user row
+ */
+function birkly_guide_checklist_item_visible(string $itemId, array $user): bool
+{
+    $permissionByItem = [
+        'has_collection' => 'manage_content',
+        'has_published_entry' => 'manage_content',
+        'hub_plugin_installed' => 'manage_plugins',
+        'site_previewable' => 'manage_settings',
+    ];
+    $needed = $permissionByItem[$itemId] ?? null;
+    if ($needed === null) {
+        return true;
+    }
+    if (!function_exists('checkPermission')) {
+        require_once dirname(__DIR__) . '/api/auth.php';
+    }
+    return checkPermission($user, $needed);
+}
+
+/**
+ * @param array<string, mixed>|null $user
+ * @return list<array<string, mixed>>
+ */
+function birkly_guide_checklist_items_for_user(?array $user): array
+{
+    $items = birkly_guide_checklist_items();
+    if ($user === null) {
+        return $items;
+    }
+    return array_values(array_filter($items, static function (array $item) use ($user): bool {
+        return birkly_guide_checklist_item_visible((string) ($item['id'] ?? ''), $user);
+    }));
+}
+
+/**
  * @return list<array<string, mixed>>
  */
 function birkly_guide_checklist_items(): array
@@ -367,9 +403,10 @@ function birkly_guide_resolve_concepts(): array
 
 /**
  * @param array<string, mixed> $guidePrefs
+ * @param array<string, mixed>|null $user
  * @return array<string, mixed>
  */
-function birkly_guide_build_progress_payload(array $guidePrefs, string $area): array
+function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?array $user = null): array
 {
     $tipsSeen = is_array($guidePrefs['tips_seen'] ?? null) ? $guidePrefs['tips_seen'] : [];
     $attentionDismissed = is_array($guidePrefs['attention_dismissed'] ?? null) ? $guidePrefs['attention_dismissed'] : [];
@@ -391,7 +428,7 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area): a
         && ($guidePrefs['first_admin_visit_ack_at'] ?? null) !== null
         && ($guidePrefs['first_admin_visit_ack_at'] ?? '') !== '';
 
-    $checklist = birkly_guide_checklist_items();
+    $checklist = birkly_guide_checklist_items_for_user($user);
     foreach ($checklist as &$item) {
         $item['label'] = __('admin.guide_checklist_' . ($item['id'] ?? ''));
     }

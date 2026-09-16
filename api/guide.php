@@ -44,12 +44,15 @@ if ($user === null) {
 $page = (string) ($_GET['page'] ?? $input['page'] ?? '');
 $tab = (string) ($_GET['tab'] ?? $input['tab'] ?? '');
 $area = birkly_guide_area_from_request($page, $tab);
+$permUser = is_array($_SESSION['user'] ?? null)
+    ? array_merge($_SESSION['user'], $user)
+    : $user;
 
 if ($action === 'progress') {
     $prefs = birkly_guide_prefs_from_user($user);
     echo json_encode([
         'status' => 'ok',
-        'data' => birkly_guide_build_progress_payload($prefs, $area),
+        'data' => birkly_guide_build_progress_payload($prefs, $area, $permUser),
     ]);
     exit;
 }
@@ -115,7 +118,7 @@ if ($action === 'update') {
         $newPrefs = birkly_guide_prefs_from_user($user);
         echo json_encode([
             'status' => 'ok',
-            'data' => birkly_guide_build_progress_payload($newPrefs, $area),
+            'data' => birkly_guide_build_progress_payload($newPrefs, $area, $permUser),
         ]);
         exit;
     }
@@ -130,7 +133,7 @@ if ($action === 'update') {
     $newPrefs = birkly_guide_prefs_from_user($updated);
     echo json_encode([
         'status' => 'ok',
-        'data' => birkly_guide_build_progress_payload($newPrefs, $area),
+        'data' => birkly_guide_build_progress_payload($newPrefs, $area, $permUser),
     ]);
     exit;
 }

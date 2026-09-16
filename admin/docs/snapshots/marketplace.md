@@ -4,6 +4,8 @@ Birkly CMS downloads ship **without bundled plugins**. After a fresh install, th
 
 ## Summary
 
+**From Guide:** Open **Guide → Journeys → Install your first Hub plugin** for a short path through Hub Discover and Installed.
+
 **Fresh installs** contain core CMS only: no commerce, events, automation, or user-management code in the download. Open **Plugins → Hub** in the admin to browse the catalog and install extensions. **Free official** plugins install in one click with a hidden entitlement. **Paid official** plugins show a price badge and **Purchase** CTA — complete checkout, then install from the entitlement or use the fallback activation key. **Existing installs** that already have plugin folders keep working; future updates for those plugins come from the marketplace (Hub tab).
 
 ## Beginner
