@@ -94,6 +94,9 @@
     "docs/**",
     "tests/**"
   ],
+  "executable_files": [
+    "start-server.sh"
+  ],
   "fresh_install": {
     "active_plugins": [],
     "onboarding_marketplace_hint": true
