@@ -21,6 +21,17 @@ $defaultLogo = '/admin/assets/birkly-icon.svg';
 $logoUrl = !empty($logoPath) ? $logoPath : $defaultLogo;
 
 require_once $root . '/core/demo_starter_templates.php';
+require_once $root . '/core/i18n.php';
+$onboardingLanguages = I18n::getAvailableLanguages();
+uksort($onboardingLanguages, static function ($a, $b) {
+    if ($a === 'en') {
+        return -1;
+    }
+    if ($b === 'en') {
+        return 1;
+    }
+    return strcmp($a, $b);
+});
 $starterCards = [
     'marsk' => ['label' => __('admin.onboarding_starter_marsk_label'), 'hint' => __('admin.onboarding_starter_marsk_hint')],
     'blank' => ['label' => __('admin.onboarding_starter_blank_label'), 'hint' => __('admin.onboarding_starter_blank_hint')],
@@ -69,6 +80,20 @@ $localCatalog = birkly_demo_starter_catalog();
                     <div class="field">
                         <label class="field-label" for="first-user-password-confirm"><?= __('admin.confirm_password') ?></label>
                         <input class="input" type="password" id="first-user-password-confirm" name="password_confirm" required autocomplete="new-password" minlength="8">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="first-user-language"><?= __('admin.onboarding_admin_language_label') ?></label>
+                        <select class="select" id="first-user-language" name="language" required>
+                            <?php foreach ($onboardingLanguages as $lang): ?>
+                                <?php
+                                $langCode = (string) ($lang['code'] ?? '');
+                                $langLabel = trim((string) ($lang['native_name'] ?? $lang['name'] ?? $langCode));
+                                $selected = $langCode === 'en' ? ' selected' : '';
+                                ?>
+                                <option value="<?= htmlspecialchars($langCode) ?>"<?= $selected ?>><?= htmlspecialchars($langLabel) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="field-help"><?= __('admin.onboarding_admin_language_help') ?></p>
                     </div>
                     <div id="first-user-error" class="callout callout-danger" hidden aria-live="polite" role="alert"></div>
                     <div class="form-actions">

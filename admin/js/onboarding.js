@@ -204,6 +204,7 @@ const onboarding = {
         const email = document.getElementById('first-user-email').value.trim();
         const password = document.getElementById('first-user-password').value;
         const passwordConfirm = document.getElementById('first-user-password-confirm').value;
+        const language = document.getElementById('first-user-language')?.value || 'en';
 
         errorDiv.hidden = true;
         if (password !== passwordConfirm) {
@@ -217,7 +218,7 @@ const onboarding = {
             const response = await fetch(Birkly.url('/api/onboarding.php?action=create_first_user'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password })
+                body: JSON.stringify({ name, email, password, language })
             });
             const data = await response.json();
             if (data.status === 'ok') {
