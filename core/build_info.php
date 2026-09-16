@@ -216,6 +216,29 @@ function birkly_admin_asset_url(string $relativePath): string
 }
 
 /**
+ * Plugin admin/static asset URL with cache bust (Hub version + file mtime).
+ */
+function birkly_plugin_asset_url(string $pluginId, string $relativePath): string
+{
+    if (!function_exists('birkly_url')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    $pluginId = preg_replace('/[^a-z0-9_-]/', '', strtolower($pluginId)) ?? '';
+    $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+    $publicPath = 'plugins/' . $pluginId . '/' . $relativePath;
+    $version = '1';
+    if (function_exists('get_all_plugins')) {
+        $plugins = get_all_plugins();
+        if (isset($plugins[$pluginId]['version'])) {
+            $version = (string) $plugins[$pluginId]['version'];
+        }
+    }
+    $mtime = birkly_admin_asset_version($publicPath);
+    return birkly_url('/' . $publicPath) . '?v=' . rawurlencode($version . '.' . $mtime);
+}
+
+/**
  * Cache-bust token for public runtime assets (birkly-client.js, etc.).
  */
 function birkly_public_runtime_asset_version(string $basename): string
