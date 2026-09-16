@@ -164,7 +164,21 @@
             const drafts = Number(stats.drafts || 0);
             const publishedPct = total > 0 ? Math.round((published / total) * 100) : 0;
 
+            let zeroCollectionsBlock = '';
+            if (collections === 0) {
+                zeroCollectionsBlock =
+                    '<div class="card-section">' +
+                    '<div class="empty-state empty-state--compact">' +
+                    '<p class="empty-state-title">' + escapeHtml(t('dash_empty_collections_title', 'Create your first collection')) + '</p>' +
+                    '<p class="empty-state-text">' + escapeHtml(t('dash_empty_collections_hint', 'Collections hold the content that powers your site.')) + '</p>' +
+                    '<div class="empty-state-actions">' +
+                    '<a class="btn btn-primary btn-sm" href="' + escapeHtml(adminUrl('collection-editor')) + '">' + escapeHtml(t('content_groups_new_collection', 'New collection')) + '</a>' +
+                    '<button type="button" class="btn btn-ghost btn-sm" data-dash-guide-open>' + escapeHtml(t('guide_show_me_how', 'Show me how')) + '</button>' +
+                    '</div></div></div>';
+            }
+
             setContent(element,
+                zeroCollectionsBlock +
                 '<div class="card-section">' +
                 '<div class="u-grid-2">' +
                 statTile(collections, t('collections', 'Collections'), null, 'stack') +
@@ -183,6 +197,11 @@
                 '</div>' +
                 '</div>'
             );
+            element.querySelector('[data-dash-guide-open]')?.addEventListener('click', function () {
+                if (window.BirklyGuide && typeof window.BirklyGuide.open === 'function') {
+                    window.BirklyGuide.open({ journeyId: 'first-content', tab: 'journeys' });
+                }
+            });
         });
 
         dashboard.registerMount('analyticsMini', function (element, widget, data) {

@@ -129,6 +129,13 @@
             metaBits.push(t('delivery_meta_migration_pending', 'Migration pending'));
         }
 
+        var guideNudge = (overall !== 'green' && id === 'site-delivery')
+            ? '<div class="delivery-status-guide-nudge">' +
+                '<button type="button" class="btn btn-ghost btn-sm" data-delivery-guide-nudge>' +
+                escapeHtml(t('guide_delivery_nudge', 'Show me how to set up site delivery')) +
+                '</button></div>'
+            : '';
+
         return '' +
             '<section class="delivery-status card ' + statusClass(overall) + '" data-delivery-status-id="' + escapeHtml(id) + '" aria-label="' + escapeHtml(t('delivery_aria_label', 'Site delivery status')) + '">' +
             '<div class="delivery-status-header">' +
@@ -139,6 +146,7 @@
             '<button type="button" class="btn btn-secondary btn-sm delivery-status-refresh">' + escapeHtml(t('delivery_btn_refresh', 'Refresh')) + '</button>' +
             '<button type="button" class="btn btn-secondary btn-sm delivery-status-repair">' + escapeHtml(t('delivery_btn_repair', 'Repair delivery')) + '</button>' +
             '</div></div>' +
+            guideNudge +
             '<ul class="delivery-status-checks">' + rows + '</ul>' +
             '</section>';
     }
@@ -197,6 +205,14 @@
                     });
                 });
             });
+            var guideNudgeBtn = root.querySelector('[data-delivery-guide-nudge]');
+            if (guideNudgeBtn) {
+                guideNudgeBtn.addEventListener('click', function () {
+                    if (global.BirklyGuide && typeof global.BirklyGuide.open === 'function') {
+                        global.BirklyGuide.open({ journeyId: 'first-content', tab: 'journeys' });
+                    }
+                });
+            }
             var repairBtn = root.querySelector('.delivery-status-repair');
             if (repairBtn) {
                 repairBtn.addEventListener('click', function () {
