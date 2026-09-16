@@ -199,16 +199,28 @@ function birkly_feedback_relay_secret(): string
     return trim((string) (getenv('BIRKLY_FEEDBACK_RELAY_SECRET') ?: ''));
 }
 
+/**
+ * Bundled admin Help topic for closed-alpha legal (always available on the install).
+ */
+function birkly_admin_alpha_legal_help_url(): string
+{
+    if (!function_exists('birkly_url')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    return birkly_url('/admin/index.php?page=help&topic=alpha-legal');
+}
+
 function birkly_legal_terms_url(): string
 {
     $config = birkly_platform_config();
     $url = trim((string) ($config['legal_terms_url'] ?? ''));
-    return $url !== '' ? $url : 'https://docs.birkly.com/00-overview/alpha-legal.html';
+    return $url !== '' ? $url : birkly_admin_alpha_legal_help_url();
 }
 
 function birkly_legal_privacy_url(): string
 {
     $config = birkly_platform_config();
     $url = trim((string) ($config['legal_privacy_url'] ?? ''));
-    return $url !== '' ? $url : 'https://docs.birkly.com/00-overview/alpha-legal.html';
+    return $url !== '' ? $url : birkly_admin_alpha_legal_help_url();
 }
