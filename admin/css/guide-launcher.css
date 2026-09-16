@@ -54,6 +54,10 @@
   animation: guide-launcher-bounce 0.78s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+#guide-launcher-mount.has-guide-attention {
+  animation: guide-launcher-attention-float 2.4s ease-in-out infinite;
+}
+
 @keyframes guide-launcher-bounce {
   0% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
   38% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 0.35rem)); }
@@ -166,8 +170,24 @@ body.ai-chat-window-open .assist-fab-wrap {
 
 .guide-launcher-btn.is-attention {
   border-color: var(--accent);
-  box-shadow: var(--elevation-2), 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
-  animation: guide-launcher-attention 1.8s var(--ease-out) 3;
+  box-shadow:
+    var(--elevation-2),
+    0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent),
+    0 0 1.25rem color-mix(in srgb, var(--accent) 35%, transparent);
+  animation: guide-launcher-attention 2s var(--ease-out) infinite;
+}
+
+.guide-launcher-btn.is-attention .guide-launcher-btn__halo {
+  opacity: 0.9;
+  animation: guide-launcher-halo-attention 2s ease-in-out infinite;
+}
+
+.guide-launcher-btn.is-attention .guide-launcher-btn__focus-ring {
+  opacity: 0.9;
+}
+
+.guide-launcher-btn.is-attention:hover {
+  animation: guide-launcher-attention 2s var(--ease-out) infinite;
 }
 
 .guide-launcher-btn.is-open {
@@ -192,14 +212,25 @@ body.ai-chat-window-open .assist-fab-wrap {
 
 @keyframes guide-launcher-attention {
   0%, 100% { transform: scale(1); }
-  35% { transform: scale(1.05); }
-  55% { transform: scale(0.98); }
-  75% { transform: scale(1.02); }
+  35% { transform: scale(1.06); }
+  55% { transform: scale(0.97); }
+  75% { transform: scale(1.03); }
+}
+
+@keyframes guide-launcher-halo-attention {
+  0%, 100% { opacity: 0.65; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.12); }
+}
+
+@keyframes guide-launcher-attention-float {
+  0%, 100% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)))); }
+  50% { transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift)) - 0.2rem)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   #guide-launcher-mount,
   #guide-launcher-mount.is-bouncing,
+  #guide-launcher-mount.has-guide-attention,
   .guide-launcher-btn__halo,
   .guide-launcher-btn__focus-ring::before,
   .guide-launcher-btn__focus-ring::after,
