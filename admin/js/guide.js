@@ -407,35 +407,6 @@
         });
     }
 
-    function registerDashboardWidget() {
-        const dash = global.Birkly && global.Birkly.Dashboard;
-        if (!dash || typeof dash.registerMount !== 'function') return;
-        dash.registerMount('guideSetup', function (element, widget, data) {
-            if (!element) return;
-            if (!data) {
-                element.innerHTML = '<p class="empty-state-text">' + escapeHtml(t('loading', 'Loading…')) + '</p>';
-                return;
-            }
-            const done = data.checklist_done_count || 0;
-            const total = data.checklist_total || 0;
-            if (total > 0 && done >= total) {
-                element.innerHTML = '<p class="u-text-sm u-fg-secondary">' +
-                    escapeHtml(t('guide_dashboard_all_done', 'Setup checklist complete. Open Guide anytime for journeys and help.')) +
-                    '</p><button type="button" class="btn btn-secondary btn-sm u-mt-2" data-guide-open-widget>' +
-                    escapeHtml(t('guide_launcher_label', 'Guide')) + '</button>';
-            } else {
-                element.innerHTML =
-                    '<p class="u-text-sm u-fg-secondary">' + escapeHtml(t('guide_dashboard_progress', '{done} of {total} done', { done: done, total: total })) + '</p>' +
-                    '<ul class="guide-checklist guide-checklist--compact" role="list">' + renderChecklistHtml(data.checklist) + '</ul>' +
-                    '<button type="button" class="btn btn-primary btn-sm u-mt-2" data-guide-open-widget>' +
-                    escapeHtml(t('guide_open_panel', 'Open Guide')) + '</button>';
-            }
-            element.querySelector('[data-guide-open-widget]')?.addEventListener('click', function () {
-                global.BirklyGuide.open();
-            });
-        });
-    }
-
     function initAccountGuidePrefs() {
         if (document.body.getAttribute('data-admin-page') !== 'account') return;
         const form = document.getElementById('account-guide-form');
@@ -489,12 +460,32 @@
         return page !== 'onboarding' && page !== 'login';
     }
 
-    function init() {
-        registerDashboardWidget();
+    function startGuideChrome() {
         if (!shouldRun()) return;
         mountLauncher();
+        if (!document.getElementById('guide-launcher-btn')) {
+            return false;
+        }
         refresh();
         initAccountGuidePrefs();
+        return true;
+    }
+
+    function init() {
+        if (startGuideChrome()) {
+            return;
+        }
+        if (!shouldRun()) return;
+        document.addEventListener('birkly:assist-chrome-ready', function () {
+            startGuideChrome();
+        }, { once: true });
+        var attempts = 0;
+        (function retryMount() {
+            if (startGuideChrome() || attempts++ > 50) {
+                return;
+            }
+            setTimeout(retryMount, 50);
+        })();
     }
 
     function openGuide(options) {

@@ -5,7 +5,6 @@
   inset-block-end: var(--space-6);
   inset-inline-end: var(--space-6);
   z-index: var(--z-chrome);
-  pointer-events: none;
   --chrome-glass-bg: linear-gradient(
     165deg,
     color-mix(in srgb, var(--surface-raised) 78%, transparent) 0%,
@@ -18,6 +17,13 @@
     var(--elevation-2),
     inset 0 1px 0 color-mix(in srgb, var(--text-primary) 8%, transparent);
   --chrome-accent-glow: 0 0 1.25rem color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.assist-chrome-stack .assist-fab-wrap,
+.assist-chrome-stack #guide-launcher-mount,
+.assist-chrome-stack .guide-launcher-btn,
+.assist-chrome-stack .ai-chat-floating-btn {
+  pointer-events: auto;
 }
 
 .assist-fab-wrap {

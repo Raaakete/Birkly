@@ -289,8 +289,7 @@
     const STORAGE_KEY_MODELS = 'ai_chat_model_by_connection';
     const CONSOLE_LOG_LIMIT = 200;
 
-    // Initialize
-    document.addEventListener('DOMContentLoaded', function() {
+    function bootAssistChrome() {
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
         loadConsoleLogs();
         loadConnections().then(() => {
@@ -299,6 +298,11 @@
         createFloatingButton();
         loadApprovalQueue();
         setInterval(loadApprovalQueue, 30000);
+    }
+
+    // Initialize
+    function onAssistDomReady() {
+        bootAssistChrome();
 
         window.addEventListener('birkly:ai-connection-changed', function(event) {
             const detail = event.detail || {};
@@ -332,7 +336,13 @@
                 renderConnectionDropdown();
             });
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', onAssistDomReady);
+    } else {
+        onAssistDomReady();
+    }
 
     // Load available AI connections
     async function loadConnections() {
@@ -355,6 +365,10 @@
 
     // Create unified assist FAB with speed-dial (AI chat + feedback)
     function createFloatingButton() {
+        if (document.getElementById('assist-fab-wrap')) {
+            document.dispatchEvent(new CustomEvent('birkly:assist-chrome-ready'));
+            return;
+        }
         document.body.classList.add('assist-fab-active');
 
         let chromeStack = document.getElementById('assist-chrome-stack');
@@ -450,6 +464,8 @@
                 setAssistFabState('idle');
             }
         });
+
+        document.dispatchEvent(new CustomEvent('birkly:assist-chrome-ready'));
     }
 
     function updateApprovalBadge() {
