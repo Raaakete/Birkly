@@ -6,7 +6,10 @@ $privacyLink = '<a href="' . htmlspecialchars($privacyUrl, ENT_QUOTES, 'UTF-8') 
     . htmlspecialchars(__('admin.feedback_privacy_policy'), ENT_QUOTES, 'UTF-8') . '</a>';
 $termsLink = '<a href="' . htmlspecialchars($termsUrl, ENT_QUOTES, 'UTF-8') . '" target="_blank" rel="noopener noreferrer">'
     . htmlspecialchars(__('admin.feedback_alpha_terms'), ENT_QUOTES, 'UTF-8') . '</a>';
-$privacyNotice = sprintf(__('admin.feedback_privacy_notice'), $privacyLink, $termsLink);
+$privacyNotice = __('admin.feedback_privacy_notice', [
+    'privacy' => $privacyLink,
+    'terms' => $termsLink,
+]);
 $feedbackSubmitterEmail = trim((string) ($_SESSION['user']['email'] ?? ''));
 ?>
 <!-- Alpha feedback floating button + modal (P3-M10, P15-M4) -->

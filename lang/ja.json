@@ -1611,7 +1611,7 @@
         "feedback_error_prefix": "エラー：",
         "feedback_load_failed": "ロードに失敗しました。",
         "feedback_loading": "フィードバックを読み込んでいます…",
-        "feedback_privacy_notice": "あなたのフィードバックは、クローズドアルファ中のBirklyの改善に役立ちます。送信内容には、アカウントのメールアドレス、現在のページ、ブラウザ情報が含まれます。%1$sと%2$sをご覧ください。",
+        "feedback_privacy_notice": "あなたのフィードバックは、クローズドアルファ中のBirklyの改善に役立ちます。送信には現在の管理画面のページとブラウザ情報が含まれます。メールアドレスは、下のフォローアップ連絡をオンにした場合のみ Birkly チームと共有されます。{{privacy}}と{{terms}}をご覧ください。",
         "feedback_privacy_policy": "プライバシーポリシー",
         "feedback_refresh": "リフレッシュ",
         "feedback_save_failed": "保存に失敗しました",
