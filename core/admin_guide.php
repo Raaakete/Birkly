@@ -28,6 +28,7 @@ function birkly_guide_default_prefs(): array
         'journeys_completed' => [],
         'disable_attention' => false,
         'tips_snoozed_until' => null,
+        'guide_auto_open_pending' => false,
         'post_onboarding_nudge_pending' => false,
         'post_onboarding_nudge_dismissed_at' => null,
         'reset_at' => null,
@@ -65,7 +66,7 @@ function birkly_guide_merge_prefs(array $user, array $guidePatch): ?array
     $prefs = is_array($user['ui_preferences'] ?? null) ? $user['ui_preferences'] : [];
     $guide = birkly_guide_prefs_from_user($user);
     foreach ($guidePatch as $key => $value) {
-        if (array_key_exists($key, birkly_guide_default_prefs()) || in_array($key, ['tips_seen', 'attention_dismissed', 'journeys_completed'], true)) {
+        if (array_key_exists($key, birkly_guide_default_prefs()) || in_array($key, ['tips_seen', 'attention_dismissed', 'journeys_completed', 'guide_auto_open_pending'], true)) {
             $guide[$key] = $value;
         }
     }
@@ -283,8 +284,9 @@ function birkly_guide_checklist_item_visible(string $itemId, array $user): bool
     $permissionByItem = [
         'has_collection' => 'manage_content',
         'has_published_entry' => 'manage_content',
-        'hub_plugin_installed' => 'manage_plugins',
         'site_previewable' => 'manage_settings',
+        'ai_connection_configured' => 'manage_settings',
+        'hub_plugin_installed' => 'manage_plugins',
     ];
     $needed = $permissionByItem[$itemId] ?? null;
     if ($needed === null) {
@@ -314,12 +316,18 @@ function birkly_guide_checklist_items_for_user(?array $user): array
 /**
  * @return list<array<string, mixed>>
  */
-function birkly_guide_checklist_items(): array
+function birkly_guide_checklist_items(?array $user = null): array
 {
     $hasCollection = birkly_guide_count_collections() > 0;
     $hasPublished = birkly_guide_has_published_entry();
     $hasPlugin = birkly_guide_has_alpha_plugin_active();
     $previewable = birkly_guide_site_previewable();
+    $hasAi = birkly_guide_user_has_ai_connection($user);
+
+    require_once __DIR__ . '/project_site.php';
+    $visitHref = function_exists('birkly_public_site_visit_url')
+        ? birkly_public_site_visit_url()
+        : birkly_guide_admin_page_url('settings', ['tab' => 'site-delivery']);
 
     return [
         [
@@ -337,18 +345,25 @@ function birkly_guide_checklist_items(): array
             'journey_id' => 'first-content',
         ],
         [
+            'id' => 'site_previewable',
+            'done' => $previewable,
+            'href' => $visitHref !== '' ? $visitHref : birkly_guide_admin_page_url('settings', ['tab' => 'site-delivery']),
+            'help_topic' => 'getting-started',
+            'journey_id' => 'first-content',
+        ],
+        [
+            'id' => 'ai_connection_configured',
+            'done' => $hasAi,
+            'href' => birkly_guide_admin_page_url('settings', ['tab' => 'ai']),
+            'help_topic' => 'getting-started',
+            'journey_id' => 'first-content',
+        ],
+        [
             'id' => 'hub_plugin_installed',
             'done' => $hasPlugin,
             'href' => birkly_guide_admin_page_url('plugins'),
             'help_topic' => 'marketplace',
             'journey_id' => 'hub-first-plugin',
-        ],
-        [
-            'id' => 'site_previewable',
-            'done' => $previewable,
-            'href' => birkly_guide_admin_page_url('settings', ['tab' => 'site-delivery']),
-            'help_topic' => 'getting-started',
-            'journey_id' => null,
         ],
     ];
 }
@@ -397,10 +412,18 @@ function birkly_guide_resolve_journeys(array $guidePrefs): array
             $page = (string) ($step['href_page'] ?? '');
             $tab = (string) ($step['href_tab'] ?? '');
             $params = $tab !== '' ? ['tab' => $tab] : [];
+            $href = '';
+            if ($page === 'visit-project') {
+                require_once __DIR__ . '/project_site.php';
+                $href = function_exists('birkly_public_site_visit_url') ? birkly_public_site_visit_url() : '';
+            } elseif ($page !== '') {
+                $href = birkly_guide_admin_page_url($page, $params);
+            }
             $steps[] = [
                 'teach' => __('admin.' . (string) ($step['teach_key'] ?? '')),
-                'href' => $page !== '' ? birkly_guide_admin_page_url($page, $params) : '',
+                'href' => $href,
                 'help_topic' => (string) ($step['help_topic'] ?? 'getting-started'),
+                'open_in_new_tab' => $page === 'visit-project',
             ];
         }
         $out[] = [
@@ -457,14 +480,6 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
         }
     }
 
-    $showPostOnboardingNudge = $area === 'dashboard'
-        && !empty($guidePrefs['post_onboarding_nudge_pending'])
-        && empty($guidePrefs['post_onboarding_nudge_dismissed_at'])
-        && !$snoozed
-        && empty($guidePrefs['disable_attention'])
-        && ($guidePrefs['first_admin_visit_ack_at'] ?? null) !== null
-        && ($guidePrefs['first_admin_visit_ack_at'] ?? '') !== '';
-
     $checklist = birkly_guide_checklist_items_for_user($user);
     foreach ($checklist as &$item) {
         $item['label'] = __('admin.guide_checklist_' . ($item['id'] ?? ''));
@@ -472,7 +487,8 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
     unset($item);
 
     $shouldAutoOpen = ($guidePrefs['first_admin_visit_ack_at'] ?? null) === null
-        || $guidePrefs['first_admin_visit_ack_at'] === '';
+        || $guidePrefs['first_admin_visit_ack_at'] === ''
+        || !empty($guidePrefs['guide_auto_open_pending']);
 
     $checklistDone = count(array_filter($checklist, static fn ($item) => !empty($item['done'])));
 
@@ -485,7 +501,8 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
         'tip' => $tip,
         'attention' => $attention,
         'should_auto_open_panel' => $shouldAutoOpen,
-        'show_post_onboarding_nudge' => $showPostOnboardingNudge,
+        'guide_auto_open_pending' => !empty($guidePrefs['guide_auto_open_pending']),
+        'show_post_onboarding_nudge' => false,
         'tips_snoozed' => $snoozed,
         'journeys' => birkly_guide_resolve_journeys($guidePrefs),
         'concepts' => birkly_guide_resolve_concepts(),

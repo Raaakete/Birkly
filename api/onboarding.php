@@ -528,11 +528,17 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         
         saveOnboardingProgress($userId, $progressData);
 
+        require_once __DIR__ . '/../core/project_learning_site.php';
+        birkly_ensure_learning_project_site(birkly_project_root(), true);
+
         require_once __DIR__ . '/../core/birkly_users.php';
         require_once __DIR__ . '/../core/admin_guide.php';
         $account = birkly_load_user_account_for_session($_SESSION['user']);
         if ($account !== null) {
-            $updatedGuide = birkly_guide_merge_prefs($account, ['post_onboarding_nudge_pending' => true]);
+            $updatedGuide = birkly_guide_merge_prefs($account, [
+                'guide_auto_open_pending' => true,
+                'post_onboarding_nudge_pending' => false,
+            ]);
             if ($updatedGuide !== null) {
                 $_SESSION['user']['ui_preferences'] = $updatedGuide['ui_preferences'] ?? [];
             }
@@ -571,6 +577,22 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             'completed' => true,
             'completed_at' => date('c')
         ]);
+
+        require_once __DIR__ . '/../core/project_learning_site.php';
+        birkly_ensure_learning_project_site(birkly_project_root(), true);
+
+        require_once __DIR__ . '/../core/birkly_users.php';
+        require_once __DIR__ . '/../core/admin_guide.php';
+        $account = birkly_load_user_account_for_session($_SESSION['user']);
+        if ($account !== null) {
+            $updatedGuide = birkly_guide_merge_prefs($account, [
+                'guide_auto_open_pending' => true,
+                'post_onboarding_nudge_pending' => false,
+            ]);
+            if ($updatedGuide !== null) {
+                $_SESSION['user']['ui_preferences'] = $updatedGuide['ui_preferences'] ?? [];
+            }
+        }
         
         echo json_encode([
             'status' => 'ok',

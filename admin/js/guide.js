@@ -159,7 +159,8 @@
                     '<span class="guide-journey-step__index">' + stepNum + '</span>' +
                     '<p class="guide-journey-teach">' + escapeHtml(step.teach || '') + '</p></div>' +
                     '<div class="guide-journey-step__actions">' +
-                    (step.href ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(step.href) + '">' +
+                    (step.href ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(step.href) + '"' +
+                        (step.open_in_new_tab ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
                         escapeHtml(t('guide_journey_go', 'Go there')) + '</a>' : '') +
                     '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(step.help_topic || 'getting-started')) + '">' +
                         escapeHtml(t('guide_learn_more', 'Learn more')) + '</a></div></li>';
@@ -277,20 +278,19 @@
         }
     }
 
-    function isOnboardingWelcomeVisible() {
+    function isOnboardingWelcomeBlocking() {
         const modal = document.getElementById('onboarding-complete-modal');
         if (!modal) {
             return false;
         }
-        if (modal.style.display === 'flex') {
+        if (modal.dataset.showWelcome === '1') {
             return true;
         }
-        const params = new URLSearchParams(window.location.search);
-        return modal.dataset.showWelcome === '1' || params.get('onboarding_complete') === 'true';
+        return modal.style.display === 'flex';
     }
 
     function runFirstVisitAutoOpen(data) {
-        if (!data || !data.should_auto_open_panel || isOnboardingWelcomeVisible()) {
+        if (!data || !data.should_auto_open_panel || isOnboardingWelcomeBlocking()) {
             return;
         }
         setPanelOpen(true);
@@ -300,46 +300,6 @@
         }
     }
 
-    function dismissPostOnboardingNudge() {
-        return postUpdate({ dismiss_post_onboarding_nudge: true }).then(applyProgress);
-    }
-
-    function updatePostOnboardingBanner(data) {
-        const mount = document.getElementById('guide-post-onboarding-mount');
-        if (!mount || document.body.getAttribute('data-admin-page') !== 'dashboard') {
-            return;
-        }
-        if (!data || !data.show_post_onboarding_nudge) {
-            mount.hidden = true;
-            mount.innerHTML = '';
-            mount.dataset.bound = '';
-            return;
-        }
-        mount.hidden = false;
-        if (mount.dataset.bound === '1') {
-            return;
-        }
-        mount.className = 'guide-post-onboarding-mount callout callout-info';
-        mount.setAttribute('role', 'region');
-        mount.setAttribute('aria-label', t('guide_post_onboarding_title', 'Continue in Guide'));
-        mount.innerHTML =
-            '<div class="u-split u-gap-3">' +
-            '<div><p class="u-text-sm u-mb-0"><strong>' + escapeHtml(t('guide_post_onboarding_title', 'Continue in Guide')) + '</strong></p>' +
-            '<p class="u-text-sm u-fg-secondary u-mb-0">' + escapeHtml(t('guide_post_onboarding_body', 'Use the checklist and journeys to publish your first content and explore Hub.')) + '</p></div>' +
-            '<div class="u-cluster u-shrink-0">' +
-            '<button type="button" class="btn btn-primary btn-sm" data-guide-nudge-open>' + escapeHtml(t('guide_open_panel', 'Open Guide')) + '</button>' +
-            '<button type="button" class="btn btn-ghost btn-sm" data-guide-nudge-dismiss>' + escapeHtml(t('guide_post_onboarding_dismiss', 'Dismiss')) + '</button>' +
-            '</div></div>';
-        mount.dataset.bound = '1';
-        mount.querySelector('[data-guide-nudge-open]')?.addEventListener('click', function () {
-            openGuide({ tab: 'setup' });
-            dismissPostOnboardingNudge().catch(function () { /* ignore */ });
-        });
-        mount.querySelector('[data-guide-nudge-dismiss]')?.addEventListener('click', function () {
-            dismissPostOnboardingNudge().catch(function () { /* ignore */ });
-        });
-    }
-
     function applyProgress(data) {
         state.data = data;
         state.area = data.area || '';
@@ -347,14 +307,13 @@
         const showAttention = !!data.attention && !state.open;
         setLauncherAttention(showAttention);
         runFirstVisitAutoOpen(data);
-        updatePostOnboardingBanner(data);
         global.dispatchEvent(new CustomEvent('birkly:guide-progress', { detail: data }));
     }
 
     function afterOnboardingWelcomeClosed() {
         fetchProgress().then(function (data) {
             applyProgress(data);
-            if (data.should_auto_open_panel) {
+            if (data.should_auto_open_panel || data.guide_auto_open_pending) {
                 runFirstVisitAutoOpen(data);
             }
         }).catch(function () { /* ignore */ });
