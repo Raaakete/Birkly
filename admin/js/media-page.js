@@ -502,9 +502,29 @@ function resolveMediaItemUrl(url) {
     grid.innerHTML = '';
 
     if (!items.length) {
-      grid.innerHTML = '<div class="empty-state empty-state--compact">' +
-        '<p class="empty-state-title">' + escapeHtml(mdT('media_js_empty_title', 'No media found')) + '</p>' +
-        '<p class="empty-state-text">' + escapeHtml(mdT('media_js_empty_hint', 'Upload files or change the current filters.')) + '</p></div>';
+      const searchActive = Boolean((document.getElementById('media-search')?.value || '').trim());
+      const typeActive = Boolean((document.getElementById('type-filter')?.value || '').trim());
+      const libraryEmpty = state.currentMedia.length === 0;
+      grid.innerHTML = '';
+      if (libraryEmpty && !searchActive && !typeActive && window.Birkly && typeof window.Birkly.renderEmptyState === 'function') {
+        grid.appendChild(window.Birkly.renderEmptyState({
+          title: mdT('media_empty_library_title', 'Your media library is empty'),
+          hint: mdT('media_empty_library_hint', 'Upload images and files to use in entries and templates.'),
+          primary: {
+            label: mdT('upload_media', 'Upload Media'),
+            onClick: uploadMedia,
+          },
+          secondary: {
+            label: mdT('guide_show_me_how', 'Show me how'),
+            guideAction: 'first-content',
+          },
+          helpTopic: 'media-library',
+        }));
+      } else {
+        grid.innerHTML = '<div class="empty-state empty-state--compact">' +
+          '<p class="empty-state-title">' + escapeHtml(mdT('media_js_empty_title', 'No media found')) + '</p>' +
+          '<p class="empty-state-text">' + escapeHtml(mdT('media_js_empty_hint', 'Upload files or change the current filters.')) + '</p></div>';
+      }
       updateSelectionToolbar();
       return;
     }

@@ -555,6 +555,16 @@ body.entries-filter-drawer-open { overflow: hidden; }
   transition: opacity var(--motion-fast) var(--ease-out);
 }
 
+.entries-smart-table .entries-empty-cell {
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.entries-smart-table .entries-empty-cell .empty-state {
+  margin-inline: auto;
+  max-width: var(--measure-md, 48ch);
+}
+
 /* components/tables.css sets `display: flex` on the bulk bar, which beats the
    UA `[hidden]` rule. Until the component honours `[hidden]` itself, the page
    restores it so the template can drop `style="display:none"`. */
