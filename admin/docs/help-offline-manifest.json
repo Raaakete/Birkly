@@ -954,6 +954,23 @@
             "ai_topic": "templating"
         },
         {
+            "id": "admin-guide-companion",
+            "title": "Admin Guide companion",
+            "keywords": [
+                "guide",
+                "checklist",
+                "journey",
+                "onboarding",
+                "setup",
+                "empty state"
+            ],
+            "snapshot": "/admin/docs/snapshots/admin-guide-companion.md",
+            "docs_path": "01-admin/admin-guide-companion.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "getting-started"
+        },
+        {
             "id": "getting-started",
             "title": "Getting started",
             "keywords": [

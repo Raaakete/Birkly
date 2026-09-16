@@ -5,6 +5,7 @@
 
 require_once __DIR__ . '/../core/i18n.php';
 require_once __DIR__ . '/../core/admin_guide.php';
+require_once __DIR__ . '/../api/auth.php';
 
 function guide_assert(string $label, bool $ok): void
 {
@@ -59,5 +60,10 @@ $payloadNudge = birkly_guide_build_progress_payload($prefsNudge, 'dashboard');
 guide_assert('post onboarding nudge on dashboard', !empty($payloadNudge['show_post_onboarding_nudge']));
 $payloadNudgeContent = birkly_guide_build_progress_payload($prefsNudge, 'content');
 guide_assert('no nudge off dashboard', empty($payloadNudgeContent['show_post_onboarding_nudge']));
+
+$adminUser = ['role' => 'admin', 'permissions' => ['*']];
+$viewerUser = ['role' => 'viewer', 'permissions' => ['read', 'read_media']];
+guide_assert('admin sees full checklist', count(birkly_guide_checklist_items_for_user($adminUser)) === 4);
+guide_assert('viewer sees no hub item', count(birkly_guide_checklist_items_for_user($viewerUser)) === 0);
 
 echo "guide_core_test passed.\n";

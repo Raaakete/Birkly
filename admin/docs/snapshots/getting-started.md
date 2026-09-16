@@ -2,6 +2,8 @@
 
 ## Summary
 
+**Tip:** After you log in, open **Guide** (launcher above Assist) for a verified setup checklist and short journeys — or read this page for the full install and content walkthrough.
+
 Get started with Birkly in six steps: (0) Install via **release zip** or **Docker**, then open **START_HERE.html** before admin login. (1) Log in to the admin. (2) Complete the first-time wizard (project name, use case, optional AI). (3) Create a collection (e.g. “Blog posts”) and add fields (title, content, date, image). (4) Add one or more entries and set status to Published. (5) Add the Birkly client script to your website so it can load and display the content. No coding is required for basic content creation; connecting the site is one script tag plus simple placeholders in your HTML.
 
 Supported install channels are **zip** and **Docker** only — Composer, npm, and cPanel installers are not documented product paths. See [Deployment](../07-operations/deployment.md) and [Hosting on Dokploy](../07-operations/dokploy-hosting.md).
