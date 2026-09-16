@@ -244,6 +244,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         $name = trim($input['name'] ?? '');
         $email = trim($input['email'] ?? '');
         $password = $input['password'] ?? '';
+        $language = trim((string) ($input['language'] ?? 'en'));
         
         if (empty($name) || empty($email) || empty($password)) {
             http_response_code(400);
@@ -287,6 +288,11 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         // Create first admin user
         require_once __DIR__ . '/storage.php';
         require_once __DIR__ . '/users.php'; // For hashPassword function
+        require_once __DIR__ . '/../core/i18n.php';
+        $availableLangs = I18n::getAvailableLanguages();
+        if ($language === '' || !isset($availableLangs[$language])) {
+            $language = 'en';
+        }
         
         $userId = md5(strtolower(trim($email)));
         $userFile = $userId . '.json';
@@ -303,6 +309,7 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
             'email' => strtolower(trim($email)),
             'password' => hashPassword($password),
             'role' => 'admin',
+            'language' => $language,
             'created_at' => date('c'),
             'is_first_user' => true
         ];
@@ -319,9 +326,11 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         unset($user['password']);
         haru_secure_session_start();
         $_SESSION['user'] = $user;
+        $_SESSION['admin_language'] = $language;
         $_SESSION['last_activity'] = time();
         require_once __DIR__ . '/../core/csrf.php';
         generate_csrf_token();
+        I18n::setLanguage($language);
         
         echo json_encode([
             'status' => 'ok',

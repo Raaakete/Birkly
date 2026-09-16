@@ -391,6 +391,10 @@
   border-radius: var(--radius-sm);
 }
 
+.bulk-actions-toolbar[hidden] {
+  display: none !important;
+}
+
 .bulk-actions-content {
   display: flex;
   align-items: center;
