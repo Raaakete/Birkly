@@ -1961,6 +1961,9 @@ function birkly_ai_presence_is_safe_external_url(string $url): bool
     if (str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
         return false;
     }
+    if (filter_var($host, FILTER_VALIDATE_IP)) {
+        return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+    }
     $ip = gethostbyname($host);
     if ($ip !== $host && filter_var($ip, FILTER_VALIDATE_IP)) {
         if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
@@ -1975,29 +1978,20 @@ function birkly_ai_presence_is_safe_external_url(string $url): bool
  */
 function birkly_ai_presence_fetch_url_meta(string $url): array
 {
-    if (!birkly_ai_presence_is_safe_external_url($url)) {
-        return ['ok' => false, 'error' => 'URL is not allowed'];
+    if (!function_exists('birkly_safe_http_fetch')) {
+        require_once __DIR__ . '/safe_http_fetch.php';
     }
 
-    $ch = curl_init($url);
-    if ($ch === false) {
-        return ['ok' => false, 'error' => 'Failed to initialize request'];
-    }
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_MAXREDIRS => 3,
-        CURLOPT_TIMEOUT => 10,
-        CURLOPT_USERAGENT => 'Mozilla/5.0 (compatible; Birkly/1.0)',
-        CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+    $fetch = birkly_safe_http_fetch($url, [
+        'timeout' => 10,
+        'user_agent' => 'Mozilla/5.0 (compatible; Birkly/1.0)',
+        'max_bytes' => 500000,
     ]);
-    $html = curl_exec($ch);
-    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    if ($html === false || $httpCode >= 400) {
-        return ['ok' => false, 'error' => 'Failed to fetch URL'];
+    if (empty($fetch['ok'])) {
+        return ['ok' => false, 'error' => $fetch['error'] ?? 'Failed to fetch URL'];
     }
+
+    $html = (string) ($fetch['body'] ?? '');
 
     $title = '';
     if (preg_match('/<title[^>]*>(.*?)<\/title>/is', (string) $html, $m)) {

@@ -1,6 +1,9 @@
 <?php
 /**
- * Minimal deploy fingerprint — no plugin bootstrap (safe health check for Dokploy).
+ * Deploy fingerprint — public health vs authenticated diagnostics (P88).
+ *
+ * Unauthenticated: minimal JSON only (build revision).
+ * Diagnostics: require X-BIRKLY-DEPLOY-SECRET (BIRKLY_DEPLOY_DIAG_SECRET).
  */
 declare(strict_types=1);
 
@@ -11,15 +14,12 @@ require_once __DIR__ . '/../core/birkly_paths.php';
 require_once __DIR__ . '/../core/birkly_data_paths.php';
 require_once __DIR__ . '/../core/hosting_urls.php';
 require_once __DIR__ . '/../core/ops_starters_client.php';
+require_once __DIR__ . '/../core/deploy_health.php';
 
 $revision = birkly_deploy_revision();
-$pluginsFile = birkly_project_root() . '/core/plugins.php';
-$pluginsSnippet = is_readable($pluginsFile)
-    ? (string) file_get_contents($pluginsFile, false, null, 0, 400)
-    : '';
-
 $projectRoot = birkly_project_root();
-$hosting = birkly_hosting_load();
+$action = trim((string) ($_GET['action'] ?? ''));
+
 $installationId = null;
 $installationFile = $projectRoot . '/settings/installation.json';
 if (is_readable($installationFile)) {
@@ -28,12 +28,6 @@ if (is_readable($installationFile)) {
         $installationId = $installation['installation_id'] ?? null;
     }
 }
-$dataRoot = getenv('BIRKLY_DATA') ?: '';
-$dataRootResolved = $dataRoot !== '' ? (realpath($dataRoot) ?: $dataRoot) : null;
-$opsStarters = birkly_ops_starters_diagnostics('marsk');
-$opsStarters['install_probe'] = birkly_ops_starters_install_probe($projectRoot, 'marsk');
-
-$action = trim((string) ($_GET['action'] ?? ''));
 
 /**
  * @return array<string, mixed>
@@ -58,10 +52,10 @@ function birkly_deploy_revision_plugin_diagnostics(string $projectRoot): array
         $syntaxOk = null;
         $syntaxDetail = null;
         if (is_file($pluginFile)) {
-            $output = shell_exec('php -l ' . escapeshellarg($pluginFile) . ' 2>&1') ?? '';
-            $syntaxOk = str_contains($output, 'No syntax errors detected');
+            $lint = birkly_php_lint_file($pluginFile);
+            $syntaxOk = $lint['ok'];
             if (!$syntaxOk) {
-                $syntaxDetail = trim($output);
+                $syntaxDetail = $lint['detail'];
             }
         }
         $rows[$pluginId] = [
@@ -94,31 +88,81 @@ function birkly_deploy_revision_plugin_diagnostics(string $projectRoot): array
     }
 
     return [
-        'plugins_dir' => $pluginsDir,
-        'settings_dir' => $settingsDir,
         'plugins' => $rows,
     ];
 }
 
-if ($action === 'diagnose_plugins') {
-    echo json_encode([
+/**
+ * @return array<string, mixed>
+ */
+function birkly_deploy_diag_verbose_payload(string $projectRoot, ?string $installationId): array
+{
+    $hosting = birkly_hosting_load();
+    $dataRoot = getenv('BIRKLY_DATA') ?: '';
+    $dataRootResolved = $dataRoot !== '' ? (realpath($dataRoot) ?: $dataRoot) : null;
+    $opsStarters = birkly_ops_starters_diagnostics('marsk');
+    $opsStarters['install_probe'] = birkly_ops_starters_install_probe($projectRoot, 'marsk');
+
+    $pluginsFile = $projectRoot . '/core/plugins.php';
+    $pluginsSnippet = is_readable($pluginsFile)
+        ? (string) file_get_contents($pluginsFile, false, null, 0, 400)
+        : '';
+
+    return [
         'status' => 'ok',
         'service' => 'birkly-cms',
-        'build_revision' => $revision,
-        'installation_id' => $installationId,
-        'plugins' => birkly_deploy_revision_plugin_diagnostics($projectRoot),
+        'build_revision' => birkly_deploy_revision(),
+        'plugin_registry_globals' => str_contains($pluginsSnippet, 'GLOBALS[\'birkly_plugins\']'),
+        'hosting' => [
+            'cms_base_url' => $hosting['cms_base_url'] ?? '',
+            'public_site_mode' => $hosting['public_site_mode'] ?? 'none',
+            'public_site_url' => $hosting['public_site_url'] ?? '',
+            'request_host' => birkly_cms_request_host(),
+            'request_host_role' => birkly_request_host_role(),
+            'env_overrides' => birkly_hosting_env_overrides(),
+            'trust_request_host' => birkly_hosting_trust_request_host(),
+        ],
+        'volume' => [
+            'installation_id' => $installationId,
+            'data_root' => $dataRootResolved,
+        ],
+        'ops_starters' => $opsStarters,
         'time' => gmdate('c'),
-    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-    exit;
+    ];
 }
 
-if ($action === 'sync_bundled_plugin') {
+function birkly_deploy_require_installation_match(?string $installationId): void
+{
     $requestedId = trim((string) ($_GET['installation_id'] ?? ''));
     if ($requestedId === '' || $installationId === null || !hash_equals((string) $installationId, $requestedId)) {
         http_response_code(403);
         echo json_encode(['status' => 'error', 'message' => 'installation_id mismatch'], JSON_UNESCAPED_UNICODE);
         exit;
     }
+}
+
+if ($action === 'diagnose') {
+    birkly_require_deploy_diag_auth();
+    echo json_encode(
+        birkly_deploy_diag_verbose_payload($projectRoot, $installationId),
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+    exit;
+}
+
+if ($action !== '') {
+    birkly_require_deploy_diag_auth();
+}
+
+if ($action === 'diagnose_plugins') {
+    $payload = birkly_deploy_diag_verbose_payload($projectRoot, $installationId);
+    $payload['plugins'] = birkly_deploy_revision_plugin_diagnostics($projectRoot);
+    echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if ($action === 'sync_bundled_plugin') {
+    birkly_deploy_require_installation_match($installationId);
 
     $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
     if ($pluginId === '' || !preg_match('/^[a-z0-9_-]+$/i', $pluginId)) {
@@ -131,7 +175,7 @@ if ($action === 'sync_bundled_plugin') {
     $targetDir = $projectRoot . '/plugins/' . $pluginId;
     if (!is_dir($bundleDir)) {
         http_response_code(404);
-        echo json_encode(['status' => 'error', 'message' => 'bundled plugin not found', 'bundle_dir' => $bundleDir], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['status' => 'error', 'message' => 'bundled plugin not found'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
@@ -171,22 +215,18 @@ if ($action === 'sync_bundled_plugin') {
 
 if ($action === 'probe_plugin_load') {
     $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
-    if ($pluginId === '' || !preg_match('/^[a-z0-9_-]+$/i', $pluginId)) {
+    $probe = birkly_probe_plugin_load($pluginId);
+    if (!$probe['ok'] && ($probe['error'] ?? '') === 'invalid plugin_id') {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => 'invalid plugin_id'], JSON_UNESCAPED_UNICODE);
         exit;
     }
 
-    $probeScript = $projectRoot . '/scripts/probe-plugin-load.php';
-    $cmd = 'php ' . escapeshellarg($probeScript) . ' ' . escapeshellarg($pluginId) . ' 2>&1';
-    $output = shell_exec($cmd) ?? '';
-    $ok = str_contains($output, 'OK');
-
     echo json_encode([
-        'status' => $ok ? 'ok' : 'error',
+        'status' => $probe['ok'] ? 'ok' : 'error',
         'plugin_id' => $pluginId,
-        'load_ok' => $ok,
-        'detail' => trim($output) !== 'OK' ? trim($output) : null,
+        'load_ok' => $probe['ok'],
+        'detail' => $probe['error'],
         'plugins' => birkly_deploy_revision_plugin_diagnostics($projectRoot),
         'time' => gmdate('c'),
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -194,15 +234,7 @@ if ($action === 'probe_plugin_load') {
 }
 
 if ($action === 'repair_plugins') {
-    $requestedId = trim((string) ($_GET['installation_id'] ?? ''));
-    if ($requestedId === '' || $installationId === null || !hash_equals((string) $installationId, $requestedId)) {
-        http_response_code(403);
-        echo json_encode([
-            'status' => 'error',
-            'message' => 'installation_id mismatch',
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+    birkly_deploy_require_installation_match($installationId);
 
     require_once $projectRoot . '/api/storage.php';
     $storage = new Storage($projectRoot . '/settings');
@@ -244,8 +276,8 @@ if ($action === 'repair_plugins') {
             if (!is_file($pluginFile)) {
                 $deactivate = true;
             } else {
-                $output = shell_exec('php -l ' . escapeshellarg($pluginFile) . ' 2>&1') ?? '';
-                $deactivate = !str_contains($output, 'No syntax errors detected');
+                $lint = birkly_php_lint_file($pluginFile);
+                $deactivate = !$lint['ok'];
             }
         }
         if ($deactivate) {
@@ -270,12 +302,7 @@ if ($action === 'repair_plugins') {
 }
 
 if ($action === 'plugin_dev_sync_now') {
-    $requestedId = trim((string) ($_GET['installation_id'] ?? ''));
-    if ($requestedId === '' || $installationId === null || !hash_equals((string) $installationId, $requestedId)) {
-        http_response_code(403);
-        echo json_encode(['status' => 'error', 'message' => 'installation_id mismatch'], JSON_UNESCAPED_UNICODE);
-        exit;
-    }
+    birkly_deploy_require_installation_match($installationId);
 
     $script = $projectRoot . '/scripts/plugin-dev-git-sync.sh';
     if (!is_file($script)) {
@@ -284,8 +311,21 @@ if ($action === 'plugin_dev_sync_now') {
         exit;
     }
 
-    $cmd = 'sh ' . escapeshellarg($script) . ' 2>&1';
-    $output = shell_exec($cmd) ?? '';
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $process = @proc_open(['sh', $script], $descriptors, $pipes, $projectRoot);
+    $output = '';
+    if (is_resource($process)) {
+        fclose($pipes[0]);
+        $output = (string) stream_get_contents($pipes[1]) . (string) stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+    }
+
     $automationJson = $projectRoot . '/plugins/automation/plugin.json';
     $version = null;
     if (is_readable($automationJson)) {
@@ -306,23 +346,10 @@ if ($action === 'plugin_dev_sync_now') {
     exit;
 }
 
-echo json_encode([
-    'service' => 'birkly-cms',
-    'build_revision' => $revision,
-    'plugin_registry_globals' => str_contains($pluginsSnippet, 'GLOBALS[\'birkly_plugins\']'),
-    'hosting' => [
-        'cms_base_url' => $hosting['cms_base_url'] ?? '',
-        'public_site_mode' => $hosting['public_site_mode'] ?? 'none',
-        'public_site_url' => $hosting['public_site_url'] ?? '',
-        'request_host' => birkly_cms_request_host(),
-        'request_host_role' => birkly_request_host_role(),
-        'env_overrides' => birkly_hosting_env_overrides(),
-        'trust_request_host' => birkly_hosting_trust_request_host(),
-    ],
-    'volume' => [
-        'installation_id' => $installationId,
-        'data_root' => $dataRootResolved,
-    ],
-    'ops_starters' => $opsStarters,
-    'time' => gmdate('c'),
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+if ($action !== '') {
+    http_response_code(400);
+    echo json_encode(['status' => 'error', 'message' => 'unknown action'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+echo json_encode(birkly_public_deploy_health_payload(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

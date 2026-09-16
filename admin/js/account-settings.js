@@ -366,6 +366,25 @@ function renderCloudAccountStatus(container, status) {
     document.getElementById('cloud-account-link-btn')?.addEventListener('click', startCloudAccountLink);
 }
 
+function isAllowedCloudOAuthRedirect(authorizationUrl, oauthBaseUrl) {
+    if (!authorizationUrl || typeof authorizationUrl !== 'string') {
+        return false;
+    }
+    try {
+        const target = new URL(authorizationUrl.trim());
+        if (target.protocol !== 'https:') {
+            return false;
+        }
+        if (!oauthBaseUrl || typeof oauthBaseUrl !== 'string') {
+            return false;
+        }
+        const base = new URL(oauthBaseUrl.trim());
+        return base.protocol === 'https:' && target.host === base.host;
+    } catch (e) {
+        return false;
+    }
+}
+
 async function startCloudAccountLink() {
     const btn = document.getElementById('cloud-account-link-btn');
     if (btn) btn.disabled = true;
@@ -378,7 +397,12 @@ async function startCloudAccountLink() {
         });
         const data = await response.json();
         if (data.status !== 'ok') throw new Error(data.message || 'Failed to start link');
-        window.location.href = data.data.authorization_url;
+        const authUrl = data.data && data.data.authorization_url;
+        const oauthBase = data.data && data.data.oauth_base_url;
+        if (!isAllowedCloudOAuthRedirect(authUrl, oauthBase)) {
+            throw new Error('Invalid cloud authorization redirect');
+        }
+        window.location.href = authUrl;
     } catch (err) {
         showCloudAccountMessage(err.message || 'Failed to start cloud account link', 'error');
         if (btn) btn.disabled = false;
