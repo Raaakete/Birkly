@@ -31,6 +31,7 @@ if (!is_array($manifest)) {
 $excludes = $manifest['excludes'] ?? [];
 $shippedPluginFiles = $manifest['plugins_dir_shipped_files'] ?? ['plugins/README.md', 'plugins/.gitkeep'];
 $runtimeSkeletonFiles = $manifest['runtime_skeleton_files'] ?? [];
+$executableFiles = $manifest['executable_files'] ?? ['start-server.sh'];
 
 $excludeRules = [];
 $includeExceptions = [];
@@ -151,6 +152,18 @@ foreach ($runtimeSkeletonFiles as $rel) {
     }
 }
 
+foreach ($executableFiles as $rel) {
+    $rel = str_replace('\\', '/', $rel);
+    $dest = $staging . '/' . $rel;
+    if (is_file($dest)) {
+        @chmod($dest, 0755);
+    }
+}
+
+$zipUnixExecAttrs = static function (int $mode): int {
+    return ($mode & 0xFFFF) << 16;
+};
+
 $zip = new ZipArchive();
 if ($zip->open($out, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
     fwrite(STDERR, "[build-cms-release] FAIL: cannot create $out\n");
@@ -171,6 +184,9 @@ foreach ($stageIterator as $file) {
         $zip->addEmptyDir($rel);
     } else {
         $zip->addFile($path, $rel);
+        if (in_array($rel, $executableFiles, true)) {
+            $zip->setExternalAttributesName($rel, ZipArchive::OPSYS_UNIX, $zipUnixExecAttrs(0755));
+        }
     }
 }
 
