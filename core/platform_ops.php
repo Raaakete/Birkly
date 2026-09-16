@@ -26,6 +26,15 @@ function birkly_ops_installations_register_url(): string
         return str_replace('/api/ops/v1/feedback', '/api/ops/v1/installations/register', $relay);
     }
 
+    // Fallback: owner installs on older CMS builds could have an empty relay URL while still
+    // needing registration (P86 — provision feedback_relay_secret for Ops inbox).
+    $defaultRelay = defined('BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL')
+        ? BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL
+        : 'https://ops.birkly.cloud/api/ops/v1/feedback';
+    if (str_contains($defaultRelay, '/api/ops/v1/feedback')) {
+        return str_replace('/api/ops/v1/feedback', '/api/ops/v1/installations/register', $defaultRelay);
+    }
+
     return '';
 }
 

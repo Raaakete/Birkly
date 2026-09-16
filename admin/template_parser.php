@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../core/build_info.php';
 
 class TemplateParser {
     private $data = [];
@@ -124,6 +125,15 @@ class TemplateParser {
             '/\{birkly_url\s+[\'"]([^\'"]+)[\'"]\}/',
             function ($matches) {
                 return '<?= birkly_url(\'' . addslashes($matches[1]) . '\') ?>';
+            },
+            $parsed
+        );
+
+        // Handle {plugin_asset_url 'user_management' 'admin/site_users.js'}
+        $parsed = preg_replace_callback(
+            '/\{plugin_asset_url\s+[\'"]([^\'"]+)[\'"]\s+[\'"]([^\'"]+)[\'"]\}/',
+            function ($matches) {
+                return '<?= htmlspecialchars(birkly_plugin_asset_url(\'' . addslashes($matches[1]) . '\', \'' . addslashes($matches[2]) . '\')) ?>';
             },
             $parsed
         );
