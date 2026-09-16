@@ -70,7 +70,7 @@
         try {
             const res = await fetch(feedbackApiUrl(), {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     action: 'submit',
@@ -82,9 +82,15 @@
                     _csrf: csrf(),
                 }),
             });
-            const data = await res.json();
+            const raw = await res.text();
+            let data = {};
+            try {
+                data = raw ? JSON.parse(raw) : {};
+            } catch (parseErr) {
+                throw new Error(fbT('feedback_submit_failed', 'Submission failed'));
+            }
             if (!res.ok || data.status !== 'ok') {
-                throw new Error(data.message || fbT('feedback_submit_failed', 'Submission failed'));
+                throw new Error(data.message || data.error || fbT('feedback_submit_failed', 'Submission failed'));
             }
 
             document.getElementById('feedback-submit-form')?.reset();

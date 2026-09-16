@@ -139,7 +139,8 @@ function birkly_feedback_relay_url(): string
         return '';
     }
 
-    return BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL;
+    // Self-host / alpha: relay only when explicitly configured (P86-D6).
+    return '';
 }
 
 function birkly_feedback_relay_secret(): string
