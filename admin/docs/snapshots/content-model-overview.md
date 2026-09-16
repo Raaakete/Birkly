@@ -2,6 +2,8 @@
 
 ## Summary
 
+**From Guide:** The **first-content** journey in admin **Guide** walks you through creating a collection and publishing an entry — use it if you prefer steps inside the CMS.
+
 Birkly organizes site content with two primitives: **collections** (content types / schemas) and **entries** (individual items). There is no separate “singleton” or “document” type — one-off pages, shared chrome, and repeating lists all use collections and entries. Use this page as the start-here guide before creating schema in the admin.
 
 ## Beginner

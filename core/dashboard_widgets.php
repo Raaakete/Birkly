@@ -142,9 +142,13 @@ function birkly_normalize_dashboard_widget_roles($roles): ?array
  */
 function birkly_get_core_dashboard_widgets(): array
 {
+    $guideWidgetTitle = function_exists('__')
+        ? __('admin.guide_widget_title')
+        : 'Getting set up';
+
     $widgets = [
         // Sizes: md = 1× column, lg = 2× columns (see .dash-widget--1x / --2x).
-        ['id' => 'guide-setup', 'title' => 'Getting set up', 'size' => 'lg', 'priority' => 4, 'endpoint' => '/api/guide.php?action=progress&page=dashboard', 'mount' => 'guideSetup'],
+        ['id' => 'guide-setup', 'title' => $guideWidgetTitle, 'size' => 'lg', 'priority' => 4, 'endpoint' => '/api/guide.php?action=progress&page=dashboard', 'mount' => 'guideSetup'],
         ['id' => 'content-snapshot', 'title' => 'Content overview', 'size' => 'md', 'priority' => 5, 'endpoint' => '/api/dashboard.php?action=stats', 'mount' => 'contentSnapshot'],
         ['id' => 'analytics-mini', 'title' => 'Website analytics', 'size' => 'lg', 'priority' => 10, 'endpoint' => '/api/dashboard.php?action=analytics', 'mount' => 'analyticsMini', 'roles' => ['admin']],
         ['id' => 'recent-collections', 'title' => 'Recent collections', 'size' => 'md', 'priority' => 20, 'mount' => 'recentCollections'],
