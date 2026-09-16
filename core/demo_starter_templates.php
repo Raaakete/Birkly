@@ -293,18 +293,21 @@ function birkly_demo_install_starter_template(string $templateId, string $projec
 
     if ($templateId === 'blank') {
         require_once __DIR__ . '/project_learning_site.php';
-        $learning = birkly_ensure_learning_project_site($projectRoot, true);
+        $wrote = birkly_write_learning_project_site_index($projectRoot);
+        if ($wrote) {
+            birkly_demo_enable_visit_project_after_install($projectRoot);
+        }
+        $indexPath = $websiteRoot . '/index.html';
         return [
-            'success' => (bool) ($learning['ok'] ?? false),
+            'success' => $wrote,
             'template' => $templateId,
             'installed_collections' => [],
             'demo_website' => false,
-            'project_site' => (bool) ($learning['created'] ?? false) || is_file($websiteRoot . '/index.html'),
+            'project_site' => $wrote && is_file($indexPath),
             'removed' => $removed,
-            'message' => ($learning['ok'] ?? false)
+            'message' => $wrote
                 ? 'Starter content cleared; learning site ready in project/'
-                : ($learning['message'] ?? 'Starter content cleared'),
-            'learning_site' => $learning,
+                : 'Starter content cleared but learning site could not be written',
         ];
     }
 

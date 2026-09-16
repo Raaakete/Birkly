@@ -28,6 +28,7 @@ function birkly_guide_default_prefs(): array
         'journeys_completed' => [],
         'disable_attention' => false,
         'tips_snoozed_until' => null,
+        'guide_auto_open_pending' => false,
         'post_onboarding_nudge_pending' => false,
         'post_onboarding_nudge_dismissed_at' => null,
         'reset_at' => null,
@@ -65,7 +66,7 @@ function birkly_guide_merge_prefs(array $user, array $guidePatch): ?array
     $prefs = is_array($user['ui_preferences'] ?? null) ? $user['ui_preferences'] : [];
     $guide = birkly_guide_prefs_from_user($user);
     foreach ($guidePatch as $key => $value) {
-        if (array_key_exists($key, birkly_guide_default_prefs()) || in_array($key, ['tips_seen', 'attention_dismissed', 'journeys_completed'], true)) {
+        if (array_key_exists($key, birkly_guide_default_prefs()) || in_array($key, ['tips_seen', 'attention_dismissed', 'journeys_completed', 'guide_auto_open_pending'], true)) {
             $guide[$key] = $value;
         }
     }
@@ -479,14 +480,6 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
         }
     }
 
-    $showPostOnboardingNudge = $area === 'dashboard'
-        && !empty($guidePrefs['post_onboarding_nudge_pending'])
-        && empty($guidePrefs['post_onboarding_nudge_dismissed_at'])
-        && !$snoozed
-        && empty($guidePrefs['disable_attention'])
-        && ($guidePrefs['first_admin_visit_ack_at'] ?? null) !== null
-        && ($guidePrefs['first_admin_visit_ack_at'] ?? '') !== '';
-
     $checklist = birkly_guide_checklist_items_for_user($user);
     foreach ($checklist as &$item) {
         $item['label'] = __('admin.guide_checklist_' . ($item['id'] ?? ''));
@@ -494,7 +487,8 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
     unset($item);
 
     $shouldAutoOpen = ($guidePrefs['first_admin_visit_ack_at'] ?? null) === null
-        || $guidePrefs['first_admin_visit_ack_at'] === '';
+        || $guidePrefs['first_admin_visit_ack_at'] === ''
+        || !empty($guidePrefs['guide_auto_open_pending']);
 
     $checklistDone = count(array_filter($checklist, static fn ($item) => !empty($item['done'])));
 
@@ -507,7 +501,8 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area, ?a
         'tip' => $tip,
         'attention' => $attention,
         'should_auto_open_panel' => $shouldAutoOpen,
-        'show_post_onboarding_nudge' => $showPostOnboardingNudge,
+        'guide_auto_open_pending' => !empty($guidePrefs['guide_auto_open_pending']),
+        'show_post_onboarding_nudge' => false,
         'tips_snoozed' => $snoozed,
         'journeys' => birkly_guide_resolve_journeys($guidePrefs),
         'concepts' => birkly_guide_resolve_concepts(),

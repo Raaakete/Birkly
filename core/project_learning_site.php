@@ -98,6 +98,19 @@ function birkly_learning_site_project_is_empty(string $websiteRoot): bool
 }
 
 /**
+ * Write (or replace) the learning index.html under project/.
+ */
+function birkly_write_learning_project_site_index(string $projectRoot): bool
+{
+    $websiteRoot = rtrim($projectRoot, '/\\') . '/' . birkly_public_site_dir();
+    if (!is_dir($websiteRoot) && !@mkdir($websiteRoot, 0755, true) && !is_dir($websiteRoot)) {
+        return false;
+    }
+    $indexPath = $websiteRoot . '/index.html';
+    return @file_put_contents($indexPath, birkly_learning_site_index_html()) !== false;
+}
+
+/**
  * Write learning index.html when the project folder has no site yet.
  *
  * @return array{ok:bool,created:bool,path?:string,message?:string}
