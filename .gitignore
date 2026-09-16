@@ -4,6 +4,7 @@
 users/
 # Local content overrides — demo seed under content/collections/ is tracked for OSS.
 content/
+!content/.gitkeep
 !content/collections/
 !content/collections/**
 media/
