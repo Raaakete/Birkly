@@ -32,4 +32,18 @@ $payload2 = birkly_guide_build_progress_payload($prefs, 'content');
 guide_assert('no auto open after ack', empty($payload2['should_auto_open_panel']));
 guide_assert('content tip', ($payload2['tip']['area'] ?? '') === 'content');
 
+$manifest = birkly_guide_load_manifest();
+guide_assert('manifest journeys', count($manifest['journeys'] ?? []) >= 2);
+guide_assert('manifest concepts', count($manifest['concepts'] ?? []) >= 3);
+
+$journeys = birkly_guide_resolve_journeys($prefs);
+guide_assert('resolve journeys', count($journeys) >= 2 && ($journeys[0]['id'] ?? '') === 'first-content');
+
+$concepts = birkly_guide_resolve_concepts();
+guide_assert('resolve concepts', count($concepts) >= 3);
+
+$payload3 = birkly_guide_build_progress_payload($prefs, 'dashboard');
+guide_assert('checklist counts', ($payload3['checklist_total'] ?? 0) === 4 && isset($payload3['checklist_done_count']));
+guide_assert('payload journeys', count($payload3['journeys'] ?? []) >= 2);
+
 echo "guide_core_test passed.\n";

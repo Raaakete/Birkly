@@ -27,6 +27,7 @@ function birkly_guide_default_prefs(): array
         'attention_dismissed' => [],
         'journeys_completed' => [],
         'disable_attention' => false,
+        'reset_at' => null,
     ];
 }
 
@@ -265,6 +266,87 @@ function birkly_guide_checklist_items(): array
 }
 
 /**
+ * @return array<string, mixed>
+ */
+function birkly_guide_load_manifest(): array
+{
+    static $cached = null;
+    if (is_array($cached)) {
+        return $cached;
+    }
+    $path = dirname(__DIR__) . '/admin/guide/guide-manifest.json';
+    if (!is_file($path)) {
+        $cached = ['journeys' => [], 'concepts' => []];
+        return $cached;
+    }
+    $decoded = json_decode((string) file_get_contents($path), true);
+    $cached = is_array($decoded) ? $decoded : ['journeys' => [], 'concepts' => []];
+    return $cached;
+}
+
+/**
+ * @param array<string, mixed> $guidePrefs
+ * @return list<array<string, mixed>>
+ */
+function birkly_guide_resolve_journeys(array $guidePrefs): array
+{
+    $manifest = birkly_guide_load_manifest();
+    $completed = is_array($guidePrefs['journeys_completed'] ?? null) ? $guidePrefs['journeys_completed'] : [];
+    $out = [];
+    foreach (($manifest['journeys'] ?? []) as $journey) {
+        if (!is_array($journey)) {
+            continue;
+        }
+        $id = (string) ($journey['id'] ?? '');
+        if ($id === '') {
+            continue;
+        }
+        $steps = [];
+        foreach (($journey['steps'] ?? []) as $step) {
+            if (!is_array($step)) {
+                continue;
+            }
+            $page = (string) ($step['href_page'] ?? '');
+            $tab = (string) ($step['href_tab'] ?? '');
+            $params = $tab !== '' ? ['tab' => $tab] : [];
+            $steps[] = [
+                'teach' => __('admin.' . (string) ($step['teach_key'] ?? '')),
+                'href' => $page !== '' ? birkly_guide_admin_page_url($page, $params) : '',
+                'help_topic' => (string) ($step['help_topic'] ?? 'getting-started'),
+            ];
+        }
+        $out[] = [
+            'id' => $id,
+            'title' => __('admin.' . (string) ($journey['title_key'] ?? $id)),
+            'completed' => in_array($id, $completed, true),
+            'steps' => $steps,
+        ];
+    }
+    return $out;
+}
+
+/**
+ * @return list<array<string, mixed>>
+ */
+function birkly_guide_resolve_concepts(): array
+{
+    $manifest = birkly_guide_load_manifest();
+    $out = [];
+    foreach (($manifest['concepts'] ?? []) as $concept) {
+        if (!is_array($concept)) {
+            continue;
+        }
+        $out[] = [
+            'id' => (string) ($concept['id'] ?? ''),
+            'title' => __('admin.' . (string) ($concept['title_key'] ?? '')),
+            'body' => __('admin.' . (string) ($concept['body_key'] ?? '')),
+            'help_topic' => (string) ($concept['help_topic'] ?? 'getting-started'),
+        ];
+    }
+    return $out;
+}
+
+/**
  * @param array<string, mixed> $guidePrefs
  * @return array<string, mixed>
  */
@@ -290,17 +372,18 @@ function birkly_guide_build_progress_payload(array $guidePrefs, string $area): a
     $shouldAutoOpen = ($guidePrefs['first_admin_visit_ack_at'] ?? null) === null
         || $guidePrefs['first_admin_visit_ack_at'] === '';
 
+    $checklistDone = count(array_filter($checklist, static fn ($item) => !empty($item['done'])));
+
     return [
         'area' => $area,
         'prefs' => $guidePrefs,
         'checklist' => $checklist,
+        'checklist_done_count' => $checklistDone,
+        'checklist_total' => count($checklist),
         'tip' => $tip,
         'attention' => $attention,
         'should_auto_open_panel' => $shouldAutoOpen,
-        'concepts' => [
-            ['id' => 'content', 'help_topic' => 'content-model-overview'],
-            ['id' => 'site', 'help_topic' => 'templating-overview'],
-            ['id' => 'plugins', 'help_topic' => 'marketplace'],
-        ],
+        'journeys' => birkly_guide_resolve_journeys($guidePrefs),
+        'concepts' => birkly_guide_resolve_concepts(),
     ];
 }
