@@ -51,12 +51,22 @@
         return 'msg_' + Date.now() + '_' + chatMessageSeq;
     }
 
+    function nudgeGuideLauncherBounce() {
+        const mount = document.getElementById('guide-launcher-mount');
+        if (!mount) return;
+        mount.classList.remove('is-bouncing');
+        requestAnimationFrame(function () {
+            mount.classList.add('is-bouncing');
+        });
+    }
+
     function setAssistFabState(state) {
         const wrap = document.getElementById('assist-fab-wrap');
         if (!wrap) return;
         assistFabState = state;
         wrap.classList.remove('fab-idle', 'fab-menu', 'fab-chat');
         wrap.classList.add('fab-' + state);
+        nudgeGuideLauncherBounce();
 
         const button = document.getElementById('ai-chat-floating-btn');
         if (!button) return;
@@ -352,11 +362,14 @@
             chromeStack = document.createElement('div');
             chromeStack.id = 'assist-chrome-stack';
             chromeStack.className = 'assist-chrome-stack';
-            const guideMount = document.createElement('div');
+            document.body.appendChild(chromeStack);
+        }
+
+        let guideMount = document.getElementById('guide-launcher-mount');
+        if (!guideMount) {
+            guideMount = document.createElement('div');
             guideMount.id = 'guide-launcher-mount';
             guideMount.setAttribute('aria-hidden', 'false');
-            chromeStack.appendChild(guideMount);
-            document.body.appendChild(chromeStack);
         }
 
         const wrap = document.createElement('div');
@@ -397,6 +410,7 @@
         badge.setAttribute('aria-hidden', 'true');
         button.appendChild(badge);
 
+        wrap.appendChild(guideMount);
         wrap.appendChild(menu);
         wrap.appendChild(button);
         chromeStack.appendChild(wrap);
@@ -1626,6 +1640,7 @@
         closeSidePanel();
         closeModelMenu();
         setAssistFabState('chat');
+        nudgeGuideLauncherBounce();
         try {
             localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '1');
         } catch (e) { /* ignore */ }
@@ -1696,6 +1711,7 @@
         if (assistFabState === 'chat') {
             setAssistFabState('idle');
         }
+        nudgeGuideLauncherBounce();
         try {
             localStorage.setItem(STORAGE_KEY_WINDOW_OPEN, '0');
         } catch (e) { /* ignore */ }
