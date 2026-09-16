@@ -71,6 +71,7 @@ if ($action === 'update') {
 
     if (!empty($input['ack_first_visit'])) {
         $patch['first_admin_visit_ack_at'] = date('c');
+        $patch['guide_auto_open_pending'] = false;
     }
     if (isset($input['disable_attention'])) {
         $patch['disable_attention'] = (bool) $input['disable_attention'];

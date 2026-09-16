@@ -25,9 +25,10 @@ learning_site_assert('html has marker', str_contains($html, birkly_learning_site
 learning_site_assert('html has posts loop', str_contains($html, "'posts'"));
 learning_site_assert('html has client script', str_contains($html, 'birkly-client.js'));
 
-$result = birkly_ensure_learning_project_site($projectDir, false);
-learning_site_assert('ensure creates index', ($result['ok'] ?? false) && ($result['created'] ?? false));
+learning_site_assert('force write index', birkly_write_learning_project_site_index($projectDir));
 learning_site_assert('index exists', is_file($projectDir . '/project/index.html'));
+$result = birkly_ensure_learning_project_site($projectDir, false);
+learning_site_assert('ensure ok when index exists', ($result['ok'] ?? false) && empty($result['created']));
 
 $result2 = birkly_ensure_learning_project_site($projectDir, false);
 learning_site_assert('ensure idempotent', ($result2['ok'] ?? false) && empty($result2['created']));

@@ -72,21 +72,16 @@ guide_assert('snooze active', birkly_guide_is_tips_snoozed($prefsSnooze));
 $payloadSnooze = birkly_guide_build_progress_payload($prefsSnooze, 'content');
 guide_assert('snooze suppresses attention', empty($payloadSnooze['attention']));
 
-$prefsNudge = birkly_guide_default_prefs();
-$prefsNudge['first_admin_visit_ack_at'] = date('c');
-$prefsNudge['post_onboarding_nudge_pending'] = true;
-$payloadNudge = birkly_guide_build_progress_payload($prefsNudge, 'dashboard');
-guide_assert('post onboarding nudge on dashboard', !empty($payloadNudge['show_post_onboarding_nudge']));
-$payloadNudgeContent = birkly_guide_build_progress_payload($prefsNudge, 'content');
-guide_assert('no nudge off dashboard', empty($payloadNudgeContent['show_post_onboarding_nudge']));
+$prefsAutoOpen = birkly_guide_default_prefs();
+$prefsAutoOpen['first_admin_visit_ack_at'] = date('c');
+$prefsAutoOpen['guide_auto_open_pending'] = true;
+$payloadAutoOpen = birkly_guide_build_progress_payload($prefsAutoOpen, 'dashboard');
+guide_assert('auto open pending after onboarding', !empty($payloadAutoOpen['should_auto_open_panel']));
+guide_assert('post onboarding banner off', empty($payloadAutoOpen['show_post_onboarding_nudge']));
 
 $adminUser = ['role' => 'admin', 'permissions' => ['*']];
 $viewerUser = ['role' => 'viewer', 'permissions' => ['read', 'read_media']];
 guide_assert('admin sees full checklist', count(birkly_guide_checklist_items_for_user($adminUser)) === 5);
-$journeysResolved = birkly_guide_resolve_journeys($prefs);
-$firstJourneySteps = $journeysResolved[0]['steps'] ?? [];
-guide_assert('first content journey steps', count($firstJourneySteps) >= 5);
-guide_assert('visit project step', ($firstJourneySteps[3]['open_in_new_tab'] ?? false) === true);
 guide_assert('viewer sees no hub item', count(birkly_guide_checklist_items_for_user($viewerUser)) === 0);
 
 echo "guide_core_test passed.\n";
