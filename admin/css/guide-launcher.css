@@ -222,8 +222,9 @@ body.ai-chat-window-open .assist-fab-wrap {
   inset-block-end: calc(var(--guide-chrome-stack-top, 7.25rem) + var(--guide-panel-clearance, var(--space-3)));
   inset-inline-end: var(--space-6);
   z-index: var(--z-drawer);
-  width: min(24rem, calc(100vw - var(--space-12)));
-  max-height: min(32rem, calc(100vh - 7rem));
+  width: min(27rem, calc(100vw - var(--space-10)));
+  max-height: min(36rem, calc(100vh - 6rem));
+  min-height: min(22rem, calc(100vh - 10rem));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -307,7 +308,7 @@ body.ai-chat-window-open .guide-panel {
   display: flex;
   gap: var(--space-1);
   padding: var(--space-2);
-  margin: 0 var(--space-3) var(--space-2);
+  margin: var(--space-3) var(--space-4) var(--space-3);
   border-radius: var(--radius-md);
   background: var(--surface-sunken);
 }
@@ -337,7 +338,7 @@ body.ai-chat-window-open .guide-panel {
 }
 
 .guide-panel-body {
-  padding: 0 var(--space-4) var(--space-4);
+  padding: var(--space-1) var(--space-4) var(--space-4);
   overflow: auto;
   flex: 1 1 auto;
 }
@@ -588,19 +589,27 @@ body.ai-chat-window-open .guide-panel {
 }
 
 /* Concepts */
+.guide-section-lede--concepts {
+  margin-block-end: var(--space-5);
+}
+
 .guide-concepts {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
+.guide-concepts--expanded {
+  gap: var(--space-4);
+  padding-block-end: var(--space-2);
+}
+
 .guide-concept-card {
   position: relative;
-  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  padding: var(--space-4);
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   background: var(--surface-raised);
-  border-inline-start: 3px solid var(--accent);
 }
 
 .guide-concept-card__title {
@@ -610,11 +619,22 @@ body.ai-chat-window-open .guide-panel {
   color: var(--text-primary);
 }
 
+.guide-concepts--expanded .guide-concept-card__title {
+  font-size: var(--text-base);
+  margin-block-end: var(--space-2);
+}
+
 .guide-concept-card__body {
   margin: 0 0 var(--space-2);
   font-size: var(--text-sm);
   line-height: var(--leading-relaxed);
   color: var(--text-secondary);
+}
+
+.guide-concepts--expanded .guide-concept-card__body {
+  margin-block-end: var(--space-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-loose, 1.65);
 }
 
 .guide-concept-card__link {
@@ -634,6 +654,11 @@ body.ai-chat-window-open .guide-panel {
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--accent) 7%, var(--surface-sunken));
   border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+}
+
+.guide-tip-block--lead {
+  margin-block-start: 0;
+  margin-block-end: var(--space-4);
 }
 
 .guide-tip-block__title {
