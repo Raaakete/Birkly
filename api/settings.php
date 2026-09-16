@@ -289,9 +289,7 @@ if ($action === 'save_all') {
     if (isset($settings['siteTimezone'])) {
         $siteSettings['timezone'] = $settings['siteTimezone'];
     }
-    if (isset($settings['siteLanguage'])) {
-        $siteSettings['language'] = $settings['siteLanguage'];
-    }
+    // Site default language is not edited in General settings (admin UI: Account; public site: per-collection multilang / template ?lang=).
     
     // Media settings
     $mediaSettings = [];
