@@ -1,14 +1,17 @@
 /* P87 — Admin Guide launcher + panel (Assist chrome stack) */
 
 .assist-chrome-stack {
+  --guide-fab-gap: 1.25rem; /* ~20px between Guide and Assist FAB */
+  --assist-guide-menu-lift: 0px;
+  --assist-guide-chat-lift: 0px;
   position: fixed;
   inset-block-end: var(--space-6);
   inset-inline-end: var(--space-6);
   z-index: var(--z-chrome);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--guide-fab-gap);
   pointer-events: none;
 }
 
@@ -19,10 +22,27 @@
 .assist-chrome-stack .assist-fab-wrap {
   position: static;
   inset: auto;
+  align-items: center;
+}
+
+#guide-launcher-mount {
+  transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.assist-chrome-stack:has(.fab-menu) {
+  --assist-guide-menu-lift: calc(2.75rem + var(--space-2));
 }
 
 body.ai-chat-window-open .assist-chrome-stack {
-  inset-block-end: calc(5.5rem + min(51rem, calc(100vh - var(--space-16) - var(--space-6))) + var(--space-3));
+  --assist-guide-chat-lift: calc(
+    min(51rem, calc(100vh - var(--space-16) - var(--space-6)))
+    + 2.5rem
+    + var(--space-3)
+  );
+}
+
+#guide-launcher-mount {
+  transform: translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift))));
 }
 
 .guide-launcher-btn {
@@ -86,7 +106,7 @@ body.ai-chat-window-open .assist-chrome-stack {
 
 .guide-panel {
   position: fixed;
-  inset-block-end: calc(var(--space-6) + 2.25rem + var(--space-2) + 3rem + var(--space-2));
+  inset-block-end: calc(var(--space-6) + 2.25rem + var(--guide-fab-gap, 1.25rem) + 3rem);
   inset-inline-end: var(--space-6);
   z-index: var(--z-drawer);
   width: min(22rem, calc(100vw - var(--space-12)));
@@ -115,7 +135,14 @@ body.ai-chat-window-open .assist-chrome-stack {
 }
 
 body.ai-chat-window-open .guide-panel {
-  inset-block-end: calc(5.5rem + min(51rem, calc(100vh - var(--space-16) - var(--space-6))) + var(--space-3) + 2.25rem + var(--space-2) + 3rem);
+  inset-block-end: calc(
+    5.5rem
+    + min(51rem, calc(100vh - var(--space-16) - var(--space-6)))
+    + var(--space-3)
+    + 2.25rem
+    + var(--guide-fab-gap, 1.25rem)
+    + 3rem
+  );
 }
 
 .guide-panel-header {
