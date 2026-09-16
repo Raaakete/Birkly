@@ -159,7 +159,8 @@
                     '<span class="guide-journey-step__index">' + stepNum + '</span>' +
                     '<p class="guide-journey-teach">' + escapeHtml(step.teach || '') + '</p></div>' +
                     '<div class="guide-journey-step__actions">' +
-                    (step.href ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(step.href) + '">' +
+                    (step.href ? '<a class="btn btn-secondary btn-sm" href="' + escapeHtml(step.href) + '"' +
+                        (step.open_in_new_tab ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' +
                         escapeHtml(t('guide_journey_go', 'Go there')) + '</a>' : '') +
                     '<a class="btn btn-ghost btn-sm" href="' + escapeHtml(helpUrl(step.help_topic || 'getting-started')) + '">' +
                         escapeHtml(t('guide_learn_more', 'Learn more')) + '</a></div></li>';

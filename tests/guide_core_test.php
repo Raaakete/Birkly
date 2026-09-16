@@ -31,7 +31,7 @@ guide_assert('default first visit empty', array_key_exists('first_admin_visit_ac
 
 $payload = birkly_guide_build_progress_payload($prefs, 'dashboard');
 guide_assert('auto open first visit', !empty($payload['should_auto_open_panel']));
-guide_assert('checklist has items', count($payload['checklist'] ?? []) >= 4);
+guide_assert('checklist has items', count($payload['checklist'] ?? []) >= 5);
 $firstLabel = $payload['checklist'][0]['label'] ?? '';
 guide_assert(
     'checklist labels translated',
@@ -53,6 +53,9 @@ guide_assert('manifest concepts', count($manifest['concepts'] ?? []) >= 6);
 
 $journeys = birkly_guide_resolve_journeys($prefs);
 guide_assert('resolve journeys', count($journeys) >= 2 && ($journeys[0]['id'] ?? '') === 'first-content');
+$firstJourneySteps = $journeys[0]['steps'] ?? [];
+guide_assert('first content journey steps', count($firstJourneySteps) >= 5);
+guide_assert('visit project step', ($firstJourneySteps[3]['open_in_new_tab'] ?? false) === true);
 
 $concepts = birkly_guide_resolve_concepts();
 guide_assert('resolve concepts', count($concepts) >= 6);
@@ -60,7 +63,7 @@ $firstConcept = $concepts[0] ?? [];
 guide_assert('concept has href', ($firstConcept['href'] ?? '') !== '');
 
 $payload3 = birkly_guide_build_progress_payload($prefs, 'dashboard');
-guide_assert('checklist counts', ($payload3['checklist_total'] ?? 0) === 4 && isset($payload3['checklist_done_count']));
+guide_assert('checklist counts', ($payload3['checklist_total'] ?? 0) === 5 && isset($payload3['checklist_done_count']));
 guide_assert('payload journeys', count($payload3['journeys'] ?? []) >= 2);
 
 $prefsSnooze = $prefs;
@@ -79,7 +82,11 @@ guide_assert('no nudge off dashboard', empty($payloadNudgeContent['show_post_onb
 
 $adminUser = ['role' => 'admin', 'permissions' => ['*']];
 $viewerUser = ['role' => 'viewer', 'permissions' => ['read', 'read_media']];
-guide_assert('admin sees full checklist', count(birkly_guide_checklist_items_for_user($adminUser)) === 4);
+guide_assert('admin sees full checklist', count(birkly_guide_checklist_items_for_user($adminUser)) === 5);
+$journeysResolved = birkly_guide_resolve_journeys($prefs);
+$firstJourneySteps = $journeysResolved[0]['steps'] ?? [];
+guide_assert('first content journey steps', count($firstJourneySteps) >= 5);
+guide_assert('visit project step', ($firstJourneySteps[3]['open_in_new_tab'] ?? false) === true);
 guide_assert('viewer sees no hub item', count(birkly_guide_checklist_items_for_user($viewerUser)) === 0);
 
 echo "guide_core_test passed.\n";

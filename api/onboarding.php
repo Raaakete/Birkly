@@ -528,6 +528,9 @@ if (!isset($GLOBALS['__HARU_INTERNAL_CALL'])) {
         
         saveOnboardingProgress($userId, $progressData);
 
+        require_once __DIR__ . '/../core/project_learning_site.php';
+        birkly_ensure_learning_project_site(birkly_project_root(), true);
+
         require_once __DIR__ . '/../core/birkly_users.php';
         require_once __DIR__ . '/../core/admin_guide.php';
         $account = birkly_load_user_account_for_session($_SESSION['user']);
