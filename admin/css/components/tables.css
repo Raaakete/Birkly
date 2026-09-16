@@ -425,19 +425,22 @@
    flex item shrink below its trigger's own min-width and overlap the value
    input next to it; flex-shrink: 0 keeps it at its intended size instead. */
 .bulk-actions-buttons > .custom-select,
-.bulk-actions-row--field-edit > .custom-select {
+.bulk-actions-row--field-edit > .custom-select,
+.bulk-actions-field-form > .custom-select {
   flex-shrink: 0;
 }
 
 .bulk-actions-buttons .custom-select-trigger,
-.bulk-actions-row--field-edit .custom-select-trigger {
+.bulk-actions-row--field-edit .custom-select-trigger,
+.bulk-actions-field-form .custom-select-trigger {
   height: var(--control-sm);
   padding-inline: var(--space-2);
   font-size: var(--text-sm);
 }
 
 .bulk-actions-buttons .input,
-.bulk-actions-row--field-edit .input {
+.bulk-actions-row--field-edit .input,
+.bulk-actions-field-form .input {
   height: var(--control-sm);
   padding-inline: var(--space-2);
   font-size: var(--text-sm);
