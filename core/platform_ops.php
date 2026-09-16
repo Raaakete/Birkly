@@ -83,18 +83,21 @@ function birkly_ops_request_signature(string $body): string
  * Throttled by default so admin HTML is not blocked on every navigation.
  * Pass $force=true from explicit admin actions (e.g. feedback) when needed.
  */
-function birkly_ops_register_installation(bool $force = false): void
+/**
+ * @return string Per-install relay secret when registration succeeded and returned one (may already be persisted)
+ */
+function birkly_ops_register_installation(bool $force = false): string
 {
     $url = birkly_ops_installations_register_url();
     if ($url === '' || !function_exists('curl_init')) {
-        return;
+        return '';
     }
 
     require_once __DIR__ . '/birkly_paths.php';
     $stampFile = rtrim(birkly_project_root(), '/\\') . '/settings/.ops_register_stamp';
     $ttlSeconds = 6 * 60 * 60; // 6 hours
     if (!$force && is_file($stampFile) && (time() - (int) filemtime($stampFile)) < $ttlSeconds) {
-        return;
+        return birkly_feedback_relay_secret();
     }
 
     require_once __DIR__ . '/version.php';
@@ -117,7 +120,7 @@ function birkly_ops_register_installation(bool $force = false): void
     ];
     $body = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     if ($body === false) {
-        return;
+        return '';
     }
 
     $headers = ['Content-Type: application/json', 'Accept: application/json'];
@@ -155,7 +158,7 @@ function birkly_ops_register_installation(bool $force = false): void
         if (!$force) {
             @touch($stampFile);
         }
-        return;
+        return '';
     }
 
     $data = json_decode($response, true);
@@ -169,7 +172,7 @@ function birkly_ops_register_installation(bool $force = false): void
         if (!$force) {
             @touch($stampFile);
         }
-        return;
+        return '';
     }
 
     @touch($stampFile);
@@ -181,6 +184,8 @@ function birkly_ops_register_installation(bool $force = false): void
     } elseif ($force && $relaySecret === '' && birkly_feedback_relay_secret() === '') {
         error_log('ops register ok but no feedback_relay_secret for install ' . birkly_platform_install_id());
     }
+
+    return $relaySecret !== '' ? $relaySecret : birkly_feedback_relay_secret();
 }
 
 /**

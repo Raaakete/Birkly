@@ -19,6 +19,7 @@ require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/rate_limit.php';
 require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/../core/platform.php';
+require_once __DIR__ . '/../core/outbound_http.php';
 
 const FEEDBACK_DIR = __DIR__ . '/../data/feedback';
 const FEEDBACK_STATUSES = ['new', 'in_progress', 'resolved', 'closed'];
@@ -133,7 +134,14 @@ function feedback_relay_to_platform(array $record): void
     if (birkly_feedback_relay_secret() === '' && is_file(__DIR__ . '/../core/platform_ops.php')) {
         require_once __DIR__ . '/../core/platform_ops.php';
         error_log('feedback relay: no secret yet — forcing Ops registration for install ' . $installId);
-        birkly_ops_register_installation(true);
+        $provisioned = birkly_ops_register_installation(true);
+        if ($provisioned !== '' && birkly_feedback_relay_secret() === '') {
+            // Registration succeeded but disk persist may have failed — use returned secret this request.
+            $GLOBALS['__birkly_platform_config'] = array_merge(
+                birkly_platform_config(),
+                ['feedback_relay_secret' => $provisioned]
+            );
+        }
     }
 
     $secret = birkly_feedback_relay_secret();
@@ -171,6 +179,7 @@ function feedback_relay_to_platform(array $record): void
         CURLOPT_TIMEOUT => 8,
         CURLOPT_CONNECTTIMEOUT => 4,
     ]);
+    birkly_outbound_curl_apply_transport_defaults($ch);
     $response = curl_exec($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curlErr = curl_error($ch);
