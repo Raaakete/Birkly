@@ -17,7 +17,18 @@
         {
           "teach_key": "guide_journey_first_content_s3_teach",
           "href_page": "settings",
-          "href_tab": "site-delivery",
+          "href_tab": "project",
+          "help_topic": "getting-started"
+        },
+        {
+          "teach_key": "guide_journey_first_content_s4_teach",
+          "href_page": "visit-project",
+          "help_topic": "getting-started"
+        },
+        {
+          "teach_key": "guide_journey_first_content_s5_teach",
+          "href_page": "settings",
+          "href_tab": "ai",
           "help_topic": "getting-started"
         }
       ]

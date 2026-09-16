@@ -283,8 +283,9 @@ function birkly_guide_checklist_item_visible(string $itemId, array $user): bool
     $permissionByItem = [
         'has_collection' => 'manage_content',
         'has_published_entry' => 'manage_content',
-        'hub_plugin_installed' => 'manage_plugins',
         'site_previewable' => 'manage_settings',
+        'ai_connection_configured' => 'manage_settings',
+        'hub_plugin_installed' => 'manage_plugins',
     ];
     $needed = $permissionByItem[$itemId] ?? null;
     if ($needed === null) {
@@ -314,12 +315,18 @@ function birkly_guide_checklist_items_for_user(?array $user): array
 /**
  * @return list<array<string, mixed>>
  */
-function birkly_guide_checklist_items(): array
+function birkly_guide_checklist_items(?array $user = null): array
 {
     $hasCollection = birkly_guide_count_collections() > 0;
     $hasPublished = birkly_guide_has_published_entry();
     $hasPlugin = birkly_guide_has_alpha_plugin_active();
     $previewable = birkly_guide_site_previewable();
+    $hasAi = birkly_guide_user_has_ai_connection($user);
+
+    require_once __DIR__ . '/project_site.php';
+    $visitHref = function_exists('birkly_public_site_visit_url')
+        ? birkly_public_site_visit_url()
+        : birkly_guide_admin_page_url('settings', ['tab' => 'site-delivery']);
 
     return [
         [
@@ -337,18 +344,25 @@ function birkly_guide_checklist_items(): array
             'journey_id' => 'first-content',
         ],
         [
+            'id' => 'site_previewable',
+            'done' => $previewable,
+            'href' => $visitHref !== '' ? $visitHref : birkly_guide_admin_page_url('settings', ['tab' => 'site-delivery']),
+            'help_topic' => 'getting-started',
+            'journey_id' => 'first-content',
+        ],
+        [
+            'id' => 'ai_connection_configured',
+            'done' => $hasAi,
+            'href' => birkly_guide_admin_page_url('settings', ['tab' => 'ai']),
+            'help_topic' => 'getting-started',
+            'journey_id' => 'first-content',
+        ],
+        [
             'id' => 'hub_plugin_installed',
             'done' => $hasPlugin,
             'href' => birkly_guide_admin_page_url('plugins'),
             'help_topic' => 'marketplace',
             'journey_id' => 'hub-first-plugin',
-        ],
-        [
-            'id' => 'site_previewable',
-            'done' => $previewable,
-            'href' => birkly_guide_admin_page_url('settings', ['tab' => 'site-delivery']),
-            'help_topic' => 'getting-started',
-            'journey_id' => null,
         ],
     ];
 }
@@ -397,10 +411,18 @@ function birkly_guide_resolve_journeys(array $guidePrefs): array
             $page = (string) ($step['href_page'] ?? '');
             $tab = (string) ($step['href_tab'] ?? '');
             $params = $tab !== '' ? ['tab' => $tab] : [];
+            $href = '';
+            if ($page === 'visit-project') {
+                require_once __DIR__ . '/project_site.php';
+                $href = function_exists('birkly_public_site_visit_url') ? birkly_public_site_visit_url() : '';
+            } elseif ($page !== '') {
+                $href = birkly_guide_admin_page_url($page, $params);
+            }
             $steps[] = [
                 'teach' => __('admin.' . (string) ($step['teach_key'] ?? '')),
-                'href' => $page !== '' ? birkly_guide_admin_page_url($page, $params) : '',
+                'href' => $href,
                 'help_topic' => (string) ($step['help_topic'] ?? 'getting-started'),
+                'open_in_new_tab' => $page === 'visit-project',
             ];
         }
         $out[] = [
