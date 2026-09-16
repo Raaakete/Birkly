@@ -75,11 +75,12 @@ function birkly_is_platform_owner_install(): bool
  */
 function birkly_feedback_triage_enabled(): bool
 {
-    if (birkly_feedback_relay_url() !== '') {
-        return false;
+    // Platform-owner installs keep a local triage inbox even when also relaying to Ops (P86).
+    if (birkly_is_platform_owner_install()) {
+        return true;
     }
 
-    return birkly_is_platform_owner_install();
+    return birkly_feedback_relay_url() === '';
 }
 
 function birkly_alpha_program_enabled(): bool
@@ -135,11 +136,7 @@ function birkly_feedback_relay_url(): string
         return $env;
     }
 
-    if (birkly_is_platform_owner_install()) {
-        return '';
-    }
-
-    // Alpha / self-host customer installs relay to Ops by default (P5.4-M2, P86).
+    // All installs relay to Ops by default unless explicitly overridden above (P5.4-M2, P86).
     return BIRKLY_OPS_DEFAULT_FEEDBACK_RELAY_URL;
 }
 
