@@ -82,7 +82,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
                   <h2><?= __('admin.site_identity') ?></h2>
                 </div>
                 <div class="card-body u-stack-4">
-                <p class="section-description"><?= __('admin.site_identity_help') ?></p>
                 <div class="form-grid">
                   <div class="form-group">
                     <label for="project-name"><?= __('admin.project_name') ?></label>
@@ -100,7 +99,6 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     </select>
                   </div>
                 </div>
-                <p class="form-help"><?= __('admin.settings_admin_language_account_help') ?></p>
                 <div class="form-group">
                   <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
                   <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
