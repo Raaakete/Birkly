@@ -7,6 +7,8 @@ require_once __DIR__ . '/../core/i18n.php';
 require_once __DIR__ . '/../core/admin_guide.php';
 require_once __DIR__ . '/../api/auth.php';
 
+I18n::init();
+
 function guide_assert(string $label, bool $ok): void
 {
     if (!$ok) {
@@ -27,6 +29,11 @@ guide_assert('default first visit empty', array_key_exists('first_admin_visit_ac
 $payload = birkly_guide_build_progress_payload($prefs, 'dashboard');
 guide_assert('auto open first visit', !empty($payload['should_auto_open_panel']));
 guide_assert('checklist has items', count($payload['checklist'] ?? []) >= 4);
+$firstLabel = $payload['checklist'][0]['label'] ?? '';
+guide_assert(
+    'checklist labels translated',
+    $firstLabel !== '' && strpos($firstLabel, 'admin.guide_') !== 0
+);
 
 $prefs['first_admin_visit_ack_at'] = date('c');
 $payload2 = birkly_guide_build_progress_payload($prefs, 'content');
