@@ -21,7 +21,7 @@ If something fails (for example invalid CSRF or missing permission), the message
 
 ### What you can change (typical sections)
 
-- **General** — **Site identity** (project name, description, logo), timezone, language, and media defaults (max upload size, image quality, thumbnail size, create thumbnails). Site identity replaced the older "Project information" naming so it isn't confused with the `project/` website workspace.
+- **General** — **Site identity** (project name, description, logo), timezone, and media defaults (max upload size, image quality, thumbnail size, create thumbnails). **Admin UI language** is set under **Account**, not General. Site identity replaced the older "Project information" naming so it isn't confused with the `project/` website workspace.
 
 - **Site delivery** — **Domains** (registered domains, local development), the **Hosting URLs** wizard (CMS URL vs. public site), and **Redirects**. This tab does *not* include the `project/` file browser — that moved to its own **Project** tab (below).
 

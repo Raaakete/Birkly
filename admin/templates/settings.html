@@ -1,13 +1,4 @@
 <?php ?>
-<?php
-$availableLangs = class_exists('I18n') ? I18n::getAvailableLanguages() : [];
-$currentSiteLanguage = (string) ($settings['site']['language'] ?? 'en');
-if (empty($availableLangs)) {
-    $availableLangs = [
-        ['code' => 'en', 'native_name' => 'English', 'flag' => ''],
-    ];
-}
-?>
 <div class="page-header settings-page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current"><?= __('admin.settings') ?></span></div>
@@ -85,7 +76,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
       <div class="tab-pane active" id="general">
         <form id="general-form" class="settings-form" enctype="multipart/form-data">
           <div class="settings-stack">
-            <div class="settings-pane-section" data-settings-search="general site identity project name description logo timezone language branding">
+            <div class="settings-pane-section" data-settings-search="general site identity project name description logo timezone branding">
               <section class="card">
                 <div class="card-header">
                   <h2><?= __('admin.site_identity') ?></h2>
@@ -109,23 +100,7 @@ include __DIR__ . '/components/sticky-save-bar.php';
                     </select>
                   </div>
                 </div>
-                <div class="form-grid">
-                  <div class="form-group">
-                    <label for="site-language"><?= __('admin.settings_site_language_label') ?></label>
-                    <select id="site-language" name="siteLanguage" class="input">
-                      <?php foreach ($availableLangs as $lang): ?>
-                        <?php
-                          $langCode = (string) ($lang['code'] ?? '');
-                          $langLabel = trim((string) ($lang['native_name'] ?? $langCode));
-                          $langFlag = trim((string) ($lang['flag'] ?? ''));
-                        ?>
-                        <option value="<?= htmlspecialchars($langCode) ?>" <?= $langCode === $currentSiteLanguage ? 'selected' : '' ?>><?= htmlspecialchars(trim($langLabel . ' ' . $langFlag)) ?></option>
-                      <?php endforeach; ?>
-                    </select>
-                    <small class="form-help"><?= __('admin.settings_default_site_language_help') ?></small>
-                    <small class="form-help"><?= __('admin.settings_admin_language_account_help') ?></small>
-                  </div>
-                </div>
+                <p class="form-help"><?= __('admin.settings_admin_language_account_help') ?></p>
                 <div class="form-group">
                   <label for="project-description"><?= __('admin.project_description') ?> (<?= __('admin.optional') ?>)</label>
                   <textarea id="project-description" name="projectDescription" class="input" rows="3" placeholder="<?= __('admin.brief_description') ?>"><?= htmlspecialchars($settings['admin']['project_description'] ?? '') ?></textarea>
