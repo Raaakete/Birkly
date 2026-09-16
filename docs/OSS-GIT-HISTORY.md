@@ -20,3 +20,14 @@ Do not merge old local main over rewritten history.
 - `docs/reviews`, `docs/roadmap`
 
 Runtime dirs are created at deploy (Docker entrypoint) or on first Storage write — no tracked files under these paths.
+
+## Re-scrub (P86-M3)
+
+If `./scripts/oss-history-audit.sh` fails again:
+
+```bash
+./scripts/scrub-oss-history.sh --dry-run
+./scripts/scrub-oss-history.sh --execute   # requires git-filter-repo; rewrites history
+```
+
+Owner checklist: `Birkly-Marketplace` → `internal/planning/reviews/P86-owner-playbook.md`.
