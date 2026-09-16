@@ -19,10 +19,9 @@
    ============================================ */
 
 /* ---- 1. Launcher ---- */
+/* Fixed position lives on .assist-chrome-stack (P87 Guide + Assist). */
 .assist-fab-wrap {
-  position: fixed;
-  inset-block-end: var(--space-6);
-  inset-inline-end: var(--space-6);
+  position: relative;
   z-index: var(--z-chrome);
   display: flex;
   flex-direction: column;
@@ -543,7 +542,7 @@
 
 /* ---- 11. Narrow screens ---- */
 @media (max-width: 767px) {
-  .assist-fab-wrap {
+  .assist-chrome-stack {
     inset-inline-end: max(var(--space-4), env(safe-area-inset-right, 0px));
     inset-block-end: max(var(--space-4), env(safe-area-inset-bottom, 0px));
     max-width: calc(100vw - var(--space-8));
