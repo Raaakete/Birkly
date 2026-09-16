@@ -2412,7 +2412,7 @@
                 '</div>';
             grid.querySelector('[data-guide-open-hub]')?.addEventListener('click', function () {
                 if (window.BirklyGuide && typeof window.BirklyGuide.open === 'function') {
-                    window.BirklyGuide.open();
+                    window.BirklyGuide.open({ journeyId: 'hub-first-plugin', tab: 'journeys' });
                 }
             });
             return;

@@ -738,13 +738,42 @@
             '</tr>';
     }
 
+    function entriesListIsFiltered() {
+        return Boolean(listState.q) || Boolean(listState.status);
+    }
+
+    function renderEmptyEntriesRow() {
+        const colspan = getColumnCount();
+        const filtered = entriesListIsFiltered();
+        if (!filtered && listState.total === 0 && window.Birkly && typeof window.Birkly.renderEmptyState === 'function') {
+            const empty = window.Birkly.renderEmptyState({
+                title: t('entries_empty_title', 'No entries yet'),
+                hint: t('entries_empty_hint', 'Create your first entry to publish content from this collection.'),
+                primary: {
+                    label: t('new_entry', 'New entry'),
+                    href: adminUrl('entry-editor', { collection: collectionSlug }),
+                },
+                secondary: {
+                    label: t('guide_show_me_how', 'Show me how'),
+                    guideAction: 'first-content',
+                },
+                helpTopic: 'entries',
+            });
+            return '<tr class="table-row table-row--empty"><td class="cell cell-empty entries-empty-cell" colspan="' + colspan + '">' + empty.outerHTML + '</td></tr>';
+        }
+        const message = filtered
+            ? t('entries_empty_filtered', 'No entries match your filters.')
+            : t('entries_empty_title', 'No entries yet');
+        return '<tr class="table-row table-row--empty"><td class="cell cell-empty" colspan="' + colspan + '">' + escapeHtml(message) + '</td></tr>';
+    }
+
     function renderEntriesTable(entries) {
         refreshTableElements();
         if (!tableBody) {
             return;
         }
         if (!Array.isArray(entries) || entries.length === 0) {
-            tableBody.innerHTML = '<tr class="table-row table-row--empty"><td class="cell cell-empty" colspan="' + getColumnCount() + '">No entries found.</td></tr>';
+            tableBody.innerHTML = renderEmptyEntriesRow();
             return;
         }
         tableBody.innerHTML = entries.map(renderEntryRow).join('');

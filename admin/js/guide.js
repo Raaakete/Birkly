@@ -9,6 +9,7 @@
         data: null,
         area: '',
         panelTab: 'setup',
+        pendingJourneyFocus: null,
     };
 
     function t(key, fallback, params) {
@@ -136,7 +137,7 @@
             const completeBtn = journey.completed ? '' :
                 '<button type="button" class="btn btn-ghost btn-sm guide-journey-done" data-journey-id="' + escapeHtml(journey.id) + '">' +
                 escapeHtml(t('guide_journey_mark_done', 'Mark journey done')) + '</button>';
-            return '<details class="guide-journey' + doneClass + '"' + (journey.completed ? '' : ' open') + '>' +
+            return '<details class="guide-journey' + doneClass + '" data-journey-id="' + escapeHtml(journey.id) + '"' + (journey.completed ? '' : ' open') + '>' +
                 '<summary class="guide-journey-title">' + escapeHtml(journey.title || journey.id) + '</summary>' +
                 '<ol class="guide-journey-steps">' + steps + '</ol>' + completeBtn + '</details>';
         }).join('');
@@ -202,6 +203,15 @@
 
         body.innerHTML = renderPanelBody(data);
         bindPanelInteractions(body);
+        if (state.pendingJourneyFocus) {
+            const focusId = state.pendingJourneyFocus;
+            state.pendingJourneyFocus = null;
+            const journeyEl = body.querySelector('.guide-journey[data-journey-id="' + focusId + '"]');
+            if (journeyEl) {
+                journeyEl.open = true;
+                journeyEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
     }
 
     function applyProgress(data) {
@@ -358,11 +368,31 @@
         initAccountGuidePrefs();
     }
 
+    function openGuide(options) {
+        let journeyId = null;
+        let tab = null;
+        if (typeof options === 'string') {
+            journeyId = options;
+            tab = 'journeys';
+        } else if (options && typeof options === 'object') {
+            journeyId = options.journeyId || null;
+            tab = options.tab || (journeyId ? 'journeys' : null);
+        }
+        if (tab) {
+            state.panelTab = tab;
+        }
+        if (journeyId) {
+            state.pendingJourneyFocus = journeyId;
+        }
+        setPanelOpen(true);
+        if (state.data) {
+            renderPanel(state.data);
+        }
+        refresh();
+    }
+
     global.BirklyGuide = {
-        open: function () {
-            setPanelOpen(true);
-            refresh();
-        },
+        open: openGuide,
         refresh: refresh,
         fetchProgress: fetchProgress,
     };

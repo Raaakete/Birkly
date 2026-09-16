@@ -69,7 +69,7 @@
             secondary.textContent = options.secondary.label;
             if (options.secondary.guideAction && global.BirklyGuide && typeof global.BirklyGuide.open === 'function') {
                 secondary.addEventListener('click', function () {
-                    global.BirklyGuide.open(options.secondary.guideAction);
+                    global.BirklyGuide.open({ journeyId: options.secondary.guideAction, tab: 'journeys' });
                 });
             } else if (options.secondary.href) {
                 secondary.className = 'btn btn-secondary btn-sm';

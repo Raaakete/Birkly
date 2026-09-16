@@ -613,7 +613,7 @@
         guideBtn.textContent = cgT('guide_show_me_how', 'Show me how');
         guideBtn.addEventListener('click', function () {
             if (window.BirklyGuide && typeof window.BirklyGuide.open === 'function') {
-                window.BirklyGuide.open();
+                window.BirklyGuide.open({ journeyId: 'first-content', tab: 'journeys' });
             }
         });
         actions.appendChild(guideBtn);
