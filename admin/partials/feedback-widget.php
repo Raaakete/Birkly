@@ -24,7 +24,7 @@ $privacyNotice = sprintf(__('admin.feedback_privacy_notice'), $privacyLink, $ter
             <h2><?= htmlspecialchars(__('admin.feedback_send_title'), ENT_QUOTES, 'UTF-8') ?></h2>
             <button type="button" class="modal-close" data-close-feedback-submit aria-label="<?= htmlspecialchars(__('admin.close'), ENT_QUOTES, 'UTF-8') ?>">×</button>
         </div>
-        <form id="feedback-submit-form" class="modal-body u-stack-4">
+        <form id="feedback-submit-form" class="modal-body u-stack-4" enctype="multipart/form-data">
             <p class="feedback-privacy-notice u-text-sm u-fg-secondary">
                 <?= $privacyNotice ?>
             </p>
@@ -60,6 +60,11 @@ $privacyNotice = sprintf(__('admin.feedback_privacy_notice'), $privacyLink, $ter
                     <?= htmlspecialchars(__('admin.feedback_description_help'), ENT_QUOTES, 'UTF-8') ?>
                     <a href="mailto:hello@birkly.io?subject=Birkly%20alpha%20feedback%20screenshot">hello@birkly.io</a>
                 </p>
+            </div>
+            <div class="field">
+                <label class="field-label" for="feedback-attachments"><?= htmlspecialchars(__('admin.feedback_attachments_label'), ENT_QUOTES, 'UTF-8') ?></label>
+                <input type="file" id="feedback-attachments" name="attachments[]" class="input" multiple accept="image/jpeg,image/png,image/gif,image/webp,video/mp4">
+                <p class="field-help"><?= htmlspecialchars(__('admin.feedback_attachments_help'), ENT_QUOTES, 'UTF-8') ?></p>
             </div>
             <div id="feedback-submit-error" class="callout callout-danger" hidden></div>
             <div id="feedback-submit-success" class="callout callout-success" hidden><?= htmlspecialchars(__('admin.feedback_submit_success'), ENT_QUOTES, 'UTF-8') ?></div>
