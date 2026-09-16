@@ -1,22 +1,27 @@
 /* P87 — Admin Guide launcher + panel (Assist chrome stack) */
 
+.assist-chrome-stack,
+.guide-panel {
+  --assist-fab-size: 3rem;
+  --guide-launcher-gap: 0.625rem;
+  --guide-launcher-height: var(--assist-fab-size);
+  --guide-panel-clearance: var(--space-3);
+  --guide-chrome-stack-top: calc(
+    var(--space-6) + var(--assist-fab-size) + var(--guide-launcher-gap) + var(--guide-launcher-height)
+  );
+  --chrome-glass-bg: color-mix(in srgb, var(--surface-raised) 90%, var(--surface) 10%);
+  --chrome-assist-bg: color-mix(in srgb, var(--accent) 22%, var(--surface-raised) 78%);
+  --chrome-assist-bg-strong: color-mix(in srgb, var(--accent) 32%, var(--surface-raised) 68%);
+  --chrome-glass-border: color-mix(in srgb, var(--accent) 38%, var(--border-subtle));
+  --chrome-glass-blur: blur(12px) saturate(1.15);
+  --chrome-glass-shadow: var(--elevation-2);
+}
+
 .assist-chrome-stack {
   position: fixed;
   inset-block-end: var(--space-6);
   inset-inline-end: var(--space-6);
   z-index: var(--z-chrome);
-  --chrome-glass-bg: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--surface-raised) 78%, transparent) 0%,
-    color-mix(in srgb, var(--surface) 65%, transparent) 48%,
-    color-mix(in srgb, var(--surface-sunken) 72%, transparent) 100%
-  );
-  --chrome-glass-border: color-mix(in srgb, var(--accent) 42%, var(--border-subtle));
-  --chrome-glass-blur: blur(14px) saturate(1.3);
-  --chrome-glass-shadow:
-    var(--elevation-2),
-    inset 0 1px 0 color-mix(in srgb, var(--text-primary) 8%, transparent);
-  --chrome-accent-glow: 0 0 1.25rem color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .assist-chrome-stack .assist-fab-wrap,
@@ -27,9 +32,6 @@
 }
 
 .assist-fab-wrap {
-  --assist-fab-size: 3rem;
-  --guide-launcher-gap: 0.625rem;
-  --guide-launcher-height: var(--assist-fab-size);
   --assist-guide-menu-lift: 0px;
   --assist-guide-chat-lift: 0px;
   position: relative;
@@ -40,7 +42,7 @@
   position: absolute;
   inset-inline-start: 50%;
   inset-block-end: calc(var(--assist-fab-size) + var(--guide-launcher-gap));
-  z-index: 2;
+  z-index: calc(var(--z-drawer) + 2);
   transform: translateX(-50%) translateY(calc(-1 * (var(--assist-guide-menu-lift) + var(--assist-guide-chat-lift))));
   transition: transform 0.72s cubic-bezier(0.22, 1.35, 0.36, 1);
 }
@@ -151,12 +153,11 @@ body.ai-chat-window-open .assist-fab-wrap {
   align-items: center;
   justify-content: center;
   color: var(--accent);
-  filter: drop-shadow(0 0 0.35rem color-mix(in srgb, var(--accent) 45%, transparent));
 }
 
 .guide-launcher-btn:hover {
   border-color: var(--accent);
-  box-shadow: var(--chrome-glass-shadow), var(--chrome-accent-glow);
+  box-shadow: var(--chrome-glass-shadow);
   transform: translateY(-1px);
 }
 
@@ -168,12 +169,8 @@ body.ai-chat-window-open .assist-fab-wrap {
 
 .guide-launcher-btn.is-open {
   border-color: var(--accent);
-  background: linear-gradient(
-    165deg,
-    color-mix(in srgb, var(--accent) 38%, transparent) 0%,
-    color-mix(in srgb, var(--accent) 22%, transparent) 100%
-  );
-  box-shadow: var(--chrome-glass-shadow), var(--chrome-accent-glow);
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface-raised) 76%);
+  box-shadow: var(--chrome-glass-shadow);
 }
 
 .guide-launcher-btn.is-open .guide-launcher-btn__inner {
@@ -222,9 +219,7 @@ body.ai-chat-window-open .assist-fab-wrap {
 /* ---- Panel shell ---- */
 .guide-panel {
   position: fixed;
-  inset-block-end: calc(
-    var(--space-6) + var(--assist-fab-size, 3rem) + var(--guide-launcher-gap, 0.625rem) + var(--guide-launcher-height, 2.125rem) + var(--space-2)
-  );
+  inset-block-end: calc(var(--guide-chrome-stack-top, 7.25rem) + var(--guide-panel-clearance, var(--space-3)));
   inset-inline-end: var(--space-6);
   z-index: var(--z-drawer);
   width: min(24rem, calc(100vw - var(--space-12)));
@@ -259,10 +254,8 @@ body.ai-chat-window-open .guide-panel {
     5.5rem
     + min(51rem, calc(100vh - var(--space-16) - var(--space-6)))
     + var(--space-3)
-    + var(--assist-fab-size, 3rem)
-    + var(--guide-launcher-gap, 0.625rem)
-    + var(--guide-launcher-height, 2.125rem)
-    + var(--space-2)
+    + var(--guide-chrome-stack-top, 7.25rem)
+    + var(--guide-panel-clearance, var(--space-3))
   );
 }
 
