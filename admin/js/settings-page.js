@@ -3391,7 +3391,7 @@ async function migrateStorage() {
                 statusEl.style.color = 'var(--success-600)';
             }
         } else {
-            const failureMessage = data.message || 'Unknown error';
+            const failureMessage = data.message || stT('error_unknown', 'Unknown error');
             showMessage(stT('settings_js_migration_failed', 'Migration failed:') + ' ' + failureMessage, 'error');
             if (statusEl) {
                 statusEl.textContent = '✗ ' + failureMessage;

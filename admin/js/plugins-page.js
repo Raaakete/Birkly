@@ -4003,9 +4003,9 @@
             closePluginSettingsModal();
         } catch (err) {
             if (window.BirklyFeedback && typeof BirklyFeedback.toast === 'function') {
-                BirklyFeedback.toast(err.message || 'Failed to save settings', 'error');
+                BirklyFeedback.toast(err.message || t('hub_js_settings_save_failed', 'Failed to save settings'), 'error');
             } else {
-                alert(err.message || 'Failed to save settings');
+                alert(err.message || t('hub_js_settings_save_failed', 'Failed to save settings'));
             }
         }
     }

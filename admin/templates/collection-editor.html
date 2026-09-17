@@ -1548,7 +1548,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 backToCollections: <?= json_encode(__('admin.col_save_back_to_collections')) ?>,
                 updated: <?= json_encode(__('admin.col_save_updated')) ?>,
                 blockedLanguage: <?= json_encode(__('admin.col_save_blocked_language')) ?>,
-                continueEditing: <?= json_encode(__('admin.col_save_continue_editing')) ?>
+                continueEditing: <?= json_encode(__('admin.col_save_continue_editing')) ?>,
+                errorPrefix: <?= json_encode(__('admin.feedback_error_prefix')) ?>,
+                unknownError: <?= json_encode(__('admin.error_unknown')) ?>,
+                errorSaving: <?= json_encode(__('admin.col_save_error_saving')) ?>
             }
         })
         : null;

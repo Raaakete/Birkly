@@ -667,7 +667,7 @@
 
                 var data = await response.json();
                 if (data.status !== 'ok') {
-                    showToast('Error: ' + (data.message || 'Unknown error'), 'error');
+                    showToast(label('errorPrefix', 'Error:') + ' ' + (data.message || label('unknownError', 'Unknown error')), 'error');
                     return false;
                 }
 
@@ -691,7 +691,7 @@
                 return false;
             } catch (error) {
                 global.console.error('Error saving collection:', error);
-                showToast('Error saving collection: ' + error.message, 'error');
+                showToast(label('errorSaving', 'Error saving collection:') + ' ' + error.message, 'error');
                 return false;
             } finally {
                 isSubmitting = false;
