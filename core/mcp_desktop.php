@@ -388,6 +388,127 @@ function birkly_mcp_desktop_client_config_snippet(string $credentialsPath): arra
     ];
 }
 
+/**
+ * @return array{app_label: string, mac_path: string, win_path: string}
+ */
+function birkly_mcp_desktop_install_target_meta(string $target): array
+{
+    if ($target === 'cursor') {
+        return [
+            'app_label' => 'Cursor',
+            'mac_path' => '~/.cursor/mcp.json',
+            'win_path' => '%USERPROFILE%\\.cursor\\mcp.json',
+        ];
+    }
+
+    return [
+        'app_label' => 'Claude Desktop',
+        'mac_path' => '~/Library/Application Support/Claude/claude_desktop_config.json',
+        'win_path' => '%APPDATA%\\Claude\\claude_desktop_config.json',
+    ];
+}
+
+/**
+ * macOS double-click helper (.command) — merges MCP config using python3 (preinstalled on macOS).
+ *
+ * @param array<string, mixed> $mcpConfig
+ */
+function birkly_mcp_desktop_mac_command_script(array $mcpConfig, string $target = 'claude'): string
+{
+    $meta = birkly_mcp_desktop_install_target_meta($target);
+    $json = json_encode($mcpConfig, JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        throw new RuntimeException('Could not encode MCP config');
+    }
+    $pyConfig = str_replace('\\', '\\\\', $json);
+    $pyConfig = str_replace("'", "\\'", $pyConfig);
+
+    if ($target === 'cursor') {
+        $pathExpr = "pathlib.Path.home() / '.cursor' / 'mcp.json'";
+        $mkdirExpr = "(pathlib.Path.home() / '.cursor').mkdir(parents=True, exist_ok=True)";
+    } else {
+        $pathExpr = "pathlib.Path.home() / 'Library' / 'Application Support' / 'Claude' / 'claude_desktop_config.json'";
+        $mkdirExpr = "path.parent.mkdir(parents=True, exist_ok=True)";
+    }
+
+    return <<<BASH
+#!/bin/bash
+set -e
+echo "Birkly — connecting {$meta['app_label']} on this Mac..."
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Python 3 is required (usually preinstalled on macOS). Install Xcode Command Line Tools if needed."
+  read -r -p "Press Enter to close."
+  exit 1
+fi
+python3 <<'PY'
+import json, pathlib
+config = json.loads('{$pyConfig}')
+path = {$pathExpr}
+{$mkdirExpr}
+data = {}
+if path.exists():
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except json.JSONDecodeError:
+        data = {}
+if not isinstance(data, dict):
+    data = {}
+servers = data.get('mcpServers')
+if not isinstance(servers, dict):
+    servers = {}
+servers.update(config.get('mcpServers', {}))
+data['mcpServers'] = servers
+path.write_text(json.dumps(data, indent=2) + "\\n", encoding='utf-8')
+print("Saved to", path)
+print("Fully quit {$meta['app_label']}, then open it again.")
+PY
+read -r -p "Press Enter to close."
+BASH;
+}
+
+/**
+ * Windows helper (.bat) — runs PowerShell to merge MCP config.
+ *
+ * @param array<string, mixed> $mcpConfig
+ */
+function birkly_mcp_desktop_windows_bat_script(array $mcpConfig, string $target = 'claude'): string
+{
+    $meta = birkly_mcp_desktop_install_target_meta($target);
+    $json = json_encode($mcpConfig, JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        throw new RuntimeException('Could not encode MCP config');
+    }
+    $b64 = base64_encode($json);
+
+    if ($target === 'cursor') {
+        $pathPs = 'Join-Path $env:USERPROFILE ".cursor\\mcp.json"';
+        $dirPs = 'Join-Path $env:USERPROFILE ".cursor"';
+    } else {
+        $pathPs = 'Join-Path $env:APPDATA "Claude\\claude_desktop_config.json"';
+        $dirPs = 'Join-Path $env:APPDATA "Claude"';
+    }
+
+    $appLabel = $meta['app_label'];
+
+    return "@echo off\r\n"
+        . "title Birkly — {$appLabel}\r\n"
+        . "echo Connecting {$appLabel} on this PC...\r\n"
+        . "powershell -NoProfile -ExecutionPolicy Bypass -Command \""
+        . "\$json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{$b64}')); "
+        . "\$config = \$json | ConvertFrom-Json; "
+        . "\$dir = {$dirPs}; "
+        . "New-Item -ItemType Directory -Force -Path \$dir | Out-Null; "
+        . "\$path = {$pathPs}; "
+        . "\$data = @{}; "
+        . "if (Test-Path \$path) { try { \$data = Get-Content \$path -Raw | ConvertFrom-Json } catch {} }; "
+        . "if (-not \$data.mcpServers) { \$data | Add-Member -NotePropertyName mcpServers -NotePropertyValue (@{}) -Force }; "
+        . "foreach (\$p in \$config.mcpServers.PSObject.Properties) { \$data.mcpServers | Add-Member -NotePropertyName \$p.Name -NotePropertyValue \$p.Value -Force }; "
+        . "\$data | ConvertTo-Json -Depth 10 | Set-Content -Path \$path -Encoding UTF8; "
+        . "Write-Host 'Saved to' \$path; "
+        . "Write-Host 'Fully quit {$appLabel}, then open it again.'\"\r\n"
+        . "pause\r\n";
+}
+
 function birkly_mcp_desktop_status_for_user(string $userId): array
 {
     $path = birkly_mcp_desktop_credentials_path($userId);
