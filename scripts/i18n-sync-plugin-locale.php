@@ -35,6 +35,7 @@ $metaDefaults = [
     'fr' => ['name' => 'French', 'native_name' => 'Français', 'flag' => '🇫🇷'],
     'de' => ['name' => 'German', 'native_name' => 'Deutsch', 'flag' => '🇩🇪'],
     'ja' => ['name' => 'Japanese', 'native_name' => '日本語', 'flag' => '🇯🇵'],
+    'es' => ['name' => 'Spanish', 'native_name' => 'Español', 'flag' => '🇪🇸'],
 ];
 $locData['_meta'] = array_merge($metaDefaults[$locale] ?? ['name' => $locale], $locData['_meta'] ?? []);
 if (!isset($locData['plugins'][$pluginId]) || !is_array($locData['plugins'][$pluginId])) {
