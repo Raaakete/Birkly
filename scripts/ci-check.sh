@@ -86,4 +86,26 @@ if [[ -f "$ROOT/scripts/i18n-audit-fr-quality.php" ]]; then
   done
 fi
 
+if [[ -f "$ROOT/scripts/i18n-audit-es-quality.php" ]]; then
+  echo "==> Core Spanish quality"
+  if php "$ROOT/scripts/i18n-audit-es-quality.php"; then
+    echo "[ci-check] OK: es quality core"
+  else
+    echo "[ci-check] WARN: es quality core (FR/mixed contamination)"
+  fi
+  echo "==> Plugin Spanish quality (warn-only; sibling repos)"
+  for pair in "Birkly-Plugin-User:user_management" "Birkly-Plugin-Commerce:commerce" "Birkly-Plugin-Events:events" "Birkly-Plugin-Automation:automation" "Birkly-Plugin-Studio:studio"; do
+    repo="${pair%%:*}"
+    pid="${pair##*:}"
+    proot="$(cd "$ROOT/.." && pwd)/$repo"
+    if [[ -f "$proot/lang/es.json" ]]; then
+      if php "$ROOT/scripts/i18n-audit-es-quality.php" --plugin="$proot" "$pid"; then
+        echo "[ci-check] OK: es quality ${pid}"
+      else
+        echo "[ci-check] WARN: es quality ${pid} (FR/mixed contamination)"
+      fi
+    fi
+  done
+fi
+
 echo "ci-check: PASS"

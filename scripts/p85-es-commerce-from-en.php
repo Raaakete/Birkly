@@ -51,6 +51,8 @@ function commerce_es_phrase_pairs(): array
         return $pairs;
     }
     $raw = <<<'TXT'
+Sidebar attention for shop activity|Atención en la barra lateral para actividad de la tienda
+Enter the provider secret key before saving.|Introduzca la clave secreta del proveedor antes de guardar.
 Dashboard|Panel
 Fulfillment|Gestión de pedidos
 Gift Cards|Tarjetas regalo
@@ -349,6 +351,15 @@ $enFlat = flatten_plugin($enData['plugins']['commerce'] ?? []);
 $esFlat = [];
 foreach ($enFlat as $k => $v) {
     $esFlat[$k] = translate_commerce_en_to_es($v);
+}
+
+$commerceEsCurated = [
+    'settings_emails_help' => 'Plantillas de recibo, envío, reembolso, fallo de pago de suscripción (dunning) y seguimiento retrasado. Active o desactive cada disparador en la lista. Pedido pagado es el recibo enviado tras el pago para todos los pedidos (incluidas donaciones). El agradecimiento de donación opcional es un disparador aparte para automatización o reenvío manual. Activar una plantilla solo prepara el mensaje; no envía correo. Elija una conexión predeterminada abajo y sobrescriba por plantilla si necesita remitentes distintos.',
+];
+foreach ($commerceEsCurated as $path => $esVal) {
+    if (isset($esFlat[$path])) {
+        $esFlat[$path] = $esVal;
+    }
 }
 
 $esData = [
