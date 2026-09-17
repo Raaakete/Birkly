@@ -55,6 +55,8 @@ data/analytics/*
 !data/analytics/.gitkeep
 data/invitations/*
 !data/invitations/.gitkeep
+data/mcp_desktop/*
+!data/mcp_desktop/.gitkeep
 
 # PHP dependencies
 vendor/

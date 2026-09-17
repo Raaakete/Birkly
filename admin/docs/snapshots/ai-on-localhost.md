@@ -2,31 +2,24 @@
 
 ## Summary
 
-**Two different ways to use AI with Birkly** — pick the one that matches what you are trying to do.
+**Cloud connector URLs** (Claude, ChatGPT, Cursor over the internet) need a **public HTTPS** site. When Birkly runs on **localhost** or a private address, use **Connect desktop app** on **Settings → AI** instead.
 
-## Chat inside Birkly (works on a local address)
+## Connect desktop app (recommended on localhost)
 
-Use the **built-in assistant** on **Settings → AI**. Birkly talks to your AI provider from the server. You do not need a Connector URL for this.
+For **Claude Desktop** or **Cursor** on the **same computer** as Birkly:
 
-## Connect an external AI app
+1. Open **Settings → AI**.
+2. In **Connect desktop app**, click **Pair this computer**.
+3. Copy the JSON config into your desktop app’s MCP settings (Claude: `claude_desktop_config.json`; Cursor: MCP settings).
 
-Claude, ChatGPT, Cursor, and similar apps connect **into** Birkly using a **Connector URL** from **Settings → AI** (personal connector or service agent).
+Birkly uses a small **PHP bridge** (`scripts/birkly-mcp-desktop.php`) — no Node, `mcp-remote`, or API keys. Tokens are stored in `data/mcp_desktop/` on the server (not in the config snippet).
 
-Those apps must be able to **reach your site on the web**. When your site uses a normal **HTTPS** address, copy the Connector URL, paste it in your AI app, and sign in.
+## Built-in assistant (optional)
 
-## While your site is only on a local or private address
+You can also use the **built-in assistant** on **Settings → AI** for chat inside the admin. That uses your provider API key and does not need a Connector URL.
 
-A Connector URL that points at your computer (for example `http://localhost`) usually **will not work** in external AI apps — their services cannot open pages that only exist on your machine.
+## After your site has public HTTPS
 
-**What to do:**
-
-1. **Use the built-in assistant** in the admin while you build content locally.
-2. **After your site has HTTPS**, use the Connector URL from this page — same flow as production.
-
-Do not expose the whole admin panel to the internet as a shortcut.
-
-## Advanced (developers)
-
-**Settings → AI → Developer / debug** may list extra tools for special local setups. Use only if you know you need them.
+Use the **Connector URL** from the personal connector card — same OAuth flow as production. You do not need the desktop bridge on a public HTTPS site unless you prefer stdio MCP locally.
 
 **Related:** [Connect your AI app](mcp-connections.md) · [Built-in assistant](ai-connections.md)
