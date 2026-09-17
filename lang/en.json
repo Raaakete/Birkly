@@ -2068,6 +2068,7 @@
         "media_js_folder_created_success": "Folder created successfully.",
         "media_js_folder_name_placeholder": "Folder name",
         "media_js_folder_renamed_success": "Folder renamed successfully.",
+        "media_js_root_folder": "Root folder",
         "media_js_item_not_found": "Media item not found.",
         "media_js_media_deleted_success": "Media deleted successfully.",
         "media_js_media_details_saved": "Media details saved successfully.",
