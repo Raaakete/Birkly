@@ -2,71 +2,29 @@
 /**
  * Deploy / health endpoint helpers (P88).
  *
- * Public callers receive a minimal fingerprint only. Diagnostics (install metadata,
- * plugin probes, hosting env) require BIRKLY_DEPLOY_DIAG_SECRET via request header.
+ * Public callers receive a minimal fingerprint only. Diagnostics require a
+ * normal admin session (read_settings / manage_settings) — no server env secrets.
  */
 declare(strict_types=1);
 
 require_once __DIR__ . '/birkly_data_paths.php';
 
 /**
- * Shared secret for deploy diagnostics (empty = diagnostics disabled except local dev).
+ * Admin must be logged in to read deploy diagnostics (hosting, plugins, etc.).
  */
-function birkly_deploy_diag_secret(): string
+function birkly_require_deploy_admin_read(): void
 {
-    return trim((string) (getenv('BIRKLY_DEPLOY_DIAG_SECRET') ?: ''));
+    require_once dirname(__DIR__) . '/api/auth.php';
+    requireAuth('read_settings');
 }
 
 /**
- * Whether diagnostic actions may be enabled at all on this request.
+ * Destructive or mutating deploy actions (plugin repair, bundled sync, …).
  */
-function birkly_deploy_diag_configured(): bool
+function birkly_require_deploy_admin_write(): void
 {
-    if (birkly_deploy_diag_secret() !== '') {
-        return true;
-    }
-
-    return function_exists('birkly_is_local_dev_request') && birkly_is_local_dev_request();
-}
-
-/**
- * True when the caller presented the deploy diagnostic secret (or local dev with no secret set).
- */
-function birkly_deploy_diag_request_authorized(): bool
-{
-    if (!birkly_deploy_diag_configured()) {
-        return false;
-    }
-
-    $secret = birkly_deploy_diag_secret();
-    if ($secret === '') {
-        return function_exists('birkly_is_local_dev_request') && birkly_is_local_dev_request();
-    }
-
-    $header = trim((string) ($_SERVER['HTTP_X_BIRKLY_DEPLOY_SECRET'] ?? ''));
-    if ($header === '') {
-        $header = trim((string) ($_SERVER['HTTP_X_BIRKLY_DEPLOY_DIAG_SECRET'] ?? ''));
-    }
-
-    return $header !== '' && hash_equals($secret, $header);
-}
-
-function birkly_require_deploy_diag_auth(): void
-{
-    if (birkly_deploy_diag_request_authorized()) {
-        return;
-    }
-
-    if (!headers_sent()) {
-        http_response_code(403);
-        header('Content-Type: application/json; charset=utf-8');
-    }
-
-    echo json_encode([
-        'status' => 'error',
-        'message' => 'Deploy diagnostics require authorization',
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
+    require_once dirname(__DIR__) . '/api/auth.php';
+    requireAuth('manage_settings');
 }
 
 /**

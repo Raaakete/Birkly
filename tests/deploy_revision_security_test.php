@@ -35,25 +35,10 @@ assert_true(!str_contains($encoded, 'data_root'), 'public payload has no data_ro
 assert_true(!str_contains(strtolower($encoded), 'secret'), 'public payload has no secret substring');
 assert_true(!str_contains(strtolower($encoded), 'password'), 'public payload has no password substring');
 
-echo "==> Diagnostic auth without secret configured\n";
-$prevSecret = getenv('BIRKLY_DEPLOY_DIAG_SECRET');
-if ($prevSecret !== false) {
-    putenv('BIRKLY_DEPLOY_DIAG_SECRET');
-}
-unset($_SERVER['HTTP_X_BIRKLY_DEPLOY_SECRET'], $_SERVER['HTTP_X_BIRKLY_DEPLOY_DIAG_SECRET']);
-assert_true(birkly_deploy_diag_request_authorized() === false, 'diag denied when secret unset and not local dev');
-
-putenv('BIRKLY_DEPLOY_DIAG_SECRET=test_diag_secret_for_ci_only');
-$_SERVER['HTTP_X_BIRKLY_DEPLOY_SECRET'] = 'wrong';
-assert_true(birkly_deploy_diag_request_authorized() === false, 'diag denied with wrong header');
-$_SERVER['HTTP_X_BIRKLY_DEPLOY_SECRET'] = 'test_diag_secret_for_ci_only';
-assert_true(birkly_deploy_diag_request_authorized() === true, 'diag allowed with matching header');
-
-if ($prevSecret !== false) {
-    putenv('BIRKLY_DEPLOY_DIAG_SECRET=' . $prevSecret);
-} else {
-    putenv('BIRKLY_DEPLOY_DIAG_SECRET');
-}
+echo "==> Admin auth helpers exist (diagnostics use session, not env secrets)\n";
+assert_true(function_exists('birkly_require_deploy_admin_read'), 'read guard defined');
+assert_true(function_exists('birkly_require_deploy_admin_write'), 'write guard defined');
+assert_true(!function_exists('birkly_deploy_diag_secret'), 'no deploy env secret helper');
 
 echo "==> Plugin probe in-process\n";
 $probe = birkly_probe_plugin_load('not_a_real_plugin_id_xxx');
