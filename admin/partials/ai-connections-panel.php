@@ -38,16 +38,43 @@ $aiConnSettingsSearch = __('admin.ai_conn_settings_search');
                 <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_localhost_desc')) ?></p>
               </div>
             </div>
-            <div class="card-body u-stack-3">
-              <ul class="settings-list">
-                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_desktop')) ?></li>
-                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_assistant')) ?></li>
-                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_remote')) ?></li>
-                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_tunnel')) ?></li>
-                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_bridge')) ?></li>
-              </ul>
-              <p class="u-text-sm">
-                <a href="https://docs.birkly.com/04-integration/ai-on-localhost.html" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.ai_conn_localhost_guide_link')) ?></a>
+            <div class="card-body u-stack-4">
+              <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_intro')) ?></p>
+
+              <div class="u-stack-2">
+                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_builtin')) ?></p>
+                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_builtin')) ?></p>
+              </div>
+
+              <div class="u-stack-2">
+                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_public')) ?></p>
+                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_public')) ?></p>
+              </div>
+
+              <div class="u-stack-2">
+                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_stdio')) ?></p>
+                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_mcp_remote')) ?></p>
+                <ol class="u-text-sm settings-list" style="list-style: decimal; padding-left: 1.25rem;">
+                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_agent')) ?></li>
+                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_npx')) ?></li>
+                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_config')) ?></li>
+                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_oauth')) ?></li>
+                </ol>
+              </div>
+
+              <div class="u-stack-2">
+                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_tunnel')) ?></p>
+                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_tunnel')) ?></p>
+              </div>
+
+              <div class="u-stack-2">
+                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_bridge')) ?></p>
+                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_bridge')) ?></p>
+              </div>
+
+              <p class="u-cluster-3 u-text-sm">
+                <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#ai-on-localhost"><?= htmlspecialchars(__('admin.ai_conn_localhost_guide_help')) ?></a>
+                <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/04-integration/ai-on-localhost.md" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.ai_conn_localhost_guide_github')) ?></a>
               </p>
               <p class="form-help"><?= htmlspecialchars(__('admin.ai_conn_localhost_security_note')) ?></p>
             </div>
