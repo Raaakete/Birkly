@@ -90,6 +90,25 @@ assert_true(
     birkly_mcp_desktop_should_handle_stdio_locally(['method' => 'notifications/initialized'])
 );
 
+$broken = [
+    'jsonrpc' => '2.0',
+    'id' => 1,
+    'result' => [
+        'protocolVersion' => '2025-03-26',
+        'capabilities' => ['tools' => [], 'resources' => []],
+    ],
+];
+$fixed = birkly_mcp_desktop_encode_stdio_jsonrpc($broken);
+assert_true(
+    'stdio encode uses objects for capability maps',
+    str_contains($fixed, '"resources":{}') && str_contains($fixed, '"tools":{}'),
+    $fixed
+);
+
+$sse = "event: message\ndata: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"ok\":true}}\n\n";
+$parsed = birkly_mcp_desktop_parse_http_jsonrpc_body($sse);
+assert_true('parse sse jsonrpc', is_array($parsed) && ($parsed['id'] ?? null) === 2);
+
 assert_true('revoke credentials', birkly_mcp_desktop_revoke_credentials($userId));
 assert_true('status after revoke', (birkly_mcp_desktop_status_for_user($userId)['paired'] ?? true) === false);
 
