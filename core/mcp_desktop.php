@@ -509,6 +509,100 @@ function birkly_mcp_desktop_windows_bat_script(array $mcpConfig, string $target 
         . "pause\r\n";
 }
 
+/**
+ * Absolute path to Claude / Cursor MCP config on this machine (CLI install).
+ */
+function birkly_mcp_desktop_app_config_path(string $target): ?string
+{
+    if ($target !== 'claude' && $target !== 'cursor') {
+        return null;
+    }
+
+    $home = (string) (getenv('HOME') ?: '');
+    if ($home === '' && PHP_OS_FAMILY === 'Windows') {
+        $home = (string) (getenv('USERPROFILE') ?: '');
+    }
+    if ($home === '') {
+        return null;
+    }
+
+    if ($target === 'cursor') {
+        return $home . '/.cursor/mcp.json';
+    }
+
+    return $home . '/Library/Application Support/Claude/claude_desktop_config.json';
+}
+
+/**
+ * @param array<string, mixed> $mcpConfig
+ * @return array{ok: bool, path?: string, message?: string}
+ */
+function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConfig): array
+{
+    $path = birkly_mcp_desktop_app_config_path($target);
+    if ($path === null) {
+        return ['ok' => false, 'message' => 'Could not resolve config path on this computer'];
+    }
+
+    $dir = dirname($path);
+    if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
+        return ['ok' => false, 'message' => 'Could not create config folder'];
+    }
+
+    $data = [];
+    if (is_file($path)) {
+        $decoded = json_decode((string) file_get_contents($path), true);
+        if (is_array($decoded)) {
+            $data = $decoded;
+        }
+    }
+
+    $servers = $data['mcpServers'] ?? [];
+    if (!is_array($servers)) {
+        $servers = [];
+    }
+    $incoming = $mcpConfig['mcpServers'] ?? [];
+    if (is_array($incoming)) {
+        foreach ($incoming as $name => $entry) {
+            $servers[$name] = $entry;
+        }
+    }
+    $data['mcpServers'] = $servers;
+
+    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return ['ok' => false, 'message' => 'Could not encode config'];
+    }
+    if (file_put_contents($path, $json . "\n", LOCK_EX) === false) {
+        return ['ok' => false, 'message' => 'Could not write config file'];
+    }
+
+    return ['ok' => true, 'path' => $path];
+}
+
+function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, string $target): string
+{
+    $php = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+    $script = birkly_project_root() . '/scripts/birkly-mcp-desktop-install.php';
+
+    return $php . ' ' . $script
+        . ' --target=' . $target
+        . ' --token-file=' . $credentialsPath;
+}
+
+/**
+ * @return array<string, string>
+ */
+function birkly_mcp_desktop_helper_download_names(): array
+{
+    return [
+        'claude_mac' => 'Connect-Birkly-to-Claude.command',
+        'claude_win' => 'Connect-Birkly-to-Claude.bat',
+        'cursor_mac' => 'Connect-Birkly-to-Cursor.command',
+        'cursor_win' => 'Connect-Birkly-to-Cursor.bat',
+    ];
+}
+
 function birkly_mcp_desktop_status_for_user(string $userId): array
 {
     $path = birkly_mcp_desktop_credentials_path($userId);
@@ -520,12 +614,19 @@ function birkly_mcp_desktop_status_for_user(string $userId): array
         return ['paired' => false, 'invalid' => true];
     }
 
+    $snippet = birkly_mcp_desktop_client_config_snippet($path);
+
     return [
         'paired' => true,
         'paired_at' => (string) ($cred['paired_at'] ?? ''),
         'credentials_path' => $path,
         'mcp_url' => (string) ($cred['mcp_url'] ?? ''),
         'expires_at' => (int) ($cred['expires_at'] ?? 0),
-        'claude_desktop_config' => birkly_mcp_desktop_client_config_snippet($path),
+        'claude_desktop_config' => $snippet,
+        'terminal_install' => [
+            'claude' => birkly_mcp_desktop_terminal_install_command($path, 'claude'),
+            'cursor' => birkly_mcp_desktop_terminal_install_command($path, 'cursor'),
+        ],
+        'helper_downloads' => birkly_mcp_desktop_helper_download_names(),
     ];
 }

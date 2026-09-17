@@ -10,9 +10,10 @@ For **Claude Desktop** or **Cursor** on the **same computer** as Birkly:
 
 1. Open **Settings → AI**.
 2. In **Connect desktop app**, click **Pair this computer**.
-3. Choose **Claude Desktop** or **Cursor**, then **Download for Mac** or **Download for Windows**.
-4. Open the downloaded helper once (double-click; on Mac, right-click → **Open** if needed).
-5. Fully quit the desktop app, then open it again.
+3. Choose **Claude Desktop** or **Cursor** (the badge shows which is selected).
+4. **On Mac (recommended):** copy the **Terminal command**, open Terminal, paste, press Enter.  
+   **Alternative:** download the helper — if macOS blocks it, use the Terminal command or **System Settings → Privacy & Security → Open Anyway**.
+5. Fully quit the desktop app, then open it again. In Claude: **Settings → Developer** → MCP servers → **birkly**.
 
 Birkly uses a small **PHP bridge** (`scripts/birkly-mcp-desktop.php`) — no Node, `mcp-remote`, or API keys. Tokens are stored in `data/mcp_desktop/` on the server (not in the config snippet).
 
