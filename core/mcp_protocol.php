@@ -245,7 +245,7 @@ function birkly_mcp_dispatch_jsonrpc(array $input, array $aiUser): array
             $result = birkly_mcp_handle_resource_read($params, $aiUser);
             break;
         case 'ping':
-            $result = (object) [];
+            $result = [];
             break;
         default:
             $error = ['code' => -32601, 'message' => 'Method not found'];
