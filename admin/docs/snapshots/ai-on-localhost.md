@@ -1,53 +1,32 @@
-# AI on localhost
+# AI on a local address
 
 ## Summary
 
-When Birkly runs on a **local URL** (for example `http://localhost:8080`), some AI connection paths behave differently than on a **public HTTPS** site. The built-in admin assistant still works. **External MCP connectors** (AI apps that connect *into* Birkly) usually cannot use a plain `http://localhost/...` URL in cloud-based setup UIs.
+**Two different ways to use AI with Birkly** — pick the one that matches what you are trying to do.
 
-## Built-in assistant (admin chat)
+## Chat inside Birkly (works on a local address)
 
-The assistant uses **outbound** API calls from your Birkly server to your provider. That works on local installs the same as on production — configure it under **Built-in assistant** on this page.
+Use the **built-in assistant** on **Settings → AI**. Birkly talks to your AI provider from the server. You do not need a Connector URL for this.
 
-## External AI apps (MCP connectors)
+## Connect an external AI app
 
-These apps connect **to** Birkly (personal connector or service agent URLs).
+Claude, ChatGPT, Cursor, and similar apps connect **into** Birkly using a **Connector URL** from **Settings → AI** (personal connector or service agent).
 
-### Public HTTPS site
+Those apps must be able to **reach your site on the web**. When your site uses a normal **HTTPS** address, copy the Connector URL, paste it in your AI app, and sign in.
 
-Copy the Connector URL from this page (`https://…/mcp` or `…/mcp/agents/…`). Paste it in your AI app and sign in with OAuth. No extra tooling.
+## While your site is only on a local or private address
 
-### Local HTTP site — same computer as Birkly
+A Connector URL that points at your computer (for example `http://localhost`) usually **will not work** in external AI apps — their services cannot open pages that only exist on your machine.
 
-Many **desktop** MCP clients speak **stdio**, not HTTP. They cannot paste `http://localhost/...` directly.
+**What to do:**
 
-**mcp-remote** is a small open-source helper (install via `npx`) that runs on your computer, bridges stdio ↔ HTTP, and forwards to your Birkly MCP URL.
+1. **Use the built-in assistant** in the admin while you build content locally.
+2. **After your site has HTTPS**, use the Connector URL from this page — same flow as production.
 
-1. **Service agents → Add agent** on this page. Copy the agent **Connector URL** (it may show `http://localhost:PORT/mcp/agents/…`).
-2. Install [Node.js](https://nodejs.org/) if needed (`npx` comes with it).
-3. In your desktop MCP app’s config, add a server that runs: `npx -y mcp-remote YOUR_CONNECTOR_URL` (use the full URL from step 1). Some apps want the absolute path to `npx` — run `which npx` in a terminal.
-4. Restart the app. On first connect, complete **OAuth** in the browser when Birkly prompts you.
+Do not expose the whole admin panel to the internet as a shortcut.
 
-Example (Claude Desktop `claude_desktop_config.json`):
+## Advanced (developers)
 
-```json
-{
-  "mcpServers": {
-    "birkly": {
-      "command": "/absolute/path/to/npx",
-      "args": ["-y", "mcp-remote", "http://localhost:8080/mcp/agents/ai_agent_YOUR_ID"]
-    }
-  }
-}
-```
+**Settings → AI → Developer / debug** may list extra tools for special local setups. Use only if you know you need them.
 
-### Local HTTP site — connector UI requires HTTPS
-
-Some AI products only accept an **HTTPS** Connector URL and call it from the cloud. Use a **short-lived tunnel** (for example `cloudflared` or ngrok) to your Birkly port, then paste `https://YOUR-TUNNEL-HOST/mcp` (or the service-agent path) in the connector UI. Shut the tunnel down when finished.
-
-### mcp-bridge (Developer / debug)
-
-Under **Developer / debug** on this page, `mcp-bridge.js` is an optional stdio bridge that uses an **MCP API key** instead of OAuth service agents. Use only if your workflow requires it.
-
-## Security
-
-Do not expose the full admin panel to the public internet as a shortcut. Prefer **mcp-remote on the same machine**, or a **tunnel limited to MCP**, for local development.
+**Related:** [Connect your AI app](mcp-connections.md) · [Built-in assistant](ai-connections.md)
