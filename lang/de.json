@@ -2068,6 +2068,7 @@
         "media_js_folder_created_success": "Ordner erfolgreich erstellt.",
         "media_js_folder_name_placeholder": "Ordnername",
         "media_js_folder_renamed_success": "Ordner erfolgreich umbenannt.",
+        "media_js_root_folder": "Stammordner",
         "media_js_item_not_found": "Medienelement nicht gefunden.",
         "media_js_media_deleted_success": "Medium erfolgreich gelöscht.",
         "media_js_media_details_saved": "Mediendetails gespeichert.",
