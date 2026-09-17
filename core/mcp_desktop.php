@@ -302,28 +302,51 @@ function birkly_mcp_desktop_parse_http_jsonrpc_body(string $raw): ?array
 }
 
 /**
- * PHP json_decode turns {} into []; Claude MCP requires capability maps as objects.
+ * PHP json_decode(true) turns JSON {} into []; Claude/Zod expect objects for schema maps.
  *
+ * @param mixed $value
+ * @return mixed
+ */
+function birkly_mcp_desktop_fixup_for_json_encode(mixed $value, ?string $parentKey = null): mixed
+{
+    if (!is_array($value)) {
+        return $value;
+    }
+
+    if ($value === []) {
+        if (in_array($parentKey, ['properties', 'patternProperties', 'tools', 'resources', 'prompts', 'logging'], true)) {
+            return new stdClass();
+        }
+
+        return $value;
+    }
+
+    if (array_is_list($value)) {
+        $out = [];
+        foreach ($value as $item) {
+            $out[] = birkly_mcp_desktop_fixup_for_json_encode($item, null);
+        }
+
+        return $out;
+    }
+
+    $out = [];
+    foreach ($value as $key => $item) {
+        $out[$key] = birkly_mcp_desktop_fixup_for_json_encode($item, is_string($key) ? $key : null);
+    }
+
+    return $out;
+}
+
+/**
  * @param array<string, mixed> $response
  * @return array<string, mixed>
  */
 function birkly_mcp_desktop_normalize_jsonrpc_for_stdio(array $response): array
 {
-    if (!isset($response['result']) || !is_array($response['result'])) {
-        return $response;
+    if (isset($response['result']) && is_array($response['result'])) {
+        $response['result'] = birkly_mcp_desktop_fixup_for_json_encode($response['result'], null);
     }
-
-    $result = $response['result'];
-    if (isset($result['capabilities']) && is_array($result['capabilities'])) {
-        $caps = $result['capabilities'];
-        foreach (['tools', 'resources', 'prompts', 'logging'] as $key) {
-            if (array_key_exists($key, $caps) && $caps[$key] === []) {
-                $caps[$key] = new stdClass();
-            }
-        }
-        $result['capabilities'] = $caps;
-    }
-    $response['result'] = $result;
 
     return $response;
 }
