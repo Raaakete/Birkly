@@ -10,24 +10,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/birkly_data_paths.php';
 
 /**
- * Admin must be logged in to read deploy diagnostics (hosting, plugins, etc.).
- */
-function birkly_require_deploy_admin_read(): void
-{
-    require_once dirname(__DIR__) . '/api/auth.php';
-    requireAuth('read_settings');
-}
-
-/**
- * Destructive or mutating deploy actions (plugin repair, bundled sync, …).
- */
-function birkly_require_deploy_admin_write(): void
-{
-    require_once dirname(__DIR__) . '/api/auth.php';
-    requireAuth('manage_settings');
-}
-
-/**
  * Safe JSON for unauthenticated health checks (Dokploy, load balancers).
  *
  * @return array<string, mixed>
