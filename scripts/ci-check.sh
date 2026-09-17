@@ -70,4 +70,20 @@ node tests/bundle_payload_validation_test.js
 node tests/template_sanitize_test.js
 # Note: marsk_render_engine_test.js needs marketplace starter fixtures; not required for public CI.
 
+if [[ -f "$ROOT/scripts/i18n-audit-fr-quality.php" ]]; then
+  echo "==> Plugin French quality (warn-only; sibling repos)"
+  for pair in "Birkly-Plugin-User:user_management" "Birkly-Plugin-Commerce:commerce" "Birkly-Plugin-Events:events" "Birkly-Plugin-Automation:automation" "Birkly-Plugin-Studio:studio"; do
+    repo="${pair%%:*}"
+    pid="${pair##*:}"
+    proot="$(cd "$ROOT/.." && pwd)/$repo"
+    if [[ -f "$proot/lang/fr.json" ]]; then
+      if php "$ROOT/scripts/i18n-audit-fr-quality.php" --plugin="$proot" "$pid"; then
+        echo "[ci-check] OK: fr quality ${pid}"
+      else
+        echo "[ci-check] WARN: fr quality ${pid} (DE/mixed contamination)"
+      fi
+    fi
+  done
+fi
+
 echo "ci-check: PASS"
