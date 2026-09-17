@@ -346,9 +346,16 @@ GITIGNORE;
         if (preg_match('#^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+:[^:]+$#', $url) === 1) {
             return $url;
         }
-        // Local path remotes are allowed so installs can sync to a mounted bare repo.
+        // Local path remotes: CLI (tests, operator scripts) and local-dev web only.
         if (str_starts_with($url, '/') || str_starts_with($url, 'file://')) {
-            return $url;
+            if (PHP_SAPI === 'cli') {
+                return $url;
+            }
+            require_once __DIR__ . '/birkly_paths.php';
+            if (function_exists('birkly_is_local_dev_request') && birkly_is_local_dev_request()) {
+                return $url;
+            }
+            throw new ProjectGitException('Local filesystem git remotes are not allowed on this host. Use an HTTPS or SSH remote URL.');
         }
 
         throw new ProjectGitException('Remote URL must be an HTTPS or SSH git URL');
