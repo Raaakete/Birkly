@@ -10,7 +10,6 @@
 declare(strict_types=1);
 
 require __DIR__ . '/p85-es-phrase-pairs.php';
-require __DIR__ . '/p85-es-fr-to-es.php';
 
 $argv = $_SERVER['argv'] ?? [];
 array_shift($argv);
@@ -47,6 +46,8 @@ function translate_admin_en(string $en): string
             $s = str_replace($from, $to, $s);
         }
     }
+    $s = preg_replace('/\bEnter\b/u', 'Introduzca', $s) ?? $s;
+    $s = preg_replace('/\benter\b/u', 'introduzca', $s) ?? $s;
     $s = preg_replace('/\bLoading ([^…]+)…/u', 'Cargando $1…', $s) ?? $s;
     $s = preg_replace('/\bNo ([^.\n]+) yet\./u', 'Aún no hay $1.', $s) ?? $s;
     $s = preg_replace('/\bFailed to ([^.\n]+)\./u', 'Error al $1.', $s) ?? $s;
@@ -95,7 +96,7 @@ function unflatten_plugin(array $flat): array
     return $tree;
 }
 
-function merge_curated_admin(array $enAdmin, array $frAdmin, array $curated): array
+function merge_curated_admin(array $enAdmin, array $curated): array
 {
     $out = [];
     foreach ($enAdmin as $key => $enVal) {
@@ -106,17 +107,7 @@ function merge_curated_admin(array $enAdmin, array $frAdmin, array $curated): ar
             $out[$key] = $curated[$key];
             continue;
         }
-        $frVal = $frAdmin[$key] ?? null;
-        $fromEn = translate_admin_en($enVal);
-        if ($fromEn !== $enVal) {
-            $out[$key] = $fromEn;
-            continue;
-        }
-        if (is_string($frVal) && $frVal !== $enVal) {
-            $out[$key] = p85_es_translate_fr($frVal);
-            continue;
-        }
-        $out[$key] = $fromEn;
+        $out[$key] = translate_admin_en($enVal);
     }
     return $out;
 }
@@ -130,16 +121,7 @@ if ($mode === 'core') {
     if (is_file($curFile)) {
         $curated = json_decode((string) file_get_contents($curFile), true) ?: [];
     }
-    $partial = json_decode((string) @file_get_contents('/tmp/es-partial-good.json'), true);
-    if (is_array($partial['admin'] ?? null)) {
-        foreach ($partial['admin'] as $k => $v) {
-            if (is_string($v) && isset($enData['admin'][$k]) && $v !== $enData['admin'][$k]) {
-                $curated[$k] = $v;
-            }
-        }
-    }
-    $frData = json_decode((string) file_get_contents($root . '/lang/fr.json'), true);
-    $esAdmin = merge_curated_admin($enData['admin'] ?? [], $frData['admin'] ?? [], $curated);
+    $esAdmin = merge_curated_admin($enData['admin'] ?? [], $curated);
     ksort($esAdmin);
     $esData = [
         '_meta' => ['name' => 'Spanish', 'native_name' => 'Español', 'flag' => '🇪🇸'],
@@ -163,23 +145,10 @@ if ($mode === 'plugin') {
     }
     $enFile = rtrim($pluginRoot, '/') . '/lang/en.json';
     $enData = json_decode((string) file_get_contents($enFile), true);
-    $frFile = rtrim($pluginRoot, '/') . '/lang/fr.json';
-    $frData = is_file($frFile) ? json_decode((string) file_get_contents($frFile), true) : [];
-    $frFlat = flatten_plugin($frData['plugins'][$pluginId] ?? []);
     $enFlat = flatten_plugin($enData['plugins'][$pluginId] ?? []);
     $esFlat = [];
     foreach ($enFlat as $k => $v) {
-        $frVal = $frFlat[$k] ?? null;
-        $fromEn = translate_admin_en($v);
-        if ($fromEn !== $v) {
-            $esFlat[$k] = $fromEn;
-            continue;
-        }
-        if (is_string($frVal) && $frVal !== $v) {
-            $esFlat[$k] = p85_es_translate_fr($frVal);
-            continue;
-        }
-        $esFlat[$k] = $fromEn;
+        $esFlat[$k] = translate_admin_en($v);
     }
     $esData = [
         '_meta' => ['name' => 'Spanish', 'native_name' => 'Español', 'flag' => '🇪🇸'],

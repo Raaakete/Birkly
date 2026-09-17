@@ -9,6 +9,20 @@ function p85_es_phrase_pairs(): array
         return $pairs;
     }
     $raw = <<<'TXT'
+Enter the 6-digit code from your authenticator app:|Introduzca el código de 6 dígitos de su aplicación de autenticación:
+Enter the model ID required by your endpoint.|Introduzca el ID del modelo requerido por su punto de acceso.
+Enter the license key to revoke this seat on the marketplace.|Introduzca la clave de licencia para revocar este asiento en el marketplace.
+Enter the license key from your purchase confirmation email.|Introduzca la clave de licencia del correo de confirmación de compra.
+Enter the domain name without http:// or https://|Introduzca el nombre de dominio sin http:// ni https://
+Enter the collection slug:|Introduzca el slug de la colección:
+Enter the provider secret key before saving.|Introduzca la clave secreta del proveedor antes de guardar.
+Enter your password and, if prompted, a code from your authenticator app to disable two-factor authentication for your account.|Introduzca su contraseña y, si se solicita, un código de su aplicación de autenticación para desactivar la autenticación de dos factores en su cuenta.
+Sidebar attention for user activity|Atención en la barra lateral para actividad de usuarios
+Sidebar attention for shop activity|Atención en la barra lateral para actividad de la tienda
+Sidebar attention for automation|Atención en la barra lateral para automatización
+Sidebar attention for RSVPs|Atención en la barra lateral para confirmaciones (RSVP)
+Sidebar attention for Studio|Atención en la barra lateral para Studio
+Cancelled|Cancelado
 Automate your workflows with triggers, conditions, and actions|Automatice sus flujos con disparadores, condiciones y acciones
 Ask questions about your content in plain language|Haga preguntas sobre su contenido en lenguaje natural
 Complete these steps to get your site running:|Complete estos pasos para poner en marcha su sitio:
@@ -193,7 +207,6 @@ Sources|Fuentes
 Console|Consola
 Service|Servicio
 Orders|Pedidos
-Cancel|Cancelar
 Delete|Eliminar
 Search|Buscar
 Export|Exportar
