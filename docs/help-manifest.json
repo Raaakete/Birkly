@@ -60,6 +60,34 @@
             "docs_path": "01-admin/admin-design-language.html"
         },
         {
+            "id": "admin-language-vs-site",
+            "title": "Admin language vs site language",
+            "keywords": [
+                "language",
+                "i18n",
+                "admin",
+                "site",
+                "onboarding",
+                "locale"
+            ],
+            "docs_path": "01-admin/admin-language-vs-site-language.html"
+        },
+        {
+            "id": "admin-plugin-extension",
+            "title": "Admin plugin extension",
+            "keywords": [
+                "admin",
+                "plugin",
+                "dashboard",
+                "notification",
+                "webmcp",
+                "shelf",
+                "extension"
+            ],
+            "docs_path": "06-extensibility/admin-plugin-extension.html",
+            "ai_topic": "plugins-overview"
+        },
+        {
             "id": "agent-guide",
             "title": "Agent Guide",
             "keywords": [
@@ -817,6 +845,32 @@
             "ai_topic": "playbooks-index"
         },
         {
+            "id": "admin-guide-companion",
+            "title": "Admin Guide companion",
+            "keywords": [
+                "guide",
+                "checklist",
+                "journey",
+                "onboarding",
+                "setup",
+                "empty state"
+            ],
+            "docs_path": "01-admin/admin-guide-companion.html",
+            "ai_topic": "getting-started"
+        },
+        {
+            "id": "known-issues-wave1",
+            "title": "Known issues — Wave 1",
+            "keywords": [
+                "known issues",
+                "limitations",
+                "wave 1",
+                "alpha",
+                "defer"
+            ],
+            "docs_path": "00-overview/known-issues-wave1.html"
+        },
+        {
             "id": "loops-and-lists",
             "title": "Loops and lists",
             "keywords": [
@@ -1157,22 +1211,6 @@
             "ai_topic": "settings-roles"
         },
         {
-            "id": "admin-plugin-extension",
-            "title": "Admin plugin extension",
-            "keywords": [
-                "admin",
-                "plugin",
-                "dashboard",
-                "notification",
-                "webmcp",
-                "shelf",
-                "extension",
-                "admin.scripts"
-            ],
-            "docs_path": "06-extensibility/admin-plugin-extension.html",
-            "ai_topic": "plugins-overview"
-        },
-        {
             "id": "scaffold-plugin",
             "title": "Plugin scaffolding CLI",
             "keywords": [
@@ -1183,6 +1221,18 @@
                 "create"
             ],
             "docs_path": "06-extensibility/scaffold-plugin-cli.html"
+        },
+        {
+            "id": "self-host-install",
+            "title": "Self-host install",
+            "keywords": [
+                "self-host",
+                "zip",
+                "install",
+                "release",
+                "0_START-HERE"
+            ],
+            "docs_path": "07-operations/self-host-install.html"
         },
         {
             "id": "settings",
