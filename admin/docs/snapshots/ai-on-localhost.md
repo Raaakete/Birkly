@@ -2,33 +2,37 @@
 
 ## Summary
 
-Running Birkly on `http://localhost` works for day-to-day admin and the **built-in assistant**, but **cloud connector UIs** usually reject `http://localhost` URLs. For **Claude Desktop** on the same machine, use **`mcp-remote`** (stdio) with a **service agent** URL from **Settings → AI**. Alternatives: a short-lived **HTTPS tunnel**, or the legacy **mcp-bridge** under Developer / debug.
+When Birkly runs on a **local URL** (for example `http://localhost:8080`), some AI connection paths behave differently than on a **public HTTPS** site. The built-in admin assistant still works. **External MCP connectors** (AI apps that connect *into* Birkly) usually cannot use a plain `http://localhost/...` URL in cloud-based setup UIs.
 
-> **Warning:** Do **not** expose your admin panel to the open internet as a “quick fix.” Prefer `mcp-remote` + OAuth service agents for local desktop tools, or a short-lived tunnel only for the MCP endpoint.
+## Built-in assistant (admin chat)
 
-## Beginner
+The assistant uses **outbound** API calls from your Birkly server to your provider. That works on local installs the same as on production — configure it under **Built-in assistant** on this page.
 
-### What works on localhost
+## External AI apps (MCP connectors)
 
-| Path | Works? | Notes |
-|------|--------|-------|
-| Admin + **built-in assistant** on localhost | **Yes** | Outbound BYOAI (API keys) works from your machine. **Ollama** on `http://localhost:11434` is fine. |
-| Remote **connectors** (Claude / ChatGPT / similar) → `http://localhost/mcp` | **Usually no** | Those apps need a **public HTTPS** Connector URL ending in `/mcp`. |
-| **Claude Desktop** via **`mcp-remote`** + service agent URL | **Yes** | Recommended — stdio on your Mac/PC proxies to `http://localhost:PORT/mcp/agents/…` with OAuth. |
-| **Tunnel** (`cloudflared` / ngrok) → HTTPS → `/mcp` | **Yes** | When the connector UI requires a public HTTPS URL. |
-| **mcp-bridge** (legacy API-key stdio) | **Yes** | Developer / debug only — see Settings → AI. |
+These apps connect **to** Birkly (personal connector or service agent URLs).
 
-Where to configure connectors: **Settings → AI**. See [Connect your AI app](../01-admin/mcp-connections.md).
+### Public HTTPS site
 
-### Option A — mcp-remote + service agent (recommended for Claude Desktop)
+Copy the Connector URL from this page (`https://…/mcp` or `…/mcp/agents/…`). Paste it in your AI app and sign in with OAuth. No extra tooling.
 
-1. **Settings → AI → Service agents → Add agent** — copy the connector URL (`http://localhost:8080/mcp/agents/ai_agent_…`).
-2. Claude Desktop `claude_desktop_config.json`:
+### Local HTTP site — same computer as Birkly
+
+Many **desktop** MCP clients speak **stdio**, not HTTP. They cannot paste `http://localhost/...` directly.
+
+**mcp-remote** is a small open-source helper (install via `npx`) that runs on your computer, bridges stdio ↔ HTTP, and forwards to your Birkly MCP URL.
+
+1. **Service agents → Add agent** on this page. Copy the agent **Connector URL** (it may show `http://localhost:PORT/mcp/agents/…`).
+2. Install [Node.js](https://nodejs.org/) if needed (`npx` comes with it).
+3. In your desktop MCP app’s config, add a server that runs: `npx -y mcp-remote YOUR_CONNECTOR_URL` (use the full URL from step 1). Some apps want the absolute path to `npx` — run `which npx` in a terminal.
+4. Restart the app. On first connect, complete **OAuth** in the browser when Birkly prompts you.
+
+Example (Claude Desktop `claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "birkly-local": {
+    "birkly": {
       "command": "/absolute/path/to/npx",
       "args": ["-y", "mcp-remote", "http://localhost:8080/mcp/agents/ai_agent_YOUR_ID"]
     }
@@ -36,19 +40,14 @@ Where to configure connectors: **Settings → AI**. See [Connect your AI app](..
 }
 ```
 
-3. Quit Claude completely; complete OAuth on first connect.
-4. Restart Claude after plugin installs so tools refresh.
+### Local HTTP site — connector UI requires HTTPS
 
-### Option B — Tunnel to public HTTPS
+Some AI products only accept an **HTTPS** Connector URL and call it from the cloud. Use a **short-lived tunnel** (for example `cloudflared` or ngrok) to your Birkly port, then paste `https://YOUR-TUNNEL-HOST/mcp` (or the service-agent path) in the connector UI. Shut the tunnel down when finished.
 
-See Birkly-Docs `04-integration/ai-on-localhost.md` for cloudflared/ngrok steps.
+### mcp-bridge (Developer / debug)
 
-### Option C — mcp-bridge (Developer / debug)
+Under **Developer / debug** on this page, `mcp-bridge.js` is an optional stdio bridge that uses an **MCP API key** instead of OAuth service agents. Use only if your workflow requires it.
 
-Legacy API-key stdio bridge. OAuth service agents are preferred.
+## Security
 
-## Advanced Users
-
-**Why remote connectors fail on localhost:** Cloud AI apps call MCP from their servers; they cannot reach `127.0.0.1`. Use `mcp-remote` on the same machine or an HTTPS tunnel.
-
-**Connector URL shape:** Production and tunneled URLs use HTTPS and end with `/mcp` or `/mcp/agents/…` for service agents.
+Do not expose the full admin panel to the public internet as a shortcut. Prefer **mcp-remote on the same machine**, or a **tunnel limited to MCP**, for local development.
