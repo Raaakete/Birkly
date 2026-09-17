@@ -105,6 +105,25 @@ assert_true(
     $fixed
 );
 
+$toolsList = [
+    'jsonrpc' => '2.0',
+    'id' => 2,
+    'result' => [
+        'tools' => [
+            [
+                'name' => 'list_collections',
+                'inputSchema' => ['type' => 'object', 'properties' => []],
+            ],
+        ],
+    ],
+];
+$toolsFixed = birkly_mcp_desktop_encode_stdio_jsonrpc($toolsList);
+assert_true(
+    'tools/list properties encode as object',
+    str_contains($toolsFixed, '"properties":{}'),
+    $toolsFixed
+);
+
 $sse = "event: message\ndata: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"ok\":true}}\n\n";
 $parsed = birkly_mcp_desktop_parse_http_jsonrpc_body($sse);
 assert_true('parse sse jsonrpc', is_array($parsed) && ($parsed['id'] ?? null) === 2);
