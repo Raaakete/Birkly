@@ -33,6 +33,8 @@ Claude does not offer “delete” for local stdio MCP servers in the Connectors
 
 If the server shows **Server disconnected** after it worked once: fully quit Claude, run the **install** Terminal command again (fixes token path and config), reopen Claude, and check **Protokolle anzeigen** in Developer → MCP or `logs/php_errors.log` in your Birkly folder.
 
+**Drops off after ~60 seconds idle:** Claude Desktop often closes idle local MCP processes after about a minute (you will see `Server transport closed unexpectedly` in the MCP log). That is normal — send another message or toggle **birkly** off and on in Konnektoren if the next tool call does not reconnect. Keep Birkly updated (desktop bridge disables PHP execution time limits and stays in a read loop). Early log lines about `capabilities.resources` or `tools/list` `properties` as arrays mean you need the latest Birkly `main` (fixes #763–#765).
+
 ## Built-in assistant (optional)
 
 You can also use the **built-in assistant** on **Settings → AI** for chat inside the admin. That uses your provider API key and does not need a Connector URL.
