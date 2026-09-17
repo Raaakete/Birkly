@@ -153,6 +153,14 @@ $merge = birkly_mcp_desktop_merge_into_app_config('claude', $snippet);
 assert_true('merge install ok', ($merge['ok'] ?? false) === true);
 assert_true('merge wrote file', is_file($mergeDir . '/claude_desktop_config.json'));
 
+$remove = birkly_mcp_desktop_remove_from_app_config('claude');
+assert_true('uninstall ok', ($remove['ok'] ?? false) === true && ($remove['removed'] ?? false) === true);
+$mergedJson = json_decode((string) file_get_contents($mergeDir . '/claude_desktop_config.json'), true);
+assert_true('uninstall removed birkly', is_array($mergedJson) && !isset($mergedJson['mcpServers']['birkly']));
+
+$uninstallCmd = birkly_mcp_desktop_terminal_uninstall_command('claude');
+assert_true('uninstall command mentions --uninstall', str_contains($uninstallCmd, '--uninstall'));
+
 rrmdir($testRoot);
 
 echo "\nmcp_desktop_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");

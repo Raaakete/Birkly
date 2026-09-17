@@ -67,6 +67,9 @@ function birkly_mcp_desktop_save_credentials(string $userId, array $credentials)
 
 function birkly_mcp_desktop_revoke_credentials(string $userId): bool
 {
+    require_once __DIR__ . '/mcp_oauth.php';
+    birkly_mcp_oauth_revoke_client_sessions_for_user($userId, BIRKLY_MCP_DESKTOP_CLIENT_ID);
+
     $path = birkly_mcp_desktop_credentials_path($userId);
     if (!is_file($path)) {
         return true;
@@ -519,6 +522,44 @@ function birkly_mcp_desktop_http_post(
     return $result;
 }
 
+function birkly_mcp_desktop_attach_stdio_process_guards(): void
+{
+    static $attached = false;
+    if ($attached) {
+        return;
+    }
+    $attached = true;
+
+    $root = birkly_project_root();
+    error_reporting(E_ALL);
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+    $logDir = $root . '/logs';
+    if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
+        ini_set('error_log', $logDir . '/php_errors.log');
+    }
+
+    set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
+        if (!(error_reporting() & $severity)) {
+            return true;
+        }
+        error_log("Birkly desktop MCP [$severity] $message in $file:$line");
+
+        return true;
+    });
+
+    register_shutdown_function(static function (): void {
+        $err = error_get_last();
+        if ($err === null) {
+            return;
+        }
+        if (!in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
+            return;
+        }
+        fwrite(STDERR, 'Birkly desktop MCP fatal: ' . $err['message'] . "\n");
+    });
+}
+
 function birkly_mcp_desktop_should_handle_stdio_locally(array $message): bool
 {
     $method = (string) ($message['method'] ?? '');
@@ -553,6 +594,8 @@ function birkly_mcp_desktop_handle_stdio_jsonrpc(array &$credentials, array $mes
 
 function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
 {
+    birkly_mcp_desktop_attach_stdio_process_guards();
+
     $credentials = birkly_mcp_desktop_load_credentials($tokenFile);
     if ($credentials === null) {
         fwrite(STDERR, "Birkly desktop connector: missing or invalid token file. Pair again in Settings → AI.\n");
@@ -581,7 +624,16 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
             continue;
         }
 
-        $response = birkly_mcp_desktop_handle_stdio_jsonrpc($credentials, $message);
+        try {
+            $response = birkly_mcp_desktop_handle_stdio_jsonrpc($credentials, $message);
+        } catch (Throwable $e) {
+            error_log('Birkly desktop MCP request: ' . $e->getMessage());
+            $response = [
+                'jsonrpc' => '2.0',
+                'id' => $message['id'] ?? null,
+                'error' => ['code' => -32603, 'message' => 'Birkly MCP error. Re-pair in Admin → Settings → AI or check logs/php_errors.log.'],
+            ];
+        }
         if ($response === null) {
             $response = [
                 'jsonrpc' => '2.0',
@@ -590,6 +642,7 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
             ];
         }
         fwrite(STDOUT, birkly_mcp_desktop_encode_stdio_jsonrpc($response) . "\n");
+        fflush(STDOUT);
     }
 
     return 0;
@@ -809,6 +862,45 @@ function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConf
     return ['ok' => true, 'path' => $path];
 }
 
+/**
+ * Remove the birkly MCP server entry from Claude Desktop / Cursor config on this machine.
+ *
+ * @return array{ok: bool, path?: string, message?: string, removed?: bool}
+ */
+function birkly_mcp_desktop_remove_from_app_config(string $target, string $serverName = 'birkly'): array
+{
+    $path = birkly_mcp_desktop_app_config_path($target);
+    if ($path === null) {
+        return ['ok' => false, 'message' => 'Could not resolve config path on this computer'];
+    }
+    if (!is_file($path)) {
+        return ['ok' => true, 'path' => $path, 'removed' => false];
+    }
+
+    $decoded = json_decode((string) file_get_contents($path), true);
+    if (!is_array($decoded)) {
+        return ['ok' => false, 'message' => 'Config file is not valid JSON'];
+    }
+
+    $servers = $decoded['mcpServers'] ?? [];
+    if (!is_array($servers) || !isset($servers[$serverName])) {
+        return ['ok' => true, 'path' => $path, 'removed' => false];
+    }
+
+    unset($servers[$serverName]);
+    $decoded['mcpServers'] = $servers;
+
+    $json = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    if ($json === false) {
+        return ['ok' => false, 'message' => 'Could not encode config'];
+    }
+    if (file_put_contents($path, $json . "\n", LOCK_EX) === false) {
+        return ['ok' => false, 'message' => 'Could not write config file'];
+    }
+
+    return ['ok' => true, 'path' => $path, 'removed' => true];
+}
+
 function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, string $target): string
 {
     $root = birkly_project_root();
@@ -834,6 +926,25 @@ function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, st
         . ' ' . escapeshellarg($scriptRel)
         . ' --target=' . escapeshellarg($target)
         . ' --token-file=' . escapeshellarg($tokenArg);
+}
+
+function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
+{
+    $root = birkly_project_root();
+    $php = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+    $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
+
+    if (PHP_OS_FAMILY === 'Windows') {
+        return 'cd /d ' . escapeshellarg($root)
+            . ' && ' . escapeshellarg($php)
+            . ' ' . escapeshellarg($scriptRel)
+            . ' --uninstall --target=' . escapeshellarg($target);
+    }
+
+    return 'cd ' . escapeshellarg($root)
+        . ' && ' . escapeshellarg($php)
+        . ' ' . escapeshellarg($scriptRel)
+        . ' --uninstall --target=' . escapeshellarg($target);
 }
 
 /**
@@ -873,6 +984,12 @@ function birkly_mcp_desktop_status_for_user(string $userId): array
             'claude' => birkly_mcp_desktop_terminal_install_command($path, 'claude'),
             'cursor' => birkly_mcp_desktop_terminal_install_command($path, 'cursor'),
         ],
+        'terminal_uninstall' => [
+            'claude' => birkly_mcp_desktop_terminal_uninstall_command('claude'),
+            'cursor' => birkly_mcp_desktop_terminal_uninstall_command('cursor'),
+        ],
+        'claude_config_path' => birkly_mcp_desktop_app_config_path('claude'),
+        'cursor_config_path' => birkly_mcp_desktop_app_config_path('cursor'),
         'helper_downloads' => birkly_mcp_desktop_helper_download_names(),
     ];
 }
