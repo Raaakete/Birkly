@@ -15,7 +15,12 @@ $root = dirname(__DIR__);
 require_once $root . '/core/mcp_desktop.php';
 
 $tokenFile = null;
-foreach ($argv as $arg) {
+for ($i = 1; $i < count($argv); $i++) {
+    $arg = $argv[$i];
+    if ($arg === '--token-file' && isset($argv[$i + 1])) {
+        $tokenFile = $argv[++$i];
+        continue;
+    }
     if (str_starts_with($arg, '--token-file=')) {
         $tokenFile = substr($arg, strlen('--token-file='));
     }

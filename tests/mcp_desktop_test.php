@@ -132,6 +132,14 @@ assert_true('revoke credentials', birkly_mcp_desktop_revoke_credentials($userId)
 assert_true('status after revoke', (birkly_mcp_desktop_status_for_user($userId)['paired'] ?? true) === false);
 
 $snippet = birkly_mcp_desktop_client_config_snippet($path);
+$args = $snippet['mcpServers']['birkly']['args'] ?? [];
+assert_true(
+    'config uses separate --token-file arg',
+    is_array($args)
+        && ($args[1] ?? '') === '--token-file'
+        && ($args[2] ?? '') === $path,
+    json_encode($args)
+);
 $macScript = birkly_mcp_desktop_mac_command_script($snippet, 'claude');
 assert_true('mac helper mentions Claude', str_contains($macScript, 'Claude Desktop'));
 assert_true('mac helper merges birkly', str_contains($macScript, '"birkly"'));
@@ -144,6 +152,14 @@ putenv('HOME=' . $testRoot . '/fakehome');
 $merge = birkly_mcp_desktop_merge_into_app_config('claude', $snippet);
 assert_true('merge install ok', ($merge['ok'] ?? false) === true);
 assert_true('merge wrote file', is_file($mergeDir . '/claude_desktop_config.json'));
+
+$remove = birkly_mcp_desktop_remove_from_app_config('claude');
+assert_true('uninstall ok', ($remove['ok'] ?? false) === true && ($remove['removed'] ?? false) === true);
+$mergedJson = json_decode((string) file_get_contents($mergeDir . '/claude_desktop_config.json'), true);
+assert_true('uninstall removed birkly', is_array($mergedJson) && !isset($mergedJson['mcpServers']['birkly']));
+
+$uninstallCmd = birkly_mcp_desktop_terminal_uninstall_command('claude');
+assert_true('uninstall command mentions --uninstall', str_contains($uninstallCmd, '--uninstall'));
 
 rrmdir($testRoot);
 

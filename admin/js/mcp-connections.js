@@ -192,6 +192,7 @@
     function bindDesktopSetupUi(body, setupData) {
         const config = setupData.claude_desktop_config;
         const terminalInstall = setupData.terminal_install || {};
+        const terminalUninstall = setupData.terminal_uninstall || {};
         const helperDownloads = setupData.helper_downloads || {};
         const osHint = detectDesktopOsHint();
 
@@ -208,6 +209,10 @@
             const cmd = document.getElementById('mcp-desktop-terminal-cmd');
             if (cmd) {
                 cmd.value = terminalInstall[target] || '';
+            }
+            const uninstallCmd = document.getElementById('mcp-desktop-terminal-uninstall-cmd');
+            if (uninstallCmd) {
+                uninstallCmd.value = terminalUninstall[target] || '';
             }
         }
 
@@ -243,6 +248,14 @@
                 showToast(mcpT('ai_conn_desktop_config_copied', 'Config copied'));
             });
         });
+
+        body.querySelector('[data-copy-terminal-uninstall]')?.addEventListener('click', function () {
+            const cmd = document.getElementById('mcp-desktop-terminal-uninstall-cmd');
+            if (!cmd || !cmd.value) return;
+            fallbackCopy(cmd, function () {
+                showToast(mcpT('ai_conn_desktop_terminal_copied', 'Command copied — paste it in Terminal on this Mac.'));
+            });
+        });
     }
 
     function renderDesktopSetupBlock(setupData) {
@@ -253,6 +266,7 @@
         const macPrimary = osHint === 'mac';
         const winPrimary = osHint === 'win';
         const terminalClaude = escapeHtml((setupData.terminal_install || {}).claude || '');
+        const terminalUninstallClaude = escapeHtml((setupData.terminal_uninstall || {}).claude || '');
         const macGatekeeper = macPrimary ? `
             <div class="desktop-mcp-note desktop-mcp-note-warning" role="note">
                 <p class="desktop-mcp-note-title">${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_title', 'If macOS blocks the downloaded file'))}</p>
@@ -335,6 +349,16 @@
                 <div class="mcp-snippet-block u-stack-2 u-pt-2">
                     <textarea id="mcp-desktop-config-json" class="input input-mono" rows="8" readonly>${escapeHtml(json)}</textarea>
                     <button type="button" class="btn btn-sm btn-secondary" data-copy-desktop-config>${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}</button>
+                </div>
+            </details>
+            <details class="desktop-mcp-advanced u-pt-3">
+                <summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_remove_summary', 'Remove from Claude or Cursor'))}</summary>
+                <div class="desktop-mcp-note desktop-mcp-note-warning u-mt-2" role="note">
+                    <p>${escapeHtml(mcpT('ai_conn_desktop_remove_claude_note', 'Claude does not delete local MCP servers from Konnektoren — only disable them. To remove “birkly” completely, run the command below (or delete the birkly block from your MCP config file), then quit and reopen the app.'))}</p>
+                </div>
+                <div class="desktop-mcp-terminal u-stack-2 u-pt-2">
+                    <textarea id="mcp-desktop-terminal-uninstall-cmd" class="desktop-mcp-terminal-input" rows="3" readonly spellcheck="false">${terminalUninstallClaude}</textarea>
+                    <button type="button" class="btn btn-secondary btn-sm" data-copy-terminal-uninstall>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                 </div>
             </details>
         </div>`;

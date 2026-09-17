@@ -723,6 +723,59 @@ function birkly_mcp_oauth_parse_token_request(): array
     return $_POST;
 }
 
+/**
+ * Rotate access token from a refresh token (no HTTP). Returns token response or null.
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_mcp_oauth_exchange_refresh_token(string $refreshToken, string $clientId): ?array
+{
+    birkly_mcp_oauth_purge_expired();
+
+    $refreshToken = trim($refreshToken);
+    $clientId = trim($clientId);
+    if ($refreshToken === '' || $clientId === '') {
+        return null;
+    }
+
+    $store = birkly_mcp_oauth_load_store();
+    $matched = null;
+    $matchedHash = null;
+    foreach ($store['tokens'] as $hash => $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        if (!hash_equals((string) ($entry['refresh_token'] ?? ''), $refreshToken)) {
+            continue;
+        }
+        if (!hash_equals((string) ($entry['client_id'] ?? ''), $clientId)) {
+            continue;
+        }
+        if (($entry['refresh_expires_at'] ?? 0) < time()) {
+            return null;
+        }
+        $matched = $entry;
+        $matchedHash = $hash;
+        break;
+    }
+
+    if ($matched === null || $matchedHash === null) {
+        return null;
+    }
+
+    unset($store['tokens'][$matchedHash]);
+    birkly_mcp_oauth_save_store($store);
+
+    return birkly_mcp_oauth_issue_tokens(
+        $clientId,
+        (string) $matched['endpoint_id'],
+        (string) ($matched['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE),
+        (string) ($matched['authorized_by'] ?? ''),
+        (string) ($matched['authorized_role'] ?? ''),
+        (string) ($matched['agent_type'] ?? 'service')
+    );
+}
+
 function birkly_mcp_oauth_issue_tokens(
     string $clientId,
     string $endpointId,
@@ -822,39 +875,12 @@ function birkly_mcp_oauth_handle_token(): void
             birkly_mcp_oauth_error('invalid_request', 'refresh_token and client_id are required');
         }
 
-        $store = birkly_mcp_oauth_load_store();
-        $matched = null;
-        $matchedHash = null;
-        foreach ($store['tokens'] as $hash => $entry) {
-            if (!hash_equals((string) ($entry['refresh_token'] ?? ''), $refreshToken)) {
-                continue;
-            }
-            if (!hash_equals((string) ($entry['client_id'] ?? ''), $clientId)) {
-                continue;
-            }
-            if (($entry['refresh_expires_at'] ?? 0) < time()) {
-                birkly_mcp_oauth_error('invalid_grant', 'Refresh token expired');
-            }
-            $matched = $entry;
-            $matchedHash = $hash;
-            break;
+        $tokens = birkly_mcp_oauth_exchange_refresh_token($refreshToken, $clientId);
+        if ($tokens === null) {
+            birkly_mcp_oauth_error('invalid_grant', 'Refresh token invalid or expired');
         }
 
-        if ($matched === null) {
-            birkly_mcp_oauth_error('invalid_grant', 'Refresh token invalid');
-        }
-
-        unset($store['tokens'][$matchedHash]);
-        birkly_mcp_oauth_save_store($store);
-
-        birkly_mcp_oauth_json_response(birkly_mcp_oauth_issue_tokens(
-            $clientId,
-            (string) $matched['endpoint_id'],
-            (string) ($matched['scope'] ?? BIRKLY_MCP_OAUTH_SCOPE),
-            (string) ($matched['authorized_by'] ?? ''),
-            (string) ($matched['authorized_role'] ?? ''),
-            (string) ($matched['agent_type'] ?? 'service')
-        ));
+        birkly_mcp_oauth_json_response($tokens);
     }
 
     birkly_mcp_oauth_error('unsupported_grant_type', 'Supported: authorization_code, refresh_token');
@@ -1074,6 +1100,39 @@ function birkly_mcp_oauth_list_sessions(?string $userId = null): array
     });
 
     return $sessions;
+}
+
+/**
+ * Revoke MCP OAuth sessions for one user and OAuth client (e.g. desktop connector).
+ */
+function birkly_mcp_oauth_revoke_client_sessions_for_user(string $userId, string $clientId): int
+{
+    if ($userId === '' || $clientId === '') {
+        return 0;
+    }
+
+    $store = birkly_mcp_oauth_load_store();
+    $removed = 0;
+
+    foreach ($store['tokens'] as $hash => $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        if ((string) ($entry['authorized_by'] ?? '') !== $userId) {
+            continue;
+        }
+        if (!hash_equals((string) ($entry['client_id'] ?? ''), $clientId)) {
+            continue;
+        }
+        unset($store['tokens'][$hash]);
+        $removed++;
+    }
+
+    if ($removed > 0) {
+        birkly_mcp_oauth_save_store($store);
+    }
+
+    return $removed;
 }
 
 /**
