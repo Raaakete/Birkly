@@ -253,8 +253,89 @@ function birkly_mcp_desktop_proxy_jsonrpc(array $credentials, array $message): ?
         return null;
     }
 
-    $decoded = json_decode($raw, true);
-    return is_array($decoded) ? $decoded : null;
+    $decoded = birkly_mcp_desktop_parse_http_jsonrpc_body($raw);
+    if ($decoded === null) {
+        return null;
+    }
+
+    return birkly_mcp_desktop_normalize_jsonrpc_for_stdio($decoded);
+}
+
+/**
+ * Parse JSON-RPC from Streamable HTTP (JSON body or SSE `data:` lines).
+ *
+ * @return array<string, mixed>|null
+ */
+function birkly_mcp_desktop_parse_http_jsonrpc_body(string $raw): ?array
+{
+    $trimmed = trim($raw);
+    if ($trimmed === '') {
+        return null;
+    }
+
+    if ($trimmed[0] === '{') {
+        $decoded = json_decode($trimmed, true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    if (!str_contains($trimmed, 'data:')) {
+        return null;
+    }
+
+    $last = null;
+    foreach (preg_split('/\r\n|\n|\r/', $trimmed) as $line) {
+        $line = trim($line);
+        if (!str_starts_with($line, 'data:')) {
+            continue;
+        }
+        $json = trim(substr($line, 5));
+        if ($json === '' || $json === '[DONE]') {
+            continue;
+        }
+        $decoded = json_decode($json, true);
+        if (is_array($decoded)) {
+            $last = $decoded;
+        }
+    }
+
+    return $last;
+}
+
+/**
+ * PHP json_decode turns {} into []; Claude MCP requires capability maps as objects.
+ *
+ * @param array<string, mixed> $response
+ * @return array<string, mixed>
+ */
+function birkly_mcp_desktop_normalize_jsonrpc_for_stdio(array $response): array
+{
+    if (!isset($response['result']) || !is_array($response['result'])) {
+        return $response;
+    }
+
+    $result = $response['result'];
+    if (isset($result['capabilities']) && is_array($result['capabilities'])) {
+        $caps = $result['capabilities'];
+        foreach (['tools', 'resources', 'prompts', 'logging'] as $key) {
+            if (array_key_exists($key, $caps) && $caps[$key] === []) {
+                $caps[$key] = new stdClass();
+            }
+        }
+        $result['capabilities'] = $caps;
+    }
+    $response['result'] = $result;
+
+    return $response;
+}
+
+/**
+ * @param array<string, mixed> $payload
+ */
+function birkly_mcp_desktop_encode_stdio_jsonrpc(array $payload): string
+{
+    $normalized = birkly_mcp_desktop_normalize_jsonrpc_for_stdio($payload);
+
+    return json_encode($normalized, JSON_UNESCAPED_SLASHES) ?: '{}';
 }
 
 function birkly_mcp_desktop_http_post(
@@ -361,7 +442,7 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
                 'error' => ['code' => -32603, 'message' => 'Could not reach Birkly MCP. Check that Birkly is running and re-pair in Settings → AI.'],
             ];
         }
-        fwrite(STDOUT, json_encode($response, JSON_UNESCAPED_SLASHES) . "\n");
+        fwrite(STDOUT, birkly_mcp_desktop_encode_stdio_jsonrpc($response) . "\n");
     }
 
     return 0;
