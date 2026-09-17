@@ -47,7 +47,8 @@ Use for: online shop, cart, checkout, product variants, subscriptions, digital/p
 | `{commerce_cart_count}` | Cart item count |
 | `{commerce_cart_url}` | Cart API URL |
 | `{commerce_buy_url entry_id collection qty}` | Add/buy link |
-| `{commerce_price_from entry_id collection}` | "From €X" display |
+| `{commerce_price_from slug collection}` | Lowest catalog price on detail pages (`slug` = current entry) |
+| `{commerce_price_from {'commerce'}}` / `variant.commerce` | Price from commerce field value |
 
 ## Fulfillment routing
 

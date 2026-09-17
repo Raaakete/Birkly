@@ -13,7 +13,7 @@ Symptoms: “I’m admin but still get prompts” → configure **Always allow**
 
 ## Connection checklist
 
-1. **HTTPS** — Remote MCP clients cannot reach `http://localhost`. Use a public URL or tunnel for local dev.
+1. **Localhost** — Cloud connector UIs reject `http://localhost`. On the same machine, use **`mcp-remote`** + a **service agent** URL from Settings → AI (stdio → `http://localhost:PORT/mcp/agents/…`). Otherwise use an HTTPS tunnel.
 2. **Personal connector URL** — Copy from **Settings → AI** exactly: `/mcp/agents/ai_agent_personal` (not a stale site-wide `/mcp` URL unless using API-key bridge).
 3. **Service agents** — Your user/role must appear under **Who can use this agent** before OAuth succeeds.
 4. **Role** — Personal connector uses your human role; service agents use the agent’s fixed role.
