@@ -90,6 +90,13 @@ assert_true('mac helper merges birkly', str_contains($macScript, '"birkly"'));
 $winScript = birkly_mcp_desktop_windows_bat_script($snippet, 'cursor');
 assert_true('win helper mentions Cursor', str_contains($winScript, 'Cursor'));
 
+$mergeDir = $testRoot . '/fakehome/Library/Application Support/Claude';
+mkdir($mergeDir, 0755, true);
+putenv('HOME=' . $testRoot . '/fakehome');
+$merge = birkly_mcp_desktop_merge_into_app_config('claude', $snippet);
+assert_true('merge install ok', ($merge['ok'] ?? false) === true);
+assert_true('merge wrote file', is_file($mergeDir . '/claude_desktop_config.json'));
+
 rrmdir($testRoot);
 
 echo "\nmcp_desktop_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");
