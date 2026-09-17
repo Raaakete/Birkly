@@ -428,7 +428,7 @@ function resolveMediaItemUrl(url) {
     rootItem.className = 'side-nav-item folder-item-move';
     rootItem.innerHTML =
       icon('folder-root', { size: 16 }) +
-      '<span class="side-nav-label" data-text="Root folder">Root folder</span>';
+      '<span class="side-nav-label" data-text="' + escapeHtml(mdT('media_js_root_folder', 'Root folder')) + '">' + escapeHtml(mdT('media_js_root_folder', 'Root folder')) + '</span>';
     rootItem.addEventListener('click', async function () {
       selectMoveFolder('');
     });
