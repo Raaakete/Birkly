@@ -4,6 +4,8 @@ Birkly fills your HTML with CMS content using a plain-English template language:
 
 ## Summary
 
+**From Guide:** The **How it works → Site & templates** card in admin **Guide** links here when you are ready to connect `project/` HTML to your entries.
+
 **In short:** Write normal HTML, leave slots where content should come from Birkly, and load `birkly-client.js`. Collections are quoted (`'blog'`). System fields are bare (`{title}`, `{slug}`); user-defined fields use quotes (`{'excerpt'}`, `{'price'}`). List pages loop a collection; detail pages read one entry from the URL — they must **not** loop the whole collection.
 
 **Canonical engine reference:** Birkly repo `docs/TEMPLATE_LANGUAGE_SPEC.md` (Template Language Spec v1.0). Human SSOT pointer: [Canonical template syntax](canonical-syntax.md).
