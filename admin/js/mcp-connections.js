@@ -115,9 +115,149 @@
         if (localCallout) {
             localCallout.hidden = publicOk;
         }
+        const desktopCard = document.getElementById('ai-desktop-connector-card');
+        if (desktopCard) {
+            desktopCard.hidden = publicOk;
+        }
         const legacyBanner = document.getElementById('ai-https-warning');
         if (legacyBanner) {
             legacyBanner.hidden = true;
+        }
+    }
+
+    function desktopApiUrl() {
+        return (typeof Birkly !== 'undefined' && Birkly.url)
+            ? Birkly.url('/api/admin_mcp_desktop.php')
+            : '/api/admin_mcp_desktop.php';
+    }
+
+    async function loadDesktopConnector() {
+        const body = document.getElementById('ai-desktop-connector-body');
+        if (!body || isPublicHttps()) {
+            return;
+        }
+        try {
+            const res = await fetch(desktopApiUrl() + '?action=status', { credentials: 'same-origin' });
+            const result = await res.json();
+            const data = result?.data || {};
+            renderDesktopConnector(data);
+        } catch (err) {
+            console.error('Desktop connector status:', err);
+            renderDesktopConnector({ paired: false, error: true });
+        }
+    }
+
+    function renderDesktopConfigBlock(config) {
+        if (!config) return '';
+        const json = JSON.stringify(config, null, 2);
+        const id = 'mcp-desktop-config-json';
+        return `
+        <div class="mcp-snippet-block u-stack-2">
+            <span class="u-label u-text-sm">${escapeHtml(mcpT('ai_conn_desktop_config_label', 'Paste into your desktop app MCP settings'))}</span>
+            <textarea id="${id}" class="input input-mono" rows="10" readonly>${escapeHtml(json)}</textarea>
+            <button type="button" class="btn btn-sm btn-secondary" data-copy-desktop-config>${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}</button>
+        </div>`;
+    }
+
+    function renderDesktopConnector(data) {
+        const body = document.getElementById('ai-desktop-connector-body');
+        if (!body) return;
+
+        if (data.error) {
+            body.innerHTML = `<p class="message message-error" role="alert">${escapeHtml(mcpT('ai_conn_desktop_status_error', 'Could not load desktop pairing status. Refresh the page.'))}</p>`;
+            return;
+        }
+
+        if (!data.paired) {
+            body.innerHTML = `
+            <p class="settings-help">${escapeHtml(mcpT('ai_conn_desktop_unpaired_body', 'Pair this Birkly site with Claude Desktop or Cursor on the same computer. Uses PHP only — no Node or extra installs.'))}</p>
+            <button type="button" class="btn btn-primary" id="mcp-desktop-pair-btn">${escapeHtml(mcpT('ai_conn_desktop_pair_btn', 'Pair this computer'))}</button>`;
+            document.getElementById('mcp-desktop-pair-btn')?.addEventListener('click', pairDesktopConnector);
+            return;
+        }
+
+        const pairedAt = data.paired_at
+            ? mcpT('ai_conn_desktop_paired_at', 'Paired %s').replace('%s', data.paired_at)
+            : mcpT('ai_conn_desktop_paired', 'Paired for this user on this server');
+        const invalidNote = data.invalid
+            ? `<p class="message message-warning" role="alert">${escapeHtml(mcpT('ai_conn_desktop_invalid', 'Credentials file is invalid. Pair again.'))}</p>`
+            : '';
+
+        body.innerHTML = `
+            ${invalidNote}
+            <p class="settings-help">${escapeHtml(pairedAt)}</p>
+            ${renderDesktopConfigBlock(data.claude_desktop_config)}
+            <div class="u-cluster-3">
+                <button type="button" class="btn btn-sm btn-secondary" id="mcp-desktop-repair-btn">${escapeHtml(mcpT('ai_conn_desktop_repair_btn', 'Re-pair'))}</button>
+                <button type="button" class="btn btn-sm btn-danger" id="mcp-desktop-revoke-btn">${escapeHtml(mcpT('ai_conn_desktop_revoke_btn', 'Revoke'))}</button>
+            </div>`;
+
+        body.querySelector('[data-copy-desktop-config]')?.addEventListener('click', function () {
+            const ta = document.getElementById('mcp-desktop-config-json');
+            if (!ta) return;
+            fallbackCopy(ta, function () {
+                showToast(mcpT('ai_conn_desktop_config_copied', 'Config copied'));
+            });
+        });
+        document.getElementById('mcp-desktop-repair-btn')?.addEventListener('click', pairDesktopConnector);
+        document.getElementById('mcp-desktop-revoke-btn')?.addEventListener('click', revokeDesktopConnector);
+    }
+
+    async function pairDesktopConnector() {
+        const body = document.getElementById('ai-desktop-connector-body');
+        if (body) {
+            body.innerHTML = `<div class="loading-state"><p>${escapeHtml(mcpT('ai_conn_desktop_pairing', 'Pairing…'))}</p></div>`;
+        }
+        try {
+            const res = await fetch(desktopApiUrl(), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ action: 'pair', _csrf: csrfToken })
+            });
+            const result = await res.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'pair failed');
+            }
+            const data = result.data || {};
+            renderDesktopConnector({
+                paired: true,
+                paired_at: new Date().toISOString(),
+                claude_desktop_config: data.claude_desktop_config
+            });
+            showToast(mcpT('ai_conn_desktop_pair_success', 'Desktop app paired. Copy the config into Claude Desktop or Cursor.'));
+        } catch (err) {
+            console.error(err);
+            renderDesktopConnector({ paired: false });
+            showToast(mcpT('ai_conn_desktop_pair_failed', 'Pairing failed. Check that your personal connector is active.'), true);
+        }
+    }
+
+    async function revokeDesktopConnector() {
+        if (!window.confirm(mcpT('ai_conn_desktop_revoke_confirm', 'Revoke desktop pairing? The desktop app will stop working until you pair again.'))) {
+            return;
+        }
+        try {
+            const res = await fetch(desktopApiUrl(), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ action: 'revoke', _csrf: csrfToken })
+            });
+            const result = await res.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'revoke failed');
+            }
+            renderDesktopConnector({ paired: false });
+            showToast(mcpT('ai_conn_desktop_revoked', 'Desktop pairing revoked.'));
+        } catch (err) {
+            showToast(mcpT('ai_conn_desktop_revoke_failed', 'Could not revoke pairing.'), true);
         }
     }
 
@@ -231,6 +371,7 @@
                 || (window.location.origin + connectorPath());
             serverUrl = resolveConnectorUrl(connectorUrl);
             updateHttpsWarning();
+            loadDesktopConnector();
 
             renderPersonalAgent(personal);
             renderServiceAgents(serviceAgents);
