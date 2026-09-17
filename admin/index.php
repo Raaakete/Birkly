@@ -352,7 +352,7 @@ birkly_set_admin_csp_headers();
 $__birklyOnboardingNonceAttr = birkly_csp_nonce_attr();
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

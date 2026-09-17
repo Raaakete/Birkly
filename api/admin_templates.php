@@ -3593,6 +3593,8 @@ function getPluginsData() {
             'active' => __('admin.active'),
             'inactive' => __('admin.inactive'),
             'hub_js_missing_plugin_info' => __('admin.hub_js_missing_plugin_info'),
+            'hub_js_settings_save_failed' => __('admin.hub_js_settings_save_failed'),
+            'error_unknown' => __('admin.error_unknown'),
             'marketplace_distribution_notice_alpha' => __('admin.marketplace_distribution_notice_alpha'),
             'marketplace_distribution_notice_beta' => __('admin.marketplace_distribution_notice_beta'),
             'hub_license_ref' => __('admin.hub_license_ref'),

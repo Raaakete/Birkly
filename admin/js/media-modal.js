@@ -31,6 +31,18 @@ function birklyMediaModalIcon(name, size) {
         : '';
 }
 
+function birklyMediaModalT(key, fallback, params) {
+    let text = (typeof Birkly !== 'undefined' && Birkly.i18n && typeof Birkly.i18n.t === 'function')
+        ? Birkly.i18n.t('admin.' + key, fallback)
+        : (fallback != null ? fallback : key);
+    if (params && typeof params === 'object') {
+        Object.keys(params).forEach(function (name) {
+            text = text.split('{' + name + '}').join(String(params[name]));
+        });
+    }
+    return text;
+}
+
 window.Birkly.MediaModal = {
     isOpen: false,
     currentCallback: null,
@@ -275,24 +287,27 @@ window.Birkly.MediaModal = {
             
             if (result.status === 'ok' && result.data) {
                 if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
-                    window.BirklyFeedback.toast('Media uploaded', 'success');
+                    window.BirklyFeedback.toast(birklyMediaModalT('media_js_upload_success', 'Media uploaded'), 'success');
                 }
                 await this.loadMedia();
                 this.selectMedia(result.data);
             } else {
-                const msg = result.message || result.error || 'Unknown error';
+                const msg = result.message || result.error || birklyMediaModalT('error_unknown', 'Unknown error');
+                const failPrefix = birklyMediaModalT('media_js_upload_failed_prefix', 'Upload failed:');
                 if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
-                    window.BirklyFeedback.toast('Upload failed: ' + msg, 'error');
+                    window.BirklyFeedback.toast(failPrefix + ' ' + msg, 'error');
                 } else {
-                    alert('Upload failed: ' + msg);
+                    alert(failPrefix + ' ' + msg);
                 }
             }
         } catch (error) {
             console.error('Upload error:', error);
+            const failPrefix = birklyMediaModalT('media_js_upload_failed_prefix', 'Upload failed:');
+            const errMsg = (error && error.message) ? error.message : birklyMediaModalT('error_unknown', 'Unknown error');
             if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
-                window.BirklyFeedback.toast('Upload failed: ' + error.message, 'error');
+                window.BirklyFeedback.toast(failPrefix + ' ' + errMsg, 'error');
             } else {
-                alert('Upload failed: ' + (error && error.message ? error.message : 'Unknown error'));
+                alert(failPrefix + ' ' + errMsg);
             }
         }
     },

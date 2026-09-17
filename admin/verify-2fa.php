@@ -6,6 +6,8 @@ require_once __DIR__ . '/../api/session.php';
 haru_secure_session_start();
 
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/i18n.php';
+I18n::init();
 // IMPORTANT: api/*.php files often auto-execute as JSON endpoints unless marked as internal.
 // This page must be accessible before a full admin session exists.
 $GLOBALS['__HARU_INTERNAL_CALL'] = true;
@@ -76,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(getCurrentLanguage()) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

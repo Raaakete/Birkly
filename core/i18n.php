@@ -388,3 +388,21 @@ function getCurrentLanguage() {
 function setLanguage($language) {
     I18n::setLanguage($language);
 }
+
+/**
+ * Display label for built-in CMS admin roles (user menu, sidebar).
+ */
+function birkly_admin_user_role_label(string $role): string
+{
+    $slug = strtolower(trim($role));
+    if ($slug === '') {
+        $slug = 'viewer';
+    }
+    $key = 'admin.user_role_' . preg_replace('/[^a-z0-9_]/', '', str_replace('-', '_', $slug));
+    $label = I18n::translate($key);
+    if ($label !== $key) {
+        return $label;
+    }
+
+    return ucfirst($slug);
+}

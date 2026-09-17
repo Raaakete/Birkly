@@ -257,6 +257,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
     const languageSelect = document.getElementById('user-language-select');
     const i18nLangErrorPrefix = <?= json_encode(__('admin.language_change_error'), JSON_UNESCAPED_UNICODE) ?>;
     const i18nLangErrorRetry = <?= json_encode(__('admin.language_change_error_retry'), JSON_UNESCAPED_UNICODE) ?>;
+    const i18nLangErrorUnknown = <?= json_encode(__('admin.error_unknown'), JSON_UNESCAPED_UNICODE) ?>;
     if (languageSelect) {
         languageSelect.addEventListener('change', function() {
             const language = this.value;
@@ -278,7 +279,7 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                     // Reload page to apply new language
                     window.location.reload();
                 } else {
-                    alert(i18nLangErrorPrefix + ' ' + (data.message || 'Unknown error'));
+                    alert(i18nLangErrorPrefix + ' ' + (data.message || i18nLangErrorUnknown));
                 }
             })
             .catch(error => {

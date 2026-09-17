@@ -92,7 +92,7 @@ if (!$currentUser) {
     $currentUser = ['email' => 'User', 'role' => 'viewer', 'name' => 'User', 'avatar' => ''];
 }
 $userEmail = $currentUser['email'] ?? 'User';
-$userRole = ucfirst($currentUser['role'] ?? 'viewer');
+$userRole = birkly_admin_user_role_label((string) ($currentUser['role'] ?? 'viewer'));
 $userName = $currentUser['name'] ?? $userEmail;
 $userAvatar = $currentUser['avatar'] ?? '';
 

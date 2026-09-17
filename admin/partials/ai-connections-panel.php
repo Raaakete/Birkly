@@ -6,9 +6,13 @@
  * removed in P60.1 — this partial is the single home. The connection modules
  * (mcp-connections.js / ai-connections.js) init against these DOM ids.
  */
+if (!function_exists('birkly_icon')) {
+    require_once __DIR__ . '/../../core/icons.php';
+}
+$aiConnSettingsSearch = __('admin.ai_conn_settings_search');
 ?>
         <div class="settings-stack ai-settings">
-          <div id="ai-integrations" class="settings-pane-section" data-settings-search="ai assistant mcp connections service agents outbound personal connector"><div class="u-stack-6">
+          <div id="ai-integrations" class="settings-pane-section" data-settings-search="<?= htmlspecialchars($aiConnSettingsSearch) ?>"><div class="u-stack-6">
           <div class="section-header">
             <div class="u-stack-1">
               <h2 class="section-title"><?= htmlspecialchars(__('admin.ai_integrations')) ?></h2>
