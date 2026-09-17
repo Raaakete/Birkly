@@ -37,11 +37,56 @@ if (!is_array($input)) {
 $action = (string) ($input['action'] ?? $_GET['action'] ?? 'status');
 
 if ($action === 'status') {
+    $data = birkly_mcp_desktop_status_for_user($userId);
+    $data['install_targets'] = [
+        'claude' => birkly_mcp_desktop_install_target_meta('claude'),
+        'cursor' => birkly_mcp_desktop_install_target_meta('cursor'),
+    ];
     echo json_encode([
         'status' => 'ok',
-        'data' => birkly_mcp_desktop_status_for_user($userId),
+        'data' => $data,
     ]);
     exit;
+}
+
+if ($action === 'download_helper') {
+    $status = birkly_mcp_desktop_status_for_user($userId);
+    if (!($status['paired'] ?? false)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Pair this computer first']);
+        exit;
+    }
+    $target = (string) ($input['target'] ?? $_GET['target'] ?? 'claude');
+    if ($target !== 'claude' && $target !== 'cursor') {
+        $target = 'claude';
+    }
+    $os = (string) ($input['os'] ?? $_GET['os'] ?? 'mac');
+    $config = $status['claude_desktop_config'] ?? null;
+    if (!is_array($config)) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => 'Config unavailable']);
+        exit;
+    }
+    try {
+        if ($os === 'win' || $os === 'windows') {
+            $body = birkly_mcp_desktop_windows_bat_script($config, $target);
+            $filename = $target === 'cursor' ? 'Connect-Birkly-to-Cursor.bat' : 'Connect-Birkly-to-Claude.bat';
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            echo $body;
+            exit;
+        }
+        $body = birkly_mcp_desktop_mac_command_script($config, $target);
+        $filename = $target === 'cursor' ? 'Connect-Birkly-to-Cursor.command' : 'Connect-Birkly-to-Claude.command';
+        header('Content-Type: application/octet-stream');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        echo $body;
+        exit;
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        exit;
+    }
 }
 
 if (!validate_csrf_token((string) ($input['_csrf'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) {
