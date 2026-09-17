@@ -89,17 +89,19 @@ def sort_nested(obj: Any) -> Any:
 
 def translate_one_string(text: str, translator: GoogleTranslator, delay: float) -> str:
     protected, tokens = protect(text)
+    target = getattr(translator, "target", "ja")
+    if target == "ja":
+        try:
+            from deep_translator import MyMemoryTranslator
+
+            ja = MyMemoryTranslator(source="en-US", target="ja-JP").translate(protected)
+            if ja and ja.strip():
+                time.sleep(delay)
+                return restore(ja, tokens)
+        except Exception:
+            pass
     try:
         ja = translator.translate(protected)
-        if ja and ja.strip():
-            time.sleep(delay)
-            return restore(ja, tokens)
-    except Exception:
-        pass
-    try:
-        from deep_translator import MyMemoryTranslator
-
-        ja = MyMemoryTranslator(source="en-US", target="ja-JP").translate(protected)
         if ja and ja.strip():
             time.sleep(delay)
             return restore(ja, tokens)
