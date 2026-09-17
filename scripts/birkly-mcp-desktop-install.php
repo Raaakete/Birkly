@@ -13,9 +13,20 @@ require_once $root . '/core/mcp_desktop.php';
 
 $target = 'claude';
 $tokenFile = null;
-foreach ($argv as $arg) {
+$uninstall = false;
+for ($i = 1; $i < count($argv); $i++) {
+    $arg = $argv[$i];
+    if ($arg === '--uninstall') {
+        $uninstall = true;
+        continue;
+    }
     if (str_starts_with($arg, '--target=')) {
         $target = substr($arg, strlen('--target='));
+        continue;
+    }
+    if ($arg === '--token-file' && isset($argv[$i + 1])) {
+        $tokenFile = $argv[++$i];
+        continue;
     }
     if (str_starts_with($arg, '--token-file=')) {
         $tokenFile = substr($arg, strlen('--token-file='));
@@ -25,6 +36,23 @@ foreach ($argv as $arg) {
 if ($target !== 'claude' && $target !== 'cursor') {
     fwrite(STDERR, "Unknown --target. Use claude or cursor.\n");
     exit(1);
+}
+
+if ($uninstall) {
+    $result = birkly_mcp_desktop_remove_from_app_config($target);
+    if (!($result['ok'] ?? false)) {
+        fwrite(STDERR, (string) ($result['message'] ?? 'Uninstall failed') . "\n");
+        exit(1);
+    }
+    $meta = birkly_mcp_desktop_install_target_meta($target);
+    $path = (string) ($result['path'] ?? '');
+    if ($result['removed'] ?? false) {
+        echo "Birkly: removed “birkly” from {$path}\n";
+    } else {
+        echo "Birkly: no “birkly” entry in {$path}\n";
+    }
+    echo "Fully quit {$meta['app_label']}, then open it again.\n";
+    exit(0);
 }
 
 if ($tokenFile !== null && $tokenFile !== '' && !str_starts_with($tokenFile, '/')

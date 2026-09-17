@@ -21,6 +21,18 @@ Birkly uses a small **PHP bridge** (`scripts/birkly-mcp-desktop.php`) — no Nod
 
 After updating Birkly, run the **Terminal install** command again (or edit Claude **Developer → Local MCP** so `args` use `--token-file` and the credentials path as **two** separate entries, not `--token-file=/path with spaces`).
 
+## Disconnect or remove
+
+| Goal | What to do |
+|------|------------|
+| Stop AI using Birkly temporarily | Turn off **birkly** in Claude **Konnektoren** or Developer → MCP |
+| Revoke tokens on the server | **Settings → AI** → **Revoke** (desktop card) |
+| Remove **birkly** from Claude completely | **Settings → AI** → expand **Remove from Claude or Cursor** → run the Terminal uninstall command, then fully quit Claude |
+
+Claude does not offer “delete” for local stdio MCP servers in the Connectors UI — only disable. Uninstall removes the `birkly` entry from `~/Library/Application Support/Claude/claude_desktop_config.json`.
+
+If the server shows **Server disconnected** after it worked once: fully quit Claude, run the **install** Terminal command again (fixes token path and config), reopen Claude, and check **Protokolle anzeigen** in Developer → MCP or `logs/php_errors.log` in your Birkly folder.
+
 ## Built-in assistant (optional)
 
 You can also use the **built-in assistant** on **Settings → AI** for chat inside the admin. That uses your provider API key and does not need a Connector URL.

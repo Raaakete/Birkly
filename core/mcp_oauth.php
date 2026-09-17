@@ -1103,6 +1103,39 @@ function birkly_mcp_oauth_list_sessions(?string $userId = null): array
 }
 
 /**
+ * Revoke MCP OAuth sessions for one user and OAuth client (e.g. desktop connector).
+ */
+function birkly_mcp_oauth_revoke_client_sessions_for_user(string $userId, string $clientId): int
+{
+    if ($userId === '' || $clientId === '') {
+        return 0;
+    }
+
+    $store = birkly_mcp_oauth_load_store();
+    $removed = 0;
+
+    foreach ($store['tokens'] as $hash => $entry) {
+        if (!is_array($entry)) {
+            continue;
+        }
+        if ((string) ($entry['authorized_by'] ?? '') !== $userId) {
+            continue;
+        }
+        if (!hash_equals((string) ($entry['client_id'] ?? ''), $clientId)) {
+            continue;
+        }
+        unset($store['tokens'][$hash]);
+        $removed++;
+    }
+
+    if ($removed > 0) {
+        birkly_mcp_oauth_save_store($store);
+    }
+
+    return $removed;
+}
+
+/**
  * Revoke all active MCP OAuth sessions for a human user. Returns count removed.
  */
 function birkly_mcp_oauth_revoke_user_sessions(string $userId): int
