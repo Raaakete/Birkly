@@ -19,8 +19,8 @@
     }
 
     const DOCS_HELP_URL = typeof Birkly !== 'undefined' && Birkly.adminUrl
-        ? Birkly.adminUrl('help') + '#mcp-connections'
-        : '/admin/index.php?page=help#mcp-connections';
+        ? Birkly.adminUrl('help') + '&topic=mcp-connections'
+        : '/admin/index.php?page=help&topic=mcp-connections';
 
     function isAiIntegrationsContext() {
         const pane = document.getElementById('ai-integrations');
@@ -110,9 +110,14 @@
     }
 
     function updateHttpsWarning() {
-        const banner = document.getElementById('ai-https-warning');
-        if (banner) {
-            banner.hidden = isPublicHttps();
+        const publicOk = isPublicHttps();
+        const localCallout = document.getElementById('ai-local-address-callout');
+        if (localCallout) {
+            localCallout.hidden = publicOk;
+        }
+        const legacyBanner = document.getElementById('ai-https-warning');
+        if (legacyBanner) {
+            legacyBanner.hidden = true;
         }
     }
 

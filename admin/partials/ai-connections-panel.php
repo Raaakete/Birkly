@@ -10,6 +10,8 @@ if (!function_exists('birkly_icon')) {
     require_once __DIR__ . '/../../core/icons.php';
 }
 $aiConnSettingsSearch = __('admin.ai_conn_settings_search');
+$helpMcpConnectionsUrl = birkly_url('/admin/index.php?page=help&topic=mcp-connections');
+$helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost');
 ?>
         <div class="settings-stack ai-settings">
           <div id="ai-integrations" class="settings-pane-section" data-settings-search="<?= htmlspecialchars($aiConnSettingsSearch) ?>"><div class="u-stack-6">
@@ -19,64 +21,18 @@ $aiConnSettingsSearch = __('admin.ai_conn_settings_search');
               <p class="settings-help"><?= htmlspecialchars(__('admin.ai_conn_panel_help')) ?></p>
             </div>
             <p class="u-cluster-3 u-text-sm">
-              <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#mcp-connections"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
-              <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/01-admin/mcp-connections.md" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.documentation')) ?></a>
+              <a href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_step_guide')) ?></a>
+              <a href="<?= htmlspecialchars($helpMcpConnectionsUrl) ?>"><?= htmlspecialchars(__('admin.documentation')) ?></a>
             </p>
           </div>
 
-          <div class="callout callout-warning" id="ai-https-warning" role="alert" hidden>
-            <div class="callout-body u-stack-1">
-              <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_https_title')) ?></p>
-              <p><?= htmlspecialchars(__('admin.ai_conn_https_body')) ?></p>
-            </div>
-          </div>
-
-          <div class="card" id="ai-localhost-card">
-            <div class="card-header">
-              <div class="card-heading">
-                <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_conn_localhost_title')) ?></h3>
-                <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_localhost_desc')) ?></p>
-              </div>
-            </div>
-            <div class="card-body u-stack-4">
-              <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_intro')) ?></p>
-
-              <div class="u-stack-2">
-                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_builtin')) ?></p>
-                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_builtin')) ?></p>
-              </div>
-
-              <div class="u-stack-2">
-                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_public')) ?></p>
-                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_public')) ?></p>
-              </div>
-
-              <div class="u-stack-2">
-                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_stdio')) ?></p>
-                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_mcp_remote')) ?></p>
-                <ol class="u-text-sm settings-list" style="list-style: decimal; padding-left: 1.25rem;">
-                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_agent')) ?></li>
-                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_npx')) ?></li>
-                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_config')) ?></li>
-                  <li><?= htmlspecialchars(__('admin.ai_conn_localhost_step_oauth')) ?></li>
-                </ol>
-              </div>
-
-              <div class="u-stack-2">
-                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_tunnel')) ?></p>
-                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_tunnel')) ?></p>
-              </div>
-
-              <div class="u-stack-2">
-                <p class="u-text-sm u-weight-semibold"><?= htmlspecialchars(__('admin.ai_conn_localhost_h_bridge')) ?></p>
-                <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_localhost_p_bridge')) ?></p>
-              </div>
-
-              <p class="u-cluster-3 u-text-sm">
-                <a href="<?= htmlspecialchars(birkly_url('/admin/index.php?page=help')) ?>#ai-on-localhost"><?= htmlspecialchars(__('admin.ai_conn_localhost_guide_help')) ?></a>
-                <a href="https://github.com/Raaakete/Birkly-Docs/blob/main/04-integration/ai-on-localhost.md" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.ai_conn_localhost_guide_github')) ?></a>
+          <div class="callout callout-info" id="ai-local-address-callout" role="status" hidden>
+            <div class="callout-body u-stack-2">
+              <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_local_address_title')) ?></p>
+              <p class="u-text-sm"><?= htmlspecialchars(__('admin.ai_conn_local_address_body')) ?></p>
+              <p class="u-text-sm">
+                <a href="<?= htmlspecialchars($helpAiLocalUrl) ?>"><?= htmlspecialchars(__('admin.ai_conn_local_address_help_link')) ?></a>
               </p>
-              <p class="form-help"><?= htmlspecialchars(__('admin.ai_conn_localhost_security_note')) ?></p>
             </div>
           </div>
 
