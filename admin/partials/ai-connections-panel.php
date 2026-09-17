@@ -36,6 +36,18 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
             </div>
           </div>
 
+          <div class="card" id="ai-desktop-connector-card" hidden>
+            <div class="card-header">
+              <div class="u-stack-1">
+                <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_conn_desktop_title')) ?></h3>
+                <p class="card-description"><?= htmlspecialchars(__('admin.ai_conn_desktop_desc')) ?></p>
+              </div>
+            </div>
+            <div class="card-body u-stack-4" id="ai-desktop-connector-body">
+              <div class="loading-state"><p><?= htmlspecialchars(__('admin.ai_conn_desktop_loading')) ?></p></div>
+            </div>
+          </div>
+
           <div class="callout callout-info" id="ai-agents-migration-banner" role="status" hidden>
             <div class="callout-body u-stack-1">
               <p class="callout-title"><?= htmlspecialchars(__('admin.ai_conn_migration_title')) ?></p>

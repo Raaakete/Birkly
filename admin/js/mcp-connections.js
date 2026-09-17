@@ -115,9 +115,225 @@
         if (localCallout) {
             localCallout.hidden = publicOk;
         }
+        const desktopCard = document.getElementById('ai-desktop-connector-card');
+        if (desktopCard) {
+            desktopCard.hidden = publicOk;
+        }
         const legacyBanner = document.getElementById('ai-https-warning');
         if (legacyBanner) {
             legacyBanner.hidden = true;
+        }
+    }
+
+    function desktopApiUrl() {
+        return (typeof Birkly !== 'undefined' && Birkly.url)
+            ? Birkly.url('/api/admin_mcp_desktop.php')
+            : '/api/admin_mcp_desktop.php';
+    }
+
+    async function loadDesktopConnector() {
+        const body = document.getElementById('ai-desktop-connector-body');
+        if (!body || isPublicHttps()) {
+            return;
+        }
+        try {
+            const res = await fetch(desktopApiUrl() + '?action=status', { credentials: 'same-origin' });
+            const result = await res.json();
+            const data = result?.data || {};
+            renderDesktopConnector(data);
+        } catch (err) {
+            console.error('Desktop connector status:', err);
+            renderDesktopConnector({ paired: false, error: true });
+        }
+    }
+
+    function detectDesktopOsHint() {
+        const ua = navigator.userAgent || '';
+        const platform = navigator.platform || '';
+        if (/Win/i.test(platform) || /Windows/i.test(ua)) {
+            return 'win';
+        }
+        if (/Mac/i.test(platform) || /Macintosh/i.test(ua)) {
+            return 'mac';
+        }
+        return 'mac';
+    }
+
+    function downloadDesktopHelper(target, os) {
+        const url = desktopApiUrl()
+            + '?action=download_helper'
+            + '&target=' + encodeURIComponent(target)
+            + '&os=' + encodeURIComponent(os);
+        window.location.assign(url);
+    }
+
+    function bindDesktopSetupUi(body, config) {
+        const osHint = detectDesktopOsHint();
+        body.querySelectorAll('[data-desktop-target]').forEach(btn => {
+            btn.addEventListener('click', function () {
+                body.querySelectorAll('[data-desktop-target]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const panel = body.querySelector('[data-desktop-panel="' + btn.getAttribute('data-desktop-target') + '"]');
+                body.querySelectorAll('[data-desktop-panel]').forEach(p => { p.hidden = true; });
+                if (panel) panel.hidden = false;
+            });
+        });
+        body.querySelectorAll('[data-download-desktop-helper]').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = btn.getAttribute('data-download-desktop-helper') || 'claude';
+                const os = btn.getAttribute('data-download-os') || osHint;
+                downloadDesktopHelper(target, os);
+            });
+        });
+        body.querySelector('[data-copy-desktop-config]')?.addEventListener('click', function () {
+            const ta = document.getElementById('mcp-desktop-config-json');
+            if (!ta) return;
+            fallbackCopy(ta, function () {
+                showToast(mcpT('ai_conn_desktop_config_copied', 'Config copied'));
+            });
+        });
+    }
+
+    function renderDesktopSetupBlock(config) {
+        if (!config) return '';
+        const json = JSON.stringify(config, null, 2);
+        const osHint = detectDesktopOsHint();
+        const macPrimary = osHint === 'mac';
+        const winPrimary = osHint === 'win';
+
+        return `
+        <div class="u-stack-4" id="mcp-desktop-setup-root">
+            <p class="settings-help">${escapeHtml(mcpT('ai_conn_desktop_setup_intro', 'Choose your desktop app, download the small helper, and open it once. No copying JSON.'))}</p>
+            <div class="u-cluster-3" role="tablist">
+                <button type="button" class="btn btn-sm btn-secondary active" data-desktop-target="claude">${escapeHtml(mcpT('ai_conn_desktop_app_claude', 'Claude Desktop'))}</button>
+                <button type="button" class="btn btn-sm btn-secondary" data-desktop-target="cursor">${escapeHtml(mcpT('ai_conn_desktop_app_cursor', 'Cursor'))}</button>
+            </div>
+            <div data-desktop-panel="claude" class="u-stack-3">
+                <ol class="endpoint-setup-steps">
+                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_download', 'Download the helper for your computer.'))}</li>
+                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_open_mac', 'Double-click the file. If macOS asks, choose Open.'))}</li>
+                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_restart', 'Fully quit Claude Desktop, then open it again.'))}</li>
+                </ol>
+                <div class="u-cluster-3">
+                    <button type="button" class="btn ${macPrimary ? 'btn-primary' : 'btn-secondary'}" data-download-desktop-helper="claude" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_claude', 'Download for Mac'))}</button>
+                    <button type="button" class="btn ${winPrimary ? 'btn-primary' : 'btn-secondary'}" data-download-desktop-helper="claude" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_claude', 'Download for Windows'))}</button>
+                </div>
+            </div>
+            <div data-desktop-panel="cursor" class="u-stack-3" hidden>
+                <ol class="endpoint-setup-steps">
+                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_download', 'Download the helper for your computer.'))}</li>
+                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_open_mac', 'Double-click the file. If macOS asks, choose Open.'))}</li>
+                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_restart_cursor', 'Fully quit Cursor, then open it again.'))}</li>
+                </ol>
+                <div class="u-cluster-3">
+                    <button type="button" class="btn ${macPrimary ? 'btn-primary' : 'btn-secondary'}" data-download-desktop-helper="cursor" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_cursor', 'Download for Mac'))}</button>
+                    <button type="button" class="btn ${winPrimary ? 'btn-primary' : 'btn-secondary'}" data-download-desktop-helper="cursor" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_cursor', 'Download for Windows'))}</button>
+                </div>
+            </div>
+            <details class="u-text-sm">
+                <summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_advanced_summary', 'Advanced: copy JSON manually'))}</summary>
+                <div class="mcp-snippet-block u-stack-2 u-pt-2">
+                    <textarea id="mcp-desktop-config-json" class="input input-mono" rows="8" readonly>${escapeHtml(json)}</textarea>
+                    <button type="button" class="btn btn-sm btn-secondary" data-copy-desktop-config>${escapeHtml(mcpT('ai_mcp_click_copy', 'Click to copy'))}</button>
+                </div>
+            </details>
+        </div>`;
+    }
+
+    function renderDesktopConnector(data) {
+        const body = document.getElementById('ai-desktop-connector-body');
+        if (!body) return;
+
+        if (data.error) {
+            body.innerHTML = `<p class="message message-error" role="alert">${escapeHtml(mcpT('ai_conn_desktop_status_error', 'Could not load desktop pairing status. Refresh the page.'))}</p>`;
+            return;
+        }
+
+        if (!data.paired) {
+            body.innerHTML = `
+            <p class="settings-help">${escapeHtml(mcpT('ai_conn_desktop_unpaired_body', 'Pair this Birkly site with Claude Desktop or Cursor on the same computer. Uses PHP only — no Node or extra installs.'))}</p>
+            <button type="button" class="btn btn-primary" id="mcp-desktop-pair-btn">${escapeHtml(mcpT('ai_conn_desktop_pair_btn', 'Pair this computer'))}</button>`;
+            document.getElementById('mcp-desktop-pair-btn')?.addEventListener('click', pairDesktopConnector);
+            return;
+        }
+
+        const pairedAt = data.paired_at
+            ? mcpT('ai_conn_desktop_paired_at', 'Paired %s').replace('%s', data.paired_at)
+            : mcpT('ai_conn_desktop_paired', 'Paired for this user on this server');
+        const invalidNote = data.invalid
+            ? `<p class="message message-warning" role="alert">${escapeHtml(mcpT('ai_conn_desktop_invalid', 'Credentials file is invalid. Pair again.'))}</p>`
+            : '';
+
+        body.innerHTML = `
+            ${invalidNote}
+            <p class="settings-help">${escapeHtml(pairedAt)}</p>
+            ${renderDesktopSetupBlock(data.claude_desktop_config)}
+            <div class="u-cluster-3">
+                <button type="button" class="btn btn-sm btn-secondary" id="mcp-desktop-repair-btn">${escapeHtml(mcpT('ai_conn_desktop_repair_btn', 'Re-pair'))}</button>
+                <button type="button" class="btn btn-sm btn-danger" id="mcp-desktop-revoke-btn">${escapeHtml(mcpT('ai_conn_desktop_revoke_btn', 'Revoke'))}</button>
+            </div>`;
+
+        bindDesktopSetupUi(body, data.claude_desktop_config);
+        document.getElementById('mcp-desktop-repair-btn')?.addEventListener('click', pairDesktopConnector);
+        document.getElementById('mcp-desktop-revoke-btn')?.addEventListener('click', revokeDesktopConnector);
+    }
+
+    async function pairDesktopConnector() {
+        const body = document.getElementById('ai-desktop-connector-body');
+        if (body) {
+            body.innerHTML = `<div class="loading-state"><p>${escapeHtml(mcpT('ai_conn_desktop_pairing', 'Pairing…'))}</p></div>`;
+        }
+        try {
+            const res = await fetch(desktopApiUrl(), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ action: 'pair', _csrf: csrfToken })
+            });
+            const result = await res.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'pair failed');
+            }
+            const data = result.data || {};
+            renderDesktopConnector({
+                paired: true,
+                paired_at: new Date().toISOString(),
+                claude_desktop_config: data.claude_desktop_config
+            });
+            showToast(mcpT('ai_conn_desktop_pair_success', 'Paired. Download the helper below and open it once.'));
+        } catch (err) {
+            console.error(err);
+            renderDesktopConnector({ paired: false });
+            showToast(mcpT('ai_conn_desktop_pair_failed', 'Pairing failed. Check that your personal connector is active.'), true);
+        }
+    }
+
+    async function revokeDesktopConnector() {
+        if (!window.confirm(mcpT('ai_conn_desktop_revoke_confirm', 'Revoke desktop pairing? The desktop app will stop working until you pair again.'))) {
+            return;
+        }
+        try {
+            const res = await fetch(desktopApiUrl(), {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': csrfToken
+                },
+                body: JSON.stringify({ action: 'revoke', _csrf: csrfToken })
+            });
+            const result = await res.json();
+            if (result.status !== 'ok') {
+                throw new Error(result.message || 'revoke failed');
+            }
+            renderDesktopConnector({ paired: false });
+            showToast(mcpT('ai_conn_desktop_revoked', 'Desktop pairing revoked.'));
+        } catch (err) {
+            showToast(mcpT('ai_conn_desktop_revoke_failed', 'Could not revoke pairing.'), true);
         }
     }
 
@@ -231,6 +447,7 @@
                 || (window.location.origin + connectorPath());
             serverUrl = resolveConnectorUrl(connectorUrl);
             updateHttpsWarning();
+            loadDesktopConnector();
 
             renderPersonalAgent(personal);
             renderServiceAgents(serviceAgents);
