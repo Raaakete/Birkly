@@ -180,10 +180,32 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
         $out['_html_fields'] = $htmlFieldNames;
     }
 
+    $status = birkly_page_bundle_resolve_status($out, $errors);
+
     return [
-        'status' => 'ok',
+        'status' => $status,
         'data' => $out,
         'errors' => $errors,
         'revision' => $revision,
     ];
+}
+
+/**
+ * @param array<string,mixed> $out
+ * @param list<string> $errors
+ */
+function birkly_page_bundle_resolve_status(array $out, array $errors): string
+{
+    if ($errors === []) {
+        return 'ok';
+    }
+    $dataKeys = array_filter(
+        array_keys($out),
+        static fn (string $key): bool => $key !== '_html_fields'
+    );
+    if ($dataKeys === []) {
+        return 'error';
+    }
+
+    return 'partial';
 }

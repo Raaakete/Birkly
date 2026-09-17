@@ -1490,20 +1490,32 @@ function birkly_template_engine_resolve_template_function_arg(string $raw, array
     }
     if (preg_match("/^'([^']*)'$/D", $trimmed, $m)) {
         $key = $m[1];
-        if (array_key_exists($key, $data) && !is_array($data[$key])) {
+        if (array_key_exists($key, $data)) {
             return $data[$key];
         }
         $entry = (array_key_exists('entry', $data) && birkly_template_engine_truthy($data['entry']))
             ? $data['entry']
             : null;
-        if (is_array($entry) && array_key_exists($key, $entry) && !is_array($entry[$key])) {
+        if (is_array($entry) && array_key_exists($key, $entry)) {
             return $entry[$key];
         }
         return $key;
     }
     if (preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/D', $trimmed)) {
-        if (array_key_exists($trimmed, $data) && !is_array($data[$trimmed])) {
-            return $data[$trimmed];
+        if (array_key_exists($trimmed, $data)) {
+            $val = $data[$trimmed];
+            if (!is_array($val)) {
+                return $val;
+            }
+        }
+        $entry = (array_key_exists('entry', $data) && birkly_template_engine_truthy($data['entry']))
+            ? $data['entry']
+            : null;
+        if (is_array($entry) && array_key_exists($trimmed, $entry)) {
+            $val = $entry[$trimmed];
+            if (!is_array($val)) {
+                return $val;
+            }
         }
     }
     return $trimmed;
