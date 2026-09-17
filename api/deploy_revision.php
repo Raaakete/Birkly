@@ -3,7 +3,7 @@
  * Deploy fingerprint — public health vs authenticated diagnostics (P88).
  *
  * Unauthenticated: minimal JSON only (build revision).
- * Diagnostics: require X-BIRKLY-DEPLOY-SECRET (BIRKLY_DEPLOY_DIAG_SECRET).
+ * Diagnostics: admin session with read_settings (mutations: manage_settings).
  */
 declare(strict_types=1);
 
@@ -142,7 +142,7 @@ function birkly_deploy_require_installation_match(?string $installationId): void
 }
 
 if ($action === 'diagnose') {
-    birkly_require_deploy_diag_auth();
+    birkly_require_deploy_admin_read();
     echo json_encode(
         birkly_deploy_diag_verbose_payload($projectRoot, $installationId),
         JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
@@ -150,11 +150,8 @@ if ($action === 'diagnose') {
     exit;
 }
 
-if ($action !== '') {
-    birkly_require_deploy_diag_auth();
-}
-
 if ($action === 'diagnose_plugins') {
+    birkly_require_deploy_admin_read();
     $payload = birkly_deploy_diag_verbose_payload($projectRoot, $installationId);
     $payload['plugins'] = birkly_deploy_revision_plugin_diagnostics($projectRoot);
     echo json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
@@ -162,6 +159,7 @@ if ($action === 'diagnose_plugins') {
 }
 
 if ($action === 'sync_bundled_plugin') {
+    birkly_require_deploy_admin_write();
     birkly_deploy_require_installation_match($installationId);
 
     $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
@@ -214,6 +212,7 @@ if ($action === 'sync_bundled_plugin') {
 }
 
 if ($action === 'probe_plugin_load') {
+    birkly_require_deploy_admin_read();
     $pluginId = trim((string) ($_GET['plugin_id'] ?? 'automation'));
     $probe = birkly_probe_plugin_load($pluginId);
     if (!$probe['ok'] && ($probe['error'] ?? '') === 'invalid plugin_id') {
@@ -234,6 +233,7 @@ if ($action === 'probe_plugin_load') {
 }
 
 if ($action === 'repair_plugins') {
+    birkly_require_deploy_admin_write();
     birkly_deploy_require_installation_match($installationId);
 
     require_once $projectRoot . '/api/storage.php';
@@ -302,6 +302,7 @@ if ($action === 'repair_plugins') {
 }
 
 if ($action === 'plugin_dev_sync_now') {
+    birkly_require_deploy_admin_write();
     birkly_deploy_require_installation_match($installationId);
 
     $script = $projectRoot . '/scripts/plugin-dev-git-sync.sh';

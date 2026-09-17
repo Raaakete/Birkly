@@ -35,7 +35,6 @@ Open [http://localhost:8080/admin](http://localhost:8080/admin).
 3. **Environment:** `BIRKLY_DATA=/app/data` (image default).
 4. Expose port **80**; terminate HTTPS in Dokploy.
 5. **Verify:** `/api/deploy_revision.php` returns minimal JSON (`status`, `service`, `build_revision`); Logs shows **Containers (1)**.
-6. **Diagnostics (optional):** set `BIRKLY_DEPLOY_DIAG_SECRET` in Dokploy and call diagnostic actions with header `X-BIRKLY-DEPLOY-SECRET` — never expose this value in logs or git.
 
 #### Volume type (important)
 
@@ -159,7 +158,7 @@ Each environment needs its **own named volume** (e.g. `birkly-cms-data` for prod
 
 3. **Manual edit** on the test volume: `settings/hosting.json` → set `cms_base_url` to `https://test.birkly.cloud`; sync `settings/admin.json` → `cms_url` to the same value.
 
-**Diagnose:** with `BIRKLY_DEPLOY_DIAG_SECRET` configured, request `GET /api/deploy_revision.php?action=diagnose` with header `X-BIRKLY-DEPLOY-SECRET: <your-secret>`. Check `hosting.cms_base_url`, `hosting.request_host`, and `hosting.request_host_role`. If `request_host` is `test.birkly.cloud` but `request_host_role` is `unknown` and `cms_base_url` is `cms.birkly.cloud`, you have a test/prod hosting mismatch. The public endpoint does not return hosting or installation metadata.
+**Diagnose hosting mismatch:** log in to **Admin**, then open `/admin/deploy-check.php` (build info) or **Settings → Site delivery** (hosting URLs). If the site URL and CMS URL do not match how you access the server, fix hosting settings. The public `/api/deploy_revision.php` URL does not expose hosting or installation metadata.
 
 ## Legacy multi-folder layout
 
@@ -218,7 +217,7 @@ Open:
 | `service` | `birkly-cms` |
 | `build_revision` | commit SHA or `unknown` |
 
-For `plugin_registry_globals` and hosting fields, use `?action=diagnose` with `X-BIRKLY-DEPLOY-SECRET` (see P88 deploy diagnostics).
+For full build/hosting diagnostics while logged in as admin, use `/admin/deploy-check.php` or `GET /api/deploy_revision.php?action=diagnose` in the same browser session (requires **read settings** permission).
 
 Also: `/api/health.php` on a fixed build returns **JSON only** (no `Warning:` lines) and includes `"build_revision"`.
 
