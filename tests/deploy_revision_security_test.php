@@ -39,4 +39,16 @@ echo "==> Plugin probe in-process\n";
 $probe = birkly_probe_plugin_load('not_a_real_plugin_id_xxx');
 assert_true($probe['ok'] === false, 'invalid plugin id fails smoke load');
 
+echo "==> Legacy public ?action= gate (P88.1)\n";
+$legacyOut = shell_exec(
+    'cd ' . escapeshellarg($root)
+    . ' && php -d variables_order=EGPCS -r '
+    . escapeshellarg('$_GET["action"]="plugins"; include "api/deploy_revision.php";')
+    . ' 2>/dev/null'
+);
+$legacyOut = trim((string) $legacyOut);
+$legacy = json_decode($legacyOut, true);
+assert_true(is_array($legacy) && ($legacy['status'] ?? '') === 'error', 'legacy action returns error JSON');
+assert_true(str_contains($legacyOut, 'admin_deploy_diagnostics'), 'legacy action points to admin API');
+
 exit($failures > 0 ? 1 : 0);
