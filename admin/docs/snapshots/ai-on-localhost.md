@@ -15,7 +15,11 @@ For **Claude Desktop** or **Cursor** on the **same computer** as Birkly:
    **Alternative:** download the helper — if macOS blocks it, use the Terminal command or **System Settings → Privacy & Security → Open Anyway**.
 5. Fully quit the desktop app, then open it again. In Claude: **Settings → Developer** → MCP servers → **birkly**.
 
-Birkly uses a small **PHP bridge** (`scripts/birkly-mcp-desktop.php`) — no Node, `mcp-remote`, or API keys. Tokens are stored in `data/mcp_desktop/` on the server (not in the config snippet).
+Birkly uses a small **PHP bridge** (`scripts/birkly-mcp-desktop.php`) — no Node, `mcp-remote`, or API keys. Tokens are stored in `data/mcp_desktop/` on the server (not in the config snippet). The bridge talks to your Birkly **directly on disk** (same PHP install); you do **not** need `php -S` or Herd running for tool calls after pairing.
+
+**Tool count:** Claude may list fewer tools for the local **birkly** connector than for a hosted site (e.g. birkly.io). That is normal — the list includes only **core tools plus MCP tools from plugins that are installed and active** on *this* instance. Install or activate Commerce, Automation, User, etc. from the Hub to match a production tool set.
+
+After updating Birkly, run the **Terminal install** command again (or edit Claude **Developer → Local MCP** so `args` use `--token-file` and the credentials path as **two** separate entries, not `--token-file=/path with spaces`).
 
 ## Built-in assistant (optional)
 

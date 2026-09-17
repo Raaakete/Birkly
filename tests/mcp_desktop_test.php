@@ -132,6 +132,14 @@ assert_true('revoke credentials', birkly_mcp_desktop_revoke_credentials($userId)
 assert_true('status after revoke', (birkly_mcp_desktop_status_for_user($userId)['paired'] ?? true) === false);
 
 $snippet = birkly_mcp_desktop_client_config_snippet($path);
+$args = $snippet['mcpServers']['birkly']['args'] ?? [];
+assert_true(
+    'config uses separate --token-file arg',
+    is_array($args)
+        && ($args[1] ?? '') === '--token-file'
+        && ($args[2] ?? '') === $path,
+    json_encode($args)
+);
 $macScript = birkly_mcp_desktop_mac_command_script($snippet, 'claude');
 assert_true('mac helper mentions Claude', str_contains($macScript, 'Claude Desktop'));
 assert_true('mac helper merges birkly', str_contains($macScript, '"birkly"'));

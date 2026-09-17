@@ -156,30 +156,33 @@ function birkly_mcp_desktop_refresh_credentials(array $credentials): ?array
         return null;
     }
 
-    $mcpUrl = (string) ($credentials['mcp_url'] ?? '');
-    if ($mcpUrl === '') {
-        return null;
-    }
+    $data = birkly_mcp_oauth_exchange_refresh_token($refresh, $clientId);
+    if ($data === null) {
+        $mcpUrl = (string) ($credentials['mcp_url'] ?? '');
+        if ($mcpUrl === '') {
+            return null;
+        }
 
-    $tokenUrl = birkly_mcp_desktop_token_endpoint_from_mcp_url($mcpUrl);
-    if ($tokenUrl === null) {
-        return null;
-    }
+        $tokenUrl = birkly_mcp_desktop_token_endpoint_from_mcp_url($mcpUrl);
+        if ($tokenUrl === null) {
+            return null;
+        }
 
-    $body = http_build_query([
-        'grant_type' => 'refresh_token',
-        'refresh_token' => $refresh,
-        'client_id' => $clientId,
-    ]);
+        $body = http_build_query([
+            'grant_type' => 'refresh_token',
+            'refresh_token' => $refresh,
+            'client_id' => $clientId,
+        ]);
 
-    $response = birkly_mcp_desktop_http_post($tokenUrl, $body, 'application/x-www-form-urlencoded', '');
-    if ($response === null) {
-        return null;
-    }
+        $response = birkly_mcp_desktop_http_post($tokenUrl, $body, 'application/x-www-form-urlencoded', '');
+        if ($response === null) {
+            return null;
+        }
 
-    $data = json_decode($response, true);
-    if (!is_array($data) || empty($data['access_token'])) {
-        return null;
+        $data = json_decode($response, true);
+        if (!is_array($data) || empty($data['access_token'])) {
+            return null;
+        }
     }
 
     $credentials['access_token'] = (string) $data['access_token'];
@@ -215,13 +218,116 @@ function birkly_mcp_desktop_token_endpoint_from_mcp_url(string $mcpUrl): ?string
     return $parts['scheme'] . '://' . $parts['host'] . $port . $oauthPath;
 }
 
+function birkly_mcp_desktop_bootstrap_runtime(): void
+{
+    static $ready = false;
+    if ($ready) {
+        return;
+    }
+    $ready = true;
+
+    $root = birkly_project_root();
+    error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+    $logDir = $root . '/logs';
+    if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
+        ini_set('error_log', $logDir . '/php_errors.log');
+    }
+
+    require_once $root . '/api/storage.php';
+    require_once __DIR__ . '/mcp_oauth.php';
+    require_once __DIR__ . '/mcp_protocol.php';
+}
+
 /**
- * POST JSON-RPC to Streamable HTTP MCP.
+ * @param array<string, mixed> $credentials
+ */
+function birkly_mcp_desktop_ensure_fresh_credentials(array &$credentials): void
+{
+    if (($credentials['expires_at'] ?? 0) >= time() + 30) {
+        return;
+    }
+    $refreshed = birkly_mcp_desktop_refresh_credentials($credentials);
+    if ($refreshed !== null) {
+        $credentials = $refreshed;
+    }
+}
+
+/**
+ * @param mixed $result
+ * @return array<string, mixed>|null
+ */
+function birkly_mcp_desktop_normalize_dispatch_result(mixed $result): ?array
+{
+    if ($result === null) {
+        return null;
+    }
+    if (is_array($result)) {
+        return $result;
+    }
+    if ($result instanceof stdClass) {
+        return (array) $result;
+    }
+    if (is_object($result)) {
+        $decoded = json_decode(json_encode($result), true);
+        return is_array($decoded) ? $decoded : null;
+    }
+
+    return null;
+}
+
+/**
+ * Handle JSON-RPC in-process (no HTTP server required). Preferred for Claude Desktop stdio.
  *
+ * @param array<string, mixed> $credentials
+ * @param array<string, mixed> $message
+ * @return array<string, mixed>|null JSON-RPC response envelope
+ */
+function birkly_mcp_desktop_dispatch_jsonrpc_inprocess(array &$credentials, array $message): ?array
+{
+    birkly_mcp_desktop_bootstrap_runtime();
+    birkly_mcp_desktop_ensure_fresh_credentials($credentials);
+
+    $token = (string) ($credentials['access_token'] ?? '');
+    if ($token === '') {
+        return null;
+    }
+
+    $aiUser = birkly_mcp_resolve_actor_with_auth('', $token);
+    if ($aiUser === null) {
+        return birkly_mcp_desktop_normalize_jsonrpc_for_stdio(birkly_mcp_build_jsonrpc_response(
+            $message,
+            null,
+            ['code' => -32001, 'message' => 'Desktop MCP token expired or revoked. Re-pair in Admin → Settings → AI.']
+        ));
+    }
+
+    try {
+        [$result, $error] = birkly_mcp_dispatch_jsonrpc($message, $aiUser);
+    } catch (Throwable $e) {
+        error_log('Desktop MCP dispatch: ' . $e->getMessage());
+        return birkly_mcp_desktop_normalize_jsonrpc_for_stdio(birkly_mcp_build_jsonrpc_response(
+            $message,
+            null,
+            ['code' => -32603, 'message' => 'Birkly MCP tool error. See logs/php_errors.log on this machine.']
+        ));
+    }
+
+    $result = birkly_mcp_desktop_normalize_dispatch_result($result);
+    $response = birkly_mcp_build_jsonrpc_response($message, $result, $error);
+
+    return birkly_mcp_desktop_normalize_jsonrpc_for_stdio($response);
+}
+
+/**
+ * POST JSON-RPC to Streamable HTTP MCP (fallback when BIRKLY_DESKTOP_MCP_USE_HTTP=1).
+ *
+ * @param array<string, mixed> $credentials
  * @param array<string, mixed> $message
  * @return array<string, mixed>|null Decoded JSON-RPC response
  */
-function birkly_mcp_desktop_proxy_jsonrpc(array $credentials, array $message): ?array
+function birkly_mcp_desktop_proxy_jsonrpc(array &$credentials, array $message): ?array
 {
     $mcpUrl = (string) ($credentials['mcp_url'] ?? '');
     $token = (string) ($credentials['access_token'] ?? '');
@@ -229,13 +335,8 @@ function birkly_mcp_desktop_proxy_jsonrpc(array $credentials, array $message): ?
         return null;
     }
 
-    if (($credentials['expires_at'] ?? 0) < time() + 30) {
-        $refreshed = birkly_mcp_desktop_refresh_credentials($credentials);
-        if ($refreshed !== null) {
-            $credentials = $refreshed;
-            $token = (string) $credentials['access_token'];
-        }
-    }
+    birkly_mcp_desktop_ensure_fresh_credentials($credentials);
+    $token = (string) ($credentials['access_token'] ?? '');
 
     $payload = json_encode($message);
     if ($payload === false) {
@@ -431,6 +532,25 @@ function birkly_mcp_desktop_should_handle_stdio_locally(array $message): bool
     return false;
 }
 
+/**
+ * @param array<string, mixed> $credentials
+ * @param array<string, mixed> $message
+ * @return array<string, mixed>|null
+ */
+function birkly_mcp_desktop_handle_stdio_jsonrpc(array &$credentials, array $message): ?array
+{
+    if (getenv('BIRKLY_DESKTOP_MCP_USE_HTTP') === '1') {
+        return birkly_mcp_desktop_proxy_jsonrpc($credentials, $message);
+    }
+
+    $response = birkly_mcp_desktop_dispatch_jsonrpc_inprocess($credentials, $message);
+    if ($response !== null) {
+        return $response;
+    }
+
+    return birkly_mcp_desktop_proxy_jsonrpc($credentials, $message);
+}
+
 function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
 {
     $credentials = birkly_mcp_desktop_load_credentials($tokenFile);
@@ -457,12 +577,16 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
             continue;
         }
 
-        $response = birkly_mcp_desktop_proxy_jsonrpc($credentials, $message);
+        if (!array_key_exists('id', $message)) {
+            continue;
+        }
+
+        $response = birkly_mcp_desktop_handle_stdio_jsonrpc($credentials, $message);
         if ($response === null) {
             $response = [
                 'jsonrpc' => '2.0',
                 'id' => $message['id'] ?? null,
-                'error' => ['code' => -32603, 'message' => 'Could not reach Birkly MCP. Check that Birkly is running and re-pair in Settings → AI.'],
+                'error' => ['code' => -32603, 'message' => 'Could not run Birkly MCP. Re-pair in Admin → Settings → AI or check logs/php_errors.log.'],
             ];
         }
         fwrite(STDOUT, birkly_mcp_desktop_encode_stdio_jsonrpc($response) . "\n");
@@ -485,7 +609,8 @@ function birkly_mcp_desktop_client_config_snippet(string $credentialsPath): arra
                 'command' => $phpBinary,
                 'args' => [
                     $bridgeScript,
-                    '--token-file=' . $credentialsPath,
+                    '--token-file',
+                    $credentialsPath,
                 ],
             ],
         ],
