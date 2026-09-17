@@ -176,7 +176,7 @@
     }
 
     function getSelectedDesktopTarget(body) {
-        const active = body.querySelector('[data-desktop-target].btn-primary');
+        const active = body.querySelector('[data-desktop-target].is-selected');
         return active ? (active.getAttribute('data-desktop-target') || 'claude') : 'claude';
     }
 
@@ -187,7 +187,6 @@
             ? mcpT('ai_conn_desktop_app_cursor', 'Cursor')
             : mcpT('ai_conn_desktop_app_claude', 'Claude Desktop');
         label.textContent = mcpT('ai_conn_desktop_selected_app', 'Setup for: %s').replace('%s', appName);
-        label.hidden = false;
     }
 
     function bindDesktopSetupUi(body, setupData) {
@@ -198,8 +197,9 @@
 
         function setDesktopTarget(target) {
             body.querySelectorAll('[data-desktop-target]').forEach(b => {
-                b.classList.toggle('btn-primary', b.getAttribute('data-desktop-target') === target);
-                b.classList.toggle('btn-secondary', b.getAttribute('data-desktop-target') !== target);
+                const on = b.getAttribute('data-desktop-target') === target;
+                b.classList.toggle('is-selected', on);
+                b.setAttribute('aria-pressed', on ? 'true' : 'false');
             });
             body.querySelectorAll('[data-desktop-panel]').forEach(p => {
                 p.hidden = p.getAttribute('data-desktop-panel') !== target;
@@ -254,49 +254,83 @@
         const winPrimary = osHint === 'win';
         const terminalClaude = escapeHtml((setupData.terminal_install || {}).claude || '');
         const macGatekeeper = macPrimary ? `
-            <div class="callout callout-warning u-text-sm" role="note">
-                <p class="callout-title">${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_title', 'If macOS blocks the downloaded file'))}</p>
-                <p>${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_body', 'Apple often blocks downloaded helpers. Use the Terminal command above instead, or open System Settings → Privacy & Security → scroll down → Open Anyway for the Birkly file.'))}</p>
+            <div class="desktop-mcp-note desktop-mcp-note-warning" role="note">
+                <p class="desktop-mcp-note-title">${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_title', 'If macOS blocks the downloaded file'))}</p>
+                <p>${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_body', 'Apple often blocks downloaded helpers. Use the Terminal command in step 2 instead, or System Settings → Privacy & Security → Open Anyway.'))}</p>
             </div>` : '';
 
+        const stepTerminal = macPrimary ? `
+            <li class="desktop-mcp-step">
+                <span class="desktop-mcp-step-num">2</span>
+                <div class="desktop-mcp-step-body u-stack-2">
+                    <p>${escapeHtml(mcpT('ai_conn_desktop_step_terminal', 'Copy the command, open Terminal, paste, press Enter.'))}</p>
+                    <div class="desktop-mcp-terminal">
+                        <textarea id="mcp-desktop-terminal-cmd" class="desktop-mcp-terminal-input" rows="4" readonly spellcheck="false">${terminalClaude}</textarea>
+                        <button type="button" class="btn btn-primary" data-copy-terminal-install>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
+                    </div>
+                </div>
+            </li>` : `
+            <li class="desktop-mcp-step">
+                <span class="desktop-mcp-step-num">2</span>
+                <div class="desktop-mcp-step-body">
+                    <p>${escapeHtml(mcpT('ai_conn_desktop_step_download_named', 'Download the helper file for your app.'))}</p>
+                </div>
+            </li>`;
+
         return `
-        <div class="u-stack-4" id="mcp-desktop-setup-root">
-            <p class="settings-help">${escapeHtml(mcpT('ai_conn_desktop_setup_intro', 'First choose Claude or Cursor below. On Mac, the Terminal command is the most reliable way to connect.'))}</p>
-            <p class="badge badge-info" data-desktop-target-label hidden>${escapeHtml(mcpT('ai_conn_desktop_selected_app', 'Setup for: Claude Desktop'))}</p>
-            <div class="u-cluster-3" role="tablist" aria-label="${escapeHtml(mcpT('ai_conn_desktop_app_picker_aria', 'Desktop app'))}">
-                <button type="button" class="btn btn-sm btn-primary" data-desktop-target="claude">${escapeHtml(mcpT('ai_conn_desktop_app_claude', 'Claude Desktop'))}</button>
-                <button type="button" class="btn btn-sm btn-secondary" data-desktop-target="cursor">${escapeHtml(mcpT('ai_conn_desktop_app_cursor', 'Cursor'))}</button>
+        <div class="desktop-mcp-setup" id="mcp-desktop-setup-root">
+            <div class="desktop-mcp-note desktop-mcp-note-info" role="note">
+                <p class="desktop-mcp-note-title">${escapeHtml(mcpT('ai_conn_desktop_privacy_title', 'Private to you'))}</p>
+                <p>${escapeHtml(mcpT('ai_conn_desktop_privacy_body', 'This is not a public link. Paths point to files on your computer and Birkly install. Only your logged-in admin session sees this command. Other Birkly users do not get your pairing file or tokens.'))}</p>
             </div>
-            ${macPrimary ? `
-            <div class="mcp-snippet-block u-stack-2">
-                <span class="u-label u-text-sm">${escapeHtml(mcpT('ai_conn_desktop_terminal_label', 'On this Mac: open Terminal, paste, press Enter'))}</span>
-                <textarea id="mcp-desktop-terminal-cmd" class="input input-mono" rows="3" readonly data-terminal-claude="${terminalClaude}">${terminalClaude}</textarea>
-                <button type="button" class="btn btn-primary btn-sm" data-copy-terminal-install>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
-            </div>` : ''}
-            <div data-desktop-panel="claude" class="u-stack-3">
-                <ol class="endpoint-setup-steps">
-                    ${macPrimary ? `<li>${escapeHtml(mcpT('ai_conn_desktop_step_terminal', 'Run the Terminal command above (recommended on Mac).'))}</li>` : `<li>${escapeHtml(mcpT('ai_conn_desktop_step_download_named', 'Download Connect-Birkly-to-Claude.'))}</li>`}
-                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_restart', 'Fully quit Claude Desktop, then open it again.'))}</li>
-                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_find_claude', 'In Claude: Settings → Developer — you should see “birkly” under MCP servers.'))}</li>
-                </ol>
-                <div class="u-cluster-3">
-                    <button type="button" class="btn ${macPrimary ? 'btn-secondary' : 'btn-primary'}" data-download-desktop-helper="claude" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_claude', 'Download Connect-Birkly-to-Claude (Mac)'))}</button>
-                    <button type="button" class="btn ${winPrimary ? 'btn-primary' : 'btn-secondary'}" data-download-desktop-helper="claude" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_claude', 'Download for Windows'))}</button>
-                </div>
-            </div>
-            <div data-desktop-panel="cursor" class="u-stack-3" hidden>
-                <ol class="endpoint-setup-steps">
-                    ${macPrimary ? `<li>${escapeHtml(mcpT('ai_conn_desktop_step_terminal', 'Run the Terminal command above (recommended on Mac).'))}</li>` : `<li>${escapeHtml(mcpT('ai_conn_desktop_step_download_named', 'Download the helper file for your app.'))}</li>`}
-                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_restart_cursor', 'Fully quit Cursor, then open it again.'))}</li>
-                    <li>${escapeHtml(mcpT('ai_conn_desktop_step_find_cursor', 'In Cursor: open MCP settings — you should see “birkly”.'))}</li>
-                </ol>
-                <div class="u-cluster-3">
-                    <button type="button" class="btn ${macPrimary ? 'btn-secondary' : 'btn-primary'}" data-download-desktop-helper="cursor" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_cursor', 'Download Connect-Birkly-to-Cursor (Mac)'))}</button>
-                    <button type="button" class="btn ${winPrimary ? 'btn-primary' : 'btn-secondary'}" data-download-desktop-helper="cursor" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_cursor', 'Download for Windows'))}</button>
-                </div>
-            </div>
+            <p class="desktop-mcp-lead">${escapeHtml(mcpT('ai_conn_desktop_setup_intro', 'Connect in three steps. On Mac, use Terminal — it works even when downloads are blocked.'))}</p>
+            <ol class="desktop-mcp-steps">
+                <li class="desktop-mcp-step">
+                    <span class="desktop-mcp-step-num">1</span>
+                    <div class="desktop-mcp-step-body u-stack-3">
+                        <p class="desktop-mcp-step-title">${escapeHtml(mcpT('ai_conn_desktop_step_pick_app', 'Choose your desktop app'))}</p>
+                        <p class="u-text-sm u-fg-secondary" data-desktop-target-label>${escapeHtml(mcpT('ai_conn_desktop_selected_app', 'Setup for: Claude Desktop'))}</p>
+                        <div class="desktop-mcp-app-grid" role="group" aria-label="${escapeHtml(mcpT('ai_conn_desktop_app_picker_aria', 'Desktop app'))}">
+                            <button type="button" class="desktop-mcp-app-tile is-selected" data-desktop-target="claude" aria-pressed="true">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_claude', 'Claude Desktop'))}</span>
+                            </button>
+                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="cursor" aria-pressed="false">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_cursor', 'Cursor'))}</span>
+                            </button>
+                        </div>
+                    </div>
+                </li>
+                ${stepTerminal}
+                <li class="desktop-mcp-step">
+                    <span class="desktop-mcp-step-num">3</span>
+                    <div class="desktop-mcp-step-body u-stack-2">
+                        <div data-desktop-panel="claude">
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart', 'Fully quit Claude Desktop, then open it again.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_claude', 'Claude → Settings → Developer → MCP servers: look for “birkly”.'))}</p>
+                            ${!macPrimary ? `<div class="u-cluster-3 u-pt-2">
+                                <button type="button" class="btn btn-primary" data-download-desktop-helper="claude" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_claude', 'Download Connect-Birkly-to-Claude (Mac)'))}</button>
+                                <button type="button" class="btn btn-secondary" data-download-desktop-helper="claude" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_claude', 'Download for Windows'))}</button>
+                            </div>` : `<details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a download instead of Terminal?'))}</summary>
+                            <div class="u-cluster-3 u-pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="claude" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_claude', 'Download Connect-Birkly-to-Claude (Mac)'))}</button>
+                            </div></details>`}
+                        </div>
+                        <div data-desktop-panel="cursor" hidden>
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_cursor', 'Fully quit Cursor, then open it again.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_cursor', 'Cursor → MCP settings: look for “birkly”.'))}</p>
+                            ${!macPrimary ? `<div class="u-cluster-3 u-pt-2">
+                                <button type="button" class="btn btn-primary" data-download-desktop-helper="cursor" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_cursor', 'Download Connect-Birkly-to-Cursor (Mac)'))}</button>
+                                <button type="button" class="btn btn-secondary" data-download-desktop-helper="cursor" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_cursor', 'Download for Windows'))}</button>
+                            </div>` : `<details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a download instead of Terminal?'))}</summary>
+                            <div class="u-pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="cursor" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_cursor', 'Download Connect-Birkly-to-Cursor (Mac)'))}</button>
+                            </div></details>`}
+                        </div>
+                    </div>
+                </li>
+            </ol>
             ${macGatekeeper}
-            <details class="u-text-sm">
+            <details class="desktop-mcp-advanced">
                 <summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_advanced_summary', 'Advanced: copy JSON manually'))}</summary>
                 <div class="mcp-snippet-block u-stack-2 u-pt-2">
                     <textarea id="mcp-desktop-config-json" class="input input-mono" rows="8" readonly>${escapeHtml(json)}</textarea>

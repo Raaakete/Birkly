@@ -27,6 +27,11 @@ if ($target !== 'claude' && $target !== 'cursor') {
     exit(1);
 }
 
+if ($tokenFile !== null && $tokenFile !== '' && !str_starts_with($tokenFile, '/')
+    && !preg_match('#^[A-Za-z]:[\\\\/]#', $tokenFile)) {
+    $tokenFile = birkly_project_root() . '/' . ltrim($tokenFile, '/\\');
+}
+
 $credentials = birkly_mcp_desktop_load_credentials($tokenFile);
 if ($credentials === null) {
     fwrite(STDERR, "Missing credentials. Pair in Settings → AI first, then pass --token-file=…\n");
