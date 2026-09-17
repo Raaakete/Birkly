@@ -136,15 +136,25 @@ function birkly_plugin_id_for_admin_page(string $page_slug): ?string
     return null;
 }
 
+function birkly_plugin_admin_resolve_label(string $label): string
+{
+    if (function_exists('birkly_i18n_resolve_string')) {
+        return birkly_i18n_resolve_string($label);
+    }
+
+    return $label;
+}
+
 /** @return list<array{label: string, url: string|null}> */
 function birkly_plugin_admin_breadcrumb_trail(array $meta, string $current_page): array
 {
-    $rootTitle = (string) ($meta['title'] ?? 'Plugin');
+    $rootTitle = birkly_plugin_admin_resolve_label((string) ($meta['title'] ?? 'Plugin'));
     $rootPage = (string) ($meta['root_page'] ?? $meta['page'] ?? '');
     $subPages = $meta['sub_pages'] ?? [];
 
     if (isset($subPages[$current_page]) && $current_page !== $rootPage) {
         $sub = $subPages[$current_page];
+        $subTitle = is_array($sub) ? (string) ($sub['title'] ?? $current_page) : (string) $sub;
         $trail = [];
         if ($rootPage !== '') {
             $trail[] = [
@@ -153,7 +163,7 @@ function birkly_plugin_admin_breadcrumb_trail(array $meta, string $current_page)
             ];
         }
         $trail[] = [
-            'label' => is_array($sub) ? (string) ($sub['title'] ?? $current_page) : (string) $sub,
+            'label' => birkly_plugin_admin_resolve_label($subTitle),
             'url' => null,
         ];
         return $trail;
