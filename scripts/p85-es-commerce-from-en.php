@@ -93,6 +93,8 @@ Catalog|Catálogo
 Inventory|Inventario
 Discounts|Descuentos
 Close|Cerrar
+Canceled|Cancelado
+Cancelled|Cancelado
 Cancel|Cancelar
 Save|Guardar
 Delete|Eliminar

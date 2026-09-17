@@ -140,7 +140,7 @@ if ($mode === 'plugin') {
         exit(1);
     }
     if ($pluginId === 'commerce') {
-        passthru('php ' . escapeshellarg($root . '/scripts/p85-es-commerce-from-en.php'), $code);
+        passthru('php ' . escapeshellarg($root . '/scripts/p85-es-commerce-build-es.php'), $code);
         exit($code);
     }
     $enFile = rtrim($pluginRoot, '/') . '/lang/en.json';
