@@ -55,8 +55,8 @@ function birkly_fr_contamination_reasons(string $en, string $fr, string $de): ar
         . 'Pagenleiste|Automatisation gelöscht|Stäng|Okänt)\b/u', $fr)) {
         $reasons[] = 'german_phrase';
     }
-    if (preg_match('/\b(und der|und als|in der Admin|für dieses|zu éléments|Type de champ|'
-        . 'Recouvrement|wenn ein|bitte neu)\b/ui', $fr)) {
+    if (preg_match('/\b(und der|und als|in der Admin|für dieses|zu élémentsn|'
+        . 'Recouvrement|wenn ein|bitte neu|wird geladen|gelöscht)\b/ui', $fr)) {
         $reasons[] = 'mixed_de_fr';
     }
     return $reasons;
