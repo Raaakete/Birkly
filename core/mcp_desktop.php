@@ -418,7 +418,7 @@ function birkly_mcp_desktop_fixup_for_json_encode(mixed $value, ?string $parentK
     }
 
     if ($value === []) {
-        if (in_array($parentKey, ['properties', 'patternProperties', 'tools', 'resources', 'prompts', 'logging'], true)) {
+        if (in_array($parentKey, ['properties', 'patternProperties', 'tools', 'resources', 'prompts', 'logging', 'capabilities'], true)) {
             return new stdClass();
         }
 
@@ -448,11 +448,9 @@ function birkly_mcp_desktop_fixup_for_json_encode(mixed $value, ?string $parentK
  */
 function birkly_mcp_desktop_normalize_jsonrpc_for_stdio(array $response): array
 {
-    if (isset($response['result']) && is_array($response['result'])) {
-        $response['result'] = birkly_mcp_desktop_fixup_for_json_encode($response['result'], null);
-    }
+    $fixed = birkly_mcp_desktop_fixup_for_json_encode($response, null);
 
-    return $response;
+    return is_array($fixed) ? $fixed : $response;
 }
 
 /**
@@ -534,6 +532,8 @@ function birkly_mcp_desktop_attach_stdio_process_guards(): void
     error_reporting(E_ALL);
     ini_set('display_errors', '0');
     ini_set('log_errors', '1');
+    @ini_set('max_execution_time', '0');
+    @set_time_limit(0);
     $logDir = $root . '/logs';
     if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
         ini_set('error_log', $logDir . '/php_errors.log');
@@ -592,6 +592,48 @@ function birkly_mcp_desktop_handle_stdio_jsonrpc(array &$credentials, array $mes
     return birkly_mcp_desktop_proxy_jsonrpc($credentials, $message);
 }
 
+/**
+ * @param array<string, mixed> $credentials
+ */
+function birkly_mcp_desktop_process_stdio_line(array &$credentials, string $line): void
+{
+    $line = trim($line);
+    if ($line === '') {
+        return;
+    }
+    $message = json_decode($line, true);
+    if (!is_array($message)) {
+        return;
+    }
+    if (birkly_mcp_desktop_should_handle_stdio_locally($message)) {
+        return;
+    }
+
+    if (!array_key_exists('id', $message)) {
+        return;
+    }
+
+    try {
+        $response = birkly_mcp_desktop_handle_stdio_jsonrpc($credentials, $message);
+    } catch (Throwable $e) {
+        error_log('Birkly desktop MCP request: ' . $e->getMessage());
+        $response = [
+            'jsonrpc' => '2.0',
+            'id' => $message['id'] ?? null,
+            'error' => ['code' => -32603, 'message' => 'Birkly MCP error. Re-pair in Admin → Settings → AI or check logs/php_errors.log.'],
+        ];
+    }
+    if ($response === null) {
+        $response = [
+            'jsonrpc' => '2.0',
+            'id' => $message['id'] ?? null,
+            'error' => ['code' => -32603, 'message' => 'Could not run Birkly MCP. Re-pair in Admin → Settings → AI or check logs/php_errors.log.'],
+        ];
+    }
+    fwrite(STDOUT, birkly_mcp_desktop_encode_stdio_jsonrpc($response) . "\n");
+    fflush(STDOUT);
+}
+
 function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
 {
     birkly_mcp_desktop_attach_stdio_process_guards();
@@ -602,47 +644,49 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
         return 1;
     }
 
-    $stdin = fopen('php://stdin', 'r');
+    $stdin = fopen('php://stdin', 'rb');
     if ($stdin === false) {
         return 1;
     }
 
-    while (($line = fgets($stdin)) !== false) {
-        $line = trim($line);
-        if ($line === '') {
-            continue;
+    stream_set_blocking($stdin, false);
+    $buffer = '';
+
+    while (true) {
+        @set_time_limit(0);
+
+        $read = [$stdin];
+        $write = null;
+        $except = null;
+        $ready = @stream_select($read, $write, $except, 25, 0);
+        if ($ready === false) {
+            break;
         }
-        $message = json_decode($line, true);
-        if (!is_array($message)) {
-            continue;
-        }
-        if (birkly_mcp_desktop_should_handle_stdio_locally($message)) {
+
+        if ($ready === 0) {
+            if (feof($stdin)) {
+                break;
+            }
             continue;
         }
 
-        if (!array_key_exists('id', $message)) {
+        $chunk = fread($stdin, 65536);
+        if ($chunk === false) {
+            break;
+        }
+        if ($chunk === '') {
+            if (feof($stdin)) {
+                break;
+            }
             continue;
         }
 
-        try {
-            $response = birkly_mcp_desktop_handle_stdio_jsonrpc($credentials, $message);
-        } catch (Throwable $e) {
-            error_log('Birkly desktop MCP request: ' . $e->getMessage());
-            $response = [
-                'jsonrpc' => '2.0',
-                'id' => $message['id'] ?? null,
-                'error' => ['code' => -32603, 'message' => 'Birkly MCP error. Re-pair in Admin → Settings → AI or check logs/php_errors.log.'],
-            ];
+        $buffer .= $chunk;
+        while (($pos = strpos($buffer, "\n")) !== false) {
+            $line = substr($buffer, 0, $pos);
+            $buffer = substr($buffer, $pos + 1);
+            birkly_mcp_desktop_process_stdio_line($credentials, $line);
         }
-        if ($response === null) {
-            $response = [
-                'jsonrpc' => '2.0',
-                'id' => $message['id'] ?? null,
-                'error' => ['code' => -32603, 'message' => 'Could not run Birkly MCP. Re-pair in Admin → Settings → AI or check logs/php_errors.log.'],
-            ];
-        }
-        fwrite(STDOUT, birkly_mcp_desktop_encode_stdio_jsonrpc($response) . "\n");
-        fflush(STDOUT);
     }
 
     return 0;
