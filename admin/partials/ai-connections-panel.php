@@ -40,11 +40,15 @@ $aiConnSettingsSearch = __('admin.ai_conn_settings_search');
             </div>
             <div class="card-body u-stack-3">
               <ul class="settings-list">
+                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_desktop')) ?></li>
                 <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_assistant')) ?></li>
                 <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_remote')) ?></li>
-                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_bridge')) ?></li>
                 <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_tunnel')) ?></li>
+                <li><?= htmlspecialchars(__('admin.ai_conn_localhost_bullet_bridge')) ?></li>
               </ul>
+              <p class="u-text-sm">
+                <a href="https://docs.birkly.com/04-integration/ai-on-localhost.html" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars(__('admin.ai_conn_localhost_guide_link')) ?></a>
+              </p>
               <p class="form-help"><?= htmlspecialchars(__('admin.ai_conn_localhost_security_note')) ?></p>
             </div>
           </div>
