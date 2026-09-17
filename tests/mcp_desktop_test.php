@@ -68,6 +68,16 @@ $status = birkly_mcp_desktop_status_for_user($userId);
 assert_true('status paired', ($status['paired'] ?? false) === true);
 assert_true('status includes config', is_array($status['claude_desktop_config']['mcpServers']['birkly'] ?? null));
 
+$cmd = birkly_mcp_desktop_terminal_install_command(
+    $testRoot . '/Birkly-main 6/data/mcp_desktop/credentials_test.json',
+    'claude'
+);
+assert_true(
+    'terminal command quotes paths with spaces',
+    str_contains($cmd, 'cd ') && str_contains($cmd, 'Birkly-main 6') && str_contains($cmd, "'"),
+    $cmd
+);
+
 $tokenUrl = birkly_mcp_desktop_token_endpoint_from_mcp_url('http://127.0.0.1:8080/mcp/agents/ai_agent_personal');
 assert_true(
     'token endpoint from mcp url',

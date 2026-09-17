@@ -271,6 +271,145 @@
 .ai-connection-entry-setup,
 .ai-connection-entry-actions { margin-block-start: var(--space-3); }
 
+/* Desktop MCP wizard (local / Settings → AI) */
+.desktop-mcp-card .card-body { padding-block: var(--space-5); }
+
+.desktop-mcp-setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.desktop-mcp-lead {
+  font-size: var(--text-md);
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 52rem;
+}
+
+.desktop-mcp-note {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+}
+
+.desktop-mcp-note-info {
+  background: color-mix(in srgb, var(--color-info, #3b82f6) 8%, var(--surface-sunken));
+  border-color: color-mix(in srgb, var(--color-info, #3b82f6) 25%, transparent);
+}
+
+.desktop-mcp-note-warning {
+  background: color-mix(in srgb, var(--color-warning, #eab308) 10%, var(--surface-sunken));
+}
+
+.desktop-mcp-note-title {
+  font-weight: var(--weight-semibold);
+  margin: 0 0 var(--space-1);
+}
+
+.desktop-mcp-note p:last-child { margin: 0; }
+
+.desktop-mcp-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.desktop-mcp-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+
+.desktop-mcp-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+  background: var(--surface-elevated, var(--surface-base));
+  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.desktop-mcp-step-title {
+  font-weight: var(--weight-semibold);
+  margin: 0;
+}
+
+.desktop-mcp-step-body { min-width: 0; }
+
+.desktop-mcp-app-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--space-3);
+}
+
+.desktop-mcp-app-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-base);
+  cursor: pointer;
+  font: inherit;
+  text-align: center;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.desktop-mcp-app-tile:hover {
+  border-color: var(--border-strong, var(--border-subtle));
+}
+
+.desktop-mcp-app-tile.is-selected {
+  border-color: var(--color-primary, #22c55e);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary, #22c55e) 40%, transparent);
+}
+
+.desktop-mcp-app-name {
+  font-weight: var(--weight-medium);
+}
+
+.desktop-mcp-terminal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.desktop-mcp-terminal-input {
+  width: 100%;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-base);
+  resize: vertical;
+  min-height: 5rem;
+}
+
+.desktop-mcp-advanced {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
 .ai-connection-entry-actions {
   display: flex;
   gap: var(--space-2);
