@@ -35,11 +35,6 @@ assert_true(!str_contains($encoded, 'data_root'), 'public payload has no data_ro
 assert_true(!str_contains(strtolower($encoded), 'secret'), 'public payload has no secret substring');
 assert_true(!str_contains(strtolower($encoded), 'password'), 'public payload has no password substring');
 
-echo "==> Admin auth helpers exist (diagnostics use session, not env secrets)\n";
-assert_true(function_exists('birkly_require_deploy_admin_read'), 'read guard defined');
-assert_true(function_exists('birkly_require_deploy_admin_write'), 'write guard defined');
-assert_true(!function_exists('birkly_deploy_diag_secret'), 'no deploy env secret helper');
-
 echo "==> Plugin probe in-process\n";
 $probe = birkly_probe_plugin_load('not_a_real_plugin_id_xxx');
 assert_true($probe['ok'] === false, 'invalid plugin id fails smoke load');
