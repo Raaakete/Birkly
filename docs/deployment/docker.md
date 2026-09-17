@@ -168,6 +168,10 @@ Omit `BIRKLY_DATA` and mount folders separately (`/app/content`, `/app/settings`
 
 `GET /api/health.php` — used by the image `HEALTHCHECK` and external monitoring.
 
+## Dependencies
+
+The CMS runtime does not use Composer packages at deploy time. See [Dependency visibility](../security/dependencies.md) for how that relates to security scanners and what is actually pinned (PHP image, extensions, plugins).
+
 ## Dokploy troubleshooting (deploy not updating)
 
 If you merged fixes on GitHub but the live site still shows the same PHP warnings, the **container image was not rebuilt** from latest `main`. Auto-deploy and “clean cache” do not always trigger a new Docker build.
