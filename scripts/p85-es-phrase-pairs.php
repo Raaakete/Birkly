@@ -59,12 +59,12 @@ API Documentation|Documentación de la API
 Brief Description|Descripción breve
 Loading catalog…|Cargando catálogo…
 Shipping address|Dirección de envío
-Shipping methods|Metodos de envío
+Shipping methods|Métodos de envío
 Account Settings|Configuración de la cuenta
 Loading orders…|Cargando pedidos…
 Billing address|Dirección de facturación
-Shipping method|Metodo de envío
-Payment methods|Metodos de pago
+Shipping method|Método de envío
+Payment methods|Métodos de pago
 Role Management|Gestión de roles
 API Information|Información de la API
 Permanent (301)|Permanente (301)
@@ -98,7 +98,7 @@ Add New User|Añadir nuevo usuario
 Bulk Actions|Acciones masivas
 Restrictions|Restricciones
 Fulfillment|Gestión de pedidos
-No customer|Ningún clientee
+No customer|Ningún cliente
 All shipped|Todo enviado
 Description|Description
 collections|collections
@@ -121,7 +121,7 @@ Dashboard|Panel
 No orders|Ningún pedido
 Gift card|Tarjeta regalo
 Gift Card|Tarjeta regalo
-Customers|Clientees
+Customers|Clientes
 Inventory|Inventario
 Discounts|Descuentos
 Published|Publicado
@@ -135,7 +135,7 @@ Failed to|Error al
 duplicate|duplicar
 Duplicate|Duplicar
 yesterday|ayer
-customers|clientees
+customers|clientes
 warehouse|almacen
 low stock|stock bajo
 Send test|Enviar prueba
@@ -180,8 +180,8 @@ Shipped|Enviado
 Catalog|Catálogo
 Confirm|Confirmar
 Address|Dirección
-Actions|Actions
-Details|Details
+Actions|Acciones
+Details|Detalles
 Pending|Pendiente
 Success|Éxito
 Warning|Advertencia
@@ -243,7 +243,7 @@ Stable|Estable
 Items|Artículos
 Close|Cerrar
 Email|Correo electrónico
-Phone|Telefono
+Phone|Teléfono
 Total|Total
 Price|Precio
 Notes|Notes
