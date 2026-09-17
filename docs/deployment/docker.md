@@ -217,7 +217,7 @@ Open:
 | `service` | `birkly-cms` |
 | `build_revision` | commit SHA or `unknown` |
 
-For full build/hosting diagnostics while logged in as admin, use `/admin/deploy-check.php` or `GET /api/deploy_revision.php?action=diagnose` in the same browser session (requires **read settings** permission).
+For full build/hosting diagnostics, log in to admin and open `/admin/deploy-check.php` or call `/api/admin_deploy_diagnostics.php?action=status` with your session (requires **read settings**). The public `/api/deploy_revision.php` URL does not accept `action` parameters.
 
 Also: `/api/health.php` on a fixed build returns **JSON only** (no `Warning:` lines) and includes `"build_revision"`.
 
