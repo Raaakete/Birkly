@@ -1,10 +1,10 @@
-# Closed alpha tester guide
+# Closed alpha guide (product testing)
 
-Guide for **invited closed-alpha testers** of Birkly. If you do not have an invite, request access at the [Birkly website](https://birkly.com) waitlist.
+Reference for **future** closed-alpha self-host trials — not an open invite program. When your team runs a cohort, use this alongside [Self-host install](../07-operations/self-host-install.md) and [Known issues (Wave 1)](known-issues-wave1.md).
 
 ## Summary
 
-Closed alpha means Birkly is feature-complete enough for real self-hosted trials but **not** a public beta. Expect rough edges. Your job: use the CMS on your own server, report bugs and ideas via in-admin **Feedback**, and read **Help** for live Birkly-Docs. We ship fixes from your reports before open beta.
+Closed alpha means Birkly is mature enough for real self-hosted trials but **not** a public beta. Expect rough edges. Testers use the CMS on their own server, report bugs via in-admin **Feedback**, and read **Help** for live Birkly-Docs. Support: **hello@birkly.io**.
 
 ## What is in this alpha
 
@@ -24,7 +24,7 @@ Closed alpha means Birkly is feature-complete enough for real self-hosted trials
 
 ## Getting started
 
-1. **Install** Birkly on a server or local PHP (see [Getting started](getting-started.md)).
+1. **Install** Birkly on a server or local PHP (see [Self-host install](../07-operations/self-host-install.md) and [Getting started](getting-started.md)).
 2. Complete **onboarding** (project name, first admin user).
 3. Open **Help** (sidebar) for contextual docs — **Read full doc** opens Birkly-Docs topics.
 4. Install plugins from **Plugins → Hub** (Commerce, Events, Automation, User Management).
@@ -61,6 +61,8 @@ We use this data only to improve the alpha (see [Alpha legal](alpha-legal.md) an
 
 ## Related
 
+- [Admin language vs site language](../01-admin/admin-language-vs-site-language.md)
 - [Getting started](getting-started.md)
 - [Help and onboarding](../01-admin/help-and-onboarding.md)
 - [Troubleshooting](../07-operations/troubleshooting.md)
+- [Known issues (Wave 1)](known-issues-wave1.md)

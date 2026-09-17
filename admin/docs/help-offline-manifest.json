@@ -70,6 +70,40 @@
             "nav_section_label": "Admin"
         },
         {
+            "id": "admin-language-vs-site",
+            "title": "Admin language vs site language",
+            "keywords": [
+                "language",
+                "i18n",
+                "admin",
+                "site",
+                "onboarding",
+                "locale"
+            ],
+            "snapshot": "/admin/docs/snapshots/admin-language-vs-site.md",
+            "docs_path": "01-admin/admin-language-vs-site-language.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin"
+        },
+        {
+            "id": "admin-plugin-extension",
+            "title": "Admin plugin extension",
+            "keywords": [
+                "admin",
+                "plugin",
+                "dashboard",
+                "notification",
+                "webmcp",
+                "shelf",
+                "extension"
+            ],
+            "snapshot": "/admin/docs/snapshots/admin-plugin-extension.md",
+            "docs_path": "06-extensibility/admin-plugin-extension.html",
+            "nav_section": "extensibility",
+            "nav_section_label": "Extensibility",
+            "ai_topic": "plugins-overview"
+        },
+        {
             "id": "agent-guide",
             "title": "Agent Guide",
             "keywords": [
@@ -954,23 +988,6 @@
             "ai_topic": "templating"
         },
         {
-            "id": "admin-guide-companion",
-            "title": "Admin Guide companion",
-            "keywords": [
-                "guide",
-                "checklist",
-                "journey",
-                "onboarding",
-                "setup",
-                "empty state"
-            ],
-            "snapshot": "/admin/docs/snapshots/admin-guide-companion.md",
-            "docs_path": "01-admin/admin-guide-companion.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "getting-started"
-        },
-        {
             "id": "getting-started",
             "title": "Getting started",
             "keywords": [
@@ -1001,6 +1018,38 @@
             "nav_section": "admin",
             "nav_section_label": "Admin",
             "ai_topic": "playbooks-index"
+        },
+        {
+            "id": "admin-guide-companion",
+            "title": "Admin Guide companion",
+            "keywords": [
+                "guide",
+                "checklist",
+                "journey",
+                "onboarding",
+                "setup",
+                "empty state"
+            ],
+            "snapshot": "/admin/docs/snapshots/admin-guide-companion.md",
+            "docs_path": "01-admin/admin-guide-companion.html",
+            "nav_section": "admin",
+            "nav_section_label": "Admin",
+            "ai_topic": "getting-started"
+        },
+        {
+            "id": "known-issues-wave1",
+            "title": "Known issues — Wave 1",
+            "keywords": [
+                "known issues",
+                "limitations",
+                "wave 1",
+                "alpha",
+                "defer"
+            ],
+            "snapshot": "/admin/docs/snapshots/known-issues-wave1.md",
+            "docs_path": "00-overview/known-issues-wave1.html",
+            "nav_section": "overview",
+            "nav_section_label": "Overview"
         },
         {
             "id": "loops-and-lists",
@@ -1418,25 +1467,6 @@
             "ai_topic": "settings-roles"
         },
         {
-            "id": "admin-plugin-extension",
-            "title": "Admin plugin extension",
-            "keywords": [
-                "admin",
-                "plugin",
-                "dashboard",
-                "notification",
-                "webmcp",
-                "shelf",
-                "extension",
-                "admin.scripts"
-            ],
-            "snapshot": "/admin/docs/snapshots/admin-plugin-extension.md",
-            "docs_path": "06-extensibility/admin-plugin-extension.html",
-            "nav_section": "extensibility",
-            "nav_section_label": "Extensibility",
-            "ai_topic": "plugins-overview"
-        },
-        {
             "id": "scaffold-plugin",
             "title": "Plugin scaffolding CLI",
             "keywords": [
@@ -1450,6 +1480,21 @@
             "docs_path": "06-extensibility/scaffold-plugin-cli.html",
             "nav_section": "extensibility",
             "nav_section_label": "Extensibility"
+        },
+        {
+            "id": "self-host-install",
+            "title": "Self-host install",
+            "keywords": [
+                "self-host",
+                "zip",
+                "install",
+                "release",
+                "0_START-HERE"
+            ],
+            "snapshot": "/admin/docs/snapshots/self-host-install.md",
+            "docs_path": "07-operations/self-host-install.html",
+            "nav_section": "operations",
+            "nav_section_label": "Operations"
         },
         {
             "id": "settings",
@@ -1674,6 +1719,6 @@
     ],
     "manifest_source": "offline",
     "offline": true,
-    "synced_at": "2026-09-08T15:48:03+00:00",
-    "synced_from": "/agent/repos/Birkly-Docs"
+    "synced_at": "2026-09-17T11:07:31+00:00",
+    "synced_from": "/agent/repos/Birkly/../Birkly-Docs"
 }

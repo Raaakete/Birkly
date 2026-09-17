@@ -2,9 +2,7 @@
 
 ## Summary
 
-**Tip:** After you log in, open **Guide** (launcher above Assist) for a verified setup checklist and short journeys — or read this page for the full install and content walkthrough.
-
-Get started with Birkly in six steps: (0) Install via **release zip** or **Docker**, then open **START_HERE.html** before admin login. (1) Log in to the admin. (2) Complete the first-time wizard (project name, use case, optional AI). (3) Create a collection (e.g. “Blog posts”) and add fields (title, content, date, image). (4) Add one or more entries and set status to Published. (5) Add the Birkly client script to your website so it can load and display the content. No coding is required for basic content creation; connecting the site is one script tag plus simple placeholders in your HTML.
+Get started with Birkly in six steps: (0) Install via **release zip** or **Docker**, then open **`0_START-HERE.html`** before admin login. (1) Log in to the admin. (2) Complete the first-time wizard (project name, use case, optional AI). (3) Create a collection (e.g. “Blog posts”) and add fields (title, content, date, image). (4) Add one or more entries and set status to Published. (5) Add the Birkly client script to your website so it can load and display the content. No coding is required for basic content creation; connecting the site is one script tag plus simple placeholders in your HTML.
 
 Supported install channels are **zip** and **Docker** only — Composer, npm, and cPanel installers are not documented product paths. See [Deployment](../07-operations/deployment.md) and [Hosting on Dokploy](../07-operations/dokploy-hosting.md).
 
@@ -12,17 +10,19 @@ Supported install channels are **zip** and **Docker** only — Composer, npm, an
 
 ## Beginner
 
-**Step 0 — Extract and open START_HERE.html**
+**Step 0 — Extract and open 0_START-HERE.html**
 
 If you downloaded Birkly as a zip file, do this **before** logging in to the admin:
 
 1. **Extract the zip** to a folder (e.g. `Documents/Birkly` on your computer, or upload the contents to your web host).
-2. Confirm you see **START_HERE.html** in the **same folder** as `admin/`, `api/`, and `core/` — not still inside the zip, and not one folder too deep (e.g. `Birkly/Birkly/`).
-3. **Open START_HERE.html** in your browser (double-click the file locally, or visit `https://your-domain.com/START_HERE.html` after upload).
+2. Confirm you see **`0_START-HERE.html`** in the **same folder** as `admin/`, `api/`, and `core/` — not still inside the zip, and not one folder too deep (e.g. `Birkly/Birkly/`).
+3. **Open `0_START-HERE.html`** in your browser (double-click the file locally, or visit `https://your-domain.com/0_START-HERE.html` after upload).
 4. Wait for the **folder check** to confirm you're in the right place.
 5. Choose **On your computer** (local test with PHP) or **On a web server** (FTP/cloud), follow the short steps for your path, then click **Start setup** to open the admin onboarding wizard.
 
-**Example:** You extract `Birkly-1.0.zip` to `~/Birkly`, open `START_HERE.html`, pick **On your computer**, run `./start-server.sh` in that folder, then click **Start setup** — the browser opens the admin wizard at `http://localhost:8080/admin/` with local install hints.
+**Example:** You extract `Birkly-1.0.zip` to `~/Birkly`, open `0_START-HERE.html`, pick **On your computer**, run `./start-server.sh` in that folder, then click **Start setup** — the browser opens the admin wizard at `http://localhost:8080/admin/` with local install hints.
+
+For server installs and Hub plugins, see [Self-host install](../07-operations/self-host-install.md).
 
 ---
 
