@@ -4,6 +4,17 @@
  * Handles language files, translations, and content localization
  */
 
+/**
+ * Admin UI languages shown in onboarding, account, and sidebar pickers (P85 tiering).
+ * Other lang/*.json files may exist for future work but are not offered to users.
+ *
+ * @return list<string>
+ */
+function birkly_admin_ui_selectable_language_codes(): array
+{
+    return ['en', 'de', 'fr', 'ja', 'es'];
+}
+
 class I18n {
     private static $currentLanguage = 'en';
     private static $translations = [];
@@ -47,6 +58,22 @@ class I18n {
         
         self::setLanguage($language);
     }
+
+    /**
+     * Map stored language to a selectable admin UI locale (hidden locales fall back to en).
+     */
+    public static function normalizeSelectableAdminLanguage(string $language): string
+    {
+        $language = strtolower(trim($language));
+        if ($language === '') {
+            return self::$fallbackLanguage;
+        }
+        if (in_array($language, birkly_admin_ui_selectable_language_codes(), true)) {
+            return $language;
+        }
+
+        return self::$fallbackLanguage;
+    }
     
     /**
      * Get default language from settings
@@ -64,6 +91,7 @@ class I18n {
      * Set current language
      */
     public static function setLanguage($language) {
+        $language = self::normalizeSelectableAdminLanguage((string) $language);
         self::$currentLanguage = $language;
         
         // Store in session
@@ -347,23 +375,26 @@ class I18n {
     public static function getAvailableLanguages() {
         $langDir = __DIR__ . '/../lang';
         $languages = [];
-        
+
         if (is_dir($langDir)) {
-            $files = glob($langDir . '/*.json');
-            foreach ($files as $file) {
-                $langCode = basename($file, '.json');
-                $data = json_decode(file_get_contents($file), true);
-                if ($data && isset($data['_meta'])) {
-                    $languages[$langCode] = [
-                        'code' => $langCode,
-                        'name' => $data['_meta']['name'] ?? $langCode,
-                        'native_name' => $data['_meta']['native_name'] ?? $data['_meta']['name'] ?? $langCode,
-                        'flag' => $data['_meta']['flag'] ?? ''
-                    ];
+            foreach (birkly_admin_ui_selectable_language_codes() as $langCode) {
+                $file = $langDir . '/' . $langCode . '.json';
+                if (!is_file($file)) {
+                    continue;
                 }
+                $data = json_decode((string) file_get_contents($file), true);
+                if (!is_array($data) || !isset($data['_meta'])) {
+                    continue;
+                }
+                $languages[$langCode] = [
+                    'code' => $langCode,
+                    'name' => $data['_meta']['name'] ?? $langCode,
+                    'native_name' => $data['_meta']['native_name'] ?? $data['_meta']['name'] ?? $langCode,
+                    'flag' => $data['_meta']['flag'] ?? '',
+                ];
             }
         }
-        
+
         return $languages;
     }
 }
