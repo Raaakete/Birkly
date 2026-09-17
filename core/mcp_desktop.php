@@ -582,12 +582,29 @@ function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConf
 
 function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, string $target): string
 {
+    $root = birkly_project_root();
     $php = PHP_BINARY !== '' ? PHP_BINARY : 'php';
-    $script = birkly_project_root() . '/scripts/birkly-mcp-desktop-install.php';
+    $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
 
-    return $php . ' ' . $script
-        . ' --target=' . $target
-        . ' --token-file=' . $credentialsPath;
+    $tokenArg = $credentialsPath;
+    if (str_starts_with($credentialsPath, $root . DIRECTORY_SEPARATOR)
+        || str_starts_with($credentialsPath, $root . '/')) {
+        $tokenArg = ltrim(substr($credentialsPath, strlen($root)), '/\\');
+    }
+
+    if (PHP_OS_FAMILY === 'Windows') {
+        return 'cd /d ' . escapeshellarg($root)
+            . ' && ' . escapeshellarg($php)
+            . ' ' . escapeshellarg($scriptRel)
+            . ' --target=' . escapeshellarg($target)
+            . ' --token-file=' . escapeshellarg($tokenArg);
+    }
+
+    return 'cd ' . escapeshellarg($root)
+        . ' && ' . escapeshellarg($php)
+        . ' ' . escapeshellarg($scriptRel)
+        . ' --target=' . escapeshellarg($target)
+        . ' --token-file=' . escapeshellarg($tokenArg);
 }
 
 /**

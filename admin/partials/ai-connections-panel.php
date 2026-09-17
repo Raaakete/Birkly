@@ -36,7 +36,7 @@ $helpAiLocalUrl = birkly_url('/admin/index.php?page=help&topic=ai-on-localhost')
             </div>
           </div>
 
-          <div class="card" id="ai-desktop-connector-card" hidden>
+          <div class="card desktop-mcp-card" id="ai-desktop-connector-card" hidden>
             <div class="card-header">
               <div class="u-stack-1">
                 <h3 class="card-title"><?= htmlspecialchars(__('admin.ai_conn_desktop_title')) ?></h3>
