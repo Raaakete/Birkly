@@ -164,7 +164,7 @@ Prefer plugin storefront helpers over custom cart fetch engines (`BirklyCommerce
   <article>
     <h2>{title}</h2>
     <p>{'description'}</p>
-    <p>{commerce_price_from slug products}</p>
+    <p>€{commerce_price_from slug products}</p>
     <button type="button"
       data-commerce-add
       data-commerce-entry="{slug}"

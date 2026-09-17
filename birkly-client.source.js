@@ -1489,11 +1489,14 @@
                     }
                     if (getRes.ok) {
                         json = await getRes.json().catch(() => ({}));
+                    } else if (getRes.status === 400) {
+                        json = await getRes.json().catch(() => ({}));
                     }
                 } catch (getErr) {
                     Birkly.warn('Birkly: GET page bundle failed, falling back to POST', getErr);
                 }
-                if (!json || json.status !== 'ok' || !json.data) {
+                const bundleStatusOk = json && json.data && (json.status === 'ok' || json.status === 'partial');
+                if (!bundleStatusOk) {
                     const postRes = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', ...headers },
@@ -1501,7 +1504,8 @@
                         credentials: 'include'
                     });
                     json = await postRes.json().catch(() => ({}));
-                    if (!postRes.ok || json.status !== 'ok' || !json.data) {
+                    const postStatusOk = json && json.data && (json.status === 'ok' || json.status === 'partial');
+                    if (!postStatusOk) {
                         if (cached && cached.data && Birkly.bundle.bundlePayloadIsValid(cached.data)) {
                             return true;
                         }
@@ -1766,6 +1770,64 @@
         }
     }
 
+    /**
+     * Resolve template-function args like PHP SSR (bare slug, {'field'}).
+     * @param {string} raw
+     * @param {Record<string, unknown>} data
+     */
+    function resolveTemplateFunctionArg(raw, data) {
+        const trimmed = String(raw || '').trim();
+        if (trimmed === '') {
+            return '';
+        }
+        const quoted = trimmed.match(/^'([^']*)'$/);
+        if (quoted) {
+            const key = quoted[1];
+            if (Object.prototype.hasOwnProperty.call(data, key)) {
+                const val = data[key];
+                if (val !== null && val !== undefined) {
+                    return val;
+                }
+            }
+            const entry = data.entry && typeof data.entry === 'object' ? data.entry : null;
+            if (entry && Object.prototype.hasOwnProperty.call(entry, key)) {
+                const val = entry[key];
+                if (val !== null && val !== undefined) {
+                    return val;
+                }
+            }
+            return key;
+        }
+        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+            if (Object.prototype.hasOwnProperty.call(data, trimmed)) {
+                const val = data[trimmed];
+                if (val !== null && val !== undefined && typeof val !== 'object') {
+                    return val;
+                }
+            }
+            const entry = data.entry && typeof data.entry === 'object' ? data.entry : null;
+            if (entry && Object.prototype.hasOwnProperty.call(entry, trimmed)) {
+                const val = entry[trimmed];
+                if (val !== null && val !== undefined) {
+                    return val;
+                }
+            }
+        }
+        return trimmed;
+    }
+
+    function resolveTemplateFunctionArgs(args, data) {
+        if (!Array.isArray(args)) {
+            return [];
+        }
+        return args.map((arg) => {
+            if (typeof arg === 'string') {
+                return resolveTemplateFunctionArg(arg, data);
+            }
+            return arg;
+        });
+    }
+
     function parseQuotedArgs(raw) {
         const args = [];
         const s = String(raw || '').trim();
@@ -1860,7 +1922,7 @@
             if (!Birkly.templateFunctions.names.has(funcName)) continue;
 
             const rawArgs = rawCond.slice(funcName.length).trim();
-            const args = rawArgs ? parseQuotedArgs(rawArgs) : [];
+            const args = rawArgs ? resolveTemplateFunctionArgs(parseQuotedArgs(rawArgs), data) : [];
 
             // If this is a zero-arg template function and it's already hydrated into `data`,
             // don't create a hashed __tf_ key (avoids duplicate calls and keeps truthiness stable).
@@ -1892,7 +1954,7 @@
             
             if (funcMatch && Birkly.templateFunctions.names.has(funcMatch[1])) {
                 const funcName = funcMatch[1];
-                const args = parseQuotedArgs(funcMatch[2]);
+                const args = resolveTemplateFunctionArgs(parseQuotedArgs(funcMatch[2]), data);
                 
                 scheduleTemplateCall(funcName, args, varName, {});
                 
@@ -1913,7 +1975,7 @@
             if (!funcName || controlStarts.has(funcName)) continue;
             if (!Birkly.templateFunctions.names.has(funcName)) continue;
 
-            const args = parseQuotedArgs(m[2] || '');
+            const args = resolveTemplateFunctionArgs(parseQuotedArgs(m[2] || ''), data);
 
             if (args.length === 0 && (funcName in data)) {
                 out = out.replace(m[0], `{ ${funcName} }`);
@@ -4108,6 +4170,10 @@
             }
         });
         await ensureCollectionsInData(data, collections);
+
+        for (const region of regions) {
+            region.template = await preprocessTemplateFunctionCalls(region.template, data);
+        }
 
         for (const region of regions) {
             const rendered = Birkly.render.render(region.template, data);

@@ -122,7 +122,8 @@ try {
         'revision' => $revision,
     ]);
     $result['revision'] = $revision;
-    page_bundle_respond($result, 200, $revision);
+    $httpCode = (($result['status'] ?? '') === 'error') ? 400 : 200;
+    page_bundle_respond($result, $httpCode, $revision);
 } catch (Throwable $e) {
     error_log('page_bundle fatal: ' . $e->getMessage());
     page_bundle_respond(['status' => 'error', 'message' => 'Bundle failed'], 500);
