@@ -1,5 +1,15 @@
 <?php
+/**
+ * @deprecated Do not use — FR→ES substring maps produced FR/ES mixed catalogs. Translate from en.json only.
+ *
+ * Use: php scripts/p85-es-rebuild-from-en.php core|plugin …
+ */
 declare(strict_types=1);
+
+if (PHP_SAPI === 'cli' && realpath($_SERVER['SCRIPT_FILENAME'] ?? '') === __FILE__) {
+    fwrite(STDERR, "p85-es-fr-to-es.php is deprecated. Use p85-es-rebuild-from-en.php from lang/en.json only.\n");
+    exit(1);
+}
 
 function p85_es_fr_to_es_pairs(): array
 {
