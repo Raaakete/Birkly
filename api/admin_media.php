@@ -6,72 +6,7 @@ require_once __DIR__ . '/../core/csrf.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../core/media_storage.php';
 
-if (!$__cmsMcpFunctionsOnly) {
-    header('Content-Type: application/json');
-
-    // SECURITY FIX: Replace wildcard CORS with origin whitelist
-    require_once __DIR__ . '/../core/cors.php';
-    set_cors_headers('admin');
-
-    require_once __DIR__ . '/session.php';
-    haru_secure_session_start();
-
-    $action = $_GET['action'] ?? 'list';
-
-    // SECURITY: enforce permissions by media action
-    // - list/folders: read_media (viewer allowed)
-    // - upload: upload
-    // - all other actions mutate media/folders: manage_media
-    if ($action === 'list' || $action === 'folders' || $action === 'get') {
-        requireAuth('read_media');
-    } elseif ($action === 'upload') {
-        requireAuth('upload');
-    } else {
-        requireAuth('manage_media');
-    }
-
-    switch ($action) {
-        case 'list':
-            echo json_encode(listMedia());
-            break;
-        case 'get':
-            echo json_encode(getMediaItem());
-            break;
-        case 'upload':
-            echo json_encode(uploadMedia());
-            break;
-        case 'delete':
-            echo json_encode(deleteMedia());
-            break;
-        case 'folders':
-            echo json_encode(listFolders());
-            break;
-        case 'create_folder':
-            echo json_encode(createFolder());
-            break;
-        case 'move':
-            echo json_encode(moveMedia());
-            break;
-        case 'update':
-            echo json_encode(updateMedia());
-            break;
-        case 'rename_folder':
-            echo json_encode(renameFolder());
-            break;
-        case 'delete_folder':
-            echo json_encode(deleteFolder());
-            break;
-        case 'move_to_folder':
-            echo json_encode(moveToFolder());
-            break;
-        default:
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
-    }
-    return;
-}
-
-if ($__cmsMcpFunctionsOnly) {
+if ($__cmsMcpFunctionsOnly || !empty($GLOBALS['__HARU_INTERNAL_CALL'])) {
     require_once __DIR__ . '/../core/cms_mcp_request.php';
 }
 
@@ -1019,4 +954,69 @@ function updateFolderReferences($oldName, $newName) {
         }
     }
 }
-?> 
+
+// HTTP router — only when this file is the web entrypoint (never on MCP require_once).
+$__adminMediaHttpEntry = !$__cmsMcpFunctionsOnly
+    && empty($GLOBALS['__HARU_INTERNAL_CALL'])
+    && empty($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'])
+    && PHP_SAPI !== 'cli'
+    && realpath((string) ($_SERVER['SCRIPT_FILENAME'] ?? '')) === realpath(__FILE__);
+
+if ($__adminMediaHttpEntry) {
+    header('Content-Type: application/json');
+
+    require_once __DIR__ . '/../core/cors.php';
+    set_cors_headers('admin');
+
+    require_once __DIR__ . '/session.php';
+    haru_secure_session_start();
+
+    $action = $_GET['action'] ?? 'list';
+
+    if ($action === 'list' || $action === 'folders' || $action === 'get') {
+        requireAuth('read_media');
+    } elseif ($action === 'upload') {
+        requireAuth('upload');
+    } else {
+        requireAuth('manage_media');
+    }
+
+    switch ($action) {
+        case 'list':
+            echo json_encode(listMedia());
+            break;
+        case 'get':
+            echo json_encode(getMediaItem());
+            break;
+        case 'upload':
+            echo json_encode(uploadMedia());
+            break;
+        case 'delete':
+            echo json_encode(deleteMedia());
+            break;
+        case 'folders':
+            echo json_encode(listFolders());
+            break;
+        case 'create_folder':
+            echo json_encode(createFolder());
+            break;
+        case 'move':
+            echo json_encode(moveMedia());
+            break;
+        case 'update':
+            echo json_encode(updateMedia());
+            break;
+        case 'rename_folder':
+            echo json_encode(renameFolder());
+            break;
+        case 'delete_folder':
+            echo json_encode(deleteFolder());
+            break;
+        case 'move_to_folder':
+            echo json_encode(moveToFolder());
+            break;
+        default:
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+    }
+} 
