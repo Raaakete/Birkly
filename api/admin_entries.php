@@ -1567,11 +1567,25 @@ function bulkFieldEdit(): array {
     $schema = birkly_entry_read_schema($collectionSlug);
 
     $fieldDefinition = null;
-    foreach (($schema['fields'] ?? []) as $field) {
-        if (($field['name'] ?? '') === $fieldName) {
-            $fieldDefinition = $field;
-            break;
+    if ($fieldName === 'title') {
+        $fieldDefinition = [
+            'name' => 'title',
+            'type' => 'text',
+            'label' => 'Title',
+            'required' => false,
+            'options' => [],
+        ];
+    } else {
+        foreach (($schema['fields'] ?? []) as $field) {
+            if (($field['name'] ?? '') === $fieldName) {
+                $fieldDefinition = $field;
+                break;
+            }
         }
+    }
+
+    if ($fieldDefinition === null) {
+        return ['status' => 'error', 'message' => 'Unknown field'];
     }
 
     $processedValue = $value;
@@ -1585,25 +1599,27 @@ function bulkFieldEdit(): array {
         }
     }
 
-    if ($fieldDefinition !== null) {
-        $fieldType = (string) ($fieldDefinition['type'] ?? '');
-        if ($fieldType !== '') {
-            $className = getFieldtypeClass($fieldType);
-            if ($className && class_exists($className)) {
-                try {
-                    $ft = new $className([
-                        'name' => $fieldName,
-                        'label' => $fieldDefinition['label'] ?? $fieldName,
-                        'value' => $processedValue,
-                        'required' => $fieldDefinition['required'] ?? false,
-                        'options' => $fieldDefinition['options'] ?? [],
-                    ]);
-                    if (method_exists($ft, 'processValue') && !is_array($processedValue)) {
-                        $processedValue = $ft->processValue($processedValue);
-                    }
-                } catch (Throwable $e) {
-                    error_log('bulkFieldEdit fieldtype processing failed: ' . $e->getMessage());
+    $fieldType = (string) ($fieldDefinition['type'] ?? '');
+    if ($fieldType !== '') {
+        if (!function_exists('getFieldtypeClass')) {
+            $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+            require_once __DIR__ . '/admin_fieldtypes.php';
+        }
+        $className = getFieldtypeClass($fieldType);
+        if ($className && class_exists($className)) {
+            try {
+                $ft = new $className([
+                    'name' => $fieldName,
+                    'label' => $fieldDefinition['label'] ?? $fieldName,
+                    'value' => $processedValue,
+                    'required' => $fieldDefinition['required'] ?? false,
+                    'options' => $fieldDefinition['options'] ?? [],
+                ]);
+                if (method_exists($ft, 'processValue') && is_string($processedValue)) {
+                    $processedValue = $ft->processValue($processedValue);
                 }
+            } catch (Throwable $e) {
+                error_log('bulkFieldEdit fieldtype processing failed: ' . $e->getMessage());
             }
         }
     }
