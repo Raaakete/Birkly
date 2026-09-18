@@ -1100,12 +1100,51 @@ function birkly_template_engine_resolve_variable(string $name, array $data): str
 /**
  * @param list<array<int,string>> $parts  regex match sets from /'([^']+)'|(\d+)/
  */
+function birkly_template_engine_format_resolved_field_leaf(string $fieldName, $current, array $data): string
+{
+    if ($current === null) {
+        return '';
+    }
+
+    require_once __DIR__ . '/fieldtype_html.php';
+    $fieldTypes = $data['_field_types'] ?? [];
+    $type = is_array($fieldTypes) ? (string) ($fieldTypes[$fieldName] ?? '') : '';
+    if ($fieldName !== '' && $type !== '') {
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        return birkly_fieldtype_format_leaf_for_template(
+            $fieldName,
+            $current,
+            $type,
+            ['entry' => $data['entry'] ?? $data]
+        );
+    }
+
+    if (is_array($current) || is_object($current)) {
+        return '';
+    }
+
+    return birkly_template_engine_js_string($current);
+}
+
 function birkly_template_engine_resolve_field_path_from_parts(array $parts, array $data): string
 {
     if (count($parts) === 1) {
         $key = (isset($parts[0][1]) && $parts[0][1] !== '') ? $parts[0][1] : ($parts[0][2] ?? '');
-        if ($key !== '' && array_key_exists($key, $data) && !is_array($data[$key]) && $data[$key] !== null) {
-            return birkly_template_engine_js_string($data[$key]);
+        if ($key !== '') {
+            $current = null;
+            if (array_key_exists($key, $data) && $data[$key] !== null) {
+                $current = $data[$key];
+            } else {
+                $entry = (array_key_exists('entry', $data) && birkly_template_engine_truthy($data['entry']))
+                    ? $data['entry']
+                    : null;
+                if (is_array($entry) && array_key_exists($key, $entry) && $entry[$key] !== null) {
+                    $current = $entry[$key];
+                }
+            }
+            if ($current !== null) {
+                return birkly_template_engine_format_resolved_field_leaf($key, $current, $data);
+            }
         }
     }
 
@@ -1133,23 +1172,8 @@ function birkly_template_engine_resolve_field_path_from_parts(array $parts, arra
         $path .= ($path === '' ? '' : '.') . (preg_match('/^\d+$/', (string) $segment) ? $segment : "'" . $segment . "'");
     }
     $fieldName = birkly_template_engine_field_name_for_escape($path);
-    $fieldTypes = $data['_field_types'] ?? [];
-    $type = is_array($fieldTypes) ? (string) ($fieldTypes[$fieldName] ?? '') : '';
-    if ($fieldName !== '' && $type !== '') {
-        require_once __DIR__ . '/fieldtype_presentation.php';
-        return birkly_fieldtype_format_leaf_for_template(
-            $fieldName,
-            $current,
-            $type,
-            ['entry' => $data['entry'] ?? $data]
-        );
-    }
 
-    if (is_array($current) || is_object($current)) {
-        return '';
-    }
-
-    return birkly_template_engine_js_string($current);
+    return birkly_template_engine_format_resolved_field_leaf($fieldName, $current, $data);
 }
 
 function birkly_template_engine_encode_entry_block_content(string $html): string
@@ -1554,6 +1578,101 @@ function birkly_template_engine_resolve_template_function_arg(string $raw, array
 }
 
 /**
+ * Split comma-separated template-function args (paren call syntax), respecting single quotes.
+ *
+ * @return list<string>
+ */
+function birkly_template_engine_split_template_function_call_args(string $raw): array
+{
+    $raw = trim($raw);
+    if ($raw === '') {
+        return [];
+    }
+    $args = [];
+    $buf = '';
+    $len = strlen($raw);
+    $inQuote = false;
+    for ($i = 0; $i < $len; $i++) {
+        $ch = $raw[$i];
+        if ($ch === "'") {
+            $inQuote = !$inQuote;
+            $buf .= $ch;
+            continue;
+        }
+        if ($ch === ',' && !$inQuote) {
+            $piece = trim($buf);
+            if ($piece !== '') {
+                $args[] = $piece;
+            }
+            $buf = '';
+            continue;
+        }
+        $buf .= $ch;
+    }
+    $piece = trim($buf);
+    if ($piece !== '') {
+        $args[] = $piece;
+    }
+
+    return $args;
+}
+
+/**
+ * @param array<string,mixed> $data
+ * @return list<mixed>
+ */
+function birkly_template_engine_parse_template_function_args(string $rawArgs, array $data): array
+{
+    $rawArgs = trim($rawArgs);
+    if ($rawArgs === '') {
+        return [];
+    }
+    if (preg_match("/^\{'([^']+)'\}$/", $rawArgs, $fm)) {
+        return [birkly_template_engine_resolve_template_function_arg("'" . $fm[1] . "'", $data)];
+    }
+    if (str_starts_with($rawArgs, '(') && str_ends_with($rawArgs, ')')) {
+        $rawArgs = substr($rawArgs, 1, -1);
+    }
+    $pieces = str_contains($rawArgs, ',')
+        ? birkly_template_engine_split_template_function_call_args($rawArgs)
+        : [$rawArgs];
+    $args = [];
+    foreach ($pieces as $piece) {
+        $piece = trim($piece);
+        if ($piece === '') {
+            continue;
+        }
+        if (preg_match("/^'([^']*)'$/D", $piece, $qm)) {
+            $args[] = birkly_template_engine_resolve_template_function_arg("'" . $qm[1] . "'", $data);
+            continue;
+        }
+        $args[] = birkly_template_engine_resolve_template_function_arg($piece, $data);
+    }
+
+    return $args;
+}
+
+/**
+ * @param array<string,mixed> $data
+ */
+function birkly_template_engine_evaluate_template_function(string $funcName, string $rawArgs, array $data): string
+{
+    $args = birkly_template_engine_parse_template_function_args($rawArgs, $data);
+    $result = birkly_template_engine_call_registered_function($funcName, $args);
+    if ($result === null) {
+        return '';
+    }
+    if (is_bool($result)) {
+        return $result ? '1' : '';
+    }
+    if (is_scalar($result)) {
+        return (string) $result;
+    }
+
+    return '';
+}
+
+/**
  * Replace {template_function arg …} calls with SSR-evaluated results.
  *
  * @param array<string,mixed> $data
@@ -1586,43 +1705,28 @@ function birkly_template_engine_process_template_functions(string $html, array $
         'end' => true, 'set' => true, 'count' => true, 'entry' => true, 'public_form' => true,
     ];
 
+    $replaceFn = static function (array $match) use ($data, $names, $controlStarts): string {
+        $funcName = $match[1];
+        if (!isset($names[$funcName]) || isset($controlStarts[$funcName])) {
+            return $match[0];
+        }
+
+        return birkly_template_engine_evaluate_template_function($funcName, trim($match[2]), $data);
+    };
+
+    // Docs / shelf syntax: {media_img('hero', title)}
+    $out = preg_replace_callback(
+        '/\{([a-zA-Z0-9_]+)\(([^)]*)\)\}/',
+        $replaceFn,
+        $html
+    );
+    $out = $out === null ? $html : $out;
+
+    // Space-separated args: {render_mentions {'body'}}
     $out = preg_replace_callback(
         '/\{([a-zA-Z0-9_]+)\s+((?:[^{}]|\{[^{}]*\})*)\}/',
-        static function (array $match) use ($data, $names, $controlStarts): string {
-            $funcName = $match[1];
-            if (!isset($names[$funcName]) || isset($controlStarts[$funcName])) {
-                return $match[0];
-            }
-            $rawArgs = trim($match[2]);
-            $args = [];
-            if ($rawArgs !== '') {
-                if (preg_match("/^\{'([^']+)'\}$/", $rawArgs, $fm)) {
-                    $args[] = birkly_template_engine_resolve_template_function_arg("'" . $fm[1] . "'", $data);
-                } elseif (preg_match_all("/'([^']*)'/", $rawArgs, $qm, PREG_SET_ORDER)) {
-                    foreach ($qm as $q) {
-                        $args[] = birkly_template_engine_resolve_template_function_arg("'" . $q[1] . "'", $data);
-                    }
-                } else {
-                    foreach (preg_split('/\s+/', $rawArgs) as $piece) {
-                        if ($piece !== '') {
-                            $args[] = birkly_template_engine_resolve_template_function_arg($piece, $data);
-                        }
-                    }
-                }
-            }
-            $result = birkly_template_engine_call_registered_function($funcName, $args);
-            if ($result === null) {
-                return '';
-            }
-            if (is_bool($result)) {
-                return $result ? '1' : '';
-            }
-            if (is_scalar($result)) {
-                return (string) $result;
-            }
-            return '';
-        },
-        $html
+        $replaceFn,
+        $out
     );
 
     return $out === null ? $html : $out;
