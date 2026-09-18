@@ -726,7 +726,10 @@ function executeCreateEntry($actionData, $aiUser = null, $originalUserId = null)
             }
             error_log('executeCreateEntry: plugin hooks dt='
                 . (int) round((microtime(true) - $hookStarted) * 1000) . 'ms');
-            return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
+            require_once __DIR__ . '/../core/fieldtype_presentation.php';
+            $entryForResponse = birkly_ai_prepare_entry_for_read_response($entry, $collection, $contentStorage);
+
+            return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entryForResponse]];
         } else {
             error_log("executeCreateEntry: Failed to write entry file for collection: " . $collection);
             return [
@@ -872,7 +875,10 @@ function executeUpdateEntry($actionData, $aiUser = null, $originalUserId = null)
     if ($result) {
         error_log("executeUpdateEntry: Successfully updated entry");
         birkly_ai_after_entry_write($entry, $collection, $oldEntry);
-        return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entry]];
+        require_once __DIR__ . '/../core/fieldtype_presentation.php';
+        $entryForResponse = birkly_ai_prepare_entry_for_read_response($entry, $collection, $contentStorage);
+
+        return ['success' => true, 'data' => ['entry_id' => $entryId, 'entry' => $entryForResponse]];
     } else {
         error_log("executeUpdateEntry: Failed to write entry file");
         return ['success' => false, 'message' => 'Failed to update entry'];
