@@ -58,6 +58,11 @@ try {
     $second = birkly_cms_update_attention_sync($status);
     cua_assert('dedupe same version', ($second['emitted'] ?? 0) === 0);
 
+    birkly_plugin_activity_clear_nav($pluginId);
+    $reemit = birkly_cms_update_attention_sync($status);
+    cua_assert('re-emit after nav cleared', ($reemit['emitted'] ?? 0) === 1);
+    cua_assert('nav restored after re-emit', birkly_plugin_activity_has_nav_attention($pluginId));
+
     birkly_cms_update_attention_dismiss_modal('1.0.1');
     $state = birkly_cms_update_attention_load_state();
     cua_assert('modal dismissed for version', ($state['modal_dismissed_version'] ?? '') === '1.0.1');
