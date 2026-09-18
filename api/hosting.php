@@ -21,18 +21,6 @@ require_once __DIR__ . '/../core/hosting_urls.php';
 require_once __DIR__ . '/../core/hosting_probe.php';
 require_once __DIR__ . '/../core/hosting_detect.php';
 
-if (!isset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'])) {
-$rawInput = file_get_contents('php://input');
-$input = [];
-if ($rawInput !== '') {
-    $decoded = json_decode($rawInput, true);
-    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-        $input = $decoded;
-    }
-}
-
-$action = $_GET['action'] ?? $input['action'] ?? '';
-
 function birkly_hosting_api_payload(): array
 {
     $config = birkly_hosting_load();
@@ -56,6 +44,18 @@ function birkly_hosting_api_payload(): array
         'detect' => birkly_hosting_detect_environment(),
     ];
 }
+
+if (!isset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'])) {
+$rawInput = file_get_contents('php://input');
+$input = [];
+if ($rawInput !== '') {
+    $decoded = json_decode($rawInput, true);
+    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+        $input = $decoded;
+    }
+}
+
+$action = $_GET['action'] ?? $input['action'] ?? '';
 
 if ($action === 'get' || $action === 'status' || $action === 'probe') {
     $data = birkly_hosting_api_payload();
