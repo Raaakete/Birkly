@@ -180,6 +180,9 @@ function birkly_fieldtype_format_leaf_for_template(string $fieldName, $value, st
 
     $field = ['name' => $fieldName, 'type' => $fieldType];
     $ft = birkly_fieldtype_create_instance($field, $value);
+    if ($ft && method_exists($ft, 'isSensitive') && $ft->isSensitive()) {
+        return '••••••';
+    }
     if ($ft && method_exists($ft, 'formatValueForTemplate')) {
         return (string) $ft->formatValueForTemplate($value, $field, $context);
     }

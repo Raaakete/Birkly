@@ -95,9 +95,17 @@ class Toggle extends BaseField {
         return '';
     }
 
+    public function outputsTrustedHtml(): bool
+    {
+        return true;
+    }
+
     public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
     {
         $on = $value === true || $value === '1' || $value === 1 || $value === 'true' || $value === 'yes';
-        return $on ? 'On' : 'Off';
+
+        return $on
+            ? '<span class="birkly-bool birkly-bool--on">On</span>'
+            : '<span class="birkly-bool birkly-bool--off">Off</span>';
     }
 }

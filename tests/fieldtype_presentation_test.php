@@ -80,6 +80,20 @@ $blocksHtml = birkly_dynamicitems_render_html([
 ]);
 assert_true('dynamicitems markdown h1', str_contains($blocksHtml, '<h1>Hello</h1>'), 'got: ' . $blocksHtml);
 
+echo "\n[FP-07b] DynamicItems map block renders iframe (not escaped)\n";
+$mapBlocks = birkly_dynamicitems_render_html([
+    ['type' => 'map', 'name' => 'm', 'label' => 'Map', 'value' => ['lat' => '48.137', 'lng' => '11.575']],
+]);
+assert_true(
+    'dynamicitems map iframe raw',
+    str_contains($mapBlocks, '<iframe') && !str_contains($mapBlocks, '&lt;iframe'),
+    'got: ' . $mapBlocks
+);
+
+echo "\n[FP-04b] Password template leaf masked\n";
+$pwLeaf = birkly_fieldtype_format_leaf_for_template('api_secret', 'secret', 'password', []);
+assert_true('password bullets', $pwLeaf === '••••••', 'got: ' . $pwLeaf);
+
 echo "\n[FP-08] Map HTML embed\n";
 require_once dirname(__DIR__) . '/core/map_presentation.php';
 $mapHtml = birkly_map_render_html(['lat' => '48.137', 'lng' => '11.575', 'label' => 'Munich']);
