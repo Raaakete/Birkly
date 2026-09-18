@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/plugins/template_functions.php';
 require_once __DIR__ . '/media_storage.php';
+require_once __DIR__ . '/dynamicitems_presentation.php';
+require_once __DIR__ . '/relation_resolve.php';
 
 function birkly_media_resolve_item(string $mediaId): ?array
 {
@@ -129,28 +131,35 @@ function birkly_fieldtype_register_template_shelf(): void
     ]);
 
     register_template_function('relation_titles', static function ($value) {
-        if (is_string($value) && (str_starts_with($value, '[') || str_starts_with($value, '{'))) {
-            $decoded = json_decode($value, true);
-            if (is_array($decoded)) {
-                $value = $decoded;
-            }
-        }
-        if (!is_array($value)) {
-            return '';
-        }
-        $titles = [];
-        foreach ($value as $item) {
-            if (is_array($item)) {
-                $titles[] = (string) ($item['title'] ?? $item['label'] ?? $item['id'] ?? '');
-            } elseif (is_scalar($item)) {
-                $titles[] = (string) $item;
-            }
-        }
-        $titles = array_values(array_filter($titles, static fn ($t) => $t !== ''));
-
+        $titles = birkly_relation_resolve_titles($value);
         return implode(', ', $titles);
     }, [
-        'description' => 'Comma-separated relation entry titles from a relation field value.',
+        'description' => 'Comma-separated relation entry titles (loads titles from storage when missing).',
         'arguments' => ['relation_value' => 'array|string'],
+    ]);
+
+    register_template_function('relation_links', static function ($value) {
+        $links = birkly_relation_resolve_links($value);
+        if ($links === []) {
+            return '';
+        }
+        $parts = [];
+        foreach ($links as $link) {
+            $href = htmlspecialchars((string) ($link['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $title = htmlspecialchars((string) ($link['title'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $parts[] = '<a class="birkly-relation-link" href="' . $href . '">' . $title . '</a>';
+        }
+
+        return '<div class="birkly-relation-links">' . implode(' ', $parts) . '</div>';
+    }, [
+        'description' => 'HTML links to related entries (?collection=&slug=) from a relation field value.',
+        'arguments' => ['relation_value' => 'array|string'],
+    ]);
+
+    register_template_function('dynamicitems_html', static function ($value) {
+        return birkly_dynamicitems_render_html($value);
+    }, [
+        'description' => 'Render DynamicItems blocks (markdown/editor as HTML, other types escaped).',
+        'arguments' => ['dynamicitems_value' => 'array|string'],
     ]);
 }

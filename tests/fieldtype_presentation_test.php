@@ -71,6 +71,21 @@ echo "\n[FP-06] Template shelf media_url callable\n";
 birkly_fieldtype_presentation_boot();
 assert_true('media_url registered', function_exists('get_template_function') && get_template_function('media_url') !== null);
 assert_true('gallery_html registered', get_template_function('gallery_html') !== null);
+assert_true('dynamicitems_html registered', get_template_function('dynamicitems_html') !== null);
+
+echo "\n[FP-07] DynamicItems markdown block renders HTML\n";
+require_once dirname(__DIR__) . '/core/dynamicitems_presentation.php';
+$blocksHtml = birkly_dynamicitems_render_html([
+    ['type' => 'markdown', 'name' => 'body', 'label' => 'Body', 'value' => '# Hello'],
+]);
+assert_true('dynamicitems markdown h1', str_contains($blocksHtml, '<h1>Hello</h1>'), 'got: ' . $blocksHtml);
+
+echo "\n[FP-08] MCP field hints attached on read path\n";
+$hinted = birkly_entry_attach_mcp_read_hints(
+    ['title' => 'T', 'tags' => ['a']],
+    'nonexistent-collection-slug-for-test'
+);
+assert_true('no hints when collection missing', !isset($hinted['_mcp_field_hints']));
 
 echo "\n" . ($failures === 0 ? "All $total tests passed.\n" : "$failures of $total tests FAILED.\n");
 exit($failures === 0 ? 0 : 1);

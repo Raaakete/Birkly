@@ -291,13 +291,16 @@ function birkly_ai_tools_prompt_section(array $aiUser): string
  */
 function birkly_ai_action_workflow_prompt_section(): string
 {
-    return implode("\n", [
+    require_once __DIR__ . '/fieldtype_catalog.php';
+    $fieldtypeLines = birkly_mcp_fieldtype_guidance_lines();
+
+    return implode("\n", array_merge([
         'ACTION PAYLOAD RULES (critical — wrong shape causes "Collection slug is required" errors):',
         '1. Put slug/collection/fields on the SAME LEVEL as "type", not only inside "data". Both work:',
         '   {"type":"update_collection","slug":"gallery","fields":[...]}',
         '   {"type":"update_collection","data":{"slug":"gallery","fields":[...]}}',
         '2. update_collection: ALWAYS include "slug". Fields in "fields". Set entry_method: "public_api" for contact/inquiry collections and public sub-collections (comments). Set allow_public_read: true when the public site must list/read entries without auth ({for each entry in ...} loops). sub_collections[] for nested schemas.',
-        '3. create_entry: ALWAYS include "collection" as a slug string. Field values (title, text, image, …) at top level.',
+        '3. create_entry: ALWAYS include "collection" as a slug string. Field values at top level (media ids on file/gallery fields, not URLs).',
         '4. save_collection_groups: pass full groups tree from list_collection_groups when reorganizing admin sidebar.',
         '5. create_page: include "title", "slug", and "content" (HTML with {for each entry in \'slug\'} loops).',
         '6. Do NOT pass a nested collection object instead of a slug string.',
@@ -306,7 +309,7 @@ function birkly_ai_action_workflow_prompt_section(): string
         '',
         'RECOMMENDED SITE-BUILD ORDER (custom HTML/CSS in project/ — playbooks auto-load; else read_birkly_docs "site-building"):',
         'Step 0 — ai-quality-guide + web-project-patterns (often pre-loaded); get_project_info + list_project_files once (do not repeat)',
-        'Step A — define schema (fieldtypes): update_collection / create_collection with fields[] — use checkbox/toggle not boolean; gallery/tags/multiselect need {for each x in \'field\'} loops on the site (see fieldtypes + templating playbooks)',
+        'Step A — define schema (fieldtypes): update_collection / create_collection with fields[] — use checkbox/toggle not boolean; invalid types fail before mkdir (no ghost dirs); read_entry returns _mcp_field_hints per field when connected via MCP',
         'Step B — create_entry seed data (status published)',
         'Step C — write_project_file: index.html, detail pages, css/style.css; birkly-client.js on every templated page',
         'Step D — public forms: entry_method public_api + read_collection before form HTML (public-forms playbook)',
@@ -317,11 +320,11 @@ function birkly_ai_action_workflow_prompt_section(): string
         'EXAMPLE — add fields to two collections:',
         '```json',
         '{"actions":[',
-        '  {"type":"update_collection","slug":"gallery","fields":[{"name":"title","type":"text","label":"Title","required":true},{"name":"image","type":"image","label":"Image"}]},',
+        '  {"type":"update_collection","slug":"gallery","fields":[{"name":"title","type":"text","label":"Title","required":true},{"name":"hero","type":"file","label":"Hero image"}]},',
         '  {"type":"update_collection","slug":"contact","fields":[{"name":"email","type":"text","label":"Email"}]}',
         ']}',
         '```',
-    ]);
+    ], $fieldtypeLines));
 }
 
 function birkly_ai_tool_calls_to_actions(array $toolCalls): array
