@@ -94,6 +94,15 @@ echo "\n[FP-04b] Password template leaf masked\n";
 $pwLeaf = birkly_fieldtype_format_leaf_for_template('api_secret', 'secret', 'password', []);
 assert_true('password bullets', $pwLeaf === '••••••', 'got: ' . $pwLeaf);
 
+echo "\n[FP-04c] escape_output masks password via fieldTypes map\n";
+require_once dirname(__DIR__) . '/core/birkly_template_engine.php';
+$escaped = birkly_template_engine_escape_output(
+    "'api_secret'",
+    'super-secret-qa',
+    ['fieldTypes' => ['api_secret' => 'password']]
+);
+assert_true('escape_output password bullets', $escaped === '••••••', 'got: ' . $escaped);
+
 echo "\n[FP-08] Map HTML embed\n";
 require_once dirname(__DIR__) . '/core/map_presentation.php';
 $mapHtml = birkly_map_render_html(['lat' => '48.137', 'lng' => '11.575', 'label' => 'Munich']);

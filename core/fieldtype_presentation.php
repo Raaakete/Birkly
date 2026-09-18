@@ -22,6 +22,7 @@ function birkly_fieldtype_presentation_boot(): void
     FieldRegistry::autoRegisterFieldTypes();
     require_once __DIR__ . '/fieldtype_template_shelf.php';
     birkly_fieldtype_register_template_shelf();
+    birkly_fieldtype_presentation_register_filters();
     $booted = true;
 }
 
@@ -176,6 +177,11 @@ function birkly_fieldtype_format_leaf_for_template(string $fieldName, $value, st
 {
     if ($value === null) {
         return '';
+    }
+
+    $fieldType = strtolower(trim($fieldType));
+    if ($fieldType === 'password' && $value !== '') {
+        return '••••••';
     }
 
     $field = ['name' => $fieldName, 'type' => $fieldType];
