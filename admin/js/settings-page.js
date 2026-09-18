@@ -583,6 +583,21 @@ window.migrateStorage = migrateStorage;
         });
     }
 
+    /** Unsaved badge / tab chrome — only the tab you are viewing (avoids hidden-tab false positives). */
+    function isCurrentTabDirtyForUi() {
+        return isTrackedGlobalTab(currentTab) && !!dirtyTabs[currentTab];
+    }
+
+    function scheduleCaptureTabBaseline(tabId, delayMs) {
+        if (!isTrackedGlobalTab(tabId)) {
+            return;
+        }
+        var wait = typeof delayMs === 'number' ? delayMs : 450;
+        setTimeout(function () {
+            captureFormSnapshots(tabId);
+        }, wait);
+    }
+
     function normalizeTabId(tabId) {
         if (!tabId) return null;
         if (TAB_ALIASES[tabId]) {
@@ -710,6 +725,15 @@ window.migrateStorage = migrateStorage;
                 return;
             }
 
+            if (field.type === 'password') {
+                // Ignore until the user types — stops autofill / focus quirks from marking Settings dirty.
+                if (field.dataset.settingsUserEdited !== '1') {
+                    return;
+                }
+                parts.push(field.name + '=' + field.value);
+                return;
+            }
+
             if (field.type === 'checkbox') {
                 parts.push(field.name + '=' + (field.checked ? '1' : '0'));
                 return;
@@ -767,7 +791,7 @@ window.migrateStorage = migrateStorage;
         saveBtn.textContent = stT('settings_js_save_settings_btn', 'Save Settings');
 
         if (dirtyBadge) {
-            dirtyBadge.hidden = !hasDirtyTrackedTabs();
+            dirtyBadge.hidden = !isCurrentTabDirtyForUi();
         }
     }
 
@@ -798,6 +822,10 @@ window.migrateStorage = migrateStorage;
 
         if (formSnapshots[tabId] === undefined) {
             formSnapshots[tabId] = serializeTabForms(tabId);
+            dirtyTabs[tabId] = false;
+            updateTabDirtyIndicators();
+            updateSaveBar(currentTab);
+            return false;
         }
 
         dirtyTabs[tabId] = serializeTabForms(tabId) !== formSnapshots[tabId];
@@ -823,10 +851,18 @@ window.migrateStorage = migrateStorage;
                 var form = document.getElementById(formId);
                 if (!form || form.dataset.dirtyBound === '1') return;
                 form.dataset.dirtyBound = '1';
-                form.addEventListener('input', function () {
+                form.addEventListener('input', function (event) {
+                    var target = event.target;
+                    if (target && target.type === 'password') {
+                        target.dataset.settingsUserEdited = '1';
+                    }
                     checkDirtyState(tabId);
                 });
-                form.addEventListener('change', function () {
+                form.addEventListener('change', function (event) {
+                    var target = event.target;
+                    if (target && target.type === 'password') {
+                        target.dataset.settingsUserEdited = '1';
+                    }
                     checkDirtyState(tabId);
                 });
             });
@@ -1066,13 +1102,7 @@ window.migrateStorage = migrateStorage;
 
         scrollToSettingsSection(scrollTo);
 
-        if (isTrackedGlobalTab(tabId)) {
-            setTimeout(function () {
-                if (typeof window.markSettingsClean === 'function') {
-                    window.markSettingsClean(tabId);
-                }
-            }, 350);
-        }
+        scheduleCaptureTabBaseline(tabId, 500);
     }
 
     async function confirmLeaveDirtyTab(targetTabId) {
@@ -1207,18 +1237,11 @@ window.migrateStorage = migrateStorage;
         initAiConnectionsIntroModal();
         updateSaveBar(currentTab);
 
-        // Capture after tab activation / custom controls settle (avoids false dirty state).
-        requestAnimationFrame(function () {
-            requestAnimationFrame(function () {
-                captureFormSnapshots();
-                if (typeof window.markSettingsClean === 'function') {
-                    window.markSettingsClean(Object.keys(GLOBAL_SAVE_TABS));
-                }
-            });
-        });
+        scheduleCaptureTabBaseline(parsed.tab, 500);
     }
 
     window.initSettingsTabs = initTabs;
+    window.captureSettingsSnapshot = captureFormSnapshots;
     window.getSettingsCurrentTab = function () { return currentTab; };
     window.markSettingsClean = function (tabIds) {
         var tabs = Array.isArray(tabIds) ? tabIds : [tabIds || currentTab];

@@ -63,6 +63,9 @@
     }
 
     function markDirty() {
+        if (typeof window.getSettingsCurrentTab === 'function' && window.getSettingsCurrentTab() !== 'analytics') {
+            return;
+        }
         if (typeof window.checkSettingsDirtyState === 'function') {
             window.checkSettingsDirtyState('analytics');
         }
