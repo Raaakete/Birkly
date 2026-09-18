@@ -220,11 +220,25 @@ if (empty($userAvatar)) {
                 ?>
 
                 <!-- Third Section: Settings, Help, Logout -->
+                <?php
+                $settingsCmsUpdateAttention = false;
+                if (isset($_SESSION['user']) && function_exists('checkPermission') && checkPermission($_SESSION['user'], 'manage_settings')) {
+                    if (!function_exists('birkly_plugin_activity_nav_attention_counts')) {
+                        require_once __DIR__ . '/../../core/plugin_activity.php';
+                    }
+                    if (function_exists('birkly_plugin_activity_nav_attention_counts')) {
+                        $cmsNavCounts = birkly_plugin_activity_nav_attention_counts();
+                        $settingsCmsUpdateAttention = ($cmsNavCounts['birkly'] ?? 0) > 0;
+                    }
+                }
+                $settingsNavTitle = __('admin.settings') . ($settingsCmsUpdateAttention ? ' (new activity)' : '');
+                ?>
                 <ul class="nav-links" id="links-settings">
-                    <li class="nav-item">
-                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('redirects') || is_nav_active('roles') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>" title="<?= htmlspecialchars(__('admin.settings')) ?>">
+                    <li class="nav-item<?= $settingsCmsUpdateAttention ? ' has-attention' : '' ?>" data-nav-attention-key="birkly">
+                        <a href="<?= htmlspecialchars(admin_url('settings')) ?>" class="nav-link <?= is_nav_active('settings') || is_nav_active('redirects') || is_nav_active('roles') || is_nav_active('templates') || is_nav_active('audit-log') || is_nav_active('activity') || is_nav_active('updates') || is_nav_active('webhooks') ? 'active' : '' ?>" title="<?= htmlspecialchars($settingsNavTitle) ?>"<?= $settingsCmsUpdateAttention ? ' aria-label="' . htmlspecialchars($settingsNavTitle, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
                             <?= birkly_icon('gear', ['class' => 'nav-icon']) ?>
                             <span class="nav-label"><?= __('admin.settings') ?></span>
+                            <span class="nav-attention-dot" aria-hidden="true"<?= $settingsCmsUpdateAttention ? '' : ' hidden' ?>></span>
                         </a>
                     </li>
                     <?php
