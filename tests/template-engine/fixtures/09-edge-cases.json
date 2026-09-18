@@ -53,10 +53,10 @@
             "expected": "ab"
         },
         {
-            "name": "control-word prefix strips entry dot path",
+            "name": "entry dot path resolves current entry object",
             "html": "a{entry.title}b",
             "data": { "entry": { "title": "T" } },
-            "expected": "ab"
+            "expected": "aTb"
         },
         {
             "name": "unclosed brace is left alone",

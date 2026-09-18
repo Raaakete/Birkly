@@ -1605,7 +1605,8 @@ function birkly_template_engine_process_variables(string $html, array $data, arr
         if ($trimmed === '') {
             return '';
         }
-        if (preg_match('/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count|entry)\b/i', $trimmed)) {
+        // Bare `entry` is a valid loop variable for scalar arrays; only strip real control tags.
+        if (preg_match('/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count)\b/i', $trimmed)) {
             return '';
         }
         if (preg_match('/^entry\s+for\s+[\'"][^\'"]+[\'"]$/iD', $trimmed)) {

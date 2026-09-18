@@ -306,7 +306,7 @@ function birkly_ai_action_workflow_prompt_section(): string
         '',
         'RECOMMENDED SITE-BUILD ORDER (custom HTML/CSS in project/ — playbooks auto-load; else read_birkly_docs "site-building"):',
         'Step 0 — ai-quality-guide + web-project-patterns (often pre-loaded); get_project_info + list_project_files once (do not repeat)',
-        'Step A — define schema (fieldtypes): update_collection / create_collection with fields[]',
+        'Step A — define schema (fieldtypes): update_collection / create_collection with fields[] — use checkbox/toggle not boolean; gallery/tags/multiselect need {for each x in \'field\'} loops on the site (see fieldtypes + templating playbooks)',
         'Step B — create_entry seed data (status published)',
         'Step C — write_project_file: index.html, detail pages, css/style.css; birkly-client.js on every templated page',
         'Step D — public forms: entry_method public_api + read_collection before form HTML (public-forms playbook)',

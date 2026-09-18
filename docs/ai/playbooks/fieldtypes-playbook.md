@@ -61,7 +61,10 @@ Workflow: `list_media` / `upload_media` → reference filename in `create_entry`
 | `number` | Price, quantity, rating |
 | `date` | Publish date, event date |
 | `datetime` | Scheduled publish, event start |
-| `boolean` | Featured flag, visible toggle |
+| `checkbox` | On/off stored as `0`/`1` (filters use `'1'`) |
+| `toggle` | Boolean-style on/off |
+
+**Not a type:** `boolean` — use `checkbox` or `toggle`.
 
 ## Selection & structure
 
@@ -72,6 +75,37 @@ Workflow: `list_media` / `upload_media` → reference filename in `create_entry`
 | `tags` | Tag list |
 | `color` | Hex color picker |
 | `json` | Structured data (advanced) |
+
+## Structured & media fieldtypes (storefront)
+
+| type | Stored shape (public API) | Template access |
+|------|---------------------------|-----------------|
+| `map` | `{ lat, lng, label?, zoom? }` | Dot paths: `{'field'.'lat'}`, `{'field'.'lng'}` — no built-in map widget; build iframe/HTML yourself |
+| `range` | `{ min, max }` (numbers) | `{'field'.'min'}`, `{'field'.'max'}` |
+| `gallery` | Array of media ids | Loop: `{for each id in 'gallery_field'}<img src="/media/{id}.jpg">{endfor}` (confirm extension via media metadata) |
+| `media` / file refs | Media id string | `/media/{id}.ext` or `{'field'}` when string |
+| `code` | String **or** `{ language, code }` depending on schema | `{'field'.'code'}` — `$` in source is preserved; do not confuse with PHP `preg_replace` |
+| `relation` | Target entry id/slug string | No dynamic `{from … get entry {field}}` — use a **template function** from the fieldtype/plugin shelf or hardcode slug only for demos |
+| `oembed` | URL string | No URL→embed filters in templates; fieldtype should expose a template-function on the shelf when embed HTML is needed |
+| `dynamicitems` | List of `{ type, value }` | `{for each entry in dynamic_field}` then `{ type }`, `{ value }`, nested dot paths on `value` when object |
+
+### Array fields (`tags`, `multiselect`, `gallery`)
+
+Loop the **field name** (quoted reads from current `entry`):
+
+```html
+{for each tag in 'tags_list'}<span class="chip">{tag}</span>{endfor}
+{for each cat in multi_categories}<span>{cat}</span>{endfor}
+```
+
+- Prefer loop variables like `tag`, `cat`, `id` — not `{value}` or `{.}` (not defined for scalar loops).
+- `{for each entry in 'tags_list'}…{entry}…` works for scalar lists after engine fix; `tag`/`cat` is still clearer.
+
+**Anti-pattern:** Hardcoding `/media/…` ids on the page while claiming the gallery field is tested — loop the field or register a fieldtype template function.
+
+### Shelf model (vision)
+
+Fieldtypes are self-contained: admin UI, validation, storage, and **optional** template-shelf helpers (`register_template_function`) live in the fieldtype folder. Core templating only resolves stored JSON — it does not embed gallery maps, oEmbed players, or relation cards unless the fieldtype (or plugin) places them on the shelf.
 
 ## Example: blog post collection
 

@@ -763,10 +763,10 @@
             let rendered = '';
             for (const item of items) {
                 const loopData = Object.assign({}, data, { [itemVar]: item });
-                if (item && typeof item === 'object') {
+                if (item && typeof item === 'object' && !Array.isArray(item)) {
+                    Object.assign(loopData, item);
                     if (itemVar === 'entry' || !Object.prototype.hasOwnProperty.call(data, 'entry')) {
                         loopData.entry = item;
-                        Object.assign(loopData, item);
                     }
                 }
                 rendered += render(loopBody, loopData);
@@ -823,7 +823,9 @@
         return html.replace(/\{([^{}]*)\}/g, (full, inner) => {
             const trimmed = String(inner || '').trim();
             if (!trimmed) return '';
-            if (/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count|entry)\b/i.test(trimmed)) {
+            // Do not treat bare `entry` as a control tag — it is a valid loop variable
+            // for scalar arrays (tags, multiselect). `entry for 'slug'` is stripped below.
+            if (/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count)\b/i.test(trimmed)) {
                 return '';
             }
             if (/^entry\s+for\s+['"][^'"]+['"]$/i.test(trimmed)) {
