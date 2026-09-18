@@ -256,6 +256,9 @@
                 } else {
                     clearCmsUpdateNavAttention();
                 }
+                if (typeof window.markSettingsClean === 'function') {
+                    window.markSettingsClean('system');
+                }
             } else if (result.status === 'error') {
                 showError(result.message || updT('updates_js_check_failed', 'Could not check for updates'));
             } else {
