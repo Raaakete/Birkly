@@ -94,4 +94,10 @@ class Toggle extends BaseField {
     public function getConfigUI($fieldIndex, $existingData = []): string {
         return '';
     }
+
+    public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
+    {
+        $on = $value === true || $value === '1' || $value === 1 || $value === 'true' || $value === 'yes';
+        return $on ? 'On' : 'Off';
+    }
 }

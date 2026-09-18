@@ -80,7 +80,12 @@ $blocksHtml = birkly_dynamicitems_render_html([
 ]);
 assert_true('dynamicitems markdown h1', str_contains($blocksHtml, '<h1>Hello</h1>'), 'got: ' . $blocksHtml);
 
-echo "\n[FP-08] MCP field hints attached on read path\n";
+echo "\n[FP-08] Map HTML embed\n";
+require_once dirname(__DIR__) . '/core/map_presentation.php';
+$mapHtml = birkly_map_render_html(['lat' => '48.137', 'lng' => '11.575', 'label' => 'Munich']);
+assert_true('map iframe present', str_contains($mapHtml, 'birkly-map-frame') && str_contains($mapHtml, 'openstreetmap.org'), $mapHtml);
+
+echo "\n[FP-09] MCP field hints attached on read path\n";
 $hinted = birkly_entry_attach_mcp_read_hints(
     ['title' => 'T', 'tags' => ['a']],
     'nonexistent-collection-slug-for-test'

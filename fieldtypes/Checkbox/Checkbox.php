@@ -87,4 +87,10 @@ class Checkbox extends BaseField {
     public function getTableMinWidth(): string {
         return '60px';
     }
+
+    public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
+    {
+        $on = $value === true || $value === '1' || $value === 1 || $value === 'true' || $value === 'yes';
+        return $on ? 'Yes' : 'No';
+    }
 }
