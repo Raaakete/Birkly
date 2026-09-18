@@ -82,11 +82,13 @@ Workflow: `list_media` / `upload_media` → reference filename in `create_entry`
 |------|---------------------------|-----------------|
 | `map` | `{ lat, lng, label?, zoom? }` | Dot paths: `{'field'.'lat'}`, `{'field'.'lng'}` — no built-in map widget; build iframe/HTML yourself |
 | `range` | `{ min, max }` (numbers) | `{'field'.'min'}`, `{'field'.'max'}` |
-| `gallery` | Array of media ids | Loop: `{for each id in 'gallery_field'}<img src="/media/{id}.jpg">{endfor}` (confirm extension via media metadata) |
-| `media` / file refs | Media id string | `/media/{id}.ext` or `{'field'}` when string |
-| `code` | String **or** `{ language, code }` depending on schema | `{'field'.'code'}` — `$` in source is preserved; do not confuse with PHP `preg_replace` |
-| `relation` | Target entry id/slug string | No dynamic `{from … get entry {field}}` — use a **template function** from the fieldtype/plugin shelf or hardcode slug only for demos |
-| `oembed` | URL string | No URL→embed filters in templates; fieldtype should expose a template-function on the shelf when embed HTML is needed |
+| `gallery` | Array of media ids | `{gallery_html('gallery_field')}` or loop ids + `{media_img(id)}` |
+| `media` / `file` | Media id string | `{media_url('hero_image')}` · `{media_img('hero_image', 'Alt text')}` |
+| `markdown` | Markdown source string | `{'body'}` renders HTML when collection schema includes `markdown` (trusted via `_html_fields`) |
+| `password` | bcrypt/argon hash at rest | Never exposed in MCP/public reads (`[redacted]`); leave blank on edit to keep hash |
+| `code` | Plain string (or JSON mode) | `{'snippet'}` — `$` / `${name}` preserved in storage and templates |
+| `relation` | Array of `{id, title?, collection?}` | `{relation_titles('related')}` or loop structured items |
+| `oembed` | Embed URL (normalized on save) | `{oembed_html('video')}` |
 | `dynamicitems` | List of `{ type, value }` | `{for each entry in dynamic_field}` then `{ type }`, `{ value }`, nested dot paths on `value` when object |
 
 ### Array fields (`tags`, `multiselect`, `gallery`)
@@ -98,8 +100,8 @@ Loop the **field name** (quoted reads from current `entry`):
 {for each cat in multi_categories}<span>{cat}</span>{endfor}
 ```
 
-- Prefer loop variables like `tag`, `cat`, `id` — not `{value}` or `{.}` (not defined for scalar loops).
-- `{for each entry in 'tags_list'}…{entry}…` works for scalar lists after engine fix; `tag`/`cat` is still clearer.
+- Prefer loop variables like `tag`, `cat`, `id` — or `{entry}` / `{.}` for scalar lists.
+- Direct `{'tags'}` outputs a comma-separated list when the field type is `tags` / `multiselect` (schema-driven via page bundle `_field_types`).
 
 **Anti-pattern:** Hardcoding `/media/…` ids on the page while claiming the gallery field is tested — loop the field or register a fieldtype template function.
 
