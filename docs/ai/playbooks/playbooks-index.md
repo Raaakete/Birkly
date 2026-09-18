@@ -43,6 +43,7 @@ If a tool call is allowed by the role and passes approval settings, playbooks do
 | `webmcp-tools` | Agent Guide Tools tab: WebMCP visitor actions, form allowlist, hosting snippets |
 | `mcp-setup` | Connect Claude, ChatGPT, Cursor via MCP |
 | `mcp-capabilities` | MCP tool families, plugin tools, allow_public_read, fieldtype picks |
+| `mcp-qa` | Full MCP tool audit, analytics via admin actions, `mcp-qa.html` harness |
 | `mcp-troubleshooting` | OAuth failures, stale tools/list, two approval channels, reconnect |
 | `ai-connections` | Built-in admin chat assistant, API keys, approvals |
 | `plugins-overview` | Install, enable, marketplace, official plugins |
