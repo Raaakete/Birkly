@@ -82,6 +82,24 @@
         });
     }
 
+    function applyAttentionPayload(payload) {
+        if (!payload) {
+            return;
+        }
+        if (typeof window.loadUnreadCount === 'function') {
+            window.loadUnreadCount();
+        }
+        if (typeof window.loadNavAttention === 'function') {
+            window.loadNavAttention();
+        }
+        if (payload.show_modal && payload.update_available) {
+            var latest = payload.latest_version || '';
+            var current = payload.current_version || '';
+            bindModal(latest);
+            showModal(latest, current);
+        }
+    }
+
     function syncCmsUpdates() {
         return fetch(url('/api/plugin_activity.php?action=cms_update_sync'), { credentials: 'same-origin' })
             .then(function (response) { return response.json(); })
@@ -89,19 +107,22 @@
                 if (!data || data.status !== 'ok' || !data.data) {
                     return;
                 }
-                var payload = data.data;
-                if (typeof window.loadNavAttention === 'function') {
-                    window.loadNavAttention();
-                }
-                if (payload.show_modal && payload.update_available) {
-                    var latest = payload.latest_version || '';
-                    var current = payload.current_version || '';
-                    bindModal(latest);
-                    showModal(latest, current);
-                }
+                applyAttentionPayload(data.data);
             })
             .catch(function () { /* ignore */ });
     }
+
+    window.birklyCmsUpdateAttentionAfterCheck = function (updateData) {
+        if (!updateData || !updateData.update_available) {
+            return;
+        }
+        applyAttentionPayload({
+            update_available: true,
+            current_version: updateData.current_version,
+            latest_version: updateData.latest_version,
+            show_modal: updateData.attention ? updateData.attention.show_modal : true,
+        });
+    };
 
     document.addEventListener('DOMContentLoaded', function () {
         syncCmsUpdates();
