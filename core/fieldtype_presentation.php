@@ -282,6 +282,21 @@ function birkly_fieldtype_presentation_register_filters(): void
 }
 
 /**
+ * Mask sensitive fields (and attach MCP hints) before returning entry JSON to AI/MCP clients.
+ *
+ * @param array<string,mixed> $entry
+ */
+function birkly_ai_prepare_entry_for_read_response(array $entry, string $collectionSlug, $storage = null): array
+{
+    if (!function_exists('apply_filters')) {
+        require_once __DIR__ . '/plugins.php';
+    }
+    birkly_fieldtype_presentation_boot();
+
+    return apply_filters('birkly_ai_read_entry', $entry, $collectionSlug);
+}
+
+/**
  * @param array<string,mixed> $entry
  * @return array<string,mixed>
  */
