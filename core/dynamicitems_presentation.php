@@ -33,7 +33,7 @@ function birkly_dynamicitems_render_html($value): string
         $label = (string) ($block['label'] ?? '');
 
         $inner = birkly_dynamicitems_render_block_inner($type, $blockValue, $name);
-        $trusted = in_array($type, ['contenteditor', 'content-editor', 'editor', 'wysiwyg', 'markdown'], true);
+        $trusted = birkly_dynamicitems_block_outputs_trusted_html($type);
 
         $class = 'birkly-dynamicitem birkly-dynamicitem--' . preg_replace('/[^a-z0-9_-]/', '', $type);
         if ($label !== '') {
@@ -84,4 +84,26 @@ function birkly_dynamicitems_render_block_inner(string $type, $blockValue, strin
     }
 
     return birkly_fieldtype_format_leaf_for_template($name, $blockValue, $type, []);
+}
+
+function birkly_dynamicitems_block_outputs_trusted_html(string $type): bool
+{
+    $type = birkly_fieldtype_normalize_type_slug($type);
+
+    return in_array($type, [
+        'contenteditor',
+        'content-editor',
+        'editor',
+        'wysiwyg',
+        'markdown',
+        'file',
+        'image',
+        'media',
+        'gallery',
+        'map',
+        'oembed',
+        'range',
+        'checkbox',
+        'toggle',
+    ], true);
 }

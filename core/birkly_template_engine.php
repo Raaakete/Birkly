@@ -1878,6 +1878,11 @@ function birkly_template_engine_render(string $html, $data, array $options = [])
     } elseif (isset($options['htmlFields']) && is_array($options['htmlFields'])) {
         $ctxOptions['htmlFields'] = $options['htmlFields'];
     }
+    if (isset($data['_field_types']) && is_array($data['_field_types'])) {
+        $ctxOptions['fieldTypes'] = $data['_field_types'];
+    } elseif (isset($options['fieldTypes']) && is_array($options['fieldTypes'])) {
+        $ctxOptions['fieldTypes'] = $options['fieldTypes'];
+    }
     // Nested render() calls (loops/from/if) must not re-extract already-tokenized
     // protected blocks from the parent pass — only the outermost call protects.
     $protect = ($options['_skipProtect'] ?? null) !== true;

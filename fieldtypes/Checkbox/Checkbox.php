@@ -88,9 +88,17 @@ class Checkbox extends BaseField {
         return '60px';
     }
 
+    public function outputsTrustedHtml(): bool
+    {
+        return true;
+    }
+
     public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
     {
         $on = $value === true || $value === '1' || $value === 1 || $value === 'true' || $value === 'yes';
-        return $on ? 'Yes' : 'No';
+
+        return $on
+            ? '<span class="birkly-bool birkly-bool--on">Yes</span>'
+            : '<span class="birkly-bool birkly-bool--off">No</span>';
     }
 }
