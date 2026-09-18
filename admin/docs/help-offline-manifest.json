@@ -838,6 +838,26 @@
             "ai_topic": "content-model"
         },
         {
+            "id": "core-template-shelf",
+            "title": "Core template shelf",
+            "keywords": [
+                "template shelf",
+                "media_url",
+                "media_img",
+                "gallery_html",
+                "oembed_html",
+                "relation_titles",
+                "relation_links",
+                "dynamicitems_html",
+                "fieldtypes"
+            ],
+            "snapshot": "/admin/docs/snapshots/core-template-shelf.md",
+            "docs_path": "03-templating/core-template-shelf.html",
+            "nav_section": "templating",
+            "nav_section_label": "Templating",
+            "ai_topic": "templating"
+        },
+        {
             "id": "dashboard",
             "title": "Dashboard",
             "keywords": [
@@ -1020,23 +1040,6 @@
             "ai_topic": "playbooks-index"
         },
         {
-            "id": "admin-guide-companion",
-            "title": "Admin Guide companion",
-            "keywords": [
-                "guide",
-                "checklist",
-                "journey",
-                "onboarding",
-                "setup",
-                "empty state"
-            ],
-            "snapshot": "/admin/docs/snapshots/admin-guide-companion.md",
-            "docs_path": "01-admin/admin-guide-companion.html",
-            "nav_section": "admin",
-            "nav_section_label": "Admin",
-            "ai_topic": "getting-started"
-        },
-        {
             "id": "known-issues-wave1",
             "title": "Known issues — Wave 1",
             "keywords": [
@@ -1143,7 +1146,10 @@
                 "media",
                 "image",
                 "gallery",
-                "templates"
+                "templates",
+                "media_url",
+                "media_img",
+                "gallery_html"
             ],
             "snapshot": "/admin/docs/snapshots/media-in-templates.md",
             "docs_path": "03-templating/media-in-templates.html",
@@ -1719,6 +1725,6 @@
     ],
     "manifest_source": "offline",
     "offline": true,
-    "synced_at": "2026-09-17T11:07:31+00:00",
+    "synced_at": "2026-09-18T16:39:11+00:00",
     "synced_from": "/agent/repos/Birkly/../Birkly-Docs"
 }

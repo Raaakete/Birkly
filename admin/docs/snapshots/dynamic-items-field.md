@@ -72,7 +72,13 @@ For shared header/footer content:
 
 **Allowed block types:** Most built-in fieldtypes except nested Dynamic items, Gallery, Map, and Relation (to avoid excessive nesting). **ContentEditor** is available for rich body blocks. The admin discovers available types automatically.
 
-**Templates:** Output depends on integration — with `<birkly-region>`, the client hydrates the field HTML. In custom JSON consumers, iterate the array and map `type` + `value`.
+**Templates (project HTML):**
+
+- **Shelf (recommended):** `{dynamicitems_html('blocks')}` — renders blocks (markdown and editor output as HTML).
+- **Manual loop:** iterate stored items when you need custom markup; each item exposes `{ type }`, `{ value }`, and dot paths on `value` when it is an object.
+- **Regions:** `<birkly-region>` can hydrate Dynamic items HTML on the client.
+
+See [Core template shelf](../03-templating/core-template-shelf.md).
 
 **Multilanguage:** Field container IDs and block handlers are scoped per language tab (`field_en_blocks`, etc.); Add Block must target the active tab’s field name.
 

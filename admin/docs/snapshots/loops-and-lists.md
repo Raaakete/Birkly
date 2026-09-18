@@ -78,29 +78,34 @@ Trailing **`limit N`** (space, not `=`):
 
 Loops over empty collections render nothing. Show a message with a surrounding conditional when you need one (see [Conditionals](conditionals.md) and [From…get / existence](from-get-and-existence.md)).
 
-### Array fields (tags)
+### Array fields (tags, multiselect)
+
+Loop the **field name** (quoted reads from the current entry):
 
 ```html
 {if entry has 'tags'}
-  {for each item in 'tags'}
-    <span class="tag">{item}</span>
+  {for each tag in 'tags'}
+    <span class="tag">{tag}</span>
   {endfor}
 {endif}
 ```
+
+- Loop variables: `tag`, `cat`, `id`, or `{entry}` / `{.}` for scalar lists.
+- Direct output `{'tags'}` prints a **comma-separated list** when the schema type is `tags` or `multiselect` (page bundle `_field_types`).
 
 ### Gallery / multi-image
 
-If the field is an array of image refs:
+Prefer the shelf helper `{gallery_html('gallery')}` or loop media ids:
 
 ```html
 {if entry has 'gallery'}
-  {for each item in 'gallery'}
-    <img src="{item}" alt="">
+  {for each id in 'gallery'}
+    {media_img(id)}
   {endfor}
 {endif}
 ```
 
-Exact item shape depends on the fieldtype; always guard with `{if entry has '…'}`. See [Media in templates](media-in-templates.md).
+See [Media in templates](media-in-templates.md) and [Core template shelf](core-template-shelf.md).
 
 ### Sub-collections
 

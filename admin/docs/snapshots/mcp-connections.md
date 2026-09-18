@@ -151,6 +151,20 @@ The agent runs with its configured fixed role. For non-admin users who authorize
 
 Users who cannot see a service agent in Settings cannot complete OAuth for it. Assignment fields (`visible_to_roles`, `allowed_users`) are enforced in the admin list and at authorization time.
 
+## Content tools for connected agents
+
+When an AI app uses MCP to read or write collections:
+
+| Topic | Guidance |
+|-------|----------|
+| **Images in content** | Use `file` / `gallery` fieldtypes; store **media ids** from `upload_media` / `list_media`. Templates: `{media_url('hero')}`, `{gallery_html('photos')}` — not `text`/`url` with hardcoded `/media/…` paths. |
+| **read_entry hints** | Responses may include `_mcp_field_hints` (per-field type + template hint). **Do not** write `_mcp_field_hints` back with `update_entry`. |
+| **Schema validation** | `create_collection` / `update_collection` validate field types **before** creating collection directories — invalid schemas do not leave empty “ghost” folders on disk. |
+| **Secrets** | `password` fields are hashed at rest; reads show `[redacted]` on MCP/public API. |
+| **Field types** | Invalid aliases like `boolean` or `json` are rejected — use `checkbox`/`toggle`, `code` (JSON mode), or sub-collections. |
+
+Deeper playbook alignment: [Field types](../02-content/field-types.md), [Core template shelf](../03-templating/core-template-shelf.md).
+
 ## Developer / debug
 
 For local Claude Desktop development only, `mcp-bridge.js` is available under the collapsed **Developer / debug** (or **Local project**) section on **Settings → AI** / the AI settings tab. Normal users do not need this file. Step-by-step bridge and tunnel recipes: [AI on localhost](../04-integration/ai-on-localhost.md).

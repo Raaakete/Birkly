@@ -1,34 +1,32 @@
 # Media in templates
 
-Show images and files by outputting the **field value** (filename or URL) into normal HTML — there is no `{ media … }` helper in the public template language.
+Show images and files from **file** / **gallery** fields using core **template shelf** helpers or loops — not `{ media … }` phantoms.
 
 ## Summary
 
-**In short:** Store a filename or media ref on an `image` / `media` / `gallery` field, then print it with `{'featured_image'}` (quoted user field). Put that value in `<img src="…">` or `<a href="…">`. Always guard empty fields with `{if entry has 'featured_image'}`. Build public URLs from your CMS media path (often `/media/…` — confirm with the Media library).
+**In short:** Store a **media library id** on a `file` field (aliases `image`, `media`) or an array of ids on `gallery`. In templates use `{media_url('hero')}`, `{media_img('hero', 'Alt')}`, or `{gallery_html('photos')}`. For custom markup, loop ids and call `{media_img(id)}`. Guard empty fields with `{if entry has 'hero'}`. Full shelf reference: [Core template shelf](core-template-shelf.md).
 
-> **Media (P2):** screenshot deferred — media pick + `<img>` in template.
+> **Media (P2):** screenshot deferred — media pick + shelf output in template.
 
 ## Beginner
 
-### Single image field
+### Single image (`file` / `image` / `media`)
 
-Collection field e.g. `featured_image` (type `image`). Entry stores a filename such as `hero-bread.jpg`.
+Collection field e.g. `featured_image` (type `file`). Entry stores a media library **id** (not a bare filename path).
 
 ```html
 {if entry has 'featured_image'}
-  <img src="/media/{'featured_image'}" alt="{title}">
+  {media_img('featured_image', title)}
 {else}
   <img src="/images/placeholder.jpg" alt="">
 {endif}
 ```
 
-If your API already returns a full URL in the field, use:
+URL only:
 
 ```html
-<img src="{'featured_image'}" alt="{title}">
+<a href="{media_url('brochure')}">Download</a>
 ```
-
-Check one published entry in the public API or preview before hard-coding a prefix.
 
 ### Inside a list loop
 
@@ -36,7 +34,7 @@ Check one published entry in the public API or preview before hard-coding a pref
 {for each entry in 'gallery' with status = published ordered by order}
   {if entry has 'image'}
     <figure>
-      <img src="{'image'}" alt="{title}">
+      {media_img('image', title)}
       <figcaption>{title}</figcaption>
     </figure>
   {endif}
@@ -45,21 +43,31 @@ Check one published entry in the public API or preview before hard-coding a pref
 
 ### Gallery (array) field
 
+Built-in grid:
+
 ```html
 {if entry has 'gallery'}
-  {for each item in 'gallery'}
-    <img src="{item}" alt="">
+  {gallery_html('gallery')}
+{endif}
+```
+
+Custom layout — loop scalar ids:
+
+```html
+{if entry has 'gallery'}
+  {for each id in 'gallery'}
+    {media_img(id)}
   {endfor}
 {endif}
 ```
 
-If items are objects, your build may expose a path such as a URL property — inspect API JSON; do not invent `{ media }` helpers.
+Inside the loop you can use `{entry}` or `{.}` for the current id.
 
 ### Files / downloads
 
 ```html
 {if entry has 'document'}
-  <a href="{'document'}" download>Download</a>
+  <a href="{media_url('document')}" download>Download</a>
 {endif}
 ```
 
@@ -71,26 +79,30 @@ Editor fields already contain `<img>` HTML. Output with `{'content'}` (HTML). Up
 
 ### For developers & AI
 
-**Aligned with media playbook**
+**Workflow**
 
-1. `list_media` / Media library — note exact filename.  
-2. Set the image field on `create_entry` / `update_entry`.  
-3. Template: `{'featured_image'}` — **not** `{ media featured_image }`.
+1. `list_media` / `upload_media` — note media id.  
+2. Set the field on `create_entry` / `update_entry`.  
+3. Template: `{media_url('hero')}` · `{media_img('hero', 'Alt')}` · `{gallery_html('photos')}`.
 
 **Phantoms**
 
 | Wrong | Right |
 |-------|-------|
-| `{ media 'logo.svg' }` | Static path or a CMS field that holds the file |
-| `{ media featured_image width=400 }` | `{'featured_image'}` + CSS / native `width` / your CDN |
-| `{ image.url }` without verifying shape | Inspect API; use `{item}` or documented path |
+| `{ media 'logo.svg' }` | Static path or `{media_url('logo')}` |
+| `{ media featured_image width=400 }` | `{media_img('featured_image', '…')}` + CSS |
+| `{'featured_image'}` alone in `<img src>` when value is an id | `{media_img('featured_image', '…')}` |
+| `{ image.url }` without verifying shape | Shelf helpers or inspect API JSON |
 
 **Empty guards** — required for clean DOM (`src=""` breaks layout and a11y).
 
 **Performance** — prefer appropriately sized uploads; the core language does not resize on the fly.
 
+**External URLs** — use a `url` field for partner links, not `file` / `gallery`.
+
 ## Related
 
+- [Core template shelf](core-template-shelf.md)
 - [Variables and output](variables-and-output.md)
 - [Conditionals](conditionals.md)
 - [Loops and lists](loops-and-lists.md)
