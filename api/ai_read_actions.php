@@ -57,9 +57,11 @@ function executeReadAction($actionData, $aiUser) {
             return ['success' => false, 'message' => 'Entry not found'];
         }
 
-        if (function_exists('apply_filters')) {
-            $entry = apply_filters('birkly_ai_read_entry', $entry, $collection);
-        }
+        $meta = $contentStorage->read('collections/' . $collectionDir . '/collection.json');
+        $canonicalSlug = is_array($meta) ? (string) ($meta['slug'] ?? $collectionDir) : $collectionDir;
+
+        require_once __DIR__ . '/../core/fieldtype_presentation.php';
+        $entry = birkly_ai_prepare_entry_for_read_response($entry, $canonicalSlug, $contentStorage);
 
         return ['success' => true, 'data' => ['entry' => $entry]];
 

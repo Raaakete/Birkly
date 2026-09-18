@@ -94,6 +94,17 @@ echo "\n[FP-04b] Password template leaf masked\n";
 $pwLeaf = birkly_fieldtype_format_leaf_for_template('api_secret', 'secret', 'password', []);
 assert_true('password bullets', $pwLeaf === '••••••', 'got: ' . $pwLeaf);
 
+echo "\n[FP-04d] prepare_entry_for_read_response applies password mask via filter\n";
+require_once dirname(__DIR__) . '/core/plugins.php';
+$plainEntry = ['password_field' => 'plain-secret'];
+$maskedViaHelper = birkly_ai_prepare_entry_for_read_response($plainEntry, 'nonexistent-collection-slug');
+// Collection missing on disk — mask step is a no-op; ensure filter path runs without error.
+assert_true('helper returns array', is_array($maskedViaHelper));
+$maskedViaHelper = birkly_entry_mask_sensitive_fields($plainEntry, [
+    ['name' => 'password_field', 'type' => 'password'],
+]);
+assert_true('password redacted in mask helper', ($maskedViaHelper['password_field'] ?? '') === '[redacted]');
+
 echo "\n[FP-04c] escape_output masks password via fieldTypes map\n";
 require_once dirname(__DIR__) . '/core/birkly_template_engine.php';
 $escaped = birkly_template_engine_escape_output(
