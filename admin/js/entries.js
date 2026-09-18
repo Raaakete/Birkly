@@ -67,9 +67,7 @@
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     const bulkRestoreBtn = document.getElementById('bulk-restore-btn');
     const bulkCancelBtn = document.getElementById('bulk-cancel-btn');
-    const bulkFieldName = document.getElementById('bulk-field-name');
-    const bulkFieldValue = document.getElementById('bulk-field-value');
-    const bulkFieldApplyBtn = document.getElementById('bulk-field-apply-btn');
+    const bulkEditFieldsBtn = document.getElementById('bulk-edit-fields-btn');
     const statusFilter = document.getElementById('status-filter') || document.getElementById('status-filter-desktop');
     const statusFilterDesktop = document.getElementById('status-filter-desktop');
     const statusFilterMobile = document.getElementById('status-filter');
@@ -303,16 +301,6 @@
         });
     }
 
-    async function performBulkFieldEdit(entryIds, fieldNameValue, fieldValueValue) {
-        return requestJson('/api/admin_entries.php?action=bulk_field_edit', {
-            collection: collectionSlug,
-            entry_ids: entryIds,
-            field_name: fieldNameValue,
-            value: fieldValueValue,
-            _csrf: getCSRFToken(),
-        });
-    }
-
     async function performEntryAction(action, entryId) {
         return requestJson('/api/admin_entries.php?action=' + encodeURIComponent(action), {
             collection: collectionSlug,
@@ -363,39 +351,6 @@
             const result = await performBulkOperation(action, Array.from(selectedEntries));
             progress.remove();
             BirklyFeedback.toast(successLabel.replace('%count%', String(result.count || selectedEntries.size)), 'success');
-            window.location.reload();
-        } catch (error) {
-            progress.remove();
-            toastError(error);
-        }
-    }
-
-    async function handleBulkFieldEdit() {
-        const fieldNameValue = bulkFieldName?.value || '';
-        const fieldValueValue = bulkFieldValue?.value ?? '';
-
-        if (selectedEntries.size === 0) {
-            return;
-        }
-        if (!fieldNameValue) {
-            BirklyFeedback.toast(t('entries_bulk_choose_field', 'Choose a field to edit first.'), 'warning');
-            return;
-        }
-        var entityLabel = selectedEntries.size === 1
-            ? t('entries_bulk_entity_entry', 'entry')
-            : t('entries_bulk_entity_entries', 'entries');
-        var confirmMsg = t('entries_bulk_apply_confirm', 'Apply this field update to %count% selected %entity%?')
-            .replace('%count%', String(selectedEntries.size))
-            .replace('%entity%', entityLabel);
-        if (!(await BirklyFeedback.confirm(confirmMsg))) {
-            return;
-        }
-
-        const progress = showProgress(t('entries_bulk_updating_fields', 'Updating field values…'));
-        try {
-            const result = await performBulkFieldEdit(Array.from(selectedEntries), fieldNameValue, fieldValueValue);
-            progress.remove();
-            BirklyFeedback.toast(result.message || t('entries_bulk_field_updated', 'Field updated successfully.'), 'success');
             window.location.reload();
         } catch (error) {
             progress.remove();
@@ -513,7 +468,14 @@
         );
     });
 
-    bulkFieldApplyBtn?.addEventListener('click', handleBulkFieldEdit);
+    bulkEditFieldsBtn?.addEventListener('click', function () {
+        if (selectedEntries.size === 0) {
+            return;
+        }
+        if (window.BirklyEntriesBulkEdit && typeof window.BirklyEntriesBulkEdit.open === 'function') {
+            window.BirklyEntriesBulkEdit.open(Array.from(selectedEntries));
+        }
+    });
     bulkCancelBtn?.addEventListener('click', clearSelection);
 
     function syncStatusFilters(value) {
