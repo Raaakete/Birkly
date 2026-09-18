@@ -150,13 +150,24 @@ function birkly_template_engine_should_output_raw_html(string $pathOrName, array
         return true;
     }
 
+    $fieldTypes = $options['fieldTypes'] ?? [];
+    if (is_array($fieldTypes)) {
+        $type = (string) ($fieldTypes[$fieldName] ?? '');
+        if ($type !== '') {
+            require_once __DIR__ . '/fieldtype_presentation.php';
+            if (birkly_fieldtype_outputs_html_for_type($type)) {
+                return true;
+            }
+        }
+    }
+
     $htmlFields = $options['htmlFields'] ?? [];
     if (!is_array($htmlFields)) {
         return false;
     }
 
     if (array_is_list($htmlFields)) {
-        return in_array($fieldName, $htmlFields, true);
+        return $htmlFields !== [] && in_array($fieldName, $htmlFields, true);
     }
 
     if (isset($htmlFields[$fieldName])) {
@@ -166,17 +177,6 @@ function birkly_template_engine_should_output_raw_html(string $pathOrName, array
     foreach ($htmlFields as $names) {
         if (is_array($names) && in_array($fieldName, $names, true)) {
             return true;
-        }
-    }
-
-    $fieldTypes = $options['fieldTypes'] ?? [];
-    if (is_array($fieldTypes)) {
-        $type = (string) ($fieldTypes[$fieldName] ?? '');
-        if ($type !== '') {
-            require_once __DIR__ . '/fieldtype_presentation.php';
-            if (birkly_fieldtype_outputs_html_for_type($type)) {
-                return true;
-            }
         }
     }
 
