@@ -217,6 +217,18 @@ function birkly_fieldtype_format_leaf_for_template(string $fieldName, $value, st
  * @param list<array<string,mixed>> $fields
  * @return array<string,mixed>
  */
+function birkly_fieldtype_resolve_collection_dir($storage, string $collectionSlug): ?string
+{
+    require_once __DIR__ . '/public_read.php';
+    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    if ($dir !== null) {
+        return $dir;
+    }
+    require_once __DIR__ . '/content_resolve.php';
+
+    return birkly_content_resolve_collection_dir($storage, $collectionSlug);
+}
+
 function birkly_entry_mask_sensitive_fields(array $entry, array $fields): array
 {
     foreach ($fields as $field) {
@@ -225,6 +237,11 @@ function birkly_entry_mask_sensitive_fields(array $entry, array $fields): array
         }
         $name = (string) ($field['name'] ?? '');
         if ($name === '' || !array_key_exists($name, $entry)) {
+            continue;
+        }
+        $type = strtolower(trim((string) ($field['type'] ?? '')));
+        if ($type === 'password' && ($entry[$name] ?? '') !== '' && $entry[$name] !== '[redacted]') {
+            $entry[$name] = '[redacted]';
             continue;
         }
         $ft = birkly_fieldtype_create_instance($field, $entry[$name]);
@@ -245,8 +262,7 @@ function birkly_entry_mask_sensitive_for_collection(array $entry, string $collec
         require_once __DIR__ . '/storage/StorageFactory.php';
         $storage = get_storage();
     }
-    require_once __DIR__ . '/public_read.php';
-    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    $dir = birkly_fieldtype_resolve_collection_dir($storage, $collectionSlug);
     if ($dir === null) {
         return $entry;
     }
@@ -306,8 +322,7 @@ function birkly_entry_attach_mcp_read_hints(array $entry, string $collectionSlug
         require_once __DIR__ . '/storage/StorageFactory.php';
         $storage = get_storage();
     }
-    require_once __DIR__ . '/public_read.php';
-    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    $dir = birkly_fieldtype_resolve_collection_dir($storage, $collectionSlug);
     if ($dir === null) {
         return $entry;
     }
