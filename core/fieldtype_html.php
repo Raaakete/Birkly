@@ -169,5 +169,16 @@ function birkly_template_engine_should_output_raw_html(string $pathOrName, array
         }
     }
 
+    $fieldTypes = $options['fieldTypes'] ?? [];
+    if (is_array($fieldTypes)) {
+        $type = (string) ($fieldTypes[$fieldName] ?? '');
+        if ($type !== '') {
+            require_once __DIR__ . '/fieldtype_presentation.php';
+            if (birkly_fieldtype_outputs_html_for_type($type)) {
+                return true;
+            }
+        }
+    }
+
     return false;
 }

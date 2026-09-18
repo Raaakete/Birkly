@@ -61,7 +61,7 @@ $pw = birkly_template_engine_render(
         '_field_types' => ['api_secret' => 'password'],
     ]
 );
-assert_true('password field empty on storefront leaf', $pw === '<p></p>', $pw);
+assert_true('password field masked on storefront leaf', $pw === '<p>••••••</p>', $pw);
 
 echo "\ntemplate_shelf_paren_syntax_test: " . ($failures === 0 ? "PASS\n" : "FAIL ($failures)\n");
 exit($failures === 0 ? 0 : 1);
