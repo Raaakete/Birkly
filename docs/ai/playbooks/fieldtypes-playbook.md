@@ -31,7 +31,8 @@ Use when defining collection schemas, fixing validation errors, or choosing the 
 | `text` | Title, name, short line | `{name}` or `{'name'}` | Single line |
 | `textarea` | Plain multi-line | `{'body'}` | No HTML formatting |
 | `editor` | Rich HTML articles | `{'content'}` | Renders HTML; see `content-editor` playbook |
-| `markdown` | Markdown source | `{'body'}` | Rendered client-side if configured |
+| `markdown` | Markdown source | `{'body'}` | Rendered to HTML on SSR/client when schema type is `markdown` |
+| `contenteditor` | Rich HTML | `{'content'}` | Same as `editor` / `content-editor` aliases |
 | `email` | Email addresses | `{'email'}` | Validated on public submit |
 | `url` | Links | `{'website'}` | |
 | `slug` | URL slug | `{slug}` | Often auto-generated on create_entry |
@@ -42,11 +43,10 @@ Use when defining collection schemas, fixing validation errors, or choosing the 
 
 **Prefer native media fieldtypes over URL/text for assets stored in Birkly.**
 
-| type | Use for | Entry value | Template |
-|------|---------|-------------|----------|
-| `image` | Single featured/hero image | Media filename / ref | Fieldtype renders `<img>` in admin; in templates use field output |
-| `gallery` | Multiple images (portfolio, product photos) | Array of media refs | Loop or gallery fieldtype output — **not** several `url` fields |
-| `media` | Generic file (PDF, audio, download) | File metadata object | Upload via media library; **not** a bare URL string |
+| type | Use for | Entry value | Template (storefront) |
+|------|---------|-------------|------------------------|
+| `file` / `image` / `media` | Hero, download, single asset | **Media library id** string | `{media_url('hero')}` · `{media_img('hero', 'Alt')}` — see shelf below |
+| `gallery` | Multiple images | Array of media ids | `{gallery_html('photos')}` or `{for each id in 'photos'}{media_img(id)}{endfor}` |
 
 **Anti-pattern:** `text` or `url` fields holding `/media/...` paths or external image URLs when the asset should live in the media library. Those bypass uploads, folders, responsive variants, and admin pickers.
 
@@ -76,20 +76,38 @@ Workflow: `list_media` / `upload_media` → reference filename in `create_entry`
 | `color` | Hex color picker |
 | `json` | Structured data (advanced) |
 
-## Structured & media fieldtypes (storefront)
+## Core template shelf (storefront)
+
+Use **parenthesis** shelf calls (documented in human help). Legacy space form `{media_img 'hero'}` still works.
+
+| Helper | Field types | Example |
+|--------|-------------|---------|
+| `media_url` / `media_img` | `file`, `image`, `media` | `{media_img('hero', title)}` |
+| `gallery_html` | `gallery` | `{gallery_html('photos')}` |
+| `map_html` | `map` | `{map_html('location')}` — OSM embed; dot paths `{'location'.'lat'}` are fallback text only |
+| `range_html` | `range` | `{range_html('band', 0, 100)}` — scalar stored value + min/max args or field config |
+| `oembed_html` | `oembed` | `{oembed_html('video')}` |
+| `relation_titles` / `relation_links` | `relation` | `{relation_titles('related')}` · `<ul>{relation_links('related')}</ul>` |
+| `dynamicitems_html` | `dynamicitems` | `{dynamicitems_html('blocks')}` |
+
+Full table: `admin/docs/snapshots/core-template-shelf.md` · https://docs.birkly.com/03-templating/core-template-shelf.html
+
+**Anti-pattern:** `{'hero_image'}` inside `<img src>` when the field stores a **media id** — use `{media_img('hero_image', '…')}`.
+
+## Structured fieldtypes (storefront)
 
 | type | Stored shape (public API) | Template access |
 |------|---------------------------|-----------------|
-| `map` | `{ lat, lng, label?, zoom? }` | Dot paths: `{'field'.'lat'}`, `{'field'.'lng'}` — no built-in map widget; build iframe/HTML yourself |
-| `range` | `{ min, max }` (numbers) | `{'field'.'min'}`, `{'field'.'max'}` |
-| `gallery` | Array of media ids | `{gallery_html('gallery_field')}` or loop ids + `{media_img(id)}` |
-| `media` / `file` | Media id string | `{media_url('hero_image')}` · `{media_img('hero_image', 'Alt text')}` |
-| `markdown` | Markdown source string | `{'body'}` renders HTML when collection schema includes `markdown` (trusted via `_html_fields`) |
-| `password` | bcrypt/argon hash at rest | Never exposed in MCP/public reads (`[redacted]`); leave blank on edit to keep hash |
-| `code` | Plain string (or JSON mode) | `{'snippet'}` — `$` / `${name}` preserved in storage and templates |
-| `relation` | Array of `{id, title?, collection?}` | `{relation_titles('related')}` or loop structured items |
-| `oembed` | Embed URL (normalized on save) | `{oembed_html('video')}` |
-| `dynamicitems` | List of `{ type, value }` | `{for each entry in dynamic_field}` then `{ type }`, `{ value }`, nested dot paths on `value` when object |
+| `map` | `{ lat, lng, label?, address? }` | Prefer `{map_html('field')}`; optional `{'field'.'lat'}` for text |
+| `range` | Number (slider value); min/max in **field config** | `{range_html('field', min, max)}` — not `{min,max}` object unless you modeled it that way |
+| `markdown` | Markdown source | `{'body'}` → HTML when schema type is `markdown` |
+| `contenteditor` / `editor` | HTML string | `{'content'}` trusted HTML |
+| `password` | Hash at rest | Storefront `{'secret'}` → **`••••••`** only; MCP/API `[redacted]`; blank on edit keeps hash |
+| `code` | Plain string (or JSON mode) | `{'snippet'}` — `$` / `${name}` preserved |
+| `relation` | `[{id, title?, collection?, slug?}]` | `{relation_titles('related')}` · `{relation_links('related')}` |
+| `oembed` | Watch/embed URL | `{oembed_html('video')}` |
+| `dynamicitems` | `[{ type, name?, label?, value }]` | `{dynamicitems_html('blocks')}` — **not** a collection loop |
+| `checkbox` / `toggle` | `0` / `1` | `{'in_stock'}` → Yes/No or On/Off pills on storefront (display only) |
 
 ### Array fields (`tags`, `multiselect`, `gallery`)
 
@@ -174,7 +192,9 @@ After schema changes: `read_collection` → match template `name="{slug}"` and `
 
 ## Related
 
+- `fieldtype-qa` — end-to-end QA collection, seed data, deploy checklist
 - `content-model` — collections, publishing, slugs
+- `templating` — loops, phantoms, shelf vs `{'field'}`
 - `public-forms` — `{entry for}` and form field mapping
 - `sub-collections` — nested schemas
 - `content-editor` — Editor field HTML tables/grids

@@ -87,7 +87,8 @@ Not collections — loop the **field** on the current entry:
 
 - Use a named loop variable (`tag`, `id`, `cat`). `{value}` and `{.}` are not scalar-loop aliases.
 - `{entry}` as loop variable works for scalar lists but is easy to confuse with collection loops; prefer explicit names.
-- There is no string-replace filter for oEmbed URLs or dynamic relation lookups — use fieldtype template functions on the shelf (see `fieldtypes` playbook).
+- There is no string-replace filter for oEmbed URLs or dynamic relation lookups — use **shelf** helpers with **parentheses**: `{media_img('hero')}`, `{oembed_html('video')}`, `{dynamicitems_html('blocks')}` (see `fieldtypes`; full QA matrix: `fieldtype-qa`).
+- `{'field'}` on detail pages outputs formatted scalars when schema type is known; **media ids**, maps, ranges, relations, and dynamic item blocks still need shelf helpers — not raw `{'hero'}` in `<img src>`.
 
 ## Regions
 
