@@ -73,6 +73,11 @@ function checkForUpdates() {
             ]);
         }
 
+        if (file_exists(__DIR__ . '/../core/cms_update_attention.php')) {
+            require_once __DIR__ . '/../core/cms_update_attention.php';
+            birkly_cms_update_attention_sync($status, true);
+        }
+
         echo json_encode([
             'status' => 'ok',
             'data' => $status,

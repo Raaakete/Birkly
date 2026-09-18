@@ -10,6 +10,8 @@ if (!function_exists('birkly_build_info')) {
 }
 $__birklyScriptNonceAttr = birkly_csp_nonce_attr();
 $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/tabs-v2.js'), ENT_QUOTES, 'UTF-8');
+$__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkPermission')
+    && checkPermission($_SESSION['user'], 'manage_settings');
 ?>
 
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/icon.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
@@ -826,6 +828,27 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
                 var any = Object.keys(counts).some(function (id) { return Number(counts[id] || 0) > 0; });
                 flyoutDot.hidden = !any;
             }
+            var cmsKey = 'birkly';
+            var cmsHas = Number(counts[cmsKey] || 0) > 0;
+            document.querySelectorAll('#links-settings [data-nav-attention-key="' + cmsKey + '"]').forEach(function (item) {
+                item.classList.toggle('has-attention', cmsHas);
+                var link = item.querySelector('.nav-link');
+                var label = item.querySelector('.nav-label');
+                var name = label ? (label.textContent || '').trim() : 'Settings';
+                var title = cmsHas ? (name + ' (new activity)') : name;
+                if (link) {
+                    link.setAttribute('title', title);
+                    if (cmsHas) {
+                        link.setAttribute('aria-label', title);
+                    } else {
+                        link.removeAttribute('aria-label');
+                    }
+                }
+                var dot = item.querySelector('.nav-attention-dot');
+                if (dot) {
+                    dot.hidden = !cmsHas;
+                }
+            });
         }
 
         function loadNavAttention() {
@@ -854,6 +877,24 @@ $__birklyAssetVersion = htmlspecialchars(birkly_admin_asset_version('admin/js/ta
         window.loadNavAttention = loadNavAttention;
     })();
     </script>
+<?php if ($__birklyCanManageSettings): ?>
+    <div id="cms-update-modal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="cms-update-modal-title" aria-hidden="true" hidden>
+        <div class="modal-content modal--md">
+            <div class="modal-header">
+                <h2 class="modal-title" id="cms-update-modal-title"><?= htmlspecialchars(__('admin.cms_update_modal_title'), ENT_QUOTES, 'UTF-8') ?></h2>
+                <button type="button" class="modal-close-btn" data-cms-update-modal-close aria-label="<?= htmlspecialchars(__('admin.cancel'), ENT_QUOTES, 'UTF-8') ?>">&times;</button>
+            </div>
+            <div class="modal-body u-stack-3">
+                <p id="cms-update-modal-body" data-template="<?= htmlspecialchars(__('admin.cms_update_modal_body'), ENT_QUOTES, 'UTF-8') ?>"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-cms-update-modal-later><?= htmlspecialchars(__('admin.cms_update_modal_later'), ENT_QUOTES, 'UTF-8') ?></button>
+                <a href="<?= htmlspecialchars(birkly_admin_url('updates'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary" data-cms-update-modal-go><?= htmlspecialchars(__('admin.cms_update_modal_go'), ENT_QUOTES, 'UTF-8') ?></a>
+            </div>
+        </div>
+    </div>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/cms-update-attention.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
+<?php endif; ?>
     
     <!-- No SPA router/scripts in MPA mode -->
 <?php

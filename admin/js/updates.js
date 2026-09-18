@@ -334,9 +334,21 @@
         }
     }
 
+    async function clearCmsUpdateNavAttention() {
+        try {
+            await fetch(url('/api/plugin_activity.php?action=clear_cms_updates'), { credentials: 'same-origin' });
+            if (typeof window.loadNavAttention === 'function') {
+                window.loadNavAttention();
+            }
+        } catch (e) {
+            /* non-critical */
+        }
+    }
+
     function initUpdatesManager() {
         if (!el('update-status')) return;
 
+        clearCmsUpdateNavAttention();
         ensureInstallButton();
         loadCurrentVersion();
         checkForUpdates();

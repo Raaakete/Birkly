@@ -190,6 +190,7 @@ function getPreferenceKeyForEvent($event) {
         'review_action' => 'entry_review',
         'invitation_accepted' => 'invitation_accepted',
         'role_changed' => 'role_changed',
+        'cms_update' => 'system_updates',
         'login_failed' => 'security_events',
         'rate_limited' => 'security_events',
         'permission_denied' => 'security_events',
@@ -463,6 +464,17 @@ function birkly_notifications_list_recent(int $limit = 20): array
         foreach (birkly_plugin_activity_list(50) as $item) {
             if (empty($item['notify'])) {
                 continue;
+            }
+            $itemEvent = (string) ($item['event'] ?? '');
+            if ($itemEvent === 'cms_update') {
+                if (!($preferences['system_updates'] ?? true)) {
+                    continue;
+                }
+                $sessionUser = $_SESSION['user'] ?? null;
+                if (!is_array($sessionUser) || !function_exists('checkPermission')
+                    || !checkPermission($sessionUser, 'manage_settings')) {
+                    continue;
+                }
             }
             $id = (string) ($item['id'] ?? '');
             if ($id === '') {
