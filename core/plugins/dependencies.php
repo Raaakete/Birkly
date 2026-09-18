@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/services.php';
+require_once __DIR__ . '/version_constraints.php';
 
 /**
  * Check plugin dependencies
@@ -43,7 +44,7 @@ function check_plugin_dependencies($plugin_id) {
         // Check version
         if ($required_version !== '*') {
             $dep_version = $dep_plugin['version'] ?? '0.0.0';
-            if (!version_compare($dep_version, $required_version, '>=')) {
+            if (!birkly_version_satisfies_constraint($dep_version, $required_version)) {
                 $errors[] = "Plugin '{$dep_id}' version mismatch. Required: {$required_version}, Found: {$dep_version}";
             }
         }
@@ -77,7 +78,7 @@ function check_plugin_dependencies($plugin_id) {
             
             // Check version if specified
             if ($required_version !== '*' && isset($service_info['version'])) {
-                if (!version_compare($service_info['version'], $required_version, '>=')) {
+                if (!birkly_version_satisfies_constraint((string) $service_info['version'], $required_version)) {
                     $errors[] = "Service '{$service_id}' version mismatch. Required: {$required_version}, Found: {$service_info['version']}";
                 }
             }
@@ -107,19 +108,8 @@ function check_plugin_dependencies($plugin_id) {
         }
     }
     
-    // Check PHP version
-    $required_php = $metadata['requires_php'] ?? null;
-    if ($required_php && !version_compare(PHP_VERSION, $required_php, '>=')) {
-        $errors[] = "PHP version mismatch. Required: {$required_php}, Found: " . PHP_VERSION;
-    }
-    
-    // Check Birkly version
-    $required_haru = $metadata['requires'] ?? null;
-    if ($required_haru) {
-        $haru_version = get_birkly_version();
-        if (!version_compare($haru_version, $required_haru, '>=')) {
-            $errors[] = "Birkly version mismatch. Required: {$required_haru}, Found: {$haru_version}";
-        }
+    foreach (birkly_plugin_compat_errors_from_metadata($metadata) as $compatError) {
+        $errors[] = $compatError;
     }
     
     return $errors;

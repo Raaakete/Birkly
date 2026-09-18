@@ -543,6 +543,15 @@ function birkly_marketplace_install_plugin(
     $preview = birkly_marketplace_preview_zip_capabilities($zipPath);
     $pluginId = birkly_marketplace_resolve_plugin_id($zipPath, $slug);
 
+    if (!empty($preview['ok']) && is_array($preview['plugin_json'] ?? null)) {
+        require_once dirname(__DIR__) . '/plugins/version_constraints.php';
+        $preflightErrors = birkly_plugin_compat_errors_from_metadata($preview['plugin_json']);
+        if ($preflightErrors !== []) {
+            @unlink($zipPath);
+            return ['ok' => false, 'errors' => $preflightErrors, 'preflight' => $preview];
+        }
+    }
+
     if ($upgrade) {
         global $birkly_plugins;
         if (!isset($birkly_plugins[$pluginId])) {
