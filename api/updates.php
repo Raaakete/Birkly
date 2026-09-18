@@ -73,14 +73,19 @@ function checkForUpdates() {
             ]);
         }
 
+        $attention = null;
         if (file_exists(__DIR__ . '/../core/cms_update_attention.php')) {
             require_once __DIR__ . '/../core/cms_update_attention.php';
-            birkly_cms_update_attention_sync($status, true);
+            $sync = birkly_cms_update_attention_sync($status, true);
+            $attention = [
+                'show_modal' => !empty($sync['show_modal']),
+                'emitted' => (int) ($sync['emitted'] ?? 0),
+            ];
         }
 
         echo json_encode([
             'status' => 'ok',
-            'data' => $status,
+            'data' => array_merge($status, $attention !== null ? ['attention' => $attention] : []),
         ]);
         
     } catch (Exception $e) {

@@ -109,7 +109,8 @@ if ($action === 'clear_hub_updates') {
 if ($action === 'cms_update_sync') {
     requireAuth('manage_settings');
     require_once __DIR__ . '/../core/cms_update_attention.php';
-    $force = isset($_GET['force']) && (string) $_GET['force'] === '1';
+    // Always live-check: cached "up to date" must not hide a release published minutes ago.
+    $force = !isset($_GET['force']) || (string) $_GET['force'] !== '0';
     $result = birkly_cms_update_attention_sync(null, $force);
     $status = $result['status'] ?? [];
     echo json_encode([
