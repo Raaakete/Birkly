@@ -696,6 +696,23 @@
             "ai_topic": "content-model"
         },
         {
+            "id": "core-template-shelf",
+            "title": "Core template shelf",
+            "keywords": [
+                "template shelf",
+                "media_url",
+                "media_img",
+                "gallery_html",
+                "oembed_html",
+                "relation_titles",
+                "relation_links",
+                "dynamicitems_html",
+                "fieldtypes"
+            ],
+            "docs_path": "03-templating/core-template-shelf.html",
+            "ai_topic": "templating"
+        },
+        {
             "id": "dashboard",
             "title": "Dashboard",
             "keywords": [
@@ -845,20 +862,6 @@
             "ai_topic": "playbooks-index"
         },
         {
-            "id": "admin-guide-companion",
-            "title": "Admin Guide companion",
-            "keywords": [
-                "guide",
-                "checklist",
-                "journey",
-                "onboarding",
-                "setup",
-                "empty state"
-            ],
-            "docs_path": "01-admin/admin-guide-companion.html",
-            "ai_topic": "getting-started"
-        },
-        {
             "id": "known-issues-wave1",
             "title": "Known issues — Wave 1",
             "keywords": [
@@ -947,7 +950,10 @@
                 "media",
                 "image",
                 "gallery",
-                "templates"
+                "templates",
+                "media_url",
+                "media_img",
+                "gallery_html"
             ],
             "docs_path": "03-templating/media-in-templates.html",
             "ai_topic": "media"

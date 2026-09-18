@@ -2,45 +2,34 @@
 
 ## Summary
 
-**Cloud connector URLs** (Claude, ChatGPT, Cursor over the internet) need a **public HTTPS** site. When Birkly runs on **localhost** or a private address, use **Connect desktop app** on **Settings → AI** instead.
+**Two different ways to use AI with Birkly** — pick the one that matches what you are trying to do.
 
-## Connect desktop app (recommended on localhost)
+## Chat inside Birkly (works on a local address)
 
-For **Claude Desktop** or **Cursor** on the **same computer** as Birkly:
+Use the **built-in assistant** on **Settings → AI**. Birkly talks to your AI provider from the server. You do not need a Connector URL for this.
 
-1. Open **Settings → AI**.
-2. In **Connect desktop app**, click **Pair this computer**.
-3. Choose **Claude Desktop** or **Cursor** (the badge shows which is selected).
-4. **On Mac (recommended):** copy the **Terminal command**, open Terminal, paste, press Enter.  
-   **Alternative:** download the helper — if macOS blocks it, use the Terminal command or **System Settings → Privacy & Security → Open Anyway**.
-5. Fully quit the desktop app, then open it again. In Claude: **Settings → Developer** → MCP servers → **birkly**.
+## Connect an external AI app
 
-Birkly uses a small **PHP bridge** (`scripts/birkly-mcp-desktop.php`) — no Node, `mcp-remote`, or API keys. Tokens are stored in `data/mcp_desktop/` on the server (not in the config snippet). The bridge talks to your Birkly **directly on disk** (same PHP install); you do **not** need `php -S` or Herd running for tool calls after pairing.
+Claude, ChatGPT, Cursor, and similar apps connect **into** Birkly using a **Connector URL** from **Settings → AI** (personal connector or service agent).
 
-**Tool count:** Claude may list fewer tools for the local **birkly** connector than for a hosted site (e.g. birkly.io). That is normal — the list includes only **core tools plus MCP tools from plugins that are installed and active** on *this* instance. Install or activate Commerce, Automation, User, etc. from the Hub to match a production tool set.
+Those apps must be able to **reach your site on the web**. When your site uses a normal **HTTPS** address, copy the Connector URL, paste it in your AI app, and sign in.
 
-After updating Birkly, run the **Terminal install** command again (or edit Claude **Developer → Local MCP** so `args` use `--token-file` and the credentials path as **two** separate entries, not `--token-file=/path with spaces`).
+## While your site is only on a local or private address
 
-## Disconnect or remove
+A Connector URL that points at your computer (for example `http://localhost`) usually **will not work** in external AI apps — their services cannot open pages that only exist on your machine.
 
-| Goal | What to do |
-|------|------------|
-| Stop AI using Birkly temporarily | Turn off **birkly** in Claude **Konnektoren** or Developer → MCP |
-| Revoke tokens on the server | **Settings → AI** → **Revoke** (desktop card) |
-| Remove **birkly** from Claude completely | **Settings → AI** → expand **Remove from Claude or Cursor** → run the Terminal uninstall command, then fully quit Claude |
+**What to do:**
 
-Claude does not offer “delete” for local stdio MCP servers in the Connectors UI — only disable. Uninstall removes the `birkly` entry from `~/Library/Application Support/Claude/claude_desktop_config.json`.
+1. **Use the built-in assistant** in the admin while you build content locally.
+2. **After your site has HTTPS**, use the Connector URL from this page — same flow as production.
 
-If the server shows **Server disconnected** after it worked once: fully quit Claude, run the **install** Terminal command again (fixes token path and config), reopen Claude, and check **Protokolle anzeigen** in Developer → MCP or `logs/php_errors.log` in your Birkly folder.
+Do not expose the whole admin panel to the internet as a shortcut.
 
-**Drops off after ~60 seconds idle:** Claude Desktop often closes idle local MCP processes after about a minute (you will see `Server transport closed unexpectedly` in the MCP log). That is normal — send another message or toggle **birkly** off and on in Konnektoren if the next tool call does not reconnect. Keep Birkly updated (desktop bridge disables PHP execution time limits and stays in a read loop). Early log lines about `capabilities.resources` or `tools/list` `properties` as arrays mean you need the latest Birkly `main` (fixes #763–#765).
+## Advanced (developers)
 
-## Built-in assistant (optional)
+**Settings → AI → Developer / debug** may list extra tools for special local setups. Use only if you know you need them.
 
-You can also use the **built-in assistant** on **Settings → AI** for chat inside the admin. That uses your provider API key and does not need a Connector URL.
+## Further reading
 
-## After your site has public HTTPS
-
-Use the **Connector URL** from the personal connector card — same OAuth flow as production. You do not need the desktop bridge on a public HTTPS site unless you prefer stdio MCP locally.
-
-**Related:** [Connect your AI app](mcp-connections.md) · [Built-in assistant](ai-connections.md)
+- [Connect your AI app](../01-admin/mcp-connections.md)
+- [Built-in assistant](../01-admin/ai-connections.md)
