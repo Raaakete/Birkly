@@ -66,8 +66,28 @@ function birkly_ops_updates_check_url(): string
 function birkly_ops_release_channel(): string
 {
     $config = birkly_platform_config();
-    $channel = strtolower(trim((string) ($config['release_channel'] ?? getenv('BIRKLY_RELEASE_CHANNEL') ?: 'stable')));
-    return in_array($channel, ['alpha', 'beta', 'stable'], true) ? $channel : 'stable';
+    $channel = strtolower(trim((string) ($config['release_channel'] ?? '')));
+    if ($channel === '') {
+        $channel = strtolower(trim((string) (getenv('BIRKLY_RELEASE_CHANNEL') ?: '')));
+    }
+    if ($channel === '' || !in_array($channel, ['alpha', 'beta', 'stable'], true)) {
+        require_once __DIR__ . '/birkly_paths.php';
+        $defaultsPath = rtrim(birkly_project_root(), '/\\') . '/settings/birkly_ops_release_defaults.json';
+        if (is_file($defaultsPath)) {
+            $raw = file_get_contents($defaultsPath);
+            $data = is_string($raw) ? json_decode($raw, true) : null;
+            if (is_array($data)) {
+                $fromZip = strtolower(trim((string) ($data['release_channel'] ?? '')));
+                if (in_array($fromZip, ['alpha', 'beta', 'stable'], true)) {
+                    $channel = $fromZip;
+                }
+            }
+        }
+    }
+    if ($channel === '' || !in_array($channel, ['alpha', 'beta', 'stable'], true)) {
+        $channel = 'stable';
+    }
+    return $channel;
 }
 
 function birkly_ops_request_signature(string $body): string
