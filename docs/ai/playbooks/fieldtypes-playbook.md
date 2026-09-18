@@ -61,7 +61,10 @@ Workflow: `list_media` / `upload_media` → reference filename in `create_entry`
 | `number` | Price, quantity, rating |
 | `date` | Publish date, event date |
 | `datetime` | Scheduled publish, event start |
-| `boolean` | Featured flag, visible toggle |
+| `checkbox` | On/off stored as `0`/`1` (filters use `'1'`) |
+| `toggle` | Boolean-style on/off |
+
+**Not a type:** `boolean` — use `checkbox` or `toggle`.
 
 ## Selection & structure
 
@@ -72,6 +75,39 @@ Workflow: `list_media` / `upload_media` → reference filename in `create_entry`
 | `tags` | Tag list |
 | `color` | Hex color picker |
 | `json` | Structured data (advanced) |
+
+## Structured & media fieldtypes (storefront)
+
+| type | Stored shape (public API) | Template access |
+|------|---------------------------|-----------------|
+| `map` | `{ lat, lng, label?, zoom? }` | Dot paths: `{'field'.'lat'}`, `{'field'.'lng'}` — no built-in map widget; build iframe/HTML yourself |
+| `range` | `{ min, max }` (numbers) | `{'field'.'min'}`, `{'field'.'max'}` |
+| `gallery` | Array of media ids | `{gallery_html('gallery_field')}` or loop ids + `{media_img(id)}` |
+| `media` / `file` | Media id string | `{media_url('hero_image')}` · `{media_img('hero_image', 'Alt text')}` |
+| `markdown` | Markdown source string | `{'body'}` renders HTML when collection schema includes `markdown` (trusted via `_html_fields`) |
+| `password` | bcrypt/argon hash at rest | Never exposed in MCP/public reads (`[redacted]`); leave blank on edit to keep hash |
+| `code` | Plain string (or JSON mode) | `{'snippet'}` — `$` / `${name}` preserved in storage and templates |
+| `relation` | Array of `{id, title?, collection?}` | `{relation_titles('related')}` or loop structured items |
+| `oembed` | Embed URL (normalized on save) | `{oembed_html('video')}` |
+| `dynamicitems` | List of `{ type, value }` | `{for each entry in dynamic_field}` then `{ type }`, `{ value }`, nested dot paths on `value` when object |
+
+### Array fields (`tags`, `multiselect`, `gallery`)
+
+Loop the **field name** (quoted reads from current `entry`):
+
+```html
+{for each tag in 'tags_list'}<span class="chip">{tag}</span>{endfor}
+{for each cat in multi_categories}<span>{cat}</span>{endfor}
+```
+
+- Prefer loop variables like `tag`, `cat`, `id` — or `{entry}` / `{.}` for scalar lists.
+- Direct `{'tags'}` outputs a comma-separated list when the field type is `tags` / `multiselect` (schema-driven via page bundle `_field_types`).
+
+**Anti-pattern:** Hardcoding `/media/…` ids on the page while claiming the gallery field is tested — loop the field or register a fieldtype template function.
+
+### Shelf model (vision)
+
+Fieldtypes are self-contained: admin UI, validation, storage, and **optional** template-shelf helpers (`register_template_function`) live in the fieldtype folder. Core templating only resolves stored JSON — it does not embed gallery maps, oEmbed players, or relation cards unless the fieldtype (or plugin) places them on the shelf.
 
 ## Example: blog post collection
 

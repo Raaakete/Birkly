@@ -110,12 +110,26 @@ function birkly_entry_multilang_apply_field_value(string $html, string $fieldNam
             $q = preg_quote($quote, '/');
             $pattern = '/(\bid=' . $q . preg_quote($elementId, '/') . $q . '[^>]*\bvalue=' . $q . ')([^' . $q . ']*?)(' . $q . ')/i';
             if (preg_match($pattern, $html)) {
-                return preg_replace($pattern, '${1}' . $encoded . '${3}', $html, 1);
+                return preg_replace_callback(
+                    $pattern,
+                    static function (array $m) use ($encoded): string {
+                        return $m[1] . $encoded . $m[3];
+                    },
+                    $html,
+                    1
+                ) ?? $html;
             }
 
             $pattern = '/(\bvalue=' . $q . ')([^' . $q . ']*?)(' . $q . '[^>]*\bid=' . $q . preg_quote($elementId, '/') . $q . ')/i';
             if (preg_match($pattern, $html)) {
-                return preg_replace($pattern, '${1}' . $encoded . '${3}', $html, 1);
+                return preg_replace_callback(
+                    $pattern,
+                    static function (array $m) use ($encoded): string {
+                        return $m[1] . $encoded . $m[3];
+                    },
+                    $html,
+                    1
+                ) ?? $html;
             }
         }
     }

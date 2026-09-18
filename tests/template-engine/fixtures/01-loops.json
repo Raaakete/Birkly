@@ -82,6 +82,14 @@
             }
         },
         {
+            "name": "scalar array loop may use entry as item variable",
+            "html": "{for each entry in 'tags_list'}<{entry}>{endfor}",
+            "data": {
+                "entry": { "title": "Post", "tags_list": ["design", "cms"] }
+            },
+            "expected": "<design><cms>"
+        },
+        {
             "name": "numeric field values render like JS numbers",
             "html": "{for each entry in 'products'}<p>{'price'}|{'stock'}</p>{endfor}",
             "data": {

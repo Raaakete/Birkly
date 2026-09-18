@@ -19,6 +19,8 @@ function birkly_page_bundle_bootstrap_template_functions(): void {
         @session_start();
     }
     require_once __DIR__ . '/public_bootstrap.php';
+    require_once __DIR__ . '/fieldtype_presentation.php';
+    birkly_fieldtype_presentation_boot();
     birkly_public_load_active_plugins();
     $booted = true;
 }

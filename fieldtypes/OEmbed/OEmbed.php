@@ -158,6 +158,11 @@ class OEmbed extends BaseField {
         HTML;
     }
 
+    public function resolveEmbedUrlForTemplate(string $value): ?string
+    {
+        return $this->resolveEmbedUrl($value);
+    }
+
     private function resolveEmbedUrl(string $value): ?string {
         $value = trim($value);
         if ($value === '') {
