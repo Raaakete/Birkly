@@ -62,6 +62,12 @@ $masked = birkly_entry_mask_sensitive_fields($entry, [
 ]);
 assert_true('password hash redacted', ($masked['password_field'] ?? '') === '[redacted]');
 
+$plain = birkly_entry_mask_sensitive_fields(
+    ['api_secret' => 'super-secret-qa'],
+    [['name' => 'api_secret', 'type' => 'password']]
+);
+assert_true('plaintext password redacted by type', ($plain['api_secret'] ?? '') === '[redacted]');
+
 echo "\n[FP-05] Multilang HTML patch preserves dollar signs in code fields\n";
 $sample = '<input id="field_en_code" value="const x = ${name};" />';
 $patched = birkly_entry_multilang_apply_field_value($sample, 'code', 'en', 'const x = ${name};');
