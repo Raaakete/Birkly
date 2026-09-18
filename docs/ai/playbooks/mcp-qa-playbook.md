@@ -35,7 +35,7 @@ Do not run destructive tools (`delete_*`, `automation_run_live`, bulk ship, plug
 | Content | `create_entry`, `read_entry`, `update_entry` | Published entries visible when `allow_public_read` |
 | Sub-entries | `create_sub_entry`, `read_sub_entry` | Scoped to parent id |
 | Media (named) | `list_media`, `read_media` | Always prefer for simple reads |
-| Media (admin) | `cms_admin_action` → `media.list` | JSON with `media` key (not HTML) — CMS **#784+** |
+| Media (admin) | `cms_admin_action` → `media.list` | JSON with `media` key (not HTML) — CMS **#784+**; **#785+** moves `admin_media.php` HTTP router off the include path |
 | Search | `cms_admin_search` or `search.admin_search` | Collections/entries keys — CMS **#784+** |
 | Hosting | `cms_admin_action` → `hosting.get` | `hosting` payload — CMS **#784+** |
 | Delivery (named) | `get_site_delivery_status`, `run_site_delivery_probe` | Work even when `hosting.get` lags on old builds |

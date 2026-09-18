@@ -1392,8 +1392,9 @@ function cms_mcp_ensure_admin_media_loaded(): void
         return;
     }
     $GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'] = true;
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
     require_once dirname(__DIR__) . '/api/admin_media.php';
-    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY']);
+    unset($GLOBALS['__CMS_MCP_LOAD_FUNCTIONS_ONLY'], $GLOBALS['__HARU_INTERNAL_CALL']);
     $loaded = true;
 }
 
