@@ -244,6 +244,18 @@
                     prerelease: result.data.prerelease,
                     update_check_error: result.data.update_check_error,
                 });
+                if (result.data.update_available) {
+                    if (typeof window.birklyCmsUpdateAttentionAfterCheck === 'function') {
+                        window.birklyCmsUpdateAttentionAfterCheck(result.data);
+                    } else if (typeof window.loadUnreadCount === 'function') {
+                        window.loadUnreadCount();
+                    }
+                    if (typeof window.loadNavAttention === 'function') {
+                        window.loadNavAttention();
+                    }
+                } else {
+                    clearCmsUpdateNavAttention();
+                }
             } else if (result.status === 'error') {
                 showError(result.message || updT('updates_js_check_failed', 'Could not check for updates'));
             } else {
@@ -348,7 +360,6 @@
     function initUpdatesManager() {
         if (!el('update-status')) return;
 
-        clearCmsUpdateNavAttention();
         ensureInstallButton();
         loadCurrentVersion();
         checkForUpdates();

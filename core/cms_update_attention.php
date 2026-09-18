@@ -20,9 +20,14 @@ function birkly_cms_update_attention_event(): string
     return 'cms_update';
 }
 
-function birkly_cms_update_attention_cache_ttl_seconds(): int
+function birkly_cms_update_attention_cache_ttl_seconds(?array $status = null): int
 {
-    return 3600;
+    if (is_array($status) && !empty($status['update_available'])) {
+        return 3600;
+    }
+
+    // Short TTL when up to date so new Ops/GitHub releases surface quickly.
+    return 300;
 }
 
 function birkly_cms_update_attention_link(): string
@@ -94,7 +99,6 @@ function birkly_cms_update_attention_save_state(array $state): void
 function birkly_cms_update_attention_cached_status(bool $forceRefresh = false): array
 {
     $cachePath = birkly_cms_update_attention_cache_path();
-    $ttl = birkly_cms_update_attention_cache_ttl_seconds();
     $now = time();
 
     if (!$forceRefresh && is_readable($cachePath)) {
@@ -102,6 +106,9 @@ function birkly_cms_update_attention_cached_status(bool $forceRefresh = false): 
         if (is_array($cached)) {
             $checkedAt = (int) ($cached['checked_at'] ?? 0);
             $status = $cached['status'] ?? null;
+            $ttl = is_array($status)
+                ? birkly_cms_update_attention_cache_ttl_seconds($status)
+                : 300;
             if ($checkedAt > 0 && ($now - $checkedAt) < $ttl && is_array($status)) {
                 return $status;
             }
@@ -248,6 +255,11 @@ function birkly_cms_update_attention_dismiss_modal(string $version): void
     birkly_cms_update_attention_save_state($state);
 }
 
+function birkly_cms_update_attention_has_active_attention(): bool
+{
+    return birkly_plugin_activity_has_nav_attention(birkly_cms_update_attention_plugin_id());
+}
+
 function birkly_cms_update_attention_should_show_modal(array $status, array $state): bool
 {
     if (empty($status['update_available'])) {
@@ -280,6 +292,8 @@ function birkly_cms_update_attention_sync(?array $status = null, bool $forceRefr
         $current = (string) ($status['current_version'] ?? '');
         if ($latest !== '') {
             $sameVersion = (string) ($state['latest_version'] ?? '') === $latest;
+            $hasActive = birkly_cms_update_attention_has_active_attention();
+
             if ($sameVersion && !empty($state['acknowledged'])) {
                 return [
                     'emitted' => 0,
@@ -288,17 +302,20 @@ function birkly_cms_update_attention_sync(?array $status = null, bool $forceRefr
                     'show_modal' => birkly_cms_update_attention_should_show_modal($status, $state),
                 ];
             }
-            if (!$sameVersion) {
-                birkly_cms_update_attention_clear_activity(false);
-                $state = birkly_cms_update_attention_load_state();
-                unset($state['acknowledged']);
-            } elseif ($sameVersion) {
+
+            if ($sameVersion && $hasActive) {
                 return [
                     'emitted' => 0,
                     'cleared' => 0,
                     'status' => $status,
                     'show_modal' => birkly_cms_update_attention_should_show_modal($status, $state),
                 ];
+            }
+
+            if (!$sameVersion) {
+                birkly_cms_update_attention_clear_activity(false);
+                $state = birkly_cms_update_attention_load_state();
+                unset($state['acknowledged']);
             }
 
             $activity = birkly_plugin_activity_emit([
