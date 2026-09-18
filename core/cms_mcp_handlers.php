@@ -978,18 +978,36 @@ function cms_mcp_handler_plugins_permissions(string $subAction, array $input, ar
 /** @return array<string, mixed> */
 function cms_mcp_handler_search(string $subAction, array $input, array $aiUser): array
 {
-    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
-    require_once dirname(__DIR__) . '/api/search.php';
-    unset($GLOBALS['__HARU_INTERNAL_CALL']);
+    cms_mcp_bootstrap_session($aiUser);
 
     if ($subAction !== 'admin_search') {
         return cms_mcp_error('Unknown search action');
     }
-    $query = (string) ($input['query'] ?? $input['q'] ?? '');
-    $limit = (int) ($input['limit'] ?? 50);
+
+    $GLOBALS['__HARU_INTERNAL_CALL'] = true;
+    require_once dirname(__DIR__) . '/api/search.php';
+    unset($GLOBALS['__HARU_INTERNAL_CALL']);
+
+    $query = trim((string) ($input['query'] ?? $input['q'] ?? ''));
+    $limit = max(1, (int) ($input['limit'] ?? 50));
+    if ($query === '') {
+        return cms_mcp_ok([
+            'collections' => [],
+            'entries' => [],
+            'media' => [],
+            'users' => [],
+        ]);
+    }
+
+    require_once dirname(__DIR__) . '/api/../core/storage/StorageFactory.php';
+    $storage = StorageFactory::getStorage(dirname(__DIR__) . '/content');
+    if ($storage === null) {
+        return cms_mcp_error('Storage initialization failed');
+    }
+
     return cms_mcp_ok([
-        'collections' => searchCollections($query, $limit),
-        'entries' => searchEntries($query, $limit),
+        'collections' => searchCollections($storage, $query, $limit),
+        'entries' => searchEntries($storage, $query, $limit),
         'media' => searchMedia($query, $limit),
         'users' => searchUsers($query, $limit),
     ]);
@@ -1411,12 +1429,33 @@ function cms_mcp_handler_media(string $subAction, array $input, array $aiUser): 
             switch ($subAction) {
                 case 'list':
                     cms_mcp_media_apply_query($input);
-                    return listMedia();
+                    $listed = listMedia();
+                    if (isset($listed['error'])) {
+                        return cms_mcp_error((string) $listed['error']);
+                    }
+                    if (($listed['status'] ?? '') === 'ok') {
+                        return cms_mcp_ok([
+                            'media' => $listed['data'] ?? [],
+                            'count' => count($listed['data'] ?? []),
+                        ]);
+                    }
+                    return cms_mcp_ok(['media' => is_array($listed) ? $listed : [], 'count' => 0]);
                 case 'get':
                     cms_mcp_media_apply_query($input);
-                    return getMediaItem();
+                    $item = getMediaItem();
+                    if (($item['status'] ?? '') === 'ok') {
+                        return cms_mcp_ok($item['data'] ?? $item);
+                    }
+                    if (isset($item['error'])) {
+                        return cms_mcp_error((string) $item['error']);
+                    }
+                    return cms_mcp_ok($item);
                 case 'folders':
-                    return listFolders();
+                    $folders = listFolders();
+                    if (($folders['status'] ?? '') === 'ok') {
+                        return cms_mcp_ok($folders['data'] ?? $folders);
+                    }
+                    return cms_mcp_ok($folders);
                 case 'upload':
                     return ['status' => 'error', 'message' => 'Use upload_media tool for url/base64 uploads'];
                 case 'update':

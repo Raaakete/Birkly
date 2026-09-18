@@ -5,6 +5,15 @@
  * Provides unified search across collections, entries, sub-entries, media, users, and plugin content.
  */
 
+if (!empty($GLOBALS['__HARU_INTERNAL_CALL'])) {
+    require_once __DIR__ . '/../core/birkly_paths.php';
+    require_once __DIR__ . '/../core/storage/StorageFactory.php';
+    require_once __DIR__ . '/../core/sub_entries.php';
+    if (!function_exists('birkly_trigger_event')) {
+        require_once __DIR__ . '/../core/plugins.php';
+    }
+} else {
+
 // Start output buffering to catch any errors
 ob_start();
 
@@ -330,6 +339,8 @@ try {
     ]);
     exit;
 }
+
+} // end HTTP entry (not __HARU_INTERNAL_CALL)
 
 /**
  * Search collections
@@ -801,14 +812,16 @@ function getEntryTitle($storage, $collectionSlug, $entryId) {
     }
 }
 
-function formatFileSize($bytes) {
-    if ($bytes >= 1073741824) {
-        return number_format($bytes / 1073741824, 2) . ' GB';
-    } elseif ($bytes >= 1048576) {
-        return number_format($bytes / 1048576, 2) . ' MB';
-    } elseif ($bytes >= 1024) {
-        return number_format($bytes / 1024, 2) . ' KB';
-    } else {
+if (!function_exists('formatFileSize')) {
+    function formatFileSize($bytes) {
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        }
+
         return $bytes . ' bytes';
     }
 }

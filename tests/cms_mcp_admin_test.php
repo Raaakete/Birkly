@@ -93,6 +93,14 @@ assert_true('hosting.probe has delivery', is_array($hostingProbe['data']['delive
 $discoveryGet = cms_mcp_dispatch_admin('discovery.get', [], $aiUser);
 assert_true('discovery.get ok', ($discoveryGet['status'] ?? '') === 'ok');
 
+$searchAdmin = cms_mcp_dispatch_admin('search.admin_search', ['query' => 'blog', 'limit' => 5], $aiUser);
+assert_true('search.admin_search ok', ($searchAdmin['status'] ?? '') === 'ok');
+assert_true('search.admin_search has collections key', is_array($searchAdmin['data']['collections'] ?? null));
+
+$mediaList = cms_mcp_dispatch_admin('media.list', ['limit' => 2], $aiUser);
+assert_true('media.list ok', ($mediaList['status'] ?? '') === 'ok');
+assert_true('media.list has media key', is_array($mediaList['data']['media'] ?? null));
+
 $listResult = cms_mcp_dispatch_admin('connections.list', [], $aiUser);
 assert_true('connections.list ok or graceful', in_array($listResult['status'] ?? '', ['ok', 'error'], true));
 
