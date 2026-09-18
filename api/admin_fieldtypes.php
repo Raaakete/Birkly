@@ -92,14 +92,16 @@ function getFieldtypeClass($fieldtypeName) {
         }
     }
     
-    // Handle special aliases (these are just convenience mappings, not hardcoded fieldtypes)
+    require_once __DIR__ . '/../core/fieldtype_catalog.php';
     $aliases = [
-        'tag' => 'tags', // Tag fieldtype uses Tags class
+        'tag' => 'tags',
         'dynamic-items' => 'dynamicitems',
-        'content-editor' => 'contenteditor', // ContentEditor fieldtype directory name
-        'editor' => 'contenteditor', // Legacy demo schemas
+        'content-editor' => 'contenteditor',
+        'editor' => 'contenteditor',
         'wysiwyg' => 'contenteditor',
-        'media' => 'file', // Legacy demo schemas (use file or gallery)
+        'media' => 'file',
+        'image' => 'file',
+        'richtext' => 'contenteditor',
     ];
     
     if (isset($aliases[$normalized])) {

@@ -279,6 +279,20 @@ class Range extends BaseField {
         return '80px'; // Range fields are narrow (just numeric value)
     }
 
+    public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
+    {
+        require_once dirname(__DIR__, 2) . '/core/fieldtype_presentation.php';
+        birkly_fieldtype_presentation_boot();
+        $rangeHtml = function_exists('get_template_function') ? get_template_function('range_html') : null;
+        if ($rangeHtml === null) {
+            return is_scalar($value) ? (string) $value : '';
+        }
+        $min = $fieldConfig['min'] ?? null;
+        $max = $fieldConfig['max'] ?? null;
+
+        return (string) $rangeHtml($value, $min, $max);
+    }
+
     public function getConfigUI($fieldIndex, $existingData = []): string {
         $min = htmlspecialchars($existingData['min'] ?? 0);
         $max = htmlspecialchars($existingData['max'] ?? 100);

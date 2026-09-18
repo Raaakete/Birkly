@@ -214,5 +214,16 @@ class Map extends BaseField {
     public function getTableMinWidth(): string {
         return '180px'; // Map fields need space for coordinates display
     }
+
+    public function outputsTrustedHtml(): bool
+    {
+        return true;
+    }
+
+    public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
+    {
+        require_once dirname(__DIR__, 2) . '/core/map_presentation.php';
+        return birkly_map_render_html($value);
+    }
 }
 

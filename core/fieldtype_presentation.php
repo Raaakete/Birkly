@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../fieldtypes/BaseField.php';
 require_once __DIR__ . '/../fieldtypes/FieldRegistry.php';
 require_once __DIR__ . '/fieldtype_html.php';
+require_once __DIR__ . '/fieldtype_catalog.php';
 
 use Birkly\FieldTypes\BaseField;
 use Birkly\FieldTypes\FieldRegistry;
@@ -265,4 +266,47 @@ function birkly_fieldtype_presentation_register_filters(): void
     add_filter('birkly_public_entry_filter', static function (array $entry, string $collection) {
         return birkly_entry_mask_sensitive_for_collection($entry, $collection);
     }, 10);
+
+    add_filter('birkly_ai_read_entry', static function (array $entry, string $collection) {
+        return birkly_entry_attach_mcp_read_hints($entry, $collection);
+    }, 15);
+}
+
+/**
+ * @param array<string,mixed> $entry
+ * @return array<string,mixed>
+ */
+function birkly_entry_attach_mcp_read_hints(array $entry, string $collectionSlug, $storage = null): array
+{
+    if ($storage === null) {
+        require_once __DIR__ . '/storage/StorageFactory.php';
+        $storage = get_storage();
+    }
+    require_once __DIR__ . '/public_read.php';
+    $dir = birkly_public_resolve_collection_dir($storage, $collectionSlug);
+    if ($dir === null) {
+        return $entry;
+    }
+    $meta = birkly_collection_meta_with_schema($storage, $dir);
+    $fields = birkly_collection_schema_fields($meta);
+    $hints = [];
+    foreach ($fields as $field) {
+        if (!is_array($field)) {
+            continue;
+        }
+        $name = trim((string) ($field['name'] ?? ''));
+        $type = trim((string) ($field['type'] ?? ''));
+        if ($name === '' || $type === '') {
+            continue;
+        }
+        $hints[$name] = [
+            'type' => birkly_fieldtype_normalize_type_slug($type),
+            'hint' => birkly_fieldtype_mcp_hint_for_type($type),
+        ];
+    }
+    if ($hints !== []) {
+        $entry['_mcp_field_hints'] = $hints;
+    }
+
+    return $entry;
 }
