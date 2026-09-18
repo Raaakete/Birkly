@@ -1060,7 +1060,19 @@ window.migrateStorage = migrateStorage;
             window.initUpdates();
         }
 
+        if (tabId === 'system' && typeof window.birklyCmsUpdateAttentionHideModal === 'function') {
+            window.birklyCmsUpdateAttentionHideModal();
+        }
+
         scrollToSettingsSection(scrollTo);
+
+        if (isTrackedGlobalTab(tabId)) {
+            setTimeout(function () {
+                if (typeof window.markSettingsClean === 'function') {
+                    window.markSettingsClean(tabId);
+                }
+            }, 350);
+        }
     }
 
     async function confirmLeaveDirtyTab(targetTabId) {
@@ -1190,11 +1202,20 @@ window.migrateStorage = migrateStorage;
             await activateTab(next.tab, getSettingsTabButtons(), getSettingsTabPanes(), next.scrollTo, { fromHistory: true });
         });
 
-        captureFormSnapshots();
         bindDirtyTracking();
         initSettingsSearch();
         initAiConnectionsIntroModal();
         updateSaveBar(currentTab);
+
+        // Capture after tab activation / custom controls settle (avoids false dirty state).
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                captureFormSnapshots();
+                if (typeof window.markSettingsClean === 'function') {
+                    window.markSettingsClean(Object.keys(GLOBAL_SAVE_TABS));
+                }
+            });
+        });
     }
 
     window.initSettingsTabs = initTabs;
