@@ -1068,6 +1068,21 @@ function birkly_template_engine_evaluate_condition(string $condition, array $dat
 /** @param array<string,mixed> $options */
 function birkly_template_engine_escape_output(string $pathOrName, $value, array $options): string
 {
+    if (!function_exists('birkly_template_engine_field_name_for_escape')) {
+        require_once __DIR__ . '/fieldtype_html.php';
+    }
+    $fieldName = birkly_template_engine_field_name_for_escape($pathOrName);
+    $fieldTypes = $options['fieldTypes'] ?? [];
+    if ($fieldName !== '' && is_array($fieldTypes) && ($fieldTypes[$fieldName] ?? '') !== '') {
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        $value = birkly_fieldtype_format_leaf_for_template(
+            $fieldName,
+            $value,
+            (string) $fieldTypes[$fieldName],
+            ['entry' => $options['entry'] ?? []]
+        );
+    }
+
     $str = $value === null ? '' : birkly_template_engine_js_string($value);
     if ($str === '') {
         return '';
@@ -1086,15 +1101,32 @@ function birkly_template_engine_escape_output(string $pathOrName, $value, array 
 
 function birkly_template_engine_resolve_variable(string $name, array $data): string
 {
+    $raw = null;
     if (array_key_exists($name, $data) && !is_array($data[$name]) && $data[$name] !== null) {
-        return birkly_template_engine_js_string($data[$name]);
+        $raw = $data[$name];
+    } else {
+        $entry = $data['entry'] ?? null;
+        if (birkly_template_engine_truthy($entry) && is_array($entry)
+            && array_key_exists($name, $entry) && !is_array($entry[$name]) && $entry[$name] !== null) {
+            $raw = $entry[$name];
+        }
     }
-    $entry = $data['entry'] ?? null;
-    if (birkly_template_engine_truthy($entry) && is_array($entry)
-        && array_key_exists($name, $entry) && !is_array($entry[$name]) && $entry[$name] !== null) {
-        return birkly_template_engine_js_string($entry[$name]);
+    if ($raw === null) {
+        return '';
     }
-    return '';
+
+    $fieldTypes = $data['_field_types'] ?? [];
+    if (is_array($fieldTypes) && ($fieldTypes[$name] ?? '') !== '') {
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        return birkly_fieldtype_format_leaf_for_template(
+            $name,
+            $raw,
+            (string) $fieldTypes[$name],
+            ['entry' => is_array($data['entry'] ?? null) ? $data['entry'] : $data]
+        );
+    }
+
+    return birkly_template_engine_js_string($raw);
 }
 
 /**
