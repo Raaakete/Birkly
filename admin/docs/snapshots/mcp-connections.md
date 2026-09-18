@@ -165,6 +165,20 @@ When an AI app uses MCP to read or write collections:
 
 Deeper playbook alignment: [Field types](../02-content/field-types.md), [Core template shelf](../03-templating/core-template-shelf.md).
 
+## Admin parity via MCP (analytics, search, media)
+
+Connected agents use the same admin APIs as the UI, mostly through **`cms_admin_action`** (and plugin `commerce_admin_action` / `automation_admin_action` when those plugins are active).
+
+| Admin surface | MCP access |
+|---------------|------------|
+| **Visitor analytics** (Settings → Analytics) | `cms_admin_action` with `analytics.data`, `analytics.get_settings`, `analytics.presets`, `analytics.save_settings` — there is no separate `analytics_*` tool name in `tools/list` |
+| **Commerce analytics** | `commerce_admin_action` → `analytics_summary`, `analytics_export_csv` |
+| **Global search** | `cms_admin_search` or `search.admin_search` via `cms_admin_action` |
+| **Media library (admin list)** | `list_media` / `read_media`, or `media.list` via `cms_admin_action` |
+| **Site delivery / domains** | `get_site_delivery_status`, `run_site_delivery_probe`, or `hosting.get` via `cms_admin_action` |
+
+AI playbooks: `mcp-capabilities` (overview), `mcp-qa` (full-tool regression checklist). Load via `read_birkly_docs` or `birkly://docs/mcp-qa`.
+
 ## Developer / debug
 
 For local Claude Desktop development only, `mcp-bridge.js` is available under the collapsed **Developer / debug** (or **Local project**) section on **Settings → AI** / the AI settings tab. Normal users do not need this file. Step-by-step bridge and tunnel recipes: [AI on localhost](../04-integration/ai-on-localhost.md).

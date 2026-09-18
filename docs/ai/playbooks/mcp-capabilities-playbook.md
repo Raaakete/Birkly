@@ -51,9 +51,20 @@ Core CMS exposes the same pattern as Commerce/Automation plugins:
 | `cms_bulk_entry_action` | Shortcut: bulk publish/unpublish/trash/restore |
 | `cms_list_connections` / `cms_read_connection` | Read Connections before configure |
 | `cms_create_user` | Create human user accounts |
-| `cms_admin_search` | Global admin search |
+| `cms_admin_search` | Global admin search (same backend as `search.admin_search`) |
 
 Action ids use `domain.subaction` (e.g. `entries.review`, `project_git.push`, `webhooks.create`). Write actions respect the MCP endpoint role permissions.
+
+### Analytics & delivery (no dedicated `analytics_*` tools)
+
+| Need | Call | Notes |
+|------|------|-------|
+| Site / visitor analytics | `cms_admin_action` → `analytics.data` | Also `analytics.get_settings`, `analytics.presets`, `analytics.save_settings` |
+| Commerce ops analytics | `commerce_admin_action` → `analytics_summary`, `analytics_export_csv` | Commerce plugin must be active |
+| Delivery / domains (admin parity) | `cms_admin_action` → `hosting.get`, `hosting.probe`, `hosting.set_domain_role` | Named tools `get_site_delivery_status` and `run_site_delivery_probe` are safe read/probe shortcuts |
+| Global admin search | `cms_admin_search` **or** `cms_admin_action` → `search.admin_search` | Requires current CMS build (internal search bootstrap — see `mcp-qa` playbook) |
+
+There is **no** `analytics_*` entry in `tools/list`; use admin actions above. Full MCP regression checklist: playbook **`mcp-qa`**.
 
 ### Catalog groups (`cms_list_admin_actions`)
 
@@ -139,6 +150,7 @@ These improve outcomes; they are not extra permission rules.
 
 - `mcp-setup` — connector OAuth setup
 - `mcp-troubleshooting` — OAuth, stale tools, two approval channels
+- `mcp-qa` — full-tool audit harness (`mcp-qa.html`, `cms_mcp_admin_test.php`)
 - `fieldtypes` — full type reference
 - `public-forms` — forms + public_api
 - `plugins-overview` — install/activate plugins
