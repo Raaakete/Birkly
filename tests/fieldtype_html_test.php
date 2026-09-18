@@ -80,6 +80,15 @@ assert_true(
     'got: ' . var_export($rendered, true)
 );
 
+echo "\n[V-HTML-02] empty _html_fields still trusts fieldTypes (checkbox badges)\n";
+require_once dirname(__DIR__) . '/core/fieldtype_presentation.php';
+birkly_fieldtype_presentation_boot();
+$trusted = birkly_template_engine_should_output_raw_html("'in_stock'", [
+    'htmlFields' => [],
+    'fieldTypes' => ['in_stock' => 'checkbox'],
+]);
+assert_true('checkbox type trusted when htmlFields list empty', $trusted === true);
+
 @exec('rm -rf ' . escapeshellarg($tmp));
 
 echo "\n" . ($failures === 0 ? "All $total tests passed.\n" : "$failures of $total tests FAILED.\n");
