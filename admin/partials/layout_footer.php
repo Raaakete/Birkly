@@ -889,7 +889,7 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-cms-update-modal-later><?= htmlspecialchars(__('admin.cms_update_modal_later'), ENT_QUOTES, 'UTF-8') ?></button>
-                <a href="<?= htmlspecialchars(birkly_admin_url('updates'), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary" data-cms-update-modal-go><?= htmlspecialchars(__('admin.cms_update_modal_go'), ENT_QUOTES, 'UTF-8') ?></a>
+                <a href="<?= htmlspecialchars(birkly_admin_url('settings', ['tab' => 'system']), ENT_QUOTES, 'UTF-8') ?>" class="btn btn-primary" data-cms-update-modal-go><?= htmlspecialchars(__('admin.cms_update_modal_go'), ENT_QUOTES, 'UTF-8') ?></a>
             </div>
         </div>
     </div>

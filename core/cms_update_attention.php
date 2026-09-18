@@ -33,10 +33,10 @@ function birkly_cms_update_attention_cache_ttl_seconds(?array $status = null): i
 function birkly_cms_update_attention_link(): string
 {
     if (function_exists('birkly_admin_url')) {
-        return birkly_admin_url('updates');
+        return birkly_admin_url('settings', ['tab' => 'system']);
     }
 
-    return '/admin/?page=updates';
+    return '/admin/?page=settings&tab=system';
 }
 
 function birkly_cms_update_attention_state_path(): string
