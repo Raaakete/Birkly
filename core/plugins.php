@@ -786,6 +786,7 @@ require_once __DIR__ . '/plugins/admin_asset_shelf.php';
 require_once __DIR__ . '/plugins/admin_i18n_shelf.php';
 require_once __DIR__ . '/plugins/notification_shelf.php';
 require_once __DIR__ . '/hub_update_attention.php';
+require_once __DIR__ . '/cms_update_attention.php';
 require_once __DIR__ . '/plugins/mcp_shelf.php';
 require_once __DIR__ . '/plugins/admin_shelf.php';
 require_once __DIR__ . '/plugins/fieldtype_shelf.php';

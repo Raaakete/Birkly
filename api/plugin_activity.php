@@ -106,6 +106,58 @@ if ($action === 'clear_hub_updates') {
     exit;
 }
 
+if ($action === 'cms_update_sync') {
+    requireAuth('manage_settings');
+    require_once __DIR__ . '/../core/cms_update_attention.php';
+    $force = isset($_GET['force']) && (string) $_GET['force'] === '1';
+    $result = birkly_cms_update_attention_sync(null, $force);
+    $status = $result['status'] ?? [];
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'sync' => [
+                'emitted' => (int) ($result['emitted'] ?? 0),
+                'cleared' => (int) ($result['cleared'] ?? 0),
+            ],
+            'update_available' => !empty($status['update_available']),
+            'current_version' => (string) ($status['current_version'] ?? ''),
+            'latest_version' => (string) ($status['latest_version'] ?? ''),
+            'show_modal' => !empty($result['show_modal']),
+            'counts' => birkly_plugin_activity_nav_attention_counts(),
+        ],
+    ]);
+    exit;
+}
+
+if ($action === 'cms_update_dismiss_modal') {
+    requireAuth('manage_settings');
+    $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
+    if (!validate_csrf_token($csrf)) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+        exit;
+    }
+    require_once __DIR__ . '/../core/cms_update_attention.php';
+    $version = (string) ($input['version'] ?? $_GET['version'] ?? '');
+    birkly_cms_update_attention_dismiss_modal($version);
+    echo json_encode(['status' => 'ok', 'data' => ['version' => $version]]);
+    exit;
+}
+
+if ($action === 'clear_cms_updates') {
+    requireAuth('manage_settings');
+    require_once __DIR__ . '/../core/cms_update_attention.php';
+    $cleared = birkly_cms_update_attention_clear_activity(false);
+    birkly_plugin_activity_clear_nav(birkly_cms_update_attention_plugin_id());
+    echo json_encode([
+        'status' => 'ok',
+        'data' => [
+            'cleared' => $cleared,
+            'counts' => birkly_plugin_activity_nav_attention_counts(),
+        ],
+    ]);
+    exit;
+}
+
 if ($action === 'emit_test') {
     requireAuth('manage_settings');
     $csrf = $input['_csrf'] ?? $_POST['_csrf'] ?? '';
