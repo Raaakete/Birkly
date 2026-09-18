@@ -672,6 +672,14 @@ function saveEntry() {
                 }
 
                 $fieldType = $field['type'] ?? '';
+                if ($fieldType === 'password' && trim((string) $rawValue) === '') {
+                    if (isset($entry[$langCode][$fieldName])) {
+                        $entryOutput[$langCode][$fieldName] = $entry[$langCode][$fieldName];
+                    } elseif (isset($entry[$fieldName])) {
+                        $entryOutput[$langCode][$fieldName] = $entry[$fieldName];
+                    }
+                    continue;
+                }
                 $value = $rawValue;
 
                 if ($fieldType !== '') {
@@ -737,6 +745,13 @@ function saveEntry() {
             // Default to empty string for text-like fields if not set
             if ($rawValue === null && in_array($fieldType, ['text', 'email', 'url', 'textarea', 'wysiwyg', 'date', 'datetime', 'time'])) {
                 $rawValue = '';
+            }
+
+            if ($fieldType === 'password' && ($rawValue === null || trim((string) $rawValue) === '')) {
+                if (isset($entry[$fieldName])) {
+                    $entryOutput[$fieldName] = $entry[$fieldName];
+                }
+                continue;
             }
             
             $value = $rawValue;

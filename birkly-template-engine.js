@@ -585,6 +585,76 @@
         return '';
     }
 
+    function fieldNameFromParts(parts) {
+        if (!parts || !parts.length) return '';
+        const last = parts[parts.length - 1];
+        const key = last[1] !== '' && last[1] != null ? last[1] : last[2];
+        return String(key || '');
+    }
+
+    function renderMarkdownSubset(source) {
+        const lines = String(source || '').replace(/\r\n?/g, '\n').split('\n');
+        const html = [];
+        let inUl = false;
+        let inOl = false;
+        function closeLists() {
+            if (inUl) { html.push('</ul>'); inUl = false; }
+            if (inOl) { html.push('</ol>'); inOl = false; }
+        }
+        function inline(text) {
+            let out = escapeHtml(text);
+            out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
+                const href = /^(https?:\/\/|mailto:)/i.test(url) ? escapeHtml(url) : '#';
+                return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
+            });
+            out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+            out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            return out;
+        }
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) { closeLists(); continue; }
+            let m = trimmed.match(/^(#{1,6})\s+(.+)$/);
+            if (m) { closeLists(); html.push('<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>'); continue; }
+            if (/^>\s?/.test(trimmed)) { closeLists(); html.push('<blockquote>' + inline(trimmed.replace(/^>\s?/, '')) + '</blockquote>'); continue; }
+            if (/^- /.test(trimmed)) {
+                if (!inUl) { closeLists(); html.push('<ul>'); inUl = true; }
+                html.push('<li>' + inline(trimmed.replace(/^- /, '')) + '</li>');
+                continue;
+            }
+            m = trimmed.match(/^\d+\.\s+(.+)$/);
+            if (m) {
+                if (!inOl) { closeLists(); html.push('<ol>'); inOl = true; }
+                html.push('<li>' + inline(m[1]) + '</li>');
+                continue;
+            }
+            closeLists();
+            html.push('<p>' + inline(trimmed) + '</p>');
+        }
+        closeLists();
+        return html.join('');
+    }
+
+    function formatFieldLeafForTemplate(fieldName, current, data) {
+        const types = data._field_types || {};
+        const type = types[fieldName] || '';
+        if (type === 'markdown') {
+            return renderMarkdownSubset(String(current));
+        }
+        if (Array.isArray(current)) {
+            return current
+                .filter((item) => item == null || typeof item !== 'object')
+                .map((item) => String(item))
+                .filter((s) => s !== '')
+                .join(', ');
+        }
+        if (current == null) {
+            return '';
+        }
+        return String(current);
+    }
+
     function resolveFieldPathFromParts(parts, data) {
         let current = data.entry || data;
         for (const part of parts) {
@@ -594,7 +664,18 @@
             }
             current = current[key];
         }
-        if (current == null || typeof current === 'object') return '';
+        if (current == null) return '';
+        const fieldName = fieldNameFromParts(parts);
+        if (fieldName) {
+            const formatted = formatFieldLeafForTemplate(fieldName, current, data);
+            const types = data._field_types || {};
+            if (types[fieldName]) {
+                return formatted;
+            }
+        }
+        if (typeof current === 'object') {
+            return '';
+        }
         return String(current);
     }
 
@@ -763,6 +844,11 @@
             let rendered = '';
             for (const item of items) {
                 const loopData = Object.assign({}, data, { [itemVar]: item });
+                if (item == null || typeof item !== 'object' || Array.isArray(item)) {
+                    loopData.__loop_scalar = item;
+                } else {
+                    delete loopData.__loop_scalar;
+                }
                 if (item && typeof item === 'object' && !Array.isArray(item)) {
                     Object.assign(loopData, item);
                     if (itemVar === 'entry' || !Object.prototype.hasOwnProperty.call(data, 'entry')) {
@@ -835,6 +921,9 @@
                 return '';
             }
             if (/^count\s+of\b/i.test(trimmed)) return full;
+            if (trimmed === '.' && Object.prototype.hasOwnProperty.call(data, '__loop_scalar')) {
+                return escapeOutput('.', data.__loop_scalar, options);
+            }
 
             // System / context paths: current.language, query.'lang', query.slug …
             const ctx = resolveContextPath(trimmed, data);

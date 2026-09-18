@@ -8,6 +8,7 @@ require_once __DIR__ . '/page_bundle_helpers.php';
 require_once __DIR__ . '/page_bundle_template_functions.php';
 require_once __DIR__ . '/site_domain.php';
 require_once __DIR__ . '/fieldtype_html.php';
+require_once __DIR__ . '/fieldtype_presentation.php';
 
 /**
  * @param array<string,mixed> $options  Pass trusted_ssr=true for internal project SSR
@@ -178,6 +179,14 @@ function birkly_run_page_bundle_requests($storage, array $requests, string $lang
     }
     if ($htmlFieldNames !== []) {
         $out['_html_fields'] = $htmlFieldNames;
+    }
+
+    $fieldTypeMap = birkly_page_bundle_field_type_map(
+        $storage,
+        birkly_page_bundle_collect_collections($requests)
+    );
+    if ($fieldTypeMap !== []) {
+        $out['_field_types'] = $fieldTypeMap;
     }
 
     $status = birkly_page_bundle_resolve_status($out, $errors);

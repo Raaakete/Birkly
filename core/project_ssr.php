@@ -527,6 +527,20 @@ function birkly_project_ssr_build_data(string $html, array $query = [], string $
         $data['_html_fields'] = $htmlFieldNames;
     }
 
+    $fieldTypeNames = isset($data['_field_types']) && is_array($data['_field_types'])
+        ? $data['_field_types']
+        : [];
+    if ($detailCollection !== '') {
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        $detailFieldTypes = birkly_page_bundle_field_type_map($storage, [$detailCollection]);
+        if ($detailFieldTypes !== []) {
+            $fieldTypeNames = array_merge($fieldTypeNames, $detailFieldTypes);
+        }
+    }
+    if ($fieldTypeNames !== []) {
+        $data['_field_types'] = $fieldTypeNames;
+    }
+
     if (stripos($html, "agent-guide") !== false && stripos($html, 'get summary') !== false) {
         require_once __DIR__ . '/ai_presence_discovery.php';
         $summary = birkly_ai_presence_discovery_template_summary();
