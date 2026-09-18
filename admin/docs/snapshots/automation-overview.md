@@ -62,6 +62,14 @@ To run for real (not just dry-run), you must explicitly confirm in the UI after 
 
 In the admin sidebar, open **Automation** (or **Workflows**). Create a new workflow, pick a trigger, add conditions if needed, then add one or more actions. For webhook triggers, the admin shows the URL to call; for scheduled triggers, set the time and timezone; for entry triggers, use the collection and sub-collection pickers.
 
+**Workflow editor (node canvas)**
+
+The dedicated workflow editor uses a visual **node canvas**: triggers, conditions, and actions appear as connected cards. Select a node to configure it in the **inspector** panel on the right (grouped sections for delivery, content, filters, and advanced options). Use **arrow keys** to move selection between nodes on the canvas; zoom and minimap controls help on large graphs. **Workflow settings** (enabled, stop on failure) live in the editor header drawer. Save before dry-run so the test uses your latest graph.
+
+**Runs history**
+
+The **Runs** tab lists recent workflow executions across your site. Filter by workflow or success/error, open a run to see a step-by-step timeline (trigger, conditions, actions), and use pagination when you have many logs. This complements per-workflow logs from the editor and is useful when debugging production issues.
+
 **Good practices**
 
 - **Secrets:** Put API keys and webhook URLs in the workflow config or environment variables -- not in screenshots or public docs.

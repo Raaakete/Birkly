@@ -75,6 +75,20 @@ post.html?collection=blog&slug={slug}
 
 On detail: `{title}` / `{'content'}` — **no** `{for each entry in 'blog'}`.
 
+### Core shelf (fieldtypes)
+
+```text
+{media_url('hero')}
+{media_img('hero', 'Alt text')}
+{gallery_html('photos')}
+{oembed_html('video')}
+{relation_titles('related')}
+{relation_links('related')}
+{dynamicitems_html('blocks')}
+{for each id in 'gallery'}{media_img(id)}{endfor}
+{for each tag in 'tags'}{tag}{endfor}
+```
+
 ## Advanced Users
 
 ### Ordering phrases
@@ -95,7 +109,7 @@ On detail: `{title}` / `{'content'}` — **no** `{for each entry in 'blog'}`.
 | `{title truncate 80}` | excerpt field |
 | `{'content' strip_tags}` | plain field / CMS cleanup |
 | `{from 'blog' get entries …}` / `sort=` / `limit=` | `ordered by` + `limit N` |
-| `{ media … }` | `{'featured_image'}` in `<img>` |
+| `{ media … }` | `{media_img('featured_image', '…')}` or `{media_url('featured_image')}` |
 | `ordered="date:desc"` | `ordered="newest"` |
 | Detail page collection loop | URL context + `.current` |
 | Manual `/plugins/…/storefront.js` tags | Single `birkly-client.js` — [Project sites and plugins](project-sites-and-plugins.md) |
@@ -108,6 +122,7 @@ On detail: `{title}` / `{'content'}` — **no** `{for each entry in 'blog'}`.
 | Mental model | [Templating overview](templating-overview.md) |
 | Script tag + plugins | [Client setup](client-setup.md), [Project sites and plugins](project-sites-and-plugins.md) |
 | List/detail | [Loops](loops-and-lists.md), [Detail pages](detail-pages-and-url-context.md) |
+| Media / shelf | [Core template shelf](core-template-shelf.md), [Media in templates](media-in-templates.md) |
 | Forms | [Public forms templating](public-forms-templating.md) |
 | Full tutorial | [Worked site walkthrough](worked-site-walkthrough.md) |
 | Spec (CMS) | `docs/TEMPLATE_LANGUAGE_SPEC.md` |
