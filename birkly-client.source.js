@@ -3261,8 +3261,23 @@
     function formatFieldLeafForTemplate(fieldName, current, data) {
         const types = data._field_types || {};
         const type = types[fieldName] || '';
+        if (type === 'password') {
+            return current == null || current === '' ? '' : '••••••';
+        }
         if (type === 'markdown') {
             return renderMarkdownSubset(String(current));
+        }
+        if (type === 'checkbox') {
+            const on = current === true || current === '1' || current === 1 || current === 'true' || current === 'yes';
+            return on
+                ? '<span class="birkly-bool birkly-bool--on">Yes</span>'
+                : '<span class="birkly-bool birkly-bool--off">No</span>';
+        }
+        if (type === 'toggle') {
+            const on = current === true || current === '1' || current === 1 || current === 'true' || current === 'yes';
+            return on
+                ? '<span class="birkly-bool birkly-bool--on">On</span>'
+                : '<span class="birkly-bool birkly-bool--off">Off</span>';
         }
         if (Array.isArray(current)) {
             return current
@@ -3270,6 +3285,9 @@
                 .map((item) => String(item))
                 .filter((s) => s !== '')
                 .join(', ');
+        }
+        if (types[fieldName]) {
+            return current == null ? '' : String(current);
         }
         return '';
     }

@@ -132,7 +132,11 @@ class Password extends BaseField {
     }
 
     public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string {
-        return '';
+        if (!is_string($value) || $value === '') {
+            return '';
+        }
+
+        return '••••••';
     }
 
     public function renderListCell($value, array $context = []): string {
