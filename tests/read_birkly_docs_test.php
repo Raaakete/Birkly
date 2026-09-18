@@ -115,6 +115,13 @@ $catalog = birkly_ai_playbook_catalog();
 assert_true('playbook catalog has playbooks-index', isset($catalog['playbooks-index']));
 assert_true('playbook catalog has ai-quality-guide', isset($catalog['ai-quality-guide']));
 assert_true('playbook catalog has fieldtypes', isset($catalog['fieldtypes']));
+assert_true('playbook catalog has fieldtype-qa', isset($catalog['fieldtype-qa']));
+
+$fieldtypeQa = readBirklyDocsTopic('fieldtype-qa');
+assert_true(
+    'fieldtype-qa playbook has dynamicitems_html guidance',
+    is_array($fieldtypeQa) && str_contains((string) ($fieldtypeQa['text'] ?? ''), 'dynamicitems_html')
+);
 assert_true('playbook catalog has commerce-store-kit', isset($catalog['commerce-store-kit']));
 assert_true('playbook catalog count >= 20', count($catalog) >= 20);
 

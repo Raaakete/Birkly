@@ -143,6 +143,12 @@ On a detail page, sub-collection loop example:
 
 Do not stop after one collection if the site has distinct sections (marketing copy, repeatable items, forms, shared nav) — split the model to match.
 
+### Detail pages — structured fieldtypes
+
+On URL-context detail pages, use **core template shelf** calls for non-scalar presentation (media library ids, gallery, map, range, oEmbed, relations, dynamic item blocks). Example: `{media_img('featured_image', title)}`, `{dynamicitems_html('content_blocks')}` — not `{for each entry in 'content_blocks'}`.
+
+After template or entry changes on SSR hosts, invalidate project SSR cache (`cms_admin_action` → `project_site.invalidate_ssr_cache`). For a full regression checklist, load **`fieldtype-qa`**.
+
 ---
 
 ## Common mistakes (symptom → fix)
@@ -158,6 +164,7 @@ Do not stop after one collection if the site has distinct sections (marketing co
 | Same nav pasted everywhere | Use `<birkly-region>` or `{from … get …}` for shared blocks |
 | `{{ }}` / `{% for %}` | Birkly uses single braces: `{for each entry in 'slug'}` |
 | Invented filters (`truncate`, `strip_tags`) | Store teasers in CMS; only date `format` filter exists |
+| Raw media id / YouTube URL on detail page | Shelf: `{media_img('…')}`, `{oembed_html('…')}` — see `fieldtypes` / `fieldtype-qa` |
 
 ## Known bad patterns (real regressions — never generate these)
 

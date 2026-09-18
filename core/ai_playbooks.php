@@ -29,6 +29,13 @@ function birkly_ai_playbook_catalog(): array
             'triggers' => 'field type, fieldtypes, schema type, image field, editor field',
             'category' => 'Core CMS',
         ],
+        'fieldtype-qa' => [
+            'title' => 'Fieldtype storefront QA',
+            'topic' => 'fieldtype-qa',
+            'summary' => 'End-to-end QA collection, shelf templates, seed data, SSR cache, deploy checklist.',
+            'triggers' => 'fieldtype qa, field type regression, storefront qa, media_img, dynamicitems_html, test all fieldtypes',
+            'category' => 'Core CMS',
+        ],
         'collection-groups' => [
             'title' => 'Collection sidebar groups',
             'topic' => 'collection-groups',
@@ -209,6 +216,7 @@ function birkly_ai_core_docs_topics(): array
         'playbooks-index' => $playbook('playbooks-index.md', 'AI playbooks — master index'),
         'ai-quality-guide' => $playbook('ai-quality-guide.md', 'AI output quality guide'),
         'fieldtypes' => $playbook('fieldtypes-playbook.md', 'Field types reference'),
+        'fieldtype-qa' => $playbook('fieldtype-qa-playbook.md', 'Fieldtype storefront QA'),
         'collection-groups' => $playbook('collection-groups-playbook.md', 'Collection groups playbook'),
         'content-model' => $playbook('content-model-playbook.md', 'Content model playbook'),
         'public-forms' => $playbook('public-forms-playbook.md', 'Public forms playbook'),
@@ -294,6 +302,7 @@ function birkly_ai_detect_playbook_topics(string $message, array $conversationHi
     $triggerMap = [
         'ai-quality-guide' => '/\b(how (?:do|should)|best practice|quality|checklist|why (?:did|does).*fail|not working)\b/i',
         'fieldtypes' => '/\b(field type|fieldtypes|schema type|editor field|image field|gallery field)\b/i',
+        'fieldtype-qa' => '/\b(fieldtype qa|field type qa|storefront qa|test (?:all )?fieldtypes?|fieldtype regression|dynamicitems_html|media_img\()\b/i',
         'collection-groups' => '/\b(collection group|sidebar group|reorder collections|organize collections)\b/i',
         'public-forms' => '/\b(contact form|newsletter|public form|submit from website|visitor submission|validation failed)\b/i',
         'sub-collections' => '/\b(sub-collection|sub-entry|nested entries|comments on posts)\b/i',

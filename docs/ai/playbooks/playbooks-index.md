@@ -29,6 +29,7 @@ If a tool call is allowed by the role and passes approval settings, playbooks do
 | `playbooks-index` | This file — routing & decision tree |
 | `content-model` | Collections, entries, schema, fields, publishing, slugs |
 | `fieldtypes` | Field `type` values, schema JSON examples, image/editor/email |
+| `fieldtype-qa` | Storefront QA matrix, shelf helpers, seed data, SSR cache, core deploy checks |
 | `site-building` | Website, portfolio, landing page, `project/` HTML/CSS |
 | `web-project-patterns` | List/detail pages, schema decisions, CMS-to-HTML wiring, common bugs |
 | `templating` | Template syntax, loops, `ordered by`, dates `format`, `{from…get}`, regions, phantoms |
@@ -83,6 +84,7 @@ AI playbooks distill these; load L3 when you need admin UI specifics.
 |-------|----------|------------------------------|
 | Content model | `content-model` | https://docs.birkly.com/02-content/content-model-overview.html |
 | Field types | `fieldtypes` | https://docs.birkly.com/02-content/field-types.html |
+| Fieldtype storefront QA | `fieldtype-qa` | Playbook + https://docs.birkly.com/03-templating/core-template-shelf.html |
 | Public API forms | `public-forms` | https://docs.birkly.com/04-integration/public-forms.html · https://docs.birkly.com/03-templating/public-forms-templating.html |
 | Website + client JS | `web-project-patterns`, `templating` | https://docs.birkly.com/03-templating/templating-overview.html · https://docs.birkly.com/03-templating/client-setup.html |
 | MCP connections | `mcp-setup` | https://docs.birkly.com/01-admin/mcp-connections.html (**Settings → AI**) |
@@ -107,6 +109,7 @@ Build a public website?
 
 Structured content?
 ├─ Flat entries → content-model + fieldtypes
+├─ Regression / all fieldtypes on project site → fieldtype-qa (+ fieldtypes)
 ├─ Child rows per parent → sub-collections (+ public-forms if visitors submit)
 ├─ Admin sidebar organization → collection-groups
 └─ Rich article body → content-editor
