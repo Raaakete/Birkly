@@ -141,3 +141,16 @@ if (!function_exists('birkly_public_load_plugins_for_template_function')) {
     }
 }
 
+if (!function_exists('birkly_public_register_fieldtype_presentation')) {
+    function birkly_public_register_fieldtype_presentation(): void {
+        static $registered = false;
+        if ($registered) {
+            return;
+        }
+        $registered = true;
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        birkly_fieldtype_presentation_register_filters();
+    }
+}
+birkly_public_register_fieldtype_presentation();
+

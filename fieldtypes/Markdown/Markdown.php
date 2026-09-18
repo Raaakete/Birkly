@@ -159,6 +159,17 @@ class Markdown extends BaseField {
         return (string)$value;
     }
 
+    public function outputsTrustedHtml(): bool
+    {
+        return true;
+    }
+
+    public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
+    {
+        require_once __DIR__ . '/markdown_render.php';
+        return birkly_markdown_render((string) $value);
+    }
+
     public function renderListCell($value, array $context = []): string {
         $plain = trim(strip_tags((string)$value));
         return parent::renderListCell($plain, ['truncate' => $context['truncate'] ?? 60]);

@@ -2734,9 +2734,6 @@
     }
 
     function formatDate(value, format) {
-        if (Birkly.dateFormatter && typeof Birkly.dateFormatter.formatDate === 'function') {
-            return Birkly.dateFormatter.formatDate(value, format || 'Y-m-d', Birkly.currentLanguage);
-        }
         if (!value) return '';
         const d = new Date(value);
         if (Number.isNaN(d.getTime())) return String(value);
@@ -3210,6 +3207,73 @@
         return '';
     }
 
+    function fieldNameFromParts(parts) {
+        if (!parts || !parts.length) return '';
+        const last = parts[parts.length - 1];
+        const key = last[1] !== '' && last[1] != null ? last[1] : last[2];
+        return String(key || '');
+    }
+
+    function renderMarkdownSubset(source) {
+        const lines = String(source || '').replace(/\r\n?/g, '\n').split('\n');
+        const html = [];
+        let inUl = false;
+        let inOl = false;
+        function closeLists() {
+            if (inUl) { html.push('</ul>'); inUl = false; }
+            if (inOl) { html.push('</ol>'); inOl = false; }
+        }
+        function inline(text) {
+            let out = escapeHtml(text);
+            out = out.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
+                const href = /^(https?:\/\/|mailto:)/i.test(url) ? escapeHtml(url) : '#';
+                return '<a href="' + href + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
+            });
+            out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+            out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            out = out.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            return out;
+        }
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) { closeLists(); continue; }
+            let m = trimmed.match(/^(#{1,6})\s+(.+)$/);
+            if (m) { closeLists(); html.push('<h' + m[1].length + '>' + inline(m[2]) + '</h' + m[1].length + '>'); continue; }
+            if (/^>\s?/.test(trimmed)) { closeLists(); html.push('<blockquote>' + inline(trimmed.replace(/^>\s?/, '')) + '</blockquote>'); continue; }
+            if (/^- /.test(trimmed)) {
+                if (!inUl) { closeLists(); html.push('<ul>'); inUl = true; }
+                html.push('<li>' + inline(trimmed.replace(/^- /, '')) + '</li>');
+                continue;
+            }
+            m = trimmed.match(/^\d+\.\s+(.+)$/);
+            if (m) {
+                if (!inOl) { closeLists(); html.push('<ol>'); inOl = true; }
+                html.push('<li>' + inline(m[1]) + '</li>');
+                continue;
+            }
+            closeLists();
+            html.push('<p>' + inline(trimmed) + '</p>');
+        }
+        closeLists();
+        return html.join('');
+    }
+
+    function formatFieldLeafForTemplate(fieldName, current, data) {
+        const types = data._field_types || {};
+        const type = types[fieldName] || '';
+        if (type === 'markdown') {
+            return renderMarkdownSubset(String(current));
+        }
+        if (Array.isArray(current)) {
+            return current
+                .filter((item) => item == null || typeof item !== 'object')
+                .map((item) => String(item))
+                .filter((s) => s !== '')
+                .join(', ');
+        }
+        return '';
+    }
+
     function resolveFieldPathFromParts(parts, data) {
         let current = data.entry || data;
         for (const part of parts) {
@@ -3219,7 +3283,18 @@
             }
             current = current[key];
         }
-        if (current == null || typeof current === 'object') return '';
+        if (current == null) return '';
+        const fieldName = fieldNameFromParts(parts);
+        if (fieldName) {
+            const formatted = formatFieldLeafForTemplate(fieldName, current, data);
+            const types = data._field_types || {};
+            if (types[fieldName]) {
+                return formatted;
+            }
+        }
+        if (typeof current === 'object') {
+            return '';
+        }
         return String(current);
     }
 
@@ -3336,32 +3411,6 @@
         });
     }
 
-    function processFromGetSummaryBlocks(html, data, render) {
-        const pattern = /\{from\s+['"]agent-guide['"]\s+get\s+summary\}/i;
-        let guard = 0;
-        while (guard++ < 500) {
-            const m = html.match(pattern);
-            if (!m) break;
-            const start = m.index;
-            const openLen = m[0].length;
-            const contentStart = start + openLen;
-            const [closePos, closeLen] = findClosingTag(html, contentStart, ['{endget}', '{end}']);
-            if (closePos === null) {
-                html = html.substring(0, start) + html.substring(contentStart);
-                continue;
-            }
-            const block = html.substring(contentStart, closePos);
-            const summary = data.agent_guide;
-            let replacement = '';
-            if (summary && typeof summary === 'object') {
-                const blockData = Object.assign({}, data, { entry: summary }, summary);
-                replacement = render(block, blockData);
-            }
-            html = html.substring(0, start) + replacement + html.substring(closePos + closeLen);
-        }
-        return html;
-    }
-
     function processFromGetBlocks(html, data, render) {
         const pattern = /\{from\s+['"]([^'"]+)['"]\s+get\s+entry\s+['"]([^'"]+)['"]\}/i;
         let guard = 0;
@@ -3414,10 +3463,15 @@
             let rendered = '';
             for (const item of items) {
                 const loopData = Object.assign({}, data, { [itemVar]: item });
-                if (item && typeof item === 'object') {
+                if (item == null || typeof item !== 'object' || Array.isArray(item)) {
+                    loopData.__loop_scalar = item;
+                } else {
+                    delete loopData.__loop_scalar;
+                }
+                if (item && typeof item === 'object' && !Array.isArray(item)) {
+                    Object.assign(loopData, item);
                     if (itemVar === 'entry' || !Object.prototype.hasOwnProperty.call(data, 'entry')) {
                         loopData.entry = item;
-                        Object.assign(loopData, item);
                     }
                 }
                 rendered += render(loopBody, loopData);
@@ -3474,7 +3528,9 @@
         return html.replace(/\{([^{}]*)\}/g, (full, inner) => {
             const trimmed = String(inner || '').trim();
             if (!trimmed) return '';
-            if (/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count|entry)\b/i.test(trimmed)) {
+            // Do not treat bare `entry` as a control tag — it is a valid loop variable
+            // for scalar arrays (tags, multiselect). `entry for 'slug'` is stripped below.
+            if (/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count)\b/i.test(trimmed)) {
                 return '';
             }
             if (/^entry\s+for\s+['"][^'"]+['"]$/i.test(trimmed)) {
@@ -3484,6 +3540,9 @@
                 return '';
             }
             if (/^count\s+of\b/i.test(trimmed)) return full;
+            if (trimmed === '.' && Object.prototype.hasOwnProperty.call(data, '__loop_scalar')) {
+                return escapeOutput('.', data.__loop_scalar, options);
+            }
 
             // System / context paths: current.language, query.'lang', query.slug …
             const ctx = resolveContextPath(trimmed, data);
@@ -3576,7 +3635,6 @@
 
         let out = processEntryForBlocks(source);
         out = processPublicFormBlocks(out);
-        out = processFromGetSummaryBlocks(out, data, renderFn);
         out = processFromGetBlocks(out, data, renderFn);
         out = processInlineFromGet(out, data, ctxOptions);
         out = processForLoops(out, data, renderFn);

@@ -76,6 +76,19 @@ Sub-collections on a detail page:
 {endfor}
 ```
 
+## Field arrays (tags, multiselect, gallery)
+
+Not collections — loop the **field** on the current entry:
+
+```html
+{for each tag in 'tags_list'}<span>{tag}</span>{endfor}
+{for each id in 'test_gallery'}<img src="/media/{id}.jpg" alt="">{endfor}
+```
+
+- Use a named loop variable (`tag`, `id`, `cat`). `{value}` and `{.}` are not scalar-loop aliases.
+- `{entry}` as loop variable works for scalar lists but is easy to confuse with collection loops; prefer explicit names.
+- There is no string-replace filter for oEmbed URLs or dynamic relation lookups — use fieldtype template functions on the shelf (see `fieldtypes` playbook).
+
 ## Regions
 
 ```html

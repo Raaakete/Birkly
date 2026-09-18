@@ -443,23 +443,8 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
     if (is_dir($collectionDir)) {
         return ['success' => false, 'message' => 'Collection already exists'];
     }
-    
-    // Create collection directory
-    if (!is_dir($collectionsPath)) {
-        mkdir($collectionsPath, 0755, true);
-    }
-    
-    if (!mkdir($collectionDir, 0755, true)) {
-        return ['success' => false, 'message' => 'Failed to create collection directory'];
-    }
-    
-    // Create entries directory
-    $entriesDir = $collectionDir . '/entries';
-    if (!mkdir($entriesDir, 0755, true)) {
-        return ['success' => false, 'message' => 'Failed to create entries directory'];
-    }
-    
-    // Prepare collection data
+
+    // Validate config (including field types) before touching disk — avoids ghost dirs (QA §1.3).
     $collectionData = [
         'name' => $name,
         'slug' => $slug,
@@ -473,6 +458,22 @@ function executeCreateCollection($actionData, $aiUser = null, $originalUserId = 
     $mergeError = birkly_ai_merge_collection_config($collectionData, $actionData, null);
     if ($mergeError !== null) {
         return ['success' => false, 'message' => $mergeError];
+    }
+
+    // Create collection directory
+    if (!is_dir($collectionsPath)) {
+        mkdir($collectionsPath, 0755, true);
+    }
+
+    if (!mkdir($collectionDir, 0755, true)) {
+        return ['success' => false, 'message' => 'Failed to create collection directory'];
+    }
+
+    // Create entries directory
+    $entriesDir = $collectionDir . '/entries';
+    if (!mkdir($entriesDir, 0755, true)) {
+        birkly_ai_delete_directory($collectionDir);
+        return ['success' => false, 'message' => 'Failed to create entries directory'];
     }
     
     // Save collection.json

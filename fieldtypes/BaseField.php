@@ -210,4 +210,58 @@ abstract class BaseField {
         // Default to the same as getListColumnWidth for backward compatibility
         return $this->getListColumnWidth();
     }
+
+    /**
+     * Whether template output for this field type is trusted HTML (not escaped).
+     */
+    public function outputsTrustedHtml(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Whether values must never be exposed via public API / MCP reads.
+     */
+    public function isSensitive(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Mask a stored value for API/MCP consumers.
+     *
+     * @param array<string, mixed> $fieldConfig
+     */
+    public function maskValueForApiRead($value, array $fieldConfig = [])
+    {
+        return $value;
+    }
+
+    /**
+     * Format a field value for direct template tags like {'field_name'} when the
+     * stored value is structured (arrays, objects).
+     *
+     * @param array<string, mixed> $fieldConfig
+     * @param array<string, mixed> $context
+     */
+    public function formatValueForTemplate($value, array $fieldConfig = [], array $context = []): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+        if (is_array($value)) {
+            $parts = [];
+            foreach ($value as $item) {
+                if (is_scalar($item) || $item === null) {
+                    $parts[] = (string) $item;
+                }
+            }
+            return implode(', ', array_filter($parts, static fn ($p) => $p !== ''));
+        }
+
+        return '';
+    }
 } 

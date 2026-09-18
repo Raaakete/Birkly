@@ -12,7 +12,7 @@ function birkly_fieldtype_outputs_html(string $type): bool
 {
     $normalized = strtolower(trim($type));
 
-    return in_array($normalized, ['editor', 'content-editor', 'contenteditor', 'wysiwyg'], true);
+    return in_array($normalized, ['editor', 'content-editor', 'contenteditor', 'wysiwyg', 'markdown'], true);
 }
 
 /**

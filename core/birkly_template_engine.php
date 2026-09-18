@@ -1119,9 +1119,36 @@ function birkly_template_engine_resolve_field_path_from_parts(array $parts, arra
         }
         $current = $current[$key];
     }
-    if ($current === null || is_array($current)) {
+    if ($current === null) {
         return '';
     }
+
+    require_once __DIR__ . '/fieldtype_html.php';
+    $path = '';
+    foreach ($parts as $part) {
+        $segment = (isset($part[1]) && $part[1] !== '') ? $part[1] : ($part[2] ?? '');
+        if ($segment === '') {
+            continue;
+        }
+        $path .= ($path === '' ? '' : '.') . (preg_match('/^\d+$/', (string) $segment) ? $segment : "'" . $segment . "'");
+    }
+    $fieldName = birkly_template_engine_field_name_for_escape($path);
+    $fieldTypes = $data['_field_types'] ?? [];
+    $type = is_array($fieldTypes) ? (string) ($fieldTypes[$fieldName] ?? '') : '';
+    if ($fieldName !== '' && $type !== '') {
+        require_once __DIR__ . '/fieldtype_presentation.php';
+        return birkly_fieldtype_format_leaf_for_template(
+            $fieldName,
+            $current,
+            $type,
+            ['entry' => $data['entry'] ?? $data]
+        );
+    }
+
+    if (is_array($current) || is_object($current)) {
+        return '';
+    }
+
     return birkly_template_engine_js_string($current);
 }
 
@@ -1390,6 +1417,11 @@ function birkly_template_engine_process_for_loops(string $html, array $data, cal
         foreach ($items as $item) {
             $loopData = $data;
             $loopData[$itemVar] = $item;
+            if (!is_array($item)) {
+                $loopData['__loop_scalar'] = $item;
+            } else {
+                unset($loopData['__loop_scalar']);
+            }
             if (birkly_template_engine_truthy($item) && is_array($item)) {
                 foreach ($item as $k => $v) {
                     $loopData[$k] = $v;
@@ -1605,7 +1637,8 @@ function birkly_template_engine_process_variables(string $html, array $data, arr
         if ($trimmed === '') {
             return '';
         }
-        if (preg_match('/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count|entry)\b/i', $trimmed)) {
+        // Bare `entry` is a valid loop variable for scalar arrays; only strip real control tags.
+        if (preg_match('/^(if|else|elseif|endif|for|endfor|from|get|endget|endentry|end|set|count)\b/i', $trimmed)) {
             return '';
         }
         if (preg_match('/^entry\s+for\s+[\'"][^\'"]+[\'"]$/iD', $trimmed)) {
@@ -1616,6 +1649,10 @@ function birkly_template_engine_process_variables(string $html, array $data, arr
         }
         if (preg_match('/^count\s+of\b/i', $trimmed)) {
             return $full;
+        }
+
+        if ($trimmed === '.' && array_key_exists('__loop_scalar', $data)) {
+            return birkly_template_engine_escape_output('.', (string) $data['__loop_scalar'], $options);
         }
 
         // Context paths with optional date format: comment.created_at format "M j, Y"
