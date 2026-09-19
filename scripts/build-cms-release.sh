@@ -16,9 +16,9 @@ if [[ ! -f "$LAUNCH_BUILD" ]]; then
   echo "[build-cms-release] FAIL: missing build-birkly-launch.sh (sync Ops to latest Birkly main)" >&2
   exit 1
 fi
-bash "$LAUNCH_BUILD"
-if [[ ! -f "$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch" ]]; then
-  echo "[build-cms-release] FAIL: Birkly Launch.app missing after launcher build" >&2
+BIRKLY_LAUNCH_SKIP_MAC=1 bash "$LAUNCH_BUILD"
+if [[ ! -f "$ROOT/Birkly Launch.exe" ]]; then
+  echo "[build-cms-release] FAIL: Birkly Launch.exe missing after launcher build" >&2
   exit 1
 fi
 
