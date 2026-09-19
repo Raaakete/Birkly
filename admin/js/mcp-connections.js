@@ -282,7 +282,7 @@
             if (!cmd || !cmd.value) return;
             const osHint = detectDesktopOsHint();
             const copiedMsg = osHint === 'win'
-                ? mcpT('ai_conn_desktop_terminal_copied_win', 'Command copied — paste it in PowerShell or Command Prompt on this PC.')
+                ? mcpT('ai_conn_desktop_terminal_copied_win', 'Command copied — paste it in PowerShell or Command Prompt on this PC (Enter to run).')
                 : mcpT('ai_conn_desktop_terminal_copied', 'Command copied — paste it in Terminal on this Mac.');
             fallbackCopy(cmd, function () {
                 showToast(copiedMsg);

@@ -68,14 +68,40 @@ $status = birkly_mcp_desktop_status_for_user($userId);
 assert_true('status paired', ($status['paired'] ?? false) === true);
 assert_true('status includes config', is_array($status['claude_desktop_config']['mcpServers']['birkly'] ?? null));
 
-$cmd = birkly_mcp_desktop_terminal_install_command(
-    $testRoot . '/Birkly-main 6/data/mcp_desktop/credentials_test.json',
-    'claude'
-);
+$credPath = $testRoot . '/Birkly-main 6/data/mcp_desktop/credentials_test.json';
+$cmd = birkly_mcp_desktop_terminal_install_command($credPath, 'claude');
+if (PHP_OS_FAMILY === 'Windows') {
+    assert_true(
+        'windows terminal command uses cmd /c for PowerShell compatibility',
+        str_starts_with($cmd, 'cmd /c '),
+        $cmd
+    );
+    assert_true(
+        'windows terminal command quotes paths with spaces',
+        str_contains($cmd, 'Birkly-main 6'),
+        $cmd
+    );
+} else {
+    assert_true(
+        'terminal command quotes paths with spaces',
+        str_contains($cmd, 'cd ') && str_contains($cmd, 'Birkly-main 6') && str_contains($cmd, "'"),
+        $cmd
+    );
+}
+
+$resolvedRel = birkly_mcp_desktop_resolve_credentials_path('data/mcp_desktop/' . basename($path));
 assert_true(
-    'terminal command quotes paths with spaces',
-    str_contains($cmd, 'cd ') && str_contains($cmd, 'Birkly-main 6') && str_contains($cmd, "'"),
-    $cmd
+    'resolve relative credentials path',
+    $resolvedRel !== '' && is_file($resolvedRel),
+    $resolvedRel
+);
+
+$snippetAbs = birkly_mcp_desktop_client_config_snippet($credPath);
+$tokenArg = $snippetAbs['mcpServers']['birkly']['args'][2] ?? '';
+assert_true(
+    'config uses absolute token path',
+    is_string($tokenArg) && $tokenArg !== '' && (str_contains($tokenArg, 'credentials_test.json') && !str_starts_with($tokenArg, 'data/')),
+    (string) $tokenArg
 );
 
 $tokenUrl = birkly_mcp_desktop_token_endpoint_from_mcp_url('http://127.0.0.1:8080/mcp/agents/ai_agent_personal');
