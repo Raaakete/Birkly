@@ -30,7 +30,7 @@ if ($Root -ne $Global:BirklyWindowsScriptRoot) {
     Write-Host "[Birkly] Using CMS folder: $Root"
 }
 
-foreach ($dir in @('content', 'media', 'users', 'settings', 'logs', 'temp', 'cache')) {
+foreach ($dir in @('content', 'media', 'users', 'settings', 'logs', 'temp', 'cache', 'plugins')) {
     $p = Join-Path $Root $dir
     if (-not (Test-Path -LiteralPath $p)) {
         New-Item -ItemType Directory -Path $p -Force | Out-Null

@@ -421,6 +421,14 @@ function birkly_marketplace_user_error_message(string $error): string
     }
 
     if (
+        stripos($error, 'ssl certificate') !== false
+        || stripos($error, 'certificate problem') !== false
+        || stripos($error, 'unable to get local issuer') !== false
+    ) {
+        return $error . ' On Windows with Birkly portable PHP, run install-php.ps1 again (it installs a CA bundle for HTTPS), restart the server, then retry Hub.';
+    }
+
+    if (
         stripos($error, 'timed out') !== false
         || stripos($error, 'could not resolve') !== false
         || stripos($error, 'failed to connect') !== false

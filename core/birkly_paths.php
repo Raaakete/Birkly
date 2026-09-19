@@ -264,7 +264,34 @@ function birkly_paths_reset_cache(): void
  */
 function birkly_runtime_dir_names(): array
 {
-    return ['content', 'media', 'users', 'settings', 'logs', 'temp', 'cache'];
+    return ['content', 'media', 'users', 'settings', 'logs', 'temp', 'cache', 'plugins'];
+}
+
+/**
+ * Check whether PHP can write to a path (probe file when is_writable() is unreliable on Windows).
+ */
+function birkly_path_is_writable(string $path): bool
+{
+    if ($path === '') {
+        return false;
+    }
+
+    if (is_writable($path)) {
+        return true;
+    }
+
+    if (!is_dir($path) && !is_file($path)) {
+        return false;
+    }
+
+    $probe = rtrim($path, '/\\') . '/.birkly-write-probe-' . getmypid() . '-' . bin2hex(random_bytes(4));
+    if (@file_put_contents($probe, '') === false) {
+        return false;
+    }
+
+    @unlink($probe);
+
+    return true;
 }
 
 /**
@@ -288,7 +315,7 @@ function birkly_ensure_runtime_dirs(?string $projectRoot = null): array
         }
         $report[$dir] = [
             'exists' => is_dir($path),
-            'writable' => is_dir($path) && is_writable($path),
+            'writable' => is_dir($path) && birkly_path_is_writable($path),
             'created' => $created,
         ];
     }

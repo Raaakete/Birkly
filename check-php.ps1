@@ -33,7 +33,8 @@ Write-Host "[Birkly] Found PHP $phpVersion ($phpExe)"
 if ($LASTEXITCODE -ne 0) { exit 1 }
 
 if (-not (Test-BirklyPhpExtensions -PhpExe $phpExe)) {
-    Write-Host "[Birkly] Re-run install-php.ps1 or enable extensions in php.ini."
+    Write-Host "[Birkly] Re-run: powershell -ExecutionPolicy Bypass -File .\install-php.ps1"
+    Write-Host "[Birkly] Required: json, mbstring, curl, openssl, zip, fileinfo, gd (+ HTTPS CA bundle for Hub)."
     exit 1
 }
 

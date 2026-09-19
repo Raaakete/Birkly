@@ -1,6 +1,8 @@
 # Shared helpers for Birkly Windows PowerShell scripts (dot-source from repo root .ps1 files).
 $ErrorActionPreference = 'Stop'
 
+$BirklyPhpRequiredExtensions = @('json', 'mbstring', 'curl', 'openssl', 'zip', 'fileinfo', 'gd')
+
 function Test-BirklyPathExists {
     param([string]$Path)
     if (-not $Path) { return $false }
@@ -97,14 +99,15 @@ function Get-BirklyPhpExe {
 
 function Test-BirklyPhpExtensions {
     param([string]$PhpExe)
-    $required = @('json', 'mbstring', 'curl', 'openssl', 'zip')
-    foreach ($ext in $required) {
+    foreach ($ext in $BirklyPhpRequiredExtensions) {
         & $PhpExe -r "exit(extension_loaded('$ext') ? 0 : 1);" 2>$null
         if ($LASTEXITCODE -ne 0) {
             Write-Host "[Birkly] Missing PHP extension: $ext"
             if ($ext -eq 'zip') {
-                Write-Host '[Birkly] Starter templates (e.g. Marsk) need the zip extension. Re-run:'
-                Write-Host '  powershell -ExecutionPolicy Bypass -File .\install-php.ps1'
+                Write-Host '[Birkly] Hub installs and Marsk starters need zip. Re-run install-php.ps1'
+            }
+            if ($ext -eq 'gd') {
+                Write-Host '[Birkly] Image uploads/thumbnails need gd. Re-run install-php.ps1'
             }
             return $false
         }
@@ -112,21 +115,48 @@ function Test-BirklyPhpExtensions {
     return $true
 }
 
+function Ensure-BirklyCaBundle {
+    param([string]$RuntimePhpDir)
+    $sslDir = Join-Path $RuntimePhpDir 'extras\ssl'
+    if (-not (Test-BirklyPathExists -Path $sslDir)) {
+        New-Item -ItemType Directory -Path $sslDir -Force | Out-Null
+    }
+    $caPath = Join-Path $sslDir 'cacert.pem'
+    if (Test-BirklyPathExists -Path $caPath) {
+        return $caPath
+    }
+    $url = 'https://curl.se/ca/cacert.pem'
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri $url -OutFile $caPath -UseBasicParsing
+    } catch {
+        Write-Host "[Birkly] Warning: could not download CA bundle for HTTPS ($url)."
+        Write-Host $_.Exception.Message
+        return $null
+    }
+    return $caPath
+}
+
 function Get-BirklyPhpIniExtensionBlock {
     return @"
 
 ; --- Birkly local server ---
 extension_dir = "ext"
+allow_url_fopen = On
 extension=curl
 extension=mbstring
 extension=openssl
 extension=fileinfo
 extension=zip
+extension=gd
+openssl.cafile = "extras/ssl/cacert.pem"
+curl.cainfo = "extras/ssl/cacert.pem"
 "@
 }
 
 function Initialize-BirklyPhpIni {
     param([string]$RuntimePhpDir)
+    Ensure-BirklyCaBundle -RuntimePhpDir $RuntimePhpDir | Out-Null
     $iniDev = Join-Path $RuntimePhpDir 'php.ini-development'
     $ini = Join-Path $RuntimePhpDir 'php.ini'
     if (-not (Test-BirklyPathExists -Path $iniDev)) {
@@ -138,18 +168,34 @@ function Initialize-BirklyPhpIni {
 
 function Repair-BirklyPhpIni {
     param([string]$RuntimePhpDir)
+    Ensure-BirklyCaBundle -RuntimePhpDir $RuntimePhpDir | Out-Null
     $ini = Join-Path $RuntimePhpDir 'php.ini'
     if (-not (Test-BirklyPathExists -Path $ini)) {
         Initialize-BirklyPhpIni -RuntimePhpDir $RuntimePhpDir
         return
     }
     $content = Get-Content -LiteralPath $ini -Raw
-    if ($content -notmatch '(?m)^\s*extension\s*=\s*zip\s*$') {
-        if ($content -notmatch '(?m)^\s*;\s*---\s*Birkly local server\s*---') {
-            Add-Content -LiteralPath $ini -Value (Get-BirklyPhpIniExtensionBlock) -Encoding UTF8
-        } else {
-            Add-Content -LiteralPath $ini -Value "`r`nextension=zip" -Encoding UTF8
+    if ($content -notmatch '(?m)^\s*;\s*---\s*Birkly local server\s*---') {
+        Add-Content -LiteralPath $ini -Value (Get-BirklyPhpIniExtensionBlock) -Encoding UTF8
+        return
+    }
+    $toAdd = @()
+    foreach ($ext in @('fileinfo', 'zip', 'gd')) {
+        if ($content -notmatch "(?m)^\s*extension\s*=\s*$ext\s*$") {
+            $toAdd += "extension=$ext"
         }
+    }
+    if ($content -notmatch '(?m)^\s*allow_url_fopen\s*=\s*On') {
+        $toAdd += 'allow_url_fopen = On'
+    }
+    if ($content -notmatch '(?m)^\s*openssl\.cafile\s*=') {
+        $toAdd += 'openssl.cafile = "extras/ssl/cacert.pem"'
+    }
+    if ($content -notmatch '(?m)^\s*curl\.cainfo\s*=') {
+        $toAdd += 'curl.cainfo = "extras/ssl/cacert.pem"'
+    }
+    if ($toAdd.Count -gt 0) {
+        Add-Content -LiteralPath $ini -Value ("`r`n" + ($toAdd -join "`r`n")) -Encoding UTF8
     }
 }
 

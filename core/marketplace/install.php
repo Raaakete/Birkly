@@ -4,6 +4,7 @@
  */
 
 require_once dirname(__DIR__) . '/marketplace/http.php';
+require_once dirname(__DIR__) . '/birkly_paths.php';
 
 function birkly_marketplace_ensure_plugins_core(): void
 {
@@ -183,14 +184,18 @@ function birkly_marketplace_ensure_plugins_root_writable(string $pluginsRoot): a
         }
     }
 
-    if (!is_writable($pluginsRoot)) {
+    if (!birkly_path_is_writable($pluginsRoot)) {
         @chmod($pluginsRoot, 0775);
     }
 
-    if (!is_writable($pluginsRoot)) {
+    if (!birkly_path_is_writable($pluginsRoot)) {
+        $hint = PHP_OS_FAMILY === 'Windows'
+            ? 'The plugins/ folder is not writable. Close the server, delete any read-only flag on your Birkly folder in File Explorer, then run start-server.ps1 again (it creates plugins/).'
+            : 'The plugins/ directory is not writable by the web server. Adjust filesystem permissions (e.g. chown/chmod for your PHP user) and retry.';
+
         return [
             'ok' => false,
-            'error' => 'The plugins/ directory is not writable by the web server. Adjust filesystem permissions (e.g. chown/chmod for your PHP user) and retry.',
+            'error' => $hint,
         ];
     }
 
