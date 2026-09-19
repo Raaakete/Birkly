@@ -291,6 +291,10 @@
         body.is-windows .windows-easy { display: block; }
         body.is-windows .dev-terminal-path { display: none; }
         body.is-windows .windows-easy.dev-terminal-path { display: block; }
+        .mac-easy { display: none; }
+        body.is-mac .mac-easy { display: block; }
+        body.is-mac .dev-terminal-path { display: none; }
+        body.is-mac .mac-easy.dev-terminal-path { display: block; }
         @media (max-width: 720px) {
             .setup-path-grid { grid-template-columns: 1fr; }
         }
@@ -371,6 +375,13 @@
 
                 <div class="local-method-panel active" id="local-method-birkly">
 
+                <div class="status info mac-easy" style="margin-bottom:var(--space-5);padding:var(--space-4);">
+                    <h4 style="margin-bottom:var(--space-2);font-size:1rem;">macOS says Birkly Launch cannot be opened?</h4>
+                    <p style="margin-bottom:var(--space-2);">Downloaded apps are often quarantined. Birkly Launch only runs PHP on <strong>your Mac</strong> (localhost) — it does not upload your project.</p>
+                    <p style="margin-bottom:var(--space-2);"><strong>First time:</strong> Right-click <code>Birkly Launch.app</code> → <strong>Open</strong> → confirm <strong>Open</strong> again. Or use <code>Birkly Launch.command</code> (opens Terminal).</p>
+                    <p style="margin-bottom:0;">After the zip is extracted, the app must sit next to <code>admin/</code> — not inside the zip file.</p>
+                </div>
+
                 <div class="status info windows-easy" style="margin-bottom:var(--space-5);padding:var(--space-4);">
                     <h4 style="margin-bottom:var(--space-2);font-size:1rem;">Windows says the file may be unsafe?</h4>
                     <p style="margin-bottom:var(--space-2);">That is <strong>normal</strong> for downloaded software. Birkly is not signed with a Microsoft certificate yet. The <code>.bat</code> files only start PHP on <strong>your computer</strong> (localhost) — they do not send your files to us.</p>
@@ -385,10 +396,16 @@
                     <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If you only see these files <em>inside</em> a zip, go back and use <strong>Extract All</strong> first (see security tip above for <strong>Unblock</strong>).</p>
                 </div>
 
+                <div class="step mac-easy">
+                    <div class="step-head"><span class="step-num">1</span><h4>Open your Birkly folder</h4></div>
+                    <p>In <strong>Finder</strong>, open the folder where you extracted Birkly. You should see <code>Birkly Launch.app</code> next to the <code>admin</code> folder (and <code>start-server.sh</code> for advanced use).</p>
+                    <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If files are still inside the zip, extract first — double-clicking inside the archive will not work.</p>
+                </div>
+
                 <div class="step dev-terminal-path">
                     <div class="step-head"><span class="step-num">1</span><h4>Open a terminal in your Birkly folder</h4></div>
-                    <p>Mac: you can double-click <code>Birkly Launch.command</code> instead of the terminal steps below. Linux: run <code>./birkly-launch-linux</code> if present, or use <code>start-server.sh</code>.</p>
-                    <p>Otherwise open Terminal in the folder next to <code>admin/</code> and <code>start-server.sh</code>.</p>
+                    <p>Linux: run <code>./birkly-launch-linux</code> if present, or use <code>./start-server.sh</code>.</p>
+                    <p>Open Terminal in the folder next to <code>admin/</code> and <code>start-server.sh</code>.</p>
                     <details class="accordion">
                         <summary>How to open a terminal (Mac / Linux)</summary>
                         <div class="accordion-body">
@@ -431,6 +448,27 @@
                             </ol>
                         </div>
                     </div>
+                    <div class="mac-easy">
+                        <div class="file-action" style="margin-bottom:var(--space-4);">
+                            <span class="file-action-icon" aria-hidden="true">★</span>
+                            <div>
+                                <p><strong>Easiest:</strong> skip to step 3 and open <code>Birkly Launch.app</code>. It checks for PHP when it starts (install with Homebrew if needed — see below).</p>
+                            </div>
+                        </div>
+                        <div class="file-action">
+                            <span class="file-action-icon" aria-hidden="true">①</span>
+                            <div>
+                                <p><strong>Or</strong> run <code>./check-php.sh</code> in Terminal first.</p>
+                            </div>
+                        </div>
+                        <details class="accordion" style="margin-top:var(--space-3);">
+                            <summary>PHP not installed on Mac?</summary>
+                            <div class="accordion-body">
+                                <p>Install Homebrew if needed, then: <code>brew install php</code></p>
+                                <p>Run <code>./check-php.sh</code> again, or use <code>Birkly Launch.app</code>.</p>
+                            </div>
+                        </details>
+                    </div>
                     <div class="dev-terminal-path">
                         <p id="php-check-intro">Run the PHP check before starting the server:</p>
                         <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
@@ -461,6 +499,21 @@
                             </div>
                         </details>
                     </div>
+                    <div class="mac-easy">
+                        <div class="file-action">
+                            <span class="file-action-icon" aria-hidden="true">②</span>
+                            <div>
+                                <p>Double-click <code>Birkly Launch.app</code> (Terminal opens with the server — <strong>leave it open</strong>).</p>
+                                <p>Your browser opens when the server is ready. After a reboot, open the app again. Port settings: in Terminal, run <code>"./Birkly Launch.app/Contents/MacOS/birkly-launch" --setup</code> from your Birkly folder.</p>
+                            </div>
+                        </div>
+                        <details class="accordion" style="margin-top:var(--space-3);">
+                            <summary>Advanced: use <code>./start-server.sh</code> in Terminal</summary>
+                            <div class="accordion-body">
+                                <p>Same rules: keep the Terminal window open while you use Birkly.</p>
+                            </div>
+                        </details>
+                    </div>
                     <div class="dev-terminal-path">
                         <p id="start-server-intro">Run in the terminal and keep the window open:</p>
                         <div class="cmd-row"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
@@ -481,7 +534,9 @@
 
                 <div class="step local-shared-steps">
                     <div class="step-head"><span class="step-num">4</span><h4>Open this page through the server</h4></div>
-                    <p>After <code>Birkly Launch.exe</code> or <code>start-server.bat</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
+                    <p class="windows-easy">After <code>Birkly Launch.exe</code> or <code>start-server.bat</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
+                    <p class="mac-easy">After <code>Birkly Launch.app</code> or <code>./start-server.sh</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
+                    <p class="dev-terminal-path">After the server is running, open this site in your browser (not the <code>file://</code> tab):</p>
                     <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
                         <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
@@ -566,6 +621,20 @@
             return /Windows/i.test(navigator.userAgent || '');
         }
 
+        function isMac() {
+            return /Macintosh|Mac OS X/i.test(navigator.userAgent || '');
+        }
+
+        function localLauncherHint() {
+            if (isWindows()) {
+                return 'Double-click <code>Birkly Launch.exe</code> (or <code>check-php.bat</code> then <code>start-server.bat</code>) and keep that window open.';
+            }
+            if (isMac()) {
+                return 'Open <code>Birkly Launch.app</code> (or run <code>./check-php.sh</code> then <code>./start-server.sh</code> in Terminal) and keep that window open.';
+            }
+            return 'Run <code>./birkly-launch-linux</code> or <code>./start-server.sh</code> and keep that window open.';
+        }
+
         function isInsideZipArchive() {
             try {
                 const href = decodeURIComponent(window.location.href || '');
@@ -590,7 +659,7 @@
                 gate.className = 'status warn extract-gate visible';
                 gate.innerHTML = '<h3>Files look extracted — next, start the server</h3>'
                     + '<p>You opened this page from your folder (that is fine for reading). Birkly only works through <strong>http://localhost</strong> after the server is running.</p>'
-                    + '<ol class="action-steps"><li>Double-click <code>Birkly Launch.exe</code> (or <code>check-php.bat</code> then <code>start-server.bat</code>) and keep that window open.</li>'
+                    + '<ol class="action-steps"><li>' + localLauncherHint() + '</li>'
                     + '<li>Click <strong>Open via localhost</strong> in step 4 below — do not continue in this <code>file://</code> tab.</li></ol>';
                 return;
             }
@@ -601,6 +670,9 @@
         function applyOsLayout() {
             if (isWindows()) {
                 document.body.classList.add('is-windows');
+            }
+            if (isMac()) {
+                document.body.classList.add('is-mac');
             }
         }
 
@@ -958,7 +1030,7 @@
             updateCloudUrls();
 
             const localCard = document.querySelector('.path-card[data-path="local"]');
-            if (isWindows()) {
+            if (isWindows() || isMac()) {
                 showSteps('local', localCard);
             }
 

@@ -37,6 +37,33 @@ $shippedPluginFiles = $manifest['plugins_dir_shipped_files'] ?? ['plugins/README
 $runtimeSkeletonFiles = $manifest['runtime_skeleton_files'] ?? [];
 $executableFiles = $manifest['executable_files'] ?? ['start-server.sh'];
 $launcherReleaseFiles = $manifest['launcher_release_files'] ?? [];
+$launcherReleaseDirs = $manifest['launcher_release_dirs'] ?? [];
+
+$copyTree = function (string $srcDir, string $destDir) use (&$copyTree): void {
+    if (!is_dir($destDir)) {
+        mkdir($destDir, 0755, true);
+    }
+    $items = scandir($srcDir);
+    if ($items === false) {
+        return;
+    }
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+        $from = $srcDir . '/' . $item;
+        $to = $destDir . '/' . $item;
+        if (is_dir($from)) {
+            $copyTree($from, $to);
+        } else {
+            $parent = dirname($to);
+            if (!is_dir($parent)) {
+                mkdir($parent, 0755, true);
+            }
+            copy($from, $to);
+        }
+    }
+};
 
 $excludeRules = [];
 $includeExceptions = [];
@@ -154,6 +181,17 @@ foreach ($launcherReleaseFiles as $rel) {
         mkdir($destDir, 0755, true);
     }
     copy($src, $dest);
+}
+
+foreach ($launcherReleaseDirs as $rel) {
+    $rel = str_replace('\\', '/', $rel);
+    $src = $root . '/' . $rel;
+    if (!is_dir($src)) {
+        fwrite(STDERR, "[build-cms-release] WARN: launcher dir missing (skip): $rel\n");
+        continue;
+    }
+    $dest = $staging . '/' . $rel;
+    $copyTree($src, $dest);
 }
 
 foreach ($runtimeSkeletonFiles as $rel) {

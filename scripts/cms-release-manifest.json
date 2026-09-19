@@ -102,6 +102,9 @@
     "birkly-launch-linux",
     "Birkly Launch.command"
   ],
+  "launcher_release_dirs": [
+    "Birkly Launch.app"
+  ],
   "executable_files": [
     "start-server.sh",
     "start-server.bat",
@@ -112,7 +115,8 @@
     "birkly-launch-mac",
     "birkly-launch-mac-intel",
     "birkly-launch-linux",
-    "Birkly Launch.command"
+    "Birkly Launch.command",
+    "Birkly Launch.app/Contents/MacOS/birkly-launch"
   ],
   "fresh_install": {
     "active_plugins": [],
