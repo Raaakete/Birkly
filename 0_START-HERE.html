@@ -323,23 +323,8 @@
             </div>
 
             <div id="extract-gate" class="status error extract-gate" role="alert">
-                <h3>Stop — extract the zip first</h3>
-                <p>You are viewing this page <strong>inside the zip file</strong> or without a running server. Birkly cannot work until the files are extracted to a normal folder.</p>
-                <ol class="action-steps">
-                    <li><strong>Close this browser tab.</strong></li>
-                    <li>In <strong>File Explorer</strong> (the folder icon on your taskbar — not Chrome or Edge), find the Birkly zip you downloaded.</li>
-                    <li><strong>Right-click</strong> the zip → <strong>Extract All…</strong> → choose <strong>Desktop</strong> or <strong>Documents</strong> → Extract.</li>
-                    <li>Open the <strong>new folder</strong> (same name as the zip, <em>not</em> the zip itself).</li>
-                    <li>Double-click <code>0_START-HERE.html</code> in that folder (same file the invite email mentions).</li>
-                </ol>
-                <div class="wrong-hint">
-                    <strong>Common mistakes:</strong>
-                    <ul style="margin:0.5rem 0 0 1.25rem;">
-                        <li>Opening files <em>inside</em> the zip without <strong>Extract All</strong> (use <strong>Unblock</strong> on the zip in Properties if Windows warns you).</li>
-                        <li>Typing <code>cmd</code> in the browser — use File Explorer and the <code>.bat</code> files instead.</li>
-                        <li>Closing the blue security screen without choosing <strong>More info</strong> → <strong>Run anyway</strong>.</li>
-                    </ul>
-                </div>
+                <h3>Extract the zip first</h3>
+                <p>You are still inside the archive. Extract to a normal folder, then open <code>0_START-HERE.html</code> from that folder.</p>
             </div>
 
             <div id="folder-status" class="status" role="status" aria-live="polite"></div>
@@ -350,7 +335,7 @@
                 <a href="https://docs.birkly.com/00-overview/getting-started.html" target="_blank" rel="noopener">Birkly getting-started guide</a>.
             </p>
 
-            <p style="font-weight:600;margin-bottom:var(--space-3);">How will you run Birkly?</p>
+            <p style="font-weight:600;margin-bottom:var(--space-3);">Where will you run Birkly?</p>
             <div class="path-grid" id="path-grid">
                 <div class="path-card" data-path="local" tabindex="0" role="button" aria-pressed="false">
                     <h3>On your computer</h3>
@@ -364,19 +349,17 @@
 
             <!-- Local -->
             <div class="steps" id="local-steps">
-                <p class="setup-path-label">Choose <em>one</em> setup path (not every step below — pick a column):</p>
                 <div class="setup-path-grid" id="setup-path-grid">
                     <div class="setup-path-card selected" data-local-method="birkly" tabindex="0" role="button" aria-pressed="true">
                         <span class="badge">Recommended</span>
-                        <h3>Built-in PHP server</h3>
-                        <p>Use Birkly Launch (app or .exe). Manual terminal steps are optional.</p>
+                        <h3>Built-in server</h3>
+                        <p>Birkly Launch</p>
                     </div>
                     <div class="setup-path-card" data-local-method="stack" tabindex="0" role="button" aria-pressed="false">
-                        <h3>XAMPP / Laragon / MAMP</h3>
-                        <p>Only if you already use one of these apps for PHP.</p>
+                        <h3>XAMPP / MAMP / Laragon</h3>
+                        <p>You already use a PHP stack</p>
                     </div>
                 </div>
-                <p class="setup-path-or">You chose one path above — follow only that path’s steps</p>
 
                 <div class="local-method-panel active" id="local-method-birkly">
 
@@ -384,25 +367,23 @@
                     <div class="step-head"><span class="step-num">1</span><h4>Start Birkly</h4></div>
 
                     <div class="windows-easy">
-                        <p>Extract the zip first (not open files inside the archive). In your Birkly folder next to <code>admin/</code>, double-click <code>Birkly Launch.exe</code> and <strong>leave the window open</strong>. Your browser opens when the server is ready.</p>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Windows SmartScreen: <strong>More info</strong> → <strong>Run anyway</strong>. Unblock the zip in Properties before extracting if needed.</p>
+                        <p>Double-click <code>Birkly Launch.exe</code> (next to <code>admin/</code>). Leave the window open.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Blocked? SmartScreen → <strong>More info</strong> → <strong>Run anyway</strong>.</p>
                     </div>
 
                     <div class="mac-easy">
-                        <p>Extract the zip first. In Finder, open your Birkly folder (next to <code>admin/</code>). You need <strong><code>Birkly Launch.app</code></strong> — if you only see <code>Birkly Launch.command</code>, download the <strong>latest</strong> Birkly zip from your invite (older builds did not include the app).</p>
-                        <p style="margin-top:var(--space-3);"><strong>First time on Mac (required):</strong> macOS blocks unsigned downloads. Open <strong>Terminal</strong> in this folder (Finder → right-click the folder → <em>New Terminal at Folder</em>, or drag the folder onto Terminal), paste this once, press Enter:</p>
+                        <p>Terminal in this folder → paste → Enter:</p>
                         <div class="cmd-row"><pre class="cmd" id="cmd-mac-launch">xattr -cr "Birkly Launch.app" 2>/dev/null; open "Birkly Launch.app"</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-launch">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">That clears the “cannot be opened” / malware warning. <strong>Do not double-click <code>Birkly Launch.command</code></strong> — it hits the same block. After the one-time Terminal step, use the <code>.app</code> only. Leave the Terminal window open while you use Birkly.</p>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);">Already use PHP via Homebrew or Herd? The launcher uses your <code>php</code> on PATH. If PHP is missing, run <code>brew install php</code> and try again.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Needs <code>Birkly Launch.app</code> here — use the zip from your <strong>invite</strong>, not GitHub “Source code”. Keep Terminal open.</p>
                     </div>
 
                     <div class="linux-easy">
-                        <p>In a terminal next to <code>admin/</code>, run <code>./birkly-launch-linux</code> if present, otherwise <code>./start-server.sh</code>. Keep the window open.</p>
+                        <p>Run <code>./birkly-launch-linux</code> or <code>./start-server.sh</code>. Leave the window open.</p>
                     </div>
                 </div>
 
                 <details class="accordion easy-launcher-advanced">
-                    <summary>Advanced: check PHP and start the server manually</summary>
+                    <summary>Advanced (terminal / .bat instead of Launch)</summary>
                     <div class="accordion-body">
                         <div class="windows-easy">
                             <p>Double-click <code>check-php.bat</code>, then <code>start-server.bat</code>. Do not use <code>start-server.sh</code> on Windows.</p>
@@ -524,16 +505,6 @@
             return /Macintosh|Mac OS X/i.test(navigator.userAgent || '');
         }
 
-        function localLauncherHint() {
-            if (isWindows()) {
-                return 'Double-click <code>Birkly Launch.exe</code> and keep that window open.';
-            }
-            if (isMac()) {
-                return 'In Terminal, run the copy-paste command from step 1 (clears macOS block, then opens <code>Birkly Launch.app</code>). Keep that window open.';
-            }
-            return 'Run <code>./birkly-launch-linux</code> or <code>./start-server.sh</code> and keep that window open.';
-        }
-
         function isInsideZipArchive() {
             try {
                 const href = decodeURIComponent(window.location.href || '');
@@ -556,10 +527,7 @@
             }
             if (isFileProtocol()) {
                 gate.className = 'status warn extract-gate visible';
-                gate.innerHTML = '<h3>Files look extracted — next, start the server</h3>'
-                    + '<p>You opened this page from your folder (that is fine for reading). Birkly only works through <strong>http://localhost</strong> after the server is running.</p>'
-                    + '<ol class="action-steps"><li>' + localLauncherHint() + '</li>'
-                    + '<li>Click <strong>Open via localhost</strong> in step 2 below — do not continue in this <code>file://</code> tab.</li></ol>';
+                gate.innerHTML = '<p><strong>Next:</strong> step 1 (start server), then step 2 (<strong>Open via localhost</strong>). This <code>file://</code> tab will not run Birkly.</p>';
                 return;
             }
             gate.classList.remove('visible');
@@ -643,11 +611,11 @@
             }
             if (!hasAdmin) {
                 box.className = 'status error visible';
-                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/</code>. Re-extract the zip so <code>0_START-HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
+                box.innerHTML = '<h3>Wrong folder</h3><p>Open the folder where <code>0_START-HERE.html</code> sits next to <code>admin/</code>.</p>';
                 return 'wrong';
             }
             box.className = 'status warn visible';
-            box.innerHTML = '<h3>Almost there</h3><p>Found <code>admin/</code> but some files are missing. Re-extract the zip if setup fails.</p>';
+            box.innerHTML = '<h3>Almost there</h3><p>Found <code>admin/</code> but some files are missing.</p>';
             return 'partial';
         }
 
@@ -682,11 +650,11 @@
             }
             if (!hasAdmin) {
                 box.className = 'status error visible';
-                box.innerHTML = '<h3>Wrong folder</h3><p>Could not find <code>admin/</code>. Re-extract the zip so <code>0_START-HERE.html</code> sits next to <code>admin/</code>, <code>api/</code>, and <code>core/</code>.</p>';
+                box.innerHTML = '<h3>Wrong folder</h3><p>Open the folder where <code>0_START-HERE.html</code> sits next to <code>admin/</code>.</p>';
                 return 'wrong';
             }
             box.className = 'status warn visible';
-            box.innerHTML = '<h3>Almost there</h3><p>Found <code>admin/</code> but some files are missing. Re-extract the zip if setup fails.</p>';
+            box.innerHTML = '<h3>Almost there</h3><p>Found <code>admin/</code> but some files are missing.</p>';
             return 'partial';
         }
 
