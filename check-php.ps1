@@ -1,5 +1,6 @@
 #Requires -Version 5.1
 $ErrorActionPreference = 'Stop'
+$Global:BirklyWindowsScriptRoot = (Resolve-Path -LiteralPath $PSScriptRoot).Path
 . (Join-Path $PSScriptRoot 'scripts\windows-php-common.ps1')
 
 $Root = Get-BirklyRoot
@@ -36,7 +37,7 @@ if (-not (Test-BirklyPhpExtensions -PhpExe $phpExe)) {
 }
 
 if (-not (Test-Path -LiteralPath (Join-Path $Root 'index.php'))) {
-    Write-Host "[Birkly] index.php not found. Run this from your Birkly folder."
+    Write-BirklyWrongFolderHint -Root $Root
     exit 1
 }
 
