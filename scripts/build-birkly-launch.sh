@@ -98,13 +98,17 @@ else
   copy_from_vendor
 fi
 
-assemble_mac_app
-
-MACOS_BIN="$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch"
-if [[ ! -f "$MACOS_BIN" ]]; then
-  echo "[build-birkly-launch] FAIL: Birkly Launch.app not ready (no MacOS binary)" >&2
-  exit 1
+if [[ "${BIRKLY_LAUNCH_SKIP_MAC:-}" == "1" ]]; then
+  echo "[build-birkly-launch] skipping macOS .app (customer zip — use start-server.sh on Mac)"
+  rm -rf "$ROOT/Birkly Launch.app" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel" 2>/dev/null || true
+else
+  assemble_mac_app
+  MACOS_BIN="$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch"
+  if [[ ! -f "$MACOS_BIN" ]]; then
+    echo "[build-birkly-launch] FAIL: Birkly Launch.app not ready (no MacOS binary)" >&2
+    exit 1
+  fi
+  chmod 755 "$MACOS_BIN" 2>/dev/null || true
 fi
-chmod 755 "$MACOS_BIN" 2>/dev/null || true
 
 echo "[build-birkly-launch] OK"

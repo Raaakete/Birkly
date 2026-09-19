@@ -353,7 +353,9 @@
                     <div class="setup-path-card selected" data-local-method="birkly" tabindex="0" role="button" aria-pressed="true">
                         <span class="badge">Recommended</span>
                         <h3>Built-in server</h3>
-                        <p>Birkly Launch</p>
+                        <p class="windows-easy">Birkly Launch</p>
+                        <p class="mac-easy">Terminal + PHP</p>
+                        <p class="linux-easy">Birkly Launch</p>
                     </div>
                     <div class="setup-path-card" data-local-method="stack" tabindex="0" role="button" aria-pressed="false">
                         <h3>XAMPP / MAMP / Laragon</h3>
@@ -362,10 +364,6 @@
                 </div>
 
                 <div class="local-method-panel active" id="local-method-birkly">
-
-                <div class="status warn mac-easy" style="margin-bottom:var(--space-4);padding:var(--space-4);font-size:0.9375rem;">
-                    <strong>Mac won’t open the app?</strong> Messages like <em>beschädigt</em> / damaged (often after <strong>Chrome</strong>) or <em>kann nicht geöffnet werden</em> / cannot be opened (Safari or <strong>Intel Mac</strong>) are usually fixable in step&nbsp;1 below — not a broken Birkly download. Right-click → Open does <em>not</em> fix the damaged dialog.
-                </div>
 
                 <div class="step">
                     <div class="step-head"><span class="step-num">1</span><h4>Start Birkly</h4></div>
@@ -376,17 +374,12 @@
                     </div>
 
                     <div class="mac-easy">
-                        <p><strong>1.</strong> Terminal in this folder → paste → Enter (once per zip download):</p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-unquarantine">xattr -cr . &amp;&amp; bash scripts/mac-open-birkly-launch.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-unquarantine">Copy</button></div>
-                        <p style="margin-top:var(--space-3);"><strong>2.</strong> On <strong>Apple Silicon</strong>, you can also double-click <code>Birkly Launch.app</code> after step&nbsp;1. Quit from the Dock when done.</p>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);"><strong>Intel Mac:</strong> step&nbsp;1 starts the Intel launcher for you (do not double-click the app). <strong>Apple Silicon:</strong> step&nbsp;1 clears quarantine and opens the app.</p>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Bigger zip? It includes launchers for Mac and Windows (~12&nbsp;MB).</p>
-                        <details class="accordion" style="margin-top:var(--space-3);">
-                            <summary>Prefer no Terminal?</summary>
-                            <div class="accordion-body">
-                                <p>Use <strong>Advanced</strong> below → <code>./start-server.sh</code> (Herd, Homebrew, or MAMP PHP). Safari alone does not guarantee the app opens on every Mac.</p>
-                            </div>
-                        </details>
+                        <p>Open <strong>Terminal</strong> in this folder (Finder: select the Birkly folder → hold <strong>Control</strong> → click → <strong>New Terminal at Folder</strong>).</p>
+                        <p style="margin-top:var(--space-3);">Run these two commands (Copy each line, paste in Terminal, press Enter):</p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-php-check">Copy</button></div>
+                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-start">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-start">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave Terminal open while you use Birkly. PHP missing? Install <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a> or <code>brew install php</code>, then run <code>./check-php.sh</code> again.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">We do not ship a Mac double-click launcher — macOS blocks unsigned apps from browser downloads. Use the stack path (MAMP/Herd) if you prefer not to use Terminal.</p>
                     </div>
 
                     <div class="linux-easy">
@@ -394,21 +387,17 @@
                     </div>
                 </div>
 
-                <details class="accordion easy-launcher-advanced">
+                <details class="accordion easy-launcher-advanced windows-easy linux-easy">
                     <summary>Advanced (terminal / .bat instead of Launch)</summary>
                     <div class="accordion-body">
                         <div class="windows-easy">
                             <p>Double-click <code>check-php.bat</code>, then <code>start-server.bat</code>. Do not use <code>start-server.sh</code> on Windows.</p>
                             <p>If PHP is missing: <code>install-php-windows.bat</code> → Laragon, then <code>check-php.bat</code> again.</p>
                         </div>
-                        <div class="mac-easy">
-                            <p>Terminal: <code>./check-php.sh</code> then <code>./start-server.sh</code>.</p>
-                            <p>PHP missing: <code>brew install php</code></p>
-                        </div>
                         <div class="linux-easy">
                             <p><code>./check-php.sh</code> then <code>./start-server.sh</code></p>
                         </div>
-                        <div class="dev-terminal-path" style="margin-top:var(--space-3);">
+                        <div class="dev-terminal-path windows-easy linux-easy" style="margin-top:var(--space-3);">
                             <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
                             <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
                             <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>

@@ -12,6 +12,6 @@ Refresh after launcher source changes:
 git add release/launchers && git commit -m "chore: refresh vendored launchers"
 ```
 
-**On Linux (Ops / CI):** copies from this folder; `.app` is arm64-only until a Mac refresh lands a **universal** binary. Intel Macs use `birkly-launch-mac-intel` via `bash scripts/mac-open-birkly-launch.sh`.
+**Customer zip:** Windows `.exe` and Linux binary only — macOS uses `start-server.sh` (see `0_START-HERE.html`). Dev builds can still produce `Birkly Launch.app` when `BIRKLY_LAUNCH_SKIP_MAC` is unset.
 
 Do not edit binaries manually.
