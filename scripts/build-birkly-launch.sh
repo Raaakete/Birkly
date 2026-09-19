@@ -55,25 +55,22 @@ copy_from_vendor() {
     cp "$VENDOR/$f" "$ROOT/$f"
     chmod 755 "$ROOT/$f" 2>/dev/null || true
   done
-  if [[ ! -d "$VENDOR/Birkly Launch.app" ]]; then
-    echo "[build-birkly-launch] FAIL: missing vendored Birkly Launch.app" >&2
-    return 1
-  fi
-  rm -rf "$ROOT/Birkly Launch.app"
-  cp -R "$VENDOR/Birkly Launch.app" "$ROOT/"
   return 0
 }
 
 if command -v go >/dev/null 2>&1; then
   build_with_go
-  assemble_mac_app
 else
   copy_from_vendor
 fi
 
-if [[ ! -x "$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch" ]]; then
-  echo "[build-birkly-launch] FAIL: Birkly Launch.app not ready" >&2
+assemble_mac_app
+
+MACOS_BIN="$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch"
+if [[ ! -f "$MACOS_BIN" ]]; then
+  echo "[build-birkly-launch] FAIL: Birkly Launch.app not ready (no MacOS binary)" >&2
   exit 1
 fi
+chmod 755 "$MACOS_BIN" 2>/dev/null || true
 
 echo "[build-birkly-launch] OK"
