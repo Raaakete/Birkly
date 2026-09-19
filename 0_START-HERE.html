@@ -375,18 +375,20 @@
                     <h4 style="margin-bottom:var(--space-2);font-size:1rem;">Windows says the file may be unsafe?</h4>
                     <p style="margin-bottom:var(--space-2);">That is <strong>normal</strong> for downloaded software. Birkly is not signed with a Microsoft certificate yet. The <code>.bat</code> files only start PHP on <strong>your computer</strong> (localhost) — they do not send your files to us.</p>
                     <p style="margin-bottom:var(--space-2);"><strong>Before you extract the zip:</strong> In Downloads, right-click the Birkly <code>.zip</code> → <strong>Properties</strong> → if you see <strong>Unblock</strong>, tick it → <strong>Apply</strong> → then <strong>Extract All</strong>.</p>
-                    <p style="margin-bottom:0;"><strong>When you double-click a <code>.bat</code> file:</strong> On the blue “Windows protected your PC” screen, click <strong>More info</strong> → <strong>Run anyway</strong>. Or right-click the file → <strong>Run</strong>.</p>
+                    <p style="margin-bottom:var(--space-2);"><strong>When you double-click <code>Birkly Launch.exe</code> or a <code>.bat</code> file:</strong> On the blue “Windows protected your PC” screen, click <strong>More info</strong> → <strong>Run anyway</strong>. Or right-click the file → <strong>Run</strong>.</p>
+                    <p style="margin-bottom:0;">Birkly is not code-signed yet — the same SmartScreen steps apply to the launcher and the <code>.bat</code> helpers.</p>
                 </div>
 
                 <div class="step windows-easy">
                     <div class="step-head"><span class="step-num">1</span><h4>Open your Birkly folder</h4></div>
-                    <p>In <strong>File Explorer</strong> (folder icon on the taskbar), open the folder where you extracted Birkly. You should see files named <code>check-php.bat</code> and <code>start-server.bat</code> next to the <code>admin</code> folder.</p>
+                    <p>In <strong>File Explorer</strong> (folder icon on the taskbar), open the folder where you extracted Birkly. You should see <code>Birkly Launch.exe</code> (recommended), plus <code>check-php.bat</code> and <code>start-server.bat</code>, next to the <code>admin</code> folder.</p>
                     <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If you only see these files <em>inside</em> a zip, go back and use <strong>Extract All</strong> first (see security tip above for <strong>Unblock</strong>).</p>
                 </div>
 
                 <div class="step dev-terminal-path">
                     <div class="step-head"><span class="step-num">1</span><h4>Open a terminal in your Birkly folder</h4></div>
-                    <p>Mac/Linux: open Terminal in the folder next to <code>admin/</code> and <code>start-server.sh</code>.</p>
+                    <p>Mac: you can double-click <code>Birkly Launch.command</code> instead of the terminal steps below. Linux: run <code>./birkly-launch-linux</code> if present, or use <code>start-server.sh</code>.</p>
+                    <p>Otherwise open Terminal in the folder next to <code>admin/</code> and <code>start-server.sh</code>.</p>
                     <details class="accordion">
                         <summary>How to open a terminal (Mac / Linux)</summary>
                         <div class="accordion-body">
@@ -399,10 +401,16 @@
                 <div class="step">
                     <div class="step-head"><span class="step-num">2</span><h4>Check PHP is installed</h4></div>
                     <div class="windows-easy">
+                        <div class="file-action" style="margin-bottom:var(--space-4);">
+                            <span class="file-action-icon" aria-hidden="true">★</span>
+                            <div>
+                                <p><strong>Easiest:</strong> skip to step 3 and double-click <code>Birkly Launch.exe</code>. It checks for PHP when it starts and can open <code>install-php-windows.bat</code> if needed.</p>
+                            </div>
+                        </div>
                         <div class="file-action">
                             <span class="file-action-icon" aria-hidden="true">①</span>
                             <div>
-                                <p>Double-click <code>check-php.bat</code> in File Explorer.</p>
+                                <p><strong>Or</strong> double-click <code>check-php.bat</code> in File Explorer first.</p>
                                 <p>Wait for <strong>SUCCESS</strong>. If it fails, double-click <code>install-php-windows.bat</code> and follow the prompts, then run <code>check-php.bat</code> again.</p>
                             </div>
                         </div>
@@ -442,10 +450,16 @@
                         <div class="file-action">
                             <span class="file-action-icon" aria-hidden="true">②</span>
                             <div>
-                                <p>Double-click <code>start-server.bat</code>.</p>
-                                <p>A black window opens — <strong>leave it open</strong>. Do not double-click <code>start-server.sh</code> on Windows.</p>
+                                <p>Double-click <code>Birkly Launch.exe</code> (opens your browser when the server is ready).</p>
+                                <p>A window opens — <strong>leave it open</strong>. After a reboot, double-click the launcher again. Port settings: run <code>Birkly Launch.exe --setup</code> from a terminal, or keep using <code>start-server.bat</code> below.</p>
                             </div>
                         </div>
+                        <details class="accordion" style="margin-top:var(--space-3);">
+                            <summary>Advanced: use <code>start-server.bat</code> instead</summary>
+                            <div class="accordion-body">
+                                <p>Double-click <code>start-server.bat</code>. Same rules: leave the window open. Do not double-click <code>start-server.sh</code> on Windows.</p>
+                            </div>
+                        </details>
                     </div>
                     <div class="dev-terminal-path">
                         <p id="start-server-intro">Run in the terminal and keep the window open:</p>
@@ -467,7 +481,7 @@
 
                 <div class="step local-shared-steps">
                     <div class="step-head"><span class="step-num">4</span><h4>Open this page through the server</h4></div>
-                    <p>After <code>start-server.bat</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
+                    <p>After <code>Birkly Launch.exe</code> or <code>start-server.bat</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
                     <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
                         <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
@@ -576,7 +590,7 @@
                 gate.className = 'status warn extract-gate visible';
                 gate.innerHTML = '<h3>Files look extracted — next, start the server</h3>'
                     + '<p>You opened this page from your folder (that is fine for reading). Birkly only works through <strong>http://localhost</strong> after the server is running.</p>'
-                    + '<ol class="action-steps"><li>Double-click <code>check-php.bat</code>, then <code>start-server.bat</code> (keep that window open).</li>'
+                    + '<ol class="action-steps"><li>Double-click <code>Birkly Launch.exe</code> (or <code>check-php.bat</code> then <code>start-server.bat</code>) and keep that window open.</li>'
                     + '<li>Click <strong>Open via localhost</strong> in step 4 below — do not continue in this <code>file://</code> tab.</li></ol>';
                 return;
             }
