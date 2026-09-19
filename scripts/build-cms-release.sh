@@ -11,6 +11,10 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
+if [[ -x "$ROOT/scripts/build-birkly-launch.sh" ]]; then
+  "$ROOT/scripts/build-birkly-launch.sh" || echo "[build-cms-release] WARN: launcher build failed; zip may omit Birkly Launch binaries" >&2
+fi
+
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
 
@@ -32,6 +36,7 @@ $excludes = $manifest['excludes'] ?? [];
 $shippedPluginFiles = $manifest['plugins_dir_shipped_files'] ?? ['plugins/README.md', 'plugins/.gitkeep'];
 $runtimeSkeletonFiles = $manifest['runtime_skeleton_files'] ?? [];
 $executableFiles = $manifest['executable_files'] ?? ['start-server.sh'];
+$launcherReleaseFiles = $manifest['launcher_release_files'] ?? [];
 
 $excludeRules = [];
 $includeExceptions = [];
@@ -134,6 +139,21 @@ foreach ($shippedPluginFiles as $rel) {
     if (!is_file($dest)) {
         copy($src, $dest);
     }
+}
+
+foreach ($launcherReleaseFiles as $rel) {
+    $rel = str_replace('\\', '/', $rel);
+    $src = $root . '/' . $rel;
+    if (!is_file($src)) {
+        fwrite(STDERR, "[build-cms-release] WARN: launcher file missing (skip): $rel\n");
+        continue;
+    }
+    $dest = $staging . '/' . $rel;
+    $destDir = dirname($dest);
+    if (!is_dir($destDir)) {
+        mkdir($destDir, 0755, true);
+    }
+    copy($src, $dest);
 }
 
 foreach ($runtimeSkeletonFiles as $rel) {

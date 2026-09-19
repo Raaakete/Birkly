@@ -77,6 +77,12 @@ tmp/
 cache/
 *.cache
 
+# Built local launcher binaries (scripts/build-birkly-launch.sh)
+/Birkly Launch.exe
+/birkly-launch-mac
+/birkly-launch-mac-intel
+/birkly-launch-linux
+
 # Upload directories (user content)
 uploads/
 
