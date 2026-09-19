@@ -169,8 +169,9 @@
         const labels = {
             claude: mcpT('ai_conn_desktop_app_claude', 'Claude Desktop'),
             cursor: mcpT('ai_conn_desktop_app_cursor', 'Cursor'),
-            vscode: mcpT('ai_conn_desktop_app_vscode', 'VS Code (Copilot)'),
-            gemini: mcpT('ai_conn_desktop_app_gemini', 'Gemini CLI')
+            copilot: mcpT('ai_conn_desktop_app_copilot', 'Microsoft Copilot (CLI)'),
+            gemini: mcpT('ai_conn_desktop_app_gemini', 'Gemini CLI'),
+            vscode: mcpT('ai_conn_desktop_app_vscode', 'VS Code')
         };
         return labels[target] || labels.claude;
     }
@@ -327,11 +328,14 @@
                             <button type="button" class="desktop-mcp-app-tile" data-desktop-target="cursor" aria-pressed="false">
                                 <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_cursor', 'Cursor'))}</span>
                             </button>
-                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="vscode" aria-pressed="false">
-                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_vscode', 'VS Code (Copilot)'))}</span>
+                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="copilot" aria-pressed="false">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_copilot', 'Microsoft Copilot (CLI)'))}</span>
                             </button>
                             <button type="button" class="desktop-mcp-app-tile" data-desktop-target="gemini" aria-pressed="false">
                                 <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_gemini', 'Gemini CLI'))}</span>
+                            </button>
+                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="vscode" aria-pressed="false">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_vscode', 'VS Code'))}</span>
                             </button>
                         </div>
                     </div>
@@ -356,12 +360,12 @@
                                 <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="cursor" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
-                        <div data-desktop-panel="vscode" hidden>
-                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_vscode', 'Restart VS Code after running the command.'))}</p>
-                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_vscode', 'VS Code → Command Palette → “MCP: List Servers” — look for “birkly”. GitHub Copilot can use MCP tools when enabled.'))}</p>
+                        <div data-desktop-panel="copilot" hidden>
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_copilot', 'Start a new Copilot CLI session after running the command.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_copilot', 'Requires the Copilot CLI (`copilot` in Terminal or PowerShell). Run /mcp or copilot mcp list — “birkly” should appear. This is not the Windows Copilot sidebar app.'))}</p>
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="vscode" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="copilot" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                         <div data-desktop-panel="gemini" hidden>
@@ -370,6 +374,14 @@
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
                                 <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="gemini" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                            </div></details>
+                        </div>
+                        <div data-desktop-panel="vscode" hidden>
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_vscode', 'Restart VS Code after running the command.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_vscode', 'VS Code → Command Palette → “MCP: List Servers” — look for “birkly”. Copilot in VS Code can use MCP tools when agent mode is enabled.'))}</p>
+                            <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
+                            <div class="u-pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="vscode" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
                             </div></details>
                         </div>
                     </div>

@@ -697,7 +697,7 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
  */
 function birkly_mcp_desktop_valid_targets(): array
 {
-    return ['claude', 'cursor', 'vscode', 'gemini'];
+    return ['claude', 'cursor', 'copilot', 'gemini', 'vscode'];
 }
 
 function birkly_mcp_desktop_is_valid_target(string $target): bool
@@ -761,6 +761,17 @@ function birkly_mcp_desktop_client_config_snippet(string $credentialsPath, ?stri
             ],
         ];
     }
+    if ($target === 'copilot') {
+        return [
+            'mcpServers' => [
+                'birkly' => array_merge([
+                    'type' => 'local',
+                    'env' => [],
+                    'tools' => ['*'],
+                ], $entry),
+            ],
+        ];
+    }
 
     return [
         'mcpServers' => [
@@ -781,9 +792,16 @@ function birkly_mcp_desktop_install_target_meta(string $target): array
             'win_path' => '%USERPROFILE%\\.cursor\\mcp.json',
         ];
     }
+    if ($target === 'copilot') {
+        return [
+            'app_label' => 'Microsoft Copilot (CLI)',
+            'mac_path' => '~/.copilot/mcp-config.json',
+            'win_path' => '%USERPROFILE%\\.copilot\\mcp-config.json',
+        ];
+    }
     if ($target === 'vscode') {
         return [
-            'app_label' => 'VS Code (GitHub Copilot)',
+            'app_label' => 'Visual Studio Code',
             'mac_path' => '~/Library/Application Support/Code/User/mcp.json',
             'win_path' => '%APPDATA%\\Code\\User\\mcp.json',
         ];
@@ -894,6 +912,9 @@ function birkly_mcp_desktop_app_config_path(string $target): ?string
         if ($target === 'cursor') {
             return $home . DIRECTORY_SEPARATOR . '.cursor' . DIRECTORY_SEPARATOR . 'mcp.json';
         }
+        if ($target === 'copilot') {
+            return $home . DIRECTORY_SEPARATOR . '.copilot' . DIRECTORY_SEPARATOR . 'mcp-config.json';
+        }
         if ($target === 'gemini') {
             return $home . DIRECTORY_SEPARATOR . '.gemini' . DIRECTORY_SEPARATOR . 'settings.json';
         }
@@ -914,6 +935,9 @@ function birkly_mcp_desktop_app_config_path(string $target): ?string
 
     if ($target === 'cursor') {
         return $home . '/.cursor/mcp.json';
+    }
+    if ($target === 'copilot') {
+        return $home . '/.copilot/mcp-config.json';
     }
     if ($target === 'gemini') {
         return $home . '/.gemini/settings.json';
@@ -1084,6 +1108,7 @@ function birkly_mcp_desktop_helper_download_names(): array
     foreach (birkly_mcp_desktop_valid_targets() as $target) {
         $label = match ($target) {
             'cursor' => 'Cursor',
+            'copilot' => 'Copilot',
             'vscode' => 'VS-Code',
             'gemini' => 'Gemini',
             default => 'Claude',
