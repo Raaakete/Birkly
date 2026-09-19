@@ -324,7 +324,12 @@
                     <li>Double-click <code>0_START-HERE.html</code> in that folder. You can also read <code>OPEN-ME-FIRST.txt</code>.</li>
                 </ol>
                 <div class="wrong-hint">
-                    <strong>Common mistake:</strong> typing <code>cmd</code> in the browser address bar or in Windows Search without opening your Birkly folder first. You do <em>not</em> need to type commands for the easy setup — use the <code>.bat</code> files in your folder instead.
+                    <strong>Common mistakes:</strong>
+                    <ul style="margin:0.5rem 0 0 1.25rem;">
+                        <li>Opening files <em>inside</em> the zip without <strong>Extract All</strong> (use <strong>Unblock</strong> on the zip in Properties if Windows warns you).</li>
+                        <li>Typing <code>cmd</code> in the browser — use File Explorer and the <code>.bat</code> files instead.</li>
+                        <li>Closing the blue security screen without choosing <strong>More info</strong> → <strong>Run anyway</strong>.</li>
+                    </ul>
                 </div>
             </div>
 
@@ -366,10 +371,17 @@
 
                 <div class="local-method-panel active" id="local-method-birkly">
 
+                <div class="status info windows-easy" style="margin-bottom:var(--space-5);padding:var(--space-4);">
+                    <h4 style="margin-bottom:var(--space-2);font-size:1rem;">Windows says the file may be unsafe?</h4>
+                    <p style="margin-bottom:var(--space-2);">That is <strong>normal</strong> for downloaded software. Birkly is not signed with a Microsoft certificate yet. The <code>.bat</code> files only start PHP on <strong>your computer</strong> (localhost) — they do not send your files to us.</p>
+                    <p style="margin-bottom:var(--space-2);"><strong>Before you extract the zip:</strong> In Downloads, right-click the Birkly <code>.zip</code> → <strong>Properties</strong> → if you see <strong>Unblock</strong>, tick it → <strong>Apply</strong> → then <strong>Extract All</strong>.</p>
+                    <p style="margin-bottom:0;"><strong>When you double-click a <code>.bat</code> file:</strong> On the blue “Windows protected your PC” screen, click <strong>More info</strong> → <strong>Run anyway</strong>. Or right-click the file → <strong>Run</strong>.</p>
+                </div>
+
                 <div class="step windows-easy">
                     <div class="step-head"><span class="step-num">1</span><h4>Open your Birkly folder</h4></div>
-                    <p>In <strong>File Explorer</strong>, open the folder where you extracted Birkly. You should see files named <code>check-php.bat</code> and <code>start-server.bat</code> next to <code>admin</code> (a folder).</p>
-                    <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If you only see these files <em>inside</em> a zip, go back and use <strong>Extract All</strong> first.</p>
+                    <p>In <strong>File Explorer</strong> (folder icon on the taskbar), open the folder where you extracted Birkly. You should see files named <code>check-php.bat</code> and <code>start-server.bat</code> next to the <code>admin</code> folder.</p>
+                    <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If you only see these files <em>inside</em> a zip, go back and use <strong>Extract All</strong> first (see security tip above for <strong>Unblock</strong>).</p>
                 </div>
 
                 <div class="step dev-terminal-path">
@@ -395,9 +407,17 @@
                             </div>
                         </div>
                         <div class="troubleshoot">
-                            <h5>If you see “PHP is not installed” or “command not found”</h5>
+                            <h5>If Windows will not let you open the .bat file</h5>
                             <ol>
-                                <li>Double-click <code>install-php-windows.bat</code></li>
+                                <li>Unblock the <strong>zip</strong> before extracting (Properties → Unblock), or right-click the <code>.bat</code> → Properties → Unblock</li>
+                                <li>SmartScreen: <strong>More info</strong> → <strong>Run anyway</strong></li>
+                                <li>Work/school PC: your IT policy may block scripts — use Laragon or ask IT</li>
+                            </ol>
+                        </div>
+                        <div class="troubleshoot" style="margin-top:var(--space-3);border-color:#fcd34d;background:#fffbeb;">
+                            <h5 style="color:var(--warning-700);">If you see “PHP is not installed” or “command not found”</h5>
+                            <ol>
+                                <li>Double-click <code>install-php-windows.bat</code> (same SmartScreen steps as above)</li>
                                 <li>Press <strong>1</strong> for Laragon (easiest), install it, then run <code>check-php.bat</code> again</li>
                                 <li>Do not paste commands into the browser — only use File Explorer</li>
                             </ol>

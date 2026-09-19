@@ -6,6 +6,10 @@ echo.
 echo ============================================================
 echo   Birkly - PHP check
 echo ============================================================
+echo   Safe local helper from your Birkly folder only.
+echo   If Windows blocked you: right-click this file -^> Run,
+echo   or on SmartScreen choose More info, then Run anyway.
+echo ============================================================
 echo.
 
 where php >nul 2>&1
