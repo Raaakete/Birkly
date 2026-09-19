@@ -45,7 +45,7 @@ Official plugin IDs and marketplace slugs are defined in `scripts/cms-release-ma
 
 ### CMS release zip + local launcher
 
-`build-cms-release.sh` calls `build-birkly-launch.sh` when `go` is available, then copies launcher binaries (`launcher_release_files`) and `Birkly Launch.app` (`launcher_release_dirs`) into the zip. `start-server.bat` / `start-server.sh` are unchanged.
+`build-cms-release.sh` calls `build-birkly-launch.sh` (Windows + Linux launchers only; Mac uses `start-server.sh` in the zip). Copies `launcher_release_files` into the zip. `start-server.bat` / `start-server.sh` are unchanged.
 
 ```bash
 ./scripts/build-birkly-launch.sh   # uses Go, or copies from release/launchers/ on Ops
