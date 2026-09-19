@@ -38,6 +38,9 @@ Thumbs.db
 # Local SQLite databases (per-install; schema lives in database/init.php)
 database/*.db
 
+# Windows portable PHP (created by install-php.ps1)
+/runtime/
+
 # Plugin runtime state (per-install; plugin code lives under plugins/)
 data/plugins/
 

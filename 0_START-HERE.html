@@ -376,18 +376,22 @@
                     <div class="step-head"><span class="step-num">1</span><h4>Start the PHP server</h4></div>
 
                     <p class="mac-easy">Open a new Terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Services</strong> → <strong>New Terminal at Folder</strong>.</p>
-                    <p class="windows-easy">Open a terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Open in Terminal</strong>. If you do not see that, install <a href="https://git-scm.com/download/win" target="_blank" rel="noopener">Git for Windows</a>, then right-click → <strong>Open Git Bash here</strong>.</p>
+                    <p class="windows-easy">Open <strong>PowerShell</strong> at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Open in Terminal</strong> (or <strong>Open PowerShell window here</strong>).</p>
                     <p class="linux-easy">Open a terminal in your <strong>Birkly</strong> folder.</p>
 
                     <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
-                    <div class="cmd-row"><pre class="cmd" id="cmd-php-check">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
-                    <p class="mac-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
-                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from <a href="https://windows.php.net/download/" target="_blank" rel="noopener">windows.php.net/download</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
-                    <p class="linux-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
+                    <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-php-check-win">powershell -ExecutionPolicy Bypass -File .\check-php.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-win">Copy</button></div>
+                    <div class="cmd-row mac-easy linux-easy"><pre class="cmd" id="cmd-php-check-unix">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-unix">Copy</button></div>
+                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> on your PC. If the check fails, run the installer below — it downloads PHP into your Birkly folder (no website zip steps):</p>
+                    <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-php-install-win">powershell -ExecutionPolicy Bypass -File .\install-php.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-install-win">Copy</button></div>
+                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">When it finishes, close PowerShell, open it again at the Birkly folder, and run the check command again.</p>
+                    <p class="mac-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> on your Mac. If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
+                    <p class="linux-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong>. If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it, then run the check again.</p>
 
                     <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
-                    <div class="cmd-row"><pre class="cmd" id="cmd-start-server">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server">Copy</button></div>
-                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. If port <code>8080</code> is busy, run <code>bash start-server.sh -k -p 8001</code> (use your own port instead of <code>8001</code>).</p>
+                    <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-start-server-win">powershell -ExecutionPolicy Bypass -File .\start-server.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-win">Copy</button></div>
+                    <div class="cmd-row mac-easy linux-easy"><pre class="cmd" id="cmd-start-server-unix">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-unix">Copy</button></div>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. If port <code>8080</code> is busy, use <span class="windows-easy"><code>powershell -ExecutionPolicy Bypass -File .\start-server.ps1 -Port 8001 -Kill</code></span><span class="mac-easy linux-easy"><code>bash start-server.sh -k -p 8001</code></span> (pick your own port instead of <code>8001</code>).</p>
 
                     <details class="accordion" style="margin-top:var(--space-4);">
                         <summary>Permission denied</summary>
@@ -400,7 +404,8 @@
                         <div class="accordion-body">
                             <p>Install PHP from the official download links in step&nbsp;1, then restart the terminal.</p>
                             <p class="mac-easy">Optional on Mac: <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a> or Homebrew <code>brew install php</code>.</p>
-                            <p class="windows-easy">Optional on Windows: <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a> (includes PHP and adds it to your PATH).</p>
+                            <p class="windows-easy">Use <code>install-php.ps1</code> first (step&nbsp;1). Optional GUI installer: <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a>. On Windows&nbsp;11 you may also try <code>winget install PHP.PHP.8.3</code> if <code>winget</code> is available — then open a new terminal.</p>
+                            <p class="windows-easy">The one-liner on php.net often fails (wrong PHP version, security policy, or PATH). The Birkly installer script is the supported path.</p>
                             <p class="linux-easy">Optional: your distro package manager (e.g. <code>sudo apt install php php-mbstring php-curl</code>).</p>
                             <p>Birkly needs PHP <strong>8.0+</strong> with <code>json</code>, <code>mbstring</code>, <code>curl</code>, and <code>openssl</code>.</p>
                         </div>
