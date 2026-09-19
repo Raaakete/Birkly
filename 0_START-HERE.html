@@ -352,10 +352,8 @@
                 <div class="setup-path-grid" id="setup-path-grid">
                     <div class="setup-path-card selected" data-local-method="birkly" tabindex="0" role="button" aria-pressed="true">
                         <span class="badge">Recommended</span>
-                        <h3>Built-in server</h3>
-                        <p class="windows-easy">Birkly Launch</p>
-                        <p class="mac-easy">Terminal + PHP</p>
-                        <p class="linux-easy">Birkly Launch</p>
+                        <h3>Built-in PHP server</h3>
+                        <p>Scripts in your Birkly folder</p>
                     </div>
                     <div class="setup-path-card" data-local-method="stack" tabindex="0" role="button" aria-pressed="false">
                         <h3>XAMPP / MAMP / Laragon</h3>
@@ -366,44 +364,76 @@
                 <div class="local-method-panel active" id="local-method-birkly">
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">1</span><h4>Start Birkly</h4></div>
+                    <div class="step-head"><span class="step-num">1</span><h4>Start the PHP server</h4></div>
 
                     <div class="windows-easy">
-                        <p>Double-click <code>Birkly Launch.exe</code> (next to <code>admin/</code>). Leave the window open.</p>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Blocked? SmartScreen → <strong>More info</strong> → <strong>Run anyway</strong>.</p>
+                        <p><strong>Open a terminal in your Birkly folder:</strong> in File Explorer, open the folder that contains <code>0_START-HERE.html</code>, click the address bar, type <code>cmd</code>, press <strong>Enter</strong>.</p>
+                        <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-win-php-check">check-php.bat</pre><button type="button" class="copy-btn" data-copy-target="cmd-win-php-check">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If PHP is missing, double-click <code>install-php-windows.bat</code> in the same folder, or install <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a> (includes PHP), then run <code>check-php.bat</code> again.</p>
+                        <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-win-start">start-server.bat</pre><button type="button" class="copy-btn" data-copy-target="cmd-win-start">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If port <code>8080</code> is busy, use another port at the end, for example:</p>
+                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-win-start-port">start-server.bat -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-win-start-port">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Leave the Command Prompt window open while you use Birkly.</p>
+                        <details class="accordion" style="margin-top:var(--space-4);">
+                            <summary>Permission denied or “blocked” on Windows</summary>
+                            <div class="accordion-body">
+                                <p>If SmartScreen blocks a <code>.bat</code> file: <strong>More info</strong> → <strong>Run anyway</strong>.</p>
+                                <p>Run commands from the folder where <code>0_START-HERE.html</code> lives — not from inside the zip file.</p>
+                                <p>If scripts will not run, open Command Prompt as usual and type the full names above (they must find <code>check-php.bat</code> in the current directory).</p>
+                            </div>
+                        </details>
+                        <details class="accordion" style="margin-top:var(--space-2);">
+                            <summary>PHP not found or check failed</summary>
+                            <div class="accordion-body">
+                                <p>Install PHP 8+ with <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a>, restart the terminal, then <code>check-php.bat</code> again.</p>
+                                <p>Or run <code>install-php-windows.bat</code> for guided download links.</p>
+                                <p>After installing, close and reopen Command Prompt so <code>php</code> is on your PATH.</p>
+                            </div>
+                        </details>
                     </div>
 
                     <div class="mac-easy">
-                        <p>Open <strong>Terminal</strong> in this folder (Finder: select the Birkly folder → hold <strong>Control</strong> → click → <strong>New Terminal at Folder</strong>).</p>
-                        <p style="margin-top:var(--space-3);">Run these two commands (Copy each line, paste in Terminal, press Enter):</p>
+                        <p><strong>Open a new Terminal in your Birkly folder:</strong> right-click the folder that contains <code>0_START-HERE.html</code> → <strong>Services</strong> → <strong>New Terminal at Folder</strong> (on some Macs this appears directly on the right-click menu).</p>
+                        <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
                         <div class="cmd-row"><pre class="cmd" id="cmd-mac-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-php-check">Copy</button></div>
-                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-start">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-start">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave Terminal open while you use Birkly. PHP missing? Install <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a> or <code>brew install php</code>, then run <code>./check-php.sh</code> again.</p>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">We do not ship a Mac double-click launcher — macOS blocks unsigned apps from browser downloads. Use the stack path (MAMP/Herd) if you prefer not to use Terminal.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If you see “command not found” or PHP is not installed yet, install PHP 8+ from <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a> (easiest), or install <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> and run:</p>
+                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-brew-php">brew install php</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-brew-php">Copy</button></div>
+                        <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-start">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-start">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If port <code>8080</code> is occupied or you want another port, use (replace <code>8001</code> with your port):</p>
+                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-start-port">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Leave Terminal open while you use Birkly.</p>
+                        <details class="accordion" style="margin-top:var(--space-4);">
+                            <summary>Permission denied</summary>
+                            <div class="accordion-body">
+                                <p>Try running with <code>bash</code> instead of <code>./</code>:</p>
+                                <div class="cmd-row"><pre class="cmd" id="cmd-mac-bash-check">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-bash-check">Copy</button></div>
+                                <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-bash-start">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-bash-start">Copy</button></div>
+                                <p style="margin-top:var(--space-2);">Or allow execute permission once:</p>
+                                <div class="cmd-row"><pre class="cmd" id="cmd-mac-chmod">chmod +x check-php.sh start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-chmod">Copy</button></div>
+                            </div>
+                        </details>
+                        <details class="accordion" style="margin-top:var(--space-2);">
+                            <summary>PHP not found or check failed</summary>
+                            <div class="accordion-body">
+                                <p>Install <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a>, quit and reopen Terminal, then run <code>./check-php.sh</code> again.</p>
+                                <p>Homebrew: <code>brew install php</code> (requires <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> first).</p>
+                                <p>Birkly needs PHP <strong>8.0+</strong> with extensions <code>json</code>, <code>mbstring</code>, <code>curl</code>, and <code>openssl</code>.</p>
+                            </div>
+                        </details>
                     </div>
 
                     <div class="linux-easy">
-                        <p>Run <code>./birkly-launch-linux</code> or <code>./start-server.sh</code>. Leave the window open.</p>
+                        <p><strong>Open a terminal</strong> in the folder that contains <code>0_START-HERE.html</code>.</p>
+                        <p style="margin-top:var(--space-4);"><strong>1. Check PHP:</strong></p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-linux-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-linux-php-check">Copy</button></div>
+                        <p style="margin-top:var(--space-4);"><strong>2. Start the server:</strong></p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-linux-start">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-linux-start">Copy</button></div>
+                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-linux-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-linux-start-port">Copy</button></div>
                     </div>
                 </div>
-
-                <details class="accordion easy-launcher-advanced windows-easy linux-easy">
-                    <summary>Advanced (terminal / .bat instead of Launch)</summary>
-                    <div class="accordion-body">
-                        <div class="windows-easy">
-                            <p>Double-click <code>check-php.bat</code>, then <code>start-server.bat</code>. Do not use <code>start-server.sh</code> on Windows.</p>
-                            <p>If PHP is missing: <code>install-php-windows.bat</code> → Laragon, then <code>check-php.bat</code> again.</p>
-                        </div>
-                        <div class="linux-easy">
-                            <p><code>./check-php.sh</code> then <code>./start-server.sh</code></p>
-                        </div>
-                        <div class="dev-terminal-path windows-easy linux-easy" style="margin-top:var(--space-3);">
-                            <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
-                            <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
-                            <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
-                        </div>
-                    </div>
-                </details>
                 </div>
 
                 <div class="local-method-panel" id="local-method-stack">
@@ -417,7 +447,7 @@
 
                 <div class="step local-shared-steps">
                     <div class="step-head"><span class="step-num">2</span><h4>Open this page through the server</h4></div>
-                    <p>With the launcher (or manual server) running, open this site in your browser — not the <code>file://</code> tab:</p>
+                    <p>With the PHP server running (step 1), open this site in your browser — not the <code>file://</code> tab:</p>
                     <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
                         <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
@@ -444,7 +474,7 @@
                     <div class="text-center">
                         <a href="#" id="local-onboarding-link" class="btn disabled" aria-disabled="true">Start setup →</a>
                     </div>
-                    <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Start the launcher (step 1) and open this page via localhost (step 2) first.</p>
+                    <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Start the server (step 1) and open this page via localhost (step 2) first.</p>
                 </div>
             </div>
             </div><!-- #setup-flow -->

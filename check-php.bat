@@ -28,7 +28,7 @@ for %%E in (json mbstring curl openssl) do (
 )
 
 if not exist "index.php" (
-    echo [FAIL] Open this from your extracted Birkly folder ^(next to admin\^).
+    echo [FAIL] Open this from your extracted Birkly folder ^(where 0_START-HERE.html is^).
     echo        Do not run files from inside the zip file.
     goto :pause_fail
 )
