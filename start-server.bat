@@ -24,6 +24,7 @@ shift
 goto parse_args
 
 :after_args
+echo [Birkly] Local server helper — keep this window open while using Birkly.
 where php >nul 2>&1
 if errorlevel 1 (
     echo.
