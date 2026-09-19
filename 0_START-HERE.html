@@ -311,6 +311,13 @@
         body.is-mac .cmd-row.mac-easy,
         body.is-linux .cmd-row.linux-easy,
         body.is-windows .cmd-row.windows-easy { display: flex; }
+        /* OS toggles on <span> inside a sentence must stay inline */
+        p span.windows-easy,
+        p span.mac-easy,
+        p span.linux-easy { display: none; }
+        body.is-windows p span.windows-easy,
+        body.is-mac p span.mac-easy,
+        body.is-linux p span.linux-easy { display: inline; }
         .easy-launcher-advanced { margin-top: var(--space-4); }
         .easy-launcher-advanced .accordion-body { padding-top: var(--space-3); }
         @media (max-width: 720px) {
@@ -387,7 +394,7 @@
                     <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-php-check-win">powershell -ExecutionPolicy Bypass -File .\check-php.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-win">Copy</button></div>
                     <div class="cmd-row mac-easy"><pre class="cmd" id="cmd-php-check-mac">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-mac">Copy</button></div>
                     <div class="cmd-row linux-easy"><pre class="cmd" id="cmd-php-check-linux">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-linux">Copy</button></div>
-                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> on your PC. If the check fails, run the installer below — it downloads PHP into your Birkly folder (no website zip steps):</p>
+                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> on your PC. If the check fails, run the installer below. It downloads PHP from the official Windows build and unpacks it into a <code>runtime\php</code> folder inside your Birkly folder — you do not unzip anything yourself or change Windows PATH.</p>
                     <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-php-install-win">powershell -ExecutionPolicy Bypass -File .\install-php.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-install-win">Copy</button></div>
                     <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">When it finishes, close PowerShell, open it again at the Birkly folder, and run the check command again.</p>
                     <p class="mac-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> on your Mac. If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
