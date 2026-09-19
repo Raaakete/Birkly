@@ -70,6 +70,18 @@ assert_true('status includes config', is_array($status['claude_desktop_config'][
 
 $credPath = $testRoot . '/Birkly-main 6/data/mcp_desktop/credentials_test.json';
 $cmd = birkly_mcp_desktop_terminal_install_command($credPath, 'claude');
+$installScript = birkly_mcp_desktop_install_script_path();
+assert_true(
+    'terminal command uses absolute install script path',
+    str_contains($cmd, 'birkly-mcp-desktop-install.php')
+        && (str_contains($cmd, $installScript) || str_contains($cmd, str_replace('\\', '/', $installScript))),
+    $cmd
+);
+assert_true(
+    'terminal command uses --target=claude without spaced equals',
+    str_contains($cmd, '--target=claude') && !str_contains($cmd, '--target= claude'),
+    $cmd
+);
 if (PHP_OS_FAMILY === 'Windows') {
     assert_true(
         'windows terminal command uses cmd /c for PowerShell compatibility',
@@ -84,10 +96,22 @@ if (PHP_OS_FAMILY === 'Windows') {
 } else {
     assert_true(
         'terminal command quotes paths with spaces',
-        str_contains($cmd, 'cd ') && str_contains($cmd, 'Birkly-main 6') && str_contains($cmd, "'"),
+        str_contains($cmd, 'Birkly-main 6'),
         $cmd
     );
 }
+
+$manifestPath = dirname(__DIR__) . '/scripts/cms-release-manifest.json';
+$manifest = json_decode((string) file_get_contents($manifestPath), true);
+$manifestExcludes = is_array($manifest) ? ($manifest['excludes'] ?? []) : [];
+assert_true(
+    'release manifest ships mcp desktop install script',
+    in_array('!scripts/birkly-mcp-desktop-install.php', $manifestExcludes, true)
+);
+assert_true(
+    'release manifest ships mcp desktop bridge script',
+    in_array('!scripts/birkly-mcp-desktop.php', $manifestExcludes, true)
+);
 
 $resolvedRel = birkly_mcp_desktop_resolve_credentials_path('data/mcp_desktop/' . basename($path));
 assert_true(

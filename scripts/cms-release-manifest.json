@@ -71,6 +71,8 @@
     "!scripts/build-plugin-zip.sh",
     "!scripts/create-default-user.php",
     "!scripts/windows-php-common.ps1",
+    "!scripts/birkly-mcp-desktop-install.php",
+    "!scripts/birkly-mcp-desktop.php",
     "runtime/**",
     ".env",
     "config.php",
