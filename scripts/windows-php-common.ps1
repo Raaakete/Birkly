@@ -97,15 +97,32 @@ function Get-BirklyPhpExe {
 
 function Test-BirklyPhpExtensions {
     param([string]$PhpExe)
-    $required = @('json', 'mbstring', 'curl', 'openssl')
+    $required = @('json', 'mbstring', 'curl', 'openssl', 'zip')
     foreach ($ext in $required) {
         & $PhpExe -r "exit(extension_loaded('$ext') ? 0 : 1);" 2>$null
         if ($LASTEXITCODE -ne 0) {
             Write-Host "[Birkly] Missing PHP extension: $ext"
+            if ($ext -eq 'zip') {
+                Write-Host '[Birkly] Starter templates (e.g. Marsk) need the zip extension. Re-run:'
+                Write-Host '  powershell -ExecutionPolicy Bypass -File .\install-php.ps1'
+            }
             return $false
         }
     }
     return $true
+}
+
+function Get-BirklyPhpIniExtensionBlock {
+    return @"
+
+; --- Birkly local server ---
+extension_dir = "ext"
+extension=curl
+extension=mbstring
+extension=openssl
+extension=fileinfo
+extension=zip
+"@
 }
 
 function Initialize-BirklyPhpIni {
@@ -116,16 +133,24 @@ function Initialize-BirklyPhpIni {
         throw "php.ini-development not found in $RuntimePhpDir"
     }
     Copy-Item -LiteralPath $iniDev -Destination $ini -Force
-    $block = @"
+    Add-Content -LiteralPath $ini -Value (Get-BirklyPhpIniExtensionBlock) -Encoding UTF8
+}
 
-; --- Birkly local server ---
-extension_dir = "ext"
-extension=curl
-extension=mbstring
-extension=openssl
-extension=fileinfo
-"@
-    Add-Content -LiteralPath $ini -Value $block -Encoding UTF8
+function Repair-BirklyPhpIni {
+    param([string]$RuntimePhpDir)
+    $ini = Join-Path $RuntimePhpDir 'php.ini'
+    if (-not (Test-BirklyPathExists -Path $ini)) {
+        Initialize-BirklyPhpIni -RuntimePhpDir $RuntimePhpDir
+        return
+    }
+    $content = Get-Content -LiteralPath $ini -Raw
+    if ($content -notmatch '(?m)^\s*extension\s*=\s*zip\s*$') {
+        if ($content -notmatch '(?m)^\s*;\s*---\s*Birkly local server\s*---') {
+            Add-Content -LiteralPath $ini -Value (Get-BirklyPhpIniExtensionBlock) -Encoding UTF8
+        } else {
+            Add-Content -LiteralPath $ini -Value "`r`nextension=zip" -Encoding UTF8
+        }
+    }
 }
 
 function Write-BirklyWrongFolderHint {

@@ -501,6 +501,17 @@ function birkly_ops_extract_starter_zip(string $zipPath, string $projectRoot, ar
         ];
     }
 
+    if (!class_exists('ZipArchive')) {
+        return [
+            'success' => false,
+            'installed_collections' => [],
+            'project_site' => false,
+            'message' => 'PHP zip extension is required to install starter templates. On Windows, run: powershell -ExecutionPolicy Bypass -File .\\install-php.ps1 then restart the server.',
+            'errors' => ['ZipArchive extension not available'],
+            'include_demo_entries' => $includeDemoEntries,
+        ];
+    }
+
     $zip = new ZipArchive();
     if ($zip->open($zipPath) !== true) {
         return [
