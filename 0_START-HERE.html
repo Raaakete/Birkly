@@ -363,6 +363,10 @@
 
                 <div class="local-method-panel active" id="local-method-birkly">
 
+                <div class="status warn mac-easy" style="margin-bottom:var(--space-4);padding:var(--space-4);font-size:0.9375rem;">
+                    <strong>Chrome download on Mac</strong> — if macOS says the app is <em>beschädigt</em> / damaged, that is Gatekeeper quarantine, not a broken Birkly build. <strong>Once</strong>, open Terminal in this folder and run <code>xattr -cr .</code> (Copy below in step 1), then open <code>Birkly Launch.app</code>. Right-click → Open does <em>not</em> fix the damaged dialog.
+                </div>
+
                 <div class="step">
                     <div class="step-head"><span class="step-num">1</span><h4>Start Birkly</h4></div>
 
@@ -372,15 +376,14 @@
                     </div>
 
                     <div class="mac-easy">
-                        <p><strong>First time:</strong> right-click <code>Birkly Launch.app</code> → <strong>Open</strong> → <strong>Open</strong> again. (A normal double-click only shows “can’t verify” with no Open button.)</p>
-                        <p style="margin-top:var(--space-2);">After that, double-click the app like any other program. Quit <strong>Birkly Launch</strong> from the Dock when you are done.</p>
+                        <p><strong>1.</strong> Terminal in this folder → paste → Enter (once per Chrome download):</p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-unquarantine">xattr -cr .</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-unquarantine">Copy</button></div>
+                        <p style="margin-top:var(--space-3);"><strong>2.</strong> Double-click <code>Birkly Launch.app</code> (only the app — not <code>birkly-launch-mac</code> files). Quit from the Dock when done.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Bigger zip? It includes <code>Birkly Launch.app</code> and <code>Birkly Launch.exe</code> (~10&nbsp;MB). Newer zips omit extra Mac binaries at the root.</p>
                         <details class="accordion" style="margin-top:var(--space-3);">
-                            <summary>Still blocked?</summary>
+                            <summary>Prefer no Terminal?</summary>
                             <div class="accordion-body">
-                                <p><strong>System Settings</strong> → <strong>Privacy &amp; Security</strong> → scroll down → <strong>Open Anyway</strong> (appears after you tried to open the app).</p>
-                                <p style="margin-top:var(--space-2);">Or once per download, in Terminal in this folder:</p>
-                                <div class="cmd-row"><pre class="cmd" id="cmd-mac-unquarantine">xattr -cr .</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-unquarantine">Copy</button></div>
-                                <p style="margin-top:var(--space-2);font-size:0.875rem;color:var(--text-secondary);">Intel Mac without Rosetta: use <strong>Advanced</strong> → <code>./start-server.sh</code>.</p>
+                                <p>Download the zip with <strong>Safari</strong>, or use <strong>Advanced</strong> → <code>./start-server.sh</code> (works with Herd/Homebrew PHP).</p>
                             </div>
                         </details>
                     </div>
