@@ -30,7 +30,15 @@ for ($i = 1; $i < count($argv); $i++) {
     }
     if (str_starts_with($arg, '--token-file=')) {
         $tokenFile = substr($arg, strlen('--token-file='));
+        if ($tokenFile === '' && isset($argv[$i + 1]) && !str_starts_with($argv[$i + 1], '--')) {
+            $tokenFile = $argv[++$i];
+        }
+        continue;
     }
+}
+
+if (is_string($tokenFile)) {
+    $tokenFile = trim($tokenFile, " \t\n\r\0\x0B\"'");
 }
 
 if (!birkly_mcp_desktop_is_valid_target($target)) {

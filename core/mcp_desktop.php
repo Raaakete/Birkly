@@ -1111,6 +1111,35 @@ function birkly_mcp_desktop_windows_cmd_quote(string $value): string
     return '"' . str_replace('"', '""', $value) . '"';
 }
 
+/**
+ * Wrap a full cmd.exe command line for paste into PowerShell or cmd (no PHP escapeshellarg — it breaks quoting).
+ */
+function birkly_mcp_desktop_windows_terminal_cmd_string(string $innerLine): string
+{
+    return 'cmd /c "' . str_replace('"', '""', $innerLine) . '"';
+}
+
+/**
+ * Build the inner command line passed to cmd /c on Windows (absolute paths, separate --token-file arg).
+ */
+function birkly_mcp_desktop_windows_install_inner_line(
+    string $php,
+    string $install,
+    string $target,
+    ?string $tokenArg = null,
+    bool $uninstall = false
+): string {
+    $line = birkly_mcp_desktop_windows_cmd_quote($php)
+        . ' ' . birkly_mcp_desktop_windows_cmd_quote($install);
+    if ($uninstall) {
+        return $line . ' --uninstall --target=' . $target;
+    }
+
+    $token = $tokenArg ?? '';
+
+    return $line . ' --target=' . $target . ' --token-file ' . birkly_mcp_desktop_windows_cmd_quote($token);
+}
+
 function birkly_mcp_desktop_install_script_path(): string
 {
     return birkly_project_root() . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'birkly-mcp-desktop-install.php';
@@ -1128,18 +1157,16 @@ function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, st
     );
 
     if (PHP_OS_FAMILY === 'Windows') {
-        $inner = birkly_mcp_desktop_windows_cmd_quote($php)
-            . ' ' . birkly_mcp_desktop_windows_cmd_quote($install)
-            . ' --target=' . $target
-            . ' --token-file=' . birkly_mcp_desktop_windows_cmd_quote($tokenArg);
+        $inner = birkly_mcp_desktop_windows_install_inner_line($php, $install, $target, $tokenArg);
 
-        return 'cmd /c ' . escapeshellarg($inner);
+        return birkly_mcp_desktop_windows_terminal_cmd_string($inner);
     }
 
     return escapeshellarg($php)
         . ' ' . escapeshellarg($install)
         . ' --target=' . $target
-        . ' --token-file=' . escapeshellarg($tokenArg);
+        . ' --token-file '
+        . escapeshellarg($tokenArg);
 }
 
 function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
@@ -1151,11 +1178,9 @@ function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
     $install = birkly_mcp_desktop_install_script_path();
 
     if (PHP_OS_FAMILY === 'Windows') {
-        $inner = birkly_mcp_desktop_windows_cmd_quote($php)
-            . ' ' . birkly_mcp_desktop_windows_cmd_quote($install)
-            . ' --uninstall --target=' . $target;
+        $inner = birkly_mcp_desktop_windows_install_inner_line($php, $install, $target, null, true);
 
-        return 'cmd /c ' . escapeshellarg($inner);
+        return birkly_mcp_desktop_windows_terminal_cmd_string($inner);
     }
 
     return escapeshellarg($php)
