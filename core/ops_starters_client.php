@@ -320,32 +320,6 @@ function birkly_content_collections_dir(string $projectRoot): string
 }
 
 /**
- * Check whether PHP can write to a path (probe file when is_writable() is unreliable).
- */
-function birkly_path_is_writable(string $path): bool
-{
-    if ($path === '') {
-        return false;
-    }
-
-    if (is_writable($path)) {
-        return true;
-    }
-
-    if (!is_dir($path) && !is_file($path)) {
-        return false;
-    }
-
-    $probe = rtrim($path, '/\\') . '/.birkly-write-probe-' . getmypid() . '-' . bin2hex(random_bytes(4));
-    if (@file_put_contents($probe, '') === false) {
-        return false;
-    }
-
-    @unlink($probe);
-    return true;
-}
-
-/**
  * Ensure content/collections exists and is writable before starter install.
  *
  * @return array{ok:bool,path:string,error?:string}
