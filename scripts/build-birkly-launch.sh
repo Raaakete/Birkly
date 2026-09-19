@@ -1,48 +1,79 @@
 #!/usr/bin/env bash
-# Cross-compile Birkly Launch into the CMS root (release zip root). Optional — release build skips if go is missing.
+# Cross-compile Birkly Launch into the CMS root (release zip root).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SRC="$ROOT/tools/birkly-launch"
+VENDOR="$ROOT/release/launchers"
 
 if [[ ! -f "$SRC/main.go" ]]; then
   echo "[build-birkly-launch] FAIL: missing $SRC/main.go" >&2
   exit 1
 fi
 
-if ! command -v go >/dev/null 2>&1; then
-  echo "[build-birkly-launch] SKIP: go not installed" >&2
-  exit 0
-fi
+build_with_go() {
+  cd "$SRC"
+  local LDFLAGS="-s -w"
 
-cd "$SRC"
-LDFLAGS="-s -w"
+  echo "[build-birkly-launch] windows/amd64 → Birkly Launch.exe"
+  GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/Birkly Launch.exe" .
 
-echo "[build-birkly-launch] windows/amd64 → Birkly Launch.exe"
-GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/Birkly Launch.exe" .
+  echo "[build-birkly-launch] darwin/arm64 → birkly-launch-mac"
+  GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-mac" .
 
-echo "[build-birkly-launch] darwin/arm64 → birkly-launch-mac"
-GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-mac" .
+  echo "[build-birkly-launch] darwin/amd64 → birkly-launch-mac-intel"
+  GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-mac-intel" .
 
-echo "[build-birkly-launch] darwin/amd64 → birkly-launch-mac-intel"
-GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-mac-intel" .
+  echo "[build-birkly-launch] linux/amd64 → birkly-launch-linux"
+  GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-linux" .
+}
 
-echo "[build-birkly-launch] linux/amd64 → birkly-launch-linux"
-GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-linux" .
+assemble_mac_app() {
+  local APP="$ROOT/Birkly Launch.app"
+  local MACOS_BIN="$APP/Contents/MacOS/birkly-launch"
+  rm -rf "$APP"
+  mkdir -p "$(dirname "$MACOS_BIN")"
+  cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
 
-APP="$ROOT/Birkly Launch.app"
-MACOS_BIN="$APP/Contents/MacOS/birkly-launch"
-rm -rf "$APP"
-mkdir -p "$(dirname "$MACOS_BIN")"
-cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
+  if command -v lipo >/dev/null 2>&1 && [[ -f "$ROOT/birkly-launch-mac" && -f "$ROOT/birkly-launch-mac-intel" ]]; then
+    echo "[build-birkly-launch] lipo universal → Birkly Launch.app"
+    lipo -create -output "$MACOS_BIN" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel"
+  else
+    echo "[build-birkly-launch] Birkly Launch.app (arm64 in bundle)"
+    cp "$ROOT/birkly-launch-mac" "$MACOS_BIN"
+  fi
+  chmod 755 "$MACOS_BIN"
+}
 
-if command -v lipo >/dev/null 2>&1 && [[ -f "$ROOT/birkly-launch-mac" && -f "$ROOT/birkly-launch-mac-intel" ]]; then
-  echo "[build-birkly-launch] lipo universal → Birkly Launch.app"
-  lipo -create -output "$MACOS_BIN" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel"
+copy_from_vendor() {
+  echo "[build-birkly-launch] using vendored binaries from release/launchers/"
+  for f in "Birkly Launch.exe" birkly-launch-mac birkly-launch-mac-intel birkly-launch-linux; do
+    if [[ ! -f "$VENDOR/$f" ]]; then
+      echo "[build-birkly-launch] FAIL: missing vendored $f" >&2
+      return 1
+    fi
+    cp "$VENDOR/$f" "$ROOT/$f"
+    chmod 755 "$ROOT/$f" 2>/dev/null || true
+  done
+  if [[ ! -d "$VENDOR/Birkly Launch.app" ]]; then
+    echo "[build-birkly-launch] FAIL: missing vendored Birkly Launch.app" >&2
+    return 1
+  fi
+  rm -rf "$ROOT/Birkly Launch.app"
+  cp -R "$VENDOR/Birkly Launch.app" "$ROOT/"
+  return 0
+}
+
+if command -v go >/dev/null 2>&1; then
+  build_with_go
+  assemble_mac_app
 else
-  echo "[build-birkly-launch] Birkly Launch.app (arm64 binary in bundle)"
-  cp "$ROOT/birkly-launch-mac" "$MACOS_BIN"
+  copy_from_vendor
 fi
-chmod 755 "$MACOS_BIN"
+
+if [[ ! -x "$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch" ]]; then
+  echo "[build-birkly-launch] FAIL: Birkly Launch.app not ready" >&2
+  exit 1
+fi
 
 echo "[build-birkly-launch] OK"
