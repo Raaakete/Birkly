@@ -98,7 +98,8 @@
     "start-server.sh",
     "start-server.bat",
     "check-php.sh",
-    "check-php.bat"
+    "check-php.bat",
+    "install-php-windows.bat"
   ],
   "fresh_install": {
     "active_plugins": [],
