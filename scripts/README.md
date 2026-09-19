@@ -43,17 +43,13 @@ Pulls from marketplace registry API, with fallback to `../Birkly-Marketplace/cat
 
 Official plugin IDs and marketplace slugs are defined in `scripts/cms-release-manifest.json`.
 
-### CMS release zip + local launcher
+### CMS release zip
 
-`build-cms-release.sh` calls `build-birkly-launch.sh` (Windows + Linux launchers only; Mac uses `start-server.sh` in the zip). Copies `launcher_release_files` into the zip. `start-server.bat` / `start-server.sh` are unchanged.
+Customer zips use `start-server.bat` / `start-server.sh` and `0_START-HERE.html` only (no `Birkly Launch` binaries in the zip). Optional dev build: `./scripts/build-birkly-launch.sh` (not part of `build-cms-release.sh`).
 
 ```bash
-./scripts/build-birkly-launch.sh   # uses Go, or copies from release/launchers/ on Ops
-./scripts/sync-release-launchers.sh   # after changing launcher source — commit release/launchers/
 OUT=/tmp/birkly-release.zip ./scripts/build-cms-release.sh
 ```
-
-Source: `tools/birkly-launch/` (not shipped in the customer zip).
 
 ## Other scripts
 

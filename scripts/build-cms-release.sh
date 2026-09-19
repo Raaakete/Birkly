@@ -11,17 +11,6 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
-LAUNCH_BUILD="$ROOT/scripts/build-birkly-launch.sh"
-if [[ ! -f "$LAUNCH_BUILD" ]]; then
-  echo "[build-cms-release] FAIL: missing build-birkly-launch.sh (sync Ops to latest Birkly main)" >&2
-  exit 1
-fi
-BIRKLY_LAUNCH_SKIP_MAC=1 bash "$LAUNCH_BUILD"
-if [[ ! -f "$ROOT/Birkly Launch.exe" ]]; then
-  echo "[build-cms-release] FAIL: Birkly Launch.exe missing after launcher build" >&2
-  exit 1
-fi
-
 STAGING="$(mktemp -d)"
 trap 'rm -rf "$STAGING"' EXIT
 
