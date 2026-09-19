@@ -1,0 +1,18 @@
+BIRKLY - READ THIS FIRST (Windows)
+==================================
+
+Do NOT open files while they are still inside the zip.
+
+1. Right-click the Birkly zip file you downloaded.
+2. Choose "Extract All..." (or "Extract Here").
+3. Open the NEW folder (not the zip).
+4. Double-click:  0_START-HERE.html
+
+Follow the steps in your browser.
+
+No PHP yet?
+  Double-click:  install-php-windows.bat
+  Then:          check-php.bat
+  Then:          start-server.bat  (keep that window open)
+
+Questions: https://docs.birkly.com/00-overview/getting-started.html

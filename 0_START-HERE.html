@@ -203,6 +203,97 @@
             word-break: break-all;
         }
         .text-center { text-align: center; }
+        .extract-gate { display: none; }
+        .extract-gate.visible { display: block; }
+        .extract-gate ol.action-steps {
+            margin: var(--space-4) 0 0;
+            padding-left: 1.25rem;
+            color: var(--text-primary);
+        }
+        .extract-gate ol.action-steps li { margin-bottom: var(--space-3); }
+        .extract-gate .wrong-hint {
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            background: #fff;
+            border-radius: var(--radius-s);
+            border: 1px dashed #fca5a5;
+            font-size: 0.875rem;
+        }
+        #setup-flow.blocked { opacity: 0.45; pointer-events: none; user-select: none; }
+        .setup-path-label { font-weight: 700; margin-bottom: var(--space-3); }
+        .setup-path-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+            margin-bottom: var(--space-5);
+        }
+        .setup-path-card {
+            border: 2px solid var(--border-light);
+            border-radius: var(--radius-m);
+            padding: var(--space-5);
+            cursor: pointer;
+            background: var(--bg-elevated);
+            position: relative;
+        }
+        .setup-path-card:hover, .setup-path-card.selected {
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 4px rgba(124, 227, 191, 0.25);
+        }
+        .setup-path-card .badge {
+            display: inline-block;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            background: var(--color-primary);
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            margin-bottom: var(--space-2);
+        }
+        .setup-path-card h3 { font-size: 1rem; margin-bottom: var(--space-2); }
+        .setup-path-card p { font-size: 0.8125rem; color: var(--text-secondary); margin: 0; }
+        .setup-path-or {
+            text-align: center;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+            font-size: 0.8125rem;
+        }
+        .file-action {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            margin: var(--space-3) 0;
+            padding: var(--space-4);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-s);
+        }
+        .file-action-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+        .file-action code {
+            font-family: ui-monospace, monospace;
+            font-size: 0.875rem;
+            background: var(--color-neutral-200);
+            padding: 0.1rem 0.35rem;
+            border-radius: 4px;
+        }
+        .troubleshoot {
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            border-radius: var(--radius-s);
+            border: 1px solid #fca5a5;
+            background: #fef2f2;
+            font-size: 0.875rem;
+        }
+        .troubleshoot h5 { font-size: 0.875rem; margin-bottom: var(--space-2); color: var(--error-700); }
+        .troubleshoot ol { margin-left: 1.25rem; color: var(--text-secondary); }
+        .windows-easy { display: none; }
+        body.is-windows .windows-easy { display: block; }
+        body.is-windows .dev-terminal-path { display: none; }
+        body.is-windows .windows-easy.dev-terminal-path { display: block; }
+        @media (max-width: 720px) {
+            .setup-path-grid { grid-template-columns: 1fr; }
+        }
         @media (max-width: 640px) {
             body { padding: var(--space-4) var(--space-3); }
             .card { padding: var(--space-5); }
@@ -222,8 +313,24 @@
                 <p>Your flat-file CMS — no database required.</p>
             </div>
 
+            <div id="extract-gate" class="status error extract-gate" role="alert">
+                <h3>Stop — extract the zip first</h3>
+                <p>You are viewing this page <strong>inside the zip file</strong> or without a running server. Birkly cannot work until the files are extracted to a normal folder.</p>
+                <ol class="action-steps">
+                    <li><strong>Close this browser tab.</strong></li>
+                    <li>In <strong>File Explorer</strong> (the folder icon on your taskbar — not Chrome or Edge), find the Birkly zip you downloaded.</li>
+                    <li><strong>Right-click</strong> the zip → <strong>Extract All…</strong> → choose <strong>Desktop</strong> or <strong>Documents</strong> → Extract.</li>
+                    <li>Open the <strong>new folder</strong> (same name as the zip, <em>not</em> the zip itself).</li>
+                    <li>Double-click <code>0_START-HERE.html</code> in that folder. You can also read <code>OPEN-ME-FIRST.txt</code>.</li>
+                </ol>
+                <div class="wrong-hint">
+                    <strong>Common mistake:</strong> typing <code>cmd</code> in the browser address bar or in Windows Search without opening your Birkly folder first. You do <em>not</em> need to type commands for the easy setup — use the <code>.bat</code> files in your folder instead.
+                </div>
+            </div>
+
             <div id="folder-status" class="status" role="status" aria-live="polite"></div>
 
+            <div id="setup-flow">
             <p class="docs-link">
                 Need help? Read the
                 <a href="https://docs.birkly.com/00-overview/getting-started.html" target="_blank" rel="noopener">Birkly getting-started guide</a>.
@@ -243,63 +350,89 @@
 
             <!-- Local -->
             <div class="steps" id="local-steps">
-                <p style="font-weight:600;margin-bottom:var(--space-3);">How are you running PHP locally?</p>
-                <div class="local-method-tabs">
-                    <button type="button" class="local-method-tab active" data-local-method="birkly">Birkly built-in server</button>
-                    <button type="button" class="local-method-tab" data-local-method="stack">XAMPP / MAMP / Laragon</button>
+                <p class="setup-path-label">Choose <em>one</em> setup path (not every step below — pick a column):</p>
+                <div class="setup-path-grid" id="setup-path-grid">
+                    <div class="setup-path-card selected" data-local-method="birkly" tabindex="0" role="button" aria-pressed="true">
+                        <span class="badge">Recommended</span>
+                        <h3>Easy local setup</h3>
+                        <p>Double-click files in your Birkly folder. No typing commands.</p>
+                    </div>
+                    <div class="setup-path-card" data-local-method="stack" tabindex="0" role="button" aria-pressed="false">
+                        <h3>XAMPP / Laragon / MAMP</h3>
+                        <p>Only if you already use one of these apps for PHP.</p>
+                    </div>
                 </div>
+                <p class="setup-path-or">You chose one path above — follow only that path’s steps</p>
 
                 <div class="local-method-panel active" id="local-method-birkly">
-                <div class="step">
+
+                <div class="step windows-easy">
+                    <div class="step-head"><span class="step-num">1</span><h4>Open your Birkly folder</h4></div>
+                    <p>In <strong>File Explorer</strong>, open the folder where you extracted Birkly. You should see files named <code>check-php.bat</code> and <code>start-server.bat</code> next to <code>admin</code> (a folder).</p>
+                    <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If you only see these files <em>inside</em> a zip, go back and use <strong>Extract All</strong> first.</p>
+                </div>
+
+                <div class="step dev-terminal-path">
                     <div class="step-head"><span class="step-num">1</span><h4>Open a terminal in your Birkly folder</h4></div>
-                    <p>Open a terminal in the folder where you extracted Birkly — the complete project folder where this file sits alongside <code>admin/</code> and <code>start-server.sh</code>.</p>
+                    <p>Mac/Linux: open Terminal in the folder next to <code>admin/</code> and <code>start-server.sh</code>.</p>
                     <details class="accordion">
-                        <summary>How to open a terminal here (Windows, Mac, Linux)</summary>
+                        <summary>How to open a terminal (Mac / Linux)</summary>
                         <div class="accordion-body">
-                            <p><strong>Mac:</strong> Finder → your Birkly folder → right-click → <em>Services</em> → <em>New Terminal at Folder</em>. On newer macOS you may see <em>New Terminal at Folder</em> directly in the right-click menu.</p>
-                            <p><strong>Windows:</strong> Open the folder in File Explorer → click the address bar → type <code>cmd</code> → Enter. Or use Windows Terminal and <code>cd</code> to the folder.</p>
-                            <p><strong>Linux:</strong> Right-click the folder → <em>Open in Terminal</em>, or <code>cd /path/to/Birkly</code>.</p>
-                            <p><em>Browsers cannot open a terminal for you — use one of the methods above.</em></p>
+                            <p><strong>Mac:</strong> Finder → Birkly folder → right-click → <em>New Terminal at Folder</em>.</p>
+                            <p><strong>Linux:</strong> Right-click → <em>Open in Terminal</em>.</p>
                         </div>
                     </details>
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">2</span><h4>Check PHP</h4></div>
-                    <p id="php-check-intro">The built-in server needs PHP 8+ on your PATH. Run this check before starting the server:</p>
-                    <p id="php-check-windows-hint" class="status info" style="display:none;margin-bottom:var(--space-3);">
-                        <strong>Windows:</strong> Double-click <code>check-php.bat</code> in File Explorer, or run it in Command Prompt. It will tell you if PHP is missing and how to install it.
-                    </p>
-                    <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
-                    <p class="cmd-label" id="cmd-php-check-alt-label">Or check manually:</p>
-                    <div class="cmd-row"><pre class="cmd" id="cmd-php-version">php -v</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-version">Copy</button></div>
-                    <details class="accordion">
-                        <summary>PHP not installed or check failed?</summary>
-                        <div class="accordion-body">
-                            <p>Birkly needs PHP 8.0+ with <code>json</code>, <code>mbstring</code>, <code>curl</code>, and <code>openssl</code>.</p>
-                            <p><strong>Mac:</strong> <code>brew install php</code></p>
-                            <p><strong>Windows:</strong> run <code>check-php.bat</code> for install hints, or use <a href="https://windows.php.net/download/" target="_blank" rel="noopener">windows.php.net</a> / XAMPP / Laragon.</p>
-                            <p><strong>Linux:</strong> <code>sudo apt install php php-mbstring php-curl php-json</code></p>
+                    <div class="step-head"><span class="step-num">2</span><h4>Check PHP is installed</h4></div>
+                    <div class="windows-easy">
+                        <div class="file-action">
+                            <span class="file-action-icon" aria-hidden="true">①</span>
+                            <div>
+                                <p>Double-click <code>check-php.bat</code> in File Explorer.</p>
+                                <p>Wait for <strong>SUCCESS</strong>. If it fails, double-click <code>install-php-windows.bat</code> and follow the prompts, then run <code>check-php.bat</code> again.</p>
+                            </div>
                         </div>
-                    </details>
+                        <div class="troubleshoot">
+                            <h5>If you see “PHP is not installed” or “command not found”</h5>
+                            <ol>
+                                <li>Double-click <code>install-php-windows.bat</code></li>
+                                <li>Press <strong>1</strong> for Laragon (easiest), install it, then run <code>check-php.bat</code> again</li>
+                                <li>Do not paste commands into the browser — only use File Explorer</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="dev-terminal-path">
+                        <p id="php-check-intro">Run the PHP check before starting the server:</p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
+                        <details class="accordion">
+                            <summary>PHP not installed?</summary>
+                            <div class="accordion-body">
+                                <p><strong>Mac:</strong> <code>brew install php</code></p>
+                                <p><strong>Linux:</strong> <code>sudo apt install php php-mbstring php-curl</code></p>
+                            </div>
+                        </details>
+                    </div>
                 </div>
 
                 <div class="step">
                     <div class="step-head"><span class="step-num">3</span><h4>Start the Birkly server</h4></div>
-                    <p id="start-server-intro">Run in the terminal and keep the window open:</p>
-                    <p id="start-server-windows-hint" class="status info" style="display:none;margin-bottom:var(--space-3);">
-                        <strong>Windows:</strong> Do not double-click <code>start-server.sh</code> — Windows will ask which app should open it.
-                        Double-click <code>start-server.bat</code> instead, or run <code>start-server.bat</code> in Command Prompt.
-                    </p>
-                    <div class="cmd-row"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
-                    <p class="cmd-label" id="cmd-start-port-label">Optional — custom port or stop an old server first:</p>
-                    <div class="cmd-row"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
-                    <details class="accordion">
-                        <summary>Permission denied on ./start-server.sh?</summary>
-                        <div class="accordion-body">
-                            <p>On Mac/Linux only, run once: <code>chmod +x ./start-server.sh</code> — then try <code>./start-server.sh</code> again. On Windows use <code>start-server.bat</code> (see above).</p>
+                    <div class="windows-easy">
+                        <div class="file-action">
+                            <span class="file-action-icon" aria-hidden="true">②</span>
+                            <div>
+                                <p>Double-click <code>start-server.bat</code>.</p>
+                                <p>A black window opens — <strong>leave it open</strong>. Do not double-click <code>start-server.sh</code> on Windows.</p>
+                            </div>
                         </div>
-                    </details>
+                    </div>
+                    <div class="dev-terminal-path">
+                        <p id="start-server-intro">Run in the terminal and keep the window open:</p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
+                        <p class="cmd-label" id="cmd-start-port-label">Optional — different port:</p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
+                    </div>
                 </div>
                 </div>
 
@@ -308,16 +441,18 @@
                     <div class="step-head"><span class="step-num">1</span><h4>Point your PHP stack at this folder</h4></div>
                     <p>In XAMPP, MAMP, Laragon, or similar, set the <strong>document root</strong> to this Birkly folder (where <code>admin/</code> and <code>index.php</code> live).</p>
                     <p>Note the URL your stack gives you (e.g. <code>http://localhost:8888</code>) — use it in the steps below instead of <code>localhost:8080</code>.</p>
+                    <p class="status info" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">You chose the <strong>stack</strong> path — skip the double-click <code>.bat</code> steps in the easy path.</p>
                 </div>
                 </div>
 
-                <div class="step">
+                <div class="step local-shared-steps">
                     <div class="step-head"><span class="step-num">4</span><h4>Open this page through the server</h4></div>
-                    <p>Do <strong>not</strong> continue from a <code>file://</code> tab. After the server is running, open:</p>
+                    <p>After <code>start-server.bat</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
                     <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
                         <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
                     </div>
+                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Click the button above — or copy the address into Chrome/Edge. Keep the black server window open.</p>
                 </div>
 
                 <div class="step">
@@ -342,6 +477,7 @@
                     <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Complete steps 2–5 first (PHP check, server running, this page open via localhost).</p>
                 </div>
             </div>
+            </div><!-- #setup-flow -->
 
             <!-- Cloud -->
             <div class="steps" id="cloud-steps">
@@ -396,47 +532,41 @@
             return /Windows/i.test(navigator.userAgent || '');
         }
 
-        function applyPhpCheckCommandsForOs() {
-            if (!isWindows()) {
-                return;
-            }
-            const hint = document.getElementById('php-check-windows-hint');
-            if (hint) {
-                hint.style.display = 'block';
-            }
-            const checkCmd = document.getElementById('cmd-php-check');
-            if (checkCmd) {
-                checkCmd.textContent = 'check-php.bat';
-            }
-            const altLabel = document.getElementById('cmd-php-check-alt-label');
-            if (altLabel) {
-                altLabel.textContent = 'Or in Command Prompt:';
+        function isInsideZipArchive() {
+            try {
+                const href = decodeURIComponent(window.location.href || '');
+                return /\.zip[\\/]/i.test(href);
+            } catch (_) {
+                return false;
             }
         }
 
-        function applyStartServerCommandsForOs() {
-            if (!isWindows()) {
+        function initLocationWarnings() {
+            const gate = document.getElementById('extract-gate');
+            const flow = document.getElementById('setup-flow');
+            if (!gate) {
                 return;
             }
-            const hint = document.getElementById('start-server-windows-hint');
-            if (hint) {
-                hint.style.display = 'block';
+            if (isInsideZipArchive()) {
+                gate.classList.add('visible');
+                flow?.classList.add('blocked');
+                return;
             }
-            const intro = document.getElementById('start-server-intro');
-            if (intro) {
-                intro.textContent = 'In Command Prompt (keep the window open), or double-click start-server.bat in File Explorer:';
+            if (isFileProtocol()) {
+                gate.className = 'status warn extract-gate visible';
+                gate.innerHTML = '<h3>Files look extracted — next, start the server</h3>'
+                    + '<p>You opened this page from your folder (that is fine for reading). Birkly only works through <strong>http://localhost</strong> after the server is running.</p>'
+                    + '<ol class="action-steps"><li>Double-click <code>check-php.bat</code>, then <code>start-server.bat</code> (keep that window open).</li>'
+                    + '<li>Click <strong>Open via localhost</strong> in step 4 below — do not continue in this <code>file://</code> tab.</li></ol>';
+                return;
             }
-            const def = document.getElementById('cmd-start-default');
-            const port = document.getElementById('cmd-start-port');
-            const portLabel = document.getElementById('cmd-start-port-label');
-            if (def) {
-                def.textContent = 'start-server.bat';
-            }
-            if (port) {
-                port.textContent = 'start-server.bat -p 8001';
-            }
-            if (portLabel) {
-                portLabel.textContent = 'Optional — different port:';
+            gate.classList.remove('visible');
+            flow?.classList.remove('blocked');
+        }
+
+        function applyOsLayout() {
+            if (isWindows()) {
+                document.body.classList.add('is-windows');
             }
         }
 
@@ -520,8 +650,6 @@
             const box = document.getElementById('folder-status');
             if (!box) return 'skip';
             if (isFileProtocol()) {
-                box.className = 'status';
-                box.style.display = 'none';
                 return 'file';
             }
 
@@ -772,29 +900,42 @@
             });
         });
 
-        document.querySelectorAll('.local-method-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const method = tab.dataset.localMethod;
-                document.querySelectorAll('.local-method-tab').forEach(t => t.classList.toggle('active', t === tab));
+        document.querySelectorAll('.setup-path-card').forEach(card => {
+            const activate = () => {
+                const method = card.dataset.localMethod;
+                document.querySelectorAll('.setup-path-card').forEach(c => {
+                    c.classList.toggle('selected', c === card);
+                    c.setAttribute('aria-pressed', c === card ? 'true' : 'false');
+                });
                 document.querySelectorAll('.local-method-panel').forEach(p => p.classList.remove('active'));
                 document.getElementById('local-method-' + method)?.classList.add('active');
+            };
+            card.addEventListener('click', activate);
+            card.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
             });
         });
 
         // DOMContentLoaded — do not wait for fonts/CDN on window.load before probing.
         document.addEventListener('DOMContentLoaded', () => {
-            applyPhpCheckCommandsForOs();
-            applyStartServerCommandsForOs();
+            applyOsLayout();
+            initLocationWarnings();
             updateLocalUrls();
             updateCloudUrls();
 
+            const localCard = document.querySelector('.path-card[data-path="local"]');
+            if (isWindows()) {
+                showSteps('local', localCard);
+            }
+
             if (!isFileProtocol() && isLocalhost()) {
-                showSteps('local', document.querySelector('.path-card[data-path="local"]'));
+                showSteps('local', localCard);
                 pollSetupProbe('env-probe', true);
             } else if (!isFileProtocol() && !isLocalhost()) {
                 showSteps('cloud', document.querySelector('.path-card[data-path="cloud"]'));
                 runSetupProbe('cloud-probe', true);
             } else {
+                showSteps('local', localCard);
                 markProbePending(document.getElementById('env-probe'), 'After step 4, open this page via localhost — we will check your environment here.');
             }
         });
