@@ -7,6 +7,9 @@ class BirklyVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
     private static ?string $lastMoveError = null;
+
+    /** @var list<string> */
+    private static array $stagedUpdateRelativePaths = [];
     // GitHub repository for update checks and downloads
     private static $githubRepo = 'Raaakete/Birkly';
     private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/Birkly/releases/latest';
@@ -335,34 +338,54 @@ class BirklyVersion {
         return false;
     }
 
-    private static function copyFileForUpdate(string $source, string $target): bool
+    private static function copyFileForUpdate(string $source, string $target, string $relativePath = ''): bool
     {
         $targetDir = dirname($target);
         if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
             return false;
         }
 
-        if (is_file($target)) {
-            @chmod($target, 0666);
-            if (!@unlink($target) && PHP_OS_FAMILY === 'Windows') {
-                clearstatcache(true, $target);
-            }
+        $stagingPath = $target . '.birkly-staged';
+        if (is_file($stagingPath)) {
+            @unlink($stagingPath);
         }
 
-        if (@copy($source, $target)) {
+        if (!@copy($source, $stagingPath)) {
+            return false;
+        }
+
+        clearstatcache(true, $target);
+
+        if (!is_file($target)) {
+            if (@rename($stagingPath, $target)) {
+                return true;
+            }
+            if (@copy($stagingPath, $target)) {
+                @unlink($stagingPath);
+                return true;
+            }
+            @unlink($stagingPath);
+            return false;
+        }
+
+        if (@rename($stagingPath, $target)) {
             return true;
         }
 
-        if (PHP_OS_FAMILY === 'Windows' && is_file($target)) {
-            $tmp = $target . '.birkly-new';
-            if (@copy($source, $tmp)) {
-                if (@rename($tmp, $target)) {
-                    return true;
-                }
-                @unlink($tmp);
-            }
+        if (@copy($stagingPath, $target)) {
+            @unlink($stagingPath);
+            return true;
         }
 
+        if (PHP_OS_FAMILY === 'Windows' && is_file($stagingPath) && filesize($stagingPath) > 0) {
+            if ($relativePath !== '') {
+                self::$stagedUpdateRelativePaths[] = $relativePath;
+            }
+
+            return true;
+        }
+
+        @unlink($stagingPath);
         return false;
     }
 
@@ -667,6 +690,7 @@ class BirklyVersion {
 
         @set_time_limit(600);
         self::$lastMoveError = null;
+        self::$stagedUpdateRelativePaths = [];
 
         $backupDir = __DIR__ . '/../backups/pre-update-' . date('Y-m-d-H-i-s');
         $cmsRoot = dirname(__DIR__);
@@ -718,11 +742,15 @@ class BirklyVersion {
             
             // Clean up
             self::cleanupTempFiles($tempFile, $tempExtractDir);
+
+            $staged = array_values(array_unique(self::$stagedUpdateRelativePaths));
             
             return [
                 'success' => true,
                 'version' => $version,
-                'backup_location' => $backupDir
+                'backup_location' => $backupDir,
+                'staged_files' => $staged,
+                'restart_recommended' => $staged !== [],
             ];
             
         } catch (Exception $e) {
@@ -836,7 +864,7 @@ class BirklyVersion {
                     }
                 }
             } else {
-                if (!self::copyFileForUpdate($item->getPathname(), $targetPath)) {
+                if (!self::copyFileForUpdate($item->getPathname(), $targetPath, $relativePath)) {
                     self::$lastMoveError = $relativePath;
                     return false;
                 }
@@ -847,10 +875,44 @@ class BirklyVersion {
     }
     
     /**
-     * Restore backup
+     * Restore backup over an existing CMS tree (merge — do not mkdir over live root).
      */
     private static function restoreBackup(string $backupDir, string $targetDir): bool {
-        return self::copyDirectory($backupDir, $targetDir);
+        return self::mergeDirectoryInto($backupDir, $targetDir);
+    }
+
+    private static function mergeDirectoryInto(string $sourceDir, string $targetDir): bool {
+        if (!is_dir($sourceDir)) {
+            return false;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $relativePath = str_replace('\\', '/', $iterator->getSubPathName());
+            $targetPath = $targetDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+
+            if ($item->isDir()) {
+                if (!is_dir($targetPath) && !mkdir($targetPath, 0755, true)) {
+                    return false;
+                }
+                continue;
+            }
+
+            $parent = dirname($targetPath);
+            if (!is_dir($parent) && !mkdir($parent, 0755, true)) {
+                return false;
+            }
+
+            if (!@copy($item->getPathname(), $targetPath)) {
+                return false;
+            }
+        }
+
+        return true;
     }
     
     /**

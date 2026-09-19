@@ -174,12 +174,19 @@ function installUpdate($data) {
             'user' => $_SESSION['user']['email']
         ]);
         
+        $message = 'Update installed successfully';
+        if (!empty($result['restart_recommended'])) {
+            $message = 'Update installed. Close the Birkly server window completely, start it again, then reload this page.';
+        }
+
         api_json_echo([
             'status' => 'ok',
-            'message' => 'Update installed successfully',
+            'message' => $message,
             'data' => [
                 'version' => $result['version'],
-                'backup_location' => $result['backup_location']
+                'backup_location' => $result['backup_location'],
+                'staged_files' => $result['staged_files'] ?? [],
+                'restart_recommended' => !empty($result['restart_recommended']),
             ]
         ]);
         
