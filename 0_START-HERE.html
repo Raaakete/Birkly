@@ -116,6 +116,15 @@
         }
         .step h4 { font-size: 1.0625rem; font-weight: 700; }
         .step p, .step li { color: var(--text-secondary); font-size: 0.9375rem; margin: var(--space-2) 0; }
+        .step code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.875em;
+            background: var(--color-neutral-200);
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 0.12em 0.4em;
+            color: var(--text-primary);
+        }
         .step ul { margin-left: 1.25rem; }
         .cmd-row { display: flex; align-items: flex-start; gap: var(--space-2); margin: var(--space-3) 0; }
         pre.cmd {
@@ -372,7 +381,9 @@
 
                     <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
                     <div class="cmd-row"><pre class="cmd" id="cmd-php-check">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
-                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from the official site and install it — <span class="mac-easy"><a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> (Mac)</span><span class="windows-easy"><a href="https://windows.php.net/download/" target="_blank" rel="noopener">windows.php.net/download</a></span><span class="linux-easy"><a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a></span>. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
+                    <p class="mac-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
+                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from <a href="https://windows.php.net/download/" target="_blank" rel="noopener">windows.php.net/download</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
+                    <p class="linux-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> and install it. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
 
                     <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
                     <div class="cmd-row"><pre class="cmd" id="cmd-start-server">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server">Copy</button></div>
@@ -402,18 +413,18 @@
                     <div class="step-head"><span class="step-num">1</span><h4>Point your PHP stack at this folder</h4></div>
                     <p>In XAMPP, MAMP, Laragon, or similar, set the <strong>document root</strong> to this Birkly folder (where <code>admin/</code> and <code>index.php</code> live).</p>
                     <p>Note the URL your stack gives you (e.g. <code>http://localhost:8888</code>) — use it in the steps below instead of <code>localhost:8080</code>.</p>
-                    <p class="status info" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">You chose the <strong>stack</strong> path — skip the double-click <code>.bat</code> steps in the easy path.</p>
+                    <p class="status info" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">You chose the <strong>stack</strong> path — skip the built-in server steps in step&nbsp;1.</p>
                 </div>
                 </div>
 
                 <div class="step local-shared-steps">
                     <div class="step-head"><span class="step-num">2</span><h4>Open this page through the server</h4></div>
-                    <p>With the PHP server running (step 1), open this site in your browser — not the <code>file://</code> tab:</p>
-                    <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
+                    <p>With the PHP server running (step 1), open this site in your browser — not the <code>file://</code> tab. If you used a different port in step&nbsp;1 (for example <code>8001</code>), change <code>8080</code> in the URL below to match.</p>
                     <div class="text-center">
-                        <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
+                        <a href="#" id="local-open-link" class="btn" target="_blank" rel="noopener">Open localhost in browser</a>
                     </div>
-                    <p class="windows-easy mac-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Click the button above or copy the address. Keep the server window open.</p>
+                    <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
+                    <p class="windows-easy mac-easy linux-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">You can also copy the address above. Keep the server window open.</p>
                 </div>
 
                 <div class="step">
