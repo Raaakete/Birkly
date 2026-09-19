@@ -88,7 +88,19 @@ if (!($result['ok'] ?? false)) {
 }
 
 $meta = birkly_mcp_desktop_install_target_meta($target);
-echo "Birkly: saved to " . ($result['path'] ?? '') . "\n";
+$savedPath = (string) ($result['path'] ?? '');
+echo "Birkly: saved to " . $savedPath . "\n";
+$allPaths = $result['paths'] ?? [];
+if (is_array($allPaths) && count($allPaths) > 1) {
+    foreach ($allPaths as $extraPath) {
+        if (is_string($extraPath) && $extraPath !== $savedPath) {
+            echo "  also: " . $extraPath . "\n";
+        }
+    }
+}
+if (PHP_OS_FAMILY === 'Windows' && $target === 'claude' && str_contains($savedPath, 'Packages' . DIRECTORY_SEPARATOR . 'Claude_')) {
+    echo "Claude (Microsoft Store / WinGet) reads this MSIX config path — not only %APPDATA%\\Claude\\.\n";
+}
 echo "Fully quit {$meta['app_label']}, then open it again.\n";
 echo "In {$meta['app_label']}, look for the “birkly” MCP server in settings.\n";
 exit(0);
