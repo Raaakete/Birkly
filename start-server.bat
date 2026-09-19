@@ -1,5 +1,5 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 
 set "PORT=8080"
@@ -28,9 +28,13 @@ where php >nul 2>&1
 if errorlevel 1 (
     echo.
     echo [Birkly] PHP is not installed or not on your PATH.
-    echo Install PHP 8.1+ from https://windows.php.net/download/
-    echo Or use XAMPP / Laragon and run this file from their terminal.
     echo.
+    echo WHAT TO DO NEXT:
+    echo   1. Double-click install-php-windows.bat in this folder.
+    echo   2. When check-php.bat shows SUCCESS, run start-server.bat again.
+    echo.
+    set /p RUN="Open install-php-windows.bat now? (Y/N): "
+    if /i "!RUN!"=="Y" call "%~dp0install-php-windows.bat"
     pause
     exit /b 1
 )
