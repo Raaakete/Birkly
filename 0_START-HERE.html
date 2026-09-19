@@ -293,8 +293,13 @@
         body.is-windows .windows-easy.dev-terminal-path { display: block; }
         .mac-easy { display: none; }
         body.is-mac .mac-easy { display: block; }
+        .linux-easy { display: block; }
+        body.is-windows .linux-easy,
+        body.is-mac .linux-easy { display: none; }
+        body.is-windows .dev-terminal-path,
         body.is-mac .dev-terminal-path { display: none; }
-        body.is-mac .mac-easy.dev-terminal-path { display: block; }
+        .easy-launcher-advanced { margin-top: var(--space-4); }
+        .easy-launcher-advanced .accordion-body { padding-top: var(--space-3); }
         @media (max-width: 720px) {
             .setup-path-grid { grid-template-columns: 1fr; }
         }
@@ -363,8 +368,8 @@
                 <div class="setup-path-grid" id="setup-path-grid">
                     <div class="setup-path-card selected" data-local-method="birkly" tabindex="0" role="button" aria-pressed="true">
                         <span class="badge">Recommended</span>
-                        <h3>Easy local setup</h3>
-                        <p>Double-click files in your Birkly folder. No typing commands.</p>
+                        <h3>Built-in PHP server</h3>
+                        <p>Use Birkly Launch (app or .exe). Manual terminal steps are optional.</p>
                     </div>
                     <div class="setup-path-card" data-local-method="stack" tabindex="0" role="button" aria-pressed="false">
                         <h3>XAMPP / Laragon / MAMP</h3>
@@ -375,152 +380,48 @@
 
                 <div class="local-method-panel active" id="local-method-birkly">
 
-                <div class="status info mac-easy" style="margin-bottom:var(--space-5);padding:var(--space-4);">
-                    <h4 style="margin-bottom:var(--space-2);font-size:1rem;">macOS says Birkly Launch cannot be opened?</h4>
-                    <p style="margin-bottom:var(--space-2);">Downloaded apps are often quarantined. Birkly Launch only runs PHP on <strong>your Mac</strong> (localhost) — it does not upload your project.</p>
-                    <p style="margin-bottom:var(--space-2);"><strong>First time:</strong> Right-click <code>Birkly Launch.app</code> → <strong>Open</strong> → confirm <strong>Open</strong> again. Or use <code>Birkly Launch.command</code> (opens Terminal).</p>
-                    <p style="margin-bottom:0;">After the zip is extracted, the app must sit next to <code>admin/</code> — not inside the zip file.</p>
-                </div>
-
-                <div class="status info windows-easy" style="margin-bottom:var(--space-5);padding:var(--space-4);">
-                    <h4 style="margin-bottom:var(--space-2);font-size:1rem;">Windows says the file may be unsafe?</h4>
-                    <p style="margin-bottom:var(--space-2);">That is <strong>normal</strong> for downloaded software. Birkly is not signed with a Microsoft certificate yet. The <code>.bat</code> files only start PHP on <strong>your computer</strong> (localhost) — they do not send your files to us.</p>
-                    <p style="margin-bottom:var(--space-2);"><strong>Before you extract the zip:</strong> In Downloads, right-click the Birkly <code>.zip</code> → <strong>Properties</strong> → if you see <strong>Unblock</strong>, tick it → <strong>Apply</strong> → then <strong>Extract All</strong>.</p>
-                    <p style="margin-bottom:var(--space-2);"><strong>When you double-click <code>Birkly Launch.exe</code> or a <code>.bat</code> file:</strong> On the blue “Windows protected your PC” screen, click <strong>More info</strong> → <strong>Run anyway</strong>. Or right-click the file → <strong>Run</strong>.</p>
-                    <p style="margin-bottom:0;">Birkly is not code-signed yet — the same SmartScreen steps apply to the launcher and the <code>.bat</code> helpers.</p>
-                </div>
-
-                <div class="step windows-easy">
-                    <div class="step-head"><span class="step-num">1</span><h4>Open your Birkly folder</h4></div>
-                    <p>In <strong>File Explorer</strong> (folder icon on the taskbar), open the folder where you extracted Birkly. You should see <code>Birkly Launch.exe</code> (recommended), plus <code>check-php.bat</code> and <code>start-server.bat</code>, next to the <code>admin</code> folder.</p>
-                    <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If you only see these files <em>inside</em> a zip, go back and use <strong>Extract All</strong> first (see security tip above for <strong>Unblock</strong>).</p>
-                </div>
-
-                <div class="step mac-easy">
-                    <div class="step-head"><span class="step-num">1</span><h4>Open your Birkly folder</h4></div>
-                    <p>In <strong>Finder</strong>, open the folder where you extracted Birkly. You should see <code>Birkly Launch.app</code> next to the <code>admin</code> folder (and <code>start-server.sh</code> for advanced use).</p>
-                    <p class="status warn" style="margin-top:var(--space-3);padding:var(--space-3);font-size:0.875rem;">If files are still inside the zip, extract first — double-clicking inside the archive will not work.</p>
-                </div>
-
-                <div class="step dev-terminal-path">
-                    <div class="step-head"><span class="step-num">1</span><h4>Open a terminal in your Birkly folder</h4></div>
-                    <p>Linux: run <code>./birkly-launch-linux</code> if present, or use <code>./start-server.sh</code>.</p>
-                    <p>Open Terminal in the folder next to <code>admin/</code> and <code>start-server.sh</code>.</p>
-                    <details class="accordion">
-                        <summary>How to open a terminal (Mac / Linux)</summary>
-                        <div class="accordion-body">
-                            <p><strong>Mac:</strong> Finder → Birkly folder → right-click → <em>New Terminal at Folder</em>.</p>
-                            <p><strong>Linux:</strong> Right-click → <em>Open in Terminal</em>.</p>
-                        </div>
-                    </details>
-                </div>
-
                 <div class="step">
-                    <div class="step-head"><span class="step-num">2</span><h4>Check PHP is installed</h4></div>
+                    <div class="step-head"><span class="step-num">1</span><h4>Start Birkly</h4></div>
+
                     <div class="windows-easy">
-                        <div class="file-action" style="margin-bottom:var(--space-4);">
-                            <span class="file-action-icon" aria-hidden="true">★</span>
-                            <div>
-                                <p><strong>Easiest:</strong> skip to step 3 and double-click <code>Birkly Launch.exe</code>. It checks for PHP when it starts and can open <code>install-php-windows.bat</code> if needed.</p>
-                            </div>
-                        </div>
-                        <div class="file-action">
-                            <span class="file-action-icon" aria-hidden="true">①</span>
-                            <div>
-                                <p><strong>Or</strong> double-click <code>check-php.bat</code> in File Explorer first.</p>
-                                <p>Wait for <strong>SUCCESS</strong>. If it fails, double-click <code>install-php-windows.bat</code> and follow the prompts, then run <code>check-php.bat</code> again.</p>
-                            </div>
-                        </div>
-                        <div class="troubleshoot">
-                            <h5>If Windows will not let you open the .bat file</h5>
-                            <ol>
-                                <li>Unblock the <strong>zip</strong> before extracting (Properties → Unblock), or right-click the <code>.bat</code> → Properties → Unblock</li>
-                                <li>SmartScreen: <strong>More info</strong> → <strong>Run anyway</strong></li>
-                                <li>Work/school PC: your IT policy may block scripts — use Laragon or ask IT</li>
-                            </ol>
-                        </div>
-                        <div class="troubleshoot" style="margin-top:var(--space-3);border-color:#fcd34d;background:#fffbeb;">
-                            <h5 style="color:var(--warning-700);">If you see “PHP is not installed” or “command not found”</h5>
-                            <ol>
-                                <li>Double-click <code>install-php-windows.bat</code> (same SmartScreen steps as above)</li>
-                                <li>Press <strong>1</strong> for Laragon (easiest), install it, then run <code>check-php.bat</code> again</li>
-                                <li>Do not paste commands into the browser — only use File Explorer</li>
-                            </ol>
-                        </div>
+                        <p>Extract the zip first (not open files inside the archive). In your Birkly folder next to <code>admin/</code>, double-click <code>Birkly Launch.exe</code> and <strong>leave the window open</strong>. Your browser opens when the server is ready.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Windows SmartScreen: <strong>More info</strong> → <strong>Run anyway</strong>. Unblock the zip in Properties before extracting if needed.</p>
                     </div>
+
                     <div class="mac-easy">
-                        <div class="file-action" style="margin-bottom:var(--space-4);">
-                            <span class="file-action-icon" aria-hidden="true">★</span>
-                            <div>
-                                <p><strong>Easiest:</strong> skip to step 3 and open <code>Birkly Launch.app</code>. It checks for PHP when it starts (install with Homebrew if needed — see below).</p>
-                            </div>
-                        </div>
-                        <div class="file-action">
-                            <span class="file-action-icon" aria-hidden="true">①</span>
-                            <div>
-                                <p><strong>Or</strong> run <code>./check-php.sh</code> in Terminal first.</p>
-                            </div>
-                        </div>
-                        <details class="accordion" style="margin-top:var(--space-3);">
-                            <summary>PHP not installed on Mac?</summary>
-                            <div class="accordion-body">
-                                <p>Install Homebrew if needed, then: <code>brew install php</code></p>
-                                <p>Run <code>./check-php.sh</code> again, or use <code>Birkly Launch.app</code>.</p>
-                            </div>
-                        </details>
+                        <p>Extract the zip first. In Finder, open your Birkly folder (next to <code>admin/</code>). You need <strong><code>Birkly Launch.app</code></strong> — if you only see <code>Birkly Launch.command</code>, download the <strong>latest</strong> Birkly zip from your invite (older builds did not include the app).</p>
+                        <p style="margin-top:var(--space-3);"><strong>First time on Mac (required):</strong> macOS blocks unsigned downloads. Open <strong>Terminal</strong> in this folder (Finder → right-click the folder → <em>New Terminal at Folder</em>, or drag the folder onto Terminal), paste this once, press Enter:</p>
+                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-launch">xattr -cr "Birkly Launch.app" 2>/dev/null; open "Birkly Launch.app"</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-launch">Copy</button></div>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">That clears the “cannot be opened” / malware warning. <strong>Do not double-click <code>Birkly Launch.command</code></strong> — it hits the same block. After the one-time Terminal step, use the <code>.app</code> only. Leave the Terminal window open while you use Birkly.</p>
+                        <p style="font-size:0.875rem;color:var(--text-secondary);">Already use PHP via Homebrew or Herd? The launcher uses your <code>php</code> on PATH. If PHP is missing, run <code>brew install php</code> and try again.</p>
                     </div>
-                    <div class="dev-terminal-path">
-                        <p id="php-check-intro">Run the PHP check before starting the server:</p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
-                        <details class="accordion">
-                            <summary>PHP not installed?</summary>
-                            <div class="accordion-body">
-                                <p><strong>Mac:</strong> <code>brew install php</code></p>
-                                <p><strong>Linux:</strong> <code>sudo apt install php php-mbstring php-curl</code></p>
-                            </div>
-                        </details>
+
+                    <div class="linux-easy">
+                        <p>In a terminal next to <code>admin/</code>, run <code>./birkly-launch-linux</code> if present, otherwise <code>./start-server.sh</code>. Keep the window open.</p>
                     </div>
                 </div>
 
-                <div class="step">
-                    <div class="step-head"><span class="step-num">3</span><h4>Start the Birkly server</h4></div>
-                    <div class="windows-easy">
-                        <div class="file-action">
-                            <span class="file-action-icon" aria-hidden="true">②</span>
-                            <div>
-                                <p>Double-click <code>Birkly Launch.exe</code> (opens your browser when the server is ready).</p>
-                                <p>A window opens — <strong>leave it open</strong>. After a reboot, double-click the launcher again. Port settings: run <code>Birkly Launch.exe --setup</code> from a terminal, or keep using <code>start-server.bat</code> below.</p>
-                            </div>
+                <details class="accordion easy-launcher-advanced">
+                    <summary>Advanced: check PHP and start the server manually</summary>
+                    <div class="accordion-body">
+                        <div class="windows-easy">
+                            <p>Double-click <code>check-php.bat</code>, then <code>start-server.bat</code>. Do not use <code>start-server.sh</code> on Windows.</p>
+                            <p>If PHP is missing: <code>install-php-windows.bat</code> → Laragon, then <code>check-php.bat</code> again.</p>
                         </div>
-                        <details class="accordion" style="margin-top:var(--space-3);">
-                            <summary>Advanced: use <code>start-server.bat</code> instead</summary>
-                            <div class="accordion-body">
-                                <p>Double-click <code>start-server.bat</code>. Same rules: leave the window open. Do not double-click <code>start-server.sh</code> on Windows.</p>
-                            </div>
-                        </details>
-                    </div>
-                    <div class="mac-easy">
-                        <div class="file-action">
-                            <span class="file-action-icon" aria-hidden="true">②</span>
-                            <div>
-                                <p>Double-click <code>Birkly Launch.app</code> (Terminal opens with the server — <strong>leave it open</strong>).</p>
-                                <p>Your browser opens when the server is ready. After a reboot, open the app again. Port settings: in Terminal, run <code>"./Birkly Launch.app/Contents/MacOS/birkly-launch" --setup</code> from your Birkly folder.</p>
-                            </div>
+                        <div class="mac-easy">
+                            <p>Terminal: <code>./check-php.sh</code> then <code>./start-server.sh</code>.</p>
+                            <p>PHP missing: <code>brew install php</code></p>
                         </div>
-                        <details class="accordion" style="margin-top:var(--space-3);">
-                            <summary>Advanced: use <code>./start-server.sh</code> in Terminal</summary>
-                            <div class="accordion-body">
-                                <p>Same rules: keep the Terminal window open while you use Birkly.</p>
-                            </div>
-                        </details>
+                        <div class="linux-easy">
+                            <p><code>./check-php.sh</code> then <code>./start-server.sh</code></p>
+                        </div>
+                        <div class="dev-terminal-path" style="margin-top:var(--space-3);">
+                            <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
+                            <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
+                            <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
+                        </div>
                     </div>
-                    <div class="dev-terminal-path">
-                        <p id="start-server-intro">Run in the terminal and keep the window open:</p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
-                        <p class="cmd-label" id="cmd-start-port-label">Optional — different port:</p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
-                    </div>
-                </div>
+                </details>
                 </div>
 
                 <div class="local-method-panel" id="local-method-stack">
@@ -533,21 +434,19 @@
                 </div>
 
                 <div class="step local-shared-steps">
-                    <div class="step-head"><span class="step-num">4</span><h4>Open this page through the server</h4></div>
-                    <p class="windows-easy">After <code>Birkly Launch.exe</code> or <code>start-server.bat</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
-                    <p class="mac-easy">After <code>Birkly Launch.app</code> or <code>./start-server.sh</code> is running, open this site in your browser (not the <code>file://</code> tab):</p>
-                    <p class="dev-terminal-path">After the server is running, open this site in your browser (not the <code>file://</code> tab):</p>
+                    <div class="step-head"><span class="step-num">2</span><h4>Open this page through the server</h4></div>
+                    <p>With the launcher (or manual server) running, open this site in your browser — not the <code>file://</code> tab:</p>
                     <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
                         <a href="#" id="local-open-link" class="btn btn-secondary">Open via localhost →</a>
                     </div>
-                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Click the button above — or copy the address into Chrome/Edge. Keep the black server window open.</p>
+                    <p class="windows-easy mac-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Click the button above or copy the address. Keep the server window open.</p>
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">5</span><h4>Environment ready</h4></div>
+                    <div class="step-head"><span class="step-num">3</span><h4>Environment ready</h4></div>
                     <p>With this page open via <code>http://localhost</code>, we quietly confirm writable folders and PHP extensions.</p>
-                    <div id="env-probe" class="probe pending">Complete steps 2–4 first, then we will check your environment here.</div>
+                    <div id="env-probe" class="probe pending">Complete step 1 and open this page via localhost (step 2) — then we will check your environment here.</div>
                     <details class="accordion">
                         <summary>Environment check failed?</summary>
                         <div class="accordion-body">
@@ -558,12 +457,12 @@
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">6</span><h4>Continue to admin setup</h4></div>
+                    <div class="step-head"><span class="step-num">4</span><h4>Continue to admin setup</h4></div>
                     <p>Create your admin account and finish setup in the wizard.</p>
                     <div class="text-center">
                         <a href="#" id="local-onboarding-link" class="btn disabled" aria-disabled="true">Start setup →</a>
                     </div>
-                    <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Complete steps 2–5 first (PHP check, server running, this page open via localhost).</p>
+                    <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Start the launcher (step 1) and open this page via localhost (step 2) first.</p>
                 </div>
             </div>
             </div><!-- #setup-flow -->
@@ -627,10 +526,10 @@
 
         function localLauncherHint() {
             if (isWindows()) {
-                return 'Double-click <code>Birkly Launch.exe</code> (or <code>check-php.bat</code> then <code>start-server.bat</code>) and keep that window open.';
+                return 'Double-click <code>Birkly Launch.exe</code> and keep that window open.';
             }
             if (isMac()) {
-                return 'Open <code>Birkly Launch.app</code> (or run <code>./check-php.sh</code> then <code>./start-server.sh</code> in Terminal) and keep that window open.';
+                return 'In Terminal, run the copy-paste command from step 1 (clears macOS block, then opens <code>Birkly Launch.app</code>). Keep that window open.';
             }
             return 'Run <code>./birkly-launch-linux</code> or <code>./start-server.sh</code> and keep that window open.';
         }
@@ -660,7 +559,7 @@
                 gate.innerHTML = '<h3>Files look extracted — next, start the server</h3>'
                     + '<p>You opened this page from your folder (that is fine for reading). Birkly only works through <strong>http://localhost</strong> after the server is running.</p>'
                     + '<ol class="action-steps"><li>' + localLauncherHint() + '</li>'
-                    + '<li>Click <strong>Open via localhost</strong> in step 4 below — do not continue in this <code>file://</code> tab.</li></ol>';
+                    + '<li>Click <strong>Open via localhost</strong> in step 2 below — do not continue in this <code>file://</code> tab.</li></ol>';
                 return;
             }
             gate.classList.remove('visible');
@@ -886,7 +785,7 @@
             } else if (!extOk) {
                 el.textContent = 'Missing PHP extensions. Enable json, mbstring, curl, and openssl, then refresh.';
             } else {
-                el.textContent = 'Environment check failed. Confirm PHP 8+ (step 2), then refresh.';
+                el.textContent = 'Environment check failed. Confirm PHP 8+ (see Advanced in step 1), then refresh.';
             }
             return false;
         }
@@ -895,19 +794,19 @@
             const el = document.getElementById(targetId);
             if (!el) return false;
             if (isFileProtocol()) {
-                markProbePending(el, 'After step 4, open this page via localhost — we will check your environment here.');
+                markProbePending(el, 'After step 2, open this page via localhost — we will check your environment here.');
                 return false;
             }
             try {
                 const data = await fetchSetupProbe(false);
                 if (data.status !== 'ok' || !data.data) {
                     el.className = 'probe error';
-                    el.textContent = 'Could not reach the server. Check that it is running (step 3).';
+                    el.textContent = 'Could not reach the server. Check that it is running (step 1).';
                     return false;
                 }
                 return applyProbeSuccess(el, data, enableOnSuccess);
             } catch (_) {
-                markProbePending(el, 'Waiting for the server — complete steps 2–4, then keep the server window open.');
+                markProbePending(el, 'Waiting for the server — complete steps 1–2, then keep the server window open.');
                 return false;
             }
         }
@@ -924,7 +823,7 @@
             const tick = async () => {
                 attempts += 1;
                 if (isFileProtocol()) {
-                    markProbePending(el, 'After step 4, open this page via localhost — we will check your environment here.');
+                    markProbePending(el, 'After step 2, open this page via localhost — we will check your environment here.');
                     return;
                 }
 
@@ -1042,7 +941,7 @@
                 runSetupProbe('cloud-probe', true);
             } else {
                 showSteps('local', localCard);
-                markProbePending(document.getElementById('env-probe'), 'After step 4, open this page via localhost — we will check your environment here.');
+                markProbePending(document.getElementById('env-probe'), 'After step 2, open this page via localhost — we will check your environment here.');
             }
         });
     </script>
