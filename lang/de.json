@@ -486,6 +486,7 @@
         "ai_conn_desktop_step_terminal_win": "Befehl kopieren, PowerShell oder Eingabeaufforderung öffnen, einfügen, Enter drücken.",
         "ai_conn_desktop_step_download_named": "Helfer-Datei für Ihre App herunterladen.",
         "ai_conn_desktop_step_find_claude": "In Claude: Einstellungen → Entwickler — unter MCP-Servern sollte „birkly“ stehen.",
+        "ai_conn_desktop_step_find_claude_win_msix": "Windows (Microsoft Store / WinGet): Claude liest die MCP-Konfiguration unter AppData\\Local\\Packages\\Claude_* — nicht immer die Datei von „Konfiguration bearbeiten“. Fehlt „birkly“, Installationsbefehl nach Birkly-Update erneut ausführen; die Konsole zeigt den geschriebenen Pfad.",
         "ai_conn_desktop_step_find_cursor": "In Cursor: MCP-Einstellungen — dort sollte „birkly“ erscheinen.",
         "ai_conn_desktop_mac_gatekeeper_title": "Wenn macOS die heruntergeladene Datei blockiert",
         "ai_conn_desktop_mac_gatekeeper_body": "Apple blockiert heruntergeladene Helfer oft. Nutzen Sie den Terminal-Befehl oben, oder Systemeinstellungen → Datenschutz & Sicherheit → unten „Trotzdem öffnen“ für die Birkly-Datei.",

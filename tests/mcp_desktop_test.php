@@ -113,6 +113,29 @@ assert_true(
     in_array('!scripts/birkly-mcp-desktop.php', $manifestExcludes, true)
 );
 
+$msixLocalRoot = $testRoot . '/fake-local-appdata';
+$msixPkg = $msixLocalRoot . '/Packages/Claude_pzs8sxrjxfjjc/LocalCache/Roaming/Claude';
+mkdir($msixPkg, 0755, true);
+$msixDiscovered = birkly_mcp_desktop_windows_claude_msix_config_paths($msixLocalRoot);
+assert_true(
+    'windows msix claude config path discovered',
+    count($msixDiscovered) === 1 && str_ends_with($msixDiscovered[0], 'claude_desktop_config.json'),
+    json_encode($msixDiscovered)
+);
+$msixConfigPath = $msixDiscovered[0];
+$msixMerge = birkly_mcp_desktop_merge_mcp_config_file(
+    $msixConfigPath,
+    'claude',
+    birkly_mcp_desktop_client_config_snippet($path, 'claude')
+);
+assert_true('msix claude config merge ok', ($msixMerge['ok'] ?? false) === true);
+$msixJson = json_decode((string) file_get_contents($msixConfigPath), true);
+assert_true(
+    'msix claude config contains birkly server',
+    is_array($msixJson) && isset($msixJson['mcpServers']['birkly']),
+    json_encode($msixJson)
+);
+
 $winInner = birkly_mcp_desktop_windows_install_inner_line(
     'C:\\Users\\dbayr\\Desktop\\birkly-0.0.2\\runtime\\php\\php.exe',
     'C:\\Users\\dbayr\\Desktop\\birkly-0.0.2\\scripts\\birkly-mcp-desktop-install.php',

@@ -375,6 +375,7 @@
                         <div data-desktop-panel="claude">
                             <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart', 'Fully quit Claude Desktop, then open it again.'))}</p>
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_claude', 'Claude → Settings → Developer → MCP servers: look for “birkly”.'))}</p>
+                            ${macPrimary ? '' : `<p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_claude_win_msix', 'Store/WinGet Claude on Windows uses a different config folder than “Edit Config” may show — check the path printed when the install command succeeds.'))}</p>`}
                             <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-cluster-3 u-pt-2">
                                 <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="claude" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
