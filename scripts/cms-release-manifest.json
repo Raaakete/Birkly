@@ -96,7 +96,9 @@
   ],
   "executable_files": [
     "start-server.sh",
-    "start-server.bat"
+    "start-server.bat",
+    "check-php.sh",
+    "check-php.bat"
   ],
   "fresh_install": {
     "active_plugins": [],
