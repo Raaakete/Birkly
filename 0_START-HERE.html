@@ -366,73 +366,34 @@
                 <div class="step">
                     <div class="step-head"><span class="step-num">1</span><h4>Start the PHP server</h4></div>
 
-                    <div class="windows-easy">
-                        <p><strong>Open a terminal in your Birkly folder:</strong> in File Explorer, open the folder that contains <code>0_START-HERE.html</code>, click the address bar, type <code>cmd</code>, press <strong>Enter</strong>.</p>
-                        <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-win-php-check">check-php.bat</pre><button type="button" class="copy-btn" data-copy-target="cmd-win-php-check">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If PHP is missing, double-click <code>install-php-windows.bat</code> in the same folder, or install <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a> (includes PHP), then run <code>check-php.bat</code> again.</p>
-                        <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-win-start">start-server.bat</pre><button type="button" class="copy-btn" data-copy-target="cmd-win-start">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If port <code>8080</code> is busy, use another port at the end, for example:</p>
-                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-win-start-port">start-server.bat -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-win-start-port">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Leave the Command Prompt window open while you use Birkly.</p>
-                        <details class="accordion" style="margin-top:var(--space-4);">
-                            <summary>Permission denied or “blocked” on Windows</summary>
-                            <div class="accordion-body">
-                                <p>If SmartScreen blocks a <code>.bat</code> file: <strong>More info</strong> → <strong>Run anyway</strong>.</p>
-                                <p>Run commands from the folder where <code>0_START-HERE.html</code> lives — not from inside the zip file.</p>
-                                <p>If scripts will not run, open Command Prompt as usual and type the full names above (they must find <code>check-php.bat</code> in the current directory).</p>
-                            </div>
-                        </details>
-                        <details class="accordion" style="margin-top:var(--space-2);">
-                            <summary>PHP not found or check failed</summary>
-                            <div class="accordion-body">
-                                <p>Install PHP 8+ with <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a>, restart the terminal, then <code>check-php.bat</code> again.</p>
-                                <p>Or run <code>install-php-windows.bat</code> for guided download links.</p>
-                                <p>After installing, close and reopen Command Prompt so <code>php</code> is on your PATH.</p>
-                            </div>
-                        </details>
-                    </div>
+                    <p class="mac-easy">Open a new Terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Services</strong> → <strong>New Terminal at Folder</strong>.</p>
+                    <p class="windows-easy">Open a terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Open in Terminal</strong>. If you do not see that, install <a href="https://git-scm.com/download/win" target="_blank" rel="noopener">Git for Windows</a>, then right-click → <strong>Open Git Bash here</strong>.</p>
+                    <p class="linux-easy">Open a terminal in your <strong>Birkly</strong> folder.</p>
 
-                    <div class="mac-easy">
-                        <p><strong>Open a new Terminal in your Birkly folder:</strong> right-click the folder that contains <code>0_START-HERE.html</code> → <strong>Services</strong> → <strong>New Terminal at Folder</strong> (on some Macs this appears directly on the right-click menu).</p>
-                        <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-php-check">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If you see “command not found” or PHP is not installed yet, install PHP 8+ from <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a> (easiest), or install <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> and run:</p>
-                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-brew-php">brew install php</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-brew-php">Copy</button></div>
-                        <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-mac-start">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-start">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If port <code>8080</code> is occupied or you want another port, use (replace <code>8001</code> with your port):</p>
-                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-start-port">Copy</button></div>
-                        <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-3);">Leave Terminal open while you use Birkly.</p>
-                        <details class="accordion" style="margin-top:var(--space-4);">
-                            <summary>Permission denied</summary>
-                            <div class="accordion-body">
-                                <p>Try running with <code>bash</code> instead of <code>./</code>:</p>
-                                <div class="cmd-row"><pre class="cmd" id="cmd-mac-bash-check">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-bash-check">Copy</button></div>
-                                <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-mac-bash-start">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-bash-start">Copy</button></div>
-                                <p style="margin-top:var(--space-2);">Or allow execute permission once:</p>
-                                <div class="cmd-row"><pre class="cmd" id="cmd-mac-chmod">chmod +x check-php.sh start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-chmod">Copy</button></div>
-                            </div>
-                        </details>
-                        <details class="accordion" style="margin-top:var(--space-2);">
-                            <summary>PHP not found or check failed</summary>
-                            <div class="accordion-body">
-                                <p>Install <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a>, quit and reopen Terminal, then run <code>./check-php.sh</code> again.</p>
-                                <p>Homebrew: <code>brew install php</code> (requires <a href="https://brew.sh/" target="_blank" rel="noopener">Homebrew</a> first).</p>
-                                <p>Birkly needs PHP <strong>8.0+</strong> with extensions <code>json</code>, <code>mbstring</code>, <code>curl</code>, and <code>openssl</code>.</p>
-                            </div>
-                        </details>
-                    </div>
+                    <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
+                    <div class="cmd-row"><pre class="cmd" id="cmd-php-check">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> (a free program on your computer). If the check fails, download PHP&nbsp;8+ from the official site and install it — <span class="mac-easy"><a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a> (Mac)</span><span class="windows-easy"><a href="https://windows.php.net/download/" target="_blank" rel="noopener">windows.php.net/download</a></span><span class="linux-easy"><a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net/downloads</a></span>. Close the terminal, open it again at the Birkly folder, and run the check once more.</p>
 
-                    <div class="linux-easy">
-                        <p><strong>Open a terminal</strong> in the folder that contains <code>0_START-HERE.html</code>.</p>
-                        <p style="margin-top:var(--space-4);"><strong>1. Check PHP:</strong></p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-linux-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-linux-php-check">Copy</button></div>
-                        <p style="margin-top:var(--space-4);"><strong>2. Start the server:</strong></p>
-                        <div class="cmd-row"><pre class="cmd" id="cmd-linux-start">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-linux-start">Copy</button></div>
-                        <div class="cmd-row" style="margin-top:var(--space-2);"><pre class="cmd" id="cmd-linux-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-linux-start-port">Copy</button></div>
-                    </div>
+                    <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
+                    <div class="cmd-row"><pre class="cmd" id="cmd-start-server">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server">Copy</button></div>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. If port <code>8080</code> is busy, run <code>bash start-server.sh -k -p 8001</code> (use your own port instead of <code>8001</code>).</p>
+
+                    <details class="accordion" style="margin-top:var(--space-4);">
+                        <summary>Permission denied</summary>
+                        <div class="accordion-body">
+                            <p>Run the commands from inside your <strong>Birkly</strong> folder (not from inside the zip file). On Mac you can use <code>chmod +x check-php.sh start-server.sh</code> once, then <code>./check-php.sh</code> and <code>./start-server.sh</code>.</p>
+                        </div>
+                    </details>
+                    <details class="accordion" style="margin-top:var(--space-2);">
+                        <summary>PHP not found or check failed</summary>
+                        <div class="accordion-body">
+                            <p>Install PHP from the official download links in step&nbsp;1, then restart the terminal.</p>
+                            <p class="mac-easy">Optional on Mac: <a href="https://herd.laravel.com/" target="_blank" rel="noopener">Laravel Herd</a> or Homebrew <code>brew install php</code>.</p>
+                            <p class="windows-easy">Optional on Windows: <a href="https://laragon.org/download/" target="_blank" rel="noopener">Laragon</a> (includes PHP and adds it to your PATH).</p>
+                            <p class="linux-easy">Optional: your distro package manager (e.g. <code>sudo apt install php php-mbstring php-curl</code>).</p>
+                            <p>Birkly needs PHP <strong>8.0+</strong> with <code>json</code>, <code>mbstring</code>, <code>curl</code>, and <code>openssl</code>.</p>
+                        </div>
+                    </details>
                 </div>
                 </div>
 
@@ -554,11 +515,6 @@
             if (isInsideZipArchive()) {
                 gate.classList.add('visible');
                 flow?.classList.add('blocked');
-                return;
-            }
-            if (isFileProtocol()) {
-                gate.className = 'status warn extract-gate visible';
-                gate.innerHTML = '<p><strong>Next:</strong> step 1 (start server), then step 2 (<strong>Open via localhost</strong>). This <code>file://</code> tab will not run Birkly.</p>';
                 return;
             }
             gate.classList.remove('visible');

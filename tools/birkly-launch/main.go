@@ -1,5 +1,5 @@
 // Birkly local server launcher — easy-local path only.
-// Does not replace start-server.bat/.sh, cloud upload, or XAMPP/Laragon flows.
+// Does not replace start-server.sh, cloud upload, or XAMPP/Laragon flows.
 package main
 
 import (
@@ -81,7 +81,7 @@ After a reboot, double-click again to restart the server.
   -h, --help       This help
 
 macOS: Birkly Launch.app · Windows: Birkly Launch.exe
-Advanced: start-server.bat / ./start-server.sh still work the same way.`)
+Advanced: bash start-server.sh still works the same way.`)
 }
 
 func configPath(root string) string {
@@ -132,7 +132,7 @@ func findPHP(root string) (string, error) {
 	if p, err := exec.LookPath("php"); err == nil {
 		return p, nil
 	}
-	return "", errors.New("PHP not found — use check-php.bat / ./check-php.sh, or install PHP (easy path: bundled runtime/php in a future download)")
+	return "", errors.New("PHP not found — run bash check-php.sh, or install PHP from https://www.php.net/downloads.php")
 }
 
 func portFree(port int) bool {

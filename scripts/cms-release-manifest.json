@@ -33,6 +33,9 @@
     "birkly-launch-linux",
     "birkly-launch-mac",
     "birkly-launch-mac-intel",
+    "check-php.bat",
+    "start-server.bat",
+    "install-php-windows.bat",
     "OPEN-ME-FIRST.txt",
     "tests/**",
     "docs/**",
@@ -108,10 +111,7 @@
   "launcher_release_dirs": [],
   "executable_files": [
     "start-server.sh",
-    "start-server.bat",
-    "check-php.sh",
-    "check-php.bat",
-    "install-php-windows.bat"
+    "check-php.sh"
   ],
   "fresh_install": {
     "active_plugins": [],
