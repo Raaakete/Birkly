@@ -144,16 +144,15 @@ function installUpdate($data) {
         return;
     }
     
-    // Security check: ensure temp file is in temp directory and has expected name pattern
-    $expectedPattern = '/^birkly-update-' . preg_quote($version, '/') . '\.zip$/';
-    if (!preg_match($expectedPattern, $tempFile)) {
+    $expectedBasename = BirklyVersion::updatePackageBasename($version);
+    if ($tempFile !== $expectedBasename) {
         echo json_encode(['status' => 'error', 'message' => 'Invalid temp file']);
         return;
     }
-    
-    $fullTempPath = sys_get_temp_dir() . '/' . $tempFile;
-    if (!file_exists($fullTempPath)) {
-        echo json_encode(['status' => 'error', 'message' => 'Temp file not found']);
+
+    $fullTempPath = BirklyVersion::resolveDownloadedUpdatePath($version, $tempFile);
+    if ($fullTempPath === null) {
+        echo json_encode(['status' => 'error', 'message' => 'Update package not found. Download the update again before installing.']);
         return;
     }
     

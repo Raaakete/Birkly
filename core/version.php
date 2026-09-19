@@ -6,6 +6,7 @@ require_once __DIR__ . '/outbound_http.php';
 class BirklyVersion {
     private static $currentVersion = '1.0.0';
     private static $versionFile = __DIR__ . '/../VERSION';
+    private static ?string $lastMoveError = null;
     // GitHub repository for update checks and downloads
     private static $githubRepo = 'Raaakete/Birkly';
     private static $updateCheckUrl = 'https://api.github.com/repos/Raaakete/Birkly/releases/latest';
@@ -203,6 +204,11 @@ class BirklyVersion {
     /**
      * Locate CMS root prefix inside a GitHub source archive (e.g. "Birkly-1.0.3/").
      */
+    private static function normalizeZipEntryPath(string $name): string
+    {
+        return str_replace('\\', '/', $name);
+    }
+
     private static function findZipCmsPrefix(ZipArchive $zip): ?string
     {
         if ($zip->locateName('index.php') !== false && $zip->locateName('admin/index.php') !== false) {
@@ -211,7 +217,11 @@ class BirklyVersion {
 
         for ($i = 0; $i < $zip->numFiles; $i++) {
             $name = $zip->getNameIndex($i);
-            if (!is_string($name) || !preg_match('#^([^/]+)/index\.php$#', $name, $m)) {
+            if (!is_string($name)) {
+                continue;
+            }
+            $name = self::normalizeZipEntryPath($name);
+            if (!preg_match('#^([^/]+)/index\.php$#', $name, $m)) {
                 continue;
             }
             $prefix = $m[1] . '/';
@@ -222,6 +232,138 @@ class BirklyVersion {
         }
 
         return null;
+    }
+
+    private static function sanitizeUpdateVersionForFilename(string $version): string
+    {
+        $safe = preg_replace('/[^a-zA-Z0-9._\-]/', '_', $version);
+        return $safe !== '' ? $safe : 'unknown';
+    }
+
+    public static function updatePackageBasename(string $version): string
+    {
+        return 'birkly-update-' . self::sanitizeUpdateVersionForFilename($version) . '.zip';
+    }
+
+    /**
+     * Writable storage for downloaded CMS update zips (survives between download + install clicks).
+     */
+    public static function updatePackageStorageDir(): string
+    {
+        return dirname(__DIR__) . '/data/cms_updates';
+    }
+
+    public static function updatePackagePath(string $version): string
+    {
+        return self::updatePackageStorageDir() . '/' . self::updatePackageBasename($version);
+    }
+
+    /**
+     * Resolve a downloaded update package on disk (data/cms_updates first, then system temp).
+     */
+    public static function resolveDownloadedUpdatePath(string $version, string $tempBasename): ?string
+    {
+        $expected = self::updatePackageBasename($version);
+        if ($tempBasename !== $expected && $tempBasename !== basename($expected)) {
+            return null;
+        }
+
+        $candidates = [
+            self::updatePackagePath($version),
+            sys_get_temp_dir() . DIRECTORY_SEPARATOR . $expected,
+            sys_get_temp_dir() . '/' . $expected,
+        ];
+
+        foreach ($candidates as $path) {
+            if (is_file($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    private static function ensureUpdateStorageDir(): bool
+    {
+        $dir = self::updatePackageStorageDir();
+        if (is_dir($dir)) {
+            return is_writable($dir);
+        }
+
+        return mkdir($dir, 0750, true) && is_writable($dir);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function updateInstallExcludePrefixes(): array
+    {
+        return [
+            'users/',
+            'content/',
+            'media/',
+            'logs/',
+            'settings/',
+            'backups/',
+            'project/',
+            'data/',
+            'runtime/',
+            '.env',
+            'config.php',
+        ];
+    }
+
+    private static function updatePathIsExcluded(string $relativePath, array $excludeFiles): bool
+    {
+        $relativePath = str_replace('\\', '/', $relativePath);
+        foreach ($excludeFiles as $exclude) {
+            $exclude = str_replace('\\', '/', (string) $exclude);
+            if ($exclude === '') {
+                continue;
+            }
+            if (str_ends_with($exclude, '/')) {
+                if ($relativePath === rtrim($exclude, '/') || str_starts_with($relativePath, $exclude)) {
+                    return true;
+                }
+                continue;
+            }
+            if ($relativePath === $exclude || str_starts_with($relativePath, $exclude . '/')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function copyFileForUpdate(string $source, string $target): bool
+    {
+        $targetDir = dirname($target);
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
+            return false;
+        }
+
+        if (is_file($target)) {
+            @chmod($target, 0666);
+            if (!@unlink($target) && PHP_OS_FAMILY === 'Windows') {
+                clearstatcache(true, $target);
+            }
+        }
+
+        if (@copy($source, $target)) {
+            return true;
+        }
+
+        if (PHP_OS_FAMILY === 'Windows' && is_file($target)) {
+            $tmp = $target . '.birkly-new';
+            if (@copy($source, $tmp)) {
+                if (@rename($tmp, $target)) {
+                    return true;
+                }
+                @unlink($tmp);
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -424,7 +566,13 @@ class BirklyVersion {
      * Download and verify update package
      */
     public static function downloadUpdate(string $version): array {
-        $tempFile = sys_get_temp_dir() . '/birkly-update-' . $version . '.zip';
+        if (!class_exists('ZipArchive')) {
+            return ['error' => 'PHP zip extension is required for CMS updates. On Windows, run install-php.ps1 or enable extension=zip in php.ini.'];
+        }
+        if (!self::ensureUpdateStorageDir()) {
+            return ['error' => 'Could not create data/cms_updates for the update package. Check folder permissions.'];
+        }
+        $tempFile = self::updatePackagePath($version);
         $opsMeta = self::resolveOpsDownloadMeta($version);
         $downloadUrl = $opsMeta['download_url'] ?? self::getDownloadUrl($version);
         $expectedChecksum = $opsMeta['checksum_sha256'] ?? '';
@@ -513,13 +661,20 @@ class BirklyVersion {
      * Install update package
      */
     public static function installUpdate(string $tempFile, string $version): array {
+        if (!class_exists('ZipArchive')) {
+            return ['error' => 'PHP zip extension is required for CMS updates. On Windows, run install-php.ps1 or enable extension=zip in php.ini.'];
+        }
+
+        @set_time_limit(600);
+        self::$lastMoveError = null;
+
         $backupDir = __DIR__ . '/../backups/pre-update-' . date('Y-m-d-H-i-s');
         $cmsRoot = dirname(__DIR__);
         
         try {
             // Create backup
             if (!self::createBackup($cmsRoot, $backupDir)) {
-                return ['error' => 'Failed to create backup'];
+                return ['error' => 'Failed to create backup. Ensure the backups/ folder is writable.'];
             }
             
             // Extract update
@@ -547,23 +702,15 @@ class BirklyVersion {
                 return ['error' => 'CMS files not found in update package'];
             }
             
-            // Move files to CMS root (excluding user/site data — same policy as release manifest)
-            $excludeFiles = [
-                'users/',
-                'content/',
-                'media/',
-                'logs/',
-                'settings/',
-                'backups/',
-                'project/',
-                '.env',
-                'config.php'
-            ];
+            $excludeFiles = self::updateInstallExcludePrefixes();
             
             if (!self::moveUpdateFiles($actualCmsRoot, $cmsRoot, $excludeFiles)) {
-                // Restore backup on failure
                 self::restoreBackup($backupDir, $cmsRoot);
-                return ['error' => 'Failed to install update files'];
+                $detail = self::$lastMoveError !== null ? ' (' . self::$lastMoveError . ')' : '';
+                $hint = PHP_OS_FAMILY === 'Windows'
+                    ? ' On Windows, fully stop the Birkly server (close the server window), then try Install again.'
+                    : '';
+                return ['error' => 'Failed to install update files' . $detail . '.' . $hint];
             }
             
             // Update version file
@@ -607,9 +754,8 @@ class BirklyVersion {
             'core/',
             'fieldtypes/',
             'plugins/',
-            'project/',
             'index.php',
-            'VERSION'
+            'VERSION',
         ];
         
         foreach ($coreFiles as $file) {
@@ -668,44 +814,30 @@ class BirklyVersion {
      * Move update files to CMS root
      */
     private static function moveUpdateFiles(string $sourceDir, string $targetDir, array $excludeFiles): bool {
+        self::$lastMoveError = null;
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
         );
         
         foreach ($iterator as $item) {
-            $relativePath = $iterator->getSubPathName();
-            $targetPath = $targetDir . DIRECTORY_SEPARATOR . $relativePath;
+            $relativePath = str_replace('\\', '/', $iterator->getSubPathName());
+            $targetPath = $targetDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
             
-            // Skip excluded files
-            $shouldExclude = false;
-            foreach ($excludeFiles as $exclude) {
-                if (strpos($relativePath, $exclude) === 0) {
-                    $shouldExclude = true;
-                    break;
-                }
-            }
-            
-            if ($shouldExclude) {
+            if (self::updatePathIsExcluded($relativePath, $excludeFiles)) {
                 continue;
             }
             
             if ($item->isDir()) {
                 if (!is_dir($targetPath)) {
                     if (!mkdir($targetPath, 0755, true)) {
+                        self::$lastMoveError = $relativePath;
                         return false;
                     }
                 }
             } else {
-                // Ensure target directory exists
-                $targetDirPath = dirname($targetPath);
-                if (!is_dir($targetDirPath)) {
-                    if (!mkdir($targetDirPath, 0755, true)) {
-                        return false;
-                    }
-                }
-                
-                if (!copy($item, $targetPath)) {
+                if (!self::copyFileForUpdate($item->getPathname(), $targetPath)) {
+                    self::$lastMoveError = $relativePath;
                     return false;
                 }
             }
