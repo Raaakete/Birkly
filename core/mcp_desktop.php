@@ -25,11 +25,52 @@ function birkly_mcp_desktop_credentials_path(string $userId): string
     return birkly_mcp_desktop_data_dir() . '/credentials_' . $safe . '.json';
 }
 
+function birkly_mcp_desktop_resolve_credentials_path(string $credentialsPath): string
+{
+    $credentialsPath = trim($credentialsPath);
+    if ($credentialsPath === '') {
+        return '';
+    }
+
+    if (!function_exists('birkly_project_root')) {
+        require_once __DIR__ . '/birkly_paths.php';
+    }
+
+    if (preg_match('#^[A-Za-z]:[\\\\/]#', $credentialsPath) || str_starts_with($credentialsPath, '/')) {
+        $real = realpath($credentialsPath);
+
+        return $real !== false ? $real : $credentialsPath;
+    }
+
+    $root = birkly_project_root();
+    $joined = $root . DIRECTORY_SEPARATOR . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($credentialsPath, '/\\'));
+    $real = realpath($joined);
+
+    return $real !== false ? $real : $joined;
+}
+
+function birkly_mcp_desktop_normalize_config_path(string $path): string
+{
+    if ($path === '') {
+        return '';
+    }
+
+    $resolved = birkly_mcp_desktop_resolve_credentials_path($path);
+    if (PHP_OS_FAMILY === 'Windows') {
+        return str_replace('\\', '/', $resolved);
+    }
+
+    return $resolved;
+}
+
 function birkly_mcp_desktop_load_credentials(?string $path = null): ?array
 {
     $path = $path ?? '';
     if ($path === '' && isset($_ENV['BIRKLY_DESKTOP_TOKEN_FILE'])) {
         $path = (string) $_ENV['BIRKLY_DESKTOP_TOKEN_FILE'];
+    }
+    if ($path !== '') {
+        $path = birkly_mcp_desktop_resolve_credentials_path($path);
     }
     if ($path === '' || !is_readable($path)) {
         return null;
@@ -735,15 +776,20 @@ function birkly_mcp_desktop_relative_token_path(string $credentialsPath): string
  */
 function birkly_mcp_desktop_stdio_command_entry(string $credentialsPath): array
 {
-    $phpBinary = birkly_mcp_desktop_php_binary();
-    $bridgeScript = birkly_project_root() . '/scripts/birkly-mcp-desktop.php';
+    $phpBinary = birkly_mcp_desktop_normalize_config_path(birkly_mcp_desktop_php_binary());
+    $bridgeScript = birkly_mcp_desktop_normalize_config_path(
+        birkly_project_root() . '/scripts/birkly-mcp-desktop.php'
+    );
+    $tokenFile = birkly_mcp_desktop_normalize_config_path(
+        birkly_mcp_desktop_resolve_credentials_path($credentialsPath)
+    );
 
     return [
         'command' => $phpBinary,
         'args' => [
             $bridgeScript,
             '--token-file',
-            $credentialsPath,
+            $tokenFile,
         ],
     ];
 }
@@ -1066,11 +1112,13 @@ function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, st
     $tokenArg = birkly_mcp_desktop_relative_token_path($credentialsPath);
 
     if (PHP_OS_FAMILY === 'Windows') {
-        return 'cd /d ' . escapeshellarg($root)
+        $inner = 'cd /d ' . escapeshellarg($root)
             . ' && ' . escapeshellarg($php)
             . ' ' . escapeshellarg($scriptRel)
             . ' --target=' . escapeshellarg($target)
             . ' --token-file=' . escapeshellarg($tokenArg);
+
+        return 'cmd /c ' . escapeshellarg($inner);
     }
 
     return 'cd ' . escapeshellarg($root)
@@ -1087,10 +1135,12 @@ function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
     $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
 
     if (PHP_OS_FAMILY === 'Windows') {
-        return 'cd /d ' . escapeshellarg($root)
+        $inner = 'cd /d ' . escapeshellarg($root)
             . ' && ' . escapeshellarg($php)
             . ' ' . escapeshellarg($scriptRel)
             . ' --uninstall --target=' . escapeshellarg($target);
+
+        return 'cmd /c ' . escapeshellarg($inner);
     }
 
     return 'cd ' . escapeshellarg($root)
