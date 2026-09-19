@@ -302,11 +302,15 @@
         body.is-windows .windows-easy.dev-terminal-path { display: block; }
         .mac-easy { display: none; }
         body.is-mac .mac-easy { display: block; }
-        .linux-easy { display: block; }
-        body.is-windows .linux-easy,
-        body.is-mac .linux-easy { display: none; }
+        .linux-easy { display: none; }
+        body.is-linux .linux-easy { display: block; }
         body.is-windows .dev-terminal-path,
-        body.is-mac .dev-terminal-path { display: none; }
+        body.is-mac .dev-terminal-path,
+        body.is-linux .dev-terminal-path { display: none; }
+        /* cmd-row must stay flex when shown (do not combine mac-easy + linux-easy on one node) */
+        body.is-mac .cmd-row.mac-easy,
+        body.is-linux .cmd-row.linux-easy,
+        body.is-windows .cmd-row.windows-easy { display: flex; }
         .easy-launcher-advanced { margin-top: var(--space-4); }
         .easy-launcher-advanced .accordion-body { padding-top: var(--space-3); }
         @media (max-width: 720px) {
@@ -375,13 +379,14 @@
                 <div class="step">
                     <div class="step-head"><span class="step-num">1</span><h4>Start the PHP server</h4></div>
 
-                    <p class="mac-easy">Open a new Terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Services</strong> → <strong>New Terminal at Folder</strong>.</p>
+                    <p class="mac-easy">Open a new Terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Services</strong> → <strong>New Terminal at Folder</strong>. (Built-in Mac app — no Git or extra tools.)</p>
                     <p class="windows-easy">Open <strong>PowerShell</strong> at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Open in Terminal</strong> (or <strong>Open PowerShell window here</strong>).</p>
                     <p class="linux-easy">Open a terminal in your <strong>Birkly</strong> folder.</p>
 
                     <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
                     <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-php-check-win">powershell -ExecutionPolicy Bypass -File .\check-php.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-win">Copy</button></div>
-                    <div class="cmd-row mac-easy linux-easy"><pre class="cmd" id="cmd-php-check-unix">bash check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-unix">Copy</button></div>
+                    <div class="cmd-row mac-easy"><pre class="cmd" id="cmd-php-check-mac">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-mac">Copy</button></div>
+                    <div class="cmd-row linux-easy"><pre class="cmd" id="cmd-php-check-linux">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check-linux">Copy</button></div>
                     <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Birkly needs <strong>PHP</strong> on your PC. If the check fails, run the installer below — it downloads PHP into your Birkly folder (no website zip steps):</p>
                     <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-php-install-win">powershell -ExecutionPolicy Bypass -File .\install-php.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-install-win">Copy</button></div>
                     <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">When it finishes, close PowerShell, open it again at the Birkly folder, and run the check command again.</p>
@@ -390,8 +395,9 @@
 
                     <p style="margin-top:var(--space-4);"><strong>2. Start the PHP server</strong></p>
                     <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-start-server-win">powershell -ExecutionPolicy Bypass -File .\start-server.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-win">Copy</button></div>
-                    <div class="cmd-row mac-easy linux-easy"><pre class="cmd" id="cmd-start-server-unix">bash start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-unix">Copy</button></div>
-                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. If port <code>8080</code> is busy, use <span class="windows-easy"><code>powershell -ExecutionPolicy Bypass -File .\start-server.ps1 -Port 8001 -Kill</code></span><span class="mac-easy linux-easy"><code>bash start-server.sh -k -p 8001</code></span> (pick your own port instead of <code>8001</code>).</p>
+                    <div class="cmd-row mac-easy"><pre class="cmd" id="cmd-start-server-mac">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-mac">Copy</button></div>
+                    <div class="cmd-row linux-easy"><pre class="cmd" id="cmd-start-server-linux">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-linux">Copy</button></div>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. If port <code>8080</code> is busy, use <span class="windows-easy"><code>powershell -ExecutionPolicy Bypass -File .\start-server.ps1 -Port 8001 -Kill</code></span><span class="mac-easy"><code>./start-server.sh -k -p 8001</code></span><span class="linux-easy"><code>./start-server.sh -k -p 8001</code></span> (pick your own port instead of <code>8001</code>).</p>
 
                     <details class="accordion" style="margin-top:var(--space-4);">
                         <summary>Permission denied</summary>
@@ -513,6 +519,11 @@
             return /Macintosh|Mac OS X/i.test(navigator.userAgent || '');
         }
 
+        function isLinux() {
+            const ua = navigator.userAgent || '';
+            return /Linux/i.test(ua) && !/Android/i.test(ua);
+        }
+
         function isInsideZipArchive() {
             try {
                 const href = decodeURIComponent(window.location.href || '');
@@ -543,6 +554,8 @@
             }
             if (isMac()) {
                 document.body.classList.add('is-mac');
+            } else if (isLinux()) {
+                document.body.classList.add('is-linux');
             }
         }
 
