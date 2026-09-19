@@ -1,8 +1,12 @@
 #!/bin/bash
-# Double-click on macOS (Terminal). Runs the arm64 or Intel launcher next to this file.
+# Fallback double-click helper when Gatekeeper blocks the .app — opens Birkly Launch.app when present.
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$DIR"
+if [[ -d "./Birkly Launch.app" ]]; then
+  open "./Birkly Launch.app"
+  exit 0
+fi
 if [[ "$(uname -m)" == "arm64" ]] && [[ -x "./birkly-launch-mac" ]]; then
   exec "./birkly-launch-mac"
 fi

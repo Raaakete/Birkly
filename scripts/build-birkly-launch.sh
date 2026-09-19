@@ -30,4 +30,19 @@ GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/bi
 echo "[build-birkly-launch] linux/amd64 → birkly-launch-linux"
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-linux" .
 
+APP="$ROOT/Birkly Launch.app"
+MACOS_BIN="$APP/Contents/MacOS/birkly-launch"
+rm -rf "$APP"
+mkdir -p "$(dirname "$MACOS_BIN")"
+cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
+
+if command -v lipo >/dev/null 2>&1 && [[ -f "$ROOT/birkly-launch-mac" && -f "$ROOT/birkly-launch-mac-intel" ]]; then
+  echo "[build-birkly-launch] lipo universal → Birkly Launch.app"
+  lipo -create -output "$MACOS_BIN" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel"
+else
+  echo "[build-birkly-launch] Birkly Launch.app (arm64 binary in bundle)"
+  cp "$ROOT/birkly-launch-mac" "$MACOS_BIN"
+fi
+chmod 755 "$MACOS_BIN"
+
 echo "[build-birkly-launch] OK"
