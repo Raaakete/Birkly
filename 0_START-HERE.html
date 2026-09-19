@@ -413,6 +413,14 @@
                         </div>
                     </details>
                     <details class="accordion" style="margin-top:var(--space-2);">
+                        <summary>index.php not found (Windows)</summary>
+                        <div class="accordion-body windows-easy">
+                            <p>Open the folder in File Explorer. You should see <strong>index.php</strong>, <strong>0_START-HERE.html</strong>, and an <strong>admin</strong> folder in the <em>same</em> folder as <code>start-server.ps1</code>.</p>
+                            <p>If those files are inside a subfolder (common after unzip), <code>cd</code> into that folder, then run the server command again. If <code>index.php</code> is missing, extract the <strong>full</strong> Birkly zip again — do not copy only the <code>.ps1</code> scripts.</p>
+                            <p>After updating Birkly, download the latest alpha zip so <code>scripts\windows-php-common.ps1</code> matches <code>start-server.ps1</code>.</p>
+                        </div>
+                    </details>
+                    <details class="accordion" style="margin-top:var(--space-2);">
                         <summary>PHP not found or check failed</summary>
                         <div class="accordion-body">
                             <p>Install PHP from the official download links in step&nbsp;1, then restart the terminal.</p>

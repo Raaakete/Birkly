@@ -4,8 +4,9 @@
 #Requires -Version 5.1
 
 $ErrorActionPreference = 'Stop'
-$Global:BirklyWindowsScriptRoot = (Resolve-Path -LiteralPath $PSScriptRoot).Path
-. (Join-Path $PSScriptRoot 'scripts\windows-php-common.ps1')
+$entryScript = if ($PSCommandPath) { $PSCommandPath } elseif ($MyInvocation.MyCommand.Path) { $MyInvocation.MyCommand.Path } else { Join-Path $PSScriptRoot 'install-php.ps1' }
+$Global:BirklyWindowsScriptRoot = (Split-Path -Parent (Resolve-Path -LiteralPath $entryScript).Path)
+. (Join-Path $Global:BirklyWindowsScriptRoot 'scripts\windows-php-common.ps1')
 
 $Root = Get-BirklyRoot
 $RuntimeDir = Join-Path $Root 'runtime\php'
