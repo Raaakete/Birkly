@@ -11,8 +11,14 @@ if [[ ! -f "$MANIFEST" ]]; then
   exit 1
 fi
 
-if [[ -x "$ROOT/scripts/build-birkly-launch.sh" ]]; then
-  "$ROOT/scripts/build-birkly-launch.sh" || echo "[build-cms-release] WARN: launcher build failed; zip may omit Birkly Launch binaries" >&2
+if [[ ! -x "$ROOT/scripts/build-birkly-launch.sh" ]]; then
+  echo "[build-cms-release] FAIL: missing build-birkly-launch.sh" >&2
+  exit 1
+fi
+"$ROOT/scripts/build-birkly-launch.sh"
+if [[ ! -f "$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch" ]]; then
+  echo "[build-cms-release] FAIL: Birkly Launch.app missing after launcher build" >&2
+  exit 1
 fi
 
 STAGING="$(mktemp -d)"
