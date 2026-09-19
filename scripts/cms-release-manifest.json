@@ -101,8 +101,6 @@
   ],
   "launcher_release_files": [
     "Birkly Launch.exe",
-    "birkly-launch-mac",
-    "birkly-launch-mac-intel",
     "birkly-launch-linux"
   ],
   "launcher_release_dirs": [
@@ -115,12 +113,8 @@
     "check-php.bat",
     "install-php-windows.bat",
     "Birkly Launch.exe",
-    "birkly-launch-mac",
-    "birkly-launch-mac-intel",
     "birkly-launch-linux",
-    "Birkly Launch.app/Contents/MacOS/birkly-launch",
-    "Birkly Launch.app/Contents/MacOS/birkly-launch-arm64",
-    "Birkly Launch.app/Contents/MacOS/birkly-launch-intel"
+    "Birkly Launch.app/Contents/MacOS/birkly-launch"
   ],
   "fresh_install": {
     "active_plugins": [],
