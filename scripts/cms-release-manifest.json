@@ -103,6 +103,7 @@
   "launcher_release_files": [
     "Birkly Launch.exe",
     "birkly-launch-linux",
+    "birkly-launch-mac-intel",
     "scripts/mac-open-birkly-launch.sh"
   ],
   "launcher_release_dirs": [
@@ -116,6 +117,7 @@
     "install-php-windows.bat",
     "Birkly Launch.exe",
     "birkly-launch-linux",
+    "birkly-launch-mac-intel",
     "scripts/mac-open-birkly-launch.sh",
     "Birkly Launch.app/Contents/MacOS/birkly-launch"
   ],

@@ -28,6 +28,24 @@ build_with_go() {
   GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="$LDFLAGS" -o "$ROOT/birkly-launch-linux" .
 }
 
+macho_is_universal() {
+  local f="$1"
+  [[ -f "$f" ]] && file "$f" 2>/dev/null | grep -q 'x86_64' && file "$f" 2>/dev/null | grep -q 'arm64'
+}
+
+copy_vendored_mac_app_if_universal() {
+  local VENDOR_APP="$VENDOR/Birkly Launch.app"
+  local VENDOR_BIN="$VENDOR_APP/Contents/MacOS/birkly-launch"
+  if [[ -d "$VENDOR_APP" ]] && macho_is_universal "$VENDOR_BIN"; then
+    echo "[build-birkly-launch] vendored universal → Birkly Launch.app"
+    rm -rf "$ROOT/Birkly Launch.app"
+    cp -R "$VENDOR_APP" "$ROOT/Birkly Launch.app"
+    chmod 755 "$ROOT/Birkly Launch.app/Contents/MacOS/birkly-launch" 2>/dev/null || true
+    return 0
+  fi
+  return 1
+}
+
 assemble_mac_app() {
   local APP="$ROOT/Birkly Launch.app"
   local MACOS_BIN="$APP/Contents/MacOS/birkly-launch"
@@ -37,19 +55,24 @@ assemble_mac_app() {
     exit 1
   fi
 
-  rm -rf "$APP"
-  mkdir -p "$(dirname "$MACOS_BIN")"
-  cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
-
   # CFBundleExecutable must be a Mach-O binary — a shell script is blocked by Gatekeeper from Finder.
   if command -v lipo >/dev/null 2>&1; then
+    rm -rf "$APP"
+    mkdir -p "$(dirname "$MACOS_BIN")"
+    cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
     echo "[build-birkly-launch] lipo universal → Birkly Launch.app"
     lipo -create -output "$MACOS_BIN" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel"
+    chmod 755 "$MACOS_BIN"
+  elif copy_vendored_mac_app_if_universal; then
+    :
   else
-    echo "[build-birkly-launch] Birkly Launch.app (arm64 Mach-O; Intel Mac: use ./start-server.sh)"
+    rm -rf "$APP"
+    mkdir -p "$(dirname "$MACOS_BIN")"
+    cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
+    echo "[build-birkly-launch] Birkly Launch.app (arm64 only — Intel Mac: bash scripts/mac-open-birkly-launch.sh)"
     cp "$ROOT/birkly-launch-mac" "$MACOS_BIN"
+    chmod 755 "$MACOS_BIN"
   fi
-  chmod 755 "$MACOS_BIN"
 
   if command -v codesign >/dev/null 2>&1; then
     codesign --force --deep --sign - "$APP" 2>/dev/null || true

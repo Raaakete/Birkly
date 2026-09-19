@@ -12,6 +12,6 @@ Refresh after launcher source changes:
 git add release/launchers && git commit -m "chore: refresh vendored launchers"
 ```
 
-**On Linux (Ops / CI):** copies from this folder; `.app` is arm64 Mach-O until a Mac refresh lands.
+**On Linux (Ops / CI):** copies from this folder; `.app` is arm64-only until a Mac refresh lands a **universal** binary. Intel Macs use `birkly-launch-mac-intel` via `bash scripts/mac-open-birkly-launch.sh`.
 
 Do not edit binaries manually.
