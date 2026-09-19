@@ -5,6 +5,7 @@ require_once __DIR__ . '/session.php';
 haru_secure_session_start();
 
 require_once __DIR__ . '/../core/csrf.php';
+require_once __DIR__ . '/../core/api_response.php';
 require_once __DIR__ . '/../core/version.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/log.php';
@@ -25,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (!validate_csrf_token($csrf)) {
         log_security_event('update_failed', ['reason' => 'invalid_csrf', 'action' => $action, 'user' => $_SESSION['user']['email']]);
-        echo json_encode(['status' => 'error', 'message' => 'Invalid security token']);
+        api_json_echo(['status' => 'error', 'message' => 'Invalid security token']);
         exit;
     }
     
@@ -44,11 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         default:
             http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
+            api_json_echo(['status' => 'error', 'message' => 'Invalid action']);
     }
 } else {
     http_response_code(405);
-    echo json_encode(['status' => 'error', 'message' => 'Method not allowed']);
+    api_json_echo(['status' => 'error', 'message' => 'Method not allowed']);
 }
 
 function checkForUpdates() {
@@ -58,7 +59,7 @@ function checkForUpdates() {
         if (($status['status'] ?? '') !== 'ok') {
             $message = (string) ($status['message'] ?? 'Update check failed');
             log_security_event('update_check_failed', ['error' => $message, 'user' => $_SESSION['user']['email']]);
-            echo json_encode(['status' => 'error', 'message' => $message]);
+            api_json_echo(['status' => 'error', 'message' => $message]);
             return;
         }
 
@@ -75,23 +76,26 @@ function checkForUpdates() {
 
         $attention = null;
         if (file_exists(__DIR__ . '/../core/cms_update_attention.php')) {
-            require_once __DIR__ . '/../core/cms_update_attention.php';
-            $sync = birkly_cms_update_attention_sync($status, true);
-            $attention = [
-                'show_modal' => !empty($sync['show_modal']),
-                'emitted' => (int) ($sync['emitted'] ?? 0),
-            ];
+            try {
+                require_once __DIR__ . '/../core/cms_update_attention.php';
+                $sync = birkly_cms_update_attention_sync($status, true);
+                $attention = [
+                    'show_modal' => !empty($sync['show_modal']),
+                    'emitted' => (int) ($sync['emitted'] ?? 0),
+                ];
+            } catch (Throwable $attentionError) {
+                error_log('cms_update_attention_sync failed: ' . $attentionError->getMessage());
+            }
         }
 
-        echo json_encode([
+        api_json_echo([
             'status' => 'ok',
             'data' => array_merge($status, $attention !== null ? ['attention' => $attention] : []),
         ]);
         
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         log_security_event('update_check_error', ['error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        require_once __DIR__ . '/../core/api_response.php';
-        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Update check failed')]);
+        api_json_echo(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Update check failed')]);
     }
 }
 
@@ -99,7 +103,7 @@ function downloadUpdate($data) {
     $version = $data['version'] ?? '';
     
     if (empty($version)) {
-        echo json_encode(['status' => 'error', 'message' => 'Version required']);
+        api_json_echo(['status' => 'error', 'message' => 'Version required']);
         return;
     }
     
@@ -108,7 +112,7 @@ function downloadUpdate($data) {
         
         if (isset($result['error'])) {
             log_security_event('update_download_failed', ['version' => $version, 'error' => $result['error'], 'user' => $_SESSION['user']['email']]);
-            echo json_encode(['status' => 'error', 'message' => $result['error']]);
+            api_json_echo(['status' => 'error', 'message' => $result['error']]);
             return;
         }
         
@@ -118,7 +122,7 @@ function downloadUpdate($data) {
             'user' => $_SESSION['user']['email']
         ]);
         
-        echo json_encode([
+        api_json_echo([
             'status' => 'ok',
             'message' => 'Update downloaded successfully',
             'data' => [
@@ -128,10 +132,9 @@ function downloadUpdate($data) {
             ]
         ]);
         
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         log_security_event('update_download_error', ['version' => $version, 'error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        require_once __DIR__ . '/../core/api_response.php';
-        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Download failed')]);
+        api_json_echo(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Download failed')]);
     }
 }
 
@@ -140,19 +143,19 @@ function installUpdate($data) {
     $tempFile = $data['temp_file'] ?? '';
     
     if (empty($version) || empty($tempFile)) {
-        echo json_encode(['status' => 'error', 'message' => 'Version and temp file required']);
+        api_json_echo(['status' => 'error', 'message' => 'Version and temp file required']);
         return;
     }
     
     $expectedBasename = BirklyVersion::updatePackageBasename($version);
     if ($tempFile !== $expectedBasename) {
-        echo json_encode(['status' => 'error', 'message' => 'Invalid temp file']);
+        api_json_echo(['status' => 'error', 'message' => 'Invalid temp file']);
         return;
     }
 
     $fullTempPath = BirklyVersion::resolveDownloadedUpdatePath($version, $tempFile);
     if ($fullTempPath === null) {
-        echo json_encode(['status' => 'error', 'message' => 'Update package not found. Download the update again before installing.']);
+        api_json_echo(['status' => 'error', 'message' => 'Update package not found. Download the update again before installing.']);
         return;
     }
     
@@ -161,7 +164,7 @@ function installUpdate($data) {
         
         if (isset($result['error'])) {
             log_security_event('update_install_failed', ['version' => $version, 'error' => $result['error'], 'user' => $_SESSION['user']['email']]);
-            echo json_encode(['status' => 'error', 'message' => $result['error']]);
+            api_json_echo(['status' => 'error', 'message' => $result['error']]);
             return;
         }
         
@@ -171,7 +174,7 @@ function installUpdate($data) {
             'user' => $_SESSION['user']['email']
         ]);
         
-        echo json_encode([
+        api_json_echo([
             'status' => 'ok',
             'message' => 'Update installed successfully',
             'data' => [
@@ -180,22 +183,19 @@ function installUpdate($data) {
             ]
         ]);
         
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         log_security_event('update_install_error', ['version' => $version, 'error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        require_once __DIR__ . '/../core/api_response.php';
-        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Installation failed')]);
+        api_json_echo(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Installation failed')]);
     }
 }
 
 function getUpdateStatus() {
     try {
         $status = BirklyVersion::getUpdateStatus();
-        echo json_encode($status);
+        api_json_echo($status);
         
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         log_security_event('update_status_error', ['error' => $e->getMessage(), 'user' => $_SESSION['user']['email']]);
-        require_once __DIR__ . '/../core/api_response.php';
-        echo json_encode(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Failed to get update status')]);
+        api_json_echo(['status' => 'error', 'message' => api_sanitize_error_message($e, 'Failed to get update status')]);
     }
 }
-?>
