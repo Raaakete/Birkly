@@ -118,7 +118,9 @@
     "birkly-launch-mac",
     "birkly-launch-mac-intel",
     "birkly-launch-linux",
-    "Birkly Launch.app/Contents/MacOS/birkly-launch"
+    "Birkly Launch.app/Contents/MacOS/birkly-launch",
+    "Birkly Launch.app/Contents/MacOS/birkly-launch-arm64",
+    "Birkly Launch.app/Contents/MacOS/birkly-launch-intel"
   ],
   "fresh_install": {
     "active_plugins": [],
