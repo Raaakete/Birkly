@@ -30,10 +30,7 @@ build_with_go() {
 
 assemble_mac_app() {
   local APP="$ROOT/Birkly Launch.app"
-  local MACOS_DIR="$APP/Contents/MacOS"
-  local MACOS_BIN="$MACOS_DIR/birkly-launch"
-  local ARM_BIN="$MACOS_DIR/birkly-launch-arm64"
-  local INTEL_BIN="$MACOS_DIR/birkly-launch-intel"
+  local MACOS_BIN="$APP/Contents/MacOS/birkly-launch"
 
   if [[ ! -f "$ROOT/birkly-launch-mac" || ! -f "$ROOT/birkly-launch-mac-intel" ]]; then
     echo "[build-birkly-launch] FAIL: missing macOS launcher binaries" >&2
@@ -41,21 +38,17 @@ assemble_mac_app() {
   fi
 
   rm -rf "$APP"
-  mkdir -p "$MACOS_DIR"
+  mkdir -p "$(dirname "$MACOS_BIN")"
   cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
-  cp "$ROOT/birkly-launch-mac" "$ARM_BIN"
-  cp "$ROOT/birkly-launch-mac-intel" "$INTEL_BIN"
-  chmod 755 "$ARM_BIN" "$INTEL_BIN"
 
-  cat > "$MACOS_BIN" << 'EOF'
-#!/bin/bash
-DIR="$(cd "$(dirname "$0")" && pwd)"
-case "$(uname -m)" in
-  arm64) exec "$DIR/birkly-launch-arm64" "$@" ;;
-  x86_64) exec "$DIR/birkly-launch-intel" "$@" ;;
-  *) exec "$DIR/birkly-launch-arm64" "$@" ;;
-esac
-EOF
+  # CFBundleExecutable must be a Mach-O binary — a shell script is blocked by Gatekeeper from Finder.
+  if command -v lipo >/dev/null 2>&1; then
+    echo "[build-birkly-launch] lipo universal → Birkly Launch.app"
+    lipo -create -output "$MACOS_BIN" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel"
+  else
+    echo "[build-birkly-launch] Birkly Launch.app (arm64 Mach-O; Intel Mac: use ./start-server.sh)"
+    cp "$ROOT/birkly-launch-mac" "$MACOS_BIN"
+  fi
   chmod 755 "$MACOS_BIN"
 
   if command -v codesign >/dev/null 2>&1; then
