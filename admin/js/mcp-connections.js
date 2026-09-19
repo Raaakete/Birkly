@@ -41,7 +41,9 @@
     }
 
     function initMcpConnections() {
-        if (initialized) return;
+        if (initialized) {
+            return;
+        }
         initialized = true;
 
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -50,6 +52,15 @@
         updateDevBridgeLink();
         loadEndpoints();
         setupEventListeners();
+    }
+
+    function refreshDesktopConnector() {
+        if (!initialized) {
+            initMcpConnections();
+            return;
+        }
+        updateHttpsWarning();
+        loadDesktopConnector();
     }
 
     function maybeInitMcpConnections() {
@@ -61,7 +72,12 @@
     document.addEventListener('DOMContentLoaded', function() {
         maybeInitMcpConnections();
         window.addEventListener('hashchange', maybeInitMcpConnections);
-        window.addEventListener('birkly:ai-integrations-tab', maybeInitMcpConnections);
+        window.addEventListener('birkly:ai-integrations-tab', function () {
+            maybeInitMcpConnections();
+            if (isAiIntegrationsContext()) {
+                refreshDesktopConnector();
+            }
+        });
     });
 
     function connectorPath() {
@@ -159,10 +175,25 @@
         return 'mac';
     }
 
+    function desktopAppLabel(target) {
+        const labels = {
+            claude: mcpT('ai_conn_desktop_app_claude', 'Claude Desktop'),
+            cursor: mcpT('ai_conn_desktop_app_cursor', 'Cursor'),
+            copilot: mcpT('ai_conn_desktop_app_copilot', 'Microsoft Copilot (CLI)'),
+            gemini: mcpT('ai_conn_desktop_app_gemini', 'Gemini CLI'),
+            vscode: mcpT('ai_conn_desktop_app_vscode', 'VS Code')
+        };
+        return labels[target] || labels.claude;
+    }
+
     function desktopHelperFilename(helperDownloads, target, os) {
         const map = helperDownloads || {};
         const key = target + '_' + (os === 'win' || os === 'windows' ? 'win' : 'mac');
-        return map[key] || ('Connect-Birkly-to-' + (target === 'cursor' ? 'Cursor' : 'Claude') + (os === 'win' ? '.bat' : '.command'));
+        if (map[key]) {
+            return map[key];
+        }
+        const suffix = os === 'win' || os === 'windows' ? '.bat' : '.command';
+        return 'Connect-Birkly-' + target + suffix;
     }
 
     function downloadDesktopHelper(target, os, helperDownloads) {
@@ -180,19 +211,39 @@
         return active ? (active.getAttribute('data-desktop-target') || 'claude') : 'claude';
     }
 
+    function desktopTerminalInstallCommand(setupData, target) {
+        const map = setupData?.terminal_install || {};
+        const cmd = map[target];
+        return typeof cmd === 'string' ? cmd : '';
+    }
+
+    function desktopTerminalUninstallCommand(setupData, target) {
+        const map = setupData?.terminal_uninstall || {};
+        const cmd = map[target];
+        return typeof cmd === 'string' ? cmd : '';
+    }
+
+    function applyDesktopTerminalFields(body, setupData, target) {
+        if (!body) return;
+        const installCmd = body.querySelector('[data-mcp-desktop-terminal-install]');
+        const uninstallCmd = body.querySelector('[data-mcp-desktop-terminal-uninstall]');
+        const installText = desktopTerminalInstallCommand(setupData, target);
+        const uninstallText = desktopTerminalUninstallCommand(setupData, target);
+        if (installCmd) {
+            installCmd.value = installText;
+        }
+        if (uninstallCmd) {
+            uninstallCmd.value = uninstallText;
+        }
+    }
+
     function updateDesktopTargetLabel(body, target) {
         const label = body.querySelector('[data-desktop-target-label]');
         if (!label) return;
-        const appName = target === 'cursor'
-            ? mcpT('ai_conn_desktop_app_cursor', 'Cursor')
-            : mcpT('ai_conn_desktop_app_claude', 'Claude Desktop');
-        label.textContent = mcpT('ai_conn_desktop_selected_app', 'Setup for: %s').replace('%s', appName);
+        label.textContent = mcpT('ai_conn_desktop_selected_app', 'Setup for: %s').replace('%s', desktopAppLabel(target));
     }
 
     function bindDesktopSetupUi(body, setupData) {
-        const config = setupData.claude_desktop_config;
-        const terminalInstall = setupData.terminal_install || {};
-        const terminalUninstall = setupData.terminal_uninstall || {};
         const helperDownloads = setupData.helper_downloads || {};
         const osHint = detectDesktopOsHint();
 
@@ -206,14 +257,7 @@
                 p.hidden = p.getAttribute('data-desktop-panel') !== target;
             });
             updateDesktopTargetLabel(body, target);
-            const cmd = document.getElementById('mcp-desktop-terminal-cmd');
-            if (cmd) {
-                cmd.value = terminalInstall[target] || '';
-            }
-            const uninstallCmd = document.getElementById('mcp-desktop-terminal-uninstall-cmd');
-            if (uninstallCmd) {
-                uninstallCmd.value = terminalUninstall[target] || '';
-            }
+            applyDesktopTerminalFields(body, setupData, target);
         }
 
         body.querySelectorAll('[data-desktop-target]').forEach(btn => {
@@ -234,10 +278,14 @@
         });
 
         body.querySelector('[data-copy-terminal-install]')?.addEventListener('click', function () {
-            const cmd = document.getElementById('mcp-desktop-terminal-cmd');
+            const cmd = body.querySelector('[data-mcp-desktop-terminal-install]');
             if (!cmd || !cmd.value) return;
+            const osHint = detectDesktopOsHint();
+            const copiedMsg = osHint === 'win'
+                ? mcpT('ai_conn_desktop_terminal_copied_win', 'Command copied — paste it in PowerShell or Command Prompt on this PC.')
+                : mcpT('ai_conn_desktop_terminal_copied', 'Command copied — paste it in Terminal on this Mac.');
             fallbackCopy(cmd, function () {
-                showToast(mcpT('ai_conn_desktop_terminal_copied', 'Command copied — paste it in Terminal on this Mac.'));
+                showToast(copiedMsg);
             });
         });
 
@@ -250,7 +298,7 @@
         });
 
         body.querySelector('[data-copy-terminal-uninstall]')?.addEventListener('click', function () {
-            const cmd = document.getElementById('mcp-desktop-terminal-uninstall-cmd');
+            const cmd = body.querySelector('[data-mcp-desktop-terminal-uninstall]');
             if (!cmd || !cmd.value) return;
             fallbackCopy(cmd, function () {
                 showToast(mcpT('ai_conn_desktop_terminal_copied', 'Command copied — paste it in Terminal on this Mac.'));
@@ -264,30 +312,27 @@
         const json = JSON.stringify(config, null, 2);
         const osHint = detectDesktopOsHint();
         const macPrimary = osHint === 'mac';
-        const winPrimary = osHint === 'win';
-        const terminalClaude = escapeHtml((setupData.terminal_install || {}).claude || '');
-        const terminalUninstallClaude = escapeHtml((setupData.terminal_uninstall || {}).claude || '');
+        const terminalStepText = macPrimary
+            ? mcpT('ai_conn_desktop_step_terminal', 'Copy the command, open Terminal, paste, press Enter.')
+            : mcpT('ai_conn_desktop_step_terminal_win', 'Copy the command, open PowerShell or Command Prompt, paste, press Enter.');
+        const defaultTarget = 'claude';
+        const initialInstallCmd = escapeHtml(desktopTerminalInstallCommand(setupData, defaultTarget));
+        const terminalUninstallClaude = escapeHtml(desktopTerminalUninstallCommand(setupData, defaultTarget));
         const macGatekeeper = macPrimary ? `
             <div class="desktop-mcp-note desktop-mcp-note-warning" role="note">
                 <p class="desktop-mcp-note-title">${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_title', 'If macOS blocks the downloaded file'))}</p>
                 <p>${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_body', 'Apple often blocks downloaded helpers. Use the Terminal command in step 2 instead, or System Settings → Privacy & Security → Open Anyway.'))}</p>
             </div>` : '';
 
-        const stepTerminal = macPrimary ? `
+        const stepTerminal = `
             <li class="desktop-mcp-step">
                 <span class="desktop-mcp-step-num">2</span>
                 <div class="desktop-mcp-step-body u-stack-2">
-                    <p>${escapeHtml(mcpT('ai_conn_desktop_step_terminal', 'Copy the command, open Terminal, paste, press Enter.'))}</p>
+                    <p>${escapeHtml(terminalStepText)}</p>
                     <div class="desktop-mcp-terminal">
-                        <textarea id="mcp-desktop-terminal-cmd" class="desktop-mcp-terminal-input" rows="4" readonly spellcheck="false">${terminalClaude}</textarea>
+                        <textarea id="mcp-desktop-terminal-cmd" data-mcp-desktop-terminal-install class="desktop-mcp-terminal-input" rows="4" readonly spellcheck="false">${initialInstallCmd}</textarea>
                         <button type="button" class="btn btn-primary" data-copy-terminal-install>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                     </div>
-                </div>
-            </li>` : `
-            <li class="desktop-mcp-step">
-                <span class="desktop-mcp-step-num">2</span>
-                <div class="desktop-mcp-step-body">
-                    <p>${escapeHtml(mcpT('ai_conn_desktop_step_download_named', 'Download the helper file for your app.'))}</p>
                 </div>
             </li>`;
 
@@ -297,7 +342,7 @@
                 <p class="desktop-mcp-note-title">${escapeHtml(mcpT('ai_conn_desktop_privacy_title', 'Private to you'))}</p>
                 <p>${escapeHtml(mcpT('ai_conn_desktop_privacy_body', 'This is not a public link. Paths point to files on your computer and Birkly install. Only your logged-in admin session sees this command. Other Birkly users do not get your pairing file or tokens.'))}</p>
             </div>
-            <p class="desktop-mcp-lead">${escapeHtml(mcpT('ai_conn_desktop_setup_intro', 'Connect in three steps. On Mac, use Terminal — it works even when downloads are blocked.'))}</p>
+            <p class="desktop-mcp-lead">${escapeHtml(mcpT('ai_conn_desktop_setup_intro', 'Connect in three steps. Copy the install command first — it works on Mac and Windows even when downloads are blocked.'))}</p>
             <ol class="desktop-mcp-steps">
                 <li class="desktop-mcp-step">
                     <span class="desktop-mcp-step-num">1</span>
@@ -311,6 +356,15 @@
                             <button type="button" class="desktop-mcp-app-tile" data-desktop-target="cursor" aria-pressed="false">
                                 <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_cursor', 'Cursor'))}</span>
                             </button>
+                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="copilot" aria-pressed="false">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_copilot', 'Microsoft Copilot (CLI)'))}</span>
+                            </button>
+                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="gemini" aria-pressed="false">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_gemini', 'Gemini CLI'))}</span>
+                            </button>
+                            <button type="button" class="desktop-mcp-app-tile" data-desktop-target="vscode" aria-pressed="false">
+                                <span class="desktop-mcp-app-name">${escapeHtml(mcpT('ai_conn_desktop_app_vscode', 'VS Code'))}</span>
+                            </button>
                         </div>
                     </div>
                 </li>
@@ -321,24 +375,42 @@
                         <div data-desktop-panel="claude">
                             <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart', 'Fully quit Claude Desktop, then open it again.'))}</p>
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_claude', 'Claude → Settings → Developer → MCP servers: look for “birkly”.'))}</p>
-                            ${!macPrimary ? `<div class="u-cluster-3 u-pt-2">
-                                <button type="button" class="btn btn-primary" data-download-desktop-helper="claude" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_claude', 'Download Connect-Birkly-to-Claude (Mac)'))}</button>
-                                <button type="button" class="btn btn-secondary" data-download-desktop-helper="claude" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_claude', 'Download for Windows'))}</button>
-                            </div>` : `<details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a download instead of Terminal?'))}</summary>
+                            <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-cluster-3 u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="claude" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_claude', 'Download Connect-Birkly-to-Claude (Mac)'))}</button>
-                            </div></details>`}
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="claude" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                            </div></details>
                         </div>
                         <div data-desktop-panel="cursor" hidden>
                             <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_cursor', 'Fully quit Cursor, then open it again.'))}</p>
                             <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_cursor', 'Cursor → MCP settings: look for “birkly”.'))}</p>
-                            ${!macPrimary ? `<div class="u-cluster-3 u-pt-2">
-                                <button type="button" class="btn btn-primary" data-download-desktop-helper="cursor" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_cursor', 'Download Connect-Birkly-to-Cursor (Mac)'))}</button>
-                                <button type="button" class="btn btn-secondary" data-download-desktop-helper="cursor" data-download-os="win">${escapeHtml(mcpT('ai_conn_desktop_download_win_cursor', 'Download for Windows'))}</button>
-                            </div>` : `<details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a download instead of Terminal?'))}</summary>
+                            <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
                             <div class="u-pt-2">
-                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="cursor" data-download-os="mac">${escapeHtml(mcpT('ai_conn_desktop_download_mac_cursor', 'Download Connect-Birkly-to-Cursor (Mac)'))}</button>
-                            </div></details>`}
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="cursor" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                            </div></details>
+                        </div>
+                        <div data-desktop-panel="copilot" hidden>
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_copilot', 'Start a new Copilot CLI session after running the command.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_copilot', 'Requires the Copilot CLI (`copilot` in Terminal or PowerShell). Run /mcp or copilot mcp list — “birkly” should appear. This is not the Windows Copilot sidebar app.'))}</p>
+                            <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
+                            <div class="u-pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="copilot" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                            </div></details>
+                        </div>
+                        <div data-desktop-panel="gemini" hidden>
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_gemini', 'Close any open Gemini CLI session, then start a new one.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_gemini', 'In Gemini CLI, run /mcp or check settings — “birkly” should appear as an MCP server.'))}</p>
+                            <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
+                            <div class="u-pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="gemini" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                            </div></details>
+                        </div>
+                        <div data-desktop-panel="vscode" hidden>
+                            <p>${escapeHtml(mcpT('ai_conn_desktop_step_restart_vscode', 'Restart VS Code after running the command.'))}</p>
+                            <p class="u-text-sm u-fg-secondary">${escapeHtml(mcpT('ai_conn_desktop_step_find_vscode', 'VS Code → Command Palette → “MCP: List Servers” — look for “birkly”. Copilot in VS Code can use MCP tools when agent mode is enabled.'))}</p>
+                            <details class="u-text-sm u-pt-2"><summary class="u-clickable">${escapeHtml(mcpT('ai_conn_desktop_download_alt', 'Prefer a one-click helper download?'))}</summary>
+                            <div class="u-pt-2">
+                                <button type="button" class="btn btn-secondary btn-sm" data-download-desktop-helper="vscode" data-download-os="${macPrimary ? 'mac' : 'win'}">${escapeHtml(mcpT('ai_conn_desktop_download_helper', 'Download helper for this PC'))}</button>
+                            </div></details>
                         </div>
                     </div>
                 </li>
@@ -357,7 +429,7 @@
                     <p>${escapeHtml(mcpT('ai_conn_desktop_remove_claude_note', 'Claude does not delete local MCP servers from Konnektoren — only disable them. To remove “birkly” completely, run the command below (or delete the birkly block from your MCP config file), then quit and reopen the app.'))}</p>
                 </div>
                 <div class="desktop-mcp-terminal u-stack-2 u-pt-2">
-                    <textarea id="mcp-desktop-terminal-uninstall-cmd" class="desktop-mcp-terminal-input" rows="3" readonly spellcheck="false">${terminalUninstallClaude}</textarea>
+                    <textarea id="mcp-desktop-terminal-uninstall-cmd" data-mcp-desktop-terminal-uninstall class="desktop-mcp-terminal-input" rows="3" readonly spellcheck="false">${terminalUninstallClaude}</textarea>
                     <button type="button" class="btn btn-secondary btn-sm" data-copy-terminal-uninstall>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                 </div>
             </details>
@@ -398,6 +470,7 @@
             </div>`;
 
         bindDesktopSetupUi(body, data);
+        applyDesktopTerminalFields(body, data, getSelectedDesktopTarget(body));
         document.getElementById('mcp-desktop-repair-btn')?.addEventListener('click', pairDesktopConnector);
         document.getElementById('mcp-desktop-revoke-btn')?.addEventListener('click', revokeDesktopConnector);
     }
@@ -421,12 +494,8 @@
             if (result.status !== 'ok') {
                 throw new Error(result.message || 'pair failed');
             }
-            const data = result.data || {};
-            renderDesktopConnector(Object.assign({
-                paired: true,
-                paired_at: new Date().toISOString()
-            }, data));
-            showToast(mcpT('ai_conn_desktop_pair_success', 'Paired. Download the helper below and open it once.'));
+            showToast(mcpT('ai_conn_desktop_pair_success', 'Paired. Copy the install command in step 2 and run it on this computer.'));
+            await loadDesktopConnector();
         } catch (err) {
             console.error(err);
             renderDesktopConnector({ paired: false });
@@ -1243,6 +1312,7 @@
     // never collide at runtime.
     window.McpConnections = {
         init: initMcpConnections,
+        refreshDesktop: refreshDesktopConnector,
         copySnippet: copySnippet
     };
 })();
