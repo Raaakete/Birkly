@@ -13,6 +13,8 @@ for f in "Birkly Launch.exe" birkly-launch-mac birkly-launch-mac-intel birkly-la
   fi
   cp "$ROOT/$f" "$DEST/$f"
 done
-rm -rf "$DEST/Birkly Launch.app"
-cp -R "$ROOT/Birkly Launch.app" "$DEST/"
+if [[ -d "$ROOT/Birkly Launch.app" ]]; then
+  rm -rf "$DEST/Birkly Launch.app"
+  cp -R "$ROOT/Birkly Launch.app" "$DEST/"
+fi
 echo "[sync-release-launchers] OK"
