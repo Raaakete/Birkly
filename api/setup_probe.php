@@ -10,16 +10,14 @@ header('Content-Type: application/json');
 header('Cache-Control: no-store');
 
 require_once __DIR__ . '/../core/birkly_paths.php';
+require_once __DIR__ . '/../core/php_runtime_requirements.php';
 
 $root = birkly_project_root();
 $light = isset($_GET['light']) && (string) $_GET['light'] !== '0' && (string) $_GET['light'] !== '';
 $writable = $light ? [] : birkly_ensure_runtime_dirs($root);
 
-$extensions = ['json', 'mbstring', 'curl', 'openssl', 'zip'];
-$loaded = [];
-foreach ($extensions as $ext) {
-    $loaded[$ext] = extension_loaded($ext);
-}
+$loaded = birkly_php_extension_status();
+$extensionsOk = birkly_php_missing_extensions() === [];
 
 $langFile = $root . '/lang/en.json';
 
@@ -30,6 +28,8 @@ echo json_encode([
         'php_ok' => version_compare(PHP_VERSION, '8.0.0', '>='),
         'sapi' => PHP_SAPI,
         'extensions' => $loaded,
+        'extensions_ok' => $extensionsOk,
+        'ca_bundle' => birkly_php_ca_bundle_path() !== null,
         'writable_dirs' => $writable,
         'light' => $light,
         'has_lang_en' => is_file($langFile),

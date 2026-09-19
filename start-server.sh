@@ -207,7 +207,7 @@ fi
 cd "$ROOT_DIR"
 
 # Ensure writable runtime directories exist before serving
-for dir in content media users settings logs temp cache; do
+for dir in content media users settings logs temp cache plugins; do
     mkdir -p "$dir"
 done
 mkdir -p content/collections
