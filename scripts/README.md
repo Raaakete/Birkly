@@ -45,7 +45,7 @@ Official plugin IDs and marketplace slugs are defined in `scripts/cms-release-ma
 
 ### CMS release zip
 
-Customer zips use `check-php.sh`, `start-server.sh`, and `0_START-HERE.html` (no `Birkly Launch` binaries, no `.bat` helpers). Optional dev build: `./scripts/build-birkly-launch.sh` (not part of `build-cms-release.sh`).
+Customer zips use `0_START-HERE.html` plus Mac/Linux `check-php.sh` / `start-server.sh`, and Windows `check-php.ps1` / `start-server.ps1` / `install-php.ps1` (portable PHP into `runtime/php`). Optional dev build: `./scripts/build-birkly-launch.sh` (not part of `build-cms-release.sh`).
 
 ```bash
 OUT=/tmp/birkly-release.zip ./scripts/build-cms-release.sh
