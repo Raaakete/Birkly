@@ -863,7 +863,7 @@ function birkly_mcp_desktop_install_target_meta(string $target): array
     return [
         'app_label' => 'Claude Desktop',
         'mac_path' => '~/Library/Application Support/Claude/claude_desktop_config.json',
-        'win_path' => '%APPDATA%\\Claude\\claude_desktop_config.json',
+        'win_path' => '%LOCALAPPDATA%\\Packages\\Claude_*\\LocalCache\\Roaming\\Claude\\claude_desktop_config.json (Microsoft Store / WinGet) or %APPDATA%\\Claude\\claude_desktop_config.json (legacy .exe)',
     ];
 }
 
@@ -942,6 +942,73 @@ function birkly_mcp_desktop_user_home(): ?string
     return $home !== '' ? $home : null;
 }
 
+/**
+ * MSIX / Store / WinGet Claude Desktop reads MCP config from the package virtual store (not %APPDATA%\\Claude).
+ *
+ * @return list<string> Absolute paths to claude_desktop_config.json (one per Claude_* package)
+ */
+function birkly_mcp_desktop_windows_claude_msix_config_paths(?string $localAppData = null): array
+{
+    $local = $localAppData ?? (string) (getenv('LOCALAPPDATA') ?: '');
+    if ($local === '') {
+        return [];
+    }
+
+    $packagesDir = $local . DIRECTORY_SEPARATOR . 'Packages';
+    if (!is_dir($packagesDir)) {
+        return [];
+    }
+
+    $paths = [];
+    foreach (glob($packagesDir . DIRECTORY_SEPARATOR . 'Claude_*', GLOB_ONLYDIR) ?: [] as $pkgDir) {
+        if (!is_string($pkgDir) || $pkgDir === '') {
+            continue;
+        }
+        $paths[] = $pkgDir . DIRECTORY_SEPARATOR . 'LocalCache' . DIRECTORY_SEPARATOR . 'Roaming'
+            . DIRECTORY_SEPARATOR . 'Claude' . DIRECTORY_SEPARATOR . 'claude_desktop_config.json';
+    }
+
+    sort($paths);
+
+    return $paths;
+}
+
+function birkly_mcp_desktop_windows_claude_legacy_config_path(): ?string
+{
+    $appData = (string) (getenv('APPDATA') ?: '');
+    if ($appData === '') {
+        return null;
+    }
+
+    return $appData . DIRECTORY_SEPARATOR . 'Claude' . DIRECTORY_SEPARATOR . 'claude_desktop_config.json';
+}
+
+/**
+ * Config files to update on this machine (Claude on Windows may use MSIX + legacy paths).
+ *
+ * @return list<string>
+ */
+function birkly_mcp_desktop_app_config_paths(string $target): array
+{
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
+        return [];
+    }
+
+    if ($target === 'claude' && PHP_OS_FAMILY === 'Windows') {
+        $msix = birkly_mcp_desktop_windows_claude_msix_config_paths();
+        if ($msix !== []) {
+            return $msix;
+        }
+        $legacy = birkly_mcp_desktop_windows_claude_legacy_config_path();
+
+        return $legacy !== null ? [$legacy] : [];
+    }
+
+    $single = birkly_mcp_desktop_app_config_path($target);
+
+    return $single !== null ? [$single] : [];
+}
+
 function birkly_mcp_desktop_app_config_path(string $target): ?string
 {
     if (!birkly_mcp_desktop_is_valid_target($target)) {
@@ -972,11 +1039,16 @@ function birkly_mcp_desktop_app_config_path(string $target): ?string
             return $appData . DIRECTORY_SEPARATOR . 'Code' . DIRECTORY_SEPARATOR . 'User' . DIRECTORY_SEPARATOR . 'mcp.json';
         }
 
-        if ($appData === '') {
-            return null;
+        if ($target === 'claude') {
+            $msix = birkly_mcp_desktop_windows_claude_msix_config_paths();
+            if ($msix !== []) {
+                return $msix[0];
+            }
+
+            return birkly_mcp_desktop_windows_claude_legacy_config_path();
         }
 
-        return $appData . DIRECTORY_SEPARATOR . 'Claude' . DIRECTORY_SEPARATOR . 'claude_desktop_config.json';
+        return null;
     }
 
     if ($target === 'cursor') {
@@ -997,18 +1069,13 @@ function birkly_mcp_desktop_app_config_path(string $target): ?string
 
 /**
  * @param array<string, mixed> $mcpConfig
- * @return array{ok: bool, path?: string, message?: string}
+ * @return array{ok: bool, path?: string, paths?: list<string>, message?: string}
  */
-function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConfig): array
+function birkly_mcp_desktop_merge_mcp_config_file(string $path, string $target, array $mcpConfig): array
 {
-    $path = birkly_mcp_desktop_app_config_path($target);
-    if ($path === null) {
-        return ['ok' => false, 'message' => 'Could not resolve config path on this computer'];
-    }
-
     $dir = dirname($path);
     if (!is_dir($dir) && !mkdir($dir, 0700, true) && !is_dir($dir)) {
-        return ['ok' => false, 'message' => 'Could not create config folder'];
+        return ['ok' => false, 'message' => 'Could not create config folder: ' . $dir];
     }
 
     $data = [];
@@ -1050,10 +1117,37 @@ function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConf
         return ['ok' => false, 'message' => 'Could not encode config'];
     }
     if (file_put_contents($path, $json . "\n", LOCK_EX) === false) {
-        return ['ok' => false, 'message' => 'Could not write config file'];
+        return ['ok' => false, 'message' => 'Could not write config file: ' . $path];
     }
 
     return ['ok' => true, 'path' => $path];
+}
+
+/**
+ * @param array<string, mixed> $mcpConfig
+ * @return array{ok: bool, path?: string, paths?: list<string>, message?: string}
+ */
+function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConfig): array
+{
+    $paths = birkly_mcp_desktop_app_config_paths($target);
+    if ($paths === []) {
+        return ['ok' => false, 'message' => 'Could not resolve config path on this computer'];
+    }
+
+    $written = [];
+    foreach ($paths as $path) {
+        $result = birkly_mcp_desktop_merge_mcp_config_file($path, $target, $mcpConfig);
+        if (!($result['ok'] ?? false)) {
+            return $result;
+        }
+        $written[] = $path;
+    }
+
+    return [
+        'ok' => true,
+        'path' => $written[0],
+        'paths' => $written,
+    ];
 }
 
 /**
@@ -1061,19 +1155,15 @@ function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConf
  *
  * @return array{ok: bool, path?: string, message?: string, removed?: bool}
  */
-function birkly_mcp_desktop_remove_from_app_config(string $target, string $serverName = 'birkly'): array
+function birkly_mcp_desktop_remove_from_app_config_file(string $path, string $target, string $serverName = 'birkly'): array
 {
-    $path = birkly_mcp_desktop_app_config_path($target);
-    if ($path === null) {
-        return ['ok' => false, 'message' => 'Could not resolve config path on this computer'];
-    }
     if (!is_file($path)) {
         return ['ok' => true, 'path' => $path, 'removed' => false];
     }
 
     $decoded = json_decode((string) file_get_contents($path), true);
     if (!is_array($decoded)) {
-        return ['ok' => false, 'message' => 'Config file is not valid JSON'];
+        return ['ok' => false, 'message' => 'Config file is not valid JSON: ' . $path];
     }
 
     if ($target === 'vscode') {
@@ -1101,6 +1191,29 @@ function birkly_mcp_desktop_remove_from_app_config(string $target, string $serve
     }
 
     return ['ok' => true, 'path' => $path, 'removed' => true];
+}
+
+function birkly_mcp_desktop_remove_from_app_config(string $target, string $serverName = 'birkly'): array
+{
+    $paths = birkly_mcp_desktop_app_config_paths($target);
+    if ($paths === []) {
+        return ['ok' => false, 'message' => 'Could not resolve config path on this computer'];
+    }
+
+    $removedAny = false;
+    $lastPath = $paths[0];
+    foreach ($paths as $path) {
+        $result = birkly_mcp_desktop_remove_from_app_config_file($path, $target, $serverName);
+        if (!($result['ok'] ?? false)) {
+            return $result;
+        }
+        $lastPath = $path;
+        if ($result['removed'] ?? false) {
+            $removedAny = true;
+        }
+    }
+
+    return ['ok' => true, 'path' => $lastPath, 'removed' => $removedAny];
 }
 
 /**
