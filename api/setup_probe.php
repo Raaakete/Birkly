@@ -15,7 +15,7 @@ $root = birkly_project_root();
 $light = isset($_GET['light']) && (string) $_GET['light'] !== '0' && (string) $_GET['light'] !== '';
 $writable = $light ? [] : birkly_ensure_runtime_dirs($root);
 
-$extensions = ['json', 'mbstring', 'curl', 'openssl'];
+$extensions = ['json', 'mbstring', 'curl', 'openssl', 'zip'];
 $loaded = [];
 foreach ($extensions as $ext) {
     $loaded[$ext] = extension_loaded($ext);

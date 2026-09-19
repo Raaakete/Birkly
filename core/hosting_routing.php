@@ -120,6 +120,7 @@ function birkly_hosting_dispatch(string $uri): bool
 
     if ($config['public_site_mode'] === 'project') {
         $role = birkly_request_host_role();
+        require_once __DIR__ . '/site_seo.php';
         require_once __DIR__ . '/site_seo_url_map.php';
         try {
             if (birkly_seo_try_pretty_url_route($uri)) {
