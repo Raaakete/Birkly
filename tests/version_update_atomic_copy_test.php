@@ -45,6 +45,13 @@ $copy = $ref->getMethod('copyFileForUpdate');
 $copy->setAccessible(true);
 $restore = $ref->getMethod('restoreBackup');
 $restore->setAccessible(true);
+$priority = $ref->getMethod('updateInstallPathPriority');
+$priority->setAccessible(true);
+
+assert_true(
+    'core/update_staging.php installs before api/session.php',
+    $priority->invoke(null, 'core/update_staging.php') < $priority->invoke(null, 'api/session.php')
+);
 
 $tmp = sys_get_temp_dir() . '/birkly-atomic-' . uniqid();
 $source = $tmp . '/source.txt';
