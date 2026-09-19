@@ -13,7 +13,8 @@ $RuntimeDir = Join-Path $Root 'runtime\php'
 $phpExe = Join-Path $RuntimeDir 'php.exe'
 
 if (Test-Path -LiteralPath $phpExe) {
-    Write-Host "[Birkly] PHP is already installed in runtime\php"
+    Repair-BirklyPhpIni -RuntimePhpDir $RuntimeDir
+    Write-Host "[Birkly] PHP is already installed in runtime\php (php.ini checked for Birkly extensions)."
     exit 0
 }
 
