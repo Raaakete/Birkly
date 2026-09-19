@@ -80,22 +80,8 @@ After a reboot, double-click again to restart the server.
   --open           Open your project URL in the browser
   -h, --help       This help
 
+macOS: Birkly Launch.app · Windows: Birkly Launch.exe
 Advanced: start-server.bat / ./start-server.sh still work the same way.`)
-}
-
-func cmsRoot() (string, error) {
-	exe, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-	root := filepath.Dir(exe)
-	if _, err := os.Stat(filepath.Join(root, "index.php")); err != nil {
-		return "", errors.New("index.php not found — run Birkly Launch from your extracted Birkly folder (not inside the zip)")
-	}
-	if _, err := os.Stat(filepath.Join(root, "admin")); err != nil {
-		return "", errors.New("admin/ not found — use the full Birkly folder next to admin/ and api/")
-	}
-	return root, nil
 }
 
 func configPath(root string) string {
@@ -206,6 +192,7 @@ func runSetup() {
 }
 
 func runServer() {
+	ensureDarwinInteractiveTerminal()
 	root, err := cmsRoot()
 	if err != nil {
 		fatal(err.Error())
@@ -254,7 +241,7 @@ func runServer() {
 	fmt.Printf("  %s\n", url)
 	fmt.Println()
 	fmt.Println("  Keep this window open. Close it or press Enter to stop.")
-	fmt.Println("  Change port later: run \"Birkly Launch.exe --setup\" or ./birkly-launch --setup")
+	fmt.Println("  Change port later: run the launcher with --setup (or use start-server.sh / .bat)")
 	fmt.Println()
 
 	openBrowser(url)
@@ -277,7 +264,7 @@ func fatal(msg string) {
 }
 
 func waitExit(code int) {
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" || (runtime.GOOS == "darwin" && stdinIsTerminal()) {
 		fmt.Println("Press Enter to close…")
 		_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
 	}
