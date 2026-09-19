@@ -70,6 +70,8 @@
     "!scripts/build-cms-release.sh",
     "!scripts/build-plugin-zip.sh",
     "!scripts/create-default-user.php",
+    "!scripts/windows-php-common.ps1",
+    "runtime/**",
     ".env",
     "config.php",
     ".git/**",
@@ -111,7 +113,10 @@
   "launcher_release_dirs": [],
   "executable_files": [
     "start-server.sh",
-    "check-php.sh"
+    "check-php.sh",
+    "check-php.ps1",
+    "start-server.ps1",
+    "install-php.ps1"
   ],
   "fresh_install": {
     "active_plugins": [],

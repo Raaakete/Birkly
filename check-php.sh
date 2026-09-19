@@ -17,8 +17,8 @@ if ! command -v php >/dev/null 2>&1; then
     echo -e "${RED}[Birkly]${NC} PHP is not installed or not on your PATH."
     echo ""
     echo "Birkly needs PHP 8.0+ before you can start the server."
-    echo "  Download: https://www.php.net/downloads.php"
-    echo "  Windows:  https://windows.php.net/download/"
+    echo "  Mac/Linux: https://www.php.net/downloads.php"
+    echo "  Windows:   powershell -ExecutionPolicy Bypass -File install-php.ps1"
     echo ""
     exit 1
 fi
