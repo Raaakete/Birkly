@@ -95,7 +95,8 @@
     "tests/**"
   ],
   "executable_files": [
-    "start-server.sh"
+    "start-server.sh",
+    "start-server.bat"
   ],
   "fresh_install": {
     "active_plugins": [],
