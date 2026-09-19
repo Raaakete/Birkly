@@ -932,6 +932,27 @@ class BirklyVersion {
     /**
      * Get update status for admin panel
      */
+    private static function sanitizeUpdateText(string $text): string
+    {
+        if ($text === '') {
+            return '';
+        }
+
+        if (function_exists('api_utf8_sanitize')) {
+            return api_utf8_sanitize($text);
+        }
+
+        if (function_exists('mb_convert_encoding')) {
+            $clean = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+            if (is_string($clean)) {
+                return $clean;
+            }
+        }
+
+        $clean = @iconv('UTF-8', 'UTF-8//IGNORE', $text);
+        return is_string($clean) ? $clean : '';
+    }
+
     public static function getUpdateStatus(): array {
         $currentVersion = self::getCurrentVersion();
         $updateInfo = self::checkForUpdates();
@@ -945,20 +966,19 @@ class BirklyVersion {
                 'release_notes' => '',
                 'published_at' => '',
                 'prerelease' => false,
-                'update_check_error' => $updateInfo['error'],
+                'update_check_error' => self::sanitizeUpdateText((string) $updateInfo['error']),
             ];
         }
 
         return [
             'status' => 'ok',
-            'current_version' => $updateInfo['current_version'],
-            'latest_version' => $updateInfo['latest_version'],
-            'update_available' => $updateInfo['update_available'],
-            'release_notes' => $updateInfo['release_notes'],
-            'published_at' => $updateInfo['published_at'],
-            'prerelease' => $updateInfo['prerelease'],
+            'current_version' => (string) ($updateInfo['current_version'] ?? $currentVersion),
+            'latest_version' => (string) ($updateInfo['latest_version'] ?? $currentVersion),
+            'update_available' => !empty($updateInfo['update_available']),
+            'release_notes' => self::sanitizeUpdateText((string) ($updateInfo['release_notes'] ?? '')),
+            'published_at' => (string) ($updateInfo['published_at'] ?? ''),
+            'prerelease' => !empty($updateInfo['prerelease']),
             'source' => $updateInfo['source'] ?? null,
         ];
     }
 }
-?>
