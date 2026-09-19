@@ -372,13 +372,15 @@
                     </div>
 
                     <div class="mac-easy">
-                        <p>Double-click <code>Birkly Launch.app</code> next to <code>admin/</code>. Your browser opens when the server is ready. Quit <strong>Birkly Launch</strong> from the Dock when you are done.</p>
+                        <p><strong>First time:</strong> right-click <code>Birkly Launch.app</code> → <strong>Open</strong> → <strong>Open</strong> again. (A normal double-click only shows “can’t verify” with no Open button.)</p>
+                        <p style="margin-top:var(--space-2);">After that, double-click the app like any other program. Quit <strong>Birkly Launch</strong> from the Dock when you are done.</p>
                         <details class="accordion" style="margin-top:var(--space-3);">
-                            <summary>macOS says the app is damaged / won’t open</summary>
+                            <summary>Still blocked?</summary>
                             <div class="accordion-body">
-                                <p>Chrome quarantines downloads — this is normal for unsigned apps. <strong>Once per download</strong>, open Terminal in this folder and run:</p>
+                                <p><strong>System Settings</strong> → <strong>Privacy &amp; Security</strong> → scroll down → <strong>Open Anyway</strong> (appears after you tried to open the app).</p>
+                                <p style="margin-top:var(--space-2);">Or once per download, in Terminal in this folder:</p>
                                 <div class="cmd-row"><pre class="cmd" id="cmd-mac-unquarantine">xattr -cr .</pre><button type="button" class="copy-btn" data-copy-target="cmd-mac-unquarantine">Copy</button></div>
-                                <p style="margin-top:var(--space-2);font-size:0.875rem;color:var(--text-secondary);">Then double-click the app again. Or try right-click → <strong>Open</strong> before using the command above.</p>
+                                <p style="margin-top:var(--space-2);font-size:0.875rem;color:var(--text-secondary);">Intel Mac without Rosetta: use <strong>Advanced</strong> → <code>./start-server.sh</code>.</p>
                             </div>
                         </details>
                     </div>
