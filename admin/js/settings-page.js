@@ -1072,6 +1072,9 @@ window.migrateStorage = migrateStorage;
             if (window.McpConnections && typeof window.McpConnections.init === 'function') {
                 window.McpConnections.init();
             }
+            if (window.McpConnections && typeof window.McpConnections.refreshDesktop === 'function') {
+                window.McpConnections.refreshDesktop();
+            }
             if (window.AiConnections && typeof window.AiConnections.init === 'function') {
                 window.AiConnections.init();
             }
