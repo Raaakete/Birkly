@@ -33,8 +33,8 @@ for ($i = 1; $i < count($argv); $i++) {
     }
 }
 
-if ($target !== 'claude' && $target !== 'cursor') {
-    fwrite(STDERR, "Unknown --target. Use claude or cursor.\n");
+if (!birkly_mcp_desktop_is_valid_target($target)) {
+    fwrite(STDERR, "Unknown --target. Use: " . implode(', ', birkly_mcp_desktop_valid_targets()) . ".\n");
     exit(1);
 }
 
@@ -72,7 +72,7 @@ if ($credPath === '') {
     $credPath = $userId !== '' ? birkly_mcp_desktop_credentials_path($userId) : '';
 }
 
-$config = birkly_mcp_desktop_client_config_snippet($credPath);
+$config = birkly_mcp_desktop_client_config_snippet($credPath, $target);
 $result = birkly_mcp_desktop_merge_into_app_config($target, $config);
 if (!($result['ok'] ?? false)) {
     fwrite(STDERR, (string) ($result['message'] ?? 'Install failed') . "\n");
