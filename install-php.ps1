@@ -15,21 +15,40 @@ if (Test-Path -LiteralPath $phpExe) {
     exit 0
 }
 
-# Pinned Thread Safe x64 build (VS16). Update when rotating security releases.
-$Version = '8.3.28'
-$ZipName = "php-$Version-Win32-vs16-x64.zip"
-$Url = "https://windows.php.net/downloads/releases/$ZipName"
+$ReleaseBase = 'https://downloads.php.net/~windows/releases/'
+$ZipName = $null
+$Version = $null
+
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+try {
+    $manifest = Invoke-RestMethod -Uri ($ReleaseBase + 'releases.json') -UseBasicParsing
+    $branch = $manifest.'8.3'
+    if ($branch -and $branch.'ts-vs16-x64' -and $branch.'ts-vs16-x64'.zip.path) {
+        $ZipName = $branch.'ts-vs16-x64'.zip.path
+        $Version = $branch.version
+    }
+} catch {
+    Write-Host "[Birkly] Could not read PHP release list; using fallback build."
+}
+
+if (-not $ZipName) {
+    $Version = '8.3.33'
+    $ZipName = "php-$Version-Win32-vs16-x64.zip"
+}
+
+$Url = $ReleaseBase + $ZipName
 $ZipPath = Join-Path $env:TEMP $ZipName
 
 Write-Host "[Birkly] Downloading PHP $Version (portable, ~30 MB)..."
 Write-Host "[Birkly] This may take a few minutes."
 
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 try {
     Invoke-WebRequest -Uri $Url -OutFile $ZipPath -UseBasicParsing
 } catch {
     Write-Host "[Birkly] Download failed. Check your internet connection or try again later."
     Write-Host $_.Exception.Message
+    Write-Host "[Birkly] URL: $Url"
     exit 1
 }
 
