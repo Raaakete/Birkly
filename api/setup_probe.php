@@ -34,7 +34,7 @@ echo json_encode([
         'light' => $light,
         'has_lang_en' => is_file($langFile),
         'has_server_router' => is_file($root . '/server-router.php'),
-        'has_start_server' => is_file($root . '/start-server.sh'),
+        'has_start_server' => is_file($root . '/start-server.sh') || is_file($root . '/start-server.bat'),
         'has_admin' => is_dir($root . '/admin'),
         'timestamp' => date('c'),
     ],

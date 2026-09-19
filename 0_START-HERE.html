@@ -266,14 +266,18 @@
 
                 <div class="step">
                     <div class="step-head"><span class="step-num">2</span><h4>Start the Birkly server</h4></div>
-                    <p>Run in the terminal and keep the window open:</p>
+                    <p id="start-server-intro">Run in the terminal and keep the window open:</p>
+                    <p id="start-server-windows-hint" class="status info" style="display:none;margin-bottom:var(--space-3);">
+                        <strong>Windows:</strong> Do not double-click <code>start-server.sh</code> — Windows will ask which app should open it.
+                        Double-click <code>start-server.bat</code> instead, or run <code>start-server.bat</code> in Command Prompt.
+                    </p>
                     <div class="cmd-row"><pre class="cmd" id="cmd-start-default">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-default">Copy</button></div>
-                    <p class="cmd-label">Optional — custom port or stop an old server first:</p>
+                    <p class="cmd-label" id="cmd-start-port-label">Optional — custom port or stop an old server first:</p>
                     <div class="cmd-row"><pre class="cmd" id="cmd-start-port">./start-server.sh -k -p 8001</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-port">Copy</button></div>
                     <details class="accordion">
                         <summary>Permission denied on ./start-server.sh?</summary>
                         <div class="accordion-body">
-                            <p>On Mac/Linux only, run once: <code>chmod +x ./start-server.sh</code> — then try <code>./start-server.sh</code> again. Windows usually does not need this.</p>
+                            <p>On Mac/Linux only, run once: <code>chmod +x ./start-server.sh</code> — then try <code>./start-server.sh</code> again. On Windows use <code>start-server.bat</code> (see above).</p>
                         </div>
                     </details>
                 </div>
@@ -369,6 +373,36 @@
         const PROBE_MAX_ATTEMPTS = 45;
         let serverReady = false;
         let probeTimer = null;
+
+        function isWindows() {
+            return /Windows/i.test(navigator.userAgent || '');
+        }
+
+        function applyStartServerCommandsForOs() {
+            if (!isWindows()) {
+                return;
+            }
+            const hint = document.getElementById('start-server-windows-hint');
+            if (hint) {
+                hint.style.display = 'block';
+            }
+            const intro = document.getElementById('start-server-intro');
+            if (intro) {
+                intro.textContent = 'In Command Prompt (keep the window open), or double-click start-server.bat in File Explorer:';
+            }
+            const def = document.getElementById('cmd-start-default');
+            const port = document.getElementById('cmd-start-port');
+            const portLabel = document.getElementById('cmd-start-port-label');
+            if (def) {
+                def.textContent = 'start-server.bat';
+            }
+            if (port) {
+                port.textContent = 'start-server.bat -p 8001';
+            }
+            if (portLabel) {
+                portLabel.textContent = 'Optional — different port:';
+            }
+        }
 
         function isFileProtocol() {
             return window.location.protocol === 'file:';
@@ -697,6 +731,7 @@
 
         // DOMContentLoaded — do not wait for fonts/CDN on window.load before probing.
         document.addEventListener('DOMContentLoaded', () => {
+            applyStartServerCommandsForOs();
             updateLocalUrls();
             updateCloudUrls();
 
