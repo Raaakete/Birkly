@@ -1103,50 +1103,64 @@ function birkly_mcp_desktop_remove_from_app_config(string $target, string $serve
     return ['ok' => true, 'path' => $path, 'removed' => true];
 }
 
+/**
+ * Quote a value for embedding in a Windows cmd.exe command line (avoids PHP escapeshellarg leading space).
+ */
+function birkly_mcp_desktop_windows_cmd_quote(string $value): string
+{
+    return '"' . str_replace('"', '""', $value) . '"';
+}
+
+function birkly_mcp_desktop_install_script_path(): string
+{
+    return birkly_project_root() . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'birkly-mcp-desktop-install.php';
+}
+
 function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, string $target): string
 {
-    $root = birkly_project_root();
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
+        throw new InvalidArgumentException('Unknown install target');
+    }
     $php = birkly_mcp_desktop_php_binary();
-    $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
-
-    $tokenArg = birkly_mcp_desktop_relative_token_path($credentialsPath);
+    $install = birkly_mcp_desktop_install_script_path();
+    $tokenArg = birkly_mcp_desktop_normalize_config_path(
+        birkly_mcp_desktop_resolve_credentials_path($credentialsPath)
+    );
 
     if (PHP_OS_FAMILY === 'Windows') {
-        $inner = 'cd /d ' . escapeshellarg($root)
-            . ' && ' . escapeshellarg($php)
-            . ' ' . escapeshellarg($scriptRel)
-            . ' --target=' . escapeshellarg($target)
-            . ' --token-file=' . escapeshellarg($tokenArg);
+        $inner = birkly_mcp_desktop_windows_cmd_quote($php)
+            . ' ' . birkly_mcp_desktop_windows_cmd_quote($install)
+            . ' --target=' . $target
+            . ' --token-file=' . birkly_mcp_desktop_windows_cmd_quote($tokenArg);
 
         return 'cmd /c ' . escapeshellarg($inner);
     }
 
-    return 'cd ' . escapeshellarg($root)
-        . ' && ' . escapeshellarg($php)
-        . ' ' . escapeshellarg($scriptRel)
-        . ' --target=' . escapeshellarg($target)
+    return escapeshellarg($php)
+        . ' ' . escapeshellarg($install)
+        . ' --target=' . $target
         . ' --token-file=' . escapeshellarg($tokenArg);
 }
 
 function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
 {
-    $root = birkly_project_root();
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
+        throw new InvalidArgumentException('Unknown install target');
+    }
     $php = birkly_mcp_desktop_php_binary();
-    $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
+    $install = birkly_mcp_desktop_install_script_path();
 
     if (PHP_OS_FAMILY === 'Windows') {
-        $inner = 'cd /d ' . escapeshellarg($root)
-            . ' && ' . escapeshellarg($php)
-            . ' ' . escapeshellarg($scriptRel)
-            . ' --uninstall --target=' . escapeshellarg($target);
+        $inner = birkly_mcp_desktop_windows_cmd_quote($php)
+            . ' ' . birkly_mcp_desktop_windows_cmd_quote($install)
+            . ' --uninstall --target=' . $target;
 
         return 'cmd /c ' . escapeshellarg($inner);
     }
 
-    return 'cd ' . escapeshellarg($root)
-        . ' && ' . escapeshellarg($php)
-        . ' ' . escapeshellarg($scriptRel)
-        . ' --uninstall --target=' . escapeshellarg($target);
+    return escapeshellarg($php)
+        . ' ' . escapeshellarg($install)
+        . ' --uninstall --target=' . $target;
 }
 
 /**
