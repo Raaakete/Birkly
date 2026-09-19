@@ -30,19 +30,37 @@ build_with_go() {
 
 assemble_mac_app() {
   local APP="$ROOT/Birkly Launch.app"
-  local MACOS_BIN="$APP/Contents/MacOS/birkly-launch"
-  rm -rf "$APP"
-  mkdir -p "$(dirname "$MACOS_BIN")"
-  cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
+  local MACOS_DIR="$APP/Contents/MacOS"
+  local MACOS_BIN="$MACOS_DIR/birkly-launch"
+  local ARM_BIN="$MACOS_DIR/birkly-launch-arm64"
+  local INTEL_BIN="$MACOS_DIR/birkly-launch-intel"
 
-  if command -v lipo >/dev/null 2>&1 && [[ -f "$ROOT/birkly-launch-mac" && -f "$ROOT/birkly-launch-mac-intel" ]]; then
-    echo "[build-birkly-launch] lipo universal → Birkly Launch.app"
-    lipo -create -output "$MACOS_BIN" "$ROOT/birkly-launch-mac" "$ROOT/birkly-launch-mac-intel"
-  else
-    echo "[build-birkly-launch] Birkly Launch.app (arm64 in bundle)"
-    cp "$ROOT/birkly-launch-mac" "$MACOS_BIN"
+  if [[ ! -f "$ROOT/birkly-launch-mac" || ! -f "$ROOT/birkly-launch-mac-intel" ]]; then
+    echo "[build-birkly-launch] FAIL: missing macOS launcher binaries" >&2
+    exit 1
   fi
+
+  rm -rf "$APP"
+  mkdir -p "$MACOS_DIR"
+  cp "$SRC/macos/Info.plist" "$APP/Contents/Info.plist"
+  cp "$ROOT/birkly-launch-mac" "$ARM_BIN"
+  cp "$ROOT/birkly-launch-mac-intel" "$INTEL_BIN"
+  chmod 755 "$ARM_BIN" "$INTEL_BIN"
+
+  cat > "$MACOS_BIN" << 'EOF'
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")" && pwd)"
+case "$(uname -m)" in
+  arm64) exec "$DIR/birkly-launch-arm64" "$@" ;;
+  x86_64) exec "$DIR/birkly-launch-intel" "$@" ;;
+  *) exec "$DIR/birkly-launch-arm64" "$@" ;;
+esac
+EOF
   chmod 755 "$MACOS_BIN"
+
+  if command -v codesign >/dev/null 2>&1; then
+    codesign --force --deep --sign - "$APP" 2>/dev/null || true
+  fi
 }
 
 copy_from_vendor() {
