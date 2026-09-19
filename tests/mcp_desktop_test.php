@@ -140,15 +140,31 @@ assert_true(
         && ($args[2] ?? '') === $path,
     json_encode($args)
 );
-$macScript = birkly_mcp_desktop_mac_command_script($snippet, 'claude');
+$macScript = birkly_mcp_desktop_mac_command_script($path, 'claude');
 assert_true('mac helper mentions Claude', str_contains($macScript, 'Claude Desktop'));
-assert_true('mac helper merges birkly', str_contains($macScript, '"birkly"'));
-$winScript = birkly_mcp_desktop_windows_bat_script($snippet, 'cursor');
+assert_true('mac helper runs install script', str_contains($macScript, 'birkly-mcp-desktop-install.php'));
+$winScript = birkly_mcp_desktop_windows_bat_script($path, 'cursor');
 assert_true('win helper mentions Cursor', str_contains($winScript, 'Cursor'));
+assert_true('win helper runs install script', str_contains($winScript, 'birkly-mcp-desktop-install.php'));
 
-$mergeDir = $testRoot . '/fakehome/Library/Application Support/Claude';
+$vscodeSnippet = birkly_mcp_desktop_client_config_snippet($path, 'vscode');
+assert_true(
+    'vscode snippet uses servers + stdio',
+    isset($vscodeSnippet['servers']['birkly']['type'])
+        && ($vscodeSnippet['servers']['birkly']['type'] ?? '') === 'stdio',
+    json_encode($vscodeSnippet)
+);
+$fakeHome = $testRoot . '/fakehome';
+$vscodeDir = $fakeHome . '/Library/Application Support/Code/User';
+mkdir($vscodeDir, 0755, true);
+putenv('HOME=' . $fakeHome);
+$vscodeMerge = birkly_mcp_desktop_merge_into_app_config('vscode', $vscodeSnippet);
+assert_true('vscode merge ok', ($vscodeMerge['ok'] ?? false) === true);
+$vscodeJson = json_decode((string) file_get_contents($vscodeDir . '/mcp.json'), true);
+assert_true('vscode merge wrote birkly server', is_array($vscodeJson) && isset($vscodeJson['servers']['birkly']));
+
+$mergeDir = $fakeHome . '/Library/Application Support/Claude';
 mkdir($mergeDir, 0755, true);
-putenv('HOME=' . $testRoot . '/fakehome');
 $merge = birkly_mcp_desktop_merge_into_app_config('claude', $snippet);
 assert_true('merge install ok', ($merge['ok'] ?? false) === true);
 assert_true('merge wrote file', is_file($mergeDir . '/claude_desktop_config.json'));

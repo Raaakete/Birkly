@@ -693,23 +693,78 @@ function birkly_mcp_desktop_stdio_loop(?string $tokenFile = null): int
 }
 
 /**
- * @return array<string, mixed>|null Claude Desktop / Cursor stdio config (no secrets in JSON).
+ * @return list<string>
  */
-function birkly_mcp_desktop_client_config_snippet(string $credentialsPath): array
+function birkly_mcp_desktop_valid_targets(): array
 {
-    $phpBinary = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+    return ['claude', 'cursor', 'vscode', 'gemini'];
+}
+
+function birkly_mcp_desktop_is_valid_target(string $target): bool
+{
+    return in_array($target, birkly_mcp_desktop_valid_targets(), true);
+}
+
+function birkly_mcp_desktop_php_binary(): string
+{
+    $root = birkly_project_root();
+    if (PHP_OS_FAMILY === 'Windows') {
+        $portable = $root . DIRECTORY_SEPARATOR . 'runtime' . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'php.exe';
+        if (is_file($portable)) {
+            return $portable;
+        }
+    }
+
+    return PHP_BINARY !== '' ? PHP_BINARY : 'php';
+}
+
+function birkly_mcp_desktop_relative_token_path(string $credentialsPath): string
+{
+    $root = birkly_project_root();
+    $normalizedRoot = str_replace('\\', '/', $root);
+    $normalizedPath = str_replace('\\', '/', $credentialsPath);
+    if (str_starts_with($normalizedPath, $normalizedRoot . '/')) {
+        return ltrim(substr($normalizedPath, strlen($normalizedRoot)), '/');
+    }
+
+    return $credentialsPath;
+}
+
+/**
+ * @return array{command: string, args: list<string>}
+ */
+function birkly_mcp_desktop_stdio_command_entry(string $credentialsPath): array
+{
+    $phpBinary = birkly_mcp_desktop_php_binary();
     $bridgeScript = birkly_project_root() . '/scripts/birkly-mcp-desktop.php';
 
     return [
-        'mcpServers' => [
-            'birkly' => [
-                'command' => $phpBinary,
-                'args' => [
-                    $bridgeScript,
-                    '--token-file',
-                    $credentialsPath,
-                ],
+        'command' => $phpBinary,
+        'args' => [
+            $bridgeScript,
+            '--token-file',
+            $credentialsPath,
+        ],
+    ];
+}
+
+/**
+ * @return array<string, mixed> App-specific MCP config fragment (no secrets in JSON).
+ */
+function birkly_mcp_desktop_client_config_snippet(string $credentialsPath, ?string $target = null): array
+{
+    $entry = birkly_mcp_desktop_stdio_command_entry($credentialsPath);
+    if ($target === 'vscode') {
+        return [
+            'servers' => [
+                'birkly' => array_merge(['type' => 'stdio'], $entry),
             ],
+        ];
+    }
+
+    return [
+        'mcpServers' => [
+            'birkly' => $entry,
         ],
     ];
 }
@@ -726,6 +781,20 @@ function birkly_mcp_desktop_install_target_meta(string $target): array
             'win_path' => '%USERPROFILE%\\.cursor\\mcp.json',
         ];
     }
+    if ($target === 'vscode') {
+        return [
+            'app_label' => 'VS Code (GitHub Copilot)',
+            'mac_path' => '~/Library/Application Support/Code/User/mcp.json',
+            'win_path' => '%APPDATA%\\Code\\User\\mcp.json',
+        ];
+    }
+    if ($target === 'gemini') {
+        return [
+            'app_label' => 'Gemini CLI',
+            'mac_path' => '~/.gemini/settings.json',
+            'win_path' => '%USERPROFILE%\\.gemini\\settings.json',
+        ];
+    }
 
     return [
         'app_label' => 'Claude Desktop',
@@ -735,125 +804,122 @@ function birkly_mcp_desktop_install_target_meta(string $target): array
 }
 
 /**
- * macOS double-click helper (.command) — merges MCP config using python3 (preinstalled on macOS).
- *
- * @param array<string, mixed> $mcpConfig
+ * macOS double-click helper (.command) — runs the same PHP installer as Terminal.
  */
-function birkly_mcp_desktop_mac_command_script(array $mcpConfig, string $target = 'claude'): string
+function birkly_mcp_desktop_mac_command_script(string $credentialsPath, string $target = 'claude'): string
 {
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
+        throw new InvalidArgumentException('Unknown install target');
+    }
     $meta = birkly_mcp_desktop_install_target_meta($target);
-    $json = json_encode($mcpConfig, JSON_UNESCAPED_SLASHES);
-    if ($json === false) {
-        throw new RuntimeException('Could not encode MCP config');
-    }
-    $pyConfig = str_replace('\\', '\\\\', $json);
-    $pyConfig = str_replace("'", "\\'", $pyConfig);
-
-    if ($target === 'cursor') {
-        $pathExpr = "pathlib.Path.home() / '.cursor' / 'mcp.json'";
-        $mkdirExpr = "(pathlib.Path.home() / '.cursor').mkdir(parents=True, exist_ok=True)";
-    } else {
-        $pathExpr = "pathlib.Path.home() / 'Library' / 'Application Support' / 'Claude' / 'claude_desktop_config.json'";
-        $mkdirExpr = "path.parent.mkdir(parents=True, exist_ok=True)";
-    }
+    $root = birkly_project_root();
+    $php = birkly_mcp_desktop_php_binary();
+    $tokenArg = birkly_mcp_desktop_relative_token_path($credentialsPath);
+    $install = $root . '/scripts/birkly-mcp-desktop-install.php';
+    $rootEsc = str_replace("'", "'\\''", $root);
+    $phpEsc = str_replace("'", "'\\''", $php);
+    $installEsc = str_replace("'", "'\\''", $install);
+    $tokenEsc = str_replace("'", "'\\''", $tokenArg);
 
     return <<<BASH
 #!/bin/bash
 set -e
 echo "Birkly — connecting {$meta['app_label']} on this Mac..."
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "Python 3 is required (usually preinstalled on macOS). Install Xcode Command Line Tools if needed."
-  read -r -p "Press Enter to close."
-  exit 1
-fi
-python3 <<'PY'
-import json, pathlib
-config = json.loads('{$pyConfig}')
-path = {$pathExpr}
-{$mkdirExpr}
-data = {}
-if path.exists():
-    try:
-        data = json.loads(path.read_text(encoding='utf-8'))
-    except json.JSONDecodeError:
-        data = {}
-if not isinstance(data, dict):
-    data = {}
-servers = data.get('mcpServers')
-if not isinstance(servers, dict):
-    servers = {}
-servers.update(config.get('mcpServers', {}))
-data['mcpServers'] = servers
-path.write_text(json.dumps(data, indent=2) + "\\n", encoding='utf-8')
-print("Saved to", path)
-print("Fully quit {$meta['app_label']}, then open it again.")
-PY
+cd '{$rootEsc}'
+'{$phpEsc}' '{$installEsc}' --target={$target} --token-file='{$tokenEsc}'
+echo "Fully quit {$meta['app_label']}, then open it again."
 read -r -p "Press Enter to close."
 BASH;
 }
 
 /**
- * Windows helper (.bat) — runs PowerShell to merge MCP config.
- *
- * @param array<string, mixed> $mcpConfig
+ * Windows helper (.bat) — runs the same PHP installer as PowerShell / cmd.
  */
-function birkly_mcp_desktop_windows_bat_script(array $mcpConfig, string $target = 'claude'): string
+function birkly_mcp_desktop_windows_bat_script(string $credentialsPath, string $target = 'claude'): string
 {
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
+        throw new InvalidArgumentException('Unknown install target');
+    }
     $meta = birkly_mcp_desktop_install_target_meta($target);
-    $json = json_encode($mcpConfig, JSON_UNESCAPED_SLASHES);
-    if ($json === false) {
-        throw new RuntimeException('Could not encode MCP config');
-    }
-    $b64 = base64_encode($json);
-
-    if ($target === 'cursor') {
-        $pathPs = 'Join-Path $env:USERPROFILE ".cursor\\mcp.json"';
-        $dirPs = 'Join-Path $env:USERPROFILE ".cursor"';
-    } else {
-        $pathPs = 'Join-Path $env:APPDATA "Claude\\claude_desktop_config.json"';
-        $dirPs = 'Join-Path $env:APPDATA "Claude"';
-    }
-
+    $root = birkly_project_root();
+    $php = birkly_mcp_desktop_php_binary();
+    $tokenArg = birkly_mcp_desktop_relative_token_path($credentialsPath);
+    $install = $root . DIRECTORY_SEPARATOR . 'scripts' . DIRECTORY_SEPARATOR . 'birkly-mcp-desktop-install.php';
+    $rootQ = '"' . str_replace('"', '""', $root) . '"';
+    $phpQ = '"' . str_replace('"', '""', $php) . '"';
+    $installQ = '"' . str_replace('"', '""', $install) . '"';
+    $tokenQ = '"' . str_replace('"', '""', $tokenArg) . '"';
     $appLabel = $meta['app_label'];
 
     return "@echo off\r\n"
         . "title Birkly — {$appLabel}\r\n"
         . "echo Connecting {$appLabel} on this PC...\r\n"
-        . "powershell -NoProfile -ExecutionPolicy Bypass -Command \""
-        . "\$json = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{$b64}')); "
-        . "\$config = \$json | ConvertFrom-Json; "
-        . "\$dir = {$dirPs}; "
-        . "New-Item -ItemType Directory -Force -Path \$dir | Out-Null; "
-        . "\$path = {$pathPs}; "
-        . "\$data = @{}; "
-        . "if (Test-Path \$path) { try { \$data = Get-Content \$path -Raw | ConvertFrom-Json } catch {} }; "
-        . "if (-not \$data.mcpServers) { \$data | Add-Member -NotePropertyName mcpServers -NotePropertyValue (@{}) -Force }; "
-        . "foreach (\$p in \$config.mcpServers.PSObject.Properties) { \$data.mcpServers | Add-Member -NotePropertyName \$p.Name -NotePropertyValue \$p.Value -Force }; "
-        . "\$data | ConvertTo-Json -Depth 10 | Set-Content -Path \$path -Encoding UTF8; "
-        . "Write-Host 'Saved to' \$path; "
-        . "Write-Host 'Fully quit {$appLabel}, then open it again.'\"\r\n"
+        . "cd /d {$rootQ}\r\n"
+        . "if errorlevel 1 (\r\n"
+        . "  echo Could not open your Birkly folder. Use the copy-paste command from Settings -^> AI instead.\r\n"
+        . "  pause\r\n"
+        . "  exit /b 1\r\n"
+        . ")\r\n"
+        . "{$phpQ} {$installQ} --target={$target} --token-file={$tokenQ}\r\n"
+        . "echo Fully quit {$appLabel}, then open it again.\r\n"
         . "pause\r\n";
 }
 
 /**
  * Absolute path to Claude / Cursor MCP config on this machine (CLI install).
  */
+function birkly_mcp_desktop_user_home(): ?string
+{
+    if (PHP_OS_FAMILY === 'Windows') {
+        $profile = (string) (getenv('USERPROFILE') ?: '');
+        return $profile !== '' ? $profile : null;
+    }
+    $home = (string) (getenv('HOME') ?: '');
+    return $home !== '' ? $home : null;
+}
+
 function birkly_mcp_desktop_app_config_path(string $target): ?string
 {
-    if ($target !== 'claude' && $target !== 'cursor') {
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
         return null;
     }
 
-    $home = (string) (getenv('HOME') ?: '');
-    if ($home === '' && PHP_OS_FAMILY === 'Windows') {
-        $home = (string) (getenv('USERPROFILE') ?: '');
-    }
-    if ($home === '') {
+    $home = birkly_mcp_desktop_user_home();
+    if ($home === null) {
         return null;
+    }
+
+    if (PHP_OS_FAMILY === 'Windows') {
+        $appData = (string) (getenv('APPDATA') ?: '');
+        if ($target === 'cursor') {
+            return $home . DIRECTORY_SEPARATOR . '.cursor' . DIRECTORY_SEPARATOR . 'mcp.json';
+        }
+        if ($target === 'gemini') {
+            return $home . DIRECTORY_SEPARATOR . '.gemini' . DIRECTORY_SEPARATOR . 'settings.json';
+        }
+        if ($target === 'vscode') {
+            if ($appData === '') {
+                return null;
+            }
+
+            return $appData . DIRECTORY_SEPARATOR . 'Code' . DIRECTORY_SEPARATOR . 'User' . DIRECTORY_SEPARATOR . 'mcp.json';
+        }
+
+        if ($appData === '') {
+            return null;
+        }
+
+        return $appData . DIRECTORY_SEPARATOR . 'Claude' . DIRECTORY_SEPARATOR . 'claude_desktop_config.json';
     }
 
     if ($target === 'cursor') {
         return $home . '/.cursor/mcp.json';
+    }
+    if ($target === 'gemini') {
+        return $home . '/.gemini/settings.json';
+    }
+    if ($target === 'vscode') {
+        return $home . '/Library/Application Support/Code/User/mcp.json';
     }
 
     return $home . '/Library/Application Support/Claude/claude_desktop_config.json';
@@ -883,17 +949,31 @@ function birkly_mcp_desktop_merge_into_app_config(string $target, array $mcpConf
         }
     }
 
-    $servers = $data['mcpServers'] ?? [];
-    if (!is_array($servers)) {
-        $servers = [];
-    }
-    $incoming = $mcpConfig['mcpServers'] ?? [];
-    if (is_array($incoming)) {
-        foreach ($incoming as $name => $entry) {
-            $servers[$name] = $entry;
+    if ($target === 'vscode') {
+        $servers = $data['servers'] ?? [];
+        if (!is_array($servers)) {
+            $servers = [];
         }
+        $incoming = $mcpConfig['servers'] ?? [];
+        if (is_array($incoming)) {
+            foreach ($incoming as $name => $entry) {
+                $servers[$name] = $entry;
+            }
+        }
+        $data['servers'] = $servers;
+    } else {
+        $servers = $data['mcpServers'] ?? [];
+        if (!is_array($servers)) {
+            $servers = [];
+        }
+        $incoming = $mcpConfig['mcpServers'] ?? [];
+        if (is_array($incoming)) {
+            foreach ($incoming as $name => $entry) {
+                $servers[$name] = $entry;
+            }
+        }
+        $data['mcpServers'] = $servers;
     }
-    $data['mcpServers'] = $servers;
 
     $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
@@ -926,13 +1006,21 @@ function birkly_mcp_desktop_remove_from_app_config(string $target, string $serve
         return ['ok' => false, 'message' => 'Config file is not valid JSON'];
     }
 
-    $servers = $decoded['mcpServers'] ?? [];
-    if (!is_array($servers) || !isset($servers[$serverName])) {
-        return ['ok' => true, 'path' => $path, 'removed' => false];
+    if ($target === 'vscode') {
+        $servers = $decoded['servers'] ?? [];
+        if (!is_array($servers) || !isset($servers[$serverName])) {
+            return ['ok' => true, 'path' => $path, 'removed' => false];
+        }
+        unset($servers[$serverName]);
+        $decoded['servers'] = $servers;
+    } else {
+        $servers = $decoded['mcpServers'] ?? [];
+        if (!is_array($servers) || !isset($servers[$serverName])) {
+            return ['ok' => true, 'path' => $path, 'removed' => false];
+        }
+        unset($servers[$serverName]);
+        $decoded['mcpServers'] = $servers;
     }
-
-    unset($servers[$serverName]);
-    $decoded['mcpServers'] = $servers;
 
     $json = json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
     if ($json === false) {
@@ -948,14 +1036,10 @@ function birkly_mcp_desktop_remove_from_app_config(string $target, string $serve
 function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, string $target): string
 {
     $root = birkly_project_root();
-    $php = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+    $php = birkly_mcp_desktop_php_binary();
     $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
 
-    $tokenArg = $credentialsPath;
-    if (str_starts_with($credentialsPath, $root . DIRECTORY_SEPARATOR)
-        || str_starts_with($credentialsPath, $root . '/')) {
-        $tokenArg = ltrim(substr($credentialsPath, strlen($root)), '/\\');
-    }
+    $tokenArg = birkly_mcp_desktop_relative_token_path($credentialsPath);
 
     if (PHP_OS_FAMILY === 'Windows') {
         return 'cd /d ' . escapeshellarg($root)
@@ -975,7 +1059,7 @@ function birkly_mcp_desktop_terminal_install_command(string $credentialsPath, st
 function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
 {
     $root = birkly_project_root();
-    $php = PHP_BINARY !== '' ? PHP_BINARY : 'php';
+    $php = birkly_mcp_desktop_php_binary();
     $scriptRel = 'scripts/birkly-mcp-desktop-install.php';
 
     if (PHP_OS_FAMILY === 'Windows') {
@@ -996,12 +1080,19 @@ function birkly_mcp_desktop_terminal_uninstall_command(string $target): string
  */
 function birkly_mcp_desktop_helper_download_names(): array
 {
-    return [
-        'claude_mac' => 'Connect-Birkly-to-Claude.command',
-        'claude_win' => 'Connect-Birkly-to-Claude.bat',
-        'cursor_mac' => 'Connect-Birkly-to-Cursor.command',
-        'cursor_win' => 'Connect-Birkly-to-Cursor.bat',
-    ];
+    $names = [];
+    foreach (birkly_mcp_desktop_valid_targets() as $target) {
+        $label = match ($target) {
+            'cursor' => 'Cursor',
+            'vscode' => 'VS-Code',
+            'gemini' => 'Gemini',
+            default => 'Claude',
+        };
+        $names[$target . '_mac'] = 'Connect-Birkly-to-' . $label . '.command';
+        $names[$target . '_win'] = 'Connect-Birkly-to-' . $label . '.bat';
+    }
+
+    return $names;
 }
 
 function birkly_mcp_desktop_status_for_user(string $userId): array
@@ -1024,16 +1115,36 @@ function birkly_mcp_desktop_status_for_user(string $userId): array
         'mcp_url' => (string) ($cred['mcp_url'] ?? ''),
         'expires_at' => (int) ($cred['expires_at'] ?? 0),
         'claude_desktop_config' => $snippet,
-        'terminal_install' => [
-            'claude' => birkly_mcp_desktop_terminal_install_command($path, 'claude'),
-            'cursor' => birkly_mcp_desktop_terminal_install_command($path, 'cursor'),
-        ],
-        'terminal_uninstall' => [
-            'claude' => birkly_mcp_desktop_terminal_uninstall_command('claude'),
-            'cursor' => birkly_mcp_desktop_terminal_uninstall_command('cursor'),
-        ],
+        'terminal_install' => array_combine(
+            birkly_mcp_desktop_valid_targets(),
+            array_map(
+                static fn (string $t) => birkly_mcp_desktop_terminal_install_command($path, $t),
+                birkly_mcp_desktop_valid_targets()
+            )
+        ),
+        'terminal_uninstall' => array_combine(
+            birkly_mcp_desktop_valid_targets(),
+            array_map(
+                static fn (string $t) => birkly_mcp_desktop_terminal_uninstall_command($t),
+                birkly_mcp_desktop_valid_targets()
+            )
+        ),
+        'config_paths' => array_combine(
+            birkly_mcp_desktop_valid_targets(),
+            array_map(
+                static fn (string $t) => birkly_mcp_desktop_app_config_path($t),
+                birkly_mcp_desktop_valid_targets()
+            )
+        ),
         'claude_config_path' => birkly_mcp_desktop_app_config_path('claude'),
         'cursor_config_path' => birkly_mcp_desktop_app_config_path('cursor'),
+        'install_targets' => array_combine(
+            birkly_mcp_desktop_valid_targets(),
+            array_map(
+                static fn (string $t) => birkly_mcp_desktop_install_target_meta($t),
+                birkly_mcp_desktop_valid_targets()
+            )
+        ),
         'helper_downloads' => birkly_mcp_desktop_helper_download_names(),
     ];
 }

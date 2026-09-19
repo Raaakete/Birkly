@@ -38,10 +38,13 @@ $action = (string) ($input['action'] ?? $_GET['action'] ?? 'status');
 
 if ($action === 'status') {
     $data = birkly_mcp_desktop_status_for_user($userId);
-    $data['install_targets'] = [
-        'claude' => birkly_mcp_desktop_install_target_meta('claude'),
-        'cursor' => birkly_mcp_desktop_install_target_meta('cursor'),
-    ];
+    $data['install_targets'] = array_combine(
+        birkly_mcp_desktop_valid_targets(),
+        array_map(
+            static fn (string $t) => birkly_mcp_desktop_install_target_meta($t),
+            birkly_mcp_desktop_valid_targets()
+        )
+    );
     echo json_encode([
         'status' => 'ok',
         'data' => $data,
@@ -57,27 +60,28 @@ if ($action === 'download_helper') {
         exit;
     }
     $target = (string) ($input['target'] ?? $_GET['target'] ?? 'claude');
-    if ($target !== 'claude' && $target !== 'cursor') {
+    if (!birkly_mcp_desktop_is_valid_target($target)) {
         $target = 'claude';
     }
     $os = (string) ($input['os'] ?? $_GET['os'] ?? 'mac');
-    $config = $status['claude_desktop_config'] ?? null;
-    if (!is_array($config)) {
+    $credPath = (string) ($status['credentials_path'] ?? '');
+    if ($credPath === '' || !is_file($credPath)) {
         http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Config unavailable']);
+        echo json_encode(['status' => 'error', 'message' => 'Credentials unavailable']);
         exit;
     }
+    $downloads = $status['helper_downloads'] ?? birkly_mcp_desktop_helper_download_names();
+    $osKey = ($os === 'win' || $os === 'windows') ? 'win' : 'mac';
+    $filename = (string) ($downloads[$target . '_' . $osKey] ?? 'Connect-Birkly.bat');
     try {
         if ($os === 'win' || $os === 'windows') {
-            $body = birkly_mcp_desktop_windows_bat_script($config, $target);
-            $filename = $target === 'cursor' ? 'Connect-Birkly-to-Cursor.bat' : 'Connect-Birkly-to-Claude.bat';
+            $body = birkly_mcp_desktop_windows_bat_script($credPath, $target);
             header('Content-Type: application/octet-stream');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
             echo $body;
             exit;
         }
-        $body = birkly_mcp_desktop_mac_command_script($config, $target);
-        $filename = $target === 'cursor' ? 'Connect-Birkly-to-Cursor.command' : 'Connect-Birkly-to-Claude.command';
+        $body = birkly_mcp_desktop_mac_command_script($credPath, $target);
         header('Content-Type: application/octet-stream');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         echo $body;
