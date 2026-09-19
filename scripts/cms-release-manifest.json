@@ -37,6 +37,7 @@
     "templates/**",
     "test-*.php",
     "tmp/**",
+    "tools/**",
     "test-server.php",
     "birkly-hydrate.js",
     "plugins/*",
@@ -94,12 +95,24 @@
     "docs/**",
     "tests/**"
   ],
+  "launcher_release_files": [
+    "Birkly Launch.exe",
+    "birkly-launch-mac",
+    "birkly-launch-mac-intel",
+    "birkly-launch-linux",
+    "Birkly Launch.command"
+  ],
   "executable_files": [
     "start-server.sh",
     "start-server.bat",
     "check-php.sh",
     "check-php.bat",
-    "install-php-windows.bat"
+    "install-php-windows.bat",
+    "Birkly Launch.exe",
+    "birkly-launch-mac",
+    "birkly-launch-mac-intel",
+    "birkly-launch-linux",
+    "Birkly Launch.command"
   ],
   "fresh_install": {
     "active_plugins": [],
