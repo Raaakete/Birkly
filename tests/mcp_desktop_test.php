@@ -147,6 +147,23 @@ $winScript = birkly_mcp_desktop_windows_bat_script($path, 'cursor');
 assert_true('win helper mentions Cursor', str_contains($winScript, 'Cursor'));
 assert_true('win helper runs install script', str_contains($winScript, 'birkly-mcp-desktop-install.php'));
 
+$fakeHome = $testRoot . '/fakehome';
+putenv('HOME=' . $fakeHome);
+
+$copilotSnippet = birkly_mcp_desktop_client_config_snippet($path, 'copilot');
+assert_true(
+    'copilot snippet uses local type',
+    ($copilotSnippet['mcpServers']['birkly']['type'] ?? '') === 'local'
+        && ($copilotSnippet['mcpServers']['birkly']['tools'] ?? null) === ['*'],
+    json_encode($copilotSnippet)
+);
+$copilotDir = $fakeHome . '/.copilot';
+mkdir($copilotDir, 0755, true);
+$copilotMerge = birkly_mcp_desktop_merge_into_app_config('copilot', $copilotSnippet);
+assert_true('copilot merge ok', ($copilotMerge['ok'] ?? false) === true);
+$copilotJson = json_decode((string) file_get_contents($copilotDir . '/mcp-config.json'), true);
+assert_true('copilot merge wrote birkly server', is_array($copilotJson) && isset($copilotJson['mcpServers']['birkly']));
+
 $vscodeSnippet = birkly_mcp_desktop_client_config_snippet($path, 'vscode');
 assert_true(
     'vscode snippet uses servers + stdio',
@@ -154,10 +171,8 @@ assert_true(
         && ($vscodeSnippet['servers']['birkly']['type'] ?? '') === 'stdio',
     json_encode($vscodeSnippet)
 );
-$fakeHome = $testRoot . '/fakehome';
 $vscodeDir = $fakeHome . '/Library/Application Support/Code/User';
 mkdir($vscodeDir, 0755, true);
-putenv('HOME=' . $fakeHome);
 $vscodeMerge = birkly_mcp_desktop_merge_into_app_config('vscode', $vscodeSnippet);
 assert_true('vscode merge ok', ($vscodeMerge['ok'] ?? false) === true);
 $vscodeJson = json_decode((string) file_get_contents($vscodeDir . '/mcp.json'), true);
