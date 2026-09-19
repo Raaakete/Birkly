@@ -62,6 +62,7 @@
     "!scripts/build-cms-release.sh",
     "!scripts/build-plugin-zip.sh",
     "!scripts/create-default-user.php",
+    "!scripts/mac-open-birkly-launch.sh",
     ".env",
     "config.php",
     ".git/**",
@@ -101,7 +102,8 @@
   ],
   "launcher_release_files": [
     "Birkly Launch.exe",
-    "birkly-launch-linux"
+    "birkly-launch-linux",
+    "scripts/mac-open-birkly-launch.sh"
   ],
   "launcher_release_dirs": [
     "Birkly Launch.app"
@@ -114,6 +116,7 @@
     "install-php-windows.bat",
     "Birkly Launch.exe",
     "birkly-launch-linux",
+    "scripts/mac-open-birkly-launch.sh",
     "Birkly Launch.app/Contents/MacOS/birkly-launch"
   ],
   "fresh_install": {
