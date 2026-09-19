@@ -29,6 +29,8 @@
     "docker-compose.yml",
     "Dockerfile",
     "Birkly Launch.app/**",
+    "Birkly Launch.exe",
+    "birkly-launch-linux",
     "birkly-launch-mac",
     "birkly-launch-mac-intel",
     "OPEN-ME-FIRST.txt",
@@ -102,19 +104,14 @@
     "docs/**",
     "tests/**"
   ],
-  "launcher_release_files": [
-    "Birkly Launch.exe",
-    "birkly-launch-linux"
-  ],
+  "launcher_release_files": [],
   "launcher_release_dirs": [],
   "executable_files": [
     "start-server.sh",
     "start-server.bat",
     "check-php.sh",
     "check-php.bat",
-    "install-php-windows.bat",
-    "Birkly Launch.exe",
-    "birkly-launch-linux"
+    "install-php-windows.bat"
   ],
   "fresh_install": {
     "active_plugins": [],
