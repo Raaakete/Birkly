@@ -338,11 +338,60 @@ class BirklyVersion {
         return false;
     }
 
+    /**
+     * PHP entrypoints that must not be replaced mid-request on Windows (install runs through updates.php).
+     *
+     * @return list<string>
+     */
+    private static function updateInstallDeferredApiPaths(): array
+    {
+        return ['api/updates.php', 'api/session.php'];
+    }
+
+    private static function updateInstallPathPriority(string $relativePath): int
+    {
+        $path = str_replace('\\', '/', $relativePath);
+        if ($path === 'api/updates.php') {
+            return 1000;
+        }
+        if ($path === 'api/session.php') {
+            return 990;
+        }
+        if (str_starts_with($path, 'core/')) {
+            return 10;
+        }
+        if (str_starts_with($path, 'fieldtypes/')) {
+            return 20;
+        }
+        if (str_starts_with($path, 'admin/')) {
+            return 30;
+        }
+        if (str_starts_with($path, 'api/')) {
+            return 50;
+        }
+
+        return 40;
+    }
+
     private static function copyFileForUpdate(string $source, string $target, string $relativePath = ''): bool
     {
         $targetDir = dirname($target);
         if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
             return false;
+        }
+
+        $normalizedRelative = str_replace('\\', '/', $relativePath);
+        if (PHP_OS_FAMILY === 'Windows' && in_array($normalizedRelative, self::updateInstallDeferredApiPaths(), true)) {
+            $stagingPath = $target . '.birkly-staged';
+            if (is_file($stagingPath)) {
+                @unlink($stagingPath);
+            }
+            if (!@copy($source, $stagingPath)) {
+                return false;
+            }
+            self::$stagedUpdateRelativePaths[] = $normalizedRelative;
+
+            return true;
         }
 
         $stagingPath = $target . '.birkly-staged';
@@ -847,30 +896,52 @@ class BirklyVersion {
             new RecursiveDirectoryIterator($sourceDir, RecursiveDirectoryIterator::SKIP_DOTS),
             RecursiveIteratorIterator::SELF_FIRST
         );
-        
+
+        $dirs = [];
+        $files = [];
+
         foreach ($iterator as $item) {
             $relativePath = str_replace('\\', '/', $iterator->getSubPathName());
-            $targetPath = $targetDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
-            
             if (self::updatePathIsExcluded($relativePath, $excludeFiles)) {
                 continue;
             }
-            
+
+            $targetPath = $targetDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
             if ($item->isDir()) {
-                if (!is_dir($targetPath)) {
-                    if (!mkdir($targetPath, 0755, true)) {
-                        self::$lastMoveError = $relativePath;
-                        return false;
-                    }
-                }
+                $dirs[] = ['relative' => $relativePath, 'target' => $targetPath];
             } else {
-                if (!self::copyFileForUpdate($item->getPathname(), $targetPath, $relativePath)) {
-                    self::$lastMoveError = $relativePath;
-                    return false;
-                }
+                $files[] = [
+                    'relative' => $relativePath,
+                    'target' => $targetPath,
+                    'source' => $item->getPathname(),
+                ];
             }
         }
-        
+
+        usort($dirs, static function (array $a, array $b): int {
+            return BirklyVersion::updateInstallPathPriority($a['relative'])
+                <=> BirklyVersion::updateInstallPathPriority($b['relative']);
+        });
+
+        foreach ($dirs as $dir) {
+            if (!is_dir($dir['target']) && !mkdir($dir['target'], 0755, true)) {
+                self::$lastMoveError = $dir['relative'];
+                return false;
+            }
+        }
+
+        usort($files, static function (array $a, array $b): int {
+            return BirklyVersion::updateInstallPathPriority($a['relative'])
+                <=> BirklyVersion::updateInstallPathPriority($b['relative']);
+        });
+
+        foreach ($files as $file) {
+            if (!self::copyFileForUpdate($file['source'], $file['target'], $file['relative'])) {
+                self::$lastMoveError = $file['relative'];
+                return false;
+            }
+        }
+
         return true;
     }
     

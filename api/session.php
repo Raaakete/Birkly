@@ -6,8 +6,12 @@ ini_set('error_log', __DIR__ . '/../logs/php_errors.log');
 // Secure session initialization for Birkly
 
 require_once __DIR__ . '/../core/birkly_paths.php';
-require_once __DIR__ . '/../core/update_staging.php';
-birkly_apply_staged_update_files();
+
+$updateStagingBootstrap = __DIR__ . '/../core/update_staging.php';
+if (is_file($updateStagingBootstrap)) {
+    require_once $updateStagingBootstrap;
+    birkly_apply_staged_update_files();
+}
 
 /** CMS admin/API session cookie name (avoids PHPSESSID collisions with host sites). */
 define('BIRKLY_CMS_SESSION_NAME', 'birkly_cms_sid');
