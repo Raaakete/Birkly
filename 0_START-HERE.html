@@ -265,7 +265,27 @@
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">2</span><h4>Start the Birkly server</h4></div>
+                    <div class="step-head"><span class="step-num">2</span><h4>Check PHP</h4></div>
+                    <p id="php-check-intro">The built-in server needs PHP 8+ on your PATH. Run this check before starting the server:</p>
+                    <p id="php-check-windows-hint" class="status info" style="display:none;margin-bottom:var(--space-3);">
+                        <strong>Windows:</strong> Double-click <code>check-php.bat</code> in File Explorer, or run it in Command Prompt. It will tell you if PHP is missing and how to install it.
+                    </p>
+                    <div class="cmd-row"><pre class="cmd" id="cmd-php-check">./check-php.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-check">Copy</button></div>
+                    <p class="cmd-label" id="cmd-php-check-alt-label">Or check manually:</p>
+                    <div class="cmd-row"><pre class="cmd" id="cmd-php-version">php -v</pre><button type="button" class="copy-btn" data-copy-target="cmd-php-version">Copy</button></div>
+                    <details class="accordion">
+                        <summary>PHP not installed or check failed?</summary>
+                        <div class="accordion-body">
+                            <p>Birkly needs PHP 8.0+ with <code>json</code>, <code>mbstring</code>, <code>curl</code>, and <code>openssl</code>.</p>
+                            <p><strong>Mac:</strong> <code>brew install php</code></p>
+                            <p><strong>Windows:</strong> run <code>check-php.bat</code> for install hints, or use <a href="https://windows.php.net/download/" target="_blank" rel="noopener">windows.php.net</a> / XAMPP / Laragon.</p>
+                            <p><strong>Linux:</strong> <code>sudo apt install php php-mbstring php-curl php-json</code></p>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="step">
+                    <div class="step-head"><span class="step-num">3</span><h4>Start the Birkly server</h4></div>
                     <p id="start-server-intro">Run in the terminal and keep the window open:</p>
                     <p id="start-server-windows-hint" class="status info" style="display:none;margin-bottom:var(--space-3);">
                         <strong>Windows:</strong> Do not double-click <code>start-server.sh</code> — Windows will ask which app should open it.
@@ -292,7 +312,7 @@
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">3</span><h4>Open this page through the server</h4></div>
+                    <div class="step-head"><span class="step-num">4</span><h4>Open this page through the server</h4></div>
                     <p>Do <strong>not</strong> continue from a <code>file://</code> tab. After the server is running, open:</p>
                     <code class="localhost-url" id="local-start-here-url">http://localhost:8080/0_START-HERE.html</code>
                     <div class="text-center">
@@ -301,27 +321,25 @@
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">4</span><h4>Check PHP</h4></div>
-                    <p>When this page is loaded via <code>http://localhost</code>, we verify PHP automatically.</p>
-                    <div id="php-probe" class="probe pending">Waiting for local server…</div>
+                    <div class="step-head"><span class="step-num">5</span><h4>Environment ready</h4></div>
+                    <p>With this page open via <code>http://localhost</code>, we quietly confirm writable folders and PHP extensions.</p>
+                    <div id="env-probe" class="probe pending">Complete steps 2–4 first, then we will check your environment here.</div>
                     <details class="accordion">
-                        <summary>PHP not installed yet?</summary>
+                        <summary>Environment check failed?</summary>
                         <div class="accordion-body">
-                            <p>Birkly needs PHP 8.0+. Install options:</p>
-                            <p><strong>Mac:</strong> <code>brew install php</code></p>
-                            <p><strong>Windows:</strong> <a href="https://www.php.net/downloads.php" target="_blank" rel="noopener">php.net</a> or XAMPP.</p>
-                            <p><strong>Linux:</strong> <code>sudo apt install php</code></p>
+                            <p>Make sure the server is running and this page is loaded via localhost (not <code>file://</code>).</p>
+                            <p>If folders are not writable, fix permissions on <code>content/</code>, <code>media/</code>, <code>users/</code>, <code>settings/</code>, and <code>logs/</code>.</p>
                         </div>
                     </details>
                 </div>
 
                 <div class="step">
-                    <div class="step-head"><span class="step-num">5</span><h4>Continue to admin setup</h4></div>
+                    <div class="step-head"><span class="step-num">6</span><h4>Continue to admin setup</h4></div>
                     <p>Create your admin account and finish setup in the wizard.</p>
                     <div class="text-center">
                         <a href="#" id="local-onboarding-link" class="btn disabled" aria-disabled="true">Start setup →</a>
                     </div>
-                    <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Complete steps 2–3 first (server running, this page open via localhost).</p>
+                    <p id="local-onboarding-hint" style="text-align:center;font-size:0.8125rem;color:var(--text-tertiary);margin-top:var(--space-2);">Complete steps 2–5 first (PHP check, server running, this page open via localhost).</p>
                 </div>
             </div>
 
@@ -376,6 +394,24 @@
 
         function isWindows() {
             return /Windows/i.test(navigator.userAgent || '');
+        }
+
+        function applyPhpCheckCommandsForOs() {
+            if (!isWindows()) {
+                return;
+            }
+            const hint = document.getElementById('php-check-windows-hint');
+            if (hint) {
+                hint.style.display = 'block';
+            }
+            const checkCmd = document.getElementById('cmd-php-check');
+            if (checkCmd) {
+                checkCmd.textContent = 'check-php.bat';
+            }
+            const altLabel = document.getElementById('cmd-php-check-alt-label');
+            if (altLabel) {
+                altLabel.textContent = 'Or in Command Prompt:';
+            }
         }
 
         function applyStartServerCommandsForOs() {
@@ -586,13 +622,23 @@
             return res.json();
         }
 
+        function writableDirsOk(writableDirs) {
+            if (!writableDirs || typeof writableDirs !== 'object') {
+                return true;
+            }
+            return Object.values(writableDirs).every(function (entry) {
+                return entry && entry.writable !== false;
+            });
+        }
+
         function applyProbeSuccess(el, data, enableOnSuccess) {
             const d = data.data;
-            const extOk = d.extensions && d.extensions.json && d.extensions.mbstring;
+            const extOk = d.extensions && d.extensions.json && d.extensions.mbstring && d.extensions.curl && d.extensions.openssl;
+            const dirsOk = writableDirsOk(d.writable_dirs);
             applyFolderStatusFromProbe(d);
-            if (d.php_ok && extOk) {
+            if (d.php_ok && extOk && dirsOk) {
                 el.className = 'probe ok';
-                el.textContent = '✓ PHP ' + d.php_version + ' — ready';
+                el.textContent = '✓ Environment ready';
                 if (enableOnSuccess) {
                     serverReady = true;
                     updateLocalUrls();
@@ -601,7 +647,13 @@
                 return true;
             }
             el.className = 'probe error';
-            el.textContent = 'PHP ' + d.php_version + (d.php_ok ? '' : ' (8.0+ required)') + '. Fix PHP or extensions.';
+            if (!dirsOk) {
+                el.textContent = 'Some folders are not writable. See the help below and fix permissions.';
+            } else if (!extOk) {
+                el.textContent = 'Missing PHP extensions. Enable json, mbstring, curl, and openssl, then refresh.';
+            } else {
+                el.textContent = 'Environment check failed. Confirm PHP 8+ (step 2), then refresh.';
+            }
             return false;
         }
 
@@ -609,19 +661,19 @@
             const el = document.getElementById(targetId);
             if (!el) return false;
             if (isFileProtocol()) {
-                markProbePending(el, 'Start the server and open this page via localhost to check PHP.');
+                markProbePending(el, 'After step 4, open this page via localhost — we will check your environment here.');
                 return false;
             }
             try {
                 const data = await fetchSetupProbe(false);
                 if (data.status !== 'ok' || !data.data) {
                     el.className = 'probe error';
-                    el.textContent = 'Could not read PHP environment. Check that the server is running.';
+                    el.textContent = 'Could not reach the server. Check that it is running (step 3).';
                     return false;
                 }
                 return applyProbeSuccess(el, data, enableOnSuccess);
             } catch (_) {
-                markProbePending(el, 'Server not reachable yet — start ./start-server.sh (keep that window open). Checking again…');
+                markProbePending(el, 'Waiting for the server — complete steps 2–4, then keep the server window open.');
                 return false;
             }
         }
@@ -638,7 +690,7 @@
             const tick = async () => {
                 attempts += 1;
                 if (isFileProtocol()) {
-                    markProbePending(el, 'Start the server and open this page via localhost to check PHP.');
+                    markProbePending(el, 'After step 4, open this page via localhost — we will check your environment here.');
                     return;
                 }
 
@@ -666,7 +718,7 @@
                 }
 
                 if (attempts >= PROBE_MAX_ATTEMPTS) {
-                    markProbePending(el, 'Still waiting for PHP after ~45s. Confirm ./start-server.sh is running, then refresh this page.');
+                    markProbePending(el, 'Still waiting for the server after ~45s. Confirm step 3 is running, then refresh this page.');
                     await detectFolderFallback();
                     return;
                 }
@@ -674,13 +726,13 @@
                 markProbePending(
                     el,
                     attempts < 3
-                        ? 'Waiting for local server…'
-                        : 'Still waiting for local server… (attempt ' + attempts + '). Keep ./start-server.sh running.'
+                        ? 'Checking environment…'
+                        : 'Still waiting for the server (step 3). Keep it running…'
                 );
                 probeTimer = setTimeout(tick, PROBE_POLL_MS);
             };
 
-            markProbePending(el, 'Waiting for local server…');
+            markProbePending(el, 'Checking environment…');
             tick();
         }
 
@@ -731,18 +783,19 @@
 
         // DOMContentLoaded — do not wait for fonts/CDN on window.load before probing.
         document.addEventListener('DOMContentLoaded', () => {
+            applyPhpCheckCommandsForOs();
             applyStartServerCommandsForOs();
             updateLocalUrls();
             updateCloudUrls();
 
             if (!isFileProtocol() && isLocalhost()) {
                 showSteps('local', document.querySelector('.path-card[data-path="local"]'));
-                pollSetupProbe('php-probe', true);
+                pollSetupProbe('env-probe', true);
             } else if (!isFileProtocol() && !isLocalhost()) {
                 showSteps('cloud', document.querySelector('.path-card[data-path="cloud"]'));
                 runSetupProbe('cloud-probe', true);
             } else {
-                markProbePending(document.getElementById('php-probe'), 'Start the server and open this page via localhost to check PHP.');
+                markProbePending(document.getElementById('env-probe'), 'After step 4, open this page via localhost — we will check your environment here.');
             }
         });
     </script>
