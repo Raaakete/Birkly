@@ -103,7 +103,8 @@ if ($action === 'pair') {
     try {
         $agentId = (string) ($input['agent_id'] ?? BIRKLY_AI_AGENT_PERSONAL_ID);
         $result = birkly_mcp_desktop_pair_user($currentUser, $agentId);
-        echo json_encode(['status' => 'ok', 'data' => $result]);
+        $status = birkly_mcp_desktop_status_for_user($userId);
+        echo json_encode(['status' => 'ok', 'data' => array_merge($status, $result)]);
     } catch (Throwable $e) {
         http_response_code(400);
         echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);

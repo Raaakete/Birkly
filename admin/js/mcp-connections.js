@@ -41,7 +41,9 @@
     }
 
     function initMcpConnections() {
-        if (initialized) return;
+        if (initialized) {
+            return;
+        }
         initialized = true;
 
         csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
@@ -50,6 +52,15 @@
         updateDevBridgeLink();
         loadEndpoints();
         setupEventListeners();
+    }
+
+    function refreshDesktopConnector() {
+        if (!initialized) {
+            initMcpConnections();
+            return;
+        }
+        updateHttpsWarning();
+        loadDesktopConnector();
     }
 
     function maybeInitMcpConnections() {
@@ -63,9 +74,8 @@
         window.addEventListener('hashchange', maybeInitMcpConnections);
         window.addEventListener('birkly:ai-integrations-tab', function () {
             maybeInitMcpConnections();
-            if (initialized && isAiIntegrationsContext()) {
-                updateHttpsWarning();
-                loadDesktopConnector();
+            if (isAiIntegrationsContext()) {
+                refreshDesktopConnector();
             }
         });
     });
@@ -201,6 +211,32 @@
         return active ? (active.getAttribute('data-desktop-target') || 'claude') : 'claude';
     }
 
+    function desktopTerminalInstallCommand(setupData, target) {
+        const map = setupData?.terminal_install || {};
+        const cmd = map[target];
+        return typeof cmd === 'string' ? cmd : '';
+    }
+
+    function desktopTerminalUninstallCommand(setupData, target) {
+        const map = setupData?.terminal_uninstall || {};
+        const cmd = map[target];
+        return typeof cmd === 'string' ? cmd : '';
+    }
+
+    function applyDesktopTerminalFields(body, setupData, target) {
+        if (!body) return;
+        const installCmd = body.querySelector('[data-mcp-desktop-terminal-install]');
+        const uninstallCmd = body.querySelector('[data-mcp-desktop-terminal-uninstall]');
+        const installText = desktopTerminalInstallCommand(setupData, target);
+        const uninstallText = desktopTerminalUninstallCommand(setupData, target);
+        if (installCmd) {
+            installCmd.value = installText;
+        }
+        if (uninstallCmd) {
+            uninstallCmd.value = uninstallText;
+        }
+    }
+
     function updateDesktopTargetLabel(body, target) {
         const label = body.querySelector('[data-desktop-target-label]');
         if (!label) return;
@@ -208,9 +244,6 @@
     }
 
     function bindDesktopSetupUi(body, setupData) {
-        const config = setupData.claude_desktop_config;
-        const terminalInstall = setupData.terminal_install || {};
-        const terminalUninstall = setupData.terminal_uninstall || {};
         const helperDownloads = setupData.helper_downloads || {};
         const osHint = detectDesktopOsHint();
 
@@ -224,14 +257,7 @@
                 p.hidden = p.getAttribute('data-desktop-panel') !== target;
             });
             updateDesktopTargetLabel(body, target);
-            const cmd = document.getElementById('mcp-desktop-terminal-cmd');
-            if (cmd) {
-                cmd.value = terminalInstall[target] || '';
-            }
-            const uninstallCmd = document.getElementById('mcp-desktop-terminal-uninstall-cmd');
-            if (uninstallCmd) {
-                uninstallCmd.value = terminalUninstall[target] || '';
-            }
+            applyDesktopTerminalFields(body, setupData, target);
         }
 
         body.querySelectorAll('[data-desktop-target]').forEach(btn => {
@@ -252,7 +278,7 @@
         });
 
         body.querySelector('[data-copy-terminal-install]')?.addEventListener('click', function () {
-            const cmd = document.getElementById('mcp-desktop-terminal-cmd');
+            const cmd = body.querySelector('[data-mcp-desktop-terminal-install]');
             if (!cmd || !cmd.value) return;
             const osHint = detectDesktopOsHint();
             const copiedMsg = osHint === 'win'
@@ -272,7 +298,7 @@
         });
 
         body.querySelector('[data-copy-terminal-uninstall]')?.addEventListener('click', function () {
-            const cmd = document.getElementById('mcp-desktop-terminal-uninstall-cmd');
+            const cmd = body.querySelector('[data-mcp-desktop-terminal-uninstall]');
             if (!cmd || !cmd.value) return;
             fallbackCopy(cmd, function () {
                 showToast(mcpT('ai_conn_desktop_terminal_copied', 'Command copied — paste it in Terminal on this Mac.'));
@@ -289,7 +315,9 @@
         const terminalStepText = macPrimary
             ? mcpT('ai_conn_desktop_step_terminal', 'Copy the command, open Terminal, paste, press Enter.')
             : mcpT('ai_conn_desktop_step_terminal_win', 'Copy the command, open PowerShell or Command Prompt, paste, press Enter.');
-        const terminalUninstallClaude = escapeHtml((setupData.terminal_uninstall || {}).claude || '');
+        const defaultTarget = 'claude';
+        const initialInstallCmd = escapeHtml(desktopTerminalInstallCommand(setupData, defaultTarget));
+        const terminalUninstallClaude = escapeHtml(desktopTerminalUninstallCommand(setupData, defaultTarget));
         const macGatekeeper = macPrimary ? `
             <div class="desktop-mcp-note desktop-mcp-note-warning" role="note">
                 <p class="desktop-mcp-note-title">${escapeHtml(mcpT('ai_conn_desktop_mac_gatekeeper_title', 'If macOS blocks the downloaded file'))}</p>
@@ -302,7 +330,7 @@
                 <div class="desktop-mcp-step-body u-stack-2">
                     <p>${escapeHtml(terminalStepText)}</p>
                     <div class="desktop-mcp-terminal">
-                        <textarea id="mcp-desktop-terminal-cmd" class="desktop-mcp-terminal-input" rows="4" readonly spellcheck="false"></textarea>
+                        <textarea id="mcp-desktop-terminal-cmd" data-mcp-desktop-terminal-install class="desktop-mcp-terminal-input" rows="4" readonly spellcheck="false">${initialInstallCmd}</textarea>
                         <button type="button" class="btn btn-primary" data-copy-terminal-install>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                     </div>
                 </div>
@@ -401,7 +429,7 @@
                     <p>${escapeHtml(mcpT('ai_conn_desktop_remove_claude_note', 'Claude does not delete local MCP servers from Konnektoren — only disable them. To remove “birkly” completely, run the command below (or delete the birkly block from your MCP config file), then quit and reopen the app.'))}</p>
                 </div>
                 <div class="desktop-mcp-terminal u-stack-2 u-pt-2">
-                    <textarea id="mcp-desktop-terminal-uninstall-cmd" class="desktop-mcp-terminal-input" rows="3" readonly spellcheck="false">${terminalUninstallClaude}</textarea>
+                    <textarea id="mcp-desktop-terminal-uninstall-cmd" data-mcp-desktop-terminal-uninstall class="desktop-mcp-terminal-input" rows="3" readonly spellcheck="false">${terminalUninstallClaude}</textarea>
                     <button type="button" class="btn btn-secondary btn-sm" data-copy-terminal-uninstall>${escapeHtml(mcpT('ai_conn_desktop_copy_terminal', 'Copy command'))}</button>
                 </div>
             </details>
@@ -442,6 +470,7 @@
             </div>`;
 
         bindDesktopSetupUi(body, data);
+        applyDesktopTerminalFields(body, data, getSelectedDesktopTarget(body));
         document.getElementById('mcp-desktop-repair-btn')?.addEventListener('click', pairDesktopConnector);
         document.getElementById('mcp-desktop-revoke-btn')?.addEventListener('click', revokeDesktopConnector);
     }
@@ -1283,6 +1312,7 @@
     // never collide at runtime.
     window.McpConnections = {
         init: initMcpConnections,
+        refreshDesktop: refreshDesktopConnector,
         copySnippet: copySnippet
     };
 })();
