@@ -113,6 +113,39 @@ assert_true(
     in_array('!scripts/birkly-mcp-desktop.php', $manifestExcludes, true)
 );
 
+$winInner = birkly_mcp_desktop_windows_install_inner_line(
+    'C:\\Users\\dbayr\\Desktop\\birkly-0.0.2\\runtime\\php\\php.exe',
+    'C:\\Users\\dbayr\\Desktop\\birkly-0.0.2\\scripts\\birkly-mcp-desktop-install.php',
+    'claude',
+    'C:/Users/dbayr/Desktop/birkly-0.0.2/data/mcp_desktop/credentials_test.json'
+);
+$winCmd = birkly_mcp_desktop_windows_terminal_cmd_string($winInner);
+assert_true(
+    'windows inner uses separate --token-file argument',
+    str_contains($winInner, '--token-file "C:/Users/dbayr/Desktop/birkly-0.0.2/data/mcp_desktop/credentials_test.json"'),
+    $winInner
+);
+assert_true(
+    'windows inner avoids --token-file= with trailing space',
+    !preg_match('/--token-file=\s/', $winInner),
+    $winInner
+);
+assert_true(
+    'windows terminal wrapper avoids PHP escapeshellarg',
+    str_starts_with($winCmd, 'cmd /c "') && !str_contains($winCmd, 'cmd /c " '),
+    $winCmd
+);
+
+$installScriptPath = dirname(__DIR__) . '/scripts/birkly-mcp-desktop-install.php';
+$parseProbe = PHP_BINARY . ' ' . escapeshellarg($installScriptPath)
+    . ' --target=claude --token-file= ' . escapeshellarg($path) . ' 2>&1';
+$parseOut = shell_exec($parseProbe);
+assert_true(
+    'install script accepts --token-file= with path as next argv',
+    is_string($parseOut) && !str_contains($parseOut, 'Missing credentials'),
+    (string) $parseOut
+);
+
 $resolvedRel = birkly_mcp_desktop_resolve_credentials_path('data/mcp_desktop/' . basename($path));
 assert_true(
     'resolve relative credentials path',
