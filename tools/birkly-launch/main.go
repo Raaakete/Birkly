@@ -192,7 +192,6 @@ func runSetup() {
 }
 
 func runServer() {
-	ensureDarwinInteractiveTerminal()
 	root, err := cmsRoot()
 	if err != nil {
 		fatal(err.Error())
@@ -200,7 +199,12 @@ func runServer() {
 	cfg := loadConfig(root)
 	php, err := findPHP(root)
 	if err != nil {
-		fmt.Println(err)
+		msg := err.Error()
+		if !stdinIsTerminal() && runtime.GOOS == "darwin" {
+			darwinAlert(msg + "\n\nInstall PHP (e.g. brew install php) or use Advanced → start-server.sh in START_HERE.")
+		} else {
+			fmt.Println(msg)
+		}
 		if runtime.GOOS == "windows" {
 			helper := filepath.Join(root, "install-php-windows.bat")
 			if _, statErr := os.Stat(helper); statErr == nil {
@@ -236,26 +240,31 @@ func runServer() {
 	cfg.LastURL = url
 	saveConfig(root, cfg)
 
-	fmt.Println()
-	fmt.Println("  Birkly local server is running")
-	fmt.Printf("  %s\n", url)
-	fmt.Println()
-	fmt.Println("  Keep this window open. Close it or press Enter to stop.")
-	fmt.Println("  Change port later: run the launcher with --setup (or use start-server.sh / .bat)")
-	fmt.Println()
-
 	openBrowser(url)
 
-	_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
-
-	_ = cmd.Process.Signal(os.Interrupt)
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-	select {
-	case <-done:
-	case <-time.After(3 * time.Second):
-		_ = cmd.Process.Kill()
+	if stdinIsTerminal() {
+		fmt.Println()
+		fmt.Println("  Birkly local server is running")
+		fmt.Printf("  %s\n", url)
+		fmt.Println()
+		fmt.Println("  Keep this window open. Press Enter to stop.")
+		fmt.Println()
+		_, _ = bufio.NewReader(os.Stdin).ReadBytes('\n')
+		_ = cmd.Process.Signal(os.Interrupt)
+		done := make(chan error, 1)
+		go func() { done <- cmd.Wait() }()
+		select {
+		case <-done:
+		case <-time.After(3 * time.Second):
+			_ = cmd.Process.Kill()
+		}
+		return
 	}
+
+	if runtime.GOOS == "darwin" {
+		darwinNotify("Birkly", "Server running at "+url+". Quit Birkly Launch from the Dock to stop.")
+	}
+	_ = cmd.Wait()
 }
 
 func fatal(msg string) {
