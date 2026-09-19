@@ -33,7 +33,7 @@ echo -e "${GREEN}[Birkly]${NC} Found PHP $PHP_VERSION"
 
 php -r "if (version_compare(PHP_VERSION, '8.0.0', '<')) { fwrite(STDERR, \"[Birkly] PHP 8.0+ is required.\n\"); exit(1); }"
 
-for ext in json mbstring curl openssl; do
+for ext in json mbstring curl openssl zip; do
     if ! php -r "exit(extension_loaded('$ext') ? 0 : 1);" 2>/dev/null; then
         echo -e "${RED}[Birkly]${NC} Missing PHP extension: $ext"
         exit 1
