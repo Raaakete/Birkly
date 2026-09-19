@@ -1,0 +1,24 @@
+# Build universal Birkly Launch.app (lipo) and refresh release/launchers/ — run manually on macOS.
+name: Refresh launchers
+on:
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - run: |
+          chmod +x scripts/build-birkly-launch.sh scripts/sync-release-launchers.sh
+          ./scripts/build-birkly-launch.sh
+          file "Birkly Launch.app/Contents/MacOS/birkly-launch"
+          ./scripts/sync-release-launchers.sh
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add release/launchers/
+          git diff --staged --quiet || git commit -m "chore: refresh vendored launchers (universal macOS)"
+          git push
