@@ -1,9 +1,32 @@
 # Shared helpers for Birkly Windows PowerShell scripts (dot-source from repo root .ps1 files).
 $ErrorActionPreference = 'Stop'
 
+function Resolve-BirklyCmsRoot {
+    param([string]$StartDir)
+    if (-not $StartDir) { return $null }
+    $dir = $StartDir
+    while ($dir) {
+        $index = Join-Path $dir 'index.php'
+        $admin = Join-Path $dir 'admin'
+        if ((Test-Path -LiteralPath $index) -and (Test-Path -LiteralPath $admin)) {
+            return (Resolve-Path -LiteralPath $dir).Path
+        }
+        $parent = Split-Path -Parent $dir
+        if (-not $parent -or $parent -eq $dir) { break }
+        $dir = $parent
+    }
+    return $null
+}
+
 function Get-BirklyRoot {
-    if ($PSScriptRoot) {
-        return (Resolve-Path $PSScriptRoot).Path
+    if ($Global:BirklyWindowsScriptRoot) {
+        $fromEntry = Resolve-BirklyCmsRoot -StartDir $Global:BirklyWindowsScriptRoot
+        if ($fromEntry) { return $fromEntry }
+    }
+    $fromCwd = Resolve-BirklyCmsRoot -StartDir (Get-Location).Path
+    if ($fromCwd) { return $fromCwd }
+    if ($Global:BirklyWindowsScriptRoot) {
+        return $Global:BirklyWindowsScriptRoot
     }
     return (Get-Location).Path
 }
@@ -52,4 +75,16 @@ extension=openssl
 extension=fileinfo
 "@
     Add-Content -LiteralPath $ini -Value $block -Encoding UTF8
+}
+
+function Write-BirklyWrongFolderHint {
+    param([string]$Root)
+    Write-Host '[Birkly] index.php not found. Open the Birkly folder that contains index.php, admin\, and 0_START-HERE.html.'
+    Write-Host "[Birkly] Current folder: $Root"
+    $parent = Split-Path -Parent $Root
+    if ($parent -and (Test-Path -LiteralPath (Join-Path $parent 'index.php'))) {
+        Write-Host "[Birkly] index.php is in the parent folder. Try:"
+        Write-Host "  cd `"$parent`""
+        Write-Host '  powershell -ExecutionPolicy Bypass -File .\start-server.ps1'
+    }
 }

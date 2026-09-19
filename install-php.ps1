@@ -4,6 +4,7 @@
 #Requires -Version 5.1
 
 $ErrorActionPreference = 'Stop'
+$Global:BirklyWindowsScriptRoot = (Resolve-Path -LiteralPath $PSScriptRoot).Path
 . (Join-Path $PSScriptRoot 'scripts\windows-php-common.ps1')
 
 $Root = Get-BirklyRoot
