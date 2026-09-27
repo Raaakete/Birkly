@@ -16,6 +16,12 @@ function obT(key, fallback, params) {
     return text;
 }
 
+function escapeOnboardingHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, function (ch) {
+        return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch];
+    });
+}
+
 const onboarding = {
     currentStep: 0,
     maxSteps: 3,
@@ -248,6 +254,7 @@ const onboarding = {
         }
 
         if (step === 1) this.renderInstallContext();
+        if (step === 3) this.renderReturnReminder();
         if (step === 3 && this.starterTemplate) this.highlightStarter(this.starterTemplate);
 
         this.updateProgress();
@@ -263,26 +270,52 @@ const onboarding = {
         return steps[step] || 'welcome';
     },
 
+    localRestartCommand() {
+        const platform = String((navigator.userAgent || '') + ' ' + (navigator.platform || ''));
+        if (/Win/i.test(platform)) {
+            return 'powershell -ExecutionPolicy Bypass -File .\\start-server.ps1';
+        }
+        return './start-server.sh';
+    },
+
     renderInstallContext() {
         const body = document.getElementById('install-context-body');
         if (!body) return;
         const adminUrl = Birkly.url('/admin/index.php');
+        const safeUrl = escapeOnboardingHtml(adminUrl);
+        const login = '<p><strong>' + escapeOnboardingHtml(obT('onboarding_js_admin_login', 'Admin login:')) + '</strong> <a href="' + safeUrl + '">' + safeUrl + '</a></p>';
+        const next = '<p class="form-help">' + escapeOnboardingHtml(obT('onboarding_js_next_step', 'On the next step, name your project and optionally pick a starter template.')) + '</p>';
         if (this.installPath === 'local') {
-            body.innerHTML = '<p><strong>You are running Birkly locally.</strong></p>'
-                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>To start again later, run <code>./start-server.sh</code> from your Birkly folder, then open the admin URL above.</p>'
-                + '<p class="form-help">On the next step, name your project and optionally pick a starter template.</p>';
+            const command = this.localRestartCommand();
+            body.innerHTML = '<p><strong>' + escapeOnboardingHtml(obT('onboarding_js_local_title', 'You are running Birkly locally.')) + '</strong></p>'
+                + login
+                + '<p>' + escapeOnboardingHtml(obT('onboarding_js_local_restart', 'To start again later, open a terminal in your Birkly folder and run {command}. Leave that window open, then open the admin login above.', { command: command })).replace(escapeOnboardingHtml(command), '<code>' + escapeOnboardingHtml(command) + '</code>') + '</p>'
+                + next;
         } else if (this.installPath === 'cloud') {
-            body.innerHTML = '<p><strong>Birkly is on your web server.</strong></p>'
-                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>Ensure <code>content/</code>, <code>media/</code>, <code>users/</code>, and <code>settings/</code> stay writable.</p>'
-                + '<p class="form-help">On the next step, name your project and optionally pick a starter template.</p>';
+            body.innerHTML = '<p><strong>' + escapeOnboardingHtml(obT('onboarding_js_cloud_title', 'Birkly is on your web server.')) + '</strong></p>'
+                + login
+                + '<p>' + escapeOnboardingHtml(obT('onboarding_js_cloud_writable', 'Ensure content/, media/, users/, and settings/ stay writable.')) + '</p>'
+                + next;
         } else {
-            body.innerHTML = '<p><strong>Birkly is ready.</strong></p>'
-                + '<p>Admin panel: <a href="' + adminUrl + '">' + adminUrl + '</a></p>'
-                + '<p>Re-open <code>0_START-HERE.html</code> from your Birkly folder if you need local vs cloud setup notes.</p>'
-                + '<p class="form-help">On the next step, name your project and optionally pick a starter template.</p>';
+            body.innerHTML = '<p><strong>' + escapeOnboardingHtml(obT('onboarding_js_ready_title', 'Birkly is ready.')) + '</strong></p>'
+                + login
+                + '<p>' + escapeOnboardingHtml(obT('onboarding_js_ready_help', 'Re-open 0_START-HERE.html from your Birkly folder if you need local vs cloud setup notes.')) + '</p>'
+                + next;
         }
+        this.renderReturnReminder();
+    },
+
+    renderReturnReminder() {
+        const slot = document.getElementById('onboarding-return-reminder');
+        if (!slot) return;
+        const adminUrl = Birkly.url('/admin/index.php');
+        const command = this.installPath === 'cloud' ? '' : this.localRestartCommand();
+        let html = '<p><strong>' + escapeOnboardingHtml(obT('onboarding_js_return_title', 'How to open Birkly again')) + '</strong></p>'
+            + '<p>' + escapeOnboardingHtml(obT('onboarding_js_admin_login', 'Admin login:')) + ' <a href="' + escapeOnboardingHtml(adminUrl) + '">' + escapeOnboardingHtml(adminUrl) + '</a></p>';
+        if (this.installPath !== 'cloud') {
+            html += '<p>' + escapeOnboardingHtml(obT('onboarding_js_local_restart', 'To start again later, open a terminal in your Birkly folder and run {command}. Leave that window open, then open the admin login above.', { command: command })).replace(escapeOnboardingHtml(command), '<code>' + escapeOnboardingHtml(command) + '</code>') + '</p>';
+        }
+        slot.innerHTML = html;
     },
 
     updateProgress() {
