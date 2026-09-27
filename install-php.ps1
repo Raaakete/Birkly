@@ -15,6 +15,8 @@ $phpExe = Join-Path $RuntimeDir 'php.exe'
 if (Test-Path -LiteralPath $phpExe) {
     Repair-BirklyPhpIni -RuntimePhpDir $RuntimeDir
     Write-Host "[Birkly] PHP is already installed in runtime\php (php.ini checked for Birkly extensions)."
+    Write-Host "[Birkly] Next: powershell -ExecutionPolicy Bypass -File .\start-server.ps1"
+    Write-Host "[Birkly] Then open http://localhost:8080/admin/ and leave the PowerShell window open."
     exit 0
 }
 

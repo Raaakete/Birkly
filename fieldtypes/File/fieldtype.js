@@ -5,9 +5,35 @@
 (function() {
     'use strict';
     
-    function initFileField(fieldName) {
+    function resolveFileFieldName(fieldNameOrEl) {
+        if (fieldNameOrEl && fieldNameOrEl.nodeType === 1) {
+            const el = fieldNameOrEl.classList && fieldNameOrEl.classList.contains('file-field')
+                ? fieldNameOrEl
+                : (fieldNameOrEl.closest ? fieldNameOrEl.closest('.file-field') : null);
+            const root = el || fieldNameOrEl;
+            if (root.id && root.id.indexOf('field_') === 0) {
+                return root.id.slice('field_'.length);
+            }
+        }
+        let name = String(fieldNameOrEl || '');
+        if (name.indexOf('field_') === 0) {
+            name = name.slice('field_'.length);
+        }
+        return name;
+    }
+
+    function fileFieldNotice(message, type) {
+        if (window.BirklyFeedback && typeof window.BirklyFeedback.toast === 'function') {
+            window.BirklyFeedback.toast(message, type || 'error');
+            return;
+        }
+        alert(message);
+    }
+
+    function initFileField(fieldNameOrEl) {
+        const fieldName = resolveFileFieldName(fieldNameOrEl);
         const container = document.getElementById('field_' + fieldName);
-        if (!container) return;
+        if (!container || container.dataset.fileFieldReady === '1') return;
         
         const selectBtn = container.querySelector('.select-file-btn');
         const uploadBtn = container.querySelector('.upload-file-btn');
@@ -17,6 +43,7 @@
         const previewContainer = container.querySelector('.file-preview-container');
         
         if (!selectBtn || !fileInput || !hiddenInput) return;
+        container.dataset.fileFieldReady = '1';
         
         // Select file from media library
         if (selectBtn) {
@@ -28,7 +55,8 @@
                         onSelect: function(media) {
                             setFileValue(media);
                         },
-                        allowMultiple: false
+                        allowMultiple: false,
+                        accept: fileInput.getAttribute('accept') || ''
                     });
                 } else {
                     // Fallback: trigger file input
@@ -125,14 +153,14 @@
                 if (data.status === 'ok' && data.data) {
                     setFileValue(data.data);
                 } else {
-                    alert('Upload failed: ' + (data.error || data.message || 'Unknown error'));
+                    fileFieldNotice('Upload failed: ' + (data.error || data.message || 'Unknown error'), 'error');
                 }
             })
             .catch(error => {
                 console.error('Upload error:', error);
                 uploadBtn.disabled = false;
                 uploadBtn.textContent = 'Upload File';
-                alert('Upload failed: ' + error.message);
+                fileFieldNotice('Upload failed: ' + error.message, 'error');
             });
         }
         
@@ -189,13 +217,14 @@
     
     // Also initialize on custom event for dynamic fields
     document.addEventListener('fieldtype:init', function(e) {
-        if (e.detail && e.detail.fieldtype === 'file') {
-            const fieldName = e.detail.fieldName || e.detail.element?.id?.replace('field_', '');
-            if (fieldName) {
-                initFileField(fieldName);
-            }
+        const ft = e.detail && e.detail.fieldtype;
+        if (ft === 'file' || ft === 'media' || ft === 'image') {
+            initFileField(e.detail.element || e.detail.fieldName);
         }
     });
+
+    window.initMediaField = initFileField;
+    window.initImageField = initFileField;
     
     // Expose for manual initialization
     window.initFileField = initFileField;

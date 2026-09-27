@@ -22,7 +22,8 @@ $assert(strpos($js, "e.stopPropagation()") === false, 'MediaModal does not stopP
 $assert(strpos($js, "data-media-modal-action") !== false, 'MediaModal uses data-media-modal-action buttons');
 $assert(strpos($js, 'window.BirklyFeedback') !== false, 'Upload feedback uses window.BirklyFeedback');
 $assert(strpos($js, 'global.BirklyFeedback') === false, 'Upload handler does not reference undefined global');
-$assert(strpos($footer, 'media-modal.js?v=20260803-1') !== false, 'layout_footer cache-busts fixed media-modal.js');
+$assert(strpos($footer, 'media-modal.js?v=20260927-1') !== false, 'layout_footer cache-busts fixed media-modal.js');
+$assert(strpos($js, 'birklyMediaModalItemMatchesAccept') !== false, 'MediaModal filters library items by the field accept list');
 
 if ($failures > 0) {
     fwrite(STDERR, "media_modal_actions_test: {$failures} failure(s)\n");

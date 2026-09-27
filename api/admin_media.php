@@ -236,6 +236,101 @@ function createFolder() {
 }
 
 /**
+ * php.ini size shorthand (8M, 64M) to bytes. 0 means unlimited or unparsable.
+ */
+function admin_media_ini_to_bytes(string $value): int
+{
+    $value = trim($value);
+    if ($value === '' || $value === '-1') {
+        return 0;
+    }
+    $unit = strtolower(substr($value, -1));
+    $number = $value;
+    $multiplier = 1;
+    if ($unit === 'g' || $unit === 'm' || $unit === 'k') {
+        $number = substr($value, 0, -1);
+        $multiplier = $unit === 'g' ? 1024 * 1024 * 1024 : ($unit === 'm' ? 1024 * 1024 : 1024);
+    }
+    if (!is_numeric($number)) {
+        return 0;
+    }
+    return (int) round((float) $number * $multiplier);
+}
+
+function admin_media_content_length_exceeds_post_max(int $contentLength, string $postMax): bool
+{
+    if ($contentLength <= 0) {
+        return false;
+    }
+    $limit = admin_media_ini_to_bytes($postMax);
+    if ($limit <= 0) {
+        return false;
+    }
+    return $contentLength > $limit;
+}
+
+/**
+ * PHP drops $_POST and $_FILES when the body exceeds post_max_size, which
+ * otherwise looks like a missing CSRF token.
+ */
+function admin_media_request_exceeds_post_limit(): bool
+{
+    $length = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+    if (admin_media_content_length_exceeds_post_max($length, (string) ini_get('post_max_size'))) {
+        return true;
+    }
+    return $length > 0 && $_POST === [] && $_FILES === [];
+}
+
+/**
+ * Extension fallback when Windows finfo reports application/octet-stream.
+ * Executable extensions are intentionally absent.
+ *
+ * @return array<string, string>
+ */
+function admin_media_extension_mime_map(): array
+{
+    return [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'svg' => 'image/svg+xml',
+        'mp4' => 'video/mp4',
+        'm4v' => 'video/mp4',
+        'webm' => 'video/webm',
+        'ogv' => 'video/ogg',
+        'mov' => 'video/quicktime',
+        'mp3' => 'audio/mpeg',
+        'wav' => 'audio/wav',
+        'ogg' => 'audio/ogg',
+        'pdf' => 'application/pdf',
+        'doc' => 'application/msword',
+        'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'xls' => 'application/vnd.ms-excel',
+        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'ppt' => 'application/vnd.ms-powerpoint',
+        'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'zip' => 'application/zip',
+        'rar' => 'application/x-rar-compressed',
+    ];
+}
+
+function admin_media_allowed_mime_types(): array
+{
+    return [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+        'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+        'audio/mpeg', 'audio/wav', 'audio/ogg',
+        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'application/zip', 'application/x-rar-compressed',
+    ];
+}
+
+/**
  * Detect MIME type for uploads, normalizing SVG which finfo may report as text/xml.
  */
 function detectUploadMimeType(string $tmpPath, string $originalName): string
@@ -245,18 +340,26 @@ function detectUploadMimeType(string $tmpPath, string $originalName): string
     if ($finfo) {
         finfo_close($finfo);
     }
+    $detected = strtolower(trim((string) $detected));
 
     $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-    if ($ext !== 'svg') {
-        return (string) $detected;
+    if ($ext === 'svg') {
+        $head = @file_get_contents($tmpPath, false, null, 0, 8192);
+        if ($head !== false && stripos($head, '<svg') !== false) {
+            return 'image/svg+xml';
+        }
     }
 
-    $head = @file_get_contents($tmpPath, false, null, 0, 8192);
-    if ($head !== false && stripos($head, '<svg') !== false) {
-        return 'image/svg+xml';
+    $mapped = admin_media_extension_mime_map()[$ext] ?? '';
+    $weak = $detected === ''
+        || $detected === 'application/octet-stream'
+        || $detected === 'application/x-empty'
+        || ($detected === 'text/plain' && $mapped !== '' && !str_starts_with($mapped, 'text/'));
+    if ($weak && $mapped !== '' && $ext !== 'svg') {
+        return $mapped;
     }
 
-    return (string) $detected;
+    return $detected;
 }
 
 function isRasterImageMime(string $mimeType): bool
@@ -265,6 +368,13 @@ function isRasterImageMime(string $mimeType): bool
 }
 
 function uploadMedia() {
+    if (admin_media_request_exceeds_post_limit()) {
+        return [
+            'status'  => 'error',
+            'message' => 'File too large for this server. Increase upload_max_filesize and post_max_size (Birkly allows up to 50MB), then try again.'
+        ];
+    }
+
     if (!admin_media_csrf_valid()) {
         return [
             'status'  => 'error',
@@ -313,15 +423,7 @@ function uploadMedia() {
         $mediaDir = $folderPath;
     }
     
-    // SECURITY FIX: Validate file type using detected MIME type from file content
-    $allowedTypes = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
-        'video/mp4', 'video/webm', 'video/ogg',
-        'audio/mpeg', 'audio/wav', 'audio/ogg',
-        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/zip', 'application/x-rar-compressed'
-    ];
+    $allowedTypes = admin_media_allowed_mime_types();
     
     // Always use finfo_file() to detect MIME type from file content, not client-provided type
     $detectedMimeType = detectUploadMimeType($file['tmp_name'], (string) ($file['name'] ?? ''));
@@ -367,7 +469,7 @@ function uploadMedia() {
     $mediaId = generateMediaId($filename);
     
     // Get file info
-    $fileType = mime_content_type($filepath);
+    $fileType = $detectedMimeType !== '' ? $detectedMimeType : (mime_content_type($filepath) ?: 'application/octet-stream');
     $fileSize = filesize($filepath);
     $dimensions = getImageDimensions($filepath, $fileType);
     
