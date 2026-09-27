@@ -191,8 +191,8 @@
 
 .nav-links a .nav-icon,
 .nav-links a > svg {
-  width: 1rem;
-  height: 1rem;
+  width: var(--icon);
+  height: var(--icon);
   flex-shrink: 0;
 }
 
