@@ -49,11 +49,15 @@ if ($Kill) {
 }
 
 Write-Host ''
-Write-Host "[Birkly] Starting server on http://localhost:$Port"
-Write-Host "[Birkly] Admin panel: http://localhost:$Port/admin/"
+Write-Host "[Birkly] Birkly is running at http://localhost:$Port"
+Write-Host "[Birkly] Admin login: http://localhost:$Port/admin/"
+Write-Host '[Birkly] Leave this window open while you use Birkly.'
+Write-Host '[Birkly] To start again later, run this same command from the Birkly folder, then open the admin login above.'
+Write-Host '[Birkly] Request log: logs\server.log'
 Write-Host '[Birkly] Press Ctrl+C to stop.'
 Write-Host ''
 
 $router = Join-Path $Root 'server-router.php'
-& $phpExe -S "localhost:$Port" -t $Root $router
+$log = Join-Path $Root 'logs\server.log'
+& $phpExe -S "localhost:$Port" -t $Root $router *>> $log
 exit $LASTEXITCODE

@@ -387,7 +387,10 @@
                     <div class="step-head"><span class="step-num">1</span><h4>Start the PHP server</h4></div>
 
                     <p class="mac-easy">Open a new Terminal at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Services</strong> → <strong>New Terminal at Folder</strong>. (Built-in Mac app — no Git or extra tools.)</p>
-                    <p class="windows-easy">Open <strong>PowerShell</strong> at the Birkly folder: right-click the <strong>Birkly</strong> folder → <strong>Open in Terminal</strong> (or <strong>Open PowerShell window here</strong>).</p>
+                    <p class="windows-easy">A <strong>terminal</strong> is a text window where you paste a command and press Enter. Windows already includes one called <strong>PowerShell</strong>. You do not need to install a terminal.</p>
+                    <p class="windows-easy"><strong>Windows 11:</strong> in File Explorer, right-click the <strong>Birkly</strong> folder → <strong>Open in Terminal</strong>.</p>
+                    <p class="windows-easy"><strong>Windows 10:</strong> hold <strong>Shift</strong> and right-click the <strong>Birkly</strong> folder → <strong>Open PowerShell window here</strong>. If that item is missing, click the address bar, type <code>powershell</code>, and press Enter.</p>
+                    <p class="windows-easy">Click <strong>Copy</strong> next to a command below, click the PowerShell window, paste with <strong>Ctrl+V</strong> (or right-click), then press <strong>Enter</strong>.</p>
                     <p class="linux-easy">Open a terminal in your <strong>Birkly</strong> folder.</p>
 
                     <p style="margin-top:var(--space-4);"><strong>1. Check if PHP is installed</strong></p>
@@ -404,7 +407,8 @@
                     <div class="cmd-row windows-easy"><pre class="cmd" id="cmd-start-server-win">powershell -ExecutionPolicy Bypass -File .\start-server.ps1</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-win">Copy</button></div>
                     <div class="cmd-row mac-easy"><pre class="cmd" id="cmd-start-server-mac">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-mac">Copy</button></div>
                     <div class="cmd-row linux-easy"><pre class="cmd" id="cmd-start-server-linux">./start-server.sh</pre><button type="button" class="copy-btn" data-copy-target="cmd-start-server-linux">Copy</button></div>
-                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. If port <code>8080</code> is busy, use <span class="windows-easy"><code>powershell -ExecutionPolicy Bypass -File .\start-server.ps1 -Port 8001 -Kill</code></span><span class="mac-easy"><code>./start-server.sh -k -p 8001</code></span><span class="linux-easy"><code>./start-server.sh -k -p 8001</code></span> (pick your own port instead of <code>8001</code>).</p>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">Leave this window open while you use Birkly. The script prints an <strong>admin login</strong> address — bookmark it. Tomorrow, open a terminal in this folder and run the start command again, then open that same address. If port <code>8080</code> is busy, use <span class="windows-easy"><code>powershell -ExecutionPolicy Bypass -File .\start-server.ps1 -Port 8001 -Kill</code></span><span class="mac-easy"><code>./start-server.sh -k -p 8001</code></span><span class="linux-easy"><code>./start-server.sh -k -p 8001</code></span> (pick your own port instead of <code>8001</code>).</p>
+                    <p class="windows-easy" style="font-size:0.875rem;color:var(--text-secondary);margin-top:var(--space-2);">If the site stays slow after a restart, the built-in PHP server on Windows answers one request at a time. Switch to the <strong>XAMPP / MAMP / Laragon</strong> card above and point that stack at this folder.</p>
 
                     <details class="accordion" style="margin-top:var(--space-4);">
                         <summary>Permission denied</summary>

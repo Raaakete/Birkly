@@ -223,6 +223,13 @@
 /* ============================================
    5. Fieldtype picker (inside the shared .modal shell)
    ============================================ */
+.fieldtype-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-end: var(--space-4);
+}
+
 .fieldtype-grid {
   display: flex;
   flex-direction: column;

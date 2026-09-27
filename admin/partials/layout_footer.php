@@ -35,7 +35,7 @@ $__birklyCanManageSettings = isset($_SESSION['user']) && function_exists('checkP
 <?php endif; ?>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/contextual-help.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/fieldtypes-shim.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
-    <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20260803-1')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
+    <script src="<?= htmlspecialchars(birkly_url('/admin/js/media-modal.js?v=20260927-1')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <script src="<?= htmlspecialchars(birkly_url('/admin/js/accessibility.js')) ?>"<?= $__birklyScriptNonceAttr ?>></script>
 <script src="<?= htmlspecialchars(birkly_url('/admin/js/breadcrumb-truncate.js')) ?>?v=<?= $__birklyAssetVersion ?>"<?= $__birklyScriptNonceAttr ?>></script>
     <?php
