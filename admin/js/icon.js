@@ -1,102 +1,199 @@
 /**
- * Birkly admin icon system — Phosphor-aligned stroke icons (24 viewBox).
- * Mirrors core/icons.php registry names.
+ * Birkly admin icons — Birch v5 pixel family (13 × 13).
+ * The registry block is generated from core/icon_data.php by scripts/build-icons.php.
  */
 (function () {
     'use strict';
 
     window.Birkly = window.Birkly || {};
 
-    const ICON_PATHS = {
-        'gauge': '<path d="M12 13V7"/><path d="M12 3a9 9 0 1 0 9 9"/><path d="M16 8l-4 4"/>',
-        'speedometer': '<path d="M12 13V7"/><path d="M12 3a9 9 0 1 0 9 9"/><path d="M16 8l-4 4"/>',
-        'file-text': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
-        'image': '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
-        'shopping-bag': '<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>',
-        'gear': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
-        'chat-circle': '<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>',
-        'question': '<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-        'caret-left': '<polyline points="15 18 9 12 15 6"/>',
-        'caret-right': '<polyline points="9 18 15 12 9 6"/>',
-        'caret-down': '<polyline points="6 9 12 15 18 9"/>',
-        'list': '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
-        'magnifying-glass': '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
-        'bell': '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>',
-        'plus': '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
-        'pencil-simple': '<path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
-        'trash': '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
-        'dots-six-vertical': '<circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>',
-        'check': '<polyline points="20 6 9 17 4 12"/>',
-        'warning': '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-        'info': '<circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>',
-        'users': '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
-        'user': '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-        'folder': '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
-        'copy': '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-        'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
-        'export': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
-        'import': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
-        'sun': '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
-        'moon': '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>',
-        'monitor': '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
-        'globe': '<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
-        'shield': '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
-        'envelope': '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
-        'sign-out': '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>',
-        'caret-up': '<polyline points="18 15 12 9 6 15"/>',
-        'dots-three-vertical': '<circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>',
-        'squares-four': '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
-        'arrow-counter-clockwise': '<path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 3 3 9 9 9"/>',
-        'play': '<polygon points="5,3 19,12 5,21"/>',
-        'music-notes': '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
-        'archive': '<path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5a2 2 0 0 0-2-2z"/><path d="M8 21v-4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v4"/>',
-        'folder-root': '<path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>',
-        'arrows-clockwise': '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
-        'stack': '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
-        'paper-plane-tilt': '<line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/>',
-        'arrows-out': '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>',
-        'arrows-in': '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>',
-        'stop': '<rect x="6" y="6" width="12" height="12" rx="1"/>',
-        'sparkle': '<path d="M12 3l1.912 5.813a2 2 0 0 0 1.272 1.272L21 12l-5.816 1.912a2 2 0 0 0-1.272 1.272L12 21l-1.912-5.816a2 2 0 0 0-1.272-1.272L3 12l5.816-1.912a2 2 0 0 0 1.272-1.272L12 3z"/>',
-        'x': '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
-        'text-aa': '<path d="M4 7V4h16v3"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/>',
-        'article': '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>',
-        'hash': '<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
-        'calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
-        'calendar-clock': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="16" r="3"/><line x1="12" y1="15" x2="12" y2="16"/><line x1="12" y1="16" x2="13.5" y2="17"/>',
-        'clock': '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',
-        'check-square': '<path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>',
-        'toggle-left': '<rect x="1" y="5" width="22" height="14" rx="7" ry="7"/><circle cx="8" cy="12" r="3"/>',
-        'circle-dot': '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>',
-        'list-checks': '<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/>',
-        'palette': '<circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path d="M12 2a10 10 0 0 0-1 20h1a2 2 0 0 0 2-2v-.5a2.5 2.5 0 0 1 5 0V19a2 2 0 0 0 2 2h1a10 10 0 0 0-9.5-10z"/>',
-        'tag': '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
-        'map-pin': '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
-        'phone': '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
-        'code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
-        'sliders-horizontal': '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
-        'layout': '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>'
+    // <icons:generated> — php scripts/build-icons.php; edit core/icon_data.php
+    const ICON_PIXEL = {
+        "alert": "M6 1h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM3 6h1v1h-1zM6 6h1v1h-1zM9 6h1v1h-1zM3 7h1v1h-1zM6 7h1v1h-1zM9 7h1v1h-1zM2 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM6 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM1 11h11v1h-11z",
+        "align-left": "M1 2h11v1h-11zM1 4h7v1h-7zM1 6h11v1h-11zM1 8h7v1h-7zM1 10h11v1h-11z",
+        "arrow-left": "M5 2h1v1h-1zM4 3h1v1h-1zM3 4h1v1h-1zM2 5h1v1h-1zM1 6h10v1h-10zM2 7h1v1h-1zM3 8h1v1h-1zM4 9h1v1h-1zM5 10h1v1h-1z",
+        "arrow-r": "M7 2h1v1h-1zM8 3h1v1h-1zM9 4h1v1h-1zM10 5h1v1h-1zM1 6h10v1h-10zM10 7h1v1h-1zM9 8h1v1h-1zM8 9h1v1h-1zM7 10h1v1h-1z",
+        "arrow-ur": "M3 1h8v1h-8zM10 2h1v1h-1zM9 3h2v1h-2zM8 4h1v1h-1zM10 4h1v1h-1zM7 5h1v1h-1zM10 5h1v1h-1zM6 6h1v1h-1zM10 6h1v1h-1zM5 7h1v1h-1zM10 7h1v1h-1zM4 8h1v1h-1zM3 9h1v1h-1zM2 10h1v1h-1z",
+        "bag": "M5 1h3v1h-3zM4 2h1v1h-1zM8 2h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM2 4h9v1h-9zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1zM2 11h9v1h-9z",
+        "bell": "M6 0h1v1h-1zM5 1h3v1h-3zM4 2h1v1h-1zM8 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM3 4h1v1h-1zM9 4h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h11v1h-11zM5 11h3v1h-3z",
+        "bold": "M2 1h6v1h-6zM2 2h2v1h-2zM8 2h1v1h-1zM2 3h2v1h-2zM8 3h1v1h-1zM2 4h2v1h-2zM8 4h1v1h-1zM2 5h7v1h-7zM2 6h2v1h-2zM9 6h1v1h-1zM2 7h2v1h-2zM10 7h1v1h-1zM2 8h2v1h-2zM10 8h1v1h-1zM2 9h2v1h-2zM9 9h1v1h-1zM2 10h8v1h-8z",
+        "book": "M1 1h3v1h-3zM9 1h3v1h-3zM0 2h1v1h-1zM4 2h2v1h-2zM7 2h2v1h-2zM12 2h1v1h-1zM0 3h1v1h-1zM6 3h1v1h-1zM12 3h1v1h-1zM0 4h1v1h-1zM6 4h1v1h-1zM12 4h1v1h-1zM0 5h1v1h-1zM6 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM6 6h1v1h-1zM12 6h1v1h-1zM0 7h1v1h-1zM6 7h1v1h-1zM12 7h1v1h-1zM0 8h1v1h-1zM6 8h1v1h-1zM12 8h1v1h-1zM0 9h5v1h-5zM6 9h1v1h-1zM8 9h5v1h-5zM5 10h3v1h-3z",
+        "box": "M6 1h1v1h-1zM4 2h2v1h-2zM7 2h2v1h-2zM2 3h2v1h-2zM9 3h2v1h-2zM1 4h1v1h-1zM3 4h2v1h-2zM8 4h2v1h-2zM11 4h1v1h-1zM1 5h1v1h-1zM5 5h3v1h-3zM11 5h1v1h-1zM1 6h1v1h-1zM6 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM6 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM6 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM6 9h1v1h-1zM11 9h1v1h-1zM2 10h2v1h-2zM6 10h1v1h-1zM9 10h2v1h-2zM4 11h3v1h-3zM8 11h2v1h-2z",
+        "braces": "M3 1h2v1h-2zM8 1h2v1h-2zM2 2h1v1h-1zM10 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1zM3 11h2v1h-2zM8 11h2v1h-2z",
+        "branch": "M3 0h3v1h-3zM9 0h3v1h-3zM3 1h1v1h-1zM5 1h1v1h-1zM9 1h1v1h-1zM11 1h1v1h-1zM3 2h3v1h-3zM9 2h3v1h-3zM4 3h1v1h-1zM10 3h1v1h-1zM4 4h1v1h-1zM10 4h1v1h-1zM4 5h1v1h-1zM9 5h1v1h-1zM4 6h1v1h-1zM8 6h1v1h-1zM4 7h1v1h-1zM7 7h1v1h-1zM4 8h3v1h-3zM3 9h3v1h-3zM3 10h1v1h-1zM5 10h1v1h-1zM3 11h3v1h-3z",
+        "calendar": "M3 1h1v1h-1zM8 1h1v1h-1zM1 2h11v1h-11zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h11v1h-11zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM3 8h1v1h-1zM5 8h1v1h-1zM7 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "card": "M1 2h11v1h-11zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h11v1h-11zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM3 7h4v1h-4zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h11v1h-11z",
+        "chat": "M2 2h9v1h-9zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM4 5h1v1h-1zM6 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM4 8h7v1h-7zM1 9h1v1h-1zM3 9h1v1h-1zM1 10h2v1h-2zM1 11h1v1h-1z",
+        "check": "M10 3h1v1h-1zM9 4h1v1h-1zM9 5h1v1h-1zM2 6h1v1h-1zM8 6h1v1h-1zM3 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM5 9h1v1h-1z",
+        "check-circle": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM7 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM5 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM4 11h5v1h-5z",
+        "chev-down": "M3 4h1v1h-1zM9 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM6 7h1v1h-1z",
+        "chev-left": "M7 3h1v1h-1zM6 4h1v1h-1zM5 5h1v1h-1zM4 6h1v1h-1zM5 7h1v1h-1zM6 8h1v1h-1zM7 9h1v1h-1z",
+        "chev-left2": "M5 3h1v1h-1zM10 3h1v1h-1zM4 4h1v1h-1zM9 4h1v1h-1zM3 5h1v1h-1zM8 5h1v1h-1zM2 6h1v1h-1zM7 6h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM4 8h1v1h-1zM9 8h1v1h-1zM5 9h1v1h-1zM10 9h1v1h-1z",
+        "chev-right": "M5 3h1v1h-1zM6 4h1v1h-1zM7 5h1v1h-1zM8 6h1v1h-1zM7 7h1v1h-1zM6 8h1v1h-1zM5 9h1v1h-1z",
+        "chev-up": "M6 4h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM4 6h1v1h-1zM8 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1z",
+        "chev-updown": "M6 2h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM6 10h1v1h-1z",
+        "clock": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM6 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM6 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM6 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM6 6h3v1h-3zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM4 11h5v1h-5z",
+        "code": "M3 3h1v1h-1zM9 3h1v1h-1zM2 4h1v1h-1zM10 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM0 6h1v1h-1zM12 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM2 8h1v1h-1zM10 8h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1z",
+        "collapse": "M1 1h1v1h-1zM4 1h1v1h-1zM8 1h1v1h-1zM11 1h1v1h-1zM2 2h1v1h-1zM4 2h1v1h-1zM8 2h1v1h-1zM10 2h1v1h-1zM3 3h2v1h-2zM8 3h2v1h-2zM1 4h4v1h-4zM8 4h4v1h-4zM1 8h4v1h-4zM8 8h4v1h-4zM3 9h2v1h-2zM8 9h2v1h-2zM2 10h1v1h-1zM4 10h1v1h-1zM8 10h1v1h-1zM10 10h1v1h-1zM1 11h1v1h-1zM4 11h1v1h-1zM8 11h1v1h-1zM11 11h1v1h-1z",
+        "content": "M2 1h6v1h-6zM2 2h1v1h-1zM7 2h2v1h-2zM2 3h1v1h-1zM7 3h1v1h-1zM9 3h1v1h-1zM2 4h1v1h-1zM7 4h4v1h-4zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM4 6h3v1h-3zM10 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM4 8h4v1h-4zM10 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM4 10h3v1h-3zM10 10h1v1h-1zM2 11h9v1h-9z",
+        "copy": "M7 2h5v1h-5zM7 3h1v1h-1zM11 3h1v1h-1zM2 4h6v1h-6zM11 4h1v1h-1zM2 5h1v1h-1zM7 5h1v1h-1zM11 5h1v1h-1zM2 6h1v1h-1zM7 6h5v1h-5zM2 7h1v1h-1zM7 7h1v1h-1zM2 8h1v1h-1zM7 8h1v1h-1zM2 9h1v1h-1zM7 9h1v1h-1zM2 10h6v1h-6z",
+        "dashboard": "M1 1h4v1h-4zM7 1h5v1h-5zM1 2h1v1h-1zM4 2h1v1h-1zM7 2h1v1h-1zM11 2h1v1h-1zM1 3h1v1h-1zM4 3h1v1h-1zM7 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM4 4h1v1h-1zM7 4h5v1h-5zM1 5h1v1h-1zM4 5h1v1h-1zM1 6h4v1h-4zM7 6h5v1h-5zM7 7h1v1h-1zM11 7h1v1h-1zM1 8h4v1h-4zM7 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM4 9h1v1h-1zM7 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM4 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM1 11h4v1h-4zM7 11h5v1h-5z",
+        "dots": "M2 6h1v1h-1zM6 6h1v1h-1zM10 6h1v1h-1z",
+        "download": "M6 1h1v1h-1zM6 2h1v1h-1zM6 3h1v1h-1zM6 4h1v1h-1zM3 5h1v1h-1zM6 5h1v1h-1zM9 5h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM5 7h3v1h-3zM6 8h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM1 11h11v1h-11z",
+        "expand": "M1 1h4v1h-4zM8 1h4v1h-4zM1 2h2v1h-2zM10 2h2v1h-2zM1 3h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM11 4h1v1h-1zM1 8h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM1 10h2v1h-2zM10 10h2v1h-2zM1 11h4v1h-4zM8 11h4v1h-4z",
+        "eye": "M4 3h5v1h-5zM2 4h2v1h-2zM9 4h2v1h-2zM1 5h1v1h-1zM5 5h3v1h-3zM11 5h1v1h-1zM0 6h1v1h-1zM4 6h1v1h-1zM8 6h1v1h-1zM12 6h1v1h-1zM1 7h1v1h-1zM5 7h3v1h-3zM11 7h1v1h-1zM2 8h2v1h-2zM9 8h2v1h-2zM4 9h5v1h-5z",
+        "flask": "M4 1h5v1h-5zM5 2h1v1h-1zM7 2h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM1 8h1v1h-1zM4 8h5v1h-5zM11 8h1v1h-1zM1 9h1v1h-1zM3 9h7v1h-7zM11 9h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM2 11h9v1h-9z",
+        "folder": "M1 2h4v1h-4zM1 3h1v1h-1zM5 3h1v1h-1zM1 4h1v1h-1zM6 4h6v1h-6zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "gift": "M3 1h2v1h-2zM8 1h2v1h-2zM2 2h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM10 2h1v1h-1zM3 3h2v1h-2zM6 3h1v1h-1zM8 3h2v1h-2zM1 4h11v1h-11zM1 5h1v1h-1zM6 5h1v1h-1zM11 5h1v1h-1zM1 6h11v1h-11zM2 7h1v1h-1zM6 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM6 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM6 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM6 10h1v1h-1zM10 10h1v1h-1zM2 11h9v1h-9z",
+        "globe": "M4 1h5v1h-5zM3 2h1v1h-1zM6 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM1 6h11v1h-11zM1 7h1v1h-1zM4 7h1v1h-1zM8 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM5 8h1v1h-1zM7 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM10 9h1v1h-1zM3 10h1v1h-1zM6 10h1v1h-1zM9 10h1v1h-1zM4 11h5v1h-5z",
+        "grid": "M1 1h4v1h-4zM8 1h4v1h-4zM1 2h1v1h-1zM4 2h1v1h-1zM8 2h1v1h-1zM11 2h1v1h-1zM1 3h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM11 3h1v1h-1zM1 4h4v1h-4zM8 4h4v1h-4zM1 8h4v1h-4zM8 8h4v1h-4zM1 9h1v1h-1zM4 9h1v1h-1zM8 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM4 10h1v1h-1zM8 10h1v1h-1zM11 10h1v1h-1zM1 11h4v1h-4zM8 11h4v1h-4z",
+        "grip": "M4 2h1v1h-1zM8 2h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM4 6h1v1h-1zM8 6h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM4 10h1v1h-1zM8 10h1v1h-1z",
+        "hash": "M4 2h1v1h-1zM8 2h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM1 4h9v1h-9zM3 5h1v1h-1zM7 5h1v1h-1zM3 6h1v1h-1zM7 6h1v1h-1zM3 7h1v1h-1zM7 7h1v1h-1zM2 8h9v1h-9zM2 9h1v1h-1zM6 9h1v1h-1zM2 10h1v1h-1zM6 10h1v1h-1z",
+        "heart": "M2 2h3v1h-3zM8 2h3v1h-3zM1 3h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM6 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM6 10h1v1h-1z",
+        "help": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM5 3h3v1h-3zM10 3h1v1h-1zM1 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM6 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM6 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM3 10h1v1h-1zM6 10h1v1h-1zM9 10h1v1h-1zM4 11h5v1h-5z",
+        "help-circle": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM5 3h3v1h-3zM10 3h1v1h-1zM1 4h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM6 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM6 9h1v1h-1zM10 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM4 11h5v1h-5z",
+        "history": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM6 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM6 5h1v1h-1zM11 5h1v1h-1zM0 6h2v1h-2zM6 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM7 7h2v1h-2zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM0 11h1v1h-1zM4 11h5v1h-5z",
+        "home": "M6 1h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM3 4h1v1h-1zM9 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM1 6h3v1h-3zM9 6h3v1h-3zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM5 8h3v1h-3zM10 8h1v1h-1zM2 9h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM5 10h1v1h-1zM7 10h1v1h-1zM10 10h1v1h-1zM2 11h9v1h-9z",
+        "inbox": "M2 2h9v1h-9zM2 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h3v1h-3zM9 6h3v1h-3zM1 7h1v1h-1zM4 7h1v1h-1zM8 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM5 8h3v1h-3zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "info": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM6 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM5 6h2v1h-2zM11 6h1v1h-1zM1 7h1v1h-1zM6 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM6 8h1v1h-1zM11 8h1v1h-1zM2 9h1v1h-1zM5 9h3v1h-3zM10 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM4 11h5v1h-5z",
+        "italic": "M6 1h5v1h-5zM8 2h1v1h-1zM8 3h1v1h-1zM7 4h1v1h-1zM7 5h1v1h-1zM6 6h1v1h-1zM6 7h1v1h-1zM5 8h1v1h-1zM5 9h1v1h-1zM2 10h5v1h-5z",
+        "keyboard": "M1 2h11v1h-11zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM4 8h5v1h-5zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "layers": "M6 2h1v1h-1zM4 3h2v1h-2zM7 3h2v1h-2zM2 4h2v1h-2zM9 4h2v1h-2zM1 5h1v1h-1zM11 5h1v1h-1zM2 6h2v1h-2zM9 6h2v1h-2zM1 7h1v1h-1zM4 7h2v1h-2zM7 7h2v1h-2zM11 7h1v1h-1zM2 8h2v1h-2zM6 8h1v1h-1zM9 8h2v1h-2zM4 9h2v1h-2zM7 9h2v1h-2zM6 10h1v1h-1z",
+        "link": "M2 4h4v1h-4zM7 4h4v1h-4zM1 5h1v1h-1zM6 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM4 6h5v1h-5zM11 6h1v1h-1zM1 7h1v1h-1zM6 7h1v1h-1zM11 7h1v1h-1zM2 8h4v1h-4zM7 8h4v1h-4z",
+        "list": "M1 1h1v1h-1zM4 1h8v1h-8zM1 4h1v1h-1zM4 4h8v1h-8zM1 7h1v1h-1zM4 7h8v1h-8zM1 10h1v1h-1zM4 10h8v1h-8z",
+        "loader": "M6 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM6 10h1v1h-1z",
+        "lock": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM3 4h1v1h-1zM9 4h1v1h-1zM2 5h9v1h-9zM2 6h1v1h-1zM10 6h1v1h-1zM2 7h1v1h-1zM6 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM6 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM6 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1zM2 11h9v1h-9z",
+        "log-out": "M1 1h7v1h-7zM1 2h1v1h-1zM7 2h1v1h-1zM1 3h1v1h-1zM7 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM5 5h7v1h-7zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM7 7h1v1h-1zM10 7h1v1h-1zM1 8h1v1h-1zM7 8h1v1h-1zM1 9h1v1h-1zM7 9h1v1h-1zM1 10h7v1h-7z",
+        "mail": "M1 2h11v1h-11zM1 3h2v1h-2zM10 3h2v1h-2zM1 4h1v1h-1zM3 4h1v1h-1zM9 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM4 5h1v1h-1zM8 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM5 6h3v1h-3zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h11v1h-11z",
+        "map-pin": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM5 4h3v1h-3zM10 4h1v1h-1zM2 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM5 6h3v1h-3zM10 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM6 10h1v1h-1z",
+        "media": "M1 2h11v1h-11zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM8 4h2v1h-2zM11 4h1v1h-1zM1 5h1v1h-1zM8 5h2v1h-2zM11 5h1v1h-1zM1 6h1v1h-1zM4 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM3 7h3v1h-3zM8 7h1v1h-1zM11 7h1v1h-1zM1 8h7v1h-7zM9 8h1v1h-1zM11 8h1v1h-1zM1 9h9v1h-9zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "minus": "M2 6h9v1h-9z",
+        "monitor": "M1 2h11v1h-11zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h11v1h-11zM6 9h1v1h-1zM6 10h1v1h-1zM3 11h7v1h-7z",
+        "moon": "M4 1h3v1h-3zM2 2h2v1h-2zM6 2h1v1h-1zM2 3h1v1h-1zM5 3h1v1h-1zM1 4h1v1h-1zM5 4h1v1h-1zM1 5h1v1h-1zM6 5h1v1h-1zM1 6h1v1h-1zM7 6h2v1h-2zM1 7h1v1h-1zM9 7h3v1h-3zM2 8h1v1h-1zM10 8h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM4 10h5v1h-5z",
+        "multi": "M1 2h11v1h-11zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h11v1h-11zM1 7h11v1h-11zM1 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "music": "M4 1h7v1h-7zM4 2h7v1h-7zM4 3h1v1h-1zM10 3h1v1h-1zM4 4h1v1h-1zM10 4h1v1h-1zM4 5h1v1h-1zM10 5h1v1h-1zM4 6h1v1h-1zM10 6h1v1h-1zM4 7h1v1h-1zM10 7h1v1h-1zM2 8h3v1h-3zM8 8h3v1h-3zM1 9h4v1h-4zM7 9h4v1h-4zM2 10h2v1h-2zM8 10h2v1h-2z",
+        "news": "M1 1h10v1h-10zM1 2h1v1h-1zM10 2h1v1h-1zM1 3h1v1h-1zM3 3h4v1h-4zM10 3h3v1h-3zM1 4h1v1h-1zM3 4h4v1h-4zM10 4h1v1h-1zM12 4h1v1h-1zM1 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM1 6h1v1h-1zM3 6h6v1h-6zM10 6h1v1h-1zM12 6h1v1h-1zM1 7h1v1h-1zM10 7h1v1h-1zM12 7h1v1h-1zM1 8h1v1h-1zM3 8h6v1h-6zM10 8h1v1h-1zM12 8h1v1h-1zM1 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM2 10h9v1h-9z",
+        "palette": "M4 1h5v1h-5zM3 2h1v1h-1zM9 2h1v1h-1zM2 3h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM10 3h1v1h-1zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM4 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM9 6h3v1h-3zM1 7h1v1h-1zM8 7h1v1h-1zM1 8h1v1h-1zM3 8h1v1h-1zM8 8h1v1h-1zM2 9h1v1h-1zM9 9h1v1h-1zM3 10h1v1h-1zM10 10h1v1h-1zM4 11h7v1h-7z",
+        "pencil": "M9 1h2v1h-2zM8 2h1v1h-1zM11 2h1v1h-1zM7 3h1v1h-1zM11 3h1v1h-1zM6 4h1v1h-1zM10 4h1v1h-1zM5 5h1v1h-1zM9 5h1v1h-1zM4 6h1v1h-1zM8 6h1v1h-1zM3 7h1v1h-1zM7 7h1v1h-1zM2 8h1v1h-1zM6 8h1v1h-1zM2 9h1v1h-1zM5 9h1v1h-1zM2 10h1v1h-1zM4 10h1v1h-1zM2 11h2v1h-2z",
+        "percent": "M2 2h2v1h-2zM9 2h1v1h-1zM2 3h2v1h-2zM8 3h1v1h-1zM7 4h1v1h-1zM6 5h1v1h-1zM5 6h1v1h-1zM4 7h1v1h-1zM3 8h1v1h-1zM8 8h2v1h-2zM2 9h1v1h-1zM8 9h2v1h-2z",
+        "phone": "M3 1h7v1h-7zM3 2h1v1h-1zM9 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM3 4h1v1h-1zM9 4h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM3 8h1v1h-1zM9 8h1v1h-1zM3 9h1v1h-1zM6 9h1v1h-1zM9 9h1v1h-1zM3 10h1v1h-1zM9 10h1v1h-1zM3 11h7v1h-7z",
+        "play": "M3 2h2v1h-2zM3 3h1v1h-1zM5 3h2v1h-2zM3 4h1v1h-1zM7 4h2v1h-2zM3 5h1v1h-1zM9 5h2v1h-2zM3 6h1v1h-1zM11 6h1v1h-1zM3 7h1v1h-1zM9 7h2v1h-2zM3 8h1v1h-1zM7 8h2v1h-2zM3 9h1v1h-1zM5 9h2v1h-2zM3 10h2v1h-2z",
+        "plus": "M6 2h1v1h-1zM6 3h1v1h-1zM6 4h1v1h-1zM6 5h1v1h-1zM2 6h9v1h-9zM6 7h1v1h-1zM6 8h1v1h-1zM6 9h1v1h-1zM6 10h1v1h-1z",
+        "printer": "M3 1h7v1h-7zM3 2h1v1h-1zM9 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM1 4h11v1h-11zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM9 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM3 8h7v1h-7zM11 8h1v1h-1zM1 9h3v1h-3zM9 9h3v1h-3zM3 10h1v1h-1zM9 10h1v1h-1zM3 11h7v1h-7z",
+        "quote": "M2 3h3v1h-3zM7 3h3v1h-3zM2 4h1v1h-1zM4 4h1v1h-1zM7 4h1v1h-1zM9 4h1v1h-1zM2 5h3v1h-3zM7 5h3v1h-3zM4 6h1v1h-1zM9 6h1v1h-1zM3 7h1v1h-1zM8 7h1v1h-1zM2 8h1v1h-1zM7 8h1v1h-1z",
+        "receipt": "M2 0h9v1h-9zM2 1h1v1h-1zM10 1h1v1h-1zM2 2h1v1h-1zM4 2h5v1h-5zM10 2h1v1h-1zM2 3h1v1h-1zM10 3h1v1h-1zM2 4h1v1h-1zM4 4h3v1h-3zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM4 6h5v1h-5zM10 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM4 10h1v1h-1zM6 10h1v1h-1zM8 10h1v1h-1zM10 10h1v1h-1zM3 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM9 11h1v1h-1z",
+        "refresh": "M4 1h5v1h-5zM10 1h1v1h-1zM3 2h1v1h-1zM9 2h2v1h-2zM2 3h1v1h-1zM8 3h3v1h-3zM1 4h1v1h-1zM1 5h1v1h-1zM1 6h1v1h-1zM11 6h1v1h-1zM11 7h1v1h-1zM11 8h1v1h-1zM2 9h3v1h-3zM10 9h1v1h-1zM2 10h2v1h-2zM9 10h1v1h-1zM2 11h1v1h-1zM4 11h5v1h-5z",
+        "route": "M2 0h3v1h-3zM2 1h1v1h-1zM4 1h1v1h-1zM2 2h3v1h-3zM3 3h1v1h-1zM3 4h7v1h-7zM9 5h1v1h-1zM9 6h1v1h-1zM3 7h7v1h-7zM3 8h1v1h-1zM3 9h1v1h-1zM8 9h3v1h-3zM3 10h1v1h-1zM8 10h1v1h-1zM10 10h1v1h-1zM7 11h4v1h-4z",
+        "rows3": "M1 2h1v1h-1zM3 2h9v1h-9zM1 6h1v1h-1zM3 6h9v1h-9zM1 10h1v1h-1zM3 10h9v1h-9z",
+        "rows4": "M1 1h11v1h-11zM1 4h11v1h-11zM1 7h11v1h-11zM1 10h11v1h-11z",
+        "save": "M1 1h10v1h-10zM1 2h1v1h-1zM4 2h5v1h-5zM10 2h1v1h-1zM1 3h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM4 4h5v1h-5zM11 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM3 6h7v1h-7zM11 6h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM3 8h1v1h-1zM9 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "scale": "M6 1h1v1h-1zM1 2h11v1h-11zM1 3h1v1h-1zM6 3h1v1h-1zM11 3h1v1h-1zM1 4h1v1h-1zM6 4h1v1h-1zM11 4h1v1h-1zM0 5h1v1h-1zM2 5h1v1h-1zM6 5h1v1h-1zM10 5h1v1h-1zM12 5h1v1h-1zM0 6h1v1h-1zM2 6h1v1h-1zM6 6h1v1h-1zM10 6h1v1h-1zM12 6h1v1h-1zM0 7h3v1h-3zM6 7h1v1h-1zM10 7h3v1h-3zM6 8h1v1h-1zM6 9h1v1h-1zM6 10h1v1h-1zM3 11h7v1h-7z",
+        "search": "M3 1h5v1h-5zM2 2h1v1h-1zM8 2h1v1h-1zM1 3h1v1h-1zM9 3h1v1h-1zM1 4h1v1h-1zM9 4h1v1h-1zM1 5h1v1h-1zM9 5h1v1h-1zM1 6h1v1h-1zM9 6h1v1h-1zM2 7h1v1h-1zM8 7h1v1h-1zM3 8h5v1h-5zM9 8h1v1h-1zM10 9h1v1h-1zM11 10h1v1h-1zM12 11h1v1h-1z",
+        "select": "M1 3h11v1h-11zM1 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM7 5h3v1h-3zM11 5h1v1h-1zM1 6h1v1h-1zM8 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM11 7h1v1h-1zM1 8h11v1h-11z",
+        "send": "M1 2h2v1h-2zM1 3h1v1h-1zM3 3h2v1h-2zM1 4h1v1h-1zM5 4h2v1h-2zM1 5h1v1h-1zM7 5h2v1h-2zM1 6h1v1h-1zM3 6h4v1h-4zM9 6h3v1h-3zM1 7h1v1h-1zM7 7h2v1h-2zM1 8h1v1h-1zM5 8h2v1h-2zM1 9h1v1h-1zM3 9h2v1h-2zM1 10h2v1h-2z",
+        "shield": "M6 1h1v1h-1zM4 2h2v1h-2zM7 2h2v1h-2zM2 3h2v1h-2zM9 3h2v1h-2zM2 4h1v1h-1zM10 4h1v1h-1zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM10 6h1v1h-1zM2 7h1v1h-1zM10 7h1v1h-1zM3 8h1v1h-1zM9 8h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM4 10h1v1h-1zM8 10h1v1h-1zM5 11h3v1h-3z",
+        "sliders": "M1 1h1v1h-1zM5 1h3v1h-3zM1 2h4v1h-4zM6 2h1v1h-1zM8 2h4v1h-4zM5 3h3v1h-3zM9 5h3v1h-3zM1 6h9v1h-9zM11 6h1v1h-1zM9 7h3v1h-3zM3 9h3v1h-3zM1 10h4v1h-4zM6 10h6v1h-6zM3 11h3v1h-3z",
+        "sort": "M3 0h1v1h-1zM2 1h3v1h-3zM1 2h1v1h-1zM3 2h1v1h-1zM5 2h1v1h-1zM3 3h1v1h-1zM3 4h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM9 7h1v1h-1zM9 8h1v1h-1zM7 9h1v1h-1zM9 9h1v1h-1zM11 9h1v1h-1zM8 10h3v1h-3zM9 11h1v1h-1z",
+        "sparkle": "M6 1h1v1h-1zM6 2h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM3 5h2v1h-2zM8 5h2v1h-2zM1 6h2v1h-2zM10 6h2v1h-2zM3 7h2v1h-2zM8 7h2v1h-2zM5 8h1v1h-1zM7 8h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM6 10h1v1h-1zM6 11h1v1h-1z",
+        "star": "M6 1h1v1h-1zM5 2h1v1h-1zM7 2h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM1 4h4v1h-4zM8 4h4v1h-4zM2 5h1v1h-1zM10 5h1v1h-1zM3 6h1v1h-1zM9 6h1v1h-1zM3 7h1v1h-1zM9 7h1v1h-1zM2 8h1v1h-1zM6 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM10 9h1v1h-1zM1 10h1v1h-1zM4 10h1v1h-1zM8 10h1v1h-1zM11 10h1v1h-1zM1 11h3v1h-3zM9 11h3v1h-3z",
+        "stop": "M3 3h7v1h-7zM3 4h7v1h-7zM3 5h7v1h-7zM3 6h7v1h-7zM3 7h7v1h-7zM3 8h7v1h-7zM3 9h7v1h-7z",
+        "sun": "M6 0h1v1h-1zM2 2h1v1h-1zM10 2h1v1h-1zM4 3h5v1h-5zM3 4h1v1h-1zM9 4h1v1h-1zM3 5h1v1h-1zM9 5h1v1h-1zM0 6h2v1h-2zM3 6h1v1h-1zM9 6h1v1h-1zM11 6h2v1h-2zM3 7h1v1h-1zM9 7h1v1h-1zM3 8h1v1h-1zM9 8h1v1h-1zM4 9h5v1h-5zM2 10h1v1h-1zM10 10h1v1h-1zM6 12h1v1h-1z",
+        "tag": "M1 0h6v1h-6zM1 1h1v1h-1zM7 1h1v1h-1zM1 2h1v1h-1zM3 2h2v1h-2zM8 2h1v1h-1zM1 3h1v1h-1zM3 3h2v1h-2zM9 3h1v1h-1zM1 4h1v1h-1zM10 4h1v1h-1zM1 5h1v1h-1zM11 5h1v1h-1zM2 6h1v1h-1zM12 6h1v1h-1zM3 7h1v1h-1zM11 7h1v1h-1zM4 8h1v1h-1zM10 8h1v1h-1zM5 9h1v1h-1zM9 9h1v1h-1zM6 10h1v1h-1zM8 10h1v1h-1zM7 11h1v1h-1z",
+        "template": "M1 1h11v1h-11zM1 2h1v1h-1zM11 2h1v1h-1zM1 3h1v1h-1zM11 3h1v1h-1zM1 4h11v1h-11zM1 5h1v1h-1zM5 5h1v1h-1zM11 5h1v1h-1zM1 6h1v1h-1zM5 6h1v1h-1zM11 6h1v1h-1zM1 7h1v1h-1zM5 7h1v1h-1zM11 7h1v1h-1zM1 8h1v1h-1zM5 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM5 9h1v1h-1zM11 9h1v1h-1zM1 10h11v1h-11z",
+        "toggle": "M3 3h7v1h-7zM2 4h1v1h-1zM8 4h3v1h-3zM1 5h1v1h-1zM7 5h5v1h-5zM1 6h1v1h-1zM7 6h5v1h-5zM1 7h1v1h-1zM7 7h5v1h-5zM2 8h1v1h-1zM8 8h3v1h-3zM3 9h7v1h-7z",
+        "trash": "M5 1h3v1h-3zM1 2h11v1h-11zM2 4h9v1h-9zM2 5h1v1h-1zM10 5h1v1h-1zM2 6h1v1h-1zM4 6h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM10 6h1v1h-1zM2 7h1v1h-1zM4 7h1v1h-1zM6 7h1v1h-1zM8 7h1v1h-1zM10 7h1v1h-1zM2 8h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM8 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM4 9h1v1h-1zM6 9h1v1h-1zM8 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1zM3 11h7v1h-7z",
+        "truck": "M1 1h7v1h-7zM1 2h1v1h-1zM7 2h1v1h-1zM1 3h1v1h-1zM7 3h4v1h-4zM1 4h1v1h-1zM7 4h1v1h-1zM11 4h1v1h-1zM1 5h1v1h-1zM7 5h1v1h-1zM12 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM12 6h1v1h-1zM1 7h12v1h-12zM2 8h2v1h-2zM9 8h2v1h-2zM1 9h1v1h-1zM4 9h1v1h-1zM8 9h1v1h-1zM11 9h1v1h-1zM2 10h2v1h-2zM9 10h2v1h-2z",
+        "type": "M1 1h11v1h-11zM1 2h1v1h-1zM6 2h1v1h-1zM11 2h1v1h-1zM6 3h1v1h-1zM6 4h1v1h-1zM6 5h1v1h-1zM6 6h1v1h-1zM6 7h1v1h-1zM6 8h1v1h-1zM6 9h1v1h-1zM4 10h5v1h-5z",
+        "upload": "M6 1h1v1h-1zM5 2h3v1h-3zM4 3h1v1h-1zM6 3h1v1h-1zM8 3h1v1h-1zM3 4h1v1h-1zM6 4h1v1h-1zM9 4h1v1h-1zM6 5h1v1h-1zM6 6h1v1h-1zM6 7h1v1h-1zM6 8h1v1h-1zM1 10h1v1h-1zM11 10h1v1h-1zM1 11h11v1h-11z",
+        "user": "M5 1h3v1h-3zM4 2h1v1h-1zM8 2h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM5 5h3v1h-3zM3 7h7v1h-7zM2 8h1v1h-1zM10 8h1v1h-1zM2 9h1v1h-1zM10 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1zM2 11h9v1h-9z",
+        "users": "M3 1h3v1h-3zM2 2h1v1h-1zM6 2h1v1h-1zM2 3h1v1h-1zM6 3h1v1h-1zM8 3h3v1h-3zM2 4h1v1h-1zM6 4h2v1h-2zM11 4h1v1h-1zM3 5h3v1h-3zM7 5h1v1h-1zM11 5h1v1h-1zM7 6h1v1h-1zM11 6h1v1h-1zM2 7h5v1h-5zM8 7h3v1h-3zM1 8h1v1h-1zM7 8h1v1h-1zM11 8h1v1h-1zM1 9h1v1h-1zM6 9h1v1h-1zM12 9h1v1h-1zM1 10h1v1h-1zM6 10h1v1h-1zM12 10h1v1h-1zM1 11h6v1h-6zM8 11h5v1h-5z",
+        "wand": "M9 1h1v1h-1zM8 2h3v1h-3zM9 3h1v1h-1zM11 3h1v1h-1zM11 4h1v1h-1zM7 5h1v1h-1zM6 6h1v1h-1zM8 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM6 8h1v1h-1zM3 9h1v1h-1zM5 9h1v1h-1zM2 10h1v1h-1zM4 10h1v1h-1zM2 11h2v1h-2z",
+        "webhook": "M5 1h3v1h-3zM4 2h1v1h-1zM8 2h1v1h-1zM4 3h1v1h-1zM8 3h1v1h-1zM5 4h3v1h-3zM6 5h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM4 7h1v1h-1zM8 7h1v1h-1zM2 8h3v1h-3zM8 8h3v1h-3zM1 9h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM11 9h1v1h-1zM1 10h1v1h-1zM5 10h1v1h-1zM7 10h1v1h-1zM11 10h1v1h-1zM2 11h3v1h-3zM8 11h3v1h-3z",
+        "x": "M2 2h1v1h-1zM10 2h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM4 4h1v1h-1zM8 4h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM6 6h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM4 8h1v1h-1zM8 8h1v1h-1zM3 9h1v1h-1zM9 9h1v1h-1zM2 10h1v1h-1zM10 10h1v1h-1z",
+        "zap": "M7 1h2v1h-2zM6 2h2v1h-2zM5 3h2v1h-2zM4 4h2v1h-2zM3 5h7v1h-7zM7 6h2v1h-2zM6 7h2v1h-2zM5 8h2v1h-2zM4 9h2v1h-2zM3 10h2v1h-2z"
     };
+    const ICON_STROKE = {
+        "arrow-left": "M11 6.5H2M5.5 3L2 6.5 5.5 10",
+        "arrow-r": "M2 6.5h9M7.5 3L11 6.5 7.5 10",
+        "arrow-ur": "M3.5 9.5l6-6M4.5 3.5h5v5",
+        "chev-down": "M3.5 5l3 3 3-3",
+        "chev-left": "M8 3.5l-3 3 3 3",
+        "chev-left2": "M6 3.5l-3 3 3 3M10 3.5l-3 3 3 3",
+        "chev-right": "M5 3.5l3 3-3 3",
+        "chev-up": "M3.5 8l3-3 3 3",
+        "chev-updown": "M3.5 5l3-3 3 3M3.5 8l3 3 3-3",
+        "sort": "M3.5 2v9M1 4.5l2.5-2.5L6 4.5M9.5 11V2M7 8.5l2.5 2.5L12 8.5"
+    };
+    const ICON_ALIASES = {
+        "archive": "box",
+        "arrow-counter-clockwise": "history",
+        "arrows-clockwise": "refresh",
+        "arrows-in": "collapse",
+        "arrows-out": "expand",
+        "article": "news",
+        "calendar-clock": "calendar",
+        "caret-down": "chev-down",
+        "caret-left": "chev-left",
+        "caret-right": "chev-right",
+        "caret-up": "chev-up",
+        "chat-circle": "chat",
+        "check-square": "check-circle",
+        "circle-dot": "select",
+        "dots-six-vertical": "grip",
+        "dots-three-vertical": "dots",
+        "envelope": "mail",
+        "export": "upload",
+        "file-text": "content",
+        "folder-root": "folder",
+        "gauge": "dashboard",
+        "gear": "sliders",
+        "image": "media",
+        "import": "download",
+        "layout": "template",
+        "list-checks": "list",
+        "magnifying-glass": "search",
+        "music-notes": "music",
+        "paper-plane-tilt": "send",
+        "pencil-simple": "pencil",
+        "question": "help",
+        "shopping-bag": "bag",
+        "sign-out": "log-out",
+        "sliders-horizontal": "sliders",
+        "speedometer": "dashboard",
+        "squares-four": "grid",
+        "stack": "layers",
+        "text-aa": "type",
+        "toggle-left": "toggle",
+        "warning": "alert"
+    };
+    // </icons:generated>
 
-    /** Solid-fill icons (dots) — not stroke-outlined circles */
-    const ICON_FILL_NAMES = new Set(['dots-six-vertical', 'dots-three-vertical', 'sparkle']);
+    function resolve(name) {
+        return Object.prototype.hasOwnProperty.call(ICON_ALIASES, name) ? ICON_ALIASES[name] : name;
+    }
+
+    /** 13 px, or 26 px (2 px per box) when 20 or more is asked for. */
+    function pixelSize(requested) {
+        const n = parseFloat(requested);
+        return !isNaN(n) && n >= 20 ? 26 : 13;
+    }
 
     /**
      * @param {string} name
-     * @param {{size?: number|string, class?: string, title?: string, ariaHidden?: boolean}} [opts]
+     * @param {{size?: number|string, class?: string, title?: string, ariaHidden?: boolean, pixel?: boolean}} [opts]
      * @returns {string}
      */
     Birkly.icon = function icon(name, opts) {
         opts = opts || {};
-        const inner = ICON_PATHS[name];
-        if (!inner) {
+        const birch = resolve(name);
+        const usePixel = opts.pixel || !ICON_STROKE[birch];
+        if (usePixel && !ICON_PIXEL[birch]) {
             return '';
         }
 
-        const size = opts.size != null ? opts.size : 16;
+        const size = pixelSize(opts.size != null ? opts.size : 13);
         const extraClass = opts.class ? String(opts.class) : '';
-        const fillClass = ICON_FILL_NAMES.has(name) ? ' birkly-icon--fill' : '';
-        const className = ('birkly-icon' + fillClass + (extraClass ? ' ' + extraClass : '')).trim();
+        const className = ('birkly-icon' + (size === 26 ? ' birkly-icon--l' : '') + (extraClass ? ' ' + extraClass : '')).trim();
         const title = opts.title ? String(opts.title) : '';
         const ariaHidden = opts.ariaHidden != null ? opts.ariaHidden : !title;
 
@@ -105,14 +202,13 @@
             const escaped = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
             titleMarkup = '<title>' + escaped + '</title>';
         }
-
         const ariaAttr = ariaHidden ? ' aria-hidden="true"' : '';
+        const head = '<svg class="' + className + '" width="' + size + '" height="' + size + '" viewBox="0 0 13 13" ';
 
-        if (ICON_FILL_NAMES.has(name)) {
-            return '<svg class="' + className + '" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="currentColor" stroke="none"' + ariaAttr + '>' + titleMarkup + inner + '</svg>';
+        if (usePixel) {
+            return head + 'fill="currentColor" shape-rendering="crispEdges"' + ariaAttr + '>' + titleMarkup + '<path d="' + ICON_PIXEL[birch] + '"/></svg>';
         }
-
-        return '<svg class="' + className + '" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"' + ariaAttr + '>' + titleMarkup + inner + '</svg>';
+        return head + 'fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="square"' + ariaAttr + '>' + titleMarkup + '<path d="' + ICON_STROKE[birch] + '"/></svg>';
     };
 
     /**
@@ -132,7 +228,8 @@
         return '<img src="' + base + '" alt="' + alt.replace(/"/g, '&quot;') + '" class="' + className + '"' + sizeAttr + titleAttr + '>';
     };
 
-    Birkly.iconNames = Object.keys(ICON_PATHS);
+    Birkly.iconNames = Object.keys(ICON_PIXEL).concat(Object.keys(ICON_STROKE).filter(function (n) { return !ICON_PIXEL[n]; }), Object.keys(ICON_ALIASES));
+    Birkly.iconResolve = resolve;
 
     /**
      * Hydrate elements with data-icon="name" (optional data-icon-size, data-icon-class, data-icon-title).
@@ -154,7 +251,7 @@
                 return;
             }
 
-            const size = el.getAttribute('data-icon-size') || 16;
+            const size = el.getAttribute('data-icon-size') || 13;
             const extraClass = el.getAttribute('data-icon-class') || '';
             const title = el.getAttribute('data-icon-title') || '';
             const ariaHiddenAttr = el.getAttribute('data-icon-aria-hidden');
