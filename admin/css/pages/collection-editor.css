@@ -298,6 +298,15 @@
   overflow-wrap: anywhere;
 }
 
+/* This page stylesheet loads after core/overrides.css, so `.fieldtype-card`
+   { display: flex } would otherwise beat `[hidden]` and the search would
+   leave every card on screen. */
+.fieldtype-card[hidden],
+.fieldtype-category-header[hidden],
+.fieldtype-category-grid[hidden] {
+  display: none;
+}
+
 /* ============================================
    6. Sidebar info rows and checkbox rows
    .checkbox-label has no component owner yet, so it is scoped to this page.

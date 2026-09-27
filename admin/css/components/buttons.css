@@ -93,11 +93,20 @@ a.btn { text-decoration: none; }
   background: var(--accent);
   border-color: var(--accent);
   color: var(--ink-on-accent);
+  /* Light mint fill. Dark color-scheme would paint light hover text on it. */
+  color-scheme: light;
   box-shadow: none;
+}
+.btn-primary:hover:not(:disabled):not([aria-disabled="true"]),
+a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  color: var(--ink-on-accent);
+  background: var(--btn-hover);
+  border-color: var(--btn-hover-border);
 }
 .btn.btn-primary:active:not(:disabled) {
   background: var(--mint-400);
   border-color: var(--mint-400);
+  color: var(--ink-on-accent);
 }
 
 .btn-secondary {

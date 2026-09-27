@@ -39,9 +39,13 @@ class Gallery extends BaseField {
                 $mediaId = $item['id'] ?? '';
                 $url = $item['url'] ?? '';
                 $name = htmlspecialchars($item['name'] ?? $mediaId);
+                $mime = (string) ($item['type'] ?? '');
+                $mediaTag = str_starts_with($mime, 'video/')
+                    ? "<video src=\"{$url}\" controls preload=\"metadata\"></video>"
+                    : "<img src=\"{$url}\" alt=\"{$name}\">";
                 $previewHtml .= <<<HTML
                     <div class="gallery-item" data-id="{$mediaId}">
-                        <img src="{$url}" alt="{$name}">
+                        {$mediaTag}
                         <button type="button" class="gallery-remove" data-id="{$mediaId}">×</button>
                     </div>
                 HTML;
@@ -61,7 +65,7 @@ class Gallery extends BaseField {
                 <button type="button" class="btn btn-primary upload-gallery-images" data-field="{$this->name}">Upload Images</button>
                 <button type="button" class="btn btn-danger clear-gallery" data-field="{$this->name}" style="display:none;">Clear All</button>
             </div>
-            <input type="file" id="gallery_input_{$this->name}" multiple accept="image/*" style="display:none;">
+            <input type="file" id="gallery_input_{$this->name}" multiple accept="image/*,video/mp4,video/webm,video/ogg,video/quicktime,.mp4,.m4v,.webm,.mov,.ogv" style="display:none;">
             <input type="hidden" name="{$this->name}" id="field_{$this->name}_value" value='{$this->encodeValue($value)}'>
         </div>
         HTML;
@@ -166,7 +170,8 @@ class Gallery extends BaseField {
             border: 1px solid var(--border-medium, #e5e7eb);
             background: var(--bg-primary, #ffffff);
         }
-        .gallery-item img {
+        .gallery-item img,
+        .gallery-item video {
             width: 100%;
             height: 100%;
             object-fit: cover;
