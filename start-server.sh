@@ -212,12 +212,13 @@ for dir in content media users settings logs temp cache plugins; do
 done
 mkdir -p content/collections
 
-# Start the server
-print_success "Starting server on http://localhost:$PORT"
+# Start the server. Request lines go to logs/server.log so this window
+# keeps the login URL visible. The process stays in the foreground so Ctrl+C stops it.
+print_success "Birkly is running at http://localhost:$PORT"
+print_status "Admin login: http://localhost:$PORT/admin/"
+print_status "Leave this window open while you use Birkly."
+print_status "To start again later, run ./start-server.sh from this folder, then open the admin login above."
+print_status "Request log: logs/server.log"
 print_status "Press Ctrl+C to stop the server"
-print_status "Admin panel: http://localhost:$PORT/admin/"
-print_status "Logs will be written to logs/ directory"
 
-# Start PHP server with router script and error logging
-# The router ensures PHP files execute correctly instead of being served as plain text
-php -S localhost:$PORT -t . server-router.php 2>&1 | tee logs/server.log 
+php -S localhost:$PORT -t . server-router.php >> logs/server.log 2>&1 

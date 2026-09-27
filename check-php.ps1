@@ -44,5 +44,6 @@ if (-not (Test-BirklyCmsRootCandidate -Dir $Root)) {
 }
 
 Write-Host "[Birkly] PHP is ready. Next: powershell -ExecutionPolicy Bypass -File .\start-server.ps1"
+Write-Host "[Birkly] Then open http://localhost:8080/admin/ and leave the PowerShell window open."
 Write-Host ""
 exit 0
