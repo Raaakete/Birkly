@@ -61,12 +61,12 @@
   height: 3rem;
   padding: 0;
   flex-shrink: 0;
-  border: 1px solid var(--chrome-glass-border, color-mix(in srgb, var(--accent) 45%, var(--border-subtle)));
+  border: 1px solid var(--chrome-glass-border, color-mix(in srgb, var(--mint) 45%, var(--border-subtle)));
   border-radius: var(--radius-pill);
-  background: var(--chrome-assist-bg, color-mix(in srgb, var(--accent) 22%, var(--surface-raised) 78%));
+  background: var(--chrome-assist-bg, color-mix(in srgb, var(--mint) 22%, var(--surface-raised) 78%));
   backdrop-filter: var(--chrome-glass-blur, blur(12px) saturate(1.15));
   -webkit-backdrop-filter: var(--chrome-glass-blur, blur(12px) saturate(1.15));
-  color: var(--accent);
+  color: var(--mint);
   box-shadow: var(--chrome-glass-shadow, var(--elevation-2));
   cursor: pointer;
   transition:
@@ -80,8 +80,8 @@
 }
 
 .ai-chat-floating-btn.assist-fab-main:hover {
-  border-color: var(--accent);
-  background: var(--chrome-assist-bg-strong, color-mix(in srgb, var(--accent) 32%, var(--surface-raised) 68%));
+  border-color: var(--mint);
+  background: var(--chrome-assist-bg-strong, color-mix(in srgb, var(--mint) 32%, var(--surface-raised) 68%));
   box-shadow: var(--chrome-glass-shadow, var(--elevation-2));
   transform: translateY(-1px);
 }
@@ -92,26 +92,26 @@
 
 .ai-chat-floating-btn.assist-fab-main:focus-visible {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: var(--chrome-glass-shadow, var(--elevation-2)), 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  border-color: var(--mint);
+  box-shadow: var(--chrome-glass-shadow, var(--elevation-2)), 0 0 0 3px color-mix(in srgb, var(--mint) 28%, transparent);
 }
 
 .assist-fab-wrap.fab-idle .ai-chat-floating-btn.assist-fab-main {
-  border-color: color-mix(in srgb, var(--accent) 52%, var(--border-subtle));
-  background: color-mix(in srgb, var(--accent) 26%, var(--surface-raised) 74%);
+  border-color: color-mix(in srgb, var(--mint) 52%, var(--border-subtle));
+  background: color-mix(in srgb, var(--mint) 26%, var(--surface-raised) 74%);
 }
 
 .assist-fab-wrap.fab-menu .ai-chat-floating-btn.assist-fab-main {
   width: auto;
   min-width: 3rem;
   padding-inline: var(--space-4);
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 38%, var(--surface-raised) 62%);
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 38%, var(--surface-raised) 62%);
 }
 
 .assist-fab-wrap.fab-chat .ai-chat-floating-btn.assist-fab-main {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 42%, var(--surface-raised) 58%);
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 42%, var(--surface-raised) 58%);
 }
 
 .assist-fab-visual {

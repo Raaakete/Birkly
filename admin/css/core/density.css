@@ -1,33 +1,33 @@
-/* P69 — Admin display density (Account → Compact / Default / Large) */
+/* Admin display density (Account → Compact / Comfortable / Large).
+   Comfortable is the default (`default` in storage). Compact changes sizes
+   only; Large also raises type by one pixel. Whole pixels only. */
 
 body[data-density="compact"] {
-  --space-1: 0.2rem;
-  --space-2: 0.35rem;
-  --space-3: 0.5rem;
-  --space-4: 0.65rem;
-  --space-5: 0.85rem;
-  --space-6: 1rem;
-  --text-xs: 0.6875rem;
-  --text-sm: 0.75rem;
-  --text-base: 0.8125rem;
-  --text-md: 0.875rem;
-  --control-md: 2rem;
-  --control-sm: 1.75rem;
+  --control: 28px;
+  --control-sm: 24px;
+  --control-md: 28px;
+  --row-list: 32px;
+  --row-table: 36px;
+  --card-h: 80px;
 }
 
 body[data-density="large"] {
-  --space-1: 0.35rem;
-  --space-2: 0.55rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --text-xs: 0.8125rem;
-  --text-sm: 0.9375rem;
-  --text-base: 1.0625rem;
-  --text-md: 1.125rem;
-  --control-md: 2.75rem;
-  --control-sm: 2.25rem;
+  --control: 36px;
+  --control-sm: 32px;
+  --control-md: 36px;
+  --nav-row: 32px;
+  --row-list: 48px;
+  --row-table: 56px;
+  --card-h: 116px;
+  --size-number: 28px;     --lh-number: 30px;
+  --size-page-title: 19px; --lh-page-title: 26px;
+  --size-title-l: 17px;    --lh-title-l: 24px;
+  --size-slab-title: 15px; --lh-slab-title: 22px;
+  --size-title: 14px;      --lh-title: 20px;
+  --size-body: 14px;       --lh-body: 21px;
+  --size-small: 13px;      --lh-small: 18px;
+  --size-caption: 12px;    --lh-caption: 16px;
+  --size-mono: 13px;       --lh-mono: 20px;
 }
 
 body[data-density="compact"] .card-body,
