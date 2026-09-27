@@ -142,7 +142,7 @@
   color: var(--text-tertiary);
 }
 .dropdown-item-icon svg,
-.dropdown-item-icon .birkly-icon { width: 1rem; height: 1rem; }
+.dropdown-item-icon .birkly-icon { width: var(--icon); height: var(--icon); }
 
 .dropdown-item:hover .dropdown-item-icon { color: var(--text-secondary); }
 
