@@ -59,5 +59,5 @@ Write-Host ''
 
 $router = Join-Path $Root 'server-router.php'
 $log = Join-Path $Root 'logs\server.log'
-& $phpExe -S "localhost:$Port" -t $Root $router *>> $log
+& $phpExe -d upload_max_filesize=128M -d post_max_size=128M -d memory_limit=256M -S "localhost:$Port" -t $Root $router *>> $log
 exit $LASTEXITCODE

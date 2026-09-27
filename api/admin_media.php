@@ -283,6 +283,53 @@ function admin_media_request_exceeds_post_limit(): bool
 }
 
 /**
+ * upload_max_filesize rejects the file but still leaves $_POST intact, so the
+ * empty-body check above does not see it.
+ */
+function admin_media_upload_rejected_by_ini(): bool
+{
+    $file = $_FILES['file'] ?? null;
+    if (!is_array($file)) {
+        return false;
+    }
+    $error = (int) ($file['error'] ?? UPLOAD_ERR_OK);
+    return $error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE;
+}
+
+/**
+ * Media setting from Settings → Media. Falls back to 50MB when unset.
+ * The settings form allows 1–100MB.
+ */
+function admin_media_configured_max_bytes(): int
+{
+    $fallback = 50 * 1024 * 1024;
+    $path = dirname(__DIR__) . '/settings/media.json';
+    if (!is_file($path)) {
+        return $fallback;
+    }
+    $raw = json_decode((string) file_get_contents($path), true);
+    $bytes = is_array($raw) ? (int) ($raw['max_upload_size'] ?? 0) : 0;
+    if ($bytes < 1024 * 1024) {
+        return $fallback;
+    }
+    return min($bytes, 100 * 1024 * 1024);
+}
+
+function admin_media_server_upload_limit_message(): string
+{
+    $upload = trim((string) ini_get('upload_max_filesize'));
+    $post = trim((string) ini_get('post_max_size'));
+    $mb = max(1, (int) round(admin_media_configured_max_bytes() / (1024 * 1024)));
+    $uploadLabel = $upload !== '' ? $upload : 'unknown';
+    $postLabel = $post !== '' ? $post : 'unknown';
+
+    return 'File too large for this server. PHP upload_max_filesize is ' . $uploadLabel
+        . ' and post_max_size is ' . $postLabel
+        . '. The media setting allows ' . $mb
+        . 'MB. Increase both PHP limits to at least that size, then try again.';
+}
+
+/**
  * Extension fallback when Windows finfo reports application/octet-stream.
  * Executable extensions are intentionally absent.
  *
@@ -368,10 +415,10 @@ function isRasterImageMime(string $mimeType): bool
 }
 
 function uploadMedia() {
-    if (admin_media_request_exceeds_post_limit()) {
+    if (admin_media_request_exceeds_post_limit() || admin_media_upload_rejected_by_ini()) {
         return [
             'status'  => 'error',
-            'message' => 'File too large for this server. Increase upload_max_filesize and post_max_size (Birkly allows up to 50MB), then try again.'
+            'message' => admin_media_server_upload_limit_message(),
         ];
     }
 
@@ -446,10 +493,12 @@ function uploadMedia() {
         }
     }
     
-    if ($file['size'] > 50 * 1024 * 1024) { // 50MB limit
+    $maxBytes = admin_media_configured_max_bytes();
+    if (($file['size'] ?? 0) > $maxBytes) {
+        $mb = max(1, (int) round($maxBytes / (1024 * 1024)));
         return [
             'status'  => 'error',
-            'message' => 'File too large. Maximum size is 50MB.'
+            'message' => 'File too large. Maximum size is ' . $mb . 'MB.'
         ];
     }
     

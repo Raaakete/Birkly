@@ -131,9 +131,13 @@
                             const mediaId = item.id || '';
                             const url = item.url || '';
                             const name = (item.name || mediaId).replace(/"/g, '&quot;');
+                            const mime = String(item.type || '');
+                            const mediaTag = mime.indexOf('video/') === 0
+                                ? '<video src="' + url + '" controls preload="metadata"></video>'
+                                : '<img src="' + url + '" alt="' + name + '">';
                             html += `
                                 <div class="gallery-item" data-id="${mediaId}">
-                                    <img src="${url}" alt="${name}">
+                                    ${mediaTag}
                                     <button type="button" class="gallery-remove" data-id="${mediaId}">×</button>
                                 </div>
                             `;
