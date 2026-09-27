@@ -19,6 +19,7 @@
    Core Foundation
    ============================================ */
 @import url('core/variables.css');
+@import url('core/migration-aliases.css');
 @import url('core/compat-tokens.css');
 @import url('core/density.css');
 @import url('core/reset.css');
