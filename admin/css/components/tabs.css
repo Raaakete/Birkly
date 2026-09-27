@@ -170,8 +170,8 @@
 .folder-item > .birkly-icon,
 .folder-item-move > svg,
 .folder-item-move > .birkly-icon {
-  width: 1rem;
-  height: 1rem;
+  width: var(--icon);
+  height: var(--icon);
   flex-shrink: 0;
   color: var(--text-tertiary);
   transition: color var(--motion-fast) var(--ease-out);

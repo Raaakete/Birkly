@@ -3,36 +3,42 @@
    ============================================
 
    `.birkly-icon` plus its size modifiers are the contract emitted by
-   birkly_icon() (core/icons.php) and Birkly.icon(). The context rules below
-   pin icon sizes inside chrome that would otherwise inherit an em-based
-   size. Raw px is correct here: these are icon dimensions, not spacing.
+   birkly_icon() (core/icons.php) and Birkly.icon(). Birch pixel icons render
+   at exactly 13px (--icon) or 26px (--icon-l); never at fractional scales.
    ============================================ */
 
 .birkly-icon {
   display: inline-block;
   vertical-align: middle;
   flex-shrink: 0;
+  width: var(--icon);
+  height: var(--icon);
   color: currentColor;
 }
 
+.birkly-icon--l {
+  width: var(--icon-l);
+  height: var(--icon-l);
+}
+
 .birkly-icon--sm {
-  width: 14px;
-  height: 14px;
+  width: var(--icon);
+  height: var(--icon);
 }
 
 .birkly-icon--md {
-  width: 16px;
-  height: 16px;
+  width: var(--icon);
+  height: var(--icon);
 }
 
 .birkly-icon--lg {
-  width: 20px;
-  height: 20px;
+  width: var(--icon-l);
+  height: var(--icon-l);
 }
 
 .birkly-icon--xl {
-  width: 24px;
-  height: 24px;
+  width: var(--icon-l);
+  height: var(--icon-l);
 }
 
 .birkly-icon-img {
@@ -43,20 +49,20 @@
 
 .nav-icon.birkly-icon,
 .nav-links a .birkly-icon {
-  width: 16px;
-  height: 16px;
+  width: var(--icon);
+  height: var(--icon);
 }
 
 .topbar-icon-btn .birkly-icon {
-  width: 16px;
-  height: 16px;
+  width: var(--icon);
+  height: var(--icon);
   display: block;
 }
 
 .fieldtype-card-icon .birkly-icon,
 .fieldtype-card-icon-svg {
-  width: 32px;
-  height: 32px;
+  width: var(--icon-l);
+  height: var(--icon-l);
 }
 
 .fieldtype-type-icon {
@@ -69,14 +75,14 @@
 
 .fieldtype-type-icon .birkly-icon,
 .fieldtype-type-icon-svg {
-  width: 14px;
-  height: 14px;
+  width: var(--icon);
+  height: var(--icon);
   display: block;
 }
 
 .dropdown-item-icon .birkly-icon {
-  width: 16px;
-  height: 16px;
+  width: var(--icon);
+  height: var(--icon);
 }
 
 /* Drag handles and menu dots — centered, solid fill icons */
@@ -100,6 +106,6 @@
 .fieldtype-drag-handle .birkly-icon,
 .fieldtype-drag-handle img {
   display: block;
-  width: 16px;
-  height: 16px;
+  width: var(--icon);
+  height: var(--icon);
 }
