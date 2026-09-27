@@ -253,7 +253,7 @@
   height: var(--control-md);
   border-radius: 50%;
   background: var(--accent);
-  color: var(--ink-on-accent);
+  color: var(--on-accent);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   overflow: hidden;

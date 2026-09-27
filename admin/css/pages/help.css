@@ -85,8 +85,8 @@
   flex-shrink: 0;
   width: 2px;
   height: 1.1em;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
+  border-radius: 0;
+  background: var(--text);
 }
 
 .help-doc-label-beginner::before { background: var(--success-fg); }

@@ -257,7 +257,7 @@
   inset-block: 0;
   width: 2px;
   border-radius: 0;
-  background: var(--accent);
+  background: var(--text);
 }
 
 .nav-links li.active a .nav-icon,

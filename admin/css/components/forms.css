@@ -346,7 +346,7 @@ input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):che
   content: "";
   width: 0.55rem;
   height: 0.3rem;
-  border: 2px solid var(--ink-on-accent);
+  border: 2px solid var(--on-accent);
   border-block-start: none;
   border-inline-end: none;
   transform: rotate(-45deg) translateY(-1px);
@@ -360,7 +360,7 @@ input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):ind
   content: "";
   width: 0.55rem;
   height: 2px;
-  background: var(--ink-on-accent);
+  background: var(--on-accent);
 }
 
 input[type="radio"]:checked::before {
@@ -368,7 +368,7 @@ input[type="radio"]:checked::before {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 50%;
-  background: var(--ink-on-accent);
+  background: var(--on-accent);
 }
 
 input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):focus-visible,
