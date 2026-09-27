@@ -155,7 +155,7 @@
 .ap-workflow-step.is-done .ap-workflow-num {
   border-color: var(--accent);
   background: var(--accent);
-  color: var(--ink-on-accent);
+  color: var(--on-accent);
 }
 
 /* Completeness tiles are .stat; a satisfied section is signalled on the border

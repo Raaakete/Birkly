@@ -10,9 +10,9 @@
     var(--space-6) + var(--assist-fab-size) + var(--guide-launcher-gap) + var(--guide-launcher-height)
   );
   --chrome-glass-bg: color-mix(in srgb, var(--surface-raised) 90%, var(--surface) 10%);
-  --chrome-assist-bg: color-mix(in srgb, var(--accent) 22%, var(--surface-raised) 78%);
-  --chrome-assist-bg-strong: color-mix(in srgb, var(--accent) 32%, var(--surface-raised) 68%);
-  --chrome-glass-border: color-mix(in srgb, var(--accent) 38%, var(--border-subtle));
+  --chrome-assist-bg: color-mix(in srgb, var(--mint) 22%, var(--surface-raised) 78%);
+  --chrome-assist-bg-strong: color-mix(in srgb, var(--mint) 32%, var(--surface-raised) 68%);
+  --chrome-glass-border: color-mix(in srgb, var(--mint) 38%, var(--border-subtle));
   --chrome-glass-blur: blur(12px) saturate(1.15);
   --chrome-glass-shadow: var(--elevation-2);
 }
@@ -87,7 +87,7 @@ body.ai-chat-window-open .assist-fab-wrap {
   width: var(--assist-fab-size);
   height: var(--guide-launcher-height);
   padding: 0;
-  border: 1px solid var(--chrome-glass-border, color-mix(in srgb, var(--accent) 42%, var(--border-subtle)));
+  border: 1px solid var(--chrome-glass-border, color-mix(in srgb, var(--mint) 42%, var(--border-subtle)));
   border-radius: var(--radius-pill);
   background: var(--chrome-glass-bg);
   backdrop-filter: var(--chrome-glass-blur);
@@ -109,7 +109,7 @@ body.ai-chat-window-open .assist-fab-wrap {
   border-radius: inherit;
   background: radial-gradient(
     circle at 50% 50%,
-    color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--mint) 22%, transparent) 0%,
     transparent 70%
   );
   opacity: 0.55;
@@ -135,13 +135,13 @@ body.ai-chat-window-open .assist-fab-wrap {
 }
 
 .guide-launcher-btn__focus-ring::before {
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  border-color: color-mix(in srgb, var(--mint) 55%, transparent);
   animation: guide-launcher-orbit 2.4s linear infinite;
 }
 
 .guide-launcher-btn__focus-ring::after {
   inset: 0.12rem;
-  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  border-color: color-mix(in srgb, var(--mint) 30%, transparent);
   animation: guide-launcher-orbit 2.4s linear infinite reverse;
 }
 
@@ -159,21 +159,21 @@ body.ai-chat-window-open .assist-fab-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--accent);
+  color: var(--mint);
 }
 
 .guide-launcher-btn:hover {
-  border-color: var(--accent);
+  border-color: var(--mint);
   box-shadow: var(--chrome-glass-shadow);
   transform: translateY(-1px);
 }
 
 .guide-launcher-btn.is-attention {
-  border-color: var(--accent);
+  border-color: var(--mint);
   box-shadow:
     var(--elevation-2),
-    0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent),
-    0 0 1.25rem color-mix(in srgb, var(--accent) 35%, transparent);
+    0 0 0 3px color-mix(in srgb, var(--mint) 28%, transparent),
+    0 0 1.25rem color-mix(in srgb, var(--mint) 35%, transparent);
   animation: guide-launcher-attention 2s var(--ease-out) infinite;
 }
 
@@ -191,8 +191,8 @@ body.ai-chat-window-open .assist-fab-wrap {
 }
 
 .guide-launcher-btn.is-open {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 24%, var(--surface-raised) 76%);
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 24%, var(--surface-raised) 76%);
   box-shadow: var(--chrome-glass-shadow);
 }
 
@@ -241,7 +241,7 @@ body.ai-chat-window-open .assist-fab-wrap {
 
   .guide-launcher-btn:focus-visible .guide-launcher-btn__focus-ring {
     opacity: 1;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 35%, transparent);
   }
 }
 
@@ -318,7 +318,7 @@ body.ai-chat-window-open .guide-panel {
   width: 2rem;
   height: 2rem;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface-sunken));
+  background: color-mix(in srgb, var(--mint) 14%, var(--surface-sunken));
   color: var(--accent-text);
   flex-shrink: 0;
 }
@@ -432,7 +432,7 @@ body.ai-chat-window-open .guide-panel {
 .guide-setup-progress__fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 70%, var(--accent-hover)));
+  background: linear-gradient(90deg, var(--mint), color-mix(in srgb, var(--mint) 70%, var(--mint-hover)));
   transition: width var(--motion-slow) var(--ease-out);
 }
 
@@ -461,12 +461,12 @@ body.ai-chat-window-open .guide-panel {
 }
 
 .guide-checklist__item.is-pending {
-  border-color: color-mix(in srgb, var(--accent) 25%, var(--border-subtle));
+  border-color: color-mix(in srgb, var(--mint) 25%, var(--border-subtle));
 }
 
 .guide-checklist__item.is-done {
-  background: color-mix(in srgb, var(--accent) 6%, var(--surface-raised));
-  border-color: color-mix(in srgb, var(--accent) 20%, var(--border-subtle));
+  background: color-mix(in srgb, var(--mint) 6%, var(--surface-raised));
+  border-color: color-mix(in srgb, var(--mint) 20%, var(--border-subtle));
 }
 
 .guide-checklist__marker {
@@ -484,8 +484,8 @@ body.ai-chat-window-open .guide-panel {
 }
 
 .guide-checklist__item.is-done .guide-checklist__marker {
-  background: var(--accent);
-  color: var(--ink-on-accent);
+  background: var(--mint);
+  color: var(--on-mint);
 }
 
 .guide-checklist__copy {
@@ -560,7 +560,7 @@ body.ai-chat-window-open .guide-panel {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--accent-text);
-  background: color-mix(in srgb, var(--accent) 12%, var(--surface-sunken));
+  background: color-mix(in srgb, var(--mint) 12%, var(--surface-sunken));
 }
 
 .guide-journey-badge.is-done {
@@ -600,7 +600,7 @@ body.ai-chat-window-open .guide-panel {
   font-size: var(--text-2xs);
   font-weight: var(--weight-bold);
   color: var(--accent-text);
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface-sunken));
+  background: color-mix(in srgb, var(--mint) 14%, var(--surface-sunken));
 }
 
 .guide-journey-teach {
@@ -693,8 +693,8 @@ body.ai-chat-window-open .guide-panel {
   margin-block-end: var(--space-4);
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface-sunken));
+  border: 1px solid color-mix(in srgb, var(--mint) 35%, var(--border-subtle));
+  background: color-mix(in srgb, var(--mint) 10%, var(--surface-sunken));
 }
 
 .guide-ai-nudge__title {
@@ -715,8 +715,8 @@ body.ai-chat-window-open .guide-panel {
   margin-block-start: var(--space-4);
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--accent) 7%, var(--surface-sunken));
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+  background: color-mix(in srgb, var(--mint) 7%, var(--surface-sunken));
+  border: 1px solid color-mix(in srgb, var(--mint) 22%, var(--border-subtle));
 }
 
 .guide-tip-block--lead {

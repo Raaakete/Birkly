@@ -6,7 +6,7 @@
 
    HOVER: background + border transition directly to --btn-hover /
    --btn-hover-border (no wash bloom, no label bounce).
-   Primary: brand mint → hover mint-200 (lighter than fill, darker than mint-100).
+   Primary: the one main action — mint, darker mint on hover.
    Secondary: filled well (--btn-secondary-*), no border → lighter on hover.
 
    PRESS: 1px translateY on :active.
@@ -88,25 +88,25 @@ a.btn { text-decoration: none; }
    ============================================ */
 
 .btn-primary {
-  --btn-hover: var(--mint-200);       /* lighter than brand, darker than mint-100 */
-  --btn-hover-border: var(--mint-200);
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--ink-on-accent);
+  --btn-hover: var(--mint-hover);
+  --btn-hover-border: var(--mint-hover);
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--on-mint);
   /* Light mint fill. Dark color-scheme would paint light hover text on it. */
   color-scheme: light;
   box-shadow: none;
 }
 .btn-primary:hover:not(:disabled):not([aria-disabled="true"]),
 a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
-  color: var(--ink-on-accent);
+  color: var(--on-mint);
   background: var(--btn-hover);
   border-color: var(--btn-hover-border);
 }
 .btn.btn-primary:active:not(:disabled) {
-  background: var(--mint-400);
-  border-color: var(--mint-400);
-  color: var(--ink-on-accent);
+  background: var(--mint-hover);
+  border-color: var(--mint-hover);
+  color: var(--on-mint);
 }
 
 .btn-secondary {
@@ -331,6 +331,6 @@ a.btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   animation: u-spin 0.6s linear infinite;
 }
 .btn-primary.btn-loading::after,
-.btn-primary.loading::after { color: var(--ink-on-accent); }
+.btn-primary.loading::after { color: var(--on-mint); }
 
 .admin-visit-project-btn { height: var(--control-lg); }

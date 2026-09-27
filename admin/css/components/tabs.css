@@ -217,7 +217,7 @@
 .folder-item-move.active,
 .folder-item-move.selected {
   --nav-bar: 3px;
-  --nav-bar-color: var(--accent);
+  --nav-bar-color: var(--text);
   background: transparent;
   color: var(--text-primary);
   font-weight: var(--weight-semibold);
