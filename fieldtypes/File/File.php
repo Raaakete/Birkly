@@ -135,7 +135,11 @@ class File extends BaseField {
     
     private function findFileUrlById($fileId) {
         $mediaDir = __DIR__ . '/../../media';
-        $extensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'json', 'xml', 'csv'];
+        $extensions = [
+            'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'rar', 'json', 'xml', 'csv',
+            'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg',
+            'mp4', 'm4v', 'webm', 'ogv', 'mov', 'mp3', 'wav', 'ogg',
+        ];
         
         foreach ($extensions as $ext) {
             $filePath = "$mediaDir/$fileId.$ext";

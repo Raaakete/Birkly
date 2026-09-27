@@ -163,6 +163,12 @@
             }));
         });
 
+        container.querySelectorAll('.file-field').forEach(function (wrap) {
+            if (typeof window.initFileField === 'function') {
+                window.initFileField(wrap);
+            }
+        });
+
         container.querySelectorAll('.media-field').forEach(function (wrap) {
             var name = wrap.id.replace('field_', '');
             if (typeof window.initMediaField === 'function') {

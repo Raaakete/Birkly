@@ -11,12 +11,38 @@ function birklyMediaModalResolveUrl(url) {
 }
 
 function birklyMediaModalHasPermission(permission) {
-    const perms = window.Birkly?.currentUser?.permissions || [];
-    if (!Array.isArray(perms)) return false;
+    const perms = window.Birkly?.currentUser?.permissions;
+    // An empty list means the shell did not publish permissions. The upload API still checks auth.
+    if (!Array.isArray(perms) || perms.length === 0) return true;
     if (perms.includes('*') || perms.includes(permission)) return true;
     if (permission === 'read_media' && perms.includes('manage_media')) return true;
     if (permission === 'upload' && (perms.includes('manage_media') || perms.includes('upload'))) return true;
     return false;
+}
+
+function birklyMediaModalItemMatchesAccept(item, accept) {
+    const raw = String(accept || '').trim().toLowerCase();
+    if (!raw || raw === '*/*' || raw === '*') return true;
+    const parts = raw.split(',').map(function (part) { return part.trim(); }).filter(Boolean);
+    if (!parts.length) return true;
+    const mime = String(item.type || '').toLowerCase();
+    const name = String(item.name || item.url || '').toLowerCase();
+    const ext = name.indexOf('.') >= 0 ? name.slice(name.lastIndexOf('.')) : '';
+    const videoExt = ['.mp4', '.m4v', '.webm', '.ogv', '.mov'];
+    const audioExt = ['.mp3', '.wav', '.ogg'];
+    return parts.some(function (part) {
+        if (part === '*/*' || part === '*') return true;
+        if (part.charAt(0) === '.') return ext === part;
+        if (part.endsWith('/*')) {
+            const prefix = part.slice(0, -1);
+            if (mime.indexOf(prefix) === 0) return true;
+            if (part === 'video/*') return videoExt.indexOf(ext) !== -1;
+            if (part === 'audio/*') return audioExt.indexOf(ext) !== -1;
+            if (part === 'image/*') return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].indexOf(ext) !== -1;
+            return false;
+        }
+        return mime === part;
+    });
 }
 
 function birklyMediaModalEscapeHtml(text) {
@@ -46,6 +72,7 @@ function birklyMediaModalT(key, fallback, params) {
 window.Birkly.MediaModal = {
     isOpen: false,
     currentCallback: null,
+    accept: '',
     
     // Open media modal
     open(options) {
@@ -56,12 +83,17 @@ window.Birkly.MediaModal = {
         }
         
         // Handle both callback function and options object
+        this.accept = '';
         if (typeof options === 'function') {
             this.currentCallback = options;
         } else if (options && typeof options.onSelect === 'function') {
             this.currentCallback = options.onSelect;
+            this.accept = String(options.accept || '');
         } else {
             this.currentCallback = null;
+            if (options && typeof options === 'object') {
+                this.accept = String(options.accept || '');
+            }
         }
         
         this.isOpen = true;
@@ -127,7 +159,7 @@ window.Birkly.MediaModal = {
                 </div>
                 <div class="modal-body u-stack-5">
                     <div class="media-upload-section">
-                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,application/pdf" class="u-hidden">
+                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.mov,.mp3,.wav" class="u-hidden">
                         <button type="button" class="btn btn-primary" data-media-modal-action="upload-trigger">
                             Upload new media
                         </button>
@@ -170,8 +202,10 @@ window.Birkly.MediaModal = {
             }
         });
 
-        // Handle file upload
         const fileInput = this.modal.querySelector('#birkly-media-modal-upload');
+        if (fileInput && this.accept && this.accept !== '*/*' && this.accept !== '*') {
+            fileInput.setAttribute('accept', this.accept);
+        }
         if (fileInput) {
             fileInput.addEventListener('change', (e) => {
                 if (!birklyMediaModalHasPermission('upload')) {
@@ -210,11 +244,12 @@ window.Birkly.MediaModal = {
             }
             
             if (result.status === 'ok' && Array.isArray(result.data)) {
-                if (!result.data.length) {
+                const visible = result.data.filter((item) => birklyMediaModalItemMatchesAccept(item, this.accept));
+                if (!visible.length) {
                     grid.innerHTML = '<div class="empty-state empty-state--compact"><p class="empty-state-text">No media files yet. Upload one above.</p></div>';
                     return;
                 }
-                this.renderMediaGrid(result.data);
+                this.renderMediaGrid(visible);
             } else {
                 const msg = result.message || result.error || (response.status === 403 ? 'You do not have permission to view media.' : 'Failed to load media');
                 grid.innerHTML = '<div class="error-state"><p class="empty-state-text">' + birklyMediaModalEscapeHtml(msg) + '</p></div>';
