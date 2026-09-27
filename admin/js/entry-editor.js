@@ -1831,6 +1831,12 @@
             wrap._editorSafetyMirror = safetyMirror;
         });
 
+        document.querySelectorAll('.file-field').forEach(function(wrap) {
+            if (typeof window.initFileField === 'function') {
+                window.initFileField(wrap);
+            }
+        });
+
         // Initialize Media fieldtypes
         document.querySelectorAll('.media-field').forEach(function(wrap) {
             const name = wrap.id.replace('field_', '');
