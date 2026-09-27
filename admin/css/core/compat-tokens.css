@@ -30,7 +30,7 @@
 
 :root {
   /* ---- Brand / primary ---- */
-  --primary: var(--accent);
+  --primary: var(--mint);
   --primary-50: var(--mint-50);
   --primary-100: var(--mint-100);
   --primary-200: var(--mint-200);
@@ -40,7 +40,7 @@
   --primary-600: var(--mint-600);
   --primary-700: var(--mint-700);
   --primary-800: var(--mint-800);
-  --color-primary: var(--accent);
+  --color-primary: var(--mint);
   --color-primary-strong: var(--accent-text);
   --color-primary-soft: var(--accent-soft);
   --color-primary-muted: var(--accent-muted);
