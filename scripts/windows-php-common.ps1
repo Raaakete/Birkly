@@ -151,8 +151,8 @@ extension=zip
 extension=gd
 openssl.cafile = "extras/ssl/cacert.pem"
 curl.cainfo = "extras/ssl/cacert.pem"
-upload_max_filesize = 64M
-post_max_size = 64M
+upload_max_filesize = 128M
+post_max_size = 128M
 memory_limit = 256M
 realpath_cache_size = 4096K
 realpath_cache_ttl = 600
@@ -207,8 +207,8 @@ function Repair-BirklyPhpIni {
     # Append even when php.ini-development already set a smaller value.
     # The last directive in the file wins.
     $performanceLines = @(
-        'upload_max_filesize = 64M',
-        'post_max_size = 64M',
+        'upload_max_filesize = 128M',
+        'post_max_size = 128M',
         'realpath_cache_size = 4096K',
         'realpath_cache_ttl = 600',
         'opcache.enable = 1',
