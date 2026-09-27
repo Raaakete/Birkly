@@ -503,17 +503,3 @@
     color-scheme: dark;
   }
 }
-
-/* Temporary staging deploy check. Page background is blue only on the staging branch. */
-:root,
-[data-theme="dark"],
-[data-theme="system"] {
-  --canvas: #7EB6FF;
-}
-
-/* Temporary staging deploy check. Page background is blue only on the staging branch. */
-:root,
-[data-theme="dark"],
-[data-theme="system"] {
-  --canvas: #7EB6FF;
-}
