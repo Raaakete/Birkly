@@ -332,8 +332,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
-  color: var(--ink-on-accent);
+  background: var(--text);
+  color: var(--bg);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   letter-spacing: 0.02em;
@@ -373,7 +373,7 @@
   overflow: hidden;
   border-radius: 50%;
   border: 1px solid var(--border-subtle);
-  background: var(--accent);
+  background: var(--text);
 }
 
 .topbar-user-menu .user-menu-panel-face,
@@ -399,8 +399,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--accent);
-  color: var(--ink-on-accent);
+  background: var(--text);
+  color: var(--bg);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   line-height: 1;
