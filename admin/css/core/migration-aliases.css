@@ -1,0 +1,152 @@
+/* ============================================
+   Birkly Admin — P56 token names on Birch values
+   ============================================
+
+   Temporary. Page CSS written for P56 reads these names; each resolves to a
+   Birch token from core/variables.css, so unmigrated pages already render in
+   the Birch palette and scale. Pages switch to the Birch names as they move
+   (P96-M6 to M14). This file is deleted at P96-M15.
+
+   Never add a raw value here — only var() to a Birch token or a whole-pixel
+   size that Birch already uses.
+   ============================================ */
+
+:root,
+body {
+  /* Surfaces */
+  --canvas: var(--bg);
+  --surface-sunken: var(--surface-2);
+  --surface-raised: var(--surface);
+  --surface-hover: var(--surface-2);
+  --surface-active: var(--surface-3);
+  --surface-selected: var(--accent-soft);
+  --surface-inverse: var(--ink-float);
+  --overlay: var(--scrim);
+
+  /* Text */
+  --text-primary: var(--text);
+  --text-secondary: var(--text-2);
+  --text-tertiary: var(--text-3);
+  --text-inverse: var(--on-ink-float);
+  --text-link: var(--accent-text);
+  --text-link-hover: var(--accent-hover);
+
+  /* Lines */
+  --border-subtle: var(--line);
+  --border-default: var(--line);
+  --border-control: var(--line-strong);
+  --border-control-hover: var(--text-3);
+  --border-strong: var(--text-3);
+  --field-border: var(--line);
+  --field-border-hover: var(--line-strong);
+  --field-border-focus: var(--accent);
+
+  /* Accent: in P56 --accent was mint. Core CSS now names mint explicitly;
+     the remaining P56 accent names mean on / selected / focus, which is blue. */
+  --accent-active: var(--accent-hover);
+  --accent-muted: var(--accent-line);
+  --accent-focus: var(--accent);
+  --accent-text-hover: var(--accent-hover);
+  --accent-soft-hover: var(--accent-line);
+  --accent-border: var(--accent-line);
+  --ink-on-accent: var(--on-accent);
+
+  --control-track: var(--surface-3);
+  --control-track-hover: var(--line-strong);
+  --control-knob: var(--surface);
+
+  /* Status */
+  --success-surface: var(--success-soft);
+  --success-border: var(--success-soft);
+  --success-fg: var(--success);
+  --success-solid: var(--success);
+  --ink-on-success: var(--on-status);
+  --warning-surface: var(--warning-soft);
+  --warning-border: var(--warning-soft);
+  --warning-fg: var(--warning);
+  --warning-solid: var(--warning);
+  --ink-on-warning: var(--on-status);
+  --danger-surface: var(--danger-soft);
+  --danger-border: var(--danger-soft);
+  --danger-fg: var(--danger);
+  --danger-solid: var(--danger);
+  --ink-on-danger: var(--on-status);
+  --info-surface: var(--info-soft);
+  --info-border: var(--info-soft);
+  --info-fg: var(--info);
+  --info-solid: var(--info);
+  --ink-on-info: var(--on-status);
+  --neutral-surface: var(--surface-2);
+  --neutral-border: var(--line);
+  --neutral-fg: var(--text-2);
+  --status-dot-ok: var(--success);
+  --status-dot-ok-glow: var(--success);
+  --status-dot-bad: var(--danger);
+  --status-dot-bad-glow: var(--danger);
+
+  /* Space (P56 used rem; density.css still scales these) */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Type */
+  --text-2xs: var(--size-caption);
+  --text-xs: var(--size-small);
+  --text-sm: var(--size-small);
+  --text-base: var(--size-body);
+  --text-md: var(--size-slab-title);
+  --text-lg: var(--size-title-l);
+  --text-xl: var(--size-page-title);
+  --text-2xl: var(--size-number);
+  --leading-tight: 1.25;
+  --leading-snug: 1.4;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.6;
+  --tracking-tight: var(--tracking-title);
+  --tracking-normal: 0;
+  --tracking-label: 0;
+
+  /* Shape */
+  --radius-none: 0;
+  --radius-sm: var(--r);
+  --radius-md: var(--r);
+  --radius-lg: var(--r);
+  --radius-pill: var(--r);
+
+  /* Sizes */
+  --control-md: var(--control);
+  --control-lg: var(--chrome-row);
+  --chrome-stack-gap: var(--s-6);
+  --chrome-content-gap: var(--s-6);
+  --btn-secondary-bg: var(--surface);
+  --btn-secondary-hover: var(--surface-2);
+  --sidebar-width-collapsed: var(--sidebar-rail);
+  --shell-edge-padding: var(--gutter);
+
+  /* Elevation: slabs are flat; only floats cast shadows */
+  --elevation-0: none;
+  --elevation-1: none;
+  --elevation-2: var(--shadow-float-2);
+  --elevation-3: var(--shadow-menu);
+  --elevation-inset: none;
+  --elevation-inset-strong: none;
+
+  /* Motion */
+  --motion-fast: var(--dur-1);
+  --motion-base: var(--dur-2);
+  --motion-slow: var(--dur-3);
+  --ease-out: var(--ease);
+  --ease-in-out: var(--ease);
+
+  /* Focus */
+  --focus-color: var(--accent);
+  --focus-ring: 0 0 0 2px var(--accent);
+}

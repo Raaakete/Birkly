@@ -1,250 +1,148 @@
 /* ============================================
-   Birkly Admin — Design Tokens (canonical)
+   Birkly Admin — Birch v5 design tokens
    ============================================
 
-   Single source of truth for the admin design language (P56).
-   Legacy token names are aliased in core/compat-tokens.css.
+   The only file allowed to hold raw colour values. Components never write
+   dark rules; dark is its own scale, remapped below.
 
-   Rules:
-   - Every value in admin/css/ comes from a token here. No raw hex.
-   - Dark mode is a token remap only. Components never write dark rules.
-   - Contrast ratios noted inline are measured sRGB (WCAG 2.1).
+   Colours are oklch; the hex in each comment is the value it must round-trip
+   to (Foundations board). Contrast is WCAG 2.1 against --surface.
 
-   Reference: internal/planning/reviews/P56-M1-design-language-brief.md
+   Whole pixels only: no half-pixel sizes, strokes, rings or offsets.
+
+   P56 token names still used by page CSS live in core/migration-aliases.css
+   until P96-M15.
    ============================================ */
 
 :root {
-  /* ============================================
-     1. Primitive ramps — never used directly by components
-     ============================================ */
+  /* 1. Colour */
+  --bg: oklch(96.74% 0.0029 84.6); /* #F5F4F2 · canvas */
+  --bg-side: oklch(96.74% 0.0029 84.6); /* #F5F4F2 */
+  --surface: oklch(99.67% 0.0013 106.4); /* #FEFEFD · slab, menu, field on canvas */
+  --surface-2: oklch(95.16% 0.0027 106.4); /* #EFEFED · well, hover inside a slab */
+  --surface-3: oklch(92.49% 0.0042 91.4); /* #E7E6E3 · pressed well, switch track */
+  --line: oklch(91.8% 0.004 106.5); /* #E4E4E1 · hairline */
+  --line-strong: oklch(85.75% 0.0043 91.5); /* #D1D0CD · secondary edge, dashed */
+  --text: oklch(20.44% 0.0043 264.5); /* #161719 · ink · 17.8:1 */
+  --text-2: oklch(40.05% 0.0043 247.9); /* #46484A · 9.1:1 */
+  --text-3: oklch(52.0% 0.0053 258.3); /* #67696C · 5.5:1 · never on surface-3 */
+  --accent: oklch(53.05% 0.1546 262.0); /* #3767C4 · on, selected, focus */
+  --accent-hover: oklch(46.92% 0.1496 262.0); /* #2855AD */
+  --accent-soft: oklch(94.32% 0.0271 260.3); /* #E2EDFF */
+  --accent-line: oklch(83.0% 0.0704 262.5); /* #AFC8F6 */
+  --accent-text: oklch(46.92% 0.1496 262.0); /* #2855AD · 5.9:1 */
+  --on-accent: oklch(99.04% 0.0045 258.3); /* #FAFCFF · 5.2:1 */
+  --mint: oklch(86.18% 0.1032 181.6); /* #7DE8D6 · the one main action */
+  --mint-hover: oklch(81.85% 0.1102 182.1); /* #65DBC9 */
+  --on-mint: oklch(22.14% 0.0339 181.8); /* #05201C · 11.7:1 */
+  --success: oklch(46.93% 0.1192 148.1); /* #1C6C31 · 5.7:1 */
+  --success-soft: oklch(94.91% 0.0443 148.3); /* #DBF7DE */
+  --warning: oklch(45.92% 0.1002 67.5); /* #7C4B02 · 6.5:1 */
+  --warning-soft: oklch(95.9% 0.0552 91.4); /* #FFF1C8 */
+  --danger: oklch(50.09% 0.1704 24.9); /* #B02A2D · 5.6:1 */
+  --danger-soft: oklch(95.09% 0.0245 26.9); /* #FFE9E6 */
+  --info: oklch(47.05% 0.1402 255.0); /* #155AA7 · 6.0:1 */
+  --info-soft: oklch(95.39% 0.0237 244.1); /* #E3F2FF */
+  --on-status: oklch(99.67% 0.0013 106.4); /* #FEFEFD · text on a solid status fill */
+  --ink-float: oklch(18.2% 0.0044 264.5); /* #111214 · tooltip, toast */
+  --on-ink-float: oklch(98.45% 0.0026 106.4); /* #FAFAF8 · 17.9:1 */
+  --scrim: rgb(22 23 25 / 0.32);
 
-  /* Warm neutral ramp.
-     Steps 75-200 are tuned so a white panel reads clearly against the
-     tinted canvas while its hairline border stays visible on both. */
-  --neutral-0: #FFFFFF;
-  --neutral-50: #F8F9F7;
-  --neutral-75: #F1F3EE;
-  --neutral-100: #E7EAE2;
-  --neutral-200: #DDE1D8;
-  --neutral-300: #CBD0C4;
-  --neutral-400: #B3B8AC;
-  --neutral-500: #9CA096;
-  --neutral-600: #8E9089;
-  --neutral-700: #5E605B;
-  --neutral-800: #3D403A;
-  --neutral-900: #20221D;
-  --neutral-950: #161815;
+  /* Ramps for the few legacy call sites that read a step directly */
+  --neutral-0: oklch(99.67% 0.0013 106.4); /* #FEFEFD */
+  --neutral-50: oklch(98.48% 0.0013 106.4); /* #FAFAF9 */
+  --neutral-75: oklch(96.74% 0.0029 84.6); /* #F5F4F2 */
+  --neutral-90: oklch(95.16% 0.0027 106.4); /* #EFEFED */
+  --neutral-100: oklch(92.49% 0.0042 91.4); /* #E7E6E3 */
+  --neutral-200: oklch(91.8% 0.004 106.5); /* #E4E4E1 */
+  --neutral-300: oklch(85.75% 0.0043 91.5); /* #D1D0CD */
+  --neutral-400: oklch(76.67% 0.0044 91.5); /* #B4B3B0 */
+  --neutral-500: oklch(68.93% 0.0031 264.5); /* #9A9B9D */
+  --neutral-600: oklch(59.24% 0.0051 258.3); /* #7C7E81 */
+  --neutral-700: oklch(40.05% 0.0043 247.9); /* #46484A */
+  --neutral-800: oklch(30.8% 0.0046 248.0); /* #2E3032 */
+  --neutral-900: oklch(20.44% 0.0043 264.5); /* #161719 */
+  --neutral-950: oklch(18.2% 0.0044 264.5); /* #111214 */
+  --mint-50: oklch(97.44% 0.0186 180.3); /* #EAFBF7 */
+  --mint-100: oklch(94.4% 0.0407 181.2); /* #D0F6EE */
+  --mint-200: oklch(90.24% 0.0717 182.8); /* #A9EFE3 */
+  --mint-300: oklch(87.97% 0.0886 182.3); /* #92EBDC */
+  --mint-400: oklch(86.18% 0.1032 181.6); /* #7DE8D6 */
+  --mint-500: oklch(86.18% 0.1032 181.6); /* #7DE8D6 */
+  --mint-600: oklch(81.85% 0.1102 182.1); /* #65DBC9 */
+  --mint-700: oklch(71.37% 0.1104 180.6); /* #3FB9A6 */
+  --mint-800: oklch(58.92% 0.0936 180.9); /* #2A8F80 */
+  --mint-900: oklch(47.49% 0.0761 181.6); /* #1B6A5F */
+  --mint-950: oklch(37.03% 0.0598 181.8); /* #0F4A42 */
 
-  /* A half-step lighter than neutral-100, for passive fills sitting on a
-     WHITE surface (options wells, card footers, table headers). neutral-100
-     is darker than --canvas itself, which read as "too heavy" for a fill
-     nested one level inside a card — see brief revision, design pass 2. */
-  --neutral-90: #EEF0E9;
+  /* 2. Type — system stacks, whole pixels */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Mint ramp (P41 brand — unchanged hues, extended dark end for text use) */
-  --mint-50: #EDFCF7;
-  --mint-100: #D4F8ED;
-  --mint-200: #AEF0DC;
-  --mint-300: #88E8C9;
-  --mint-400: #7CE3BF;
-  --mint-500: #7CE3BF;
-  --mint-600: #52C49A;
-  --mint-700: #3DA882;
-  --mint-800: #2D8C6B;
-  --mint-900: #1D6B52;
-  --mint-950: #17604A;
-
-  /* ============================================
-     2. Surfaces — four layers (brief §4.1)
-     ============================================ */
-  --canvas: var(--neutral-75);
-  --surface: var(--neutral-0);
-  --surface-sunken: var(--neutral-90);
-  --surface-raised: var(--neutral-0);
-  --surface-hover: var(--neutral-50);
-  --surface-active: var(--neutral-100);
-  --surface-selected: var(--mint-50);
-  --surface-inverse: var(--neutral-900);
-  --overlay: rgba(32, 34, 29, 0.32);
-
-  /* ============================================
-     3. Text (brief §4.5)
-     ============================================ */
-  --text-primary: var(--neutral-900);      /* 16.1:1 on surface */
-  --text-secondary: var(--neutral-700);    /*  6.4:1 on surface */
-  --text-tertiary: var(--neutral-600);     /*  3.4:1 — non-essential only */
-  --text-inverse: var(--neutral-50);
-  --text-link: var(--accent-text);
-  --text-link-hover: var(--accent-text-hover);
-
-  /* ============================================
-     4. Borders (brief §4.2)
-     subtle/default are decorative hairlines.
-     control* are functional boundaries and meet WCAG 1.4.11 (3:1).
-     ============================================ */
-  --border-subtle: var(--neutral-200);
-  --border-default: var(--neutral-300);
-  --border-control: var(--neutral-600);        /* 3.23:1 on surface */
-  --border-control-hover: var(--neutral-700);
-  --border-strong: var(--neutral-700);
-
-  /* Text-field borders — a softer, distinct family from --border-control
-     (buttons, custom-selects). Resting state is hairline-light; hover and
-     focus strengthen it. Focus is a NEUTRAL grey, never accent/green — a
-     green-bordered field reads as "valid" and gets confused with success. */
-  --field-border: var(--neutral-200);          /* soft resting border */
-  --field-border-hover: var(--neutral-400);    /* slightly stronger on hover */
-  --field-border-focus: var(--neutral-600);    /* clearly active, still neutral */
-
-  /* ============================================
-     5. Accent — split fill / text ramps (brief §4.3)
-     Mint is a LIGHT colour: fill under dark ink, never text on light.
-     ============================================ */
-  --accent: var(--mint-400);
-  --accent-hover: #8CECCA;
-  --accent-active: #79E1BD;
-  --accent-muted: var(--mint-600);             /* decorative only, never text */
-  --accent-focus: var(--mint-800);             /* 4.14:1 — focus rings */
-  --accent-text: var(--mint-900);              /* 6.41:1 — accent text + links */
-  --accent-text-hover: var(--mint-950);        /* 7.48:1 */
-  --accent-soft: var(--mint-50);
-  --accent-soft-hover: var(--mint-100);
-  --accent-border: var(--mint-200);
-  --ink-on-accent: var(--neutral-900);         /* 10.4:1 on mint */
-
-  /* Control tracks — switch/slider rails. A background needs its own token:
-     using a --border-* token as a fill (the pre-P56 habit) is dishonest, and
-     --neutral-surface is invisible against --surface. */
-  --control-track: var(--neutral-300);
-  --control-track-hover: var(--neutral-600);
-  --control-knob: var(--surface);
-
-  /* ============================================
-     6. Semantic colours (brief §4.4)
-     Status indicators use {sem}-surface + {sem}-fg.
-     {sem}-solid is for destructive/confirm buttons only.
-     ============================================ */
-  --success-surface: #E8F5EC;
-  --success-border: #BFE0CC;
-  --success-fg: #1B6E3C;                       /* 6.3:1 on surface */
-  --success-solid: #24793F;                    /* 5.4:1 with white ink */
-  --ink-on-success: var(--neutral-0);
-
-  --warning-surface: #FDF3E3;
-  --warning-border: #F0DCAE;
-  --warning-fg: #7A5200;                       /* 6.9:1 on surface */
-  --warning-solid: #E0A100;                    /* takes DARK ink */
-  --ink-on-warning: var(--neutral-900);
-
-  --danger-surface: #FDEDED;
-  --danger-border: #F2C6C6;
-  --danger-fg: #A32020;                        /* 7.5:1 on surface */
-  --danger-solid: #D33A3A;                     /* 4.7:1 with white ink */
-  --ink-on-danger: var(--neutral-0);
-
-  /* Tiny status dots (Agent Guide hub tabs). Lighter than button solids so an
-     8px disc still reads as “on” / “off” at a glance. */
-  --status-dot-ok: var(--mint-200);
-  --status-dot-ok-glow: var(--mint-400);
-  --status-dot-bad: #FF8B8B;
-  --status-dot-bad-glow: #FF6B6B;
-
-  --info-surface: #E9F1FA;
-  --info-border: #C3D9EF;
-  --info-fg: #1F5C99;                          /* 6.9:1 on surface */
-  --info-solid: #2A6FB5;                       /* 5.2:1 with white ink */
-  --ink-on-info: var(--neutral-0);
-
-  /* Neutral status tone (draft, archived, disabled) */
-  --neutral-surface: var(--neutral-100);
-  --neutral-border: var(--neutral-300);
-  --neutral-fg: var(--neutral-700);
-
-  /* ============================================
-     7. Spacing — 4px grid, one scale (brief §2.1)
-     ============================================ */
-  --space-0: 0;
-  --space-1: 0.25rem;   /*  4px */
-  --space-2: 0.5rem;    /*  8px */
-  --space-3: 0.75rem;   /* 12px */
-  --space-4: 1rem;      /* 16px */
-  --space-5: 1.25rem;   /* 20px */
-  --space-6: 1.5rem;    /* 24px */
-  --space-8: 2rem;      /* 32px */
-  --space-10: 2.5rem;   /* 40px */
-  --space-12: 3rem;     /* 48px */
-  --space-16: 4rem;     /* 64px */
-
-  /* ============================================
-     8. Typography (brief §3)
-     ============================================ */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-
-  --text-2xs: 0.6875rem;   /* 11px — uppercase micro-labels, table headers */
-  --text-xs: 0.75rem;      /* 12px — badges, help text, timestamps */
-  --text-sm: 0.8125rem;    /* 13px — dense tables, secondary, toolbars */
-  --text-base: 0.875rem;   /* 14px — DEFAULT UI text */
-  --text-md: 1rem;         /* 16px — prose / help docs only */
-  --text-lg: 1.125rem;     /* 18px — card + section titles */
-  --text-xl: 1.375rem;     /* 22px — page title (breadcrumb current) */
-  --text-2xl: 1.75rem;     /* 28px — auth / onboarding / empty-state heroes */
-
-  --leading-tight: 1.25;
-  --leading-snug: 1.35;
-  --leading-normal: 1.5;
-  --leading-relaxed: 1.6;
+  --size-display: 56px;    --lh-display: 60px;
+  --size-number: 26px;     --lh-number: 28px;
+  --size-page-title: 18px; --lh-page-title: 24px;
+  --size-title-l: 16px;    --lh-title-l: 22px;
+  --size-slab-title: 14px; --lh-slab-title: 20px;
+  --size-title: 13px;      --lh-title: 18px;
+  --size-body: 13px;       --lh-body: 20px;
+  --size-small: 12px;      --lh-small: 16px;
+  --size-caption: 11px;    --lh-caption: 16px;
+  --size-mono: 12px;       --lh-mono: 18px;
 
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --tracking-tight: -0.01em;
-  --tracking-normal: 0;
-  --tracking-label: 0.04em;
+  --tracking-display: -0.035em;
+  --tracking-number: -0.025em;
+  --tracking-title: -0.01em;
+  --tracking-overline: 0.08em;
 
-  /* ============================================
-     9. Radius — four steps (brief §5.1)
-     ============================================ */
-  --radius-none: 0;
-  --radius-sm: 6px;     /* controls: buttons, inputs, badges, nav items */
-  --radius-md: 10px;    /* panels: cards, tables, sections, wells */
-  --radius-lg: 14px;    /* overlays: modals, drawers, popovers */
-  --radius-pill: 999px;
+  /* 3. Space — 4px base; app UI stops at 24 */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --gutter: var(--s-6);
 
-  /* ============================================
-     10. Control sizes (brief §2.2)
-     ============================================ */
-  --control-xs: 1.5rem;    /* 24px — inline cell actions */
-  --control-sm: 1.75rem;   /* 28px — dense toolbars */
-  --control-md: 2.25rem;   /* 36px — DEFAULT page controls */
-  --control-lg: 2.5rem;    /* 40px — chrome row only */
+  /* 4. Shape — one radius */
+  --r: 6px;
+  --r-inset: 3px;
+  --r-pixel: 0;
 
-  /* Shared chrome rhythm (sidebar brand row == topbar row == page title row) */
-  --chrome-row: var(--control-lg);
-  --chrome-stack-gap: var(--space-6);
-  --chrome-content-gap: var(--space-6);
+  /* 5. Sizes that follow density (core/density.css) */
+  --control: 32px;
+  --control-sm: 28px;
+  --control-xs: 24px;
+  --chrome-row: 40px;
+  --nav-row: 28px;
+  --row-list: 40px;
+  --row-table: 48px;
+  --card-h: 100px;
+  --icon: 13px;
+  --icon-l: 26px;
 
-  /* Secondary button fill — filled well, no border; hover lightens.
-     Must remap in dark (raw --neutral-* stays light-palette). */
-  --btn-secondary-bg: var(--neutral-100);
-  --btn-secondary-hover: var(--neutral-50);
+  /* 6. Elevation — only what floats */
+  --shadow-float-2: 0 2px 8px rgb(22 23 25 / 0.16);
+  --shadow-menu: 0 0 0 1px rgb(22 23 25 / 0.06), 0 12px 32px -6px rgb(22 23 25 / 0.18);
+  --shadow-sheet: 0 24px 64px -12px rgb(22 23 25 / 0.28);
 
-  /* ============================================
-     11. Elevation — borders do the work (brief §5.2)
-     ============================================ */
-  --elevation-0: none;
-  --elevation-1: 0 1px 2px rgba(32, 34, 29, 0.06);
-  --elevation-2: 0 4px 12px rgba(32, 34, 29, 0.10);
-  --elevation-3: 0 16px 40px rgba(32, 34, 29, 0.16);
-  /* Inset wells — secondary nav track + pressed active chip */
-  --elevation-inset: inset 0 1px 2px rgba(32, 34, 29, 0.08);
-  --elevation-inset-strong: inset 0 1px 3px rgba(32, 34, 29, 0.14);
+  /* 7. Motion */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 640ms;
+  --dur-px: 1s;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  /* ============================================
-     12. Layering — one scale (brief §5.3)
-     Popover sits above modal so menus inside dialogs work.
-     ============================================ */
+  /* 8. Focus */
+  --focus-outline: 2px solid var(--accent);
+  --focus-outline-offset: 1px;
+
+  /* 9. Layering — popover above modal so menus inside dialogs work */
   --z-base: 0;
   --z-raised: 10;
   --z-dragging: 50;
@@ -257,249 +155,107 @@
   --z-toast: 600;
   --z-tooltip: 700;
 
-  /* ============================================
-     13. Motion (brief §5.4)
-     ============================================ */
-  --motion-fast: 120ms;
-  --motion-base: 180ms;
-  --motion-slow: 240ms;
-  --ease-out: cubic-bezier(0.2, 0, 0, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* ============================================
-     14. Focus (brief §5.5)
-     ============================================ */
-  --focus-color: var(--accent-focus);
-  --focus-outline: 2px solid var(--focus-color);
-  --focus-outline-offset: 2px;
-  --focus-ring: 0 0 0 3px color-mix(in srgb, var(--focus-color) 30%, transparent);
-
-  /* ============================================
-     15. Measure and page width (brief §2.4)
-     ============================================ */
+  /* 10. Shell */
+  --sidebar-width: 216px;
+  --sidebar-rail: 52px;
+  --sidebar-rail-auto: 64px;
   --measure-sm: 42ch;
   --measure-md: 68ch;
   --measure-lg: 90ch;
   --page-max: 1440px;
   --page-max-narrow: 880px;
 
-  /* Shell */
-  --sidebar-width: 280px;
-  /* Collapsed nav boxes should match the logo tile's own width exactly
-     (--chrome-row, 40px) — not a wider fixed rail — so the collapsed column
-     reads as one consistent width top to bottom (design pass 2). */
-  --sidebar-width-collapsed: var(--chrome-row);
-  --shell-edge-padding: var(--space-10);
-
-  /* ============================================
-     16. Breakpoints — documentation only.
-     Custom properties cannot be used in @media conditions;
-     keep literal values in sync with these (brief §2.5).
-     Allowed: 640 / 768 / 1024 / 1280 / 1440, min-width only.
-     ============================================ */
+  /* Breakpoints — documentation only; literal values in @media (min-width): 640 / 768 / 1024 / 1280 / 1440 */
   --bp-sm: 640px;
   --bp-md: 768px;
   --bp-lg: 1024px;
   --bp-xl: 1280px;
   --bp-2xl: 1440px;
-
-  /* ============================================
-     17. Dark theme values — remapped in the selectors below.
-     Defined once here so the remap is not duplicated three times.
-     ============================================ */
-  --dk-canvas: #131511;
-  --dk-surface: #252821;
-  --dk-surface-sunken: #0D0F0B;
-  --dk-surface-raised: #2E322A;
-  --dk-surface-hover: #2E322A;
-  --dk-surface-active: #363A31;
-  --dk-surface-selected: #1E3A30;
-  --dk-surface-inverse: #F1F3EE;
-  --dk-overlay: rgba(0, 0, 0, 0.56);
-
-  --dk-text-primary: #F4F6F2;
-  --dk-text-secondary: #B4B7B0;
-  --dk-text-tertiary: #82857E;
-  --dk-text-inverse: #161815;
-
-  --dk-border-subtle: #363A31;
-  --dk-border-default: #444840;
-  --dk-border-control: #5F635A;
-  --dk-border-control-hover: #7A7E74;
-  --dk-border-strong: #8A8D85;
-
-  --dk-field-border: #3A3D36;         /* soft resting border on dark surface */
-  --dk-field-border-hover: #525649;
-  --dk-field-border-focus: #8E9188;   /* clearly active, still neutral */
-
-  --dk-accent-text: #8CECCA;                 /* 11.6:1 on dark surface */
-  --dk-accent-focus: #7CE3BF;
-  --dk-accent-soft: #17352B;
-  --dk-accent-soft-hover: #1D4238;
-  --dk-accent-border: #2D6B57;
-
-  --dk-control-track: #444840;
-  --dk-control-track-hover: #5F635A;
-  --dk-control-knob: #E7EAE2;
-
-  --dk-success-surface: #16301F;
-  --dk-success-border: #24492F;
-  --dk-success-fg: #7BD79B;
-  --dk-warning-surface: #33260C;
-  --dk-warning-border: #4D3A12;
-  --dk-warning-fg: #E8BC5E;
-  --dk-danger-surface: #331A1A;
-  --dk-danger-border: #4D2626;
-  --dk-danger-fg: #F09393;
-  --dk-info-surface: #15263A;
-  --dk-info-border: #22405E;
-  --dk-info-fg: #8CBEEA;
-  --dk-neutral-surface: #262823;
-  --dk-neutral-border: #3A3D36;
-  --dk-neutral-fg: #B4B7B0;
-
-  --dk-elevation-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --dk-elevation-2: 0 4px 12px rgba(0, 0, 0, 0.5);
-  --dk-elevation-3: 0 16px 40px rgba(0, 0, 0, 0.6);
-  --dk-elevation-inset: inset 0 1px 2px rgba(0, 0, 0, 0.45);
-  --dk-elevation-inset-strong: inset 0 1px 3px rgba(0, 0, 0, 0.55);
-
-  /* Secondary button on dark: filled well + lighter hover (same intent as light). */
-  --dk-btn-secondary-bg: #363A31;
-  --dk-btn-secondary-hover: #444840;
 }
 
-/* ============================================
-   Dark theme remap — token values only.
-   ============================================ */
 [data-theme="dark"] {
-  --canvas: var(--dk-canvas);
-  --surface: var(--dk-surface);
-  --surface-sunken: var(--dk-surface-sunken);
-  --surface-raised: var(--dk-surface-raised);
-  --surface-hover: var(--dk-surface-hover);
-  --surface-active: var(--dk-surface-active);
-  --surface-selected: var(--dk-surface-selected);
-  --surface-inverse: var(--dk-surface-inverse);
-  --overlay: var(--dk-overlay);
-
-  --text-primary: var(--dk-text-primary);
-  --text-secondary: var(--dk-text-secondary);
-  --text-tertiary: var(--dk-text-tertiary);
-  --text-inverse: var(--dk-text-inverse);
-
-  --border-subtle: var(--dk-border-subtle);
-  --border-default: var(--dk-border-default);
-  --border-control: var(--dk-border-control);
-  --border-control-hover: var(--dk-border-control-hover);
-  --border-strong: var(--dk-border-strong);
-
-  --field-border: var(--dk-field-border);
-  --field-border-hover: var(--dk-field-border-hover);
-  --field-border-focus: var(--dk-field-border-focus);
-
-  --accent-text: var(--dk-accent-text);
-  --accent-text-hover: var(--dk-accent-text);
-  --accent-focus: var(--dk-accent-focus);
-  --accent-soft: var(--dk-accent-soft);
-  --accent-soft-hover: var(--dk-accent-soft-hover);
-  --accent-border: var(--dk-accent-border);
-
-  --control-track: var(--dk-control-track);
-  --control-track-hover: var(--dk-control-track-hover);
-  --control-knob: var(--dk-control-knob);
-
-  --success-surface: var(--dk-success-surface);
-  --success-border: var(--dk-success-border);
-  --success-fg: var(--dk-success-fg);
-  --warning-surface: var(--dk-warning-surface);
-  --warning-border: var(--dk-warning-border);
-  --warning-fg: var(--dk-warning-fg);
-  --danger-surface: var(--dk-danger-surface);
-  --danger-border: var(--dk-danger-border);
-  --danger-fg: var(--dk-danger-fg);
-  --info-surface: var(--dk-info-surface);
-  --info-border: var(--dk-info-border);
-  --info-fg: var(--dk-info-fg);
-  --neutral-surface: var(--dk-neutral-surface);
-  --neutral-border: var(--dk-neutral-border);
-  --neutral-fg: var(--dk-neutral-fg);
-
-  --elevation-1: var(--dk-elevation-1);
-  --elevation-2: var(--dk-elevation-2);
-  --elevation-3: var(--dk-elevation-3);
-  --elevation-inset: var(--dk-elevation-inset);
-  --elevation-inset-strong: var(--dk-elevation-inset-strong);
-
-  --btn-secondary-bg: var(--dk-btn-secondary-bg);
-  --btn-secondary-hover: var(--dk-btn-secondary-hover);
-
+  --bg: oklch(17.58% 0.0038 229.0); /* #0F1112 */
+  --bg-side: oklch(17.58% 0.0038 229.0); /* #0F1112 */
+  --surface: oklch(21.75% 0.0042 264.5); /* #191A1C */
+  --surface-2: oklch(25.07% 0.0048 248.0); /* #202224 */
+  --surface-3: oklch(28.42% 0.0062 258.4); /* #282A2D */
+  --line: oklch(28.42% 0.0062 258.4); /* #282A2D */
+  --line-strong: oklch(37.11% 0.0073 264.5); /* #3E4044 */
+  --text: oklch(95.46% 0.0027 106.4); /* #F0F0EE · 15.3:1 */
+  --text-2: oklch(79.14% 0.0048 258.3); /* #B9BBBE · 9.0:1 */
+  --text-3: oklch(65.95% 0.0063 264.5); /* #909296 · 5.6:1 */
+  --accent: oklch(72.09% 0.1298 261.7); /* #77A4F6 */
+  --accent-hover: oklch(77.73% 0.1132 260.9); /* #8DB7FF */
+  --accent-soft: oklch(29.98% 0.0605 262.6); /* #1D2D4C */
+  --accent-line: oklch(44.94% 0.0902 262.2); /* #395487 */
+  --accent-text: oklch(78.97% 0.1063 261.2); /* #94BBFF · 7.0:1 */
+  --on-accent: oklch(17.87% 0.0311 263.3); /* #0A111F · 7.5:1 */
+  --mint: oklch(83.17% 0.1082 181.2); /* #6DDFCC */
+  --mint-hover: oklch(87.98% 0.0981 181.0); /* #89EDDB */
+  --on-mint: oklch(22.14% 0.0339 181.8); /* #05201C · 10.6:1 */
+  --success: oklch(80.03% 0.1505 148.1); /* #73D885 */
+  --success-soft: oklch(29.95% 0.0536 148.3); /* #19351E */
+  --warning: oklch(84.06% 0.1398 82.0); /* #F8C153 */
+  --warning-soft: oklch(32.92% 0.0648 81.0); /* #463104 */
+  --danger: oklch(75.63% 0.1458 25.1); /* #FF8880 */
+  --danger-soft: oklch(32.05% 0.0754 24.5); /* #53211F */
+  --info: oklch(79.02% 0.1082 254.4); /* #8ABEFF */
+  --info-soft: oklch(30.99% 0.0642 254.8); /* #183150 */
+  --on-status: oklch(17.58% 0.0038 229.0); /* #0F1112 */
+  --ink-float: oklch(95.76% 0.0027 106.4); /* #F1F1EF */
+  --on-ink-float: oklch(18.2% 0.0044 264.5); /* #111214 · 16.6:1 */
+  --scrim: rgb(0 0 0 / 0.56);
+  --shadow-float-2: 0 2px 8px rgb(0 0 0 / 0.5);
+  --shadow-menu: 0 0 0 1px var(--line-strong), 0 12px 32px -6px rgb(0 0 0 / 0.6);
+  --shadow-sheet: 0 24px 64px -12px rgb(0 0 0 / 0.7);
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   [data-theme="system"] {
-    --canvas: var(--dk-canvas);
-    --surface: var(--dk-surface);
-    --surface-sunken: var(--dk-surface-sunken);
-    --surface-raised: var(--dk-surface-raised);
-    --surface-hover: var(--dk-surface-hover);
-    --surface-active: var(--dk-surface-active);
-    --surface-selected: var(--dk-surface-selected);
-    --surface-inverse: var(--dk-surface-inverse);
-    --overlay: var(--dk-overlay);
-
-    --text-primary: var(--dk-text-primary);
-    --text-secondary: var(--dk-text-secondary);
-    --text-tertiary: var(--dk-text-tertiary);
-    --text-inverse: var(--dk-text-inverse);
-
-    --border-subtle: var(--dk-border-subtle);
-    --border-default: var(--dk-border-default);
-    --border-control: var(--dk-border-control);
-    --border-control-hover: var(--dk-border-control-hover);
-    --border-strong: var(--dk-border-strong);
-
-    --field-border: var(--dk-field-border);
-    --field-border-hover: var(--dk-field-border-hover);
-    --field-border-focus: var(--dk-field-border-focus);
-
-    --accent-text: var(--dk-accent-text);
-    --accent-text-hover: var(--dk-accent-text);
-    --accent-focus: var(--dk-accent-focus);
-    --accent-soft: var(--dk-accent-soft);
-    --accent-soft-hover: var(--dk-accent-soft-hover);
-    --accent-border: var(--dk-accent-border);
-
-    --control-track: var(--dk-control-track);
-    --control-track-hover: var(--dk-control-track-hover);
-    --control-knob: var(--dk-control-knob);
-
-    --success-surface: var(--dk-success-surface);
-    --success-border: var(--dk-success-border);
-    --success-fg: var(--dk-success-fg);
-    --warning-surface: var(--dk-warning-surface);
-    --warning-border: var(--dk-warning-border);
-    --warning-fg: var(--dk-warning-fg);
-    --danger-surface: var(--dk-danger-surface);
-    --danger-border: var(--dk-danger-border);
-    --danger-fg: var(--dk-danger-fg);
-    --info-surface: var(--dk-info-surface);
-    --info-border: var(--dk-info-border);
-    --info-fg: var(--dk-info-fg);
-    --neutral-surface: var(--dk-neutral-surface);
-    --neutral-border: var(--dk-neutral-border);
-    --neutral-fg: var(--dk-neutral-fg);
-
-    --elevation-1: var(--dk-elevation-1);
-    --elevation-2: var(--dk-elevation-2);
-    --elevation-3: var(--dk-elevation-3);
-    --elevation-inset: var(--dk-elevation-inset);
-    --elevation-inset-strong: var(--dk-elevation-inset-strong);
-
-    --btn-secondary-bg: var(--dk-btn-secondary-bg);
-    --btn-secondary-hover: var(--dk-btn-secondary-hover);
-
+    --bg: oklch(17.58% 0.0038 229.0); /* #0F1112 */
+    --bg-side: oklch(17.58% 0.0038 229.0); /* #0F1112 */
+    --surface: oklch(21.75% 0.0042 264.5); /* #191A1C */
+    --surface-2: oklch(25.07% 0.0048 248.0); /* #202224 */
+    --surface-3: oklch(28.42% 0.0062 258.4); /* #282A2D */
+    --line: oklch(28.42% 0.0062 258.4); /* #282A2D */
+    --line-strong: oklch(37.11% 0.0073 264.5); /* #3E4044 */
+    --text: oklch(95.46% 0.0027 106.4); /* #F0F0EE · 15.3:1 */
+    --text-2: oklch(79.14% 0.0048 258.3); /* #B9BBBE · 9.0:1 */
+    --text-3: oklch(65.95% 0.0063 264.5); /* #909296 · 5.6:1 */
+    --accent: oklch(72.09% 0.1298 261.7); /* #77A4F6 */
+    --accent-hover: oklch(77.73% 0.1132 260.9); /* #8DB7FF */
+    --accent-soft: oklch(29.98% 0.0605 262.6); /* #1D2D4C */
+    --accent-line: oklch(44.94% 0.0902 262.2); /* #395487 */
+    --accent-text: oklch(78.97% 0.1063 261.2); /* #94BBFF · 7.0:1 */
+    --on-accent: oklch(17.87% 0.0311 263.3); /* #0A111F · 7.5:1 */
+    --mint: oklch(83.17% 0.1082 181.2); /* #6DDFCC */
+    --mint-hover: oklch(87.98% 0.0981 181.0); /* #89EDDB */
+    --on-mint: oklch(22.14% 0.0339 181.8); /* #05201C · 10.6:1 */
+    --success: oklch(80.03% 0.1505 148.1); /* #73D885 */
+    --success-soft: oklch(29.95% 0.0536 148.3); /* #19351E */
+    --warning: oklch(84.06% 0.1398 82.0); /* #F8C153 */
+    --warning-soft: oklch(32.92% 0.0648 81.0); /* #463104 */
+    --danger: oklch(75.63% 0.1458 25.1); /* #FF8880 */
+    --danger-soft: oklch(32.05% 0.0754 24.5); /* #53211F */
+    --info: oklch(79.02% 0.1082 254.4); /* #8ABEFF */
+    --info-soft: oklch(30.99% 0.0642 254.8); /* #183150 */
+    --on-status: oklch(17.58% 0.0038 229.0); /* #0F1112 */
+    --ink-float: oklch(95.76% 0.0027 106.4); /* #F1F1EF */
+    --on-ink-float: oklch(18.2% 0.0044 264.5); /* #111214 · 16.6:1 */
+    --scrim: rgb(0 0 0 / 0.56);
+    --shadow-float-2: 0 2px 8px rgb(0 0 0 / 0.5);
+    --shadow-menu: 0 0 0 1px var(--line-strong), 0 12px 32px -6px rgb(0 0 0 / 0.6);
+    --shadow-sheet: 0 24px 64px -12px rgb(0 0 0 / 0.7);
     color-scheme: dark;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0ms;
+    --dur-3: 0ms;
+    --dur-4: 0ms;
+    --dur-px: 0ms;
   }
 }
