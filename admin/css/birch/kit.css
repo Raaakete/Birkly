@@ -116,6 +116,15 @@
 }
 
 [data-birch] .button.is-busy { pointer-events: none; }
+
+/* P56 buttons on Birch pages: secondary has the line, danger is soft */
+[data-birch] .btn-secondary { border-color: var(--line-strong); }
+[data-birch] .btn-danger {
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+[data-birch] .btn-danger:hover { border-color: var(--danger); }
 [data-birch] .button.is-busy .birkly-icon { animation: birch-spin var(--dur-px) steps(8) infinite; }
 
 [data-birch] .button:focus-visible,
@@ -320,8 +329,19 @@
   cursor: pointer;
 }
 
-[data-birch] .check,
-[data-birch] .radio {
+/* P56 wraps a checkbox in label.check; the kit's .check is the box itself */
+[data-birch] label.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  color: var(--text);
+  font-size: var(--size-body);
+  line-height: var(--lh-body);
+  cursor: pointer;
+}
+
+[data-birch] :is(input.check, label.check > input[type="checkbox"]),
+[data-birch] input.radio {
   appearance: none;
   display: inline-grid;
   place-content: center;
@@ -335,17 +355,17 @@
   transition: background-color var(--dur-1) var(--ease), border-color var(--dur-1) var(--ease);
 }
 
-[data-birch] .check { border-radius: var(--r-inset); }
-[data-birch] .radio { border-radius: 50%; }
+[data-birch] :is(input.check, label.check > input[type="checkbox"]) { border-radius: var(--r-inset); }
+[data-birch] input.radio { border-radius: 50%; }
 
-[data-birch] .check:checked,
-[data-birch] .check:indeterminate,
-[data-birch] .radio:checked {
+[data-birch] :is(input.check, label.check > input[type="checkbox"]):checked,
+[data-birch] :is(input.check, label.check > input[type="checkbox"]):indeterminate,
+[data-birch] input.radio:checked {
   border-color: var(--accent);
   background: var(--accent);
 }
 
-[data-birch] .check:checked::before {
+[data-birch] :is(input.check, label.check > input[type="checkbox"]):checked::before {
   content: "";
   width: 7px;
   height: 4px;
@@ -355,14 +375,14 @@
   transform: translateY(-1px) rotate(-45deg);
 }
 
-[data-birch] .check:indeterminate::before {
+[data-birch] :is(input.check, label.check > input[type="checkbox"]):indeterminate::before {
   content: "";
   width: 6px;
   height: 2px;
   background: var(--on-accent);
 }
 
-[data-birch] .radio:checked::before {
+[data-birch] input.radio:checked::before {
   content: "";
   width: 6px;
   height: 6px;
@@ -370,8 +390,8 @@
   background: var(--on-accent);
 }
 
-[data-birch] .check:focus-visible,
-[data-birch] .radio:focus-visible,
+[data-birch] :is(input.check, label.check > input[type="checkbox"]):focus-visible,
+[data-birch] input.radio:focus-visible,
 [data-birch] .switch:focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
@@ -527,6 +547,8 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
+
+[data-birch] .tabs > [hidden] { display: none; }
 
 [data-birch] .tabs > button,
 [data-birch] .tabs > a {
@@ -1062,6 +1084,13 @@ body[data-density="compact"] [data-birch] .collection-card-text { display: none;
 [data-birch] .modal-body {
   padding: 0 var(--s-5) var(--s-4);
   font-size: var(--size-body);
+}
+
+[data-birch] .modal-body .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 var(--s-3);
 }
 
 [data-birch] .modal-footer {
