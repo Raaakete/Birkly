@@ -582,6 +582,9 @@
    ============================================ */
 @media (max-width: 1023px) {
   .admin-topbar {
+    height: auto;
+    min-height: var(--chrome-row);
+    padding-block: var(--s-1);
     flex-wrap: wrap;
     gap: var(--space-2);
     align-items: center;
@@ -618,6 +621,8 @@
 }
 
 @media (max-width: 767px) {
+  .developer-mode-badge { display: none; }
+
 
   .page-header {
     height: auto;
