@@ -241,7 +241,7 @@
 .entries-smart-table .cell-field .ft-list-text,
 .entries-smart-table .cell-field .cell-excerpt,
 .entries-smart-table .cell-field .field-text,
-.entries-smart-table .cell-field > span:not(.ft-gallery-preview-container):not(.ft-list-badge) {
+.entries-smart-table .cell-field > span:not(.ft-list-row):not(.ft-list-badge) {
   display: block;
   min-width: 0;
   max-width: 100%;
@@ -255,10 +255,8 @@
   color: var(--text-primary);
 }
 
-/* Media and badge cells are allowed to breathe — they are not text */
-.entries-smart-table .cell-field .ft-media-preview,
-.entries-smart-table .cell-field .ft-gallery-preview-container,
-.entries-smart-table .cell-field .ft-gallery-count {
+/* Rows of chips and thumbnails are allowed to breathe — they are not text */
+.entries-smart-table .cell-field .ft-list-row {
   white-space: normal;
   overflow: visible;
 }
@@ -448,46 +446,44 @@
 }
 
 /* ============================================
-   Fieldtype cell previews (media, gallery, lists)
+   List-cell primitives for BaseField::renderListCell()
+   Shared vocabulary every fieldtype (core and plugin) may emit. Anything
+   specific to one fieldtype ships in its getListCSS().
    ============================================ */
-.ft-media-preview,
-.ft-list-image-square {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-subtle);
-  flex-shrink: 0;
-}
-
-.ft-gallery-preview-container {
+.ft-list-row {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
+  min-width: 0;
 }
 
-.ft-gallery-preview {
-  width: 2rem;
-  height: 2rem;
-  border-radius: var(--radius-sm);
+.ft-list-image-square {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
   object-fit: cover;
-  border: 1px solid var(--border-subtle);
 }
 
-.ft-gallery-count,
 .ft-list-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0 var(--space-2);
-  height: 1.25rem;
-  border-radius: var(--radius-pill);
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-subtle);
-  font-size: var(--text-2xs);
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-inset);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
-  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ft-list-badge.is-on {
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 /* Sub-entries count badge: uses the shared .badge/.badge-count primitives
@@ -500,18 +496,26 @@
 }
 
 .ft-list-text {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
+  max-width: 18rem;
   overflow: hidden;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 18rem;
 }
 
-.ft-list-empty {
-  font-size: var(--text-sm);
-  color: var(--text-tertiary);
+.ft-list-mono {
+  font-family: var(--font-mono);
+  font-size: var(--size-mono);
 }
+
+.ft-list-empty,
+.ft-list-muted {
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
+.ft-list-muted { font-size: var(--text-xs); }
 
 .reviewer-indicator {
   display: inline-flex;

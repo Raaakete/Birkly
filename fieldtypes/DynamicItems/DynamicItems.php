@@ -431,6 +431,6 @@ class DynamicItems extends BaseField {
         }
         
         return '<span class="ft-list-badge">' . $count . ' item' . ($count === 1 ? '' : 's') . '</span>' .
-               ($previewText ? ' <span class="ft-list-text" style="font-size:11px;color:var(--text-tertiary, #9ca3af);">(' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . ')</span>' : '');
+               ($previewText ? '<span class="ft-list-muted">' . htmlspecialchars($previewText, ENT_QUOTES, 'UTF-8') . '</span>' : '');
     }
 } 

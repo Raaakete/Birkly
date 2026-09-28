@@ -207,15 +207,15 @@ class Tags extends BaseField {
         
         // Show tags as badges (larger size)
         $tags = array_slice($value, 0, 3);
-        $html = '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">';
+        $html = '<span class="ft-list-row">';
         foreach ($tags as $tag) {
             $tagText = htmlspecialchars($tag, ENT_QUOTES, 'UTF-8');
-            $html .= '<span class="ft-list-badge" style="font-size:12px;padding:4px 8px;">' . $tagText . '</span>';
+            $html .= '<span class="ft-list-badge">' . $tagText . '</span>';
         }
         if ($count > 3) {
-            $html .= '<span class="ft-list-badge" style="font-size:12px;padding:4px 8px;background:var(--color-neutral-200, #f3f4f6);">+' . ($count - 3) . '</span>';
+            $html .= '<span class="ft-list-muted">+' . ($count - 3) . '</span>';
         }
-        $html .= '</div>';
+        $html .= '</span>';
         
         return $html;
     }

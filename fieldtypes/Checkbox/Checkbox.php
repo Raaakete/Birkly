@@ -87,7 +87,7 @@ class Checkbox extends BaseField {
 
     public function renderListCell($value, array $context = []): string {
         if ($value === true || $value === '1' || $value === 1 || $value === 'true') {
-            return '<span class="ft-list-badge" style="background:var(--success-50, #d1fae5);color:var(--success-700, #065f46);">✓</span>';
+            return '<span class="ft-list-badge is-on">Yes</span>';
         }
         return '<span class="ft-list-empty">–</span>';
     }
