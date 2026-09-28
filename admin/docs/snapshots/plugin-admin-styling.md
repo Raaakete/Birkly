@@ -2,521 +2,643 @@
 
 ## Summary
 
-A Birkly plugin's admin screens can look exactly like core without shipping a single line of CSS. Compose your page from the core classes — `.plugin-page`, `.card`, `.btn`, `.field`, `.table`, `.badge`, `.tabs`, `.modal` — plus the `u-*` helpers, and you inherit the whole design language including dark mode, focus rings and reduced-motion handling for free. If you do need CSS, build it on the design tokens and namespace it as `.{plugin}-*`. Plugins **should** adopt the design language, but are **never required** to: the platform will not force a rewrite of existing plugin CSS, and a compatibility layer keeps old token names working.
+A plugin's admin pages can look exactly like core without shipping CSS. Put `data-birch` on your page root, then compose the page from the Birch roles and kit:
+
+- `.frame` for a named group, `.slab` for one thing;
+- `.button.is-main` for the one main action;
+- `.field-group`, `.signal`, `.table`, `.menu`, `.dialog` and `.empty`.
+
+You then inherit light and dark, the three densities, focus rings, icon gestures and reduced motion for free. When you do need CSS, build it only from tokens and name it for what it is (`.order-row`, `.workflow-node`). Pages written for the older P56 design still render in Birch through an adoption layer and two alias files. Both are removed in a later CMS release, and this page's rename tables are the migration path.
 
 ## Beginner
 
-### Three ways to style a plugin page
+### Three steps to a Birch plugin page
 
-| Tier | What you do | CSS you ship |
-|------|-------------|--------------|
-| **Tier 0 — Compose** *(recommended)* | Build the page out of core classes and helpers | **None** |
-| **Tier 1 — Extend** | Ship a small stylesheet for genuinely plugin-specific UI, built on core tokens | `.{plugin}-*` only |
-| **Tier 2 — Independent** | Ship your own look | Fully namespaced, still meets the baseline rules |
+1. **Opt in.** Give your page root `class="plugin-page"` and the `data-birch` attribute.
+2. **Ask the four questions** for every block, in order, and stop at the first yes:
+   - floats and goes away → a float or a menu;
+   - one thing → a slab;
+   - a named group next to other groups → a frame;
+   - anything else → the canvas.
 
-Start at Tier 0. Most plugin admin screens are a toolbar, some panels, a table and a form — all of which core already provides. Every line of CSS you don't write is a line that can't drift out of sync when the admin design changes.
+   Something not there yet is dashed; something that needs the user is a signal.
+3. **Use the kit.** Buttons, fields, rows, tables, dialogs and empty states already exist. See [Admin design language](../01-admin/admin-design-language.md) for every one, with markup.
 
-### Why Tier 0 is worth it
+### Why not write your own CSS
 
-- **Dark mode works automatically.** Core classes read their colours from tokens that get remapped for dark themes. A plugin that hardcodes `#ffffff` looks broken the moment a user switches theme.
-- **Accessibility comes with it.** Focus rings, contrast-checked text colours, `prefers-reduced-motion`, keyboard-visible row actions — all already handled.
-- **Your plugin looks native.** Users don't have to learn a second visual language inside the same admin.
-- **You inherit improvements.** When core adjusts padding or a border colour, your page moves with it.
+- **Dark mode and density work automatically.** Kit classes read tokens that are remapped for dark and resized per density. A hard-coded `#ffffff` or `height: 40px` breaks the moment a user switches either.
+- **Accessibility comes with it.** Contrast-checked colours, focus rings, reduced motion and the phone More menu are already handled.
+- **Your plugin looks native.** Users don't meet a second visual language inside the same admin.
+- **You inherit improvements.** When core adjusts a gap or a colour, your page moves with it.
 
-### The one rule you cannot break
+### The rules you cannot break
 
-**Never restyle a core class.** Writing `.btn { … }` or `.card { … }` in your plugin's stylesheet changes buttons and cards for the entire admin, including other plugins' pages. Scope everything to your own namespace.
+- **Never restyle a core class.** A rule such as `.button { … }` or `.slab { … }` in your stylesheet changes every page in the admin, including other plugins' pages.
+- **One mint button per view.** Mint is the main action. Everything else is a secondary, quiet or danger button.
+- **No colour literals.** Every colour is a token, or dark mode breaks.
 
 ### Where to put your CSS
 
-Plugin admin templates load their stylesheet themselves, at the top of the template:
+A plugin loads its own stylesheet at the top of its admin template:
 
 ```html
-<link rel="stylesheet" href="{birkly_url '/admin/css/plugin-page.css'}">
 <link rel="stylesheet" href="{birkly_url '/plugins/my-plugin/admin/my-plugin.css'}">
 ```
 
-A Tier 0 plugin only needs the first line — and often not even that, since `plugin-page.css` is already part of the admin bundle.
+A plugin that only composes kit classes needs no stylesheet at all.
 
 ## Advanced Users
 
-### 1. Adoption tiers in detail
+### 1. Opting in
 
-#### Tier 0 — Compose (recommended)
+```html
+{plugin_page_header}
 
-Use `.plugin-page` as your root, `{plugin_page_header}` for breadcrumbs, and the contracted components below for everything else. Layout comes from `u-stack-*`, `u-row`, `u-cluster`, `u-grid*` and `u-split`. Ship no stylesheet at all.
+<div class="webhooks-page plugin-page" data-birch>
+  …
+</div>
+```
 
-This is achievable for the large majority of plugin admin screens. If you find a genuine gap — a shape core has no component for — that is worth filing as a core gap rather than absorbing into your plugin.
+- `{plugin_page_header}` emits the breadcrumb (`birkly_render_plugin_page_breadcrumbs()`). The last segment becomes the page title in the top bar, so don't render an `<h1>`.
+- `<body>` already carries `data-birch`, so the kit applies everywhere. `data-birch` on your `.plugin-page` root turns on the **adoption layer**: P56 markup inside the root takes Birch roles, as the next table shows. Keep it on even after you move to Birch classes; it also sets the 24 px gap between the root's children.
 
-#### Tier 1 — Extend
+| P56 markup inside `.plugin-page[data-birch]` | Rendered as |
+|---------------------------------------------|-------------|
+| A top-level `.card` | Frame: no fill, 1 px `--line`, 20 px padding |
+| A `.card` inside a card, in a `u-grid-*` / `.stats-grid`, `.card--sunken`, or inside `.card--flush` | Slab |
+| `.card-header` / `.card-title` / `.card-description` | Frame head: `title-l`, `small` `--text-3` |
+| `.card-body`, `.card-footer` | No padding, border or fill |
+| `table.table` in `.table-container` | Header on the canvas; each row a slab 4 px apart |
+| `.stat-label` / `.stat-value` | Metric label and `number` value |
+| `.empty-state` | Dashed |
+| `.callout` | No border, 6 px radius |
+| `.field` / `.form-group` label | `small` 500, sentence case |
+| `.input` inside a frame · inside a slab | White · `--surface-2` (the field takes the opposite of what it sits on) |
+| `.modal` > `.modal-content` | Float; `.modal.is-sheet` docks it right |
+| `.btn-primary` · `.btn-secondary` · `.btn-danger` | Mint · secondary · danger-soft |
+| `label.switch > input + .switch__slider` | The Birch two-cell switch |
 
-Ship a small stylesheet for UI that is genuinely specific to your plugin: a workflow canvas, a chart container, a domain-specific editor. Build it entirely from tokens; use core components for everything around it.
+The adoption layer keeps shipped plugins intact. It is not the target: write new pages with the Birch classes in § 3.
 
-Rules of thumb for Tier 1:
+### 2. Class names
 
-- One stylesheet, named after the plugin, under `admin/` in your plugin folder.
-- Every declaration uses `var(--…)` for colour, spacing, radius, shadow, motion and z-index.
-- Every selector starts with `.{plugin}-`.
-- No selector matches a core class on its own.
+- **Plain words**, with no prefix, suffix or BEM: `.order-row`, `.workflow-node`, `.tier-card`, `.bulk-bar`.
+- **State** through `is-` classes and ARIA: `.is-main`, `.is-selected` / `aria-selected`, `[aria-current="page"]`, `aria-pressed`, `aria-checked`.
+- **Core owns the generic names**: `.row`, `.table`, `.card`, `.field`, `.frame`, `.slab`, `.menu` and the rest of the kit. A plugin component is named for what it is, and never reuses a core name for something else.
+- **A component's surface comes from its role.** If your `.order-row` is one thing, style it like a slab (`--surface`, 6 px radius, 16 px padding, no border, no shadow), or better, put `class="slab order-row"` on it and style only its layout.
+- **No `u-` prefix** for your own helpers; that prefix belongs to core.
 
-#### Tier 2 — Independent
+### 3. P56 → Birch rename tables
 
-Ship your own look. This is allowed — the platform does not require adoption. You still must not restyle core classes, must not use `!important` against core, must not remove focus outlines, and must handle dark mode yourself (which is more work than adopting the tokens, which is why Tier 2 is rarely the right call).
+The tables list every P56 class, token and icon name that core still honours, with its Birch replacement. The alias files `admin/css/core/migration-aliases.css` and `admin/css/core/compat-tokens.css`, the icon aliases, and the P56 component sheets are removed in the CMS release after 1.1. Move your plugin before then.
 
----
+#### Classes
 
-### 2. The public class contract
+| P56 | Birch | Notes |
+|-----|-------|-------|
+| `.btn.btn-primary` | `.button.is-main` | One visible per view |
+| `.btn`, `.btn-secondary`, `.btn-outline` | `.button` | Secondary is the default |
+| `.btn-ghost`, `.btn-link` | `.button.is-quiet` | Cancel and low-weight actions |
+| `.btn-danger`, `.btn-danger-quiet` | `.button.is-danger` | Danger-soft fill, danger text |
+| `.btn-sm` · `.btn-lg` | `.button.is-small` · `.button` | Height follows density (`--control`) |
+| `.btn-icon`, `.btn-icon-sm`, `.btn-icon-xs`, `.btn-icon--edit`, `.btn-icon--danger` | `.icon-button` + `aria-label` | Destructive row actions go in a menu as `.menu-item.is-danger` |
+| `.card` (top level) | `.frame` | A named group of slabs |
+| `.card` (nested), `.card--elevated`, `.card--bordered`, stat tile | `.slab` | One thing; no border, no shadow |
+| `.card--sunken`, `.card--borderless` | `.well` · canvas | |
+| `.card-header`, `.card-title`, `.card-description`, `.card-subtitle` | `.frame-head` > `.frame-head-body` > `.frame-title` + `.frame-text` | Actions sit at the end of `.frame-head` |
+| `.card-body`, `.card-footer` | No wrapper | Footer actions go in the page bar or a dialog foot |
+| `.card-section`, `.card-section--compact` | One `.slab` per section, or `.setting-row` | Slabs 4 px apart inside the frame |
+| `.section-header`, `.section-title`, `section__header` | `.frame-head`, or `.group-title` on the canvas | |
+| `.stats-grid` > `.stat` (`.stat-label`, `.stat-value`, `.stat-meta`) | `.metrics` > `.metric` (`.metric-label`, `.metric-value`, `.metric-meta`) | Up to four slots in one slab |
+| `.callout`, `.callout-info` / `-success` / `-warning` / `-danger`, `.callout--banner`, `.callout--compact` | `.signal` (warning), `.signal.is-info` / `.is-success` / `.is-danger` with `.signal-body` > `.signal-title` + `.signal-text` | Action as a secondary button on the right |
+| `.badge`, `.badge-success` / `-warning` / `-danger` / `-info` / `-neutral` | `.status.is-success` / `.is-warning` / `.is-danger` / `.is-info` / `.status`; `.count` for numbers; `.chip` for tags | `.is-plain` drops the fill |
+| `.status-indicator` | `.status` | 6 px square dot |
+| `.empty-state` (`-icon`, `-title`, `-text`, `-actions`), `.empty-state--compact` | `.empty` (`.empty-icon`, `.empty-title`, `.empty-text`) | Dashed; 26 px icon in an accent-soft well |
+| `.loading-state`, `.spinner`, `.skeleton-row`, `.skeleton-block` | `.skeleton` bars; `.button.is-busy` with the `loader` icon | |
+| `.field`, `.form-group` (label + control + help) | `.field-group` | In Birch, `.field` is the entry editor's field **slab** |
+| `.field-label`, `.field-help`, `.field-error`, `.input` | Unchanged | |
+| `.textarea`, `.input-lg`, `.input-search` | `textarea.input`, `.input`, `.search-field` > `.input` | |
+| `select.select`, `.dropdown-chevron` | `.select-box` > `select.input` + the `chev-down` icon | |
+| `.input-icon-wrap`, prefix addons | `.input-group` > `.prefix.well` + `.input` | |
+| `.checkbox-label` > `input` | `label.choice` > `input.check` (`input.radio`) | |
+| `label.switch` > `input` + `.switch__slider`, `.switch--sm`, `.switch--disabled` | `button.switch[role="switch"][aria-checked]` with two `<span>` cells (x, check) | The P56 markup keeps working |
+| `.segmented` > `.segmented-item.active` | `.segmented.well` > `button[aria-pressed]` | |
+| `.tabs` > `.tab.active`, `.tab-panel` | `.tabs[role="tablist"]` > `button[role="tab"][aria-selected]` | 2 px ink underline |
+| `.side-nav`, `.side-nav-item`, `.side-nav-chevron` | Unchanged: `.side-nav-item.active` or `aria-selected` | Ink bar for current; the chevron is the `chev-right` icon |
+| `.table-container` > `table.table`, `.cell-muted`, `.cell-numeric` | `.table` > `.table-head` + `.table-row` (or keep `table.table` inside the adoption layer); `.row-meta`, `.u-numeric` | Rows are slabs |
+| `.data-list` | `.list-rows` > `.list-row` (`.row-body`, `.row-title`, `.row-meta`, `.row-actions`) | |
+| `.dropdown-menu` > `.dropdown-item`, `.dropdown-divider`, `.dropdown-header`, `.dropdown-item-meta`, `.dropdown-empty` | `.menu` > `.menu-item`, `.menu-rule`, `.menu-head`, `.row-meta`, `.menu-note` | Menu shadow; never a form |
+| `.modal-header`, `.modal-title`, `.modal-body`, `.modal-footer`, `.modal-footer--split` | `.modal-content.dialog` > `.dialog-head` (`.dialog-title`, `.dialog-text`), `.dialog-body`, `.dialog-foot` | Keep the `.modal` + `.modal-backdrop` shell |
+| `.sheet-panel`, `.sheet-backdrop`, `.sheet-title`, `.sheet-body`, `.sheet-footer`, `.sheet--mobile-only`, `.drawer-header` / `-body` / `-footer` | `.modal.is-sheet` > `.modal-content.dialog` | Docked right |
+| `.main-actions-bar` > `.main-actions-left` / `.main-actions-right` | `.page-bar` > (actions) + `.page-bar-tools` | The More menu handles phones for both |
+| `.divider`, `.divider-labelled` | A gap; `.menu-rule` inside menus | |
+| `.page--narrow` | `.u-max-w-page-narrow` | |
+| `.grid-cols-1`, `.grid-cols-auto-fill`, `.grid-cols-auto-fit` | `.u-grid-auto-sm` / `.u-grid-auto` / `.u-grid-auto-lg`, `.card-grid` | |
+| `.birkly-icon--sm` | `.birkly-icon` (13 px) | Two sizes only: 13 and 26 |
+| `.u-bg-*`, `.u-border*`, `.u-elevation-*`, `.u-radius-*` | The role class (`.slab`, `.well`, `.frame` …) | The role decides fill, line, radius and shadow |
 
-These class names and their visual meaning are guaranteed across minor versions. Their presence is verified in CI, so a core refactor cannot silently delete one out from under you.
+#### Tokens
 
-**Page chrome**
+`--accent` changed meaning. In P56 it was mint; in Birch it is blue (on, selected, focus). Plugin CSS that painted a mint fill with `var(--accent)` now paints blue. Use `var(--mint)` only for the one main action. Otherwise decide whether you mean "selected" (`--accent-soft`, `--accent-line`) or "link" (`--accent-text`).
 
-`.page` · `.plugin-page` · `.page-header` · `.page-header-left` · `.page-header-actions` · `.breadcrumbs` · `.main-actions-bar` · `.section-header` · `.section-title` · `.section-description`
+Every P56 name that core still defines is listed below with the Birch token it resolves to today. Replace the left column with the middle one.
 
-**Panels**
+#### Surfaces
 
-`.card` · `.card-header` · `.card-title` · `.card-body` · `.card-footer`
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--canvas` | `--bg` |  |
+| `--surface-sunken` | `--surface-2` |  |
+| `--surface-raised` | `--surface` |  |
+| `--surface-hover` | `--surface-2` |  |
+| `--surface-active` | `--surface-3` |  |
+| `--surface-selected` | `--accent-soft` |  |
+| `--surface-inverse` | `--ink-float` |  |
+| `--overlay` | `--scrim` |  |
+| `--bg-primary` | `--surface` |  |
+| `--bg-secondary` | `--surface-2` |  |
+| `--bg-tertiary` | `--surface-2` |  |
+| `--bg-elevated` | `--surface` |  |
+| `--bg-hover` | `--surface-2` |  |
+| `--bg-overlay` | `--scrim` |  |
+| `--surface-1` | `--surface` |  |
+| `--surface-muted` | `--surface-2` |  |
+| `--color-neutral-200` | `--surface-3` |  |
+| `--gray-50` | `--surface-2` |  |
+| `--gray-100` | `--surface-2` |  |
+| `--surface-secondary` | `--surface-2` |  |
+| `--surface-color` | `--surface` |  |
+| `--bg-subtle` | `--surface-2` |  |
 
-Once content is already inside a `.card`, don't nest a second one — use `.card-section` to divide the body into divider-separated sub-blocks instead (a settings group, a fieldtype's options block). See [Admin design language § Card section](../01-admin/admin-design-language.md#card-section--stop-nesting-a-card-inside-a-card) for the markup. `.card-section` is documented and stable, but — unlike the classes listed above — its presence is **not yet** checked by CI (see the note at the end of this section).
+#### Text
 
-**Controls**
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--text-primary` | `--text` |  |
+| `--text-secondary` | `--text-2` |  |
+| `--text-tertiary` | `--text-3` |  |
+| `--text-inverse` | `--on-ink-float` |  |
+| `--text-link` | `--accent-text` |  |
+| `--text-link-hover` | `--accent-hover` |  |
+| `--color-black` | `--text` |  |
+| `--gray-500` | `--text-3` |  |
+| `--gray-800` | `--text` |  |
+| `--gray-900` | `--text` |  |
+| `--color-text` | `--text` |  |
+| `--color-text-secondary` | `--text-2` |  |
+| `--text-muted` | `--text-2` |  |
 
-`.btn` · `.btn-primary` · `.btn-secondary` · `.btn-outline` · `.btn-danger` · `.btn-sm` · `.btn-lg` · `.btn-icon`
+#### Lines
 
-**Forms**
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--border-subtle` | `--line` |  |
+| `--border-default` | `--line` |  |
+| `--border-control` | `--line-strong` |  |
+| `--border-control-hover` | `--text-3` | A text colour used as a line; prefer `--line-strong`. |
+| `--border-strong` | `--text-3` | A text colour used as a line; prefer `--line-strong`. |
+| `--field-border` | `--line` |  |
+| `--field-border-hover` | `--line-strong` |  |
+| `--field-border-focus` | `--accent` |  |
+| `--gray-200` | `--line` |  |
+| `--gray-300` | `--line` |  |
+| `--gray-400` | `--line-strong` |  |
+| `--border-light` | `--line` |  |
+| `--border-medium` | `--line` |  |
+| `--border-color` | `--line` |  |
+| `--color-border` | `--line` |  |
 
-`.field` · `.form-group` · `.input` · `.select` · `.textarea` · `.switch` · `.field-help` · `.field-error`
+#### Accent and mint
 
-**Data**
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--accent-active` | `--accent-hover` |  |
+| `--accent-muted` | `--accent-line` |  |
+| `--accent-focus` | `--accent` | `--accent` is blue in Birch (it was mint in P56). |
+| `--accent-text-hover` | `--accent-hover` |  |
+| `--accent-soft-hover` | `--accent-line` |  |
+| `--accent-border` | `--accent-line` |  |
+| `--ink-on-accent` | `--on-accent` |  |
+| `--control-track` | `--surface-3` |  |
+| `--control-track-hover` | `--line-strong` |  |
+| `--control-knob` | `--surface` |  |
+| `--primary` | `--mint` | Mint means the one main action. Use it only on `.button.is-main`. |
+| `--primary-50` | `--mint-50` | Mint tints are legacy. For a tint use `--accent-soft` (selected) or a status `-soft`. |
+| `--primary-100` | `--mint-100` |  |
+| `--primary-200` | `--mint-200` |  |
+| `--primary-300` | `--mint-300` |  |
+| `--primary-400` | `--mint-400` |  |
+| `--primary-500` | `--mint-500` |  |
+| `--primary-600` | `--mint-600` |  |
+| `--primary-700` | `--mint-700` | Never a text colour. |
+| `--primary-800` | `--mint-800` |  |
+| `--color-primary` | `--mint` | As `--primary`. |
+| `--color-primary-strong` | `--accent-text` |  |
+| `--color-primary-soft` | `--accent-soft` |  |
+| `--color-primary-muted` | `--accent-line` |  |
+| `--color-primary-border` | `--accent-line` |  |
 
-`.table` · `.table-container` · `.data-list` · `.badge`
+#### Status
 
-**Feedback and state**
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--success-surface` | `--success-soft` |  |
+| `--success-border` | `--success-soft` | Birch signals have no line; the soft fill is the edge. |
+| `--success-fg` | `--success` |  |
+| `--success-solid` | `--success` |  |
+| `--ink-on-success` | `--on-status` |  |
+| `--warning-surface` | `--warning-soft` |  |
+| `--warning-border` | `--warning-soft` |  |
+| `--warning-fg` | `--warning` |  |
+| `--warning-solid` | `--warning` |  |
+| `--ink-on-warning` | `--on-status` |  |
+| `--danger-surface` | `--danger-soft` |  |
+| `--danger-border` | `--danger-soft` |  |
+| `--danger-fg` | `--danger` |  |
+| `--danger-solid` | `--danger` |  |
+| `--ink-on-danger` | `--on-status` |  |
+| `--info-surface` | `--info-soft` |  |
+| `--info-border` | `--info-soft` |  |
+| `--info-fg` | `--info` |  |
+| `--info-solid` | `--info` |  |
+| `--ink-on-info` | `--on-status` |  |
+| `--neutral-surface` | `--surface-2` |  |
+| `--neutral-border` | `--line` |  |
+| `--neutral-fg` | `--text-2` |  |
+| `--status-dot-ok` | `--success` |  |
+| `--status-dot-ok-glow` | `--success` | Birch dots do not glow. |
+| `--status-dot-bad` | `--danger` |  |
+| `--status-dot-bad-glow` | `--danger` | Birch dots do not glow. |
+| `--success-50` | `--success-soft` |  |
+| `--success-100` | `--success-soft` |  |
+| `--success-200` | `--success-soft` |  |
+| `--success-500` | `--success` |  |
+| `--success-600` | `--success` |  |
+| `--success-700` | `--success` |  |
+| `--success-800` | `--success` |  |
+| `--error-50` | `--danger-soft` |  |
+| `--error-100` | `--danger-soft` |  |
+| `--error-200` | `--danger-soft` |  |
+| `--error-500` | `--danger` |  |
+| `--error-600` | `--danger` |  |
+| `--error-700` | `--danger` |  |
+| `--error-800` | `--danger` |  |
+| `--color-error` | `--danger` |  |
+| `--danger-100` | `--danger-soft` |  |
+| `--danger-700` | `--danger` |  |
+| `--warning-50` | `--warning-soft` |  |
+| `--warning-100` | `--warning-soft` |  |
+| `--warning-200` | `--warning-soft` |  |
+| `--warning-500` | `--warning` |  |
+| `--warning-600` | `--warning` |  |
+| `--warning-700` | `--warning` |  |
+| `--warning-800` | `--warning` |  |
+| `--warning-900` | `--warning` |  |
+| `--info-500` | `--info` |  |
+| `--danger-color` | `--danger` |  |
 
-`.callout` · `.empty-state` · `.skeleton` · `.spinner`
+#### Space
 
-**Navigation and overlays**
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--space-0` | `0` |  |
+| `--space-1` | `--s-1` |  |
+| `--space-2` | `--s-2` |  |
+| `--space-3` | `--s-3` |  |
+| `--space-4` | `--s-4` |  |
+| `--space-5` | `--s-5` |  |
+| `--space-6` | `--s-6` |  |
+| `--space-8` | `32px` (literal) | App UI stops at 24 px (`--s-6`); larger gaps are docs only. |
+| `--space-10` | `40px` (literal) | App UI stops at 24 px (`--s-6`). |
+| `--space-12` | `48px` (literal) | App UI stops at 24 px (`--s-6`). |
+| `--space-16` | `64px` (literal) | App UI stops at 24 px (`--s-6`). |
 
-`.tabs` · `.tab` · `.tab-panel` · `.modal` · `.modal-header` · `.modal-body` · `.modal-footer` · `.dropdown` · `.dropdown-item`
+#### Type
 
-`.tab`'s active state is a filled pill (`--surface-selected`), not an underline. For vertical secondary navigation, the equivalent component is `.side-nav` / `.side-nav-item` — same active/hover/focus rule as `.tab`, oriented vertically, with an optional `.side-nav-sub` for nested items. Like `.card-section`, `.side-nav` and `.side-nav-item` are documented in [Admin design language](../01-admin/admin-design-language.md) but not yet in the CI presence check below.
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--text-2xs` | `--size-caption` |  |
+| `--text-xs` | `--size-small` | Careful: `--text-2` is a colour, not a size. |
+| `--text-sm` | `--size-small` |  |
+| `--text-base` | `--size-body` |  |
+| `--text-md` | `--size-slab-title` |  |
+| `--text-lg` | `--size-title-l` |  |
+| `--text-xl` | `--size-page-title` |  |
+| `--text-2xl` | `--size-number` |  |
+| `--leading-tight` | `1.25` (literal) | Use the paired `--lh-*` token for the size. |
+| `--leading-snug` | `1.4` (literal) |  |
+| `--leading-normal` | `1.5` (literal) |  |
+| `--leading-relaxed` | `1.6` (literal) |  |
+| `--tracking-tight` | `--tracking-title` |  |
+| `--tracking-normal` | `0` (literal) |  |
+| `--tracking-label` | `0` | Sentence case, no tracking. |
+| `--font-family-mono` | `--font-mono` |  |
+| `--font-size-base` | `--size-body` |  |
+| `--font-medium` | `--weight-medium` |  |
 
-**Misc**
+#### Radius
 
-`.avatar` · `.divider` · `.birkly-icon`
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--radius-none` | `0` |  |
+| `--radius-sm` | `--r` |  |
+| `--radius-md` | `--r` |  |
+| `--radius-lg` | `--r` |  |
+| `--radius-pill` | `--r` | No pills in Birch; everything is 6 px. |
+| `--radius-xs` | `--r` |  |
+| `--radius-full` | `--r` | No pills in Birch; everything is 6 px. |
+| `--radius-round` | `--r` |  |
 
-Also contracted, though not in the CI presence check: every `u-*` helper, every documented token, the `.fieldtype-*` API, the action-zone classes `.main-actions-left` / `.main-actions-right` / `.main-actions-bar--sticky` / `.cell-actions` / `.btn-icon--edit` / `.btn-icon--danger`, and the newer `.card-section` / `.side-nav` / `.side-nav-item` (documented in [Admin design language](../01-admin/admin-design-language.md) but added after the current CI contract list was written, so don't rely on CI to flag a regression in these specifically — treat them as stable by documentation, not yet by automated enforcement).
+#### Elevation
 
-**Not contracted:** internal element parts not listed above (for example `.card-heading`, `.data-list-main`, `.tabs-v2-*` internals), page-level classes in `admin/css/pages/*.css`, and `.entries-smart-table` internals. Modifier suffixes documented in [Admin design language](../01-admin/admin-design-language.md) — `.card--compact`, `.badge-success`, `.modal--lg`, `.table--compact` and so on — are stable in practice but the list above is what CI guarantees.
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--elevation-0` | `none` |  |
+| `--elevation-1` | `none` | Slabs are flat. Only floats cast shadows. |
+| `--elevation-2` | `--shadow-float-2` |  |
+| `--elevation-3` | `--shadow-menu` |  |
+| `--elevation-inset` | `none` |  |
+| `--elevation-inset-strong` | `none` |  |
+| `--shadow-sm` | `none` | Slabs are flat. Only floats cast shadows. |
+| `--shadow-md` | `--shadow-float-2` |  |
+| `--shadow-lg` | `--shadow-float-2` |  |
+| `--shadow-xl` | `--shadow-menu` |  |
+| `--shadow-2xl` | `--shadow-menu` |  |
 
----
+#### Motion
 
-### 3. Rules for plugin CSS (all tiers)
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--motion-fast` | `--dur-1` |  |
+| `--motion-base` | `--dur-2` |  |
+| `--motion-slow` | `--dur-3` |  |
+| `--ease-out` | `--ease` |  |
+| `--ease-in-out` | `--ease` |  |
+| `--transition-fast` | `var(--dur-1) var(--ease)` | Write `var(--dur-1) var(--ease)`. |
+| `--transition-base` | `var(--dur-2) var(--ease)` | Write `var(--dur-2) var(--ease)`. |
 
-1. **Never restyle a core class.** No `.btn { … }`, no `.card { … }`, no `#media-modal .modal-content { … }`. Scope to `.{plugin}-*`, or to a root class of your own plus a core class if you genuinely must adjust layout inside your page (`.my-plugin-page .card { margin: 0 }` is tolerable; `.card { margin: 0 }` is not).
-2. **Tokens, not hex.** A plugin that hardcodes hex is broken in dark mode — that is the single most common plugin styling defect. Use `var(--surface)`, `var(--text-primary)`, `var(--border-subtle)` and friends.
-3. **No `!important` against core.** If you're losing a specificity fight with a core rule, you are almost certainly restyling something you shouldn't be.
-4. **No new blues.** Use `--info-surface` / `--info-border` / `--info-fg` / `--info-solid`. Shipping a Tailwind blue as an active-tab colour is the exact failure mode this token family exists to prevent.
-5. **Honour focus and reduced motion.** Never remove a focus outline without an equivalent replacement. Don't add unguarded looping animation — the global `prefers-reduced-motion` block covers transitions and animations, but a decorative loop is still a decorative loop.
-6. **Namespace everything** as `.{plugin}-*`. Do not use the `u-` prefix for private helpers; that prefix belongs to core.
-7. **Don't re-implement a contracted component.** If `.card` doesn't fit your case, that's a core gap — file it rather than shipping a ninth card family.
-8. **Respect the accent rules.** `--accent` is a fill and is 1.54:1 on white; `--accent-text` is the text ramp; `--ink-on-accent` is what goes on a mint fill. One mint-filled element per screen.
-9. **One page title.** Your page gets its title from the breadcrumb `.current` segment via `{plugin_page_header}`. Don't render an `<h1>`.
-10. **No box-in-box.** If a `.card` is already on the page and you're about to wrap a group of fields or options in another bordered, rounded, filled container *inside* that card's body, stop — use `.card-section` (a divider-separated sub-block with no border/background/radius of its own), more spacing (`u-stack-*`), or a plain `.divider` instead. This applies to plugin admin pages exactly as much as core: a fieldtype's options block or a plugin settings group nested inside `.card-body` is the same violation either way.
-11. **Text fields use `--field-border`, not `--border-control`.** If you're building your own input-like control in a Tier 1/2 stylesheet, border it with `--field-border` / `--field-border-hover` / `--field-border-focus` (the same family `.input`/`.select`/`.textarea` use), not `--border-control` — and never colour a text field's focus state with `--accent-focus` or any other green/mint token. A green-ish focus border on a field reads as "already validated", which is confusing right next to the platform's own `.input.is-valid` success state. `--border-control` is for buttons, custom-selects and other non-text-field controls.
-12. **Never reuse the literal `data-theme` attribute for anything of your own.** Dark mode is scoped by the exact selector `[data-theme="dark"]` on `<html>`/`<body>`; a CSS attribute selector matches *any* element carrying that attribute, not only the real theme root. If your plugin renders anything theme-related — a theme preview swatch, an appearance-option button, a per-item "which mode is this" marker — name that attribute something else (`data-theme-option`, `data-my-plugin-theme`, anything but the bare `data-theme`), or it will silently and locally inherit dark-surface tokens regardless of the page's actual theme.
+#### Sizes, focus and layering
 
-A Tier 1 stylesheet that follows these rules looks like this:
+| P56 name | Birch token | Note |
+|----------|-------------|------|
+| `--control-md` | `--control` |  |
+| `--control-lg` | `--chrome-row` | Deprecated; there is one control height per density. |
+| `--chrome-stack-gap` | `--s-6` |  |
+| `--chrome-content-gap` | `--s-6` |  |
+| `--btn-secondary-bg` | `--surface` |  |
+| `--btn-secondary-hover` | `--surface-2` |  |
+| `--sidebar-width-collapsed` | `--sidebar-rail` |  |
+| `--shell-edge-padding` | `--gutter` |  |
+| `--focus-color` | `--accent` |  |
+| `--focus-ring` | `var(--focus-outline)` | Birch focus is an outline, not a box-shadow ring. |
+| `--z-index-modal` | `--z-modal` |  |
+
+### 4. Rules for plugin CSS
+
+1. **Never restyle a core class.** No `.button { … }`, no `.slab { … }`, no `#media-modal .modal-content { … }`. Style your own names. If you must adjust layout inside your page, scope it under your root: `.webhooks-page .table-row { grid-template-columns: … }` is fine, `.table-row { … }` is not.
+2. **Tokens, not literals.** No hex, `rgb()`, `hsl()` or `oklch()`. Colour, space, radius, shadow, duration and z-index all come from `var(--…)`.
+3. **Take the role's surface.** A slab is `--surface`, 6 px radius, 16 px padding, no border, no shadow. Separate slabs with gaps (4 px stacked, 8 px in a grid), never with borders. Only floats and menus cast shadows (`--shadow-sheet`, `--shadow-menu`, `--shadow-float-2`).
+4. **One mint per view.** `--mint` fills exactly one main action. Blue (`--accent`) means on, selected, link or focus. Status colours appear only inside signals and status badges.
+5. **Mint and blue are fills.** Text on mint is `--on-mint`; blue text is `--accent-text`.
+6. **Sentence case, whole pixels.** No `text-transform: uppercase`, no letter-spaced labels, no half-pixel sizes or offsets.
+7. **Follow density.** Use `--control`, `--control-sm`, `--row-list`, `--row-table` and the `--size-*` / `--lh-*` pairs instead of fixed heights and font sizes.
+8. **Stepped motion from tokens.** Durations are `--dur-1` … `--dur-4`, `--dur-frame` and `--dur-px`, with `--ease` for anything not stepped. No `transition: all`, no hover scale, no looping decoration, and no reduced-motion block of your own: the global one covers token durations and every animation.
+9. **Icons through the registry.** Use `birkly_icon()` / `Birkly.icon()` at 13 or 26 px, sized only with `var(--icon)` / `var(--icon-l)`. No emoji, and no inline SVG where a registry icon exists.
+10. **Keep focus visible.** Never remove an outline without an equal replacement (`outline: var(--focus-outline); outline-offset: var(--focus-outline-offset)`).
+11. **No `!important` against core.** Losing a specificity fight with a kit rule usually means you are restyling something you shouldn't.
+12. **Never reuse the bare `data-theme` attribute.** Dark mode is scoped by `[data-theme="dark"]` on `<html>` / `<body>`, and an attribute selector matches any element. Name yours `data-theme-option` or similar.
+
+A stylesheet that follows these rules:
 
 ```css
-/* plugins/my-plugin/admin/my-plugin.css */
+/* plugins/webhooks/admin/webhooks.css */
 
-.my-plugin-canvas {
-  position: relative;
-  min-height: 24rem;
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+.delivery-log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-1);
 }
 
-.my-plugin-node {
-  padding: var(--space-3);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+.delivery-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--row-list);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--r);
   background: var(--surface);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
-  transition: border-color var(--motion-fast) var(--ease-out);
+  font-size: var(--size-body);
+  line-height: var(--lh-body);
+  transition: box-shadow var(--dur-1) var(--ease);
 }
 
-.my-plugin-node:hover { border-color: var(--border-control-hover); }
+.delivery-row.is-selected { box-shadow: 0 0 0 2px var(--accent); }
 
-.my-plugin-node.is-selected {
-  border-color: var(--accent-focus);
-  background: var(--accent-soft);
-}
-
-.my-plugin-node:focus-visible {
-  outline: var(--focus-outline);
-  outline-offset: var(--focus-outline-offset);
+.delivery-row-time {
+  color: var(--text-3);
+  font-size: var(--size-caption);
+  line-height: var(--lh-caption);
+  font-variant-numeric: tabular-nums;
 }
 ```
 
-No hex, no `!important`, no core class touched, dark mode handled by the tokens.
+It uses no literals and no borders, touches no core class, and handles dark mode, density and selection through tokens.
 
----
+### 5. Worked example: a Birch plugin page
 
-### 4. Legacy token aliases
-
-Older plugin CSS references token names that no longer exist as primary definitions: `--color-primary`, `--bg-elevated`, `--border-color`, `--gray-200`, `--shadow-md`, `--radius-full`, `--error-600`, `--transition-fast` and similar.
-
-`admin/css/core/compat-tokens.css` keeps every one of those working. It contains **only** aliases of the form `--old-name: var(--new-name)`, no rules and no classes, and it is imported immediately after the canonical token file. That means existing plugin CSS not only keeps working — it also picks up the new design, because each alias points at a semantic token rather than a frozen value.
-
-Two things to know:
-
-1. **Core admin CSS may not use any aliased name.** That is enforced in CI, so the alias list can only shrink.
-2. **New plugin CSS should use the canonical names.** The aliases exist for compatibility and will be removed in a future plugin-adoption phase. Writing new code against them means signing up for a migration you could have skipped.
-
-Common migrations:
-
-| Legacy name | Canonical replacement |
-|-------------|----------------------|
-| `--color-primary`, `--primary-500` | `--accent` (fill) or `--accent-text` (text) |
-| `--color-primary-strong`, `--primary-700` | `--accent-text` — **`--primary-700` fails AA as text** |
-| `--color-primary-soft`, `--primary-50` | `--accent-soft` |
-| `--bg-primary`, `--bg-elevated`, `--surface-1` | `--surface` |
-| `--bg-secondary`, `--bg-tertiary`, `--surface-muted` | `--surface-sunken` |
-| `--bg-hover` | `--surface-hover` |
-| `--bg-overlay` | `--overlay` |
-| `--border-light`, `--border-color`, `--gray-200` | `--border-subtle` |
-| `--border-medium`, `--gray-300` | `--border-default` |
-| `--gray-400` | `--border-control` |
-| `--gray-500` | `--text-tertiary` |
-| `--gray-800`, `--gray-900`, `--color-black` | `--text-primary` |
-| `--error-*`, `--danger-100`, `--danger-700`, `--color-error` | `--danger-surface` / `--danger-border` / `--danger-fg` / `--danger-solid` |
-| `--success-50/100/…`, `--warning-50/…` | `--{sem}-surface` / `-border` / `-fg` / `-solid` |
-| `--info-500` | `--info-solid` |
-| `--shadow-sm/md/lg/xl` | `--elevation-1` / `-2` / `-3` |
-| `--radius-xs` | `--radius-sm` |
-| `--radius-full`, `--radius-round` | `--radius-pill` |
-| `--transition-fast`, `--transition-base` | `--motion-fast` / `--motion-base` plus `--ease-out` |
-| `--font-size-base` | `--text-base` |
-| `--font-medium` | `--weight-medium` |
-| `--font-family-mono` | `--font-mono` |
-| `--z-index-modal` | `--z-modal` |
-
-That table is the complete alias set by family — if a legacy name you use is not in `compat-tokens.css`, it is **not** aliased and resolves to nothing. Spacing and radius are the common trap: there is no `--spacing-*` or `--border-radius-*` alias, so CSS using those names has no fallback. Move it to `--space-1` … `--space-16` and `--radius-sm` / `-md` / `-lg` / `-pill`.
-
-Full token reference: [Admin design language](../01-admin/admin-design-language.md).
-
----
-
-### 5. Worked example — a complete Tier 0 plugin page
-
-This is a full plugin admin template. It ships **no CSS**, uses only contracted classes and `u-*` helpers, and covers page chrome, a stat row, a card, a table with row actions, a form, and a modal.
+The template below ships one line of CSS, the table's columns. It covers the page bar, a metric bar, a signal, a table, a settings frame, an empty state and a dialog.
 
 ```html
-<!-- plugins/my-plugin/admin/my-plugin.html -->
+<!-- plugins/webhooks/admin/webhooks.html -->
 
 {plugin_page_header}
 
-<div class="my-plugin-page plugin-page">
+<div class="webhooks-page plugin-page" data-birch>
 
-  <!-- Toolbar: primary action left, search/filters right -->
-  <div class="main-actions-bar">
-    <div class="main-actions-left">
-      <button type="button" class="btn btn-primary" id="mp-new">New webhook</button>
-    </div>
-    <div class="main-actions-right">
-      <input class="input input-search" type="search" id="mp-search" placeholder="Search webhooks">
-      <div class="segmented" role="group" aria-label="View">
-        <button type="button" class="segmented-item active" aria-pressed="true">All</button>
-        <button type="button" class="segmented-item" aria-pressed="false">Failing</button>
+  <div class="page-bar">
+    <button type="button" class="button is-main" id="webhook-new"><?= birkly_icon('plus') ?>New webhook</button>
+    <button type="button" class="button"><?= birkly_icon('download') ?>Export</button>
+    <div class="page-bar-tools">
+      <div class="search-field"><?= birkly_icon('search') ?><input class="input" type="search" placeholder="Search webhooks" aria-label="Search webhooks"></div>
+      <div class="segmented well" role="group" aria-label="Filter">
+        <button type="button" aria-pressed="true">All <span class="count">12</span></button>
+        <button type="button" aria-pressed="false">Failing <span class="count is-warning">2</span></button>
       </div>
     </div>
   </div>
 
-  <div class="page-body u-stack-6">
-
-    <!-- Metrics -->
-    <div class="u-grid-auto">
-      <div class="stat">
-        <span class="stat-label">Delivered today</span>
-        <span class="stat-value">1,284</span>
-        <span class="stat-meta">99.4% success</span>
-      </div>
-      <div class="stat">
-        <span class="stat-label">Failing endpoints</span>
-        <span class="stat-value">2</span>
-        <span class="stat-meta">Retrying</span>
-      </div>
+  <div class="metrics">
+    <div class="metric">
+      <span class="metric-label"><?= birkly_icon('send') ?>Delivered today</span>
+      <span class="metric-value">1,284</span>
+      <span class="metric-meta">99.4% success</span>
     </div>
-
-    <!-- A notice -->
-    <div class="callout callout-info">
-      <div class="callout-body">
-        <p class="callout-title">Retries are enabled</p>
-        <p>Failed deliveries are retried three times with exponential backoff.</p>
-      </div>
+    <div class="metric">
+      <span class="metric-label"><?= birkly_icon('alert') ?>Failing endpoints</span>
+      <span class="metric-value">2</span>
+      <span class="metric-meta">Retrying</span>
     </div>
-
-    <!-- Data panel: flush card wrapping a table -->
-    <section class="card card--flush">
-      <header class="card-header">
-        <div class="card-heading">
-          <h2 class="card-title">Endpoints</h2>
-          <p class="card-description">Every URL this plugin delivers events to.</p>
-        </div>
-        <div class="card-actions">
-          <button type="button" class="btn btn-sm">Export</button>
-        </div>
-      </header>
-
-      <div class="card-body">
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Endpoint</th>
-                <th>Event</th>
-                <th>Status</th>
-                <th class="numeric">Deliveries</th>
-                <th class="col-shrink"></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><span class="cell-title">https://example.com/hooks/orders</span></td>
-                <td><span class="cell-muted">order.created</span></td>
-                <td><span class="badge badge-success">Active</span></td>
-                <td class="numeric u-numeric">842</td>
-                <td class="cell-actions">
-                  <button type="button" class="btn-icon btn-icon-sm btn-icon--edit" aria-label="Edit endpoint">
-                    <span data-icon="pencil-simple" data-icon-size="14"></span>
-                  </button>
-                  <button type="button" class="btn-icon btn-icon-sm btn-icon--danger" aria-label="Delete endpoint">
-                    <span data-icon="trash" data-icon-size="14"></span>
-                  </button>
-                </td>
-              </tr>
-              <tr>
-                <td><span class="cell-title">https://example.com/hooks/refunds</span></td>
-                <td><span class="cell-muted">order.refunded</span></td>
-                <td><span class="badge badge-danger">Failing</span></td>
-                <td class="numeric u-numeric">17</td>
-                <td class="cell-actions">
-                  <button type="button" class="btn-icon btn-icon-sm btn-icon--edit" aria-label="Edit endpoint">
-                    <span data-icon="pencil-simple" data-icon-size="14"></span>
-                  </button>
-                  <button type="button" class="btn-icon btn-icon-sm btn-icon--danger" aria-label="Delete endpoint">
-                    <span data-icon="trash" data-icon-size="14"></span>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Required states. Toggle the `hidden` attribute from JS. -->
-        <div class="empty-state empty-state--compact" id="mp-empty" hidden>
-          <div class="empty-state-icon"><span data-icon="paper-plane-tilt" data-icon-size="20"></span></div>
-          <p class="empty-state-title">No endpoints yet</p>
-          <p class="empty-state-text">Add an endpoint to start receiving events.</p>
-          <div class="empty-state-actions">
-            <button type="button" class="btn btn-primary">New webhook</button>
-          </div>
-        </div>
-
-        <div class="loading-state" id="mp-loading" hidden>Loading endpoints…</div>
-
-        <div class="error-state" id="mp-error" hidden>
-          <div class="empty-state-icon"><span data-icon="warning" data-icon-size="20"></span></div>
-          <p class="empty-state-title">Couldn't load endpoints</p>
-          <p class="empty-state-text">The plugin API did not respond.</p>
-          <div class="empty-state-actions">
-            <button type="button" class="btn">Retry</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Settings form -->
-    <section class="card">
-      <header class="card-header">
-        <h2 class="card-title">Delivery settings</h2>
-      </header>
-      <form class="card-body u-stack-4 u-max-w-measure-lg" id="mp-settings">
-        <div class="field">
-          <label class="field-label" for="mp-timeout">
-            Timeout <span class="field-required">*</span>
-          </label>
-          <input class="input" id="mp-timeout" name="timeout" type="number" value="10" required>
-          <p class="field-help">Seconds to wait for a 2xx response before treating the delivery as failed.</p>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="mp-signature">Signature algorithm</label>
-          <select class="select" id="mp-signature" name="signature">
-            <option value="sha256">HMAC SHA-256</option>
-            <option value="sha512">HMAC SHA-512</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label class="field-label" for="mp-notes">Internal notes</label>
-          <textarea class="textarea" id="mp-notes" name="notes" rows="3"></textarea>
-          <p class="field-error" id="mp-notes-error" hidden>Notes are limited to 500 characters.</p>
-        </div>
-
-        <div class="u-row u-justify-between">
-          <label class="checkbox-label">
-            <input type="checkbox" name="retry" checked>
-            Retry failed deliveries
-          </label>
-          <label class="switch">
-            <input type="checkbox" name="enabled" checked>
-            <span class="switch__slider"></span>
-          </label>
-        </div>
-      </form>
-      <footer class="card-footer">
-        <button type="submit" form="mp-settings" class="btn btn-primary">Save settings</button>
-        <button type="button" class="btn btn-ghost">Reset</button>
-      </footer>
-    </section>
-
   </div>
+
+  <div class="signal">
+    <?= birkly_icon('alert') ?>
+    <div class="signal-body">
+      <p class="signal-title">2 endpoints are failing</p>
+      <p class="signal-text">Deliveries retry three times with backoff.</p>
+    </div>
+    <button type="button" class="button is-small">Review</button>
+  </div>
+
+  <div class="table" role="table" aria-label="Endpoints">
+    <div class="table-head" role="row"><span>Endpoint</span><span>Event</span><span>Status</span><span></span></div>
+    <div class="table-row" role="row">
+      <span class="row-body"><span class="row-title">https://example.com/hooks/orders</span><span class="row-meta mono">order.created</span></span>
+      <span>842 deliveries</span>
+      <span><span class="status is-success">Active</span></span>
+      <span><button type="button" class="icon-button" aria-label="Endpoint menu"><?= birkly_icon('dots') ?></button></span>
+    </div>
+  </div>
+
+  <div class="empty" id="webhooks-empty" hidden>
+    <span class="empty-icon"><?= birkly_icon('send') ?></span>
+    <p class="empty-title">No endpoints yet</p>
+    <p class="empty-text">Add an endpoint to start receiving events.</p>
+  </div>
+
+  <section class="frame">
+    <div class="frame-head">
+      <div class="frame-head-body">
+        <h2 class="frame-title">Delivery settings</h2>
+        <p class="frame-text">Applies to every endpoint.</p>
+      </div>
+    </div>
+    <div class="setting-rows">
+      <div class="setting-row">
+        <div class="setting-label"><label for="wh-timeout">Timeout</label><small class="field-help">Seconds to wait for a 2xx response.</small></div>
+        <div class="setting-value"><input class="input" id="wh-timeout" type="number" value="10"></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-label"><span class="u-label">Retry failed deliveries</span></div>
+        <div class="setting-value">
+          <button type="button" class="switch" role="switch" aria-checked="true" aria-label="Retry failed deliveries"><span><?= birkly_icon('x') ?></span><span><?= birkly_icon('check') ?></span></button>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
-<!-- Modal: add / edit endpoint -->
-<div class="modal" id="mp-modal">
-  <div class="modal-content modal--md">
-    <header class="modal-header">
-      <h2 class="modal-title" id="mp-modal-title">New webhook</h2>
-      <button type="button" class="modal-close" aria-label="Close">&times;</button>
-    </header>
-    <div class="modal-body">
-      <form id="mp-endpoint-form" class="u-stack-4">
-        <div class="field">
-          <label class="field-label" for="mp-url">Endpoint URL <span class="field-required">*</span></label>
-          <input class="input" id="mp-url" name="url" type="url" required>
-        </div>
-        <div class="field">
-          <label class="field-label" for="mp-event">Event</label>
-          <select class="select" id="mp-event" name="event">
-            <option value="order.created">order.created</option>
-            <option value="order.refunded">order.refunded</option>
-          </select>
-        </div>
-      </form>
+<div class="modal" id="webhook-modal">
+  <div class="modal-backdrop" data-modal-dismiss></div>
+  <div class="modal-content dialog" role="dialog" aria-modal="true" aria-labelledby="webhook-modal-title">
+    <div class="dialog-head">
+      <div><h2 class="dialog-title" id="webhook-modal-title">New webhook</h2><p class="dialog-text">We sign every delivery with your secret.</p></div>
+      <button type="button" class="icon-button" data-modal-dismiss aria-label="Close"><?= birkly_icon('x') ?></button>
     </div>
-    <footer class="modal-footer">
-      <button type="button" class="btn btn-secondary">Cancel</button>
-      <button type="submit" form="mp-endpoint-form" class="btn btn-primary">Save</button>
-    </footer>
+    <form class="dialog-body" id="webhook-form">
+      <div class="slab">
+        <div class="field-group">
+          <label class="field-label" for="wh-url">Endpoint URL</label>
+          <input class="input" id="wh-url" name="url" type="url" required>
+        </div>
+      </div>
+    </form>
+    <div class="dialog-foot">
+      <button type="button" class="button is-quiet" data-modal-dismiss>Cancel</button>
+      <button type="submit" form="webhook-form" class="button is-main">Save</button>
+    </div>
   </div>
 </div>
 ```
 
-Notes on the example:
+Notes:
 
-- `{plugin_page_header}` emits the `.page-header` + `.breadcrumbs` block via `birkly_render_plugin_page_breadcrumbs()`. The last segment becomes the page title in the topbar. There is no `<h1>` anywhere in the template.
-- Exactly one `.btn-primary` is visible per view.
-- `hidden` is the state switch, not `style="display:none"` — core declares `[hidden] { display: none }` after every component, so it beats a component's own `display: flex`.
-- `data-icon` placeholders are hydrated by `Birkly.initIcons(document)`; in PHP use `birkly_icon('trash', ['size' => 14])`.
-- Toasts and confirmations come from `BirklyFeedback.toast(...)` and `await BirklyFeedback.confirm(...)`. Don't use `alert()` or `confirm()`.
-
----
+- **One mint per view.** New webhook is the page's mint action. The dialog is its own view, and Save is the only mint in it.
+- **Phones.** Below 768 px the page bar keeps New webhook and moves Export, the search and the filter into the More menu, with no code of your own. The kit's `.metrics` and `.table` also reflow.
+- **Opening the dialog.** Add `.active` to the `.modal` from your script (`document.getElementById('webhook-modal').classList.add('active')`). Anything with `data-modal-dismiss` inside it closes it again.
+- **Table columns.** A `div.table` lays out its head and rows on `--table-columns`. Set it once in your stylesheet: `.webhooks-page .table { --table-columns: minmax(0, 1fr) 140px 100px 32px; }`.
+- **States.** Toggle states with the `hidden` attribute, not `style="display:none"`.
+- **Plain HTML templates.** When you can't call PHP, use `<span data-icon="send"></span>` and `Birkly.initIcons(root)`.
+- **Feedback.** Toasts and confirmations come from `BirklyFeedback.toast(…)` and `await BirklyFeedback.confirm(…)`, never `alert()` or `confirm()`.
+- **Money.** Format it with `Birkly.money(minor, currency)` or `birkly_money()`.
 
 ### 6. Fieldtypes
 
-A fieldtype ships outside `admin/`, so it gets its own frozen CSS contract in `admin/css/plugins/fieldtype-api.css`. Every class name there is stable; only the values behind them change when the design language changes, which means an existing fieldtype picks up a redesign without a single markup edit.
+Fieldtypes own their presentation, and core provides the shared vocabulary they build on.
 
-**Prefer the shared components first** — `.card`, `.btn`, `.input`, `.field`, `.callout`, `.empty-state`, `.badge` and the `u-*` helpers. Use the `.fieldtype-*` classes for the three things components don't cover: the toolbar rail, the preview grid, and the async states of a field editor.
+| Method (`fieldtypes/BaseField.php`) | Returns |
+|--------------------------------------|---------|
+| `getIcon()` | A registry icon name for the collection builder and the Add a field dialog (empty string = the generic fieldtype icon) |
+| `getTypeLabel()` | Sentence-case type name ("Short text") |
+| `getDescription()` | One sentence-case line for the Add a field dialog |
+| `getCSS()` | The editor widget's CSS |
+| `getListCSS()` | CSS for `renderListCell()` output on entries lists |
 
-| Class | Purpose |
-|-------|---------|
-| `.fieldtype-wrapper` | Padded panel container: `--surface`, hairline border, `--radius-md` |
-| `.fieldtype-with-toolbar` | Container for an editor that has a toolbar rail — clips its children so the toolbar sits flush |
-| `.fieldtype-toolbar` | Sunken toolbar band with a bottom hairline; stacks vertically below 768px |
-| `.fieldtype-toolbar-group` | Group of toolbar controls with a trailing divider |
-| `.fieldtype-toolbar-spacer` | Pushes the remaining toolbar controls to the trailing edge |
-| `.fieldtype-content` | The editing surface. Shows a focus outline on `:focus-within` |
-| `.fieldtype-preview-grid` | `auto-fill, minmax(7.5rem, 1fr)` thumbnail grid |
-| `.fieldtype-preview-list` | Vertical preview stack |
-| `.fieldtype-preview-item` | One preview tile; border brightens on hover |
-| `.fieldtype-preview-item-actions` | Absolutely positioned action cluster, revealed on hover **or** `:focus-within` |
-| `.fieldtype-empty-state` | Centred empty block matching the admin's `.empty-state` |
-| `.fieldtype-empty-state-icon` | 44px icon tile |
-| `.fieldtype-empty-state-text` | Secondary copy, capped at `--measure-sm` |
-| `.fieldtype-loading` | Centred spinner block |
-| `.fieldtype-error` | Danger-toned inline error panel |
-| `.fieldtype-help` | Small tertiary help text below the field |
+- Build editor widgets from kit classes: `.input`, `.select-box`, `.button`, `label.switch`, `.is-mono`, `.well`, `.dashed` for drop zones.
+- The frozen `.fieldtype-*` API in `admin/css/plugins/fieldtype-api.css` covers the toolbar rail, the preview grid and async states: `.fieldtype-wrapper`, `.fieldtype-with-toolbar`, `.fieldtype-toolbar`, `-toolbar-group`, `-toolbar-spacer`, `.fieldtype-content`, `.fieldtype-preview-grid`, `-preview-list`, `-preview-item`, `-preview-item-actions`, `.fieldtype-empty-state` (with `-icon` and `-text`), `.fieldtype-loading`, `.fieldtype-error` and `.fieldtype-help`.
+- List cells use `.ft-list-row`, `.ft-list-text`, `.ft-list-muted`, `.ft-list-mono`, `.ft-list-badge`, `.ft-list-empty` and `.ft-list-image-square` (in `components/tables.css`).
+- The entry editor places each field in its own slab (`.entry-field`), so a widget sits inside a slab. Its inputs are therefore `--surface-2` at rest; don't wrap the widget in a second box.
+- **A fieldtype never adds a mint or red button to the editor.** The page's mint action is Save.
 
-Example:
+Fieldtype CSS follows the same rules as plugin CSS: tokens only, no `!important`, and no restyling of core classes or of another fieldtype's classes.
 
-```html
-<div class="fieldtype-with-toolbar" data-fieldtype="gallery">
-  <div class="fieldtype-toolbar">
-    <div class="fieldtype-toolbar-group">
-      <button type="button" class="btn btn-sm">Add images</button>
-      <button type="button" class="btn btn-sm">Reorder</button>
-    </div>
-    <div class="fieldtype-toolbar-spacer"></div>
-    <span class="badge badge-neutral u-numeric">4</span>
-  </div>
+### 7. Icons
 
-  <div class="fieldtype-content">
-    <div class="fieldtype-preview-grid">
-      <figure class="fieldtype-preview-item">
-        <img src="…" alt="">
-        <div class="fieldtype-preview-item-actions">
-          <button type="button" class="btn-icon btn-icon-xs btn-icon--danger" aria-label="Remove">…</button>
-        </div>
-      </figure>
-    </div>
+Use registry names everywhere: in templates (`birkly_icon('send')`), in JS (`Birkly.icon('send')`), in `getIcon()`, and for your sidebar item (`navigation.icon` in `plugin.json` and `sidebar.icon` in `register_plugin_admin_meta()`). A registry name draws a 13 px Birch icon with its hover gesture. A plugin's own inline `<svg>` is still accepted as a fallback, sized to the 13 px box, but it has no gesture. See [Plugin navigation icon](plugin-navigation-icon.md).
 
-    <div class="fieldtype-empty-state" hidden>
-      <div class="fieldtype-empty-state-icon">…</div>
-      <p class="fieldtype-empty-state-text">No images selected yet.</p>
-    </div>
+The full set, sizes, the grid alphabet and the gesture list are in [Admin design language § Icons](../01-admin/admin-design-language.md#6-icons). To turn a gesture off, for example on a drag handle, pass `['gesture' => false]` or `data-icon-gesture="false"`. To play one from script, for example when your count goes up, call `Birkly.iconPlay(el)`.
 
-    <div class="fieldtype-loading" hidden></div>
-  </div>
-</div>
+#### Icon names
 
-<p class="fieldtype-help">Drag to reorder. The first image is used as the thumbnail.</p>
-<div class="fieldtype-error" hidden>Upload failed — the file exceeds the size limit.</div>
-```
+Pre-Birch icon names resolve to Birch icons through aliases in `core/icon_data.php`. The aliases are removed with the token aliases, so switch to the Birch name:
 
-Fieldtypes that ship their own CSS follow the same rules as Tier 1 plugin CSS: tokens only, no `!important`, no restyling of core or `.fieldtype-*` classes belonging to someone else.
+| P56 name | Birch icon | P56 name | Birch icon |
+|----------|------------|----------|------------|
+| `archive` | `box` | `gauge` | `dashboard` |
+| `arrow-counter-clockwise` | `history` | `gear` | `sliders` |
+| `arrows-clockwise` | `refresh` | `image` | `media` |
+| `arrows-in` | `collapse` | `import` | `download` |
+| `arrows-out` | `expand` | `layout` | `template` |
+| `article` | `news` | `list-checks` | `list` |
+| `calendar-clock` | `calendar` | `magnifying-glass` | `search` |
+| `caret-down` | `chev-down` | `music-notes` | `music` |
+| `caret-left` | `chev-left` | `paper-plane-tilt` | `send` |
+| `caret-right` | `chev-right` | `pencil-simple` | `pencil` |
+| `caret-up` | `chev-up` | `question` | `help` |
+| `chat-circle` | `chat` | `shopping-bag` | `bag` |
+| `check-square` | `check-circle` | `sign-out` | `log-out` |
+| `circle-dot` | `select` | `sliders-horizontal` | `sliders` |
+| `dots-six-vertical` | `grip` | `speedometer` | `dashboard` |
+| `dots-three-vertical` | `dots` | `squares-four` | `grid` |
+| `envelope` | `mail` | `stack` | `layers` |
+| `export` | `upload` | `text-aa` | `type` |
+| `file-text` | `content` | `toggle-left` | `toggle` |
+| `folder-root` | `folder` | `warning` | `alert` |
 
----
+Every other pre-Birch name was already a Birch name: `bell`, `plus`, `trash`, `x`, `check`, `info`, `users`, `user`, `folder`, `copy`, `link`, `sun`, `moon`, `monitor`, `globe`, `shield`, `play`, `stop`, `sparkle`, `hash`, `calendar`, `clock`, `palette`, `tag`, `map-pin`, `phone`, `code`, `list`.
 
-### 7. Review checklist before you publish
+### 8. Review checklist before you publish
 
-- [ ] No hex, `rgb()` or `hsl()` literal in plugin CSS — tokens only
-- [ ] No selector that matches a bare core class
-- [ ] No `!important`
-- [ ] Every selector namespaced `.{plugin}-*` (or scoped under your page root)
-- [ ] Screens verified in **both** light and dark themes
-- [ ] Exactly one `.btn-primary` visible per view; no page `<h1>`
-- [ ] Empty, loading and error states present for every async region
-- [ ] Focus visible on every interactive element; Escape closes overlays; focus trapped and restored in modals
-- [ ] Text contrast meets AA (4.5:1 body, 3:1 for ≥18px text and UI boundaries)
-- [ ] `--accent` and `--primary-700` never used as a text colour; `--ink-on-accent` on every mint fill
-- [ ] Checked at 640 / 768 / 1024 / 1280 / 1440+ with no unintended horizontal scroll
-- [ ] No `.card` nested inside another `.card`'s body — `.card-section`, spacing or a `.divider` instead
-- [ ] Any custom text-like input uses `--field-border` / `-hover` / `-focus`, and its focus state is never accent/green
-- [ ] No literal `data-theme="light"` / `"dark"` / `"system"` attribute anywhere in plugin markup or JS other than the real theme root
+- [ ] `data-birch` on the `.plugin-page` root; no page `<h1>`; the breadcrumb comes from `{plugin_page_header}`
+- [ ] Every block answers the four questions: frames hold slabs, slabs hold wells, floats hold slabs, and nothing is boxed without a role
+- [ ] No border or shadow on a slab; gaps of 4 / 8 / 24 px instead
+- [ ] Exactly one visible `.button.is-main` per view (page, dialog, sheet); buttons inside signals are secondary
+- [ ] No colour literal in plugin CSS; blue and mint never as text colour; text on mint is `--on-mint`
+- [ ] Checked in light and dark, and in Compact, Comfortable and Large
+- [ ] Checked at 390, 768, 1024, 1280 and 1440 px; the page bar collapses into More on a phone
+- [ ] Empty, loading and error states for every async region
+- [ ] Focus visible on every control; icon buttons have `aria-label`; Escape closes dialogs
+- [ ] Icons via the registry at 13 / 26 px; no emoji; sidebar icon is a registry name
+- [ ] Durations are tokens; no `transition: all`, no scale, no own reduced-motion block
+- [ ] Sentence case everywhere
+- [ ] No P56 class, token or icon name from the rename tables in new code
 
 ## Related
 
-- [Admin design language](../01-admin/admin-design-language.md) — full token, helper and component reference
-- [Admin design system](../01-admin/design-system.md) — short overview, icons and theming entry points
-- [Admin chrome and action zones](../01-admin/admin-chrome-action-zones.md) — where each kind of action belongs
-- [Plugin development](plugin-development.md) — structure, permissions and packaging
+- [Admin design language](../01-admin/admin-design-language.md): roles, tokens, density, components, shell, icons, motion, CI rules
+- [Admin design system](../01-admin/design-system.md): short orientation
+- [Admin chrome and action zones](../01-admin/admin-chrome-action-zones.md): where each kind of action belongs
+- [Plugin development](plugin-development.md): structure, permissions and packaging
 - [Plugin navigation icon](plugin-navigation-icon.md)
 - [Field types](../02-content/field-types.md)
 - [Security and review](security-and-review.md)

@@ -195,7 +195,7 @@
   border: 2px solid var(--line);
   border-block-start-color: var(--accent-line);
   border-radius: 50%;
-  animation: fieldtype-spin 0.6s linear infinite;
+  animation: fieldtype-spin calc(var(--dur-frame) * 5) linear infinite;
 }
 
 @keyframes fieldtype-spin {

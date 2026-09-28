@@ -125,7 +125,7 @@
   color: var(--danger);
 }
 [data-birch] .btn-danger:hover { border-color: var(--danger); }
-[data-birch] .button.is-busy .birkly-icon { animation: birch-spin var(--dur-px) steps(8) infinite; }
+[data-birch] .button.is-busy .birkly-icon:not([data-gesture="chase"]) { animation: birch-spin var(--dur-px) steps(4) infinite; }
 
 [data-birch] .button:focus-visible,
 [data-birch] .icon-button:focus-visible {
