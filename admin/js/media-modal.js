@@ -151,25 +151,24 @@ window.Birkly.MediaModal = {
         this.modal.className = 'modal-backdrop media-modal-overlay show';
         this.modal.setAttribute('role', 'dialog');
         this.modal.setAttribute('aria-modal', 'true');
+        this.modal.setAttribute('data-birch', '');
         this.modal.innerHTML = `
             <div class="modal-content modal--lg">
                 <div class="modal-header">
                     <h3 class="modal-title">Select media</h3>
-                    <button type="button" class="modal-close" data-media-modal-action="close" aria-label="Close">&times;</button>
+                    <button type="button" class="modal-close" data-media-modal-action="close" aria-label="Close">${birklyMediaModalIcon('x', 13) || '&times;'}</button>
                 </div>
-                <div class="modal-body u-stack-5">
+                <div class="modal-body media-picker-body">
                     <div class="media-upload-section">
-                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.mov,.mp3,.wav" class="u-hidden">
-                        <button type="button" class="btn btn-primary" data-media-modal-action="upload-trigger">
-                            Upload new media
-                        </button>
+                        <input type="file" id="birkly-media-modal-upload" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.mov,.mp3,.wav" hidden>
+                        <button type="button" class="button" data-media-modal-action="upload-trigger">${birklyMediaModalIcon('upload', 13)}Upload new media</button>
                     </div>
                     <div class="media-picker-grid" id="birkly-media-modal-grid">
                         <div class="loading-state"><p class="empty-state-text">Loading media…</p></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-media-modal-action="close">Cancel</button>
+                    <button type="button" class="button" data-media-modal-action="close">Cancel</button>
                 </div>
             </div>
         `;
@@ -280,12 +279,12 @@ window.Birkly.MediaModal = {
         media.forEach((item) => {
             const mediaItem = document.createElement('button');
             mediaItem.type = 'button';
-            mediaItem.className = 'card card--interactive media-picker-item';
+            mediaItem.className = 'media-picker-item';
             const imgUrl = birklyMediaModalResolveUrl(item.url || item.thumbnail || '');
             const isImage = String(item.type || item.category || '').indexOf('image') === 0 || /\.(jpe?g|png|gif|webp|svg)$/i.test(item.name || '');
             const previewHtml = isImage && imgUrl
                 ? '<img src="' + birklyMediaModalEscapeHtml(imgUrl) + '" alt="' + birklyMediaModalEscapeHtml(item.name || '') + '">'
-                : (birklyMediaModalIcon('file-text', 32) || birklyMediaModalEscapeHtml(item.category || item.type || 'File'));
+                : (birklyMediaModalIcon('content', 26) || birklyMediaModalEscapeHtml(item.category || item.type || 'File'));
             mediaItem.innerHTML =
                 '<span class="media-picker-thumb">' + previewHtml + '</span>' +
                 '<span class="media-picker-name">' + birklyMediaModalEscapeHtml(item.name || item.title || item.id || 'Media') + '</span>' +
