@@ -48,13 +48,17 @@
           <small>{translate 'admin.avatar_upload_instructions'}</small>
         </div>
         <div class="setting-value">
-          <input type="file" id="account-avatar" name="avatar" accept="image/*">
+          <div class="file-pick">
+            <input type="file" id="account-avatar" name="avatar" accept="image/*" class="u-sr-only">
+            <button type="button" class="button is-small" data-file-pick="account-avatar"><span data-icon="upload"></span><span>{translate 'admin.file_pick_image'}</span></button>
+            <span class="file-pick-name" data-file-pick-name="account-avatar" data-empty="{translate 'admin.file_pick_none'}">{translate 'admin.file_pick_none'}</span>
+          </div>
           {if user.avatar exist}
           <div class="avatar-preview-wrap">
             <p class="u-text-sm u-fg-secondary">{translate 'admin.current_avatar'}:</p>
             <img src="{user.avatar}" alt="{translate 'admin.current_avatar'}">
             <div class="avatar-actions">
-              <button type="button" id="remove-avatar-btn" class="btn btn-danger btn-sm">{translate 'admin.remove_avatar'}</button>
+              <button type="button" id="remove-avatar-btn" class="button is-small is-danger">{translate 'admin.remove_avatar'}</button>
             </div>
           </div>
           {endif}

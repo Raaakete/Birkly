@@ -207,15 +207,15 @@
         dashboard.registerMount('analyticsMini', function (element, widget, data) {
             var analyticsSettingsUrl = adminUrl('settings', { tab: 'analytics' });
             if (!data) {
-                setContent(element, callout('—', t('dash_analytics_not_configured', 'Analytics not configured'), t('dash_analytics_not_configured_help', 'Choose a preset under Settings → Analytics.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open Analytics →'), 'muted'));
+                setContent(element, callout('—', t('dash_analytics_not_configured', 'Analytics not configured'), t('dash_analytics_not_configured_help', 'Choose a preset under Settings → Analytics.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open analytics →'), 'muted'));
                 return;
             }
             if (data.analytics_collecting === false || data.analytics_preset === 'off') {
-                setContent(element, callout('—', t('dash_analytics_off', 'Analytics is off'), t('dash_analytics_off_help', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open Analytics →'), 'muted'));
+                setContent(element, callout('—', t('dash_analytics_off', 'Analytics is off'), t('dash_analytics_off_help', 'Turn on Minimal, Standard, or Advanced under Settings → Analytics.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open analytics →'), 'muted'));
                 return;
             }
             if (!data.has_analytics) {
-                setContent(element, callout('—', t('dash_tracking_not_enabled', 'Tracking not enabled yet'), t('dash_tracking_not_enabled_help', 'Re-save your Analytics preset to enable site tracking, or enable a domain under Site delivery.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open Analytics →'), 'muted'));
+                setContent(element, callout('—', t('dash_tracking_not_enabled', 'Tracking not enabled yet'), t('dash_tracking_not_enabled_help', 'Re-save your Analytics preset to enable site tracking, or enable a domain under Site delivery.'), analyticsSettingsUrl, t('dash_open_analytics', 'Open analytics →'), 'muted'));
                 return;
             }
             var pageViews = Number(data.total_page_views || 0);

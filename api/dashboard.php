@@ -394,7 +394,7 @@ if ($action === 'notifications') {
                     $notifications[] = [
                         'id' => 'ai_approvals',
                         'type' => 'info',
-                        'title' => 'Pending AI Approvals',
+                        'title' => 'Pending AI approvals',
                         'message' => "You have {$pendingCount} pending AI action" . ($pendingCount > 1 ? 's' : '') . " requiring approval",
                         'link' => birkly_admin_url('settings', ['tab' => 'ai_approvals']),
                         'icon' => '🤖',
@@ -420,7 +420,7 @@ if ($action === 'notifications') {
                     $notifications[] = [
                         'id' => 'system_errors',
                         'type' => 'warning',
-                        'title' => 'System Errors Detected',
+                        'title' => 'System errors detected',
                         'message' => "{$errorCount} recent error" . ($errorCount > 1 ? 's' : '') . " found in logs",
                         'link' => birkly_admin_url('settings', ['tab' => 'logs']),
                         'icon' => '⚠️',
@@ -441,7 +441,7 @@ if ($action === 'notifications') {
                 $notifications[] = [
                     'id' => 'storage_warning',
                     'type' => 'warning',
-                    'title' => 'High Storage Usage',
+                    'title' => 'High storage usage',
                     'message' => "Media storage is using {$storageUsedMB}MB. Consider cleaning up unused files.",
                     'link' => birkly_admin_url('media'),
                     'icon' => '💾',
