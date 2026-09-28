@@ -171,7 +171,7 @@ class Relation extends BaseField {
         #relationPickerModal .card {
             background: var(--surface);
             border-radius: var(--radius-md, 0.5rem);
-            box-shadow: var(--elevation-3, var(--shadow-xl);
+            box-shadow: var(--shadow-sheet);
             overflow: hidden;
         }
 
