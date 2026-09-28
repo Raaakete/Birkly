@@ -15,15 +15,19 @@ $check = in_array('--check', $argv, true);
 $data = birkly_icon_data();
 $stale = [];
 
+// A plain path string when the icon is one layer, else {"#": body, "a": part, "1": ghost}.
 $pixel = [];
 foreach ($data['pixel'] as $name => $rows) {
-    $pixel[$name] = birkly_icon_grid_path($rows);
+    $layers = birkly_icon_grid_layers($rows);
+    $pixel[$name] = array_keys($layers) === ['#'] ? $layers['#'] : $layers;
 }
 ksort($pixel);
 $stroke = $data['stroke'];
 ksort($stroke);
 $aliases = $data['aliases'];
 ksort($aliases);
+$gestures = $data['gestures'];
+ksort($gestures);
 
 $json = static fn (array $a): string => json_encode($a, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 $indent = static fn (string $s): string => preg_replace('/^/m', '    ', $s);
@@ -31,6 +35,7 @@ $block = "    // <icons:generated> — php scripts/build-icons.php; edit core/ic
     . '    const ICON_PIXEL = ' . ltrim($indent($json($pixel))) . ";\n"
     . '    const ICON_STROKE = ' . ltrim($indent($json($stroke))) . ";\n"
     . '    const ICON_ALIASES = ' . ltrim($indent($json($aliases))) . ";\n"
+    . '    const ICON_GESTURES = ' . ltrim($indent($json($gestures))) . ";\n"
     . "    // </icons:generated>\n";
 
 $jsPath = $root . '/admin/js/icon.js';
@@ -50,7 +55,7 @@ if ($next !== $js) {
 $dir = $root . '/admin/assets/icons';
 $wanted = [];
 foreach (birkly_icon_names() as $name) {
-    $svg = str_replace(' class="birkly-icon"', '', birkly_icon_svg($name, ['aria_hidden' => false]));
+    $svg = str_replace(' class="birkly-icon"', '', birkly_icon_svg($name, ['aria_hidden' => false, 'gesture' => false]));
     $svg = str_replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ', $svg) . "\n";
     $file = $dir . '/' . $name . '.svg';
     $wanted[basename($file)] = true;
