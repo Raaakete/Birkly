@@ -9,18 +9,10 @@
    Shared editor chrome (sidebar tab shell, templating panels, copy button,
    code examples) lives in pages/content.css — both editors need it.
 
-   THIRD-PARTY BRAND COLOURS — documented exception to the no-hex rule.
-   The search-result preview must look like a real Google SERP entry, so the
-   three colours below are Google's, not ours. They are declared once here as
-   local custom properties and are deliberately NOT remapped for dark mode:
-   the preview is a picture of someone else's page, not admin chrome.
+   The search-result preview mimics a Google result; its colours are the
+   --serp-* tokens in core/variables.css (remapped for dark mode, since the
+   preview card sits on --surface-2).
    ============================================ */
-
-.entry-editor-page {
-  --serp-title: #1A0DAB;
-  --serp-url: #006621;
-  --serp-desc: #545454;
-}
 
 /* ============================================
    1. Unsaved-changes indicator (sticky save bar)

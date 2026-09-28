@@ -6,16 +6,9 @@
    a rail. Settings inside a frame are slabs 4px apart. The Agent Guide /
    WebMCP editor (partials/ap-hub-body.php) is embedded below the tabs.
 
-   THIRD-PARTY BRAND COLOURS — documented exception to the no-hex rule:
-   the search preview mimics a Google result, so its three colours are
-   Google's and are not remapped for dark mode.
+   The search preview mimics a Google result; its colours are the
+   --serp-* tokens in core/variables.css.
    ============================================ */
-
-.discovery-page {
-  --serp-title: #1A0DAB;
-  --serp-url: #006621;
-  --serp-desc: #545454;
-}
 
 .discovery-page[data-birch] [hidden],
 .disc-hub .tab-panel[hidden] { display: none; }
@@ -180,10 +173,6 @@
 
 .serp-preview-url { color: var(--serp-url); font-size: var(--size-small); }
 .serp-preview-desc { color: var(--serp-desc); font-size: var(--size-body); line-height: var(--lh-body); }
-
-[data-theme="dark"] .serp-preview-title { color: var(--accent-text); }
-[data-theme="dark"] .serp-preview-url { color: var(--success); }
-[data-theme="dark"] .serp-preview-desc { color: var(--text-2); }
 
 .social-preview {
   display: flex;
