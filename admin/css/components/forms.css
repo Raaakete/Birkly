@@ -312,8 +312,8 @@ input[type="file"]::file-selector-button:hover {
 /* ============================================
    Checkbox and radio
    ============================================ */
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input),
-input[type="radio"] {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check),
+input[type="radio"]:not(.radio) {
   appearance: none;
   -webkit-appearance: none;
   width: 1rem;
@@ -330,19 +330,19 @@ input[type="radio"] {
               border-color var(--motion-fast) var(--ease-out);
 }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input) { border-radius: 4px; }
-input[type="radio"] { border-radius: 50%; }
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check) { border-radius: 4px; }
+input[type="radio"]:not(.radio) { border-radius: 50%; }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):hover:not(:disabled),
-input[type="radio"]:hover:not(:disabled) { border-color: var(--border-control-hover); }
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):hover:not(:disabled),
+input[type="radio"]:not(.radio):hover:not(:disabled) { border-color: var(--border-control-hover); }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):checked,
-input[type="radio"]:checked {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):checked,
+input[type="radio"]:not(.radio):checked {
   background: var(--accent);
   border-color: var(--accent);
 }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):checked::before {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):checked::before {
   content: "";
   width: 0.55rem;
   height: 0.3rem;
@@ -352,18 +352,18 @@ input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):che
   transform: rotate(-45deg) translateY(-1px);
 }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):indeterminate {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):indeterminate {
   background: var(--accent);
   border-color: var(--accent);
 }
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):indeterminate::before {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):indeterminate::before {
   content: "";
   width: 0.55rem;
   height: 2px;
   background: var(--on-accent);
 }
 
-input[type="radio"]:checked::before {
+input[type="radio"]:not(.radio):checked::before {
   content: "";
   width: 0.4rem;
   height: 0.4rem;
@@ -371,14 +371,14 @@ input[type="radio"]:checked::before {
   background: var(--on-accent);
 }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):focus-visible,
-input[type="radio"]:focus-visible {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):focus-visible,
+input[type="radio"]:not(.radio):focus-visible {
   outline: var(--focus-outline);
   outline-offset: var(--focus-outline-offset);
 }
 
-input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):disabled,
-input[type="radio"]:disabled {
+input[type="checkbox"]:not(.toggle-switch-input):not(.checkbox-switch-input):not(.check):disabled,
+input[type="radio"]:not(.radio):disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background: var(--surface-sunken);
