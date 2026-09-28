@@ -68,18 +68,18 @@ function birkly_fieldtype_icon(?string $fieldtype, array $attrs = []): string
 function birkly_fieldtype_display_label(?string $fieldtype, array $fieldtypes = []): string
 {
     if ($fieldtype === null || $fieldtype === '') {
-        return 'SELECT TYPE';
+        return 'Select type';
     }
 
     foreach ($fieldtypes as $ft) {
         $name = (string) ($ft['name'] ?? '');
         $type = (string) ($ft['type'] ?? '');
         if ($name === $fieldtype || $type === $fieldtype) {
-            return strtoupper((string) ($ft['label'] ?? $fieldtype));
+            return (string) ($ft['label'] ?? $fieldtype);
         }
     }
 
-    return strtoupper((string) $fieldtype);
+    return ucfirst((string) $fieldtype);
 }
 
 /**
