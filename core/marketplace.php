@@ -223,6 +223,40 @@ function birkly_marketplace_releases_for_channel(array $releases, string $channe
 /**
  * @param list<array<string, mixed>> $releases
  */
+/**
+ * Releases this site can install: each release's min_birkly must accept the running CMS version.
+ *
+ * @param list<array<string, mixed>> $releases
+ * @return list<array<string, mixed>>
+ */
+function birkly_marketplace_releases_compatible_with_site(array $releases): array
+{
+    require_once __DIR__ . '/plugins/version_constraints.php';
+    $cmsVersion = birkly_cms_version_for_plugin_compat();
+
+    return array_values(array_filter($releases, static function ($release) use ($cmsVersion): bool {
+        if (!is_array($release)) {
+            return false;
+        }
+        $constraint = trim((string) ($release['min_birkly'] ?? ''));
+        return $constraint === '' || birkly_version_satisfies_constraint($cmsVersion, birkly_minimum_version_constraint($constraint));
+    }));
+}
+
+/**
+ * @param list<array<string, mixed>> $releases
+ */
+function birkly_marketplace_release_min_birkly(array $releases, string $version): string
+{
+    foreach ($releases as $release) {
+        if (is_array($release) && (string) ($release['version'] ?? '') === $version) {
+            return (string) ($release['min_birkly'] ?? '');
+        }
+    }
+
+    return '';
+}
+
 function birkly_marketplace_latest_release_version(array $releases, ?string $channel = null): ?string
 {
     if ($channel !== null) {
@@ -1760,9 +1794,11 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
         ];
     }
 
-    $allReleases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
+    $listedReleases = is_array($detail['releases'] ?? null) ? $detail['releases'] : [];
+    $allReleases = birkly_marketplace_releases_compatible_with_site($listedReleases);
     $offerMeta = is_array($detail['offer'] ?? null) ? $detail['offer'] : [];
     $latestOverall = birkly_marketplace_latest_release_version($allReleases);
+    $latestListed = birkly_marketplace_latest_release_version($listedReleases);
     $latestOverallStr = $latestOverall ?? $currentVersion;
     $updateAvailable = $latestOverall !== null && version_compare($latestOverall, $currentVersion, '>');
     $latestStability = birkly_marketplace_release_stability_from_releases($allReleases, $latestOverallStr, $offerMeta);
@@ -1777,6 +1813,12 @@ function birkly_marketplace_check_plugin_update(string $slug, string $currentVer
         'update_available' => $updateAvailable,
         'current_version' => $currentVersion,
     ];
+    if ($latestListed !== null && ($latestOverall === null || version_compare($latestListed, $latestOverall, '>'))) {
+        $result['requires_newer_birkly'] = [
+            'version' => $latestListed,
+            'min_birkly' => birkly_marketplace_release_min_birkly($listedReleases, $latestListed),
+        ];
+    }
 
     $licenseRef = trim((string) ($licenseRef ?? ''));
     if ($licenseRef !== '') {
