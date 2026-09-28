@@ -39,10 +39,8 @@
   text-overflow: ellipsis;
 }
 
-.badge > svg,
-.badge > .birkly-icon,
-.status-badge > svg,
-.status-badge > .birkly-icon {
+.badge > svg:not(.birkly-icon),
+.status-badge > svg:not(.birkly-icon) {
   width: 0.75rem;
   height: 0.75rem;
   flex-shrink: 0;
