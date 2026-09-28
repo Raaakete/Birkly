@@ -258,6 +258,14 @@
   pointer-events: none;
 }
 
+/* Birch labels are sentence case: the P56 uppercase micro-label drops its caps */
+[data-birch] .u-label {
+  color: var(--text);
+  font: var(--weight-medium) var(--size-small) / var(--lh-small) var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 /* ---------- Frame head ---------- */
 [data-birch] .frame-head {
   display: flex;

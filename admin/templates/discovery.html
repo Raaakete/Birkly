@@ -1,14 +1,31 @@
+<div class="discovery-page" data-birch>
 <div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
             <span class="current">{translate 'admin.discovery'}</span>
         </div>
-        <p class="page-subtitle u-text-sm u-fg-secondary u-m-0">{translate 'admin.discovery_subtitle'}</p>
+    </div>
+</div>
+
+<!-- Page bar: the active pack's Publish / Save draft (discovery.js shows one) -->
+<div class="disc-page-bars" id="disc-page-bars">
+    <div class="disc-page-bar" id="disc-seo-bar" hidden>
+<?php
+$stickySaveBarSaveId = 'disc-seo-publish-btn';
+$stickySaveBarSaveLabel = __('admin.discovery_publish');
+$stickySaveBarMessageId = 'disc-seo-publish-status';
+$stickySaveBarMessageClass = 'message';
+$stickySaveBarSaveClass = 'btn btn-primary';
+$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="disc-seo-save">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
+    . '<button type="button" class="btn btn-danger" id="disc-seo-unpublish" hidden>' . htmlspecialchars(__('admin.discovery_unpublish')) . '</button>';
+$stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
+include $stickyTplDir . '/components/sticky-save-bar.php';
+?>
     </div>
 </div>
 
 <div class="disc-hub">
-    <div class="tabs u-mb-6" id="disc-hub-tablist" role="tablist" aria-label="{translate 'admin.discovery'}">
+    <div class="tabs" id="disc-hub-tablist" role="tablist" aria-label="{translate 'admin.discovery'}">
         <button type="button" class="tab active" role="tab" id="disc-tab-seo" data-disc-zone="seo" aria-controls="disc-panel-seo" aria-selected="true" tabindex="0">
             <span>{translate 'admin.discovery_tab_seo'}</span>
             <span class="ap-tab-dot" id="disc-tab-dot-seo" data-ok="0" aria-hidden="true"></span>
@@ -25,45 +42,36 @@
 
     <!-- SEO pack -->
     <div class="tab-panel active" id="disc-panel-seo" role="tabpanel" aria-labelledby="disc-tab-seo" data-disc-panel="seo">
-        <section class="card u-p-6 u-stack-4 disc-pack-intro">
-            <div class="u-split u-align-start u-gap-4">
-                <div class="u-stack-2 u-fill">
-                    <h2 class="u-m-0">{translate 'admin.discovery_tab_seo'}</h2>
-                    <p class="form-help u-m-0">{translate 'admin.discovery_seo_intro'}</p>
-                </div>
-                <label class="switch switch--lg" title="{translate 'admin.discovery_pack_enable'}">
-                    <input type="checkbox" id="disc-seo-enabled" data-pack="seo">
-                    <span class="switch__slider"></span>
-                </label>
+        <section class="module-header disc-pack-intro">
+            <span class="module-header-icon"><?= birkly_icon('search') ?></span>
+            <div class="module-header-body">
+                <h2 class="module-header-title">{translate 'admin.discovery_tab_seo'}</h2>
+                <p class="module-header-text">{translate 'admin.discovery_seo_intro'}</p>
             </div>
+            <label class="switch" title="{translate 'admin.discovery_pack_enable'}">
+                <input type="checkbox" id="disc-seo-enabled" data-pack="seo">
+                <span class="switch__slider"></span>
+            </label>
         </section>
-        <div id="disc-seo-config" class="u-stack-6" hidden>
-<?php
-$stickySaveBarSaveId = 'disc-seo-publish-btn';
-$stickySaveBarSaveLabel = __('admin.discovery_publish');
-$stickySaveBarMessageId = 'disc-seo-publish-status';
-$stickySaveBarMessageClass = 'message';
-$stickySaveBarSaveClass = 'btn btn-primary';
-$stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="disc-seo-save">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
-    . '<button type="button" class="btn btn-danger" id="disc-seo-unpublish" hidden>' . htmlspecialchars(__('admin.discovery_unpublish')) . '</button>';
-$stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
-include $stickyTplDir . '/components/sticky-save-bar.php';
-?>
-            <section class="card u-p-6 u-stack-4">
-                <div class="u-split u-align-center u-gap-3 u-mb-3">
-                    <h3 class="u-m-0">{translate 'admin.discovery_seo_defaults'}</h3>
-                    <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-generate">{translate 'admin.discovery_generate_ai'}</button>
+        <div id="disc-seo-config" class="disc-seo-layout" hidden>
+          <div class="disc-seo-main">
+            <section class="frame">
+                <div class="frame-head">
+                    <div class="frame-head-body">
+                        <h3 class="frame-title">{translate 'admin.discovery_seo_defaults'}</h3>
+                        <p class="frame-text">{translate 'admin.discovery_seo_defaults_help'}</p>
+                    </div>
+                    <button type="button" class="button is-small" id="disc-seo-generate"><?= birkly_icon('wand') ?>{translate 'admin.discovery_generate_ai'}</button>
                 </div>
-                <p class="form-help">{translate 'admin.discovery_seo_defaults_help'}</p>
-                <div class="disc-seo-previews u-stack-3 u-mb-4">
-                    <div class="meta-preview-card">
-                        <h5>{translate 'admin.discovery_seo_preview_title'}</h5>
+                <div class="disc-seo-previews">
+                    <div class="meta-preview-card preview-card">
+                        <span class="preview-label">{translate 'admin.discovery_seo_preview_title'}</span>
                         <div class="serp-preview-title" id="disc-seo-serp-title">Site title</div>
                         <div class="serp-preview-url" id="disc-seo-serp-url">yoursite.com</div>
                         <div class="serp-preview-desc" id="disc-seo-serp-desc">Meta description preview</div>
                     </div>
-                    <div class="meta-preview-card">
-                        <h5>Social preview</h5>
+                    <div class="meta-preview-card preview-card">
+                        <span class="preview-label">{translate 'admin.discovery_seo_social_preview'}</span>
                         <div class="social-preview">
                             <div class="social-preview-image" id="disc-seo-social-image" hidden></div>
                             <div class="social-preview-body">
@@ -74,6 +82,7 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         </div>
                     </div>
                 </div>
+                <div class="disc-settings">
                 <div class="form-group">
                     <label for="disc-seo-site-title">{translate 'admin.discovery_seo_site_title'}</label>
                     <input type="text" id="disc-seo-site-title" class="input" placeholder="Your business name">
@@ -99,37 +108,43 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <option value="summary">{translate 'admin.discovery_seo_twitter_summary'}</option>
                     </select>
                 </div>
-            </section>
-            <section class="card u-p-6 u-stack-4" id="disc-seo-url-map-section">
-                <div class="u-stack-2 u-mb-4">
-                    <h3 class="u-m-0">{translate 'admin.discovery_seo_url_map_title'}</h3>
-                    <p class="form-help u-m-0">{translate 'admin.discovery_seo_url_map_intro'}</p>
-                    <ol class="form-help u-m-0 u-pl-4 u-stack-1">
-                        <li>{translate 'admin.discovery_seo_url_map_step1'}</li>
-                        <li>{translate 'admin.discovery_seo_url_map_step2'}</li>
-                        <li>{translate 'admin.discovery_seo_url_map_step3'}</li>
-                    </ol>
                 </div>
-                <div class="disc-url-list-toolbar u-split u-align-center u-gap-3 u-mb-3">
-                    <div class="disc-url-list-toolbar__actions">
-                        <button type="button" class="btn btn-sm btn-primary" id="disc-seo-setup-ai">{translate 'admin.discovery_seo_url_map_setup_ai'}</button>
-                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-rescan">{translate 'admin.discovery_seo_url_map_rescan'}</button>
-                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-propose">{translate 'admin.discovery_seo_url_map_propose'}</button>
-                        <button type="button" class="btn btn-sm btn-secondary" id="disc-seo-add-redirect" hidden>{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
+            </section>
+            <section class="frame" id="disc-seo-url-map-section">
+                <div class="frame-head">
+                    <div class="frame-head-body">
+                        <h3 class="frame-title">{translate 'admin.discovery_seo_url_map_title'}</h3>
+                        <p class="frame-text">{translate 'admin.discovery_seo_url_map_intro'}</p>
                     </div>
-                    <div class="disc-url-list-toolbar__filters u-split u-align-center u-gap-2">
-                        <label for="disc-seo-url-filter" class="collection-filter-label">{translate 'admin.discovery_seo_url_map_show'}</label>
-                        <select id="disc-seo-url-filter" class="collection-filter-select">
+                </div>
+                <ol class="disc-steps">
+                    <li>{translate 'admin.discovery_seo_url_map_step1'}</li>
+                    <li>{translate 'admin.discovery_seo_url_map_step2'}</li>
+                    <li>{translate 'admin.discovery_seo_url_map_step3'}</li>
+                </ol>
+                <div class="disc-url-list-toolbar">
+                    <div class="disc-url-list-toolbar__actions">
+                        <button type="button" class="button is-small" id="disc-seo-setup-ai"><?= birkly_icon('wand') ?>{translate 'admin.discovery_seo_url_map_setup_ai'}</button>
+                        <button type="button" class="button is-small is-quiet" id="disc-seo-rescan"><?= birkly_icon('refresh') ?>{translate 'admin.discovery_seo_url_map_rescan'}</button>
+                        <button type="button" class="button is-small is-quiet" id="disc-seo-propose">{translate 'admin.discovery_seo_url_map_propose'}</button>
+                        <button type="button" class="button is-small is-quiet" id="disc-seo-add-redirect" hidden><?= birkly_icon('plus') ?>{translate 'admin.discovery_seo_url_map_add_redirect'}</button>
+                    </div>
+                    <div class="disc-url-list-toolbar__filters">
+                        <label for="disc-seo-url-filter" class="u-sr-only">{translate 'admin.discovery_seo_url_map_show'}</label>
+                        <span class="select-box">
+                        <select id="disc-seo-url-filter">
                             <option value="all">{translate 'admin.discovery_seo_url_map_filter_all'}</option>
                             <option value="page">{translate 'admin.discovery_seo_url_map_filter_pages'}</option>
                             <option value="detail">{translate 'admin.discovery_seo_url_map_filter_posts'}</option>
                             <option value="redirect">{translate 'admin.discovery_seo_url_map_filter_redirects'}</option>
                         </select>
+                        <?= birkly_icon('chev-down') ?>
+                        </span>
                     </div>
                 </div>
-                <p class="form-help u-m-0 u-mb-3" id="disc-seo-url-empty-help" hidden>{translate 'admin.discovery_seo_url_map_empty_pages'} <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">{translate 'admin.discovery_seo_url_map_project_link'}</a></p>
-                <div class="table-responsive disc-url-table-wrap">
-                    <table class="table table--compact disc-url-table" id="disc-seo-url-table">
+                <p class="field-help" id="disc-seo-url-empty-help" hidden>{translate 'admin.discovery_seo_url_map_empty_pages'} <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'project'])) ?>">{translate 'admin.discovery_seo_url_map_project_link'}</a></p>
+                <div class="disc-url-table-wrap">
+                    <table class="disc-url-table" id="disc-seo-url-table">
                         <thead>
                             <tr>
                                 <th class="col-site-file">{translate 'admin.discovery_seo_url_map_col_file'}</th>
@@ -140,22 +155,22 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             </tr>
                         </thead>
                         <tbody id="disc-seo-url-tbody">
-                            <tr><td colspan="5" class="u-fg-secondary">{translate 'admin.discovery_seo_url_map_empty'}</td></tr>
+                            <tr class="disc-url-empty"><td colspan="5">{translate 'admin.discovery_seo_url_map_empty'}</td></tr>
                         </tbody>
                     </table>
                 </div>
-                <p class="form-help u-m-0" id="disc-seo-scan-meta" hidden></p>
+                <p class="field-help" id="disc-seo-scan-meta" hidden></p>
             </section>
 
             <div id="disc-seo-redirect-modal" class="modal" style="display: none;" aria-hidden="true">
                 <div class="modal-backdrop" data-modal-dismiss="self"></div>
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3>{translate 'admin.discovery_seo_redirect_modal_title'}</h3>
-                        <button class="modal-close" type="button" data-modal-dismiss="self">&times;</button>
+                        <h3 class="modal-title">{translate 'admin.discovery_seo_redirect_modal_title'}</h3>
+                        <button class="modal-close" type="button" data-modal-dismiss="self" aria-label="{translate 'admin.close'}"><?= birkly_icon('x') ?></button>
                     </div>
                     <form id="disc-seo-redirect-form">
-                        <div class="modal-body u-stack-4">
+                        <div class="modal-body disc-modal-body">
                             <input type="hidden" id="disc-redirect-index" value="">
                             <div class="form-group">
                                 <label for="disc-redirect-from">{translate 'admin.discovery_seo_redirect_from'}</label>
@@ -168,28 +183,31 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             </div>
                             <div class="form-group">
                                 <label for="disc-redirect-status">{translate 'admin.discovery_seo_redirect_type'}</label>
-                                <select id="disc-redirect-status" class="input collection-filter-select">
+                                <select id="disc-redirect-status" class="input">
                                     <option value="301">{translate 'admin.discovery_seo_redirect_301'}</option>
                                     <option value="302">{translate 'admin.discovery_seo_redirect_302'}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-modal-dismiss="self">{translate 'admin.cancel'}</button>
-                            <button type="submit" class="btn btn-primary">{translate 'admin.discovery_seo_redirect_save'}</button>
+                            <button type="button" class="button" data-modal-dismiss="self">{translate 'admin.cancel'}</button>
+                            <button type="submit" class="button is-main">{translate 'admin.discovery_seo_redirect_save'}</button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <section class="card u-p-6 u-stack-4" id="disc-seo-bindings-section">
-                <h3 class="u-m-0">{translate 'admin.discovery_seo_bindings_title'}</h3>
-                <p class="form-help">{translate 'admin.discovery_seo_bindings_intro'}</p>
-                <p class="form-help u-text-sm u-fg-secondary">{translate 'admin.discovery_seo_bindings_example'}</p>
-                <div id="disc-seo-bindings-list" class="u-stack-2"></div>
-                <details class="u-mt-3" id="disc-seo-binding-details">
-                    <summary class="u-cursor-pointer u-weight-semibold">{translate 'admin.discovery_seo_bindings_form_title'}</summary>
-                    <div class="u-stack-2 u-mt-3 u-pt-3" id="disc-seo-binding-form">
+            <section class="frame" id="disc-seo-bindings-section">
+                <div class="frame-head">
+                    <div class="frame-head-body">
+                        <h3 class="frame-title">{translate 'admin.discovery_seo_bindings_title'}</h3>
+                        <p class="frame-text">{translate 'admin.discovery_seo_bindings_intro'} {translate 'admin.discovery_seo_bindings_example'}</p>
+                    </div>
+                </div>
+                <div id="disc-seo-bindings-list" class="disc-bindings-list"></div>
+                <details class="disc-fold" id="disc-seo-binding-details">
+                    <summary>{translate 'admin.discovery_seo_bindings_form_title'}</summary>
+                    <div class="disc-settings" id="disc-seo-binding-form">
                         <input type="hidden" id="disc-binding-id" value="">
                         <div class="form-group">
                             <label for="disc-binding-collection">{translate 'admin.discovery_seo_bindings_collection'}</label>
@@ -208,13 +226,20 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                             <input type="text" id="disc-binding-pattern" class="input" placeholder="/blog/{slug}">
                             <p class="form-help u-m-0">{translate 'admin.discovery_seo_bindings_pattern_help'}</p>
                         </div>
-                        <button type="button" class="btn btn-secondary btn-sm" id="disc-binding-save">{translate 'admin.discovery_seo_bindings_save'}</button>
+                        <div class="disc-binding-actions"><button type="button" class="button is-small" id="disc-binding-save">{translate 'admin.discovery_seo_bindings_save'}</button></div>
                     </div>
                 </details>
             </section>
-            <section class="card u-p-6 u-stack-4">
-                <h3 class="u-m-0">{translate 'admin.discovery_seo_technical_title'}</h3>
-                <p class="form-help">{translate 'admin.discovery_seo_technical_help'}</p>
+          </div>
+          <aside class="disc-seo-rail">
+            <section class="frame">
+                <div class="frame-head">
+                    <div class="frame-head-body">
+                        <h3 class="frame-title">{translate 'admin.discovery_seo_technical_title'}</h3>
+                        <p class="frame-text">{translate 'admin.discovery_seo_technical_help'}</p>
+                    </div>
+                </div>
+                <div class="disc-settings">
                 <div class="form-group">
                     <label for="disc-seo-robots">{translate 'admin.discovery_seo_robots'}</label>
                     <select id="disc-seo-robots" class="input">
@@ -226,16 +251,22 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-google-verify">{translate 'admin.discovery_seo_google_verify'}</label>
-                    <input type="text" id="disc-seo-google-verify" class="input" placeholder="google-site-verification content value">
+                    <input type="text" id="disc-seo-google-verify" class="input is-mono" placeholder="google-site-verification content value">
                 </div>
                 <div class="form-group">
                     <label for="disc-seo-bing-verify">{translate 'admin.discovery_seo_bing_verify'}</label>
-                    <input type="text" id="disc-seo-bing-verify" class="input" placeholder="msvalidate.01 content value">
+                    <input type="text" id="disc-seo-bing-verify" class="input is-mono" placeholder="msvalidate.01 content value">
+                </div>
                 </div>
             </section>
-            <section class="card u-p-6 u-stack-4">
-                <h3 class="u-m-0">{translate 'admin.discovery_delivery'}</h3>
-                <p class="form-help">{translate 'admin.discovery_delivery_help'}</p>
+            <section class="frame">
+                <div class="frame-head">
+                    <div class="frame-head-body">
+                        <h3 class="frame-title">{translate 'admin.discovery_delivery'}</h3>
+                        <p class="frame-text">{translate 'admin.discovery_delivery_help'}</p>
+                    </div>
+                </div>
+                <div class="disc-settings">
                 <div class="form-group">
                     <label for="disc-seo-delivery-mode">{translate 'admin.discovery_delivery_mode'}</label>
                     <select id="disc-seo-delivery-mode" class="input">
@@ -243,52 +274,51 @@ include $stickyTplDir . '/components/sticky-save-bar.php';
                         <option value="manual">{translate 'admin.discovery_delivery_manual'}</option>
                     </select>
                 </div>
+                </div>
                 <div class="disc-surfaces" id="disc-seo-surfaces"></div>
             </section>
+          </aside>
         </div>
     </div>
 
     <!-- Agent Guide pack -->
     <div class="tab-panel" id="disc-panel-agent-guide" role="tabpanel" aria-labelledby="disc-tab-agent-guide" hidden data-disc-panel="agent-guide">
-        <section class="card u-p-6 u-stack-4 disc-pack-intro">
-            <div class="u-split u-align-start u-gap-4">
-                <div class="u-stack-2 u-fill">
-                    <h2 class="u-m-0">{translate 'admin.discovery_tab_agent_guide'}</h2>
-                    <p class="form-help u-m-0">{translate 'admin.discovery_agent_guide_intro'}</p>
-                </div>
-                <label class="switch switch--lg">
-                    <input type="checkbox" id="disc-agent-guide-enabled" data-pack="agent_guide">
-                    <span class="switch__slider"></span>
-                </label>
+        <section class="module-header disc-pack-intro">
+            <span class="module-header-icon"><?= birkly_icon('book') ?></span>
+            <div class="module-header-body">
+                <h2 class="module-header-title">{translate 'admin.discovery_tab_agent_guide'}</h2>
+                <p class="module-header-text">{translate 'admin.discovery_agent_guide_intro'}</p>
             </div>
+            <label class="switch" title="{translate 'admin.discovery_pack_enable'}">
+                <input type="checkbox" id="disc-agent-guide-enabled" data-pack="agent_guide">
+                <span class="switch__slider"></span>
+            </label>
         </section>
-        <div id="disc-agent-guide-config" class="u-stack-6" hidden>
-            <p class="form-help u-m-0" id="disc-agent-guide-status"></p>
+        <div id="disc-agent-guide-config" class="disc-pack-status" hidden>
+            <p class="field-help" id="disc-agent-guide-status"></p>
         </div>
     </div>
 
     <!-- WebMCP pack -->
     <div class="tab-panel" id="disc-panel-webmcp" role="tabpanel" aria-labelledby="disc-tab-webmcp" hidden data-disc-panel="webmcp">
-        <section class="card u-p-6 u-stack-4 disc-pack-intro">
-            <div class="u-split u-align-start u-gap-4">
-                <div class="u-stack-2 u-fill">
-                    <h2 class="u-m-0">{translate 'admin.discovery_tab_webmcp'}</h2>
-                    <p class="form-help u-m-0">{translate 'admin.discovery_webmcp_intro'}</p>
-                </div>
-                <label class="switch switch--lg">
-                    <input type="checkbox" id="disc-webmcp-enabled" data-pack="webmcp">
-                    <span class="switch__slider"></span>
-                </label>
+        <section class="module-header disc-pack-intro">
+            <span class="module-header-icon"><?= birkly_icon('zap') ?></span>
+            <div class="module-header-body">
+                <h2 class="module-header-title">{translate 'admin.discovery_tab_webmcp'}</h2>
+                <p class="module-header-text">{translate 'admin.discovery_webmcp_intro'}</p>
             </div>
+            <label class="switch" title="{translate 'admin.discovery_pack_enable'}">
+                <input type="checkbox" id="disc-webmcp-enabled" data-pack="webmcp">
+                <span class="switch__slider"></span>
+            </label>
         </section>
-        <div id="disc-webmcp-config" class="u-stack-6" hidden>
-            <p class="form-help u-m-0">{translate 'admin.ag_tools_master_hosting'}</p>
-        </div>
+        <div id="disc-webmcp-config" class="disc-pack-status" hidden></div>
     </div>
 </div>
 
 <!-- Shared Agent Guide / WebMCP editor (embed) -->
 <div id="disc-ap-embed" class="disc-ap-embed ap-hub--discovery-embed" hidden>
+<div class="disc-page-bar" id="disc-ag-bar" hidden>
 <?php
 $stickySaveBarSaveId = 'ai-presence-publish-btn';
 $stickySaveBarSaveLabel = __('admin.publish_ai_presence');
@@ -297,10 +327,11 @@ $stickySaveBarMessageClass = 'message';
 $stickySaveBarSaveClass = 'btn btn-primary';
 $stickySaveBarExtraActionHtml = '<button type="button" class="btn btn-secondary" id="ai-presence-save-draft">' . htmlspecialchars(__('admin.save_draft')) . '</button>'
     . '<button type="button" class="btn btn-danger" id="ai-presence-unpublish-btn" hidden>' . htmlspecialchars(__('admin.unpublish_ai_presence')) . '</button>';
-$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
-    . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
+$stickySaveBarRightHtml = '<button type="button" class="btn btn-ghost btn-sm" id="ap-about-agent-guide-btn">' . birkly_icon('info') . htmlspecialchars(__('admin.ai_presence_about_link')) . '</button>'
+    . '<button type="button" class="btn btn-ghost btn-sm" id="ap-setup-guide-btn">' . birkly_icon('wand') . htmlspecialchars(__('admin.ag_setup_guide')) . '</button>';
 $stickyTplDir = defined('__TEMPLATE_DIR__') ? __TEMPLATE_DIR__ : __DIR__;
 include $stickyTplDir . '/components/sticky-save-bar.php';
+echo '</div>';
 if (!function_exists('render_template_file')) {
     require_once dirname($stickyTplDir) . '/template_parser.php';
 }
@@ -309,16 +340,17 @@ echo render_template_file(dirname($stickyTplDir) . '/partials/ap-hub-body.php', 
 </div>
 
 <!-- Global verify -->
-<details class="card u-p-6 u-mt-6" id="disc-verify-panel">
-    <summary class="u-text-base u-weight-semibold u-cursor-pointer">{translate 'admin.discovery_verify_title'}</summary>
-    <p class="form-help">{translate 'admin.discovery_verify_help'}</p>
-    <p class="u-text-sm u-fg-secondary u-m-0" id="disc-verify-last-run" hidden></p>
-    <div class="u-split u-mb-3">
-        <span class="u-text-sm u-fg-secondary">{translate 'admin.ag_discovery_refresh'}</span>
-        <button type="button" class="btn btn-sm btn-secondary" id="disc-verify-refresh">{translate 'admin.ag_discovery_refresh'}</button>
+<details class="fold-frame disc-verify" id="disc-verify-panel">
+    <summary>{translate 'admin.discovery_verify_title'}</summary>
+    <div class="disc-verify-body">
+        <div class="disc-verify-head">
+            <p class="frame-text">{translate 'admin.discovery_verify_help'} <span id="disc-verify-last-run" hidden></span></p>
+            <button type="button" class="button is-small" id="disc-verify-refresh"><?= birkly_icon('refresh') ?>{translate 'admin.ag_discovery_refresh'}</button>
+        </div>
+        <ul class="ai-presence-item-list" id="disc-verify-checks" aria-live="polite"></ul>
     </div>
-    <ul class="ai-presence-item-list" id="disc-verify-checks" aria-live="polite"></ul>
 </details>
+</div>
 
 {include_style 'pages/discovery.css'}
 {include_style 'components/agent-guide-wizard.css'}
