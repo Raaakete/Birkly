@@ -231,7 +231,7 @@ function getAvailableFieldtypes() {
                         'label' => $displayLabel,
                         'category' => $category,
                         'icon' => method_exists($fieldtype, 'getIcon') ? $fieldtype->getIcon() : '',
-                        'description' => method_exists($fieldtype, 'getDescription') ? $fieldtype->getDescription() : '',
+                        'description' => (method_exists($fieldtype, 'getDescription') ? $fieldtype->getDescription() : '') ?: (string) ($data['description'] ?? ''),
                         'config' => $config
                     ];
                 } catch (Exception $e) {
