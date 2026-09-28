@@ -15,6 +15,14 @@ require_once __DIR__ . '/../api/2fa.php';
 // NOTE: Do NOT include api/users.php here — it parses php://input as JSON on include
 // and can break this form POST with "Invalid JSON input".
 
+require_once __DIR__ . '/../api/validate.php';
+require_once __DIR__ . '/../core/csp.php';
+if (!headers_sent()) {
+    header('Content-Type: text/html; charset=utf-8');
+    birkly_set_admin_csp_headers();
+}
+$__birklyVerifyNonceAttr = birkly_csp_nonce_attr();
+
 // Check if 2FA verification is pending
 if (!isset($_SESSION['2fa_pending'])) {
     header('Location: login.php');
@@ -33,9 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $useBackupCode = (($_POST['use_backup_code'] ?? '0') === '1');
     
     if (!validate_csrf_token($csrf)) {
-        $error = 'Invalid security token. Please try again.';
+        $error = __('admin.auth_2fa_error_token');
     } elseif (empty($code) && empty($_POST['backup_code'] ?? '')) {
-        $error = 'Please enter your verification code.';
+        $error = __('admin.auth_2fa_error_empty');
     } else {
         // Verify 2FA code (use backup code field if available)
         $backupRaw = trim($_POST['backup_code'] ?? '');
@@ -61,18 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     // Redirect to dashboard
                     // Use absolute path to ensure correct routing
-                    $redirect = $_GET['redirect'] ?? birkly_admin_url('dashboard');
-                    if (!preg_match('/^https?:\/\//', $redirect) && !str_starts_with($redirect, '/')) {
-                        $redirect = birkly_url('/admin/' . ltrim($redirect, '/'));
+                    // Only a path on this site: no scheme, no protocol-relative //host, no backslash tricks.
+                    $redirect = (string) ($_GET['redirect'] ?? '');
+                    if (!preg_match('#^/(?![/\\\\])[^\\\\]*$#', $redirect)) {
+                        $redirect = birkly_admin_url('dashboard');
                     }
                     header('Location: ' . $redirect);
                     exit;
                 }
             }
             
-            $error = 'Failed to complete login. Please try again.';
+            $error = __('admin.auth_2fa_error_login');
         } else {
-            $error = 'Invalid verification code. Please try again.';
+            $error = __('admin.auth_2fa_error_invalid');
         }
     }
 }
@@ -83,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo get_csrf_token(); ?>">
-    <title>Verify Two-Factor Authentication - Birkly Admin</title>
+    <title><?= htmlspecialchars(__('admin.auth_2fa_title')) ?> - Birkly</title>
     <link rel="stylesheet" href="<?= htmlspecialchars(birkly_url('/admin/css/style.css')) ?>">
     <link rel="shortcut icon" href="assets/birkly_favicon.svg">
 </head>
@@ -92,8 +101,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <section class="card auth-card">
             <div class="card-body u-stack-6">
                 <div class="u-center-col u-stack-2">
-                    <h1 class="auth-title">Two-factor authentication</h1>
-                    <p class="auth-subtitle">Enter the verification code from your authenticator app</p>
+                    <h1 class="auth-title"><?= htmlspecialchars(__('admin.auth_2fa_title')) ?></h1>
+                    <p class="auth-subtitle"><?= htmlspecialchars(__('admin.auth_2fa_subtitle')) ?></p>
                 </div>
 
                 <?php if ($error): ?>
@@ -113,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="hidden" name="use_backup_code" id="use_backup_code" value="0">
 
                     <div class="field" id="code-field">
-                        <label class="field-label" for="code" id="code-label">Verification code</label>
+                        <label class="field-label" for="code" id="code-label"><?= htmlspecialchars(__('admin.auth_2fa_code_label')) ?></label>
                         <input
                             class="input auth-code-input"
                             type="text"
@@ -129,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="field" id="backup-code-section" hidden>
-                        <label class="field-label" for="backup_code">Backup code</label>
+                        <label class="field-label" for="backup_code"><?= htmlspecialchars(__('admin.auth_2fa_backup_label')) ?></label>
                         <input
                             class="input auth-code-input u-mono"
                             type="text"
@@ -138,26 +147,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             placeholder="XXXXXXXX"
                             maxlength="8"
                         >
-                        <p class="field-help">If you've lost access to your authenticator app, use one of your backup codes.</p>
+                        <p class="field-help"><?= htmlspecialchars(__('admin.auth_2fa_backup_help')) ?></p>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg btn-full" id="verify-button">
-                        Verify
-                    </button>
+                    <button type="submit" class="btn btn-primary btn-lg btn-full" id="verify-button" data-busy-label="<?= htmlspecialchars(__('admin.auth_2fa_verifying')) ?>"><?= htmlspecialchars(__('admin.auth_2fa_verify')) ?></button>
 
                     <p class="u-align-text-center u-m-0">
-                        <button type="button" class="btn btn-link" id="toggle-backup">Use backup code instead</button>
+                        <button type="button" class="btn btn-link" id="toggle-backup" data-label-backup="<?= htmlspecialchars(__('admin.auth_2fa_use_backup')) ?>" data-label-app="<?= htmlspecialchars(__('admin.auth_2fa_use_app')) ?>"><?= htmlspecialchars(__('admin.auth_2fa_use_backup')) ?></button>
                     </p>
                 </form>
 
                 <div class="auth-footer">
-                    <a class="u-text-sm" href="login.php">Back to login</a>
+                    <a class="u-text-sm" href="login.php"><?= htmlspecialchars(__('admin.auth_2fa_back_to_login')) ?></a>
                 </div>
             </div>
         </section>
     </main>
 
-    <script>
+    <script<?= $__birklyVerifyNonceAttr ?>>
         function toggleBackupCode() {
             const section = document.getElementById('backup-code-section');
             const codeField = document.getElementById('code-field');
@@ -171,14 +178,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 codeField.hidden = true;
                 codeInput.required = false;
                 useBackupInput.value = '1';
-                toggleLink.textContent = 'Use authenticator app instead';
+                toggleLink.textContent = toggleLink.dataset.labelApp;
                 backupInput.focus();
             } else {
                 section.hidden = true;
                 codeField.hidden = false;
                 codeInput.required = true;
                 useBackupInput.value = '0';
-                toggleLink.textContent = 'Use backup code instead';
+                toggleLink.textContent = toggleLink.dataset.labelBackup;
                 codeInput.focus();
             }
         }
@@ -197,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handle form submission
         document.getElementById('verify-form').addEventListener('submit', function(e) {
             const button = document.getElementById('verify-button');
-            button.textContent = 'Verifying...';
+            button.textContent = button.dataset.busyLabel;
             button.disabled = true;
         });
     </script>
