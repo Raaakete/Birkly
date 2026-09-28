@@ -1,102 +1,73 @@
-<!-- System Updates Page -->
+<div class="settings-shell updates-page" data-birch data-updates-page>
 <div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
+            <a href="<?= htmlspecialchars(admin_url('settings', ['tab' => 'system'])) ?>">{translate 'admin.settings'}</a>
             <span class="current">{translate 'admin.updates'}</span>
         </div>
     </div>
-    <div class="page-header-actions"></div>
 </div>
 
-<div class="updates-page">
-    <div class="main-actions-bar">
-        <div class="main-actions-left">
-            <button class="btn btn-secondary" id="check-updates-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M23 4v6h-6"></path>
-                    <polyline points="23 4 13 14 9 10"></polyline>
-                </svg>
-                {translate 'admin.check_again'}
-            </button>
-        </div>
-    </div>
-
-    <div class="page-body u-stack-4">
-        <!-- Current Version Card -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">{translate 'admin.current_version'}</h2>
-                <span class="badge badge-info" id="current-version">{translate 'admin.settings_js_loading_table'}</span>
-            </div>
-            <div class="card-body u-stack-3">
-                <p>{translate 'admin.version_running'} <strong id="current-version-text">{translate 'admin.settings_js_loading_table'}</strong></p>
-                <div class="kv">
-                    <span class="kv-key">{translate 'admin.installation_date'}</span>
-                    <span class="kv-value" id="install-date">{translate 'admin.unknown'}</span>
-                    <span class="kv-key">{translate 'admin.last_update'}</span>
-                    <span class="kv-value" id="last-update">{translate 'admin.never'}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Update Status Card -->
-        <div class="card" id="update-status-card">
-            <div class="card-header">
-                <h2 class="card-title">{translate 'admin.update_status'}</h2>
-                <div id="update-status">
-                    <span class="badge badge-neutral">{translate 'admin.updates_js_checking'}</span>
-                </div>
-            </div>
-            <div class="card-body u-stack-3" id="update-details" hidden>
-                <div id="update-info"></div>
-                <div class="u-cluster" id="update-actions" hidden>
-                    <button class="btn btn-primary" id="download-update-btn">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7,10 12,15 17,10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        {translate 'admin.download_update'}
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Changelog Card -->
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title">{translate 'admin.changelog'}</h2>
-            </div>
-            <div class="card-body">
-                <div id="changelog-content">
-                    <div class="loading-state"><p>{translate 'admin.loading_changelog'}</p></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Backup Reminder -->
-        <div class="callout callout-warning">
-            <div class="callout-body u-stack-2">
-                <p class="callout-title">{translate 'admin.important_reminder'}</p>
-                <p><strong>{translate 'admin.backup_before_update'}</strong></p>
-                <ul class="settings-list">
-                    <li>{translate 'admin.backup_database'}</li>
-                    <li>{translate 'admin.backup_files'}</li>
-                    <li>{translate 'admin.test_backup'}</li>
-                </ul>
-            </div>
-        </div>
+<div class="main-actions-bar">
+    <div class="main-actions-left">
+        <span id="update-actions" hidden>
+            <button type="button" class="btn btn-primary" id="download-update-btn"><?= birkly_icon('download') ?>{translate 'admin.download_update'}</button>
+        </span>
+        <button type="button" class="btn btn-secondary" id="check-updates-btn"><?= birkly_icon('refresh') ?>{translate 'admin.check_again'}</button>
     </div>
 </div>
 
-<!-- Initialize Updates JavaScript -->
+<div class="settings-stack">
+    <section class="frame">
+        <div class="frame-head">
+            <h2 class="frame-title">{translate 'admin.current_version'}</h2>
+            <span class="badge badge-info" id="current-version">{translate 'admin.settings_js_loading_table'}</span>
+        </div>
+        <div class="slab updates-version">
+            <p>{translate 'admin.version_running'} <strong id="current-version-text">{translate 'admin.settings_js_loading_table'}</strong></p>
+            <div class="kv">
+                <span class="kv-key">{translate 'admin.installation_date'}</span>
+                <span class="kv-value" id="install-date">{translate 'admin.unknown'}</span>
+                <span class="kv-key">{translate 'admin.last_update'}</span>
+                <span class="kv-value" id="last-update">{translate 'admin.never'}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="frame" id="update-status-card">
+        <div class="frame-head">
+            <h2 class="frame-title">{translate 'admin.update_status'}</h2>
+            <div id="update-status">
+                <span class="badge badge-neutral">{translate 'admin.updates_js_checking'}</span>
+            </div>
+        </div>
+        <div class="slab" id="update-details" hidden>
+            <div id="update-info"></div>
+        </div>
+    </section>
+
+    <section class="frame">
+        <div class="frame-head">
+            <h2 class="frame-title">{translate 'admin.changelog'}</h2>
+        </div>
+        <div class="slab" id="changelog-content">
+            <div class="loading-state"><p>{translate 'admin.loading_changelog'}</p></div>
+        </div>
+    </section>
+
+    <div class="signal">
+        <?= birkly_icon('alert') ?>
+        <div class="signal-body">
+            <p class="signal-title">{translate 'admin.important_reminder'}</p>
+            <p class="signal-text">{translate 'admin.backup_before_update'}</p>
+            <ul class="settings-list">
+                <li>{translate 'admin.backup_database'}</li>
+                <li>{translate 'admin.backup_files'}</li>
+                <li>{translate 'admin.test_backup'}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+</div>
+
 {include_script 'updates.js'}
-
-<script>
-// Initialize updates manager when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.initUpdatesManager) {
-        window.initUpdatesManager();
-    }
-});
-</script>

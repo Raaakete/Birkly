@@ -106,7 +106,7 @@
             : '';
 
         return '<article class="' + rowClass + '" data-activity-id="' + id + '">' +
-            '<div class="activity-row__icon" aria-hidden="true">' + escapeHtml(item.icon || '📌') + '</div>' +
+            '<div class="activity-row__icon activity-row__icon--' + escapeHtml(item.severity || 'info') + '" aria-hidden="true">' + rowIcon(item) + '</div>' +
             '<div class="activity-row__body">' +
             '<div class="activity-row__head">' +
             '<span class="activity-row__message">' + message + '</span>' +
@@ -127,6 +127,16 @@
             '</div>' +
             '<div class="activity-row__actions">' + linkBtn + expandBtn + '</div>' +
             '</article>';
+    }
+
+    function rowIcon(item) {
+        if (item.icon_name && window.Birkly && typeof window.Birkly.icon === 'function') {
+            const svg = window.Birkly.icon(String(item.icon_name));
+            if (svg) {
+                return svg;
+            }
+        }
+        return escapeHtml(item.icon || '📌');
     }
 
     function renderList(items, options) {

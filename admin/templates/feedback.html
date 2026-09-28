@@ -1,3 +1,4 @@
+<div class="settings-shell feedback-shell" data-birch>
 <div class="page-header">
     <div class="page-header-left">
         <div class="breadcrumbs">
@@ -9,13 +10,13 @@
     <div class="page-header-actions"></div>
 </div>
 
-<div class="page-body u-stack-6">
-    <p class="u-text-sm u-fg-secondary"><?= __('admin.feedback_admin_intro') ?></p>
-
-    <div class="main-actions-bar">
-        <div class="main-actions-left u-align-end">
-            <div class="form-group u-m-0">
-                <label for="feedback-filter-status"><?= __('admin.feedback_status_label') ?></label>
+<div class="main-actions-bar">
+        <div class="main-actions-left">
+            <button type="button" class="btn btn-secondary" id="feedback-refresh-btn"><?= birkly_icon('refresh') ?><?= __('admin.feedback_refresh') ?></button>
+        </div>
+        <div class="main-actions-right feedback-filters">
+            <div class="feedback-filter">
+                <label class="u-sr-only" for="feedback-filter-status"><?= __('admin.feedback_status_label') ?></label>
                 <select id="feedback-filter-status" class="input">
                     <option value=""><?= __('admin.feedback_all_statuses') ?></option>
                     <option value="new"><?= __('admin.feedback_status_new') ?></option>
@@ -24,8 +25,8 @@
                     <option value="closed"><?= __('admin.feedback_status_closed') ?></option>
                 </select>
             </div>
-            <div class="form-group u-m-0">
-                <label for="feedback-filter-type"><?= __('admin.feedback_type_label') ?></label>
+            <div class="feedback-filter">
+                <label class="u-sr-only" for="feedback-filter-type"><?= __('admin.feedback_type_label') ?></label>
                 <select id="feedback-filter-type" class="input">
                     <option value=""><?= __('admin.feedback_all_types') ?></option>
                     <option value="bug"><?= __('admin.feedback_type_bug') ?></option>
@@ -34,8 +35,8 @@
                     <option value="question"><?= __('admin.feedback_type_question') ?></option>
                 </select>
             </div>
-            <div class="form-group u-m-0">
-                <label for="feedback-filter-category"><?= __('admin.feedback_category_label') ?></label>
+            <div class="feedback-filter">
+                <label class="u-sr-only" for="feedback-filter-category"><?= __('admin.feedback_category_label') ?></label>
                 <select id="feedback-filter-category" class="input">
                     <option value=""><?= __('admin.feedback_all_categories') ?></option>
                     <option value="admin"><?= __('admin.feedback_category_admin') ?></option>
@@ -48,10 +49,10 @@
                 </select>
             </div>
         </div>
-        <div class="main-actions-right">
-            <button type="button" class="btn btn-secondary" id="feedback-refresh-btn"><?= __('admin.feedback_refresh') ?></button>
-        </div>
     </div>
+
+<div class="page-body settings-panels feedback-body">
+    <p class="settings-help"><?= __('admin.feedback_admin_intro') ?></p>
 
     <div id="feedback-list-loading" class="loading-state"><?= __('admin.feedback_loading') ?></div>
     <div id="feedback-list-empty" class="empty-state" hidden>
@@ -96,4 +97,5 @@
     </div>
 </div>
 
+</div>
 <script src="<?= birkly_url('/admin/js/feedback.js') ?>"></script>

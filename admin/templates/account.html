@@ -1,3 +1,4 @@
+<div class="settings-shell account-shell" data-birch>
 <div class="page-header">
   <div class="page-header-left">
     <div class="breadcrumbs"><span class="current">{translate 'admin.account_settings'}</span></div>
@@ -14,30 +15,41 @@
   </div>
 </div>
 
-<div class="account-settings-page">
+<div class="account-settings-page settings-panels">
   <div class="settings-stack">
   <section class="card">
     <div class="card-header">
       <h2 class="card-title">{translate 'admin.profile_information'}</h2>
     </div>
     <form id="account-profile-form" class="settings-form card-body u-stack-4" enctype="multipart/form-data">
-      <div class="form-group">
-        <label for="account-name">{translate 'admin.name'}</label>
-        <input type="text" id="account-name" name="name" value="{user.name}" required>
-        <small>{translate 'admin.display_name_description'}</small>
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="account-name">{translate 'admin.name'}</label>
+          <small>{translate 'admin.display_name_description'}</small>
+        </div>
+        <div class="setting-value">
+          <input type="text" id="account-name" name="name" class="input" value="{user.name}" required>
+        </div>
       </div>
       
-      <div class="form-group">
-        <label for="account-email">{translate 'admin.email'}</label>
-        <input type="email" id="account-email" name="email" value="{user.email}" disabled>
-        <small>{translate 'admin.email_cannot_be_changed'}</small>
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="account-email">{translate 'admin.email'}</label>
+          <small>{translate 'admin.email_cannot_be_changed'}</small>
+        </div>
+        <div class="setting-value">
+          <input type="email" id="account-email" name="email" class="input" value="{user.email}" disabled>
+        </div>
       </div>
       
-      <div class="form-group">
-        <label for="account-avatar">{translate 'admin.avatar'}</label>
-        <input type="file" id="account-avatar" name="avatar" accept="image/*">
-        <small>{translate 'admin.avatar_upload_instructions'}</small>
-        {if user.avatar exist}
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="account-avatar">{translate 'admin.avatar'}</label>
+          <small>{translate 'admin.avatar_upload_instructions'}</small>
+        </div>
+        <div class="setting-value">
+          <input type="file" id="account-avatar" name="avatar" accept="image/*">
+          {if user.avatar exist}
           <div class="avatar-preview-wrap">
             <p class="u-text-sm u-fg-secondary">{translate 'admin.current_avatar'}:</p>
             <img src="{user.avatar}" alt="{translate 'admin.current_avatar'}">
@@ -45,10 +57,11 @@
               <button type="button" id="remove-avatar-btn" class="btn btn-danger btn-sm">{translate 'admin.remove_avatar'}</button>
             </div>
           </div>
-        {endif}
-        <div id="avatar-preview" class="avatar-preview-wrap" hidden>
+          {endif}
+          <div id="avatar-preview" class="avatar-preview-wrap" hidden>
           <p class="u-text-sm u-fg-secondary">{translate 'admin.preview'}:</p>
           <img id="avatar-preview-img" src="" alt="{translate 'admin.preview'}">
+        </div>
         </div>
       </div>
     </form>
@@ -59,21 +72,33 @@
       <h2 class="card-title">{translate 'admin.change_password'}</h2>
     </div>
     <form id="account-password-form" class="settings-form card-body u-stack-4">
-      <div class="form-group">
-        <label for="current-password">{translate 'admin.current_password'} *</label>
-        <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="current-password">{translate 'admin.current_password'} *</label>
+        </div>
+        <div class="setting-value">
+          <input type="password" id="current-password" name="current_password" required class="input" autocomplete="current-password">
+        </div>
       </div>
-      <div class="form-group">
-        <label for="new-password">{translate 'admin.new_password'} *</label>
-        <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
-        <small class="form-help">{translate 'admin.password_min_length'}</small>
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="new-password">{translate 'admin.new_password'} *</label>
+          <small class="form-help">{translate 'admin.password_min_length'}</small>
+        </div>
+        <div class="setting-value">
+          <input type="password" id="new-password" name="new_password" required class="input" autocomplete="new-password" minlength="8">
+        </div>
       </div>
-      <div class="form-group">
-        <label for="confirm-password">{translate 'admin.confirm_new_password'} *</label>
-        <input type="password" id="confirm-password" name="confirm_password" required class="input" autocomplete="new-password" minlength="8">
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="confirm-password">{translate 'admin.confirm_new_password'} *</label>
+        </div>
+        <div class="setting-value">
+          <input type="password" id="confirm-password" name="confirm_password" required class="input" autocomplete="new-password" minlength="8">
+        </div>
       </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">{translate 'admin.change_password'}</button>
+      <div class="setting-actions">
+        <button type="submit" class="btn btn-secondary">{translate 'admin.change_password'}</button>
       </div>
       
       <div id="password-message" class="message" role="status" aria-live="polite" hidden></div>
@@ -85,9 +110,13 @@
       <h2 class="card-title">{translate 'admin.language_preferences'}</h2>
     </div>
     <form id="account-language-form" class="settings-form card-body u-stack-4">
-      <div class="form-group">
-        <label for="account-language">{translate 'admin.admin_panel_language'}</label>
-        <select id="account-language" name="language" class="input">
+      <div class="form-group setting-row">
+        <div class="setting-label">
+          <label for="account-language">{translate 'admin.admin_panel_language'}</label>
+          <small>{translate 'admin.language_setting_description'}</small>
+        </div>
+        <div class="setting-value">
+          <select id="account-language" name="language" class="input">
           {for each lang in available_languages}
             {if lang.code == current_language}
               <option value="{lang.code}" selected>{lang.native_name} {lang.flag}</option>
@@ -96,7 +125,7 @@
             {endif}
           {endfor}
         </select>
-        <small>{translate 'admin.language_setting_description'}</small>
+        </div>
       </div>
       <div id="language-message" class="message" role="status" aria-live="polite" hidden></div>
     </form>
@@ -108,18 +137,17 @@
       <p class="card-description">{translate 'admin.guide_account_description'}</p>
     </div>
     <form id="account-guide-form" class="settings-form card-body u-stack-4">
-      <div class="data-list-item">
-        <div class="data-list-main">
-          <span class="data-list-title">{translate 'admin.guide_disable_attention_label'}</span>
-          <small class="data-list-meta">{translate 'admin.guide_disable_attention_help'}</small>
+      <div class="setting-row">
+        <div class="setting-label">
+          <label for="account-guide-disable-attention">{translate 'admin.guide_disable_attention_label'}</label>
+          <small class="form-help">{translate 'admin.guide_disable_attention_help'}</small>
         </div>
-        <label class="switch">
-          <input type="checkbox" id="account-guide-disable-attention" name="disable_attention">
-          <span class="switch__slider"></span>
-        </label>
+        <div class="setting-value">
+          <label class="switch"><input type="checkbox" id="account-guide-disable-attention" name="disable_attention"><span class="switch__slider"></span></label>
+        </div>
       </div>
-      <div class="empty-state-actions">
-        <button type="submit" class="btn btn-primary">{translate 'admin.save_changes'}</button>
+      <div class="setting-actions">
+        <button type="submit" class="btn btn-secondary">{translate 'admin.save_changes'}</button>
         <button type="button" class="btn btn-secondary" id="account-guide-snooze">{translate 'admin.guide_snooze_tips'}</button>
         <button type="submit" class="btn btn-secondary" data-guide-reset="1">{translate 'admin.guide_reset_progress'}</button>
       </div>
@@ -135,15 +163,15 @@
     <form id="account-density-form" class="settings-form card-body u-stack-4">
       <div class="form-group u-stack-3">
         <label class="radio-card">
-          <input type="radio" name="ui_density" value="compact">
+          <input type="radio" class="radio" name="ui_density" value="compact">
           <span><strong>Compact</strong> — smaller text and tighter spacing</span>
         </label>
         <label class="radio-card">
-          <input type="radio" name="ui_density" value="default" checked>
+          <input type="radio" class="radio" name="ui_density" value="default" checked>
           <span><strong>Default</strong> — standard admin layout</span>
         </label>
         <label class="radio-card">
-          <input type="radio" name="ui_density" value="large">
+          <input type="radio" class="radio" name="ui_density" value="large">
           <span><strong>Large</strong> — larger text and more breathing room</span>
         </label>
       </div>
@@ -189,88 +217,81 @@
       </div>
     </div>
     <form id="account-notifications-form" class="settings-form card-body u-stack-4">
-      <div class="data-list data-list--flush">
-          <h3 class="u-label u-pt-2">{translate 'admin.content_events'}</h3>
+      <div class="setting-rows">
+          <h3 class="setting-group-title">{translate 'admin.content_events'}</h3>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_entry_published'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_entry_published_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-entry-published">{translate 'admin.notify_entry_published'}</label>
+              <small class="form-help">{translate 'admin.notify_entry_published_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-entry-published" name="entry_published" {if user.notification_preferences.entry_published exist}{if user.notification_preferences.entry_published == true}checked{endif}{else}checked{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-entry-published" name="entry_published" {if user.notification_preferences.entry_published exist}{if user.notification_preferences.entry_published == true}checked{endif}{else}checked{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_entry_review'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_entry_review_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-entry-review">{translate 'admin.notify_entry_review'}</label>
+              <small class="form-help">{translate 'admin.notify_entry_review_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-entry-review" name="entry_review" {if user.notification_preferences.entry_review exist}{if user.notification_preferences.entry_review == true}checked{endif}{else}checked{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-entry-review" name="entry_review" {if user.notification_preferences.entry_review exist}{if user.notification_preferences.entry_review == true}checked{endif}{else}checked{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_entry_commented'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_entry_commented_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-entry-commented">{translate 'admin.notify_entry_commented'}</label>
+              <small class="form-help">{translate 'admin.notify_entry_commented_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-entry-commented" name="entry_commented" {if user.notification_preferences.entry_commented exist}{if user.notification_preferences.entry_commented == true}checked{endif}{else}checked{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-entry-commented" name="entry_commented" {if user.notification_preferences.entry_commented exist}{if user.notification_preferences.entry_commented == true}checked{endif}{else}checked{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
 
-          <h3 class="u-label u-pt-2">{translate 'admin.user_events'}</h3>
+          <h3 class="setting-group-title">{translate 'admin.user_events'}</h3>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_invitation_accepted'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_invitation_accepted_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-invitation-accepted">{translate 'admin.notify_invitation_accepted'}</label>
+              <small class="form-help">{translate 'admin.notify_invitation_accepted_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-invitation-accepted" name="invitation_accepted" {if user.notification_preferences.invitation_accepted exist}{if user.notification_preferences.invitation_accepted == true}checked{endif}{else}checked{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-invitation-accepted" name="invitation_accepted" {if user.notification_preferences.invitation_accepted exist}{if user.notification_preferences.invitation_accepted == true}checked{endif}{else}checked{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_role_changed'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_role_changed_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-role-changed">{translate 'admin.notify_role_changed'}</label>
+              <small class="form-help">{translate 'admin.notify_role_changed_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-role-changed" name="role_changed" {if user.notification_preferences.role_changed exist}{if user.notification_preferences.role_changed == true}checked{endif}{else}checked{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-role-changed" name="role_changed" {if user.notification_preferences.role_changed exist}{if user.notification_preferences.role_changed == true}checked{endif}{else}checked{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
 
-          <h3 class="u-label u-pt-2">{translate 'admin.system_events'}</h3>
+          <h3 class="setting-group-title">{translate 'admin.system_events'}</h3>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_system_updates'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_system_updates_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-system-updates">{translate 'admin.notify_system_updates'}</label>
+              <small class="form-help">{translate 'admin.notify_system_updates_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-system-updates" name="system_updates" {if user.notification_preferences.system_updates exist}{if user.notification_preferences.system_updates == true}checked{endif}{else}checked{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-system-updates" name="system_updates" {if user.notification_preferences.system_updates exist}{if user.notification_preferences.system_updates == true}checked{endif}{else}checked{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
 
-          <div class="data-list-item">
-            <div class="data-list-main">
-              <span class="data-list-title">{translate 'admin.notify_security_events'}</span>
-              <small class="data-list-meta">{translate 'admin.notify_security_events_desc'}</small>
+          <div class="setting-row">
+            <div class="setting-label">
+              <label for="notify-security-events">{translate 'admin.notify_security_events'}</label>
+              <small class="form-help">{translate 'admin.notify_security_events_desc'}</small>
             </div>
-            <label class="switch">
-              <input type="checkbox" id="notify-security-events" name="security_events" {if user.notification_preferences.security_events exist}{if user.notification_preferences.security_events == true}checked{endif}{else}{if user.role == 'admin'}checked{endif}{endif}>
-              <span class="switch__slider"></span>
-            </label>
+            <div class="setting-value">
+              <label class="switch"><input type="checkbox" id="notify-security-events" name="security_events" {if user.notification_preferences.security_events exist}{if user.notification_preferences.security_events == true}checked{endif}{else}{if user.role == 'admin'}checked{endif}{endif}><span class="switch__slider"></span></label>
+            </div>
           </div>
       </div>
       <div id="notifications-message" class="message" role="status" aria-live="polite" hidden></div>
@@ -347,4 +368,5 @@
   </div>
 </div>
 
+</div>
 {include_script 'account-settings.js'}
