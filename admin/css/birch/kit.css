@@ -511,7 +511,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
+  height: calc(var(--control) - 8px);
   padding: 0 var(--s-2);
   border: 0;
   border-radius: var(--r-inset);
