@@ -224,19 +224,21 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
     ?>
     <div class="entries-pagination" id="entries-pagination" aria-live="polite">
         <div class="entries-pagination__summary">
-            <?php if ($entriesTotalCount > 0): ?>
-                Showing <?= (int) $rangeStart ?>-<?= (int) $rangeEnd ?> of <?= (int) $entriesTotalCount ?> entries
+            <?php if ((int) $entriesTotalCount === 1): ?>
+                <?= htmlspecialchars(__('admin.entries_pagination_showing_one')) ?>
+            <?php elseif ($entriesTotalCount > 0): ?>
+                <?= htmlspecialchars(strtr(__('admin.entries_pagination_showing'), ['{start}' => (int) $rangeStart, '{end}' => (int) $rangeEnd, '{total}' => (int) $entriesTotalCount])) ?>
             <?php else: ?>
-                No entries found
+                <?= htmlspecialchars(__('admin.entries_pagination_none')) ?>
             <?php endif; ?>
         </div>
         <div class="entries-pagination__controls">
             <?php if ($totalPages > 1): ?>
                 <?php if ($currentPage > 1): ?>
                     <?php $prevParams = $paginationBaseParams; $prevParams['page'] = $currentPage - 1; ?>
-                    <a class="button is-small" href="<?= htmlspecialchars(admin_url('entries', $prevParams)) ?>" data-entries-page="<?= (int) ($currentPage - 1) ?>">Previous</a>
+                    <a class="button is-small" href="<?= htmlspecialchars(admin_url('entries', $prevParams)) ?>" data-entries-page="<?= (int) ($currentPage - 1) ?>"><?= htmlspecialchars(__('admin.entries_pagination_previous')) ?></a>
                 <?php else: ?>
-                    <span class="button is-small" aria-disabled="true">Previous</span>
+                    <span class="button is-small" aria-disabled="true"><?= htmlspecialchars(__('admin.entries_pagination_previous')) ?></span>
                 <?php endif; ?>
 
                 <div class="entries-pagination__pages">
@@ -252,9 +254,9 @@ $showDragHandles = !$isTrashView && $currentStatusFilter === '' && $currentSearc
 
                 <?php if ($currentPage < $totalPages): ?>
                     <?php $nextParams = $paginationBaseParams; $nextParams['page'] = $currentPage + 1; ?>
-                    <a class="button is-small" href="<?= htmlspecialchars(admin_url('entries', $nextParams)) ?>" data-entries-page="<?= (int) ($currentPage + 1) ?>">Next</a>
+                    <a class="button is-small" href="<?= htmlspecialchars(admin_url('entries', $nextParams)) ?>" data-entries-page="<?= (int) ($currentPage + 1) ?>"><?= htmlspecialchars(__('admin.entries_pagination_next')) ?></a>
                 <?php else: ?>
-                    <span class="button is-small" aria-disabled="true">Next</span>
+                    <span class="button is-small" aria-disabled="true"><?= htmlspecialchars(__('admin.entries_pagination_next')) ?></span>
                 <?php endif; ?>
             <?php endif; ?>
         </div>

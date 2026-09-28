@@ -187,7 +187,7 @@
                         <div class="u-stack-2 u-pt-4 u-border-top" id="ap-assist-results">
                             <div class="u-split u-wrap u-gap-2">
                                 <h3 class="u-text-sm u-weight-semibold u-m-0">{translate 'admin.ai_presence_assist_review'} <span class="badge badge-sm" id="ap-suggestion-count" hidden>0</span></h3>
-                                <button type="button" class="btn btn-sm btn-secondary" id="ap-accept-all-suggestions">{translate 'admin.ai_presence_accept_all'}</button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="ap-accept-all-suggestions" hidden>{translate 'admin.ai_presence_accept_all'}</button>
                             </div>
                             <p class="form-help">{translate 'admin.ai_presence_suggestions_help'}</p>
                             <ul id="ap-assist-suggestions" class="ap-card-list"></ul>
