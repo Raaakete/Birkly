@@ -22,28 +22,36 @@
    ============================================ */
 
 /* ---------- Gesture engine ---------- */
+/* Defaults carry no specificity, so any gesture rule overrides them */
+:where(.birkly-icon[data-gesture]) {
+  --g-n: 4;
+  --g-loop: 1;
+  --g-a-at: 0; --g-b-at: 0; --g-c-at: 0; --g-d-at: 0; --g-e-at: 0; --g-f-at: 0; --g-g-at: 0; --g-h-at: 0; --g-i-at: 0; --g-j-at: 0;
+  --g-1-at: 0; --g-2-at: 0; --g-3-at: 0;
+}
+
 .birkly-icon[data-gesture] path {
   animation-name: var(--run-base, none);
-  animation-duration: calc(var(--dur-frame) * var(--g-n, 4));
+  animation-duration: calc(var(--dur-frame) * var(--g-n));
   animation-timing-function: steps(1, end);
-  animation-iteration-count: var(--g-loop, 1);
+  animation-iteration-count: var(--g-loop);
   transform-box: view-box;
   transform-origin: 50% 50%;
 }
 
-.birkly-icon[data-gesture] [data-part="a"] { animation-name: var(--run-a, none); animation-delay: calc(var(--dur-frame) * var(--g-a-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-a-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="b"] { animation-name: var(--run-b, none); animation-delay: calc(var(--dur-frame) * var(--g-b-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-b-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="c"] { animation-name: var(--run-c, none); animation-delay: calc(var(--dur-frame) * var(--g-c-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-c-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="d"] { animation-name: var(--run-d, none); animation-delay: calc(var(--dur-frame) * var(--g-d-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-d-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="e"] { animation-name: var(--run-e, none); animation-delay: calc(var(--dur-frame) * var(--g-e-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-e-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="f"] { animation-name: var(--run-f, none); animation-delay: calc(var(--dur-frame) * var(--g-f-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-f-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="g"] { animation-name: var(--run-g, none); animation-delay: calc(var(--dur-frame) * var(--g-g-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-g-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="h"] { animation-name: var(--run-h, none); animation-delay: calc(var(--dur-frame) * var(--g-h-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-h-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="i"] { animation-name: var(--run-i, none); animation-delay: calc(var(--dur-frame) * var(--g-i-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-i-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="j"] { animation-name: var(--run-j, none); animation-delay: calc(var(--dur-frame) * var(--g-j-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-j-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="1"] { animation-name: var(--run-1, none); animation-delay: calc(var(--dur-frame) * var(--g-1-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-1-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="2"] { animation-name: var(--run-2, none); animation-delay: calc(var(--dur-frame) * var(--g-2-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-2-n, var(--g-n, 4))); }
-.birkly-icon[data-gesture] [data-part="3"] { animation-name: var(--run-3, none); animation-delay: calc(var(--dur-frame) * var(--g-3-at, 0)); animation-duration: calc(var(--dur-frame) * var(--g-3-n, var(--g-n, 4))); }
+.birkly-icon[data-gesture] [data-part="a"] { animation-name: var(--run-a, none); animation-delay: calc(var(--dur-frame) * var(--g-a-at)); animation-duration: calc(var(--dur-frame) * var(--g-a-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="b"] { animation-name: var(--run-b, none); animation-delay: calc(var(--dur-frame) * var(--g-b-at)); animation-duration: calc(var(--dur-frame) * var(--g-b-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="c"] { animation-name: var(--run-c, none); animation-delay: calc(var(--dur-frame) * var(--g-c-at)); animation-duration: calc(var(--dur-frame) * var(--g-c-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="d"] { animation-name: var(--run-d, none); animation-delay: calc(var(--dur-frame) * var(--g-d-at)); animation-duration: calc(var(--dur-frame) * var(--g-d-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="e"] { animation-name: var(--run-e, none); animation-delay: calc(var(--dur-frame) * var(--g-e-at)); animation-duration: calc(var(--dur-frame) * var(--g-e-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="f"] { animation-name: var(--run-f, none); animation-delay: calc(var(--dur-frame) * var(--g-f-at)); animation-duration: calc(var(--dur-frame) * var(--g-f-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="g"] { animation-name: var(--run-g, none); animation-delay: calc(var(--dur-frame) * var(--g-g-at)); animation-duration: calc(var(--dur-frame) * var(--g-g-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="h"] { animation-name: var(--run-h, none); animation-delay: calc(var(--dur-frame) * var(--g-h-at)); animation-duration: calc(var(--dur-frame) * var(--g-h-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="i"] { animation-name: var(--run-i, none); animation-delay: calc(var(--dur-frame) * var(--g-i-at)); animation-duration: calc(var(--dur-frame) * var(--g-i-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="j"] { animation-name: var(--run-j, none); animation-delay: calc(var(--dur-frame) * var(--g-j-at)); animation-duration: calc(var(--dur-frame) * var(--g-j-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="1"] { animation-name: var(--run-1, none); animation-delay: calc(var(--dur-frame) * var(--g-1-at)); animation-duration: calc(var(--dur-frame) * var(--g-1-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="2"] { animation-name: var(--run-2, none); animation-delay: calc(var(--dur-frame) * var(--g-2-at)); animation-duration: calc(var(--dur-frame) * var(--g-2-n, var(--g-n))); }
+.birkly-icon[data-gesture] [data-part="3"] { animation-name: var(--run-3, none); animation-delay: calc(var(--dur-frame) * var(--g-3-at)); animation-duration: calc(var(--dur-frame) * var(--g-3-n, var(--g-n))); }
 
 /* Trigger: the icon itself or one wrapper deep inside a hovered or
    keyboard-focused control. Disabled and busy controls stay still. */

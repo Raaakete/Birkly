@@ -166,6 +166,11 @@
   --page-max: 1440px;
   --page-max-narrow: 880px;
 
+  /* 11. Third-party brand colours: the search preview mimics a Google result */
+  --serp-title: #1A0DAB;
+  --serp-url: #006621;
+  --serp-desc: #545454;
+
   /* Breakpoints — documentation only; literal values in @media (min-width): 640 / 768 / 1024 / 1280 / 1440 */
   --bp-sm: 640px;
   --bp-md: 768px;
@@ -209,6 +214,9 @@
   --shadow-float-2: 0 2px 8px rgb(0 0 0 / 0.5);
   --shadow-menu: 0 0 0 1px var(--line-strong), 0 12px 32px -6px rgb(0 0 0 / 0.6);
   --shadow-sheet: 0 24px 64px -12px rgb(0 0 0 / 0.7);
+  --serp-title: var(--accent-text);
+  --serp-url: var(--success);
+  --serp-desc: var(--text-2);
   color-scheme: dark;
 }
 
@@ -248,6 +256,9 @@
     --shadow-float-2: 0 2px 8px rgb(0 0 0 / 0.5);
     --shadow-menu: 0 0 0 1px var(--line-strong), 0 12px 32px -6px rgb(0 0 0 / 0.6);
     --shadow-sheet: 0 24px 64px -12px rgb(0 0 0 / 0.7);
+    --serp-title: var(--accent-text);
+    --serp-url: var(--success);
+    --serp-desc: var(--text-2);
     color-scheme: dark;
   }
 }

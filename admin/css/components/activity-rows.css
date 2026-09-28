@@ -128,7 +128,7 @@
 
 .project-activity-filters .btn.is-active {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .activity-page-filters {
