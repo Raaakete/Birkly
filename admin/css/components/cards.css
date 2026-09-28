@@ -23,10 +23,10 @@
   flex-direction: column;
   min-width: 0;
   background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  box-shadow: var(--elevation-0);
-  color: var(--text-primary);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: none;
+  color: var(--text);
 }
 
 /* ---- Regions ---- */
@@ -34,66 +34,66 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-6);
-  border-block-end: 1px solid var(--border-subtle);
+  gap: var(--s-4);
+  padding: var(--s-4) var(--s-6);
+  border-block-end: 1px solid var(--line);
   min-width: 0;
 }
 
 .card-title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--size-title-l);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-snug);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
   min-width: 0;
 }
 
 .card-header h2,
 .card-header h3 {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--size-title-l);
   font-weight: var(--weight-semibold);
 }
 
 .card-subtitle,
 .card-description {
   margin: 0;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
+  font-size: var(--size-small);
+  color: var(--text-2);
+  line-height: 1.5;
   max-width: var(--measure-md);
 }
 
 .card-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 
 .card-body {
-  padding: var(--space-6);
+  padding: var(--s-6);
   min-width: 0;
 }
 
 .card-footer {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-6);
-  border-block-start: 1px solid var(--border-subtle);
-  background: var(--surface-sunken);
-  border-end-start-radius: var(--radius-md);
-  border-end-end-radius: var(--radius-md);
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-6);
+  border-block-start: 1px solid var(--line);
+  background: var(--surface-2);
+  border-end-start-radius: var(--r);
+  border-end-end-radius: var(--r);
 }
 
 /* A header stacked with its description */
 .card-heading {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--s-1);
   min-width: 0;
 }
 
@@ -112,52 +112,52 @@
      </div>
    ============================================ */
 .card-section {
-  padding-block: var(--space-4);
+  padding-block: var(--s-4);
   min-width: 0;
 }
 .card-section + .card-section {
-  border-block-start: 1px solid var(--border-subtle);
+  border-block-start: 1px solid var(--line);
 }
 .card-section:first-child { padding-block-start: 0; }
 .card-section:last-child { padding-block-end: 0; }
 
 /* Compact variant — tighter option rows (fieldtype config, dense settings) */
-.card-section--compact { padding-block: var(--space-3); }
+.card-section--compact { padding-block: var(--s-3); }
 
 /* A section that carries its own small title row, still boxless */
 .card-section-title {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-sm);
+  margin: 0 0 var(--s-2);
+  font-size: var(--size-small);
   font-weight: var(--weight-medium);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* ---- Modifiers ---- */
-.card--compact > .card-header { padding: var(--space-3) var(--space-4); }
-.card--compact > .card-body { padding: var(--space-4); }
-.card--compact > .card-footer { padding: var(--space-3) var(--space-4); }
+.card--compact > .card-header { padding: var(--s-3) var(--s-4); }
+.card--compact > .card-body { padding: var(--s-4); }
+.card--compact > .card-footer { padding: var(--s-3) var(--s-4); }
 
 /* Flush — child owns its own padding (tables, lists) */
 .card--flush > .card-body { padding: 0; }
 
 /* Padded — the card IS the body. For JS-composed cards whose children cannot
    easily be wrapped in a .card-body (P56-M11: hosting wizard preview). */
-.card--padded { padding: var(--space-6); }
-.card--padded.card--compact { padding: var(--space-4); }
+.card--padded { padding: var(--s-6); }
+.card--padded.card--compact { padding: var(--s-4); }
 
 .card--sunken {
-  background: var(--surface-sunken);
-  border-color: var(--border-subtle);
+  background: var(--surface-2);
+  border-color: var(--line);
 }
 
 .card--accent {
   background: var(--accent-soft);
-  border-color: var(--accent-border);
+  border-color: var(--accent-line);
 }
 
 .card--danger {
-  background: var(--danger-surface);
-  border-color: var(--danger-border);
+  background: var(--danger-soft);
+  border-color: var(--danger-soft);
 }
 
 .card--borderless { border-color: transparent; }
@@ -168,14 +168,14 @@ a.card {
   cursor: pointer;
   text-decoration: none;
   transition:
-    border-color var(--motion-fast) var(--ease-out),
-    box-shadow var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
+    border-color var(--dur-1) var(--ease),
+    box-shadow var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease);
 }
 .card--interactive:hover,
 a.card:hover {
-  border-color: var(--border-default);
-  box-shadow: var(--elevation-1);
+  border-color: var(--line);
+  box-shadow: none;
 }
 .card--interactive:focus-visible,
 a.card:focus-visible {
@@ -184,8 +184,8 @@ a.card:focus-visible {
 }
 
 /* Legacy aliases kept for un-migrated markup */
-.card--bordered { border-color: var(--border-default); }
-.card--elevated { box-shadow: var(--elevation-1); }
+.card--bordered { border-color: var(--line); }
+.card--elevated { box-shadow: none; }
 
 /* ============================================
    Stat — a labelled metric. Replaces .dash-stat-tile and friends.
@@ -194,34 +194,34 @@ a.card:focus-visible {
 .stat {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--s-1);
   min-width: 0;
-  padding: var(--space-4);
+  padding: var(--s-4);
   background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
 }
 
 .stat-label {
-  font-size: var(--text-2xs);
+  font-size: var(--size-caption);
   font-weight: var(--weight-medium);
   text-transform: uppercase;
-  letter-spacing: var(--tracking-label);
-  color: var(--text-tertiary);
+  letter-spacing: 0;
+  color: var(--text-3);
 }
 
 .stat-value {
-  font-size: var(--text-2xl);
+  font-size: var(--size-number);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-tight);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
 .stat-meta {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 
 /* ============================================
@@ -236,10 +236,10 @@ a.card:focus-visible {
 .data-list-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--s-3);
   min-height: 2.75rem;
-  padding: var(--space-3) var(--space-6);
-  border-block-end: 1px solid var(--border-subtle);
+  padding: var(--s-3) var(--s-6);
+  border-block-end: 1px solid var(--line);
   min-width: 0;
   color: inherit;
   text-decoration: none;
@@ -248,10 +248,10 @@ a.card:focus-visible {
 
 a.data-list-item,
 .data-list-item--interactive {
-  transition: background-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease);
 }
 a.data-list-item:hover,
-.data-list-item--interactive:hover { background: var(--surface-hover); }
+.data-list-item--interactive:hover { background: var(--surface-2); }
 
 .data-list-main {
   display: flex;
@@ -262,29 +262,29 @@ a.data-list-item:hover,
 }
 
 .data-list-title {
-  font-size: var(--text-base);
+  font-size: var(--size-body);
   font-weight: var(--weight-medium);
-  color: var(--text-primary);
+  color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .data-list-meta {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 
 .data-list-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--s-1);
   flex-shrink: 0;
 }
 
 .data-list--compact .data-list-item {
   min-height: 2.25rem;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--s-2) var(--s-4);
 }
 
 /* Flush — the list supplies no horizontal padding of its own, for when it
@@ -297,35 +297,35 @@ a.data-list-item:hover,
 .kv {
   display: grid;
   grid-template-columns: minmax(0, 10rem) minmax(0, 1fr);
-  gap: var(--space-2) var(--space-4);
+  gap: var(--s-2) var(--s-4);
   min-width: 0;
 }
 .kv-key {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 .kv-value {
-  font-size: var(--text-sm);
-  color: var(--text-primary);
+  font-size: var(--size-small);
+  color: var(--text);
   min-width: 0;
   overflow-wrap: anywhere;
 }
 @media (max-width: 767px) {
-  .kv { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
-  .kv-value { margin-block-end: var(--space-2); }
+  .kv { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
+  .kv-value { margin-block-end: var(--s-2); }
 }
 
 /* Drag and drop — token layering, no scale, no giant shadow */
 .collection-card.dragging,
 .dragging {
   opacity: 0.85;
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--shadow-float-2);
   z-index: var(--z-dragging);
 }
 
 .drop-target,
 .collection-card.drop-target {
-  border-color: var(--accent-focus);
+  border-color: var(--accent);
   background: var(--accent-soft);
 }
 
@@ -333,7 +333,7 @@ a.data-list-item:hover,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-tertiary);
+  color: var(--text-3);
   cursor: grab;
   flex-shrink: 0;
 }

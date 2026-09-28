@@ -10,10 +10,10 @@
 
 body {
   font-family: var(--font-sans);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  color: var(--text-primary);
-  background: var(--canvas);
+  font-size: var(--size-body);
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
 }
 
 /* ============================================
@@ -21,35 +21,35 @@ body {
    ============================================ */
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-snug);
-  letter-spacing: var(--tracking-tight);
+  line-height: 1.4;
+  letter-spacing: var(--tracking-title);
 }
 
 h1 {
-  font-size: var(--text-xl);
+  font-size: var(--size-page-title);
   font-weight: var(--weight-medium);
-  line-height: var(--leading-tight);
+  line-height: 1.25;
 }
 
-h2 { font-size: var(--text-lg); }
-h3 { font-size: var(--text-base); }
-h4 { font-size: var(--text-base); }
+h2 { font-size: var(--size-title-l); }
+h3 { font-size: var(--size-body); }
+h4 { font-size: var(--size-body); }
 
 h5, h6 {
-  font-size: var(--text-sm);
-  letter-spacing: var(--tracking-normal);
+  font-size: var(--size-small);
+  letter-spacing: 0;
 }
 
 p {
   margin: 0;
-  line-height: var(--leading-normal);
+  line-height: 1.5;
 }
 
 small {
-  font-size: var(--text-xs);
-  color: var(--text-secondary);
+  font-size: var(--size-small);
+  color: var(--text-2);
 }
 
 strong, b { font-weight: var(--weight-semibold); }
@@ -64,15 +64,15 @@ strong, b { font-weight: var(--weight-semibold); }
    restored because there the link needs to be identifiable mid-sentence.
    ============================================ */
 a {
-  color: var(--text-link);
+  color: var(--accent-text);
   text-decoration: none;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
-  transition: color var(--motion-fast) var(--ease-out);
+  transition: color var(--dur-1) var(--ease);
 }
 
 a:hover {
-  color: var(--text-link-hover);
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 
@@ -113,22 +113,22 @@ a.chip:hover {
 code {
   font-family: var(--font-mono);
   font-size: 0.9em;
-  background: var(--surface-sunken);
-  color: var(--text-primary);
+  background: var(--surface-2);
+  color: var(--text);
   padding: 0.125em 0.375em;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
+  border-radius: var(--r);
+  border: 1px solid var(--line);
 }
 
 pre {
   font-family: var(--font-mono);
-  font-size: var(--text-sm);
-  line-height: var(--leading-relaxed);
-  background: var(--surface-sunken);
-  color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  padding: var(--space-4);
-  border-radius: var(--radius-md);
+  font-size: var(--size-small);
+  line-height: 1.6;
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  padding: var(--s-4);
+  border-radius: var(--r);
   overflow-x: auto;
 }
 
@@ -142,7 +142,7 @@ pre code {
 
 hr {
   border: none;
-  border-block-start: 1px solid var(--border-subtle);
+  border-block-start: 1px solid var(--line);
   margin: 0;
 }
 
@@ -151,57 +151,57 @@ hr {
    The only place --text-md and heading margins are used.
    ============================================ */
 .prose {
-  font-size: var(--text-md);
-  line-height: var(--leading-relaxed);
-  color: var(--text-primary);
+  font-size: var(--size-slab-title);
+  line-height: 1.6;
+  color: var(--text);
   max-width: var(--measure-md);
 }
 
-.prose > * + * { margin-block-start: var(--space-4); }
+.prose > * + * { margin-block-start: var(--s-4); }
 
 .prose h1,
 .prose h2,
 .prose h3,
 .prose h4 {
-  margin-block-start: var(--space-8);
-  margin-block-end: var(--space-2);
+  margin-block-start: 32px;
+  margin-block-end: var(--s-2);
 }
 
 .prose > :first-child { margin-block-start: 0; }
 
-.prose h1 { font-size: var(--text-2xl); font-weight: var(--weight-semibold); }
-.prose h2 { font-size: var(--text-xl); }
-.prose h3 { font-size: var(--text-lg); }
+.prose h1 { font-size: var(--size-number); font-weight: var(--weight-semibold); }
+.prose h2 { font-size: var(--size-page-title); }
+.prose h3 { font-size: var(--size-title-l); }
 
 .prose ul,
 .prose ol {
-  padding-inline-start: var(--space-6);
+  padding-inline-start: var(--s-6);
   list-style: revert;
 }
 
-.prose li + li { margin-block-start: var(--space-1); }
+.prose li + li { margin-block-start: var(--s-1); }
 
 .prose blockquote {
-  padding-inline-start: var(--space-4);
-  border-inline-start: 2px solid var(--accent-border);
-  color: var(--text-secondary);
+  padding-inline-start: var(--s-4);
+  border-inline-start: 2px solid var(--accent-line);
+  color: var(--text-2);
 }
 
 .prose table {
   width: 100%;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
 }
 
 .prose th,
 .prose td {
   text-align: start;
-  padding: var(--space-2) var(--space-3);
-  border-block-end: 1px solid var(--border-subtle);
+  padding: var(--s-2) var(--s-3);
+  border-block-end: 1px solid var(--line);
 }
 
 .prose th {
   font-weight: var(--weight-medium);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 /* ============================================
@@ -211,33 +211,33 @@ hr {
    margins (the container's stack owns rhythm).
    ============================================ */
 .rich-text {
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  font-size: var(--size-body);
+  line-height: 1.5;
   color: inherit;
 }
 
-.rich-text > * + * { margin-block-start: var(--space-2); }
+.rich-text > * + * { margin-block-start: var(--s-2); }
 
 .rich-text h1,
 .rich-text h2,
 .rich-text h3,
 .rich-text h4 {
   margin: 0;
-  font-size: var(--text-base);
+  font-size: var(--size-body);
   font-weight: var(--weight-semibold);
 }
 
 .rich-text ul,
 .rich-text ol {
-  padding-inline-start: var(--space-5);
+  padding-inline-start: var(--s-5);
   list-style: revert;
 }
 
-.rich-text li + li { margin-block-start: var(--space-1); }
+.rich-text li + li { margin-block-start: var(--s-1); }
 
 .rich-text pre {
-  font-size: var(--text-xs);
-  padding: var(--space-3);
+  font-size: var(--size-small);
+  padding: var(--s-3);
 }
 
 .rich-text a { text-decoration: underline; }

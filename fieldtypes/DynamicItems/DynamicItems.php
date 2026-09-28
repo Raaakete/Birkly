@@ -284,7 +284,7 @@ class DynamicItems extends BaseField {
             align-items: center;
             justify-content: center;
             padding: var(--s-5);
-            background: var(--overlay, rgb(0 0 0 / 0.4));
+            background: var(--scrim);
         }
         .dynamicitems-modal {
             display: flex;

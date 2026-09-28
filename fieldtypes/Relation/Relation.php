@@ -158,7 +158,7 @@ class Relation extends BaseField {
             align-items: center;
             justify-content: center;
             padding: var(--s-5);
-            background: var(--overlay);
+            background: var(--scrim);
         }
         #relationPickerModal.relation-picker-modal.is-open { display: flex; }
         #relationPickerModal .relation-picker-panel {

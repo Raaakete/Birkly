@@ -22,13 +22,13 @@
    ============================================ */
 .ap-hub {
   min-width: 0;
-  padding-block-end: var(--space-8);
+  padding-block-end: 32px;
 }
 
 #ap-hub-tablist .tab {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 /* Status dots — dedicated bright tokens (tiny discs read darker than buttons). */
@@ -36,17 +36,17 @@
   display: inline-block;
   width: 0.5rem;
   height: 0.5rem;
-  border-radius: var(--radius-pill);
+  border-radius: var(--r);
   flex-shrink: 0;
-  background: var(--status-dot-bad);
+  background: var(--danger);
 }
 
 .ap-tab-dot[data-ok="1"] {
-  background: var(--status-dot-ok);
+  background: var(--success);
 }
 
 .ap-tab-dot[data-ok="0"] {
-  background: var(--status-dot-bad);
+  background: var(--danger);
 }
 
 /* ============================================
@@ -56,13 +56,13 @@
    ============================================ */
 .ap-guide-layout {
   min-width: 0;
-  padding-block-end: var(--space-8);
+  padding-block-end: 32px;
 }
 
 .ap-guide-tabs {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
+  gap: var(--s-6);
   align-items: start;
   min-width: 0;
 }
@@ -94,7 +94,7 @@
 
   .ap-guide-nav {
     position: sticky;
-    inset-block-start: var(--space-6);
+    inset-block-start: var(--s-6);
   }
 }
 
@@ -111,7 +111,7 @@
 .ap-card-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--s-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -120,21 +120,21 @@
 .ap-workflow-step {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
+  gap: var(--s-3);
+  padding: var(--s-2) var(--s-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
   cursor: pointer;
   transition:
-    border-color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
+    border-color var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease);
 }
 
-.ap-workflow-step:hover { border-color: var(--border-default); }
+.ap-workflow-step:hover { border-color: var(--line); }
 
 .ap-workflow-step.is-done {
-  border-color: var(--accent-border);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
@@ -145,10 +145,10 @@
   flex-shrink: 0;
   width: 1.5rem;
   height: 1.5rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
-  font-size: var(--text-xs);
+  font-size: var(--size-small);
   font-weight: var(--weight-semibold);
 }
 
@@ -160,7 +160,7 @@
 
 /* Completeness tiles are .stat; a satisfied section is signalled on the border
    so the grid stays scannable without adding a second badge per tile. */
-.ap-stat-complete { border-color: var(--success-border); }
+.ap-stat-complete { border-color: var(--success-soft); }
 
 /* ============================================
    Field grids — three-up context forms with full-width spans
@@ -168,7 +168,7 @@
 .ap-context-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4);
+  gap: var(--s-4);
   min-width: 0;
 }
 
@@ -186,7 +186,7 @@
 .ap-field-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--space-2);
+  gap: var(--s-2);
   align-items: start;
 }
 
@@ -199,11 +199,11 @@
   flex-shrink: 0;
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
   color: var(--accent-text);
-  font-size: var(--text-sm);
+  font-size: var(--size-small);
   font-weight: var(--weight-semibold);
 }
 
@@ -213,21 +213,21 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-1);
-  padding: var(--space-6);
-  border: 2px dashed var(--border-default);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+  gap: var(--s-1);
+  padding: var(--s-6);
+  border: 2px dashed var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
   text-align: center;
   cursor: pointer;
   transition:
-    border-color var(--motion-fast) var(--ease-out),
-    background-color var(--motion-fast) var(--ease-out);
+    border-color var(--dur-1) var(--ease),
+    background-color var(--dur-1) var(--ease);
 }
 
 .ap-upload-dropzone:hover,
 .ap-upload-dropzone.is-dragover {
-  border-color: var(--accent-muted);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 
@@ -249,36 +249,36 @@
 }
 
 .ai-presence-item-list li {
-  padding: var(--space-3) 0;
-  border-block-end: 1px solid var(--border-subtle);
-  font-size: var(--text-sm);
+  padding: var(--s-3) 0;
+  border-block-end: 1px solid var(--line);
+  font-size: var(--size-small);
 }
 
 .ai-presence-item-list li:last-child { border-block-end: none; }
 
-.ai-presence-item-list li.selected { background: var(--surface-selected); }
+.ai-presence-item-list li.selected { background: var(--accent-soft); }
 
 .ap-item-list--interactive li {
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease);
 }
 
-.ap-item-list--interactive li:hover { background: var(--surface-hover); }
+.ap-item-list--interactive li:hover { background: var(--surface-2); }
 
 /* Endpoint / URL definition lists */
 .ai-presence-urls dt {
-  margin-block-start: var(--space-2);
-  font-size: var(--text-xs);
+  margin-block-start: var(--s-2);
+  font-size: var(--size-small);
   font-weight: var(--weight-semibold);
 }
 
 .ai-presence-urls dd {
-  font-size: var(--text-xs);
+  font-size: var(--size-small);
   overflow-wrap: anywhere;
 }
 
 .ap-status-url {
-  font-size: var(--text-xs);
+  font-size: var(--size-small);
   overflow-wrap: anywhere;
 }
 
@@ -290,14 +290,14 @@
   display: block;
   width: 100%;
   object-fit: cover;
-  background: var(--surface-sunken);
+  background: var(--surface-2);
 }
 
 .ap-media-card-thumb { aspect-ratio: 16 / 10; }
 
 .ap-product-card-thumb {
   max-height: 7.5rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r);
 }
 
 .ap-media-thumb {
@@ -305,8 +305,8 @@
   width: 3rem;
   height: 3rem;
   object-fit: cover;
-  border-radius: var(--radius-sm);
-  background: var(--surface-sunken);
+  border-radius: var(--r);
+  background: var(--surface-2);
 }
 
 /* ============================================
@@ -315,39 +315,39 @@
 .ap-version-timeline {
   list-style: none;
   margin: 0;
-  padding: 0 0 0 var(--space-4);
-  border-inline-start: 2px solid var(--border-subtle);
+  padding: 0 0 0 var(--s-4);
+  border-inline-start: 2px solid var(--line);
 }
 
 .ap-version-timeline-item {
   position: relative;
-  padding: 0 0 var(--space-4) var(--space-4);
+  padding: 0 0 var(--s-4) var(--s-4);
 }
 
 /* Dot straddles the 2px rail: half its own width outside the padding edge. */
 .ap-version-timeline-marker {
   position: absolute;
-  inset-block-start: var(--space-2);
-  inset-inline-start: calc(-1 * var(--space-4) - 0.3125rem);
+  inset-block-start: var(--s-2);
+  inset-inline-start: calc(-1 * var(--s-4) - 0.3125rem);
   width: 0.625rem;
   height: 0.625rem;
   border: 2px solid var(--surface);
-  border-radius: var(--radius-pill);
-  background: var(--accent-muted);
+  border-radius: var(--r);
+  background: var(--accent-line);
 }
 
 .ap-version-timeline-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--text-sm);
+  gap: var(--s-1);
+  font-size: var(--size-small);
 }
 
 .ai-presence-preview-result {
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  font-size: var(--text-sm);
+  padding: var(--s-3);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  font-size: var(--size-small);
   white-space: pre-wrap;
 }
 
@@ -371,7 +371,7 @@
 .ap-ai-loading-backdrop {
   position: absolute;
   inset: 0;
-  background: var(--overlay);
+  background: var(--scrim);
 }
 
 .ap-ai-loading-panel {
@@ -379,9 +379,9 @@
   z-index: var(--z-raised);
   min-width: 17.5rem;
   max-width: 26rem;
-  padding: var(--space-6) var(--space-8);
+  padding: var(--s-6) 32px;
   text-align: center;
-  box-shadow: var(--elevation-3);
+  box-shadow: var(--shadow-menu);
 }
 
 /* ============================================

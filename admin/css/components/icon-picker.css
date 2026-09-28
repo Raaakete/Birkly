@@ -3,7 +3,7 @@
 .icon-picker-field {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--s-2);
   min-width: 0;
 }
 
@@ -19,16 +19,16 @@
   width: 2.5rem;
   height: 2.5rem;
   flex: 0 0 auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
   font-size: 1.25rem;
   line-height: 1;
 }
 
 .icon-picker-field-preview.is-empty {
-  color: var(--text-tertiary);
-  font-size: var(--text-sm);
+  color: var(--text-3);
+  font-size: var(--size-small);
 }
 
 .icon-picker-open-btn {
@@ -42,7 +42,7 @@
 .icon-picker-preview-row {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
+  gap: var(--s-3);
 }
 
 .icon-picker-preview {
@@ -52,38 +52,38 @@
   width: 3rem;
   height: 3rem;
   flex: 0 0 auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface-2);
   font-size: 1.5rem;
   line-height: 1;
 }
 
 .icon-picker-preview.is-empty {
-  color: var(--text-tertiary);
-  font-size: var(--text-sm);
+  color: var(--text-3);
+  font-size: var(--size-small);
 }
 
 .icon-picker-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--s-5);
   max-height: min(50vh, 28rem);
   overflow: auto;
-  padding-inline-end: var(--space-1);
+  padding-inline-end: var(--s-1);
 }
 
 .icon-picker-group-label {
-  margin: 0 0 var(--space-2);
-  font-size: var(--text-sm);
+  margin: 0 0 var(--s-2);
+  font-size: var(--size-small);
   font-weight: var(--weight-semibold);
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .icon-picker-group-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr));
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 .icon-picker-tile {
@@ -94,18 +94,18 @@
   aspect-ratio: 1;
   min-height: 2.75rem;
   padding: 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
   background: var(--surface);
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
-  transition: background-color var(--motion-fast) var(--ease-out),
-              border-color var(--motion-fast) var(--ease-out);
+  transition: background-color var(--dur-1) var(--ease),
+              border-color var(--dur-1) var(--ease);
 }
 
 .icon-picker-tile:hover {
-  border-color: var(--accent-border);
+  border-color: var(--accent-line);
   background: var(--accent-soft);
 }
 

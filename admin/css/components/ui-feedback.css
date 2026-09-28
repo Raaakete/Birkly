@@ -16,15 +16,15 @@
 
 .birkly-feedback-toast-region {
   position: fixed;
-  inset-block-start: var(--space-6);
+  inset-block-start: var(--s-6);
   inset-inline-start: 50%;
   transform: translateX(-50%);
   z-index: var(--z-toast);
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: var(--space-2);
-  width: min(26rem, calc(100vw - var(--space-8)));
+  gap: var(--s-2);
+  width: min(26rem, calc(100vw - 32px));
   pointer-events: none;
 }
 
@@ -33,20 +33,20 @@
   display: flex;
   align-items: flex-start;
   width: 100%;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--surface-raised);
-  color: var(--text-primary);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
-  box-shadow: var(--elevation-2);
-  animation: birkly-feedback-toast-in var(--motion-base) var(--ease-out);
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--size-body);
+  line-height: 1.5;
+  box-shadow: var(--shadow-float-2);
+  animation: birkly-feedback-toast-in var(--dur-2) var(--ease);
 }
 
 .birkly-feedback-toast--leaving {
-  animation: birkly-feedback-toast-out var(--motion-base) var(--ease-out) forwards;
+  animation: birkly-feedback-toast-out var(--dur-2) var(--ease) forwards;
 }
 
 .birkly-feedback-toast__icon {
@@ -56,10 +56,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-pill);
-  background: var(--neutral-surface);
-  color: var(--neutral-fg);
-  font-size: var(--text-xs);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: var(--size-small);
   font-weight: var(--weight-semibold);
   line-height: 1;
 }
@@ -77,18 +77,18 @@
   justify-content: center;
   width: var(--control-xs);
   height: var(--control-xs);
-  margin-block-start: calc(var(--space-1) * -1);
-  margin-inline-end: calc(var(--space-2) * -1);
+  margin-block-start: calc(var(--s-1) * -1);
+  margin-inline-end: calc(var(--s-2) * -1);
   padding: 0;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--r);
   background: transparent;
   color: inherit;
   opacity: 0.6;
-  font-size: var(--text-md);
+  font-size: var(--size-slab-title);
   line-height: 1;
   cursor: pointer;
-  transition: opacity var(--motion-fast) var(--ease-out);
+  transition: opacity var(--dur-1) var(--ease);
 }
 
 .birkly-feedback-toast__close:hover {
@@ -97,47 +97,47 @@
 
 /* ---- Tones ---- */
 .birkly-feedback-toast--success {
-  border-color: var(--success-border);
-  background: var(--success-surface);
-  color: var(--success-fg);
+  border-color: var(--success-soft);
+  background: var(--success-soft);
+  color: var(--success);
 }
 
 .birkly-feedback-toast--success .birkly-feedback-toast__icon {
-  background: var(--success-solid);
-  color: var(--ink-on-success);
+  background: var(--success);
+  color: var(--on-status);
 }
 
 .birkly-feedback-toast--error {
-  border-color: var(--danger-border);
-  background: var(--danger-surface);
-  color: var(--danger-fg);
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .birkly-feedback-toast--error .birkly-feedback-toast__icon {
-  background: var(--danger-solid);
-  color: var(--ink-on-danger);
+  background: var(--danger);
+  color: var(--on-status);
 }
 
 .birkly-feedback-toast--warning {
-  border-color: var(--warning-border);
-  background: var(--warning-surface);
-  color: var(--warning-fg);
+  border-color: var(--warning-soft);
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 
 .birkly-feedback-toast--warning .birkly-feedback-toast__icon {
-  background: var(--warning-solid);
-  color: var(--ink-on-warning);
+  background: var(--warning);
+  color: var(--on-status);
 }
 
 .birkly-feedback-toast--info {
-  border-color: var(--info-border);
-  background: var(--info-surface);
-  color: var(--info-fg);
+  border-color: var(--info-soft);
+  background: var(--info-soft);
+  color: var(--info);
 }
 
 .birkly-feedback-toast--info .birkly-feedback-toast__icon {
-  background: var(--info-solid);
-  color: var(--ink-on-info);
+  background: var(--info);
+  color: var(--on-status);
 }
 
 @keyframes birkly-feedback-toast-in {
@@ -159,7 +159,7 @@
 .birkly-feedback-confirm-modal,
 .birkly-feedback-prompt-modal {
   opacity: 0;
-  transition: opacity var(--motion-base) var(--ease-out);
+  transition: opacity var(--dur-2) var(--ease);
 }
 
 .birkly-feedback-confirm-modal.active,
@@ -175,32 +175,32 @@
 .birkly-feedback-prompt-modal .modal-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--s-3);
 }
 
 .birkly-feedback-confirm-modal .modal-body p,
 .birkly-feedback-prompt-modal .modal-body p {
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .birkly-feedback-confirm-details {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 .birkly-feedback-confirm-details__intro {
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .birkly-feedback-confirm-details__list {
-  padding-inline-start: var(--space-5);
+  padding-inline-start: var(--s-5);
   list-style: disc;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .birkly-feedback-confirm-details__list li + li {
-  margin-block-start: var(--space-1);
+  margin-block-start: var(--s-1);
 }
 
 .birkly-feedback-prompt-modal #birkly-feedback-prompt-input {
@@ -208,5 +208,5 @@
 }
 
 .birkly-feedback-confirm-modal--danger .modal-header h2 {
-  color: var(--danger-fg);
+  color: var(--danger);
 }

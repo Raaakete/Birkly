@@ -1,9 +1,9 @@
 /* Delivery status strip (P66-M1) — uses design tokens (light + dark). */
 .delivery-status {
-  border-left: 4px solid var(--border-default);
-  padding: var(--space-6);
-  gap: var(--space-4);
-  color: var(--text-primary);
+  border-left: 4px solid var(--line);
+  padding: var(--s-6);
+  gap: var(--s-4);
+  color: var(--text);
 }
 
 .delivery-status.card {
@@ -13,47 +13,47 @@
 }
 
 .delivery-status--green {
-  border-left-color: var(--success-fg);
-  background: var(--success-surface);
+  border-left-color: var(--success);
+  background: var(--success-soft);
 }
 
 .delivery-status--yellow {
-  border-left-color: var(--warning-fg);
-  background: var(--warning-surface);
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
 }
 
 .delivery-status--red {
-  border-left-color: var(--danger-fg);
-  background: var(--danger-surface);
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
 }
 
 .delivery-status-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-4);
-  margin-bottom: var(--space-3);
+  gap: var(--s-4);
+  margin-bottom: var(--s-3);
 }
 
 .delivery-status-title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--size-title-l);
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-snug);
-  color: var(--text-primary);
+  line-height: 1.4;
+  color: var(--text);
 }
 
 .delivery-status-meta {
-  margin: var(--space-2) 0 0;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
+  margin: var(--s-2) 0 0;
+  font-size: var(--size-small);
+  color: var(--text-2);
+  line-height: 1.5;
 }
 
 .delivery-status-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--s-2);
   flex-shrink: 0;
 }
 
@@ -62,45 +62,45 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--s-2);
 }
 
 .delivery-status-check {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-  line-height: var(--leading-normal);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
+  gap: var(--s-2);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  padding: var(--s-2) var(--s-3);
+  border-radius: var(--r);
   background: var(--surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
+  border: 1px solid var(--line);
+  color: var(--text);
 }
 
 .delivery-status-check-icon {
   width: 1.125rem;
   flex-shrink: 0;
   font-weight: var(--weight-semibold);
-  line-height: var(--leading-normal);
+  line-height: 1.5;
 }
 
 .delivery-status-check-text {
   flex: 1;
   min-width: 0;
-  color: var(--text-primary);
+  color: var(--text);
 }
 
 .delivery-status-check--pass .delivery-status-check-icon {
-  color: var(--success-fg);
+  color: var(--success);
 }
 
 .delivery-status-check--warn .delivery-status-check-icon {
-  color: var(--warning-fg);
+  color: var(--warning);
 }
 
 .delivery-status-check--fail .delivery-status-check-icon {
-  color: var(--danger-fg);
+  color: var(--danger);
 }
 
 .delivery-status-fix {

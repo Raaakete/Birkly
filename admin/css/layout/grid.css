@@ -12,7 +12,7 @@
 
 .grid {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--s-4);
   min-width: 0;
 }
 

@@ -52,7 +52,7 @@ class Toggle extends BaseField {
         .toggle-field-wrapper {
             display: flex;
             align-items: center;
-            min-height: var(--control-md, 2.5rem);
+            min-height: var(--control);
         }
         CSS;
     }

@@ -312,7 +312,7 @@
     function showProgress(message) {
         const progress = document.createElement('div');
         progress.className = 'bulk-progress';
-        progress.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--bg-elevated);padding:var(--space-3);border-radius:var(--radius-sm,8px);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:1000;';
+        progress.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--surface);padding:var(--s-3);border-radius:var(--r);box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:1000;';
         progress.textContent = message;
         document.body.appendChild(progress);
         return progress;

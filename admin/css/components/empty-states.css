@@ -23,11 +23,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
-  padding: var(--space-12) var(--space-6);
+  gap: var(--s-3);
+  padding: 48px var(--s-6);
   text-align: center;
   min-width: 0;
-  color: var(--text-secondary);
+  color: var(--text-2);
 }
 
 .empty-state-icon,
@@ -37,10 +37,10 @@
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  border-radius: var(--radius-md);
-  background: var(--surface-sunken);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-tertiary);
+  border-radius: var(--r);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text-3);
 }
 .empty-state-icon svg,
 .empty-state__icon svg,
@@ -54,10 +54,10 @@
 .coming-soon h1,
 .coming-soon h2 {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--size-title-l);
   font-weight: var(--weight-semibold);
-  letter-spacing: var(--tracking-tight);
-  color: var(--text-primary);
+  letter-spacing: var(--tracking-title);
+  color: var(--text);
 }
 
 .empty-state-text,
@@ -65,9 +65,9 @@
 .empty-state p,
 .coming-soon p {
   margin: 0;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  line-height: var(--leading-normal);
+  font-size: var(--size-small);
+  color: var(--text-2);
+  line-height: 1.5;
   max-width: var(--measure-sm);
 }
 
@@ -76,46 +76,46 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  margin-block-start: var(--space-1);
+  gap: var(--s-2);
+  margin-block-start: var(--s-1);
   flex-wrap: wrap;
 }
 
 /* Compact variant for inside small panels and table bodies */
 .empty-state--compact {
-  padding: var(--space-6) var(--space-4);
-  gap: var(--space-2);
+  padding: var(--s-6) var(--s-4);
+  gap: var(--s-2);
 }
 .empty-state--compact .empty-state-icon { width: 2rem; height: 2rem; }
-.empty-state--compact .empty-state-title { font-size: var(--text-base); }
+.empty-state--compact .empty-state-title { font-size: var(--size-body); }
 
 /* Inline variant — single line, for list footers */
 .empty-state--inline {
   flex-direction: row;
-  padding: var(--space-4);
-  gap: var(--space-2);
+  padding: var(--s-4);
+  gap: var(--s-2);
   text-align: start;
   justify-content: flex-start;
 }
 
 /* Error tone */
 .error-state,
-.empty-state--error { color: var(--danger-fg); }
+.empty-state--error { color: var(--danger); }
 .error-state .empty-state-icon,
 .empty-state--error .empty-state-icon {
-  background: var(--danger-surface);
-  border-color: var(--danger-border);
-  color: var(--danger-fg);
+  background: var(--danger-soft);
+  border-color: var(--danger-soft);
+  color: var(--danger);
 }
 .error-state .empty-state-title,
-.empty-state--error .empty-state-title { color: var(--danger-fg); }
+.empty-state--error .empty-state-title { color: var(--danger); }
 
 /* Loading state — spinner instead of an icon tile */
 .loading-state::before {
   content: "";
   width: 1.25rem;
   height: 1.25rem;
-  border: 2px solid var(--border-default);
+  border: 2px solid var(--line);
   border-block-start-color: var(--accent-text);
   border-radius: 50%;
   animation: u-spin 0.6s linear infinite;
